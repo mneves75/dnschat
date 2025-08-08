@@ -673,4 +673,4 @@ After reading this guide:
 
 If you have questions not covered in this guide, check the [Tech FAQ](../TECH-FAQ.md) or ask a senior developer.
 
-**Last Updated:** v1.0.0 - Production Ready Release
+**Last Updated:** v1.5.0 - Production Ready Release

@@ -300,6 +300,6 @@ grep -r "docs/" README.md docs/
 
 ---
 
-**Last Updated**: v1.0.0 - Documentation Reorganization  
+**Last Updated**: v1.5.0 - Documentation Reorganization  
 **Maintainer**: DNSChat Development Team  
 **Next Review**: Monthly (first Monday of each month)

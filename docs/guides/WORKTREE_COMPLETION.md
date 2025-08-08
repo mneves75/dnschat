@@ -17,7 +17,7 @@
   - Updated `src/navigation/index.tsx` to include About tab
 - **Features**:
   - Modern dark/light theme support
-  - Auto-updating version from package.json (currently 1.0.0)
+  - Auto-updating version from package.json (currently 1.5.0)
   - Complete project information and links
   - Credits to @levelsio and all library authors
   - Version management documentation

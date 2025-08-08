@@ -118,9 +118,9 @@ The app uses a hierarchical navigation pattern:
   - Current scheme: `dnschat://`
   - Bundle IDs still using template defaults (`com.satya164.reactnavigationtemplate`) - needs updating
   - Uses React Native's New Architecture (newArchEnabled: true)
-  - Version in app.json (1.0.0) differs from package.json (1.2.1)
+  - Version in app.json (1.5.0) matches package.json (1.5.0)
 - **tsconfig.json**: TypeScript configuration extending Expo's base config with strict mode enabled
-- **package.json**: Current version 1.2.1 with all dependencies including DNS libraries
+- **package.json**: Current version 1.5.0 with all dependencies including DNS libraries
 
 ### Deep Linking
 The app is configured for automatic deep linking with:
@@ -231,7 +231,7 @@ Android is configured with edge-to-edge display using the `react-native-edge-to-
 ### Configuration Status - COMPLETE
 
 - **✅ Bundle IDs**: Production identifiers (`org.mvneves.dnschat`)
-- **✅ Version Sync**: app.json and package.json at v1.3.0
+- **✅ Version Sync**: app.json and package.json at v1.5.0
 - **✅ Package Metadata**: Complete podspec dependencies resolved
 - **✅ Build Process**: iOS builds successfully with native DNS module
 - **✅ Module Registration**: Native module properly detected by React Native bridge

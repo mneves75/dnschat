@@ -1,4 +1,4 @@
-# DNSChat Installation Guide v1.0.0
+# DNSChat Installation Guide v1.5.0
 
 ## 📱 Complete Installation Guide for Native DNS Chat App
 
@@ -441,4 +441,4 @@ For advanced configuration and development, see [CLAUDE.md](./CLAUDE.md) for det
 
 ---
 
-*Installation guide for ChatDNS v1.3.1 - Production Ready Native DNS Implementation*
+*Installation guide for DNSChat v1.5.0 - Production Ready Native DNS Implementation*
