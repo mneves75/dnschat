@@ -1,0 +1,31 @@
+---
+alwaysApply: true
+---
+## DNSChat Project Structure Guide
+
+- **Entry points**
+  - [index.tsx](mdc:index.tsx): Registers the app with Expo and loads [src/App.tsx](mdc:src/App.tsx)
+  - [app.json](mdc:app.json): Expo config (name, scheme `chatdns`, iOS/Android IDs, plugins)
+- **Navigation**: [src/navigation/index.tsx](mdc:src/navigation/index.tsx) uses React Navigation v7 with `createStaticNavigation`
+- **State**:
+  - [src/context/ChatContext.tsx](mdc:src/context/ChatContext.tsx)
+  - [src/context/SettingsContext.tsx](mdc:src/context/SettingsContext.tsx)
+- **Services**:
+  - DNS: [src/services/dnsService.ts](mdc:src/services/dnsService.ts)
+  - Storage: [src/services/storageService.ts](mdc:src/services/storageService.ts)
+- **Types**:
+  - [src/types/chat.ts](mdc:src/types/chat.ts)
+- **Native DNS**:
+  - iOS: [ios/DNSNative/DNSResolver.swift](mdc:ios/DNSNative/DNSResolver.swift), [ios/DNSNative/RNDNSModule.m](mdc:ios/DNSNative/RNDNSModule.m)
+  - JS bridge: [modules/dns-native/index.ts](mdc:modules/dns-native/index.ts)
+  - Expo plugin: [plugins/dns-native-plugin.js](mdc:plugins/dns-native-plugin.js)
+
+### Key Behaviors
+- **Deep linking**: Scheme `chatdns://` configured in [app.json](mdc:app.json) and consumed in [src/App.tsx](mdc:src/App.tsx)
+- **New Architecture**: `newArchEnabled: true` in [app.json](mdc:app.json)
+- **DNS flow**: Native → UDP → TCP → DoH → Mock (see [src/services/dnsService.ts](mdc:src/services/dnsService.ts))
+
+### Conventions
+- Keep logic in `src/services/*`; UI in `src/components/*` and screens in `src/navigation/screens/*`
+- Persist via `StorageService`; do not read/write AsyncStorage directly in components
+- Extend navigation only via [src/navigation/index.tsx](mdc:src/navigation/index.tsx)

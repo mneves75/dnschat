@@ -1,0 +1,217 @@
+import React from 'react';
+import { View, Text, StyleSheet, useColorScheme, Pressable, Alert } from 'react-native';
+import { format } from 'date-fns';
+import Markdown from 'react-native-markdown-display';
+import { Message } from '../types/chat';
+
+interface MessageBubbleProps {
+  message: Message;
+}
+
+export function MessageBubble({ message }: MessageBubbleProps) {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+  
+  const isUser = message.role === 'user';
+  const isLoading = message.status === 'sending';
+  const hasError = message.status === 'error';
+
+  const handleLongPress = () => {
+    Alert.alert(
+      'Copy Message',
+      'Do you want to copy this message?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Copy',
+          onPress: () => {
+            // In a real app, you'd use Clipboard from '@react-native-clipboard/clipboard'
+            // Copy functionality would be implemented here
+          },
+        },
+      ]
+    );
+  };
+
+  const bubbleStyles = [
+    styles.bubble,
+    isUser ? styles.userBubble : styles.assistantBubble,
+    isDark ? styles.darkBubble : styles.lightBubble,
+    isUser && isDark ? styles.darkUserBubble : {},
+    !isUser && isDark ? styles.darkAssistantBubble : {},
+    hasError ? styles.errorBubble : {},
+  ];
+
+  const textStyles = [
+    styles.text,
+    isUser ? styles.userText : styles.assistantText,
+    isDark ? styles.darkText : styles.lightText,
+    hasError ? styles.errorText : {},
+  ];
+
+  const markdownStyles = {
+    body: {
+      color: isDark 
+        ? (isUser ? '#FFFFFF' : '#E5E5E7') 
+        : (isUser ? '#FFFFFF' : '#000000'),
+      fontSize: 16,
+      lineHeight: 20,
+    },
+    code_inline: {
+      backgroundColor: isDark ? '#2C2C2E' : '#F2F2F7',
+      color: isDark ? '#FF9500' : '#AF52DE',
+      paddingHorizontal: 4,
+      paddingVertical: 2,
+      borderRadius: 4,
+      fontSize: 14,
+    },
+    code_block: {
+      backgroundColor: isDark ? '#1C1C1E' : '#F2F2F7',
+      padding: 12,
+      borderRadius: 8,
+      marginVertical: 8,
+    },
+    fence: {
+      backgroundColor: isDark ? '#1C1C1E' : '#F2F2F7',
+      padding: 12,
+      borderRadius: 8,
+      marginVertical: 8,
+    },
+  };
+
+  return (
+    <View style={[styles.container, isUser ? styles.userContainer : styles.assistantContainer]}>
+      <Pressable onLongPress={handleLongPress} style={bubbleStyles}>
+        {isUser ? (
+          <Text style={textStyles}>{message.content}</Text>
+        ) : (
+          <Markdown style={markdownStyles}>
+            {message.content}
+          </Markdown>
+        )}
+        
+        {isLoading && (
+          <View style={styles.loadingIndicator}>
+            <Text style={[styles.loadingText, isDark ? styles.darkText : styles.lightText]}>
+              ●●●
+            </Text>
+          </View>
+        )}
+        
+        <View style={styles.messageInfo}>
+          <Text style={[
+            styles.timestamp, 
+            isDark ? styles.darkTimestamp : styles.lightTimestamp,
+            isUser ? styles.userTimestamp : styles.assistantTimestamp
+          ]}>
+            {format(message.timestamp, 'HH:mm')}
+          </Text>
+          
+          {hasError && (
+            <Text style={styles.errorIndicator}>!</Text>
+          )}
+        </View>
+      </Pressable>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    marginVertical: 4,
+    marginHorizontal: 16,
+    maxWidth: '80%',
+  },
+  userContainer: {
+    alignSelf: 'flex-end',
+  },
+  assistantContainer: {
+    alignSelf: 'flex-start',
+  },
+  bubble: {
+    padding: 12,
+    borderRadius: 18,
+    minWidth: 60,
+  },
+  userBubble: {
+    backgroundColor: '#007AFF',
+  },
+  assistantBubble: {
+    backgroundColor: '#E5E5EA',
+  },
+  darkBubble: {
+    // Base dark styling handled by specific bubble types
+  },
+  lightBubble: {
+    // Base light styling handled by specific bubble types
+  },
+  darkUserBubble: {
+    backgroundColor: '#007AFF',
+  },
+  darkAssistantBubble: {
+    backgroundColor: '#3C3C43',
+  },
+  errorBubble: {
+    backgroundColor: '#FF3B30',
+  },
+  text: {
+    fontSize: 16,
+    lineHeight: 20,
+  },
+  userText: {
+    color: '#FFFFFF',
+  },
+  assistantText: {
+    color: '#000000',
+  },
+  darkText: {
+    color: '#FFFFFF',
+  },
+  lightText: {
+    color: '#000000',
+  },
+  errorText: {
+    color: '#FFFFFF',
+  },
+  messageInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 4,
+  },
+  timestamp: {
+    fontSize: 12,
+    opacity: 0.6,
+  },
+  darkTimestamp: {
+    color: '#FFFFFF',
+  },
+  lightTimestamp: {
+    color: '#000000',
+  },
+  userTimestamp: {
+    color: '#FFFFFF',
+  },
+  assistantTimestamp: {
+    // Uses dark/light color
+  },
+  errorIndicator: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: 'bold',
+    backgroundColor: '#FF3B30',
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    textAlign: 'center',
+    lineHeight: 16,
+  },
+  loadingIndicator: {
+    marginTop: 4,
+  },
+  loadingText: {
+    fontSize: 16,
+    opacity: 0.6,
+    textAlign: 'center',
+  },
+});

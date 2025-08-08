@@ -1,0 +1,28 @@
+---
+globs: src/services/dnsService.ts, ios/DNSNative/**, modules/dns-native/**, plugins/dns-native-plugin.js
+---
+## DNS Service Architecture
+
+- **Primary API**: `DNSService.queryLLM(message, dnsServer?)` in [src/services/dnsService.ts](mdc:src/services/dnsService.ts)
+- **Fallback Chain (within service)**
+  1. Native module via `nativeDNS` ([modules/dns-native/index.ts](mdc:modules/dns-native/index.ts))
+  2. UDP (react-native-udp)
+  3. TCP (react-native-tcp-socket)
+  4. DoH (Cloudflare) using base64url-encoded DNS message
+  
+  Mock fallback is applied by `ChatContext` if the service throws (see `MockDNSService` in [src/services/dnsService.ts](mdc:src/services/dnsService.ts) and usage in [src/context/ChatContext.tsx](mdc:src/context/ChatContext.tsx)).
+- **Native iOS**: [ios/DNSNative/DNSResolver.swift](mdc:ios/DNSNative/DNSResolver.swift) with `NWConnection` UDP and TXT parsing; bridged via [ios/DNSNative/RNDNSModule.m](mdc:ios/DNSNative/RNDNSModule.m)
+- **Expo Plugin**: [plugins/dns-native-plugin.js](mdc:plugins/dns-native-plugin.js) copies native code into platform projects
+- **Native Capability Detection**: `nativeDNS.isAvailable()` returns platform capabilities; multi-part TXT responses parsed via `nativeDNS.parseMultiPartResponse()`
+- **Sanitization**
+  - JS (UDP/TCP path): minimal `trim` and length limit to preserve natural language
+  - JS (DoH path): stricter sanitization in `createDNSQuery` (removes quotes/punctuation) before encoding
+  - iOS: preserves original message (trims only); single-label encoding with truncation to 63 bytes when necessary
+- **Backgrounding**
+  - AppState suspends/guards network ops in service
+- **Constraints**
+  - Do not change fallback order without explicit requirement
+  - Keep message sanitization minimal for native/UDP/TCP path
+  - Port is 53; default server `ch.at` unless overridden by settings
+- **Testing**
+  - CLI: [test-dns.js](mdc:test-dns.js), [test-native-dns.js](mdc:test-native-dns.js), [test-dnsservice.js](mdc:test-dnsservice.js)

@@ -1,0 +1,21 @@
+---
+globs: app.json, package.json, ios/**, android/**
+---
+## Expo Config and Commands
+
+- **Config**: [app.json](mdc:app.json)
+  - Name: DNS Chat; Slug: `chat-dns`; Scheme: `chatdns`
+  - New Architecture: `newArchEnabled: true`
+  - iOS: `bundleIdentifier: org.mvneves.dnschat`
+  - Android: package `org.mvneves.dnschat`, adaptive icon
+  - Plugins: `expo-asset`, `expo-splash-screen`, `react-native-edge-to-edge`, `./plugins/dns-native-plugin`
+- **Entry**: [index.tsx](mdc:index.tsx) → [src/App.tsx](mdc:src/App.tsx)
+- **Scripts** ([package.json](mdc:package.json))
+  - `npm start` (dev client), `npm run ios`, `npm run android`, `npm run web`
+  - Android Java 17 helper: `npm run android:java17`
+- **Native setup**
+  - iOS pods: `cd ios && pod install`
+  - Plugin copies native DNS module into platform projects on prebuild
+- **Do not**
+  - Change app scheme without updating deep links in [src/App.tsx](mdc:src/App.tsx) and navigation
+  - Remove the DNS plugin unless replacing native integration

@@ -1,0 +1,55 @@
+{
+  "name": "chat-dns",
+  "version": "1.0.0",
+  "description": "DNSChat - A React Native chat app using DNS TXT queries",
+  "main": "index.tsx",
+  "author": "mvneves",
+  "license": "MIT",
+  "homepage": "https://github.com/mneves75/dnschat",
+  "scripts": {
+    "start": "expo start --dev-client",
+    "web": "expo start --web",
+    "android": "JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home PATH=/opt/homebrew/opt/openjdk@17/bin:$PATH expo run:android",
+    "android:java24": "expo run:android",
+    "ios": "expo run:ios"
+  },
+  "dependencies": {
+    "@expo/metro-runtime": "~5.0.4",
+    "@react-native-async-storage/async-storage": "2.1.2",
+    "@react-navigation/bottom-tabs": "^7.1.1",
+    "@react-navigation/elements": "^2.2.3",
+    "@react-navigation/native": "^7.0.12",
+    "@react-navigation/native-stack": "^7.1.13",
+    "@types/dns-packet": "^5.6.5",
+    "date-fns": "^4.1.0",
+    "dns-packet": "^5.6.1",
+    "expo": "^53.0.4",
+    "expo-asset": "~11.1.4",
+    "expo-dev-client": "~5.2.4",
+    "expo-splash-screen": "~0.30.7",
+    "expo-system-ui": "~5.0.6",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
+    "react-native": "0.79.5",
+    "react-native-edge-to-edge": "1.6.0",
+    "react-native-gesture-handler": "~2.24.0",
+    "react-native-markdown-display": "^7.0.2",
+    "react-native-reanimated": "~3.17.4",
+    "react-native-safe-area-context": "5.4.0",
+    "react-native-screens": "~4.11.1",
+    "react-native-svg": "15.11.2",
+    "react-native-tcp-socket": "^6.3.0",
+    "react-native-udp": "^4.1.7",
+    "react-native-uuid": "^2.0.3",
+    "react-native-web": "^0.20.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.20.0",
+    "@types/react": "~19.0.10",
+    "typescript": "~5.8.3"
+  },
+  "overrides": {
+    "markdown-it": ">=12.3.2"
+  },
+  "private": true
+}

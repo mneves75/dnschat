@@ -1,0 +1,86 @@
+# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+
+# dependencies
+node_modules/
+
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Native
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Metro
+.metro-health-check*
+
+# debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# macOS
+.DS_Store
+*.pem
+
+# local env files
+.env*.local
+.env
+.env.*
+
+# typescript
+*.tsbuildinfo
+
+# Security & Development Artifacts
+*.keystore
+*.jks
+*.p8
+*.p12
+test-dns.js
+test-native-dns.js
+test-dnsservice.js
+audit_report.md
+remediation_checklist.json
+security-scan-*
+.expo/xcodebuild*.log
+
+# Backup directories (keep local only)
+BACKUP-COMPLETE-HISTORY-*/
+
+# Build artifacts that may contain sensitive info
+android/app/build/
+ios/build/
+ios/DerivedData/
+android/app/release/
+android/app/debug/
+
+# IDE and editor files
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+Thumbs.db
+ehthumbs.db
+
+# Logs and debugging
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+app-example

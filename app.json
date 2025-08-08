@@ -1,0 +1,38 @@
+{
+  "expo": {
+    "name": "DNS Chat",
+    "slug": "chat-dns",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./icons/dnschat_ios26.png",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "scheme": "chatdns",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "org.mvneves.dnschat"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./icons/dnschat_ios26.png",
+        "backgroundColor": "#0D7377"
+      },
+      "package": "org.mvneves.dnschat"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-asset",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#ffffff",
+          "image": "./assets/splash-icon.png"
+        }
+      ],
+      "react-native-edge-to-edge",
+      "./plugins/dns-native-plugin"
+    ]
+  }
+}

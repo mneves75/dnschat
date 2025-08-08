@@ -1,0 +1,19 @@
+---
+globs: *.ts,*.tsx
+---
+## TypeScript Conventions
+
+- **Compiler**: `strict: true`, `moduleResolution: bundler` per [tsconfig.json](mdc:tsconfig.json)
+- **Types**
+  - Prefer explicit function signatures on exports and public APIs
+  - Avoid `any`; model domain types in [src/types/chat.ts](mdc:src/types/chat.ts)
+  - Narrow error handling with typed errors (see `DNSError` in [modules/dns-native/index.ts](mdc:modules/dns-native/index.ts))
+- **Imports**
+  - Use absolute project-relative imports from `src/` where practical; keep native module imports isolated to services
+- **Control flow**
+  - Use guard clauses, early returns, minimal nesting
+- **Formatting**
+  - Match existing code style; prefer multi-line readability over complex one-liners
+- **Do not**
+  - Mutate AsyncStorage directly in UI; go through `StorageService`
+  - Introduce runtime-only type assertions that weaken safety

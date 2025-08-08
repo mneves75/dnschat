@@ -1,0 +1,18 @@
+---
+globs: src/context/*.tsx, src/services/storageService.ts, src/types/*.ts, src/types.d.ts
+---
+## State and Storage
+
+- **ChatContext** ([src/context/ChatContext.tsx](mdc:src/context/ChatContext.tsx))
+  - API: `createChat`, `deleteChat`, `sendMessage`, `loadChats`, `setCurrentChat`, `clearError`
+  - Flow: add user message → placeholder assistant message → resolve via `DNSService` → replace placeholder
+- **SettingsContext** ([src/context/SettingsContext.tsx](mdc:src/context/SettingsContext.tsx))
+  - Stores `dnsServer` in AsyncStorage key `@chat_dns_settings`
+- **StorageService** ([src/services/storageService.ts](mdc:src/services/storageService.ts))
+  - Sole interface to AsyncStorage for chats
+  - Serializes dates to ISO; deserializes back to `Date`
+  - Auto-generates chat title from first user message
+- **Types**: [src/types/chat.ts](mdc:src/types/chat.ts)
+- **Do not**
+  - Write to AsyncStorage directly from components
+  - Mutate context state outside provided APIs
