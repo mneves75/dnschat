@@ -40,7 +40,7 @@ const withDNSNativeModule = (config) => {
         // Add to MainApplication.java
         const mainAppPath = path.join(
           config.modRequest.platformProjectRoot,
-          'app', 'src', 'main', 'java', 'com', config.android?.package?.split('.').pop() || 'chatdns', 'MainApplication.java'
+          'app', 'src', 'main', 'java', 'com', config.android?.package?.split('.').pop() || 'dnschat', 'MainApplication.java'
         );
 
         if (fs.existsSync(mainAppPath)) {

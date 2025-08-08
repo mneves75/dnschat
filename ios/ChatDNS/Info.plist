@@ -27,7 +27,7 @@
       <dict>
         <key>CFBundleURLSchemes</key>
         <array>
-          <string>chatdns</string>
+          <string>dnschat</string>
           <string>org.mvneves.dnschat</string>
         </array>
       </dict>

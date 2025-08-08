@@ -7,7 +7,7 @@
     "icon": "./icons/dnschat_ios26.png",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "scheme": "chatdns",
+    "scheme": "dnschat",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "org.mvneves.dnschat"

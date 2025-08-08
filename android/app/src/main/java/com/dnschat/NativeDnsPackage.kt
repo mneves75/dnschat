@@ -1,4 +1,4 @@
-package com.chatdns
+package com.dnschat
 
 import com.facebook.react.ReactPackage
 import com.facebook.react.bridge.NativeModule

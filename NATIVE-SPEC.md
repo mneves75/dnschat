@@ -163,13 +163,13 @@ RCT_EXTERN_METHOD(query:(NSString *)queryBase64
 
 -   **Framework:** `DatagramSocket` and Kotlin Coroutines (`kotlinx.coroutines`). This is the standard, non-blocking approach for modern Android development.
 -   **Files:**
-    -   `android/app/src/main/java/com/chatdns/NativeDnsModule.kt`: The core Kotlin implementation.
-    -   `android/app/src/main/java/com/chatdns/NativeDnsPackage.kt`: The package file to register the module.
+    -   `android/app/src/main/java/com/dnschat/NativeDnsModule.kt`: The core Kotlin implementation.
+    -   `android/app/src/main/java/com/dnschat/NativeDnsPackage.kt`: The package file to register the module.
 
 ### `NativeDnsModule.kt`
 
 ```kotlin
-package com.chatdns // Or your package name
+package com.dnschat // Or your package name
 
 import android.util.Base64
 import com.facebook.react.bridge.*
@@ -221,7 +221,7 @@ class NativeDnsModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
 ### `NativeDnsPackage.kt`
 
 ```kotlin
-package com.chatdns // Or your package name
+package com.dnschat // Or your package name
 
 import com.facebook.react.ReactPackage
 import com.facebook.react.bridge.NativeModule
@@ -247,7 +247,7 @@ class NativeDnsPackage : ReactPackage {
     -   Create `NativeDns.swift` and `NativeDns.m` in the `ios/ChatDNS/` directory.
     -   No Pod install should be needed as `Network.framework` is a system library.
 3.  **Android Implementation**:
-    -   Create the `com/chatdns` package structure if it doesn't exist.
+    -   Create the `com/dnschat` package structure if it doesn't exist.
     -   Create `NativeDnsModule.kt` and `NativeDnsPackage.kt`.
     -   Register `NativeDnsPackage()` in `MainApplication.kt`'s `getPackages()` method.
 4.  **Update `dnsService.ts`**:

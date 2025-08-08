@@ -103,7 +103,7 @@ The app uses a hierarchical navigation pattern:
 
 ### Key Configuration Files
 - **app.json**: Expo configuration including app name, bundle identifiers, and plugins
-  - Current scheme: `chatdns://`
+  - Current scheme: `dnschat://`
   - Bundle IDs still using template defaults (`com.satya164.reactnavigationtemplate`) - needs updating
   - Uses React Native's New Architecture (newArchEnabled: true)
   - Version in app.json (1.0.0) differs from package.json (1.2.1)
@@ -112,7 +112,7 @@ The app uses a hierarchical navigation pattern:
 
 ### Deep Linking
 The app is configured for automatic deep linking with:
-- Scheme: `chatdns://` (configured in app.json and App.tsx)
+- Scheme: `dnschat://` (configured in app.json and App.tsx)
 - Profile screen supports username paths like `@username`
 
 ### DNS Communication

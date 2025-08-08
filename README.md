@@ -26,7 +26,7 @@ A React Native mobile application that provides a modern, ChatGPT-like chat inte
 - **💾 Local Storage**: Persistent conversation history using AsyncStorage
 - **📱 Cross-platform**: iOS, Android, and Web support via React Native and Expo
 - **🎨 Dark/Light Theme**: Automatic theme switching based on system preferences
-- **🔗 Deep Linking**: Support for direct message sending via `chatdns://message=<TEXT_MESSAGE>`
+- **🔗 Deep Linking**: Support for direct message sending via `dnschat://message=<TEXT_MESSAGE>`
 - **🛡️ Network Resilience**: Multi-layer fallback strategy with DNS-over-TCP for UDP-blocked networks
 - **🎨 Custom App Icon**: Professional DNS-themed icon with network/chat visual identity
 - **⚡ Performance Enhancement**: Native KeyboardAvoidingView for optimal keyboard handling without component conflicts
@@ -207,12 +207,12 @@ export PATH=/opt/homebrew/opt/openjdk@17/bin:$PATH
 ## Configuration
 
 ### Deep Linking
-- Scheme: `chatdns://` (configured in app.json and App.tsx)
-- **Direct Message Sending**: `chatdns://message=<TEXT_MESSAGE>`
+- Scheme: `dnschat://` (configured in app.json and App.tsx)
+- **Direct Message Sending**: `dnschat://message=<TEXT_MESSAGE>`
   - Automatically creates new chat and sends the message via DNS
   - URL-encoded text messages supported
-  - Example: `chatdns://message=What's%20the%20weather%20like?`
-- Profile path support: `chatdns://@username` (legacy)
+  - Example: `dnschat://message=What's%20the%20weather%20like?`
+- Profile path support: `dnschat://@username` (legacy)
 
 ### Theme Support
 Automatic light/dark theme switching based on system preferences using React Navigation's theme system.

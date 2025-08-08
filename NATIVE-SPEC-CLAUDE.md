@@ -214,7 +214,7 @@ enum DNSErrorType {
 
 ```typescript
 // Service Endpoint Design
-POST https://dns-proxy.chatdns.app/query
+POST https://dns-proxy.dnschat.app/query
 {
   "server": "ch.at",
   "query": "Hello world", 

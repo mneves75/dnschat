@@ -1,4 +1,4 @@
-package com.chatdns
+package com.dnschat
 
 import android.os.Build
 import android.util.Base64

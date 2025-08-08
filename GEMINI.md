@@ -9,7 +9,7 @@ Key features include:
 -   **Local Storage**: Persists conversation history using AsyncStorage.
 -   **Modern UI**: Features a dark/light theme, message bubbles, and typing indicators.
 -   **Cross-Platform**: Built with React Native and Expo.
--   **Deep Linking**: Supports URLs like `chatdns://@username`.
+-   **Deep Linking**: Supports URLs like `dnschat://@username`.
 -   **Native DNS Service**: Includes a custom UDP socket implementation for direct DNS queries on iOS.
 
 The project uses React Navigation for navigation, and Expo Development Build for running on native platforms.

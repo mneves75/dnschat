@@ -23,7 +23,7 @@
     "@types/dns-packet": "^5.6.5",
     "date-fns": "^4.1.0",
     "dns-packet": "^5.6.1",
-    "expo": "^53.0.4",
+    "expo": "^53.0.20",
     "expo-asset": "~11.1.4",
     "expo-dev-client": "~5.2.4",
     "expo-splash-screen": "~0.30.7",
