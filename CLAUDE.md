@@ -6,6 +6,18 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## 📚 Documentation Structure
+
+DNSChat now has comprehensive technical documentation organized in the `/docs/` folder:
+
+- **[docs/README.md](docs/README.md)** - Complete documentation hub and navigation
+- **[docs/TECH-FAQ.md](docs/TECH-FAQ.md)** - Technical FAQ for quick issue resolution
+- **[docs/technical/JUNIOR-DEV-GUIDE.md](docs/technical/JUNIOR-DEV-GUIDE.md)** - Comprehensive onboarding guide
+- **[docs/architecture/SYSTEM-ARCHITECTURE.md](docs/architecture/SYSTEM-ARCHITECTURE.md)** - Complete system architecture overview
+- **[docs/troubleshooting/COMMON-ISSUES.md](docs/troubleshooting/COMMON-ISSUES.md)** - Comprehensive troubleshooting guide
+
+**When working on this project, always reference the appropriate documentation and keep it updated.**
+
 ## Inspiration and Acknowledgements
 
 - Reference: [Arxiv Daily tweet](https://x.com/Arxiv_Daily/status/1952452878716805172) describing DNS-based LLM chat.

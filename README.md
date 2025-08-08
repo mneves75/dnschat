@@ -44,30 +44,15 @@ A React Native mobile application that provides a modern, ChatGPT-like chat inte
 
 ## Architecture
 
-### Navigation Structure
-- **Root Stack Navigator**
-  - HomeTabs (Bottom Tab Navigator)
-    - ChatList screen - displays all conversations with delete functionality
-    - About screen - project information and credits
-  - Chat screen - individual conversation interface
-  - Profile screen (with deep linking support)
-  - Settings screen (modal presentation)
+DNSChat uses a layered architecture with platform-native DNS implementations and comprehensive fallback strategies.
 
-### DNS Communication
-The app uses an innovative approach to communicate with LLMs via DNS with native platform implementations:
-- **Query Format**: `dig @ch.at "<USER_MESSAGE>" TXT +short`
-- **Native Implementations**:
-  - **iOS**: Apple Network Framework using `nw_resolver_t` APIs (iOS 12+)
-  - **Android**: DnsResolver API for modern devices (API 29+) + dnsjava for legacy
-- **Fallback Chain**: Native → UDP sockets → DNS-over-HTTPS → Mock service
-- **Error Handling**: Automatic retries with exponential backoff across all methods
-- **Response Parsing**: Handles multi-part DNS responses (format: "1/3:", "2/3:", etc.)
-- **Platform Compliance**: Uses only sanctioned APIs, bypassing security restrictions
+**📚 For complete technical details, see [docs/architecture/SYSTEM-ARCHITECTURE.md](docs/architecture/SYSTEM-ARCHITECTURE.md)**
 
-### State Management
-- **ChatContext**: Global state management using React Context
-- **StorageService**: AsyncStorage-based persistence with JSON serialization
-- **Error Recovery**: Robust error handling with fallback mechanisms
+### Key Components
+- **DNS Communication**: Native iOS/Android modules with UDP/TCP/HTTPS fallbacks
+- **State Management**: React Context with AsyncStorage persistence  
+- **Navigation**: React Navigation v7 with deep linking support
+- **UI**: Modern chat interface with dark/light theme support
 
 ## 🚀 Quick Start
 
@@ -135,106 +120,67 @@ Access settings via gear icon in About tab to configure custom DNS servers:
 ### Project Structure
 ```
 src/
-├── components/          # Reusable UI components
-├── context/            # React Context providers
-├── navigation/         # Navigation configuration
-├── screens/           # Screen components
-├── services/          # Business logic and API services
-└── types/             # TypeScript type definitions
+├── components/          # Reusable UI components  
+├── services/           # DNS communication & storage
+├── navigation/         # App navigation & screens
+└── context/           # Global state management
 ```
 
-### Key Services
-- **Native DNS Module**: Platform-optimized DNS implementations (iOS Network Framework, Android DnsResolver)
-- **DNSService**: Orchestrates native and fallback DNS methods with intelligent routing
-- **StorageService**: Manages local conversation persistence with AsyncStorage
-- **MockDNSService**: Development fallback with simulated responses
-
-### Testing DNS Communication
-The project includes comprehensive DNS testing tools:
+### Quick Testing
 ```bash
-# Test DNS connectivity with CLI tool
+# Test DNS connectivity
 node test-dns.js "Hello world"
 
-# Test native implementations on device
-npm run ios      # Test iOS Network Framework implementation
-npm run android  # Test Android DnsResolver implementation
-
-# Run comprehensive native module tests
-npm test -- --testPathPattern=modules/dns-native
+# Run the app
+npm run ios      # iOS with native DNS
+npm run android  # Android with native DNS
 ```
+
+**📚 For detailed development guides, see [docs/technical/JUNIOR-DEV-GUIDE.md](docs/technical/JUNIOR-DEV-GUIDE.md)**
 
 ## 🛠️ Troubleshooting
 
-### Android Build Issues
+### Common Issues Quick Fix
 
-#### "Unsupported class file major version 68"
-This error occurs when using Java 24 with Android builds. **Solution**: Use Java 17.
+| Problem | Quick Solution | Detailed Guide |
+|---------|---------------|----------------|
+| Build fails | Use Java 17: `npm run android` | [Tech FAQ](docs/TECH-FAQ.md) |
+| "expo: command not found" | `npm install -g @expo/cli` | [Setup Issues](docs/troubleshooting/COMMON-ISSUES.md#environment-setup-issues) |
+| Native DNS not working | `cd ios && pod install && cd ..` | [Native Module Issues](docs/troubleshooting/COMMON-ISSUES.md#native-module-issues) |
+| DNS queries failing | Test: `node test-dns.js "test"` | [DNS Issues](docs/troubleshooting/COMMON-ISSUES.md#dns-communication-issues) |
 
-```bash
-# Install Java 17 if not already installed
-brew install openjdk@17
+**📚 Complete troubleshooting resources:**
+- **[Tech FAQ](docs/TECH-FAQ.md)** - Quick solutions for 90% of issues
+- **[Common Issues Guide](docs/troubleshooting/COMMON-ISSUES.md)** - Comprehensive troubleshooting
+- **[Junior Developer Guide](docs/technical/JUNIOR-DEV-GUIDE.md)** - Setup and development help
 
-# Verify you have Java 17
-/opt/homebrew/opt/openjdk@17/bin/java -version
-
-# Use the updated android script (automatically uses Java 17)
-npm run android
-```
-
-#### "Could not create task ':react-native-reanimated:outgoingVariants'"
-This is a Gradle version compatibility issue. **Solution**: The project uses Gradle 8.10.2 for compatibility.
-
-```bash
-# Clear Gradle caches if needed
-rm -rf ~/.gradle/caches && rm -rf android/.gradle && rm -rf android/build
-
-# Try build again
-npm run android
-```
-
-#### Android Build Environment
-If you encounter persistent build issues, ensure you have the correct environment:
-
-```bash
-# Check current Java version (should show Java 17 when using npm run android)
-java -version
-
-# If you need to manually set Java 17 for debugging
-export JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home
-export PATH=/opt/homebrew/opt/openjdk@17/bin:$PATH
-```
-
-## Configuration
+## Features & Configuration
 
 ### Deep Linking
-- Scheme: `dnschat://` (configured in app.json and App.tsx)
-- **Direct Message Sending**: `dnschat://message=<TEXT_MESSAGE>`
-  - Automatically creates new chat and sends the message via DNS
-  - URL-encoded text messages supported
-  - Example: `dnschat://message=What's%20the%20weather%20like?`
-- Profile path support: `dnschat://@username` (legacy)
+- **URL Scheme**: `dnschat://message=<TEXT_MESSAGE>` for direct message sending
+- **Theme Support**: Automatic dark/light mode based on system preferences  
+- **Cross-Platform**: iOS, Android, and Web with platform-specific optimizations
 
-### Theme Support
-Automatic light/dark theme switching based on system preferences using React Navigation's theme system.
+**📚 For detailed configuration options, see [docs/technical/](docs/technical/)**
 
-### Edge-to-Edge Display
-Android configured with edge-to-edge display using `react-native-edge-to-edge`.
+## Documentation
 
-## Notes
+### 📚 Complete Technical Documentation
+- **[docs/README.md](docs/README.md)** - Documentation hub and navigation
+- **[Tech FAQ](docs/TECH-FAQ.md)** - Quick solutions for common issues
+- **[Installation Guide](INSTALL.md)** - Detailed setup instructions
+- **[Troubleshooting](docs/troubleshooting/)** - Problem-solving resources
+- **[Architecture](docs/architecture/)** - System design and technical deep-dives
+- **[Developer Guides](docs/technical/)** - Onboarding and development help
 
-- **Development Build Required**: Uses `expo-dev-client` and cannot run with Expo Go
-- **Native DNS Modules**: Custom implementations for optimal DNS performance on both platforms
-- **Continuous Native Generation**: `ios` and `android` folders are auto-generated with native modules
-- **New Architecture**: Configured to use React Native's New Architecture
-- **Platform Compliance**: Uses only sanctioned APIs (iOS Network Framework, Android DnsResolver)
-- **Asset Preloading**: Navigation icons and assets are preloaded for performance
+### External Resources
+- [React Native Docs](https://reactnative.dev/) | [Expo Docs](https://docs.expo.dev/) | [React Navigation](https://reactnavigation.org/)
 
-## Resources
+## Important Notes
 
-- [React Navigation Documentation](https://reactnavigation.org/)
-- [Expo Documentation](https://docs.expo.dev/)
-- [React Native New Architecture](https://reactnative.dev/docs/new-architecture-intro)
-- [DNS over HTTPS (RFC 8484)](https://tools.ietf.org/html/rfc8484)
+- **Requires Development Build**: Cannot run with Expo Go (uses native modules)
+- **Java 17 Required**: For Android builds (automatic with `npm run android`)
+- **Native DNS**: Custom iOS/Android implementations for optimal performance
 
 ## License
 
