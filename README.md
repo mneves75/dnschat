@@ -1,6 +1,6 @@
-# DNSChat v1.0.0 🚀
+# DNSChat v1.5.0 🚀
 
-**Production Ready - Secure Initial Release**
+**Production Ready - Complete Documentation & Technical Guides**
 
 A React Native mobile application that provides a modern, ChatGPT-like chat interface using DNS TXT queries to communicate with an LLM. **Now with fully functional native DNS implementation, configurable server settings, and critical VirtualizedList bug fixes!**
 
