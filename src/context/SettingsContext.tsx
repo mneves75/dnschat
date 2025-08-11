@@ -4,6 +4,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 interface SettingsContextType {
   dnsServer: string;
   updateDnsServer: (server: string) => Promise<void>;
+  preferDnsOverHttps: boolean;
+  updatePreferDnsOverHttps: (prefer: boolean) => Promise<void>;
   loading: boolean;
 }
 
@@ -14,10 +16,12 @@ const DEFAULT_DNS_SERVER = 'ch.at';
 
 interface Settings {
   dnsServer: string;
+  preferDnsOverHttps?: boolean;
 }
 
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const [dnsServer, setDnsServer] = useState<string>(DEFAULT_DNS_SERVER);
+  const [preferDnsOverHttps, setPreferDnsOverHttps] = useState<boolean>(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -30,6 +34,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       if (settingsJson) {
         const settings: Settings = JSON.parse(settingsJson);
         setDnsServer(settings.dnsServer || DEFAULT_DNS_SERVER);
+        setPreferDnsOverHttps(settings.preferDnsOverHttps ?? false);
       }
     } catch (error) {
       console.error('Error loading settings:', error);
@@ -45,6 +50,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       
       const settings: Settings = {
         dnsServer: cleanServer,
+        preferDnsOverHttps,
       };
       
       await AsyncStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
@@ -54,10 +60,28 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const updatePreferDnsOverHttps = async (prefer: boolean) => {
+    try {
+      setPreferDnsOverHttps(prefer);
+      
+      const settings: Settings = {
+        dnsServer,
+        preferDnsOverHttps: prefer,
+      };
+      
+      await AsyncStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+    } catch (error) {
+      console.error('Error saving DNS over HTTPS preference:', error);
+      throw error;
+    }
+  };
+
   return (
     <SettingsContext.Provider value={{ 
       dnsServer, 
-      updateDnsServer, 
+      updateDnsServer,
+      preferDnsOverHttps,
+      updatePreferDnsOverHttps,
       loading 
     }}>
       {children}

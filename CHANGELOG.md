@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **DNS Query Logging Tab**: New dedicated tab for viewing detailed DNS query logs with step-by-step method attempts
+- **DNS-over-HTTPS Preference**: Toggle in Settings to prefer DNS-over-HTTPS (Cloudflare) for enhanced privacy
+- **Real-time DNS Query Visualization**: Live logging of DNS method attempts, fallbacks, and response times
+- **Comprehensive Logging Service**: Track all DNS queries with detailed timing and error information
+- **DNS Method Statistics**: Visual indicators showing which DNS method succeeded (Native, UDP, TCP, HTTPS)
+
+### Fixed
+- **Settings Button Theme**: Settings icon now properly adapts to light/dark theme colors
+
+### Changed
+- **DNS Query Priority**: When DNS-over-HTTPS is enabled, it's tried first before native methods
+- **Settings UI**: Enhanced with toggle for DNS method preference and improved configuration display
+
 ## [1.5.0] - 2025-08-08
 
 ### Added

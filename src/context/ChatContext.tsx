@@ -12,7 +12,7 @@ interface ChatProviderProps {
 }
 
 export function ChatProvider({ children }: ChatProviderProps) {
-  const { dnsServer } = useSettings();
+  const { dnsServer, preferDnsOverHttps } = useSettings();
   const [chats, setChats] = useState<Chat[]>([]);
   const [currentChat, setCurrentChat] = useState<Chat | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -128,7 +128,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
       let response: string;
       
       try {
-        response = await DNSService.queryLLM(content, dnsServer);
+        response = await DNSService.queryLLM(content, dnsServer, preferDnsOverHttps);
       } catch (dnsError) {
         response = await MockDNSService.queryLLM(content);
       }

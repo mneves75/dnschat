@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, Switch } from 'react-native';
 import { useTheme, useNavigation } from '@react-navigation/native';
 import { useSettings } from '../../context/SettingsContext';
  
 export function Settings() {
   const { colors } = useTheme();
   const navigation = useNavigation();
-  const { dnsServer, updateDnsServer, loading } = useSettings();
+  const { dnsServer, updateDnsServer, preferDnsOverHttps, updatePreferDnsOverHttps, loading } = useSettings();
   const [tempDnsServer, setTempDnsServer] = useState(dnsServer);
+  const [tempPreferHttps, setTempPreferHttps] = useState(preferDnsOverHttps);
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
@@ -16,9 +17,10 @@ export function Settings() {
     try {
       setSaving(true);
       await updateDnsServer(tempDnsServer);
+      await updatePreferDnsOverHttps(tempPreferHttps);
       Alert.alert(
         'Settings Saved',
-        'DNS server configuration has been updated successfully.',
+        'Settings have been updated successfully.',
         [{ text: 'OK', onPress: () => (navigation as any)?.goBack?.() }]
       );
     } catch (error) {
@@ -31,19 +33,22 @@ export function Settings() {
   const handleReset = () => {
     Alert.alert(
       'Reset to Default',
-      'Are you sure you want to reset DNS server to default (ch.at)?',
+      'Are you sure you want to reset all settings to default?',
       [
         { text: 'Cancel', style: 'cancel' },
         { 
           text: 'Reset', 
           style: 'destructive',
-          onPress: () => setTempDnsServer('ch.at')
+          onPress: () => {
+            setTempDnsServer('ch.at');
+            setTempPreferHttps(false);
+          }
         }
       ]
     );
   };
 
-  const isDirty = tempDnsServer !== dnsServer;
+  const isDirty = tempDnsServer !== dnsServer || tempPreferHttps !== preferDnsOverHttps;
   const isValidServer = tempDnsServer.trim().length > 0;
 
   return (
@@ -90,15 +95,53 @@ export function Settings() {
 
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>
+            DNS Method Preference
+          </Text>
+          <Text style={[styles.description, { color: colors.text }]}>
+            When enabled, DNS-over-HTTPS will be preferred over native DNS methods for enhanced privacy.
+          </Text>
+          
+          <View style={[styles.switchRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={styles.switchInfo}>
+              <Text style={[styles.switchLabel, { color: colors.text }]}>
+                Prefer DNS-over-HTTPS
+              </Text>
+              <Text style={[styles.switchDescription, { color: colors.text + '80' }]}>
+                Uses Cloudflare's secure DNS service
+              </Text>
+            </View>
+            <Switch
+              value={tempPreferHttps}
+              onValueChange={setTempPreferHttps}
+              trackColor={{ false: colors.border, true: '#007AFF' }}
+              thumbColor={tempPreferHttps ? '#FFFFFF' : '#F4F3F4'}
+              ios_backgroundColor={colors.border}
+              disabled={loading}
+            />
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
             Current Configuration
           </Text>
           <View style={[styles.infoBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Text style={[styles.infoLabel, { color: colors.text + '80' }]}>
-              Active DNS Server:
-            </Text>
-            <Text style={[styles.infoValue, { color: colors.text }]}>
-              {dnsServer}
-            </Text>
+            <View style={{ marginBottom: 12 }}>
+              <Text style={[styles.infoLabel, { color: colors.text + '80' }]}>
+                Active DNS Server:
+              </Text>
+              <Text style={[styles.infoValue, { color: colors.text }]}>
+                {dnsServer}
+              </Text>
+            </View>
+            <View>
+              <Text style={[styles.infoLabel, { color: colors.text + '80' }]}>
+                DNS Method:
+              </Text>
+              <Text style={[styles.infoValue, { color: colors.text }]}>
+                {preferDnsOverHttps ? 'DNS-over-HTTPS (Cloudflare)' : 'Native DNS (UDP/TCP)'}
+              </Text>
+            </View>
           </View>
         </View>
 
@@ -177,6 +220,27 @@ const styles = StyleSheet.create({
   hint: {
     fontSize: 14,
     fontStyle: 'italic',
+  },
+  switchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  switchInfo: {
+    flex: 1,
+    marginRight: 16,
+  },
+  switchLabel: {
+    fontSize: 16,
+    fontWeight: '500',
+    marginBottom: 4,
+  },
+  switchDescription: {
+    fontSize: 14,
+    lineHeight: 18,
   },
   infoBox: {
     borderWidth: 1,

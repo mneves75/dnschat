@@ -93,10 +93,11 @@ The app uses a hierarchical navigation pattern:
 - **Root Stack** (`RootStack` in src/navigation/index.tsx)
   - HomeTabs (Bottom Tab Navigator)
     - ChatList screen - displays all chat conversations with delete functionality
+    - Logs screen - real-time DNS query logs with detailed method attempts and timings
     - About screen - project information and version display
   - Chat screen - individual chat conversation interface
   - Profile screen (with deep linking support for @username paths)
-  - Settings screen (modal presentation)
+  - Settings screen (modal presentation with DNS configuration and method preferences)
   - NotFound screen (404 fallback)
 
 ### Chat Architecture
@@ -110,7 +111,12 @@ The app uses a hierarchical navigation pattern:
 - **MessageList**: Virtualized list of messages with auto-scroll
 - **ChatInput**: Bottom input area with send functionality
 - **ChatListItem**: Individual chat item with trash icon for deletion and confirmation dialog
+- **LogsScreen**: Real-time DNS query log viewer with expandable details and method statistics
+- **Settings**: Enhanced configuration screen with DNS server and method preference controls
+- **DNSLogService**: Service for tracking and persisting DNS query attempts and results
 - **TrashIcon**: SVG icon component for delete functionality
+- **LogsIcon**: SVG icon for logs tab navigation
+- **SettingsIcon**: SVG icon with theme-aware coloring
 - **ErrorBoundary**: Global error handling wrapper
 
 ### Key Configuration Files
@@ -127,16 +133,32 @@ The app is configured for automatic deep linking with:
 - Scheme: `dnschat://` (configured in app.json and App.tsx)
 - Profile screen supports username paths like `@username`
 
+### DNS Query Logging
+The app includes comprehensive DNS query logging to help users understand and debug DNS communication:
+- **Real-time Logging**: All DNS query attempts are logged with timestamps and durations
+- **Method Tracking**: Shows which DNS method (Native, UDP, TCP, HTTPS) was attempted and succeeded
+- **Fallback Visualization**: Visual indicators showing when and why fallbacks occurred
+- **Persistent Storage**: Logs are saved to AsyncStorage (up to 100 queries)
+- **DNS-over-HTTPS Preference**: Users can toggle to prefer Cloudflare's DNS-over-HTTPS for enhanced privacy
+
 ### DNS Communication
 The app communicates with an LLM via DNS TXT queries using a comprehensive multi-layer fallback strategy with network resilience:
 
-#### Query Methods (in order of preference):
+#### Query Methods (configurable order):
+Default order (when DNS-over-HTTPS preference is OFF):
 1. **Native DNS Modules** (iOS/Android): Platform-optimized implementations
    - **iOS**: Apple Network Framework (`nw_resolver_t`) - bypasses port 53 restrictions
    - **Android**: DnsResolver API (API 29+) + dnsjava fallback for legacy devices
 2. **UDP DNS**: Direct UDP queries via `react-native-udp` and `dns-packet`
 3. **DNS-over-TCP**: TCP fallback via `react-native-tcp-socket` for networks blocking UDP port 53
 4. **DNS-over-HTTPS**: Cloudflare API fallback (https://cloudflare-dns.com/dns-query)
+5. **Mock Service**: Development/testing fallback
+
+When DNS-over-HTTPS preference is ON (Settings → Prefer DNS-over-HTTPS):
+1. **DNS-over-HTTPS**: Cloudflare API (prioritized for privacy)
+2. **Native DNS Modules**: Fallback to platform-optimized implementations
+3. **UDP DNS**: Secondary fallback
+4. **DNS-over-TCP**: Tertiary fallback
 5. **Mock Service**: Development/testing fallback
 
 #### Network Resilience Features:

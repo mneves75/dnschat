@@ -1,3 +1,4 @@
+import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { HeaderButton, Text } from '@react-navigation/elements';
 import {
@@ -6,9 +7,11 @@ import {
 } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Image } from 'react-native';
+import { useTheme } from '@react-navigation/native';
 import newspaper from '../assets/newspaper.png';
 import { InfoIcon } from '../components/InfoIcon';
 import { SettingsIcon } from '../components/icons/SettingsIcon';
+import { LogsIcon } from '../components/icons/LogsIcon';
 import { Home } from './screens/Home';
 import { Profile } from './screens/Profile';
 import { Settings } from './screens/Settings';
@@ -16,6 +19,16 @@ import { About } from './screens/About';
 import { NotFound } from './screens/NotFound';
 import { ChatList } from './screens/ChatList';
 import { Chat } from './screens/Chat';
+import { Logs } from './screens/Logs';
+
+function SettingsHeaderButton({ onPress }: { onPress: () => void }) {
+  const { colors } = useTheme();
+  return (
+    <HeaderButton onPress={onPress}>
+      {({ tintColor }) => <SettingsIcon size={24} color={tintColor || colors.text} />}
+    </HeaderButton>
+  );
+}
 
 const HomeTabs = createBottomTabNavigator({
   screens: {
@@ -35,6 +48,15 @@ const HomeTabs = createBottomTabNavigator({
         ),
       },
     },
+    Logs: {
+      screen: Logs,
+      options: {
+        title: 'Logs',
+        tabBarIcon: ({ color, size }) => (
+          <LogsIcon size={size} color={color} />
+        ),
+      },
+    },
     About: {
       screen: About,
       options: ({ navigation }) => ({
@@ -43,9 +65,7 @@ const HomeTabs = createBottomTabNavigator({
           <InfoIcon size={size} color={color} />
         ),
         headerRight: () => (
-          <HeaderButton onPress={() => navigation.navigate('Settings')}>
-            <SettingsIcon size={24} />
-          </HeaderButton>
+          <SettingsHeaderButton onPress={() => navigation.navigate('Settings')} />
         ),
       }),
     },

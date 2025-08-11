@@ -1,6 +1,7 @@
 import { Platform, AppState } from 'react-native';
 import * as dns from 'dns-packet';
 import { nativeDNS, DNSError, DNSErrorType } from '../../modules/dns-native';
+import { DNSLogService } from './dnsLogService';
 
 // Try to import UDP and TCP, fallback to null if not available
 let dgram: any = null;
@@ -109,7 +110,7 @@ export class DNSService {
     }
   }
 
-  static async queryLLM(message: string, dnsServer?: string): Promise<string> {
+  static async queryLLM(message: string, dnsServer?: string, preferHttps?: boolean): Promise<string> {
     // Initialize background listener on first use
     this.initializeBackgroundListener();
 
@@ -128,12 +129,44 @@ export class DNSService {
     // Sanitize the message for DNS query
     const sanitizedMessage = this.sanitizeMessage(message);
     
+    // Start logging the query
+    const queryId = DNSLogService.startQuery(message);
+    
     for (let attempt = 0; attempt < this.MAX_RETRIES; attempt++) {
       try {
         let response: string[];
         
-        // Try Native DNS first (preferred method)
+        // If preferHttps is true, try DNS-over-HTTPS first
+        if (preferHttps) {
+          let httpsStartTime = 0;
+          try {
+            DNSLogService.logMethodAttempt('https', `Using Cloudflare DNS-over-HTTPS (preferred)`);
+            httpsStartTime = Date.now();
+            
+            response = await this.handleBackgroundSuspension(() => 
+              this.performDNSOverHTTPS(sanitizedMessage, targetServer)
+            );
+            
+            const httpsDuration = Date.now() - httpsStartTime;
+            DNSLogService.logMethodSuccess('https', httpsDuration, `Response received via HTTPS`);
+            
+            const parsedResponse = this.parseResponse(response);
+            await DNSLogService.endQuery(true, parsedResponse, 'https');
+            return parsedResponse;
+          } catch (httpsError: any) {
+            const httpsDuration = Date.now() - httpsStartTime;
+            DNSLogService.logMethodFailure('https', httpsError.message, httpsDuration);
+            DNSLogService.logFallback('https', 'native');
+            // Fall through to try native methods
+          }
+        }
+        
+        // Try Native DNS (preferred when not using HTTPS)
+        let nativeStartTime = 0;
         try {
+          DNSLogService.logMethodAttempt('native', `Server: ${targetServer}`);
+          nativeStartTime = Date.now();
+          
           const result = await this.handleBackgroundSuspension(async () => {
             const capabilities = await nativeDNS.isAvailable();
             
@@ -145,35 +178,74 @@ export class DNSService {
           });
           
           if (result) {
+            const duration = Date.now() - nativeStartTime;
+            DNSLogService.logMethodSuccess('native', duration, `Response received`);
+            await DNSLogService.endQuery(true, result, 'native');
             return result;
           }
-        } catch (nativeError) {
+        } catch (nativeError: any) {
+          const duration = Date.now() - nativeStartTime;
+          DNSLogService.logMethodFailure('native', nativeError.message || 'Native DNS not available', duration);
+          DNSLogService.logFallback('native', preferHttps ? 'https' : 'udp');
           // Continue to fallback methods for errors
         }
         
         // Fallback to UDP method on mobile platforms if available
         if (Platform.OS !== 'web' && dgram) {
+          let udpStartTime = 0;
           try {
+            DNSLogService.logMethodAttempt('udp', `Server: ${targetServer}:53`);
+            udpStartTime = Date.now();
+            
             response = await this.handleBackgroundSuspension(() => 
               this.performNativeUDPQuery(sanitizedMessage, targetServer)
             );
+            
+            const duration = Date.now() - udpStartTime;
+            DNSLogService.logMethodSuccess('udp', duration, `Response received`);
           } catch (udpError: any) {
+            const duration = Date.now() - udpStartTime;
+            DNSLogService.logMethodFailure('udp', udpError.message, duration);
             // If UDP fails with port error, try TCP fallback
             if (udpError.message.includes('BAD_PORT') || udpError.message.includes('port') || udpError.message.includes('timeout')) {
               if (TcpSocket) {
+                let tcpStartTime = 0;
                 try {
+                  DNSLogService.logFallback('udp', 'tcp');
+                  DNSLogService.logMethodAttempt('tcp', `Server: ${targetServer}:53`);
+                  tcpStartTime = Date.now();
+                  
                   response = await this.handleBackgroundSuspension(() => 
                     this.performDNSOverTCP(sanitizedMessage, targetServer)
                   );
+                  
+                  const tcpDuration = Date.now() - tcpStartTime;
+                  DNSLogService.logMethodSuccess('tcp', tcpDuration, `Response received`);
                 } catch (tcpError: any) {
+                  const tcpDuration = Date.now() - tcpStartTime;
+                  DNSLogService.logMethodFailure('tcp', tcpError.message, tcpDuration);
+                  DNSLogService.logFallback('tcp', 'https');
+                  DNSLogService.logMethodAttempt('https', `Using Cloudflare DNS-over-HTTPS`);
+                  const httpsStartTime = Date.now();
+                  
                   response = await this.handleBackgroundSuspension(() => 
                     this.performDNSOverHTTPS(sanitizedMessage, targetServer)
                   );
+                  
+                  const httpsDuration = Date.now() - httpsStartTime;
+                  DNSLogService.logMethodSuccess('https', httpsDuration, `Response received via HTTPS`);
                 }
               } else {
+                DNSLogService.logFallback('udp', 'https');
+                DNSLogService.logMethodAttempt('https', `Using Cloudflare DNS-over-HTTPS`);
+                const httpsStartTime = Date.now();
+                
                 response = await this.handleBackgroundSuspension(() => 
                   this.performDNSOverHTTPS(sanitizedMessage, targetServer)
                 );
+                
+                const httpsDuration = Date.now() - httpsStartTime;
+                DNSLogService.logMethodSuccess('https', httpsDuration, `Response received via HTTPS`);
               }
             } else {
               throw udpError;
@@ -182,34 +254,77 @@ export class DNSService {
         } else {
           // Try TCP first on web or when UDP not available
           if (Platform.OS !== 'web' && TcpSocket) {
+            let tcpStartTime = 0;
             try {
+              DNSLogService.logMethodAttempt('tcp', `Server: ${targetServer}:53`);
+              tcpStartTime = Date.now();
+              
               response = await this.handleBackgroundSuspension(() => 
                 this.performDNSOverTCP(sanitizedMessage, targetServer)
               );
+              
+              const tcpDuration = Date.now() - tcpStartTime;
+              DNSLogService.logMethodSuccess('tcp', tcpDuration, `Response received`);
             } catch (tcpError: any) {
+              const tcpDuration = Date.now() - tcpStartTime;
+              DNSLogService.logMethodFailure('tcp', tcpError.message, tcpDuration);
+              DNSLogService.logFallback('tcp', 'https');
+              DNSLogService.logMethodAttempt('https', `Using Cloudflare DNS-over-HTTPS`);
+              const httpsStartTime = Date.now();
+              
               response = await this.handleBackgroundSuspension(() => 
                 this.performDNSOverHTTPS(sanitizedMessage, targetServer)
               );
+              
+              const httpsDuration = Date.now() - httpsStartTime;
+              DNSLogService.logMethodSuccess('https', httpsDuration, `Response received via HTTPS`);
             }
           } else {
             // Use DNS-over-HTTPS for web or when TCP not available
+            DNSLogService.logMethodAttempt('https', `Using Cloudflare DNS-over-HTTPS`);
+            const httpsStartTime = Date.now();
+            
             response = await this.handleBackgroundSuspension(() => 
               this.performDNSOverHTTPS(sanitizedMessage, targetServer)
             );
+            
+            const httpsDuration = Date.now() - httpsStartTime;
+            DNSLogService.logMethodSuccess('https', httpsDuration, `Response received via HTTPS`);
           }
         }
         
-        return this.parseResponse(response);
-      } catch (error) {
+        const parsedResponse = this.parseResponse(response);
+        
+        // Determine which method succeeded
+        let successMethod: 'udp' | 'tcp' | 'https' = 'udp';
+        if (response && response.length > 0) {
+          // We need to track which method succeeded - for now we'll use the last attempted
+          successMethod = Platform.OS === 'web' ? 'https' : 'udp';
+        }
+        
+        await DNSLogService.endQuery(true, parsedResponse, successMethod);
+        return parsedResponse;
+      } catch (error: any) {
         if (attempt === this.MAX_RETRIES - 1) {
+          await DNSLogService.endQuery(false, undefined, undefined);
           throw error;
         }
+        
+        DNSLogService.addLog({
+          id: `retry-${Date.now()}`,
+          timestamp: new Date(),
+          message: `Retrying query (attempt ${attempt + 2}/${this.MAX_RETRIES})`,
+          method: 'udp',
+          status: 'attempt',
+          details: `Waiting ${this.RETRY_DELAY * Math.pow(2, attempt)}ms`,
+        });
         
         // Exponential backoff
         await this.sleep(this.RETRY_DELAY * Math.pow(2, attempt));
       }
     }
     
+    await DNSLogService.endQuery(false, undefined, undefined);
     throw new Error('Failed to get response after all retries');
   }
 
