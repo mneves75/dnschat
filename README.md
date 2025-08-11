@@ -1,4 +1,4 @@
-# DNSChat v1.5.2 🚀
+# DNSChat v1.6.1 🚀
 
 **Native DNS Implementation with Critical Bug Fixes - PRODUCTION READY**
 
