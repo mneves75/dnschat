@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.1] - 2025-08-11
+
+### Fixed
+- **Settings Save Button Contrast**: Fixed save button visibility in dark mode with proper theme-aware colors
+- **Settings Header Button**: Resolved React child error in navigation header settings button
+- **Button Theme Adaptation**: Improved contrast ratios for better accessibility across light/dark themes
+
+### Changed
+- **UI Color Schemes**: Enhanced settings button styling with theme-appropriate background and text colors
+
+## [1.6.0] - 2025-08-11
+
 ### Added
 - **DNS Query Logging Tab**: New dedicated tab for viewing detailed DNS query logs with step-by-step method attempts
 - **DNS-over-HTTPS Preference**: Toggle in Settings to prefer DNS-over-HTTPS (Cloudflare) for enhanced privacy
