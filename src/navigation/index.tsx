@@ -25,7 +25,7 @@ function SettingsHeaderButton({ onPress }: { onPress: () => void }) {
   const { colors } = useTheme();
   return (
     <HeaderButton onPress={onPress}>
-      {({ tintColor }) => <SettingsIcon size={24} color={tintColor || colors.text} />}
+      <SettingsIcon size={24} color={colors.text} />
     </HeaderButton>
   );
 }
