@@ -1,43 +1,33 @@
 ---
 alwaysApply: true
-description: DNSChat project structure, entry points, navigation, state, services, types, native DNS, deep linking, DNS flow, and conventions
 ---
-
 ## DNSChat Project Structure Guide
 
 - **Entry points**
   - [index.tsx](mdc:index.tsx): Registers the app with Expo and loads [src/App.tsx](mdc:src/App.tsx)
   - [app.json](mdc:app.json): Expo config (name, scheme `dnschat`, iOS/Android IDs, plugins)
 - **Navigation**: [src/navigation/index.tsx](mdc:src/navigation/index.tsx) uses React Navigation v7 with `createStaticNavigation`
-- **State**
+- **State**:
   - [src/context/ChatContext.tsx](mdc:src/context/ChatContext.tsx)
   - [src/context/SettingsContext.tsx](mdc:src/context/SettingsContext.tsx)
-- **Services**
+- **Services**:
   - DNS: [src/services/dnsService.ts](mdc:src/services/dnsService.ts)
   - DNS Logging: [src/services/dnsLogService.ts](mdc:src/services/dnsLogService.ts)
   - Storage: [src/services/storageService.ts](mdc:src/services/storageService.ts)
-- **Types**: [src/types/chat.ts](mdc:src/types/chat.ts)
-- **Native DNS**
+- **Types**:
+  - [src/types/chat.ts](mdc:src/types/chat.ts)
+- **Native DNS**:
   - iOS: [ios/DNSNative/DNSResolver.swift](mdc:ios/DNSNative/DNSResolver.swift), [ios/DNSNative/RNDNSModule.m](mdc:ios/DNSNative/RNDNSModule.m)
   - JS bridge: [modules/dns-native/index.ts](mdc:modules/dns-native/index.ts)
   - Expo plugin: [plugins/dns-native-plugin.js](mdc:plugins/dns-native-plugin.js)
 
 ### Key Behaviors
-
 - **Deep linking**: Scheme `dnschat://` configured in [app.json](mdc:app.json) and consumed in [src/App.tsx](mdc:src/App.tsx)
 - **New Architecture**: `newArchEnabled: true` in [app.json](mdc:app.json)
 - **DNS flow**: Configurable priority - Native → UDP → TCP → DoH → Mock OR DoH → Native → UDP → TCP → Mock (see [src/services/dnsService.ts](mdc:src/services/dnsService.ts))
 - **DNS Logging**: Real-time query logging with persistent storage (see [src/services/dnsLogService.ts](mdc:src/services/dnsLogService.ts))
 
 ### Conventions
-
-- Keep logic in `src/services/*`; UI in `src/components/*`; screens in `src/navigation/screens/*`
+- Keep logic in `src/services/*`; UI in `src/components/*` and screens in `src/navigation/screens/*`
 - Persist via `StorageService`; do not read/write AsyncStorage directly in components
 - Extend navigation only via [src/navigation/index.tsx](mdc:src/navigation/index.tsx)
-
-### Context
-
-- Project entry: [index.tsx](mdc:index.tsx) → [src/App.tsx](mdc:src/App.tsx)
-- Navigation: [src/navigation/index.tsx](mdc:src/navigation/index.tsx)
-- State and storage: [src/context/ChatContext.tsx](mdc:src/context/ChatContext.tsx), [src/context/SettingsContext.tsx](mdc:src/context/SettingsContext.tsx), [src/services/storageService.ts](mdc:src/services/storageService.ts)
-- DNS flow: [src/services/dnsService.ts](mdc:src/services/dnsService.ts), [modules/dns-native/index.ts](mdc:modules/dns-native/index.ts)
