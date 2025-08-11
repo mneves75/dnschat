@@ -641,7 +641,7 @@ git log --oneline -5
 
 ---
 
-**Last Updated:** v1.5.0 - Production Ready Release  
+**Last Updated:** v1.6.1 - UI Fixes & Enhanced Features  
 **Maintainers:** DNSChat Development Team
 
 *This guide is continuously updated. Check git history for recent additions.*

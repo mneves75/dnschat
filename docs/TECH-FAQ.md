@@ -487,5 +487,5 @@ If stuck after trying FAQ solutions:
 
 ---
 
-**Last Updated:** v1.5.0 - Production Ready Release
+**Last Updated:** v1.6.1 - UI Fixes & Enhanced Features
 **Maintainers:** DNSChat Development Team
