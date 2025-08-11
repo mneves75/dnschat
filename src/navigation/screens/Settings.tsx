@@ -163,7 +163,7 @@ export function Settings() {
             style={[
               styles.saveButton,
               { 
-                backgroundColor: isDirty && isValidServer ? '#007AFF' : colors.text + '20',
+                backgroundColor: isDirty && isValidServer ? '#007AFF' : colors.border,
                 opacity: saving ? 0.6 : 1
               }
             ]}
@@ -172,7 +172,7 @@ export function Settings() {
           >
             <Text style={[
               styles.saveButtonText, 
-              { color: isDirty && isValidServer ? '#FFFFFF' : colors.text + '60' }
+              { color: isDirty && isValidServer ? '#FFFFFF' : colors.text }
             ]}>
               {saving ? 'Saving...' : 'Save Changes'}
             </Text>
