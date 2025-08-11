@@ -93,7 +93,7 @@ The app uses a hierarchical navigation pattern:
 - **Root Stack** (`RootStack` in src/navigation/index.tsx)
   - HomeTabs (Bottom Tab Navigator)
     - ChatList screen - displays all chat conversations with delete functionality
-    - Logs screen - real-time DNS query logs with detailed method attempts and timings
+    - Logs screen - real-time DNS query logs with detailed method attempts and timings  
     - About screen - project information and version display
   - Chat screen - individual chat conversation interface
   - Profile screen (with deep linking support for @username paths)
@@ -102,9 +102,11 @@ The app uses a hierarchical navigation pattern:
 
 ### Chat Architecture
 - **ChatContext** (src/context/ChatContext.tsx): Global state management for chats and messages using React Context
+- **SettingsContext** (src/context/SettingsContext.tsx): Stores `dnsServer` and `preferDnsOverHttps` preferences
 - **StorageService** (src/services/storageService.ts): AsyncStorage-based persistence for conversations with automatic JSON serialization
-- **DNSService** (src/services/dnsService.ts): Handles DNS TXT queries to `ch.at` via DNS-over-HTTPS (Cloudflare)
-- **MockDNSService** (src/services/dnsService.ts): Development mock service (currently active) - simulates network delays and occasional errors
+- **DNSService** (src/services/dnsService.ts): Handles DNS TXT queries with configurable fallback chain
+- **DNSLogService** (src/services/dnsLogService.ts): Tracks DNS query attempts with timing and method information
+- **MockDNSService** (src/services/dnsService.ts): Development mock service fallback
 
 ### Key Components
 - **MessageBubble**: Individual chat message display with markdown support
@@ -124,9 +126,9 @@ The app uses a hierarchical navigation pattern:
   - Current scheme: `dnschat://`
   - Bundle IDs: `org.mvneves.dnschat` (iOS and Android)
   - Uses React Native's New Architecture (newArchEnabled: true)
-  - Version in app.json (1.5.0) matches package.json (1.5.0)
+  - Version in app.json (1.6.0) matches package.json (1.6.0)
 - **tsconfig.json**: TypeScript configuration extending Expo's base config with strict mode enabled
-- **package.json**: Current version 1.5.0 with all dependencies including DNS libraries
+- **package.json**: Current version 1.6.0 with all dependencies including DNS libraries
 
 ### Deep Linking
 The app is configured for automatic deep linking with:
@@ -253,7 +255,7 @@ Android is configured with edge-to-edge display using the `react-native-edge-to-
 ### Configuration Status - COMPLETE
 
 - **✅ Bundle IDs**: Production identifiers (`org.mvneves.dnschat`)
-- **✅ Version Sync**: app.json and package.json at v1.5.0
+- **✅ Version Sync**: app.json and package.json at v1.6.0
 - **✅ Package Metadata**: Complete podspec dependencies resolved
 - **✅ Build Process**: iOS builds successfully with native DNS module
 - **✅ Module Registration**: Native module properly detected by React Native bridge

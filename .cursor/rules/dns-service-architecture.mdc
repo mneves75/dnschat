@@ -34,5 +34,3 @@ globs: src/services/dnsService.ts, ios/DNSNative/**, modules/dns-native/**, plug
   - Keep message sanitization minimal for native/UDP/TCP path
   - Port is 53; default server `ch.at` unless overridden by settings
   - All queries are logged via DNSLogService with timing and method tracking
-- **Testing**
-  - CLI: [test-dns.js](mdc:test-dns.js), [test-native-dns.js](mdc:test-native-dns.js), [test-dnsservice.js](mdc:test-dnsservice.js)
