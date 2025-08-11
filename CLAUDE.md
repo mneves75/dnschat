@@ -122,7 +122,7 @@ The app uses a hierarchical navigation pattern:
 ### Key Configuration Files
 - **app.json**: Expo configuration including app name, bundle identifiers, and plugins
   - Current scheme: `dnschat://`
-  - Bundle IDs still using template defaults (`com.satya164.reactnavigationtemplate`) - needs updating
+  - Bundle IDs: `org.mvneves.dnschat` (iOS and Android)
   - Uses React Native's New Architecture (newArchEnabled: true)
   - Version in app.json (1.5.0) matches package.json (1.5.0)
 - **tsconfig.json**: TypeScript configuration extending Expo's base config with strict mode enabled
