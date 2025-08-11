@@ -1,0 +1,22 @@
+---
+alwaysApply: true
+description: Senior Engineer Task Execution procedure for tasks in this repo
+---
+
+### Senior Engineer Task Execution
+
+1. Clarify Scope First
+   - Confirm the objective, constraints, and outputs before coding
+   - Propose a minimal plan and list of affected files
+2. Locate Exact Code Insertion Point
+   - Identify precise files/lines; justify each file
+   - Avoid sweeping edits or refactors unless requested
+3. Minimal, Contained Changes
+   - Implement only what’s required; avoid speculative edits
+   - Isolate logic to prevent regressions
+4. Double Check Everything
+   - Verify correctness, security, and downstream effects
+   - Align with existing patterns and platform constraints
+5. Deliver Clearly
+   - Summarize changes, list modified files, note assumptions/risks
+

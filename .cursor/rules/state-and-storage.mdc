@@ -7,11 +7,16 @@ globs: src/context/*.tsx, src/services/storageService.ts, src/types/*.ts, src/ty
   - API: `createChat`, `deleteChat`, `sendMessage`, `loadChats`, `setCurrentChat`, `clearError`
   - Flow: add user message → placeholder assistant message → resolve via `DNSService` → replace placeholder
 - **SettingsContext** ([src/context/SettingsContext.tsx](mdc:src/context/SettingsContext.tsx))
-  - Stores `dnsServer` in AsyncStorage key `@chat_dns_settings`
+  - Stores `dnsServer` and `preferDnsOverHttps` in AsyncStorage key `@chat_dns_settings`
+  - API: `updateDnsServer`, `updatePreferDnsOverHttps`
 - **StorageService** ([src/services/storageService.ts](mdc:src/services/storageService.ts))
   - Sole interface to AsyncStorage for chats
   - Serializes dates to ISO; deserializes back to `Date`
   - Auto-generates chat title from first user message
+- **DNSLogService** ([src/services/dnsLogService.ts](mdc:src/services/dnsLogService.ts))
+  - Tracks DNS query attempts with timing and method information
+  - Stores logs in AsyncStorage key `@dns_query_logs` (max 100 entries)
+  - API: `startQuery`, `logMethodAttempt`, `logMethodSuccess`, `logMethodFailure`, `endQuery`
 - **Types**: [src/types/chat.ts](mdc:src/types/chat.ts)
 - **Do not**
   - Write to AsyncStorage directly from components

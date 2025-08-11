@@ -5,17 +5,17 @@ globs: src/navigation/**/*.tsx
 
 - **Root**: [src/navigation/index.tsx](mdc:src/navigation/index.tsx) defines `HomeTabs` and `RootStack` via `createStaticNavigation`
 - **Screens**
-  - Tabs: `ChatList`, `About` with header button to `Settings`
+  - Tabs: `ChatList`, `Logs`, `About` with header button to `Settings`
   - Stack: `Chat`, `Profile` (deep link), `Settings` (modal), `NotFound`
 - **Deep linking**
-  - Scheme: `chatdns://` (see [src/App.tsx](mdc:src/App.tsx) and [app.json](mdc:app.json))
+  - Scheme: `dnschat://` (see [src/App.tsx](mdc:src/App.tsx) and [app.json](mdc:app.json))
   - `Profile` path: `:user(@[a-zA-Z0-9-_]+)` with parse/stringify
 - **Adding a screen**
   - Add component under `src/navigation/screens/*`
   - Register it inside the `screens` map in `HomeTabs` or `RootStack`
   - Provide `options` in place; keep titles concise; avoid side-effects in options
 - **Icons**
-  - Use [src/components/InfoIcon.tsx](mdc:src/components/InfoIcon.tsx) and [src/components/icons/SettingsIcon.tsx](mdc:src/components/icons/SettingsIcon.tsx)
+  - Use [src/components/InfoIcon.tsx](mdc:src/components/InfoIcon.tsx), [src/components/icons/SettingsIcon.tsx](mdc:src/components/icons/SettingsIcon.tsx), and [src/components/icons/LogsIcon.tsx](mdc:src/components/icons/LogsIcon.tsx)
 - **Do not**
   - Instantiate navigators outside `src/navigation/index.tsx`
   - Bypass the static navigation pattern

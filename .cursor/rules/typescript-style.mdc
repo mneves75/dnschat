@@ -1,0 +1,24 @@
+---
+globs: *.ts,*.tsx
+description: TypeScript and React code style and structure guidelines for DNSChat
+---
+
+### TypeScript and React Code Style
+
+- **Naming**
+  - Avoid short variable/symbol names; use meaningful nouns and verbs
+  - Functions should be verbs/verb-phrases; variables should be nouns/noun-phrases
+- **Static Typing**
+  - Explicitly annotate function signatures and exported/public APIs
+  - Avoid `any`, unsafe casts, and leaky types
+- **Control Flow**
+  - Prefer guard clauses and handle error/edge cases first
+  - Avoid deep nesting beyond 2–3 levels
+- **Comments**
+  - Add concise comments for complex or non-obvious logic; explain “why”, not “how”
+  - Do not use inline comments; place comments above the code they describe
+- **Formatting**
+  - Match the existing code style and formatting
+  - Prefer multi-line over dense one-liners; wrap long lines
+  - Do not reformat unrelated code in edits
+
