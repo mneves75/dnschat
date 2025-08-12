@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, Switch } from 'react-native';
 import { useTheme, useNavigation } from '@react-navigation/native';
 import { useSettings } from '../../context/SettingsContext';
+import { useOnboarding } from '../../context/OnboardingContext';
  
 export function Settings() {
   const { colors } = useTheme();
   const navigation = useNavigation();
   const { dnsServer, updateDnsServer, preferDnsOverHttps, updatePreferDnsOverHttps, loading } = useSettings();
+  const { resetOnboarding } = useOnboarding();
   const [tempDnsServer, setTempDnsServer] = useState(dnsServer);
   const [tempPreferHttps, setTempPreferHttps] = useState(preferDnsOverHttps);
   const [saving, setSaving] = useState(false);
@@ -42,6 +44,24 @@ export function Settings() {
           onPress: () => {
             setTempDnsServer('ch.at');
             setTempPreferHttps(false);
+          }
+        }
+      ]
+    );
+  };
+
+  const handleResetOnboarding = () => {
+    Alert.alert(
+      'Reset Onboarding',
+      'This will reset the onboarding process and show it again on next app launch. This is useful for testing or if you want to see the tour again.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Reset Onboarding', 
+          style: 'destructive',
+          onPress: async () => {
+            await resetOnboarding();
+            Alert.alert('Onboarding Reset', 'The onboarding will be shown again when you restart the app.');
           }
         }
       ]
@@ -143,6 +163,29 @@ export function Settings() {
               </Text>
             </View>
           </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+            Development
+          </Text>
+          <TouchableOpacity
+            style={[
+              styles.devButton,
+              { borderColor: colors.text + '40', backgroundColor: colors.card }
+            ]}
+            onPress={handleResetOnboarding}
+            disabled={saving || loading}
+          >
+            <View>
+              <Text style={[styles.devButtonTitle, { color: colors.text }]}>
+                Reset Onboarding
+              </Text>
+              <Text style={[styles.devButtonDescription, { color: colors.text + '80' }]}>
+                Show the onboarding flow again
+              </Text>
+            </View>
+          </TouchableOpacity>
         </View>
 
         <View style={styles.buttonContainer}>
@@ -281,5 +324,19 @@ const styles = StyleSheet.create({
   saveButtonText: {
     fontSize: 16,
     fontWeight: '600',
+  },
+  devButton: {
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 16,
+  },
+  devButtonTitle: {
+    fontSize: 16,
+    fontWeight: '500',
+    marginBottom: 4,
+  },
+  devButtonDescription: {
+    fontSize: 14,
+    lineHeight: 18,
   },
 });
