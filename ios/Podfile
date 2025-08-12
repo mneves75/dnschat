@@ -13,7 +13,7 @@ install! 'cocoapods',
 
 prepare_react_native_project!
 
-target 'ChatDNS' do
+target 'DNSChat' do
   use_expo_modules!
 
   if ENV['EXPO_USE_COMMUNITY_AUTOLINKING'] == '1'
@@ -30,9 +30,6 @@ target 'ChatDNS' do
   end
 
   config = use_native_modules!(config_command)
-
-  # Add DNSNative pod for native DNS functionality
-  pod 'DNSNative', :path => './DNSNative'
 
   use_frameworks! :linkage => podfile_properties['ios.useFrameworks'].to_sym if podfile_properties['ios.useFrameworks']
   use_frameworks! :linkage => ENV['USE_FRAMEWORKS'].to_sym if ENV['USE_FRAMEWORKS']
@@ -52,8 +49,6 @@ target 'ChatDNS' do
       :mac_catalyst_enabled => false,
       :ccache_enabled => podfile_properties['apple.ccacheEnabled'] == 'true',
     )
-
-    # Note: Switched to JSC engine to avoid Hermes dSYM issues with TestFlight
 
     # This is necessary for Xcode 14, because it signs resource bundles by default
     # when building for devices.
