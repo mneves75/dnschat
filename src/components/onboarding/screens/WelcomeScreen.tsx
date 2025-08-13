@@ -10,6 +10,9 @@ import {
 } from 'react-native';
 import { OnboardingNavigation } from '../OnboardingNavigation';
 
+// Import the app icon properly for Metro bundler
+const AppIcon = require('../../../../icons/dnschat_ios26.png');
+
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export function WelcomeScreen() {
@@ -48,7 +51,7 @@ export function WelcomeScreen() {
         >
           <View style={styles.iconContainer}>
             <Image 
-              source={require('../../../../icons/dnschat_ios26.png')} 
+              source={AppIcon} 
               style={styles.appIcon}
               resizeMode="contain"
             />

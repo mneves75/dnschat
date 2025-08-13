@@ -169,7 +169,16 @@ export class DNSService {
         // If we get here, all methods failed for this attempt
         const availableMethods = methodOrder.join(', ');
         const methodCount = methodOrder.length;
-        throw new Error(`All ${methodCount} DNS transport methods failed (attempted: ${availableMethods}) for target server: ${targetServer}`);
+        
+        // Provide actionable guidance based on common failure patterns
+        let guidance = '';
+        if (methodOrder.includes('udp') && methodOrder.includes('tcp')) {
+          guidance = ' • This often indicates network restrictions blocking DNS port 53. Try switching to a different network (e.g., cellular vs WiFi) or contact your network administrator.';
+        } else if (methodOrder.includes('https')) {
+          guidance = ' • DNS-over-HTTPS was attempted but cannot access ch.at\'s custom responses. This is a known architectural limitation.';
+        }
+        
+        throw new Error(`All ${methodCount} DNS transport methods failed (attempted: ${availableMethods}) for target server: ${targetServer}.${guidance}`);
       } catch (error: any) {
         if (attempt === this.MAX_RETRIES - 1) {
           await DNSLogService.endQuery(false, undefined, undefined);
@@ -191,7 +200,17 @@ export class DNSService {
     }
     
     await DNSLogService.endQuery(false, undefined, undefined);
-    throw new Error(`DNS query exhausted all ${this.MAX_RETRIES} retry attempts for server '${targetServer}' with message '${sanitizedMessage}' - check DNS logs for detailed failure information`);
+    
+    // Provide comprehensive error guidance
+    const troubleshootingSteps = [
+      '1. Check network connectivity and try a different network (WiFi ↔ Cellular)',
+      '2. Verify DNS server is accessible: ping ch.at',
+      '3. Check DNS logs in app Settings for detailed failure information',
+      '4. Network may be blocking DNS port 53 - contact network administrator',
+      '5. Try enabling DNS-over-HTTPS in Settings if using public WiFi'
+    ].join('\n');
+    
+    throw new Error(`DNS query failed after ${this.MAX_RETRIES} attempts to '${targetServer}' with message '${sanitizedMessage}'.\n\nTroubleshooting steps:\n${troubleshootingSteps}`);
   }
 
   private static async performNativeUDPQuery(message: string, dnsServer: string): Promise<string[]> {
@@ -209,8 +228,39 @@ export class DNSService {
       };
 
       const onError = (e: any) => {
+        console.log('❌ UDP: Error occurred:', e);
+        console.log('❌ UDP: Error type:', typeof e);
+        console.log('❌ UDP: Error message:', e?.message);
+        console.log('❌ UDP: Error code:', e?.code);
+        console.log('❌ UDP: Error errno:', e?.errno);
+        
         cleanup();
-        reject(e);
+        
+        // Enhanced error handling for common UDP issues
+        if (e === undefined || e === null) {
+          reject(new Error('UDP Socket error - received undefined error object'));
+        } else if (typeof e === 'string') {
+          reject(new Error(`UDP Socket error: ${e}`));
+        } else if (e instanceof Error) {
+          // Check for specific iOS port blocking errors
+          const errorMsg = e.message?.toLowerCase() || '';
+          if (errorMsg.includes('bad_port') || errorMsg.includes('port') || e.code === 'ERR_SOCKET_BAD_PORT') {
+            reject(new Error(`UDP port 53 blocked by network/iOS - automatic fallback to TCP: ${e.message}`));
+          } else if (errorMsg.includes('permission') || errorMsg.includes('denied')) {
+            reject(new Error(`UDP permission denied - network restrictions detected: ${e.message}`));
+          } else if (errorMsg.includes('network') || errorMsg.includes('unreachable')) {
+            reject(new Error(`UDP network unreachable - connectivity issue: ${e.message}`));
+          } else {
+            reject(e);
+          }
+        } else if (e && typeof e === 'object') {
+          // Extract meaningful error information from object
+          const errorMsg = e.message || e.error || e.description || 'Unknown UDP socket error';
+          const errorCode = e.code || e.errno || 'NO_CODE';
+          reject(new Error(`UDP Socket error [${errorCode}]: ${errorMsg}`));
+        } else {
+          reject(new Error(`UDP Socket error - unexpected error type: ${typeof e} (${String(e)})`));
+        }
       };
 
       const dnsQuery = {
@@ -330,14 +380,40 @@ export class DNSService {
         if (e === undefined || e === null) {
           reject(new Error('TCP Socket error - received undefined error object (possible React Native socket issue)'));
         } else if (typeof e === 'string') {
-          reject(new Error(`TCP Socket error: ${e}`));
+          // Check for specific connection issues in string errors
+          const errorStr = e.toLowerCase();
+          if (errorStr.includes('connection refused') || errorStr.includes('econnrefused')) {
+            reject(new Error(`TCP connection refused - DNS server may be blocking TCP port 53: ${e}`));
+          } else if (errorStr.includes('timeout') || errorStr.includes('etimedout')) {
+            reject(new Error(`TCP connection timeout - network may be blocking TCP DNS: ${e}`));
+          } else {
+            reject(new Error(`TCP Socket error: ${e}`));
+          }
         } else if (e instanceof Error) {
-          reject(e);
+          // Check for specific connection issues in Error objects
+          const errorMsg = e.message?.toLowerCase() || '';
+          if (errorMsg.includes('connection refused') || errorMsg.includes('econnrefused') || e.code === 'ECONNREFUSED') {
+            reject(new Error(`TCP connection refused - DNS server may be blocking TCP port 53: ${e.message}`));
+          } else if (errorMsg.includes('timeout') || errorMsg.includes('etimedout') || e.code === 'ETIMEDOUT') {
+            reject(new Error(`TCP connection timeout - network may be blocking TCP DNS: ${e.message}`));
+          } else if (errorMsg.includes('network') || errorMsg.includes('unreachable') || e.code === 'ENETUNREACH') {
+            reject(new Error(`TCP network unreachable - connectivity issue: ${e.message}`));
+          } else {
+            reject(e);
+          }
         } else if (e && typeof e === 'object') {
           // Extract meaningful error information from object
           const errorMsg = e.message || e.error || e.description || 'Unknown TCP socket error';
           const errorCode = e.code || e.errno || 'NO_CODE';
-          reject(new Error(`TCP Socket error [${errorCode}]: ${errorMsg}`));
+          
+          // Check for connection issues in object errors
+          if (errorCode === 'ECONNREFUSED' || String(errorMsg).toLowerCase().includes('connection refused')) {
+            reject(new Error(`TCP connection refused [${errorCode}] - DNS server may be blocking TCP port 53: ${errorMsg}`));
+          } else if (errorCode === 'ETIMEDOUT' || String(errorMsg).toLowerCase().includes('timeout')) {
+            reject(new Error(`TCP connection timeout [${errorCode}] - network may be blocking TCP DNS: ${errorMsg}`));
+          } else {
+            reject(new Error(`TCP Socket error [${errorCode}]: ${errorMsg}`));
+          }
         } else {
           reject(new Error(`TCP Socket error - unexpected error type: ${typeof e} (${String(e)})`));
         }
@@ -523,14 +599,18 @@ export class DNSService {
     console.log('🔧 HTTPS: Message:', message);
     console.log('🔧 HTTPS: DNS Server:', dnsServer);
     
-    // ARCHITECTURE ISSUE: DNS-over-HTTPS cannot directly query ch.at like UDP/TCP can
+    // ARCHITECTURE LIMITATION: DNS-over-HTTPS cannot directly query ch.at like UDP/TCP can
     // DNS-over-HTTPS services like Cloudflare act as DNS resolvers, not proxies to specific DNS servers
     // They will resolve queries using their own infrastructure, not forward to ch.at
+    //
+    // For ch.at specifically, we need direct DNS queries to their custom TXT service
+    // DNS-over-HTTPS would query Cloudflare's resolvers, which don't have ch.at's custom responses
     
-    console.log('❌ HTTPS: DNS-over-HTTPS incompatible with ch.at architecture');
-    console.log('❌ HTTPS: ch.at expects direct DNS queries, not DNS-over-HTTPS resolution');
+    console.log('❌ HTTPS: DNS-over-HTTPS incompatible with ch.at custom TXT service architecture');
+    console.log('❌ HTTPS: ch.at provides custom TXT responses that DNS-over-HTTPS resolvers cannot access');
+    console.log('❌ HTTPS: Fallback to Mock service will be attempted');
     
-    throw new Error(`DNS-over-HTTPS cannot query ${dnsServer} directly - architectural limitation`);
+    throw new Error(`DNS-over-HTTPS cannot access ${dnsServer}'s custom TXT responses - network restrictions require Mock fallback`);
   }
   
 
@@ -731,15 +811,17 @@ export class DNSService {
                 console.log('❌ NATIVE: Error code:', nativeError?.code);
                 console.log('❌ NATIVE: Error details:', JSON.stringify(nativeError));
                 
-                // Enhance error message with context
+                // Enhance error message with context and actionable guidance
                 if (nativeError?.message?.includes('timeout')) {
-                  throw new Error(`Native DNS timeout: ${nativeError.message}`);
+                  throw new Error(`Native DNS timeout - network may be slow or DNS server unreachable: ${nativeError.message}`);
                 } else if (nativeError?.message?.includes('network')) {
-                  throw new Error(`Native DNS network error: ${nativeError.message}`);
+                  throw new Error(`Native DNS network error - check connectivity or try different network: ${nativeError.message}`);
                 } else if (nativeError?.message?.includes('permission')) {
-                  throw new Error(`Native DNS permission denied: ${nativeError.message}`);
+                  throw new Error(`Native DNS permission denied - iOS/Android may restrict DNS access: ${nativeError.message}`);
+                } else if (nativeError?.message?.includes('resolution') || nativeError?.message?.includes('not found')) {
+                  throw new Error(`Native DNS resolution failed - DNS server may not support TXT queries: ${nativeError.message}`);
                 } else {
-                  throw new Error(`Native DNS query failed: ${nativeError?.message || nativeError}`);
+                  throw new Error(`Native DNS query failed - falling back to UDP/TCP methods: ${nativeError?.message || nativeError}`);
                 }
               }
             } else {
