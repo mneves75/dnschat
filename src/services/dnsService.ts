@@ -167,7 +167,9 @@ export class DNSService {
         }
         
         // If we get here, all methods failed for this attempt
-        throw new Error('All DNS methods failed');
+        const availableMethods = methodOrder.join(', ');
+        const methodCount = methodOrder.length;
+        throw new Error(`All ${methodCount} DNS transport methods failed (attempted: ${availableMethods}) for target server: ${targetServer}`);
       } catch (error: any) {
         if (attempt === this.MAX_RETRIES - 1) {
           await DNSLogService.endQuery(false, undefined, undefined);
@@ -189,7 +191,7 @@ export class DNSService {
     }
     
     await DNSLogService.endQuery(false, undefined, undefined);
-    throw new Error('Failed to get response after all retries');
+    throw new Error(`DNS query exhausted all ${this.MAX_RETRIES} retry attempts for server '${targetServer}' with message '${sanitizedMessage}' - check DNS logs for detailed failure information`);
   }
 
   private static async performNativeUDPQuery(message: string, dnsServer: string): Promise<string[]> {
@@ -765,8 +767,11 @@ export class DNSService {
           return { response: result, method: 'native' };
           
         case 'udp':
-          if (Platform.OS === 'web' || !dgram) {
-            throw new Error('UDP not available on this platform');
+          if (Platform.OS === 'web') {
+            throw new Error(`UDP DNS transport not supported on web platform - use DNS-over-HTTPS instead`);
+          }
+          if (!dgram) {
+            throw new Error(`UDP DNS transport unavailable - react-native-udp library not loaded (platform: ${Platform.OS})`);
           }
           
           txtRecords = await this.handleBackgroundSuspension(() => 
@@ -775,8 +780,11 @@ export class DNSService {
           break;
           
         case 'tcp':
-          if (Platform.OS === 'web' || !TcpSocket) {
-            throw new Error('TCP not available on this platform');
+          if (Platform.OS === 'web') {
+            throw new Error(`TCP DNS transport not supported on web platform - use DNS-over-HTTPS instead`);
+          }
+          if (!TcpSocket) {
+            throw new Error(`TCP DNS transport unavailable - react-native-tcp-socket library not loaded (platform: ${Platform.OS})`);
           }
           
           txtRecords = await this.handleBackgroundSuspension(() => 
@@ -797,7 +805,8 @@ export class DNSService {
           return { response: mockResponse, method: 'mock' };
           
         default:
-          throw new Error(`Unknown method: ${method}`);
+          const validMethods = ['native', 'udp', 'tcp', 'https', 'mock'].join(', ');
+          throw new Error(`Invalid DNS transport method '${method}' - valid methods are: ${validMethods}`);
       }
       
       const response = this.parseResponse(txtRecords);
@@ -925,8 +934,11 @@ export class DNSService {
           return result;
           
         case 'udp':
-          if (Platform.OS === 'web' || !dgram) {
-            throw new Error('UDP not available on this platform');
+          if (Platform.OS === 'web') {
+            throw new Error(`UDP forced test not supported on web platform - use HTTPS forced test instead`);
+          }
+          if (!dgram) {
+            throw new Error(`UDP forced test unavailable - react-native-udp library not loaded (platform: ${Platform.OS})`);
           }
           
           txtRecords = await this.handleBackgroundSuspension(() => 
@@ -935,8 +947,11 @@ export class DNSService {
           break;
           
         case 'tcp':
-          if (Platform.OS === 'web' || !TcpSocket) {
-            throw new Error('TCP Socket not available on this platform');
+          if (Platform.OS === 'web') {
+            throw new Error(`TCP forced test not supported on web platform - use HTTPS forced test instead`);
+          }
+          if (!TcpSocket) {
+            throw new Error(`TCP forced test unavailable - react-native-tcp-socket library not loaded (platform: ${Platform.OS})`);
           }
           
           txtRecords = await this.handleBackgroundSuspension(() => 
@@ -951,7 +966,8 @@ export class DNSService {
           break;
           
         default:
-          throw new Error(`Unknown transport method: ${transport}`);
+          const validTransports = ['native', 'udp', 'tcp', 'https'].join(', ');
+          throw new Error(`Invalid transport method '${transport}' for forced test - valid transports are: ${validTransports}`);
       }
       
       const response = this.parseResponse(txtRecords);
