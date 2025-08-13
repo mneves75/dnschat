@@ -61,8 +61,10 @@ export function ChatInput({
           blurOnSubmit={true}
           textAlignVertical="top"
           keyboardType="default"
-          autoCorrect={true}
-          spellCheck={true}
+           autoCorrect={false}
+           spellCheck={false}
+           autoComplete="off"
+           contextMenuHidden={true}
           keyboardAppearance={isDark ? 'dark' : 'light'}
           onSubmitEditing={handleSend}
         />

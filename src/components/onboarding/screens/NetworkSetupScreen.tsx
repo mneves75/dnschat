@@ -44,22 +44,29 @@ export function NetworkSetupScreen() {
     };
 
     try {
+      // Generate randomized latencies while preserving desired order:
+      // DNS over HTTPS < Native DNS < DNS over UDP < DNS over TCP
+      const getRandomInt = (min: number, max: number) =>
+        Math.floor(Math.random() * (max - min + 1)) + min;
+
+      const dohLatency = getRandomInt(70, 130);
+      const nativeLatency = dohLatency + getRandomInt(5, 60);
+      const udpLatency = nativeLatency + getRandomInt(10, 80);
+      const tcpLatency = udpLatency + getRandomInt(10, 90);
+
       await new Promise(resolve => setTimeout(resolve, 1000));
-      updateTest(0, { status: 'success', latency: 120 });
+      updateTest(0, { status: 'success', latency: nativeLatency });
       
       await new Promise(resolve => setTimeout(resolve, 800));
-      updateTest(1, { status: 'success', latency: 180 });
+      updateTest(1, { status: 'success', latency: udpLatency });
       
       await new Promise(resolve => setTimeout(resolve, 600));
-      updateTest(2, { status: 'success', latency: 250 });
+      updateTest(2, { status: 'success', latency: tcpLatency });
       
       await new Promise(resolve => setTimeout(resolve, 700));
-      updateTest(3, { status: 'success', latency: 95 });
+      updateTest(3, { status: 'success', latency: dohLatency });
       
-      const dnsOverHttpsLatency = 95;
-      const nativeLatency = 120;
-      
-      const shouldPreferHttps = dnsOverHttpsLatency < nativeLatency;
+      const shouldPreferHttps = dohLatency < nativeLatency;
       setRecommendedSetting(shouldPreferHttps);
       
       setOptimizationComplete(true);
