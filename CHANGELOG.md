@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.7.2] - 2025-08-13
+
+### Fixed
+- **🔧 DNS Transport Robustness**: Complete overhaul of DNS transport error handling and fallback chain
+  - Enhanced UDP port blocking detection (ERR_SOCKET_BAD_PORT) with clear fallback messaging
+  - Improved TCP connection refused handling (ECONNREFUSED) with actionable network guidance
+  - Better DNS-over-HTTPS architectural limitation explanations for ch.at compatibility
+  - Comprehensive troubleshooting steps for common network restriction scenarios
+- **🖼️ Metro Bundler Icon Issues**: Fixed missing app icons in onboarding and navigation
+  - Resolved WelcomeScreen app icon display using proper Metro bundler asset imports
+  - Fixed first tab navigation icon missing due to import statement issues
+
+### Enhanced
+- **📋 Error Messages with Actionable Guidance**: User-friendly error messages with specific troubleshooting steps
+  - Network-specific guidance (WiFi ↔ cellular switching recommendations)
+  - Clear port blocking detection with network administrator contact suggestions
+  - Detailed 5-step troubleshooting guide for DNS connectivity failures
+  - Platform-specific error categorization with fallback method explanations
+- **🔍 Comprehensive Error Diagnostics**: Enhanced logging and error type detection
+  - Robust error type detection across all transport methods (native, UDP, TCP, HTTPS)
+  - Enhanced native DNS error messages with iOS/Android platform-specific guidance  
+  - Comprehensive socket error logging with diagnostic information for debugging
+
+### Technical Improvements
+- **🛡️ Production-Ready Error Handling**: Enterprise-grade error recovery and user guidance
+- **🔧 Network Resilience**: Improved detection of corporate firewalls and public WiFi restrictions
+- **📱 Cross-Platform Compatibility**: Better Metro bundler asset handling for consistent icon display
+
 ## [1.7.1] - 2025-08-13
 
 ### Fixed

@@ -1,8 +1,8 @@
-# DNSChat v1.7.0 🚀
+# DNSChat v1.7.2 🚀
 
-**Advanced DNS Preferences & Interactive Onboarding - FEATURE-RICH RELEASE**
+**Enhanced DNS Transport Robustness & Error Handling - STABILITY RELEASE**
 
-A React Native mobile application that provides a modern, ChatGPT-like chat interface using DNS TXT queries to communicate with an LLM. **Now featuring innovative onboarding experience, advanced DNS method preferences, and enhanced settings interface!**
+A React Native mobile application that provides a modern, ChatGPT-like chat interface using DNS TXT queries to communicate with an LLM. **Now with enterprise-grade DNS transport robustness, comprehensive error handling, and actionable troubleshooting guidance!**
 
 ## 💡  Inspiration and Acknowledgements
 
@@ -12,7 +12,21 @@ A React Native mobile application that provides a modern, ChatGPT-like chat inte
 
 ## ✨ Features
 
-### 🎯 **NEW in v1.7.0: Interactive Onboarding & Advanced DNS Preferences**
+### 🔧 **NEW in v1.7.2: Enterprise-Grade DNS Transport Robustness**
+- **🛡️ Enhanced Error Handling**: Complete DNS transport error detection and recovery system
+  - **UDP Port Blocking**: Smart detection of ERR_SOCKET_BAD_PORT with automatic TCP fallback
+  - **TCP Connection Issues**: Comprehensive ECONNREFUSED handling with network troubleshooting guidance
+  - **Network Restriction Detection**: Clear identification of corporate firewall and public WiFi limitations
+  - **5-Step Troubleshooting Guide**: Actionable steps for DNS connectivity failures with network switching recommendations
+- **📋 User-Friendly Error Messages**: Production-ready error messaging with specific guidance
+  - **Network-Specific Advice**: WiFi ↔ cellular switching recommendations for connectivity issues
+  - **Administrator Contact Info**: Clear guidance on when to contact network administrators for port unblocking
+  - **Platform-Specific Guidance**: iOS/Android-specific DNS restrictions and workarounds
+- **🖼️ Metro Bundler Icon Fixes**: Resolved missing app icons in onboarding and navigation
+  - **WelcomeScreen Icon**: Fixed app icon display using proper Metro bundler asset imports
+  - **Navigation Tab Icon**: Resolved first tab icon missing due to import statement issues
+
+### 🎯 **v1.7.0: Interactive Onboarding & Advanced DNS Preferences**
 - **🌟 Innovative Onboarding Experience**: Complete guided tour of DNS Chat features
   - **Interactive DNS Demonstrations**: Live DNS query examples with real-time feedback
   - **Feature Showcases**: Step-by-step introduction to chat, logs, and settings
