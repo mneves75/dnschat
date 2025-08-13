@@ -1,0 +1,57 @@
+# React Component Patterns
+
+## Component Structure
+- **Functional Components**: Prefer functional components with hooks over class components
+- **TypeScript**: Use proper typing for props and state
+- **Error Boundaries**: Wrap components with [src/components/ErrorBoundary.tsx](mdc:src/components/ErrorBoundary.tsx) when needed
+
+## State Management
+- **Context Usage**: Use contexts from [src/context/](mdc:src/context/) for global state
+- **Local State**: Use `useState` for component-specific state
+- **Effects**: Use `useEffect` for side effects and lifecycle management
+- **Callbacks**: Use `useCallback` for stable function references
+
+## Props and Interfaces
+- **Props Interface**: Define explicit props interface for each component
+- **Default Props**: Use default parameter values or destructuring with defaults
+- **Prop Validation**: Use TypeScript for runtime type safety
+- **Children**: Handle children prop appropriately for wrapper components
+
+## Styling and UI
+- **Theme Integration**: Use theme colors from React Navigation theme
+- **Responsive Design**: Consider different screen sizes and orientations
+- **Accessibility**: Include proper accessibility props (accessibilityLabel, accessibilityHint)
+- **Platform Specific**: Use Platform.OS for platform-specific styling when needed
+
+## Component Categories
+### Screen Components
+- **Location**: [src/navigation/screens/](mdc:src/navigation/screens/)
+- **Navigation**: Use navigation props for screen transitions
+- **Header Configuration**: Configure headers in navigation options
+
+### UI Components
+- **Location**: [src/components/](mdc:src/components/)
+- **Reusability**: Design for reuse across different screens
+- **Props Interface**: Keep props interface minimal and focused
+
+### Icon Components
+- **Location**: [src/components/icons/](mdc:src/components/icons/)
+- **SVG Based**: Use SVG components for scalable icons
+- **Props**: Accept `size` and `color` props for consistency
+- **Examples**: [src/components/icons/SettingsIcon.tsx](mdc:src/components/icons/SettingsIcon.tsx), [src/components/icons/LogsIcon.tsx](mdc:src/components/icons/LogsIcon.tsx)
+
+## Best Practices
+- **Single Responsibility**: Each component should have one clear purpose
+- **Composition**: Use composition over inheritance
+- **Performance**: Use React.memo for expensive components
+- **Testing**: Write testable components with clear interfaces
+
+## Do Not
+- **Mutate props** directly
+- **Use inline styles** for complex styling
+- **Create deeply nested** component hierarchies
+- **Bypass context** for global state management
+description:
+globs:
+alwaysApply: false
+---

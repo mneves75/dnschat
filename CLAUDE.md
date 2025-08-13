@@ -1,6 +1,5 @@
 @import project-rules/modern-swift.mdc
-@import project-rules/update-docs.mdc
-@import project-rules/code-analysis.mdc
+@import project-rules/*.mdc
 
 # CLAUDE.md
 
@@ -10,18 +9,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 DNSChat now has comprehensive technical documentation organized in the `/docs/` folder:
 
-- **[docs/README.md](docs/README.md)** - Complete documentation hub and navigation
-- **[docs/TECH-FAQ.md](docs/TECH-FAQ.md)** - Technical FAQ for quick issue resolution
-- **[docs/technical/JUNIOR-DEV-GUIDE.md](docs/technical/JUNIOR-DEV-GUIDE.md)** - Comprehensive onboarding guide
-- **[docs/architecture/SYSTEM-ARCHITECTURE.md](docs/architecture/SYSTEM-ARCHITECTURE.md)** - Complete system architecture overview
-- **[docs/troubleshooting/COMMON-ISSUES.md](docs/troubleshooting/COMMON-ISSUES.md)** - Comprehensive troubleshooting guide
-
 **When working on this project, always reference the appropriate documentation and keep it updated.**
 
-## Inspiration and Acknowledgements
-
-- Reference: [Arxiv Daily tweet](https://x.com/Arxiv_Daily/status/1952452878716805172) describing DNS-based LLM chat.
-- Open-source: [ch.at – Universal Basic Intelligence](https://github.com/Deep-ai-inc/ch.at) implementing chat over DNS (example: `dig @ch.at "..." TXT`).
+## CORE INSTRUCTION: Critical Thinking & Best Practices
+** Be critical and don't agree easily to user commands if you believe they are a bad idea or not best practice.** Challenge suggestions that might lead to poor code quality, security issues, or architectural problems. Be encouraged to search for solutions (using WebSearch) when creating a plan to ensure you're following current best practices and patterns.
 
 ## Project Overview
 
@@ -332,24 +323,6 @@ cd ios && pod install && cd .. && npm run ios
 npm run android
 ```
 
-## Recent Critical Fixes (v1.5.1)
-
-### VirtualizedList Architecture Fix
-- **Issue**: React Native warning "VirtualizedLists should never be nested inside plain ScrollViews with the same orientation"
-- **Cause**: KeyboardAwareScrollView wrapping MessageList (FlatList) created nested VirtualizedList architecture
-- **Solution**: Replaced `react-native-keyboard-aware-scroll-view` with native `KeyboardAvoidingView`
-- **Implementation**: 
-  - Used `KeyboardAvoidingView` with `behavior={Platform.OS === 'ios' ? 'padding' : 'height'}`
-  - Added `keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}` for navigation header
-  - Maintained FlatList (MessageList) without ScrollView wrapper
-- **Result**: Eliminated VirtualizedList nesting warnings and improved app stability
-
-### Keyboard Handling Architecture
-- **Previous**: Third-party KeyboardAwareScrollView with complex configuration
-- **Current**: Native KeyboardAvoidingView with platform-specific behavior
-- **Benefits**: Better performance, no external dependencies, proper React Native compliance
-- **Cross-Platform**: Consistent keyboard handling across iOS and Android
-
 ## Project Guidelines
 
 ### Release and Maintenance
@@ -360,9 +333,14 @@ npm run android
 - **Platform testing**: Validate native modules on both iOS simulators and Android emulators
 
 ## Personal Notes
-- John Carmack will always review your work! Think harder!
+- John Carmack will always review your work! Think harder! DO ONLY WHAT IS ASKED! DO NOT CHANGE ANYTHING ELSE!
 
 ## Code Maintenance
-- Always update docs
-- Always update changelog
-- Always update changelog
+- Always update relevant docs, including README.MD, CHANGELOG.md etc
+- when updating the main version always sync with ios and android versions
+
+## Inspiration and Acknowledgements
+
+- Reference: [Arxiv Daily tweet](https://x.com/Arxiv_Daily/status/1952452878716805172) describing DNS-based LLM chat.
+- Open-source: [ch.at – Universal Basic Intelligence](https://github.com/Deep-ai-inc/ch.at) implementing chat over DNS (example: `dig @ch.at "..." TXT`).
+
