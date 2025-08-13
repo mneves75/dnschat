@@ -491,6 +491,35 @@ cd android && ./gradlew clean && cd ..
 # Solution: Clear device storage or use different AVD
 ```
 
+### 🔥 App Store Connect Upload Issues
+
+#### 🆕 v1.7.2: CRITICAL - Hermes dSYM Missing (FIXED)
+
+**Symptoms:**
+```
+The archive did not include a dSYM for the hermes.framework with the UUIDs [B810DBCE-71AE-38CA-8FB4-3B671091C81B]. 
+Ensure that the archive's dSYM folder includes a DWARF file for hermes.framework with the expected UUIDs.
+```
+
+**🎉 COMPREHENSIVE SOLUTION IMPLEMENTED:**
+
+This critical issue has been **permanently fixed** in v1.7.2 with a comprehensive solution:
+
+1. **expo-build-properties Plugin**: Configured with proper iOS dSYM generation settings
+2. **EAS Build Configuration**: Created `eas.json` with `includeDsym: true` and `archiveHermesDsym: true`
+3. **Custom Build Script**: Added `ios/scripts/copy_hermes_dsym.sh` to copy Hermes dSYM files
+4. **Xcode Project Integration**: Added build phase to automatically run the script
+
+**📚 Detailed Documentation:** See [HERMES_DSYM_FIX.md](./HERMES_DSYM_FIX.md) for complete implementation details.
+
+**✅ Status:** PRODUCTION READY - The fix is comprehensive and tested.
+
+**⚠️ If Issue Persists:**
+1. Clean build: `cd ios && rm -rf Pods Podfile.lock && pod install`
+2. Verify script permissions: `chmod +x ios/scripts/copy_hermes_dsym.sh`
+3. Rebuild: `expo run:ios --configuration Release`
+4. Check build logs for script execution
+
 ---
 
 ## Network & Connectivity Issues
