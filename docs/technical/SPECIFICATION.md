@@ -20,10 +20,29 @@ A modern, ChatGPT-like mobile chat interface that communicates with an LLM via D
 - **Copy Messages**: Long-press to copy message content
 
 ### 2. DNS Communication
+
+#### Core DNS System
 - **Query Format**: `dig @ch.at "<USER_MESSAGE>" TXT +short`
 - **Response Handling**: Parse DNS TXT records and combine multi-part responses
-- **Error Handling**: Graceful fallback for DNS failures, timeouts, and network issues
-- **Retry Logic**: Automatic retry with exponential backoff for failed queries
+- **Retry Logic**: Automatic retry with exponential backoff for failed queries (3 retries, 10-second timeout)
+
+#### 🔧 Enhanced Transport Layer (v1.7.2)
+**Multi-Layer Fallback Strategy:**
+1. **Native DNS** (iOS Network Framework, Android DnsResolver) - Platform-optimized, fastest
+2. **UDP DNS** - Direct UDP queries via react-native-udp 
+3. **DNS-over-TCP** - TCP fallback for UDP-blocked networks
+4. **DNS-over-HTTPS** - Cloudflare API fallback (architectural limitations with ch.at)
+5. **Mock Service** - Development/testing fallback
+
+**🛡️ Enterprise-Grade Error Handling:**
+- **UDP Port Blocking Detection**: Smart ERR_SOCKET_BAD_PORT detection with TCP fallback
+- **TCP Connection Issues**: Comprehensive ECONNREFUSED/ETIMEDOUT handling
+- **Network Restriction Guidance**: User-friendly error messages with actionable troubleshooting:
+  - Network switching recommendations (WiFi ↔ Cellular)
+  - Port blocking detection with administrator contact advice
+  - 5-step troubleshooting guide for connectivity failures
+  - Platform-specific guidance for iOS/Android restrictions
+- **Diagnostic Logging**: Comprehensive error logging for debugging and support
 
 ### 3. Local Storage
 - **Conversation History**: Persist all chats using AsyncStorage

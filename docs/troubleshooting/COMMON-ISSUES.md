@@ -249,31 +249,62 @@ grep kotlin android/build.gradle
 
 **Symptoms:**
 - Messages don't get responses
-- "DNS query failed" errors
+- "DNS query failed" errors  
 - Timeout errors
+- "UDP port 53 blocked" errors
+- "TCP connection refused" errors
+
+**🆕 v1.7.2: Enhanced Error Diagnostics & Guidance**
+
+The app now provides comprehensive error messages with actionable troubleshooting steps. When DNS queries fail, you'll see detailed guidance including:
+
+- **Network switching recommendations** (WiFi ↔ Cellular)
+- **Port blocking detection** with administrator contact advice
+- **5-step troubleshooting guide** for connectivity issues
+- **Platform-specific guidance** for iOS/Android restrictions
 
 **Diagnostic Steps:**
 ```bash
 # 1. Test basic connectivity with CLI tool
-node test-dns.js "Hello world"
+dig @ch.at "Hello world" TXT +short
 
 # Expected output:
-# ✅ DNS query successful
-# 📥 Response: Hello! How can I assist you today?
+# "Hello! How can I assist you today?"
 
 # 2. Check network restrictions
 # Test from different networks (home WiFi, cellular, public WiFi)
 
-# 3. Check DNS server status
-# Try different servers in settings
+# 3. Check app DNS logs
+# Go to Settings → View Logs for detailed failure information
 ```
 
 **Common Causes & Solutions:**
 
-#### UDP Port 53 Blocked
-**Symptoms:** "ERR_SOCKET_BAD_PORT" or connection refused
-**Cause:** Network blocking UDP port 53 (common on corporate/public WiFi)
-**Solution:** App should automatically fallback to DNS-over-TCP then HTTPS
+#### 🔧 UDP Port 53 Blocked (Enhanced in v1.7.2)
+**Symptoms:** 
+- "UDP port 53 blocked by network/iOS - automatic fallback to TCP"
+- "ERR_SOCKET_BAD_PORT" errors
+- iOS may show "Bad port" errors on cellular/corporate networks
+
+**Cause:** Network blocking UDP port 53 (common on corporate/public WiFi, iOS restrictions)
+
+**🆕 Enhanced Solutions:**
+1. **Automatic Fallback**: App now automatically switches to TCP then HTTPS
+2. **Network Switching**: Try switching between WiFi and cellular data
+3. **Corporate Networks**: Contact network administrator to unblock DNS port 53
+4. **iOS Restrictions**: Some iOS versions/carriers block direct DNS - TCP fallback handles this
+
+#### 🔧 TCP Connection Issues (Enhanced in v1.7.2)
+**Symptoms:**
+- "TCP connection refused - DNS server may be blocking TCP port 53"
+- "Connection refused" or "ECONNREFUSED" errors
+- "TCP connection timeout - network may be blocking TCP DNS"
+
+**🆕 Enhanced Solutions:**
+1. **HTTPS Fallback**: App automatically tries DNS-over-HTTPS as final fallback
+2. **Network Diagnosis**: Error messages now indicate specific connection issues
+3. **Admin Guidance**: Clear instructions on contacting network administrators
+4. **Alternative Networks**: Switch to mobile data or different WiFi network
 
 #### DNS Server Unreachable
 **Symptoms:** "DNS_SERVER_UNREACHABLE" errors
@@ -641,7 +672,7 @@ git log --oneline -5
 
 ---
 
-**Last Updated:** v1.6.1 - UI Fixes & Enhanced Features  
+**Last Updated:** v1.7.2 - Enhanced DNS Transport Robustness & Error Handling  
 **Maintainers:** DNSChat Development Team
 
 *This guide is continuously updated. Check git history for recent additions.*
