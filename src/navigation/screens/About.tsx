@@ -180,7 +180,11 @@ export function About() {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <View style={styles.logo}>
-            <Text style={styles.logoText}>🔍</Text>
+            <Image 
+              source={require('../../../assets/icon.png')} 
+              style={{ width: 60, height: 60, borderRadius: 15 }}
+              resizeMode="contain"
+            />
           </View>
           <Text style={styles.title}>DNS Chat</Text>
           <Text style={styles.version}>Version {packageJson.version}</Text>
