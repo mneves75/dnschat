@@ -12,7 +12,7 @@ interface ChatProviderProps {
 }
 
 export function ChatProvider({ children }: ChatProviderProps) {
-  const { dnsServer, preferDnsOverHttps, dnsMethodPreference } = useSettings();
+  const { dnsServer, preferDnsOverHttps, dnsMethodPreference, enableMockDNS } = useSettings();
   const [chats, setChats] = useState<Chat[]>([]);
   const [currentChat, setCurrentChat] = useState<Chat | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -123,9 +123,9 @@ export function ChatProvider({ children }: ChatProviderProps) {
         )
       );
 
-      // Get AI response using DNS service (includes automatic fallback chain to mock)
+      // Get AI response using DNS service (respects enableMockDNS setting)
       setIsLoading(true);
-      const response = await DNSService.queryLLM(content, dnsServer, preferDnsOverHttps, dnsMethodPreference);
+      const response = await DNSService.queryLLM(content, dnsServer, preferDnsOverHttps, dnsMethodPreference, enableMockDNS);
       
       // Update assistant message with response
       const completedAssistantMessage: Message = {
