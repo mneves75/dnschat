@@ -315,9 +315,30 @@ export class DNSService {
       const onError = (e: any) => {
         console.log('❌ TCP: Error occurred:', e);
         console.log('❌ TCP: Error type:', typeof e);
+        console.log('❌ TCP: Error constructor:', e?.constructor?.name);
+        console.log('❌ TCP: Error message:', e?.message);
+        console.log('❌ TCP: Error code:', e?.code);
+        console.log('❌ TCP: Error errno:', e?.errno);
         console.log('❌ TCP: Error stringified:', JSON.stringify(e));
+        console.log('❌ TCP: Error is undefined/null:', e === undefined || e === null);
+        
         cleanup();
-        reject(e || new Error('Unknown TCP error'));
+        
+        // Enhanced error handling for undefined/null errors
+        if (e === undefined || e === null) {
+          reject(new Error('TCP Socket error - received undefined error object (possible React Native socket issue)'));
+        } else if (typeof e === 'string') {
+          reject(new Error(`TCP Socket error: ${e}`));
+        } else if (e instanceof Error) {
+          reject(e);
+        } else if (e && typeof e === 'object') {
+          // Extract meaningful error information from object
+          const errorMsg = e.message || e.error || e.description || 'Unknown TCP socket error';
+          const errorCode = e.code || e.errno || 'NO_CODE';
+          reject(new Error(`TCP Socket error [${errorCode}]: ${errorMsg}`));
+        } else {
+          reject(new Error(`TCP Socket error - unexpected error type: ${typeof e} (${String(e)})`));
+        }
       };
 
       const dnsQuery = {
@@ -332,19 +353,52 @@ export class DNSService {
       };
 
       try {
+        console.log('🔧 TCP: Encoding DNS query...');
         const queryBuffer = dns.encode(dnsQuery);
+        console.log('✅ TCP: DNS query encoded, length:', queryBuffer?.length);
+        
+        if (!queryBuffer) {
+          throw new Error('DNS packet encoding failed - queryBuffer is null/undefined');
+        }
         
         // DNS-over-TCP requires 2-byte length prefix
-        const lengthPrefix = Buffer.allocUnsafe(2);
+        console.log('🔧 TCP: Creating length prefix...');
+        console.log('🔧 TCP: Buffer available:', !!Buffer);
+        console.log('🔧 TCP: Buffer.allocUnsafe available:', !!Buffer?.allocUnsafe);
+        
+        let lengthPrefix;
+        try {
+          lengthPrefix = Buffer.allocUnsafe(2);
+          console.log('✅ TCP: Length prefix buffer created');
+        } catch (bufferError) {
+          console.log('❌ TCP: Buffer.allocUnsafe failed:', bufferError);
+          throw new Error(`Buffer allocation failed: ${bufferError}`);
+        }
+        
         // For polyfill compatibility, write length manually
+        console.log('🔧 TCP: Writing length prefix...');
         if (lengthPrefix.writeUInt16BE) {
+          console.log('🔧 TCP: Using Buffer.writeUInt16BE method');
           lengthPrefix.writeUInt16BE(queryBuffer.length, 0);
         } else {
+          console.log('🔧 TCP: Using manual big-endian write (polyfill mode)');
           // Manual big-endian write for polyfill
           lengthPrefix[0] = (queryBuffer.length >> 8) & 0xFF;
           lengthPrefix[1] = queryBuffer.length & 0xFF;
         }
-        const tcpQuery = Buffer.concat([lengthPrefix, queryBuffer]);
+        console.log('✅ TCP: Length prefix written:', Array.from(lengthPrefix));
+        
+        console.log('🔧 TCP: Concatenating buffers...');
+        console.log('🔧 TCP: Buffer.concat available:', !!Buffer?.concat);
+        
+        let tcpQuery;
+        try {
+          tcpQuery = Buffer.concat([lengthPrefix, queryBuffer]);
+          console.log('✅ TCP: TCP query buffer created, total length:', tcpQuery?.length);
+        } catch (concatError) {
+          console.log('❌ TCP: Buffer.concat failed:', concatError);
+          throw new Error(`Buffer concatenation failed: ${concatError}`);
+        }
 
         console.log('🔧 TCP: Setting up timeout...');
         timeoutId = setTimeout(() => {
@@ -424,20 +478,36 @@ export class DNSService {
           socket.connect({
             port: this.DNS_PORT,
             host: dnsServer
-          }, () => {
+          }, (connectResult: any) => {
             console.log('✅ TCP: Connected successfully');
+            console.log('🔍 TCP: Connect result:', connectResult);
             try {
               console.log('📤 TCP: Sending query, length:', tcpQuery.length);
-              socket.write(tcpQuery);
-              console.log('✅ TCP: Query sent');
+              const writeResult = socket.write(tcpQuery);
+              console.log('✅ TCP: Query sent, write result:', writeResult);
             } catch (writeError) {
               console.log('❌ TCP: Write failed:', writeError);
-              onError(new Error(`Write failed: ${writeError}`));
+              console.log('❌ TCP: Write error type:', typeof writeError);
+              console.log('❌ TCP: Write error details:', JSON.stringify(writeError));
+              onError(writeError || new Error(`Write operation failed with undefined error`));
             }
           });
+          
+          // Add specific error handling for connect failures
+          socket.on('connect', () => {
+            console.log('🎉 TCP: Socket connect event fired');
+          });
+          
+          socket.on('timeout', () => {
+            console.log('⏰ TCP: Socket timeout event fired');
+            onError(new Error('TCP Socket connection timeout'));
+          });
+          
         } catch (connectError) {
-          console.log('❌ TCP: Connect failed:', connectError);
-          onError(new Error(`Connect failed: ${connectError}`));
+          console.log('❌ TCP: Connect attempt failed:', connectError);
+          console.log('❌ TCP: Connect error type:', typeof connectError);
+          console.log('❌ TCP: Connect error details:', JSON.stringify(connectError));
+          onError(connectError || new Error(`Connect attempt failed with undefined error`));
         }
 
       } catch (error) {
