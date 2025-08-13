@@ -652,31 +652,116 @@ export class DNSService {
       
       switch (method) {
         case 'native':
+          console.log('🌐 NATIVE: Starting native DNS transport test');
+          console.log('🌐 NATIVE: Target server:', targetServer);
+          console.log('🌐 NATIVE: Message:', message);
+          
           const result = await this.handleBackgroundSuspension(async () => {
-            const capabilities = await nativeDNS.isAvailable();
-            console.log('🔍 Native DNS capabilities in tryMethod:', JSON.stringify(capabilities));
+            console.log('🔧 NATIVE: Checking native DNS capabilities...');
+            
+            let capabilities;
+            try {
+              capabilities = await nativeDNS.isAvailable();
+              console.log('🔍 NATIVE: Capabilities check completed');
+              console.log('🔍 NATIVE: Capabilities details:', JSON.stringify(capabilities, null, 2));
+              console.log('🔍 NATIVE: Available:', capabilities.available);
+              console.log('🔍 NATIVE: Platform:', capabilities.platform);
+              console.log('🔍 NATIVE: Supports custom server:', capabilities.supportsCustomServer);
+              console.log('🔍 NATIVE: Supports async query:', capabilities.supportsAsyncQuery);
+              
+              if (capabilities.apiLevel) {
+                console.log('🔍 NATIVE: Android API level:', capabilities.apiLevel);
+              }
+            } catch (capabilitiesError) {
+              console.log('❌ NATIVE: Capabilities check failed:', capabilitiesError);
+              console.log('❌ NATIVE: Capabilities error type:', typeof capabilitiesError);
+              console.log('❌ NATIVE: Capabilities error details:', JSON.stringify(capabilitiesError));
+              throw new Error(`Native DNS capabilities check failed: ${capabilitiesError?.message || capabilitiesError}`);
+            }
             
             if (capabilities.available && capabilities.supportsCustomServer) {
-              console.log('✅ Native DNS available, querying TXT records...');
+              console.log('✅ NATIVE: Native DNS available and supports custom servers');
+              console.log('🔧 NATIVE: Attempting to query TXT records...');
+              
               try {
+                console.log('📤 NATIVE: Calling nativeDNS.queryTXT with:', {
+                  server: targetServer,
+                  message: message
+                });
+                
+                const queryStartTime = Date.now();
                 const records = await nativeDNS.queryTXT(targetServer, message);
-                console.log('📥 Native DNS TXT records received:', records);
-                return nativeDNS.parseMultiPartResponse(records);
+                const queryDuration = Date.now() - queryStartTime;
+                
+                console.log('📥 NATIVE: Raw TXT records received:', records);
+                console.log('📊 NATIVE: Query took:', queryDuration, 'ms');
+                console.log('📊 NATIVE: Records count:', records?.length || 0);
+                console.log('📊 NATIVE: Records type:', Array.isArray(records) ? 'array' : typeof records);
+                
+                if (!records) {
+                  throw new Error('Native DNS query returned null/undefined records');
+                }
+                
+                if (!Array.isArray(records)) {
+                  console.log('⚠️ NATIVE: Records is not an array, converting...');
+                  const arrayRecords = Array.isArray(records) ? records : [String(records)];
+                  console.log('🔄 NATIVE: Converted records:', arrayRecords);
+                  return nativeDNS.parseMultiPartResponse(arrayRecords);
+                }
+                
+                if (records.length === 0) {
+                  throw new Error('Native DNS query returned empty records array');
+                }
+                
+                console.log('🔧 NATIVE: Parsing multi-part response...');
+                const parsedResponse = nativeDNS.parseMultiPartResponse(records);
+                console.log('✅ NATIVE: Response parsed successfully');
+                console.log('📄 NATIVE: Parsed response length:', parsedResponse?.length || 0);
+                console.log('📄 NATIVE: Parsed response preview:', parsedResponse?.substring(0, 100) + (parsedResponse?.length > 100 ? '...' : ''));
+                
+                return parsedResponse;
+                
               } catch (nativeError) {
-                console.log('❌ Native DNS query failed:', nativeError);
-                throw nativeError;
+                console.log('❌ NATIVE: Query failed with error:', nativeError);
+                console.log('❌ NATIVE: Error type:', typeof nativeError);
+                console.log('❌ NATIVE: Error constructor:', nativeError?.constructor?.name);
+                console.log('❌ NATIVE: Error message:', nativeError?.message);
+                console.log('❌ NATIVE: Error code:', nativeError?.code);
+                console.log('❌ NATIVE: Error details:', JSON.stringify(nativeError));
+                
+                // Enhance error message with context
+                if (nativeError?.message?.includes('timeout')) {
+                  throw new Error(`Native DNS timeout: ${nativeError.message}`);
+                } else if (nativeError?.message?.includes('network')) {
+                  throw new Error(`Native DNS network error: ${nativeError.message}`);
+                } else if (nativeError?.message?.includes('permission')) {
+                  throw new Error(`Native DNS permission denied: ${nativeError.message}`);
+                } else {
+                  throw new Error(`Native DNS query failed: ${nativeError?.message || nativeError}`);
+                }
+              }
+            } else {
+              console.log('❌ NATIVE: Native DNS not available or doesn\'t support custom servers');
+              console.log('❌ NATIVE: Available:', capabilities.available);
+              console.log('❌ NATIVE: Supports custom server:', capabilities.supportsCustomServer);
+              
+              if (!capabilities.available) {
+                throw new Error(`Native DNS not available on platform: ${capabilities.platform}`);
+              } else {
+                throw new Error('Native DNS doesn\'t support custom servers on this platform');
               }
             }
-            console.log('❌ Native DNS not available - capabilities check failed');
-            return null;
           });
           
           if (!result) {
-            throw new Error('Native DNS not available');
+            console.log('❌ NATIVE: Result is null/undefined after background suspension handling');
+            throw new Error('Native DNS returned null result');
           }
           
           const nativeDuration = Date.now() - startTime;
-          DNSLogService.logMethodSuccess('native', nativeDuration, `Response received`);
+          console.log('✅ NATIVE: Native DNS query completed successfully');
+          console.log('📊 NATIVE: Total duration:', nativeDuration, 'ms');
+          DNSLogService.logMethodSuccess('native', nativeDuration, `Response received (${result.length} chars)`);
           return { response: result, method: 'native' };
           
         case 'udp':
@@ -805,20 +890,38 @@ export class DNSService {
       
       switch (transport) {
         case 'native':
+          console.log('🧪 NATIVE TEST: Starting forced native DNS transport test');
+          
           const result = await this.handleBackgroundSuspension(async () => {
+            console.log('🔧 NATIVE TEST: Checking capabilities for forced test...');
             const capabilities = await nativeDNS.isAvailable();
+            console.log('🔍 NATIVE TEST: Capabilities:', JSON.stringify(capabilities, null, 2));
             
             if (capabilities.available && capabilities.supportsCustomServer) {
+              console.log('✅ NATIVE TEST: Native DNS available for forced test');
+              console.log('📤 NATIVE TEST: Executing queryTXT...');
+              
+              const testStartTime = Date.now();
               const records = await nativeDNS.queryTXT(targetServer, sanitizedMessage);
-              return nativeDNS.parseMultiPartResponse(records);
+              const testQueryDuration = Date.now() - testStartTime;
+              
+              console.log('📥 NATIVE TEST: Records received:', records);
+              console.log('📊 NATIVE TEST: Query duration:', testQueryDuration, 'ms');
+              
+              const parsedResult = nativeDNS.parseMultiPartResponse(records);
+              console.log('✅ NATIVE TEST: Response parsed:', parsedResult?.length, 'chars');
+              
+              return parsedResult;
             }
-            throw new Error('Native DNS not available');
+            console.log('❌ NATIVE TEST: Native DNS not available for forced test');
+            throw new Error(`Native DNS not available for forced test - available: ${capabilities.available}, custom server: ${capabilities.supportsCustomServer}`);
           });
           
           const nativeDuration = Date.now() - startTime;
-          DNSLogService.logMethodSuccess('native', nativeDuration, `Forced test response received`);
+          console.log('🎉 NATIVE TEST: Forced test completed successfully');
+          DNSLogService.logMethodSuccess('native', nativeDuration, `Forced test response received (${result.length} chars)`);
           await DNSLogService.endQuery(true, result, 'native');
-          console.log(`✅ Native transport test successful: ${result}`);
+          console.log(`✅ Native transport test successful: ${result.substring(0, 100)}${result.length > 100 ? '...' : ''}`);
           return result;
           
         case 'udp':
