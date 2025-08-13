@@ -1,0 +1,52 @@
+{
+  "cli": {
+    "version": ">= 12.0.0"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "ios": {
+        "buildConfiguration": "Debug",
+        "simulator": true
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "ios": {
+        "buildConfiguration": "Release",
+        "simulator": false,
+        "includeDsym": true,
+        "generateSourcemaps": true
+      }
+    },
+    "production": {
+      "distribution": "store",
+      "ios": {
+        "buildConfiguration": "Release",
+        "simulator": false,
+        "includeDsym": true,
+        "generateSourcemaps": true,
+        "archiveHermesDsym": true,
+        "buildSettings": {
+          "DEBUG_INFORMATION_FORMAT": "dwarf-with-dsym",
+          "DEPLOYMENT_POSTPROCESSING": "YES",
+          "SEPARATE_STRIP": "YES",
+          "STRIP_INSTALLED_PRODUCT": "YES",
+          "COPY_PHASE_STRIP": "NO",
+          "DWARF_DSYM_FILE_NAME": "$(PRODUCT_NAME).app.dSYM",
+          "DWARF_DSYM_FOLDER_PATH": "$(BUILT_PRODUCTS_DIR)"
+        }
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "appleId": "mvneves75@gmail.com",
+        "ascAppId": "6740045336",
+        "appleTeamId": "N4BTRJM68S"
+      }
+    }
+  }
+}
