@@ -16,11 +16,57 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import org.xbill.DNS.*;
+
+// SYNC WITH iOS: DNS error types matching iOS DNSError enum
+class DNSError extends Exception {
+    public enum Type {
+        RESOLVER_FAILED,
+        QUERY_FAILED,
+        NO_RECORDS_FOUND,
+        TIMEOUT,
+        CANCELLED
+    }
+    
+    private final Type errorType;
+    
+    public DNSError(Type type, String message) {
+        super(formatErrorMessage(type, message));
+        this.errorType = type;
+    }
+    
+    public DNSError(Type type, String message, Throwable cause) {
+        super(formatErrorMessage(type, message), cause);
+        this.errorType = type;
+    }
+    
+    public Type getErrorType() {
+        return errorType;
+    }
+    
+    // SYNC WITH iOS: Match iOS error message format exactly
+    private static String formatErrorMessage(Type type, String message) {
+        switch (type) {
+            case RESOLVER_FAILED:
+                return "DNS resolver failed: " + message;
+            case QUERY_FAILED:
+                return "DNS query failed: " + message;
+            case NO_RECORDS_FOUND:
+                return "No TXT records found";
+            case TIMEOUT:
+                return "DNS query timed out";
+            case CANCELLED:
+                return "DNS query was cancelled";
+            default:
+                return "DNS error: " + message;
+        }
+    }
+}
 
 public class DNSResolver {
     private static final String TAG = "DNSResolver";
@@ -30,6 +76,9 @@ public class DNSResolver {
     
     private final Executor executor = Executors.newCachedThreadPool();
     private final ConnectivityManager connectivityManager;
+    
+    // SYNC WITH iOS: Track active queries to prevent duplicates (matches iOS @MainActor activeQueries)
+    private final ConcurrentHashMap<String, CompletableFuture<List<String>>> activeQueries = new ConcurrentHashMap<>();
 
     public DNSResolver(ConnectivityManager connectivityManager) {
         this.connectivityManager = connectivityManager;
@@ -49,23 +98,48 @@ public class DNSResolver {
     }
 
     public CompletableFuture<List<String>> queryTXT(String domain, String message) {
-        // Match dig semantics: send the original message unchanged (trim only)
-        final String originalMessage = message == null ? "" : message.trim();
+        // SYNC WITH iOS: Use sanitized message (spaces→dashes, lowercase, 200 char limit)
+        final String sanitizedMessage = sanitizeMessage(message);
+        
+        // SYNC WITH iOS: Create query ID for deduplication (matches iOS queryId format)
+        final String queryId = domain + "-" + sanitizedMessage;
+        
+        // SYNC WITH iOS: Check for existing query to prevent duplicates
+        CompletableFuture<List<String>> existingQuery = activeQueries.get(queryId);
+        if (existingQuery != null) {
+            return existingQuery;
+        }
 
+        // Create new query and store it in activeQueries (matches iOS behavior)
+        CompletableFuture<List<String>> newQuery = new CompletableFuture<>();
+        
+        // Store the query before starting (matches iOS pattern)
+        activeQueries.put(queryId, newQuery);
+        
         // Try raw UDP first (mirrors iOS and dig), then fallback to dnsjava legacy if needed
-        CompletableFuture<List<String>> result = new CompletableFuture<>();
-        queryTXTRawUDP(originalMessage)
-            .thenAccept(result::complete)
+        queryTXTRawUDP(sanitizedMessage)
+            .thenAccept(result -> {
+                // Clean up and complete (matches iOS cleanup pattern)
+                activeQueries.remove(queryId);
+                newQuery.complete(result);
+            })
             .exceptionally(err -> {
-                queryTXTLegacy(domain, originalMessage)
-                    .thenAccept(result::complete)
+                queryTXTLegacy(domain, sanitizedMessage)
+                    .thenAccept(result -> {
+                        // Clean up and complete (matches iOS cleanup pattern)
+                        activeQueries.remove(queryId);
+                        newQuery.complete(result);
+                    })
                     .exceptionally(err2 -> {
-                        result.completeExceptionally(err2);
+                        // Clean up on error (matches iOS cleanup pattern)
+                        activeQueries.remove(queryId);
+                        newQuery.completeExceptionally(err2);
                         return null;
                     });
                 return null;
             });
-        return result;
+        
+        return newQuery;
     }
 
     @androidx.annotation.RequiresApi(api = Build.VERSION_CODES.Q)
@@ -141,7 +215,7 @@ public class DNSResolver {
                 Record[] records = lookup.run();
                 
                 if (records == null || records.length == 0) {
-                    throw new Exception("No TXT records found");
+                    throw new DNSError(DNSError.Type.NO_RECORDS_FOUND, "");
                 }
 
                 List<String> txtRecords = new ArrayList<>();
@@ -156,14 +230,17 @@ public class DNSResolver {
                 }
 
                 if (txtRecords.isEmpty()) {
-                    throw new Exception("No valid TXT records found");
+                    throw new DNSError(DNSError.Type.NO_RECORDS_FOUND, "");
                 }
 
                 return txtRecords;
 
             } catch (Exception e) {
                 Log.e(TAG, "DNS query failed", e);
-                throw new RuntimeException(e);
+                if (e instanceof DNSError) {
+                    throw new RuntimeException(e);
+                }
+                throw new RuntimeException(new DNSError(DNSError.Type.QUERY_FAILED, e.getMessage(), e));
             }
         }, executor);
     }
@@ -198,11 +275,14 @@ public class DNSResolver {
 
                 List<String> txtRecords = parseDnsTxtResponse(response);
                 if (txtRecords.isEmpty()) {
-                    throw new RuntimeException("No TXT records found");
+                    throw new RuntimeException(new DNSError(DNSError.Type.NO_RECORDS_FOUND, ""));
                 }
                 return txtRecords;
             } catch (Exception e) {
-                throw new RuntimeException(e);
+                if (e.getCause() instanceof DNSError) {
+                    throw new RuntimeException(e.getCause());
+                }
+                throw new RuntimeException(new DNSError(DNSError.Type.QUERY_FAILED, e.getMessage(), e));
             } finally {
                 if (socket != null) {
                     socket.close();
@@ -360,9 +440,22 @@ public class DNSResolver {
     }
 
     private String sanitizeMessage(String message) {
-        // Preserve original content; only trim and cap length
+        // SYNC WITH iOS: Match iOS sanitization exactly
+        // iOS: message.trimmingCharacters().prefix(200).replacingOccurrences(" ", "-").lowercased()
         String trimmed = message == null ? "" : message.trim();
-        return trimmed.length() > 200 ? trimmed.substring(0, 200) : trimmed;
+        
+        // Apply 200 character limit (prefix equivalent)
+        if (trimmed.length() > 200) {
+            trimmed = trimmed.substring(0, 200);
+        }
+        
+        // Replace spaces with dashes (match iOS behavior)
+        trimmed = trimmed.replace(" ", "-");
+        
+        // Convert to lowercase (match iOS behavior)
+        trimmed = trimmed.toLowerCase();
+        
+        return trimmed;
     }
 
     public static class DNSCapabilities {
