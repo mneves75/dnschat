@@ -80,6 +80,9 @@ final class DNSResolver: NSObject {
     @available(iOS 12.0, *)
     private func performNetworkFrameworkQuery(domain: String, message: String) async throws -> [String] {
         return try await withCheckedThrowingContinuation { continuation in
+            // Thread-safe continuation wrapper to prevent double resume
+            let continuationWrapper = ContinuationWrapper(continuation: continuation)
+            
             // Create endpoint for DNS server
             let endpoint = NWEndpoint.hostPort(
                 host: NWEndpoint.Host(Self.dnsServer),
@@ -101,38 +104,38 @@ final class DNSResolver: NSObject {
                     // Send DNS query
                     connection.send(content: queryData, completion: .contentProcessed { error in
                         if let error = error {
-                            continuation.resume(throwing: DNSError.queryFailed(error.localizedDescription))
+                            continuationWrapper.resume(throwing: DNSError.queryFailed(error.localizedDescription))
                             return
                         }
                         
                         // Wait for response
                         connection.receive(minimumIncompleteLength: 1, maximumLength: 512) { data, _, isComplete, error in
-                            connection.cancel()
+                            defer { connection.cancel() }
                             
                             if let error = error {
-                                continuation.resume(throwing: DNSError.queryFailed(error.localizedDescription))
+                                continuationWrapper.resume(throwing: DNSError.queryFailed(error.localizedDescription))
                                 return
                             }
                             
                             guard let responseData = data else {
-                                continuation.resume(throwing: DNSError.noRecordsFound)
+                                continuationWrapper.resume(throwing: DNSError.noRecordsFound)
                                 return
                             }
                             
                             do {
                                 let txtRecords = try self.parseDNSResponse(responseData)
-                                continuation.resume(returning: txtRecords)
+                                continuationWrapper.resume(returning: txtRecords)
                             } catch {
-                                continuation.resume(throwing: error)
+                                continuationWrapper.resume(throwing: error)
                             }
                         }
                     })
                     
                 case .failed(let error):
-                    continuation.resume(throwing: DNSError.resolverFailed(error.localizedDescription))
+                    continuationWrapper.resume(throwing: DNSError.resolverFailed(error.localizedDescription))
                     
                 case .cancelled:
-                    continuation.resume(throwing: DNSError.cancelled)
+                    continuationWrapper.resume(throwing: DNSError.cancelled)
                     
                 default:
                     break
@@ -321,6 +324,34 @@ private func withTimeout<T>(
         let result = try await group.next()!
         group.cancelAll()
         return result
+    }
+}
+
+// MARK: - Thread-Safe Continuation Wrapper
+
+private final class ContinuationWrapper<T> {
+    private let continuation: CheckedContinuation<T, Error>
+    private var isResumed = false
+    private let queue = DispatchQueue(label: "continuation.wrapper", attributes: .concurrent)
+    
+    init(continuation: CheckedContinuation<T, Error>) {
+        self.continuation = continuation
+    }
+    
+    func resume(returning value: T) {
+        queue.async(flags: .barrier) {
+            guard !self.isResumed else { return }
+            self.isResumed = true
+            self.continuation.resume(returning: value)
+        }
+    }
+    
+    func resume(throwing error: Error) {
+        queue.async(flags: .barrier) {
+            guard !self.isResumed else { return }
+            self.isResumed = true
+            self.continuation.resume(throwing: error)
+        }
     }
 }
 
