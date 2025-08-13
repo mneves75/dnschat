@@ -71,12 +71,12 @@ export function Logs() {
     );
   };
 
-  const renderLogEntry = (entry: DNSLogEntry) => {
+  const renderLogEntry = (entry: DNSLogEntry, parentId?: string) => {
     const statusIcon = DNSLogService.getStatusIcon(entry.status);
     const methodColor = DNSLogService.getMethodColor(entry.method);
 
     return (
-      <View key={entry.id} style={styles.logEntry}>
+      <View key={`${parentId}-${entry.id}`} style={styles.logEntry}>
         <View style={styles.entryHeader}>
           <Text style={styles.entryIcon}>{statusIcon}</Text>
           <View style={[styles.methodBadge, { backgroundColor: methodColor + '20' }]}>
@@ -174,7 +174,7 @@ export function Logs() {
 
             <Text style={[styles.sectionTitle, { color: colors.text }]}>Query Steps:</Text>
             <ScrollView style={styles.entriesScroll} nestedScrollEnabled>
-              {item.entries.map(renderLogEntry)}
+              {item.entries.map((entry, index) => renderLogEntry(entry, item.id))}
             </ScrollView>
           </View>
         )}

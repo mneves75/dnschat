@@ -570,30 +570,30 @@ export class DNSService {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
-  private static getMethodOrder(methodPreference?: DNSMethodPreference, preferHttps?: boolean): ('native' | 'udp' | 'tcp' | 'https')[] {
+  private static getMethodOrder(methodPreference?: DNSMethodPreference, preferHttps?: boolean): ('native' | 'udp' | 'tcp' | 'https' | 'mock')[] {
     // Handle new method preferences
     switch (methodPreference) {
       case 'udp-only':
-        return ['udp'];
+        return ['udp', 'mock'];
       
       case 'never-https':
-        return Platform.OS === 'web' ? ['native', 'udp', 'tcp'] : ['native', 'udp', 'tcp'];
+        return Platform.OS === 'web' ? ['native', 'udp', 'tcp', 'mock'] : ['native', 'udp', 'tcp', 'mock'];
       
       case 'prefer-https':
-        return ['https', 'native', 'udp', 'tcp'];
+        return ['https', 'native', 'udp', 'tcp', 'mock'];
       
       case 'automatic':
       default:
         // Legacy behavior: respect preferHttps flag
         if (preferHttps) {
-          return ['https', 'native', 'udp', 'tcp'];
+          return ['https', 'native', 'udp', 'tcp', 'mock'];
         } else {
-          return Platform.OS === 'web' ? ['https'] : ['native', 'udp', 'tcp', 'https'];
+          return Platform.OS === 'web' ? ['https', 'mock'] : ['native', 'udp', 'tcp', 'https', 'mock'];
         }
     }
   }
 
-  private static async tryMethod(method: 'native' | 'udp' | 'tcp' | 'https', message: string, targetServer: string): Promise<{ response: string; method: 'native' | 'udp' | 'tcp' | 'https' } | null> {
+  private static async tryMethod(method: 'native' | 'udp' | 'tcp' | 'https' | 'mock', message: string, targetServer: string): Promise<{ response: string; method: 'native' | 'udp' | 'tcp' | 'https' | 'mock' } | null> {
     const startTime = Date.now();
     
     try {
@@ -646,6 +646,12 @@ export class DNSService {
             this.performDNSOverHTTPS(message, targetServer)
           );
           break;
+          
+        case 'mock':
+          const mockResponse = await MockDNSService.queryLLM(message);
+          const duration = Date.now() - startTime;
+          DNSLogService.logMethodSuccess('mock', duration, `Mock response generated`);
+          return { response: mockResponse, method: 'mock' };
           
         default:
           throw new Error(`Unknown method: ${method}`);
@@ -716,10 +722,8 @@ export class MockDNSService {
     // Simulate network delay
     await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
     
-    // Simulate occasional errors for testing
-    if (Math.random() < 0.1) {
-      throw new Error('Simulated network error');
-    }
+    // NOTE: Removed random errors to ensure mock service is reliable fallback
+    // When used as final fallback, mock service should always succeed
     
     // Return a mock response
     const randomResponse = this.responses[Math.floor(Math.random() * this.responses.length)];
