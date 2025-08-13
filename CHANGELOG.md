@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.7.0] - 2025-08-13
+
+### Added
+- **🎯 Innovative Onboarding Experience**: Complete interactive onboarding flow with DNS demonstrations and feature showcases
+- **⚙️ Advanced DNS Method Preferences**: Four new DNS method options for fine-grained control:
+  - `Automatic`: Balanced fallback chain (default)
+  - `Prefer HTTPS`: Privacy-focused with DNS-over-HTTPS first  
+  - `UDP Only`: Fast direct UDP queries only
+  - `Never HTTPS`: Native and UDP/TCP methods only
+- **📱 Scrollable Settings Interface**: Enhanced settings screen with improved navigation and keyboard handling
+- **🔄 Onboarding Reset Feature**: Developer option to reset and replay the onboarding experience
+- **🏗️ Structured DNS Fallback Logic**: Completely rewritten DNS service with method-specific fallback chains
+
+### Fixed
+- **🐛 DNS Fallback Chain Compliance**: DNS method preferences now fully respected throughout entire fallback chain
+- **📊 Logs Screen Text Rendering**: Fixed React Native error "Text strings must be rendered within a <Text> component"
+- **⚡ DNS Service Error Handling**: Enhanced null checks and fallback values for undefined DNS log entries
+- **🔧 DNS Method Selection**: Improved conditional logic for UDP-only and never-HTTPS preferences
+
+### Changed
+- **📋 Settings UI Architecture**: Migrated to radio button interface for DNS method selection
+- **🎨 Visual Method Indicators**: Real-time configuration display with method-specific colors and icons
+- **📡 DNS Query Parameters**: Extended DNSService.queryLLM() signature to support new method preferences
+- **💾 Settings Storage**: Enhanced AsyncStorage structure to persist DNS method preferences
+
+### Technical Improvements
+- **TypeScript Enhancements**: Added DNSMethodPreference type with strict enum validation
+- **Component Architecture**: Refactored Settings component with ScrollView and improved state management
+- **Context Updates**: Extended SettingsContext and ChatContext for new DNS preferences
+- **Error Recovery**: Robust undefined value handling in DNS logging service methods
+
 ## [1.6.1] - 2025-08-11
 
 ### Fixed

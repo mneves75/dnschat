@@ -81,17 +81,17 @@ export function Logs() {
           <Text style={styles.entryIcon}>{statusIcon}</Text>
           <View style={[styles.methodBadge, { backgroundColor: methodColor + '20' }]}>
             <Text style={[styles.methodText, { color: methodColor }]}>
-              {entry.method.toUpperCase()}
+              {entry.method?.toUpperCase() || 'UNKNOWN'}
             </Text>
           </View>
-          {entry.duration && (
+          {entry.duration !== undefined && (
             <Text style={[styles.duration, { color: colors.text + '80' }]}>
               {DNSLogService.formatDuration(entry.duration)}
             </Text>
           )}
         </View>
         <Text style={[styles.entryMessage, { color: colors.text }]}>
-          {entry.message}
+          {entry.message || 'No message'}
         </Text>
         {entry.details && (
           <Text style={[styles.entryDetails, { color: colors.text + '80' }]}>
@@ -129,7 +129,7 @@ export function Logs() {
         <View style={styles.logHeader}>
           <View style={styles.logHeaderLeft}>
             <Text style={[styles.queryText, { color: colors.text }]} numberOfLines={1}>
-              {item.query}
+              {item.query || 'No query'}
             </Text>
             <View style={styles.logMeta}>
               <Text style={[styles.timestamp, { color: colors.text + '80' }]}>
@@ -138,11 +138,11 @@ export function Logs() {
               {item.finalMethod && (
                 <View style={[styles.methodBadge, { backgroundColor: DNSLogService.getMethodColor(item.finalMethod) + '20' }]}>
                   <Text style={[styles.methodText, { color: DNSLogService.getMethodColor(item.finalMethod) }]}>
-                    {item.finalMethod.toUpperCase()}
+                    {item.finalMethod?.toUpperCase() || 'UNKNOWN'}
                   </Text>
                 </View>
               )}
-              {item.totalDuration && (
+              {item.totalDuration !== undefined && (
                 <Text style={[styles.duration, { color: colors.text + '80' }]}>
                   {DNSLogService.formatDuration(item.totalDuration)}
                 </Text>
@@ -167,7 +167,7 @@ export function Logs() {
               <View style={styles.responseSection}>
                 <Text style={[styles.sectionTitle, { color: colors.text }]}>Response:</Text>
                 <Text style={[styles.responseText, { color: colors.text + 'CC' }]} numberOfLines={3}>
-                  {item.response}
+                  {item.response || 'No response'}
                 </Text>
               </View>
             )}
