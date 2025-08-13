@@ -13,6 +13,55 @@ export function Settings() {
   const [tempPreferHttps, setTempPreferHttps] = useState(preferDnsOverHttps);
   const [tempMethodPreference, setTempMethodPreference] = useState<DNSMethodPreference>(dnsMethodPreference);
   const [saving, setSaving] = useState(false);
+  
+  // Transport test state
+  const [testMessage, setTestMessage] = useState('ping');
+  const [testRunning, setTestRunning] = useState(false);
+  const [lastTestResult, setLastTestResult] = useState<string | null>(null);
+  const [lastTestError, setLastTestError] = useState<string | null>(null);
+
+  // Auto-save handlers
+  const handleSelectMethodPreference = async (preference: DNSMethodPreference) => {
+    if (loading) return;
+    try {
+      setTempMethodPreference(preference);
+      setSaving(true);
+      await updateDnsMethodPreference(preference);
+      console.log('✅ DNS method preference saved:', preference);
+    } catch (e: any) {
+      console.log('❌ Failed to save DNS method preference:', e?.message || e);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleTogglePreferHttps = async (value: boolean) => {
+    if (loading) return;
+    try {
+      setTempPreferHttps(value);
+      setSaving(true);
+      await updatePreferDnsOverHttps(value);
+      console.log('✅ Prefer HTTPS (legacy) saved:', value);
+    } catch (e: any) {
+      console.log('❌ Failed to save Prefer HTTPS (legacy):', e?.message || e);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDnsServerEndEditing = async () => {
+    if (loading) return;
+    try {
+      setSaving(true);
+      await updateDnsServer(tempDnsServer);
+      console.log('✅ DNS server saved on blur:', tempDnsServer);
+    } catch (e: any) {
+      console.log('❌ Failed to save DNS server:', e?.message || e);
+      Alert.alert('Save Failed', 'Could not save DNS server.');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   // Sync temp state with context values when they change
   React.useEffect(() => {
@@ -78,6 +127,60 @@ export function Settings() {
     );
   };
 
+  // Transport test handlers
+  const handleTestSelectedPreference = async () => {
+    if (testRunning) return;
+    
+    try {
+      setTestRunning(true);
+      setLastTestResult(null);
+      setLastTestError(null);
+      
+      console.log('🧪 Testing with selected preference:', {
+        dnsServer: tempDnsServer,
+        preferHttps: tempPreferHttps,
+        methodPreference: tempMethodPreference,
+        testMessage
+      });
+      
+      const { DNSService } = await import('../../services/dnsService');
+      const response = await DNSService.queryLLM(testMessage, tempDnsServer, tempPreferHttps, tempMethodPreference);
+      
+      setLastTestResult(response);
+      console.log('✅ Test with selected preference successful:', response);
+    } catch (error: any) {
+      const errorMessage = error.message || 'Unknown error occurred';
+      setLastTestError(errorMessage);
+      console.log('❌ Test with selected preference failed:', errorMessage);
+    } finally {
+      setTestRunning(false);
+    }
+  };
+
+  const handleForceTransport = async (transport: 'native' | 'udp' | 'tcp' | 'https') => {
+    if (testRunning) return;
+    
+    try {
+      setTestRunning(true);
+      setLastTestResult(null);
+      setLastTestError(null);
+      
+      console.log(`🧪 Forcing ${transport.toUpperCase()} transport test`);
+      
+      const { DNSService } = await import('../../services/dnsService');
+      const response = await DNSService.testTransport(testMessage, transport, tempDnsServer);
+      
+      setLastTestResult(response);
+      console.log(`✅ ${transport.toUpperCase()} transport test successful:`, response);
+    } catch (error: any) {
+      const errorMessage = error.message || 'Unknown error occurred';
+      setLastTestError(errorMessage);
+      console.log(`❌ ${transport.toUpperCase()} transport test failed:`, errorMessage);
+    } finally {
+      setTestRunning(false);
+    }
+  };
+
   const isDirty = tempDnsServer !== dnsServer || tempPreferHttps !== preferDnsOverHttps || tempMethodPreference !== dnsMethodPreference;
   const isValidServer = tempDnsServer.trim().length > 0;
 
@@ -114,6 +217,7 @@ export function Settings() {
             ]}
             value={tempDnsServer}
             onChangeText={setTempDnsServer}
+            onEndEditing={handleDnsServerEndEditing}
             placeholder="ch.at"
             placeholderTextColor={colors.text + '60'}
             autoCapitalize="none"
@@ -123,7 +227,7 @@ export function Settings() {
             editable={!loading}
           />
           
-          <Text style={[styles.hint, { color: colors.text + '80' }]}>
+          <Text style={[styles.hint, { color: colors.text + '80' }]}> 
             Default: ch.at
           </Text>
         </View>
@@ -153,8 +257,8 @@ export function Settings() {
                     borderColor: tempMethodPreference === option.key ? '#007AFF' : colors.border
                   }
                 ]}
-                onPress={() => setTempMethodPreference(option.key as DNSMethodPreference)}
-                disabled={loading}
+                onPress={() => handleSelectMethodPreference(option.key as DNSMethodPreference)}
+                disabled={loading || saving}
               >
                 <View style={styles.methodInfo}>
                   <View style={styles.methodHeader}>
@@ -182,44 +286,158 @@ export function Settings() {
           </View>
           
           {/* Legacy switch for backward compatibility */}
-          <View style={[styles.switchRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={[styles.switchRow, { backgroundColor: colors.card, borderColor: colors.border }]}> 
             <View style={styles.switchInfo}>
-              <Text style={[styles.switchLabel, { color: colors.text }]}>
+              <Text style={[styles.switchLabel, { color: colors.text }]}> 
                 Prefer DNS-over-HTTPS (Legacy)
               </Text>
-              <Text style={[styles.switchDescription, { color: colors.text + '80' }]}>
+              <Text style={[styles.switchDescription, { color: colors.text + '80' }]}> 
                 Uses Cloudflare's secure DNS service
               </Text>
             </View>
             <Switch
               value={tempPreferHttps}
-              onValueChange={setTempPreferHttps}
+              onValueChange={handleTogglePreferHttps}
               trackColor={{ false: colors.border, true: '#007AFF' }}
               thumbColor={tempPreferHttps ? '#FFFFFF' : '#F4F3F4'}
               ios_backgroundColor={colors.border}
-              disabled={loading}
+              disabled={loading || saving}
             />
           </View>
         </View>
 
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}> 
+            Transport Test
+          </Text>
+          <Text style={[styles.description, { color: colors.text }]}> 
+            Send a test message using the selected preference or force a specific transport method. All tests are logged for debugging.
+          </Text>
+          
+          <Text style={[styles.label, { color: colors.text }]}> 
+            Test Message
+          </Text>
+          <TextInput
+            style={[
+              styles.input, 
+              { 
+                borderColor: colors.border, 
+                color: colors.text,
+                backgroundColor: colors.card
+              }
+            ]}
+            value={testMessage}
+            onChangeText={setTestMessage}
+            placeholder="ping"
+            placeholderTextColor={colors.text + '60'}
+            autoCapitalize="none"
+            autoCorrect={false}
+            editable={!testRunning}
+          />
+          
+          <TouchableOpacity
+            style={[
+              styles.testButton,
+              { 
+                backgroundColor: testRunning ? colors.border : '#007AFF',
+                opacity: testRunning ? 0.6 : 1
+              }
+            ]}
+            onPress={handleTestSelectedPreference}
+            disabled={testRunning || !testMessage.trim()}
+          >
+            <Text style={[styles.testButtonText, { color: '#FFFFFF' }]}> 
+              {testRunning ? 'Testing...' : 'Test Selected Preference'}
+            </Text>
+          </TouchableOpacity>
+          
+          <Text style={[styles.label, { color: colors.text, marginTop: 20 }]}> 
+            Force Specific Transport
+          </Text>
+          <View style={styles.transportButtons}>
+            {[
+              { key: 'native', label: 'Native' },
+              { key: 'udp', label: 'UDP' },
+              { key: 'tcp', label: 'TCP' },
+              { key: 'https', label: 'HTTPS' }
+            ].map((transport) => (
+              <TouchableOpacity
+                key={transport.key}
+                style={[
+                  styles.transportButton,
+                  { 
+                    backgroundColor: testRunning ? colors.border : colors.card,
+                    borderColor: colors.border,
+                    opacity: testRunning ? 0.6 : 1
+                  }
+                ]}
+                onPress={() => handleForceTransport(transport.key as 'native' | 'udp' | 'tcp' | 'https')}
+                disabled={testRunning}
+              >
+                <Text style={[styles.transportButtonText, { color: colors.text }]}> 
+                  {transport.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          
+          <TouchableOpacity
+            style={[
+              styles.logsButton,
+              { 
+                borderColor: colors.text + '40',
+                backgroundColor: colors.card
+              }
+            ]}
+            onPress={() => (navigation as any)?.navigate?.('Logs')}
+            disabled={testRunning}
+          >
+            <Text style={[styles.logsButtonText, { color: colors.text }]}> 
+              View Logs
+            </Text>
+          </TouchableOpacity>
+          
+          {lastTestResult && (
+            <View style={[styles.resultBox, { backgroundColor: '#4CAF5020', borderColor: '#4CAF50' }]}> 
+              <Text style={[styles.resultLabel, { color: '#4CAF50' }]}> 
+                Last Test Result:
+              </Text>
+              <Text style={[styles.resultText, { color: colors.text }]}> 
+                {lastTestResult}
+              </Text>
+            </View>
+          )}
+          
+          {lastTestError && (
+            <View style={[styles.resultBox, { backgroundColor: '#F4433620', borderColor: '#F44336' }]}> 
+              <Text style={[styles.resultLabel, { color: '#F44336' }]}> 
+                Last Test Error:
+              </Text>
+              <Text style={[styles.resultText, { color: colors.text }]}> 
+                {lastTestError}
+              </Text>
+            </View>
+          )}
+        </View>
+
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}> 
             Current Configuration
           </Text>
-          <View style={[styles.infoBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={[styles.infoBox, { backgroundColor: colors.card, borderColor: colors.border }]}> 
             <View style={{ marginBottom: 12 }}>
-              <Text style={[styles.infoLabel, { color: colors.text + '80' }]}>
+              <Text style={[styles.infoLabel, { color: colors.text + '80' }]}> 
                 Active DNS Server:
               </Text>
-              <Text style={[styles.infoValue, { color: colors.text }]}>
+              <Text style={[styles.infoValue, { color: colors.text }]}> 
                 {dnsServer}
               </Text>
             </View>
             <View>
-              <Text style={[styles.infoLabel, { color: colors.text + '80' }]}>
+              <Text style={[styles.infoLabel, { color: colors.text + '80' }]}> 
                 DNS Method:
               </Text>
-              <Text style={[styles.infoValue, { color: colors.text }]}>
+              <Text style={[styles.infoValue, { color: colors.text }]}> 
                 {dnsMethodPreference === 'prefer-https' ? 'DNS-over-HTTPS (Preferred)' :
                  dnsMethodPreference === 'udp-only' ? 'UDP Only' :
                  dnsMethodPreference === 'never-https' ? 'Native/UDP/TCP Only' :
@@ -230,7 +448,7 @@ export function Settings() {
         </View>
 
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}> 
             Development
           </Text>
           <TouchableOpacity
@@ -242,10 +460,10 @@ export function Settings() {
             disabled={saving || loading}
           >
             <View>
-              <Text style={[styles.devButtonTitle, { color: colors.text }]}>
+              <Text style={[styles.devButtonTitle, { color: colors.text }]}> 
                 Reset Onboarding
               </Text>
-              <Text style={[styles.devButtonDescription, { color: colors.text + '80' }]}>
+              <Text style={[styles.devButtonDescription, { color: colors.text + '80' }]}> 
                 Show the onboarding flow again
               </Text>
             </View>
@@ -261,7 +479,7 @@ export function Settings() {
             onPress={handleReset}
             disabled={saving || loading}
           >
-            <Text style={[styles.resetButtonText, { color: colors.text }]}>
+            <Text style={[styles.resetButtonText, { color: colors.text }]}> 
               Reset to Default
             </Text>
           </TouchableOpacity>
@@ -280,7 +498,7 @@ export function Settings() {
             <Text style={[
               styles.saveButtonText, 
               { color: isDirty && isValidServer ? '#FFFFFF' : colors.text }
-            ]}>
+            ]}> 
               {saving ? 'Saving...' : 'Save Changes'}
             </Text>
           </TouchableOpacity>
@@ -443,6 +661,59 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   devButtonDescription: {
+    fontSize: 14,
+    lineHeight: 18,
+  },
+  testButton: {
+    borderRadius: 8,
+    padding: 16,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  testButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  transportButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginTop: 10,
+    marginBottom: 10,
+  },
+  transportButton: {
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 12,
+    alignItems: 'center',
+    minWidth: 60,
+  },
+  transportButtonText: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  logsButton: {
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 16,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  logsButtonText: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  resultBox: {
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 12,
+    marginTop: 10,
+  },
+  resultLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginBottom: 4,
+  },
+  resultText: {
     fontSize: 14,
     lineHeight: 18,
   },

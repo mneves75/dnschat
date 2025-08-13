@@ -397,7 +397,7 @@ export class DNSService {
     
     try {
       // Option 1: Try using DNS-over-HTTPS with Cloudflare to query the specified DNS server
-      const encodedQuery = this.createDNSQuery(message, dnsServer);
+      const encodedQuery = this.createDNSQuery(message);
       // Convert to base64 - handle both Buffer and Uint8Array
       let base64Query: string;
       if (Buffer && Buffer.isBuffer(encodedQuery)) {
@@ -462,7 +462,7 @@ export class DNSService {
     }
   }
   
-  private static createDNSQuery(message: string, dnsServer?: string): Uint8Array {
+  private static createDNSQuery(message: string): Uint8Array {
     // Sanitize the message for DNS query - remove special characters
     const sanitizedMessage = message
       .trim()
@@ -649,8 +649,8 @@ export class DNSService {
           
         case 'mock':
           const mockResponse = await MockDNSService.queryLLM(message);
-          const duration = Date.now() - startTime;
-          DNSLogService.logMethodSuccess('mock', duration, `Mock response generated`);
+          const mockDuration = Date.now() - startTime;
+          DNSLogService.logMethodSuccess('mock', mockDuration, `Mock response generated`);
           return { response: mockResponse, method: 'mock' };
           
         default:
@@ -704,6 +704,107 @@ export class DNSService {
       if (error instanceof Error && error.name === 'AbortError') {
         throw new Error('DNS query timed out');
       }
+      throw error;
+    }
+  }
+
+  /**
+   * Test a specific DNS transport method with no fallback
+   * Used for testing individual transport methods in isolation
+   */
+  static async testTransport(
+    message: string, 
+    transport: 'native' | 'udp' | 'tcp' | 'https',
+    dnsServer?: string
+  ): Promise<string> {
+    console.log(`🧪 Starting forced transport test: ${transport.toUpperCase()}`);
+    
+    if (!message.trim()) {
+      throw new Error('Test message cannot be empty');
+    }
+
+    // Check rate limit
+    if (!this.checkRateLimit()) {
+      throw new Error('Rate limit exceeded. Please wait before making another request.');
+    }
+
+    // Use provided DNS server or fallback to default
+    const targetServer = dnsServer || this.DEFAULT_DNS_SERVER;
+    
+    // Sanitize the message for DNS query
+    const sanitizedMessage = this.sanitizeMessage(message);
+    
+    // Start logging the query
+    const queryId = DNSLogService.startQuery(message);
+    
+    const startTime = Date.now();
+    
+    try {
+      console.log(`🔧 Testing ${transport.toUpperCase()} transport to ${targetServer}`);
+      DNSLogService.logMethodAttempt(transport, `FORCED test (no fallback) - Server: ${targetServer}`);
+      
+      let txtRecords: string[];
+      
+      switch (transport) {
+        case 'native':
+          const result = await this.handleBackgroundSuspension(async () => {
+            const capabilities = await nativeDNS.isAvailable();
+            
+            if (capabilities.available && capabilities.supportsCustomServer) {
+              const records = await nativeDNS.queryTXT(targetServer, sanitizedMessage);
+              return nativeDNS.parseMultiPartResponse(records);
+            }
+            throw new Error('Native DNS not available');
+          });
+          
+          const nativeDuration = Date.now() - startTime;
+          DNSLogService.logMethodSuccess('native', nativeDuration, `Forced test response received`);
+          await DNSLogService.endQuery(true, result, 'native');
+          console.log(`✅ Native transport test successful: ${result}`);
+          return result;
+          
+        case 'udp':
+          if (Platform.OS === 'web' || !dgram) {
+            throw new Error('UDP not available on this platform');
+          }
+          
+          txtRecords = await this.handleBackgroundSuspension(() => 
+            this.performNativeUDPQuery(sanitizedMessage, targetServer)
+          );
+          break;
+          
+        case 'tcp':
+          if (Platform.OS === 'web' || !TcpSocket) {
+            throw new Error('TCP Socket not available on this platform');
+          }
+          
+          txtRecords = await this.handleBackgroundSuspension(() => 
+            this.performDNSOverTCP(sanitizedMessage, targetServer)
+          );
+          break;
+          
+        case 'https':
+          txtRecords = await this.handleBackgroundSuspension(() => 
+            this.performDNSOverHTTPS(sanitizedMessage, targetServer)
+          );
+          break;
+          
+        default:
+          throw new Error(`Unknown transport method: ${transport}`);
+      }
+      
+      const response = this.parseResponse(txtRecords);
+      const duration = Date.now() - startTime;
+      DNSLogService.logMethodSuccess(transport, duration, `Forced test response received`);
+      await DNSLogService.endQuery(true, response, transport);
+      console.log(`✅ ${transport.toUpperCase()} transport test successful: ${response}`);
+      return response;
+      
+    } catch (error: any) {
+      const duration = Date.now() - startTime;
+      console.log(`❌ ${transport.toUpperCase()} transport test failed:`, error.message);
+      DNSLogService.logMethodFailure(transport, error.message, duration);
+      await DNSLogService.endQuery(false, undefined, transport);
       throw error;
     }
   }
