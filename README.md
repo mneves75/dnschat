@@ -1,8 +1,8 @@
-# DNSChat v1.6.1 🚀
+# DNSChat v1.7.0 🚀
 
-**Native DNS Implementation with Critical Bug Fixes - PRODUCTION READY**
+**Advanced DNS Preferences & Interactive Onboarding - FEATURE-RICH RELEASE**
 
-A React Native mobile application that provides a modern, ChatGPT-like chat interface using DNS TXT queries to communicate with an LLM. **Now with fully functional native DNS implementation, configurable server settings, and critical VirtualizedList bug fixes!**
+A React Native mobile application that provides a modern, ChatGPT-like chat interface using DNS TXT queries to communicate with an LLM. **Now featuring innovative onboarding experience, advanced DNS method preferences, and enhanced settings interface!**
 
 ## 💡  Inspiration and Acknowledgements
 
@@ -12,6 +12,21 @@ A React Native mobile application that provides a modern, ChatGPT-like chat inte
 
 ## ✨ Features
 
+### 🎯 **NEW in v1.7.0: Interactive Onboarding & Advanced DNS Preferences**
+- **🌟 Innovative Onboarding Experience**: Complete guided tour of DNS Chat features
+  - **Interactive DNS Demonstrations**: Live DNS query examples with real-time feedback
+  - **Feature Showcases**: Step-by-step introduction to chat, logs, and settings
+  - **Onboarding Reset**: Developer option to replay the experience anytime
+- **⚙️ Advanced DNS Method Preferences**: Four powerful options for DNS query control
+  - **`Automatic`**: Intelligent fallback chain (Native → UDP → TCP → HTTPS)
+  - **`Prefer HTTPS`**: Privacy-focused with DNS-over-HTTPS prioritized
+  - **`UDP Only`**: Maximum speed with direct UDP queries only
+  - **`Never HTTPS`**: Native and traditional DNS methods only (no cloud services)
+- **📱 Enhanced Settings Interface**: Scrollable settings with radio button method selection
+  - **Real-time Configuration Display**: Live preview of current DNS method and server
+  - **Improved Keyboard Handling**: Seamless input experience across all form fields
+
+### 🏗️ **Core DNS Implementation**
 - **✅ Native DNS Implementation**: Direct UDP DNS queries using platform-native APIs
   - **iOS**: Complete Swift implementation using Apple Network Framework  
   - **Android**: Comprehensive fallback system with UDP/TCP/HTTPS layers
@@ -37,10 +52,11 @@ A React Native mobile application that provides a modern, ChatGPT-like chat inte
 - **Language**: TypeScript with strict mode
 - **Navigation**: React Navigation v7 (Native Stack + Bottom Tabs)
 - **Development**: Expo Development Build with Continuous Native Generation
-- **DNS Communication**: Native platform APIs + comprehensive fallback chain
+- **DNS Communication**: Native platform APIs + advanced method preferences
   - **iOS**: Network Framework (`nw_resolver_t`)
   - **Android**: DnsResolver API + dnsjava
-  - **Fallbacks**: UDP sockets → DNS-over-HTTPS → Mock service
+  - **Method Selection**: User-configurable DNS query methods (Automatic, Prefer HTTPS, UDP Only, Never HTTPS)
+  - **Fallbacks**: Smart fallback chains based on user preferences
 
 ## Architecture
 

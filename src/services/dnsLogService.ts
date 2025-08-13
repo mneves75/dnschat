@@ -238,14 +238,19 @@ export class DNSLogService {
     this.listeners.forEach(listener => listener(logs));
   }
 
-  static formatDuration(ms: number): string {
+  static formatDuration(ms: number | undefined): string {
+    if (ms === undefined || ms === null || isNaN(ms)) {
+      return '—';
+    }
     if (ms < 1000) {
       return `${ms}ms`;
     }
     return `${(ms / 1000).toFixed(2)}s`;
   }
 
-  static getMethodColor(method: DNSLogEntry['method']): string {
+  static getMethodColor(method: DNSLogEntry['method'] | undefined): string {
+    if (!method) return '#757575';
+    
     const colors = {
       native: '#4CAF50',
       udp: '#2196F3',
@@ -256,7 +261,9 @@ export class DNSLogService {
     return colors[method] || '#757575';
   }
 
-  static getStatusIcon(status: DNSLogEntry['status']): string {
+  static getStatusIcon(status: DNSLogEntry['status'] | undefined): string {
+    if (!status) return '•';
+    
     const icons = {
       attempt: '🔄',
       success: '✅',

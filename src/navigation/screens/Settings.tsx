@@ -1,17 +1,25 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, Switch } from 'react-native';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, Switch, ScrollView } from 'react-native';
 import { useTheme, useNavigation } from '@react-navigation/native';
-import { useSettings } from '../../context/SettingsContext';
+import { useSettings, DNSMethodPreference } from '../../context/SettingsContext';
 import { useOnboarding } from '../../context/OnboardingContext';
  
 export function Settings() {
   const { colors } = useTheme();
   const navigation = useNavigation();
-  const { dnsServer, updateDnsServer, preferDnsOverHttps, updatePreferDnsOverHttps, loading } = useSettings();
+  const { dnsServer, updateDnsServer, preferDnsOverHttps, updatePreferDnsOverHttps, dnsMethodPreference, updateDnsMethodPreference, loading } = useSettings();
   const { resetOnboarding } = useOnboarding();
   const [tempDnsServer, setTempDnsServer] = useState(dnsServer);
   const [tempPreferHttps, setTempPreferHttps] = useState(preferDnsOverHttps);
+  const [tempMethodPreference, setTempMethodPreference] = useState<DNSMethodPreference>(dnsMethodPreference);
   const [saving, setSaving] = useState(false);
+
+  // Sync temp state with context values when they change
+  React.useEffect(() => {
+    setTempDnsServer(dnsServer);
+    setTempPreferHttps(preferDnsOverHttps);
+    setTempMethodPreference(dnsMethodPreference);
+  }, [dnsServer, preferDnsOverHttps, dnsMethodPreference]);
 
   const handleSave = async () => {
     if (saving) return;
@@ -20,6 +28,7 @@ export function Settings() {
       setSaving(true);
       await updateDnsServer(tempDnsServer);
       await updatePreferDnsOverHttps(tempPreferHttps);
+      await updateDnsMethodPreference(tempMethodPreference);
       Alert.alert(
         'Settings Saved',
         'Settings have been updated successfully.',
@@ -44,6 +53,7 @@ export function Settings() {
           onPress: () => {
             setTempDnsServer('ch.at');
             setTempPreferHttps(false);
+            setTempMethodPreference('automatic');
           }
         }
       ]
@@ -68,7 +78,7 @@ export function Settings() {
     );
   };
 
-  const isDirty = tempDnsServer !== dnsServer || tempPreferHttps !== preferDnsOverHttps;
+  const isDirty = tempDnsServer !== dnsServer || tempPreferHttps !== preferDnsOverHttps || tempMethodPreference !== dnsMethodPreference;
   const isValidServer = tempDnsServer.trim().length > 0;
 
   return (
@@ -76,7 +86,12 @@ export function Settings() {
       style={[styles.container, { backgroundColor: colors.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <View style={styles.content}>
+      <ScrollView 
+        style={styles.scrollView} 
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>
             DNS Configuration
@@ -118,13 +133,59 @@ export function Settings() {
             DNS Method Preference
           </Text>
           <Text style={[styles.description, { color: colors.text }]}>
-            When enabled, DNS-over-HTTPS will be preferred over native DNS methods for enhanced privacy.
+            Choose how DNS queries are performed. Different methods offer various benefits for security, privacy, and network compatibility.
           </Text>
           
+          {/* New method preference picker */}
+          <View style={styles.methodContainer}>
+            {[
+              { key: 'automatic', label: 'Automatic', description: 'Balanced approach with fallback chain' },
+              { key: 'prefer-https', label: 'Prefer HTTPS', description: 'Privacy-focused with DNS-over-HTTPS first' },
+              { key: 'udp-only', label: 'UDP Only', description: 'Fast direct UDP queries only' },
+              { key: 'never-https', label: 'Never HTTPS', description: 'Native and UDP/TCP methods only' }
+            ].map((option) => (
+              <TouchableOpacity
+                key={option.key}
+                style={[
+                  styles.methodOption,
+                  { 
+                    backgroundColor: tempMethodPreference === option.key ? '#007AFF20' : colors.card,
+                    borderColor: tempMethodPreference === option.key ? '#007AFF' : colors.border
+                  }
+                ]}
+                onPress={() => setTempMethodPreference(option.key as DNSMethodPreference)}
+                disabled={loading}
+              >
+                <View style={styles.methodInfo}>
+                  <View style={styles.methodHeader}>
+                    <Text style={[styles.methodLabel, { color: colors.text }]}>
+                      {option.label}
+                    </Text>
+                    <View style={[
+                      styles.radioButton,
+                      { 
+                        borderColor: tempMethodPreference === option.key ? '#007AFF' : colors.border,
+                        backgroundColor: tempMethodPreference === option.key ? '#007AFF' : 'transparent'
+                      }
+                    ]}>
+                      {tempMethodPreference === option.key && (
+                        <View style={styles.radioButtonInner} />
+                      )}
+                    </View>
+                  </View>
+                  <Text style={[styles.methodDescription, { color: colors.text + '80' }]}>
+                    {option.description}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+          
+          {/* Legacy switch for backward compatibility */}
           <View style={[styles.switchRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <View style={styles.switchInfo}>
               <Text style={[styles.switchLabel, { color: colors.text }]}>
-                Prefer DNS-over-HTTPS
+                Prefer DNS-over-HTTPS (Legacy)
               </Text>
               <Text style={[styles.switchDescription, { color: colors.text + '80' }]}>
                 Uses Cloudflare's secure DNS service
@@ -159,7 +220,10 @@ export function Settings() {
                 DNS Method:
               </Text>
               <Text style={[styles.infoValue, { color: colors.text }]}>
-                {preferDnsOverHttps ? 'DNS-over-HTTPS (Cloudflare)' : 'Native DNS (UDP/TCP)'}
+                {dnsMethodPreference === 'prefer-https' ? 'DNS-over-HTTPS (Preferred)' :
+                 dnsMethodPreference === 'udp-only' ? 'UDP Only' :
+                 dnsMethodPreference === 'never-https' ? 'Native/UDP/TCP Only' :
+                 preferDnsOverHttps ? 'DNS-over-HTTPS (Legacy)' : 'Automatic Fallback'}
               </Text>
             </View>
           </View>
@@ -221,7 +285,7 @@ export function Settings() {
             </Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }
@@ -230,9 +294,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  content: {
+  scrollView: {
     flex: 1,
+  },
+  content: {
     padding: 20,
+    paddingBottom: 40,
   },
   section: {
     marginBottom: 30,
@@ -298,10 +365,50 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '500',
   },
+  methodContainer: {
+    marginBottom: 20,
+  },
+  methodOption: {
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 16,
+    marginBottom: 12,
+  },
+  methodInfo: {
+    flex: 1,
+  },
+  methodHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 6,
+  },
+  methodLabel: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  methodDescription: {
+    fontSize: 14,
+    lineHeight: 18,
+  },
+  radioButton: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  radioButtonInner: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#FFFFFF',
+  },
   buttonContainer: {
     flexDirection: 'row',
     gap: 12,
-    marginTop: 'auto',
+    marginTop: 20,
     paddingBottom: 20,
   },
   resetButton: {
