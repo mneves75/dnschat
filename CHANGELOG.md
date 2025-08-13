@@ -7,12 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.7.1] - 2025-08-13
+
 ### Fixed
+- **🚨 CRITICAL: Infinite Render Loop**: Fixed critical chat screen freeze causing iOS watchdog termination (0x8BADF00D)
+  - Resolved destructuring of `useSettings()` in ChatContext causing continuous re-renders
+  - Fixed infinite React Native hot reload bundle rebuilds
+  - Eliminated main thread blocking that triggered iOS 5-second timeout kills
+  - Prevented circular dependency between SettingsContext and ChatContext
 - **⚠️ MockDNSService Misuse**: Fixed inappropriate MockDNSService usage in onboarding screens
   - MockDNSService now disabled by default (users get real DNS behavior)
-  - Added `enableMockDNS` setting in Settings context (default: false)
+  - Added `enableMockDNS` setting in Settings context (default: false)  
   - Onboarding screens explicitly use real DNS methods only
   - DNS fallback chain now respects MockDNSService setting properly
+
+### Technical Improvements
+- **Performance Optimization**: Eliminated useCallback dependency issues causing infinite loops
+- **Context Architecture**: Improved React Context usage patterns to prevent render cycles
+- **Error Recovery**: Enhanced app stability and crash resistance
 
 ## [1.7.0] - 2025-08-13
 
