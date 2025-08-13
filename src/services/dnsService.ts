@@ -277,23 +277,47 @@ export class DNSService {
 
   private static async performDNSOverTCP(message: string, dnsServer: string): Promise<string[]> {
     return new Promise((resolve, reject) => {
+      console.log('🔧 TCP: Starting DNS-over-TCP query');
+      console.log('🔧 TCP: TcpSocket available:', !!TcpSocket);
+      console.log('🔧 TCP: TcpSocket.Socket available:', !!TcpSocket?.Socket);
+      
       if (!TcpSocket) {
+        console.log('❌ TCP: Socket not available');
         return reject(new Error('TCP Socket not available'));
       }
 
-      const socket = new TcpSocket.Socket();
+      let socket: any;
+      try {
+        console.log('🔧 TCP: Creating socket...');
+        socket = new TcpSocket.Socket();
+        console.log('✅ TCP: Socket created successfully');
+      } catch (socketError) {
+        console.log('❌ TCP: Socket creation failed:', socketError);
+        return reject(new Error(`Socket creation failed: ${socketError}`));
+      }
+
       let timeoutId: NodeJS.Timeout | null = null;
       let responseBuffer = Buffer.alloc(0);
       let expectedLength = 0;
 
       const cleanup = () => {
+        console.log('🧹 TCP: Cleaning up...');
         if (timeoutId) clearTimeout(timeoutId);
-        socket.destroy();
+        if (socket) {
+          try {
+            socket.destroy();
+          } catch (destroyError) {
+            console.log('⚠️ TCP: Error during socket destroy:', destroyError);
+          }
+        }
       };
 
       const onError = (e: any) => {
+        console.log('❌ TCP: Error occurred:', e);
+        console.log('❌ TCP: Error type:', typeof e);
+        console.log('❌ TCP: Error stringified:', JSON.stringify(e));
         cleanup();
-        reject(e);
+        reject(e || new Error('Unknown TCP error'));
       };
 
       const dnsQuery = {
@@ -322,13 +346,21 @@ export class DNSService {
         }
         const tcpQuery = Buffer.concat([lengthPrefix, queryBuffer]);
 
+        console.log('🔧 TCP: Setting up timeout...');
         timeoutId = setTimeout(() => {
+          console.log('⏰ TCP: Query timed out');
           onError(new Error('DNS TCP query timed out'));
         }, this.TIMEOUT);
 
-        socket.on('error', onError);
+        console.log('🔧 TCP: Setting up error handler...');
+        socket.on('error', (err: any) => {
+          console.log('❌ TCP: Socket error event:', err);
+          onError(err);
+        });
 
+        console.log('🔧 TCP: Setting up data handler...');
         socket.on('data', (data: Buffer) => {
+          console.log('📥 TCP: Received data, length:', data.length);
           responseBuffer = Buffer.concat([responseBuffer, data]);
 
           // Read the length prefix if we haven't yet
@@ -377,19 +409,36 @@ export class DNSService {
           }
         });
 
+        console.log('🔧 TCP: Setting up close handler...');
         socket.on('close', () => {
+          console.log('🔌 TCP: Socket closed');
           if (expectedLength === 0 || responseBuffer.length < expectedLength) {
+            console.log('❌ TCP: Connection closed prematurely');
             onError(new Error('Connection closed before receiving complete response'));
           }
         });
 
         // Connect and send the query
-        socket.connect({
-          port: this.DNS_PORT,
-          host: dnsServer
-        }, () => {
-          socket.write(tcpQuery);
-        });
+        console.log('🔧 TCP: Attempting to connect to', dnsServer, 'port', this.DNS_PORT);
+        try {
+          socket.connect({
+            port: this.DNS_PORT,
+            host: dnsServer
+          }, () => {
+            console.log('✅ TCP: Connected successfully');
+            try {
+              console.log('📤 TCP: Sending query, length:', tcpQuery.length);
+              socket.write(tcpQuery);
+              console.log('✅ TCP: Query sent');
+            } catch (writeError) {
+              console.log('❌ TCP: Write failed:', writeError);
+              onError(new Error(`Write failed: ${writeError}`));
+            }
+          });
+        } catch (connectError) {
+          console.log('❌ TCP: Connect failed:', connectError);
+          onError(new Error(`Connect failed: ${connectError}`));
+        }
 
       } catch (error) {
         onError(error);
@@ -398,100 +447,20 @@ export class DNSService {
   }
 
   private static async performDNSOverHTTPS(message: string, dnsServer: string): Promise<string[]> {
-    // For DNS-over-HTTPS, we need to create a proxy service or use a workaround
-    // Since DNS-over-HTTPS services can't query arbitrary servers, we'll use a different approach
+    console.log('🔧 HTTPS: Starting DNS-over-HTTPS query');
+    console.log('🔧 HTTPS: Message:', message);
+    console.log('🔧 HTTPS: DNS Server:', dnsServer);
     
-    try {
-      // Option 1: Try using DNS-over-HTTPS with Cloudflare to query the specified DNS server
-      const encodedQuery = this.createDNSQuery(message);
-      // Convert to base64 - handle both Buffer and Uint8Array
-      let base64Query: string;
-      if (Buffer && Buffer.isBuffer && Buffer.isBuffer(encodedQuery) && typeof (encodedQuery as any).toString === 'function') {
-        base64Query = (encodedQuery as any).toString('base64');
-      } else {
-        // For Uint8Array or polyfill Buffer, convert to base64 manually
-        const bytes = Array.from(encodedQuery as Uint8Array);
-        base64Query = btoa(String.fromCharCode(...bytes));
-      }
-      base64Query = base64Query.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-      
-      // Create AbortController for timeout (React Native compatible)
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => {
-        controller.abort();
-      }, this.TIMEOUT);
-
-      try {
-        const response = await fetch(`https://cloudflare-dns.com/dns-query?dns=${base64Query}`, {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/dns-message',
-          },
-          signal: controller.signal,
-        });
-
-        clearTimeout(timeoutId);
-
-        if (!response.ok) {
-          throw new Error(`DNS-over-HTTPS failed: ${response.status}`);
-        }
-
-        const arrayBuffer = await response.arrayBuffer();
-        const dnsResponse = Buffer ? Buffer.from(arrayBuffer) : new Uint8Array(arrayBuffer);
-        const decoded = dns.decode(dnsResponse);
-        
-        if (!decoded.answers || decoded.answers.length === 0) {
-          throw new Error('No TXT records found via DNS-over-HTTPS');
-        }
-
-        const txtRecords = decoded.answers
-          .filter(answer => answer.type === 'TXT')
-          .map(answer => {
-            if (Array.isArray(answer.data)) {
-              return answer.data.join('');
-            } else if (answer.data instanceof Uint8Array || (answer.data && typeof answer.data === 'object' && 'length' in answer.data)) {
-              return new TextDecoder().decode(answer.data as Uint8Array);
-            } else {
-              return answer.data ? answer.data.toString() : '';
-            }
-          })
-          .filter(record => record.length > 0);
-
-        return txtRecords;
-      } catch (fetchError) {
-        clearTimeout(timeoutId);
-        throw fetchError;
-      }
-      
-    } catch (error) {
-      throw new Error('DNS-over-HTTPS fallback failed - using mock service');
-    }
+    // ARCHITECTURE ISSUE: DNS-over-HTTPS cannot directly query ch.at like UDP/TCP can
+    // DNS-over-HTTPS services like Cloudflare act as DNS resolvers, not proxies to specific DNS servers
+    // They will resolve queries using their own infrastructure, not forward to ch.at
+    
+    console.log('❌ HTTPS: DNS-over-HTTPS incompatible with ch.at architecture');
+    console.log('❌ HTTPS: ch.at expects direct DNS queries, not DNS-over-HTTPS resolution');
+    
+    throw new Error(`DNS-over-HTTPS cannot query ${dnsServer} directly - architectural limitation`);
   }
   
-  private static createDNSQuery(message: string): Uint8Array {
-    // Sanitize the message for DNS query - remove special characters
-    const sanitizedMessage = message
-      .trim()
-      .replace(/'/g, '')   // Remove apostrophes
-      .replace(/"/g, '')   // Remove quotes
-      .replace(/\?/g, '')  // Remove question marks
-      .replace(/!/g, '')   // Remove exclamation marks
-      .replace(/,/g, '')   // Remove commas
-      .replace(/\./g, ' ') // Replace dots with spaces
-      .trim();
-    
-    const dnsQuery = {
-      type: 'query' as const,
-      id: Math.floor(Math.random() * 65536),
-      flags: 0x0100,
-      questions: [{
-        type: 'TXT' as const,
-        class: 'IN' as const,
-        name: sanitizedMessage
-      }]
-    };
-    return dns.encode(dnsQuery);
-  }
 
 
   private static parseResponse(txtRecords: string[]): string {
