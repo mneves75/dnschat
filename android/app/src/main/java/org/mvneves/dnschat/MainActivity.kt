@@ -1,4 +1,4 @@
-package com.satya164.reactnavigationtemplate
+package org.mvneves.dnschat
 import expo.modules.splashscreen.SplashScreenManager
 
 import android.os.Build

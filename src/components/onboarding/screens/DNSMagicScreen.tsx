@@ -72,7 +72,9 @@ export function DNSMagicScreen() {
       updateStep('1', 'success', 'Native DNS query successful! ✨', 1200);
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      const result = await DNSService.queryLLM(testMessage);
+      // For onboarding, we use real DNS methods only (enableMockDNS = false)
+      // This ensures users see real DNS behavior, not mock responses
+      const result = await DNSService.queryLLM(testMessage, undefined, undefined, undefined, false);
       setResponse(result);
       
     } catch (error) {

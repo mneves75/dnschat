@@ -111,7 +111,7 @@ export class DNSService {
     }
   }
 
-  static async queryLLM(message: string, dnsServer?: string, preferHttps?: boolean, methodPreference?: DNSMethodPreference): Promise<string> {
+  static async queryLLM(message: string, dnsServer?: string, preferHttps?: boolean, methodPreference?: DNSMethodPreference, enableMockDNS?: boolean): Promise<string> {
     // Initialize background listener on first use
     this.initializeBackgroundListener();
 
@@ -136,7 +136,7 @@ export class DNSService {
     for (let attempt = 0; attempt < this.MAX_RETRIES; attempt++) {
       try {
         // Determine method order based on preference
-        const methodOrder = this.getMethodOrder(methodPreference, preferHttps);
+        const methodOrder = this.getMethodOrder(methodPreference, preferHttps, enableMockDNS);
         
         for (const method of methodOrder) {
           try {
@@ -400,10 +400,10 @@ export class DNSService {
       const encodedQuery = this.createDNSQuery(message);
       // Convert to base64 - handle both Buffer and Uint8Array
       let base64Query: string;
-      if (Buffer && Buffer.isBuffer(encodedQuery)) {
-        base64Query = encodedQuery.toString('base64');
+      if (Buffer && Buffer.isBuffer && Buffer.isBuffer(encodedQuery) && typeof (encodedQuery as any).toString === 'function') {
+        base64Query = (encodedQuery as any).toString('base64');
       } else {
-        // For Uint8Array, convert to base64 manually
+        // For Uint8Array or polyfill Buffer, convert to base64 manually
         const bytes = Array.from(encodedQuery as Uint8Array);
         base64Query = btoa(String.fromCharCode(...bytes));
       }
@@ -570,25 +570,29 @@ export class DNSService {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
-  private static getMethodOrder(methodPreference?: DNSMethodPreference, preferHttps?: boolean): ('native' | 'udp' | 'tcp' | 'https' | 'mock')[] {
+  private static getMethodOrder(methodPreference?: DNSMethodPreference, preferHttps?: boolean, enableMockDNS?: boolean): ('native' | 'udp' | 'tcp' | 'https' | 'mock')[] {
     // Handle new method preferences
     switch (methodPreference) {
       case 'udp-only':
-        return ['udp', 'mock'];
+        return enableMockDNS ? ['udp', 'mock'] : ['udp'];
       
       case 'never-https':
-        return Platform.OS === 'web' ? ['native', 'udp', 'tcp', 'mock'] : ['native', 'udp', 'tcp', 'mock'];
+        const neverHttpsMethods: ('native' | 'udp' | 'tcp' | 'https' | 'mock')[] = Platform.OS === 'web' ? ['native', 'udp', 'tcp'] : ['native', 'udp', 'tcp'];
+        return enableMockDNS ? [...neverHttpsMethods, 'mock'] : neverHttpsMethods;
       
       case 'prefer-https':
-        return ['https', 'native', 'udp', 'tcp', 'mock'];
+        const preferHttpsMethods: ('native' | 'udp' | 'tcp' | 'https' | 'mock')[] = ['https', 'native', 'udp', 'tcp'];
+        return enableMockDNS ? [...preferHttpsMethods, 'mock'] : preferHttpsMethods;
       
       case 'automatic':
       default:
         // Legacy behavior: respect preferHttps flag
         if (preferHttps) {
-          return ['https', 'native', 'udp', 'tcp', 'mock'];
+          const httpsFirstMethods: ('native' | 'udp' | 'tcp' | 'https' | 'mock')[] = ['https', 'native', 'udp', 'tcp'];
+          return enableMockDNS ? [...httpsFirstMethods, 'mock'] : httpsFirstMethods;
         } else {
-          return Platform.OS === 'web' ? ['https', 'mock'] : ['native', 'udp', 'tcp', 'https', 'mock'];
+          const normalMethods: ('native' | 'udp' | 'tcp' | 'https' | 'mock')[] = Platform.OS === 'web' ? ['https'] : ['native', 'udp', 'tcp', 'https'];
+          return enableMockDNS ? [...normalMethods, 'mock'] : normalMethods;
         }
     }
   }

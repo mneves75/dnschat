@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **⚠️ MockDNSService Misuse**: Fixed inappropriate MockDNSService usage in onboarding screens
+  - MockDNSService now disabled by default (users get real DNS behavior)
+  - Added `enableMockDNS` setting in Settings context (default: false)
+  - Onboarding screens explicitly use real DNS methods only
+  - DNS fallback chain now respects MockDNSService setting properly
+
 ## [1.7.0] - 2025-08-13
 
 ### Added
