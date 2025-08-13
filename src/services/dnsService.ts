@@ -11,13 +11,19 @@ let Buffer: any = null;
 
 try {
   dgram = require('react-native-udp');
+  console.log('✅ UDP library loaded successfully:', !!dgram);
 } catch (error) {
+  console.log('❌ UDP library failed to load:', error);
   // UDP not available, will use fallback methods
 }
 
 try {
-  TcpSocket = require('react-native-tcp-socket').default;
+  const tcpLibrary = require('react-native-tcp-socket');
+  console.log('🔍 TCP Socket library structure:', Object.keys(tcpLibrary));
+  TcpSocket = tcpLibrary; // Use the entire library object
+  console.log('✅ TCP Socket library loaded successfully:', !!TcpSocket && !!TcpSocket.Socket);
 } catch (error) {
+  console.log('❌ TCP Socket library failed to load:', error);
   // TCP Socket not available, will use DNS-over-HTTPS fallback
 }
 
@@ -609,11 +615,20 @@ export class DNSService {
         case 'native':
           const result = await this.handleBackgroundSuspension(async () => {
             const capabilities = await nativeDNS.isAvailable();
+            console.log('🔍 Native DNS capabilities in tryMethod:', JSON.stringify(capabilities));
             
             if (capabilities.available && capabilities.supportsCustomServer) {
-              const records = await nativeDNS.queryTXT(targetServer, message);
-              return nativeDNS.parseMultiPartResponse(records);
+              console.log('✅ Native DNS available, querying TXT records...');
+              try {
+                const records = await nativeDNS.queryTXT(targetServer, message);
+                console.log('📥 Native DNS TXT records received:', records);
+                return nativeDNS.parseMultiPartResponse(records);
+              } catch (nativeError) {
+                console.log('❌ Native DNS query failed:', nativeError);
+                throw nativeError;
+              }
             }
+            console.log('❌ Native DNS not available - capabilities check failed');
             return null;
           });
           
@@ -621,8 +636,8 @@ export class DNSService {
             throw new Error('Native DNS not available');
           }
           
-          const duration = Date.now() - startTime;
-          DNSLogService.logMethodSuccess('native', duration, `Response received`);
+          const nativeDuration = Date.now() - startTime;
+          DNSLogService.logMethodSuccess('native', nativeDuration, `Response received`);
           return { response: result, method: 'native' };
           
         case 'udp':
@@ -662,14 +677,14 @@ export class DNSService {
       }
       
       const response = this.parseResponse(txtRecords);
-      const duration = Date.now() - startTime;
-      DNSLogService.logMethodSuccess(method, duration, `Response received`);
+      const successDuration = Date.now() - startTime;
+      DNSLogService.logMethodSuccess(method, successDuration, `Response received`);
       
       return { response, method };
       
     } catch (error: any) {
-      const duration = Date.now() - startTime;
-      DNSLogService.logMethodFailure(method, error.message, duration);
+      const errorDuration = Date.now() - startTime;
+      DNSLogService.logMethodFailure(method, error.message, errorDuration);
       throw error;
     }
   }
@@ -798,16 +813,16 @@ export class DNSService {
       }
       
       const response = this.parseResponse(txtRecords);
-      const duration = Date.now() - startTime;
-      DNSLogService.logMethodSuccess(transport, duration, `Forced test response received`);
+      const testSuccessDuration = Date.now() - startTime;
+      DNSLogService.logMethodSuccess(transport, testSuccessDuration, `Forced test response received`);
       await DNSLogService.endQuery(true, response, transport);
       console.log(`✅ ${transport.toUpperCase()} transport test successful: ${response}`);
       return response;
       
     } catch (error: any) {
-      const duration = Date.now() - startTime;
+      const testErrorDuration = Date.now() - startTime;
       console.log(`❌ ${transport.toUpperCase()} transport test failed:`, error.message);
-      DNSLogService.logMethodFailure(transport, error.message, duration);
+      DNSLogService.logMethodFailure(transport, error.message, testErrorDuration);
       await DNSLogService.endQuery(false, undefined, transport);
       throw error;
     }
