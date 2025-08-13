@@ -30,7 +30,7 @@ export function Chat() {
     if (!currentChat) {
       createChat();
     }
-  }, [currentChat, createChat]);
+  }, [currentChat]);
 
   useEffect(() => {
     // Show error alert when error occurs

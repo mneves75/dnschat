@@ -35,7 +35,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
     loadChats();
   }, [loadChats]);
 
-  const createChat = async (title?: string): Promise<Chat> => {
+  const createChat = useCallback(async (title?: string): Promise<Chat> => {
     try {
       const newChat = await StorageService.createChat(title);
       setChats(prevChats => [newChat, ...prevChats]);
@@ -46,7 +46,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
       setError(err instanceof Error ? err.message : 'Failed to create chat');
       throw err;
     }
-  };
+  }, []);
 
   const deleteChat = async (chatId: string): Promise<void> => {
     try {
