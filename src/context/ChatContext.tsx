@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, Rea
 import uuid from 'react-native-uuid';
 import { Chat, Message, ChatContextType } from '../types/chat';
 import { StorageService } from '../services/storageService';
-import { DNSService, MockDNSService } from '../services/dnsService';
+import { DNSService } from '../services/dnsService';
 import { useSettings } from './SettingsContext';
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -123,15 +123,9 @@ export function ChatProvider({ children }: ChatProviderProps) {
         )
       );
 
-      // Get AI response - try real DNS service first, fallback to mock
+      // Get AI response using DNS service (includes automatic fallback chain to mock)
       setIsLoading(true);
-      let response: string;
-      
-      try {
-        response = await DNSService.queryLLM(content, dnsServer, preferDnsOverHttps, dnsMethodPreference);
-      } catch (dnsError) {
-        response = await MockDNSService.queryLLM(content);
-      }
+      const response = await DNSService.queryLLM(content, dnsServer, preferDnsOverHttps, dnsMethodPreference);
       
       // Update assistant message with response
       const completedAssistantMessage: Message = {
