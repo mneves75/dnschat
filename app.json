@@ -33,7 +33,31 @@
         }
       ],
       "react-native-edge-to-edge",
-      "./plugins/dns-native-plugin"
+      "./plugins/dns-native-plugin",
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "deploymentTarget": "16.0",
+            "flipper": false,
+            "ccacheEnabled": true,
+            "newArchEnabled": true,
+            "generateStaticFrameworks": true,
+            "generateSourcemap": true,
+            "includeSymbolsInDsym": true,
+            "xcodeproj": {
+              "buildSettings": {
+                "DEBUG_INFORMATION_FORMAT": "dwarf-with-dsym",
+                "DSYM_FOLDER_PATH": "$(BUILT_PRODUCTS_DIR)/$(TARGET_NAME).app.dSYM",
+                "DEPLOYMENT_POSTPROCESSING": "YES",
+                "SEPARATE_STRIP": "YES",
+                "STRIP_INSTALLED_PRODUCT": "YES",
+                "COPY_PHASE_STRIP": "NO"
+              }
+            }
+          }
+        }
+      ]
     ]
   }
 }
