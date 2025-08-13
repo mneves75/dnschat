@@ -52,6 +52,8 @@ JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home PATH=/o
 #### Common Issues
 - **Java 24**: Causes "Unsupported class file major version 68" error
 - **Gradle 8.13+**: May cause react-native-reanimated compatibility issues (downgraded to 8.10.2)
+- **Java 17 Record Conflicts**: Fixed with fully qualified org.xbill.DNS.Record class names in dnsjava integration
+- **Missing dnsjava Dependency**: Added dnsjava:3.5.1 to android/app/build.gradle for legacy DNS support
 
 ### Dependencies Installation
 ```bash
@@ -212,10 +214,13 @@ Android is configured with edge-to-edge display using the `react-native-edge-to-
   - **Network Framework**: Uses `NWConnection` with proper async/await patterns
   - **Comprehensive Logging**: Extensive debug output for monitoring and troubleshooting
 
-- **🔄 Android Implementation**: Ready for implementation (fallback chain active)
-  - **Modern (API 29+)**: Android DnsResolver API ready for integration
-  - **Legacy (API <29)**: dnsjava library fallback prepared
-  - **Current Status**: Using JavaScript UDP/TCP fallbacks (functional)
+- **✅ Android Implementation**: Complete implementation synchronized with iOS behavior
+  - **Modern (API 29+)**: Android DnsResolver API with proper error handling
+  - **Legacy (API <29)**: dnsjava library integration with comprehensive support
+  - **Message Sanitization**: Identical to iOS (spaces→dashes, lowercase, 200 char limit)
+  - **Query Deduplication**: ConcurrentHashMap-based duplicate prevention
+  - **Structured Errors**: DNSError class matching iOS error types and formats
+  - **Java 17 Compatible**: Fixed Record class conflicts with fully qualified names
 
 ### ✅ Production Test Results
 

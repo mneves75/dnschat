@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **🔧 MAJOR: Complete Android Network Connectivity Sync**: Full synchronization of Android DNS implementation to match iOS behavior
+  - **Message Sanitization Sync**: Android now applies identical message processing as iOS (spaces→dashes, lowercase, 200 char limit)
+  - **Query Deduplication**: Implemented ConcurrentHashMap-based duplicate query prevention matching iOS @MainActor pattern
+  - **Structured Error Handling**: Added DNSError class with same error types and message formats as iOS DNSError enum
+  - **Java 17 Compatibility**: Fixed Record class conflicts with fully qualified org.xbill.DNS.Record names for Java 17 support
+  - **dnsjava Integration**: Added dnsjava:3.5.1 dependency for comprehensive legacy DNS support (API < 29)
+  - **API Compatibility**: Fixed DnsResolver method signature issues by removing unsupported FLAG_EMPTY parameter
+  - **Build Success**: Resolved all compilation errors enabling successful Android production builds
+- **🚀 Cross-Platform Consistency**: Android and iOS now have identical network connectivity behavior ensuring consistent DNS query handling
+
 ## [1.7.2] - 2025-08-13
 
 ### Fixed
