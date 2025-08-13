@@ -8,28 +8,28 @@
 
 /* Begin PBXBuildFile section */
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
-		32AEA51CA0D7A468E942F6C1 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68F808E1BF26340AAF903961 /* ExpoModulesProvider.swift */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
+		8019C03DF839A909B2CDBC46 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000B3D62018BDB010BC394D0 /* ExpoModulesProvider.swift */; };
+		A3BA46199BC7630751EF2555 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 9A251EE4D852BB9F00EA22A8 /* PrivacyInfo.xcprivacy */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
-		BF593E25222953A8D78E3644 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 209DEFA0C92742F5894B3578 /* PrivacyInfo.xcprivacy */; };
+		DC9EE394DD64B4E22101BEC5 /* libPods-DNSChat.a in Frameworks */ = {isa = PBXBuildFile; fileRef = D88E0A6E86E83FBE3C6D62EF /* libPods-DNSChat.a */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
-		F1355ECE7F103D79B7F79172 /* libPods-ChatDNS.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 198BA54860F4B96B5F59C964 /* libPods-ChatDNS.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		13B07F961A680F5B00A75B9A /* ChatDNS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ChatDNS.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = ChatDNS/Images.xcassets; sourceTree = "<group>"; };
-		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = ChatDNS/Info.plist; sourceTree = "<group>"; };
-		198BA54860F4B96B5F59C964 /* libPods-ChatDNS.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-ChatDNS.a"; sourceTree = BUILT_PRODUCTS_DIR; };
-		209DEFA0C92742F5894B3578 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = ChatDNS/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		514FE614627265BF186A47EE /* Pods-ChatDNS.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ChatDNS.release.xcconfig"; path = "Target Support Files/Pods-ChatDNS/Pods-ChatDNS.release.xcconfig"; sourceTree = "<group>"; };
-		68F808E1BF26340AAF903961 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-ChatDNS/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
-		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = ChatDNS/SplashScreen.storyboard; sourceTree = "<group>"; };
-		B92416476FFA7BA6669548B4 /* Pods-ChatDNS.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ChatDNS.debug.xcconfig"; path = "Target Support Files/Pods-ChatDNS/Pods-ChatDNS.debug.xcconfig"; sourceTree = "<group>"; };
+		000B3D62018BDB010BC394D0 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-DNSChat/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
+		13B07F961A680F5B00A75B9A /* DNSChat.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DNSChat.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = DNSChat/Images.xcassets; sourceTree = "<group>"; };
+		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = DNSChat/Info.plist; sourceTree = "<group>"; };
+		4F9F78878000CA0993CB8F54 /* Pods-DNSChat.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-DNSChat.release.xcconfig"; path = "Target Support Files/Pods-DNSChat/Pods-DNSChat.release.xcconfig"; sourceTree = "<group>"; };
+		6447948165EC24C9059BFC07 /* Pods-DNSChat.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-DNSChat.debug.xcconfig"; path = "Target Support Files/Pods-DNSChat/Pods-DNSChat.debug.xcconfig"; sourceTree = "<group>"; };
+		9A251EE4D852BB9F00EA22A8 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = DNSChat/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = DNSChat/SplashScreen.storyboard; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
+		D88E0A6E86E83FBE3C6D62EF /* libPods-DNSChat.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-DNSChat.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
-		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = ChatDNS/AppDelegate.swift; sourceTree = "<group>"; };
-		F11748442D0722820044C1D9 /* ChatDNS-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "ChatDNS-Bridging-Header.h"; path = "ChatDNS/ChatDNS-Bridging-Header.h"; sourceTree = "<group>"; };
+		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = DNSChat/AppDelegate.swift; sourceTree = "<group>"; };
+		F11748442D0722820044C1D9 /* DNSChat-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "DNSChat-Bridging-Header.h"; path = "DNSChat/DNSChat-Bridging-Header.h"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -37,34 +37,42 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				F1355ECE7F103D79B7F79172 /* libPods-ChatDNS.a in Frameworks */,
+				DC9EE394DD64B4E22101BEC5 /* libPods-DNSChat.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		13B07FAE1A68108700A75B9A /* ChatDNS */ = {
+		13B07FAE1A68108700A75B9A /* DNSChat */ = {
 			isa = PBXGroup;
 			children = (
 				F11748412D0307B40044C1D9 /* AppDelegate.swift */,
-				F11748442D0722820044C1D9 /* ChatDNS-Bridging-Header.h */,
+				F11748442D0722820044C1D9 /* DNSChat-Bridging-Header.h */,
 				BB2F792B24A3F905000567C9 /* Supporting */,
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
-				209DEFA0C92742F5894B3578 /* PrivacyInfo.xcprivacy */,
+				9A251EE4D852BB9F00EA22A8 /* PrivacyInfo.xcprivacy */,
 			);
-			name = ChatDNS;
+			name = DNSChat;
 			sourceTree = "<group>";
 		};
 		2D16E6871FA4F8E400B85C8A /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				198BA54860F4B96B5F59C964 /* libPods-ChatDNS.a */,
+				D88E0A6E86E83FBE3C6D62EF /* libPods-DNSChat.a */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		8075493B128E2E188D09A64D /* ExpoModulesProviders */ = {
+			isa = PBXGroup;
+			children = (
+				FE829DA69C54F37ACA8B69C1 /* DNSChat */,
+			);
+			name = ExpoModulesProviders;
 			sourceTree = "<group>";
 		};
 		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
@@ -77,12 +85,12 @@
 		83CBB9F61A601CBA00E9B192 = {
 			isa = PBXGroup;
 			children = (
-				13B07FAE1A68108700A75B9A /* ChatDNS */,
+				13B07FAE1A68108700A75B9A /* DNSChat */,
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
-				D3AFB98B4A826AFE63ECB20B /* Pods */,
-				93DCD2497482307C55E34BFD /* ExpoModulesProviders */,
+				99E68DEA6EF18A1BC25DAE6E /* Pods */,
+				8075493B128E2E188D09A64D /* ExpoModulesProviders */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -92,25 +100,19 @@
 		83CBBA001A601CBA00E9B192 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				13B07F961A680F5B00A75B9A /* ChatDNS.app */,
+				13B07F961A680F5B00A75B9A /* DNSChat.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-		93DCD2497482307C55E34BFD /* ExpoModulesProviders */ = {
+		99E68DEA6EF18A1BC25DAE6E /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				B07320698796AF5D02BC8858 /* ChatDNS */,
+				6447948165EC24C9059BFC07 /* Pods-DNSChat.debug.xcconfig */,
+				4F9F78878000CA0993CB8F54 /* Pods-DNSChat.release.xcconfig */,
 			);
-			name = ExpoModulesProviders;
-			sourceTree = "<group>";
-		};
-		B07320698796AF5D02BC8858 /* ChatDNS */ = {
-			isa = PBXGroup;
-			children = (
-				68F808E1BF26340AAF903961 /* ExpoModulesProvider.swift */,
-			);
-			name = ChatDNS;
+			name = Pods;
+			path = Pods;
 			sourceTree = "<group>";
 		};
 		BB2F792B24A3F905000567C9 /* Supporting */ = {
@@ -119,40 +121,40 @@
 				BB2F792C24A3F905000567C9 /* Expo.plist */,
 			);
 			name = Supporting;
-			path = ChatDNS/Supporting;
+			path = DNSChat/Supporting;
 			sourceTree = "<group>";
 		};
-		D3AFB98B4A826AFE63ECB20B /* Pods */ = {
+		FE829DA69C54F37ACA8B69C1 /* DNSChat */ = {
 			isa = PBXGroup;
 			children = (
-				B92416476FFA7BA6669548B4 /* Pods-ChatDNS.debug.xcconfig */,
-				514FE614627265BF186A47EE /* Pods-ChatDNS.release.xcconfig */,
+				000B3D62018BDB010BC394D0 /* ExpoModulesProvider.swift */,
 			);
-			path = Pods;
+			name = DNSChat;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		13B07F861A680F5B00A75B9A /* ChatDNS */ = {
+		13B07F861A680F5B00A75B9A /* DNSChat */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "ChatDNS" */;
+			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "DNSChat" */;
 			buildPhases = (
 				08A4A3CD28434E44B6B9DE2E /* [CP] Check Pods Manifest.lock */,
-				4C4A66F329E4251AB8BCE2DE /* [Expo] Configure project */,
+				18BC54525B3B259690DEEDBE /* [Expo] Configure project */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */,
+				6BCD3B9D3207A4DDA9BE0C6A /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
-			name = ChatDNS;
-			productName = ChatDNS;
-			productReference = 13B07F961A680F5B00A75B9A /* ChatDNS.app */;
+			name = DNSChat;
+			productName = DNSChat;
+			productReference = 13B07F961A680F5B00A75B9A /* DNSChat.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -168,7 +170,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "ChatDNS" */;
+			buildConfigurationList = 83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "DNSChat" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -181,7 +183,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				13B07F861A680F5B00A75B9A /* ChatDNS */,
+				13B07F861A680F5B00A75B9A /* DNSChat */,
 			);
 		};
 /* End PBXProject section */
@@ -194,7 +196,7 @@
 				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
-				BF593E25222953A8D78E3644 /* PrivacyInfo.xcprivacy in Resources */,
+				A3BA46199BC7630751EF2555 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -231,14 +233,14 @@
 			outputFileListPaths = (
 			);
 			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-ChatDNS-checkManifestLockResult.txt",
+				"$(DERIVED_FILE_DIR)/Pods-DNSChat-checkManifestLockResult.txt",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		4C4A66F329E4251AB8BCE2DE /* [Expo] Configure project */ = {
+		18BC54525B3B259690DEEDBE /* [Expo] Configure project */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
@@ -255,7 +257,25 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-ChatDNS/expo-configure-project.sh\"\n";
+			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-DNSChat/expo-configure-project.sh\"\n";
+		};
+		6BCD3B9D3207A4DDA9BE0C6A /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-DNSChat/Pods-DNSChat-frameworks.sh",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputPaths = (
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-DNSChat/Pods-DNSChat-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
 		};
 		800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -263,7 +283,7 @@
 			files = (
 			);
 			inputPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-ChatDNS/Pods-ChatDNS-resources.sh",
+				"${PODS_ROOT}/Target Support Files/Pods-DNSChat/Pods-DNSChat-resources.sh",
 				"${PODS_CONFIGURATION_BUILD_DIR}/EXConstants/EXConstants.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/EXConstants/ExpoConstants_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoFileSystem/ExpoFileSystem_privacy.bundle",
@@ -296,7 +316,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-ChatDNS/Pods-ChatDNS-resources.sh\"\n";
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-DNSChat/Pods-DNSChat-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
@@ -307,7 +327,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */,
-				32AEA51CA0D7A468E942F6C1 /* ExpoModulesProvider.swift in Sources */,
+				8019C03DF839A909B2CDBC46 /* ExpoModulesProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -316,27 +336,24 @@
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = B92416476FFA7BA6669548B4 /* Pods-ChatDNS.debug.xcconfig */;
+			baseConfigurationReference = 6447948165EC24C9059BFC07 /* Pods-DNSChat.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_ENTITLEMENTS = ChatDNS/ChatDNS.entitlements;
-				CURRENT_PROJECT_VERSION = 3;
-				DEVELOPMENT_TEAM = Q96FUTC5G8;
+				CODE_SIGN_ENTITLEMENTS = DNSChat/DNSChat.entitlements;
+				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_BITCODE = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
 					"FB_SONARKIT_ENABLED=1",
 				);
-				INFOPLIST_FILE = ChatDNS/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "DNS Chat";
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_FILE = DNSChat/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.6;
+				MARKETING_VERSION = 1.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -344,8 +361,8 @@
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
 				PRODUCT_BUNDLE_IDENTIFIER = org.mvneves.dnschat;
-				PRODUCT_NAME = ChatDNS;
-				SWIFT_OBJC_BRIDGING_HEADER = "ChatDNS/ChatDNS-Bridging-Header.h";
+				PRODUCT_NAME = DNSChat;
+				SWIFT_OBJC_BRIDGING_HEADER = "DNSChat/DNSChat-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -355,22 +372,19 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 514FE614627265BF186A47EE /* Pods-ChatDNS.release.xcconfig */;
+			baseConfigurationReference = 4F9F78878000CA0993CB8F54 /* Pods-DNSChat.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_ENTITLEMENTS = ChatDNS/ChatDNS.entitlements;
-				CURRENT_PROJECT_VERSION = 3;
-				DEVELOPMENT_TEAM = Q96FUTC5G8;
-				INFOPLIST_FILE = ChatDNS/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "DNS Chat";
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				CODE_SIGN_ENTITLEMENTS = DNSChat/DNSChat.entitlements;
+				CURRENT_PROJECT_VERSION = 1;
+				INFOPLIST_FILE = DNSChat/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.6;
+				MARKETING_VERSION = 1.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -378,8 +392,8 @@
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
 				PRODUCT_BUNDLE_IDENTIFIER = org.mvneves.dnschat;
-				PRODUCT_NAME = ChatDNS;
-				SWIFT_OBJC_BRIDGING_HEADER = "ChatDNS/ChatDNS-Bridging-Header.h";
+				PRODUCT_NAME = DNSChat;
+				SWIFT_OBJC_BRIDGING_HEADER = "DNSChat/DNSChat-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VERSIONING_SYSTEM = "apple-generic";
@@ -441,11 +455,14 @@
 				LIBRARY_SEARCH_PATHS = "$(SDKROOT)/usr/lib/swift\"$(inherited)\"";
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
-				OTHER_LDFLAGS = "$(inherited)  ";
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					" ",
+				);
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) DEBUG";
-				USE_HERMES = false;
+				USE_HERMES = true;
 			};
 			name = Debug;
 		};
@@ -496,10 +513,13 @@
 				);
 				LIBRARY_SEARCH_PATHS = "$(SDKROOT)/usr/lib/swift\"$(inherited)\"";
 				MTL_ENABLE_DEBUG_INFO = NO;
-				OTHER_LDFLAGS = "$(inherited)  ";
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					" ",
+				);
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
-				USE_HERMES = false;
+				USE_HERMES = true;
 				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
@@ -507,7 +527,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "ChatDNS" */ = {
+		13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "DNSChat" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				13B07F941A680F5B00A75B9A /* Debug */,
@@ -516,7 +536,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "ChatDNS" */ = {
+		83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "DNSChat" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				83CBBA201A601CBA00E9B192 /* Debug */,
