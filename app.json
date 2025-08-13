@@ -10,7 +10,8 @@
     "scheme": "dnschat",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "org.mvneves.dnschat"
+      "bundleIdentifier": "org.mvneves.dnschat",
+      "deploymentTarget": "16.0"
     },
     "android": {
       "adaptiveIcon": {

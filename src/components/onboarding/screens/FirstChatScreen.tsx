@@ -61,7 +61,9 @@ export function FirstChatScreen() {
     setHasTriedChat(true);
 
     try {
-      const response = await DNSService.queryLLM(inputText.trim());
+      // For onboarding, we use real DNS methods only (enableMockDNS = false)
+      // This ensures users see real DNS behavior, not mock responses
+      const response = await DNSService.queryLLM(inputText.trim(), undefined, undefined, undefined, false);
       
       setMessages(prev => prev.map(msg => 
         msg.id === assistantMessage.id 
