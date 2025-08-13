@@ -8,7 +8,9 @@ import {
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Image } from 'react-native';
 import { useTheme } from '@react-navigation/native';
-import newspaper from '../assets/newspaper.png';
+
+// Import newspaper icon properly for Metro bundler
+const newspaper = require('../assets/newspaper.png');
 import { InfoIcon } from '../components/InfoIcon';
 import { SettingsIcon } from '../components/icons/SettingsIcon';
 import { LogsIcon } from '../components/icons/LogsIcon';
