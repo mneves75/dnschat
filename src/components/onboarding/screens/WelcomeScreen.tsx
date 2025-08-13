@@ -6,6 +6,7 @@ import {
   useColorScheme,
   Animated,
   Dimensions,
+  Image,
 } from 'react-native';
 import { OnboardingNavigation } from '../OnboardingNavigation';
 
@@ -46,7 +47,11 @@ export function WelcomeScreen() {
           ]}
         >
           <View style={styles.iconContainer}>
-            <Text style={styles.icon}>🌐</Text>
+            <Image 
+              source={require('../../../../icons/dnschat_ios26.png')} 
+              style={styles.appIcon}
+              resizeMode="contain"
+            />
           </View>
           
           <Text style={[
@@ -141,6 +146,11 @@ const styles = StyleSheet.create({
   },
   icon: {
     fontSize: 80,
+  },
+  appIcon: {
+    width: 80,
+    height: 80,
+    borderRadius: 16,
   },
   title: {
     fontSize: 32,

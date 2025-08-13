@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
+  ScrollView,
 } from 'react-native';
 import { OnboardingNavigation } from '../OnboardingNavigation';
 import { useSettings } from '../../../context/SettingsContext';
@@ -91,7 +92,11 @@ export function NetworkSetupScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.content}>
+      <ScrollView 
+        style={styles.scrollView}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.headerSection}>
           <Text style={styles.icon}>🔧</Text>
           
@@ -171,7 +176,7 @@ export function NetworkSetupScreen() {
             </Text>
           </View>
         )}
-      </View>
+      </ScrollView>
 
       <OnboardingNavigation 
         nextButtonText={optimizationComplete ? 'Continue' : 'Skip Optimization'}
@@ -244,10 +249,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  content: {
+  scrollView: {
     flex: 1,
+  },
+  content: {
+    flexGrow: 1,
     paddingHorizontal: 24,
     paddingTop: 20,
+    paddingBottom: 100, // Extra padding for OnboardingNavigation
   },
   headerSection: {
     alignItems: 'center',
