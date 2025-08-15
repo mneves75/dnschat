@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.7.3] - 2025-08-15
+
+### Added
+- **🚀 Native DNS First Priority**: Default prioritization of platform-native DNS implementations
+  - Set 'native-first' as the default DNS method preference for optimal performance
+  - Native DNS methods now prioritized over fallback chains for best success rates
+  - Enhanced fallback chain: Native → UDP → TCP → HTTPS → Mock when native methods fail
+  - Smart platform detection ensuring optimal DNS method selection on iOS and Android
+- **📱 Universal Landscape Support**: Complete orientation flexibility across all platforms
+  - iOS landscape support with proper layout adaptation for all screens
+  - Android landscape orientation with seamless rotation handling 
+  - Web landscape responsive design for enhanced desktop viewing experience
+  - Automatic orientation changes with smooth UI transitions between portrait and landscape
+
+### Changed
+- **⚙️ Default DNS Configuration**: 'native-first' is now the default DNS method preference
+  - Previous 'automatic' default changed to 'native-first' for better performance
+  - Users can still configure other DNS methods via Settings interface
+  - Enhanced DNS method selection with five options (added Native First)
+- **📱 Application Orientation**: Changed from portrait-only to universal orientation support
+  - app.json orientation changed from "portrait" to "default"
+  - All screens now support both portrait and landscape viewing modes
+  - Navigation and UI components properly adapt to orientation changes
+
+### Technical Improvements
+- **🏗️ DNS Service Architecture**: Enhanced DNS method ordering with native-first strategy
+- **📱 Cross-Platform Layout**: Improved responsive design handling across all platforms
+- **⚡ Performance Optimization**: Native DNS prioritization reduces fallback overhead
+- **🔧 Configuration Management**: Simplified default settings for better out-of-the-box experience
+
 ### Fixed
 - **🔧 MAJOR: Complete Android Network Connectivity Sync**: Full synchronization of Android DNS implementation to match iOS behavior
   - **Message Sanitization Sync**: Android now applies identical message processing as iOS (spaces→dashes, lowercase, 200 char limit)
