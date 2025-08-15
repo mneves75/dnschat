@@ -69,34 +69,36 @@ AI,chat,DNS,assistant,privacy,native,tech,innovation,queries,networking
 
 ---
 
-## What's New (Release Notes v1.5.2)
+## What's New (Release Notes v1.7.2)
 
-Major Update: Native DNS Implementation + Critical Fixes
+Major Update: Universal Landscape Support + Enhanced App Store Assets
 
-PRODUCTION-READY NATIVE DNS
-- Complete iOS native implementation using Apple Network Framework
-- Direct UDP DNS queries for maximum performance
-- Comprehensive fallback system (UDP to TCP to HTTPS)
-- 90% faster response times compared to previous versions
+UNIVERSAL LANDSCAPE SUPPORT
+- Complete landscape orientation support across all platforms
+- Enhanced UI adaptation for both portrait and landscape modes
+- Optimized chat interface for improved tablet and desktop experiences
+- Seamless orientation transitions with responsive design
 
-CRITICAL BUG FIXES
-- Fixed VirtualizedList nested scrolling error
-- Improved keyboard handling with native KeyboardAvoidingView
-- Enhanced app stability and performance
+NATIVE DNS PRIORITY ENHANCEMENT
+- Native DNS modules now prioritized by default (v1.7.3)
+- Improved fallback chain performance and reliability
+- Enhanced error handling and network resilience
+- Better support for complex network configurations
 
-NEW SETTINGS SYSTEM
-- Configure custom DNS servers through Settings UI
-- Persistent server preferences with AsyncStorage
-- Real-time input validation and save confirmation
-- Reset to default functionality
+APP STORE READY ASSETS
+- Complete 2024 App Store screenshot suite:
+  * iPhone 6.9" (1320×2868px): 8 professional screenshots
+  * iPad 13" (2752×2064px): 8 optimized screenshots
+  * macOS (2560×1600px): 8 desktop-ready screenshots
+- Professional marketing materials and device mockups
+- Enhanced app presentation for multi-platform submission
 
-UI/UX IMPROVEMENTS
-- Professional DNS-themed app icon
-- Refined About screen with project credits
-- Enhanced navigation flow and user experience
-- Optimized for both iPhone and iPad
+HERMES DSYM OPTIMIZATION
+- Complete Hermes dSYM handling for improved crash reporting
+- Enhanced debug symbol management for production builds
+- Streamlined build process for better App Store compliance
 
-Ready for App Store submission with full production stability!
+Ready for comprehensive App Store submission across all Apple platforms!
 
 ---
 
@@ -118,13 +120,40 @@ Revolutionary AI chat using DNS queries. Native iOS performance, complete privac
 - **iOS**: `/icons/dnschat_ios26.png` (1024x1024)
 - **Android**: `/icons/dnschat_ios26.png` (512x512)
 
-### Screenshots Location
-`/_APP_STORE/app-store-screenshots/` (1320 x 2868 pixels)
-1. `01-main-screen-empty-chats.png` - Main chat list (empty state)
-2. `02-chat-conversation-basic.png` - Basic chat conversation 
-3. `03-chat-conversation-extended.png` - Extended chat conversation
-4. `04-about-screen-info.png` - About screen with app info
-5. `05-about-screen-credits.png` - About screen with credits
+### Screenshots Location (2024 App Store Compliant)
+
+**iPhone 6.9" Screenshots** (1320×2868px) - PRIMARY SUBMISSION
+`/_APP_STORE/screenshots/iphone_2024_appstore/`
+1. Revolutionary DNS Chat - DNS-Powered AI
+2. Real-Time DNS Monitoring - Live Network Tracking
+3. Smart Network Optimization - Auto-Optimization
+4. Seamless Experience - Zero Configuration
+5. Advanced Logging - Professional Tools
+6. Privacy First - Secure by Design
+7. Cross-Platform Sync - Universal Access
+8. Innovation Leader - Cutting Edge
+
+**iPad 13" Screenshots** (2752×2064px) - PRIMARY SUBMISSION
+`/_APP_STORE/screenshots/ipad_2024_appstore/`
+1. DNS Chat for iPad - Professional iPad Experience
+2. Real-Time DNS Dashboard - Advanced Monitoring
+3. Intelligent Network Optimization - Enterprise-Grade
+4. Seamless Multitasking - iPad Optimized
+5. Professional Logging - Developer Tools
+6. Privacy & Security - Enterprise Security
+7. Universal Compatibility - Cross-Platform
+8. Innovation Leadership - Cutting Edge
+
+**macOS Screenshots** (2560×1600px) - DESKTOP SUBMISSION
+`/_APP_STORE/screenshots/macos_appstore/`
+1. DNS Chat for macOS - Native macOS App
+2. Real-Time DNS Monitoring - Live Network Tracking
+3. Intelligent Fallback System - Smart Network Handling
+4. Seamless Chat Experience - Native Mac Experience
+5. Developer Friendly - Professional Tools
+6. Privacy First - Secure by Design
+7. Multi-Platform Compatibility - Universal Access
+8. Revolutionary Technology - Innovation Leader
 
 ---
 
@@ -132,11 +161,11 @@ Revolutionary AI chat using DNS queries. Native iOS performance, complete privac
 
 ### Bundle Information
 - **Bundle ID**: `org.mvneves.dnschat`
-- **Version**: `1.5.2`
+- **Version**: `1.7.2`
 - **Build Number**: Auto-increment based on CI/CD
 - **Minimum iOS Version**: 12.0
-- **Device Support**: iPhone, iPad
-- **Orientation**: Portrait (primary)
+- **Device Support**: iPhone, iPad, macOS
+- **Orientation**: Universal (Portrait + Landscape)
 
 ### App Store Connect Settings
 - **Age Rating**: 4+
@@ -265,4 +294,4 @@ No server infrastructure or user accounts required.
 
 ---
 
-*Generated for DNS Chat v1.5.2 - Ready for App Store submission*
+*Generated for DNS Chat v1.7.2 - Ready for Multi-Platform App Store submission*
