@@ -69,6 +69,26 @@ cd ios && pod install && cd ..
 node test-dns.js "test message"
 ```
 
+### Version Management & Automation
+```bash
+# Sync all versions to match CHANGELOG.md (recommended before builds)
+npm run sync-versions
+
+# Preview version changes without applying them
+npm run sync-versions:dry
+
+# Manual verification after sync
+npm run ios              # Verify iOS builds with correct version
+npm run android          # Verify Android builds with correct version
+```
+
+**🤖 Automated Version Sync Features:**
+- **Source of Truth**: CHANGELOG.md latest version entry (format: `## [X.Y.Z] - YYYY-MM-DD`)
+- **Multi-Platform Sync**: Updates package.json, app.json, iOS MARKETING_VERSION, Android versionName
+- **Build Number Management**: Auto-increments iOS CURRENT_PROJECT_VERSION and Android versionCode
+- **Dry Run Support**: Preview changes with `--dry-run` flag before applying
+- **Error Detection**: Validates all file formats and provides detailed error messages
+
 ### No Linting or Testing Commands
 This project does not have configured lint, typecheck, or test scripts. If you need to check TypeScript compilation, use the Expo development build process which will show compilation errors.
 
@@ -347,7 +367,12 @@ npm run android
 
 ### Release and Maintenance
 - **Always update changelog**: Maintain a detailed changelog for each release, documenting new features, bug fixes, and significant changes
-- **Version consistency**: Keep app.json and package.json versions synchronized
+- **🤖 Automated Version Sync**: Use the automated version sync script to maintain consistency across all platforms
+  - **Run before builds**: `npm run sync-versions` to sync all versions to CHANGELOG.md
+  - **Dry run testing**: `npm run sync-versions:dry` to preview changes without applying them
+  - **Source of truth**: CHANGELOG.md version is used as the authoritative version for all platforms
+  - **Auto-increment builds**: iOS and Android build numbers are automatically incremented
+- **Version consistency**: All versions automatically synchronized across app.json, package.json, iOS, and Android
 - **Native DNS testing**: Test both iOS and Android native implementations before releases
 - **CLI validation**: Use `node test-dns.js` to verify DNS service connectivity
 - **Platform testing**: Validate native modules on both iOS simulators and Android emulators
