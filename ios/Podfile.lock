@@ -1,8 +1,6 @@
 PODS:
   - boost (1.84.0)
   - CocoaAsyncSocket (7.6.5)
-  - DNSNative (1.7.2):
-    - React-Core
   - DoubleConversion (1.1.6)
   - EXConstants (17.1.7):
     - ExpoModulesCore
@@ -2616,10 +2614,6 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   boost: 7e761d76ca2ce687f7cc98e698152abd03a18f90
   CocoaAsyncSocket: 065fd1e645c7abab64f7a6a2007a48038fdc6a99
-<<<<<<< HEAD
-  DNSNative: 45f47d82d66ed7ee3f0d7d428e88dcc6fa479871
-=======
->>>>>>> feature/native-dns-default-landscape-support
   DoubleConversion: cb417026b2400c8f53ae97020b2be961b59470cb
   EXConstants: 98bcf0f22b820f9b28f9fee55ff2daededadd2f8
   EXJSONUtils: 1d3e4590438c3ee593684186007028a14b3686cd
