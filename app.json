@@ -3,7 +3,7 @@
     "name": "DNS Chat",
     "slug": "chat-dns",
     "version": "1.7.2",
-    "orientation": "portrait",
+    "orientation": "default",
     "icon": "./icons/dnschat_ios26.png",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,

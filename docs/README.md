@@ -148,11 +148,12 @@ Step-by-step procedures and reference materials:
 
 | Document | Status | Last Updated | Maintainer |
 |----------|--------|--------------|------------|
-| Tech FAQ | ✅ Current | v1.5.0 | Team |
-| Junior Dev Guide | ✅ Current | v1.5.0 | Team |
-| System Architecture | ✅ Current | v1.5.0 | Team |
-| Common Issues | ✅ Current | v1.5.0 | Team |
-| Native Specs | ✅ Current | v1.5.0 | Team |
+| Tech FAQ | ✅ Current | v1.7.2 | Team |
+| Junior Dev Guide | ✅ Current | v1.7.2 | Team |
+| System Architecture | ✅ Current | v1.7.2 | Team |
+| Common Issues | ✅ Current | v1.7.2 | Team |
+| Native Specs | ✅ Current | v1.7.2 | Team |
+| App Store Assets | ✅ Current | v1.7.2 | Team |
 
 ---
 
@@ -162,6 +163,6 @@ Start with the documentation that matches your role and experience level. When i
 
 ---
 
-**Documentation Version**: v1.5.0  
-**Last Updated**: Production Ready Release  
+**Documentation Version**: v1.7.2  
+**Last Updated**: Universal Landscape Support + App Store Assets  
 **Maintainers**: DNSChat Development Team

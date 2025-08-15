@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export type DNSMethodPreference = 'automatic' | 'prefer-https' | 'udp-only' | 'never-https';
+export type DNSMethodPreference = 'automatic' | 'prefer-https' | 'udp-only' | 'never-https' | 'native-first';
 
 interface SettingsContextType {
   dnsServer: string;
@@ -30,7 +30,7 @@ interface Settings {
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const [dnsServer, setDnsServer] = useState<string>(DEFAULT_DNS_SERVER);
   const [preferDnsOverHttps, setPreferDnsOverHttps] = useState<boolean>(false);
-  const [dnsMethodPreference, setDnsMethodPreference] = useState<DNSMethodPreference>('automatic');
+  const [dnsMethodPreference, setDnsMethodPreference] = useState<DNSMethodPreference>('native-first');
   const [enableMockDNS, setEnableMockDNS] = useState<boolean>(false);
   const [loading, setLoading] = useState(true);
 
@@ -47,9 +47,9 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         console.log('📋 Parsed settings:', settings);
         setDnsServer(settings.dnsServer || DEFAULT_DNS_SERVER);
         setPreferDnsOverHttps(settings.preferDnsOverHttps ?? false);
-        setDnsMethodPreference(settings.dnsMethodPreference ?? 'automatic');
+        setDnsMethodPreference(settings.dnsMethodPreference ?? 'native-first');
         setEnableMockDNS(settings.enableMockDNS ?? false);
-        console.log('✅ Settings loaded - DNS method:', settings.dnsMethodPreference ?? 'automatic', 'MockDNS:', settings.enableMockDNS ?? false);
+        console.log('✅ Settings loaded - DNS method:', settings.dnsMethodPreference ?? 'native-first', 'MockDNS:', settings.enableMockDNS ?? false);
       }
     } catch (error) {
       console.error('❌ Error loading settings:', error);
