@@ -52,6 +52,8 @@ JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home PATH=/o
 #### Common Issues
 - **Java 24**: Causes "Unsupported class file major version 68" error
 - **Gradle 8.13+**: May cause react-native-reanimated compatibility issues (downgraded to 8.10.2)
+- **Java 17 Record Conflicts**: Fixed with fully qualified org.xbill.DNS.Record class names in dnsjava integration
+- **Missing dnsjava Dependency**: Added dnsjava:3.5.1 to android/app/build.gradle for legacy DNS support
 
 ### Dependencies Installation
 ```bash
@@ -117,9 +119,9 @@ The app uses a hierarchical navigation pattern:
   - Current scheme: `dnschat://`
   - Bundle IDs: `org.mvneves.dnschat` (iOS and Android)
   - Uses React Native's New Architecture (newArchEnabled: true)
-  - Version in app.json (1.6.1) matches package.json (1.6.1)
+  - Version in app.json (1.7.2) matches package.json (1.7.2)
 - **tsconfig.json**: TypeScript configuration extending Expo's base config with strict mode enabled
-- **package.json**: Current version 1.6.1 with all dependencies including DNS libraries
+- **package.json**: Current version 1.7.2 with all dependencies including DNS libraries
 
 ### Deep Linking
 The app is configured for automatic deep linking with:
@@ -138,10 +140,17 @@ The app includes comprehensive DNS query logging to help users understand and de
 The app communicates with an LLM via DNS TXT queries using a comprehensive multi-layer fallback strategy with network resilience:
 
 #### Query Methods (configurable order):
-Default order (when DNS-over-HTTPS preference is OFF):
-1. **Native DNS Modules** (iOS/Android): Platform-optimized implementations
+**NEW: Default order (Native First - v1.7.3 Default)**:
+1. **Native DNS Modules** ⭐ **PRIORITIZED**: Platform-optimized implementations
    - **iOS**: Apple Network Framework (`nw_resolver_t`) - bypasses port 53 restrictions
    - **Android**: DnsResolver API (API 29+) + dnsjava fallback for legacy devices
+2. **UDP DNS**: Direct UDP queries via `react-native-udp` and `dns-packet`
+3. **DNS-over-TCP**: TCP fallback via `react-native-tcp-socket` for networks blocking UDP port 53
+4. **DNS-over-HTTPS**: Cloudflare API fallback (https://cloudflare-dns.com/dns-query)
+5. **Mock Service**: Development/testing fallback
+
+Legacy Automatic order (when DNS-over-HTTPS preference is OFF):
+1. **Native DNS Modules** (iOS/Android): Platform-optimized implementations
 2. **UDP DNS**: Direct UDP queries via `react-native-udp` and `dns-packet`
 3. **DNS-over-TCP**: TCP fallback via `react-native-tcp-socket` for networks blocking UDP port 53
 4. **DNS-over-HTTPS**: Cloudflare API fallback (https://cloudflare-dns.com/dns-query)
@@ -180,6 +189,14 @@ The `ios` and `android` folders are gitignored by default (Continuous Native Gen
 ### Theme Support
 The app automatically switches between light and dark themes based on system preferences using React Navigation's theme system (src/App.tsx:20-22).
 
+### Universal Landscape Support (v1.7.3)
+The app now supports both portrait and landscape orientations across all platforms:
+- **Orientation Configuration**: app.json set to "default" enabling universal orientation support
+- **iOS Landscape**: Full landscape support with proper layout adaptation
+- **Android Landscape**: Seamless orientation changes with responsive design
+- **Web Landscape**: Enhanced desktop viewing experience in landscape mode
+- **Auto-Rotation**: Smooth UI transitions between portrait and landscape orientations
+
 ### Edge-to-Edge Display
 Android is configured with edge-to-edge display using the `react-native-edge-to-edge` plugin.
 
@@ -212,10 +229,13 @@ Android is configured with edge-to-edge display using the `react-native-edge-to-
   - **Network Framework**: Uses `NWConnection` with proper async/await patterns
   - **Comprehensive Logging**: Extensive debug output for monitoring and troubleshooting
 
-- **🔄 Android Implementation**: Ready for implementation (fallback chain active)
-  - **Modern (API 29+)**: Android DnsResolver API ready for integration
-  - **Legacy (API <29)**: dnsjava library fallback prepared
-  - **Current Status**: Using JavaScript UDP/TCP fallbacks (functional)
+- **✅ Android Implementation**: Complete implementation synchronized with iOS behavior
+  - **Modern (API 29+)**: Android DnsResolver API with proper error handling
+  - **Legacy (API <29)**: dnsjava library integration with comprehensive support
+  - **Message Sanitization**: Identical to iOS (spaces→dashes, lowercase, 200 char limit)
+  - **Query Deduplication**: ConcurrentHashMap-based duplicate prevention
+  - **Structured Errors**: DNSError class matching iOS error types and formats
+  - **Java 17 Compatible**: Fixed Record class conflicts with fully qualified names
 
 ### ✅ Production Test Results
 
