@@ -89,6 +89,34 @@ npm run android          # Verify Android builds with correct version
 - **Dry Run Support**: Preview changes with `--dry-run` flag before applying
 - **Error Detection**: Validates all file formats and provides detailed error messages
 
+### Changelog Generation (Claude Code)
+```bash
+# Generate comprehensive changelog entries from git history (in Claude Code)
+/changelog
+
+# Preview changelog without modifying files
+/changelog --dry-run
+
+# Generate changelog with verbose analysis information
+/changelog --verbose --dry-run
+
+# Generate changelog for specific version range
+/changelog --since=v1.7.2 --next-version=1.7.4
+```
+
+**📋 /changelog Custom Slash Command Features:**
+- **🤖 AI-Powered Analysis**: Claude analyzes git commits AND actual file changes to understand user impact
+- **🎯 Smart Categorization**: Intelligently groups changes by Features, Bug Fixes, Performance, Security, Documentation, etc.
+- **👥 User-Friendly Descriptions**: Converts technical commit messages to clear, user-facing descriptions
+- **🏷️ Contributor Attribution**: Automatic GitHub username detection and proper attribution format
+- **✨ First-time Contributors**: Detects and highlights new contributors for each release
+- **🤖 Bot Exclusion**: Automatically filters out bot contributors (devin-ai, dependabot, etc.)
+- **📝 Dual Output**: Generates both CHANGELOG.md entries and GitHub release notes
+- **🧪 Dry Run Mode**: Preview changes before applying with `--dry-run` flag
+- **📊 Best Practices**: Follows Keep a Changelog format and latest changelog generation standards
+
+**📚 Implementation**: Custom markdown slash command (`.claude/commands/changelog.md`) following Claude Code slash command best practices. See `/docs/CHANGELOG-GUIDE.md` for complete workflow.
+
 ### No Linting or Testing Commands
 This project does not have configured lint, typecheck, or test scripts. If you need to check TypeScript compilation, use the Expo development build process which will show compilation errors.
 
