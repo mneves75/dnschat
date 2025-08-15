@@ -1,6 +1,6 @@
-# DNSChat v1.7.2 🚀
+# DNSChat v1.7.3 🚀
 
-**Enhanced DNS Transport Robustness & Error Handling - STABILITY RELEASE**
+**Native DNS Priority & Universal Landscape Support - PERFORMANCE RELEASE**
 
 A React Native mobile application that provides a modern, ChatGPT-like chat interface using DNS TXT queries to communicate with an LLM. **Now with enterprise-grade DNS transport robustness, comprehensive error handling, and actionable troubleshooting guidance!**
 
@@ -12,7 +12,19 @@ A React Native mobile application that provides a modern, ChatGPT-like chat inte
 
 ## ✨ Features
 
-### 🔧 **NEW in v1.7.2: Enterprise-Grade DNS Transport Robustness**
+### 🔧 **NEW in v1.7.3: Native DNS Priority & Universal Landscape Support**
+- **🚀 Native DNS First**: Default prioritization of platform-native DNS implementations
+  - **Optimized Performance**: Native DNS methods now prioritized over fallback chains
+  - **Enhanced Reliability**: Direct platform APIs for maximum DNS query success rates
+  - **Default Configuration**: 'native-first' DNS method preference set as default
+  - **Smart Fallback**: Maintains robust fallback to UDP → TCP → HTTPS when native fails
+- **📱 Universal Landscape Support**: Complete orientation flexibility across all platforms
+  - **iOS Landscape**: Full landscape support for all screens and navigation
+  - **Android Landscape**: Seamless orientation changes with proper layout adaptation
+  - **Web Landscape**: Enhanced responsive design for landscape viewing
+  - **Auto-Rotation**: Smooth transitions between portrait and landscape modes
+
+### 🔧 **v1.7.2: Enterprise-Grade DNS Transport Robustness**
 - **🛡️ Enhanced Error Handling**: Complete DNS transport error detection and recovery system
   - **UDP Port Blocking**: Smart detection of ERR_SOCKET_BAD_PORT with automatic TCP fallback
   - **TCP Connection Issues**: Comprehensive ECONNREFUSED handling with network troubleshooting guidance
@@ -31,7 +43,8 @@ A React Native mobile application that provides a modern, ChatGPT-like chat inte
   - **Interactive DNS Demonstrations**: Live DNS query examples with real-time feedback
   - **Feature Showcases**: Step-by-step introduction to chat, logs, and settings
   - **Onboarding Reset**: Developer option to replay the experience anytime
-- **⚙️ Advanced DNS Method Preferences**: Four powerful options for DNS query control
+- **⚙️ Advanced DNS Method Preferences**: Five powerful options for DNS query control
+  - **`Native First`** ⭐ **DEFAULT**: Native platform APIs prioritized for optimal performance
   - **`Automatic`**: Intelligent fallback chain (Native → UDP → TCP → HTTPS)
   - **`Prefer HTTPS`**: Privacy-focused with DNS-over-HTTPS prioritized
   - **`UDP Only`**: Maximum speed with direct UDP queries only
