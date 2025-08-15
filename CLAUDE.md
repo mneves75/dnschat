@@ -63,6 +63,48 @@ npm install
 cd ios && pod install && cd ..
 ```
 
+### CocoaPods Sandbox Sync Issues - PERMANENT FIX 🛠️
+
+**Problem**: "The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation."
+
+**Permanent Solution**: Use the automated fix scripts:
+
+```bash
+# Quick fix (recommended)
+npm run fix-pods
+
+# Alternative quick clean
+npm run clean-ios
+
+# Manual comprehensive fix (if scripts fail)
+cd ios
+rm -rf Pods/ Podfile.lock build/
+pod cache clean --all
+rm -rf ~/Library/Developer/Xcode/DerivedData/DNSChat-*
+pod deintegrate --verbose
+pod install --verbose
+```
+
+**🤖 Automated Fix Features:**
+- **Comprehensive Cleanup**: Removes Pods, Podfile.lock, build artifacts, and all caches
+- **Xcode Derived Data**: Cleans Xcode's derived data for DNSChat project
+- **CocoaPods Cache**: Clears all CocoaPods caches to prevent stale dependency issues
+- **Deintegration**: Properly deintegrates and reintegrates CocoaPods
+- **Verbose Output**: Shows detailed progress for troubleshooting
+
+**Prevention Tips:**
+- Run `npm run fix-pods` whenever you see sandbox sync errors
+- Clean pods before switching branches with iOS changes
+- Use `npm run clean-ios` for quick cleanup before builds
+- The fix script (`scripts/fix-cocoapods.sh`) can be run independently
+
+**Common Triggers:**
+- Switching git branches with different Podfile.lock versions
+- Interrupted pod installations
+- Xcode version updates
+- React Native or Expo version updates
+- Manual modification of iOS project files
+
 ### Testing DNS Communication
 ```bash
 # Test DNS functionality directly (CLI tool)

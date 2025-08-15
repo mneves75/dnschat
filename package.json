@@ -13,7 +13,9 @@
     "android:java24": "expo run:android",
     "ios": "expo run:ios",
     "sync-versions": "node scripts/sync-versions.js",
-    "sync-versions:dry": "node scripts/sync-versions.js --dry-run"
+    "sync-versions:dry": "node scripts/sync-versions.js --dry-run",
+    "fix-pods": "scripts/fix-cocoapods.sh",
+    "clean-ios": "cd ios && rm -rf Pods/ Podfile.lock build/ && pod install"
   },
   "dependencies": {
     "@expo/metro-runtime": "~5.0.4",
