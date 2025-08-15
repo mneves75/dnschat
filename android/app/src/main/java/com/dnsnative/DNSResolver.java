@@ -171,8 +171,7 @@ public class DNSResolver {
                 network,
                 message, // Use message directly as domain to query
                 DnsResolver.CLASS_IN,
-                DnsResolver.TYPE_TXT,
-                DnsResolver.FLAG_EMPTY,
+                16, // TYPE_TXT
                 executor,
                 cancellationSignal,
                 new DnsResolver.Callback<List<InetAddress>>() {
@@ -212,14 +211,14 @@ public class DNSResolver {
                 resolver.setTimeout(QUERY_TIMEOUT_MS / 1000);
                 lookup.setResolver(resolver);
                 
-                Record[] records = lookup.run();
+                org.xbill.DNS.Record[] records = lookup.run();
                 
                 if (records == null || records.length == 0) {
                     throw new DNSError(DNSError.Type.NO_RECORDS_FOUND, "");
                 }
 
                 List<String> txtRecords = new ArrayList<>();
-                for (Record record : records) {
+                for (org.xbill.DNS.Record record : records) {
                     if (record instanceof TXTRecord) {
                         TXTRecord txtRecord = (TXTRecord) record;
                         List<?> strings = txtRecord.getStrings();
@@ -396,7 +395,7 @@ public class DNSResolver {
                 header.setOpcode(Opcode.QUERY);
                 
                 Name name = Name.fromString(message + ".");
-                Record question = Record.newRecord(name, Type.TXT, DClass.IN);
+                org.xbill.DNS.Record question = org.xbill.DNS.Record.newRecord(name, Type.TXT, DClass.IN);
                 query.addRecord(question, Section.QUESTION);
 
                 // Send query to custom DNS server
@@ -407,9 +406,9 @@ public class DNSResolver {
                 Message response = resolver.send(query);
                 
                 List<String> txtRecords = new ArrayList<>();
-                Record[] answers = response.getSectionArray(Section.ANSWER);
+                org.xbill.DNS.Record[] answers = response.getSectionArray(Section.ANSWER);
                 
-                for (Record record : answers) {
+                for (org.xbill.DNS.Record record : answers) {
                     if (record instanceof TXTRecord) {
                         TXTRecord txtRecord = (TXTRecord) record;
                         List<?> strings = txtRecord.getStrings();
