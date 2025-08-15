@@ -10,6 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.7.2] - 2025-08-13
 
 ### Fixed
+- **🔥 CRITICAL: Hermes dSYM App Store Connect Upload Issue**: Permanent fix for missing Hermes debug symbols blocking App Store uploads
+  - Added expo-build-properties plugin with comprehensive iOS dSYM generation settings
+  - Created EAS build configuration (eas.json) with `includeDsym: true` and `archiveHermesDsym: true`
+  - Implemented custom build script (ios/scripts/copy_hermes_dsym.sh) to copy Hermes dSYM files
+  - Integrated Xcode build phase to automatically execute dSYM copy during Release builds
+  - Addresses error: "archive did not include a dSYM for hermes.framework with UUIDs"
 - **🔧 DNS Transport Robustness**: Complete overhaul of DNS transport error handling and fallback chain
   - Enhanced UDP port blocking detection (ERR_SOCKET_BAD_PORT) with clear fallback messaging
   - Improved TCP connection refused handling (ECONNREFUSED) with actionable network guidance
@@ -18,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **🖼️ Metro Bundler Icon Issues**: Fixed missing app icons in onboarding and navigation
   - Resolved WelcomeScreen app icon display using proper Metro bundler asset imports
   - Fixed first tab navigation icon missing due to import statement issues
+  - Fixed About screen to display proper app icon instead of search emoji
 
 ### Enhanced
 - **📋 Error Messages with Actionable Guidance**: User-friendly error messages with specific troubleshooting steps
@@ -30,10 +37,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Enhanced native DNS error messages with iOS/Android platform-specific guidance  
   - Comprehensive socket error logging with diagnostic information for debugging
 
+### Added
+- **📚 Comprehensive Documentation**: Detailed troubleshooting guides for production deployment
+  - Created HERMES_DSYM_FIX.md with complete technical implementation details
+  - Enhanced COMMON-ISSUES.md with App Store Connect upload troubleshooting section
+  - Step-by-step verification procedures for dSYM inclusion testing
+
 ### Technical Improvements
 - **🛡️ Production-Ready Error Handling**: Enterprise-grade error recovery and user guidance
 - **🔧 Network Resilience**: Improved detection of corporate firewalls and public WiFi restrictions
 - **📱 Cross-Platform Compatibility**: Better Metro bundler asset handling for consistent icon display
+- **🚀 App Store Connect Readiness**: 4-layer comprehensive solution ensures successful production uploads
 
 ## [1.7.1] - 2025-08-13
 

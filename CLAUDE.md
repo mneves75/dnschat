@@ -331,16 +331,16 @@ npm run android
 - **Native DNS testing**: Test both iOS and Android native implementations before releases
 - **CLI validation**: Use `node test-dns.js` to verify DNS service connectivity
 - **Platform testing**: Validate native modules on both iOS simulators and Android emulators
-
-## Personal Notes
-- John Carmack will always review your work! Think harder! DO ONLY WHAT IS ASKED! DO NOT CHANGE ANYTHING ELSE!
-
-## Code Maintenance
-- Always update relevant docs, including README.MD, CHANGELOG.md etc
-- when updating the main version always sync with ios and android versions
+- **Platform testing**: Always maintains both iOS and Android implementations synced.
 
 ## Inspiration and Acknowledgements
 
 - Reference: [Arxiv Daily tweet](https://x.com/Arxiv_Daily/status/1952452878716805172) describing DNS-based LLM chat.
 - Open-source: [ch.at – Universal Basic Intelligence](https://github.com/Deep-ai-inc/ch.at) implementing chat over DNS (example: `dig @ch.at "..." TXT`).
+
+
+## Code Maintenance
+- John Carmack will always review your work! always create a plan and implement it! Think harder! DO ONLY WHAT IS ASKED! DO NOT CHANGE ANYTHING ELSE!
+- Always update relevant docs, including README.MD, CHANGELOG.md etc
+- when updating the main version always sync with ios and android versions
 
