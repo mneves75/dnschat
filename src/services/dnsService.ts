@@ -711,6 +711,11 @@ export class DNSService {
         const preferHttpsMethods: ('native' | 'udp' | 'tcp' | 'https' | 'mock')[] = ['https', 'native', 'udp', 'tcp'];
         return enableMockDNS ? [...preferHttpsMethods, 'mock'] : preferHttpsMethods;
       
+      case 'native-first':
+        // New default: Native DNS always first, regardless of other preferences
+        const nativeFirstMethods: ('native' | 'udp' | 'tcp' | 'https' | 'mock')[] = Platform.OS === 'web' ? ['https', 'native'] : ['native', 'udp', 'tcp', 'https'];
+        return enableMockDNS ? [...nativeFirstMethods, 'mock'] : nativeFirstMethods;
+      
       case 'automatic':
       default:
         // Legacy behavior: respect preferHttps flag

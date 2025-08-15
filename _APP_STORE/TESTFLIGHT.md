@@ -141,8 +141,13 @@ npm run ios -- --verbose
 - ✅ **App Store Connect** app record created
 - ✅ **Code signing** configured correctly
 - ✅ **Bundle ID** matches (`org.mvneves.dnschat`)
-- ✅ **Version numbers** consistent (v1.5.2)
+- ✅ **Version numbers** consistent (v1.7.2)
 - ✅ **Native DNS module** compiles successfully
+- ✅ **Universal landscape support** enabled
+- ✅ **App Store screenshots** (2024 compliant):
+  - iPhone 6.9" (1320×2868px): 8 screenshots
+  - iPad 13" (2752×2064px): 8 screenshots  
+  - macOS (2560×1600px): 8 screenshots
 - ✅ **App icons** and metadata ready
 - ✅ **Privacy Policy** URL (required for App Store)
 
@@ -187,4 +192,4 @@ If you encounter issues during the upload process:
 
 ---
 
-*TestFlight upload guide for DNSChat v1.5.2 - Last updated: 2025-08-07*
+*TestFlight upload guide for DNSChat v1.7.2 - Last updated: 2025-08-15*

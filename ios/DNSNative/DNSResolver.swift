@@ -1,6 +1,5 @@
 import Foundation
 import Network
-import React
 
 @objc(DNSResolver)
 final class DNSResolver: NSObject {
@@ -72,7 +71,7 @@ final class DNSResolver: NSObject {
     private func createQueryTask(domain: String, message: String) -> Task<[String], Error> {
         Task {
             try await withTimeout(seconds: Self.queryTimeout) {
-                try await self.performNetworkFrameworkQuery(domain: domain, message: message)
+                try await performNetworkFrameworkQuery(domain: domain, message: message)
             }
         }
     }
@@ -80,70 +79,70 @@ final class DNSResolver: NSObject {
     @available(iOS 12.0, *)
     private func performNetworkFrameworkQuery(domain: String, message: String) async throws -> [String] {
         return try await withCheckedThrowingContinuation { continuation in
-            // Thread-safe continuation wrapper to prevent double resume
-            let continuationWrapper = ContinuationWrapper(continuation: continuation)
-            
-            // Create endpoint for DNS server
+            // Create resolver configuration pointing to our DNS server
             let endpoint = NWEndpoint.hostPort(
                 host: NWEndpoint.Host(Self.dnsServer),
                 port: NWEndpoint.Port(integerLiteral: Self.dnsPort)
             )
             
-            // Create UDP connection to DNS server
-            let connection = NWConnection(to: endpoint, using: .udp)
+            // Create resolver with custom configuration
+            let resolver = nw_resolver_create_with_endpoint(endpoint, nil)
             
-            // Create DNS query packet
-            let queryData = createDNSQuery(message: message)
+            // Configure the query - use message as the domain to query
+            let queryDomain = message.data(using: .utf8) ?? Data()
             
-            // Set up state change handler
-            connection.stateUpdateHandler = { [weak self] state in
-                guard let self = self else { return }
-                
-                switch state {
+            nw_resolver_set_update_handler(resolver) { status in
+                switch status {
                 case .ready:
-                    // Send DNS query
-                    connection.send(content: queryData, completion: .contentProcessed { error in
-                        if let error = error {
-                            continuationWrapper.resume(throwing: DNSError.queryFailed(error.localizedDescription))
-                            return
-                        }
-                        
-                        // Wait for response
-                        connection.receive(minimumIncompleteLength: 1, maximumLength: 512) { data, _, isComplete, error in
-                            defer { connection.cancel() }
-                            
-                            if let error = error {
-                                continuationWrapper.resume(throwing: DNSError.queryFailed(error.localizedDescription))
-                                return
-                            }
-                            
-                            guard let responseData = data else {
-                                continuationWrapper.resume(throwing: DNSError.noRecordsFound)
-                                return
-                            }
-                            
-                            do {
-                                let txtRecords = try self.parseDNSResponse(responseData)
-                                continuationWrapper.resume(returning: txtRecords)
-                            } catch {
-                                continuationWrapper.resume(throwing: error)
-                            }
-                        }
-                    })
+                    // Resolver is ready, perform the query
+                    self.executeQuery(resolver: resolver, message: message, continuation: continuation)
                     
                 case .failed(let error):
-                    continuationWrapper.resume(throwing: DNSError.resolverFailed(error.localizedDescription))
+                    continuation.resume(throwing: DNSError.resolverFailed(error.localizedDescription))
                     
                 case .cancelled:
-                    continuationWrapper.resume(throwing: DNSError.cancelled)
+                    continuation.resume(throwing: DNSError.cancelled)
                     
                 default:
                     break
                 }
             }
             
-            // Start the connection
-            connection.start(queue: DispatchQueue.global(qos: .userInitiated))
+            // Start the resolver
+            nw_resolver_start(resolver, DispatchQueue.global(qos: .userInitiated))
+        }
+    }
+    
+    @available(iOS 12.0, *)
+    private func executeQuery(
+        resolver: nw_resolver_t,
+        message: String,
+        continuation: CheckedContinuation<[String], Error>
+    ) {
+        // Create DNS query for TXT record
+        let queryData = createDNSQuery(message: message)
+        
+        nw_resolver_query_txt(resolver, queryData) { records, error in
+            defer {
+                nw_resolver_cancel(resolver)
+            }
+            
+            if let error = error {
+                continuation.resume(throwing: DNSError.queryFailed(error.localizedDescription))
+                return
+            }
+            
+            guard let records = records else {
+                continuation.resume(throwing: DNSError.noRecordsFound)
+                return
+            }
+            
+            do {
+                let txtRecords = try self.parseTXTRecords(records)
+                continuation.resume(returning: txtRecords)
+            } catch {
+                continuation.resume(throwing: error)
+            }
         }
     }
     
@@ -183,77 +182,16 @@ final class DNSResolver: NSObject {
         return data
     }
     
-    private func parseDNSResponse(_ responseData: Data) throws -> [String] {
+    private func parseTXTRecords(_ records: nw_txt_record_t) throws -> [String] {
         var txtRecords: [String] = []
         
-        // Basic DNS response parsing
-        guard responseData.count >= 12 else {
-            throw DNSError.queryFailed("Response too short")
-        }
-        
-        let data = Array(responseData)
-        
-        // Parse header
-        let answerCount = UInt16(data[6]) << 8 | UInt16(data[7])
-        
-        guard answerCount > 0 else {
-            throw DNSError.noRecordsFound
-        }
-        
-        // Skip header (12 bytes) and question section
-        var offset = 12
-        
-        // Skip question section
-        while offset < data.count && data[offset] != 0 {
-            let labelLength = Int(data[offset])
-            offset += labelLength + 1
-        }
-        offset += 5 // Skip null terminator, type, and class
-        
-        // Parse answer section
-        for _ in 0..<answerCount {
-            guard offset + 10 < data.count else { break }
-            
-            // Skip name (assume compression)
-            if data[offset] & 0xC0 == 0xC0 {
-                offset += 2
-            } else {
-                while offset < data.count && data[offset] != 0 {
-                    let labelLength = Int(data[offset])
-                    offset += labelLength + 1
-                }
-                offset += 1
+        // Parse TXT records from Network Framework response
+        nw_txt_record_apply(records) { key, value in
+            if let valueData = value,
+               let txtString = String(data: Data(bytes: valueData, count: Int(strlen(valueData))), encoding: .utf8) {
+                txtRecords.append(txtString)
             }
-            
-            guard offset + 10 <= data.count else { break }
-            
-            let recordType = UInt16(data[offset]) << 8 | UInt16(data[offset + 1])
-            offset += 8 // Skip type, class, TTL
-            
-            let dataLength = UInt16(data[offset]) << 8 | UInt16(data[offset + 1])
-            offset += 2
-            
-            guard offset + Int(dataLength) <= data.count else { break }
-            
-            if recordType == 16 { // TXT record
-                var txtOffset = offset
-                while txtOffset < offset + Int(dataLength) {
-                    let txtLength = Int(data[txtOffset])
-                    txtOffset += 1
-                    
-                    if txtOffset + txtLength <= offset + Int(dataLength) {
-                        let txtData = Data(data[txtOffset..<txtOffset + txtLength])
-                        if let txtString = String(data: txtData, encoding: .utf8) {
-                            txtRecords.append(txtString)
-                        }
-                        txtOffset += txtLength
-                    } else {
-                        break
-                    }
-                }
-            }
-            
-            offset += Int(dataLength)
+            return true
         }
         
         guard !txtRecords.isEmpty else {
@@ -317,41 +255,13 @@ private func withTimeout<T>(
         }
         
         group.addTask {
-            try await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+            try await Task.sleep(for: .seconds(seconds))
             throw DNSResolver.DNSError.timeout
         }
         
         let result = try await group.next()!
         group.cancelAll()
         return result
-    }
-}
-
-// MARK: - Thread-Safe Continuation Wrapper
-
-private final class ContinuationWrapper<T> {
-    private let continuation: CheckedContinuation<T, Error>
-    private var isResumed = false
-    private let queue = DispatchQueue(label: "continuation.wrapper", attributes: .concurrent)
-    
-    init(continuation: CheckedContinuation<T, Error>) {
-        self.continuation = continuation
-    }
-    
-    func resume(returning value: T) {
-        queue.async(flags: .barrier) {
-            guard !self.isResumed else { return }
-            self.isResumed = true
-            self.continuation.resume(returning: value)
-        }
-    }
-    
-    func resume(throwing error: Error) {
-        queue.async(flags: .barrier) {
-            guard !self.isResumed else { return }
-            self.isResumed = true
-            self.continuation.resume(throwing: error)
-        }
     }
 }
 
