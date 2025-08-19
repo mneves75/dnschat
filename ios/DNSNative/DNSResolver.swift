@@ -5,7 +5,7 @@ import Darwin
 import UIKit
 
 @objc(DNSResolver)
-final class DNSResolver: NSObject {
+final class DNSResolver: NSObject, @unchecked Sendable {
     
     // MARK: - Configuration
     private static let dnsServer = "ch.at"
@@ -202,7 +202,7 @@ final class DNSResolver: NSObject {
                     })
 
                 case .failed(let error):
-                    let errorMsg = error.localizedDescription ?? "Unknown network error"
+                    let errorMsg = error.localizedDescription
                     resumeOnce(.failure(DNSError.resolverFailed("Connection failed: \(errorMsg)")))
 
                 case .cancelled:
@@ -210,7 +210,7 @@ final class DNSResolver: NSObject {
 
                 case .waiting(let error):
                     // Network is waiting (e.g., no connectivity) - this is not necessarily a failure
-                    let errorMsg = error.localizedDescription ?? "Network waiting"
+                    let errorMsg = error?.localizedDescription ?? "Network waiting"
                     print("⏳ DNS: Network waiting - \(errorMsg)")
                     // Don't resume here - let it potentially transition to .ready or .failed
 
