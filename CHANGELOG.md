@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Bug Fixes
+
+- **🍎 iOS App Store Privacy Compliance**: Added required privacy usage descriptions to Info.plist
+  - **NSCameraUsageDescription**: Explains third-party library camera API references
+  - **NSMicrophoneUsageDescription**: Explains third-party library microphone API references  
+  - **NSPhotoLibraryUsageDescription**: Explains third-party library photo library API references
+  - **Fix**: Resolves ITMS-90683 App Store submission rejection for missing purpose strings
+  - **Cause**: react-native-device-info references device capability APIs for feature detection
+
 ## [2.0.0] - 2025-01-19
 
 ### 🌟 MAJOR: iOS/iPadOS 26 Liquid Glass Support
