@@ -235,6 +235,39 @@ npm test -- --testPathPattern=modules/dns-native
 
 ## 🔧 Troubleshooting
 
+### 🚨 CRITICAL: iOS App Crashes (CheckedContinuation Double Resume)
+
+**Problem**: App crashes immediately with fatal `EXC_BREAKPOINT` error during DNS operations.
+
+**Root Cause**: Race condition in iOS native DNS module where `CheckedContinuation` gets resumed multiple times.
+
+**Symptoms**:
+- App terminates instantly during DNS queries
+- TestFlight crash reports showing `EXC_BREAKPOINT` in `performNetworkFrameworkQuery`
+- Console error: "Fatal error: Attempting to resume a continuation that has already been resumed"
+
+**✅ FIXED in v1.7.7**: Enterprise-grade NSLock protection implemented for atomic continuation handling.
+
+**If experiencing similar issues in custom code**:
+```swift
+// ❌ DANGEROUS - Race condition possible
+continuation.resume(returning: result)
+
+// ✅ SAFE - Atomic resume with NSLock protection
+let resumeLock = NSLock()
+var hasResumed = false
+
+let resumeOnce: (Result<[String], Error>) -> Void = { result in
+    resumeLock.lock()
+    defer { resumeLock.unlock() }
+    
+    if !hasResumed {
+        hasResumed = true
+        continuation.resume(returning: result)
+    }
+}
+```
+
 ### 🚨 Critical: Native DNS Module Not Registering (Common iOS Issue)
 
 **Problem**: Native DNS module fails to register with React Native bridge, showing `RNDNSModule found: false` and platform detected as "web".
