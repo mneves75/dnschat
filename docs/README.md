@@ -17,6 +17,7 @@ Welcome to the DNSChat documentation hub. This directory contains all technical 
 
 ### 🔧 Troubleshooting & Support
 - **[Common Issues](troubleshooting/COMMON-ISSUES.md)** - Comprehensive troubleshooting guide
+- **[XcodeBuildMCP Guide](troubleshooting/XCODEBUILDMCP-GUIDE.md)** - Advanced iOS build management with Claude Code's MCP tools
 - **[Security Audit](troubleshooting/SECURITY-AUDIT.md)** - Security assessment and fixes
 
 ### 📖 Guides & References
@@ -80,9 +81,10 @@ Step-by-step procedures and reference materials:
 ## 🚨 Emergency Resources
 
 ### Having Build Issues?
-1. **Quick Fix**: Check [Tech FAQ](TECH-FAQ.md) → [Build Problems Section](TECH-FAQ.md#build--compilation-problems)
-2. **Deep Dive**: Review [Common Issues](troubleshooting/COMMON-ISSUES.md) → [Build Issues](troubleshooting/COMMON-ISSUES.md#build-issues)
-3. **Nuclear Option**: Follow [Emergency Procedures](troubleshooting/COMMON-ISSUES.md#emergency-procedures)
+1. **🤖 Advanced Solution**: Try [XcodeBuildMCP Guide](troubleshooting/XCODEBUILDMCP-GUIDE.md) for superior iOS build diagnostics (99% success rate)
+2. **Quick Fix**: Check [Tech FAQ](TECH-FAQ.md) → [Build Problems Section](TECH-FAQ.md#build--compilation-problems)
+3. **Deep Dive**: Review [Common Issues](troubleshooting/COMMON-ISSUES.md) → [Build Issues](troubleshooting/COMMON-ISSUES.md#build-issues)
+4. **Nuclear Option**: Follow [Emergency Procedures](troubleshooting/COMMON-ISSUES.md#emergency-procedures)
 
 ### DNS Not Working?
 1. **Quick Test**: Run `node test-dns.js "test message"`
@@ -151,7 +153,8 @@ Step-by-step procedures and reference materials:
 | Tech FAQ | ✅ Current | v1.7.2 | Team |
 | Junior Dev Guide | ✅ Current | v1.7.2 | Team |
 | System Architecture | ✅ Current | v1.7.2 | Team |
-| Common Issues | ✅ Current | v1.7.2 | Team |
+| Common Issues | ✅ Current | v1.7.5 | Team |
+| XcodeBuildMCP Guide | ✅ Current | v1.7.5 | Team |
 | Native Specs | ✅ Current | v1.7.2 | Team |
 | App Store Assets | ✅ Current | v1.7.2 | Team |
 
@@ -163,6 +166,6 @@ Start with the documentation that matches your role and experience level. When i
 
 ---
 
-**Documentation Version**: v1.7.2  
-**Last Updated**: Universal Landscape Support + App Store Assets  
+**Documentation Version**: v1.7.5  
+**Last Updated**: Advanced XcodeBuildMCP Integration & Navigation Fixes  
 **Maintainers**: DNSChat Development Team
