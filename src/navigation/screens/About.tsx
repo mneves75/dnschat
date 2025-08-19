@@ -7,6 +7,7 @@ import {
   Image,
   useColorScheme,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { 
   Form, 
   LiquidGlassWrapper,
@@ -84,12 +85,17 @@ const createStyles = (isDark: boolean) => StyleSheet.create({
 });
 
 export function About() {
+  const navigation = useNavigation();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const [iconError, setIconError] = useState(false);
 
   const openLink = (url: string) => {
     Linking.openURL(url);
+  };
+
+  const openSettings = () => {
+    navigation.navigate('Settings' as never);
   };
 
   const styles = createStyles(isDark);
@@ -164,13 +170,9 @@ export function About() {
             <Text style={[styles.title, { color: isDark ? '#FFFFFF' : '#000000' }]}>
               DNS Chat
             </Text>
-            <LiquidGlassWrapper
-              variant="interactive"
-              shape="capsule"
-              style={styles.versionBadge}
-            >
+            <View style={[styles.versionBadge, { borderRadius: 12 }]}>
               <Text style={styles.versionText}>v{packageJson.version}</Text>
-            </LiquidGlassWrapper>
+            </View>
             <Text style={[styles.description, { color: isDark ? '#AEAEB2' : '#6D6D70' }]}>
               Chat with AI using DNS TXT queries - a unique approach to LLM communication.
             </Text>
@@ -216,6 +218,16 @@ export function About() {
           title="@dnschat on X"
           subtitle="Follow for updates"
           onPress={() => openLink('https://x.com/dnschat')}
+        />
+      </Form.Section>
+
+      {/* Settings */}
+      <Form.Section title="Settings">
+        <Form.Item
+          title="App Settings"
+          subtitle="Configure DNS servers and preferences"
+          onPress={openSettings}
+          showChevron
         />
       </Form.Section>
 

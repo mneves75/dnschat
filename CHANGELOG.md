@@ -7,7 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### 🚀 Major Features
+
+- **⚡ Expo SDK 54 Beta Upgrade**: Complete migration to Expo SDK 54 beta with React Native 0.81 and React 19.1.0
+  - **React Native 0.81.0**: Latest stable React Native with improved performance and new architecture support
+  - **React 19.1.0**: Latest React with enhanced concurrent features and improved hydration
+  - **Reanimated 4.0.2**: New architecture-only Reanimated with separate worklets package
+  - **react-native-worklets**: Added missing dependency for Reanimated 4 compatibility
+  - **iOS Build**: Fixed compilation issues and confirmed full compatibility
+
+### UI/UX Improvements
+
+- **🎨 Fixed Double Rectangle Bug**: Resolved overlapping glass effects in UI components
+  - **Chat List**: Fixed nested LiquidGlassWrapper in message count badges
+  - **About Screen**: Fixed nested LiquidGlassWrapper in version badge  
+  - **Root Cause**: Overlapping background styles in nested glass components
+  - **Solution**: Replaced inner glass wrappers with regular Views + border radius
+
+- **⚙️ Added Settings Access**: Restored missing settings functionality
+  - **Settings Button**: Added "App Settings" section in About tab
+  - **Navigation**: Properly connects to existing GlassSettings modal screen
+  - **Fix**: Previously orphaned SettingsHeaderButton component was unused
+
+- **🎨 + Button Color Consistency**: Changed new chat button from yellow to iOS blue
+  - **Color**: Changed `rgba(255, 193, 7, 0.15)` → `rgba(0, 122, 255, 0.15)`
+  - **Design**: Better consistency with iOS design language
+  - **Location**: GlassChatList newChatBadge style
+
 ### Bug Fixes
+
+- **🚀 Onboarding Streamlined**: Completely removed network optimization step
+  - **Removed**: NetworkSetupScreen component and all references
+  - **Fixed**: Orphaned imports and switch cases in OnboardingContainer
+  - **Cleanup**: Deleted unused NetworkSetupScreen.tsx file
+  - **Result**: Faster, cleaner onboarding experience
 
 - **🍎 iOS App Store Privacy Compliance**: Added required privacy usage descriptions to Info.plist
   - **NSCameraUsageDescription**: Explains third-party library camera API references

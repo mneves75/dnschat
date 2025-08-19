@@ -11,7 +11,6 @@ import { useOnboarding } from '../../context/OnboardingContext';
 import { OnboardingProgress } from './OnboardingProgress';
 import { WelcomeScreen } from './screens/WelcomeScreen';
 import { DNSMagicScreen } from './screens/DNSMagicScreen';
-import { NetworkSetupScreen } from './screens/NetworkSetupScreen';
 import { FirstChatScreen } from './screens/FirstChatScreen';
 import { FeaturesScreen } from './screens/FeaturesScreen';
 
@@ -31,8 +30,6 @@ export function OnboardingContainer() {
         return <WelcomeScreen />;
       case 'DNSMagicScreen':
         return <DNSMagicScreen />;
-      case 'NetworkSetupScreen':
-        return <NetworkSetupScreen />;
       case 'FirstChatScreen':
         return <FirstChatScreen />;
       case 'FeaturesScreen':

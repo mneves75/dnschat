@@ -11,14 +11,18 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "org.mvneves.dnschat",
-      "deploymentTarget": "16.0"
+      "deploymentTarget": "16.0",
+      "liquidGlassIcon": true
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./icons/dnschat_ios26.png",
         "backgroundColor": "#0D7377"
       },
-      "package": "org.mvneves.dnschat"
+      "package": "org.mvneves.dnschat",
+      "targetSdkVersion": 36,
+      "edgeToEdge": true,
+      "predictiveBackGesture": true
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -45,6 +49,7 @@
             "generateStaticFrameworks": true,
             "generateSourcemap": true,
             "includeSymbolsInDsym": true,
+            "useFrameworks": "static",
             "xcodeproj": {
               "buildSettings": {
                 "DEBUG_INFORMATION_FORMAT": "dwarf-with-dsym",
@@ -55,6 +60,11 @@
                 "COPY_PHASE_STRIP": "NO"
               }
             }
+          },
+          "android": {
+            "newArchEnabled": true,
+            "compileSdkVersion": 36,
+            "targetSdkVersion": 36
           }
         }
       ]

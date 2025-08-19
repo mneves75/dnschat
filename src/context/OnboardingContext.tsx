@@ -42,13 +42,6 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
     completed: false,
   },
   {
-    id: 'network-setup',
-    title: 'Network Optimization',
-    description: 'Let us optimize your DNS settings',
-    component: 'NetworkSetupScreen',
-    completed: false,
-  },
-  {
     id: 'first-chat',
     title: 'Your First Chat',
     description: 'Send your first message and see the magic happen',
