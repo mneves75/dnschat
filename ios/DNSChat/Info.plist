@@ -51,6 +51,12 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>This app does not directly access the camera. Camera access is referenced by third-party libraries for device capability detection.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>This app does not access the microphone. Microphone access is referenced by third-party libraries for device capability detection.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This app does not access the photo library. Photo library access is referenced by third-party libraries for device capability detection.</string>
 	<key>UILaunchStoryboardName</key>
 	<string>SplashScreen</string>
 	<key>UIRequiredDeviceCapabilities</key>
