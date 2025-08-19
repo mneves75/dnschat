@@ -110,7 +110,7 @@ npm run web
 ### Basic Functionality Test
 ```bash
 # Test DNS connectivity
-node test-dns.js "Hello world"
+node test-dns-simple.js "Hello world"
 ```
 
 ### Platform Tests

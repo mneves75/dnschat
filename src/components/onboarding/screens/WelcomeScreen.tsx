@@ -7,6 +7,7 @@ import {
   Animated,
   Dimensions,
   Image,
+  ScrollView,
 } from 'react-native';
 import { OnboardingNavigation } from '../OnboardingNavigation';
 
@@ -39,7 +40,11 @@ export function WelcomeScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.content}>
+      <ScrollView 
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
         <Animated.View
           style={[
             styles.heroSection,
@@ -94,7 +99,7 @@ export function WelcomeScreen() {
             isDark={isDark}
           />
         </View>
-      </View>
+      </ScrollView>
 
       <OnboardingNavigation showBack={false} />
     </View>
@@ -133,12 +138,14 @@ function FeatureItem({ icon, title, description, isDark }: FeatureItemProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'space-between',
   },
-  content: {
+  scrollView: {
     flex: 1,
+  },
+  scrollContent: {
     paddingHorizontal: 24,
     paddingTop: 40,
+    paddingBottom: 20,
   },
   heroSection: {
     alignItems: 'center',

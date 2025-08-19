@@ -149,7 +149,7 @@ if (Platform.OS === 'ios') {
 ### Testing Commands
 ```bash
 # DNS connectivity test
-node test-dns.js "Hello world"
+node test-dns-simple.js "Hello world"
 
 # Platform builds
 npm run ios

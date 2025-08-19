@@ -14,9 +14,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 // Import package.json to get version
 const packageJson = require('../../../package.json');
 
+// Import app icon (same as used in onboarding)
+const AppIcon = require('../../../icons/dnschat_ios26.png');
+
 export function About() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
+  const [iconError, setIconError] = useState(false);
 
   const openLink = (url: string) => {
     Linking.openURL(url);
@@ -180,12 +184,19 @@ export function About() {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <View style={styles.logo}>
-            <Image 
-              source={require('../../../assets/icon.png')} 
-              style={{ width: 60, height: 60, borderRadius: 15 }}
-              resizeMode="contain"
-              onError={(error) => console.log('🚨 About icon load error:', error.nativeEvent.error)}
-            />
+            {!iconError ? (
+              <Image 
+                source={AppIcon}
+                style={{ width: 60, height: 60, borderRadius: 15 }}
+                resizeMode="contain"
+                onError={(error) => {
+                  console.log('🚨 About icon load error:', error.nativeEvent.error);
+                  setIconError(true);
+                }}
+              />
+            ) : (
+              <Text style={styles.logoText}>DNS</Text>
+            )}
           </View>
           <Text style={styles.title}>DNS Chat</Text>
           <Text style={styles.version}>Version {packageJson.version}</Text>
