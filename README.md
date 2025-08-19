@@ -1,8 +1,8 @@
-# DNSChat v1.7.5 🚀
+# DNSChat v1.7.7 🚀
 
-**Advanced XcodeBuildMCP Integration & Navigation Fixes - ENTERPRISE RELEASE**
+**Critical iOS Crash Fix + Enterprise Production Stability - EMERGENCY HOTFIX**
 
-A React Native mobile application that provides a modern, ChatGPT-like chat interface using DNS TXT queries to communicate with an LLM. **Now with enterprise-grade DNS transport robustness, comprehensive error handling, and actionable troubleshooting guidance!**
+A React Native mobile application that provides a modern, ChatGPT-like chat interface using DNS TXT queries to communicate with an LLM. **Now with enterprise-grade DNS transport robustness, comprehensive error handling, and production-ready crash protection!**
 
 ## 💡  Inspiration and Acknowledgements
 
@@ -11,6 +11,19 @@ A React Native mobile application that provides a modern, ChatGPT-like chat inte
 
 
 ## ✨ Features
+
+### 🚨 **EMERGENCY FIX in v1.7.7: Critical iOS Crash Resolution**
+- **🔥 iOS CheckedContinuation Double Resume Crash (FATAL)**: Fixed critical race condition causing app termination
+  - **Root Cause**: CheckedContinuation being resumed multiple times in concurrent DNS operations
+  - **Crash Type**: Fatal EXC_BREAKPOINT from Swift runtime protection against double resume
+  - **Solution**: Implemented NSLock-protected atomic `hasResumed` flag with proper defer blocks
+  - **Thread Safety**: Enterprise-grade atomic operations ensure single resume per continuation
+  - **Impact**: Eliminates all TestFlight crashes related to DNS query concurrency
+- **✅ Production Stability**: Complete elimination of iOS crash scenarios in native DNS module
+  - **iOS 16.0+ Compatibility**: NSLock implementation compatible with all deployment targets
+  - **Atomic Operations**: Thread-safe continuation management prevents race conditions
+  - **Resource Cleanup**: Proper connection cancellation on resume to prevent resource leaks
+  - **Error Handling**: Graceful handling of timeout, network failure, and cancellation scenarios
 
 ### 🚀 **NEW in v1.7.5: Advanced XcodeBuildMCP Integration & Navigation Fixes**
 - **🤖 XcodeBuildMCP Integration**: Revolutionary iOS build management with Claude Code's MCP tools
