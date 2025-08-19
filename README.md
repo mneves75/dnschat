@@ -220,6 +220,111 @@ npm run android  # Test Android DnsResolver implementation
 npm test -- --testPathPattern=modules/dns-native
 ```
 
+## 🔧 Troubleshooting
+
+### 🚨 Critical: Native DNS Module Not Registering (Common iOS Issue)
+
+**Problem**: Native DNS module fails to register with React Native bridge, showing `RNDNSModule found: false` and platform detected as "web".
+
+**Root Cause**: DNSNative pod not included in iOS Podfile, causing React Native to not recognize the native module.
+
+**✅ Permanent Solution**:
+
+1. **Verify Podfile includes DNSNative**:
+   ```ruby
+   # Add to ios/Podfile after line ~45
+   # Native DNS Module
+   pod 'DNSNative', :path => './DNSNative'
+   ```
+
+2. **Verify podspec path is correct**:
+   ```ruby
+   # In ios/DNSNative/DNSNative.podspec, ensure path is:
+   package = JSON.parse(File.read(File.join(__dir__, "../../package.json")))
+   ```
+
+3. **Run CocoaPods installation**:
+   ```bash
+   cd ios && pod install && cd ..
+   ```
+
+4. **Rebuild iOS app**:
+   ```bash
+   npm run ios
+   ```
+
+**🎯 Verification**: Look for these console logs:
+```
+✅ RNDNSModule found: true
+🔍 Native DNS capabilities received: {
+  "available": true,
+  "platform": "ios",
+  "supportsCustomServer": true
+}
+✅ Native DNS reports as available!
+```
+
+**📋 This Fix Prevents**:
+- "Platform detected as web instead of ios" errors
+- DNS method falling back to Mock service only
+- "Native DNS not available" error messages
+- Performance degradation from missing native implementation
+
+### 🐛 Common iOS Build Issues
+
+**Swift Compilation Errors**: `'RCTPromiseResolveBlock' not found`
+```bash
+# Add React import to DNSResolver.swift
+import React
+```
+
+**folly/dynamic.h Missing**: React Native 0.79.x header issue
+```bash
+# Already fixed in ios/Podfile post_install hook
+# Adds RCT-Folly header search paths automatically
+```
+
+**CocoaPods Sandbox Sync**: "Sandbox not in sync with Podfile.lock"
+```bash
+npm run fix-pods  # Automated comprehensive fix
+# OR manual:
+cd ios && rm -rf Pods/ Podfile.lock && pod install
+```
+
+### 🌐 DNS Connection Issues
+
+**UDP Port 53 Blocked**: `ERR_SOCKET_BAD_PORT` on iOS
+- **Automatic**: App falls back to DNS-over-TCP
+- **Manual**: Switch networks (WiFi ↔ Cellular) or contact network admin
+
+**DNS Server Unreachable**: Connection timeouts
+```bash
+# Test DNS connectivity
+dig @ch.at "test message" TXT +short
+# Switch to different network if no response
+```
+
+**Network Restrictions**: Corporate firewall blocking DNS
+- **Solution**: Enable "Prefer DNS-over-HTTPS" in Settings → DNS Method
+- **Alternative**: Use cellular data instead of restricted WiFi
+
+### 📱 App-Specific Issues
+
+**Missing App Icons**: Metro bundler asset issues
+```bash
+# Clear Metro cache and reinstall
+npx expo start --clear
+```
+
+**Navigation Errors**: "Screen not handled by navigator"
+```bash
+# Use proper navigation syntax:
+navigation.navigate('HomeTabs', { screen: 'Logs' })
+```
+
+**Virtual List Errors**: VirtualizedList in ScrollView warning
+- **Fixed**: All scroll views properly configured with proper flex layouts
+
 ## Configuration
 
 ### Deep Linking

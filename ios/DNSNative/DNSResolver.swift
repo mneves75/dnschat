@@ -1,5 +1,7 @@
 import Foundation
 import Network
+import React
+import Darwin
 
 @objc(DNSResolver)
 final class DNSResolver: NSObject {
@@ -50,7 +52,7 @@ final class DNSResolver: NSObject {
                 
                 // Clean up
                 await MainActor.run {
-                    activeQueries.removeValue(forKey: queryId)
+                    _ = activeQueries.removeValue(forKey: queryId)
                 }
                 
                 resolver(result)
@@ -58,7 +60,7 @@ final class DNSResolver: NSObject {
             } catch {
                 // Clean up on error
                 await MainActor.run {
-                    activeQueries.removeValue(forKey: queryId)
+                    _ = activeQueries.removeValue(forKey: queryId)
                 }
                 
                 rejecter("DNS_QUERY_FAILED", error.localizedDescription, error)
@@ -71,7 +73,7 @@ final class DNSResolver: NSObject {
     private func createQueryTask(domain: String, message: String) -> Task<[String], Error> {
         Task {
             try await withTimeout(seconds: Self.queryTimeout) {
-                try await performNetworkFrameworkQuery(domain: domain, message: message)
+                try await self.performNetworkFrameworkQuery(domain: domain, message: message)
             }
         }
     }
@@ -79,23 +81,20 @@ final class DNSResolver: NSObject {
     @available(iOS 12.0, *)
     private func performNetworkFrameworkQuery(domain: String, message: String) async throws -> [String] {
         return try await withCheckedThrowingContinuation { continuation in
-            // Create resolver configuration pointing to our DNS server
+            // Create endpoint for DNS server
             let endpoint = NWEndpoint.hostPort(
                 host: NWEndpoint.Host(Self.dnsServer),
                 port: NWEndpoint.Port(integerLiteral: Self.dnsPort)
             )
             
-            // Create resolver with custom configuration
-            let resolver = nw_resolver_create_with_endpoint(endpoint, nil)
+            // Create UDP connection to DNS server
+            let connection = NWConnection(to: endpoint, using: .udp)
             
-            // Configure the query - use message as the domain to query
-            let queryDomain = message.data(using: .utf8) ?? Data()
-            
-            nw_resolver_set_update_handler(resolver) { status in
-                switch status {
+            connection.stateUpdateHandler = { state in
+                switch state {
                 case .ready:
-                    // Resolver is ready, perform the query
-                    self.executeQuery(resolver: resolver, message: message, continuation: continuation)
+                    // Connection is ready, send DNS query
+                    self.sendDNSQuery(connection: connection, message: message, continuation: continuation)
                     
                 case .failed(let error):
                     continuation.resume(throwing: DNSError.resolverFailed(error.localizedDescription))
@@ -108,42 +107,50 @@ final class DNSResolver: NSObject {
                 }
             }
             
-            // Start the resolver
-            nw_resolver_start(resolver, DispatchQueue.global(qos: .userInitiated))
+            // Start the connection
+            connection.start(queue: DispatchQueue.global(qos: .userInitiated))
         }
     }
     
     @available(iOS 12.0, *)
-    private func executeQuery(
-        resolver: nw_resolver_t,
+    private func sendDNSQuery(
+        connection: NWConnection,
         message: String,
         continuation: CheckedContinuation<[String], Error>
     ) {
         // Create DNS query for TXT record
         let queryData = createDNSQuery(message: message)
         
-        nw_resolver_query_txt(resolver, queryData) { records, error in
-            defer {
-                nw_resolver_cancel(resolver)
-            }
-            
+        connection.send(content: queryData, completion: .contentProcessed { error in
             if let error = error {
                 continuation.resume(throwing: DNSError.queryFailed(error.localizedDescription))
                 return
             }
             
-            guard let records = records else {
-                continuation.resume(throwing: DNSError.noRecordsFound)
-                return
+            // Receive response
+            connection.receive(minimumIncompleteLength: 1, maximumLength: 1024) { data, context, isComplete, error in
+                defer {
+                    connection.cancel()
+                }
+                
+                if let error = error {
+                    continuation.resume(throwing: DNSError.queryFailed(error.localizedDescription))
+                    return
+                }
+                
+                guard let responseData = data else {
+                    continuation.resume(throwing: DNSError.noRecordsFound)
+                    return
+                }
+                
+                do {
+                    let txtRecords = try self.parseDNSResponse(responseData)
+                    continuation.resume(returning: txtRecords)
+                } catch {
+                    continuation.resume(throwing: error)
+                }
             }
-            
-            do {
-                let txtRecords = try self.parseTXTRecords(records)
-                continuation.resume(returning: txtRecords)
-            } catch {
-                continuation.resume(throwing: error)
-            }
-        }
+        })
     }
     
     private func createDNSQuery(message: String) -> Data {
@@ -182,16 +189,56 @@ final class DNSResolver: NSObject {
         return data
     }
     
-    private func parseTXTRecords(_ records: nw_txt_record_t) throws -> [String] {
+    private func parseDNSResponse(_ responseData: Data) throws -> [String] {
         var txtRecords: [String] = []
         
-        // Parse TXT records from Network Framework response
-        nw_txt_record_apply(records) { key, value in
-            if let valueData = value,
-               let txtString = String(data: Data(bytes: valueData, count: Int(strlen(valueData))), encoding: .utf8) {
-                txtRecords.append(txtString)
+        // Basic DNS response parsing
+        // Skip DNS header (12 bytes) and query section
+        var offset = 12
+        
+        // Skip query section - find the end of the domain name
+        while offset < responseData.count {
+            let length = Int(responseData[offset])
+            if length == 0 {
+                offset += 1 // Skip null terminator
+                offset += 4 // Skip QTYPE and QCLASS
+                break
             }
-            return true
+            offset += length + 1
+        }
+        
+        // Parse answer section
+        while offset < responseData.count - 10 {
+            // Skip name (compressed format - 2 bytes)
+            if responseData[offset] >= 0xC0 {
+                offset += 2
+            } else {
+                // Skip uncompressed name
+                while offset < responseData.count && responseData[offset] != 0 {
+                    let length = Int(responseData[offset])
+                    offset += length + 1
+                }
+                offset += 1 // Skip null terminator
+            }
+            
+            // Check TYPE (should be 16 for TXT)
+            guard offset + 8 < responseData.count else { break }
+            let type = UInt16(responseData[offset]) << 8 | UInt16(responseData[offset + 1])
+            offset += 8 // Skip TYPE, CLASS, TTL
+            
+            // Get RDLENGTH
+            let rdLength = Int(UInt16(responseData[offset]) << 8 | UInt16(responseData[offset + 1]))
+            offset += 2
+            
+            if type == 16 && offset + rdLength <= responseData.count {
+                // Parse TXT record data
+                let txtData = responseData.subdata(in: offset..<offset + rdLength)
+                if let txtString = String(data: txtData, encoding: .utf8) {
+                    txtRecords.append(txtString)
+                }
+            }
+            
+            offset += rdLength
         }
         
         guard !txtRecords.isEmpty else {
@@ -255,7 +302,7 @@ private func withTimeout<T>(
         }
         
         group.addTask {
-            try await Task.sleep(for: .seconds(seconds))
+            try await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
             throw DNSResolver.DNSError.timeout
         }
         

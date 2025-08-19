@@ -406,6 +406,52 @@ Android is configured with edge-to-edge display using the `react-native-edge-to-
 
 **Status: PRODUCTION READY** - Native DNS implementation now works perfectly on iOS, matching `dig @ch.at "message" TXT +short` functionality. Version 1.5.3 fixed critical iOS timeout issues. Version 1.5.4 enhanced Android implementation with comprehensive logging and improved packet handling.
 
+### 🚨 CRITICAL: Recurring Native DNS Module Registration Issue - PERMANENT FIX
+
+**Problem**: Native DNS module fails to register with React Native bridge, showing:
+```
+✅ RNDNSModule found: false
+🔍 NATIVE: Platform: web
+❌ NATIVE: Native DNS not available or doesn't support custom servers
+```
+
+**Root Cause**: DNSNative pod not included in iOS Podfile after fresh installs or CocoaPods updates.
+
+**🔧 PERMANENT SOLUTION**: Always verify DNSNative pod registration in iOS Podfile:
+
+```ruby
+# Native DNS Module - REQUIRED for iOS native DNS functionality
+pod 'DNSNative', :path => './DNSNative'
+```
+
+**⚠️ Critical Steps After Any CocoaPods Changes:**
+
+1. **Verify Podfile Entry**: Check that DNSNative pod is included in `ios/Podfile`
+2. **Fix Podspec Path**: Ensure `ios/DNSNative/DNSNative.podspec` has correct package.json path:
+   ```ruby
+   package = JSON.parse(File.read(File.join(__dir__, "../../package.json")))
+   ```
+3. **Reinstall Pods**: Run `cd ios && pod install` to register the module
+4. **Rebuild**: Run `npm run ios` to compile with native module
+
+**🔍 Verification Commands:**
+```bash
+# Check if DNSNative pod is listed
+grep -A 2 -B 2 "DNSNative" ios/Podfile.lock
+
+# Verify native module files exist
+ls -la ios/DNSNative/
+
+# Check for successful pod installation
+cd ios && pod install | grep "Installing DNSNative"
+```
+
+**This issue recurs when:**
+- Switching git branches with different Podfile configurations
+- Running `pod install` without DNSNative entry in Podfile
+- Fresh project setups or clean installs
+- CocoaPods cache clears or updates
+
 ### Native Platform Implementation
 
 - **✅ iOS Implementation**: Complete Swift implementation using Apple Network Framework
