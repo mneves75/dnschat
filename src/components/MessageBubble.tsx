@@ -118,9 +118,9 @@ export function MessageBubble({ message }: MessageBubbleProps) {
 
 const styles = StyleSheet.create({
   container: {
-    marginVertical: 4,
+    marginVertical: 2, // Tighter vertical spacing like iMessage
     marginHorizontal: 16,
-    maxWidth: '80%',
+    maxWidth: '75%', // Slightly smaller max width
   },
   userContainer: {
     alignSelf: 'flex-end',
@@ -129,15 +129,26 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   bubble: {
-    padding: 12,
-    borderRadius: 18,
+    paddingHorizontal: 16, // More horizontal padding
+    paddingVertical: 10,   // Less vertical padding
+    borderRadius: 20,      // More rounded like iMessage
     minWidth: 60,
+    // iMessage-style shadow
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2, // Android shadow
   },
   userBubble: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#007AFF', // Keep iMessage blue
+    // User bubbles have slightly different shape
+    borderBottomRightRadius: 6, // iMessage tail effect
   },
   assistantBubble: {
-    backgroundColor: '#E5E5EA',
+    backgroundColor: '#F0F0F0', // Lighter gray like iMessage
+    // Assistant bubbles have tail on the left
+    borderBottomLeftRadius: 6, // iMessage tail effect
   },
   darkBubble: {
     // Base dark styling handled by specific bubble types
@@ -146,10 +157,12 @@ const styles = StyleSheet.create({
     // Base light styling handled by specific bubble types
   },
   darkUserBubble: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#007AFF', // Keep same blue in dark mode
+    borderBottomRightRadius: 6, // iMessage tail effect
   },
   darkAssistantBubble: {
-    backgroundColor: '#3C3C43',
+    backgroundColor: '#2C2C2E', // Darker gray for dark mode
+    borderBottomLeftRadius: 6,   // iMessage tail effect
   },
   errorBubble: {
     backgroundColor: '#FF3B30',
@@ -180,8 +193,9 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   timestamp: {
-    fontSize: 12,
-    opacity: 0.6,
+    fontSize: 11, // Slightly smaller like iMessage
+    opacity: 0.5, // More subtle
+    marginTop: 2,  // Small margin from bubble
   },
   darkTimestamp: {
     color: '#FFFFFF',

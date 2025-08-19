@@ -10,13 +10,15 @@ A React Native mobile app that revolutionizes LLM interaction by using DNS TXT q
 
 ## ✨ Key Features
 
+- **🌟 iOS 26+ Liquid Glass**: Native UIGlassEffect with environmental adaptation and comprehensive fallbacks
 - **🌐 DNS-Based AI Chat**: Revolutionary LLM communication via DNS TXT queries
-- **📱 Cross-Platform**: Native iOS, Android, and Web support
+- **📱 Cross-Platform**: Native iOS, Android, and Web support with platform-specific optimizations
+- **⚡ Native Bottom Tabs**: react-native-bottom-tabs with UITabBarController/BottomNavigationView primitives
 - **🚀 Native DNS Implementation**: Platform-optimized iOS Network Framework and Android DnsResolver
 - **🔄 Multi-Layer Fallback**: UDP → TCP → DNS-over-HTTPS → Mock service
 - **💾 Local Storage**: Persistent conversation history with AsyncStorage
-- **🎨 Modern UI**: ChatGPT-like interface with dark/light theme support
-- **⚙️ Advanced DNS Config**: Five DNS method preferences for different network conditions
+- **🎨 Modern Glass UI**: iOS 26 Liquid Glass design system with sensor-aware adaptation
+- **⚙️ Advanced DNS Config**: Multiple DNS service options (ch.at, llm.pieter.com)
 - **📊 Real-Time Logging**: Comprehensive DNS query monitoring and debugging
 - **🔗 Deep Linking**: Direct message sending via custom URL schemes
 
@@ -28,9 +30,10 @@ A React Native mobile app that revolutionizes LLM interaction by using DNS TXT q
 - **TypeScript** with strict mode
 
 ### **Navigation & UI**
-- **React Navigation v7** (Native Stack + Bottom Tabs)
-- **React Native Safe Area Context**
-- **Theme Support** (automatic light/dark switching)
+- **React Navigation v7** (Native Stack) + **react-native-bottom-tabs** (Native UITabBarController)
+- **iOS 26+ Liquid Glass**: Native `.glassEffect()` modifier with comprehensive fallback system
+- **React Native Safe Area Context** with gesture handler support
+- **Advanced Theme Support** (automatic light/dark switching with iOS system colors)
 
 ### **DNS Implementation**
 - **iOS**: Swift + Apple Network Framework
