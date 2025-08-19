@@ -142,20 +142,22 @@ final class DNSResolver: NSObject {
     @available(iOS 16.0, *)
     private func performNetworkFrameworkQuery(domain: String, message: String) async throws -> [String] {
         return try await withCheckedThrowingContinuation { continuation in
+            // ENTERPRISE-GRADE: Thread-safe atomic flag with NSLock (iOS 16.0+ compatible)
+            let resumeLock = NSLock()
             var hasResumed = false
             let connection = NWConnection(
                 to: .hostPort(host: .init(Self.dnsServer), port: .init(integerLiteral: Self.dnsPort)),
                 using: .udp
             )
 
-            // This closure ensures the continuation is only ever resumed once.
+            // CRITICAL: Thread-safe continuation resume with locking
             let resumeOnce: (Result<[String], Error>) -> Void = { result in
-                // This check prevents the continuation from being resumed more than once.
-                // All callbacks from NWConnection are serialized on its dispatch queue,
-                // so we don't need to worry about concurrent access to `hasResumed`.
+                resumeLock.lock()
+                defer { resumeLock.unlock() }
+                
                 if !hasResumed {
                     hasResumed = true
-                    connection.cancel() // Immediately stop any further network activity.
+                    connection.cancel() // Immediately stop any further network activity
                     
                     switch result {
                     case .success(let records):
@@ -164,6 +166,7 @@ final class DNSResolver: NSObject {
                         continuation.resume(throwing: error)
                     }
                 }
+                // Silent ignore if already resumed - prevents crashes
             }
 
             connection.stateUpdateHandler = { state in
@@ -172,13 +175,13 @@ final class DNSResolver: NSObject {
                     let queryData = self.createDNSQuery(message: message)
                     connection.send(content: queryData, completion: .contentProcessed { error in
                         if let error = error {
-                            resumeOnce(.failure(DNSError.queryFailed(error.localizedDescription)))
+                            resumeOnce(.failure(DNSError.queryFailed("Send failed: \(error.localizedDescription)")))
                             return
                         }
                         
                         connection.receive(minimumIncompleteLength: 1, maximumLength: 1024) { data, _, _, error in
                             if let error = error {
-                                resumeOnce(.failure(DNSError.queryFailed(error.localizedDescription)))
+                                resumeOnce(.failure(DNSError.queryFailed("Receive failed: \(error.localizedDescription)")))
                                 return
                             }
                             guard let responseData = data else {
@@ -195,16 +198,27 @@ final class DNSResolver: NSObject {
                     })
 
                 case .failed(let error):
-                    resumeOnce(.failure(DNSError.resolverFailed(error.localizedDescription)))
+                    let errorMsg = error?.localizedDescription ?? "Unknown network error"
+                    resumeOnce(.failure(DNSError.resolverFailed("Connection failed: \(errorMsg)")))
 
                 case .cancelled:
-                    // If the connection is cancelled, but we haven't resumed yet,
-                    // it means the cancellation was initiated externally.
                     resumeOnce(.failure(DNSError.cancelled))
 
+                case .waiting(let error):
+                    // Network is waiting (e.g., no connectivity) - this is not necessarily a failure
+                    let errorMsg = error?.localizedDescription ?? "Network waiting"
+                    print("⏳ DNS: Network waiting - \(errorMsg)")
+                    // Don't resume here - let it potentially transition to .ready or .failed
+
                 default:
+                    // Handle any other states gracefully
                     break
                 }
+            }
+            
+            // Add safety timeout to prevent hanging forever
+            DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + Self.queryTimeout) {
+                resumeOnce(.failure(DNSError.timeout))
             }
             
             connection.start(queue: .global(qos: .userInitiated))
