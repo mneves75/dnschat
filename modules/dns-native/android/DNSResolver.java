@@ -49,15 +49,15 @@ public class DNSResolver {
     }
 
     public CompletableFuture<List<String>> queryTXT(String domain, String message) {
-        // Match dig semantics: send the original message unchanged (trim only)
-        final String originalMessage = message == null ? "" : message.trim();
+        // Sanitize message to match iOS implementation for cross-platform consistency
+        final String sanitizedMessage = sanitizeMessage(message);
 
-        // Try raw UDP first (mirrors iOS and dig), then fallback to dnsjava legacy if needed
+        // Try raw UDP first (mirrors iOS), then fallback to dnsjava legacy if needed
         CompletableFuture<List<String>> result = new CompletableFuture<>();
-        queryTXTRawUDP(originalMessage)
+        queryTXTRawUDP(sanitizedMessage)
             .thenAccept(result::complete)
             .exceptionally(err -> {
-                queryTXTLegacy(domain, originalMessage)
+                queryTXTLegacy(domain, sanitizedMessage)
                     .thenAccept(result::complete)
                     .exceptionally(err2 -> {
                         result.completeExceptionally(err2);
@@ -79,7 +79,7 @@ public class DNSResolver {
                 Thread.sleep(QUERY_TIMEOUT_MS);
                 if (!future.isDone()) {
                     cancellationSignal.cancel();
-                    future.completeExceptionally(new Exception("DNS query timed out"));
+                    future.completeExceptionally(new DNSError(DNSError.Type.TIMEOUT, "DNS query timed out after " + QUERY_TIMEOUT_MS + "ms"));
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -141,7 +141,7 @@ public class DNSResolver {
                 Record[] records = lookup.run();
                 
                 if (records == null || records.length == 0) {
-                    throw new Exception("No TXT records found");
+                    throw new DNSError(DNSError.Type.NO_RECORDS_FOUND, "No TXT records found in legacy query");
                 }
 
                 List<String> txtRecords = new ArrayList<>();
@@ -156,14 +156,17 @@ public class DNSResolver {
                 }
 
                 if (txtRecords.isEmpty()) {
-                    throw new Exception("No valid TXT records found");
+                    throw new DNSError(DNSError.Type.NO_RECORDS_FOUND, "No valid TXT records found in legacy query");
                 }
 
                 return txtRecords;
 
+            } catch (DNSError e) {
+                Log.e(TAG, "DNS query failed", e);
+                throw e;  // Re-throw structured errors
             } catch (Exception e) {
                 Log.e(TAG, "DNS query failed", e);
-                throw new RuntimeException(e);
+                throw new DNSError(DNSError.Type.QUERY_FAILED, "Legacy DNS query failed: " + e.getMessage(), e);
             }
         }, executor);
     }
@@ -198,11 +201,13 @@ public class DNSResolver {
 
                 List<String> txtRecords = parseDnsTxtResponse(response);
                 if (txtRecords.isEmpty()) {
-                    throw new RuntimeException("No TXT records found");
+                    throw new DNSError(DNSError.Type.NO_RECORDS_FOUND, "No TXT records found in UDP response");
                 }
                 return txtRecords;
+            } catch (DNSError e) {
+                throw e;  // Re-throw structured errors
             } catch (Exception e) {
-                throw new RuntimeException(e);
+                throw new DNSError(DNSError.Type.QUERY_FAILED, "UDP DNS query failed: " + e.getMessage(), e);
             } finally {
                 if (socket != null) {
                     socket.close();
@@ -360,9 +365,11 @@ public class DNSResolver {
     }
 
     private String sanitizeMessage(String message) {
-        // Preserve original content; only trim and cap length
+        // Sanitization matching iOS implementation for cross-platform consistency
         String trimmed = message == null ? "" : message.trim();
-        return trimmed.length() > 200 ? trimmed.substring(0, 200) : trimmed;
+        String capped = trimmed.length() > 200 ? trimmed.substring(0, 200) : trimmed;
+        String spacesReplaced = capped.replaceAll(" ", "-");
+        return spacesReplaced.toLowerCase();
     }
 
     public static class DNSCapabilities {
@@ -378,6 +385,47 @@ public class DNSResolver {
             this.supportsCustomServer = true;
             this.supportsAsyncQuery = true;
             this.apiLevel = Build.VERSION.SDK_INT;
+        }
+    }
+    
+    /**
+     * Structured DNS error types matching iOS DNSError enum for cross-platform consistency
+     */
+    public static class DNSError extends Exception {
+        public enum Type {
+            RESOLVER_FAILED,
+            QUERY_FAILED,
+            NO_RECORDS_FOUND,
+            TIMEOUT,
+            CANCELLED
+        }
+        
+        private final Type type;
+        private final String details;
+        
+        public DNSError(Type type, String details) {
+            super(type.name() + ": " + details);
+            this.type = type;
+            this.details = details;
+        }
+        
+        public DNSError(Type type, String details, Throwable cause) {
+            super(type.name() + ": " + details, cause);
+            this.type = type;
+            this.details = details;
+        }
+        
+        public Type getType() {
+            return type;
+        }
+        
+        public String getDetails() {
+            return details;
+        }
+        
+        @Override
+        public String toString() {
+            return "DNSError{type=" + type + ", details='" + details + "'}";
         }
     }
 }
