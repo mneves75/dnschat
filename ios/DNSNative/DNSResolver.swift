@@ -142,76 +142,73 @@ final class DNSResolver: NSObject {
     @available(iOS 16.0, *)
     private func performNetworkFrameworkQuery(domain: String, message: String) async throws -> [String] {
         return try await withCheckedThrowingContinuation { continuation in
-            // Create endpoint for DNS server
-            let endpoint = NWEndpoint.hostPort(
-                host: NWEndpoint.Host(Self.dnsServer),
-                port: NWEndpoint.Port(integerLiteral: Self.dnsPort)
+            var hasResumed = false
+            let connection = NWConnection(
+                to: .hostPort(host: .init(Self.dnsServer), port: .init(integerLiteral: Self.dnsPort)),
+                using: .udp
             )
-            
-            // Create UDP connection to DNS server
-            let connection = NWConnection(to: endpoint, using: .udp)
-            
+
+            // This closure ensures the continuation is only ever resumed once.
+            let resumeOnce: (Result<[String], Error>) -> Void = { result in
+                // This check prevents the continuation from being resumed more than once.
+                // All callbacks from NWConnection are serialized on its dispatch queue,
+                // so we don't need to worry about concurrent access to `hasResumed`.
+                if !hasResumed {
+                    hasResumed = true
+                    connection.cancel() // Immediately stop any further network activity.
+                    
+                    switch result {
+                    case .success(let records):
+                        continuation.resume(returning: records)
+                    case .failure(let error):
+                        continuation.resume(throwing: error)
+                    }
+                }
+            }
+
             connection.stateUpdateHandler = { state in
                 switch state {
                 case .ready:
-                    // Connection is ready, send DNS query
-                    self.sendDNSQuery(connection: connection, message: message, continuation: continuation)
-                    
+                    let queryData = self.createDNSQuery(message: message)
+                    connection.send(content: queryData, completion: .contentProcessed { error in
+                        if let error = error {
+                            resumeOnce(.failure(DNSError.queryFailed(error.localizedDescription)))
+                            return
+                        }
+                        
+                        connection.receive(minimumIncompleteLength: 1, maximumLength: 1024) { data, _, _, error in
+                            if let error = error {
+                                resumeOnce(.failure(DNSError.queryFailed(error.localizedDescription)))
+                                return
+                            }
+                            guard let responseData = data else {
+                                resumeOnce(.failure(DNSError.noRecordsFound))
+                                return
+                            }
+                            do {
+                                let txtRecords = try self.parseDNSResponse(responseData)
+                                resumeOnce(.success(txtRecords))
+                            } catch {
+                                resumeOnce(.failure(error))
+                            }
+                        }
+                    })
+
                 case .failed(let error):
-                    continuation.resume(throwing: DNSError.resolverFailed(error.localizedDescription))
-                    
+                    resumeOnce(.failure(DNSError.resolverFailed(error.localizedDescription)))
+
                 case .cancelled:
-                    continuation.resume(throwing: DNSError.cancelled)
-                    
+                    // If the connection is cancelled, but we haven't resumed yet,
+                    // it means the cancellation was initiated externally.
+                    resumeOnce(.failure(DNSError.cancelled))
+
                 default:
                     break
                 }
             }
             
-            // Start the connection
-            connection.start(queue: DispatchQueue.global(qos: .userInitiated))
+            connection.start(queue: .global(qos: .userInitiated))
         }
-    }
-    
-    @available(iOS 16.0, *)
-    private func sendDNSQuery(
-        connection: NWConnection,
-        message: String,
-        continuation: CheckedContinuation<[String], Error>
-    ) {
-        // Create DNS query for TXT record
-        let queryData = createDNSQuery(message: message)
-        
-        connection.send(content: queryData, completion: .contentProcessed { error in
-            if let error = error {
-                continuation.resume(throwing: DNSError.queryFailed(error.localizedDescription))
-                return
-            }
-            
-            // Receive response
-            connection.receive(minimumIncompleteLength: 1, maximumLength: 1024) { data, context, isComplete, error in
-                defer {
-                    connection.cancel()
-                }
-                
-                if let error = error {
-                    continuation.resume(throwing: DNSError.queryFailed(error.localizedDescription))
-                    return
-                }
-                
-                guard let responseData = data else {
-                    continuation.resume(throwing: DNSError.noRecordsFound)
-                    return
-                }
-                
-                do {
-                    let txtRecords = try self.parseDNSResponse(responseData)
-                    continuation.resume(returning: txtRecords)
-                } catch {
-                    continuation.resume(throwing: error)
-                }
-            }
-        })
     }
     
     private func performDNSOverHTTPSQuery(domain: String, message: String) async throws -> [String] {
