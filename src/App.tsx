@@ -3,13 +3,14 @@ import { DarkTheme, DefaultTheme } from '@react-navigation/native';
 import { Asset } from 'expo-asset';
 import * as SplashScreen from 'expo-splash-screen';
 import * as React from 'react';
-import { useColorScheme } from 'react-native';
+import { useColorScheme, Platform, View, StyleSheet } from 'react-native';
 import { Navigation } from './navigation';
 import { ChatProvider } from './context/ChatContext';
 import { SettingsProvider } from './context/SettingsContext';
 import { OnboardingProvider, useOnboarding } from './context/OnboardingContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { OnboardingContainer } from './components/onboarding/OnboardingContainer';
+import { LiquidGlassWrapper, useLiquidGlassCapabilities } from './components/LiquidGlassWrapper';
 
 Asset.loadAsync([
   ...NavigationAssets,
@@ -21,6 +22,7 @@ SplashScreen.preventAutoHideAsync();
 function AppContent() {
   const colorScheme = useColorScheme();
   const { hasCompletedOnboarding, loading } = useOnboarding();
+  const { isSupported: glassSupported } = useLiquidGlassCapabilities();
 
   const theme = colorScheme === 'dark' ? DarkTheme : DefaultTheme;
 
@@ -38,7 +40,7 @@ function AppContent() {
     return <OnboardingContainer />;
   }
 
-  return (
+  const navigationComponent = (
     <Navigation
       theme={theme}
       linking={{
@@ -50,6 +52,23 @@ function AppContent() {
       }}
     />
   );
+
+  // Wrap in iOS 26 Liquid Glass container if supported
+  if (glassSupported && Platform.OS === 'ios') {
+    return (
+      <LiquidGlassWrapper
+        variant="regular"
+        shape="rect"
+        enableContainer={true}
+        sensorAware={true}
+        style={styles.appContainer}
+      >
+        {navigationComponent}
+      </LiquidGlassWrapper>
+    );
+  }
+
+  return navigationComponent;
 }
 
 export function App() {
@@ -65,3 +84,10 @@ export function App() {
     </ErrorBoundary>
   );
 }
+
+const styles = StyleSheet.create({
+  appContainer: {
+    flex: 1,
+    backgroundColor: 'transparent',
+  },
+});

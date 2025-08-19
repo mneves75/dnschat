@@ -6,8 +6,9 @@ import {
   StaticParamList,
 } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { Image } from 'react-native';
+import { Image, Platform } from 'react-native';
 import { useTheme } from '@react-navigation/native';
+import { LiquidGlassNavBar } from '../components/LiquidGlassWrapper';
 
 // Import newspaper icon properly for Metro bundler
 const newspaper = require('../assets/newspaper.png');
@@ -16,10 +17,10 @@ import { SettingsIcon } from '../components/icons/SettingsIcon';
 import { LogsIcon } from '../components/icons/LogsIcon';
 import { Home } from './screens/Home';
 import { Profile } from './screens/Profile';
-import { Settings } from './screens/Settings';
+import { GlassSettings } from './screens/GlassSettings';
 import { About } from './screens/About';
 import { NotFound } from './screens/NotFound';
-import { ChatList } from './screens/ChatList';
+import { GlassChatList } from './screens/GlassChatList';
 import { Chat } from './screens/Chat';
 import { Logs } from './screens/Logs';
 
@@ -35,7 +36,7 @@ function SettingsHeaderButton({ onPress }: { onPress: () => void }) {
 const HomeTabs = createBottomTabNavigator({
   screens: {
     ChatList: {
-      screen: ChatList,
+      screen: GlassChatList,
       options: {
         title: 'DNS Chat',
         tabBarIcon: ({ color, size }) => (
@@ -103,7 +104,7 @@ const RootStack = createNativeStackNavigator({
       },
     },
     Settings: {
-      screen: Settings,
+      screen: GlassSettings,
       options: ({ navigation }) => ({
         presentation: 'modal',
         headerRight: () => (

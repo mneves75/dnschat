@@ -57,22 +57,12 @@ interface LiquidGlassNativeModuleInterface {
   }>;
 }
 
-/**
- * Native view manager interface for direct view manipulation
- */
-interface LiquidGlassViewManagerInterface {
-  setIntensity(reactTag: number, intensity: GlassIntensity): void;
-  setStyle(reactTag: number, style: GlassStyle): void;
-  setSensorAware(reactTag: number, sensorAware: boolean): void;
-}
-
-// Get native modules with error handling
+// Get native modules with error handling (for performance monitoring only)
 const LiquidGlassNativeModule = NativeModules.LiquidGlassNativeModule as LiquidGlassNativeModuleInterface | undefined;
-const LiquidGlassViewManager = UIManager.getViewManagerConfig('LiquidGlassViewManager') as LiquidGlassViewManagerInterface | undefined;
 
-// Check if native modules are available
+// Check if native modules are available (for advanced features only)
 const isNativeModuleAvailable = () => {
-  return Platform.OS === 'ios' && LiquidGlassNativeModule && LiquidGlassViewManager;
+  return Platform.OS === 'ios' && LiquidGlassNativeModule;
 };
 
 // ==================================================================================
@@ -155,9 +145,10 @@ export interface LiquidGlassNativeHandle {
 // ==================================================================================
 
 /**
- * Native UIView component registration
+ * Import the base LiquidGlassWrapper to use its native implementation
+ * This avoids duplicate native component registration while providing advanced features
  */
-const NativeLiquidGlassView = requireNativeComponent<LiquidGlassNativeProps>('LiquidGlassView');
+import { LiquidGlassWrapper } from '../LiquidGlassWrapper';
 
 // ==================================================================================
 // REACT NATIVE BRIDGE COMPONENT
@@ -255,39 +246,21 @@ export const LiquidGlassNative = forwardRef<LiquidGlassNativeHandle, LiquidGlass
       };
     }, [isNativeAvailable, onPerformanceUpdate]);
 
-    // Imperative handle implementation
+    // Imperative handle implementation (simplified for wrapper-based approach)
     useImperativeHandle(ref, () => ({
       setIntensity: (newIntensity: GlassIntensity) => {
-        if (!isNativeAvailable || !LiquidGlassViewManager || !nativeViewRef.current) {
-          return;
-        }
-
-        const reactTag = findNodeHandle(nativeViewRef.current);
-        if (reactTag) {
-          LiquidGlassViewManager.setIntensity(reactTag, newIntensity);
-        }
+        // Note: Direct native updates not available when using wrapper approach
+        console.warn('LiquidGlassNative: setIntensity not supported in wrapper mode');
       },
 
       setStyle: (newStyle: GlassStyle) => {
-        if (!isNativeAvailable || !LiquidGlassViewManager || !nativeViewRef.current) {
-          return;
-        }
-
-        const reactTag = findNodeHandle(nativeViewRef.current);
-        if (reactTag) {
-          LiquidGlassViewManager.setStyle(reactTag, newStyle);
-        }
+        // Note: Direct native updates not available when using wrapper approach  
+        console.warn('LiquidGlassNative: setStyle not supported in wrapper mode');
       },
 
       setSensorAware: (enabled: boolean) => {
-        if (!isNativeAvailable || !LiquidGlassViewManager || !nativeViewRef.current) {
-          return;
-        }
-
-        const reactTag = findNodeHandle(nativeViewRef.current);
-        if (reactTag) {
-          LiquidGlassViewManager.setSensorAware(reactTag, enabled);
-        }
+        // Note: Direct native updates not available when using wrapper approach
+        console.warn('LiquidGlassNative: setSensorAware not supported in wrapper mode');
       },
 
       getPerformanceMetrics: async () => {
@@ -305,28 +278,26 @@ export const LiquidGlassNative = forwardRef<LiquidGlassNativeHandle, LiquidGlass
       },
     }), [isNativeAvailable]);
 
-    // Early return if native module is not available
-    if (!isNativeModuleAvailable() || !isNativeAvailable) {
-      // Return null - the fallback system will handle rendering
-      return null;
-    }
+    // Map advanced props to LiquidGlassWrapper's simpler interface
+    const mappedProps = {
+      variant: intensity === 'ultraThin' ? 'regular' : 
+               intensity === 'thin' ? 'regular' :
+               intensity === 'regular' ? 'prominent' : 'interactive',
+      shape: 'capsule' as const,
+      sensorAware,
+      style: [containerStyle, otherProps.style],
+      ...otherProps
+    };
 
-    // Render native view
+    // Use LiquidGlassWrapper under the hood to avoid duplicate native registration
+    // This provides iOS 26+ support with proper fallbacks while adding advanced features
     return (
-      <NativeLiquidGlassView
+      <LiquidGlassWrapper
         ref={nativeViewRef}
-        intensity={intensity}
-        style={style}
-        sensorAware={sensorAware}
-        environmentalAdaptation={environmentalAdaptation}
-        dynamicIntensity={dynamicIntensity}
-        hapticsEnabled={hapticsEnabled}
-        performanceMode={performanceMode}
-        {...otherProps}
-        style={[containerStyle, otherProps.style]}
+        {...mappedProps}
       >
         {children}
-      </NativeLiquidGlassView>
+      </LiquidGlassWrapper>
     );
   }
 );

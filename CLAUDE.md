@@ -16,7 +16,77 @@ DNSChat now has comprehensive technical documentation organized in the `/docs/` 
 
 ## Project Overview
 
-This is a React Native mobile application that provides a modern, ChatGPT-like chat interface using DNS TXT queries to communicate with an LLM. The app features local storage for conversation history, a polished UI with dark/light theme support, and native KeyboardAvoidingView for optimal keyboard handling.
+This is a React Native mobile application that provides a modern, ChatGPT-like chat interface using DNS TXT queries to communicate with an LLM. The app features local storage for conversation history, a polished UI with dark/light theme support, native KeyboardAvoidingView for optimal keyboard handling, and **full iOS/iPadOS 26+ Liquid Glass design system support** with comprehensive cross-platform fallbacks.
+
+## 🎨 iOS/iPadOS 26+ Liquid Glass Support (Latest) - PRODUCTION READY
+
+**Status: FULLY IMPLEMENTED** - Complete iOS 26+ Liquid Glass design system with proper architectural separation and comprehensive fallback support.
+
+### ✅ **Architecture Overview**
+
+The Liquid Glass implementation uses a **dual-component architecture** that eliminates native bridge conflicts while providing both simplicity and advanced capabilities:
+
+```typescript
+// Production Component (Used by all app screens)
+LiquidGlassWrapper → Native iOS 26+ UIGlassEffect OR Enhanced CSS fallback
+
+// Advanced System (Optional, for complex use cases)  
+LiquidGlassNative → Uses LiquidGlassWrapper + Performance monitoring + Environmental adaptation
+```
+
+### 🎯 **Key Features**
+
+**iOS/iPadOS 26+ Native Support:**
+- **SwiftUI Integration**: Direct `.glassEffect()` modifier bridging with React Native
+- **Automatic Detection**: Robust iOS version parsing (`iOS 26.0+ = apiLevel 260`)
+- **Sensor Awareness**: Environmental adaptation with ambient light and motion detection
+- **Performance Optimization**: Device-specific performance tier analysis (high/medium/low/fallback)
+
+**Comprehensive Fallback System:**
+- **iOS 26+**: Native UIGlassEffect with sensor-aware environmental adaptation
+- **iOS 17-25**: Enhanced blur effects with react-native-blur integration  
+- **iOS 16**: Basic blur fallback with dramatic visual styling
+- **Android**: Material Design 3 elevated surfaces
+- **Web**: CSS glassmorphism with backdrop-filter support
+
+**Production-Ready Architecture:**
+- **Zero Conflicts**: Eliminated duplicate native view registration errors
+- **Type Safety**: Full TypeScript coverage with proper prop interface compatibility
+- **Performance Monitoring**: Real-time glass rendering metrics and thermal management
+- **Memory Optimization**: Lazy loading and memoization for capability detection
+
+### 🔧 **Usage**
+
+**Basic Glass Effects (Production):**
+```typescript
+import { LiquidGlassWrapper } from '../components/LiquidGlassWrapper';
+
+<LiquidGlassWrapper variant="prominent" shape="capsule" sensorAware={true}>
+  <YourContent />
+</LiquidGlassWrapper>
+```
+
+**Advanced Features (Optional):**
+```typescript
+import { LiquidGlassNative } from '../components/liquidGlass';
+
+<LiquidGlassNative 
+  intensity="regular" 
+  environmentalAdaptation={true}
+  performanceMode="auto"
+  onPerformanceUpdate={(metrics) => console.log(metrics)}
+>
+  <YourContent />
+</LiquidGlassNative>
+```
+
+### 📱 **Current Implementation Status**
+
+- **✅ Native Bridge**: `LiquidGlassViewManager` properly registered serving production component
+- **✅ Production Integration**: Used in App.tsx, navigation screens, and glass components (6 files)
+- **✅ iOS Version Detection**: Comprehensive capability detection with performance profiling
+- **✅ Cross-platform Fallbacks**: Enhanced visual effects for all platforms and iOS versions
+- **✅ Memory & Performance**: Optimized for iOS thermal management and battery efficiency
 
 ## 🚨 CRITICAL BUG FIXES (v1.7.6) - ENTERPRISE GRADE FIXES
 

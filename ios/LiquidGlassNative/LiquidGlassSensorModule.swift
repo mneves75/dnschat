@@ -267,8 +267,8 @@ class LiquidGlassSensorModule: RCTEventEmitter {
       // Configure motion manager
       self.motionManager.deviceMotionUpdateInterval = 0.5 // 2Hz for battery efficiency
       
-      // Start motion updates
-      self.motionManager.startDeviceMotionUpdates(to: self.sensorUpdateQueue) { [weak self] motion, error in
+      // Start motion updates  
+      self.motionManager.startDeviceMotionUpdates(to: OperationQueue.main) { [weak self] motion, error in
         guard let self = self, let motion = motion else { return }
         
         self.lastMotionData = motion

@@ -23,7 +23,7 @@ Pod::Spec.new do |s|
   s.source           = { :git => 'https://github.com/mneves75/dnschat.git', :tag => s.version.to_s }
 
   # Platform requirements
-  s.platform         = :ios, '16.0'
+  s.platform         = :ios, '26.0'
   s.swift_version    = '5.9'
 
   # Source files
@@ -40,12 +40,12 @@ Pod::Spec.new do |s|
   # iOS 26+ conditional framework
   s.weak_frameworks = 'UIKit' # UIGlassEffect will be weak-linked
 
-  # Build settings
+  # Build settings for framework target (no bridging header needed)
   s.pod_target_xcconfig = {
     'DEFINES_MODULE' => 'YES',
-    'SWIFT_OBJC_BRIDGING_HEADER' => '$(PODS_TARGET_SRCROOT)/LiquidGlassNative-Bridging-Header.h',
     'OTHER_SWIFT_FLAGS' => '-Xfrontend -enable-experimental-concurrency',
-    'IPHONEOS_DEPLOYMENT_TARGET' => '16.0'
+    'IPHONEOS_DEPLOYMENT_TARGET' => '26.0',
+    'CLANG_ENABLE_MODULES' => 'YES'
   }
 
   # Compiler flags for iOS 26+ features

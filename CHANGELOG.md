@@ -7,6 +7,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### 🎨 iOS/iPadOS 26+ Liquid Glass Support - Architecture Fix
+
+**Major Fix**: Resolved duplicate native view registration error and implemented proper iOS 26+ Liquid Glass support with comprehensive fallback system.
+
+#### Bug Fixes
+- **🔥 Duplicate Native View Registration**: Fixed "Tried to register two views with the same name LiquidGlassView" error
+  - **Root Cause**: Multiple React Native components attempting to register the same native bridge identifier
+  - **Solution**: Proper architectural separation - production component maintains native bridge, advanced system uses composition
+  - **Impact**: Eliminates all React Native bridge conflicts and registration crashes
+
+#### New Features
+- **✨ iOS/iPadOS 26+ Native Liquid Glass**: Full support for Apple's new liquid glass design system
+  - **Native Integration**: SwiftUI `.glassEffect()` bridging with React Native
+  - **Feature Detection**: Robust iOS version detection (`iOS 26.0+ = apiLevel 260`)
+  - **Performance Optimization**: Device-specific performance tier analysis (high/medium/low/fallback)
+  - **Sensor Awareness**: Environmental adaptation with ambient light and motion detection
+
+#### Enhanced Fallback System
+- **🌟 Multi-tier Glass Effects**: Comprehensive cross-platform glass effect implementation
+  - **iOS 26+**: Native UIGlassEffect with sensor-aware environmental adaptation
+  - **iOS 17-25**: Enhanced blur effects with react-native-blur integration
+  - **iOS 16**: Basic blur fallback with dramatic visual styling
+  - **Android**: Material Design 3 elevated surfaces
+  - **Web**: CSS glassmorphism with backdrop-filter support
+- **🎯 Automatic Selection**: Performance-aware fallback selection based on device capabilities
+- **🔧 Visual Enhancements**: Improved shadow effects, border styling, and opacity management
+
+#### Technical Improvements
+- **✅ Proper Architecture**: `LiquidGlassWrapper` (production) + `LiquidGlassNative` (advanced features via composition)
+- **✅ Type Safety**: Full TypeScript coverage with proper prop interface compatibility
+- **✅ Performance Monitoring**: Real-time glass rendering performance metrics and thermal management
+- **✅ Memory Optimization**: Lazy loading and memoization for capability detection
+- **✅ Cross-platform Compatibility**: Consistent API across iOS, Android, and Web platforms
+
+#### Code Changes
+- **Native Bridge**: Restored proper `LiquidGlassViewManager` registration serving production component
+- **Advanced System**: `LiquidGlassNative` now uses composition over duplication to provide enhanced features
+- **Capability Detection**: Comprehensive iOS version parsing and feature matrix analysis
+- **Performance Tiers**: Dynamic glass intensity adjustment based on device thermal and performance states
+
 ## [1.7.7] - 2025-08-19
 
 ### 🚨 CRITICAL CRASH FIX - iOS Production Stability

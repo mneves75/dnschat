@@ -17,19 +17,22 @@
 
 @interface RCT_EXTERN_MODULE(LiquidGlassViewManager, RCTViewManager)
 
-// Export React Native props
-RCT_EXPORT_VIEW_PROPERTY(intensity, NSString)
-RCT_EXPORT_VIEW_PROPERTY(style, NSString)
-RCT_EXPORT_VIEW_PROPERTY(sensorAware, BOOL)
-RCT_EXPORT_VIEW_PROPERTY(environmentalAdaptation, BOOL)
-RCT_EXPORT_VIEW_PROPERTY(dynamicIntensity, BOOL)
-RCT_EXPORT_VIEW_PROPERTY(hapticsEnabled, BOOL)
-RCT_EXPORT_VIEW_PROPERTY(performanceMode, NSString)
+// Export SwiftUI Glass Effect props
+RCT_EXPORT_VIEW_PROPERTY(variant, NSString)              // regular, prominent, interactive
+RCT_EXPORT_VIEW_PROPERTY(shape, NSString)               // capsule, rect, roundedRect
+RCT_EXPORT_VIEW_PROPERTY(cornerRadius, CGFloat)         // For rect shapes
+RCT_EXPORT_VIEW_PROPERTY(tintColor, NSString)           // Hex color
+RCT_EXPORT_VIEW_PROPERTY(isInteractive, BOOL)           // Interactive response
+RCT_EXPORT_VIEW_PROPERTY(sensorAware, BOOL)             // Environmental adaptation
+RCT_EXPORT_VIEW_PROPERTY(enableContainer, BOOL)         // Use GlassEffectContainer
+RCT_EXPORT_VIEW_PROPERTY(containerSpacing, CGFloat)     // Container merge distance
 
 // Export methods for dynamic updates
-RCT_EXTERN_METHOD(setIntensity:(nonnull NSNumber *)reactTag intensity:(NSString *)intensity)
-RCT_EXTERN_METHOD(setStyle:(nonnull NSNumber *)reactTag style:(NSString *)style)
+RCT_EXTERN_METHOD(setVariant:(nonnull NSNumber *)reactTag variant:(NSString *)variant)
+RCT_EXTERN_METHOD(setShape:(nonnull NSNumber *)reactTag shape:(NSString *)shape)
+RCT_EXTERN_METHOD(setTintColor:(nonnull NSNumber *)reactTag tintColor:(NSString *)tintColor)
 RCT_EXTERN_METHOD(setSensorAware:(nonnull NSNumber *)reactTag sensorAware:(BOOL)sensorAware)
+RCT_EXTERN_METHOD(setInteractive:(nonnull NSNumber *)reactTag interactive:(BOOL)interactive)
 
 @end
 
@@ -43,15 +46,10 @@ RCT_EXTERN_METHOD(setSensorAware:(nonnull NSNumber *)reactTag sensorAware:(BOOL)
 RCT_EXTERN_METHOD(getCapabilities:(RCTPromiseResolveBlock)resolve 
                   rejecter:(RCTPromiseRejectBlock)reject)
 
-// Export performance monitoring methods
-RCT_EXTERN_METHOD(startPerformanceMonitoring:(RCTPromiseResolveBlock)resolve 
-                  rejecter:(RCTPromiseRejectBlock)reject)
-
-RCT_EXTERN_METHOD(getPerformanceMetrics:(RCTPromiseResolveBlock)resolve 
-                  rejecter:(RCTPromiseRejectBlock)reject)
-
-// Export environmental context methods
-RCT_EXTERN_METHOD(getEnvironmentalContext:(RCTPromiseResolveBlock)resolve 
-                  rejecter:(RCTPromiseRejectBlock)reject)
+// Mark as not requiring main queue for better performance
++ (BOOL)requiresMainQueueSetup
+{
+    return NO;
+}
 
 @end
