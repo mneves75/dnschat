@@ -7,6 +7,58 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.7.6] - 2025-08-19
+
+### 🚨 CRITICAL BUG FIXES - ENTERPRISE GRADE DNS IMPLEMENTATION
+
+**Production Readiness**: All critical bugs identified in comprehensive code audit have been resolved.
+
+#### Bug Fixes
+- **🔥 iOS MainActor Threading Violation (CRASH BUG)**: Fixed critical concurrency bug causing app crashes
+  - Wrapped `@MainActor` activeQueries access in proper MainActor.run blocks
+  - Prevents compilation errors and runtime crashes from threading violations
+  - Impact: Eliminates all iOS crash scenarios related to DNS query concurrency
+
+- **🌐 iOS DNS Protocol Violation (NETWORK FAILURE)**: Fixed DNS packet construction causing all network queries to fail  
+  - Changed from multi-label domain approach to single-label DNS packets
+  - Now matches Android implementation and DNS RFC standards
+  - Impact: All iOS DNS queries now work correctly instead of failing silently
+
+- **📦 iOS TXT Record Parsing Bug (DATA CORRUPTION)**: Fixed response parsing causing corrupted data
+  - Implemented proper DNS TXT record length-prefix parsing per RFC standards
+  - Previously ignored length-prefix format causing data corruption
+  - Impact: DNS responses now parse correctly without data loss
+
+- **⚡ Android Query Deduplication Missing (PERFORMANCE)**: Added missing concurrent request handling
+  - Implemented ConcurrentHashMap-based deduplication matching iOS behavior
+  - Prevents multiple identical requests from consuming resources
+  - Impact: Improved performance and consistency across platforms
+
+- **🔄 Android DNS-over-HTTPS Fallback Missing (RELIABILITY)**: Added complete 3-tier fallback strategy
+  - Implemented Cloudflare DNS-over-HTTPS fallback matching iOS
+  - Changed from 2-tier (UDP → Legacy) to 3-tier (UDP → HTTPS → Legacy)
+  - Impact: Enhanced reliability on restricted networks and improved cross-platform consistency
+
+- **🏗️ Android Inconsistent DNS Handling**: Removed conflicting unused methods
+  - Eliminated architectural inconsistencies between single-label and domain-name approaches
+  - Cleaned up unused queryTXTModern() and queryTXTWithRawDNS() methods
+  - Impact: Cleaner architecture with no conflicting implementation patterns
+
+#### Technical Improvements
+- **✅ Cross-Platform Parity**: Both iOS and Android now have identical DNS behavior
+- **✅ Thread Safety**: All concurrent access properly synchronized on both platforms  
+- **✅ DNS Protocol Compliance**: Both platforms follow DNS RFC standards exactly
+- **✅ Performance Optimization**: Query deduplication prevents redundant network requests
+- **✅ Enhanced Debugging**: Comprehensive logging added for all fallback attempts
+
+#### Architecture
+- **Before**: iOS crash-prone, Android missing features, inconsistent cross-platform behavior
+- **After**: Enterprise-grade reliability, complete feature parity, production-ready stability
+
+### Contributors
+- Claude Code (Anthropic) - Comprehensive code audit and critical bug fixes
+- @mneves75 - Code review and validation
+
 ## [1.7.5] - 2025-08-18
 
 ### Features
