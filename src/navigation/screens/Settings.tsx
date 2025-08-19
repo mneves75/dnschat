@@ -389,7 +389,9 @@ export function Settings() {
                 backgroundColor: colors.card
               }
             ]}
-            onPress={() => (navigation as any)?.navigate?.('Logs')}
+            onPress={() => {
+              navigation.navigate('HomeTabs', { screen: 'Logs' });
+            }}
             disabled={testRunning}
           >
             <Text style={[styles.logsButtonText, { color: colors.text }]}> 

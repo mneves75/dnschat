@@ -60,5 +60,19 @@ target 'DNSChat' do
         end
       end
     end
+
+    # Fix for React Native 0.79.x folly/dynamic.h missing header issue
+    # Add header search paths for folly to React-jsinspector
+    installer.pods_project.targets.each do |target|
+      if target.name == 'React-jsinspector'
+        target.build_configurations.each do |config|
+          # Add RCT-Folly to header search paths
+          config.build_settings['HEADER_SEARCH_PATHS'] ||= ['$(inherited)']
+          config.build_settings['HEADER_SEARCH_PATHS'] << '"$(PODS_ROOT)/RCT-Folly"'
+          config.build_settings['HEADER_SEARCH_PATHS'] << '"$(PODS_ROOT)/Headers/Public/RCT-Folly"'
+          config.build_settings['HEADER_SEARCH_PATHS'] << '"$(PODS_ROOT)/Headers/Private/RCT-Folly"'
+        end
+      end
+    end
   end
 end
