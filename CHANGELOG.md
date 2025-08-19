@@ -25,6 +25,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Primary solution: Remove corrupted `.xcode.env.local` file with incorrect Node.js paths
   - XcodeBuildMCP integration for advanced build diagnostics and management
   - Swift module incompatibility resolution through clean build cycles
+- **🚨 CRITICAL: Native DNS Module Registration Fix**: Resolved recurring iOS native module failures
+  - Fixed DNSNative pod not being included in iOS Podfile causing "RNDNSModule found: false" errors
+  - Corrected podspec package.json path from "../../../" to "../../" to resolve pod installation failures
+  - Added React Native bridge imports to DNSResolver.swift to fix RCTPromiseResolveBlock compilation errors
+  - Modernized Network Framework implementation from low-level C API to high-level Swift API for better compatibility
+  - Fixed iOS compatibility issues by replacing iOS 16+ APIs with iOS 12+ compatible alternatives
+- **⚡ Swift Compilation Fixes**: Resolved all Swift build errors in native DNS module
+  - Added missing React import for React Native bridge types (RCTPromiseResolveBlock, RCTPromiseRejectBlock)
+  - Fixed explicit self capture requirements in async closures
+  - Replaced Task.sleep(for:) with nanoseconds-based sleep for iOS 12+ compatibility
+  - Enhanced error handling with proper MainActor usage and discardable results
 
 ### Documentation
 - **📚 Comprehensive XcodeBuildMCP Guide**: New dedicated documentation for advanced iOS build management
@@ -35,6 +46,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - XcodeBuildMCP integration patterns and navigation error fixes
   - Quick Issue Lookup table enhanced with latest solutions
   - Comprehensive coverage of React Navigation nested navigator patterns
+- **🚨 CRITICAL Native DNS Troubleshooting**: Added comprehensive native DNS module fix documentation
+  - Updated README.md with dedicated troubleshooting section for recurring native DNS issues
+  - Step-by-step permanent solution for "Native DNS Module Not Registering" error
+  - Enhanced CLAUDE.md with detailed prevention guidelines for future development
+  - Added verification steps and console log examples for confirming successful fixes
+  - Comprehensive coverage of Swift compilation errors and CocoaPods integration issues
 
 ### Technical Improvements
 - **⚡ Superior Build Diagnostics**: XcodeBuildMCP provides detailed compilation insights
