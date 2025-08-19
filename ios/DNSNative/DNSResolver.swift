@@ -58,8 +58,9 @@ final class DNSResolver: NSObject {
         
         Task {
             do {
-                // Check for existing query (deduplication)
-                if let existingQuery = await activeQueries[queryId] {
+                // Check for existing query (deduplication) - MainActor access required
+                let existingQuery = await MainActor.run { activeQueries[queryId] }
+                if let existingQuery = existingQuery {
                     print("🔄 DNS: Reusing existing query for: \(queryId)")
                     let result = try await existingQuery.value
                     resolver(result)
@@ -332,15 +333,18 @@ final class DNSResolver: NSObject {
     
     private func encodeDomainName(_ domain: String) -> Data {
         var data = Data()
-        let components = domain.components(separatedBy: ".")
         
-        for component in components {
-            let componentData = component.data(using: .utf8) ?? Data()
-            data.append(UInt8(componentData.count))
-            data.append(componentData)
-        }
+        // Treat entire message as single DNS label (matches Android implementation)
+        let labelData = domain.data(using: .utf8) ?? Data()
         
+        // Truncate if too long (DNS label max is 63 bytes)
+        let truncatedData = labelData.count > 63 ? labelData.prefix(63) : labelData
+        
+        // Length prefix + label data + null terminator
+        data.append(UInt8(truncatedData.count))
+        data.append(truncatedData)
         data.append(0x00) // Null terminator
+        
         return data
     }
     
@@ -386,10 +390,24 @@ final class DNSResolver: NSObject {
             offset += 2
             
             if type == 16 && offset + rdLength <= responseData.count {
-                // Parse TXT record data
-                let txtData = responseData.subdata(in: offset..<offset + rdLength)
-                if let txtString = String(data: txtData, encoding: .utf8) {
-                    txtRecords.append(txtString)
+                // Parse TXT record data - DNS TXT records use length-prefixed strings
+                let end = offset + rdLength
+                var p = offset
+                
+                while p < end {
+                    guard p < responseData.count else { break }
+                    let txtLen = Int(responseData[p])
+                    p += 1
+                    
+                    if p + txtLen <= end && txtLen > 0 && p + txtLen <= responseData.count {
+                        let txtData = responseData.subdata(in: p..<p + txtLen)
+                        if let txtString = String(data: txtData, encoding: .utf8) {
+                            txtRecords.append(txtString)
+                        }
+                        p += txtLen
+                    } else {
+                        break
+                    }
                 }
             }
             

@@ -10,12 +10,24 @@ import android.util.Log;
 import java.net.InetAddress;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLEncoder;
 import java.net.UnknownHostException;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -30,6 +42,9 @@ public class DNSResolver {
     
     private final Executor executor = Executors.newCachedThreadPool();
     private final ConnectivityManager connectivityManager;
+    
+    // Query deduplication - prevents multiple identical requests (matches iOS implementation)
+    private static final Map<String, CompletableFuture<List<String>>> activeQueries = new ConcurrentHashMap<>();
 
     public DNSResolver(ConnectivityManager connectivityManager) {
         this.connectivityManager = connectivityManager;
@@ -51,16 +66,51 @@ public class DNSResolver {
     public CompletableFuture<List<String>> queryTXT(String domain, String message) {
         // Sanitize message to match iOS implementation for cross-platform consistency
         final String sanitizedMessage = sanitizeMessage(message);
-
-        // Try raw UDP first (mirrors iOS), then fallback to dnsjava legacy if needed
+        final String queryId = domain + "-" + sanitizedMessage;
+        
+        // Check for existing query (deduplication) - matches iOS behavior
+        CompletableFuture<List<String>> existingQuery = activeQueries.get(queryId);
+        if (existingQuery != null) {
+            Log.d(TAG, "🔄 DNS: Reusing existing query for: " + queryId);
+            return existingQuery;
+        }
+        
+        Log.d(TAG, "🆕 DNS: Creating new query for: " + queryId);
+        
+        // Create new query with automatic cleanup
         CompletableFuture<List<String>> result = new CompletableFuture<>();
+        activeQueries.put(queryId, result);
+        Log.d(TAG, "📊 DNS: Active queries count: " + activeQueries.size());
+        
+        // 3-tier fallback strategy (matches iOS): Raw UDP → DNS-over-HTTPS → Legacy
         queryTXTRawUDP(sanitizedMessage)
-            .thenAccept(result::complete)
+            .thenAccept(txtRecords -> {
+                activeQueries.remove(queryId);
+                Log.d(TAG, "🧹 DNS: Query completed, active queries: " + activeQueries.size());
+                result.complete(txtRecords);
+            })
             .exceptionally(err -> {
-                queryTXTLegacy(domain, sanitizedMessage)
-                    .thenAccept(result::complete)
+                Log.d(TAG, "🥈 DNS: Trying DNS-over-HTTPS (fallback 1)");
+                queryTXTDNSOverHTTPS(sanitizedMessage)
+                    .thenAccept(txtRecords -> {
+                        activeQueries.remove(queryId);
+                        Log.d(TAG, "🧹 DNS: Query completed (HTTPS), active queries: " + activeQueries.size());
+                        result.complete(txtRecords);
+                    })
                     .exceptionally(err2 -> {
-                        result.completeExceptionally(err2);
+                        Log.d(TAG, "🥉 DNS: Trying legacy DNS (fallback 2)");
+                        queryTXTLegacy(domain, sanitizedMessage)
+                            .thenAccept(txtRecords -> {
+                                activeQueries.remove(queryId);
+                                Log.d(TAG, "🧹 DNS: Query completed (legacy), active queries: " + activeQueries.size());
+                                result.complete(txtRecords);
+                            })
+                            .exceptionally(err3 -> {
+                                activeQueries.remove(queryId);
+                                Log.d(TAG, "❌ DNS: All fallback methods failed, active queries: " + activeQueries.size());
+                                result.completeExceptionally(err3);
+                                return null;
+                            });
                         return null;
                     });
                 return null;
@@ -68,63 +118,6 @@ public class DNSResolver {
         return result;
     }
 
-    @androidx.annotation.RequiresApi(api = Build.VERSION_CODES.Q)
-    private CompletableFuture<List<String>> queryTXTModern(String domain, String message) {
-        CompletableFuture<List<String>> future = new CompletableFuture<>();
-        CancellationSignal cancellationSignal = new CancellationSignal();
-        
-        // Set timeout
-        executor.execute(() -> {
-            try {
-                Thread.sleep(QUERY_TIMEOUT_MS);
-                if (!future.isDone()) {
-                    cancellationSignal.cancel();
-                    future.completeExceptionally(new DNSError(DNSError.Type.TIMEOUT, "DNS query timed out after " + QUERY_TIMEOUT_MS + "ms"));
-                }
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-        });
-
-        Network network = getActiveNetwork();
-        if (network == null) {
-            future.completeExceptionally(new Exception("No active network available"));
-            return future;
-        }
-
-        try {
-            DnsResolver.getInstance().query(
-                network,
-                message, // Use message directly as domain to query
-                DnsResolver.CLASS_IN,
-                DnsResolver.TYPE_TXT,
-                DnsResolver.FLAG_EMPTY,
-                executor,
-                cancellationSignal,
-                new DnsResolver.Callback<List<InetAddress>>() {
-                    @Override
-                    public void onAnswer(List<InetAddress> answer, int rcode) {
-                        if (rcode == 0) {
-                            // This callback is for A/AAAA records, we need TXT records
-                            // For TXT records, we need to use a different approach
-                            queryTXTWithRawDNS(message, future);
-                        } else {
-                            future.completeExceptionally(new Exception("DNS query failed with rcode: " + rcode));
-                        }
-                    }
-
-                    @Override
-                    public void onError(DnsResolver.DnsException error) {
-                        future.completeExceptionally(error);
-                    }
-                }
-            );
-        } catch (Exception e) {
-            future.completeExceptionally(e);
-        }
-
-        return future;
-    }
 
     private CompletableFuture<List<String>> queryTXTLegacy(String domain, String message) {
         return CompletableFuture.supplyAsync(() -> {
@@ -311,51 +304,85 @@ public class DNSResolver {
         return results;
     }
 
-    private void queryTXTWithRawDNS(String message, CompletableFuture<List<String>> future) {
-        executor.execute(() -> {
+    /**
+     * DNS-over-HTTPS query using Cloudflare API (matches iOS implementation)
+     */
+    private CompletableFuture<List<String>> queryTXTDNSOverHTTPS(String message) {
+        return CompletableFuture.supplyAsync(() -> {
             try {
-                // Create raw DNS query for TXT records
-                Message query = new Message();
-                Header header = query.getHeader();
-                header.setFlag(Flags.RD);
-                header.setOpcode(Opcode.QUERY);
+                Log.d(TAG, "🌐 DNS-over-HTTPS: Querying Cloudflare for: " + message);
                 
-                Name name = Name.fromString(message + ".");
-                Record question = Record.newRecord(name, Type.TXT, DClass.IN);
-                query.addRecord(question, Section.QUESTION);
-
-                // Send query to custom DNS server
-                SimpleResolver resolver = new SimpleResolver(DNS_SERVER);
-                resolver.setPort(DNS_PORT);
-                resolver.setTimeout(QUERY_TIMEOUT_MS / 1000);
+                // Use Cloudflare DNS-over-HTTPS API (matches iOS implementation)
+                String baseURL = "https://cloudflare-dns.com/dns-query";
+                String encodedMessage = URLEncoder.encode(message, "UTF-8");
+                String urlString = baseURL + "?name=" + encodedMessage + "&type=TXT";
                 
-                Message response = resolver.send(query);
+                URL url = new URL(urlString);
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                connection.setRequestMethod("GET");
+                connection.setRequestProperty("Accept", "application/dns-json");
+                connection.setConnectTimeout(QUERY_TIMEOUT_MS);
+                connection.setReadTimeout(QUERY_TIMEOUT_MS);
                 
-                List<String> txtRecords = new ArrayList<>();
-                Record[] answers = response.getSectionArray(Section.ANSWER);
-                
-                for (Record record : answers) {
-                    if (record instanceof TXTRecord) {
-                        TXTRecord txtRecord = (TXTRecord) record;
-                        List<?> strings = txtRecord.getStrings();
-                        for (Object str : strings) {
-                            txtRecords.add(str.toString());
-                        }
-                    }
+                int responseCode = connection.getResponseCode();
+                if (responseCode != 200) {
+                    throw new DNSError(DNSError.Type.QUERY_FAILED, "DNS-over-HTTPS request failed with code: " + responseCode);
                 }
-
-                if (txtRecords.isEmpty()) {
-                    future.completeExceptionally(new Exception("No TXT records found"));
-                } else {
-                    future.complete(txtRecords);
+                
+                // Read response
+                BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                StringBuilder response = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    response.append(line);
                 }
-
+                reader.close();
+                connection.disconnect();
+                
+                // Parse Cloudflare DNS JSON response (matches iOS parsing logic)
+                return parseDNSOverHTTPSResponse(response.toString());
+                
+            } catch (DNSError e) {
+                throw e; // Re-throw structured errors
             } catch (Exception e) {
-                Log.e(TAG, "Raw DNS query failed", e);
-                future.completeExceptionally(e);
+                throw new DNSError(DNSError.Type.QUERY_FAILED, "DNS-over-HTTPS query failed: " + e.getMessage(), e);
             }
-        });
+        }, executor);
     }
+
+    private List<String> parseDNSOverHTTPSResponse(String jsonResponse) throws DNSError {
+        try {
+            JSONObject json = new JSONObject(jsonResponse);
+            
+            if (!json.has("Answer")) {
+                throw new DNSError(DNSError.Type.NO_RECORDS_FOUND, "No Answer section in DNS-over-HTTPS response");
+            }
+            
+            JSONArray answers = json.getJSONArray("Answer");
+            List<String> txtRecords = new ArrayList<>();
+            
+            for (int i = 0; i < answers.length(); i++) {
+                JSONObject answer = answers.getJSONObject(i);
+                if (answer.has("type") && answer.getInt("type") == 16 && answer.has("data")) {
+                    String data = answer.getString("data");
+                    // Remove quotes from TXT record data (matches iOS behavior)
+                    String cleanData = data.replaceAll("^\"|\"$", "");
+                    txtRecords.add(cleanData);
+                }
+            }
+            
+            if (txtRecords.isEmpty()) {
+                throw new DNSError(DNSError.Type.NO_RECORDS_FOUND, "No TXT records found in DNS-over-HTTPS response");
+            }
+            
+            Log.d(TAG, "📦 DNS-over-HTTPS: Found " + txtRecords.size() + " TXT records");
+            return txtRecords;
+            
+        } catch (Exception e) {
+            throw new DNSError(DNSError.Type.QUERY_FAILED, "Failed to parse DNS-over-HTTPS response: " + e.getMessage(), e);
+        }
+    }
+
 
     private Network getActiveNetwork() {
         if (connectivityManager != null) {
