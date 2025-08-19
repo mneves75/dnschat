@@ -205,7 +205,7 @@ npm run sync-versions:dry
 ### DNS Testing
 ```bash
 # CLI test
-node test-dns.js "Hello world"
+node test-dns-simple.js "Hello world"
 
 # Test specific methods
 # Use app Settings → DNS Method preferences
