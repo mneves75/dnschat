@@ -483,9 +483,10 @@ The app uses a hierarchical navigation pattern:
   - Current scheme: `dnschat://`
   - Bundle IDs: `org.mvneves.dnschat` (iOS and Android)
   - Uses React Native's New Architecture (newArchEnabled: true)
-  - Version in app.json (1.7.2) matches package.json (1.7.2)
+  - Version in app.json matches package.json 
+  - Always sync version and update xcode iOS CFBundleShortVersionString in Info.plist
 - **tsconfig.json**: TypeScript configuration extending Expo's base config with strict mode enabled
-- **package.json**: Current version 1.7.2 with all dependencies including DNS libraries
+- **package.json**: Current version with all dependencies including DNS libraries
 
 ### Deep Linking
 The app is configured for automatic deep linking with:

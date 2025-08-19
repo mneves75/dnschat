@@ -24,6 +24,10 @@ A React Native mobile application that provides a modern, ChatGPT-like chat inte
   - **Atomic Operations**: Thread-safe continuation management prevents race conditions
   - **Resource Cleanup**: Proper connection cancellation on resume to prevent resource leaks
   - **Error Handling**: Graceful handling of timeout, network failure, and cancellation scenarios
+- **🔧 Swift Compiler Compliance**: Zero warnings, enterprise-grade code quality
+  - **@unchecked Sendable**: Proper concurrency conformance for thread-safe DNS operations
+  - **Network Framework**: Correct handling of non-optional NWError types
+  - **Type Safety**: Eliminated unnecessary nil coalescing on guaranteed non-nil properties
 
 ### 🚀 **NEW in v1.7.5: Advanced XcodeBuildMCP Integration & Navigation Fixes**
 - **🤖 XcodeBuildMCP Integration**: Revolutionary iOS build management with Claude Code's MCP tools
@@ -324,10 +328,23 @@ let resumeOnce: (Result<[String], Error>) -> Void = { result in
 import React
 ```
 
+**Swift Compiler Warnings**: @Sendable closure capture or NWError optional chaining
+```bash
+# Fixed in v1.7.7: DNSResolver implements @unchecked Sendable
+# Correct NWError handling without unnecessary optional chaining
+```
+
 **folly/dynamic.h Missing**: React Native 0.79.x header issue
 ```bash
 # Already fixed in ios/Podfile post_install hook
 # Adds RCT-Folly header search paths automatically
+```
+
+**Missing App Icons**: About screen shows missing dnschat icon
+```bash
+# Check Metro bundler asset imports in About screen
+# Verify app icon is properly imported and displayed
+# Clear Metro cache: npx expo start --clear
 ```
 
 **CocoaPods Sandbox Sync**: "Sandbox not in sync with Podfile.lock"
