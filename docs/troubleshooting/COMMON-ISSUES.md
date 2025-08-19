@@ -810,7 +810,7 @@ git log --oneline -5
 
 ---
 
-**Last Updated:** v1.7.4 - Advanced XcodeBuildMCP Integration & Hermes Script Fix  
+**Last Updated:** v1.7.5 - Advanced XcodeBuildMCP Integration & Navigation Fixes  
 **Maintainers:** DNSChat Development Team
 
 *This guide is continuously updated. Check git history for recent additions.*
