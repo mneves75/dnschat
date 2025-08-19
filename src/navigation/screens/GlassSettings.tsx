@@ -18,6 +18,7 @@ import {
   Platform,
   Linking,
   Share,
+  useColorScheme,
 } from 'react-native';
 import { useSettings } from '../../context/SettingsContext';
 import { 
@@ -35,17 +36,20 @@ import {
 export function GlassSettings() {
   const { 
     dnsServer, 
-    setDnsServer, 
+    updateDnsServer, 
     preferDnsOverHttps, 
-    setPreferDnsOverHttps 
+    updatePreferDnsOverHttps 
   } = useSettings();
+  
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
   
   // Bottom sheet states
   const dnsServerSheet = useGlassBottomSheet();
   const aboutSheet = useGlassBottomSheet();
   const supportSheet = useGlassBottomSheet();
   
-  // DNS Server options
+  // DNS Service options
   const dnsServerOptions = [
     { 
       value: 'ch.at', 
@@ -53,34 +57,24 @@ export function GlassSettings() {
       description: 'Official ChatDNS server with AI responses'
     },
     { 
-      value: '8.8.8.8', 
-      label: 'Google DNS (8.8.8.8)',
-      description: 'Google\'s public DNS resolver'
-    },
-    { 
-      value: '1.1.1.1', 
-      label: 'Cloudflare DNS (1.1.1.1)',
-      description: 'Cloudflare\'s fast public DNS'
-    },
-    { 
-      value: '9.9.9.9', 
-      label: 'Quad9 DNS (9.9.9.9)',
-      description: 'Security-focused DNS resolver'
+      value: 'llm.pieter.com', 
+      label: 'llm.pieter.com',
+      description: 'Pieter\'s LLM service via DNS'
     },
   ];
 
   const currentDnsOption = dnsServerOptions.find(option => option.value === dnsServer) || dnsServerOptions[0];
 
   // Action handlers
-  const handleDnsServerSelect = React.useCallback((server: string) => {
-    setDnsServer(server);
+  const handleDnsServerSelect = React.useCallback(async (server: string) => {
+    await updateDnsServer(server);
     dnsServerSheet.hide();
     
     // Haptic feedback
     if (Platform.OS === 'ios') {
       console.log('🔸 Haptic: DNS server changed');
     }
-  }, [setDnsServer, dnsServerSheet]);
+  }, [updateDnsServer, dnsServerSheet]);
 
   const handleShareApp = React.useCallback(async () => {
     try {
@@ -106,15 +100,15 @@ export function GlassSettings() {
         { 
           text: 'Reset', 
           style: 'destructive',
-          onPress: () => {
-            setDnsServer('ch.at');
-            setPreferDnsOverHttps(false);
+          onPress: async () => {
+            await updateDnsServer('ch.at');
+            await updatePreferDnsOverHttps(false);
             Alert.alert('Settings Reset', 'All settings have been reset to default values.');
           }
         },
       ]
     );
-  }, [setDnsServer, setPreferDnsOverHttps]);
+  }, [updateDnsServer, updatePreferDnsOverHttps]);
 
   const handleClearCache = React.useCallback(() => {
     Alert.alert(
@@ -144,7 +138,7 @@ export function GlassSettings() {
           footer="Configure DNS server and query methods for optimal performance and privacy."
         >
           <Form.Item
-            title="DNS Server"
+            title="DNS Service"
             subtitle={currentDnsOption.label}
             rightContent={
               <Text style={styles.valueText}>
@@ -161,8 +155,8 @@ export function GlassSettings() {
             rightContent={
               <Switch
                 value={preferDnsOverHttps}
-                onValueChange={setPreferDnsOverHttps}
-                trackColor={{ false: '#767577', true: '#FFC107' }}
+                onValueChange={updatePreferDnsOverHttps}
+                trackColor={{ false: '#767577', true: '#007AFF' }}
                 thumbColor={Platform.OS === 'ios' ? undefined : '#f4f3f4'}
               />
             }
@@ -238,11 +232,11 @@ export function GlassSettings() {
         </Form.Section>
       </Form.List>
 
-      {/* DNS Server Selection Bottom Sheet */}
+      {/* DNS Service Selection Bottom Sheet */}
       <GlassBottomSheet
         visible={dnsServerSheet.visible}
         onClose={dnsServerSheet.hide}
-        title="Select DNS Server"
+        title="Select DNS Service"
         subtitle="Choose your preferred DNS resolver"
         height={0.7}
       >
@@ -282,19 +276,19 @@ export function GlassSettings() {
             cornerRadius={12}
             style={styles.aboutCard}
           >
-            <Text style={styles.aboutText}>
+            <Text style={[styles.aboutText, { color: isDark ? '#FFFFFF' : '#000000' }]}>
               DNSChat is a unique communication app that uses DNS TXT queries to chat with an AI. 
               This innovative approach demonstrates how DNS can be used for more than just domain resolution.
             </Text>
           </LiquidGlassWrapper>
           
           <View style={styles.aboutFeatures}>
-            <Text style={styles.featureTitle}>Key Features:</Text>
-            <Text style={styles.featureItem}>• Native DNS module with iOS 26 support</Text>
-            <Text style={styles.featureItem}>• Multiple DNS transport methods (UDP, TCP, HTTPS)</Text>
-            <Text style={styles.featureItem}>• Real-time query logging and debugging</Text>
-            <Text style={styles.featureItem}>• Beautiful glass UI inspired by Apple's design</Text>
-            <Text style={styles.featureItem}>• Cross-platform React Native implementation</Text>
+            <Text style={[styles.featureTitle, { color: isDark ? '#FFFFFF' : '#000000' }]}>Key Features:</Text>
+            <Text style={[styles.featureItem, { color: isDark ? '#AEAEB2' : '#6D6D70' }]}>• Native DNS module with iOS 26 support</Text>
+            <Text style={[styles.featureItem, { color: isDark ? '#AEAEB2' : '#6D6D70' }]}>• Multiple DNS transport methods (UDP, TCP, HTTPS)</Text>
+            <Text style={[styles.featureItem, { color: isDark ? '#AEAEB2' : '#6D6D70' }]}>• Real-time query logging and debugging</Text>
+            <Text style={[styles.featureItem, { color: isDark ? '#AEAEB2' : '#6D6D70' }]}>• Beautiful glass UI inspired by Apple's design</Text>
+            <Text style={[styles.featureItem, { color: isDark ? '#AEAEB2' : '#6D6D70' }]}>• Cross-platform React Native implementation</Text>
           </View>
         </View>
       </GlassBottomSheet>
@@ -345,7 +339,7 @@ const styles = StyleSheet.create({
   versionBadge: {
     paddingHorizontal: 8,
     paddingVertical: 4,
-    backgroundColor: 'rgba(255, 204, 0, 0.15)', // Notion yellow
+    backgroundColor: 'rgba(0, 122, 255, 0.15)', // iOS system blue
   },
   versionText: {
     fontSize: 12,
@@ -379,7 +373,6 @@ const styles = StyleSheet.create({
   aboutText: {
     fontSize: 16,
     lineHeight: 24,
-    color: '#FFFFFF',
     fontWeight: '400',
   },
   aboutFeatures: {
@@ -388,12 +381,10 @@ const styles = StyleSheet.create({
   featureTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#FFFFFF',
     marginBottom: 12,
   },
   featureItem: {
     fontSize: 15,
-    color: '#AEAEB2',
     marginBottom: 6,
     lineHeight: 20,
   },

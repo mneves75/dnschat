@@ -398,6 +398,11 @@ public class LiquidGlassView: UIView {
     refreshGlassEffect()
   }
   
+  @objc public func setIsInteractive(_ enabled: Bool) {
+    config.isInteractive = enabled
+    refreshGlassEffect()
+  }
+  
   @objc public func setCornerRadius(_ radius: CGFloat) {
     config.cornerRadius = radius
     refreshGlassEffect()
@@ -485,7 +490,7 @@ public class LiquidGlassViewManager: RCTViewManager {
   }
   
   @objc public func setIsInteractive(_ view: LiquidGlassView, isInteractive: Bool) {
-    view.setInteractive(isInteractive)
+    view.setIsInteractive(isInteractive)
   }
   
   @objc public func setCornerRadius(_ view: LiquidGlassView, cornerRadius: CGFloat) {
@@ -498,6 +503,10 @@ public class LiquidGlassViewManager: RCTViewManager {
   
   @objc public func setContainerSpacing(_ view: LiquidGlassView, containerSpacing: CGFloat) {
     view.setContainerSpacing(containerSpacing)
+  }
+  
+  @objc public func setGlassTintColor(_ view: LiquidGlassView, glassTintColor: String) {
+    view.setGlassTintColor(glassTintColor)
   }
 }
 

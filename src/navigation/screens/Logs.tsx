@@ -118,7 +118,7 @@ export function Logs() {
     const isExpanded = expandedLogs.has(item.id);
     const isActive = item.finalStatus === 'pending';
     const statusColor = item.finalStatus === 'success' ? '#4CAF50' : 
-                       item.finalStatus === 'failure' ? '#FF453A' : '#FFC107'; // Updated to Notion red
+                       item.finalStatus === 'failure' ? '#FF453A' : '#34C759'; // Success green
 
     return (
       <TouchableOpacity
@@ -146,9 +146,9 @@ export function Logs() {
                   <LiquidGlassWrapper
                     variant="interactive"
                     shape="capsule"
-                    style={[styles.methodBadge, { backgroundColor: 'rgba(255, 193, 7, 0.15)' }]}
+                    style={[styles.methodBadge, { backgroundColor: 'rgba(0, 122, 255, 0.15)' }]}
                   >
-                    <Text style={[styles.methodText, { color: '#FFC107' }]}>
+                    <Text style={[styles.methodText, { color: '#007AFF' }]}>
                       {item.finalMethod?.toUpperCase() || 'UNKNOWN'}
                     </Text>
                   </LiquidGlassWrapper>
@@ -305,7 +305,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
   },
   activeLogCard: {
-    backgroundColor: 'rgba(255, 193, 7, 0.1)', // Notion yellow for active
+    backgroundColor: 'rgba(0, 122, 255, 0.1)', // iOS system blue for active
   },
   logHeader: {
     flexDirection: 'row',

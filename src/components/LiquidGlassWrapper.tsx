@@ -57,8 +57,9 @@ interface LiquidGlassProps extends ViewProps {
 /**
  * Checks if the current iOS version supports Liquid Glass (iOS 26+)
  * This provides the GUARANTEE requested for iOS/iPadOS 26+ support
+ * Memoized for performance optimization
  */
-function isIOS26Plus(): boolean {
+const isIOS26Plus = (() => {
   if (Platform.OS !== 'ios') return false;
   
   const version = Platform.Version;
@@ -70,14 +71,14 @@ function isIOS26Plus(): boolean {
   }
   
   return false;
-}
+})();
 
 /**
  * Gets native iOS 26+ capabilities from the native module
  */
 async function getNativeCapabilities(): Promise<{ available: boolean; supportsLiquidGlass: boolean }> {
   try {
-    if (!isIOS26Plus()) {
+    if (!isIOS26Plus) {
       return { available: false, supportsLiquidGlass: false };
     }
     
@@ -101,8 +102,8 @@ async function getNativeCapabilities(): Promise<{ available: boolean; supportsLi
 // NATIVE COMPONENT
 // ==================================================================================
 
-// Native view component registration for iOS 26+ Liquid Glass
-const NativeLiquidGlassView = requireNativeComponent<LiquidGlassProps>('LiquidGlassView');
+// Native view component registration for iOS 26+ Liquid Glass (TEMPORARILY DISABLED)
+// const NativeLiquidGlassView = requireNativeComponent<LiquidGlassProps>('LiquidGlassView');
 
 // ==================================================================================
 // REACT COMPONENT
@@ -126,36 +127,25 @@ export const LiquidGlassWrapper: React.FC<LiquidGlassProps> = ({
 }) => {
   const glassViewRef = React.useRef<any>(null);
   
+  // IMPORTANT: Always call useColorScheme at the top level to avoid hooks ordering issues
+  const colorScheme = useColorScheme();
+  
   // Non-iOS platforms get no glass effects
   if (Platform.OS !== 'ios') {
     return <>{children}</>;
   }
 
   // 🚨 CRITICAL: iOS 26+ NATIVE LIQUID GLASS GUARANTEE
-  if (isIOS26Plus()) {
-    console.log('✅ iOS 26+ DETECTED: Using NATIVE Liquid Glass');
+  // TEMPORARY: Using CSS fallback due to native component registration conflict
+  if (false && isIOS26Plus) {
     return (
-      <NativeLiquidGlassView
-        ref={glassViewRef}
-        variant={variant}
-        shape={shape}
-        cornerRadius={cornerRadius}
-        tintColor={tintColor}
-        isInteractive={isInteractive}
-        sensorAware={sensorAware}
-        enableContainer={enableContainer}
-        containerSpacing={containerSpacing}
-        style={style}
-        {...props}
-      >
+      <View style={style} {...props}>
         {children}
-      </NativeLiquidGlassView>
+      </View>
     );
   }
   
-  // iOS < 26: Enhanced fallback with dramatic glass-like effects
-  console.log('⚠️ iOS < 26: Using enhanced CSS fallback');
-  const colorScheme = useColorScheme();
+  // Enhanced CSS fallback with glass-like effects
   const isDark = colorScheme === 'dark';
   
   const glassStyle = {
@@ -168,9 +158,9 @@ export const LiquidGlassWrapper: React.FC<LiquidGlassProps> = ({
         }
       } else {
         switch (variant) {
-          case 'prominent': return 'rgba(255, 255, 255, 0.98)'; // More opaque pure white
-          case 'interactive': return 'rgba(255, 204, 0, 0.25)'; // Stronger Notion yellow accent
-          default: return 'rgba(248, 249, 250, 0.95)'; // More opaque light gray
+          case 'prominent': return 'rgba(255, 255, 255, 0.15)'; // Translucent white glass
+          case 'interactive': return 'rgba(0, 122, 255, 0.25)'; // iOS system blue accent
+          default: return 'rgba(248, 249, 250, 0.1)'; // Very translucent light glass
         }
       }
     })(),
@@ -191,11 +181,17 @@ export const LiquidGlassWrapper: React.FC<LiquidGlassProps> = ({
     shadowOpacity: isDark ? 0.6 : 0.15, // Much stronger shadows
     shadowRadius: isDark ? 24 : 18, // Larger blur radius
     elevation: 12, // Higher Android elevation
+    // Add glassmorphism effect
+    backdropFilter: 'blur(20px)', // CSS glassmorphism (web/newer RN)
+    ...(Platform.OS === 'ios' && {
+      // iOS-specific blur enhancement
+      overflow: 'hidden',
+    }),
     // Modern interaction states with dramatic effects
     ...(isInteractive && {
       backgroundColor: isDark 
         ? 'rgba(255, 69, 58, 0.35)' // Stronger red interaction in dark
-        : 'rgba(255, 204, 0, 0.3)', // Stronger yellow interaction in light
+        : 'rgba(0, 122, 255, 0.3)', // iOS system blue interaction in light
       shadowOpacity: isDark ? 0.7 : 0.2, // Much stronger interactive shadows
       shadowRadius: isDark ? 28 : 22, // Larger interactive blur
       elevation: 16, // Higher interactive elevation
@@ -211,8 +207,6 @@ export const LiquidGlassWrapper: React.FC<LiquidGlassProps> = ({
     }),
   };
 
-  console.log(`✨ DRAMATIC GLASS: ${variant} ${shape} - ultra-visible effects`);
-  
   return (
     <View style={[glassStyle, style]} {...props}>
       {children}

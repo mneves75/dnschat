@@ -95,7 +95,7 @@ export function Chat() {
               variant="prominent"
               shape="capsule"
               isInteractive={true}
-              tintColor={isDark ? "#FF6B35" : "#FFC107"} // Notion orange/yellow
+              tintColor={isDark ? "#007AFF" : "#007AFF"} // iOS system blue
               style={styles.glassInputArea}
             >
               <ChatInput

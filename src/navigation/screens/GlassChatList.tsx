@@ -106,9 +106,9 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
                 <LiquidGlassWrapper
                   variant="interactive"
                   shape="capsule"
-                  style={[styles.messageBadge, { backgroundColor: 'rgba(255, 193, 7, 0.15)' }]}
+                  style={[styles.messageBadge, { backgroundColor: 'rgba(0, 122, 255, 0.15)' }]}
                 >
-                  <Text style={[styles.messageBadgeText, { color: '#FFC107' }]}>
+                  <Text style={[styles.messageBadgeText, { color: '#007AFF' }]}>
                     {messageCount} {messageCount === 1 ? 'message' : 'messages'}
                   </Text>
                 </LiquidGlassWrapper>
@@ -267,7 +267,7 @@ export function GlassChatList() {
               shape="capsule"
               style={styles.newChatBadge}
             >
-              <Text style={styles.newChatIcon}>✨</Text>
+              <Text style={styles.newChatIcon}>➕</Text>
             </LiquidGlassWrapper>
           }
           onPress={handleNewChat}

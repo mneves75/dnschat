@@ -15,19 +15,10 @@ import {
 // Import package.json to get version
 const packageJson = require('../../../package.json');
 
-// Import app icon (same as used in onboarding)
-const AppIcon = require('../../../icons/dnschat_ios26.png');
+// Import app icon from assets (same pattern as newspaper.png)
+const AppIcon = require('../../assets/dnschat_ios26.png');
 
-export function About() {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
-  const [iconError, setIconError] = useState(false);
-
-  const openLink = (url: string) => {
-    Linking.openURL(url);
-  };
-
-const styles = StyleSheet.create({
+const createStyles = (isDark: boolean) => StyleSheet.create({
   // Header Section
   headerContainer: {
     backgroundColor: 'rgba(255, 255, 255, 0.08)',
@@ -54,7 +45,7 @@ const styles = StyleSheet.create({
   logoText: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#FFC107', // Notion yellow
+    color: '#007AFF', // iOS system blue
   },
   title: {
     fontSize: 28,
@@ -65,13 +56,13 @@ const styles = StyleSheet.create({
   versionBadge: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-    backgroundColor: 'rgba(255, 193, 7, 0.15)', // Notion yellow
+    backgroundColor: 'rgba(0, 122, 255, 0.15)', // iOS system blue background
     marginBottom: 16,
   },
   versionText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#FFC107', // Notion yellow
+    color: '#007AFF', // iOS system blue
   },
   description: {
     fontSize: 16,
@@ -91,6 +82,17 @@ const styles = StyleSheet.create({
     fontWeight: '400',
   },
 });
+
+export function About() {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+  const [iconError, setIconError] = useState(false);
+
+  const openLink = (url: string) => {
+    Linking.openURL(url);
+  };
+
+  const styles = createStyles(isDark);
 
   const credits = [
     {
@@ -131,9 +133,9 @@ const styles = StyleSheet.create({
   ];
 
   return (
-    <Form.List navigationTitle="About DNS Chat">
+    <Form.List>
       
-      {/* App Information Header */}
+      {/* App Information Header - Prominent display without duplicate rectangles */}
       <Form.Section>
         <LiquidGlassWrapper
           variant="prominent"
@@ -148,8 +150,10 @@ const styles = StyleSheet.create({
                   source={AppIcon}
                   style={styles.logoImage}
                   resizeMode="contain"
+                  onLoad={() => console.log('✅ About icon loaded successfully')}
                   onError={(error) => {
-                    console.log('🚨 About icon load error:', error.nativeEvent.error);
+                    console.log('🚨 About icon load error:', error.nativeEvent?.error || 'Unknown error');
+                    console.log('🚨 AppIcon source:', AppIcon);
                     setIconError(true);
                   }}
                 />
@@ -217,10 +221,11 @@ const styles = StyleSheet.create({
 
       {/* Developer */}
       <Form.Section title="Developer">
-        <Form.Link
-          title="@mneves75"
-          subtitle="Created by Marcus Neves"
+        <Form.Item
+          title="Marcus Neves"
+          subtitle="Created by @mneves75"
           onPress={() => openLink('https://x.com/mneves75')}
+          showChevron
         />
       </Form.Section>
 
@@ -240,18 +245,7 @@ const styles = StyleSheet.create({
       </Form.Section>
 
       {/* Footer */}
-      <Form.Section>
-        <LiquidGlassWrapper
-          variant="regular"
-          shape="roundedRect"
-          cornerRadius={12}
-          style={styles.footerContainer}
-        >
-          <Text style={[styles.footerText, { color: isDark ? '#8E8E93' : '#8E8E93' }]}>
-            © 2025 Marcus Neves • MIT Licensed
-          </Text>
-        </LiquidGlassWrapper>
-      </Form.Section>
+      <Form.Section footer="© 2025 Marcus Neves • MIT Licensed" />
     </Form.List>
   );
 }

@@ -21,7 +21,7 @@
 RCT_EXPORT_VIEW_PROPERTY(variant, NSString)              // regular, prominent, interactive
 RCT_EXPORT_VIEW_PROPERTY(shape, NSString)               // capsule, rect, roundedRect
 RCT_EXPORT_VIEW_PROPERTY(cornerRadius, CGFloat)         // For rect shapes
-RCT_EXPORT_VIEW_PROPERTY(tintColor, NSString)           // Hex color
+RCT_EXPORT_VIEW_PROPERTY(glassTintColor, NSString)     // Hex color
 RCT_EXPORT_VIEW_PROPERTY(isInteractive, BOOL)           // Interactive response
 RCT_EXPORT_VIEW_PROPERTY(sensorAware, BOOL)             // Environmental adaptation
 RCT_EXPORT_VIEW_PROPERTY(enableContainer, BOOL)         // Use GlassEffectContainer

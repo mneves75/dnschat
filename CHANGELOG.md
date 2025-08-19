@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### 🎨 UI/UX Fixes - Yellow Color Issues & About Screen
+
+#### Bug Fixes
+- **🎨 Yellow Color Removal**: Replaced harsh Notion yellow (#FFC107) with iOS system blue (#007AFF)
+  - **LiquidGlassWrapper**: Interactive accents now use iOS system blue for native feel
+  - **GlassSettings**: Switch track color changed to iOS system blue
+  - **New Chat Icon**: Replaced yellow sparkle emoji (✨) with plus symbol (➕)
+  - **Impact**: More authentic iOS native appearance and better accessibility
+
+- **📱 About Screen Layout Issues**: Fixed duplicate rectangles and missing app icon
+  - **Root Cause**: Redundant Form.List navigationTitle + Form.Section LiquidGlassWrapper
+  - **Solution**: Streamlined layout while preserving prominent header design
+  - **App Icon Fix**: Moved from problematic `icons/` folder to `src/assets/` following Metro bundler conventions
+  - **Impact**: Clean single-section layout with persistent app icon display
+
+- **⚙️ DNS Service Configuration**: Enhanced DNS service selection
+  - **Added**: llm.pieter.com as DNS service option after ch.at
+  - **Removed**: Google, Cloudflare, and Quad9 DNS options (focused on AI services only)
+  - **Fixed**: TypeError with setDnsServer by using correct updateDnsServer function
+  - **Updated**: "DNS Resolver" → "DNS Service" in all UI text
+  - **Impact**: Simplified service selection focused on AI chat functionality
+
+- **🔧 GestureHandler Root View**: Added missing GestureHandlerRootView wrapper
+  - **Root Cause**: PanGestureHandler used without proper root view context
+  - **Solution**: Wrapped entire App component in GestureHandlerRootView
+  - **Impact**: DNS service selection modal now works without crashes
+
+- **🌗 Theme Support**: Fixed illegible text in App Version modal
+  - **Added**: Dynamic color schemes with useColorScheme hook
+  - **Dark Mode**: White text (#FFFFFF) for headers, #AEAEB2 for secondary text
+  - **Light Mode**: Black text (#000000) for headers, #6D6D70 for secondary text
+  - **Impact**: Perfect readability in both light and dark themes
+
 ### 🎨 iOS/iPadOS 26+ Liquid Glass Support - Architecture Fix
 
 **Major Fix**: Resolved duplicate native view registration error and implemented proper iOS 26+ Liquid Glass support with comprehensive fallback system.

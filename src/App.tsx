@@ -4,6 +4,7 @@ import { Asset } from 'expo-asset';
 import * as SplashScreen from 'expo-splash-screen';
 import * as React from 'react';
 import { useColorScheme, Platform, View, StyleSheet } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Navigation } from './navigation';
 import { ChatProvider } from './context/ChatContext';
 import { SettingsProvider } from './context/SettingsContext';
@@ -73,15 +74,17 @@ function AppContent() {
 
 export function App() {
   return (
-    <ErrorBoundary>
-      <SettingsProvider>
-        <OnboardingProvider>
-          <ChatProvider>
-            <AppContent />
-          </ChatProvider>
-        </OnboardingProvider>
-      </SettingsProvider>
-    </ErrorBoundary>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <ErrorBoundary>
+        <SettingsProvider>
+          <OnboardingProvider>
+            <ChatProvider>
+              <AppContent />
+            </ChatProvider>
+          </OnboardingProvider>
+        </SettingsProvider>
+      </ErrorBoundary>
+    </GestureHandlerRootView>
   );
 }
 
