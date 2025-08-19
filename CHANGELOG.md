@@ -26,6 +26,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **✅ Atomic Operations**: Thread-safe continuation management prevents race conditions
 - **✅ Resource Cleanup**: Proper connection cancellation on resume to prevent resource leaks
 - **✅ Error Handling**: Graceful handling of timeout, network failure, and cancellation scenarios
+- **✅ Swift Compiler Compliance**: Fixed all Swift warnings and errors for clean compilation
+  - **@unchecked Sendable**: Added proper Sendable conformance for concurrent DNS operations
+  - **NWError Handling**: Fixed optional chaining on non-optional Network Framework types
+  - **Nil Coalescing**: Removed unnecessary operators on guaranteed non-nil properties
 
 #### Code Changes
 ```swift
