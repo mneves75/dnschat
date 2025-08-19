@@ -1,8 +1,34 @@
-# DNSChat Installation Guide v1.6.1
+# DNSChat Installation Guide
 
-## 📱 Complete Installation Guide for Native DNS Chat App
+## 📍 Documentation Moved
 
-This guide will help you set up and run DNSChat - a React Native app that communicates with AI using DNS TXT queries, featuring native iOS/Android DNS modules and comprehensive network fallback strategies.
+**The complete installation guide has moved to [docs/INSTALL.md](./docs/INSTALL.md)** 
+
+This new location provides:
+- ✅ **Up-to-date instructions** for v1.7.7
+- ✅ **Modern documentation structure**
+- ✅ **Better organization and navigation**
+- ✅ **Comprehensive troubleshooting links**
+
+## 🚀 Quick Start
+
+For immediate setup, see [docs/INSTALL.md](./docs/INSTALL.md).
+
+**One-liner setup**:
+```bash
+git clone https://github.com/mneves75/dnschat.git && cd dnschat && npm install && cd ios && pod install && cd .. && npm start
+```
+
+## 📚 Complete Documentation
+
+- **[Installation Guide](./docs/INSTALL.md)** - Detailed setup instructions
+- **[Troubleshooting](./docs/TROUBLESHOOTING.md)** - Common issues and solutions  
+- **[API Reference](./docs/API.md)** - DNS service documentation
+- **[Contributing](./CONTRIBUTING.md)** - Development guidelines
+
+---
+
+*This file remains for compatibility. Please use [docs/INSTALL.md](./docs/INSTALL.md) for current instructions.*
 
 ## Inspiration and Acknowledgements
 
