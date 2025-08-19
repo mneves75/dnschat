@@ -358,6 +358,7 @@
 				INFOPLIST_FILE = DNSChat/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "DNS Chat";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSCameraUsageDescription = "This app does not directly access the camera. Camera access is referenced by third-party libraries for device capability detection.";
 				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -395,6 +396,7 @@
 				INFOPLIST_FILE = DNSChat/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "DNS Chat";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSCameraUsageDescription = "This app does not directly access the camera. Camera access is referenced by third-party libraries for device capability detection.";
 				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
