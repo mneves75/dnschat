@@ -16,7 +16,77 @@ DNSChat now has comprehensive technical documentation organized in the `/docs/` 
 
 ## Project Overview
 
-This is a React Native mobile application that provides a modern, ChatGPT-like chat interface using DNS TXT queries to communicate with an LLM. The app features local storage for conversation history, a polished UI with dark/light theme support, and native KeyboardAvoidingView for optimal keyboard handling.
+This is a React Native mobile application that provides a modern, ChatGPT-like chat interface using DNS TXT queries to communicate with an LLM. The app features local storage for conversation history, a polished UI with dark/light theme support, native KeyboardAvoidingView for optimal keyboard handling, and **full iOS/iPadOS 26+ Liquid Glass design system support** with comprehensive cross-platform fallbacks.
+
+## 🎨 iOS/iPadOS 26+ Liquid Glass Support (Latest) - PRODUCTION READY
+
+**Status: FULLY IMPLEMENTED** - Complete iOS 26+ Liquid Glass design system with proper architectural separation and comprehensive fallback support.
+
+### ✅ **Architecture Overview**
+
+The Liquid Glass implementation uses a **dual-component architecture** that eliminates native bridge conflicts while providing both simplicity and advanced capabilities:
+
+```typescript
+// Production Component (Used by all app screens)
+LiquidGlassWrapper → Native iOS 26+ UIGlassEffect OR Enhanced CSS fallback
+
+// Advanced System (Optional, for complex use cases)  
+LiquidGlassNative → Uses LiquidGlassWrapper + Performance monitoring + Environmental adaptation
+```
+
+### 🎯 **Key Features**
+
+**iOS/iPadOS 26+ Native Support:**
+- **SwiftUI Integration**: Direct `.glassEffect()` modifier bridging with React Native
+- **Automatic Detection**: Robust iOS version parsing (`iOS 26.0+ = apiLevel 260`)
+- **Sensor Awareness**: Environmental adaptation with ambient light and motion detection
+- **Performance Optimization**: Device-specific performance tier analysis (high/medium/low/fallback)
+
+**Comprehensive Fallback System:**
+- **iOS 26+**: Native UIGlassEffect with sensor-aware environmental adaptation
+- **iOS 17-25**: Enhanced blur effects with react-native-blur integration  
+- **iOS 16**: Basic blur fallback with dramatic visual styling
+- **Android**: Material Design 3 elevated surfaces
+- **Web**: CSS glassmorphism with backdrop-filter support
+
+**Production-Ready Architecture:**
+- **Zero Conflicts**: Eliminated duplicate native view registration errors
+- **Type Safety**: Full TypeScript coverage with proper prop interface compatibility
+- **Performance Monitoring**: Real-time glass rendering metrics and thermal management
+- **Memory Optimization**: Lazy loading and memoization for capability detection
+
+### 🔧 **Usage**
+
+**Basic Glass Effects (Production):**
+```typescript
+import { LiquidGlassWrapper } from '../components/LiquidGlassWrapper';
+
+<LiquidGlassWrapper variant="prominent" shape="capsule" sensorAware={true}>
+  <YourContent />
+</LiquidGlassWrapper>
+```
+
+**Advanced Features (Optional):**
+```typescript
+import { LiquidGlassNative } from '../components/liquidGlass';
+
+<LiquidGlassNative 
+  intensity="regular" 
+  environmentalAdaptation={true}
+  performanceMode="auto"
+  onPerformanceUpdate={(metrics) => console.log(metrics)}
+>
+  <YourContent />
+</LiquidGlassNative>
+```
+
+### 📱 **Current Implementation Status**
+
+- **✅ Native Bridge**: `LiquidGlassViewManager` properly registered serving production component
+- **✅ Production Integration**: Used in App.tsx, navigation screens, and glass components (6 files)
+- **✅ iOS Version Detection**: Comprehensive capability detection with performance profiling
+- **✅ Cross-platform Fallbacks**: Enhanced visual effects for all platforms and iOS versions
+- **✅ Memory & Performance**: Optimized for iOS thermal management and battery efficiency
 
 ## 🚨 CRITICAL BUG FIXES (v1.7.6) - ENTERPRISE GRADE FIXES
 
@@ -488,6 +558,15 @@ The app uses a hierarchical navigation pattern:
 - **tsconfig.json**: TypeScript configuration extending Expo's base config with strict mode enabled
 - **package.json**: Current version with all dependencies including DNS libraries
 
+### Modern Swift Patterns: Follow modern Swift/SwiftUI patterns:
+
+- Use @Observable (iOS 17+/macOS 14+) instead of ObservableObject
+- Avoid unnecessary ViewModels - keep state in views when appropriate
+- Use @State and @Environment for dependency injection
+- Embrace SwiftUI's declarative nature, don't fight the framework
+- See @docs/apple/modern-swift.md for details
+- See @docs/apple for details of newer ios/ipados/macos APIS  (like Liquid Glass, iOS/iPadOS/macOS 26+ APIs)
+
 ### Deep Linking
 The app is configured for automatic deep linking with:
 - Scheme: `dnschat://` (configured in app.json and App.tsx)
@@ -691,68 +770,6 @@ When working on native DNS problems:
 4. **Android debugging**: Check API level support and dnsjava fallback behavior
 5. **Fallback chain testing**: Verify graceful degradation through all fallback layers
 
-## Network Troubleshooting Guide
-
-### Common Network Issues and Solutions
-
-#### 1. UDP Port 53 Blocked (ERR_SOCKET_BAD_PORT on iOS)
-- **Symptoms**: UDP DNS queries fail with port/BAD_PORT errors
-- **Solution**: App automatically falls back to DNS-over-TCP
-- **Manual fix**: Ensure `react-native-tcp-socket` is installed
-- **Networks affected**: Some cellular networks, corporate Wi-Fi, public hotspots
-
-#### 2. iOS App Transport Security (ATS) Issues
-- **Symptoms**: Network requests blocked by ATS
-- **Solution**: Configured exceptions in `ios/ChatDNS/Info.plist` (iOS project structure)
-- **Coverage**: 
-  - `ch.at` - allows insecure loads for DNS queries
-  - `llm.pieter.com` - allows insecure loads for DNS queries
-  - `cloudflare-dns.com` - secure HTTPS for DNS-over-HTTPS fallback
-
-#### 3. Background App Suspension
-- **Symptoms**: DNS queries fail when app returns from background
-- **Solution**: Automatic app state monitoring and query suspension
-- **Behavior**: Queries suspend in background, resume in foreground
-- **Error messages**: "DNS query suspended due to app backgrounding"
-
-#### 4. React Native AbortSignal Compatibility
-- **Symptoms**: "AbortSignal.timeout is not a function" errors
-- **Solution**: Custom AbortController + setTimeout implementation
-- **Impact**: Affects DNS-over-HTTPS timeout handling
-
-#### 5. Native Module Registration Issues
-- **Symptoms**: "Native DNS not available, falling back to legacy methods"
-- **iOS Solution**: Run `cd ios && pod install` to register native modules
-- **Android Solution**: Clean and rebuild with `expo run:android`
-- **Verification**: Check `nativeDNS.isAvailable()` returns `available: true`
-
-#### 6. Android Build Issues
-- **Java 24 Compatibility Error**: "Unsupported class file major version 68"
-  - **Solution**: Use Java 17 - `npm run android` (automatically uses Java 17)
-  - **Manual**: `JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home npm run android`
-- **react-native-reanimated Gradle Error**: "Could not create task ':react-native-reanimated:outgoingVariants'"
-  - **Solution**: Project uses Gradle 8.10.2 for compatibility
-  - **Clear caches**: `rm -rf ~/.gradle/caches && rm -rf android/.gradle`
-- **Build Environment**: Install Java 17 with `brew install openjdk@17`
-
-### Network Testing Commands
-
-```bash
-# Test DNS connectivity directly
-node test-dns.js "Hello world"
-
-# Test native module integration (in React Native app)
-await nativeDNS.isAvailable()
-
-# Test fallback chain
-# 1. Native -> 2. UDP -> 3. TCP -> 4. HTTPS -> 5. Mock
-
-# iOS build with native modules
-cd ios && pod install && cd .. && npm run ios
-
-# Android build with native modules  
-npm run android
-```
 
 ## Project Guidelines
 
@@ -774,7 +791,7 @@ npm run android
 - Reference: [Arxiv Daily tweet](https://x.com/Arxiv_Daily/status/1952452878716805172) describing DNS-based LLM chat.
 - Open-source: [ch.at – Universal Basic Intelligence](https://github.com/Deep-ai-inc/ch.at) implementing chat over DNS (example: `dig @ch.at "..." TXT`).
 
-
+]
 ## Code Maintenance
 - John Carmack will always review your work! always create a plan and implement it! Think harder! DO ONLY WHAT IS ASKED! DO NOT CHANGE ANYTHING ELSE!
 - Always update relevant docs, including README.MD, CHANGELOG.md etc

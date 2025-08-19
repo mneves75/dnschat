@@ -95,15 +95,13 @@ const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 16,
     paddingVertical: 12,
-    borderTopWidth: StyleSheet.hairlineWidth,
+    // Remove borders and backgrounds for glass compatibility
   },
   lightContainer: {
-    backgroundColor: '#FFFFFF',
-    borderTopColor: '#E5E5EA',
+    backgroundColor: 'transparent', // Glass wrapper handles background
   },
   darkContainer: {
-    backgroundColor: '#000000',
-    borderTopColor: '#38383A',
+    backgroundColor: 'transparent', // Glass wrapper handles background
   },
   inputContainer: {
     flexDirection: 'row',
@@ -122,13 +120,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   lightTextInput: {
-    backgroundColor: '#F2F2F7',
-    borderColor: '#E5E5EA',
+    backgroundColor: 'rgba(242, 242, 247, 0.8)', // Semi-transparent for glass effect
+    borderColor: 'rgba(229, 229, 234, 0.6)',
     color: '#000000',
   },
   darkTextInput: {
-    backgroundColor: '#1C1C1E',
-    borderColor: '#38383A',
+    backgroundColor: 'rgba(28, 28, 30, 0.8)', // Semi-transparent for glass effect
+    borderColor: 'rgba(56, 56, 58, 0.6)',
     color: '#FFFFFF',
   },
   sendButton: {

@@ -7,6 +7,120 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.0] - 2025-01-19
+
+### 🌟 MAJOR: iOS/iPadOS 26 Liquid Glass Support
+
+**Revolutionary release introducing full iOS 26+ Liquid Glass design system with native performance upgrades and comprehensive visual overhaul.**
+
+#### Major Features
+
+- **🎨 Complete iOS 26+ Liquid Glass Integration**: Native `.glassEffect()` modifier support with comprehensive fallback system
+  - **iOS 26+**: Native UIGlassEffect with sensor-aware environmental adaptation
+  - **iOS 17-25**: Enhanced blur effects with react-native-blur integration  
+  - **iOS 16**: Basic blur fallback with dramatic visual styling
+  - **Android**: Material Design 3 elevated surfaces
+  - **Web**: CSS glassmorphism with backdrop-filter support
+
+- **⚡ Native Bottom Tabs Revolution**: Replaced React Navigation tabs with react-native-bottom-tabs
+  - **Native Performance**: UITabBarController (iOS) / BottomNavigationView (Android) primitives
+  - **SF Symbols Integration**: Native iOS iconography (`list.bullet.rectangle`, `info.circle`)
+  - **Modern Plus Icon**: Custom SVG with iOS design language (circular blue background, white plus)
+  - **Perfect Theming**: White background in light mode, dark (#1C1C1E) in dark mode
+  - **Haptic Feedback**: Native iOS interaction feedback
+
+- **🏗️ Architectural Excellence**: Dual-component architecture eliminating native bridge conflicts
+  - **Production Component**: `LiquidGlassWrapper` - Simple, reliable glass effects for all screens
+  - **Advanced System**: `LiquidGlassNative` - Performance monitoring + environmental adaptation
+  - **Zero Conflicts**: Eliminated duplicate native view registration errors
+  - **Type Safety**: Full TypeScript coverage with proper prop interface compatibility
+
+#### Breaking Changes
+
+- **Bottom Tabs**: Migrated from `@react-navigation/bottom-tabs` to `react-native-bottom-tabs`
+- **Native Dependencies**: Added Swift module dependencies (SDWebImage, SDWebImageSVGCoder)
+- **iOS Deployment**: Optimized for iOS 16+ (maintains backwards compatibility)
+
+#### Performance Improvements
+
+- **Native Tab Rendering**: Dramatic performance improvement over JavaScript-based tabs
+- **Lazy Loading**: Glass capability detection with memoization
+- **Memory Optimization**: iOS thermal management and battery efficiency
+- **Bundle Size**: Optimized dependency tree and asset management
+
+### 🎨 UI/UX Fixes - Yellow Color Issues & About Screen
+
+#### Bug Fixes
+- **🎨 Yellow Color Removal**: Replaced harsh Notion yellow (#FFC107) with iOS system blue (#007AFF)
+  - **LiquidGlassWrapper**: Interactive accents now use iOS system blue for native feel
+  - **GlassSettings**: Switch track color changed to iOS system blue
+  - **New Chat Icon**: Replaced yellow sparkle emoji (✨) with plus symbol (➕)
+  - **Impact**: More authentic iOS native appearance and better accessibility
+
+- **📱 About Screen Layout Issues**: Fixed duplicate rectangles and missing app icon
+  - **Root Cause**: Redundant Form.List navigationTitle + Form.Section LiquidGlassWrapper
+  - **Solution**: Streamlined layout while preserving prominent header design
+  - **App Icon Fix**: Moved from problematic `icons/` folder to `src/assets/` following Metro bundler conventions
+  - **Impact**: Clean single-section layout with persistent app icon display
+
+- **⚙️ DNS Service Configuration**: Enhanced DNS service selection
+  - **Added**: llm.pieter.com as DNS service option after ch.at
+  - **Removed**: Google, Cloudflare, and Quad9 DNS options (focused on AI services only)
+  - **Fixed**: TypeError with setDnsServer by using correct updateDnsServer function
+  - **Updated**: "DNS Resolver" → "DNS Service" in all UI text
+  - **Impact**: Simplified service selection focused on AI chat functionality
+
+- **🔧 GestureHandler Root View**: Added missing GestureHandlerRootView wrapper
+  - **Root Cause**: PanGestureHandler used without proper root view context
+  - **Solution**: Wrapped entire App component in GestureHandlerRootView
+  - **Impact**: DNS service selection modal now works without crashes
+
+- **🌗 Theme Support**: Fixed illegible text in App Version modal
+  - **Added**: Dynamic color schemes with useColorScheme hook
+  - **Dark Mode**: White text (#FFFFFF) for headers, #AEAEB2 for secondary text
+  - **Light Mode**: Black text (#000000) for headers, #6D6D70 for secondary text
+  - **Impact**: Perfect readability in both light and dark themes
+
+### 🎨 iOS/iPadOS 26+ Liquid Glass Support - Architecture Fix
+
+**Major Fix**: Resolved duplicate native view registration error and implemented proper iOS 26+ Liquid Glass support with comprehensive fallback system.
+
+#### Bug Fixes
+- **🔥 Duplicate Native View Registration**: Fixed "Tried to register two views with the same name LiquidGlassView" error
+  - **Root Cause**: Multiple React Native components attempting to register the same native bridge identifier
+  - **Solution**: Proper architectural separation - production component maintains native bridge, advanced system uses composition
+  - **Impact**: Eliminates all React Native bridge conflicts and registration crashes
+
+#### New Features
+- **✨ iOS/iPadOS 26+ Native Liquid Glass**: Full support for Apple's new liquid glass design system
+  - **Native Integration**: SwiftUI `.glassEffect()` bridging with React Native
+  - **Feature Detection**: Robust iOS version detection (`iOS 26.0+ = apiLevel 260`)
+  - **Performance Optimization**: Device-specific performance tier analysis (high/medium/low/fallback)
+  - **Sensor Awareness**: Environmental adaptation with ambient light and motion detection
+
+#### Enhanced Fallback System
+- **🌟 Multi-tier Glass Effects**: Comprehensive cross-platform glass effect implementation
+  - **iOS 26+**: Native UIGlassEffect with sensor-aware environmental adaptation
+  - **iOS 17-25**: Enhanced blur effects with react-native-blur integration
+  - **iOS 16**: Basic blur fallback with dramatic visual styling
+  - **Android**: Material Design 3 elevated surfaces
+  - **Web**: CSS glassmorphism with backdrop-filter support
+- **🎯 Automatic Selection**: Performance-aware fallback selection based on device capabilities
+- **🔧 Visual Enhancements**: Improved shadow effects, border styling, and opacity management
+
+#### Technical Improvements
+- **✅ Proper Architecture**: `LiquidGlassWrapper` (production) + `LiquidGlassNative` (advanced features via composition)
+- **✅ Type Safety**: Full TypeScript coverage with proper prop interface compatibility
+- **✅ Performance Monitoring**: Real-time glass rendering performance metrics and thermal management
+- **✅ Memory Optimization**: Lazy loading and memoization for capability detection
+- **✅ Cross-platform Compatibility**: Consistent API across iOS, Android, and Web platforms
+
+#### Code Changes
+- **Native Bridge**: Restored proper `LiquidGlassViewManager` registration serving production component
+- **Advanced System**: `LiquidGlassNative` now uses composition over duplication to provide enhanced features
+- **Capability Detection**: Comprehensive iOS version parsing and feature matrix analysis
+- **Performance Tiers**: Dynamic glass intensity adjustment based on device thermal and performance states
+
 ## [1.7.7] - 2025-08-19
 
 ### 🚨 CRITICAL CRASH FIX - iOS Production Stability

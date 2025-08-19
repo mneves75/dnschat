@@ -11,8 +11,8 @@ import {
 } from 'react-native';
 import { OnboardingNavigation } from '../OnboardingNavigation';
 
-// Import the app icon properly for Metro bundler
-const AppIcon = require('../../../../icons/dnschat_ios26.png');
+// Import the app icon from assets (same pattern as newspaper.png)
+const AppIcon = require('../../../assets/dnschat_ios26.png');
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
