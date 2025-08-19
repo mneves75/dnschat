@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   ScrollView,
   View,
@@ -184,6 +184,7 @@ export function About() {
               source={require('../../../assets/icon.png')} 
               style={{ width: 60, height: 60, borderRadius: 15 }}
               resizeMode="contain"
+              onError={(error) => console.log('🚨 About icon load error:', error.nativeEvent.error)}
             />
           </View>
           <Text style={styles.title}>DNS Chat</Text>
