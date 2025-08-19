@@ -18,14 +18,14 @@ final class DNSResolver: NSObject {
     // MARK: - Public Interface
     
     @objc static func isAvailable() -> Bool {
-        if #available(iOS 12.0, *) {
+        if #available(iOS 16.0, *) {
             return true
         }
         return false
     }
     
     @objc static func isNetworkFrameworkAvailable() -> Bool {
-        if #available(iOS 12.0, *) {
+        if #available(iOS 16.0, *) {
             return true
         }
         return false
@@ -36,11 +36,11 @@ final class DNSResolver: NSObject {
         let versionComponents = version.split(separator: ".").compactMap { Int($0) }
         
         if versionComponents.isEmpty {
-            return 12 // Default to iOS 12 if parsing fails
+            return 16 // Default to iOS 16 if parsing fails
         }
         
         // Convert iOS version to a single number similar to Android API level
-        // iOS 12.0 = 120, iOS 15.4 = 154, iOS 17.0 = 170, etc.
+        // iOS 16.0 = 160, iOS 17.4 = 174, iOS 18.0 = 180, etc.
         let major = versionComponents[0]
         let minor = versionComponents.count > 1 ? versionComponents[1] : 0
         return major * 10 + minor
@@ -110,7 +110,7 @@ final class DNSResolver: NSObject {
     private func performQueryWithFallback(domain: String, message: String) async throws -> [String] {
         print("🔗 DNS: Starting query with fallback strategy for: \(message)")
         
-        // Primary: Network Framework (iOS 12.0+)
+        // Primary: Network Framework (iOS 16.0+)
         if Self.isNetworkFrameworkAvailable() {
             do {
                 print("🥇 DNS: Trying Network Framework (primary)")
@@ -138,7 +138,7 @@ final class DNSResolver: NSObject {
         }
     }
     
-    @available(iOS 12.0, *)
+    @available(iOS 16.0, *)
     private func performNetworkFrameworkQuery(domain: String, message: String) async throws -> [String] {
         return try await withCheckedThrowingContinuation { continuation in
             // Create endpoint for DNS server
@@ -172,7 +172,7 @@ final class DNSResolver: NSObject {
         }
     }
     
-    @available(iOS 12.0, *)
+    @available(iOS 16.0, *)
     private func sendDNSQuery(
         connection: NWConnection,
         message: String,
