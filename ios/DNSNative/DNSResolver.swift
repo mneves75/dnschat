@@ -210,7 +210,7 @@ final class DNSResolver: NSObject, @unchecked Sendable {
 
                 case .waiting(let error):
                     // Network is waiting (e.g., no connectivity) - this is not necessarily a failure
-                    let errorMsg = error?.localizedDescription ?? "Network waiting"
+                    let errorMsg = error.localizedDescription
                     print("⏳ DNS: Network waiting - \(errorMsg)")
                     // Don't resume here - let it potentially transition to .ready or .failed
 
