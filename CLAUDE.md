@@ -488,6 +488,15 @@ The app uses a hierarchical navigation pattern:
 - **tsconfig.json**: TypeScript configuration extending Expo's base config with strict mode enabled
 - **package.json**: Current version with all dependencies including DNS libraries
 
+### Modern Swift Patterns: Follow modern Swift/SwiftUI patterns:
+
+- Use @Observable (iOS 17+/macOS 14+) instead of ObservableObject
+- Avoid unnecessary ViewModels - keep state in views when appropriate
+- Use @State and @Environment for dependency injection
+- Embrace SwiftUI's declarative nature, don't fight the framework
+- See @docs/apple/modern-swift.md for details
+- See @docs/apple for details of newer ios/ipados/macos APIS  (like Liquid Glass, iOS/iPadOS/macOS 26+ APIs)
+
 ### Deep Linking
 The app is configured for automatic deep linking with:
 - Scheme: `dnschat://` (configured in app.json and App.tsx)

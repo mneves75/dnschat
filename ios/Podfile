@@ -44,6 +44,9 @@ target 'DNSChat' do
 
   # Native DNS Module
   pod 'DNSNative', :path => './DNSNative'
+  
+  # iOS 26 Liquid Glass Module
+  pod 'LiquidGlassNative', :path => './LiquidGlassNative'
 
   post_install do |installer|
     react_native_post_install(
