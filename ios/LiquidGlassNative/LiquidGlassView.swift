@@ -27,8 +27,7 @@ import SwiftUI
 import Combine
 import CoreMotion
 import os.log
-
-// React Native imports
+import UIKit
 import React
 
 // ==================================================================================
@@ -66,13 +65,11 @@ fileprivate let logger = Logger(
  * Environmental context using modern @Observable pattern
  * 🚨 TARGETING iOS 26.0+ for Liquid Glass Guarantee
  */
-@available(iOS 26.0, *)
-@Observable 
-class EnvironmentalContext {
-  var ambientLight: Float = 0.5
-  var deviceOrientation: UIDeviceOrientation = .portrait
-  var thermalState: ProcessInfo.ThermalState = .nominal
-  var userInterfaceStyle: UIUserInterfaceStyle = .unspecified
+class EnvironmentalContext: ObservableObject {
+  @Published var ambientLight: Float = 0.5
+  @Published var deviceOrientation: UIDeviceOrientation = .portrait
+  @Published var thermalState: ProcessInfo.ThermalState = .nominal
+  @Published var userInterfaceStyle: UIUserInterfaceStyle = .unspecified
   var isAdaptationEnabled: Bool = false
   
   private var motionManager: CMMotionManager?
@@ -140,7 +137,6 @@ class EnvironmentalContext {
  * Custom Glass Container for performance optimization
  * 🚨 TARGETING iOS 26.0+ for Liquid Glass Guarantee
  */
-@available(iOS 26.0, *)
 struct LiquidGlassContainer<Content: View>: View {
   let spacing: CGFloat
   let content: Content
@@ -171,11 +167,10 @@ struct LiquidGlassContainer<Content: View>: View {
  * Core SwiftUI View with .glassEffect() implementation following Apple best practices
  * 🚨 TARGETING iOS 26.0+ for Liquid Glass Guarantee
  */
-@available(iOS 26.0, *)
 public struct LiquidGlassContentView: View {
   let config: LiquidGlassConfig
   let content: AnyView
-  @State private var environmentalContext = EnvironmentalContext()
+  @StateObject private var environmentalContext = EnvironmentalContext()
   
   public init(config: LiquidGlassConfig, content: AnyView) {
     self.config = config
@@ -188,23 +183,24 @@ public struct LiquidGlassContentView: View {
       LiquidGlassContainer(spacing: config.containerSpacing) {
         glassContent
       }
-      .environment(environmentalContext)
+      .environmentObject(environmentalContext)
     } else {
       glassContent
-        .environment(environmentalContext)
+        .environmentObject(environmentalContext)
     }
   }
   
   @ViewBuilder
   private var glassContent: some View {
-    ZStack {
-      // Glass background effect
-      glassBackground
-        .clipShape(glassShape)
-        .background(Material.ultraThinMaterial, in: glassShape)
-      
-      // Content overlay
-      content
+    glassShapeView {
+      ZStack {
+        // Glass background effect
+        glassBackground
+          .background(Material.ultraThinMaterial)
+        
+        // Content overlay
+        content
+      }
     }
     .task {
       if config.sensorAware {
@@ -245,14 +241,18 @@ public struct LiquidGlassContentView: View {
     return AnyView(glassView)
   }
   
-  private var glassShape: AnyShape {
+  @ViewBuilder
+  private func glassShapeView<Content: View>(@ViewBuilder content: () -> Content) -> some View {
     switch config.shape {
     case "rect":
-      return AnyShape(Rectangle())
+      content()
+        .clipShape(Rectangle())
     case "roundedRect":
-      return AnyShape(RoundedRectangle(cornerRadius: config.cornerRadius))
+      content()
+        .clipShape(RoundedRectangle(cornerRadius: config.cornerRadius))
     default: // "capsule"
-      return AnyShape(Capsule())
+      content()
+        .clipShape(Capsule())
     }
   }
 }
@@ -261,7 +261,6 @@ public struct LiquidGlassContentView: View {
 // SWIFTUI EXTENSIONS
 // ==================================================================================
 
-@available(iOS 26.0, *)
 extension Color {
   init?(hex: String) {
     var hexSanitized = hex.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -300,7 +299,6 @@ extension Color {
  * 🚨 TARGETING iOS 26.0+ for Liquid Glass Guarantee
  */
 @objc(LiquidGlassView)
-@available(iOS 26.0, *)
 public class LiquidGlassView: UIView {
   private var config = LiquidGlassConfig()
   private var hostingController: UIHostingController<LiquidGlassContentView>?
@@ -400,6 +398,21 @@ public class LiquidGlassView: UIView {
     refreshGlassEffect()
   }
   
+  @objc public func setCornerRadius(_ radius: CGFloat) {
+    config.cornerRadius = radius
+    refreshGlassEffect()
+  }
+  
+  @objc public func setEnableContainer(_ enabled: Bool) {
+    config.enableContainer = enabled
+    refreshGlassEffect()
+  }
+  
+  @objc public func setContainerSpacing(_ spacing: CGFloat) {
+    config.containerSpacing = spacing
+    refreshGlassEffect()
+  }
+  
   private func refreshGlassEffect() {
     // Remove existing hosting controller
     hostingController?.view.removeFromSuperview()
@@ -436,11 +449,16 @@ public class LiquidGlassView: UIView {
 // ==================================================================================
 
 @objc(LiquidGlassViewManager)
-@available(iOS 26.0, *)
 public class LiquidGlassViewManager: RCTViewManager {
   
   public override func view() -> UIView! {
-    return LiquidGlassView()
+    // Runtime iOS 26+ detection - return appropriate view
+    if #available(iOS 26.0, *) {
+      return LiquidGlassView()
+    } else {
+      // Return basic UIView for iOS 16-25 - fallback handled by React Native layer
+      return UIView()
+    }
   }
   
   public override static func requiresMainQueueSetup() -> Bool {
@@ -466,8 +484,20 @@ public class LiquidGlassViewManager: RCTViewManager {
     view.setSensorAware(sensorAware)
   }
   
-  @objc public func setInteractive(_ view: LiquidGlassView, interactive: Bool) {
-    view.setInteractive(interactive)
+  @objc public func setIsInteractive(_ view: LiquidGlassView, isInteractive: Bool) {
+    view.setInteractive(isInteractive)
+  }
+  
+  @objc public func setCornerRadius(_ view: LiquidGlassView, cornerRadius: CGFloat) {
+    view.setCornerRadius(cornerRadius)
+  }
+  
+  @objc public func setEnableContainer(_ view: LiquidGlassView, enableContainer: Bool) {
+    view.setEnableContainer(enableContainer)
+  }
+  
+  @objc public func setContainerSpacing(_ view: LiquidGlassView, containerSpacing: CGFloat) {
+    view.setContainerSpacing(containerSpacing)
   }
 }
 
@@ -476,7 +506,6 @@ public class LiquidGlassViewManager: RCTViewManager {
 // ==================================================================================
 
 @objc(LiquidGlassNativeModule)
-@available(iOS 26.0, *)
 public class LiquidGlassNativeModule: NSObject, RCTBridgeModule {
   
   @objc public static func requiresMainQueueSetup() -> Bool {
@@ -491,16 +520,25 @@ public class LiquidGlassNativeModule: NSObject, RCTBridgeModule {
     _ resolve: @escaping RCTPromiseResolveBlock,
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
+    // Runtime iOS 26+ detection for capabilities
+    let isIOS26Plus = {
+      if #available(iOS 26.0, *) {
+        return true
+      } else {
+        return false
+      }
+    }()
+    
     let capabilities: [String: Any] = [
-      "available": true,
+      "available": isIOS26Plus,
       "platform": "ios",
-      "supportsSwiftUIGlass": true,
-      "supportsGlassContainer": true,
-      "supportsSensorAware": true,
-      "supportsInteractive": true,
+      "supportsSwiftUIGlass": isIOS26Plus,
+      "supportsGlassContainer": isIOS26Plus,
+      "supportsSensorAware": isIOS26Plus,
+      "supportsInteractive": isIOS26Plus,
       "iosVersion": UIDevice.current.systemVersion,
       "apiLevel": getIOSAPILevel(),
-      "glassEffectAPI": "swiftui"
+      "glassEffectAPI": isIOS26Plus ? "swiftui" : "fallback"
     ]
     
     resolve(capabilities)
@@ -516,4 +554,3 @@ public class LiquidGlassNativeModule: NSObject, RCTBridgeModule {
     return major * 10 + minor
   }
 }
-

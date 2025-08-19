@@ -770,68 +770,6 @@ When working on native DNS problems:
 4. **Android debugging**: Check API level support and dnsjava fallback behavior
 5. **Fallback chain testing**: Verify graceful degradation through all fallback layers
 
-## Network Troubleshooting Guide
-
-### Common Network Issues and Solutions
-
-#### 1. UDP Port 53 Blocked (ERR_SOCKET_BAD_PORT on iOS)
-- **Symptoms**: UDP DNS queries fail with port/BAD_PORT errors
-- **Solution**: App automatically falls back to DNS-over-TCP
-- **Manual fix**: Ensure `react-native-tcp-socket` is installed
-- **Networks affected**: Some cellular networks, corporate Wi-Fi, public hotspots
-
-#### 2. iOS App Transport Security (ATS) Issues
-- **Symptoms**: Network requests blocked by ATS
-- **Solution**: Configured exceptions in `ios/ChatDNS/Info.plist` (iOS project structure)
-- **Coverage**: 
-  - `ch.at` - allows insecure loads for DNS queries
-  - `llm.pieter.com` - allows insecure loads for DNS queries
-  - `cloudflare-dns.com` - secure HTTPS for DNS-over-HTTPS fallback
-
-#### 3. Background App Suspension
-- **Symptoms**: DNS queries fail when app returns from background
-- **Solution**: Automatic app state monitoring and query suspension
-- **Behavior**: Queries suspend in background, resume in foreground
-- **Error messages**: "DNS query suspended due to app backgrounding"
-
-#### 4. React Native AbortSignal Compatibility
-- **Symptoms**: "AbortSignal.timeout is not a function" errors
-- **Solution**: Custom AbortController + setTimeout implementation
-- **Impact**: Affects DNS-over-HTTPS timeout handling
-
-#### 5. Native Module Registration Issues
-- **Symptoms**: "Native DNS not available, falling back to legacy methods"
-- **iOS Solution**: Run `cd ios && pod install` to register native modules
-- **Android Solution**: Clean and rebuild with `expo run:android`
-- **Verification**: Check `nativeDNS.isAvailable()` returns `available: true`
-
-#### 6. Android Build Issues
-- **Java 24 Compatibility Error**: "Unsupported class file major version 68"
-  - **Solution**: Use Java 17 - `npm run android` (automatically uses Java 17)
-  - **Manual**: `JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home npm run android`
-- **react-native-reanimated Gradle Error**: "Could not create task ':react-native-reanimated:outgoingVariants'"
-  - **Solution**: Project uses Gradle 8.10.2 for compatibility
-  - **Clear caches**: `rm -rf ~/.gradle/caches && rm -rf android/.gradle`
-- **Build Environment**: Install Java 17 with `brew install openjdk@17`
-
-### Network Testing Commands
-
-```bash
-# Test DNS connectivity directly
-node test-dns.js "Hello world"
-
-# Test native module integration (in React Native app)
-await nativeDNS.isAvailable()
-
-# Test fallback chain
-# 1. Native -> 2. UDP -> 3. TCP -> 4. HTTPS -> 5. Mock
-
-# iOS build with native modules
-cd ios && pod install && cd .. && npm run ios
-
-# Android build with native modules  
-npm run android
-```
 
 ## Project Guidelines
 
@@ -853,7 +791,7 @@ npm run android
 - Reference: [Arxiv Daily tweet](https://x.com/Arxiv_Daily/status/1952452878716805172) describing DNS-based LLM chat.
 - Open-source: [ch.at – Universal Basic Intelligence](https://github.com/Deep-ai-inc/ch.at) implementing chat over DNS (example: `dig @ch.at "..." TXT`).
 
-
+]
 ## Code Maintenance
 - John Carmack will always review your work! always create a plan and implement it! Think harder! DO ONLY WHAT IS ASKED! DO NOT CHANGE ANYTHING ELSE!
 - Always update relevant docs, including README.MD, CHANGELOG.md etc
