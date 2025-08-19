@@ -1644,6 +1644,33 @@ PODS:
     - React-jsiexecutor
     - React-RCTFBReactNativeSpec
     - ReactCommon/turbomodule/core
+  - react-native-bottom-tabs (0.10.0):
+    - DoubleConversion
+    - glog
+    - hermes-engine
+    - RCT-Folly (= 2024.11.18.00)
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-hermes
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - SDWebImage (>= 5.19.1)
+    - SDWebImageSVGCoder (>= 1.7.0)
+    - SwiftUIIntrospect (~> 1.0)
+    - Yoga
   - react-native-safe-area-context (5.4.0):
     - DoubleConversion
     - glog
@@ -2321,7 +2348,13 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
+  - SDWebImage (5.21.1):
+    - SDWebImage/Core (= 5.21.1)
+  - SDWebImage/Core (5.21.1)
+  - SDWebImageSVGCoder (1.8.0):
+    - SDWebImage/Core (~> 5.6)
   - SocketRocket (0.7.1)
+  - SwiftUIIntrospect (1.3.0)
   - Yoga (0.0.0)
 
 DEPENDENCIES:
@@ -2383,6 +2416,7 @@ DEPENDENCIES:
   - React-logger (from `../node_modules/react-native/ReactCommon/logger`)
   - React-Mapbuffer (from `../node_modules/react-native/ReactCommon`)
   - React-microtasksnativemodule (from `../node_modules/react-native/ReactCommon/react/nativemodule/microtasks`)
+  - react-native-bottom-tabs (from `../node_modules/react-native-bottom-tabs`)
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
   - react-native-tcp-socket (from `../node_modules/react-native-tcp-socket`)
   - react-native-udp (from `../node_modules/react-native-udp`)
@@ -2423,12 +2457,17 @@ DEPENDENCIES:
   - RNReanimated (from `../node_modules/react-native-reanimated`)
   - RNScreens (from `../node_modules/react-native-screens`)
   - RNSVG (from `../node_modules/react-native-svg`)
+  - SDWebImage
+  - SDWebImageSVGCoder
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
 
 SPEC REPOS:
   trunk:
     - CocoaAsyncSocket
+    - SDWebImage
+    - SDWebImageSVGCoder
     - SocketRocket
+    - SwiftUIIntrospect
 
 EXTERNAL SOURCES:
   boost:
@@ -2544,6 +2583,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon"
   React-microtasksnativemodule:
     :path: "../node_modules/react-native/ReactCommon/react/nativemodule/microtasks"
+  react-native-bottom-tabs:
+    :path: "../node_modules/react-native-bottom-tabs"
   react-native-safe-area-context:
     :path: "../node_modules/react-native-safe-area-context"
   react-native-tcp-socket:
@@ -2685,6 +2726,7 @@ SPEC CHECKSUMS:
   React-logger: 85fa3509931497c72ccd2547fcc91e7299d8591e
   React-Mapbuffer: 96a2f2a176268581733be182fa6eebab1c0193be
   React-microtasksnativemodule: bda561d2648e1e52bd9e5a87f8889836bdbde2e2
+  react-native-bottom-tabs: b935660f2eabf9ecb2a72d83e7f0b5a3da15da4d
   react-native-safe-area-context: 562163222d999b79a51577eda2ea8ad2c32b4d06
   react-native-tcp-socket: 120072c8020262032773f80f0daaf3964aaa08a1
   react-native-udp: 806f16ab890dd838bc073afcebd6a221d4965572
@@ -2725,9 +2767,12 @@ SPEC CHECKSUMS:
   RNReanimated: 2313402fe27fecb7237619e9c6fcee3177f08a65
   RNScreens: 482e9707f9826230810c92e765751af53826d509
   RNSVG: 794f269526df9ddc1f79b3d1a202b619df0368e3
+  SDWebImage: f29024626962457f3470184232766516dee8dfea
+  SDWebImageSVGCoder: 8e10c8f6cc879c7dfb317b284e13dd589379f01c
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748
+  SwiftUIIntrospect: fee9aa07293ee280373a591e1824e8ddc869ba5d
   Yoga: adb397651e1c00672c12e9495babca70777e411e
 
-PODFILE CHECKSUM: ab220ee2d7395c0c4c092e3df5fb1bf88b49ad53
+PODFILE CHECKSUM: c54fe28fa7388e6a5c34e5ac50b75febfe4fb95c
 
 COCOAPODS: 1.16.2

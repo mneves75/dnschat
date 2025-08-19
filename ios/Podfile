@@ -47,6 +47,10 @@ target 'DNSChat' do
   
   # iOS 26 Liquid Glass Module
   pod 'LiquidGlassNative', :path => './LiquidGlassNative'
+  
+  # Fix for react-native-bottom-tabs Swift dependencies
+  pod 'SDWebImage', :modular_headers => true
+  pod 'SDWebImageSVGCoder', :modular_headers => true
 
   post_install do |installer|
     react_native_post_install(
@@ -77,6 +81,13 @@ target 'DNSChat' do
           config.build_settings['HEADER_SEARCH_PATHS'] << '"$(PODS_ROOT)/RCT-Folly"'
           config.build_settings['HEADER_SEARCH_PATHS'] << '"$(PODS_ROOT)/Headers/Public/RCT-Folly"'
           config.build_settings['HEADER_SEARCH_PATHS'] << '"$(PODS_ROOT)/Headers/Private/RCT-Folly"'
+        end
+      end
+      
+      # Fix for react-native-bottom-tabs Swift dependencies
+      if ['SDWebImage', 'SDWebImageSVGCoder'].include?(target.name)
+        target.build_configurations.each do |config|
+          config.build_settings['DEFINES_MODULE'] = 'YES'
         end
       end
     end

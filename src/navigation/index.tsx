@@ -1,13 +1,14 @@
-import React from 'react';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import React, { useState } from 'react';
 import { HeaderButton, Text } from '@react-navigation/elements';
 import {
   createStaticNavigation,
   StaticParamList,
 } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { Image, Platform } from 'react-native';
+import { Image, Platform, useColorScheme } from 'react-native';
 import { useTheme } from '@react-navigation/native';
+import TabView, { SceneMap } from 'react-native-bottom-tabs';
+import type { BaseRoute } from 'react-native-bottom-tabs';
 import { LiquidGlassNavBar } from '../components/LiquidGlassWrapper';
 
 // Import newspaper icon properly for Metro bundler
@@ -33,47 +34,61 @@ function SettingsHeaderButton({ onPress }: { onPress: () => void }) {
   );
 }
 
-const HomeTabs = createBottomTabNavigator({
-  screens: {
-    ChatList: {
-      screen: GlassChatList,
-      options: {
-        title: 'DNS Chat',
-        tabBarIcon: ({ color, size }) => (
-          <Image
-            source={newspaper}
-            tintColor={color}
-            style={{
-              width: size,
-              height: size,
-            }}
-          />
-        ),
-      },
+type TabRoute = BaseRoute & {
+  key: 'ChatList' | 'Logs' | 'About';
+  title: string;
+  focusedIcon: any;
+  unfocusedIcon: any;
+};
+
+function HomeTabs() {
+  const [index, setIndex] = useState(0);
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+
+  const routes: TabRoute[] = [
+    {
+      key: 'ChatList',
+      title: 'DNS Chat',
+      focusedIcon: newspaper,
+      unfocusedIcon: newspaper,
     },
-    Logs: {
-      screen: Logs,
-      options: {
-        title: 'Logs',
-        tabBarIcon: ({ color, size }) => (
-          <LogsIcon size={size} color={color} />
-        ),
-      },
+    {
+      key: 'Logs', 
+      title: 'Logs',
+      focusedIcon: { sfSymbol: 'list.bullet.rectangle' },
+      unfocusedIcon: { sfSymbol: 'list.bullet.rectangle' },
     },
-    About: {
-      screen: About,
-      options: ({ navigation }) => ({
-        title: 'About',
-        tabBarIcon: ({ color, size }) => (
-          <InfoIcon size={size} color={color} />
-        ),
-        headerRight: () => (
-          <SettingsHeaderButton onPress={() => navigation.navigate('Settings')} />
-        ),
-      }),
+    {
+      key: 'About',
+      title: 'About', 
+      focusedIcon: { sfSymbol: 'info.circle' },
+      unfocusedIcon: { sfSymbol: 'info.circle' },
     },
-  },
-});
+  ];
+
+  const renderScene = SceneMap({
+    ChatList: GlassChatList,
+    Logs: Logs,
+    About: About,
+  });
+
+  return (
+    <TabView
+      navigationState={{ index, routes }}
+      renderScene={renderScene}
+      onIndexChange={setIndex}
+      labeled={true}
+      hapticFeedbackEnabled={true}
+      tabBarActiveTintColor={isDark ? '#007AFF' : '#007AFF'}
+      tabBarInactiveTintColor={isDark ? '#8E8E93' : '#8E8E93'}
+      tabBarStyle={{
+        backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF', // Fix: White background in light mode
+      }}
+      translucent={false}
+    />
+  );
+}
 
 const RootStack = createNativeStackNavigator({
   screens: {

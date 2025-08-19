@@ -28,6 +28,7 @@ import {
   LiquidGlassWrapper,
 } from '../../components/glass';
 import { TrashIcon } from '../../components/icons/TrashIcon';
+import { PlusIcon } from '../../components/icons/PlusIcon';
 import { formatDistanceToNow } from 'date-fns';
 
 // ==================================================================================
@@ -267,7 +268,7 @@ export function GlassChatList() {
               shape="capsule"
               style={styles.newChatBadge}
             >
-              <Text style={styles.newChatIcon}>➕</Text>
+              <PlusIcon size={20} color="#FFFFFF" circleColor="#007AFF" />
             </LiquidGlassWrapper>
           }
           onPress={handleNewChat}

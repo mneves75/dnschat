@@ -7,6 +7,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.0] - 2025-01-19
+
+### 🌟 MAJOR: iOS/iPadOS 26 Liquid Glass Support
+
+**Revolutionary release introducing full iOS 26+ Liquid Glass design system with native performance upgrades and comprehensive visual overhaul.**
+
+#### Major Features
+
+- **🎨 Complete iOS 26+ Liquid Glass Integration**: Native `.glassEffect()` modifier support with comprehensive fallback system
+  - **iOS 26+**: Native UIGlassEffect with sensor-aware environmental adaptation
+  - **iOS 17-25**: Enhanced blur effects with react-native-blur integration  
+  - **iOS 16**: Basic blur fallback with dramatic visual styling
+  - **Android**: Material Design 3 elevated surfaces
+  - **Web**: CSS glassmorphism with backdrop-filter support
+
+- **⚡ Native Bottom Tabs Revolution**: Replaced React Navigation tabs with react-native-bottom-tabs
+  - **Native Performance**: UITabBarController (iOS) / BottomNavigationView (Android) primitives
+  - **SF Symbols Integration**: Native iOS iconography (`list.bullet.rectangle`, `info.circle`)
+  - **Modern Plus Icon**: Custom SVG with iOS design language (circular blue background, white plus)
+  - **Perfect Theming**: White background in light mode, dark (#1C1C1E) in dark mode
+  - **Haptic Feedback**: Native iOS interaction feedback
+
+- **🏗️ Architectural Excellence**: Dual-component architecture eliminating native bridge conflicts
+  - **Production Component**: `LiquidGlassWrapper` - Simple, reliable glass effects for all screens
+  - **Advanced System**: `LiquidGlassNative` - Performance monitoring + environmental adaptation
+  - **Zero Conflicts**: Eliminated duplicate native view registration errors
+  - **Type Safety**: Full TypeScript coverage with proper prop interface compatibility
+
+#### Breaking Changes
+
+- **Bottom Tabs**: Migrated from `@react-navigation/bottom-tabs` to `react-native-bottom-tabs`
+- **Native Dependencies**: Added Swift module dependencies (SDWebImage, SDWebImageSVGCoder)
+- **iOS Deployment**: Optimized for iOS 16+ (maintains backwards compatibility)
+
+#### Performance Improvements
+
+- **Native Tab Rendering**: Dramatic performance improvement over JavaScript-based tabs
+- **Lazy Loading**: Glass capability detection with memoization
+- **Memory Optimization**: iOS thermal management and battery efficiency
+- **Bundle Size**: Optimized dependency tree and asset management
+
 ### 🎨 UI/UX Fixes - Yellow Color Issues & About Screen
 
 #### Bug Fixes

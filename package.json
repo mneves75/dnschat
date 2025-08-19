@@ -1,6 +1,6 @@
 {
   "name": "chat-dns",
-  "version": "1.7.7",
+  "version": "2.0.0",
   "description": "DNSChat - A React Native chat app using DNS TXT queries",
   "main": "index.tsx",
   "author": "mvneves",
@@ -36,6 +36,7 @@
     "react": "19.0.0",
     "react-dom": "19.0.0",
     "react-native": "0.79.5",
+    "react-native-bottom-tabs": "^0.10.0",
     "react-native-device-info": "^14.0.4",
     "react-native-edge-to-edge": "1.6.0",
     "react-native-gesture-handler": "~2.24.0",
