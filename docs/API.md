@@ -290,10 +290,10 @@ interface DNSLogEntry {
 ### CLI Testing
 ```bash
 # Test DNS connectivity
-node test-dns.js "Hello world"
+node test-dns-simple.js "Hello world"
 
 # Test specific message
-node test-dns.js "What is 2+2?"
+node test-dns-simple.js "What is 2+2?"
 ```
 
 ### Integration Testing

@@ -50,6 +50,17 @@ let resumeOnce: (Result<[String], Error>) -> Void = { result in
 }
 ```
 
+#### User Interface Improvements
+- **📱 Onboarding Screen Scrollability**: Fixed first onboarding screen content overflow on smaller screens
+  - **Issue**: Welcome screen content was cut off on smaller devices and landscape orientation
+  - **Solution**: Wrapped content in ScrollView while keeping navigation fixed at bottom
+  - **Impact**: Ensures all onboarding content is accessible on any screen size
+  
+- **🎨 About Screen App Icon**: Fixed missing app icon display in About screen
+  - **Issue**: App icon not displaying in About screen due to incorrect asset path
+  - **Solution**: Updated to use correct DNSChat icon with fallback text display
+  - **Impact**: Proper branding and visual consistency across the app
+
 ### Architecture
 - **Before**: Race condition allowed multiple continuation resumes causing fatal crashes
 - **After**: Atomic lock-protected resume ensures single execution and prevents crashes
