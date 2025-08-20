@@ -95,6 +95,7 @@ export function About() {
   };
 
   const openSettings = () => {
+    console.log('🔧 About: Navigating to Settings screen');
     navigation.navigate('Settings' as never);
   };
 
@@ -142,43 +143,41 @@ export function About() {
     <Form.List>
       
       {/* App Information Header - Prominent display without duplicate rectangles */}
-      <Form.Section>
-        <LiquidGlassWrapper
-          variant="prominent"
-          shape="roundedRect"
-          cornerRadius={16}
-          style={styles.headerContainer}
-        >
-          <View style={styles.header}>
-            <View style={styles.logoContainer}>
-              {!iconError ? (
-                <Image 
-                  source={AppIcon}
-                  style={styles.logoImage}
-                  resizeMode="contain"
-                  onLoad={() => console.log('✅ About icon loaded successfully')}
-                  onError={(error) => {
-                    console.log('🚨 About icon load error:', error.nativeEvent?.error || 'Unknown error');
-                    console.log('🚨 AppIcon source:', AppIcon);
-                    setIconError(true);
-                  }}
-                />
-              ) : (
-                <Text style={styles.logoText}>DNS</Text>
-              )}
-            </View>
-            <Text style={[styles.title, { color: isDark ? '#FFFFFF' : '#000000' }]}>
-              DNS Chat
-            </Text>
-            <View style={[styles.versionBadge, { borderRadius: 12 }]}>
-              <Text style={styles.versionText}>v{packageJson.version}</Text>
-            </View>
-            <Text style={[styles.description, { color: isDark ? '#AEAEB2' : '#6D6D70' }]}>
-              Chat with AI using DNS TXT queries - a unique approach to LLM communication.
-            </Text>
+      <LiquidGlassWrapper
+        variant="prominent"
+        shape="roundedRect"
+        cornerRadius={16}
+        style={styles.headerContainer}
+      >
+        <View style={styles.header}>
+          <View style={styles.logoContainer}>
+            {!iconError ? (
+              <Image 
+                source={AppIcon}
+                style={styles.logoImage}
+                resizeMode="contain"
+                onLoad={() => console.log('✅ About icon loaded successfully')}
+                onError={(error) => {
+                  console.log('🚨 About icon load error:', error.nativeEvent?.error || 'Unknown error');
+                  console.log('🚨 AppIcon source:', AppIcon);
+                  setIconError(true);
+                }}
+              />
+            ) : (
+              <Text style={styles.logoText}>DNS</Text>
+            )}
           </View>
-        </LiquidGlassWrapper>
-      </Form.Section>
+          <Text style={[styles.title, { color: isDark ? '#FFFFFF' : '#000000' }]}>
+            DNS Chat
+          </Text>
+          <View style={[styles.versionBadge, { borderRadius: 12 }]}>
+            <Text style={styles.versionText}>v{packageJson.version}</Text>
+          </View>
+          <Text style={[styles.description, { color: isDark ? '#AEAEB2' : '#6D6D70' }]}>
+            Chat with AI using DNS TXT queries - a unique approach to LLM communication.
+          </Text>
+        </View>
+      </LiquidGlassWrapper>
 
       {/* Inspiration Section */}
       <Form.Section 
