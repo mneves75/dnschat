@@ -7,7 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.0] - 2025-08-20
+
 ### 🚀 Major Features
+
+- **📤 Complete Share Chat Implementation**: Transform conversations into shareable professional format
+  - **Native Share API**: Cross-platform sharing (iOS/Android/Web) with React Native Share integration
+  - **Professional Formatting**: Timestamped conversations with role identification (You/AI) and attribution
+  - **Glass Action Sheet**: Elegant long-press menu with Share Chat option (📤 icon)
+  - **Error Handling**: Robust error boundaries with user-friendly fallback messages
+  - **Cross-Platform**: Works with Messages, Email, AirDrop, Social Media, Files, and any sharing app
+  - **Technical Excellence**: TypeScript type safety, memory-efficient processing, clean architecture
 
 - **⚡ Expo SDK 54 Beta Upgrade**: Complete migration to Expo SDK 54 beta with React Native 0.81 and React 19.1.0
   - **React Native 0.81.0**: Latest stable React Native with improved performance and new architecture support
@@ -53,6 +63,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Location**: GlassChatList newChatBadge style
 
 ### Bug Fixes
+
+- **🐛 About.tsx Syntax Error**: Fixed JSX compilation error preventing app startup
+  - **Issue**: Malformed JSX structure causing Metro bundler parsing errors
+  - **Location**: src/navigation/screens/About.tsx:185
+  - **Fix**: Corrected JSX formatting in Settings section
+  - **Impact**: Resolved app compilation failures and Metro bundler crashes
 
 - **🚀 Onboarding Streamlined**: Completely removed network optimization step
   - **Removed**: NetworkSetupScreen component and all references
