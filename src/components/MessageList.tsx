@@ -13,6 +13,7 @@ import { Message } from '../types/chat';
 
 interface MessageListProps {
   messages: Message[];
+  chatId: string;
   isLoading?: boolean;
   onRefresh?: () => void;
   isRefreshing?: boolean;
@@ -20,6 +21,7 @@ interface MessageListProps {
 
 export function MessageList({ 
   messages, 
+  chatId,
   isLoading = false,
   onRefresh,
   isRefreshing = false,
@@ -38,7 +40,7 @@ export function MessageList({
   }, [messages]);
 
   const renderMessage = ({ item }: ListRenderItemInfo<Message>) => {
-    return <MessageBubble message={item} />;
+    return <MessageBubble message={item} chatId={chatId} />;
   };
 
   const keyExtractor = (item: Message) => item.id;

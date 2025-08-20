@@ -64,6 +64,40 @@ export function ChatProvider({ children }: ChatProviderProps) {
     }
   };
 
+  const deleteMessage = async (chatId: string, messageId: string): Promise<void> => {
+    try {
+      await StorageService.deleteMessage(chatId, messageId);
+      
+      // Update local state - remove message from the specific chat
+      setChats(prevChats => 
+        prevChats.map(chat => 
+          chat.id === chatId 
+            ? {
+                ...chat,
+                messages: chat.messages.filter(message => message.id !== messageId),
+                updatedAt: new Date()
+              }
+            : chat
+        )
+      );
+      
+      // If this is the current chat, update it too
+      if (currentChat?.id === chatId) {
+        setCurrentChat(prevChat => 
+          prevChat ? {
+            ...prevChat,
+            messages: prevChat.messages.filter(message => message.id !== messageId),
+            updatedAt: new Date()
+          } : null
+        );
+      }
+      
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete message');
+    }
+  };
+
   const sendMessage = async (content: string): Promise<void> => {
     if (!currentChat) {
       setError('No active chat selected');
@@ -194,6 +228,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
     error,
     createChat,
     deleteChat,
+    deleteMessage,
     sendMessage,
     loadChats,
     setCurrentChat,

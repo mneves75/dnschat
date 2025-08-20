@@ -126,13 +126,7 @@ export function Logs() {
         style={styles.logItemWrapper}
         activeOpacity={0.95}
       >
-        <LiquidGlassWrapper
-          variant={isActive ? "interactive" : "regular"}
-          shape="roundedRect"
-          cornerRadius={12}
-          isInteractive={true}
-          style={[styles.logCard, isActive && styles.activeLogCard]}
-        >
+        <View style={[styles.logCard, isActive && styles.activeLogCard, { borderRadius: 12 }]}>
           <View style={styles.logHeader}>
             <View style={styles.logHeaderLeft}>
               <Text style={[styles.queryText, { color: isDark ? '#FFFFFF' : '#000000' }]} numberOfLines={1}>
@@ -143,15 +137,11 @@ export function Logs() {
                   {new Date(item.startTime).toLocaleTimeString()}
                 </Text>
                 {item.finalMethod && (
-                  <LiquidGlassWrapper
-                    variant="interactive"
-                    shape="capsule"
-                    style={[styles.methodBadge, { backgroundColor: 'rgba(0, 122, 255, 0.15)' }]}
-                  >
+                  <View style={[styles.methodBadge, { backgroundColor: 'rgba(0, 122, 255, 0.15)', borderRadius: 12 }]}>
                     <Text style={[styles.methodText, { color: '#007AFF' }]}>
                       {item.finalMethod?.toUpperCase() || 'UNKNOWN'}
                     </Text>
-                  </LiquidGlassWrapper>
+                  </View>
                 )}
                 {item.totalDuration !== undefined && (
                   <Text style={[styles.duration, { color: isDark ? '#8E8E93' : '#8E8E93' }]}>
@@ -193,7 +183,7 @@ export function Logs() {
               </ScrollView>
             </View>
           )}
-        </LiquidGlassWrapper>
+        </View>
       </TouchableOpacity>
     );
   };
@@ -202,12 +192,7 @@ export function Logs() {
     <Form.List navigationTitle="DNS Query Logs">
       {logs.length === 0 ? (
         <Form.Section>
-          <LiquidGlassWrapper
-            variant="regular"
-            shape="roundedRect"
-            cornerRadius={12}
-            style={styles.emptyStateContainer}
-          >
+          <View style={[styles.emptyStateContainer, { borderRadius: 12 }]}>
             <View style={styles.emptyState}>
               <Text style={styles.emptyIcon}>🔍</Text>
               <Text style={[styles.emptyTitle, { color: isDark ? '#FFFFFF' : '#000000' }]}>
@@ -218,7 +203,7 @@ export function Logs() {
                 All query attempts and methods will be tracked.
               </Text>
             </View>
-          </LiquidGlassWrapper>
+          </View>
         </Form.Section>
       ) : (
         <Form.Section 
@@ -241,13 +226,9 @@ export function Logs() {
             title="Clear All Logs"
             subtitle="Remove all DNS query history"
             rightContent={
-              <LiquidGlassWrapper
-                variant="interactive"
-                shape="capsule"
-                style={styles.clearBadge}
-              >
+              <View style={[styles.clearBadge, { borderRadius: 12 }]}>
                 <Text style={styles.clearIcon}>🗑️</Text>
-              </LiquidGlassWrapper>
+              </View>
             }
             onPress={clearLogs}
             showChevron

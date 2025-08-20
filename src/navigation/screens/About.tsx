@@ -7,6 +7,7 @@ import {
   Image,
   useColorScheme,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { 
   Form, 
   LiquidGlassWrapper,
@@ -84,12 +85,18 @@ const createStyles = (isDark: boolean) => StyleSheet.create({
 });
 
 export function About() {
+  const navigation = useNavigation();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const [iconError, setIconError] = useState(false);
 
   const openLink = (url: string) => {
     Linking.openURL(url);
+  };
+
+  const openSettings = () => {
+    console.log('🔧 About: Navigating to Settings screen');
+    navigation.navigate('Settings' as never);
   };
 
   const styles = createStyles(isDark);
@@ -136,46 +143,59 @@ export function About() {
     <Form.List>
       
       {/* App Information Header - Prominent display without duplicate rectangles */}
-      <Form.Section>
-        <LiquidGlassWrapper
-          variant="prominent"
-          shape="roundedRect"
-          cornerRadius={16}
-          style={styles.headerContainer}
-        >
-          <View style={styles.header}>
-            <View style={styles.logoContainer}>
-              {!iconError ? (
-                <Image 
-                  source={AppIcon}
-                  style={styles.logoImage}
-                  resizeMode="contain"
-                  onLoad={() => console.log('✅ About icon loaded successfully')}
-                  onError={(error) => {
-                    console.log('🚨 About icon load error:', error.nativeEvent?.error || 'Unknown error');
-                    console.log('🚨 AppIcon source:', AppIcon);
-                    setIconError(true);
-                  }}
-                />
-              ) : (
-                <Text style={styles.logoText}>DNS</Text>
-              )}
-            </View>
-            <Text style={[styles.title, { color: isDark ? '#FFFFFF' : '#000000' }]}>
-              DNS Chat
-            </Text>
-            <LiquidGlassWrapper
-              variant="interactive"
-              shape="capsule"
-              style={styles.versionBadge}
-            >
-              <Text style={styles.versionText}>v{packageJson.version}</Text>
-            </LiquidGlassWrapper>
-            <Text style={[styles.description, { color: isDark ? '#AEAEB2' : '#6D6D70' }]}>
-              Chat with AI using DNS TXT queries - a unique approach to LLM communication.
-            </Text>
+      <LiquidGlassWrapper
+        variant="prominent"
+        shape="roundedRect"
+        cornerRadius={16}
+        style={styles.headerContainer}
+      >
+        <View style={styles.header}>
+          <View style={styles.logoContainer}>
+            {!iconError ? (
+              <Image 
+                source={AppIcon}
+                style={styles.logoImage}
+                resizeMode="contain"
+                onLoad={() => console.log('✅ About icon loaded successfully')}
+                onError={(error) => {
+                  console.log('🚨 About icon load error:', error.nativeEvent?.error || 'Unknown error');
+                  console.log('🚨 AppIcon source:', AppIcon);
+                  setIconError(true);
+                }}
+              />
+            ) : (
+              <Text style={styles.logoText}>DNS</Text>
+            )}
           </View>
-        </LiquidGlassWrapper>
+          <Text style={[styles.title, { color: isDark ? '#FFFFFF' : '#000000' }]}>
+            DNS Chat
+          </Text>
+          <View style={[styles.versionBadge, { borderRadius: 12 }]}>
+            <Text style={styles.versionText}>v{packageJson.version}</Text>
+          </View>
+          <Text style={[styles.description, { color: isDark ? '#AEAEB2' : '#6D6D70' }]}>
+            Chat with AI using DNS TXT queries - a unique approach to LLM communication.
+          </Text>
+        </View>
+      </LiquidGlassWrapper>
+
+
+      {/* Settings - CRITICAL ACCESS */}
+      <Form.Section title="⚙️ Settings">
+        <Form.Item
+          title="App Settings"
+          subtitle="Configure DNS servers and preferences"
+          onPress={() => {
+            console.log('🔧 About: Settings button pressed');
+            openSettings();
+          }}
+          showChevron
+          rightContent={
+            <View style={{ backgroundColor: 'rgba(0, 122, 255, 0.15)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12 }}>
+              <Text style={{ color: '#007AFF', fontSize: 12, fontWeight: '600' }}>⚙️</Text>
+            </View>
+          }
+        />
       </Form.Section>
 
       {/* Inspiration Section */}

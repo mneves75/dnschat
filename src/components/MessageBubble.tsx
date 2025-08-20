@@ -3,23 +3,34 @@ import { View, Text, StyleSheet, useColorScheme, Pressable, Alert } from 'react-
 import { format } from 'date-fns';
 import Markdown from 'react-native-markdown-display';
 import { Message } from '../types/chat';
+import { useChat } from '../context/ChatContext';
 
 interface MessageBubbleProps {
   message: Message;
+  chatId: string;
 }
 
-export function MessageBubble({ message }: MessageBubbleProps) {
+export function MessageBubble({ message, chatId }: MessageBubbleProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
+  const { deleteMessage } = useChat();
   
   const isUser = message.role === 'user';
   const isLoading = message.status === 'sending';
   const hasError = message.status === 'error';
 
+  const handleDeleteMessage = async () => {
+    try {
+      await deleteMessage(chatId, message.id);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to delete message');
+    }
+  };
+
   const handleLongPress = () => {
     Alert.alert(
-      'Copy Message',
-      'Do you want to copy this message?',
+      'Message Options',
+      'Choose an action for this message',
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -27,6 +38,24 @@ export function MessageBubble({ message }: MessageBubbleProps) {
           onPress: () => {
             // In a real app, you'd use Clipboard from '@react-native-clipboard/clipboard'
             // Copy functionality would be implemented here
+          },
+        },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => {
+            Alert.alert(
+              'Delete Message',
+              'Are you sure you want to delete this message? This action cannot be undone.',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                  text: 'Delete',
+                  style: 'destructive',
+                  onPress: handleDeleteMessage,
+                },
+              ]
+            );
           },
         },
       ]

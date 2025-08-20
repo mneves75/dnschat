@@ -42,7 +42,9 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     try {
       const settingsJson = await AsyncStorage.getItem(SETTINGS_STORAGE_KEY);
       console.log('📥 Loading settings from storage:', settingsJson);
+      
       if (settingsJson) {
+        // Existing settings found
         const settings: Settings = JSON.parse(settingsJson);
         console.log('📋 Parsed settings:', settings);
         setDnsServer(settings.dnsServer || DEFAULT_DNS_SERVER);
@@ -50,6 +52,19 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         setDnsMethodPreference(settings.dnsMethodPreference ?? 'native-first');
         setEnableMockDNS(settings.enableMockDNS ?? false);
         console.log('✅ Settings loaded - DNS method:', settings.dnsMethodPreference ?? 'native-first', 'MockDNS:', settings.enableMockDNS ?? false);
+      } else {
+        // First launch - initialize default settings
+        console.log('🆕 First launch detected - initializing default settings');
+        const defaultSettings: Settings = {
+          dnsServer: DEFAULT_DNS_SERVER,
+          preferDnsOverHttps: false,
+          dnsMethodPreference: 'native-first',
+          enableMockDNS: false,
+        };
+        
+        // Save defaults for future launches
+        await AsyncStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(defaultSettings));
+        console.log('✅ Default settings initialized and saved');
       }
     } catch (error) {
       console.error('❌ Error loading settings:', error);

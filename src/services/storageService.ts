@@ -94,6 +94,26 @@ export class StorageService {
     }
   }
 
+  static async deleteMessage(chatId: string, messageId: string): Promise<void> {
+    try {
+      const chats = await this.loadChats();
+      const chat = chats.find(c => c.id === chatId);
+      
+      if (!chat) {
+        throw new Error('Chat not found');
+      }
+      
+      // Remove the message from the chat
+      chat.messages = chat.messages.filter(message => message.id !== messageId);
+      chat.updatedAt = new Date();
+      
+      await this.saveChats(chats);
+    } catch (error) {
+      console.error('Error deleting message:', error);
+      throw error;
+    }
+  }
+
   static async addMessage(chatId: string, message: Message): Promise<void> {
     try {
       const chats = await this.loadChats();
