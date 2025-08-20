@@ -292,12 +292,7 @@ export function GlassChatList() {
         </Form.Section>
       ) : (
         <Form.Section>
-          <LiquidGlassWrapper
-            variant="regular"
-            shape="roundedRect"
-            cornerRadius={12}
-            style={styles.emptyStateContainer}
-          >
+          <View style={[styles.emptyStateContainer, { borderRadius: 12 }]}>
             <View style={styles.emptyState}>
               <Text style={styles.emptyIcon}>💬</Text>
               <Text style={[styles.emptyTitle, { color: isDark ? '#FFFFFF' : '#000000' }]}>
@@ -308,7 +303,7 @@ export function GlassChatList() {
                 Your chats will appear here.
               </Text>
             </View>
-          </LiquidGlassWrapper>
+          </View>
         </Form.Section>
       )}
 
