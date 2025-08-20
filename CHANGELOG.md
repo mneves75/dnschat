@@ -16,6 +16,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **react-native-worklets**: Added missing dependency for Reanimated 4 compatibility
   - **iOS Build**: Fixed compilation issues and confirmed full compatibility
 
+### 🚨 Critical Emergency Fixes
+
+- **🔥 SYSTEMATIC DOUBLE RECTANGLE ELIMINATION**: Complete elimination of all overlapping glass effects
+  - **Root Cause**: `LiquidGlassWrapper` components nested inside Form components that already provide glass backgrounds
+  - **Impact**: Every UI component with glass effects had overlapping backgrounds creating visual artifacts
+  - **Solution**: Systematic replacement of all nested wrappers with `View + borderRadius` pattern
+  - **Components Fixed**: Recent Conversations, DNS Query History, Settings badges, About screen, empty states
+  - **Architecture**: Prevented future occurrences by establishing consistent styling patterns
+
+- **🚨 CRITICAL VERSION CONSISTENCY**: Fixed version number inconsistency disaster
+  - **Issue**: Settings screen showed hard-coded "v1.7.7" while About screen showed dynamic "v2.0.0" 
+  - **Root Cause**: Hard-coded version strings instead of single source of truth
+  - **Impact**: Different parts of app showing different version numbers - cardinal sin of software engineering
+  - **Solution**: Both screens now use identical `packageJson.version` from package.json
+  - **Prevention**: Eliminated all hard-coded version references across the codebase
+
+- **⚙️ PROMINENT SETTINGS ACCESS**: Made Settings section highly visible and accessible
+  - **Issue**: Settings section was buried at bottom of About screen, difficult to find
+  - **Solution**: Moved Settings to TOP of About screen with prominent visual indicators
+  - **Visual Enhancements**: Added gear emoji (⚙️) to section title and blue badge with gear icon
+  - **Debug Logging**: Enhanced navigation logging for troubleshooting
+  - **User Experience**: Impossible to miss Settings access with prominent placement
+
 ### UI/UX Improvements
 
 - **🎨 Fixed Double Rectangle Bug**: Resolved overlapping glass effects in UI components
@@ -23,11 +46,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **About Screen**: Fixed nested LiquidGlassWrapper in version badge  
   - **Root Cause**: Overlapping background styles in nested glass components
   - **Solution**: Replaced inner glass wrappers with regular Views + border radius
-
-- **⚙️ Added Settings Access**: Restored missing settings functionality
-  - **Settings Button**: Added "App Settings" section in About tab
-  - **Navigation**: Properly connects to existing GlassSettings modal screen
-  - **Fix**: Previously orphaned SettingsHeaderButton component was unused
 
 - **🎨 + Button Color Consistency**: Changed new chat button from yellow to iOS blue
   - **Color**: Changed `rgba(255, 193, 7, 0.15)` → `rgba(0, 122, 255, 0.15)`
@@ -48,6 +66,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **NSPhotoLibraryUsageDescription**: Explains third-party library photo library API references
   - **Fix**: Resolves ITMS-90683 App Store submission rejection for missing purpose strings
   - **Cause**: react-native-device-info references device capability APIs for feature detection
+
+### Technical Improvements
+
+- **✅ Data Integrity**: Single source of truth for version numbers across all screens
+- **✅ Visual Consistency**: Eliminated all double glass background artifacts  
+- **✅ User Experience**: Enhanced Settings discoverability with prominent placement
+- **✅ Architecture**: Established consistent patterns preventing future glass nesting issues
+- **✅ Debug Capabilities**: Enhanced logging for Settings navigation troubleshooting
 
 ## [2.0.0] - 2025-01-19
 

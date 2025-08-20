@@ -179,8 +179,9 @@ export function About() {
         </View>
       </LiquidGlassWrapper>
 
+
       {/* Settings - CRITICAL ACCESS */}
-      <Form.Section title="⚙️ Settings">
+      <Form.Section   title="⚙️ Settings">
         <Form.Item
           title="App Settings"
           subtitle="Configure DNS servers and preferences"
