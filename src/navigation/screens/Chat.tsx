@@ -86,6 +86,7 @@ export function Chat() {
             >
               <MessageList
                 messages={currentChat?.messages || []}
+                chatId={currentChat?.id || ''}
                 isLoading={isLoading}
               />
             </LiquidGlassWrapper>
@@ -110,6 +111,7 @@ export function Chat() {
           <>
             <MessageList
               messages={currentChat?.messages || []}
+              chatId={currentChat?.id || ''}
               isLoading={isLoading}
             />
             

@@ -21,6 +21,7 @@ export interface ChatContextType {
   error: string | null;
   createChat: (title?: string) => Promise<Chat>;
   deleteChat: (chatId: string) => Promise<void>;
+  deleteMessage: (chatId: string, messageId: string) => Promise<void>;
   sendMessage: (content: string) => Promise<void>;
   loadChats: () => Promise<void>;
   setCurrentChat: (chat: Chat | null) => void;
