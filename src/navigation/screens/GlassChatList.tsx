@@ -259,13 +259,9 @@ export function GlassChatList() {
           title="New Chat"
           subtitle="Start a new conversation with DNS AI"
           rightContent={
-            <LiquidGlassWrapper
-              variant="interactive"
-              shape="capsule"
-              style={styles.newChatBadge}
-            >
+            <View style={[styles.newChatBadge, { borderRadius: 12 }]}>
               <PlusIcon size={20} color="#FFFFFF" circleColor="#007AFF" />
-            </LiquidGlassWrapper>
+            </View>
           }
           onPress={handleNewChat}
           showChevron

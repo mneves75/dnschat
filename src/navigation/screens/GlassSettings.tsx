@@ -173,13 +173,9 @@ export function GlassSettings() {
             title="App Version"
             subtitle={`DNSChat v${packageJson.version}`}
             rightContent={
-              <LiquidGlassWrapper
-                variant="interactive"
-                shape="capsule"
-                style={styles.versionBadge}
-              >
+              <View style={[styles.versionBadge, { borderRadius: 12 }]}>
                 <Text style={styles.versionText}>v{packageJson.version}</Text>
-              </LiquidGlassWrapper>
+              </View>
             }
             onPress={aboutSheet.show}
           />
@@ -274,17 +270,12 @@ export function GlassSettings() {
         height={0.6}
       >
         <View style={styles.aboutContent}>
-          <LiquidGlassWrapper
-            variant="regular"
-            shape="roundedRect"
-            cornerRadius={12}
-            style={styles.aboutCard}
-          >
+          <View style={[styles.aboutCard, { borderRadius: 12 }]}>
             <Text style={[styles.aboutText, { color: isDark ? '#FFFFFF' : '#000000' }]}>
               DNSChat is a unique communication app that uses DNS TXT queries to chat with an AI. 
               This innovative approach demonstrates how DNS can be used for more than just domain resolution.
             </Text>
-          </LiquidGlassWrapper>
+          </View>
           
           <View style={styles.aboutFeatures}>
             <Text style={[styles.featureTitle, { color: isDark ? '#FFFFFF' : '#000000' }]}>Key Features:</Text>

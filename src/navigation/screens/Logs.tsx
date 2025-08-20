@@ -126,13 +126,7 @@ export function Logs() {
         style={styles.logItemWrapper}
         activeOpacity={0.95}
       >
-        <LiquidGlassWrapper
-          variant={isActive ? "interactive" : "regular"}
-          shape="roundedRect"
-          cornerRadius={12}
-          isInteractive={true}
-          style={[styles.logCard, isActive && styles.activeLogCard]}
-        >
+        <View style={[styles.logCard, isActive && styles.activeLogCard, { borderRadius: 12 }]}>
           <View style={styles.logHeader}>
             <View style={styles.logHeaderLeft}>
               <Text style={[styles.queryText, { color: isDark ? '#FFFFFF' : '#000000' }]} numberOfLines={1}>
@@ -189,7 +183,7 @@ export function Logs() {
               </ScrollView>
             </View>
           )}
-        </LiquidGlassWrapper>
+        </View>
       </TouchableOpacity>
     );
   };
