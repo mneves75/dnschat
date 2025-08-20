@@ -179,6 +179,24 @@ export function About() {
         </View>
       </LiquidGlassWrapper>
 
+      {/* Settings - CRITICAL ACCESS */}
+      <Form.Section title="⚙️ Settings">
+        <Form.Item
+          title="App Settings"
+          subtitle="Configure DNS servers and preferences"
+          onPress={() => {
+            console.log('🔧 About: Settings button pressed');
+            openSettings();
+          }}
+          showChevron
+          rightContent={
+            <View style={{ backgroundColor: 'rgba(0, 122, 255, 0.15)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12 }}>
+              <Text style={{ color: '#007AFF', fontSize: 12, fontWeight: '600' }}>⚙️</Text>
+            </View>
+          }
+        />
+      </Form.Section>
+
       {/* Inspiration Section */}
       <Form.Section 
         title="Inspiration"
@@ -217,16 +235,6 @@ export function About() {
           title="@dnschat on X"
           subtitle="Follow for updates"
           onPress={() => openLink('https://x.com/dnschat')}
-        />
-      </Form.Section>
-
-      {/* Settings */}
-      <Form.Section title="Settings">
-        <Form.Item
-          title="App Settings"
-          subtitle="Configure DNS servers and preferences"
-          onPress={openSettings}
-          showChevron
         />
       </Form.Section>
 

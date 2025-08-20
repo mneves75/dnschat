@@ -34,6 +34,7 @@ import {
 // ==================================================================================
 
 export function GlassSettings() {
+  console.log('⚙️ GlassSettings: Screen loaded successfully');
   const { 
     dnsServer, 
     updateDnsServer, 
