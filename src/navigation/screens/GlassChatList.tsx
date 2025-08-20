@@ -75,13 +75,7 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
   }, [actionSheet]);
 
   const ChatContent = (
-    <LiquidGlassWrapper
-      variant={isPressed ? "interactive" : "regular"}
-      shape="roundedRect"
-      cornerRadius={12}
-      isInteractive={true}
-      style={[styles.chatItemContainer, isPressed && styles.chatItemPressed]}
-    >
+    <View style={[styles.chatItemContainer, isPressed && styles.chatItemPressed, { borderRadius: 12 }]}>
       <View style={styles.chatItemContent}>
         {/* Chat Info */}
         <View style={styles.chatInfo}>
@@ -121,7 +115,7 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
           </Text>
         </View>
       </View>
-    </LiquidGlassWrapper>
+    </View>
   );
 
   return (
