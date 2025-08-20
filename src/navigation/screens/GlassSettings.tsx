@@ -29,6 +29,9 @@ import {
   LiquidGlassWrapper,
 } from '../../components/glass';
 
+// Import package.json to get version - CRITICAL FOR DATA INTEGRITY
+const packageJson = require('../../../package.json');
+
 // ==================================================================================
 // GLASS SETTINGS SCREEN COMPONENT
 // ==================================================================================
@@ -168,14 +171,14 @@ export function GlassSettings() {
         <Form.Section title="About">
           <Form.Item
             title="App Version"
-            subtitle="DNSChat v1.7.7"
+            subtitle={`DNSChat v${packageJson.version}`}
             rightContent={
               <LiquidGlassWrapper
                 variant="interactive"
                 shape="capsule"
                 style={styles.versionBadge}
               >
-                <Text style={styles.versionText}>Latest</Text>
+                <Text style={styles.versionText}>v{packageJson.version}</Text>
               </LiquidGlassWrapper>
             }
             onPress={aboutSheet.show}
