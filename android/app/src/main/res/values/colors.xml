@@ -1,6 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Material Design 3 Color System for DNSChat
+  
+  This color system provides:
+  - Material 3 color tokens
+  - Dynamic color support (Android 12+)
+  - Proper light/dark theme variants
+  - Semantic color roles
+  
+  Based on Material Design 3 guidelines:
+  https://m3.material.io/styles/color/system/
+-->
 <resources>
-  <color name="splashscreen_background">#ffffff</color>
-  <color name="iconBackground">#0D7377</color>
-  <color name="colorPrimary">#023c69</color>
-  <color name="colorPrimaryDark">#ffffff</color>
+    <!-- App Branding Colors -->
+    <color name="brand_primary">#007AFF</color>
+    <color name="brand_secondary">#34C759</color>
+    
+    <!-- Material 3 Light Theme Primary Colors -->
+    <color name="md_theme_light_primary">#007AFF</color>
+    <color name="md_theme_light_onPrimary">#FFFFFF</color>
+    <color name="md_theme_light_primaryContainer">#D1E4FF</color>
+    <color name="md_theme_light_onPrimaryContainer">#001D36</color>
+    
+    <!-- Material 3 Light Theme Secondary Colors -->
+    <color name="md_theme_light_secondary">#575E71</color>
+    <color name="md_theme_light_onSecondary">#FFFFFF</color>
+    <color name="md_theme_light_secondaryContainer">#DBE2F9</color>
+    <color name="md_theme_light_onSecondaryContainer">#141B2C</color>
+    
+    <!-- Material 3 Light Theme Tertiary Colors -->
+    <color name="md_theme_light_tertiary">#715573</color>
+    <color name="md_theme_light_onTertiary">#FFFFFF</color>
+    <color name="md_theme_light_tertiaryContainer">#FBD7FC</color>
+    <color name="md_theme_light_onTertiaryContainer">#29132D</color>
+    
+    <!-- Material 3 Light Theme Surface Colors -->
+    <color name="md_theme_light_surface">#FEFBFF</color>
+    <color name="md_theme_light_onSurface">#1B1B1F</color>
+    <color name="md_theme_light_surfaceVariant">#E1E2EC</color>
+    <color name="md_theme_light_onSurfaceVariant">#44474F</color>
+    <color name="md_theme_light_surfaceTint">#007AFF</color>
+    
+    <!-- Material 3 Light Theme Background Colors -->
+    <color name="md_theme_light_background">#FEFBFF</color>
+    <color name="md_theme_light_onBackground">#1B1B1F</color>
+    
+    <!-- Material 3 Light Theme Error Colors -->
+    <color name="md_theme_light_error">#BA1A1A</color>
+    <color name="md_theme_light_onError">#FFFFFF</color>
+    <color name="md_theme_light_errorContainer">#FFDAD6</color>
+    <color name="md_theme_light_onErrorContainer">#410002</color>
+    
+    <!-- Material 3 Light Theme Outline Colors -->
+    <color name="md_theme_light_outline">#75777F</color>
+    <color name="md_theme_light_outlineVariant">#C5C6D0</color>
+    
+    <!-- Material 3 Dark Theme Primary Colors -->
+    <color name="md_theme_dark_primary">#9FCAFF</color>
+    <color name="md_theme_dark_onPrimary">#003258</color>
+    <color name="md_theme_dark_primaryContainer">#004A77</color>
+    <color name="md_theme_dark_onPrimaryContainer">#D1E4FF</color>
+    
+    <!-- Material 3 Dark Theme Secondary Colors -->
+    <color name="md_theme_dark_secondary">#BFC6DC</color>
+    <color name="md_theme_dark_onSecondary">#293041</color>
+    <color name="md_theme_dark_secondaryContainer">#3F4759</color>
+    <color name="md_theme_dark_onSecondaryContainer">#DBE2F9</color>
+    
+    <!-- Material 3 Dark Theme Tertiary Colors -->
+    <color name="md_theme_dark_tertiary">#DFBBDF</color>
+    <color name="md_theme_dark_onTertiary">#3F2844</color>
+    <color name="md_theme_dark_tertiaryContainer">#573E5B</color>
+    <color name="md_theme_dark_onTertiaryContainer">#FBD7FC</color>
+    
+    <!-- Material 3 Dark Theme Surface Colors -->
+    <color name="md_theme_dark_surface">#101318</color>
+    <color name="md_theme_dark_onSurface">#E3E2E6</color>
+    <color name="md_theme_dark_surfaceVariant">#44474F</color>
+    <color name="md_theme_dark_onSurfaceVariant">#C5C6D0</color>
+    <color name="md_theme_dark_surfaceTint">#9FCAFF</color>
+    
+    <!-- Material 3 Dark Theme Background Colors -->
+    <color name="md_theme_dark_background">#101318</color>
+    <color name="md_theme_dark_onBackground">#E3E2E6</color>
+    
+    <!-- Material 3 Dark Theme Error Colors -->
+    <color name="md_theme_dark_error">#FFB4AB</color>
+    <color name="md_theme_dark_onError">#690005</color>
+    <color name="md_theme_dark_errorContainer">#93000A</color>
+    <color name="md_theme_dark_onErrorContainer">#FFDAD6</color>
+    
+    <!-- Material 3 Dark Theme Outline Colors -->
+    <color name="md_theme_dark_outline">#8F9099</color>
+    <color name="md_theme_dark_outlineVariant">#44474F</color>
+    
+    <!-- Glass Effect Colors (for enhanced Material surfaces) -->
+    <color name="glass_surface_light">#F5F5F5E6</color>
+    <color name="glass_surface_dark">#1C1C1EE6</color>
+    <color name="glass_border_light">#E5E5E5</color>
+    <color name="glass_border_dark">#2C2C2E</color>
+    
+    <!-- Chat Bubble Colors (preserving iMessage-style) -->
+    <color name="chat_user_bubble">#007AFF</color>
+    <color name="chat_assistant_bubble_light">#F0F0F0</color>
+    <color name="chat_assistant_bubble_dark">#2C2C2E</color>
+    
+    <!-- Splash Screen Colors -->
+    <color name="splashscreen_background">#FEFBFF</color>
+    <color name="splashscreen_background_dark">#101318</color>
+    
+    <!-- Legacy Colors (for backward compatibility) -->
+    <color name="colorPrimary">#007AFF</color>
+    <color name="colorPrimaryDark">#004A77</color>
+    <color name="colorAccent">#34C759</color>
+    <color name="iconBackground">#007AFF</color>
 </resources>

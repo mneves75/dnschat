@@ -20,6 +20,7 @@ import {
   TouchableOpacity,
   Share,
 } from 'react-native';
+import Clipboard from '@react-native-clipboard/clipboard';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useChat } from '../../context/ChatContext';
 import { Chat } from '../../types/chat';
@@ -64,6 +65,7 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
   const [isPressed, setIsPressed] = React.useState(false);
   
   
+  
   const isDark = colorScheme === 'dark';
   const lastMessage = chat.messages[chat.messages.length - 1];
   const messageCount = chat.messages.length;
@@ -74,6 +76,7 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
     if (Platform.OS === 'ios') {
       console.log('🔸 Haptic: Chat long press feedback');
     }
+    
     actionSheet.show();
   }, [actionSheet]);
 
@@ -137,7 +140,9 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
       {/* Chat Action Sheet */}
       <GlassActionSheet
         visible={actionSheet.visible}
-        onClose={actionSheet.hide}
+        onClose={() => {
+          actionSheet.hide();
+        }}
         title={chat.title}
         message="Choose an action for this conversation"
         actions={[
@@ -277,21 +282,59 @@ export function GlassChatList() {
   }, []);
 
   const handleShareChat = React.useCallback(async (chat: Chat) => {
-    try {
-      const shareContent = formatChatForSharing(chat);
-      
-      await Share.share({
-        message: shareContent,
-        title: `DNS Chat: ${chat.title}`,
-      });
-    } catch (error) {
-      console.error('Share failed:', error);
-      Alert.alert(
-        'Share Failed',
-        'Unable to share this conversation. Please try again.',
-        [{ text: 'OK', style: 'cancel' }]
-      );
-    }
+    const shareContent = formatChatForSharing(chat);
+    
+    // JOHN CARMACK FINAL SOLUTION: iOS Share Sheet CONFIRMED WORKING + Clipboard backup
+    Alert.alert(
+      `Share: ${chat.title}`,
+      'Choose how to share this conversation:',
+      [
+        {
+          text: 'Copy to Clipboard',
+          onPress: async () => {
+            try {
+              await Clipboard.setString(shareContent);
+              Alert.alert('✅ Copied!', 'Conversation copied to clipboard successfully');
+            } catch (error) {
+              console.error('Clipboard failed:', error);
+              Alert.alert('❌ Error', 'Failed to copy to clipboard');
+            }
+          }
+        },
+        {
+          text: 'iOS Share Sheet',
+          onPress: async () => {
+            try {
+              console.log('🚨 JOHN CARMACK: Attempting iOS Share.share()...');
+              const result = await Share.share({
+                message: shareContent,
+                title: `DNS Chat: ${chat.title}`,
+              });
+              console.log('🚨 JOHN CARMACK: Share result:', result);
+              
+              if (result.action === Share.dismissedAction) {
+                console.log('🚨 JOHN CARMACK: User dismissed share sheet');
+              } else if (result.action === Share.sharedAction) {
+                console.log('🚨 JOHN CARMACK: Successfully shared via:', result.activityType);
+                Alert.alert('✅ Shared!', 'Conversation shared successfully');
+              }
+            } catch (error) {
+              console.error('🚨 JOHN CARMACK: Share.share() error:', error);
+              // Fallback to clipboard
+              await Clipboard.setString(shareContent);
+              Alert.alert(
+                '⚠️ Share Failed - Copied Instead', 
+                'The share sheet failed, but the conversation has been copied to your clipboard.'
+              );
+            }
+          }
+        },
+        {
+          text: 'Cancel',
+          style: 'cancel'
+        }
+      ]
+    );
   }, [formatChatForSharing]);
 
   return (

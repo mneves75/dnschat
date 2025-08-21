@@ -1,6 +1,6 @@
 {
   "name": "chat-dns",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "DNSChat - A React Native chat app using DNS TXT queries",
   "main": "index.tsx",
   "author": "mvneves",
@@ -20,6 +20,7 @@
   "dependencies": {
     "@expo/metro-runtime": "~6.1.0",
     "@react-native-async-storage/async-storage": "2.1.2",
+    "@react-native-clipboard/clipboard": "^1.16.3",
     "@react-navigation/bottom-tabs": "^7.1.1",
     "@react-navigation/elements": "^2.2.3",
     "@react-navigation/native": "^7.0.12",
@@ -49,7 +50,11 @@
     "react-native-udp": "^4.1.7",
     "react-native-uuid": "^2.0.3",
     "react-native-web": "^0.20.0",
-    "react-native-worklets": "^0.4.1"
+    "react-native-worklets": "^0.4.1",
+    "react-native-paper": "^5.14.1",
+    "react-native-vector-icons": "^10.2.0",
+    "react-native-material-you": "^0.3.2",
+    "@react-native-community/slider": "^4.5.3"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

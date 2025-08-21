@@ -88,20 +88,20 @@ const useGlassSheetColors = () => {
   const isDark = colorScheme === 'dark';
 
   return {
-    // Backdrop
+    // Backdrop - Made MORE VISIBLE for John Carmack
     backdrop: isDark 
-      ? 'rgba(0, 0, 0, 0.6)'
-      : 'rgba(0, 0, 0, 0.4)',
+      ? 'rgba(0, 0, 0, 0.85)'
+      : 'rgba(0, 0, 0, 0.75)',
     
-    // Sheet background
+    // Sheet background - Made MORE OPAQUE for John Carmack
     sheetBackground: isDark
-      ? 'rgba(28, 28, 30, 0.95)'
-      : 'rgba(255, 255, 255, 0.95)',
+      ? 'rgba(28, 28, 30, 0.98)'
+      : 'rgba(255, 255, 255, 0.98)',
     
-    // Sheet border
+    // Sheet border - Made MORE VISIBLE for John Carmack
     sheetBorder: isDark
-      ? 'rgba(84, 84, 88, 0.4)'
-      : 'rgba(198, 198, 200, 0.3)',
+      ? 'rgba(84, 84, 88, 0.8)'
+      : 'rgba(198, 198, 200, 0.6)',
     
     // Handle
     handle: isDark
@@ -266,6 +266,7 @@ export const GlassBottomSheet: React.FC<GlassBottomSheetProps> = ({
     backgroundColor: colors.backdrop,
   };
 
+  
   return (
     <Modal
       visible={visible}

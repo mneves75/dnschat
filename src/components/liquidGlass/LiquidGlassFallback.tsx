@@ -235,7 +235,49 @@ const MaterialSurfaceView: React.FC<LiquidGlassProps> = ({
 }) => {
   const colorScheme = useColorScheme();
   
-  // Material Design 3 elevation levels
+  // Enhanced Material Design 3 with proper glass effects
+  const [MaterialGlassComponent, setMaterialGlassComponent] = React.useState<React.ComponentType<any> | null>(null);
+
+  React.useEffect(() => {
+    // Dynamically import the Material glass component
+    import('../material/MaterialGlassView')
+      .then(module => {
+        setMaterialGlassComponent(() => module.MaterialGlassView);
+      })
+      .catch(error => {
+        console.warn('Failed to load Material glass component, using fallback', error);
+        setMaterialGlassComponent(null);
+      });
+  }, []);
+
+  // Material Design 3 intensity mapping
+  const intensityMap: Record<GlassIntensity, 'ultraLight' | 'light' | 'regular' | 'heavy' | 'ultraHeavy'> = {
+    ultraThin: 'ultraLight',
+    thin: 'light',
+    regular: 'regular',
+    thick: 'heavy',
+    ultraThick: 'ultraHeavy',
+  };
+
+  // If Material glass component is available, use it
+  if (MaterialGlassComponent) {
+    return (
+      <MaterialGlassComponent
+        intensity={intensityMap[intensity]}
+        variant="acrylic"
+        elevation={2}
+        cornerRadius="medium"
+        enableBlur={true}
+        enableDynamicTint={true}
+        style={containerStyle}
+        debug={debug}
+      >
+        {children}
+      </MaterialGlassComponent>
+    );
+  }
+
+  // Fallback to basic Material styling
   const elevationMap: Record<GlassIntensity, number> = {
     ultraThin: 1,
     thin: 2,
@@ -253,8 +295,12 @@ const MaterialSurfaceView: React.FC<LiquidGlassProps> = ({
     shadowOpacity: 0.25,
     shadowRadius: elevation,
     backgroundColor: colorScheme === 'dark' 
-      ? 'rgba(46, 46, 46, 0.9)' 
-      : 'rgba(255, 255, 255, 0.9)',
+      ? 'rgba(16, 19, 24, 0.9)'    // Material 3 dark surface
+      : 'rgba(254, 251, 255, 0.9)', // Material 3 light surface
+    borderWidth: 1,
+    borderColor: colorScheme === 'dark'
+      ? 'rgba(143, 144, 153, 0.3)'  // Material 3 dark outline
+      : 'rgba(117, 119, 127, 0.3)', // Material 3 light outline
     borderRadius: 12,
   };
 

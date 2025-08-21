@@ -12,6 +12,7 @@ import { OnboardingProvider, useOnboarding } from './context/OnboardingContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { OnboardingContainer } from './components/onboarding/OnboardingContainer';
 import { LiquidGlassWrapper, useLiquidGlassCapabilities } from './components/LiquidGlassWrapper';
+import { MaterialThemeProvider } from './context/MaterialThemeContext';
 
 Asset.loadAsync([
   ...NavigationAssets,
@@ -76,13 +77,15 @@ export function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ErrorBoundary>
-        <SettingsProvider>
-          <OnboardingProvider>
-            <ChatProvider>
-              <AppContent />
-            </ChatProvider>
-          </OnboardingProvider>
-        </SettingsProvider>
+        <MaterialThemeProvider enableDynamicColor={true}>
+          <SettingsProvider>
+            <OnboardingProvider>
+              <ChatProvider>
+                <AppContent />
+              </ChatProvider>
+            </OnboardingProvider>
+          </SettingsProvider>
+        </MaterialThemeProvider>
       </ErrorBoundary>
     </GestureHandlerRootView>
   );

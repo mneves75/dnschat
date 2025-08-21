@@ -1,1 +1,19 @@
-<resources/>
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Material Design 3 Dark Theme Colors for DNSChat
+  
+  This file provides dark theme color overrides that are automatically
+  applied when the system is in dark mode.
+-->
+<resources>
+    <!-- Override primary colors for dark theme -->
+    <color name="colorPrimary">@color/md_theme_dark_primary</color>
+    <color name="colorPrimaryDark">@color/md_theme_dark_primaryContainer</color>
+    <color name="colorAccent">@color/md_theme_dark_secondary</color>
+    
+    <!-- Override splash screen for dark theme -->
+    <color name="splashscreen_background">@color/splashscreen_background_dark</color>
+    
+    <!-- Override icon background for dark theme -->
+    <color name="iconBackground">@color/md_theme_dark_primary</color>
+</resources>

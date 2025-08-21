@@ -797,3 +797,5 @@ When working on native DNS problems:
 - Always update relevant docs, including README.MD, CHANGELOG.md etc
 - when updating the main version always sync with ios and android versions
 
+
+- john carmack wants you to have always great attention to detail
