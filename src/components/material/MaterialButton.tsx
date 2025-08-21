@@ -193,25 +193,43 @@ export const MaterialButton: React.FC<MaterialButtonProps> = ({
     setIsPressed(false);
   };
   
-  // Create press state styling
+  // Material 3 state layer system with proper opacity values
+  const getStateLayerOpacity = (buttonVariant: MaterialButtonVariant, interaction: 'pressed') => {
+    const stateMap = {
+      filled: { pressed: 0.12 },
+      filledTonal: { pressed: 0.12 },
+      outlined: { pressed: 0.12 },
+      text: { pressed: 0.12 },
+      elevated: { pressed: 0.12 },
+    };
+    return stateMap[buttonVariant][interaction];
+  };
+
+  // Create Material 3 compliant press state styling
   const pressedStyle = useMemo((): ViewStyle => {
     if (!isPressed || disabled) return {};
     
-    const overlay = {
-      opacity: 0.12,
-    };
+    const stateOpacity = getStateLayerOpacity(variant, 'pressed');
     
-    if (variant === 'filled' || variant === 'filledTonal') {
-      return {
-        backgroundColor: colors.onPrimary,
-        ...overlay,
-      };
-    } else {
-      return {
-        backgroundColor: colors.primary,
-        ...overlay,
-      };
-    }
+    // Material 3 state layer colors based on variant
+    const stateLayerColor = (() => {
+      switch (variant) {
+        case 'filled':
+          return colors.onPrimary;
+        case 'filledTonal':
+          return colors.onSecondaryContainer;
+        case 'outlined':
+        case 'text':
+        case 'elevated':
+        default:
+          return colors.primary;
+      }
+    })();
+    
+    return {
+      backgroundColor: stateLayerColor,
+      opacity: stateOpacity,
+    };
   }, [isPressed, disabled, variant, colors]);
   
   // Create container style

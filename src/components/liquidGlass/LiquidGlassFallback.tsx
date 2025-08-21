@@ -235,20 +235,17 @@ const MaterialSurfaceView: React.FC<LiquidGlassProps> = ({
 }) => {
   const colorScheme = useColorScheme();
   
-  // Enhanced Material Design 3 with proper glass effects
-  const [MaterialGlassComponent, setMaterialGlassComponent] = React.useState<React.ComponentType<any> | null>(null);
-
-  React.useEffect(() => {
-    // Dynamically import the Material glass component
-    import('../material/MaterialGlassView')
-      .then(module => {
-        setMaterialGlassComponent(() => module.MaterialGlassView);
-      })
-      .catch(error => {
-        console.warn('Failed to load Material glass component, using fallback', error);
-        setMaterialGlassComponent(null);
-      });
-  }, []);
+  // Preload Material glass component for better performance
+  const [MaterialGlassComponent] = React.useState<React.ComponentType<any> | null>(() => {
+    try {
+      // Try to import synchronously at module level (component should be preloaded)
+      const { MaterialGlassView } = require('../material/MaterialGlassView');
+      return MaterialGlassView;
+    } catch (error) {
+      console.warn('Material glass component not available, using fallback', error);
+      return null;
+    }
+  });
 
   // Material Design 3 intensity mapping
   const intensityMap: Record<GlassIntensity, 'ultraLight' | 'light' | 'regular' | 'heavy' | 'ultraHeavy'> = {

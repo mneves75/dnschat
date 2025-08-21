@@ -98,21 +98,21 @@ export const MaterialTextInput: React.FC<MaterialTextInputProps> = ({
   const hasValue = Boolean(internalValue || value);
   const shouldFloatLabel = !disableFloatingLabel && (hasValue || isFocused || placeholder);
   
-  // Animate label
+  // Animate label with native driver for performance
   useEffect(() => {
     Animated.timing(labelAnimation, {
       toValue: shouldFloatLabel ? 1 : 0,
       duration: 200,
-      useNativeDriver: false,
+      useNativeDriver: true, // Native driver for transform-based animations
     }).start();
   }, [shouldFloatLabel, labelAnimation]);
   
-  // Animate border
+  // Animate border with native driver
   useEffect(() => {
     Animated.timing(borderAnimation, {
       toValue: isFocused ? 1 : 0,
       duration: 200,
-      useNativeDriver: false,
+      useNativeDriver: true, // Native driver for opacity animations
     }).start();
   }, [isFocused, borderAnimation]);
   
@@ -191,24 +191,20 @@ export const MaterialTextInput: React.FC<MaterialTextInputProps> = ({
     marginRight: trailingIcon ? 8 : 0,
   };
   
-  // Get label styling
+  // Get label styling with transform-based animations for performance
   const labelStyles = useMemo(() => {
     const baseSize = 16;
     const smallSize = 12;
     const topPosition = variant === 'filled' ? 8 : 6;
     const centerPosition = variant === 'filled' ? 20 : 18;
+    const translateY = centerPosition - topPosition;
+    const scaleRatio = smallSize / baseSize;
     
     return {
       position: 'absolute' as const,
       left: leadingIcon ? 48 : 16,
-      fontSize: labelAnimation.interpolate({
-        inputRange: [0, 1],
-        outputRange: [baseSize, smallSize],
-      }),
-      top: labelAnimation.interpolate({
-        inputRange: [0, 1],
-        outputRange: [centerPosition, topPosition],
-      }),
+      top: centerPosition, // Fixed position, use transform for movement
+      fontSize: baseSize, // Fixed size, use transform for scaling
       color: hasError 
         ? colors.error
         : isFocused 
@@ -217,6 +213,21 @@ export const MaterialTextInput: React.FC<MaterialTextInputProps> = ({
       backgroundColor: variant === 'outlined' ? colors.surface : 'transparent',
       paddingHorizontal: variant === 'outlined' ? 4 : 0,
       zIndex: 1,
+      // Transform-based animation (native driver compatible)
+      transform: [
+        {
+          translateY: labelAnimation.interpolate({
+            inputRange: [0, 1],
+            outputRange: [0, -translateY],
+          }),
+        },
+        {
+          scale: labelAnimation.interpolate({
+            inputRange: [0, 1],
+            outputRange: [1, scaleRatio],
+          }),
+        },
+      ],
     };
   }, [
     variant,

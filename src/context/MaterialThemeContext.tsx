@@ -227,19 +227,83 @@ const checkDynamicColorSupport = async (): Promise<boolean> => {
 
 /**
  * Get dynamic colors from Android system (if available)
- * Note: This would require native module integration for full support
+ * Implements Material You dynamic color extraction for Android 12+
  */
 const getDynamicColors = async (isDark: boolean): Promise<Material3Colors | null> => {
-  // In a real implementation, this would interface with the native Android
-  // Material You system to extract dynamic colors. For now, we return null
-  // to indicate dynamic colors aren't available via JS API.
+  if (Platform.OS !== 'android') return null;
   
-  // This could be implemented with react-native-material-you or similar
   try {
-    // Future implementation would call native module here
-    return null;
+    // Try to use react-native-material-you if available
+    const { MaterialYou } = await import('react-native-material-you').catch(() => ({ MaterialYou: null }));
+    
+    if (!MaterialYou) {
+      console.log('Material You library not available, using static colors');
+      return null;
+    }
+    
+    // Extract dynamic colors from Android system
+    const dynamicScheme = await MaterialYou.generateColorScheme(isDark);
+    
+    if (!dynamicScheme) {
+      console.log('Dynamic colors not supported on this device');
+      return null;
+    }
+    
+    // Map Android dynamic colors to our Material 3 interface
+    const dynamicColors: Material3Colors = {
+      // Primary colors from dynamic scheme
+      primary: dynamicScheme.primary || (isDark ? '#9FCAFF' : '#007AFF'),
+      onPrimary: dynamicScheme.onPrimary || (isDark ? '#003258' : '#FFFFFF'),
+      primaryContainer: dynamicScheme.primaryContainer || (isDark ? '#004A77' : '#D1E4FF'),
+      onPrimaryContainer: dynamicScheme.onPrimaryContainer || (isDark ? '#D1E4FF' : '#001D36'),
+      
+      // Secondary colors from dynamic scheme
+      secondary: dynamicScheme.secondary || (isDark ? '#BFC6DC' : '#575E71'),
+      onSecondary: dynamicScheme.onSecondary || (isDark ? '#293041' : '#FFFFFF'),
+      secondaryContainer: dynamicScheme.secondaryContainer || (isDark ? '#3F4759' : '#DBE2F9'),
+      onSecondaryContainer: dynamicScheme.onSecondaryContainer || (isDark ? '#DBE2F9' : '#141B2C'),
+      
+      // Tertiary colors (fallback to static if not in dynamic scheme)
+      tertiary: dynamicScheme.tertiary || (isDark ? '#DFBBDF' : '#715573'),
+      onTertiary: dynamicScheme.onTertiary || (isDark ? '#3F2844' : '#FFFFFF'),
+      tertiaryContainer: dynamicScheme.tertiaryContainer || (isDark ? '#573E5B' : '#FBD7FC'),
+      onTertiaryContainer: dynamicScheme.onTertiaryContainer || (isDark ? '#FBD7FC' : '#29132D'),
+      
+      // Surface colors from dynamic scheme
+      surface: dynamicScheme.surface || (isDark ? '#101318' : '#FEFBFF'),
+      onSurface: dynamicScheme.onSurface || (isDark ? '#E3E2E6' : '#1B1B1F'),
+      surfaceVariant: dynamicScheme.surfaceVariant || (isDark ? '#44474F' : '#E1E2EC'),
+      onSurfaceVariant: dynamicScheme.onSurfaceVariant || (isDark ? '#C5C6D0' : '#44474F'),
+      surfaceTint: dynamicScheme.surfaceTint || dynamicScheme.primary || (isDark ? '#9FCAFF' : '#007AFF'),
+      
+      // Background colors
+      background: dynamicScheme.background || (isDark ? '#101318' : '#FEFBFF'),
+      onBackground: dynamicScheme.onBackground || (isDark ? '#E3E2E6' : '#1B1B1F'),
+      
+      // Error colors (usually static in Material You)
+      error: dynamicScheme.error || (isDark ? '#FFB4AB' : '#BA1A1A'),
+      onError: dynamicScheme.onError || (isDark ? '#690005' : '#FFFFFF'),
+      errorContainer: dynamicScheme.errorContainer || (isDark ? '#93000A' : '#FFDAD6'),
+      onErrorContainer: dynamicScheme.onErrorContainer || (isDark ? '#FFDAD6' : '#410002'),
+      
+      // Outline colors
+      outline: dynamicScheme.outline || (isDark ? '#8F9099' : '#75777F'),
+      outlineVariant: dynamicScheme.outlineVariant || (isDark ? '#44474F' : '#C5C6D0'),
+      
+      // Glass effect colors (derived from surface)
+      glassBackground: `${dynamicScheme.surface || (isDark ? '#101318' : '#FEFBFF')}E6`,
+      glassBorder: dynamicScheme.outline || (isDark ? '#2C2C2E' : '#E5E5E5'),
+      
+      // Chat colors (preserve brand identity)
+      chatUserBubble: '#007AFF', // Keep consistent across themes
+      chatAssistantBubble: dynamicScheme.surfaceVariant || (isDark ? '#2C2C2E' : '#F0F0F0'),
+    };
+    
+    console.log('🎨 Dynamic colors extracted successfully from Material You');
+    return dynamicColors;
+    
   } catch (error) {
-    console.warn('Failed to get dynamic colors', error);
+    console.warn('Failed to get dynamic colors, using static fallback:', error);
     return null;
   }
 };
