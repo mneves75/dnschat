@@ -1,7 +1,7 @@
 PODS:
   - boost (1.84.0)
   - CocoaAsyncSocket (7.6.5)
-  - DNSNative (2.1.0):
+  - DNSNative (2.1.1):
     - React-Core
   - DoubleConversion (1.1.6)
   - EXConstants (17.1.7):
@@ -355,7 +355,7 @@ PODS:
   - hermes-engine (0.81.0):
     - hermes-engine/Pre-built (= 0.81.0)
   - hermes-engine/Pre-built (0.81.0)
-  - LiquidGlassNative (2.1.0):
+  - LiquidGlassNative (2.1.1):
     - React
     - React-Core
   - RCT-Folly (2024.11.18.00):
@@ -3406,7 +3406,7 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   boost: 7e761d76ca2ce687f7cc98e698152abd03a18f90
   CocoaAsyncSocket: 065fd1e645c7abab64f7a6a2007a48038fdc6a99
-  DNSNative: 553186a770d1102b60d9d6cfc9ccf89242e197ab
+  DNSNative: a4af1df37d99d9e76de25b972eb83a7f5e40620a
   DoubleConversion: cb417026b2400c8f53ae97020b2be961b59470cb
   EXConstants: 98bcf0f22b820f9b28f9fee55ff2daededadd2f8
   EXJSONUtils: 1d3e4590438c3ee593684186007028a14b3686cd
@@ -3428,7 +3428,7 @@ SPEC CHECKSUMS:
   fmt: a40bb5bd0294ea969aaaba240a927bd33d878cdd
   glog: 5683914934d5b6e4240e497e0f4a3b42d1854183
   hermes-engine: e7491a2038f2618c8cd444ed411a6deb350a3742
-  LiquidGlassNative: fa08aeec9b15dba893954bb482736eb2ec525ae1
+  LiquidGlassNative: 1ea13d15ece15ee153be4af29d56541688761d0a
   RCT-Folly: 846fda9475e61ec7bcbf8a3fe81edfcaeb090669
   RCTDeprecation: 0735ab4f6b3ec93a7f98187b5da74d7916e2cf4c
   RCTRequired: 8fcc7801bfc433072287b0f24a662e2816e89d0c
