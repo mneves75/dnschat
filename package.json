@@ -1,6 +1,6 @@
 {
   "name": "chat-dns",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "description": "DNSChat - A React Native chat app using DNS TXT queries",
   "main": "index.tsx",
   "author": "mvneves",
@@ -19,8 +19,9 @@
   },
   "dependencies": {
     "@expo/metro-runtime": "~6.1.0",
-    "@react-native-async-storage/async-storage": "2.1.2",
+    "@react-native-async-storage/async-storage": "2.2.0",
     "@react-native-clipboard/clipboard": "^1.16.3",
+    "@react-native-community/slider": "5.0.1",
     "@react-navigation/bottom-tabs": "^7.1.1",
     "@react-navigation/elements": "^2.2.3",
     "@react-navigation/native": "^7.0.12",
@@ -28,12 +29,12 @@
     "@types/dns-packet": "^5.6.5",
     "date-fns": "^4.1.0",
     "dns-packet": "^5.6.1",
-    "expo": "54.0.0-preview.4",
-    "expo-asset": "~11.1.4",
-    "expo-build-properties": "^0.14.8",
-    "expo-dev-client": "~5.2.4",
-    "expo-splash-screen": "~0.30.7",
-    "expo-system-ui": "~5.0.6",
+    "expo": "54.0.0-preview.5",
+    "expo-asset": "~12.0.2",
+    "expo-build-properties": "~1.0.3",
+    "expo-dev-client": "~6.0.3",
+    "expo-splash-screen": "~31.0.3",
+    "expo-system-ui": "~6.0.2",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-native": "0.81.0",
@@ -42,6 +43,7 @@
     "react-native-edge-to-edge": "1.6.0",
     "react-native-gesture-handler": "~2.28.0",
     "react-native-markdown-display": "^7.0.2",
+    "react-native-paper": "^5.14.1",
     "react-native-reanimated": "~4.0.2",
     "react-native-safe-area-context": "5.6.1",
     "react-native-screens": "~4.14.1",
@@ -49,17 +51,14 @@
     "react-native-tcp-socket": "^6.3.0",
     "react-native-udp": "^4.1.7",
     "react-native-uuid": "^2.0.3",
-    "react-native-web": "^0.20.0",
-    "react-native-worklets": "^0.4.1",
-    "react-native-paper": "^5.14.1",
     "react-native-vector-icons": "^10.2.0",
-    "react-native-material-you": "^0.3.2",
-    "@react-native-community/slider": "^4.5.3"
+    "react-native-web": "^0.21.0",
+    "react-native-worklets": "^0.4.1"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
     "@types/react": "~19.1.10",
-    "typescript": "~5.8.3"
+    "typescript": "~5.9.2"
   },
   "overrides": {
     "markdown-it": "^14.1.0"

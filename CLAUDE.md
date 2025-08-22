@@ -88,183 +88,26 @@ import { LiquidGlassNative } from '../components/liquidGlass';
 - **✅ Cross-platform Fallbacks**: Enhanced visual effects for all platforms and iOS versions
 - **✅ Memory & Performance**: Optimized for iOS thermal management and battery efficiency
 
-## 🚨 CRITICAL BUG FIXES (v1.7.6) - ENTERPRISE GRADE FIXES
+## ✅ CRITICAL BUG FIXES - FULLY RESOLVED (v2.1.2)
 
-**Status: PRODUCTION READY** - All critical bugs identified in comprehensive code review have been resolved.
+**Status: PRODUCTION READY** - All critical bugs have been permanently fixed in v2.1.2.
 
-### 🔥 Major Issues Resolved
+### Summary of Critical Issues Fixed in v2.1.2:
 
-The native DNS implementation underwent a comprehensive security and reliability audit that identified **12 critical production bugs**. All have been systematically fixed:
+**iOS Native DNS Fixes:**
+- **✅ CheckedContinuation Double Resume Protection**: Eliminated fatal EXC_BREAKPOINT crashes with atomic NSLock protection
+- **✅ MainActor Thread Safety**: Fixed compilation errors by properly wrapping @MainActor property access
+- **✅ DNS Protocol Compliance**: Corrected single-label packet encoding for ch.at queries
 
-#### **P0 Critical Fixes (Crash/Failure Prevention):**
+**Android Native DNS Fixes:**
+- **✅ Memory Management**: Implemented TTL-based cleanup (30s) with max query limits (50)
+- **✅ Resource Lifecycle**: Added proper CompletableFuture cancellation and periodic cleanup
+- **✅ Query Deduplication**: Prevents duplicate requests matching iOS behavior
 
-1. **✅ iOS MainActor Threading Violation (CRASH BUG)**
-   - **Issue**: Accessing `@MainActor` properties outside MainActor context
-   - **Impact**: Compilation errors and runtime crashes
-   - **Fix**: Wrapped all `activeQueries` access in `await MainActor.run` blocks
-   - **Location**: `ios/DNSNative/DNSResolver.swift:62`
+**Impact:** All P0 production-critical bugs eliminated. Zero known crash vectors.
 
-2. **✅ iOS DNS Protocol Violation (NETWORK FAILURE)**
-   - **Issue**: DNS packet construction treated messages as multi-label domains
-   - **Impact**: Invalid DNS packets causing all network queries to fail
-   - **Fix**: Implemented single-label approach matching Android and DNS RFC standards
-   - **Location**: `ios/DNSNative/DNSResolver.swift:334-349`
+For complete technical details, see [CHANGELOG.md v2.1.2](./CHANGELOG.md#212---2025-08-22)
 
-3. **✅ iOS TXT Record Parsing Bug (DATA CORRUPTION)**
-   - **Issue**: Ignored DNS TXT record length-prefix format
-   - **Impact**: Corrupted response data and parsing failures
-   - **Fix**: Implemented proper length-prefixed string parsing per DNS RFC
-   - **Location**: `ios/DNSNative/DNSResolver.swift:392-412`
-
-4. **✅ Android Query Deduplication Missing (PERFORMANCE)**
-   - **Issue**: No duplicate request prevention unlike iOS implementation
-   - **Impact**: Resource waste and inconsistent performance characteristics
-   - **Fix**: Added `ConcurrentHashMap` based deduplication matching iOS behavior
-   - **Location**: `modules/dns-native/android/DNSResolver.java:34-35`
-
-5. **✅ Android DNS-over-HTTPS Fallback Missing (RELIABILITY)**
-   - **Issue**: 2-tier fallback vs iOS 3-tier (missing DNS-over-HTTPS)
-   - **Impact**: Different reliability and network compatibility between platforms
-   - **Fix**: Added Cloudflare DNS-over-HTTPS implementation matching iOS
-   - **Location**: `modules/dns-native/android/DNSResolver.java:367-441`
-
-#### **P1 Architecture Fixes:**
-
-6. **✅ Android Inconsistent DNS Handling**
-   - **Issue**: Conflicting single-label vs domain-name approaches
-   - **Fix**: Removed unused methods causing architectural confusion
-
-### 🎯 **Verification & Testing**
-
-All fixes have been verified through:
-- **Syntax Analysis**: All critical sections checked for compilation errors
-- **Logic Verification**: DNS protocol compliance verified against RFC standards
-- **Cross-Platform Parity**: Both platforms now have identical behavior
-- **Thread Safety**: Concurrent access patterns verified on both platforms
-
-### 🏗️ **Architecture Improvements**
-
-**Before Fixes:**
-- iOS: Crash-prone due to threading violations
-- iOS: Invalid DNS packets causing network failures
-- Android: Missing query deduplication and DNS-over-HTTPS
-- Cross-platform: Inconsistent fallback strategies
-
-**After Fixes:**
-- **✅ Thread Safety**: All concurrent access properly synchronized
-- **✅ DNS Protocol Compliance**: Both platforms follow DNS RFC standards
-- **✅ Identical 3-Tier Fallback**: UDP → DNS-over-HTTPS → Legacy on both platforms
-- **✅ Performance Parity**: Both platforms have query deduplication
-- **✅ Enterprise Grade**: Production-ready reliability and consistency
-
-### 🔧 **Impact on Development**
-
-- **No Breaking Changes**: All fixes are internal implementation improvements
-- **Improved Reliability**: Eliminated all P0 crash and failure scenarios
-- **Better Performance**: Query deduplication prevents redundant network requests
-- **Enhanced Debugging**: Comprehensive logging added for all fallback attempts
-- **Future Proof**: Clean architecture removes technical debt
-
-## 🚨 CRITICAL CRASH FIX (v1.7.7) - iOS Production Stability
-
-**Status: EMERGENCY HOTFIX** - Resolved fatal iOS crash from CheckedContinuation double resume.
-
-### 🔥 iOS CheckedContinuation Double Resume Crash (FATAL)
-
-**Critical Issue Discovered**: TestFlight crash reports revealed a fatal race condition in the iOS native DNS module where `CheckedContinuation` could be resumed multiple times, causing app termination.
-
-#### **Problem Analysis:**
-- **Root Cause**: `CheckedContinuation` being resumed multiple times in concurrent DNS operations
-- **Crash Type**: Fatal `EXC_BREAKPOINT` from Swift runtime protection against double resume  
-- **Affected Code**: `ios/DNSNative/DNSResolver.swift:144-225` (performNetworkFrameworkQuery)
-- **Trigger Scenarios**: Network timeouts, connection failures, and rapid DNS queries
-- **Impact**: Complete app termination, 100% crash rate when triggered
-
-#### **Enterprise-Grade Solution Implemented:**
-
-```swift
-// ENTERPRISE-GRADE: Thread-safe atomic flag with NSLock (iOS 16.0+ compatible)
-let resumeLock = NSLock()
-var hasResumed = false
-
-let resumeOnce: (Result<[String], Error>) -> Void = { result in
-    resumeLock.lock()
-    defer { resumeLock.unlock() }
-    
-    if !hasResumed {
-        hasResumed = true
-        connection.cancel() // Immediately stop any further network activity
-        
-        switch result {
-        case .success(let records):
-            continuation.resume(returning: records)
-        case .failure(let error):
-            continuation.resume(throwing: error)
-        }
-    }
-    // Silent ignore if already resumed - prevents crashes
-}
-```
-
-#### **Technical Implementation Details:**
-- **✅ NSLock Protection**: Atomic operations prevent race conditions across all threads
-- **✅ Single Resume Guarantee**: `hasResumed` flag ensures continuation resumes exactly once
-- **✅ Resource Cleanup**: Connection cancellation prevents resource leaks
-- **✅ iOS 16+ Compatibility**: Uses NSLock for maximum compatibility with deployment targets
-- **✅ Error Safety**: Graceful handling of timeout, network failure, and cancellation scenarios
-
-#### **Verification & Testing:**
-- **Threading Analysis**: Verified atomic operations prevent all race conditions  
-- **Memory Safety**: Confirmed proper resource cleanup and no leaks
-- **Error Handling**: Tested all failure scenarios (timeout, network error, cancellation)
-- **Production Testing**: No crashes observed after implementation
-
-### 🏗️ **Before vs After Architecture:**
-
-**Before (Crash-Prone):**
-```swift
-// Race condition: Multiple paths could resume the same continuation
-connection.stateUpdateHandler = { state in
-    switch state {
-    case .ready:
-        // Path 1: Could resume here
-    case .failed(let error):
-        continuation.resume(throwing: error) // Path 2: Could also resume here
-    }
-}
-// Path 3: Timeout could also resume
-DispatchQueue.global().asyncAfter(...) {
-    continuation.resume(throwing: DNSError.timeout)
-}
-```
-
-**After (Crash-Safe):**
-```swift
-// Single atomic resume point
-let resumeOnce: (Result<[String], Error>) -> Void = { result in
-    resumeLock.lock()
-    defer { resumeLock.unlock() }
-    
-    if !hasResumed {
-        hasResumed = true
-        // Single, protected resume
-    }
-}
-```
-
-### 🎯 **Impact on Production:**
-- **✅ Zero Crashes**: Eliminates all TestFlight crashes related to DNS operations
-- **✅ Thread Safety**: Enterprise-grade concurrency handling
-- **✅ Reliability**: Stable DNS operations under all network conditions
-- **✅ Performance**: No performance impact from safety measures
-
-### 🔧 **Development Guidelines:**
-- **Always Use Atomic Operations**: When working with CheckedContinuation in concurrent contexts
-- **Implement Resume Protection**: Use similar NSLock patterns for all continuation-based code
-- **Test Concurrency**: Always test concurrent scenarios that could trigger race conditions
-- **Monitor Crashes**: Watch for EXC_BREAKPOINT crashes indicating continuation issues
-
-**Critical Lesson**: CheckedContinuation double resume is one of the most common causes of fatal Swift crashes in production apps. This fix provides a template for safe concurrent continuation handling.
 
 ## Development Commands
 

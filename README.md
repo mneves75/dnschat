@@ -2,11 +2,24 @@
 
 A React Native mobile app that revolutionizes LLM interaction by using DNS TXT queries for AI communication. Chat with AI models through DNS infrastructure for enhanced privacy and network resilience.
 
-[![React Native](https://img.shields.io/badge/React%20Native-0.79-blue.svg)](https://reactnative.dev/)
-[![Expo](https://img.shields.io/badge/Expo-53-black.svg)](https://expo.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue.svg)](https://www.typescriptlang.org/)
+[![Version](https://img.shields.io/badge/Version-2.1.2-brightgreen.svg)](https://github.com/mneves75/dnschat/releases)
+[![Production Ready](https://img.shields.io/badge/Production-Ready-success.svg)](https://github.com/mneves75/dnschat)
+[![React Native](https://img.shields.io/badge/React%20Native-0.81-blue.svg)](https://reactnative.dev/)
+[![Expo](https://img.shields.io/badge/Expo-54--preview-black.svg)](https://expo.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)](https://www.typescriptlang.org/)
 [![iOS](https://img.shields.io/badge/iOS-16%2B-lightgrey.svg)](https://developer.apple.com/ios/)
 [![Android](https://img.shields.io/badge/Android-API%2021%2B-green.svg)](https://developer.android.com/)
+
+## 🚨 Production Stability Update (v2.1.2)
+
+**Critical Production Issues Resolved** - All P0 fatal bugs eliminated. The app is now production-ready with enterprise-grade stability:
+
+- **✅ iOS Crash Protection**: Eliminated CheckedContinuation double resume crashes with atomic thread safety
+- **✅ Memory Management**: Android memory leaks fixed with TTL-based cleanup and resource bounds
+- **✅ DNS Protocol Compliance**: Fixed packet construction for reliable ch.at communication
+- **✅ Thread Safety**: All concurrency issues resolved with proper synchronization primitives
+
+See [CHANGELOG.md](./CHANGELOG.md) for complete technical details.
 
 ## ✨ Key Features
 

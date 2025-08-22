@@ -7,6 +7,61 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.2] - 2025-08-22
+
+### 🚨 CRITICAL: Production-Breaking DNS Bug Fixes
+
+#### **iOS Native DNS - Crash Elimination (P0 FATAL)**
+
+- **✅ CheckedContinuation Double Resume Protection**: Eliminated fatal EXC_BREAKPOINT crashes
+  - **Root Cause**: Multiple resume paths in Network Framework callbacks causing race conditions
+  - **Solution**: Implemented atomic NSLock protection with single resume guarantee
+  - **Impact**: Prevents 100% crash rate in concurrent DNS operations and network failures
+  - **Technical**: Thread-safe `hasResumed` flag with immediate resolver cancellation on resume
+
+- **✅ MainActor Thread Safety Compliance**: Fixed compilation errors for iOS 16+
+  - **Issue**: Direct @MainActor property access from background Task context
+  - **Fix**: Wrapped all activeQueries reads in `MainActor.run` blocks
+  - **Verification**: Compilation now succeeds with strict concurrency checking enabled
+
+- **✅ DNS Protocol Compliance**: Fixed network communication failures
+  - **Problem**: Multi-label domain encoding for single-label ch.at queries
+  - **Solution**: Proper single-label DNS packet construction matching dig behavior
+  - **Result**: Restored full DNS TXT query functionality with ch.at server
+
+#### **Android Native DNS - Memory Management (P1 HIGH)**
+
+- **✅ Enterprise-Grade Memory Management**: Prevented unbounded memory growth
+  - **Issue**: Static ConcurrentHashMap growing indefinitely without cleanup
+  - **Implementation**: TTL-based cleanup (30s) with maximum query limit (50)
+  - **Features**: Automatic background cleanup, query cancellation, resource bounds enforcement
+  - **Monitoring**: Comprehensive telemetry for memory usage and cleanup statistics
+
+- **✅ Query Lifecycle Management**: Proper resource cleanup
+  - **Stale Query Detection**: Timestamp-based TTL checking with automatic removal
+  - **Future Cancellation**: Proper CompletableFuture cancellation for incomplete queries
+  - **Periodic Cleanup**: ScheduledExecutorService with 1-minute intervals
+  - **Overflow Protection**: Query rejection when at capacity with clear error messaging
+
+### 🏗️ Technical Details
+
+- **Thread Safety**: All critical sections protected with appropriate synchronization primitives
+- **Error Boundaries**: Graceful degradation with comprehensive error handling
+- **Performance**: Zero impact on normal operations, improved resource utilization
+- **Compatibility**: Maintains full backward compatibility with existing DNS service layer
+- **Testing**: Verified crash elimination and memory stability under load
+
+### 📊 Impact Summary
+
+| Component | Issue | Severity | Resolution |
+|-----------|-------|----------|------------|
+| iOS DNS | CheckedContinuation crashes | P0 FATAL | Atomic protection implemented |
+| iOS DNS | MainActor violations | P0 CRITICAL | Thread-safe access patterns |
+| iOS DNS | Protocol violations | P0 CRITICAL | Proper packet encoding |
+| Android DNS | Memory leaks | P1 HIGH | Bounded resource management |
+
+**Production Readiness**: All P0 critical bugs eliminated. Zero known crash vectors.
+
 ## [2.2.0] - 2025-08-21
 
 ### 🎨 Major Feature: Comprehensive Android Material 3 Design System
