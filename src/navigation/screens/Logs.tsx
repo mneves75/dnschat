@@ -10,9 +10,12 @@ import {
   ScrollView,
   ActivityIndicator,
   useColorScheme,
+  Share,
+  Platform,
 } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import { DNSLogService, DNSQueryLog, DNSLogEntry } from '../../services/dnsLogService';
+import { useSettings } from '../../context/SettingsContext';
 import { 
   Form, 
   LiquidGlassWrapper,
@@ -22,9 +25,12 @@ export function Logs() {
   const { colors } = useTheme();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
+  const { debugMode } = useSettings();
   const [logs, setLogs] = useState<DNSQueryLog[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [expandedLogs, setExpandedLogs] = useState<Set<string>>(new Set());
+  const [expandedDebugLogs, setExpandedDebugLogs] = useState<Set<string>>(new Set());
+  const [exportingLogId, setExportingLogId] = useState<string | null>(null);
 
   useEffect(() => {
     loadLogs();
@@ -35,7 +41,12 @@ export function Logs() {
     });
 
     return unsubscribe;
-  }, []);
+  }, []); // Only subscribe once on mount
+
+  // Separate effect for debug mode changes
+  useEffect(() => {
+    DNSLogService.setDebugMode(debugMode);
+  }, [debugMode]);
 
   const loadLogs = async () => {
     await DNSLogService.initialize();
@@ -58,6 +69,84 @@ export function Logs() {
       }
       return newSet;
     });
+  };
+
+  const toggleDebugExpanded = (logId: string) => {
+    setExpandedDebugLogs((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(logId)) {
+        newSet.delete(logId);
+      } else {
+        newSet.add(logId);
+      }
+      return newSet;
+    });
+  };
+
+  const exportLog = async (log: DNSQueryLog) => {
+    if (exportingLogId) return; // Prevent multiple simultaneous exports
+    
+    setExportingLogId(log.id);
+    
+    try {
+      const jsonData = DNSLogService.exportLogAsJSON(log);
+      const filename = DNSLogService.generateExportFilename(log);
+      
+      // Add a small delay to show loading state
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      if (Platform.OS === 'web') {
+        // For React Native Web, check if browser APIs are available
+        if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+          try {
+            // Try to use Blob API if available
+            if (typeof Blob !== 'undefined' && typeof URL !== 'undefined') {
+              const blob = new Blob([jsonData], { type: 'application/json' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = filename;
+              a.style.display = 'none';
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              URL.revokeObjectURL(url);
+            } else {
+              throw new Error('Blob API not available');
+            }
+          } catch (webError) {
+            // Fallback: copy to clipboard
+            if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
+              // Escape JSON for safe clipboard operation
+              const safeJson = jsonData.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+              await navigator.clipboard.writeText(safeJson);
+              Alert.alert('Copied to Clipboard', 'The log data has been copied to your clipboard.');
+            } else {
+              // Last resort: show truncated data
+              Alert.alert('Export Data', 'Copy this data manually:\n\n' + jsonData.substring(0, 500) + '...');
+            }
+          }
+        } else {
+          // No browser APIs available, fallback to Share API or alert
+          Alert.alert('Export Not Available', 'Web export is not available in this environment.');
+        }
+      } else {
+        // For mobile, use Share API
+        await Share.share({
+          message: jsonData,
+          title: filename,
+        });
+      }
+    } catch (error: any) {
+      console.error('Error exporting log:', error);
+      const errorMessage = error?.message || 'Unknown error occurred';
+      Alert.alert(
+        'Export Failed', 
+        `Could not export the log: ${errorMessage}\n\nPlease try again.`
+      );
+    } finally {
+      setExportingLogId(null);
+    }
   };
 
   const clearLogs = () => {
@@ -109,6 +198,52 @@ export function Logs() {
           <Text style={[styles.entryError, { color: '#FF5252' }]}>
             Error: {entry.error}
           </Text>
+        )}
+        
+        {/* Debug data section - only shown when debug mode is enabled */}
+        {debugMode && entry.debugData && (
+          <View style={styles.debugDataContainer}>
+            <Text style={[styles.debugLabel, { color: colors.text + '80' }]}>
+              🐛 Debug Data:
+            </Text>
+            <View style={styles.debugContent}>
+              {entry.debugData.networkInfo && (
+                <View style={styles.debugSection}>
+                  <Text style={[styles.debugSectionTitle, { color: colors.text }]}>Network:</Text>
+                  <Text style={[styles.debugText, { color: colors.text + '80' }]} numberOfLines={5}>
+                    Server: {entry.debugData.networkInfo.server}:{entry.debugData.networkInfo.port}
+                  </Text>
+                  <Text style={[styles.debugText, { color: colors.text + '80' }]}>
+                    Protocol: {entry.debugData.networkInfo.protocol}
+                  </Text>
+                </View>
+              )}
+              {entry.debugData.rawRequest && (
+                <View style={styles.debugSection}>
+                  <Text style={[styles.debugSectionTitle, { color: colors.text }]}>Request:</Text>
+                  <Text style={[styles.debugCode, { color: colors.text + '80' }]} numberOfLines={10}>
+                    {entry.debugData.rawRequest}
+                  </Text>
+                </View>
+              )}
+              {entry.debugData.rawResponse && (
+                <View style={styles.debugSection}>
+                  <Text style={[styles.debugSectionTitle, { color: colors.text }]}>Response:</Text>
+                  <Text style={[styles.debugCode, { color: colors.text + '80' }]} numberOfLines={10}>
+                    {entry.debugData.rawResponse}
+                  </Text>
+                </View>
+              )}
+              {entry.debugData.stackTrace && (
+                <View style={styles.debugSection}>
+                  <Text style={[styles.debugSectionTitle, { color: colors.text }]}>Stack Trace:</Text>
+                  <Text style={[styles.debugCode, { color: colors.text + '80' }]} numberOfLines={10}>
+                    {entry.debugData.stackTrace}
+                  </Text>
+                </View>
+              )}
+            </View>
+          </View>
         )}
       </View>
     );
@@ -164,6 +299,29 @@ export function Logs() {
             <View style={styles.logDetails}>
               <View style={[styles.divider, { backgroundColor: colors.border }]} />
               
+              {/* Export button */}
+              <TouchableOpacity
+                style={[styles.exportButton, { 
+                  borderColor: colors.border,
+                  opacity: exportingLogId === item.id ? 0.6 : 1
+                }]}
+                onPress={() => exportLog(item)}
+                disabled={exportingLogId !== null}
+              >
+                {exportingLogId === item.id ? (
+                  <View style={styles.exportButtonContent}>
+                    <ActivityIndicator size="small" color={colors.text} />
+                    <Text style={[styles.exportButtonText, { color: colors.text, marginLeft: 8 }]}>
+                      Exporting...
+                    </Text>
+                  </View>
+                ) : (
+                  <Text style={[styles.exportButtonText, { color: colors.text }]}>
+                    📤 Export as JSON
+                  </Text>
+                )}
+              </TouchableOpacity>
+              
               {item.response && (
                 <View style={styles.responseSection}>
                   <Text style={[styles.sectionTitle, { color: colors.text }]}>Response:</Text>
@@ -171,6 +329,59 @@ export function Logs() {
                     {item.response || 'No response'}
                   </Text>
                 </View>
+              )}
+
+              {/* Debug context - only shown when debug mode is enabled */}
+              {debugMode && item.debugContext && (
+                <TouchableOpacity 
+                  onPress={() => toggleDebugExpanded(item.id)}
+                  style={styles.debugContextSection}
+                >
+                  <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                    🐛 Debug Context {expandedDebugLogs.has(item.id) ? '▼' : '▶'}
+                  </Text>
+                  {expandedDebugLogs.has(item.id) && (
+                    <View style={styles.debugContextContent}>
+                      {item.debugContext.settingsSnapshot && (
+                        <View style={styles.debugSection}>
+                          <Text style={[styles.debugSectionTitle, { color: colors.text }]}>Settings:</Text>
+                          <Text style={[styles.debugText, { color: colors.text + '80' }]}>
+                            Server: {item.debugContext.settingsSnapshot.dnsServer}
+                          </Text>
+                          <Text style={[styles.debugText, { color: colors.text + '80' }]}>
+                            Method: {item.debugContext.settingsSnapshot.dnsMethodPreference}
+                          </Text>
+                          <Text style={[styles.debugText, { color: colors.text + '80' }]}>
+                            HTTPS: {item.debugContext.settingsSnapshot.preferDnsOverHttps ? 'Yes' : 'No'}
+                          </Text>
+                        </View>
+                      )}
+                      {item.debugContext.deviceInfo && (
+                        <View style={styles.debugSection}>
+                          <Text style={[styles.debugSectionTitle, { color: colors.text }]}>Device:</Text>
+                          <Text style={[styles.debugText, { color: colors.text + '80' }]}>
+                            {item.debugContext.deviceInfo.model} - {item.debugContext.deviceInfo.os} {item.debugContext.deviceInfo.version}
+                          </Text>
+                        </View>
+                      )}
+                      {item.debugContext.conversationHistory && (
+                        <View style={styles.debugSection}>
+                          <Text style={[styles.debugSectionTitle, { color: colors.text }]}>Conversation:</Text>
+                          {item.debugContext.conversationHistory.slice(0, 5).map((msg, idx) => (
+                            <Text key={idx} style={[styles.debugText, { color: colors.text + '80' }]} numberOfLines={3}>
+                              {msg.role}: {msg.message}
+                            </Text>
+                          ))}
+                          {item.debugContext.conversationHistory.length > 5 && (
+                            <Text style={[styles.debugText, { color: colors.text + '60' }]}>
+                              ... and {item.debugContext.conversationHistory.length - 5} more messages
+                            </Text>
+                          )}
+                        </View>
+                      )}
+                    </View>
+                  )}
+                </TouchableOpacity>
               )}
 
               <Text style={[styles.sectionTitle, { color: colors.text }]}>Query Steps:</Text>
@@ -382,12 +593,6 @@ const styles = StyleSheet.create({
     marginLeft: 24,
     marginTop: 2,
   },
-  emptyState: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 32,
-  },
   emptyText: {
     fontSize: 18,
     marginBottom: 8,
@@ -408,5 +613,62 @@ const styles = StyleSheet.create({
   clearButtonText: {
     fontSize: 14,
     fontWeight: '600',
+  },
+  exportButton: {
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    marginBottom: 16,
+    alignSelf: 'flex-start',
+  },
+  exportButtonText: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  exportButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  debugDataContainer: {
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0,0,0,0.1)',
+  },
+  debugLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  debugContent: {
+    marginTop: 4,
+  },
+  debugSection: {
+    marginBottom: 8,
+  },
+  debugSectionTitle: {
+    fontSize: 11,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  debugText: {
+    fontSize: 10,
+    lineHeight: 14,
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+  },
+  debugCode: {
+    fontSize: 10,
+    lineHeight: 14,
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+  },
+  debugContextSection: {
+    marginBottom: 16,
+  },
+  debugContextContent: {
+    marginTop: 8,
+    padding: 8,
+    backgroundColor: 'rgba(0,0,0,0.02)',
+    borderRadius: 4,
   },
 });

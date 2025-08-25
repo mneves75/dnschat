@@ -9,6 +9,20 @@ export interface DNSLogEntry {
   details?: string;
   error?: string;
   duration?: number;
+  // Debug mode fields
+  debugData?: {
+    rawRequest?: string;
+    rawResponse?: string;
+    dnsPacket?: any;
+    networkInfo?: {
+      server: string;
+      port: number;
+      protocol: string;
+    };
+    retryAttempt?: number;
+    headers?: Record<string, string>;
+    stackTrace?: string;
+  };
 }
 
 export interface DNSQueryLog {
@@ -21,15 +35,42 @@ export interface DNSQueryLog {
   finalMethod?: 'native' | 'udp' | 'tcp' | 'https' | 'mock';
   response?: string;
   entries: DNSLogEntry[];
+  // Debug mode fields
+  debugContext?: {
+    chatId?: string;
+    messageId?: string;
+    userId?: string;
+    appVersion?: string;
+    platform?: string;
+    deviceInfo?: {
+      model: string;
+      os: string;
+      version: string;
+    };
+    settingsSnapshot?: {
+      dnsServer: string;
+      preferDnsOverHttps: boolean;
+      dnsMethodPreference: string;
+      debugMode: boolean;
+    };
+    conversationHistory?: Array<{
+      role: 'user' | 'assistant';
+      message: string;
+      timestamp: Date;
+    }>;
+  };
 }
 
 const STORAGE_KEY = '@dns_query_logs';
 const MAX_LOGS = 100;
+const MAX_DEBUG_STRING_LENGTH = 10000; // 10KB max for any debug string
+const MAX_CONVERSATION_HISTORY = 10; // Keep only last 10 messages
 
 export class DNSLogService {
   private static currentQueryLog: DNSQueryLog | null = null;
   private static queryLogs: DNSQueryLog[] = [];
   private static listeners: Set<(logs: DNSQueryLog[]) => void> = new Set();
+  private static debugMode: boolean = false;
 
   static async initialize() {
     try {
@@ -52,7 +93,75 @@ export class DNSLogService {
     }
   }
 
-  static startQuery(query: string): string {
+  static setDebugMode(enabled: boolean) {
+    this.debugMode = enabled;
+    console.log(`🐛 DNSLogService debug mode: ${enabled ? 'ENABLED' : 'DISABLED'}`);
+  }
+
+  static getDebugMode(): boolean {
+    return this.debugMode;
+  }
+
+  private static truncateString(str: string | undefined, maxLength: number = MAX_DEBUG_STRING_LENGTH): string | undefined {
+    if (!str) return str;
+    if (str.length <= maxLength) return str;
+    return str.substring(0, maxLength) + '... [TRUNCATED]';
+  }
+
+  private static sanitizeDebugData(debugData: DNSLogEntry['debugData']): DNSLogEntry['debugData'] {
+    if (!debugData) return debugData;
+    
+    // Safely stringify and truncate dnsPacket
+    let sanitizedPacket = undefined;
+    if (debugData.dnsPacket) {
+      try {
+        // Handle circular references with a replacer
+        const seen = new WeakSet();
+        const packetStr = JSON.stringify(debugData.dnsPacket, (key, value) => {
+          if (typeof value === 'object' && value !== null) {
+            if (seen.has(value)) {
+              return '[Circular]';
+            }
+            seen.add(value);
+          }
+          return value;
+        }, 2);
+        
+        // If too large, just store a truncated string representation
+        sanitizedPacket = packetStr.length > 1000 
+          ? { truncated: true, preview: packetStr.substring(0, 1000) + '...' }
+          : debugData.dnsPacket;
+      } catch (e) {
+        // Handle any serialization errors
+        sanitizedPacket = { error: 'Could not serialize DNS packet', type: typeof debugData.dnsPacket };
+      }
+    }
+    
+    return {
+      ...debugData,
+      rawRequest: this.truncateString(debugData.rawRequest),
+      rawResponse: this.truncateString(debugData.rawResponse),
+      stackTrace: this.truncateString(debugData.stackTrace, 5000),
+      dnsPacket: sanitizedPacket,
+    };
+  }
+
+  private static sanitizeDebugContext(debugContext: DNSQueryLog['debugContext']): DNSQueryLog['debugContext'] {
+    if (!debugContext) return debugContext;
+    
+    return {
+      ...debugContext,
+      // Limit conversation history safely
+      conversationHistory: debugContext.conversationHistory 
+        ? debugContext.conversationHistory.slice(-MAX_CONVERSATION_HISTORY).map(msg => ({
+            ...msg,
+            message: this.truncateString(msg.message, 500) || '',
+          }))
+        : undefined,
+    };
+  }
+
+  static startQuery(query: string, debugContext?: DNSQueryLog['debugContext']): string {
     const queryId = `query-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     
     this.currentQueryLog = {
@@ -61,6 +170,7 @@ export class DNSLogService {
       startTime: new Date(),
       finalStatus: 'pending',
       entries: [],
+      ...(this.debugMode && debugContext ? { debugContext: this.sanitizeDebugContext(debugContext) } : {}),
     };
 
     this.addLog({
@@ -83,7 +193,8 @@ export class DNSLogService {
 
   static logMethodAttempt(
     method: DNSLogEntry['method'],
-    details?: string
+    details?: string,
+    debugData?: DNSLogEntry['debugData']
   ) {
     if (!this.currentQueryLog) return;
 
@@ -94,6 +205,8 @@ export class DNSLogService {
       method,
       status: 'attempt',
       details,
+      // Only include debug data if debug mode is enabled, and sanitize it
+      ...(this.debugMode && debugData ? { debugData: this.sanitizeDebugData(debugData) } : {}),
     };
 
     this.addLog(entry);
@@ -102,7 +215,8 @@ export class DNSLogService {
   static logMethodSuccess(
     method: DNSLogEntry['method'],
     duration: number,
-    details?: string
+    details?: string,
+    debugData?: DNSLogEntry['debugData']
   ) {
     if (!this.currentQueryLog) return;
 
@@ -114,6 +228,7 @@ export class DNSLogService {
       status: 'success',
       details,
       duration,
+      ...(this.debugMode && debugData ? { debugData: this.sanitizeDebugData(debugData) } : {}),
     };
 
     this.addLog(entry);
@@ -122,7 +237,8 @@ export class DNSLogService {
   static logMethodFailure(
     method: DNSLogEntry['method'],
     error: string,
-    duration?: number
+    duration?: number,
+    debugData?: DNSLogEntry['debugData']
   ) {
     if (!this.currentQueryLog) return;
 
@@ -134,6 +250,7 @@ export class DNSLogService {
       status: 'failure',
       error,
       duration,
+      ...(this.debugMode && debugData ? { debugData } : {}),
     };
 
     this.addLog(entry);
@@ -271,5 +388,74 @@ export class DNSLogService {
       fallback: '↩️',
     };
     return icons[status] || '•';
+  }
+
+  static exportLogAsJSON(log: DNSQueryLog): string {
+    try {
+      // Create a comprehensive export object
+      const exportData = {
+        metadata: {
+          exportDate: new Date().toISOString(),
+          exportVersion: '1.0.0',
+          logId: log.id,
+        },
+        query: {
+          text: log.query,
+          startTime: log.startTime,
+          endTime: log.endTime,
+          totalDuration: log.totalDuration,
+          finalStatus: log.finalStatus,
+          finalMethod: log.finalMethod,
+        },
+        response: log.response,
+        debugContext: log.debugContext,
+        timeline: log.entries.map(entry => ({
+          timestamp: entry.timestamp,
+          method: entry.method,
+          status: entry.status,
+          message: entry.message,
+          duration: entry.duration,
+          details: entry.details,
+          error: entry.error,
+          ...(entry.debugData ? { debugData: entry.debugData } : {}),
+        })),
+        statistics: {
+          totalEntries: log.entries.length,
+          methodsAttempted: [...new Set(log.entries.map(e => e.method).filter(Boolean))],
+          successCount: log.entries.filter(e => e.status === 'success').length,
+          failureCount: log.entries.filter(e => e.status === 'failure').length,
+          fallbackCount: log.entries.filter(e => e.status === 'fallback').length,
+        },
+      };
+
+      // Use a replacer to handle circular references
+      const seen = new WeakSet();
+      return JSON.stringify(exportData, (key, value) => {
+        if (typeof value === 'object' && value !== null) {
+          if (seen.has(value)) {
+            return '[Circular Reference]';
+          }
+          seen.add(value);
+        }
+        return value;
+      }, 2);
+    } catch (error) {
+      console.error('Failed to export log as JSON:', error);
+      // Return a minimal error export
+      return JSON.stringify({
+        error: 'Export failed',
+        logId: log.id,
+        query: log.query,
+        timestamp: new Date().toISOString(),
+      }, null, 2);
+    }
+  }
+
+  static generateExportFilename(log: DNSQueryLog): string {
+    const date = new Date(log.startTime);
+    const dateStr = date.toISOString().split('T')[0];
+    const timeStr = date.toTimeString().split(' ')[0].replace(/:/g, '-');
+    const querySnippet = log.query.substring(0, 20).replace(/[^a-zA-Z0-9]/g, '_');
+    return `dns-log-${dateStr}-${timeStr}-${querySnippet}.json`;
   }
 }

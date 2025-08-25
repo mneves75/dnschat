@@ -136,8 +136,30 @@ export class DNSService {
     // Sanitize the message for DNS query
     const sanitizedMessage = this.sanitizeMessage(message);
     
-    // Start logging the query
-    const queryId = DNSLogService.startQuery(message);
+    // Prepare debug context if debug mode is enabled
+    let debugContext = undefined;
+    if (DNSLogService.getDebugMode()) {
+      debugContext = {
+        platform: Platform.OS,
+        appVersion: String(Platform.Version), // Ensure it's always a string
+        deviceInfo: {
+          model: Platform.OS === 'ios' ? 'iOS Device' : 'Android Device',
+          os: Platform.OS,
+          version: String(Platform.Version),
+        },
+        settingsSnapshot: {
+          dnsServer: targetServer,
+          preferDnsOverHttps: preferHttps || false,
+          dnsMethodPreference: methodPreference || 'automatic',
+          debugMode: true,
+        },
+        // TODO: Pass actual conversation history from ChatContext
+        // conversationHistory: chatContext?.getRecentMessages()
+      };
+    }
+    
+    // Start logging the query with debug context
+    const queryId = DNSLogService.startQuery(message, debugContext);
     
     for (let attempt = 0; attempt < this.MAX_RETRIES; attempt++) {
       try {
@@ -733,7 +755,17 @@ export class DNSService {
     const startTime = Date.now();
     
     try {
-      DNSLogService.logMethodAttempt(method, `Server: ${targetServer}`);
+      // Capture debug data if debug mode is enabled
+      const debugData = DNSLogService.getDebugMode() ? {
+        networkInfo: {
+          server: targetServer,
+          port: this.DNS_PORT,
+          protocol: method === 'https' ? 'https' : method === 'tcp' ? 'tcp' : 'udp',
+        },
+        rawRequest: `Query: ${message} to ${targetServer}`,
+      } : undefined;
+      
+      DNSLogService.logMethodAttempt(method, `Server: ${targetServer}`, debugData);
       
       let txtRecords: string[];
       
@@ -973,8 +1005,30 @@ export class DNSService {
     // Sanitize the message for DNS query
     const sanitizedMessage = this.sanitizeMessage(message);
     
-    // Start logging the query
-    const queryId = DNSLogService.startQuery(message);
+    // Prepare debug context if debug mode is enabled
+    let debugContext = undefined;
+    if (DNSLogService.getDebugMode()) {
+      debugContext = {
+        platform: Platform.OS,
+        appVersion: String(Platform.Version), // Ensure it's always a string
+        deviceInfo: {
+          model: Platform.OS === 'ios' ? 'iOS Device' : 'Android Device',
+          os: Platform.OS,
+          version: String(Platform.Version),
+        },
+        settingsSnapshot: {
+          dnsServer: targetServer,
+          preferDnsOverHttps: preferHttps || false,
+          dnsMethodPreference: methodPreference || 'automatic',
+          debugMode: true,
+        },
+        // TODO: Pass actual conversation history from ChatContext
+        // conversationHistory: chatContext?.getRecentMessages()
+      };
+    }
+    
+    // Start logging the query with debug context
+    const queryId = DNSLogService.startQuery(message, debugContext);
     
     const startTime = Date.now();
     

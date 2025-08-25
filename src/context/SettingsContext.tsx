@@ -12,6 +12,8 @@ interface SettingsContextType {
   updateDnsMethodPreference: (preference: DNSMethodPreference) => Promise<void>;
   enableMockDNS: boolean;
   updateEnableMockDNS: (enable: boolean) => Promise<void>;
+  debugMode: boolean;
+  updateDebugMode: (enable: boolean) => Promise<void>;
   loading: boolean;
 }
 
@@ -25,6 +27,7 @@ interface Settings {
   preferDnsOverHttps?: boolean;
   dnsMethodPreference?: DNSMethodPreference;
   enableMockDNS?: boolean;
+  debugMode?: boolean;
 }
 
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
@@ -32,6 +35,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const [preferDnsOverHttps, setPreferDnsOverHttps] = useState<boolean>(false);
   const [dnsMethodPreference, setDnsMethodPreference] = useState<DNSMethodPreference>('native-first');
   const [enableMockDNS, setEnableMockDNS] = useState<boolean>(false);
+  const [debugMode, setDebugMode] = useState<boolean>(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -51,7 +55,8 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         setPreferDnsOverHttps(settings.preferDnsOverHttps ?? false);
         setDnsMethodPreference(settings.dnsMethodPreference ?? 'native-first');
         setEnableMockDNS(settings.enableMockDNS ?? false);
-        console.log('✅ Settings loaded - DNS method:', settings.dnsMethodPreference ?? 'native-first', 'MockDNS:', settings.enableMockDNS ?? false);
+        setDebugMode(settings.debugMode ?? false);
+        console.log('✅ Settings loaded - DNS method:', settings.dnsMethodPreference ?? 'native-first', 'MockDNS:', settings.enableMockDNS ?? false, 'Debug:', settings.debugMode ?? false);
       } else {
         // First launch - initialize default settings
         console.log('🆕 First launch detected - initializing default settings');
@@ -60,6 +65,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
           preferDnsOverHttps: false,
           dnsMethodPreference: 'native-first',
           enableMockDNS: false,
+          debugMode: false,
         };
         
         // Save defaults for future launches
@@ -83,6 +89,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         preferDnsOverHttps,
         dnsMethodPreference,
         enableMockDNS,
+        debugMode,
       };
       
       await AsyncStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
@@ -101,6 +108,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         preferDnsOverHttps: prefer,
         dnsMethodPreference,
         enableMockDNS,
+        debugMode,
       };
       
       await AsyncStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
@@ -120,6 +128,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         preferDnsOverHttps,
         dnsMethodPreference: preference,
         enableMockDNS,
+        debugMode,
       };
       
       console.log('💾 Saving settings to storage:', settings);
@@ -141,6 +150,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         preferDnsOverHttps,
         dnsMethodPreference,
         enableMockDNS: enable,
+        debugMode,
       };
       
       console.log('💾 Saving settings to storage:', settings);
@@ -148,6 +158,28 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       console.log('✅ Enable Mock DNS preference saved successfully');
     } catch (error) {
       console.error('❌ Error saving enable Mock DNS preference:', error);
+      throw error;
+    }
+  };
+
+  const updateDebugMode = async (enable: boolean) => {
+    try {
+      console.log('🐛 Updating debug mode:', enable);
+      setDebugMode(enable);
+      
+      const settings: Settings = {
+        dnsServer,
+        preferDnsOverHttps,
+        dnsMethodPreference,
+        enableMockDNS,
+        debugMode: enable,
+      };
+      
+      console.log('💾 Saving settings to storage:', settings);
+      await AsyncStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+      console.log('✅ Debug mode preference saved successfully');
+    } catch (error) {
+      console.error('❌ Error saving debug mode preference:', error);
       throw error;
     }
   };
@@ -162,6 +194,8 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       updateDnsMethodPreference,
       enableMockDNS,
       updateEnableMockDNS,
+      debugMode,
+      updateDebugMode,
       loading 
     }}>
       {children}

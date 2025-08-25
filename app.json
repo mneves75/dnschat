@@ -10,19 +10,14 @@
     "scheme": "dnschat",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "org.mvneves.dnschat",
-      "deploymentTarget": "16.0",
-      "liquidGlassIcon": true
+      "bundleIdentifier": "org.mvneves.dnschat"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./icons/dnschat_ios26.png",
         "backgroundColor": "#0D7377"
       },
-      "package": "org.mvneves.dnschat",
-      "targetSdkVersion": 36,
-      "edgeToEdge": true,
-      "predictiveBackGesture": true
+      "package": "org.mvneves.dnschat"
     },
     "web": {
       "favicon": "./assets/favicon.png"

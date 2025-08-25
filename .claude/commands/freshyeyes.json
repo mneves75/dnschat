@@ -1,0 +1,110 @@
+{
+  "name": "freshyeyes",
+  "description": "Perform ultra-thorough code review with fresh eyes (Carmack-level scrutiny)",
+  "version": "1.0.0",
+  "author": "Marcus Neves",
+  "trigger": "/freshyeyes",
+  "aliases": ["/fresh", "/review", "/carmack"],
+  "prompt": "Great, now I want you to carefully read over all of the new code you just wrote and other existing code you just modified with "fresh eyes," looking super carefully for any obvious bugs, errors, problems, issues, confusion, etc. Write tests before it starts its implementation. John Carmack will review all! ultra think!",
+  "configuration": {
+    "autoExecute": false,
+    "requireConfirmation": false,
+    "showProgress": true,
+    "outputFormat": "markdown"
+  },
+  "parameters": {
+    "scope": {
+      "type": "string",
+      "description": "Scope of review: 'recent' (default), 'all', or specific file paths",
+      "default": "recent",
+      "required": false
+    },
+    "focus": {
+      "type": "string", 
+      "description": "Specific focus area: 'security', 'performance', 'logic', 'all' (default)",
+      "default": "all",
+      "required": false
+    },
+    "depth": {
+      "type": "string",
+      "description": "Review depth: 'quick', 'normal', 'deep' (default)",
+      "default": "deep",
+      "required": false
+    }
+  },
+  "reviewCategories": [
+    {
+      "name": "Critical Bugs",
+      "priority": "CRITICAL",
+      "checks": [
+        "Memory leaks",
+        "Race conditions", 
+        "Security vulnerabilities",
+        "Null reference errors",
+        "Type safety violations"
+      ]
+    },
+    {
+      "name": "Logic Issues",
+      "priority": "HIGH",
+      "checks": [
+        "Off-by-one errors",
+        "Incorrect conditionals",
+        "Missing error handling",
+        "Edge cases",
+        "Infinite loops"
+      ]
+    },
+    {
+      "name": "Performance",
+      "priority": "MEDIUM",
+      "checks": [
+        "N+1 queries",
+        "Algorithm efficiency",
+        "Caching opportunities",
+        "Database optimization",
+        "Unnecessary computations"
+      ]
+    },
+    {
+      "name": "Code Quality",
+      "priority": "LOW",
+      "checks": [
+        "Variable shadowing",
+        "Dead code",
+        "Magic numbers",
+        "Naming conventions",
+        "Code duplication"
+      ]
+    }
+  ],
+  "outputTemplate": {
+    "header": "# 🔍 Fresh Eyes Code Review Report",
+    "sections": [
+      "## 🔴 CRITICAL ISSUES",
+      "## 🟡 HIGH PRIORITY", 
+      "## 🟢 MEDIUM PRIORITY",
+      "## 🔵 LOW PRIORITY",
+      "## 📊 Summary",
+      "## ✅ Action Items"
+    ]
+  },
+  "examples": [
+    {
+      "command": "/freshyeyes",
+      "description": "Review all recent changes with deep analysis"
+    },
+    {
+      "command": "/freshyeyes scope=worker/src focus=security",
+      "description": "Security-focused review of worker source"
+    },
+    {
+      "command": "/freshyeyes depth=quick",
+      "description": "Quick review for obvious issues"
+    }
+  ],
+  "hooks": {
+    "pre": "echo 'Starting Fresh Eyes review...'",
+    "post": "echo 'Review complete. Check report above.'"
+  }
+}

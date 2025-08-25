@@ -7,7 +7,7 @@ import { useOnboarding } from '../../context/OnboardingContext';
 export function Settings() {
   const { colors } = useTheme();
   const navigation = useNavigation();
-  const { dnsServer, updateDnsServer, preferDnsOverHttps, updatePreferDnsOverHttps, dnsMethodPreference, updateDnsMethodPreference, loading } = useSettings();
+  const { dnsServer, updateDnsServer, preferDnsOverHttps, updatePreferDnsOverHttps, dnsMethodPreference, updateDnsMethodPreference, debugMode, updateDebugMode, loading } = useSettings();
   const { resetOnboarding } = useOnboarding();
   const [tempDnsServer, setTempDnsServer] = useState(dnsServer);
   const [tempPreferHttps, setTempPreferHttps] = useState(preferDnsOverHttps);
@@ -390,7 +390,7 @@ export function Settings() {
               }
             ]}
             onPress={() => {
-              navigation.navigate('HomeTabs', { screen: 'Logs' });
+              (navigation as any).navigate('HomeTabs', { screen: 'Logs' });
             }}
             disabled={testRunning}
           >
@@ -453,6 +453,26 @@ export function Settings() {
           <Text style={[styles.sectionTitle, { color: colors.text }]}> 
             Development
           </Text>
+          
+          <View style={[styles.switchRow, { backgroundColor: colors.card, borderColor: colors.border, marginBottom: 12 }]}> 
+            <View style={styles.switchInfo}>
+              <Text style={[styles.switchLabel, { color: colors.text }]}> 
+                Debug Mode
+              </Text>
+              <Text style={[styles.switchDescription, { color: colors.text + '80' }]}> 
+                Capture detailed logs for conversation debugging
+              </Text>
+            </View>
+            <Switch
+              value={debugMode}
+              onValueChange={updateDebugMode}
+              trackColor={{ false: colors.border, true: '#007AFF' }}
+              thumbColor={debugMode ? '#FFFFFF' : '#F4F3F4'}
+              ios_backgroundColor={colors.border}
+              disabled={loading || saving}
+            />
+          </View>
+          
           <TouchableOpacity
             style={[
               styles.devButton,

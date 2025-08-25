@@ -33,8 +33,8 @@ final class DNSResolver: NSObject {
         
         Task {
             do {
-                // Check for existing query (MainActor-safe access)
-                if let existingQuery = await MainActor.run({ activeQueries[queryId] }) {
+                // Check for existing query
+                if let existingQuery = await activeQueries[queryId] {
                     let result = try await existingQuery.value
                     resolver(result)
                     return
@@ -79,29 +79,6 @@ final class DNSResolver: NSObject {
     @available(iOS 12.0, *)
     private func performNetworkFrameworkQuery(domain: String, message: String) async throws -> [String] {
         return try await withCheckedThrowingContinuation { continuation in
-            // ENTERPRISE-GRADE: Atomic continuation resume protection (iOS 16.0+ compatible)
-            let resumeLock = NSLock()
-            var hasResumed = false
-            
-            let resumeOnce: (Result<[String], Error>) -> Void = { result in
-                resumeLock.lock()
-                defer { resumeLock.unlock() }
-                
-                if !hasResumed {
-                    hasResumed = true
-                    // Immediately cancel resolver to prevent further callbacks
-                    nw_resolver_cancel(resolver)
-                    
-                    switch result {
-                    case .success(let records):
-                        continuation.resume(returning: records)
-                    case .failure(let error):
-                        continuation.resume(throwing: error)
-                    }
-                }
-                // Silent ignore if already resumed - prevents crashes
-            }
-            
             // Create resolver configuration pointing to our DNS server
             let endpoint = NWEndpoint.hostPort(
                 host: NWEndpoint.Host(Self.dnsServer),
@@ -118,13 +95,13 @@ final class DNSResolver: NSObject {
                 switch status {
                 case .ready:
                     // Resolver is ready, perform the query
-                    self.executeQuerySafe(resolver: resolver, message: message, resumeHandler: resumeOnce)
+                    self.executeQuery(resolver: resolver, message: message, continuation: continuation)
                     
                 case .failed(let error):
-                    resumeOnce(.failure(DNSError.resolverFailed(error.localizedDescription)))
+                    continuation.resume(throwing: DNSError.resolverFailed(error.localizedDescription))
                     
                 case .cancelled:
-                    resumeOnce(.failure(DNSError.cancelled))
+                    continuation.resume(throwing: DNSError.cancelled)
                     
                 default:
                     break
@@ -137,32 +114,34 @@ final class DNSResolver: NSObject {
     }
     
     @available(iOS 12.0, *)
-    private func executeQuerySafe(
+    private func executeQuery(
         resolver: nw_resolver_t,
         message: String,
-        resumeHandler: @escaping (Result<[String], Error>) -> Void
+        continuation: CheckedContinuation<[String], Error>
     ) {
         // Create DNS query for TXT record
         let queryData = createDNSQuery(message: message)
         
         nw_resolver_query_txt(resolver, queryData) { records, error in
-            // Note: resolver cancellation handled by resumeHandler to prevent race conditions
+            defer {
+                nw_resolver_cancel(resolver)
+            }
             
             if let error = error {
-                resumeHandler(.failure(DNSError.queryFailed(error.localizedDescription)))
+                continuation.resume(throwing: DNSError.queryFailed(error.localizedDescription))
                 return
             }
             
             guard let records = records else {
-                resumeHandler(.failure(DNSError.noRecordsFound))
+                continuation.resume(throwing: DNSError.noRecordsFound)
                 return
             }
             
             do {
                 let txtRecords = try self.parseTXTRecords(records)
-                resumeHandler(.success(txtRecords))
+                continuation.resume(returning: txtRecords)
             } catch {
-                resumeHandler(.failure(error))
+                continuation.resume(throwing: error)
             }
         }
     }
@@ -189,17 +168,17 @@ final class DNSResolver: NSObject {
         return query
     }
     
-    private func encodeDomainName(_ message: String) -> Data {
-        // FIXED: Proper single-label DNS encoding for ch.at message queries
-        // Don't treat message as multi-label domain - encode as single label
+    private func encodeDomainName(_ domain: String) -> Data {
         var data = Data()
-        let messageData = message.data(using: .utf8) ?? Data()
+        let components = domain.components(separatedBy: ".")
         
-        // Single label encoding: length-prefixed string
-        data.append(UInt8(messageData.count))
-        data.append(messageData)
-        data.append(0x00) // Null terminator for end of labels
+        for component in components {
+            let componentData = component.data(using: .utf8) ?? Data()
+            data.append(UInt8(componentData.count))
+            data.append(componentData)
+        }
         
+        data.append(0x00) // Null terminator
         return data
     }
     
