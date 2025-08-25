@@ -48,5 +48,23 @@ target 'DNSChat' do
       :mac_catalyst_enabled => false,
       :ccache_enabled => podfile_properties['apple.ccacheEnabled'] == 'true',
     )
+
+    # Ensure ReactCommon headers (e.g., RuntimeExecutor.h) are discoverable when using static frameworks
+    installer.pods_project.targets.each do |t|
+      t.build_configurations.each do |config|
+        config.build_settings['USE_HEADERMAP'] = 'YES'
+        # Ensure Pods public/private headers are visible to all pods during build
+        hdrs = config.build_settings['HEADER_SEARCH_PATHS'] || '$(inherited)'
+        extra = [
+          '$(PODS_ROOT)/Headers/Public/**',
+          '$(PODS_ROOT)/Headers/Private/**',
+          # Built products headers (static frameworks expose headers here)
+          '$(PODS_CONFIGURATION_BUILD_DIR)/**'
+        ]
+        config.build_settings['HEADER_SEARCH_PATHS'] = [hdrs].flatten.concat(extra)
+        # Enable modules to allow modular header resolution
+        config.build_settings['CLANG_ENABLE_MODULES'] = 'YES'
+      end
+    end
   end
 end
