@@ -73,9 +73,9 @@ rm -rf ios/build/
 npm run ios
 ```
 
-**CocoaPods Sandbox Sync Error**
+**CocoaPods Sandbox Sync Error / Xcode PIF Session Error**
 ```bash
-# Automated fix
+# Automated fix (cleans Pods and resets Xcode caches/PIF session)
 npm run fix-pods
 
 # Manual fix
@@ -83,6 +83,18 @@ cd ios
 rm -rf Pods/ Podfile.lock build/
 pod cache clean --all
 pod install
+```
+
+### “Could not compute dependency graph” or “unable to initiate PIF transfer session”
+
+**Symptoms**:
+- Xcode shows dependency graph errors
+- Logs include: `unable to initiate PIF transfer session (operation in progress?)`
+
+**Solution**:
+```bash
+npm run fix-pods
+# Then open ios/DNSChat.xcworkspace and build for a simulator
 ```
 
 **folly/dynamic.h Missing** (React Native 0.79.x)

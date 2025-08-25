@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- iOS: Enhanced `scripts/fix-cocoapods.sh` to also reset Xcode PIF sessions and clear build caches (DerivedData, ModuleCache, SwiftPM, Xcode cache). Resolves “Could not compute dependency graph” and “unable to initiate PIF transfer session (operation in progress?)”.
+
 ## [2.2.0] - 2025-08-25
 
 ### 🎉 Major: Expo SDK 54 Upgrade & Debug Logging System

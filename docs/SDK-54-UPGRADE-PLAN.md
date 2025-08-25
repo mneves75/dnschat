@@ -38,7 +38,7 @@ This document outlines the comprehensive plan to upgrade DNSChat from Expo SDK 5
    rm -rf node_modules
    rm -rf ios android
    rm -rf .expo
-   rm -rf ~/Library/Developer/Xcode/DerivedData/DNSChat-*
+   rm -rf ~/Library/Developer/Xcode/DerivedData/*
    npx expo-doctor --clear-cache
    ```
 

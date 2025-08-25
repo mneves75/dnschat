@@ -63,7 +63,10 @@ rm -rf ~/Library/Caches/CocoaPods
 pod cache clean --all
 
 # Clear Xcode derived data (optional)
-rm -rf ~/Library/Developer/Xcode/DerivedData/DNSChat-*
+rm -rf ~/Library/Developer/Xcode/DerivedData/*
+
+# Or use the project script to clean Pods and reset Xcode caches/PIF
+npm run fix-pods
 ```
 
 ### Step 3: Rebuild iOS

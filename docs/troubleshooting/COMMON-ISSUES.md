@@ -539,7 +539,7 @@ mcp__XcodeBuildMCP__build_sim workspacePath=ios/DNSChat.xcworkspace scheme=DNSCh
 3. **Additional Fixes for Swift Module Issues:**
 ```bash
 # Clear derived data for Swift module compatibility
-rm -rf ~/Library/Developer/Xcode/DerivedData/DNSChat-*
+rm -rf ~/Library/Developer/Xcode/DerivedData/*
 
 # Clear extended attributes causing sandbox issues
 cd ios

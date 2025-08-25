@@ -59,7 +59,7 @@ rm ./.xcode.env.local  # Remove corrupted Node.js path file
 cd ..
 
 # Clear derived data for fresh start
-rm -rf ~/Library/Developer/Xcode/DerivedData/DNSChat-*
+rm -rf ~/Library/Developer/Xcode/DerivedData/*
 
 # Clear extended attributes (sandbox permissions)
 cd ios && xattr -cr "Pods/Target Support Files/Pods-DNSChat/" && cd ..
@@ -250,7 +250,7 @@ If XcodeBuildMCP is unavailable:
 ```bash
 # Apply primary fixes manually
 cd ios && rm ./.xcode.env.local && cd ..
-rm -rf ~/Library/Developer/Xcode/DerivedData/DNSChat-*
+rm -rf ~/Library/Developer/Xcode/DerivedData/*
 npm run fix-pods
 npm run ios
 ```

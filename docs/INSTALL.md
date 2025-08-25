@@ -129,13 +129,19 @@ npm run web
 
 ### iOS Issues
 
-**CocoaPods Sandbox Sync Error**
+**CocoaPods Sandbox Sync Error / Xcode PIF Session**
 ```bash
-# Quick fix
+# Quick fix (cleans Pods and resets Xcode caches/PIF session)
 npm run fix-pods
 
 # Manual fix
 cd ios && rm -rf Pods/ Podfile.lock && pod install
+```
+
+**Could not compute dependency graph / PIF transfer session**
+```bash
+# Run the maintenance script, then rebuild in Xcode
+npm run fix-pods
 ```
 
 **Swift Compilation Errors**

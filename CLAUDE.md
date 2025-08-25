@@ -171,7 +171,7 @@ npm run clean-ios
 cd ios
 rm -rf Pods/ Podfile.lock build/
 pod cache clean --all
-rm -rf ~/Library/Developer/Xcode/DerivedData/DNSChat-*
+rm -rf ~/Library/Developer/Xcode/DerivedData/*
 pod deintegrate --verbose
 pod install --verbose
 ```
@@ -277,7 +277,7 @@ mcp__XcodeBuildMCP__get_sim_app_path workspacePath=ios/DNSChat.xcworkspace schem
 #### Traditional Fallback (if XcodeBuildMCP unavailable)
 ```bash
 # Clear derived data for Swift module issues
-rm -rf ~/Library/Developer/Xcode/DerivedData/DNSChat-*
+rm -rf ~/Library/Developer/Xcode/DerivedData/*
 
 # Clear extended attributes for sandbox issues
 cd ios && xattr -cr "Pods/Target Support Files/Pods-DNSChat/" && cd ..

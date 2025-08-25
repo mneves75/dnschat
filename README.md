@@ -176,8 +176,9 @@ npm run sync-versions:dry
 npx expo start --clear
 ```
 
-**Fix iOS CocoaPods Issues**
+**Fix iOS CocoaPods/Xcode Build Issues**
 ```bash
+# Cleans Pods and also resets Xcode caches/PIF sessions
 npm run fix-pods
 ```
 
@@ -201,6 +202,11 @@ npm run clean-ios
 ```bash
 cd ios && pod install && cd ..
 npm run ios
+```
+
+If you see “Could not compute dependency graph” or “unable to initiate PIF transfer session”, run:
+```bash
+npm run fix-pods
 ```
 
 **Android Build Errors**
