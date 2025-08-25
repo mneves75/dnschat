@@ -41,6 +41,7 @@
             "flipper": false,
             "ccacheEnabled": true,
             "newArchEnabled": true,
+            "buildReactNativeFromSource": true,
             "generateStaticFrameworks": true,
             "generateSourcemap": true,
             "includeSymbolsInDsym": true,
