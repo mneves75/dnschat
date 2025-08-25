@@ -73,6 +73,20 @@ rm -rf ios/build/
 npm run ios
 ```
 
+### “'ReactCommon/RuntimeExecutor.h' file not found” (iOS)
+
+**Cause**: Header search paths can break when using static frameworks with RN 0.81.0.
+
+**Fix**:
+```bash
+# Podfile includes a post_install that restores header maps and search paths
+# 1) Reinstall pods and reset Xcode caches
+npm run fix-pods
+
+# 2) Clean build for simulator
+npm run ios:clean-build
+```
+
 **CocoaPods Sandbox Sync Error / Xcode PIF Session Error**
 ```bash
 # Automated fix (cleans Pods and resets Xcode caches/PIF session)
