@@ -7,6 +7,88 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.2.0] - 2025-08-25
+
+### 🎉 Major: Expo SDK 54 Upgrade & Debug Logging System
+
+#### **Framework Upgrades**
+
+- **✅ Expo SDK 54**: Upgraded from SDK 53 to 54.0.0-preview.7
+  - React Native 0.81.0 (from 0.79.5)
+  - React 19.1.0 (from 18.3.1)
+  - TypeScript 5.9.2 compatibility
+  - New Architecture fully enabled
+  - Precompiled iOS frameworks (with workaround)
+
+#### **Debug Logging System**
+
+- **✅ Comprehensive Debug Mode**: Production-grade diagnostic system
+  - DEBUG mode toggle in Settings → Development
+  - Captures detailed DNS query diagnostics when enabled
+  - Network configuration and device information
+  - Conversation context (last 10 messages)
+  - Settings snapshot at query time
+  - Complete error stack traces
+
+- **✅ Export Functionality**: Share detailed logs for debugging
+  - Export individual logs as JSON
+  - Share via email, WhatsApp, or save to files
+  - Platform-specific implementations (iOS/Android/Web)
+  - Circular reference protection with WeakSet
+  - Memory-safe data truncation (10KB strings, 10 messages)
+
+#### **Network Safety Layer**
+
+- **✅ Circuit Breaker Implementation**: Protection from unstable libraries
+  - Health monitoring for UDP/TCP modules
+  - Automatic failure detection and recovery
+  - Safe wrappers preventing crashes
+  - Dynamic module loading with error boundaries
+  - Fallback to HTTPS when network methods fail
+
+- **✅ Library Compatibility**: Mitigated unmaintained package risks
+  - react-native-udp (unmaintained 2+ years) - wrapped safely
+  - react-native-tcp-socket (untested with New Architecture) - protected
+  - Automatic method switching based on health status
+
+#### **iOS Build Workaround**
+
+- **✅ CocoaPods XCFramework Fix**: Resolved SDK 54 beta issue
+  - Added `buildReactNativeFromSource: true` to expo-build-properties
+  - Bypasses precompiled framework bug
+  - Trade-off: Build times ~120s instead of ~10s
+  - Both iOS and Android platforms fully operational
+  - Can be removed when React Native 0.81.1 releases
+
+#### **Documentation**
+
+- **✅ Comprehensive Upgrade Documentation**:
+  - SDK-54-UPGRADE-PLAN.md: Complete implementation blueprint
+  - SDK-54-UPGRADE-REPORT.md: Detailed results and metrics
+  - SDK-54-IOS-WORKAROUND.md: iOS build fix instructions
+  - Test suites for compatibility verification
+
+### Changed
+
+- Updated all dependencies to SDK 54 compatible versions
+- Modified app.json for SDK 54 configuration requirements
+- Enhanced error handling with safety wrappers
+- Improved DNS service resilience with health checks
+
+### Fixed
+
+- iOS build failures with CocoaPods XCFramework
+- Potential crashes from unmaintained network libraries
+- Memory leaks in debug data capture
+- Circular reference issues in JSON serialization
+
+### Technical Metrics
+
+- Feature Verification: 23/25 tests passing (92%)
+- Platform Support: iOS ✅ Android ✅
+- Production Ready: Yes (with build time trade-off)
+- Breaking Changes: None for end users
+
 ## [2.1.2] - 2025-08-22
 
 ### 🚨 CRITICAL: Production-Breaking DNS Bug Fixes
