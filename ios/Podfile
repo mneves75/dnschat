@@ -59,6 +59,14 @@ target 'DNSChat' do
         hdrs = config.build_settings['HEADER_SEARCH_PATHS'] || '$(inherited)'
         hdrs = [hdrs].flatten unless hdrs.is_a?(Array)
         
+        # CRITICAL: C++ Standard Library headers must come FIRST for proper header resolution
+        cpp_system_paths = [
+          # C++ Standard Library (MUST BE FIRST)
+          '"$(SDKROOT)/usr/include/c++/v1"',
+          # C Standard Library  
+          '"$(SDKROOT)/usr/include"'
+        ]
+        
         # Comprehensive header search paths for React Native 0.81
         extra_paths = [
           '$(PODS_ROOT)/Headers/Public/**',
@@ -85,18 +93,38 @@ target 'DNSChat' do
           '"$(PODS_ROOT)/Headers/Private/glog"'
         ]
         
-        config.build_settings['HEADER_SEARCH_PATHS'] = hdrs.concat(extra_paths).uniq
+        # Ensure C++ paths come first, then inherited, then extra paths
+        config.build_settings['HEADER_SEARCH_PATHS'] = cpp_system_paths + hdrs + extra_paths
+        config.build_settings['HEADER_SEARCH_PATHS'] = config.build_settings['HEADER_SEARCH_PATHS'].uniq
         
         # Specific fixes for problematic targets
         if target.name == 'RCT-Folly'
-          # Fix for RCT-Folly missing system headers on Xcode 26 / iOS SDK 26
+          # Fix for RCT-Folly C++ header ordering on Xcode 26 / iOS SDK 26
+          # CRITICAL: C++ standard library headers MUST come before C headers
           config.build_settings['HEADER_SEARCH_PATHS'] ||= []
           config.build_settings['HEADER_SEARCH_PATHS'] = [config.build_settings['HEADER_SEARCH_PATHS']].flatten unless config.build_settings['HEADER_SEARCH_PATHS'].is_a?(Array)
-          config.build_settings['HEADER_SEARCH_PATHS'].concat([
+          
+          # Remove any existing paths that might cause conflicts
+          existing_paths = config.build_settings['HEADER_SEARCH_PATHS'].dup
+          
+          # Define properly ordered paths - C++ MUST come first
+          ordered_paths = [
+            # C++ Standard Library headers (MUST BE FIRST)
+            '"$(SDKROOT)/usr/include/c++/v1"',
+            # System headers  
             '"$(SDKROOT)/usr/include"',
-            '"$(SDKROOT)/usr/include/sys"'
-          ])
+            '"$(SDKROOT)/usr/include/sys"',
+            # Module headers
+            '"$(SDKROOT)/usr/include/module"'
+          ]
+          
+          # Prepend ordered paths and append existing ones
+          config.build_settings['HEADER_SEARCH_PATHS'] = ordered_paths + existing_paths
           config.build_settings['HEADER_SEARCH_PATHS'] = config.build_settings['HEADER_SEARCH_PATHS'].uniq
+          
+          # Also ensure proper C++ language settings
+          config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++20'
+          config.build_settings['CLANG_CXX_LIBRARY'] = 'libc++'
         end
         
         if target.name == 'React-Fabric'
@@ -126,6 +154,27 @@ target 'DNSChat' do
           config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= ['$(inherited)']
           config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] << 'GLOG_NO_ABBREVIATED_SEVERITIES'
           config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] << 'NO_THREADS=1'
+        end
+        
+        # Additional C++ dependent pods that need proper header ordering
+        cpp_dependent_pods = ['boost', 'fmt', 'DoubleConversion', 'ReactCommon']
+        if cpp_dependent_pods.include?(target.name)
+          # Ensure C++ standard library paths come first
+          existing = config.build_settings['HEADER_SEARCH_PATHS'] || []
+          existing = [existing].flatten unless existing.is_a?(Array)
+          
+          cpp_paths = [
+            '"$(SDKROOT)/usr/include/c++/v1"',
+            '"$(SDKROOT)/usr/include"'
+          ]
+          
+          # Remove duplicates and ensure C++ paths are first
+          filtered_existing = existing.reject { |p| cpp_paths.include?(p) }
+          config.build_settings['HEADER_SEARCH_PATHS'] = cpp_paths + filtered_existing
+          
+          # Ensure proper C++ settings
+          config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++20'
+          config.build_settings['CLANG_CXX_LIBRARY'] = 'libc++'
         end
       end
     end
