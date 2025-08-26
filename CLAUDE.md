@@ -234,6 +234,60 @@ end
 
 **Verification**: The fix is working if iOS builds complete without "folly/dynamic.h file not found" errors.
 
+### React Native 0.81 Header Path Issues - PERMANENT FIX 🛠️
+
+**Problem**: Multiple header not found errors after upgrading to React Native 0.81 / Expo SDK 54:
+- `'react/renderer/runtimescheduler/RuntimeExecutor.h' file not found`
+- `'yoga/Yoga.h' file not found`  
+- `glog mutex.h: error: Need to implement mutex.h for your architecture`
+- `RCT-Folly: error: unknown type name 'off_t', 'ssize_t'`
+
+**Root Cause**: React Native 0.81 reorganized header paths and requires additional configuration for Xcode 26 / iOS SDK 26
+
+**Permanent Solution**: Already implemented in `ios/Podfile` post_install hook with comprehensive header search paths and target-specific fixes:
+
+```ruby
+# React Native 0.81 header search path fixes
+installer.pods_project.targets.each do |target|
+  # ... base configuration ...
+  
+  # Comprehensive header search paths for React Native 0.81
+  extra_paths = [
+    '"$(PODS_ROOT)/../../node_modules/react-native/ReactCommon"',
+    '"$(PODS_ROOT)/../../node_modules/react-native/ReactCommon/react/renderer/runtimescheduler"',
+    '"$(PODS_ROOT)/../../node_modules/react-native/ReactCommon/yoga"',
+    # ... other paths ...
+  ]
+  
+  # RCT-Folly system headers fix
+  if target.name == 'RCT-Folly'
+    config.build_settings['HEADER_SEARCH_PATHS'].concat([
+      '"$(SDKROOT)/usr/include"',
+      '"$(SDKROOT)/usr/include/sys"'
+    ])
+  end
+  
+  # glog mutex fix for ARM64 simulators
+  if target.name == 'glog'
+    config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] << 'NO_THREADS=1'
+  end
+end
+```
+
+**🤖 Fix Details:**
+- **Comprehensive Header Paths**: Added all React Native 0.81 component paths
+- **RCT-Folly Fix**: System include paths for C++ standard library headers
+- **glog Fix**: NO_THREADS flag for ARM64 simulator compatibility
+- **Automatic Application**: Applied on every `pod install`
+
+**When This Issue Occurs:**
+- Upgrading to React Native 0.81 / Expo SDK 54
+- Using Xcode 26 beta with iOS SDK 26
+- Fresh pod installations after React Native updates
+- Building for iOS simulators on Apple Silicon Macs
+
+**Verification**: Run `npm run ios` - build should complete without header not found errors.
+
 ### 🤖 Advanced iOS Build Troubleshooting with XcodeBuildMCP - v1.7.4 ENHANCEMENT 🚀
 
 **Problem**: React Native 0.79.x Hermes script execution failures and complex build diagnostics.

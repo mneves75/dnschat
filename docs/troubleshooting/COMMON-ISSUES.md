@@ -8,6 +8,7 @@
 |-------|----------|---------------|
 | "expo: command not found" | Setup | [Environment Setup](#environment-setup-issues) |
 | Hermes "Replace Configuration" error | iOS Build | [XcodeBuildMCP Solution](#️-v174-critical---hermes-replace-configuration-script-error-fixed) |
+| React Native 0.81 header not found | iOS Build | [RN 0.81 Header Fixes](#-react-native-081-header-path-issues-fixed) |
 | Swift module incompatibility | iOS Build | [XcodeBuildMCP Guide](/docs/troubleshooting/XCODEBUILDMCP-GUIDE.md) |
 | "Screen not handled by navigator" | Navigation | [Navigation Issues](#️-v174-screen-not-handled-by-any-navigator-error-fixed) |
 | Java version errors | Build | [Java/Android Issues](#javaandroid-build-issues) |
@@ -584,6 +585,50 @@ cd ios && pod install && cd ..
 # Use automatic code signing in Xcode
 # Or configure EAS Build for cloud building
 ```
+
+#### 🆕 React Native 0.81 Header Path Issues (FIXED)
+
+**Symptoms:**
+```
+❌ 'react/renderer/runtimescheduler/RuntimeExecutor.h' file not found
+❌ 'yoga/Yoga.h' file not found  
+❌ glog mutex.h: error: Need to implement mutex.h for your architecture
+❌ RCT-Folly: error: unknown type name 'off_t', 'ssize_t'
+```
+
+**Root Cause:** React Native 0.81 reorganized header paths and requires additional configuration for Xcode 26 / iOS SDK 26
+
+**🔧 COMPREHENSIVE SOLUTION (Already Applied in Podfile):**
+
+The fix has been **permanently implemented** in the `ios/Podfile` post_install hook:
+
+1. **Comprehensive Header Search Paths**: Added for all React Native 0.81 components
+   - RuntimeScheduler and RuntimeExecutor paths
+   - Yoga header locations  
+   - React-Fabric renderer paths
+   - glog and RCT-Folly dependencies
+
+2. **RCT-Folly System Headers Fix**: Added system include paths for C++ standard library headers
+
+3. **glog Mutex Fix**: Added NO_THREADS=1 flag for ARM64 simulators
+
+**✅ Status:** PRODUCTION READY - Fix automatically applied on `pod install`
+
+**If Issue Persists:**
+```bash
+# 1. Clean and reinstall pods
+cd ios
+rm -rf Pods Podfile.lock build ~/Library/Developer/Xcode/DerivedData/DNSChat-*
+pod install --verbose
+
+# 2. If still failing, run comprehensive fix
+npm run fix-pods
+
+# 3. Verify Podfile has the fixes
+grep -A5 "React Native 0.81 header search path fixes" ios/Podfile
+```
+
+**Prevention:** The fix is permanent in Podfile - no manual intervention needed for future builds.
 
 ### Android Build Issues
 

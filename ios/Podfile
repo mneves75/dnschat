@@ -49,21 +49,84 @@ target 'DNSChat' do
       :ccache_enabled => podfile_properties['apple.ccacheEnabled'] == 'true',
     )
 
-    # Ensure ReactCommon headers (e.g., RuntimeExecutor.h) are discoverable when using static frameworks
-    installer.pods_project.targets.each do |t|
-      t.build_configurations.each do |config|
+    # React Native 0.81 header search path fixes
+    installer.pods_project.targets.each do |target|
+      target.build_configurations.each do |config|
         config.build_settings['USE_HEADERMAP'] = 'YES'
-        # Ensure Pods public/private headers are visible to all pods during build
+        config.build_settings['CLANG_ENABLE_MODULES'] = 'YES'
+        
+        # Base header search paths
         hdrs = config.build_settings['HEADER_SEARCH_PATHS'] || '$(inherited)'
-        extra = [
+        hdrs = [hdrs].flatten unless hdrs.is_a?(Array)
+        
+        # Comprehensive header search paths for React Native 0.81
+        extra_paths = [
           '$(PODS_ROOT)/Headers/Public/**',
           '$(PODS_ROOT)/Headers/Private/**',
-          # Built products headers (static frameworks expose headers here)
-          '$(PODS_CONFIGURATION_BUILD_DIR)/**'
+          '$(PODS_CONFIGURATION_BUILD_DIR)/**',
+          # React Native specific paths for 0.81
+          '"$(PODS_ROOT)/../../node_modules/react-native/ReactCommon"',
+          '"$(PODS_ROOT)/../../node_modules/react-native/React"',
+          '"$(PODS_ROOT)/../../node_modules/react-native/React/Base"',
+          # RuntimeScheduler and RuntimeExecutor paths
+          '"$(PODS_ROOT)/Headers/Public/React-runtimescheduler"',
+          '"$(PODS_ROOT)/Headers/Private/React-runtimescheduler"',
+          '"$(PODS_ROOT)/../../node_modules/react-native/ReactCommon/react/renderer/runtimescheduler"',
+          # Yoga paths
+          '"$(PODS_ROOT)/Headers/Public/Yoga"',
+          '"$(PODS_ROOT)/Headers/Private/Yoga"',
+          '"$(PODS_ROOT)/../../node_modules/react-native/ReactCommon/yoga"',
+          # React-Fabric paths
+          '"$(PODS_ROOT)/Headers/Public/React-Fabric"',
+          '"$(PODS_ROOT)/Headers/Private/React-Fabric"',
+          '"$(PODS_ROOT)/../../node_modules/react-native/ReactCommon/react/renderer"',
+          # glog paths
+          '"$(PODS_ROOT)/Headers/Public/glog"',
+          '"$(PODS_ROOT)/Headers/Private/glog"'
         ]
-        config.build_settings['HEADER_SEARCH_PATHS'] = [hdrs].flatten.concat(extra)
-        # Enable modules to allow modular header resolution
-        config.build_settings['CLANG_ENABLE_MODULES'] = 'YES'
+        
+        config.build_settings['HEADER_SEARCH_PATHS'] = hdrs.concat(extra_paths).uniq
+        
+        # Specific fixes for problematic targets
+        if target.name == 'RCT-Folly'
+          # Fix for RCT-Folly missing system headers on Xcode 26 / iOS SDK 26
+          config.build_settings['HEADER_SEARCH_PATHS'] ||= []
+          config.build_settings['HEADER_SEARCH_PATHS'] = [config.build_settings['HEADER_SEARCH_PATHS']].flatten unless config.build_settings['HEADER_SEARCH_PATHS'].is_a?(Array)
+          config.build_settings['HEADER_SEARCH_PATHS'].concat([
+            '"$(SDKROOT)/usr/include"',
+            '"$(SDKROOT)/usr/include/sys"'
+          ])
+          config.build_settings['HEADER_SEARCH_PATHS'] = config.build_settings['HEADER_SEARCH_PATHS'].uniq
+        end
+        
+        if target.name == 'React-Fabric'
+          # Additional paths specifically for React-Fabric
+          fabric_paths = config.build_settings['HEADER_SEARCH_PATHS'] || []
+          fabric_paths = [fabric_paths].flatten unless fabric_paths.is_a?(Array)
+          fabric_paths.concat([
+            '"$(PODS_ROOT)/../../node_modules/react-native/ReactCommon/react/renderer/runtimescheduler"',
+            '"$(PODS_ROOT)/Headers/Public/React-runtimescheduler"',
+            '"$(PODS_ROOT)/Headers/Private/React-runtimescheduler"'
+          ])
+          config.build_settings['HEADER_SEARCH_PATHS'] = fabric_paths.uniq
+        end
+        
+        if target.name == 'glog'
+          # Additional paths specifically for glog
+          glog_paths = config.build_settings['HEADER_SEARCH_PATHS'] || []
+          glog_paths = [glog_paths].flatten unless glog_paths.is_a?(Array)
+          glog_paths.concat([
+            '"$(PODS_ROOT)/../../node_modules/react-native/ReactCommon/yoga"',
+            '"$(PODS_ROOT)/Headers/Public/Yoga"',
+            '"$(PODS_ROOT)/Headers/Private/Yoga"'
+          ])
+          config.build_settings['HEADER_SEARCH_PATHS'] = glog_paths.uniq
+          
+          # Fix for glog mutex.h error on ARM64 simulators
+          config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= ['$(inherited)']
+          config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] << 'GLOG_NO_ABBREVIATED_SEVERITIES'
+          config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] << 'NO_THREADS=1'
+        end
       end
     end
   end

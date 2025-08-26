@@ -73,8 +73,9 @@ See [CHANGELOG.md](./CHANGELOG.md) for complete technical details.
 
 ### Prerequisites
 - Node.js 18+
-- iOS: Xcode 15+ and iOS 16+ device/simulator
+- iOS: Xcode 15+ (including Xcode 26 beta) and iOS 16+ device/simulator
 - Android: Java 17 and Android SDK
+- React Native 0.81 / Expo SDK 54 compatible
 
 ### Installation
 

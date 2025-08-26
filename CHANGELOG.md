@@ -8,7 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
-- iOS: Enhanced `scripts/fix-cocoapods.sh` to also reset Xcode PIF sessions and clear build caches (DerivedData, ModuleCache, SwiftPM, Xcode cache). Resolves “Could not compute dependency graph” and “unable to initiate PIF transfer session (operation in progress?)”.
+- iOS: Enhanced `scripts/fix-cocoapods.sh` to also reset Xcode PIF sessions and clear build caches (DerivedData, ModuleCache, SwiftPM, Xcode cache). Resolves "Could not compute dependency graph" and "unable to initiate PIF transfer session (operation in progress?)".
+- iOS: Fixed React Native 0.81 header path issues for React-Fabric and glog dependencies
+  - Added comprehensive header search paths in Podfile for RuntimeScheduler, RuntimeExecutor, and Yoga
+  - Fixed RCT-Folly missing system headers on Xcode 26 / iOS SDK 26
+  - Resolved glog mutex.h compilation errors on ARM64 simulators with NO_THREADS flag
+  - Permanent fix implemented in Podfile post_install hook for automatic application
 
 ## [2.2.0] - 2025-08-25
 

@@ -7,7 +7,7 @@ PODS:
   - EXJSONUtils (0.15.0)
   - EXManifests (1.0.4):
     - ExpoModulesCore
-  - Expo (54.0.0-preview.7):
+  - Expo (54.0.0-preview.8):
     - boost
     - DoubleConversion
     - ExpoModulesCore
@@ -246,7 +246,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
-  - ExpoAsset (12.0.3):
+  - ExpoAsset (12.0.4):
     - ExpoModulesCore
   - ExpoFileSystem (19.0.5):
     - ExpoModulesCore
@@ -3435,12 +3435,12 @@ SPEC CHECKSUMS:
   EXConstants: 312d1b38b4fd6074dcd253c347dc7a5682549a02
   EXJSONUtils: 1d3e4590438c3ee593684186007028a14b3686cd
   EXManifests: c43ae3f01be93094b271e24bf03ee66410d0e7a4
-  Expo: 52ebe12b2f928f6a9c6ca43e6487a90643b9ef0d
+  Expo: 7c0bc9c55a35b373f9f9c81af0415c234f7e30a6
   expo-dev-client: aafa1a145b1613c46b9644918e03a9f57ab3207e
   expo-dev-launcher: 7deaf4d59b021055e828310629a3791b3268cb22
   expo-dev-menu: 3b7ceb07f533bcd90cc9ff7607eeb4f7514ee4db
   expo-dev-menu-interface: 600df12ea01efecdd822daaf13cc0ac091775533
-  ExpoAsset: b45d0c64a4b8108abbfa9a2e79e8f52d3c5290d8
+  ExpoAsset: 70bf7922c1c089b6735b92dd251da7da2b374212
   ExpoFileSystem: 6750ab7ff79406c819ce0e5a5dac43171761eaf1
   ExpoFont: aadbbc0baecff6ca39248443a11ba7e77b8ad1a4
   ExpoKeepAwake: 44a0f029efacb4df7508f30fe8d68b497bc43716
@@ -3536,6 +3536,6 @@ SPEC CHECKSUMS:
   SwiftUIIntrospect: fee9aa07293ee280373a591e1824e8ddc869ba5d
   Yoga: be78ddad0c56d06a5e41eaef4bfbbd49b86a4d07
 
-PODFILE CHECKSUM: d25b0f50684cbb231c0f00d45e3d69fdfd7e3705
+PODFILE CHECKSUM: b555c521dd8ab387b6ef263444233619e571b948
 
 COCOAPODS: 1.16.2
