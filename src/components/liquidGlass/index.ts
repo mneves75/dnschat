@@ -20,7 +20,6 @@ export {
   // Specialized components for specific use cases
   LiquidGlassNavigation,
   LiquidGlassModal,
-  LiquidGlassCard,
   LiquidGlassSidebar,
   
   // Component props and types
@@ -36,6 +35,7 @@ export {
   LiquidGlassButton,
   LiquidGlassChatBubble,
   LiquidGlassInput,
+  LiquidGlassCard,
   LiquidGlassContainer,
   
   // Component props and types
@@ -113,7 +113,6 @@ export {
   type LiquidGlassCapabilities,
   type GlassStyle,
   type GlassIntensity,
-  type EnvironmentalContext,
 } from '../../utils/liquidGlass';
 
 export {
@@ -152,7 +151,7 @@ export {
   // Theme types and interfaces
   type ThemeConfiguration,
   type ThemeColors,
-  type EnvironmentalContext,
+  // Note: EnvironmentalContext is exported only from utils to avoid duplicate type name
   type UserPreferences,
   type TimeOfDayPeriod,
   type ThemeContextValue,
@@ -167,10 +166,7 @@ export {
  */
 export { LiquidGlassView } from './LiquidGlassFallback';
 
-/**
- * Quick access to native-only component (for advanced use cases)
- */
-export { LiquidGlassNative } from './LiquidGlassNative';
+// Note: LiquidGlassNative is already exported above; avoid duplicate export.
 
 // ==================================================================================
 // VERSION INFO

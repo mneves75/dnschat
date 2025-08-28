@@ -94,6 +94,10 @@ class NativeDNS implements NativeDNSModule {
 
       return result;
     } catch (error: any) {
+      // Preserve DNSError thrown internally
+      if (error instanceof DNSError) {
+        throw error;
+      }
       // Map native errors to our error types
       if (error?.code === 'DNS_QUERY_FAILED') {
         throw new DNSError(
@@ -229,5 +233,4 @@ export const nativeDNS = new NativeDNS();
 // For testing and advanced usage
 export { NativeDNS };
 
-// Re-export the native module type for external use
-export type { NativeDNSModule };
+// Note: NativeDNSModule type is already exported via the interface above.

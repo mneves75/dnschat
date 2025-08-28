@@ -1,44 +1,51 @@
 # Repository Guidelines
 
+This guide outlines how to work effectively in this repository: where things live, how to build/test, and how to contribute changes.
+
 ## Project Structure & Module Organization
-- `src/`: App code — components, navigation, context, services, types.
-- `src/services/__tests__/`: Service unit/integration tests (`*.test.ts`).
-- `modules/dns-native/`: Native DNS module (Android Java, iOS Swift) with its own `__tests__`.
-- `ios/` and `android/`: Native projects; iOS includes `DNSNative`.
+
+- `src/`: App code (components, navigation, context, services, types).
+- `src/services/__tests__/`: Jest unit/integration tests (`*.test.ts`).
+- `modules/dns-native/`: Native DNS (Android Java, iOS Swift) with its own `__tests__`.
+- `ios/`, `android/`: Native projects; iOS includes `DNSNative`.
 - `assets/`, `icons/`: Images and static assets.
 
 ## Build, Test, and Development Commands
+
 - `npm start`: Launch Expo dev server (dev client).
-- `npm run ios`: Build/run iOS (requires Xcode and CocoaPods).
-- `npm run android`: Build/run Android using Java 17 (env set in script).
+- `npm run ios`: Build/run iOS (Xcode + CocoaPods).
+- `npm run android`: Build/run Android (Java 17).
 - `npm run web`: Start web target.
-- `npm run sync-versions` | `:dry`: Sync versions across app, iOS, Android.
+- `npm run sync-versions` (`:dry`): Sync app/iOS/Android versions.
 - `npm run fix-pods` / `npm run clean-ios`: Resolve CocoaPods issues / clean iOS build.
 - DNS checks: `node test-dns-simple.js`, `node test-debug-logging.js`.
+- `npm run typecheck`: Type-check core code (services/utils).
+- `npm run typecheck:tests`: Type-check service tests only.
+- `npm run typecheck:full`: Full repo type-check (may surface WIP UI errors).
 
 ## Coding Style & Naming Conventions
-- **Language**: TypeScript (strict); React Native with functional components.
-- **Indentation**: 2 spaces; max line length ~100 chars.
-- **Naming**: Components `PascalCase` (`MessageList.tsx`), hooks/context `camelCase` files, services `camelCase` (`dnsService.ts`).
-- **Files**: UI in `src/components`, business logic in `src/services`, screens in `src/navigation/screens`.
-- **Formatting**: Prefer Prettier — `npx prettier --check .`; type-check with `npx tsc --noEmit`.
+
+- Language: TypeScript (strict); React Native functional components.
+- Indentation: 2 spaces; line length ~100 chars.
+- Names: Components PascalCase (e.g., `MessageList.tsx`); hooks/services camelCase (e.g., `dnsService.ts`).
+- Files: UI in `src/components`; business logic in `src/services`; screens in `src/navigation/screens`.
+- Tools: Prettier `npx prettier --check .`; type-check via `npm run typecheck` or full with `npm run typecheck:full`.
 
 ## Testing Guidelines
-- **Unit/Integration**: Jest-style tests live in `src/services/__tests__` and `modules/dns-native/__tests__` (`*.test.ts`). If Jest is configured, run `npx jest`.
-- **Manual DNS tests**: `node test-dns-simple.js "Hello"` and `node test-sdk54-features.js`.
-- **Expectations**: Cover core paths in `dnsService`, `dnsLogService`, and native module boundaries. Prefer deterministic tests with mocked network.
-- **Naming**: `featureName.behavior.test.ts`.
+
+- Framework: Jest (if configured)—run `npx jest`.
+- Manual DNS: `node test-dns-simple.js "Hello"`, `node test-sdk54-features.js`.
+- Coverage: Core paths in `dnsService`, `dnsLogService`, and native module boundaries; prefer deterministic tests with mocked network.
+- Naming: `featureName.behavior.test.ts`.
 
 ## Commit & Pull Request Guidelines
-- **Commits**: Conventional Commits. Examples:
-  - `feat(dns): add TCP fallback`
-  - `fix(ios): resolve CocoaPods XCFramework issue`
-  - `docs(readme): clarify quick start`
-- **Branches**: `feature/...`, `fix/...`, `docs/...`.
-- **PRs**: Include problem, solution, testing (iOS/Android/Web), linked issues, and screenshots/logs for UI or DNS logs for networking. Keep PRs focused and small.
+
+- Commits: Conventional Commits (e.g., `feat(dns): add TCP fallback`, `fix(ios): resolve CocoaPods XCFramework issue`).
+- Branches: `feature/...`, `fix/...`, `docs/...`.
+- PRs: Describe problem + solution; include testing across iOS/Android/Web, linked issues, and screenshots/DNS logs. Keep PRs focused and small.
 
 ## Security & Configuration Tips
-- Use Java 17 for Android builds; run iOS `pod install` after dependency changes.
-- Do not commit secrets; sanitize logs before sharing. Prefer DNS-over-HTTPS only on restricted networks.
-- Follow fallback order in code (Native → UDP → TCP → DoH → Mock) and verify behavior via Logs tab.
 
+- Use Java 17 for Android; run `pod install` after dependency changes.
+- Do not commit secrets; sanitize logs. Prefer DoH only on restricted networks.
+- Fallback order: Native → UDP → TCP → DoH → Mock; verify behavior via Logs tab.

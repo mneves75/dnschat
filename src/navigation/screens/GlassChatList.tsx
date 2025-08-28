@@ -199,8 +199,8 @@ export function GlassChatList() {
   const isDark = colorScheme === 'dark';
   const [refreshing, setRefreshing] = React.useState(false);
 
-  const handleNewChat = React.useCallback(() => {
-    const newChat = createChat();
+  const handleNewChat = React.useCallback(async () => {
+    const newChat = await createChat();
     setCurrentChat(newChat);
     navigation.navigate('Chat' as never);
     

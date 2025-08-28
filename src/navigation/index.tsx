@@ -8,7 +8,6 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Image, Platform, useColorScheme } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import TabView, { SceneMap } from 'react-native-bottom-tabs';
-import type { BaseRoute } from 'react-native-bottom-tabs';
 import { LiquidGlassNavBar } from '../components/LiquidGlassWrapper';
 
 // Import newspaper icon properly for Metro bundler
@@ -34,7 +33,7 @@ function SettingsHeaderButton({ onPress }: { onPress: () => void }) {
   );
 }
 
-type TabRoute = BaseRoute & {
+type TabRoute = {
   key: 'ChatList' | 'Logs' | 'About';
   title: string;
   focusedIcon: any;

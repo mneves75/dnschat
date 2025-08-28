@@ -252,10 +252,10 @@ export function GlassSettings() {
                 )
               }
               onPress={() => handleDnsServerSelect(option.value)}
-              style={[
+              style={([
                 styles.dnsOption,
                 dnsServer === option.value && styles.selectedDnsOption
-              ]}
+              ] as any)}
             />
           ))}
         </View>

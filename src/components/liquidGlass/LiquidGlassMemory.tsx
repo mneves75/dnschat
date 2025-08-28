@@ -145,7 +145,7 @@ class LiquidGlassMemoryManager {
   /**
    * Singleton pattern for global memory management
    */
-  static getInstance(config?: MemoryConfig, callbacks?: MemoryManagerCallbacks): LiquidGlassMemoryManager {
+  static getInstance(config?: MemoryConfig | Partial<MemoryConfig>, callbacks?: MemoryManagerCallbacks): LiquidGlassMemoryManager {
     if (!LiquidGlassMemoryManager.instance) {
       const defaultConfig: MemoryConfig = {
         maxGlassElements: 50,
@@ -693,15 +693,19 @@ class LiquidGlassMemoryManager {
     }[intensity];
     
     // Style multiplier
-    const styleMultiplier = {
+    const styleMultiplierMap: Record<GlassStyle, number> = {
       systemMaterial: 1.0,
       systemThinMaterial: 0.8,
+      systemUltraThinMaterial: 0.7,
+      systemThickMaterial: 1.2,
       hudMaterial: 0.6,
+      menuMaterial: 0.85,
       headerMaterial: 1.2,
       footerMaterial: 1.1,
       popoverMaterial: 0.9,
       sidebarMaterial: 1.3,
-    }[style] || 1.0;
+    };
+    const styleMultiplier = styleMultiplierMap[style] ?? 1.0;
     
     return Math.round(baseMemory * intensityMultiplier * styleMultiplier);
   }
@@ -932,17 +936,7 @@ export const withLiquidGlassMemory = <P extends object>(
     React.useEffect(handleRender);
     
     return (
-      <WrappedComponent
-        {...props}
-        ref={(instance: React.Component) => {
-          componentRef.current = instance;
-          if (typeof ref === 'function') {
-            ref(instance);
-          } else if (ref) {
-            ref.current = instance;
-          }
-        }}
-      />
+      <WrappedComponent {...(props as P)} />
     );
   });
   
@@ -957,8 +951,6 @@ export const withLiquidGlassMemory = <P extends object>(
 
 export {
   LiquidGlassMemoryManager,
-  useLiquidGlassMemory,
-  withLiquidGlassMemory,
 };
 
 export type {

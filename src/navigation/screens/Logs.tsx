@@ -40,7 +40,9 @@ export function Logs() {
       setLogs(updatedLogs);
     });
 
-    return unsubscribe;
+    return () => {
+      unsubscribe();
+    };
   }, []); // Only subscribe once on mount
 
   // Separate effect for debug mode changes

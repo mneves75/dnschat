@@ -48,6 +48,7 @@ import {
   useAdaptiveGlassIntensity,
   type LiquidGlassProps,
 } from './';
+import type { StyleProp } from 'react-native';
 
 // ==================================================================================
 // TYPE DEFINITIONS
@@ -82,7 +83,7 @@ interface DNSServer {
   latency?: number; // ms
 }
 
-interface LiquidGlassChatInterfaceProps extends LiquidGlassProps {
+interface LiquidGlassChatInterfaceProps extends Omit<LiquidGlassProps, 'style' | 'children' | 'containerStyle'> {
   /** Chat messages */
   messages: Array<{
     id: string;
@@ -115,11 +116,13 @@ interface LiquidGlassChatInterfaceProps extends LiquidGlassProps {
   /** Enable DNS status display */
   showDNSStatus?: boolean;
   
-  /** Custom styling */
-  style?: ViewStyle;
+  /** Wrapper styling */
+  style?: StyleProp<ViewStyle>;
+  /** Glass container style */
+  containerStyle?: StyleProp<ViewStyle>;
 }
 
-interface LiquidGlassDNSStatusProps extends LiquidGlassProps {
+interface LiquidGlassDNSStatusProps extends Omit<LiquidGlassProps, 'style' | 'children' | 'containerStyle'> {
   /** Available DNS methods */
   methods: DNSMethod[];
   
@@ -138,11 +141,13 @@ interface LiquidGlassDNSStatusProps extends LiquidGlassProps {
   /** Status press handler */
   onPress?: () => void;
   
-  /** Custom styling */
-  style?: ViewStyle;
+  /** Wrapper styling */
+  style?: StyleProp<ViewStyle>;
+  /** Glass container style */
+  containerStyle?: StyleProp<ViewStyle>;
 }
 
-interface LiquidGlassQueryLogProps extends LiquidGlassProps {
+interface LiquidGlassQueryLogProps extends Omit<LiquidGlassProps, 'style' | 'children' | 'containerStyle'> {
   /** DNS query history */
   queries: DNSQuery[];
   
@@ -158,11 +163,13 @@ interface LiquidGlassQueryLogProps extends LiquidGlassProps {
   /** Clear log handler */
   onClearLog?: () => void;
   
-  /** Custom styling */
-  style?: ViewStyle;
+  /** Wrapper styling */
+  style?: StyleProp<ViewStyle>;
+  /** Glass container style */
+  containerStyle?: StyleProp<ViewStyle>;
 }
 
-interface LiquidGlassMethodBadgeProps extends LiquidGlassProps {
+interface LiquidGlassMethodBadgeProps extends Omit<LiquidGlassProps, 'style' | 'children' | 'containerStyle'> {
   /** DNS method */
   method: DNSMethod;
   
@@ -175,11 +182,13 @@ interface LiquidGlassMethodBadgeProps extends LiquidGlassProps {
   /** Badge press handler */
   onPress?: () => void;
   
-  /** Custom styling */
-  style?: ViewStyle;
+  /** Wrapper styling */
+  style?: StyleProp<ViewStyle>;
+  /** Glass container style */
+  containerStyle?: StyleProp<ViewStyle>;
 }
 
-interface LiquidGlassConnectionIndicatorProps extends LiquidGlassProps {
+interface LiquidGlassConnectionIndicatorProps extends Omit<LiquidGlassProps, 'style' | 'children' | 'containerStyle'> {
   /** Connection status */
   status: 'connected' | 'connecting' | 'disconnected' | 'error';
   
@@ -189,11 +198,13 @@ interface LiquidGlassConnectionIndicatorProps extends LiquidGlassProps {
   /** Show signal animation */
   animated?: boolean;
   
-  /** Custom styling */
-  style?: ViewStyle;
+  /** Wrapper styling */
+  style?: StyleProp<ViewStyle>;
+  /** Glass container style */
+  containerStyle?: StyleProp<ViewStyle>;
 }
 
-interface LiquidGlassServerSelectorProps extends LiquidGlassProps {
+interface LiquidGlassServerSelectorProps extends Omit<LiquidGlassProps, 'style' | 'children' | 'containerStyle'> {
   /** Available DNS servers */
   servers: DNSServer[];
   
@@ -209,8 +220,10 @@ interface LiquidGlassServerSelectorProps extends LiquidGlassProps {
   /** Custom server handler */
   onCustomServer?: (address: string) => void;
   
-  /** Custom styling */
-  style?: ViewStyle;
+  /** Wrapper styling */
+  style?: StyleProp<ViewStyle>;
+  /** Glass container style */
+  containerStyle?: StyleProp<ViewStyle>;
 }
 
 // ==================================================================================
@@ -415,7 +428,7 @@ export const LiquidGlassDNSStatus: React.FC<LiquidGlassDNSStatusProps> = ({
             status={isConnected ? 'connected' : 'disconnected'}
             strength={isConnected ? 1 : 0}
             animated={true}
-            style={styles.connectionIndicator}
+            style={styles.connectionIndicatorMargin}
           />
           
           {/* Status Text */}
@@ -948,7 +961,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   
-  connectionIndicator: {
+  connectionIndicatorMargin: {
     marginRight: 8,
   },
   
@@ -1171,14 +1184,7 @@ const styles = StyleSheet.create({
 // EXPORTS
 // ==================================================================================
 
-export {
-  LiquidGlassChatInterface,
-  LiquidGlassDNSStatus,
-  LiquidGlassQueryLog,
-  LiquidGlassMethodBadge,
-  LiquidGlassConnectionIndicator,
-  LiquidGlassServerSelector,
-};
+// Values already exported above via named const declarations
 
 export type {
   LiquidGlassChatInterfaceProps,

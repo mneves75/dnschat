@@ -265,7 +265,7 @@ export function About() {
       </Form.Section>
 
       {/* Footer */}
-      <Form.Section footer="© 2025 Marcus Neves • MIT Licensed" />
+      <Form.Section footer="© 2025 Marcus Neves • MIT Licensed">{null}</Form.Section>
     </Form.List>
   );
 }

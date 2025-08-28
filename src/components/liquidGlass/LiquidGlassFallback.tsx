@@ -31,6 +31,7 @@ import {
   GlassStyle,
   GlassIntensity,
 } from '../../utils/liquidGlass';
+import type { StyleProp } from 'react-native';
 
 // ==================================================================================
 // TYPE DEFINITIONS
@@ -47,7 +48,7 @@ export interface LiquidGlassProps {
   style?: GlassStyle;
   
   /** Custom styling */
-  containerStyle?: ViewStyle;
+  containerStyle?: StyleProp<ViewStyle>;
   
   /** Enable sensor-aware adaptations (iOS 26+ only) */
   sensorAware?: boolean;
@@ -126,7 +127,7 @@ const NativeGlassView: React.FC<LiquidGlassProps> = ({
   return (
     <NativeComponent
       intensity={intensity}
-      style={style}
+      glassStyle={style}
       sensorAware={sensorAware}
       environmentalAdaptation={environmentalAdaptation}
       containerStyle={[styles.glassContainer, containerStyle]}
@@ -175,7 +176,7 @@ const EnhancedBlurView: React.FC<LiquidGlassProps> = ({
   
   // This would use react-native-blur in a real implementation
   // For now, simulate with translucent overlay
-  const blurStyle: ViewStyle = {
+  const blurStyle: any = {
     backgroundColor: colorScheme === 'dark' 
       ? `rgba(20, 20, 20, ${0.3 + (blurAmount / 100)})` 
       : `rgba(255, 255, 255, ${0.3 + (blurAmount / 100)})`,

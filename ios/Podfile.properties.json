@@ -6,5 +6,5 @@
   "ios.useFrameworks": "static",
   "apple.ccacheEnabled": "true",
   "apple.privacyManifestAggregationEnabled": "true",
-  "ios.buildReactNativeFromSource": "true"
+  "ios.buildReactNativeFromSource": "false"
 }

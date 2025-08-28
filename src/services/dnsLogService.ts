@@ -102,10 +102,25 @@ export class DNSLogService {
     return this.debugMode;
   }
 
-  private static truncateString(str: string | undefined, maxLength: number = MAX_DEBUG_STRING_LENGTH): string | undefined {
-    if (!str) return str;
-    if (str.length <= maxLength) return str;
-    return str.substring(0, maxLength) + '... [TRUNCATED]';
+  private static toStringSafe(value: unknown): string | undefined {
+    if (value === undefined || value === null) return undefined;
+    if (typeof value === 'string') return value;
+    try {
+      // Prefer JSON for objects/arrays
+      if (typeof value === 'object') {
+        return JSON.stringify(value);
+      }
+      return String(value);
+    } catch {
+      return String(value);
+    }
+  }
+
+  private static truncateString(str: unknown, maxLength: number = MAX_DEBUG_STRING_LENGTH): string | undefined {
+    const s = this.toStringSafe(str);
+    if (!s) return s;
+    if (s.length <= maxLength) return s;
+    return s.substring(0, maxLength) + '... [TRUNCATED]';
   }
 
   private static sanitizeDebugData(debugData: DNSLogEntry['debugData']): DNSLogEntry['debugData'] {

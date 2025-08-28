@@ -3,12 +3,23 @@
     "version": ">= 12.0.0"
   },
   "build": {
+    "ios-beta": {
+      "distribution": "internal",
+      "ios": {
+        "buildConfiguration": "Release",
+        "simulator": false,
+        "includeDsym": true,
+        "generateSourcemaps": false,
+        "image": "macos-sequoia-15.5-xcode-26.0"
+      }
+    },
     "development": {
       "developmentClient": true,
       "distribution": "internal",
       "ios": {
         "buildConfiguration": "Debug",
-        "simulator": true
+        "simulator": true,
+        "image": "macos-15-xcode-16.4"
       }
     },
     "preview": {
@@ -17,7 +28,8 @@
         "buildConfiguration": "Release",
         "simulator": false,
         "includeDsym": true,
-        "generateSourcemaps": true
+        "generateSourcemaps": true,
+        "image": "macos-15-xcode-16.4"
       }
     },
     "production": {
@@ -28,6 +40,8 @@
         "includeDsym": true,
         "generateSourcemaps": true,
         "archiveHermesDsym": true,
+        "autoIncrement": "buildNumber",
+        "image": "macos-15-xcode-16.4",
         "buildSettings": {
           "DEBUG_INFORMATION_FORMAT": "dwarf-with-dsym",
           "DEPLOYMENT_POSTPROCESSING": "YES",

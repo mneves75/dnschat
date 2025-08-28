@@ -77,7 +77,7 @@ export interface LiquidGlassNativeProps extends ViewProps {
   intensity?: GlassIntensity;
   
   /** Glass effect style */
-  style?: GlassStyle;
+  glassStyle?: GlassStyle;
   
   /** Enable sensor-aware environmental adaptation */
   sensorAware?: boolean;
@@ -161,7 +161,7 @@ export const LiquidGlassNative = forwardRef<LiquidGlassNativeHandle, LiquidGlass
   (props, ref) => {
     const {
       intensity = 'regular',
-      style = 'systemMaterial',
+      glassStyle = 'systemMaterial',
       sensorAware = false,
       environmentalAdaptation = false,
       dynamicIntensity = false,
@@ -280,9 +280,9 @@ export const LiquidGlassNative = forwardRef<LiquidGlassNativeHandle, LiquidGlass
 
     // Map advanced props to LiquidGlassWrapper's simpler interface
     const mappedProps = {
-      variant: intensity === 'ultraThin' ? 'regular' : 
+      variant: (intensity === 'ultraThin' ? 'regular' : 
                intensity === 'thin' ? 'regular' :
-               intensity === 'regular' ? 'prominent' : 'interactive',
+               intensity === 'regular' ? 'prominent' : 'interactive') as 'regular' | 'prominent' | 'interactive',
       shape: 'capsule' as const,
       sensorAware,
       style: [containerStyle, otherProps.style],
@@ -292,10 +292,7 @@ export const LiquidGlassNative = forwardRef<LiquidGlassNativeHandle, LiquidGlass
     // Use LiquidGlassWrapper under the hood to avoid duplicate native registration
     // This provides iOS 26+ support with proper fallbacks while adding advanced features
     return (
-      <LiquidGlassWrapper
-        ref={nativeViewRef}
-        {...mappedProps}
-      >
+      <LiquidGlassWrapper {...mappedProps}>
         {children}
       </LiquidGlassWrapper>
     );
@@ -479,11 +476,16 @@ export const getOptimalNativeConfig = async (): Promise<{
     }
 
     // Configure based on device performance tier
-    const config = {
+    const config: {
+      intensity: GlassIntensity;
+      style: GlassStyle;
+      sensorAware: boolean;
+      performanceMode: 'auto' | 'performance' | 'quality' | 'battery';
+    } = {
       intensity: 'regular' as GlassIntensity,
       style: 'systemMaterial' as GlassStyle,
       sensorAware: false,
-      performanceMode: 'auto' as const,
+      performanceMode: 'auto',
     };
 
     switch (capabilities.performance.tier) {

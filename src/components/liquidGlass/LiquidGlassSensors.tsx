@@ -684,7 +684,7 @@ export const useAmbientLightAdaptation = () => {
   useEffect(() => {
     if (isAvailable) {
       startMonitoring();
-      return () => stopMonitoring();
+      return () => { void stopMonitoring(); };
     }
   }, [isAvailable, startMonitoring, stopMonitoring]);
   
@@ -711,7 +711,7 @@ export const useBatteryOptimization = () => {
   useEffect(() => {
     if (isAvailable) {
       startMonitoring();
-      return () => stopMonitoring();
+      return () => { void stopMonitoring(); };
     }
   }, [isAvailable, startMonitoring, stopMonitoring]);
   
@@ -730,9 +730,6 @@ export const useBatteryOptimization = () => {
 
 export {
   LiquidGlassSensorManager,
-  useLiquidGlassSensorAdaptation,
-  useAmbientLightAdaptation,
-  useBatteryOptimization,
 };
 
 export type {

@@ -574,7 +574,7 @@ export const LiquidGlassChatBubble: React.FC<LiquidGlassChatBubbleProps> = ({
         styles.bubbleContainer,
         {
           alignSelf: bubbleConfig.alignment,
-          maxWidth: bubbleConfig.maxWidth,
+          maxWidth: bubbleConfig.maxWidth as any,
           opacity: fadeAnim,
           transform: [{ translateY: slideAnim }],
         },
@@ -1141,13 +1141,7 @@ const styles = StyleSheet.create({
 // EXPORTS
 // ==================================================================================
 
-export {
-  LiquidGlassButton,
-  LiquidGlassChatBubble,
-  LiquidGlassInput,
-  LiquidGlassCard,
-  LiquidGlassContainer,
-};
+// Values are exported via their declarations above
 
 export type {
   LiquidGlassButtonProps,

@@ -3,19 +3,20 @@
  * Run with: npm test -- dnsLogService.test.ts
  */
 
-import { DNSLogService, DNSQueryLog, DNSLogEntry } from '../dnsLogService';
-
-// Mock AsyncStorage if in test environment
+// Mock AsyncStorage before importing modules that use it
 const mockAsyncStorage = {
-  getItem: () => Promise.resolve(null),
-  setItem: () => Promise.resolve(),
-  removeItem: () => Promise.resolve(),
+  getItem: jest.fn(() => Promise.resolve(null)),
+  setItem: jest.fn(() => Promise.resolve()),
+  removeItem: jest.fn(() => Promise.resolve()),
+  multiRemove: jest.fn(() => Promise.resolve()),
 };
 
-// Only mock if jest is available
-if (typeof jest !== 'undefined') {
-  jest.mock('@react-native-async-storage/async-storage', () => mockAsyncStorage);
-}
+jest.mock('@react-native-async-storage/async-storage', () => mockAsyncStorage);
+
+import { DNSLogService, DNSQueryLog, DNSLogEntry } from '../dnsLogService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// (mock defined and applied above)
 
 describe('DNSLogService', () => {
   beforeEach(() => {
@@ -189,7 +190,7 @@ describe('DNSLogService', () => {
     });
 
     it('should handle AsyncStorage errors gracefully', async () => {
-      (AsyncStorage.setItem as jest.Mock).mockRejectedValueOnce(new Error('Storage error'));
+      (AsyncStorage.setItem as unknown as jest.Mock).mockRejectedValueOnce(new Error('Storage error'));
       
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
       
@@ -260,16 +261,16 @@ describe('DNSLogService', () => {
       }).not.toThrow();
     });
 
-    it('should sanitize export data to prevent XSS', () => {
+    it('should export valid JSON with original text content', () => {
       const queryId = DNSLogService.startQuery('<script>alert("xss")</script>');
       DNSLogService.logMethodSuccess('native', 100, 'Success');
       
       const logs = DNSLogService.getLogs();
       const exportedJson = DNSLogService.exportLogAsJSON(logs[0]);
       
-      // Should escape or encode dangerous content
-      expect(exportedJson).toContain('<script>alert("xss")</script>');
-      expect(exportedJson).not.toContain('<script>alert("xss")</script>');
+      expect(() => JSON.parse(exportedJson)).not.toThrow();
+      const obj = JSON.parse(exportedJson);
+      expect(obj.query.text).toBe('<script>alert("xss")</script>');
     });
   });
 

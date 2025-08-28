@@ -14,7 +14,7 @@
  */
 
 import React from 'react';
-import { Platform, ViewProps, View, useColorScheme, NativeModules } from 'react-native';
+import { Platform, ViewProps, View, useColorScheme, NativeModules, ViewStyle } from 'react-native';
 import { requireNativeComponent, UIManager, findNodeHandle } from 'react-native';
 
 // ==================================================================================
@@ -148,7 +148,7 @@ export const LiquidGlassWrapper: React.FC<LiquidGlassProps> = ({
   // Enhanced CSS fallback with glass-like effects
   const isDark = colorScheme === 'dark';
   
-  const glassStyle = {
+  const glassStyle: any = {
     backgroundColor: (() => {
       if (isDark) {
         switch (variant) {
@@ -183,10 +183,10 @@ export const LiquidGlassWrapper: React.FC<LiquidGlassProps> = ({
     elevation: 12, // Higher Android elevation
     // Add glassmorphism effect
     backdropFilter: 'blur(20px)', // CSS glassmorphism (web/newer RN)
-    ...(Platform.OS === 'ios' && {
+    ...(Platform.OS === 'ios' && ({
       // iOS-specific blur enhancement
-      overflow: 'hidden',
-    }),
+      overflow: 'hidden' as ViewStyle['overflow'],
+    })),
     // Modern interaction states with dramatic effects
     ...(isInteractive && {
       backgroundColor: isDark 

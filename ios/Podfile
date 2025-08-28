@@ -40,6 +40,9 @@ target 'DNSChat' do
     :app_path => "#{Pod::Config.instance.installation_root}/..",
     :privacy_file_aggregation_enabled => podfile_properties['apple.privacyManifestAggregationEnabled'] != 'false',
   )
+  
+  # Native DNS Module - REQUIRED for iOS native DNS functionality
+  pod 'DNSNative', :path => './DNSNative'
 
   post_install do |installer|
     react_native_post_install(
@@ -49,11 +52,45 @@ target 'DNSChat' do
       :ccache_enabled => podfile_properties['apple.ccacheEnabled'] == 'true',
     )
 
+    # Ensure App target can see CocoaPods public headers for bridging headers
+    installer.aggregate_targets.each do |aggregate_target|
+      aggregate_target.user_project.native_targets.each do |user_target|
+        user_target.build_configurations.each do |config|
+          hdrs = config.build_settings['HEADER_SEARCH_PATHS'] || '$(inherited)'
+          hdrs = [hdrs].flatten unless hdrs.is_a?(Array)
+          extra = [
+            '$(PODS_ROOT)/Headers/Public/**',
+            '$(PODS_ROOT)/Headers/Private/**',
+            '$(PODS_CONFIGURATION_BUILD_DIR)/**',
+            '"$(PODS_ROOT)/Target Support Files/React-Core"'
+          ]
+          config.build_settings['HEADER_SEARCH_PATHS'] = (hdrs + extra).uniq
+          # Ensure Swift can locate pod-built modules like Expo
+          fw = config.build_settings['FRAMEWORK_SEARCH_PATHS'] || '$(inherited)'
+          fw = [fw].flatten unless fw.is_a?(Array)
+          fw_extra = ['$(PODS_CONFIGURATION_BUILD_DIR)/**']
+          config.build_settings['FRAMEWORK_SEARCH_PATHS'] = (fw + fw_extra).uniq
+          config.build_settings['SWIFT_INCLUDE_PATHS'] = '$(PODS_CONFIGURATION_BUILD_DIR)/**'
+        end
+      end
+    end
+
     # React Native 0.81 header search path fixes
     installer.pods_project.targets.each do |target|
       target.build_configurations.each do |config|
+        # Use header maps (default) for CocoaPods targets
         config.build_settings['USE_HEADERMAP'] = 'YES'
         config.build_settings['CLANG_ENABLE_MODULES'] = 'YES'
+        # Xcode 26/iOS 18.5+ toolchain: disable explicit modules for C/C++/Obj-C to avoid analyzer issues
+        config.build_settings['CLANG_ENABLE_EXPLICIT_MODULES'] = 'NO'
+        # Prefer Apple Silicon simulator arch; avoid dual-arch confusion
+        if config.name == 'Debug'
+          config.build_settings['ONLY_ACTIVE_ARCH'] = 'YES'
+        end
+        config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = 'x86_64'
+        
+        # Fix for Xcode 26 Beta - Disable Swift explicit modules per Expo SDK 54 guidance
+        config.build_settings['SWIFT_ENABLE_EXPLICIT_MODULES'] = 'NO'
         
         # Base header search paths
         hdrs = config.build_settings['HEADER_SEARCH_PATHS'] || '$(inherited)'
@@ -95,6 +132,8 @@ target 'DNSChat' do
         
         # Ensure C++ paths come first, then inherited, then extra paths
         config.build_settings['HEADER_SEARCH_PATHS'] = cpp_system_paths + hdrs + extra_paths
+        # C++ language standard
+        config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++20'
         config.build_settings['HEADER_SEARCH_PATHS'] = config.build_settings['HEADER_SEARCH_PATHS'].uniq
         
         # Specific fixes for problematic targets
@@ -123,6 +162,17 @@ target 'DNSChat' do
           config.build_settings['HEADER_SEARCH_PATHS'] = config.build_settings['HEADER_SEARCH_PATHS'].uniq
           
           # Also ensure proper C++ language settings
+          config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++20'
+          config.build_settings['CLANG_CXX_LIBRARY'] = 'libc++'
+        end
+
+        # Ensure fmt target can find its internal headers when header maps are disabled
+        if target.name == 'fmt'
+          fmt_paths = config.build_settings['HEADER_SEARCH_PATHS'] || []
+          fmt_paths = [fmt_paths].flatten unless fmt_paths.is_a?(Array)
+          # Add the pod's local include dir explicitly
+          fmt_paths.unshift('"$(PODS_TARGET_SRCROOT)/include"')
+          config.build_settings['HEADER_SEARCH_PATHS'] = fmt_paths.uniq
           config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++20'
           config.build_settings['CLANG_CXX_LIBRARY'] = 'libc++'
         end
@@ -175,6 +225,24 @@ target 'DNSChat' do
           # Ensure proper C++ settings
           config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++20'
           config.build_settings['CLANG_CXX_LIBRARY'] = 'libc++'
+        end
+        
+        # Ensure Swift-generated ObjC headers exist for Expo Swift modules on Xcode 26
+        if ['Expo', 'ExpoModulesCore'].include?(target.name)
+          config.build_settings['DEFINES_MODULE'] = 'YES'
+          config.build_settings['SWIFT_INSTALL_OBJC_HEADER'] = 'YES'
+          # Explicitly name the generated header to match module.modulemap expectations
+          config.build_settings['SWIFT_OBJC_INTERFACE_HEADER_NAME'] = "$(PRODUCT_MODULE_NAME)-Swift.h"
+        end
+
+        # Fix for Hermes script hanging during build (SDK 54 / RN 0.81)
+        if target.name == 'hermes-engine'
+          target.build_phases.each do |phase|
+            if phase.display_name == '[CP-User] [Hermes] Replace Hermes for the right configuration, if needed'
+              # Disable the problematic Hermes replacement script that hangs
+              phase.shell_script = "# Disabled due to SDK 54 hang issue\necho 'Skipping Hermes replacement script'\nexit 0"
+            end
+          end
         end
       end
     end

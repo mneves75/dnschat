@@ -3,5 +3,8 @@
   "compilerOptions": {
     "moduleResolution": "bundler",
     "strict": true
-  }
+  },
+  "exclude": [
+    "**/__tests__/**"
+  ]
 }

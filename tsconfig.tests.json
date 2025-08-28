@@ -1,0 +1,22 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "moduleResolution": "bundler",
+    "strict": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "types": ["jest"]
+  },
+  "include": [
+    "src/services/__tests__/**/*.ts",
+    "src/services/__tests__/**/*.d.ts",
+    "src/services/**/*.ts",
+    "modules/dns-native/__tests__/**/*.ts",
+    "modules/dns-native/**/*.ts"
+  ],
+  "exclude": [
+    "src/components/**",
+    "src/navigation/**",
+    "src/context/**"
+  ]
+}

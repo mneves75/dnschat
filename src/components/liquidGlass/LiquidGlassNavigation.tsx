@@ -176,7 +176,7 @@ export const LiquidGlassTabBar: React.FC<LiquidGlassTabBarProps> = ({
         accessibilityRole="button"
         accessibilityState={isFocused ? { selected: true } : {}}
         accessibilityLabel={options.tabBarAccessibilityLabel}
-        testID={options.tabBarTestID}
+        testID={(options as any).tabBarTestID}
         onPress={() => handleTabPress(route, isFocused)}
         style={styles.tab}
       >
@@ -772,9 +772,4 @@ const styles = StyleSheet.create({
 // EXPORTS
 // ==================================================================================
 
-export {
-  LiquidGlassTabBar,
-  LiquidGlassNavigationBar,
-  LiquidGlassModalComponent as LiquidGlassModal,
-  LiquidGlassBottomSheet,
-};
+// Values are already exported above via named declarations

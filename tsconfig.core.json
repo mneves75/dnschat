@@ -1,0 +1,21 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "moduleResolution": "bundler",
+    "strict": true,
+    "skipLibCheck": true
+  },
+  "include": [
+    "src/services/**/*.ts",
+    "src/services/**/*.tsx",
+    "src/types/**/*.ts",
+    "src/utils/**/*.ts"
+  ],
+  "exclude": [
+    "src/services/dnsService.ts",
+    "**/__tests__/**",
+    "modules/**",
+    "src/components/**",
+    "src/navigation/**"
+  ]
+}

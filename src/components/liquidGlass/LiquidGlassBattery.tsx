@@ -391,6 +391,14 @@ class LiquidGlassBatteryManager {
       console.warn('Thermal state update failed:', error);
     }
   }
+
+  /**
+   * Apply optimizations specifically triggered by thermal changes
+   */
+  private async applyThermalOptimizations(): Promise<void> {
+    // Reassess and apply the current set of needed optimizations
+    await this.assessOptimizationNeeds();
+  }
   
   /**
    * Calculate throttle level based on thermal state
@@ -949,7 +957,6 @@ export const useLiquidGlassBattery = (config?: Partial<BatteryConfig>) => {
 
 export {
   LiquidGlassBatteryManager,
-  useLiquidGlassBattery,
   DEFAULT_POWER_PROFILES,
 };
 

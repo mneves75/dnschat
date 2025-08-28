@@ -222,6 +222,15 @@ export const LiquidGlassThemeProvider: React.FC<LiquidGlassThemeProviderProps> =
   
   // System integrations
   const systemColorScheme = useColorScheme();
+  // Define handler before passing to hook to avoid TS "used before assigned"
+  function handleSensorUpdate(data: SensorData) {
+    if (!enableSensorAdaptation) return;
+    updateEnvironmentalContext(data);
+    if (userPreferences.adaptToEnvironment && enableAutoThemeTransitions) {
+      updateThemeFromEnvironment(data);
+    }
+  }
+
   const { sensorData, isAvailable: sensorsAvailable } = useLiquidGlassSensorAdaptation(
     {
       enableAmbientLightAdaptation: enableSensorAdaptation,
@@ -281,17 +290,7 @@ export const LiquidGlassThemeProvider: React.FC<LiquidGlassThemeProviderProps> =
   // SENSOR INTEGRATION
   // ==================================================================================
   
-  const handleSensorUpdate = useCallback((data: SensorData) => {
-    if (!enableSensorAdaptation) return;
-    
-    // Update environmental context based on sensor data
-    updateEnvironmentalContext(data);
-    
-    // Trigger adaptive theme updates if enabled
-    if (userPreferences.adaptToEnvironment && enableAutoThemeTransitions) {
-      updateThemeFromEnvironment(data);
-    }
-  }, [enableSensorAdaptation, userPreferences.adaptToEnvironment, enableAutoThemeTransitions]);
+  // handler defined above
   
   const updateEnvironmentalContext = (sensorData: SensorData) => {
     const timeOfDay = getCurrentTimeOfDay();
@@ -729,10 +728,7 @@ const determineEnvironmentalContext = async (sensorData: SensorData | null): Pro
 // EXPORTS
 // ==================================================================================
 
-export {
-  LiquidGlassThemeProvider,
-  useLiquidGlassTheme,
-};
+// Values are exported via their declarations above
 
 export type {
   ThemeConfiguration,
