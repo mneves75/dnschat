@@ -5,6 +5,7 @@ To upload your DNSChat iOS app to TestFlight, you'll need to follow these steps:
 ## 📱 TestFlight Upload Process
 
 ### 1. **Prerequisites**
+
 - **Apple Developer Account** (paid - $99/year)
 - **Xcode** installed on macOS
 - **App Store Connect** access
@@ -48,6 +49,7 @@ open ChatDNS.xcworkspace
 ```
 
 **In Xcode**:
+
 1. **Select Project** → Select "ChatDNS" target
 2. **Signing & Capabilities** tab
 3. **Team**: Select your Apple Developer team
@@ -57,6 +59,7 @@ open ChatDNS.xcworkspace
 ### 5. **Build for Archive**
 
 **In Xcode**:
+
 1. **Device Selection**: Choose "Any iOS Device" (not simulator)
 2. **Scheme**: Ensure "ChatDNS" scheme is selected
 3. **Build Configuration**: Set to "Release"
@@ -66,6 +69,7 @@ open ChatDNS.xcworkspace
 ### 6. **Upload to App Store Connect**
 
 **After successful archive**:
+
 1. **Organizer** window opens automatically
 2. **Select your archive** → **Distribute App**
 3. **App Store Connect** → **Next**
@@ -94,6 +98,7 @@ eas submit --platform ios --profile production
 ### 8. **Configure TestFlight in App Store Connect**
 
 **After upload processes**:
+
 1. Go to **App Store Connect** → **Your App** → **TestFlight**
 2. **Processing**: Wait for Apple to process your build (5-30 minutes)
 3. **Compliance**: Answer export compliance questions
@@ -103,10 +108,12 @@ eas submit --platform ios --profile production
 ### 9. **Add TestFlight Testers**
 
 **Internal Testers** (App Store Connect users):
+
 - Automatically added, no review needed
 - Can test immediately after processing
 
 **External Testers**:
+
 - Add via email addresses
 - Requires Apple review (24-48 hours)
 - Up to 10,000 testers
@@ -114,6 +121,7 @@ eas submit --platform ios --profile production
 ### 🔧 **Troubleshooting Common Issues**
 
 #### Code Signing Problems:
+
 ```bash
 # Clean derived data
 rm -rf ~/Library/Developer/Xcode/DerivedData
@@ -123,6 +131,7 @@ rm -rf ~/Library/Developer/Xcode/DerivedData
 ```
 
 #### Native Module Issues:
+
 ```bash
 # Ensure native DNS module builds properly
 cd ios && pod install && cd ..
@@ -132,6 +141,7 @@ npm run ios -- --verbose
 ```
 
 #### Bundle Identifier Conflicts:
+
 - Ensure `org.mvneves.dnschat` is unique in App Store Connect
 - Check it matches exactly in `app.json` and Xcode
 
@@ -146,7 +156,7 @@ npm run ios -- --verbose
 - ✅ **Universal landscape support** enabled
 - ✅ **App Store screenshots** (2024 compliant):
   - iPhone 6.9" (1320×2868px): 8 screenshots
-  - iPad 13" (2752×2064px): 8 screenshots  
+  - iPad 13" (2752×2064px): 8 screenshots
   - macOS (2560×1600px): 8 screenshots
 - ✅ **App icons** and metadata ready
 - ✅ **Privacy Policy** URL (required for App Store)
@@ -167,6 +177,7 @@ eas build --platform ios --profile production
 ### 📱 **TestFlight Distribution**
 
 Once uploaded:
+
 1. **Internal Testing**: Immediate access for team members
 2. **External Testing**: Public beta testing after Apple review
 3. **Feedback**: Collect user feedback through TestFlight
@@ -185,6 +196,7 @@ Once uploaded:
 ## 📞 **Support**
 
 If you encounter issues during the upload process:
+
 1. Check the [Apple Developer Forums](https://developer.apple.com/forums/)
 2. Review Expo documentation for native builds
 3. Verify all native modules compile correctly with `npm run ios`
@@ -192,4 +204,4 @@ If you encounter issues during the upload process:
 
 ---
 
-*TestFlight upload guide for DNSChat v1.7.2 - Last updated: 2025-08-15*
+_TestFlight upload guide for DNSChat v1.7.2 - Last updated: 2025-08-15_

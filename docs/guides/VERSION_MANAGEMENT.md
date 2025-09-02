@@ -5,22 +5,25 @@
 To update the app version, modify the `version` field in **both** `package.json` and `app.json`:
 
 **package.json:**
+
 ```json
 {
-  "version": "1.7.2"  // Update this value
+  "version": "1.7.2" // Update this value
 }
 ```
 
 **app.json (Expo configuration):**
+
 ```json
 {
   "expo": {
-    "version": "1.7.2"  // Keep synchronized with package.json
+    "version": "1.7.2" // Keep synchronized with package.json
   }
 }
 ```
 
 The version is automatically displayed in:
+
 - About tab (`src/navigation/screens/About.tsx`)
 - App metadata and app stores
 - Expo builds and deployments

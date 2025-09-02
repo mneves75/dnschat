@@ -1,25 +1,25 @@
-import React from 'react';
+import React from "react";
 import {
   View,
   StyleSheet,
   SafeAreaView,
   useColorScheme,
   Dimensions,
-} from 'react-native';
-import { StatusBar } from 'react-native';
-import { useOnboarding } from '../../context/OnboardingContext';
-import { OnboardingProgress } from './OnboardingProgress';
-import { WelcomeScreen } from './screens/WelcomeScreen';
-import { DNSMagicScreen } from './screens/DNSMagicScreen';
-import { NetworkSetupScreen } from './screens/NetworkSetupScreen';
-import { FirstChatScreen } from './screens/FirstChatScreen';
-import { FeaturesScreen } from './screens/FeaturesScreen';
+} from "react-native";
+import { StatusBar } from "react-native";
+import { useOnboarding } from "../../context/OnboardingContext";
+import { OnboardingProgress } from "./OnboardingProgress";
+import { WelcomeScreen } from "./screens/WelcomeScreen";
+import { DNSMagicScreen } from "./screens/DNSMagicScreen";
+import { NetworkSetupScreen } from "./screens/NetworkSetupScreen";
+import { FirstChatScreen } from "./screens/FirstChatScreen";
+import { FeaturesScreen } from "./screens/FeaturesScreen";
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 export function OnboardingContainer() {
   const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const isDark = colorScheme === "dark";
   const { currentStep, steps } = useOnboarding();
 
   const renderCurrentScreen = () => {
@@ -27,15 +27,15 @@ export function OnboardingContainer() {
     if (!currentStepData) return null;
 
     switch (currentStepData.component) {
-      case 'WelcomeScreen':
+      case "WelcomeScreen":
         return <WelcomeScreen />;
-      case 'DNSMagicScreen':
+      case "DNSMagicScreen":
         return <DNSMagicScreen />;
-      case 'NetworkSetupScreen':
+      case "NetworkSetupScreen":
         return <NetworkSetupScreen />;
-      case 'FirstChatScreen':
+      case "FirstChatScreen":
         return <FirstChatScreen />;
-      case 'FeaturesScreen':
+      case "FeaturesScreen":
         return <FeaturesScreen />;
       default:
         return <WelcomeScreen />;
@@ -43,20 +43,20 @@ export function OnboardingContainer() {
   };
 
   return (
-    <SafeAreaView style={[
-      styles.container,
-      isDark ? styles.darkContainer : styles.lightContainer
-    ]}>
+    <SafeAreaView
+      style={[
+        styles.container,
+        isDark ? styles.darkContainer : styles.lightContainer,
+      ]}
+    >
       <StatusBar
-        barStyle={isDark ? 'light-content' : 'dark-content'}
-        backgroundColor={isDark ? '#000000' : '#FFFFFF'}
+        barStyle={isDark ? "light-content" : "dark-content"}
+        backgroundColor={isDark ? "#000000" : "#FFFFFF"}
       />
-      
+
       <OnboardingProgress />
-      
-      <View style={styles.content}>
-        {renderCurrentScreen()}
-      </View>
+
+      <View style={styles.content}>{renderCurrentScreen()}</View>
     </SafeAreaView>
   );
 }
@@ -66,10 +66,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   lightContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
   },
   darkContainer: {
-    backgroundColor: '#000000',
+    backgroundColor: "#000000",
   },
   content: {
     flex: 1,

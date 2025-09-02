@@ -1,9 +1,9 @@
 export interface Message {
   id: string;
-  role: 'user' | 'assistant';
+  role: "user" | "assistant";
   content: string;
   timestamp: Date;
-  status: 'sending' | 'sent' | 'error';
+  status: "sending" | "sent" | "error";
 }
 
 export interface Chat {

@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect } from "react";
 import {
   FlatList,
   View,
@@ -7,9 +7,9 @@ import {
   Text,
   RefreshControl,
   ListRenderItemInfo,
-} from 'react-native';
-import { MessageBubble } from './MessageBubble';
-import { Message } from '../types/chat';
+} from "react-native";
+import { MessageBubble } from "./MessageBubble";
+import { Message } from "../types/chat";
 
 interface MessageListProps {
   messages: Message[];
@@ -18,15 +18,15 @@ interface MessageListProps {
   isRefreshing?: boolean;
 }
 
-export function MessageList({ 
-  messages, 
+export function MessageList({
+  messages,
   isLoading = false,
   onRefresh,
   isRefreshing = false,
 }: MessageListProps) {
   const flatListRef = useRef<FlatList<Message>>(null);
   const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const isDark = colorScheme === "dark";
 
   useEffect(() => {
     // Auto-scroll to bottom when new messages arrive
@@ -45,10 +45,20 @@ export function MessageList({
 
   const renderEmptyComponent = () => (
     <View style={styles.emptyContainer}>
-      <Text style={[styles.emptyText, isDark ? styles.darkEmptyText : styles.lightEmptyText]}>
+      <Text
+        style={[
+          styles.emptyText,
+          isDark ? styles.darkEmptyText : styles.lightEmptyText,
+        ]}
+      >
         Start a conversation!
       </Text>
-      <Text style={[styles.emptySubtext, isDark ? styles.darkEmptySubtext : styles.lightEmptySubtext]}>
+      <Text
+        style={[
+          styles.emptySubtext,
+          isDark ? styles.darkEmptySubtext : styles.lightEmptySubtext,
+        ]}
+      >
         Send a message to begin chatting with the AI assistant.
       </Text>
     </View>
@@ -58,7 +68,7 @@ export function MessageList({
     <RefreshControl
       refreshing={isRefreshing}
       onRefresh={onRefresh}
-      tintColor={isDark ? '#FFFFFF' : '#000000'}
+      tintColor={isDark ? "#FFFFFF" : "#000000"}
     />
   ) : undefined;
 
@@ -68,7 +78,10 @@ export function MessageList({
       data={messages}
       renderItem={renderMessage}
       keyExtractor={keyExtractor}
-      style={[styles.container, isDark ? styles.darkContainer : styles.lightContainer]}
+      style={[
+        styles.container,
+        isDark ? styles.darkContainer : styles.lightContainer,
+      ]}
       contentContainerStyle={styles.contentContainer}
       showsVerticalScrollIndicator={false}
       onContentSizeChange={() => {
@@ -100,10 +113,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   lightContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
   },
   darkContainer: {
-    backgroundColor: '#000000',
+    backgroundColor: "#000000",
   },
   contentContainer: {
     flexGrow: 1,
@@ -111,32 +124,32 @@ const styles = StyleSheet.create({
   },
   emptyContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     paddingHorizontal: 32,
   },
   emptyText: {
     fontSize: 24,
-    fontWeight: '600',
+    fontWeight: "600",
     marginBottom: 8,
-    textAlign: 'center',
+    textAlign: "center",
   },
   lightEmptyText: {
-    color: '#000000',
+    color: "#000000",
   },
   darkEmptyText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
   },
   emptySubtext: {
     fontSize: 16,
     opacity: 0.6,
-    textAlign: 'center',
+    textAlign: "center",
     lineHeight: 22,
   },
   lightEmptySubtext: {
-    color: '#8E8E93',
+    color: "#8E8E93",
   },
   darkEmptySubtext: {
-    color: '#8E8E93',
+    color: "#8E8E93",
   },
 });

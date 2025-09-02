@@ -3,18 +3,23 @@
 ## Cross-Platform Patterns
 
 ### State-Based Glass
+
 **SwiftUI**
+
 ```swift
 .glassEffect(.regular.tint(isActive ? .blue : .clear))
 ```
 
 **AppKit**
+
 ```swift
 glassView.tintColor = isActive ? NSColor.systemBlue.withAlphaComponent(0.3) : nil
 ```
 
 ### Hover Effects
+
 **SwiftUI**
+
 ```swift
 @State private var isHovered = false
 Text("Hover")
@@ -23,6 +28,7 @@ Text("Hover")
 ```
 
 **AppKit**
+
 ```swift
 override func mouseEntered(with: NSEvent) {
     animator().tintColor = NSColor.systemBlue.withAlphaComponent(0.2)
@@ -30,12 +36,15 @@ override func mouseEntered(with: NSEvent) {
 ```
 
 ### Animated Transitions
+
 **SwiftUI**
+
 ```swift
 .animation(.spring(duration: 0.3), value: glassState)
 ```
 
 **AppKit**
+
 ```swift
 NSAnimationContext.runAnimationGroup { context in
     context.duration = 0.3
@@ -46,6 +55,7 @@ NSAnimationContext.runAnimationGroup { context in
 ## UI Component Patterns
 
 ### Glass Card
+
 ```swift
 // SwiftUI
 struct GlassCard<Content: View>: View {
@@ -70,6 +80,7 @@ class GlassCard: NSView {
 ```
 
 ### Glass Badge
+
 ```swift
 // SwiftUI
 struct GlassBadge: View {
@@ -83,6 +94,7 @@ struct GlassBadge: View {
 ```
 
 ### Glass Toolbar
+
 ```swift
 // SwiftUI
 .toolbar {
@@ -96,6 +108,7 @@ struct GlassBadge: View {
 ## Layout Patterns
 
 ### Grid of Glass Items
+
 ```swift
 // SwiftUI
 GlassEffectContainer(spacing: 20) {
@@ -108,6 +121,7 @@ GlassEffectContainer(spacing: 20) {
 ```
 
 ### Merging Glass Groups
+
 ```swift
 // SwiftUI with union
 @Namespace private var ns
@@ -121,6 +135,7 @@ ForEach(items.indices) { i in
 ## Animation Patterns
 
 ### Pulse Effect
+
 ```swift
 // SwiftUI
 @State private var isPulsing = false
@@ -131,6 +146,7 @@ Circle()
 ```
 
 ### Morphing Between States
+
 ```swift
 // SwiftUI
 @Namespace private var namespace
@@ -144,6 +160,7 @@ if expanded {
 ## Performance Patterns
 
 ### Lazy Loading Glass
+
 ```swift
 // SwiftUI
 ScrollView {
@@ -157,6 +174,7 @@ ScrollView {
 ```
 
 ### Batch Processing
+
 ```swift
 // AppKit
 let container = NSGlassEffectContainerView()
@@ -166,13 +184,13 @@ container.spacing = 20
 
 ## Decision Matrix
 
-| Use Case | SwiftUI | AppKit |
-|----------|---------|--------|
-| Simple glass | `.glassEffect()` | `NSGlassEffectView` |
+| Use Case       | SwiftUI                | AppKit                       |
+| -------------- | ---------------------- | ---------------------------- |
+| Simple glass   | `.glassEffect()`       | `NSGlassEffectView`          |
 | Multiple glass | `GlassEffectContainer` | `NSGlassEffectContainerView` |
-| Button styling | `.buttonStyle(.glass)` | Custom `GlassButton` class |
-| Morphing | `.glassEffectID()` | Manual animation |
-| Performance | Container + lazy | Container + batch |
+| Button styling | `.buttonStyle(.glass)` | Custom `GlassButton` class   |
+| Morphing       | `.glassEffectID()`     | Manual animation             |
+| Performance    | Container + lazy       | Container + batch            |
 
 ## Tips & Tricks
 
@@ -183,6 +201,7 @@ container.spacing = 20
 5. **Consistency**: Match corner radius across app
 
 ## See Also
+
 - [Overview](overview.md)
 - [AppKit Implementation](appkit.md)
 - [SwiftUI Implementation](swiftui.md)

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef } from "react";
 import {
   View,
   TextInput,
@@ -7,7 +7,7 @@ import {
   useColorScheme,
   Text,
   Platform,
-} from 'react-native';
+} from "react-native";
 
 interface ChatInputProps {
   onSendMessage: (message: string) => void;
@@ -15,22 +15,22 @@ interface ChatInputProps {
   placeholder?: string;
 }
 
-export function ChatInput({ 
-  onSendMessage, 
-  isLoading = false, 
-  placeholder = "Message..." 
+export function ChatInput({
+  onSendMessage,
+  isLoading = false,
+  placeholder = "Message...",
 }: ChatInputProps) {
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState("");
   const textInputRef = useRef<TextInput>(null);
   const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const isDark = colorScheme === "dark";
 
   const handleSend = () => {
     if (message.trim() && !isLoading) {
       onSendMessage(message.trim());
-      setMessage('');
+      setMessage("");
       // Refocus the input after sending on iOS
-      if (Platform.OS === 'ios') {
+      if (Platform.OS === "ios") {
         setTimeout(() => {
           textInputRef.current?.focus();
         }, 100);
@@ -41,7 +41,12 @@ export function ChatInput({
   const canSend = message.trim().length > 0 && !isLoading;
 
   return (
-    <View style={[styles.container, isDark ? styles.darkContainer : styles.lightContainer]}>
+    <View
+      style={[
+        styles.container,
+        isDark ? styles.darkContainer : styles.lightContainer,
+      ]}
+    >
       <View style={styles.inputContainer}>
         <TextInput
           ref={textInputRef}
@@ -52,7 +57,7 @@ export function ChatInput({
           value={message}
           onChangeText={setMessage}
           placeholder={placeholder}
-          placeholderTextColor={isDark ? '#8E8E93' : '#8E8E93'}
+          placeholderTextColor={isDark ? "#8E8E93" : "#8E8E93"}
           multiline={true}
           maxLength={1000}
           editable={!isLoading}
@@ -61,14 +66,14 @@ export function ChatInput({
           blurOnSubmit={true}
           textAlignVertical="top"
           keyboardType="default"
-           autoCorrect={false}
-           spellCheck={false}
-           autoComplete="off"
-           contextMenuHidden={true}
-          keyboardAppearance={isDark ? 'dark' : 'light'}
+          autoCorrect={false}
+          spellCheck={false}
+          autoComplete="off"
+          contextMenuHidden={true}
+          keyboardAppearance={isDark ? "dark" : "light"}
           onSubmitEditing={handleSend}
         />
-        
+
         <TouchableOpacity
           style={[
             styles.sendButton,
@@ -78,12 +83,16 @@ export function ChatInput({
           onPress={handleSend}
           disabled={!canSend}
         >
-          <Text style={[
-            styles.sendButtonText,
-            canSend ? styles.sendButtonTextActive : styles.sendButtonTextInactive,
-            isDark ? styles.darkSendButtonText : styles.lightSendButtonText,
-          ]}>
-            {isLoading ? '...' : '→'}
+          <Text
+            style={[
+              styles.sendButtonText,
+              canSend
+                ? styles.sendButtonTextActive
+                : styles.sendButtonTextInactive,
+              isDark ? styles.darkSendButtonText : styles.lightSendButtonText,
+            ]}
+          >
+            {isLoading ? "..." : "→"}
           </Text>
         </TouchableOpacity>
       </View>
@@ -98,14 +107,14 @@ const styles = StyleSheet.create({
     // Remove borders and backgrounds for glass compatibility
   },
   lightContainer: {
-    backgroundColor: 'transparent', // Glass wrapper handles background
+    backgroundColor: "transparent", // Glass wrapper handles background
   },
   darkContainer: {
-    backgroundColor: 'transparent', // Glass wrapper handles background
+    backgroundColor: "transparent", // Glass wrapper handles background
   },
   inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
+    flexDirection: "row",
+    alignItems: "flex-end",
     gap: 12,
   },
   textInput: {
@@ -120,27 +129,27 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   lightTextInput: {
-    backgroundColor: 'rgba(242, 242, 247, 0.8)', // Semi-transparent for glass effect
-    borderColor: 'rgba(229, 229, 234, 0.6)',
-    color: '#000000',
+    backgroundColor: "rgba(242, 242, 247, 0.8)", // Semi-transparent for glass effect
+    borderColor: "rgba(229, 229, 234, 0.6)",
+    color: "#000000",
   },
   darkTextInput: {
-    backgroundColor: 'rgba(28, 28, 30, 0.8)', // Semi-transparent for glass effect
-    borderColor: 'rgba(56, 56, 58, 0.6)',
-    color: '#FFFFFF',
+    backgroundColor: "rgba(28, 28, 30, 0.8)", // Semi-transparent for glass effect
+    borderColor: "rgba(56, 56, 58, 0.6)",
+    color: "#FFFFFF",
   },
   sendButton: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   sendButtonActive: {
-    backgroundColor: '#007AFF',
+    backgroundColor: "#007AFF",
   },
   sendButtonInactive: {
-    backgroundColor: '#E5E5EA',
+    backgroundColor: "#E5E5EA",
   },
   darkSendButton: {
     // Dark mode colors handled by active/inactive states
@@ -150,13 +159,13 @@ const styles = StyleSheet.create({
   },
   sendButtonText: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   sendButtonTextActive: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
   },
   sendButtonTextInactive: {
-    color: '#8E8E93',
+    color: "#8E8E93",
   },
   darkSendButtonText: {
     // Dark mode text colors handled by active/inactive states

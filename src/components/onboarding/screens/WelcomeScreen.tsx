@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   View,
   Text,
@@ -8,18 +8,18 @@ import {
   Dimensions,
   Image,
   ScrollView,
-} from 'react-native';
-import { OnboardingNavigation } from '../OnboardingNavigation';
+} from "react-native";
+import { OnboardingNavigation } from "../OnboardingNavigation";
 
 // Import the app icon from assets (same pattern as newspaper.png)
-const AppIcon = require('../../../assets/dnschat_ios26.png');
+const AppIcon = require("../../../assets/dnschat_ios26.png");
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 export function WelcomeScreen() {
   const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
-  
+  const isDark = colorScheme === "dark";
+
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
   const slideAnim = React.useRef(new Animated.Value(50)).current;
 
@@ -40,7 +40,7 @@ export function WelcomeScreen() {
 
   return (
     <View style={styles.container}>
-      <ScrollView 
+      <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -55,25 +55,30 @@ export function WelcomeScreen() {
           ]}
         >
           <View style={styles.iconContainer}>
-            <Image 
-              source={AppIcon} 
+            <Image
+              source={AppIcon}
               style={styles.appIcon}
               resizeMode="contain"
             />
           </View>
-          
-          <Text style={[
-            styles.title,
-            isDark ? styles.darkTitle : styles.lightTitle
-          ]}>
+
+          <Text
+            style={[
+              styles.title,
+              isDark ? styles.darkTitle : styles.lightTitle,
+            ]}
+          >
             Welcome to DNS Chat
           </Text>
-          
-          <Text style={[
-            styles.subtitle,
-            isDark ? styles.darkSubtitle : styles.lightSubtitle
-          ]}>
-            The world's first chat app that uses DNS queries to communicate with AI
+
+          <Text
+            style={[
+              styles.subtitle,
+              isDark ? styles.darkSubtitle : styles.lightSubtitle,
+            ]}
+          >
+            The world's first chat app that uses DNS queries to communicate with
+            AI
           </Text>
         </Animated.View>
 
@@ -84,14 +89,14 @@ export function WelcomeScreen() {
             description="Chat through DNS TXT records - no traditional APIs needed"
             isDark={isDark}
           />
-          
+
           <FeatureItem
             icon="🔒"
             title="Privacy-Focused"
             description="Your conversations travel through the global DNS infrastructure"
             isDark={isDark}
           />
-          
+
           <FeatureItem
             icon="⚡"
             title="Network Resilient"
@@ -118,16 +123,22 @@ function FeatureItem({ icon, title, description, isDark }: FeatureItemProps) {
     <View style={styles.featureItem}>
       <Text style={styles.featureIcon}>{icon}</Text>
       <View style={styles.featureContent}>
-        <Text style={[
-          styles.featureTitle,
-          isDark ? styles.darkFeatureTitle : styles.lightFeatureTitle
-        ]}>
+        <Text
+          style={[
+            styles.featureTitle,
+            isDark ? styles.darkFeatureTitle : styles.lightFeatureTitle,
+          ]}
+        >
           {title}
         </Text>
-        <Text style={[
-          styles.featureDescription,
-          isDark ? styles.darkFeatureDescription : styles.lightFeatureDescription
-        ]}>
+        <Text
+          style={[
+            styles.featureDescription,
+            isDark
+              ? styles.darkFeatureDescription
+              : styles.lightFeatureDescription,
+          ]}
+        >
           {description}
         </Text>
       </View>
@@ -148,7 +159,7 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   heroSection: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 60,
   },
   iconContainer: {
@@ -164,34 +175,34 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 32,
-    fontWeight: 'bold',
-    textAlign: 'center',
+    fontWeight: "bold",
+    textAlign: "center",
     marginBottom: 16,
   },
   lightTitle: {
-    color: '#000000',
+    color: "#000000",
   },
   darkTitle: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
   },
   subtitle: {
     fontSize: 18,
-    textAlign: 'center',
+    textAlign: "center",
     lineHeight: 26,
     opacity: 0.8,
   },
   lightSubtitle: {
-    color: '#666666',
+    color: "#666666",
   },
   darkSubtitle: {
-    color: '#999999',
+    color: "#999999",
   },
   featuresSection: {
     gap: 24,
   },
   featureItem: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
+    flexDirection: "row",
+    alignItems: "flex-start",
     gap: 16,
   },
   featureIcon: {
@@ -203,14 +214,14 @@ const styles = StyleSheet.create({
   },
   featureTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: "600",
     marginBottom: 4,
   },
   lightFeatureTitle: {
-    color: '#000000',
+    color: "#000000",
   },
   darkFeatureTitle: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
   },
   featureDescription: {
     fontSize: 16,
@@ -218,9 +229,9 @@ const styles = StyleSheet.create({
     opacity: 0.8,
   },
   lightFeatureDescription: {
-    color: '#666666',
+    color: "#666666",
   },
   darkFeatureDescription: {
-    color: '#999999',
+    color: "#999999",
   },
 });

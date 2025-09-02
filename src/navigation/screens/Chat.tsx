@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect } from "react";
 import {
   StyleSheet,
   SafeAreaView,
@@ -8,26 +8,24 @@ import {
   Platform,
   KeyboardAvoidingView,
   View,
-} from 'react-native';
-import { MessageList } from '../../components/MessageList';
-import { ChatInput } from '../../components/ChatInput';
-import { useChat } from '../../context/ChatContext';
-import { LiquidGlassWrapper, useLiquidGlassCapabilities } from '../../components/LiquidGlassWrapper';
+} from "react-native";
+import { MessageList } from "../../components/MessageList";
+import { ChatInput } from "../../components/ChatInput";
+import { useChat } from "../../context/ChatContext";
+import {
+  LiquidGlassWrapper,
+  useLiquidGlassCapabilities,
+} from "../../components/LiquidGlassWrapper";
 
 export function Chat() {
   const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
-  const { 
-    currentChat, 
-    isLoading, 
-    error, 
-    sendMessage, 
-    clearError,
-    createChat 
-  } = useChat();
-  
+  const isDark = colorScheme === "dark";
+  const { currentChat, isLoading, error, sendMessage, clearError, createChat } =
+    useChat();
+
   // iOS 26 Liquid Glass capabilities
-  const { isSupported: glassSupported, supportsSwiftUIGlass } = useLiquidGlassCapabilities();
+  const { isSupported: glassSupported, supportsSwiftUIGlass } =
+    useLiquidGlassCapabilities();
 
   useEffect(() => {
     // Create a new chat if none exists
@@ -39,16 +37,12 @@ export function Chat() {
   useEffect(() => {
     // Show error alert when error occurs
     if (error) {
-      Alert.alert(
-        'Error',
-        error,
-        [
-          {
-            text: 'OK',
-            onPress: clearError,
-          },
-        ]
-      );
+      Alert.alert("Error", error, [
+        {
+          text: "OK",
+          onPress: clearError,
+        },
+      ]);
     }
   }, [error, clearError]);
 
@@ -57,23 +51,28 @@ export function Chat() {
       await sendMessage(message);
     } catch (err) {
       // Error handling is done in the context
-      console.error('Failed to send message:', err);
+      console.error("Failed to send message:", err);
     }
   };
 
   return (
-    <SafeAreaView style={[styles.container, isDark ? styles.darkContainer : styles.lightContainer]}>
+    <SafeAreaView
+      style={[
+        styles.container,
+        isDark ? styles.darkContainer : styles.lightContainer,
+      ]}
+    >
       <StatusBar
-        barStyle={isDark ? 'light-content' : 'dark-content'}
-        backgroundColor={isDark ? '#000000' : '#FFFFFF'}
+        barStyle={isDark ? "light-content" : "dark-content"}
+        backgroundColor={isDark ? "#000000" : "#FFFFFF"}
       />
-      
+
       <KeyboardAvoidingView
         style={styles.content}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 0}
       >
-        {Platform.OS === 'ios' ? ( // Always use glass UI on iOS
+        {Platform.OS === "ios" ? ( // Always use glass UI on iOS
           <>
             {/* iOS 26 Liquid Glass Message Area */}
             <LiquidGlassWrapper
@@ -89,7 +88,7 @@ export function Chat() {
                 isLoading={isLoading}
               />
             </LiquidGlassWrapper>
-            
+
             {/* iOS 26 Liquid Glass Chat Input */}
             <LiquidGlassWrapper
               variant="prominent"
@@ -112,7 +111,7 @@ export function Chat() {
               messages={currentChat?.messages || []}
               isLoading={isLoading}
             />
-            
+
             <ChatInput
               onSendMessage={handleSendMessage}
               isLoading={isLoading}
@@ -130,10 +129,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   lightContainer: {
-    backgroundColor: 'transparent', // Transparent for glass effects
+    backgroundColor: "transparent", // Transparent for glass effects
   },
   darkContainer: {
-    backgroundColor: 'transparent', // Transparent for glass effects
+    backgroundColor: "transparent", // Transparent for glass effects
   },
   content: {
     flex: 1,
@@ -142,12 +141,12 @@ const styles = StyleSheet.create({
   glassMessageArea: {
     flex: 1,
     margin: 8,
-    backgroundColor: 'transparent',
+    backgroundColor: "transparent",
   },
   glassInputArea: {
     margin: 12,
     paddingHorizontal: 8,
     paddingVertical: 4,
-    backgroundColor: 'transparent',
+    backgroundColor: "transparent",
   },
 });

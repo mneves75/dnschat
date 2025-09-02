@@ -1,6 +1,7 @@
 # DNSChat v1.7.5 Release Notes
 
 ## Highlights
+
 - 🤖 Advanced XcodeBuildMCP Integration for revolutionary iOS build management
 - 🧭 Critical React Navigation fixes for production stability
 - 🔧 Complete iOS build script fixes for React Native 0.79.x compatibility
@@ -8,6 +9,7 @@
 ## What's Changed
 
 ### Features
+
 - **🤖 XcodeBuildMCP Integration**: Revolutionary iOS build management with Claude Code's MCP tools (via [@conhecendocontato](https://github.com/conhecendocontato))
   - 99% success rate vs traditional 60% success rate methods for iOS builds
   - Precise error diagnosis with exact file paths and line numbers
@@ -34,6 +36,7 @@
   - TestFlight and App Store Connect documentation with deployment guides
 
 ### Improvements
+
 - **🔧 Enhanced Android Network Connectivity**: Complete synchronization with iOS DNS implementation (via [@marcusneves](https://github.com/marcusneves) & [@conhecendocontato](https://github.com/conhecendocontato))
   - Message sanitization matching iOS behavior (spaces→dashes, lowercase, 200 char limit)
   - Query deduplication with ConcurrentHashMap implementation
@@ -44,6 +47,7 @@
   - Version 1.7.2 and 1.7.3 documentation consolidation
 
 ### Bug Fixes
+
 - **🔥 CRITICAL: Hermes dSYM App Store Connect Fix**: Permanent solution for missing debug symbols blocking uploads (via [@conhecendocontato](https://github.com/conhecendocontato))
   - expo-build-properties plugin with comprehensive iOS dSYM generation
   - Custom build script for automatic Hermes dSYM copying during Release builds
@@ -58,14 +62,17 @@
   - Better error messages with specific diagnostics and actionable guidance
 
 ### Developer Experience
+
 - **⚙️ iOS Project Configuration**: Updated build settings and version management for v1.7.2+ (via [@conhecendocontato](https://github.com/conhecendocontato))
 - **🔄 Feature Branch Integration**: Seamless merge of native-dns-default-landscape-support features (via [@conhecendocontato](https://github.com/conhecendocontato))
 - **📋 Enhanced Innovative Onboarding**: Complete onboarding flow improvements and user experience enhancements (via [@marcusneves](https://github.com/marcusneves))
 
 ### Security
+
 - **🛡️ App Store Security Hardening**: Enhanced security measures for production App Store deployment (via [@conhecendocontato](https://github.com/conhecendocontato))
   - Comprehensive security review and hardening for App Store Connect compliance
   - Production-ready security configurations across all platforms
 
 ## Installation
+
 See [installation instructions](https://github.com/mneves75/dnschat#installation)
