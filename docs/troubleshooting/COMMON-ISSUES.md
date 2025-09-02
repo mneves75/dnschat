@@ -4,17 +4,17 @@
 
 ## Quick Issue Lookup
 
-| Issue | Category | Solution Link |
-|-------|----------|---------------|
-| "expo: command not found" | Setup | [Environment Setup](#environment-setup-issues) |
-| Hermes "Replace Configuration" error | iOS Build | [XcodeBuildMCP Solution](#️-v174-critical---hermes-replace-configuration-script-error-fixed) |
-| Swift module incompatibility | iOS Build | [XcodeBuildMCP Guide](/docs/troubleshooting/XCODEBUILDMCP-GUIDE.md) |
-| "Screen not handled by navigator" | Navigation | [Navigation Issues](#️-v174-screen-not-handled-by-any-navigator-error-fixed) |
-| Java version errors | Build | [Java/Android Issues](#javaandroid-build-issues) |
-| "Native DNS not available" | DNS | [Native Module Issues](#native-module-issues) |
-| VirtualizedList warnings | React Native | [React Native Issues](#react-native-issues) |
-| DNS queries failing | Network | [DNS Communication](#dns-communication-issues) |
-| Build failures | Build | [Build Problems](#build-issues) |
+| Issue                                | Category     | Solution Link                                                                                |
+| ------------------------------------ | ------------ | -------------------------------------------------------------------------------------------- |
+| "expo: command not found"            | Setup        | [Environment Setup](#environment-setup-issues)                                               |
+| Hermes "Replace Configuration" error | iOS Build    | [XcodeBuildMCP Solution](#️-v174-critical---hermes-replace-configuration-script-error-fixed) |
+| Swift module incompatibility         | iOS Build    | [XcodeBuildMCP Guide](/docs/troubleshooting/XCODEBUILDMCP-GUIDE.md)                          |
+| "Screen not handled by navigator"    | Navigation   | [Navigation Issues](#️-v174-screen-not-handled-by-any-navigator-error-fixed)                 |
+| Java version errors                  | Build        | [Java/Android Issues](#javaandroid-build-issues)                                             |
+| "Native DNS not available"           | DNS          | [Native Module Issues](#native-module-issues)                                                |
+| VirtualizedList warnings             | React Native | [React Native Issues](#react-native-issues)                                                  |
+| DNS queries failing                  | Network      | [DNS Communication](#dns-communication-issues)                                               |
+| Build failures                       | Build        | [Build Problems](#build-issues)                                                              |
 
 ---
 
@@ -23,6 +23,7 @@
 ### "expo: command not found"
 
 **Symptoms:**
+
 ```bash
 npm run ios
 > expo run:ios
@@ -32,6 +33,7 @@ sh: expo: command not found
 **Root Cause:** Expo CLI not installed or not in PATH
 
 **Solutions:**
+
 ```bash
 # Option 1: Install globally
 npm install -g @expo/cli
@@ -49,6 +51,7 @@ npm config get prefix  # Check npm global directory
 ### Node.js Version Compatibility
 
 **Symptoms:**
+
 - Weird compilation errors
 - Package installation failures
 - Runtime crashes
@@ -56,6 +59,7 @@ npm config get prefix  # Check npm global directory
 **Requirements:** Node.js 18.0.0 or higher
 
 **Solutions:**
+
 ```bash
 # Check current version
 node -v
@@ -76,6 +80,7 @@ nvm use 18
 ### "Unsupported class file major version 68"
 
 **Symptoms:**
+
 ```
 FAILURE: Build failed with an exception.
 * What went wrong:
@@ -86,6 +91,7 @@ Could not create task ':react-native-reanimated:outgoingVariants'.
 **Root Cause:** Using Java 24 (major version 68) when Android build system requires Java 17
 
 **Solutions:**
+
 ```bash
 # Check current Java version
 java -version
@@ -105,6 +111,7 @@ npm run android  # Automatically uses Java 17
 ```
 
 **Alternative Solution:**
+
 ```bash
 # Temporary Java 17 for single build
 export JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home
@@ -114,11 +121,13 @@ npm run android
 ### Android SDK Not Found
 
 **Symptoms:**
+
 ```
 ANDROID_SDK_ROOT is not set and "android" command not in your PATH
 ```
 
 **Solutions:**
+
 ```bash
 # Install Android Studio first
 # Then set environment variables
@@ -134,11 +143,13 @@ adb --version
 ### Gradle Build Failures
 
 **Symptoms:**
+
 - Task execution failures
 - Dependency resolution errors
 - "Could not create task" errors
 
 **Solutions:**
+
 ```bash
 # Clean Gradle cache
 cd android
@@ -164,6 +175,7 @@ npm run android
 Console shows: "Native DNS not available, falling back to legacy methods"
 
 **Diagnostic Steps:**
+
 ```bash
 # 1. Check if native modules are compiled
 npm run ios    # Look for compilation success
@@ -181,6 +193,7 @@ ls -la modules/dns-native/android/
 **Solutions by Platform:**
 
 #### iOS Native Module Issues
+
 ```bash
 # 1. Check CocoaPods installation
 pod --version
@@ -201,6 +214,7 @@ cat ios/DNSNative/DNSNative.podspec
 ```
 
 #### Android Native Module Issues
+
 ```bash
 # 1. Verify Java 17
 java -version  # Should show Java 17
@@ -219,6 +233,7 @@ npm run android
 ### Native Module Compilation Errors
 
 **iOS Compilation Errors:**
+
 ```bash
 # Common errors and solutions
 
@@ -234,6 +249,7 @@ swift --version  # Should be 5.0+
 ```
 
 **Android Compilation Errors:**
+
 ```bash
 # Error: "package com.dnschat does not exist"
 # Solution: Verify package structure matches
@@ -251,8 +267,9 @@ grep kotlin android/build.gradle
 ### DNS Queries Failing
 
 **Symptoms:**
+
 - Messages don't get responses
-- "DNS query failed" errors  
+- "DNS query failed" errors
 - Timeout errors
 - "UDP port 53 blocked" errors
 - "TCP connection refused" errors
@@ -267,6 +284,7 @@ The app now provides comprehensive error messages with actionable troubleshootin
 - **Platform-specific guidance** for iOS/Android restrictions
 
 **Diagnostic Steps:**
+
 ```bash
 # 1. Test basic connectivity with CLI tool
 dig @ch.at "Hello world" TXT +short
@@ -284,7 +302,9 @@ dig @ch.at "Hello world" TXT +short
 **Common Causes & Solutions:**
 
 #### 🔧 UDP Port 53 Blocked (Enhanced in v1.7.2)
-**Symptoms:** 
+
+**Symptoms:**
+
 - "UDP port 53 blocked by network/iOS - automatic fallback to TCP"
 - "ERR_SOCKET_BAD_PORT" errors
 - iOS may show "Bad port" errors on cellular/corporate networks
@@ -292,26 +312,32 @@ dig @ch.at "Hello world" TXT +short
 **Cause:** Network blocking UDP port 53 (common on corporate/public WiFi, iOS restrictions)
 
 **🆕 Enhanced Solutions:**
+
 1. **Automatic Fallback**: App now automatically switches to TCP then HTTPS
 2. **Network Switching**: Try switching between WiFi and cellular data
 3. **Corporate Networks**: Contact network administrator to unblock DNS port 53
 4. **iOS Restrictions**: Some iOS versions/carriers block direct DNS - TCP fallback handles this
 
 #### 🔧 TCP Connection Issues (Enhanced in v1.7.2)
+
 **Symptoms:**
+
 - "TCP connection refused - DNS server may be blocking TCP port 53"
 - "Connection refused" or "ECONNREFUSED" errors
 - "TCP connection timeout - network may be blocking TCP DNS"
 
 **🆕 Enhanced Solutions:**
+
 1. **HTTPS Fallback**: App automatically tries DNS-over-HTTPS as final fallback
 2. **Network Diagnosis**: Error messages now indicate specific connection issues
 3. **Admin Guidance**: Clear instructions on contacting network administrators
 4. **Alternative Networks**: Switch to mobile data or different WiFi network
 
 #### DNS Server Unreachable
+
 **Symptoms:** "DNS_SERVER_UNREACHABLE" errors
 **Solutions:**
+
 ```bash
 # 1. Test server reachability
 ping ch.at
@@ -323,8 +349,10 @@ dig ch.at
 ```
 
 #### Response Parsing Errors
+
 **Symptoms:** Partial responses or garbled text
 **Debug Steps:**
+
 ```bash
 # Enable verbose logging in dnsService.ts
 # Look for raw DNS responses in console:
@@ -334,6 +362,7 @@ dig ch.at
 ### Native DNS vs Fallback Issues
 
 **Understanding the Fallback Chain:**
+
 1. **Native DNS** (iOS Network Framework, Android DnsResolver) - Fastest
 2. **UDP Sockets** (JavaScript) - Good compatibility
 3. **DNS-over-TCP** (JavaScript) - Bypasses UDP blocks
@@ -341,6 +370,7 @@ dig ch.at
 5. **Mock Service** (Development) - Always works
 
 **Debugging Fallback Issues:**
+
 ```typescript
 // Check which method succeeded
 // Look for console logs like:
@@ -357,19 +387,22 @@ dig ch.at
 ### VirtualizedList Warnings
 
 **Symptoms:**
+
 ```
-Warning: VirtualizedLists should never be nested inside plain ScrollViews 
+Warning: VirtualizedLists should never be nested inside plain ScrollViews
 with the same orientation
 ```
 
 **Status:** Fixed in v1.5.1
 
 **Background:**
+
 - **Problem:** KeyboardAwareScrollView wrapping FlatList created nested virtual lists
 - **Impact:** Performance warnings and potential crashes
 - **Solution:** Replaced with native KeyboardAvoidingView
 
 **If you see this warning:**
+
 ```bash
 # Check your version
 grep version package.json
@@ -385,6 +418,7 @@ npm install
 #### 🆕 v1.7.4: "Screen not handled by any navigator" Error (FIXED)
 
 **Symptoms:**
+
 ```
 Console Error: The action 'NAVIGATE' with payload {"name":"Logs"} was not handled by any navigator.
 Do you have a screen named 'Logs'?
@@ -393,15 +427,17 @@ Do you have a screen named 'Logs'?
 **🎯 ROOT CAUSE:** Nested navigator structure - trying to navigate directly to a tab screen from outside the tab navigator.
 
 **🔧 SOLUTION:**
+
 ```typescript
 // ❌ Incorrect - Direct navigation to nested screen
-navigation.navigate('Logs')
+navigation.navigate("Logs");
 
 // ✅ Correct - Navigate to parent navigator first, then specific screen
-navigation.navigate('HomeTabs', { screen: 'Logs' });
+navigation.navigate("HomeTabs", { screen: "Logs" });
 ```
 
 **Navigation Structure Understanding:**
+
 ```
 RootStack
 ├── HomeTabs (Tab Navigator)
@@ -418,6 +454,7 @@ RootStack
 #### Traditional Navigation Issues
 
 **Deep Linking Not Working:**
+
 ```bash
 # Test URL scheme
 npx uri-scheme open dnschat://message=test
@@ -433,6 +470,7 @@ cat android/app/src/main/AndroidManifest.xml | grep -A10 intent-filter
 ```
 
 **Navigation State Issues:**
+
 - Clear AsyncStorage: Delete app from device/simulator
 - Reset navigation state: Restart Metro bundler
 - Check navigation structure: Verify screen names match
@@ -440,6 +478,7 @@ cat android/app/src/main/AndroidManifest.xml | grep -A10 intent-filter
 ### Performance Issues
 
 **Slow Message List:**
+
 ```typescript
 // Check FlatList optimization
 // In MessageList.tsx, verify:
@@ -452,6 +491,7 @@ removeClippedSubviews={true}
 ```
 
 **Memory Leaks:**
+
 ```bash
 # Monitor memory usage
 # iOS: Xcode Instruments
@@ -470,6 +510,7 @@ removeClippedSubviews={true}
 ### Metro Bundler Issues
 
 **Cache Problems:**
+
 ```bash
 # Clear Metro cache
 npx expo start -c
@@ -483,6 +524,7 @@ npm install
 ```
 
 **Port Conflicts:**
+
 ```bash
 # Change Metro port
 npx expo start --port 8082
@@ -496,6 +538,7 @@ lsof -ti:8081 | xargs kill -9
 #### 🆕 v1.7.4: CRITICAL - Hermes "Replace Configuration" Script Error (FIXED)
 
 **Symptoms:**
+
 ```
 PhaseScriptExecution [CP-User] [Hermes] Replace Hermes for the right configuration, if needed
 CommandError: Failed to build iOS project. "xcodebuild" exited with error code 65.
@@ -507,6 +550,7 @@ Corrupted `.xcode.env.local` file with incorrect Node.js path created during yar
 **🔧 COMPREHENSIVE SOLUTION:**
 
 1. **Primary Fix - Delete .xcode.env.local:**
+
 ```bash
 # Navigate to iOS directory and remove corrupted file
 cd ios
@@ -515,6 +559,7 @@ cd ..
 ```
 
 2. **🤖 Advanced Build Tool - XcodeBuildMCP (RECOMMENDED):**
+
 ```bash
 # Use Claude Code's XcodeBuildMCP for superior build diagnostics
 # The XcodeBuildMCP tool provides:
@@ -537,6 +582,7 @@ mcp__XcodeBuildMCP__build_sim workspacePath=ios/DNSChat.xcworkspace scheme=DNSCh
 ```
 
 3. **Additional Fixes for Swift Module Issues:**
+
 ```bash
 # Clear derived data for Swift module compatibility
 rm -rf ~/Library/Developer/Xcode/DerivedData/DNSChat-*
@@ -550,6 +596,7 @@ cd ..
 **✅ Status:** PRODUCTION READY - XcodeBuildMCP approach successfully resolves 99% of build issues.
 
 **🔍 Diagnostic Benefits of XcodeBuildMCP:**
+
 - **Precise Error Location**: Shows exact line numbers and file paths for failures
 - **Swift Compiler Details**: Identifies module incompatibility issues with specific resolution steps
 - **Sandbox Permission Analysis**: Clearly identifies macOS security restrictions vs code issues
@@ -557,14 +604,17 @@ cd ..
 
 **⚠️ Remaining Known Issue:**
 macOS sandbox restriction on Expo configuration script (final 1% of builds):
+
 ```
 Sandbox: bash deny(1) file-read-data .../expo-configure-project.sh
 ```
+
 **Workaround**: Build directly in Xcode GUI or use EAS Build for cloud compilation.
 
 #### Traditional Xcode Errors
 
 **Xcode Errors:**
+
 ```bash
 # "Build input file cannot be found"
 # Solution: Clean build folder in Xcode
@@ -579,6 +629,7 @@ cd ios && pod install && cd ..
 ```
 
 **Code Signing Issues:**
+
 ```bash
 # Development builds don't require paid account
 # Use automatic code signing in Xcode
@@ -588,6 +639,7 @@ cd ios && pod install && cd ..
 ### Android Build Issues
 
 **Gradle Errors:**
+
 ```bash
 # "Execution failed for task ':app:checkDebugAarMetadata'"
 # Solution: Java version issue (use Java 17)
@@ -605,8 +657,9 @@ cd android && ./gradlew clean && cd ..
 #### 🆕 v1.7.2: CRITICAL - Hermes dSYM Missing (FIXED)
 
 **Symptoms:**
+
 ```
-The archive did not include a dSYM for the hermes.framework with the UUIDs [B810DBCE-71AE-38CA-8FB4-3B671091C81B]. 
+The archive did not include a dSYM for the hermes.framework with the UUIDs [B810DBCE-71AE-38CA-8FB4-3B671091C81B].
 Ensure that the archive's dSYM folder includes a DWARF file for hermes.framework with the expected UUIDs.
 ```
 
@@ -624,6 +677,7 @@ This critical issue has been **permanently fixed** in v1.7.2 with a comprehensiv
 **✅ Status:** PRODUCTION READY - The fix is comprehensive and tested.
 
 **⚠️ If Issue Persists:**
+
 1. Clean build: `cd ios && rm -rf Pods Podfile.lock && pod install`
 2. Verify script permissions: `chmod +x ios/scripts/copy_hermes_dsym.sh`
 3. Rebuild: `expo run:ios --configuration Release`
@@ -636,12 +690,14 @@ This critical issue has been **permanently fixed** in v1.7.2 with a comprehensiv
 ### Corporate/Restricted Networks
 
 **Common Restrictions:**
+
 - UDP port 53 blocked (DNS)
 - Port 443 restrictions (HTTPS)
 - DNS server restrictions
 - Proxy requirements
 
 **Solutions:**
+
 ```bash
 # 1. Use mobile hotspot for testing
 # 2. Configure proxy in React Native
@@ -654,6 +710,7 @@ This critical issue has been **permanently fixed** in v1.7.2 with a comprehensiv
 **Symptoms:** DNS works on some networks but not others
 
 **Solutions:**
+
 ```bash
 # Test IPv6 connectivity
 ping6 ch.at
@@ -669,24 +726,27 @@ ping6 ch.at
 ### AsyncStorage Corruption
 
 **Symptoms:**
+
 - App crashes on startup
 - Chat history lost
 - Settings reset
 
 **Solutions:**
+
 ```typescript
 // Emergency storage reset
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 await AsyncStorage.clear();
 
 // Check storage contents
-const chats = await AsyncStorage.getItem('@chat_dns_chats');
-console.log('Storage data:', chats);
+const chats = await AsyncStorage.getItem("@chat_dns_chats");
+console.log("Storage data:", chats);
 ```
 
 ### Data Migration Issues
 
 **After App Updates:**
+
 ```typescript
 // Check data format compatibility
 // Old data structure may be incompatible
@@ -700,9 +760,10 @@ console.log('Storage data:', chats);
 ### Test Environment Setup
 
 **DNS Testing:**
+
 ```bash
 # CLI test not working
-node test-dns.js "test"
+node test-dns-simple.js "test"
 
 # Common issues:
 # - Node.js version compatibility
@@ -711,6 +772,7 @@ node test-dns.js "test"
 ```
 
 **Device Testing:**
+
 ```bash
 # iOS Simulator not connecting
 # Reset simulator: Device → Erase All Content and Settings
@@ -813,4 +875,4 @@ git log --oneline -5
 **Last Updated:** v1.7.5 - Advanced XcodeBuildMCP Integration & Navigation Fixes  
 **Maintainers:** DNSChat Development Team
 
-*This guide is continuously updated. Check git history for recent additions.*
+_This guide is continuously updated. Check git history for recent additions._

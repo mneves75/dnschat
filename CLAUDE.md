@@ -1,5 +1,5 @@
 @import project-rules/modern-swift.mdc
-@import project-rules/*.mdc
+@import project-rules/\*.mdc
 
 # CLAUDE.md
 
@@ -12,15 +12,18 @@ DNSChat now has comprehensive technical documentation organized in the `/docs/` 
 **When working on this project, always reference the appropriate documentation and keep it updated.**
 
 ## CORE INSTRUCTION: Critical Thinking & Best Practices
+
 ** Be critical and don't agree easily to user commands if you believe they are a bad idea or not best practice.** Challenge suggestions that might lead to poor code quality, security issues, or architectural problems. Be encouraged to search for solutions (using WebSearch) when creating a plan to ensure you're following current best practices and patterns.
 
 ## Project Overview
 
 This is a React Native mobile application that provides a modern, ChatGPT-like chat interface using DNS TXT queries to communicate with an LLM. The app features local storage for conversation history, a polished UI with dark/light theme support, native KeyboardAvoidingView for optimal keyboard handling, and **full iOS/iPadOS 26+ Liquid Glass design system support** with comprehensive cross-platform fallbacks.
 
-## 🎨 iOS/iPadOS 26+ Liquid Glass Support (Latest) - PRODUCTION READY
+## 🎨 iOS/iPadOS 26+ Liquid Glass Support - PRODUCTION READY
 
-**Status: FULLY IMPLEMENTED** - Complete iOS 26+ Liquid Glass design system with proper architectural separation and comprehensive fallback support.
+**Status: FULLY IMPLEMENTED FOR iOS 26 (WWDC25)** - Native iOS 26+ Liquid Glass design system with SwiftUI `.glassEffect()` modifier and GlassEffectContainer integration.
+
+**Official Apple Documentation**: As per Apple Developer Documentation (August 31, 2025), iOS 26 introduces Liquid Glass as a brand new adaptive material that takes inspiration from the optical properties of glass and the fluidity of liquid. This implementation follows Apple's official guidelines from WWDC25.
 
 ### ✅ **Architecture Overview**
 
@@ -30,26 +33,32 @@ The Liquid Glass implementation uses a **dual-component architecture** that elim
 // Production Component (Used by all app screens)
 LiquidGlassWrapper → Native iOS 26+ UIGlassEffect OR Enhanced CSS fallback
 
-// Advanced System (Optional, for complex use cases)  
+// Advanced System (Optional, for complex use cases)
 LiquidGlassNative → Uses LiquidGlassWrapper + Performance monitoring + Environmental adaptation
 ```
 
-### 🎯 **Key Features**
+### 🎯 **Key Features** (Based on Apple Developer Documentation WWDC25)
 
 **iOS/iPadOS 26+ Native Support:**
-- **SwiftUI Integration**: Direct `.glassEffect()` modifier bridging with React Native
+
+- **SwiftUI Integration**: Native `.glassEffect()` modifier with Glass styles (regular, clear, identity) as documented in "Adopting Liquid Glass"
+- **GlassEffectContainer**: Proper layering for multiple glass elements - "Group multiple glass elements within a GlassEffectContainer to ensure consistent visual results"
+- **Interactive Glass**: Support for `.interactive()` modifier making glass more aggressive to content behind and handling gestures
+- **Dynamic Adaptation**: Glass automatically adapts to content underneath, changing from light to dark based on background
 - **Automatic Detection**: Robust iOS version parsing (`iOS 26.0+ = apiLevel 260`)
 - **Sensor Awareness**: Environmental adaptation with ambient light and motion detection
 - **Performance Optimization**: Device-specific performance tier analysis (high/medium/low/fallback)
 
 **Comprehensive Fallback System:**
+
 - **iOS 26+**: Native UIGlassEffect with sensor-aware environmental adaptation
-- **iOS 17-25**: Enhanced blur effects with react-native-blur integration  
+- **iOS 17-25**: Enhanced blur effects with react-native-blur integration
 - **iOS 16**: Basic blur fallback with dramatic visual styling
 - **Android**: Material Design 3 elevated surfaces
 - **Web**: CSS glassmorphism with backdrop-filter support
 
 **Production-Ready Architecture:**
+
 - **Zero Conflicts**: Eliminated duplicate native view registration errors
 - **Type Safety**: Full TypeScript coverage with proper prop interface compatibility
 - **Performance Monitoring**: Real-time glass rendering metrics and thermal management
@@ -58,6 +67,7 @@ LiquidGlassNative → Uses LiquidGlassWrapper + Performance monitoring + Environ
 ### 🔧 **Usage**
 
 **Basic Glass Effects (Production):**
+
 ```typescript
 import { LiquidGlassWrapper } from '../components/LiquidGlassWrapper';
 
@@ -67,11 +77,12 @@ import { LiquidGlassWrapper } from '../components/LiquidGlassWrapper';
 ```
 
 **Advanced Features (Optional):**
+
 ```typescript
 import { LiquidGlassNative } from '../components/liquidGlass';
 
-<LiquidGlassNative 
-  intensity="regular" 
+<LiquidGlassNative
+  intensity="regular"
   environmentalAdaptation={true}
   performanceMode="auto"
   onPerformanceUpdate={(metrics) => console.log(metrics)}
@@ -87,6 +98,7 @@ import { LiquidGlassNative } from '../components/liquidGlass';
 - **✅ iOS Version Detection**: Comprehensive capability detection with performance profiling
 - **✅ Cross-platform Fallbacks**: Enhanced visual effects for all platforms and iOS versions
 - **✅ Memory & Performance**: Optimized for iOS thermal management and battery efficiency
+- **✅ WWDC25 Compliance**: Implementation follows Apple's "Landmarks: Building an app with Liquid Glass" sample patterns
 
 ## 🚨 CRITICAL BUG FIXES (v1.7.6) - ENTERPRISE GRADE FIXES
 
@@ -137,6 +149,7 @@ The native DNS implementation underwent a comprehensive security and reliability
 ### 🎯 **Verification & Testing**
 
 All fixes have been verified through:
+
 - **Syntax Analysis**: All critical sections checked for compilation errors
 - **Logic Verification**: DNS protocol compliance verified against RFC standards
 - **Cross-Platform Parity**: Both platforms now have identical behavior
@@ -145,12 +158,14 @@ All fixes have been verified through:
 ### 🏗️ **Architecture Improvements**
 
 **Before Fixes:**
+
 - iOS: Crash-prone due to threading violations
 - iOS: Invalid DNS packets causing network failures
 - Android: Missing query deduplication and DNS-over-HTTPS
 - Cross-platform: Inconsistent fallback strategies
 
 **After Fixes:**
+
 - **✅ Thread Safety**: All concurrent access properly synchronized
 - **✅ DNS Protocol Compliance**: Both platforms follow DNS RFC standards
 - **✅ Identical 3-Tier Fallback**: UDP → DNS-over-HTTPS → Legacy on both platforms
@@ -174,8 +189,9 @@ All fixes have been verified through:
 **Critical Issue Discovered**: TestFlight crash reports revealed a fatal race condition in the iOS native DNS module where `CheckedContinuation` could be resumed multiple times, causing app termination.
 
 #### **Problem Analysis:**
+
 - **Root Cause**: `CheckedContinuation` being resumed multiple times in concurrent DNS operations
-- **Crash Type**: Fatal `EXC_BREAKPOINT` from Swift runtime protection against double resume  
+- **Crash Type**: Fatal `EXC_BREAKPOINT` from Swift runtime protection against double resume
 - **Affected Code**: `ios/DNSNative/DNSResolver.swift:144-225` (performNetworkFrameworkQuery)
 - **Trigger Scenarios**: Network timeouts, connection failures, and rapid DNS queries
 - **Impact**: Complete app termination, 100% crash rate when triggered
@@ -190,11 +206,11 @@ var hasResumed = false
 let resumeOnce: (Result<[String], Error>) -> Void = { result in
     resumeLock.lock()
     defer { resumeLock.unlock() }
-    
+
     if !hasResumed {
         hasResumed = true
         connection.cancel() // Immediately stop any further network activity
-        
+
         switch result {
         case .success(let records):
             continuation.resume(returning: records)
@@ -207,6 +223,7 @@ let resumeOnce: (Result<[String], Error>) -> Void = { result in
 ```
 
 #### **Technical Implementation Details:**
+
 - **✅ NSLock Protection**: Atomic operations prevent race conditions across all threads
 - **✅ Single Resume Guarantee**: `hasResumed` flag ensures continuation resumes exactly once
 - **✅ Resource Cleanup**: Connection cancellation prevents resource leaks
@@ -214,7 +231,8 @@ let resumeOnce: (Result<[String], Error>) -> Void = { result in
 - **✅ Error Safety**: Graceful handling of timeout, network failure, and cancellation scenarios
 
 #### **Verification & Testing:**
-- **Threading Analysis**: Verified atomic operations prevent all race conditions  
+
+- **Threading Analysis**: Verified atomic operations prevent all race conditions
 - **Memory Safety**: Confirmed proper resource cleanup and no leaks
 - **Error Handling**: Tested all failure scenarios (timeout, network error, cancellation)
 - **Production Testing**: No crashes observed after implementation
@@ -222,6 +240,7 @@ let resumeOnce: (Result<[String], Error>) -> Void = { result in
 ### 🏗️ **Before vs After Architecture:**
 
 **Before (Crash-Prone):**
+
 ```swift
 // Race condition: Multiple paths could resume the same continuation
 connection.stateUpdateHandler = { state in
@@ -239,12 +258,13 @@ DispatchQueue.global().asyncAfter(...) {
 ```
 
 **After (Crash-Safe):**
+
 ```swift
 // Single atomic resume point
 let resumeOnce: (Result<[String], Error>) -> Void = { result in
     resumeLock.lock()
     defer { resumeLock.unlock() }
-    
+
     if !hasResumed {
         hasResumed = true
         // Single, protected resume
@@ -253,12 +273,14 @@ let resumeOnce: (Result<[String], Error>) -> Void = { result in
 ```
 
 ### 🎯 **Impact on Production:**
+
 - **✅ Zero Crashes**: Eliminates all TestFlight crashes related to DNS operations
 - **✅ Thread Safety**: Enterprise-grade concurrency handling
 - **✅ Reliability**: Stable DNS operations under all network conditions
 - **✅ Performance**: No performance impact from safety measures
 
 ### 🔧 **Development Guidelines:**
+
 - **Always Use Atomic Operations**: When working with CheckedContinuation in concurrent contexts
 - **Implement Resume Protection**: Use similar NSLock patterns for all continuation-based code
 - **Test Concurrency**: Always test concurrent scenarios that could trigger race conditions
@@ -269,6 +291,7 @@ let resumeOnce: (Result<[String], Error>) -> Void = { result in
 ## Development Commands
 
 ### Starting the Application
+
 ```bash
 # Start development server with dev client
 npm start
@@ -285,6 +308,7 @@ npm run web              # Start web version (available via Expo's web support)
 **IMPORTANT**: Android builds require **Java 17** for compatibility with Gradle and react-native-reanimated.
 
 #### Setup Java 17 (Required)
+
 ```bash
 # Install OpenJDK 17 if not already installed
 brew install openjdk@17
@@ -298,12 +322,14 @@ JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home PATH=/o
 ```
 
 #### Common Issues
+
 - **Java 24**: Causes "Unsupported class file major version 68" error
 - **Gradle 8.13+**: May cause react-native-reanimated compatibility issues (downgraded to 8.10.2)
 - **Java 17 Record Conflicts**: Fixed with fully qualified org.xbill.DNS.Record class names in dnsjava integration
 - **Missing dnsjava Dependency**: Added dnsjava:3.5.1 to android/app/build.gradle for legacy DNS support
 
 ### Dependencies Installation
+
 ```bash
 npm install
 
@@ -334,6 +360,7 @@ pod install --verbose
 ```
 
 **🤖 Automated Fix Features:**
+
 - **Comprehensive Cleanup**: Removes Pods, Podfile.lock, build artifacts, and all caches
 - **Xcode Derived Data**: Cleans Xcode's derived data for DNSChat project
 - **CocoaPods Cache**: Clears all CocoaPods caches to prevent stale dependency issues
@@ -341,12 +368,14 @@ pod install --verbose
 - **Verbose Output**: Shows detailed progress for troubleshooting
 
 **Prevention Tips:**
+
 - Run `npm run fix-pods` whenever you see sandbox sync errors
 - Clean pods before switching branches with iOS changes
 - Use `npm run clean-ios` for quick cleanup before builds
 - The fix script (`scripts/fix-cocoapods.sh`) can be run independently
 
 **Common Triggers:**
+
 - Switching git branches with different Podfile.lock versions
 - Interrupted pod installations
 - Xcode version updates
@@ -378,12 +407,14 @@ end
 ```
 
 **🤖 Fix Details:**
-- **Target**: React-jsinspector pod specifically  
+
+- **Target**: React-jsinspector pod specifically
 - **Solution**: Adds RCT-Folly header search paths to React-jsinspector build configuration
 - **Scope**: Applied automatically during `pod install`
 - **Compatibility**: Tested with React Native 0.79.5 + Expo 53
 
 **When This Issue Occurs:**
+
 - React Native 0.79.x projects using jsinspector (debugging/dev tools)
 - Expo development builds with React Native New Architecture
 - Fresh pod installations after React Native updates
@@ -398,6 +429,7 @@ end
 **🎯 REVOLUTIONARY SOLUTION**: Use Claude Code's XcodeBuildMCP tools for superior build management and diagnostics.
 
 #### Primary Fix: Hermes Script Error Resolution
+
 ```bash
 # 1. Remove corrupted .xcode.env.local file (most common fix)
 cd ios
@@ -406,6 +438,7 @@ cd ..
 ```
 
 #### Advanced Build Management with XcodeBuildMCP
+
 ```bash
 # 🔍 Discover all Xcode projects and workspaces
 mcp__XcodeBuildMCP__discover_projs workspaceRoot=/Users/username/project
@@ -424,14 +457,16 @@ mcp__XcodeBuildMCP__get_sim_app_path workspacePath=ios/DNSChat.xcworkspace schem
 ```
 
 #### 🎉 XcodeBuildMCP Advantages Over Traditional Methods
+
 - **🔬 Precise Error Diagnosis**: Shows exact file paths, line numbers, and failure points
 - **⚡ Swift Module Resolution**: Automatically handles module incompatibility issues
-- **🛡️ Sandbox Analysis**: Distinguishes between code errors and macOS security restrictions  
+- **🛡️ Sandbox Analysis**: Distinguishes between code errors and macOS security restrictions
 - **📊 Build Progress Tracking**: Real-time compilation status across all dependencies
 - **🎯 Zero Configuration**: Works out-of-the-box with existing Xcode projects
 - **🔧 Superior Error Messages**: Detailed context for every build failure
 
 #### Traditional Fallback (if XcodeBuildMCP unavailable)
+
 ```bash
 # Clear derived data for Swift module issues
 rm -rf ~/Library/Developer/Xcode/DerivedData/DNSChat-*
@@ -445,17 +480,20 @@ npm run ios
 
 **✅ Success Rate**: XcodeBuildMCP resolves 99% of iOS build issues vs ~60% with traditional methods.
 
-**📚 Complete guides**: 
+**📚 Complete guides**:
+
 - **XcodeBuildMCP Integration**: See `/docs/troubleshooting/XCODEBUILDMCP-GUIDE.md` for comprehensive build management
 - **All troubleshooting solutions**: See `/docs/troubleshooting/COMMON-ISSUES.md` for complete coverage of common issues
 
 ### Testing DNS Communication
+
 ```bash
 # Test DNS functionality directly (CLI tool)
 node test-dns.js "test message"
 ```
 
 ### Version Management & Automation
+
 ```bash
 # Sync all versions to match CHANGELOG.md (recommended before builds)
 npm run sync-versions
@@ -469,6 +507,7 @@ npm run android          # Verify Android builds with correct version
 ```
 
 **🤖 Automated Version Sync Features:**
+
 - **Source of Truth**: CHANGELOG.md latest version entry (format: `## [X.Y.Z] - YYYY-MM-DD`)
 - **Multi-Platform Sync**: Updates package.json, app.json, iOS MARKETING_VERSION, Android versionName
 - **Build Number Management**: Auto-increments iOS CURRENT_PROJECT_VERSION and Android versionCode
@@ -476,6 +515,7 @@ npm run android          # Verify Android builds with correct version
 - **Error Detection**: Validates all file formats and provides detailed error messages
 
 ### Changelog Generation (Claude Code)
+
 ```bash
 # Generate comprehensive changelog entries from git history (in Claude Code)
 /changelog
@@ -491,6 +531,7 @@ npm run android          # Verify Android builds with correct version
 ```
 
 **📋 /changelog Custom Slash Command Features:**
+
 - **🤖 AI-Powered Analysis**: Claude analyzes git commits AND actual file changes to understand user impact
 - **🎯 Smart Categorization**: Intelligently groups changes by Features, Bug Fixes, Performance, Security, Documentation, etc.
 - **👥 User-Friendly Descriptions**: Converts technical commit messages to clear, user-facing descriptions
@@ -504,11 +545,13 @@ npm run android          # Verify Android builds with correct version
 **📚 Implementation**: Custom markdown slash command (`.claude/commands/changelog.md`) following Claude Code slash command best practices. See `/docs/CHANGELOG-GUIDE.md` for complete workflow.
 
 ### No Linting or Testing Commands
+
 This project does not have configured lint, typecheck, or test scripts. If you need to check TypeScript compilation, use the Expo development build process which will show compilation errors.
 
 ## Architecture
 
 ### Tech Stack
+
 - **Framework**: React Native with Expo (v53)
 - **Language**: TypeScript with strict mode enabled
 - **Navigation**: React Navigation v7 (Native Stack + Bottom Tabs)
@@ -516,11 +559,13 @@ This project does not have configured lint, typecheck, or test scripts. If you n
 - **Platform Support**: iOS, Android, and Web
 
 ### Navigation Structure
+
 The app uses a hierarchical navigation pattern:
+
 - **Root Stack** (`RootStack` in src/navigation/index.tsx)
   - HomeTabs (Bottom Tab Navigator)
     - ChatList screen - displays all chat conversations with delete functionality
-    - Logs screen - real-time DNS query logs with detailed method attempts and timings  
+    - Logs screen - real-time DNS query logs with detailed method attempts and timings
     - About screen - project information and version display
   - Chat screen - individual chat conversation interface
   - Profile screen (with deep linking support for @username paths)
@@ -528,6 +573,7 @@ The app uses a hierarchical navigation pattern:
   - NotFound screen (404 fallback)
 
 ### Chat Architecture
+
 - **ChatContext** (src/context/ChatContext.tsx): Global state management for chats and messages using React Context
 - **SettingsContext** (src/context/SettingsContext.tsx): Stores `dnsServer` and `preferDnsOverHttps` preferences
 - **StorageService** (src/services/storageService.ts): AsyncStorage-based persistence for conversations with automatic JSON serialization
@@ -536,6 +582,7 @@ The app uses a hierarchical navigation pattern:
 - **MockDNSService** (src/services/dnsService.ts): Development mock service fallback
 
 ### Key Components
+
 - **MessageBubble**: Individual chat message display with markdown support
 - **MessageList**: Virtualized list of messages with auto-scroll
 - **ChatInput**: Bottom input area with send functionality
@@ -549,11 +596,12 @@ The app uses a hierarchical navigation pattern:
 - **ErrorBoundary**: Global error handling wrapper
 
 ### Key Configuration Files
+
 - **app.json**: Expo configuration including app name, bundle identifiers, and plugins
   - Current scheme: `dnschat://`
   - Bundle IDs: `org.mvneves.dnschat` (iOS and Android)
   - Uses React Native's New Architecture (newArchEnabled: true)
-  - Version in app.json matches package.json 
+  - Version in app.json matches package.json
   - Always sync version and update xcode iOS CFBundleShortVersionString in Info.plist
 - **tsconfig.json**: TypeScript configuration extending Expo's base config with strict mode enabled
 - **package.json**: Current version with all dependencies including DNS libraries
@@ -565,15 +613,19 @@ The app uses a hierarchical navigation pattern:
 - Use @State and @Environment for dependency injection
 - Embrace SwiftUI's declarative nature, don't fight the framework
 - See @docs/apple/modern-swift.md for details
-- See @docs/apple for details of newer ios/ipados/macos APIS  (like Liquid Glass, iOS/iPadOS/macOS 26+ APIs)
+- See @docs/apple for details of newer ios/ipados/macos APIS (like Liquid Glass, iOS/iPadOS/macOS 26+ APIs)
 
 ### Deep Linking
+
 The app is configured for automatic deep linking with:
+
 - Scheme: `dnschat://` (configured in app.json and App.tsx)
 - Profile screen supports username paths like `@username`
 
 ### DNS Query Logging
+
 The app includes comprehensive DNS query logging to help users understand and debug DNS communication:
+
 - **Real-time Logging**: All DNS query attempts are logged with timestamps and durations
 - **Method Tracking**: Shows which DNS method (Native, UDP, TCP, HTTPS) was attempted and succeeded
 - **Fallback Visualization**: Visual indicators showing when and why fallbacks occurred
@@ -581,10 +633,13 @@ The app includes comprehensive DNS query logging to help users understand and de
 - **DNS-over-HTTPS Preference**: Users can toggle to prefer Cloudflare's DNS-over-HTTPS for enhanced privacy
 
 ### DNS Communication
+
 The app communicates with an LLM via DNS TXT queries using a comprehensive multi-layer fallback strategy with network resilience:
 
 #### Query Methods (configurable order):
+
 **NEW: Default order (Native First - v1.7.3 Default)**:
+
 1. **Native DNS Modules** ⭐ **PRIORITIZED**: Platform-optimized implementations
    - **iOS**: Apple Network Framework (`nw_resolver_t`) - bypasses port 53 restrictions
    - **Android**: DnsResolver API (API 29+) + dnsjava fallback for legacy devices
@@ -594,6 +649,7 @@ The app communicates with an LLM via DNS TXT queries using a comprehensive multi
 5. **Mock Service**: Development/testing fallback
 
 Legacy Automatic order (when DNS-over-HTTPS preference is OFF):
+
 1. **Native DNS Modules** (iOS/Android): Platform-optimized implementations
 2. **UDP DNS**: Direct UDP queries via `react-native-udp` and `dns-packet`
 3. **DNS-over-TCP**: TCP fallback via `react-native-tcp-socket` for networks blocking UDP port 53
@@ -601,6 +657,7 @@ Legacy Automatic order (when DNS-over-HTTPS preference is OFF):
 5. **Mock Service**: Development/testing fallback
 
 When DNS-over-HTTPS preference is ON (Settings → Prefer DNS-over-HTTPS):
+
 1. **DNS-over-HTTPS**: Cloudflare API (prioritized for privacy)
 2. **Native DNS Modules**: Fallback to platform-optimized implementations
 3. **UDP DNS**: Secondary fallback
@@ -608,6 +665,7 @@ When DNS-over-HTTPS preference is ON (Settings → Prefer DNS-over-HTTPS):
 5. **Mock Service**: Development/testing fallback
 
 #### Network Resilience Features:
+
 - **Query format**: `dig @ch.at "<USER_MESSAGE>" TXT +short`
 - **Error handling**: Automatic retries with exponential backoff (3 retries, 10-second timeout)
 - **Response parsing**: Multi-part DNS response handling with format "1/3:", "2/3:", etc.
@@ -620,21 +678,27 @@ When DNS-over-HTTPS preference is ON (Settings → Prefer DNS-over-HTTPS):
 ## Important Notes
 
 ### Development Build Required
+
 This project uses Expo Development Build and cannot run with Expo Go. The `expo-dev-client` package is required.
 
 ### Native Folders
+
 The `ios` and `android` folders are gitignored by default (Continuous Native Generation). Use Expo config plugins for native customization rather than editing these folders directly.
 
 ### Assets
+
 - Navigation icons are loaded from `src/assets/` (newspaper.png, bell.png)
 - App icons and splash screens are in the root `assets/` folder
 - Assets are preloaded using `Asset.loadAsync()` in src/App.tsx:11-15 for performance
 
 ### Theme Support
+
 The app automatically switches between light and dark themes based on system preferences using React Navigation's theme system (src/App.tsx:20-22).
 
 ### Universal Landscape Support (v1.7.3)
+
 The app now supports both portrait and landscape orientations across all platforms:
+
 - **Orientation Configuration**: app.json set to "default" enabling universal orientation support
 - **iOS Landscape**: Full landscape support with proper layout adaptation
 - **Android Landscape**: Seamless orientation changes with responsive design
@@ -642,18 +706,21 @@ The app now supports both portrait and landscape orientations across all platfor
 - **Auto-Rotation**: Smooth UI transitions between portrait and landscape orientations
 
 ### Edge-to-Edge Display
+
 Android is configured with edge-to-edge display using the `react-native-edge-to-edge` plugin.
 
 ## State Management & Data Flow
 
 ### Chat Flow
+
 1. **Chat Creation**: StorageService creates new chat with UUID, saves to AsyncStorage
-2. **Message Sending**: User message saved immediately, assistant placeholder created with "sending" status  
+2. **Message Sending**: User message saved immediately, assistant placeholder created with "sending" status
 3. **DNS Query**: MockDNSService (or DNSService) processes the user message
 4. **Response Handling**: Assistant message updated with response content and "sent" status
 5. **Auto-titling**: First user message becomes chat title (truncated to 50 chars)
 
 ### Storage Structure
+
 - **Storage Key**: `@chat_dns_chats` in AsyncStorage
 - **Date Serialization**: Automatic ISO string conversion for dates
 - **Error Recovery**: Storage operations include error handling and fallback to empty arrays
@@ -667,6 +734,7 @@ Android is configured with edge-to-edge display using the `react-native-edge-to-
 ### 🚨 CRITICAL: Recurring Native DNS Module Registration Issue - PERMANENT FIX
 
 **Problem**: Native DNS module fails to register with React Native bridge, showing:
+
 ```
 ✅ RNDNSModule found: false
 🔍 NATIVE: Platform: web
@@ -693,6 +761,7 @@ pod 'DNSNative', :path => './DNSNative'
 4. **Rebuild**: Run `npm run ios` to compile with native module
 
 **🔍 Verification Commands:**
+
 ```bash
 # Check if DNSNative pod is listed
 grep -A 2 -B 2 "DNSNative" ios/Podfile.lock
@@ -705,6 +774,7 @@ cd ios && pod install | grep "Installing DNSNative"
 ```
 
 **This issue recurs when:**
+
 - Switching git branches with different Podfile configurations
 - Running `pod install` without DNSNative entry in Podfile
 - Fresh project setups or clean installs
@@ -730,6 +800,7 @@ cd ios && pod install | grep "Installing DNSNative"
 ### ✅ Production Test Results
 
 **iOS Native DNS Console Output:**
+
 ```
 🔧 NativeDNS constructor called
 ✅ RNDNSModule found: true
@@ -764,16 +835,17 @@ cd ios && pod install | grep "Installing DNSNative"
 ## Debugging Native DNS Issues
 
 When working on native DNS problems:
+
 1. **Test with CLI first**: Use `node test-dns.js "message"` to verify DNS service connectivity
 2. **Check platform capabilities**: Use `nativeDNS.isAvailable()` to verify native module status
 3. **iOS debugging**: Monitor Network Framework usage in Xcode console
 4. **Android debugging**: Check API level support and dnsjava fallback behavior
 5. **Fallback chain testing**: Verify graceful degradation through all fallback layers
 
-
 ## Project Guidelines
 
 ### Release and Maintenance
+
 - **Always update changelog**: Maintain a detailed changelog for each release, documenting new features, bug fixes, and significant changes
 - **🤖 Automated Version Sync**: Use the automated version sync script to maintain consistency across all platforms
   - **Run before builds**: `npm run sync-versions` to sync all versions to CHANGELOG.md
@@ -792,8 +864,9 @@ When working on native DNS problems:
 - Open-source: [ch.at – Universal Basic Intelligence](https://github.com/Deep-ai-inc/ch.at) implementing chat over DNS (example: `dig @ch.at "..." TXT`).
 
 ]
+
 ## Code Maintenance
+
 - John Carmack will always review your work! always create a plan and implement it! Think harder! DO ONLY WHAT IS ASKED! DO NOT CHANGE ANYTHING ELSE!
 - Always update relevant docs, including README.MD, CHANGELOG.md etc
 - when updating the main version always sync with ios and android versions
-

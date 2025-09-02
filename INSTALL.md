@@ -2,9 +2,10 @@
 
 ## 📍 Documentation Moved
 
-**The complete installation guide has moved to [docs/INSTALL.md](./docs/INSTALL.md)** 
+**The complete installation guide has moved to [docs/INSTALL.md](./docs/INSTALL.md)**
 
 This new location provides:
+
 - ✅ **Up-to-date instructions** for v1.7.7
 - ✅ **Modern documentation structure**
 - ✅ **Better organization and navigation**
@@ -15,6 +16,7 @@ This new location provides:
 For immediate setup, see [docs/INSTALL.md](./docs/INSTALL.md).
 
 **One-liner setup**:
+
 ```bash
 git clone https://github.com/mneves75/dnschat.git && cd dnschat && npm install && cd ios && pod install && cd .. && npm start
 ```
@@ -22,13 +24,13 @@ git clone https://github.com/mneves75/dnschat.git && cd dnschat && npm install &
 ## 📚 Complete Documentation
 
 - **[Installation Guide](./docs/INSTALL.md)** - Detailed setup instructions
-- **[Troubleshooting](./docs/TROUBLESHOOTING.md)** - Common issues and solutions  
+- **[Troubleshooting](./docs/TROUBLESHOOTING.md)** - Common issues and solutions
 - **[API Reference](./docs/API.md)** - DNS service documentation
 - **[Contributing](./CONTRIBUTING.md)** - Development guidelines
 
 ---
 
-*This file remains for compatibility. Please use [docs/INSTALL.md](./docs/INSTALL.md) for current instructions.*
+_This file remains for compatibility. Please use [docs/INSTALL.md](./docs/INSTALL.md) for current instructions._
 
 ## Inspiration and Acknowledgements
 
@@ -47,6 +49,7 @@ git clone https://github.com/mneves75/dnschat.git && cd dnschat && npm install &
 ### Platform-Specific Requirements
 
 #### 📱 iOS Development
+
 - **macOS**: Required for iOS development
 - **Xcode**: v15.0 or higher
 - **iOS Simulator**: v17.0+ or physical device
@@ -54,12 +57,14 @@ git clone https://github.com/mneves75/dnschat.git && cd dnschat && npm install &
 - **Command Line Tools**: `xcode-select --install`
 
 #### 🤖 Android Development
+
 - **Android Studio**: Latest version with SDK tools
 - **Java Development Kit**: OpenJDK 17 (see [Java Setup](#java-setup))
 - **Android SDK**: API Level 34+
 - **Android Emulator** or physical device
 
 #### 🌐 Web Development
+
 - **Modern Browser**: Chrome, Firefox, Safari, Edge
 - **No additional requirements** (uses fallback service)
 
@@ -88,8 +93,8 @@ npm install
 # Install iOS native dependencies
 cd ios && pod install && cd ..
 
-# Verify native DNS module
-node test-dns.js "Hello world"
+# Verify native DNS module (RN env)
+node test-dns-simple.js "Hello world"
 ```
 
 #### Android Setup
@@ -111,7 +116,7 @@ npm start
 
 # Run on specific platforms
 npm run ios              # iOS simulator
-npm run android          # Android emulator  
+npm run android          # Android emulator
 npm run android:java17   # Android with Java 17
 npm run web              # Web browser
 ```
@@ -123,6 +128,7 @@ npm run web              # Web browser
 ### 📱 iOS Installation (Complete)
 
 #### Step 1: System Requirements
+
 ```bash
 # Verify Xcode installation
 xcode-select -p
@@ -135,6 +141,7 @@ pod --version
 ```
 
 #### Step 2: Native Dependencies
+
 ```bash
 # Navigate to project directory
 cd /path/to/chat-dns
@@ -149,6 +156,7 @@ cd ..
 ```
 
 #### Step 3: Build Configuration
+
 ```bash
 # Clean previous builds (if needed)
 npm run clean
@@ -161,6 +169,7 @@ npm run ios
 ```
 
 #### Step 4: Verify Native DNS
+
 - Open iOS Simulator
 - Launch the app
 - Send a message: "Hi there!"
@@ -173,6 +182,7 @@ npm run ios
   ```
 
 #### Troubleshooting iOS
+
 ```bash
 # If pod install fails
 cd ios
@@ -192,6 +202,7 @@ cd ios && pod install && cd ..
 #### Step 1: Java Setup {#java-setup}
 
 **Option A: Using Homebrew (macOS)**
+
 ```bash
 # Install OpenJDK 17
 brew install openjdk@17
@@ -206,6 +217,7 @@ echo 'export PATH=/opt/homebrew/opt/openjdk@17/bin:$PATH' >> ~/.zshrc
 ```
 
 **Option B: Using Our Script**
+
 ```bash
 # Make script executable
 chmod +x android-java17.sh
@@ -215,11 +227,13 @@ npm run android:java17
 ```
 
 **Option C: Manual Download**
+
 1. Download OpenJDK 17 from [Adoptium](https://adoptium.net/)
 2. Install and set JAVA_HOME to installation directory
 3. Add to PATH environment variable
 
 #### Step 2: Android Studio Setup
+
 1. Install [Android Studio](https://developer.android.com/studio)
 2. Open Android Studio
 3. Go to **Tools > SDK Manager**
@@ -228,6 +242,7 @@ npm run android:java17
 6. Create or start an Android Virtual Device (AVD)
 
 #### Step 3: Build and Run
+
 ```bash
 # Install dependencies
 npm install
@@ -242,12 +257,14 @@ npm run android:java17
 ```
 
 #### Step 4: Verify Native DNS
+
 - Open Android Emulator
 - Launch the app
 - Send a message
 - Check logs for native DNS functionality
 
 #### Troubleshooting Android
+
 ```bash
 # Clean builds
 cd android
@@ -298,6 +315,7 @@ node test-dns.js "What is the meaning of life?"
 ### Native Module Verification
 
 #### iOS Native Module Check
+
 ```bash
 # Build and check logs
 npm run ios
@@ -308,8 +326,9 @@ npm run ios
 ```
 
 #### Android Native Module Check
+
 ```bash
-# Build and check logs  
+# Build and check logs
 npm run android
 
 # Look for in console:
@@ -330,17 +349,19 @@ npm run android
 ## 🛠️ Development Environment
 
 ### Project Structure
+
 ```
 chat-dns/
 ├── src/                    # React Native source code
 ├── ios/                    # iOS native code and configuration
-├── android/                # Android native code and configuration  
+├── android/                # Android native code and configuration
 ├── modules/dns-native/     # Native DNS module interface
 ├── assets/                 # App assets (icons, images)
 └── docs/                   # Documentation
 ```
 
 ### Key Commands
+
 ```bash
 # Development
 npm start                   # Start Expo dev server
@@ -360,6 +381,7 @@ npx expo install           # Update Expo dependencies
 ### Environment Variables
 
 Create `.env` file for custom configuration:
+
 ```bash
 # Optional: Custom DNS server
 #DNS_SERVER=llm.pieter.com
@@ -377,16 +399,19 @@ DEBUG_DNS=true
 ### Common Issues
 
 #### "Native DNS not available"
+
 - **iOS**: Run `cd ios && pod install && cd ..`
 - **Android**: Check Java version with `java -version`
 - **Solution**: Rebuild with native dependencies
 
 #### "UDP port blocked" / Network errors
+
 - App automatically falls back to DNS-over-TCP and HTTPS
 - Normal behavior on corporate/public Wi-Fi
 - No action needed - fallback is transparent
 
 #### Build failures
+
 ```bash
 # Universal reset
 rm -rf node_modules package-lock.json
@@ -403,6 +428,7 @@ npx expo start -c
 ```
 
 #### "Command not found: expo"
+
 ```bash
 # Install Expo CLI globally
 npm install -g @expo/cli
@@ -458,6 +484,7 @@ eas build --platform android --profile production
 If you can send a message and receive an AI response, congratulations! You now have a fully functional React Native app that communicates with an LLM via DNS queries.
 
 **Next Steps**:
+
 - Explore the chat interface
 - Try different types of questions
 - Check out the native DNS logs
@@ -467,4 +494,4 @@ For advanced configuration and development, see [CLAUDE.md](./CLAUDE.md) for det
 
 ---
 
-*Installation guide for DNSChat v1.6.1 - Production Ready Native DNS Implementation*
+_Installation guide for DNSChat v1.6.1 - Production Ready Native DNS Implementation_

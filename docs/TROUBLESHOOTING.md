@@ -9,6 +9,7 @@ Common issues and solutions for DNSChat v1.7.7 development and deployment.
 **Problem**: App crashes with `EXC_BREAKPOINT` during DNS operations.
 
 **Symptoms**:
+
 - App terminates instantly during DNS queries
 - TestFlight crash reports showing `EXC_BREAKPOINT`
 - Console error: "Attempting to resume continuation that has already been resumed"
@@ -16,6 +17,7 @@ Common issues and solutions for DNSChat v1.7.7 development and deployment.
 **Solution**: ✅ Fixed in v1.7.7 with enterprise-grade NSLock protection.
 
 **If creating similar code**:
+
 ```swift
 // ❌ DANGEROUS - Race condition possible
 continuation.resume(returning: result)
@@ -27,7 +29,7 @@ var hasResumed = false
 let resumeOnce: (Result<[String], Error>) -> Void = { result in
     resumeLock.lock()
     defer { resumeLock.unlock() }
-    
+
     if !hasResumed {
         hasResumed = true
         continuation.resume(returning: result)
@@ -40,6 +42,7 @@ let resumeOnce: (Result<[String], Error>) -> Void = { result in
 **Problem**: `RNDNSModule found: false`, platform detected as "web".
 
 **Solution**:
+
 ```bash
 # 1. Verify Podfile includes DNSNative
 # Add to ios/Podfile if missing:
@@ -53,6 +56,7 @@ npm run ios
 ```
 
 **Verification**: Look for console log:
+
 ```
 ✅ RNDNSModule found: true
 🔍 Native DNS capabilities: {"available": true, "platform": "ios"}
@@ -63,6 +67,7 @@ npm run ios
 ### iOS Build Errors
 
 **Swift Compilation Errors**
+
 ```bash
 # Add missing React import if needed
 # In ios/DNSNative/DNSResolver.swift:
@@ -74,6 +79,7 @@ npm run ios
 ```
 
 **CocoaPods Sandbox Sync Error**
+
 ```bash
 # Automated fix
 npm run fix-pods
@@ -86,12 +92,14 @@ pod install
 ```
 
 **folly/dynamic.h Missing** (React Native 0.79.x)
+
 - ✅ Fixed automatically in ios/Podfile post_install hook
 - No action needed - fix is already applied
 
 ### Android Build Errors
 
 **Java Version Incompatibility**
+
 ```bash
 # Use Java 17 (required)
 npm run android  # Automatically uses Java 17
@@ -101,6 +109,7 @@ npm run android  # Automatically uses Java 17
 ```
 
 **Gradle Build Failures**
+
 ```bash
 # Clean Gradle cache
 rm -rf ~/.gradle/caches
@@ -109,6 +118,7 @@ npm run android
 ```
 
 **dnsjava Conflicts**
+
 - ✅ Fixed with fully qualified class names in v1.7.6
 - No action needed - fix is already applied
 
@@ -117,6 +127,7 @@ npm run android
 ### DNS Connection Problems
 
 **UDP Port 53 Blocked**
+
 ```bash
 # App automatically falls back to TCP
 # Manual test:
@@ -124,11 +135,13 @@ dig @ch.at "test message" TXT +short
 ```
 
 **Solutions**:
+
 - Switch between WiFi and cellular data
 - Enable "Prefer DNS-over-HTTPS" in Settings
 - Contact network administrator for port unblocking
 
 **DNS Server Unreachable**
+
 ```bash
 # Test connectivity
 dig @ch.at "hello" TXT +short
@@ -144,6 +157,7 @@ dig @ch.at "hello" TXT +short
 **Problem**: DNS queries blocked by firewall.
 
 **Solutions**:
+
 1. **Enable DNS-over-HTTPS**: Settings → DNS Method → Prefer HTTPS
 2. **Switch to cellular**: Bypass WiFi restrictions
 3. **Contact IT**: Request ch.at domain whitelisting
@@ -153,6 +167,7 @@ dig @ch.at "hello" TXT +short
 ### Missing App Icons
 
 **About Screen Icon Missing**
+
 ```bash
 # Clear Metro cache
 npx expo start --clear
@@ -166,6 +181,7 @@ ls -la assets/icon.png
 ### Navigation Errors
 
 **"Screen not handled by navigator"**
+
 ```bash
 # Use proper nested navigation
 navigation.navigate('HomeTabs', { screen: 'Logs' })
@@ -176,12 +192,14 @@ navigation.navigate('HomeTabs', { screen: 'Logs' })
 ### React Native Warnings
 
 **VirtualizedList in ScrollView**
+
 - ✅ Fixed in v1.7.0+ with proper flex layouts
 - No action needed - fix is already applied
 
 ## 🧰 Development Tools
 
 ### Clear Caches
+
 ```bash
 # Metro bundler
 npx expo start --clear
@@ -194,6 +212,7 @@ rm -rf ~/Library/Developer/Xcode/DerivedData/
 ```
 
 ### Version Management
+
 ```bash
 # Sync all platform versions
 npm run sync-versions
@@ -203,6 +222,7 @@ npm run sync-versions:dry
 ```
 
 ### DNS Testing
+
 ```bash
 # CLI test
 node test-dns-simple.js "Hello world"
@@ -220,6 +240,7 @@ node test-dns-simple.js "Hello world"
 **React Native**: Use Expo developer tools
 
 ### Common Debug Commands
+
 ```bash
 # React Native logs
 npx expo logs
@@ -252,6 +273,7 @@ adb logcat | grep DNSChat
 ### Reporting Issues
 
 Include:
+
 - **Platform**: iOS/Android/Web
 - **Version**: App version and OS version
 - **Network**: WiFi/cellular, corporate/public
@@ -269,4 +291,4 @@ Include:
 
 ---
 
-*This guide covers DNSChat v1.7.7. For version-specific issues, check CHANGELOG.md.*
+_This guide covers DNSChat v1.7.7. For version-specific issues, check CHANGELOG.md._

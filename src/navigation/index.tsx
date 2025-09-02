@@ -1,29 +1,30 @@
-import React, { useState } from 'react';
-import { HeaderButton, Text } from '@react-navigation/elements';
+import React, { useState } from "react";
+import { HeaderButton, Text } from "@react-navigation/elements";
 import {
   createStaticNavigation,
   StaticParamList,
-} from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { Image, Platform, useColorScheme } from 'react-native';
-import { useTheme } from '@react-navigation/native';
-import TabView, { SceneMap } from 'react-native-bottom-tabs';
-import type { BaseRoute } from 'react-native-bottom-tabs';
-import { LiquidGlassNavBar } from '../components/LiquidGlassWrapper';
+} from "@react-navigation/native";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { Image, Platform, useColorScheme } from "react-native";
+import { useTheme } from "@react-navigation/native";
+import TabView, { SceneMap } from "react-native-bottom-tabs";
+import type { BaseRoute } from "react-native-bottom-tabs";
+import { LiquidGlassNavBar } from "../components/LiquidGlassWrapper";
 
 // Import newspaper icon properly for Metro bundler
-const newspaper = require('../assets/newspaper.png');
-import { InfoIcon } from '../components/InfoIcon';
-import { SettingsIcon } from '../components/icons/SettingsIcon';
-import { LogsIcon } from '../components/icons/LogsIcon';
-import { Home } from './screens/Home';
-import { Profile } from './screens/Profile';
-import { GlassSettings } from './screens/GlassSettings';
-import { About } from './screens/About';
-import { NotFound } from './screens/NotFound';
-import { GlassChatList } from './screens/GlassChatList';
-import { Chat } from './screens/Chat';
-import { Logs } from './screens/Logs';
+const newspaper = require("../assets/newspaper.png");
+import { InfoIcon } from "../components/InfoIcon";
+import { SettingsIcon } from "../components/icons/SettingsIcon";
+import { LogsIcon } from "../components/icons/LogsIcon";
+import { Home } from "./screens/Home";
+import { Profile } from "./screens/Profile";
+import { GlassSettings } from "./screens/GlassSettings";
+import { About } from "./screens/About";
+import { NotFound } from "./screens/NotFound";
+import { GlassChatList } from "./screens/GlassChatList";
+import { Chat } from "./screens/Chat";
+import { Logs } from "./screens/Logs";
+import { DevLogs } from "./screens/DevLogs";
 
 function SettingsHeaderButton({ onPress }: { onPress: () => void }) {
   const { colors } = useTheme();
@@ -35,7 +36,7 @@ function SettingsHeaderButton({ onPress }: { onPress: () => void }) {
 }
 
 type TabRoute = BaseRoute & {
-  key: 'ChatList' | 'Logs' | 'About';
+  key: "ChatList" | "Logs" | "About" | "DevLogs";
   title: string;
   focusedIcon: any;
   unfocusedIcon: any;
@@ -44,33 +45,43 @@ type TabRoute = BaseRoute & {
 function HomeTabs() {
   const [index, setIndex] = useState(0);
   const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const isDark = colorScheme === "dark";
 
   const routes: TabRoute[] = [
     {
-      key: 'ChatList',
-      title: 'DNS Chat',
+      key: "ChatList",
+      title: "DNS Chat",
       focusedIcon: newspaper,
       unfocusedIcon: newspaper,
     },
     {
-      key: 'Logs', 
-      title: 'Logs',
-      focusedIcon: { sfSymbol: 'list.bullet.rectangle' },
-      unfocusedIcon: { sfSymbol: 'list.bullet.rectangle' },
+      key: "Logs",
+      title: "Logs",
+      focusedIcon: { sfSymbol: "list.bullet.rectangle" },
+      unfocusedIcon: { sfSymbol: "list.bullet.rectangle" },
     },
     {
-      key: 'About',
-      title: 'About', 
-      focusedIcon: { sfSymbol: 'info.circle' },
-      unfocusedIcon: { sfSymbol: 'info.circle' },
+      key: "About",
+      title: "About",
+      focusedIcon: { sfSymbol: "info.circle" },
+      unfocusedIcon: { sfSymbol: "info.circle" },
     },
   ];
+
+  if (typeof __DEV__ !== "undefined" && __DEV__) {
+    routes.push({
+      key: "DevLogs",
+      title: "Dev Logs",
+      focusedIcon: { sfSymbol: "wrench.and.screwdriver" },
+      unfocusedIcon: { sfSymbol: "wrench.and.screwdriver" },
+    });
+  }
 
   const renderScene = SceneMap({
     ChatList: GlassChatList,
     Logs: Logs,
     About: About,
+    DevLogs: DevLogs,
   });
 
   return (
@@ -80,10 +91,10 @@ function HomeTabs() {
       onIndexChange={setIndex}
       labeled={true}
       hapticFeedbackEnabled={true}
-      tabBarActiveTintColor={isDark ? '#007AFF' : '#007AFF'}
-      tabBarInactiveTintColor={isDark ? '#8E8E93' : '#8E8E93'}
+      tabBarActiveTintColor={isDark ? "#007AFF" : "#007AFF"}
+      tabBarInactiveTintColor={isDark ? "#8E8E93" : "#8E8E93"}
       tabBarStyle={{
-        backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF', // Fix: White background in light mode
+        backgroundColor: isDark ? "#1C1C1E" : "#FFFFFF", // Fix: White background in light mode
       }}
       translucent={false}
     />
@@ -95,23 +106,23 @@ const RootStack = createNativeStackNavigator({
     HomeTabs: {
       screen: HomeTabs,
       options: {
-        title: 'DNS Chat',
+        title: "DNS Chat",
         headerShown: false,
       },
     },
     Chat: {
       screen: Chat,
       options: {
-        title: 'Chat',
+        title: "Chat",
         headerShown: true,
       },
     },
     Profile: {
       screen: Profile,
       linking: {
-        path: ':user(@[a-zA-Z0-9-_]+)',
+        path: ":user(@[a-zA-Z0-9-_]+)",
         parse: {
-          user: (value) => value.replace(/^@/, ''),
+          user: (value) => value.replace(/^@/, ""),
         },
         stringify: {
           user: (value) => `@${value}`,
@@ -121,7 +132,7 @@ const RootStack = createNativeStackNavigator({
     Settings: {
       screen: GlassSettings,
       options: ({ navigation }) => ({
-        presentation: 'modal',
+        presentation: "modal",
         headerRight: () => (
           <HeaderButton onPress={navigation.goBack}>
             <Text>Close</Text>
@@ -132,12 +143,27 @@ const RootStack = createNativeStackNavigator({
     NotFound: {
       screen: NotFound,
       options: {
-        title: '404',
+        title: "404",
       },
       linking: {
-        path: '*',
+        path: "*",
       },
     },
+    // Hidden developer logs screen, accessible via deep link only
+    ...(typeof __DEV__ !== "undefined" && __DEV__
+      ? {
+          DevLogs: {
+            screen: DevLogs,
+            options: {
+              title: "Dev DNS Logs",
+              headerShown: true,
+            },
+            linking: {
+              path: "dev/logs",
+            },
+          },
+        }
+      : {}),
   },
 });
 

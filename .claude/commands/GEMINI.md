@@ -15,21 +15,25 @@ This command reads the `docs/gemini.md` file which contains best practices for u
 ## Examples
 
 ### Analyze a single file
+
 ```
 /gemini @web/src/server/server.ts Explain this file's purpose and structure
 ```
 
 ### Check feature implementation
+
 ```
 /gemini @web/src/ Has dark mode been implemented in this codebase?
 ```
 
 ### Analyze entire project
+
 ```
 /gemini @./ Give me an overview of this entire project
 ```
 
 ### Verify security measures
+
 ```
 /gemini @web/src/ @web/src/api/ Are SQL injection protections implemented?
 ```
@@ -37,6 +41,7 @@ This command reads the `docs/gemini.md` file which contains best practices for u
 ## Implementation
 
 When you use this command, I will:
+
 1. Check if Gemini CLI is installed and accessible
 2. Read the contents of `docs/gemini.md` to understand Gemini CLI usage patterns (provide helpful error if missing)
 3. Analyze your prompt to determine the appropriate Gemini command structure
@@ -52,6 +57,7 @@ When you use this command, I will:
 ## Note
 
 The Gemini CLI is particularly useful when:
+
 - Analyzing entire codebases or large directories
 - Context window limits are a concern
 - You need to verify implementation of specific features across many files

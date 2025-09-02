@@ -5,6 +5,7 @@ This guide explains how to maintain the CHANGELOG.md and GitHub releases for DNS
 ## Overview
 
 We maintain a comprehensive changelog that:
+
 - Documents all user-facing changes
 - Credits contributors properly with GitHub links
 - Tracks first-time contributors for each release
@@ -20,6 +21,7 @@ The `/changelog` command in Claude Code analyzes git history to generate compreh
 ```
 
 This command:
+
 - Analyzes commit history beyond just titles
 - Examines actual file changes to understand user impact
 - Groups changes by category (Features, Bug Fixes, Performance, etc.)
@@ -28,11 +30,13 @@ This command:
 ## Changelog Format
 
 ### Version Header
+
 ```markdown
 ## [1.0.0-beta.13] - 2024-12-20
 ```
 
 ### Categories
+
 - **Features** - New functionality
 - **Improvements** - Enhancements to existing features
 - **Bug Fixes** - Fixed issues
@@ -42,6 +46,7 @@ This command:
 ### Attribution Format
 
 Every change should credit its contributor:
+
 ```markdown
 - Added systemd service management for Linux deployments (via [@hewigovens](https://github.com/hewigovens)) (#419)
 ```
@@ -51,8 +56,10 @@ Format: `- Description (via [@username](https://github.com/username)) (#PR)`
 ### First-time Contributors Section
 
 For releases with new contributors:
+
 ```markdown
 ### First-time Contributors
+
 - [@hewigovens](https://github.com/hewigovens) - Added systemd service management for Linux (#419)
 ```
 
@@ -83,12 +90,15 @@ git log --stat --author="username" v1.0.0-beta.12..v1.0.0-beta.13
 ## Special Cases
 
 ### Bot Contributors
+
 Do not highlight bot contributors as first-time contributors or include them in the contributors list:
+
 - `devin-ai-integration[bot]`
 - `blacksmith-sh[bot]`
 - Other `*[bot]` accounts
 
 **Important**: Bot contributions should be completely excluded from:
+
 - First-time contributors sections
 - The main contributors list at the end of CHANGELOG.md
 - GitHub release notes contributors sections
@@ -96,10 +106,13 @@ Do not highlight bot contributors as first-time contributors or include them in 
 Bot changes can be mentioned in regular changelog entries (e.g., "Added SwiftLint hooks") but without attribution.
 
 ### Core Team
+
 Core team members (repository owners) don't need "(via @username)" attribution unless specifically requested.
 
 ### Multiple Contributors
+
 If multiple people worked on a feature:
+
 ```markdown
 - Feature description (via [@user1](https://github.com/user1), [@user2](https://github.com/user2)) (#123)
 ```
@@ -129,19 +142,24 @@ The GitHub release should include:
 4. **Installation instructions** - Brief reminder
 
 Example:
+
 ```markdown
 ## Highlights
+
 - 🐧 Linux systemd service support for production deployments
 - 🔧 Improved authentication reliability
 - 🚀 Better performance for large terminal outputs
 
 ## What's Changed
+
 [Copy from CHANGELOG.md]
 
 ## First-time Contributors
+
 - @hewigovens made their first contribution in #419
 
 ## Installation
+
 See [installation instructions](https://github.com/vibetunnel/vibetunnel#installation)
 ```
 

@@ -1,10 +1,10 @@
 /**
  * Liquid Glass Components - Public API
- * 
+ *
  * Comprehensive iOS 26 Liquid Glass implementation with graceful fallbacks
  * for React Native applications. Provides platform-appropriate glass effects
  * across iOS 26+, iOS 16-25, Android, and Web.
- * 
+ *
  * @author DNSChat Team
  * @since 1.8.0 (iOS 26 Liquid Glass Support)
  */
@@ -16,16 +16,16 @@
 export {
   // Primary liquid glass component with automatic platform detection
   LiquidGlassView as default,
-  
+
   // Specialized components for specific use cases
   LiquidGlassNavigation,
   LiquidGlassModal,
   LiquidGlassCard,
   LiquidGlassSidebar,
-  
+
   // Component props and types
   type LiquidGlassProps,
-} from './LiquidGlassFallback';
+} from "./LiquidGlassFallback";
 
 // ==================================================================================
 // CORE UI COMPONENTS
@@ -37,14 +37,14 @@ export {
   LiquidGlassChatBubble,
   LiquidGlassInput,
   LiquidGlassContainer,
-  
+
   // Component props and types
   type LiquidGlassButtonProps,
   type LiquidGlassChatBubbleProps,
   type LiquidGlassInputProps,
   type LiquidGlassCardProps,
   type LiquidGlassContainerProps,
-} from './LiquidGlassUI';
+} from "./LiquidGlassUI";
 
 // ==================================================================================
 // DNS-SPECIFIC COMPONENTS
@@ -58,7 +58,7 @@ export {
   LiquidGlassMethodBadge,
   LiquidGlassConnectionIndicator,
   LiquidGlassServerSelector,
-  
+
   // DNS component props and types
   type LiquidGlassChatInterfaceProps,
   type LiquidGlassDNSStatusProps,
@@ -69,7 +69,7 @@ export {
   type DNSMethod,
   type DNSQuery,
   type DNSServer,
-} from './LiquidGlassDNS';
+} from "./LiquidGlassDNS";
 
 // ==================================================================================
 // NATIVE COMPONENTS (iOS 26+)
@@ -78,20 +78,20 @@ export {
 export {
   // Direct native component access (iOS 26+ only)
   LiquidGlassNative,
-  
+
   // Native component props and handle
   type LiquidGlassNativeProps,
   type LiquidGlassNativeHandle,
-  
+
   // Native-specific hooks
   useLiquidGlassNative,
   useLiquidGlassPerformance,
   useLiquidGlassEnvironment,
-  
+
   // Native utility functions
   isNativeGlassAvailable,
   getOptimalNativeConfig,
-} from './LiquidGlassNative';
+} from "./LiquidGlassNative";
 
 // ==================================================================================
 // UTILITIES AND HOOKS
@@ -105,22 +105,22 @@ export {
   getRecommendedIntensity,
   refreshLiquidGlassCapabilities,
   validateGlassConfig,
-  
+
   // Performance monitoring
   LiquidGlassPerformanceMonitor,
-  
+
   // Type definitions
   type LiquidGlassCapabilities,
   type GlassStyle,
   type GlassIntensity,
   type EnvironmentalContext,
-} from '../../utils/liquidGlass';
+} from "../../utils/liquidGlass";
 
 export {
   // Cross-platform hooks
   useLiquidGlassCapabilities,
   useAdaptiveGlassIntensity,
-} from './LiquidGlassFallback';
+} from "./LiquidGlassFallback";
 
 // ==================================================================================
 // SENSOR-AWARE ADAPTATIONS
@@ -132,13 +132,13 @@ export {
   useLiquidGlassSensorAdaptation,
   useAmbientLightAdaptation,
   useBatteryOptimization,
-  
+
   // Sensor types and interfaces
   type SensorData,
   type AdaptationConfig,
   type SensorCallbacks,
   type LiquidGlassSensorModule,
-} from './LiquidGlassSensors';
+} from "./LiquidGlassSensors";
 
 // ==================================================================================
 // DYNAMIC THEME SYSTEM
@@ -148,7 +148,7 @@ export {
   // Theme provider and hooks
   LiquidGlassThemeProvider,
   useLiquidGlassTheme,
-  
+
   // Theme types and interfaces
   type ThemeConfiguration,
   type ThemeColors,
@@ -156,7 +156,7 @@ export {
   type UserPreferences,
   type TimeOfDayPeriod,
   type ThemeContextValue,
-} from './LiquidGlassTheme';
+} from "./LiquidGlassTheme";
 
 // ==================================================================================
 // CONVENIENCE EXPORTS
@@ -165,12 +165,12 @@ export {
 /**
  * Quick access to the main liquid glass component
  */
-export { LiquidGlassView } from './LiquidGlassFallback';
+export { LiquidGlassView } from "./LiquidGlassFallback";
 
 /**
  * Quick access to native-only component (for advanced use cases)
  */
-export { LiquidGlassNative } from './LiquidGlassNative';
+export { LiquidGlassNative } from "./LiquidGlassNative";
 
 // ==================================================================================
 // VERSION INFO
@@ -179,18 +179,18 @@ export { LiquidGlassNative } from './LiquidGlassNative';
 /**
  * Liquid Glass implementation version
  */
-export const LIQUID_GLASS_VERSION = '1.8.0';
+export const LIQUID_GLASS_VERSION = "1.8.0";
 
 /**
  * Supported iOS versions
  */
 export const SUPPORTED_IOS_VERSIONS = {
-  native: '26.0+',
-  enhanced: '17.0+',
-  basic: '16.0+',
+  native: "26.0+",
+  enhanced: "17.0+",
+  basic: "16.0+",
 } as const;
 
 /**
  * Supported platforms
  */
-export const SUPPORTED_PLATFORMS = ['ios', 'android', 'web'] as const;
+export const SUPPORTED_PLATFORMS = ["ios", "android", "web"] as const;

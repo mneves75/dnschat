@@ -9,6 +9,7 @@ Perform a comprehensive code review of the current pull request using parallel s
 ```
 
 Options:
+
 - `--focus <area>` - Focus on specific areas. Valid values: `security`, `performance`, `tests`, `architecture`, `documentation`, `all`
 - `--gemini-only` - Perform the review only with gemini CLI
 
@@ -19,16 +20,19 @@ This command performs a thorough code review of the current branch's changes com
 ## Examples
 
 ### Standard PR review
+
 ```
 /review-pr
 ```
 
 ### Security-focused review
+
 ```
 /review-pr --focus security
 ```
 
 ### Performance and scalability review
+
 ```
 /review-pr --focus performance
 ```
@@ -55,7 +59,7 @@ When you use this command, I will:
    - WARNING: This step must be skipped when `--gemini-only` has been passed
    - Performs complete multi-aspect code review using Claude
    - Analyzes all aspects below independently
-   
+
    **Sub-Agent 2: Gemini Review**
    - Runs Gemini CLI following instructions from `docs/gemini.md`
    - Performs complete multi-aspect code review using Gemini
@@ -73,38 +77,38 @@ When you use this command, I will:
    - Verify the code solves the intended problem
    - Check for edge cases, off-by-one errors, null/undefined handling
    - Validate business logic and algorithm correctness
-   
+
    **Code Quality & Architecture**
    - Check adherence to DRY and SOLID principles
    - Assess function/class complexity and cohesion
    - Verify consistent naming conventions and code style
    - Ensure changes align with existing architecture patterns
-   
+
    **Performance & Scalability**
    - Identify O(n²) algorithms that could be O(n)
    - Check for N+1 database queries
    - Look for memory leaks or excessive allocations
    - Identify missed caching opportunities
-   
+
    **Security**
    - Check for SQL injection vulnerabilities
    - Identify XSS vulnerabilities
    - Verify authentication/authorization checks
    - Ensure no sensitive data in logs or commits
    - Validate all user inputs are sanitized
-   
+
    **Testing**
    - Verify test coverage for new/modified code
    - Check if tests actually test the right behavior
    - Ensure edge cases are covered
    - Assess test maintainability and brittleness
-   
+
    **Error Handling**
    - Verify errors are properly caught and handled
    - Check error messages are helpful for debugging
    - Ensure appropriate logging levels
    - Validate graceful failure modes
-   
+
    **Documentation**
    - Check if complex logic is explained
    - Verify API documentation is updated
@@ -146,44 +150,52 @@ When you use this command, I will:
 ## Review Checklist
 
 ### ✅ Shared Accountability
+
 - [ ] I understand I share responsibility for this code once approved
 - [ ] I've reviewed with the same care as if I wrote it
 
 ### 🎯 Functionality
+
 - [ ] Code implements intended functionality
 - [ ] Edge cases and error scenarios handled
 - [ ] No regressions introduced
 
 ### 🏗️ Architecture & Design
+
 - [ ] Changes align with system architecture
 - [ ] Scalability and maintainability considered
 - [ ] Design patterns appropriately used
 
 ### 🔒 Security
+
 - [ ] Input validation present
 - [ ] Authentication/authorization correct
 - [ ] No sensitive data exposed
 - [ ] Dependencies are secure
 
 ### ⚡ Performance
+
 - [ ] No unnecessary database queries
 - [ ] Efficient algorithms used
 - [ ] Resource usage is reasonable
 - [ ] Caching utilized where appropriate
 
 ### 🧪 Testing
+
 - [ ] Adequate test coverage
 - [ ] Tests are meaningful, not just coverage
 - [ ] Edge cases tested
 - [ ] Tests are maintainable
 
 ### 📝 Code Quality
+
 - [ ] Code is DRY
 - [ ] SOLID principles followed
 - [ ] Clear naming and structure
 - [ ] Appropriate comments/documentation
 
 ### 🔄 Backwards Compatibility
+
 - [ ] API changes are backwards compatible
 - [ ] Database migrations handled properly
 - [ ] No breaking changes without discussion
@@ -191,6 +203,7 @@ When you use this command, I will:
 ## Note
 
 This command emphasizes:
+
 - **Parallel Sub-Agent Architecture**: Two independent sub-agents perform complete reviews - one using Claude, another using Gemini CLI
 - **Intelligent Merging**: Final step combines findings from both AI models by identifying common issues (high confidence), highlighting unique insights, and resolving conflicting assessments
 - **Accountability**: Approving means you own the outcome
@@ -200,11 +213,13 @@ This command emphasizes:
 - **Precision**: Every issue must include exact line numbers
 
 **Line Number Format Examples:**
+
 - Single line issue: `src/server/auth.ts:234`
 - Multi-line issue: `src/client/app.ts:45-52`
 - Context reference: `src/utils/helpers.ts:78 (similar pattern at lines 95, 112)`
 
 **Sub-Agent Execution:**
+
 - Claude sub-agent performs the review using Claude's capabilities
 - Gemini sub-agent runs the Gemini CLI following instructions from `docs/gemini.md`
 - Both sub-agents work in parallel for efficiency
@@ -220,6 +235,7 @@ For large PRs, consider reviewing incrementally and suggesting the author break 
 ## Security Considerations
 
 **Input Sanitization:**
+
 - All user-provided parameters (e.g., `--focus` values) are validated against a whitelist
 - Git commands use proper shell escaping with quotes around branch names
 - Temporary files are created with secure permissions (mode 600)
@@ -227,6 +243,7 @@ For large PRs, consider reviewing incrementally and suggesting the author break 
 - The `--focus` parameter only accepts predefined values: security, performance, tests, architecture, documentation, all
 
 **Safe Command Execution:**
+
 ```bash
 # Always quote branch names and file paths
 git diff "main...HEAD" --stat  # Correct
@@ -247,25 +264,28 @@ git diff "main...HEAD" > .pr_review_diff.tmp
 ## Implementation Notes
 
 **Gemini CLI File Access:**
+
 - Gemini CLI can only access files within the project directory
 - Always save temporary files in the project root with `.tmp` extension
 - Use `.gitignore` patterns for temporary files (e.g., `.pr_review_*.tmp`)
 - Example workflow:
+
   ```bash
   # Create file with secure permissions
   touch .pr_review_diff.tmp && chmod 600 .pr_review_diff.tmp
-  
+
   # Save diff to project-accessible location
   git diff "main...HEAD" > .pr_review_diff.tmp
-  
+
   # Use with Gemini
   gemini -p "@.pr_review_diff.tmp Your review prompt here"
-  
+
   # Clean up
   rm -f .pr_review_diff.tmp
   ```
 
 **Handling Large Diffs:**
+
 - For very large PRs, consider splitting the diff by file type or directory
 - Use Gemini's 2M token context window advantage for comprehensive analysis
 - If diff exceeds reasonable size, suggest breaking PR into smaller chunks
@@ -273,37 +293,40 @@ git diff "main...HEAD" > .pr_review_diff.tmp
 **Chunking Strategy for Diffs Exceeding 1.5M Tokens:**
 
 1. **Automatic splitting by file type:**
+
    ```bash
    # JavaScript/TypeScript files
    git diff "main...HEAD" -- "*.js" "*.ts" "*.jsx" "*.tsx" > .pr_review_js.tmp
-   
+
    # Python files
    git diff "main...HEAD" -- "*.py" > .pr_review_py.tmp
-   
+
    # Documentation
    git diff "main...HEAD" -- "*.md" "*.rst" "*.txt" > .pr_review_docs.tmp
    ```
 
 2. **Split by directory structure:**
+
    ```bash
    # Frontend changes
    git diff "main...HEAD" -- "web/src/client/" > .pr_review_frontend.tmp
-   
+
    # Backend changes
    git diff "main...HEAD" -- "web/src/server/" > .pr_review_backend.tmp
-   
+
    # Test changes
    git diff "main...HEAD" -- "**/test/" "**/tests/" > .pr_review_tests.tmp
    ```
 
 3. **Prioritize by change type:**
+
    ```bash
    # New files (highest priority)
    git diff "main...HEAD" --name-status | grep "^A" | cut -f2 | xargs git diff "main...HEAD" -- > .pr_review_new.tmp
-   
+
    # Modified files
    git diff "main...HEAD" --name-status | grep "^M" | cut -f2 | xargs git diff "main...HEAD" -- > .pr_review_modified.tmp
-   
+
    # Deleted files (lowest priority for review)
    git diff "main...HEAD" --name-status | grep "^D" | cut -f2 > .pr_review_deleted_list.tmp
    ```

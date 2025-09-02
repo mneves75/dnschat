@@ -21,13 +21,16 @@ This project follows the **Keep a Changelog** format and has specific requiremen
 ## Analysis Process
 
 ### 1. Parse Command Arguments
+
 Extract any arguments from `$ARGUMENTS`:
+
 - `--since=tag`: Analyze commits since this git tag (default: last tag)
 - `--next-version=X.Y.Z`: Version for the new release (default: auto-increment)
 - `--dry-run`: Preview only, don't modify files
 - `--verbose`: Show detailed analysis
 
 ### 2. Git History Analysis
+
 Use these commands to analyze the repository:
 
 ```bash
@@ -47,33 +50,41 @@ Use these commands to analyze the repository:
 Analyze commit messages and file changes to categorize:
 
 **Features** (🎯): New functionality
+
 - Keywords: feat, feature, add, new, implement, create
 - Files: New components, screens, services
 
 **Improvements** (🔧): Enhancements to existing features
+
 - Keywords: improve, enhance, update, upgrade, refactor, optimize
 - Files: Existing component modifications
 
 **Bug Fixes** (🐛): Issue resolutions
+
 - Keywords: fix, bug, resolve, correct, patch
 - Critical fixes get 🔥 prefix
 
 **Performance** (⚡): Speed/efficiency improvements
+
 - Keywords: perf, performance, speed, optimize, cache
 
 **Security** (🛡️): Security-related changes
+
 - Keywords: security, auth, permission, vulnerability, secure
 
 **Documentation** (📚): Documentation updates
-- Files: *.md, docs/, README changes
+
+- Files: \*.md, docs/, README changes
 
 **Developer Experience** (🔧): Build, test, CI improvements
+
 - Keywords: dev, build, test, ci, cd, lint, format
 - Files: package.json, build configs, scripts
 
 ### 4. Contributor Attribution
 
 For each change:
+
 - Extract author email and name from git log
 - Map email to GitHub username (use known mappings)
 - Format as: `(via [@username](https://github.com/username))`
@@ -84,11 +95,12 @@ For each change:
 ### 5. First-time Contributors
 
 Compare contributors in current range vs. all previous history:
+
 ```bash
 # Get all previous contributors
 ! git log --format="%ae" [SINCE_TAG] | sort -u
 
-# Get current range contributors  
+# Get current range contributors
 ! git log --format="%ae" [SINCE_TAG]..HEAD | sort -u
 ```
 
@@ -104,27 +116,35 @@ Generate this exact format:
 ## [X.Y.Z] - YYYY-MM-DD
 
 ### Features
+
 - User-friendly description (affected areas) (via [@username](https://github.com/username))
 
-### Improvements  
+### Improvements
+
 - User-friendly description (affected areas) (via [@username](https://github.com/username))
 
 ### Bug Fixes
+
 - User-friendly description (affected areas) (via [@username](https://github.com/username))
 
 ### Performance
+
 - User-friendly description (affected areas) (via [@username](https://github.com/username))
 
 ### Security
+
 - User-friendly description (affected areas) (via [@username](https://github.com/username))
 
 ### Documentation
+
 - User-friendly description (affected areas) (via [@username](https://github.com/username))
 
 ### Developer Experience
+
 - User-friendly description (affected areas) (via [@username](https://github.com/username))
 
 ### First-time Contributors
+
 - [@username](https://github.com/username) - Full Name
 ```
 
@@ -134,17 +154,21 @@ Generate comprehensive release notes:
 
 ```markdown
 ## Highlights
+
 - 🎯 Major feature one
-- 🐛 Critical bug fix  
+- 🐛 Critical bug fix
 - ⚡ Performance improvement
 
 ## What's Changed
+
 [Copy all categorized changes from CHANGELOG.md]
 
 ## First-time Contributors
+
 - @username made their first contribution
 
 ## Installation
+
 See [installation instructions](https://github.com/mneves75/dnschat#installation)
 ```
 
@@ -168,6 +192,7 @@ See [installation instructions](https://github.com/mneves75/dnschat#installation
 ## File Handling
 
 If not in `--dry-run` mode:
+
 1. **Update CHANGELOG.md**: Insert new entry after the `## [Unreleased]` section
 2. **Create release-notes.md**: Save GitHub release notes for easy copying
 3. **Provide Next Steps**: Guide user on creating GitHub release

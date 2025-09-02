@@ -1,9 +1,9 @@
 /**
  * Glass UI Components - Evan Bacon Glass UI Demo Implementation
- * 
+ *
  * Complete glass component system inspired by Evan Bacon's glass UI demo,
  * providing iOS Settings app style components with translucent backgrounds.
- * 
+ *
  * @author DNSChat Team
  * @since 1.8.0 (iOS 26 Liquid Glass Support + Evan Bacon Glass UI)
  */
@@ -15,7 +15,7 @@ export {
   GlassFormItem,
   GlassFormLink,
   Form, // Namespace export
-} from './GlassForm';
+} from "./GlassForm";
 
 // Tab Bar Components
 export {
@@ -24,7 +24,7 @@ export {
   SegmentedGlassTabBar,
   type GlassTab,
   type GlassTabBarProps,
-} from './GlassTabBar';
+} from "./GlassTabBar";
 
 // Bottom Sheet Components
 export {
@@ -34,7 +34,7 @@ export {
   type GlassBottomSheetProps,
   type GlassSheetAction,
   type GlassActionSheetProps,
-} from './GlassBottomSheet';
+} from "./GlassBottomSheet";
 
 // Re-export base LiquidGlassWrapper for convenience
 export {
@@ -44,9 +44,9 @@ export {
   LiquidGlassNavBar,
   useLiquidGlassCapabilities,
   type LiquidGlassProps,
-} from '../LiquidGlassWrapper';
+} from "../LiquidGlassWrapper";
 
 // Glass Component Namespace (alternative import style)
-export * as Glass from './GlassForm';
-export * as GlassTabs from './GlassTabBar';
-export * as GlassSheets from './GlassBottomSheet';
+export * as Glass from "./GlassForm";
+export * as GlassTabs from "./GlassTabBar";
+export * as GlassSheets from "./GlassBottomSheet";

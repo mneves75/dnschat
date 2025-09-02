@@ -1,12 +1,15 @@
-import React from 'react';
-import Svg, { Path } from 'react-native-svg';
+import React from "react";
+import Svg, { Path } from "react-native-svg";
 
 interface SettingsIconProps {
   size?: number;
   color?: string;
 }
 
-export function SettingsIcon({ size = 24, color = '#8E8E93' }: SettingsIconProps) {
+export function SettingsIcon({
+  size = 24,
+  color = "#8E8E93",
+}: SettingsIconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path

@@ -83,36 +83,53 @@ public class DNSResolver {
         Log.d(TAG, "📊 DNS: Active queries count: " + activeQueries.size());
         
         // 3-tier fallback strategy (matches iOS): Raw UDP → DNS-over-HTTPS → Legacy
-        queryTXTRawUDP(sanitizedMessage)
+        queryTXTRawUDP(sanitizedMessage, domain)
             .thenAccept(txtRecords -> {
                 activeQueries.remove(queryId);
                 Log.d(TAG, "🧹 DNS: Query completed, active queries: " + activeQueries.size());
                 result.complete(txtRecords);
             })
             .exceptionally(err -> {
-                Log.d(TAG, "🥈 DNS: Trying DNS-over-HTTPS (fallback 1)");
-                queryTXTDNSOverHTTPS(sanitizedMessage)
-                    .thenAccept(txtRecords -> {
-                        activeQueries.remove(queryId);
-                        Log.d(TAG, "🧹 DNS: Query completed (HTTPS), active queries: " + activeQueries.size());
-                        result.complete(txtRecords);
-                    })
-                    .exceptionally(err2 -> {
-                        Log.d(TAG, "🥉 DNS: Trying legacy DNS (fallback 2)");
-                        queryTXTLegacy(domain, sanitizedMessage)
-                            .thenAccept(txtRecords -> {
-                                activeQueries.remove(queryId);
-                                Log.d(TAG, "🧹 DNS: Query completed (legacy), active queries: " + activeQueries.size());
-                                result.complete(txtRecords);
-                            })
-                            .exceptionally(err3 -> {
-                                activeQueries.remove(queryId);
-                                Log.d(TAG, "❌ DNS: All fallback methods failed, active queries: " + activeQueries.size());
-                                result.completeExceptionally(err3);
-                                return null;
-                            });
-                        return null;
-                    });
+                // Gate DoH: disable for ch.at, otherwise try DoH then legacy
+                if (domain != null && !domain.equalsIgnoreCase("ch.at")) {
+                    Log.d(TAG, "🥈 DNS: Trying DNS-over-HTTPS (fallback 1)");
+                    queryTXTDNSOverHTTPS(sanitizedMessage)
+                        .thenAccept(txtRecords -> {
+                            activeQueries.remove(queryId);
+                            Log.d(TAG, "🧹 DNS: Query completed (HTTPS), active queries: " + activeQueries.size());
+                            result.complete(txtRecords);
+                        })
+                        .exceptionally(err2 -> {
+                            Log.d(TAG, "🥉 DNS: Trying legacy DNS (fallback 2)");
+                            queryTXTLegacy(domain, sanitizedMessage)
+                                .thenAccept(txtRecords -> {
+                                    activeQueries.remove(queryId);
+                                    Log.d(TAG, "🧹 DNS: Query completed (legacy), active queries: " + activeQueries.size());
+                                    result.complete(txtRecords);
+                                })
+                                .exceptionally(err3 -> {
+                                    activeQueries.remove(queryId);
+                                    Log.d(TAG, "❌ DNS: All fallback methods failed, active queries: " + activeQueries.size());
+                                    result.completeExceptionally(err3);
+                                    return null;
+                                });
+                            return null;
+                        });
+                } else {
+                    Log.d(TAG, "🥈 DNS: Skipping DoH for ch.at, trying legacy DNS");
+                    queryTXTLegacy(domain, sanitizedMessage)
+                        .thenAccept(txtRecords -> {
+                            activeQueries.remove(queryId);
+                            Log.d(TAG, "🧹 DNS: Query completed (legacy), active queries: " + activeQueries.size());
+                            result.complete(txtRecords);
+                        })
+                        .exceptionally(err3 -> {
+                            activeQueries.remove(queryId);
+                            Log.d(TAG, "❌ DNS: All fallback methods failed, active queries: " + activeQueries.size());
+                            result.completeExceptionally(err3);
+                            return null;
+                        });
+                }
                 return null;
             });
         return result;
@@ -126,7 +143,7 @@ public class DNSResolver {
                 Lookup lookup = new Lookup(message, Type.TXT);
                 
                 // Configure custom resolver
-                SimpleResolver resolver = new SimpleResolver(DNS_SERVER);
+                SimpleResolver resolver = new SimpleResolver(domain);
                 resolver.setPort(DNS_PORT);
                 resolver.setTimeout(QUERY_TIMEOUT_MS / 1000);
                 lookup.setResolver(resolver);
@@ -168,7 +185,7 @@ public class DNSResolver {
      * Send a raw UDP DNS TXT query using the entire message as a single DNS label,
      * mirroring the iOS implementation and the user's dig usage.
      */
-    private CompletableFuture<List<String>> queryTXTRawUDP(String message) {
+    private CompletableFuture<List<String>> queryTXTRawUDP(String message, String server) {
         return CompletableFuture.supplyAsync(() -> {
             DatagramSocket socket = null;
             try {
@@ -178,7 +195,7 @@ public class DNSResolver {
                 // Send UDP packet
                 socket = new DatagramSocket();
                 socket.setSoTimeout(QUERY_TIMEOUT_MS);
-                InetAddress serverAddr = InetAddress.getByName(DNS_SERVER);
+                InetAddress serverAddr = InetAddress.getByName(server);
 
                 DatagramPacket packet = new DatagramPacket(query, query.length, serverAddr, DNS_PORT);
                 socket.send(packet);

@@ -76,16 +76,19 @@ DNSChat is a revolutionary mobile chat application that communicates with AI usi
 ### Layer Breakdown
 
 #### 1. Presentation Layer (`/src/components/`, `/src/navigation/`)
+
 - **Components**: Reusable UI elements (MessageBubble, ChatInput, etc.)
 - **Screens**: Full-screen components (Chat, Settings, About)
 - **Navigation**: Route management and deep linking
 
 #### 2. Business Logic Layer (`/src/services/`)
+
 - **DNSService**: Core DNS communication logic
 - **StorageService**: Data persistence management
 - **Context Providers**: Global state management
 
 #### 3. Native Layer (`/modules/dns-native/`, `/ios/`, `/android/`)
+
 - **iOS**: Swift implementation using Network Framework
 - **Android**: Kotlin implementation using DnsResolver API
 - **Fallbacks**: UDP sockets, DNS-over-HTTPS
@@ -106,11 +109,12 @@ const query = `dig @ch.at "${userMessage}" TXT +short`;
 const responses = [
   "1/3:Hello! This is the first part",
   "2/3:of the AI response message",
-  "3/3:split across multiple DNS records."
+  "3/3:split across multiple DNS records.",
 ];
 ```
 
 **Key Points:**
+
 - User message becomes DNS query domain
 - Response split across multiple TXT records
 - Format: `N/TOTAL:content` for multi-part responses
@@ -127,8 +131,12 @@ nw_resolver_query(resolver, domain, NW_RESOLVER_TYPE_TXT, callback);
 
 // Android - Uses DnsResolver API (Android 10+)
 DnsResolver.getInstance().query(
-  network, domain, RR_TYPE_TXT, 
-  executor, cancellationSignal, callback
+  network,
+  domain,
+  RR_TYPE_TXT,
+  executor,
+  cancellationSignal,
+  callback,
 );
 
 // Fallback - JavaScript UDP/TCP/HTTPS
@@ -184,21 +192,27 @@ interface SettingsContextType {
 ### Key Files to Understand
 
 #### `/src/services/dnsService.ts` - Core DNS Logic
+
 The heart of the application. Handles:
+
 - Native DNS module detection
 - Fallback chain management (Native → UDP → TCP → HTTPS → Mock)
 - Response parsing and error handling
 - Message sanitization and validation
 
 #### `/src/context/ChatContext.tsx` - State Management
+
 Global state for all chat functionality:
+
 - Chat creation, updates, deletion
 - Message management
 - Storage integration
 - Context provider for entire app
 
 #### `/src/components/MessageList.tsx` - Performance Critical
+
 Uses FlatList for efficient rendering:
+
 - Virtualized list for thousands of messages
 - Auto-scroll to bottom on new messages
 - Optimized re-rendering patterns
@@ -231,6 +245,7 @@ xcode-select --install  # macOS only
 ### First-Time Setup
 
 1. **Clone and Install**
+
 ```bash
 git clone https://github.com/mneves75/dnschat.git
 cd dnschat
@@ -238,6 +253,7 @@ npm install
 ```
 
 2. **Platform Setup**
+
 ```bash
 # iOS (macOS only)
 cd ios && pod install && cd ..
@@ -247,9 +263,10 @@ export JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home
 ```
 
 3. **Verify Installation**
+
 ```bash
 # Test DNS connectivity
-node test-dns.js "Hello world"
+node test-dns-simple.js "Hello world"
 
 # Start development
 npm start
@@ -259,11 +276,13 @@ npm start
 ### Development Environment
 
 #### Recommended IDE Setup
+
 - **Primary**: VS Code with React Native extensions
 - **iOS Debugging**: Xcode (for native code)
 - **Android Debugging**: Android Studio (for native code)
 
 #### Essential Extensions
+
 - ES7+ React/Redux/React-Native snippets
 - TypeScript Hero
 - React Native Tools
@@ -281,6 +300,7 @@ npm start
    - Consider testing requirements
 
 2. **Implementation Pattern**
+
 ```typescript
 // 1. Add types (if needed)
 interface NewFeature {
@@ -290,21 +310,25 @@ interface NewFeature {
 
 // 2. Update service layer
 export const newFeatureService = {
-  create: async (data: NewFeature) => { /* */ },
-  update: async (id: string, data: Partial<NewFeature>) => { /* */ }
+  create: async (data: NewFeature) => {
+    /* */
+  },
+  update: async (id: string, data: Partial<NewFeature>) => {
+    /* */
+  },
 };
 
 // 3. Update context (if global state needed)
 const NewFeatureContext = createContext<NewFeatureContextType>();
 
 // 4. Create components
-const NewFeatureComponent: React.FC<Props> = ({ }) => {
+const NewFeatureComponent: React.FC<Props> = ({}) => {
   // Implementation
 };
 
 // 5. Add tests
-describe('NewFeature', () => {
-  it('should work correctly', () => {
+describe("NewFeature", () => {
+  it("should work correctly", () => {
     // Test implementation
   });
 });
@@ -315,19 +339,21 @@ describe('NewFeature', () => {
 **⚠️ CRITICAL: DNS is the core functionality - test thoroughly!**
 
 1. **Understand Current Flow**
+
 ```typescript
 // dnsService.ts flow:
-performDNSQuery() 
-  → tryNativeDNS() 
-  → tryUDPDNS() 
-  → tryDNSOverHTTPS() 
+performDNSQuery()
+  → tryNativeDNS()
+  → tryUDPDNS()
+  → tryDNSOverHTTPS()
   → tryMockService()
 ```
 
 2. **Test at Each Layer**
+
 ```bash
 # Test CLI first
-node test-dns.js "test message"
+node test-dns-simple.js "test message"
 
 # Test native modules
 # (Check console logs for native DNS availability)
@@ -350,18 +376,19 @@ node test-dns.js "test message"
    - Storage slow: Check AsyncStorage operations
 
 2. **Use Performance Tools**
+
 ```typescript
 // React Native performance monitoring
-import { unstable_trace as trace } from 'scheduler/tracing';
+import { unstable_trace as trace } from "scheduler/tracing";
 
-trace('DNS Query', performance.now(), () => {
+trace("DNS Query", performance.now(), () => {
   // DNS query code
 });
 
 // Console timing
-console.time('DNS Query');
+console.time("DNS Query");
 await performDNSQuery(message);
-console.timeEnd('DNS Query');
+console.timeEnd("DNS Query");
 ```
 
 ---
@@ -385,20 +412,24 @@ console.timeEnd('DNS Query');
 ### Testing Levels
 
 #### 1. Unit Tests (`__tests__/`)
+
 Test individual functions and components:
+
 ```typescript
 // Example: DNS response parsing
-describe('parseMultiPartResponse', () => {
-  it('should concatenate multi-part responses', () => {
-    const responses = ['1/2:Hello ', '2/2:World'];
+describe("parseMultiPartResponse", () => {
+  it("should concatenate multi-part responses", () => {
+    const responses = ["1/2:Hello ", "2/2:World"];
     const result = parseMultiPartResponse(responses);
-    expect(result).toBe('Hello World');
+    expect(result).toBe("Hello World");
   });
 });
 ```
 
 #### 2. Integration Tests
+
 Test service integration:
+
 ```bash
 # DNS service integration
 npm test -- --testPathPattern=integration
@@ -409,7 +440,9 @@ npm run android  # Then test in emulator
 ```
 
 #### 3. E2E Testing
+
 Test complete user flows:
+
 1. Create new chat
 2. Send message
 3. Receive response
@@ -429,6 +462,7 @@ Test complete user flows:
 ### Code Style
 
 1. **TypeScript Strict Mode**
+
 ```typescript
 // Always type everything
 interface Props {
@@ -445,18 +479,20 @@ interface Chat {
 ```
 
 2. **Error Handling**
+
 ```typescript
 // Always handle errors explicitly
 try {
   const response = await performDNSQuery(message);
   return response;
 } catch (error) {
-  console.error('DNS query failed:', error);
-  throw new DNSError('Query failed', error);
+  console.error("DNS query failed:", error);
+  throw new DNSError("Query failed", error);
 }
 ```
 
 3. **Async/Await Pattern**
+
 ```typescript
 // Prefer async/await over promises
 const sendMessage = async (text: string): Promise<void> => {
@@ -472,6 +508,7 @@ const sendMessage = async (text: string): Promise<void> => {
 ### Performance Guidelines
 
 1. **Component Optimization**
+
 ```typescript
 // Use React.memo for expensive components
 const MessageBubble = React.memo<Props>(({ message }) => {
@@ -485,17 +522,18 @@ const handleSend = useCallback((text: string) => {
 ```
 
 2. **State Management**
+
 ```typescript
 // Minimize context re-renders
 const ChatProvider = ({ children }) => {
   const [state, dispatch] = useReducer(chatReducer, initialState);
-  
+
   // Memoize context value
   const value = useMemo(() => ({
     ...state,
     dispatch
   }), [state]);
-  
+
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;
 };
 ```
@@ -503,25 +541,27 @@ const ChatProvider = ({ children }) => {
 ### Security Considerations
 
 1. **Input Sanitization**
+
 ```typescript
 // Always sanitize DNS inputs (already implemented)
 const sanitizeMessage = (message: string): string => {
   return message
-    .replace(/[^\x20-\x7E]/g, '') // Remove non-printable
-    .replace(/[.;\\]/g, '_')      // Escape DNS control chars
-    .substring(0, 63);            // DNS label limit
+    .replace(/[^\x20-\x7E]/g, "") // Remove non-printable
+    .replace(/[.;\\]/g, "_") // Escape DNS control chars
+    .substring(0, 63); // DNS label limit
 };
 ```
 
 2. **Error Message Security**
+
 ```typescript
 // Don't expose internal details in errors
 const handleDNSError = (error: Error): string => {
   // Log full error internally
-  console.error('Internal DNS error:', error);
-  
+  console.error("Internal DNS error:", error);
+
   // Return sanitized message to user
-  return 'Unable to send message. Please try again.';
+  return "Unable to send message. Please try again.";
 };
 ```
 
@@ -532,9 +572,10 @@ const handleDNSError = (error: Error): string => {
 ### DNS Communication Debugging
 
 1. **Layer-by-Layer Testing**
+
 ```bash
 # 1. Test pure DNS connectivity
-node test-dns.js "debug message"
+node test-dns-simple.js "debug message"
 
 # 2. Test native modules
 # Look for console logs: "✅ Native DNS reports as available!"
@@ -544,17 +585,19 @@ node test-dns.js "debug message"
 ```
 
 2. **Console Logging Strategy**
+
 ```typescript
 // dnsService.ts debugging points
-console.log('🔍 Attempting native DNS query');
-console.log('⚠️ Native DNS failed, trying UDP');
-console.log('⚠️ UDP failed, trying DNS-over-HTTPS');
-console.log('📥 Raw response received:', response);
+console.log("🔍 Attempting native DNS query");
+console.log("⚠️ Native DNS failed, trying UDP");
+console.log("⚠️ UDP failed, trying DNS-over-HTTPS");
+console.log("📥 Raw response received:", response);
 ```
 
 ### React Native Debugging
 
 1. **Component Debugging**
+
 ```typescript
 // Use React Developer Tools
 // Add debug props to components
@@ -565,13 +608,14 @@ const MessageBubble = ({ message, ...props }) => {
 ```
 
 2. **State Debugging**
+
 ```typescript
 // Debug Context state changes
 const ChatProvider = ({ children }) => {
   const [chats, setChats] = useState([]);
-  
+
   useEffect(() => {
-    console.log('Chats state changed:', chats.length);
+    console.log("Chats state changed:", chats.length);
   }, [chats]);
 };
 ```
@@ -579,6 +623,7 @@ const ChatProvider = ({ children }) => {
 ### Network Debugging
 
 1. **Traffic Analysis**
+
 ```bash
 # Monitor DNS traffic (macOS)
 sudo tcpdump -i any port 53
@@ -588,6 +633,7 @@ sudo tcpdump -i any port 443
 ```
 
 2. **Error Pattern Recognition**
+
 - `ERR_SOCKET_BAD_PORT`: UDP port 53 blocked
 - `NETWORK_REQUEST_FAILED`: Server unreachable
 - `TIMEOUT`: Network latency or server overload
@@ -617,24 +663,28 @@ sudo tcpdump -i any port 443
 ### Review Checklist
 
 #### General Code Quality
+
 - [ ] Code follows TypeScript strict mode
 - [ ] Functions have proper error handling
 - [ ] Components are properly typed
 - [ ] No console.log statements in production code
 
 #### DNS-Specific Changes
+
 - [ ] DNS queries are properly sanitized
 - [ ] Fallback chain is maintained
 - [ ] Native modules are tested on both platforms
-- [ ] CLI test passes: `node test-dns.js "test"`
+- [ ] CLI test passes: `node test-dns-simple.js "test"`
 
 #### React Native Specific
+
 - [ ] Components use proper React patterns (hooks, memo, etc.)
 - [ ] Navigation changes don't break deep linking
 - [ ] AsyncStorage operations are error-handled
 - [ ] Platform-specific code is properly conditionally executed
 
 #### Testing
+
 - [ ] Unit tests added for new functionality
 - [ ] Integration tests pass
 - [ ] App builds and runs on both iOS and Android

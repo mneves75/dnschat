@@ -1,22 +1,28 @@
 /**
  * Liquid Glass Navigation Components
- * 
+ *
  * Enhanced navigation components with iOS 26 Liquid Glass effects.
  * Provides adaptive, sensor-aware navigation interfaces that respond
  * to environmental changes and user interaction patterns.
- * 
+ *
  * Features:
  * - Dynamic shrinking/expanding tab bars
  * - Environmental light adaptation
  * - Motion-aware transparency
  * - Performance-optimized rendering
  * - Graceful fallbacks for all platforms
- * 
+ *
  * @author DNSChat Team
  * @since 1.8.0 (iOS 26 Liquid Glass Support)
  */
 
-import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useMemo,
+  useCallback,
+} from "react";
 import {
   View,
   Text,
@@ -30,9 +36,9 @@ import {
   TextStyle,
   SafeAreaView,
   ScrollView,
-} from 'react-native';
-import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+} from "react-native";
+import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import {
   LiquidGlassView,
@@ -41,7 +47,7 @@ import {
   useLiquidGlassCapabilities,
   useAdaptiveGlassIntensity,
   type LiquidGlassProps,
-} from './';
+} from "./";
 
 // ==================================================================================
 // TYPE DEFINITIONS
@@ -50,36 +56,36 @@ import {
 interface LiquidGlassTabBarProps extends BottomTabBarProps {
   /** Enable dynamic shrinking during scroll */
   dynamicShrinking?: boolean;
-  
+
   /** Blur intensity for the tab bar */
-  intensity?: 'ultraThin' | 'thin' | 'regular' | 'thick';
-  
+  intensity?: "ultraThin" | "thin" | "regular" | "thick";
+
   /** Enable haptic feedback on tab press */
   hapticsEnabled?: boolean;
-  
+
   /** Custom glass style */
-  glassStyle?: 'footerMaterial' | 'systemMaterial' | 'hudMaterial';
+  glassStyle?: "footerMaterial" | "systemMaterial" | "hudMaterial";
 }
 
 interface LiquidGlassNavigationBarProps {
   /** Navigation title */
   title?: string;
-  
+
   /** Left navigation button */
   leftButton?: React.ReactNode;
-  
+
   /** Right navigation button */
   rightButton?: React.ReactNode;
-  
+
   /** Enable large title mode */
   largeTitleMode?: boolean;
-  
+
   /** Scroll offset for dynamic transparency */
   scrollOffset?: Animated.Value;
-  
+
   /** Glass intensity */
-  intensity?: 'ultraThin' | 'thin' | 'regular' | 'thick';
-  
+  intensity?: "ultraThin" | "thin" | "regular" | "thick";
+
   /** Custom styling */
   style?: ViewStyle;
 }
@@ -87,16 +93,20 @@ interface LiquidGlassNavigationBarProps {
 interface LiquidGlassModalProps extends LiquidGlassProps {
   /** Modal visibility */
   visible: boolean;
-  
+
   /** Presentation style */
-  presentationStyle?: 'fullScreen' | 'pageSheet' | 'formSheet' | 'overFullScreen';
-  
+  presentationStyle?:
+    | "fullScreen"
+    | "pageSheet"
+    | "formSheet"
+    | "overFullScreen";
+
   /** Animation type */
-  animationType?: 'slide' | 'fade' | 'none';
-  
+  animationType?: "slide" | "fade" | "none";
+
   /** Callback when modal requests close */
   onRequestClose: () => void;
-  
+
   /** Modal content */
   children: React.ReactNode;
 }
@@ -113,94 +123,114 @@ export const LiquidGlassTabBar: React.FC<LiquidGlassTabBarProps> = ({
   descriptors,
   navigation,
   dynamicShrinking = true,
-  intensity = 'thin',
+  intensity = "thin",
   hapticsEnabled = true,
-  glassStyle = 'footerMaterial',
+  glassStyle = "footerMaterial",
 }) => {
   const colorScheme = useColorScheme();
   const insets = useSafeAreaInsets();
   const { capabilities } = useLiquidGlassCapabilities();
   const adaptiveIntensity = useAdaptiveGlassIntensity(intensity);
-  
+
   // Animation values
   const shrinkAnim = useRef(new Animated.Value(1)).current;
   const [isShrunken, setIsShrunken] = useState(false);
-  
+
   // Dynamic shrinking based on scroll events (simulated for now)
-  const triggerShrink = useCallback((shouldShrink: boolean) => {
-    if (!dynamicShrinking) return;
-    
-    const targetValue = shouldShrink ? 0.8 : 1;
-    const duration = capabilities?.performance.supports60fps ? 300 : 200;
-    
-    Animated.timing(shrinkAnim, {
-      toValue: targetValue,
-      duration,
-      useNativeDriver: true,
-    }).start();
-    
-    setIsShrunken(shouldShrink);
-  }, [dynamicShrinking, shrinkAnim, capabilities?.performance.supports60fps]);
-  
+  const triggerShrink = useCallback(
+    (shouldShrink: boolean) => {
+      if (!dynamicShrinking) return;
+
+      const targetValue = shouldShrink ? 0.8 : 1;
+      const duration = capabilities?.performance.supports60fps ? 300 : 200;
+
+      Animated.timing(shrinkAnim, {
+        toValue: targetValue,
+        duration,
+        useNativeDriver: true,
+      }).start();
+
+      setIsShrunken(shouldShrink);
+    },
+    [dynamicShrinking, shrinkAnim, capabilities?.performance.supports60fps],
+  );
+
   // Tab press handler with haptic feedback
-  const handleTabPress = useCallback((route: any, isFocused: boolean) => {
-    // Haptic feedback
-    if (hapticsEnabled && Platform.OS === 'ios') {
-      // Would integrate with react-native-haptic-feedback
-      console.log('🎯 Haptic feedback triggered');
-    }
-    
-    if (!isFocused) {
-      navigation.navigate(route.name, route.params);
-    }
-  }, [navigation, hapticsEnabled]);
-  
+  const handleTabPress = useCallback(
+    (route: any, isFocused: boolean) => {
+      // Haptic feedback
+      if (hapticsEnabled && Platform.OS === "ios") {
+        // Would integrate with react-native-haptic-feedback
+        console.log("🎯 Haptic feedback triggered");
+      }
+
+      if (!isFocused) {
+        navigation.navigate(route.name, route.params);
+      }
+    },
+    [navigation, hapticsEnabled],
+  );
+
   // Render individual tab
-  const renderTab = useCallback((route: any, index: number) => {
-    const { options } = descriptors[route.key];
-    const label = options.tabBarLabel !== undefined
-      ? options.tabBarLabel
-      : options.title !== undefined
-      ? options.title
-      : route.name;
-    
-    const isFocused = state.index === index;
-    
-    const color = isFocused
-      ? (colorScheme === 'dark' ? '#007AFF' : '#007AFF')
-      : (colorScheme === 'dark' ? '#8E8E93' : '#8E8E93');
-    
-    return (
-      <TouchableOpacity
-        key={route.key}
-        accessibilityRole="button"
-        accessibilityState={isFocused ? { selected: true } : {}}
-        accessibilityLabel={options.tabBarAccessibilityLabel}
-        testID={options.tabBarTestID}
-        onPress={() => handleTabPress(route, isFocused)}
-        style={styles.tab}
-      >
-        <Animated.View
-          style={[
-            styles.tabContent,
-            {
-              transform: [{ scale: shrinkAnim }],
-            },
-          ]}
+  const renderTab = useCallback(
+    (route: any, index: number) => {
+      const { options } = descriptors[route.key];
+      const label =
+        options.tabBarLabel !== undefined
+          ? options.tabBarLabel
+          : options.title !== undefined
+            ? options.title
+            : route.name;
+
+      const isFocused = state.index === index;
+
+      const color = isFocused
+        ? colorScheme === "dark"
+          ? "#007AFF"
+          : "#007AFF"
+        : colorScheme === "dark"
+          ? "#8E8E93"
+          : "#8E8E93";
+
+      return (
+        <TouchableOpacity
+          key={route.key}
+          accessibilityRole="button"
+          accessibilityState={isFocused ? { selected: true } : {}}
+          accessibilityLabel={options.tabBarAccessibilityLabel}
+          testID={options.tabBarTestID}
+          onPress={() => handleTabPress(route, isFocused)}
+          style={styles.tab}
         >
-          {options.tabBarIcon && options.tabBarIcon({ 
-            focused: isFocused, 
-            color, 
-            size: isShrunken ? 20 : 24 
-          })}
-          <Text style={[styles.tabLabel, { color }]}>
-            {label}
-          </Text>
-        </Animated.View>
-      </TouchableOpacity>
-    );
-  }, [state.index, descriptors, colorScheme, handleTabPress, shrinkAnim, isShrunken]);
-  
+          <Animated.View
+            style={[
+              styles.tabContent,
+              {
+                transform: [{ scale: shrinkAnim }],
+              },
+            ]}
+          >
+            {options.tabBarIcon &&
+              options.tabBarIcon({
+                focused: isFocused,
+                color,
+                size: isShrunken ? 20 : 24,
+              })}
+            <Text style={[styles.tabLabel, { color }]}>{label}</Text>
+          </Animated.View>
+        </TouchableOpacity>
+      );
+    },
+    [
+      state.index,
+      descriptors,
+      colorScheme,
+      handleTabPress,
+      shrinkAnim,
+      isShrunken,
+    ],
+  );
+
   return (
     <LiquidGlassNavigation
       intensity={adaptiveIntensity}
@@ -214,9 +244,7 @@ export const LiquidGlassTabBar: React.FC<LiquidGlassTabBarProps> = ({
         },
       ]}
     >
-      <View style={styles.tabContainer}>
-        {state.routes.map(renderTab)}
-      </View>
+      <View style={styles.tabContainer}>{state.routes.map(renderTab)}</View>
     </LiquidGlassNavigation>
   );
 };
@@ -228,49 +256,55 @@ export const LiquidGlassTabBar: React.FC<LiquidGlassTabBarProps> = ({
 /**
  * Enhanced navigation bar with content-aware transparency and large title support
  */
-export const LiquidGlassNavigationBar: React.FC<LiquidGlassNavigationBarProps> = ({
+export const LiquidGlassNavigationBar: React.FC<
+  LiquidGlassNavigationBarProps
+> = ({
   title,
   leftButton,
   rightButton,
   largeTitleMode = false,
   scrollOffset,
-  intensity = 'thin',
+  intensity = "thin",
   style,
 }) => {
   const colorScheme = useColorScheme();
   const insets = useSafeAreaInsets();
   const { capabilities } = useLiquidGlassCapabilities();
   const adaptiveIntensity = useAdaptiveGlassIntensity(intensity);
-  
+
   // Dynamic opacity based on scroll
   const headerOpacity = useRef(new Animated.Value(1)).current;
-  const titleScale = useRef(new Animated.Value(largeTitleMode ? 1.5 : 1)).current;
-  
+  const titleScale = useRef(
+    new Animated.Value(largeTitleMode ? 1.5 : 1),
+  ).current;
+
   // Listen to scroll offset changes
   useEffect(() => {
     if (!scrollOffset) return;
-    
+
     const listener = scrollOffset.addListener(({ value }) => {
       // Gradually increase opacity as user scrolls
       const opacity = Math.min(1, Math.max(0.3, value / 100));
       headerOpacity.setValue(opacity);
-      
+
       // Shrink large title as user scrolls
       if (largeTitleMode) {
-        const scale = Math.max(1, 1.5 - (value / 200));
+        const scale = Math.max(1, 1.5 - value / 200);
         titleScale.setValue(scale);
       }
     });
-    
+
     return () => {
       scrollOffset.removeListener(listener);
     };
   }, [scrollOffset, headerOpacity, titleScale, largeTitleMode]);
-  
-  const titleColor = colorScheme === 'dark' ? '#FFFFFF' : '#000000';
-  
+
+  const titleColor = colorScheme === "dark" ? "#FFFFFF" : "#000000";
+
   return (
-    <Animated.View style={[styles.navigationBar, { opacity: headerOpacity }, style]}>
+    <Animated.View
+      style={[styles.navigationBar, { opacity: headerOpacity }, style]}
+    >
       <LiquidGlassNavigation
         intensity={adaptiveIntensity}
         style="headerMaterial"
@@ -284,10 +318,8 @@ export const LiquidGlassNavigationBar: React.FC<LiquidGlassNavigationBarProps> =
         ]}
       >
         <View style={styles.navigationContent}>
-          <View style={styles.navigationButtons}>
-            {leftButton}
-          </View>
-          
+          <View style={styles.navigationButtons}>{leftButton}</View>
+
           <Animated.View
             style={[
               styles.titleContainer,
@@ -307,10 +339,8 @@ export const LiquidGlassNavigationBar: React.FC<LiquidGlassNavigationBarProps> =
               {title}
             </Text>
           </Animated.View>
-          
-          <View style={styles.navigationButtons}>
-            {rightButton}
-          </View>
+
+          <View style={styles.navigationButtons}>{rightButton}</View>
         </View>
       </LiquidGlassNavigation>
     </Animated.View>
@@ -326,21 +356,23 @@ export const LiquidGlassNavigationBar: React.FC<LiquidGlassNavigationBarProps> =
  */
 export const LiquidGlassModalComponent: React.FC<LiquidGlassModalProps> = ({
   visible,
-  presentationStyle = 'pageSheet',
-  animationType = 'slide',
+  presentationStyle = "pageSheet",
+  animationType = "slide",
   onRequestClose,
   children,
-  intensity = 'regular',
+  intensity = "regular",
   ...glassProps
 }) => {
   const { capabilities } = useLiquidGlassCapabilities();
   const adaptiveIntensity = useAdaptiveGlassIntensity(intensity);
-  
+
   // Animation values
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(Dimensions.get('window').height)).current;
+  const slideAnim = useRef(
+    new Animated.Value(Dimensions.get("window").height),
+  ).current;
   const scaleAnim = useRef(new Animated.Value(0.9)).current;
-  
+
   // Animate modal appearance
   useEffect(() => {
     if (visible) {
@@ -351,29 +383,29 @@ export const LiquidGlassModalComponent: React.FC<LiquidGlassModalProps> = ({
           useNativeDriver: true,
         }),
       ];
-      
-      if (animationType === 'slide') {
+
+      if (animationType === "slide") {
         animations.push(
           Animated.spring(slideAnim, {
             toValue: 0,
             tension: 100,
             friction: 8,
             useNativeDriver: true,
-          })
+          }),
         );
       }
-      
-      if (presentationStyle === 'formSheet') {
+
+      if (presentationStyle === "formSheet") {
         animations.push(
           Animated.spring(scaleAnim, {
             toValue: 1,
             tension: 100,
             friction: 8,
             useNativeDriver: true,
-          })
+          }),
         );
       }
-      
+
       Animated.parallel(animations).start();
     } else {
       const animations = [
@@ -383,43 +415,50 @@ export const LiquidGlassModalComponent: React.FC<LiquidGlassModalProps> = ({
           useNativeDriver: true,
         }),
       ];
-      
-      if (animationType === 'slide') {
+
+      if (animationType === "slide") {
         animations.push(
           Animated.timing(slideAnim, {
-            toValue: Dimensions.get('window').height,
+            toValue: Dimensions.get("window").height,
             duration: 200,
             useNativeDriver: true,
-          })
+          }),
         );
       }
-      
-      if (presentationStyle === 'formSheet') {
+
+      if (presentationStyle === "formSheet") {
         animations.push(
           Animated.timing(scaleAnim, {
             toValue: 0.9,
             duration: 200,
             useNativeDriver: true,
-          })
+          }),
         );
       }
-      
+
       Animated.parallel(animations).start();
     }
-  }, [visible, animationType, presentationStyle, fadeAnim, slideAnim, scaleAnim]);
-  
+  }, [
+    visible,
+    animationType,
+    presentationStyle,
+    fadeAnim,
+    slideAnim,
+    scaleAnim,
+  ]);
+
   if (!visible) {
     return null;
   }
-  
+
   const modalTransform = [];
-  if (animationType === 'slide') {
+  if (animationType === "slide") {
     modalTransform.push({ translateY: slideAnim });
   }
-  if (presentationStyle === 'formSheet') {
+  if (presentationStyle === "formSheet") {
     modalTransform.push({ scale: scaleAnim });
   }
-  
+
   return (
     <Animated.View
       style={[
@@ -435,13 +474,13 @@ export const LiquidGlassModalComponent: React.FC<LiquidGlassModalProps> = ({
         activeOpacity={1}
         onPress={onRequestClose}
       />
-      
+
       {/* Modal Content */}
       <Animated.View
         style={[
           styles.modalContainer,
-          presentationStyle === 'fullScreen' && styles.fullScreenModal,
-          presentationStyle === 'formSheet' && styles.formSheetModal,
+          presentationStyle === "fullScreen" && styles.fullScreenModal,
+          presentationStyle === "formSheet" && styles.formSheetModal,
           {
             transform: modalTransform,
           },
@@ -455,9 +494,7 @@ export const LiquidGlassModalComponent: React.FC<LiquidGlassModalProps> = ({
           containerStyle={styles.modalGlassContainer}
           {...glassProps}
         >
-          <SafeAreaView style={styles.modalSafeArea}>
-            {children}
-          </SafeAreaView>
+          <SafeAreaView style={styles.modalSafeArea}>{children}</SafeAreaView>
         </LiquidGlassModal>
       </Animated.View>
     </Animated.View>
@@ -471,21 +508,21 @@ export const LiquidGlassModalComponent: React.FC<LiquidGlassModalProps> = ({
 interface LiquidGlassBottomSheetProps {
   /** Sheet visibility */
   visible: boolean;
-  
+
   /** Sheet height as percentage of screen */
   height?: number;
-  
+
   /** Enable drag to dismiss */
   dragToClose?: boolean;
-  
+
   /** Callback when sheet requests close */
   onClose: () => void;
-  
+
   /** Sheet content */
   children: React.ReactNode;
-  
+
   /** Glass intensity */
-  intensity?: 'ultraThin' | 'thin' | 'regular' | 'thick';
+  intensity?: "ultraThin" | "thin" | "regular" | "thick";
 }
 
 export const LiquidGlassBottomSheet: React.FC<LiquidGlassBottomSheetProps> = ({
@@ -494,17 +531,17 @@ export const LiquidGlassBottomSheet: React.FC<LiquidGlassBottomSheetProps> = ({
   dragToClose = true,
   onClose,
   children,
-  intensity = 'regular',
+  intensity = "regular",
 }) => {
   const { capabilities } = useLiquidGlassCapabilities();
   const adaptiveIntensity = useAdaptiveGlassIntensity(intensity);
-  const screenHeight = Dimensions.get('window').height;
+  const screenHeight = Dimensions.get("window").height;
   const sheetHeight = screenHeight * height;
-  
+
   // Animation values
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const translateAnim = useRef(new Animated.Value(sheetHeight)).current;
-  
+
   // Animate sheet
   useEffect(() => {
     if (visible) {
@@ -536,11 +573,11 @@ export const LiquidGlassBottomSheet: React.FC<LiquidGlassBottomSheetProps> = ({
       ]).start();
     }
   }, [visible, fadeAnim, translateAnim, sheetHeight]);
-  
+
   if (!visible) {
     return null;
   }
-  
+
   return (
     <Animated.View
       style={[
@@ -556,7 +593,7 @@ export const LiquidGlassBottomSheet: React.FC<LiquidGlassBottomSheetProps> = ({
         activeOpacity={1}
         onPress={onClose}
       />
-      
+
       {/* Sheet Content */}
       <Animated.View
         style={[
@@ -576,11 +613,9 @@ export const LiquidGlassBottomSheet: React.FC<LiquidGlassBottomSheetProps> = ({
         >
           {/* Drag Handle */}
           <View style={styles.dragHandle} />
-          
+
           {/* Content */}
-          <ScrollView style={styles.bottomSheetContent}>
-            {children}
-          </ScrollView>
+          <ScrollView style={styles.bottomSheetContent}>{children}</ScrollView>
         </LiquidGlassModal>
       </Animated.View>
     </Animated.View>
@@ -594,7 +629,7 @@ export const LiquidGlassBottomSheet: React.FC<LiquidGlassBottomSheetProps> = ({
 const styles = StyleSheet.create({
   // Tab Bar Styles
   tabBar: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
@@ -602,166 +637,166 @@ const styles = StyleSheet.create({
     elevation: 0,
     shadowOpacity: 0,
   },
-  
+
   tabContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     height: 49,
     paddingHorizontal: 8,
   },
-  
+
   tab: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     paddingVertical: 4,
   },
-  
+
   tabContent: {
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
-  
+
   tabLabel: {
     fontSize: 10,
-    fontWeight: '500',
+    fontWeight: "500",
     marginTop: 2,
   },
-  
+
   // Navigation Bar Styles
   navigationBar: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: 0,
     right: 0,
     zIndex: 1000,
   },
-  
+
   navigationBarContainer: {
     minHeight: 44,
   },
-  
+
   navigationContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: 16,
     height: 44,
   },
-  
+
   titleContainer: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
-  
+
   navigationTitle: {
     fontSize: 17,
-    fontWeight: '600',
-    textAlign: 'center',
+    fontWeight: "600",
+    textAlign: "center",
   },
-  
+
   largeTitle: {
     fontSize: 28,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
-  
+
   navigationButtons: {
     width: 80,
-    alignItems: 'flex-start',
+    alignItems: "flex-start",
   },
-  
+
   // Modal Styles
   modalOverlay: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
     zIndex: 1000,
   },
-  
+
   modalBackdrop: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
-  
+
   modalContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     paddingHorizontal: 20,
   },
-  
+
   fullScreenModal: {
     paddingHorizontal: 0,
   },
-  
+
   formSheetModal: {
-    maxHeight: '80%',
-    width: '90%',
+    maxHeight: "80%",
+    width: "90%",
     borderRadius: 16,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
-  
+
   modalGlassContainer: {
     flex: 1,
-    width: '100%',
+    width: "100%",
     borderRadius: 16,
   },
-  
+
   modalSafeArea: {
     flex: 1,
   },
-  
+
   // Bottom Sheet Styles
   bottomSheetOverlay: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
     zIndex: 1000,
   },
-  
+
   bottomSheetBackdrop: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    backgroundColor: "rgba(0, 0, 0, 0.3)",
   },
-  
+
   bottomSheetContainer: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
-  
+
   bottomSheetGlass: {
     flex: 1,
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
   },
-  
+
   dragHandle: {
     width: 36,
     height: 4,
-    backgroundColor: 'rgba(128, 128, 128, 0.3)',
+    backgroundColor: "rgba(128, 128, 128, 0.3)",
     borderRadius: 2,
-    alignSelf: 'center',
+    alignSelf: "center",
     marginTop: 8,
     marginBottom: 16,
   },
-  
+
   bottomSheetContent: {
     flex: 1,
     paddingHorizontal: 16,

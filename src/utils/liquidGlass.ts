@@ -1,22 +1,22 @@
 /**
  * iOS 26 Liquid Glass Detection and Capability Management
- * 
+ *
  * This module provides comprehensive detection and capability management for iOS 26's
  * Liquid Glass design system. It implements a robust fallback strategy for cross-platform
  * compatibility while maximizing native iOS experience when available.
- * 
+ *
  * Architecture Philosophy:
  * - Performance-first: Lazy evaluation with memoization
  * - Extensible: Easy to add new capabilities as iOS evolves
  * - Defensive: Graceful degradation for unknown/future iOS versions
  * - Type-safe: Full TypeScript coverage with strict typing
- * 
+ *
  * @author DNSChat Team
  * @since 1.8.0 (iOS 26 Liquid Glass Support)
  */
 
-import { Platform } from 'react-native';
-import DeviceInfo from 'react-native-device-info';
+import { Platform } from "react-native";
+import DeviceInfo from "react-native-device-info";
 
 // ==================================================================================
 // TYPE DEFINITIONS
@@ -28,81 +28,86 @@ import DeviceInfo from 'react-native-device-info';
 export interface LiquidGlassCapabilities {
   /** Overall Liquid Glass support status */
   isSupported: boolean;
-  
+
   /** iOS API level (160 = iOS 16.0, 260 = iOS 26.0, etc.) */
   apiLevel: number;
-  
+
   /** Platform identification */
-  platform: 'ios' | 'android' | 'web' | 'unknown';
-  
+  platform: "ios" | "android" | "web" | "unknown";
+
   /** Detailed feature support matrix */
   features: {
     /** Basic UIGlassEffect API availability */
     basicGlass: boolean;
-    
+
     /** Advanced sensor-aware glass responses */
     sensorAware: boolean;
-    
+
     /** 3D depth containers with spatial awareness */
     depthContainers: boolean;
-    
+
     /** Environmental light/motion adaptation */
     environmentalCues: boolean;
-    
+
     /** Haptic feedback integration with glass */
     hapticsIntegration: boolean;
-    
+
     /** Real-time glass intensity adjustment */
     dynamicIntensity: boolean;
   };
-  
+
   /** Performance characteristics for optimization */
   performance: {
     /** Estimated glass rendering performance tier */
-    tier: 'high' | 'medium' | 'low' | 'fallback';
-    
+    tier: "high" | "medium" | "low" | "fallback";
+
     /** Maximum recommended glass elements */
     maxGlassElements: number;
-    
+
     /** Supports 60fps glass animations */
     supports60fps: boolean;
-    
+
     /** Metal shader acceleration available */
     metalAcceleration: boolean;
   };
-  
+
   /** Device-specific optimizations */
   device: {
     /** Device model family */
-    family: 'iPhone' | 'iPad' | 'Mac' | 'AppleTV' | 'AppleWatch' | 'unknown';
-    
+    family: "iPhone" | "iPad" | "Mac" | "AppleTV" | "AppleWatch" | "unknown";
+
     /** Thermal management recommendations */
-    thermalGuidance: 'aggressive' | 'moderate' | 'conservative';
-    
+    thermalGuidance: "aggressive" | "moderate" | "conservative";
+
     /** Memory pressure considerations */
-    memoryProfile: 'high' | 'medium' | 'low';
+    memoryProfile: "high" | "medium" | "low";
   };
 }
 
 /**
  * Glass effect intensity levels
  */
-export type GlassIntensity = 'ultraThin' | 'thin' | 'regular' | 'thick' | 'ultraThick';
+export type GlassIntensity =
+  | "ultraThin"
+  | "thin"
+  | "regular"
+  | "thick"
+  | "ultraThick";
 
 /**
  * Glass effect styles matching iOS 26 system materials
  */
-export type GlassStyle = 
-  | 'systemMaterial'
-  | 'systemThinMaterial' 
-  | 'systemUltraThinMaterial'
-  | 'systemThickMaterial'
-  | 'hudMaterial'
-  | 'menuMaterial'
-  | 'popoverMaterial'
-  | 'sidebarMaterial'
-  | 'headerMaterial'
-  | 'footerMaterial';
+export type GlassStyle =
+  | "systemMaterial"
+  | "systemThinMaterial"
+  | "systemUltraThinMaterial"
+  | "systemThickMaterial"
+  | "hudMaterial"
+  | "menuMaterial"
+  | "popoverMaterial"
+  | "sidebarMaterial"
+  | "headerMaterial"
+  | "footerMaterial";
 
 /**
  * Environmental adaptation parameters
@@ -110,18 +115,18 @@ export type GlassStyle =
 export interface EnvironmentalContext {
   /** Ambient light level (0.0 - 1.0) */
   ambientLight: number;
-  
+
   /** Device orientation */
-  orientation: 'portrait' | 'landscape' | 'faceUp' | 'faceDown';
-  
+  orientation: "portrait" | "landscape" | "faceUp" | "faceDown";
+
   /** Motion state for dynamic adjustments */
-  motionState: 'static' | 'gentle' | 'active' | 'rapid';
-  
+  motionState: "static" | "gentle" | "active" | "rapid";
+
   /** Proximity detection for interaction hints */
   proximityDetected: boolean;
-  
+
   /** User interface style */
-  userInterfaceStyle: 'light' | 'dark' | 'unspecified';
+  userInterfaceStyle: "light" | "dark" | "unspecified";
 }
 
 // ==================================================================================
@@ -160,7 +165,7 @@ class LiquidGlassDetector {
     // Start new detection
     this._detectionPromise = this._detectCapabilities();
     this._capabilities = await this._detectionPromise;
-    
+
     return this._capabilities;
   }
 
@@ -180,15 +185,30 @@ class LiquidGlassDetector {
     try {
       // Platform detection
       const platform = this._detectPlatform();
-      
-      if (platform !== 'ios') {
+
+      if (platform !== "ios") {
         return this._getFallbackCapabilities(platform);
       }
 
-      // iOS-specific detection
-      const systemVersion = await DeviceInfo.getSystemVersion();
-      const apiLevel = this._parseIOSVersion(systemVersion);
-      const deviceModel = await DeviceInfo.getModel();
+      // iOS-specific detection (with fallback to Platform.Version)
+      let apiLevel = 0;
+      try {
+        const systemVersion = await DeviceInfo.getSystemVersion();
+        apiLevel = this._parseIOSVersion(String(systemVersion || ""));
+      } catch {
+        // ignore and fallback below
+      }
+
+      if (!apiLevel || Number.isNaN(apiLevel)) {
+        // Fallback: derive from Platform.Version
+        const ver: any = (Platform as any).Version;
+        const verStr = typeof ver === "string" ? ver : String(ver ?? "");
+        apiLevel = this._parseIOSVersion(verStr);
+      }
+      let deviceModel = "iPhone";
+      try {
+        deviceModel = await DeviceInfo.getModel();
+      } catch {}
       const deviceFamily = this._getDeviceFamily(deviceModel);
 
       // Feature detection based on iOS version and device capabilities
@@ -199,7 +219,7 @@ class LiquidGlassDetector {
       const capabilities: LiquidGlassCapabilities = {
         isSupported: apiLevel >= 260, // iOS 26.0+
         apiLevel,
-        platform: 'ios',
+        platform: "ios",
         features,
         performance,
         device,
@@ -209,21 +229,39 @@ class LiquidGlassDetector {
       this._logCapabilities(capabilities);
 
       return capabilities;
-
     } catch (error) {
-      console.warn('LiquidGlass: Detection failed, using fallback', error);
-      return this._getFallbackCapabilities('unknown');
+      console.warn(
+        "LiquidGlass: Detection failed, constructing ios fallback",
+        error,
+      );
+      // Build a best-effort iOS capability from Platform.Version
+      const ver: any = (Platform as any).Version;
+      const verStr = typeof ver === "string" ? ver : String(ver ?? "");
+      const apiLevel = this._parseIOSVersion(verStr);
+      const deviceFamily: LiquidGlassCapabilities["device"]["family"] =
+        "iPhone";
+      const features = this._detectFeatures(apiLevel, deviceFamily);
+      const performance = this._analyzePerformance(apiLevel, deviceFamily);
+      const device = this._analyzeDevice(deviceFamily, apiLevel);
+      return {
+        isSupported: apiLevel >= 260,
+        apiLevel,
+        platform: "ios",
+        features,
+        performance,
+        device,
+      };
     }
   }
 
   /**
    * Detect current platform
    */
-  private _detectPlatform(): 'ios' | 'android' | 'web' | 'unknown' {
-    if (Platform.OS === 'ios') return 'ios';
-    if (Platform.OS === 'android') return 'android';
-    if (Platform.OS === 'web') return 'web';
-    return 'unknown';
+  private _detectPlatform(): "ios" | "android" | "web" | "unknown" {
+    if (Platform.OS === "ios") return "ios";
+    if (Platform.OS === "android") return "android";
+    if (Platform.OS === "web") return "web";
+    return "unknown";
   }
 
   /**
@@ -232,14 +270,14 @@ class LiquidGlassDetector {
    */
   private _parseIOSVersion(versionString: string): number {
     try {
-      const parts = versionString.split('.');
+      const parts = String(versionString || "").split(".");
       const major = parseInt(parts[0], 10);
-      const minor = parseInt(parts[1] || '0', 10);
-      
+      const minor = parseInt(parts[1] || "0", 10);
+      if (Number.isNaN(major) || major <= 0) return 160;
+      if (Number.isNaN(minor) || minor < 0) return major * 10;
       // Convert to API level: iOS 16.0 = 160, iOS 26.1 = 261
       return major * 10 + minor;
     } catch {
-      // Default to iOS 16.0 if parsing fails
       return 160;
     }
   }
@@ -247,26 +285,27 @@ class LiquidGlassDetector {
   /**
    * Determine device family from model string
    */
-  private _getDeviceFamily(model: string): LiquidGlassCapabilities['device']['family'] {
+  private _getDeviceFamily(
+    model: string,
+  ): LiquidGlassCapabilities["device"]["family"] {
     const modelLower = model.toLowerCase();
-    
-    if (modelLower.includes('iphone')) return 'iPhone';
-    if (modelLower.includes('ipad')) return 'iPad';
-    if (modelLower.includes('mac')) return 'Mac';
-    if (modelLower.includes('apple tv')) return 'AppleTV';
-    if (modelLower.includes('watch')) return 'AppleWatch';
-    
-    return 'unknown';
+
+    if (modelLower.includes("iphone")) return "iPhone";
+    if (modelLower.includes("ipad")) return "iPad";
+    if (modelLower.includes("mac")) return "Mac";
+    if (modelLower.includes("apple tv")) return "AppleTV";
+    if (modelLower.includes("watch")) return "AppleWatch";
+
+    return "unknown";
   }
 
   /**
    * Detect available features based on iOS version and device
    */
   private _detectFeatures(
-    apiLevel: number, 
-    deviceFamily: LiquidGlassCapabilities['device']['family']
-  ): LiquidGlassCapabilities['features'] {
-    
+    apiLevel: number,
+    deviceFamily: LiquidGlassCapabilities["device"]["family"],
+  ): LiquidGlassCapabilities["features"] {
     // iOS 26+ gets full Liquid Glass support
     if (apiLevel >= 260) {
       return {
@@ -319,13 +358,17 @@ class LiquidGlassDetector {
    */
   private _analyzePerformance(
     apiLevel: number,
-    deviceFamily: LiquidGlassCapabilities['device']['family']
-  ): LiquidGlassCapabilities['performance'] {
-    
+    deviceFamily: LiquidGlassCapabilities["device"]["family"],
+  ): LiquidGlassCapabilities["performance"] {
     // High-end devices with iOS 26+
-    if (apiLevel >= 260 && (deviceFamily === 'iPhone' || deviceFamily === 'iPad' || deviceFamily === 'Mac')) {
+    if (
+      apiLevel >= 260 &&
+      (deviceFamily === "iPhone" ||
+        deviceFamily === "iPad" ||
+        deviceFamily === "Mac")
+    ) {
       return {
-        tier: 'high',
+        tier: "high",
         maxGlassElements: 50,
         supports60fps: true,
         metalAcceleration: true,
@@ -333,9 +376,9 @@ class LiquidGlassDetector {
     }
 
     // Medium performance for iOS 17-25
-    if (apiLevel >= 170 && deviceFamily !== 'AppleWatch') {
+    if (apiLevel >= 170 && deviceFamily !== "AppleWatch") {
       return {
-        tier: 'medium',
+        tier: "medium",
         maxGlassElements: 20,
         supports60fps: true,
         metalAcceleration: true,
@@ -345,7 +388,7 @@ class LiquidGlassDetector {
     // Low performance for iOS 16
     if (apiLevel >= 160) {
       return {
-        tier: 'low',
+        tier: "low",
         maxGlassElements: 5,
         supports60fps: false,
         metalAcceleration: false,
@@ -354,7 +397,7 @@ class LiquidGlassDetector {
 
     // Fallback for unsupported versions
     return {
-      tier: 'fallback',
+      tier: "fallback",
       maxGlassElements: 0,
       supports60fps: false,
       metalAcceleration: false,
@@ -365,38 +408,39 @@ class LiquidGlassDetector {
    * Analyze device-specific characteristics
    */
   private _analyzeDevice(
-    deviceFamily: LiquidGlassCapabilities['device']['family'],
-    apiLevel: number
-  ): LiquidGlassCapabilities['device'] {
-    
-    let thermalGuidance: LiquidGlassCapabilities['device']['thermalGuidance'] = 'moderate';
-    let memoryProfile: LiquidGlassCapabilities['device']['memoryProfile'] = 'medium';
+    deviceFamily: LiquidGlassCapabilities["device"]["family"],
+    apiLevel: number,
+  ): LiquidGlassCapabilities["device"] {
+    let thermalGuidance: LiquidGlassCapabilities["device"]["thermalGuidance"] =
+      "moderate";
+    let memoryProfile: LiquidGlassCapabilities["device"]["memoryProfile"] =
+      "medium";
 
     // Device-specific optimizations
     switch (deviceFamily) {
-      case 'iPhone':
-        thermalGuidance = 'moderate';
-        memoryProfile = apiLevel >= 260 ? 'high' : 'medium';
+      case "iPhone":
+        thermalGuidance = "moderate";
+        memoryProfile = apiLevel >= 260 ? "high" : "medium";
         break;
-      
-      case 'iPad':
-        thermalGuidance = 'aggressive'; // iPads have better cooling
-        memoryProfile = 'high';
+
+      case "iPad":
+        thermalGuidance = "aggressive"; // iPads have better cooling
+        memoryProfile = "high";
         break;
-      
-      case 'Mac':
-        thermalGuidance = 'aggressive'; // Macs have active cooling
-        memoryProfile = 'high';
+
+      case "Mac":
+        thermalGuidance = "aggressive"; // Macs have active cooling
+        memoryProfile = "high";
         break;
-      
-      case 'AppleWatch':
-        thermalGuidance = 'conservative'; // Limited thermal headroom
-        memoryProfile = 'low';
+
+      case "AppleWatch":
+        thermalGuidance = "conservative"; // Limited thermal headroom
+        memoryProfile = "low";
         break;
-      
+
       default:
-        thermalGuidance = 'conservative';
-        memoryProfile = 'low';
+        thermalGuidance = "conservative";
+        memoryProfile = "low";
     }
 
     return {
@@ -409,7 +453,9 @@ class LiquidGlassDetector {
   /**
    * Get fallback capabilities for non-iOS platforms
    */
-  private _getFallbackCapabilities(platform: 'android' | 'web' | 'unknown'): LiquidGlassCapabilities {
+  private _getFallbackCapabilities(
+    platform: "android" | "web" | "unknown",
+  ): LiquidGlassCapabilities {
     return {
       isSupported: false,
       apiLevel: 0,
@@ -419,19 +465,19 @@ class LiquidGlassDetector {
         sensorAware: false,
         depthContainers: false,
         environmentalCues: false,
-        hapticsIntegration: platform === 'android', // Android has haptics
+        hapticsIntegration: platform === "android", // Android has haptics
         dynamicIntensity: false,
       },
       performance: {
-        tier: 'fallback',
+        tier: "fallback",
         maxGlassElements: 0,
         supports60fps: true, // Assume modern devices
         metalAcceleration: false,
       },
       device: {
-        family: 'unknown',
-        thermalGuidance: 'conservative',
-        memoryProfile: 'medium',
+        family: "unknown",
+        thermalGuidance: "conservative",
+        memoryProfile: "medium",
       },
     };
   }
@@ -440,8 +486,8 @@ class LiquidGlassDetector {
    * Log capability detection results for debugging
    */
   private _logCapabilities(capabilities: LiquidGlassCapabilities): void {
-    if (__DEV__) {
-      console.log('🔍 LiquidGlass Capabilities Detected:', {
+    if (typeof __DEV__ !== "undefined" && __DEV__) {
+      console.log("🔍 LiquidGlass Capabilities Detected:", {
         supported: capabilities.isSupported,
         apiLevel: capabilities.apiLevel,
         platform: capabilities.platform,
@@ -476,21 +522,26 @@ export async function isLiquidGlassSupported(): Promise<boolean> {
  */
 export async function getOptimalGlassStyle(): Promise<GlassStyle> {
   const capabilities = await getLiquidGlassCapabilities();
-  
+
   if (!capabilities.isSupported) {
-    return 'systemMaterial'; // Fallback
+    // Prefer thinner materials on mid-tier iOS (17–25)
+    if (capabilities.platform === "ios") {
+      if (capabilities.apiLevel >= 170) return "systemThinMaterial";
+      if (capabilities.apiLevel >= 160) return "systemMaterial";
+    }
+    return "systemMaterial";
   }
 
   // Choose style based on performance tier
   switch (capabilities.performance.tier) {
-    case 'high':
-      return 'systemMaterial';
-    case 'medium':
-      return 'systemThinMaterial';
-    case 'low':
-      return 'systemUltraThinMaterial';
+    case "high":
+      return "systemMaterial";
+    case "medium":
+      return "systemThinMaterial";
+    case "low":
+      return "systemUltraThinMaterial";
     default:
-      return 'systemMaterial';
+      return "systemMaterial";
   }
 }
 
@@ -499,18 +550,22 @@ export async function getOptimalGlassStyle(): Promise<GlassStyle> {
  */
 export async function getRecommendedIntensity(): Promise<GlassIntensity> {
   const capabilities = await getLiquidGlassCapabilities();
-  
+
   if (!capabilities.isSupported) {
-    return 'thin'; // Fallback blur intensity
+    if (capabilities.platform === "ios") {
+      if (capabilities.apiLevel >= 170) return "thin";
+      if (capabilities.apiLevel >= 160) return "ultraThin";
+    }
+    return "thin";
   }
 
   // Adjust intensity based on device capabilities
-  if (capabilities.performance.tier === 'high') {
-    return 'regular';
-  } else if (capabilities.performance.tier === 'medium') {
-    return 'thin';
+  if (capabilities.performance.tier === "high") {
+    return "regular";
+  } else if (capabilities.performance.tier === "medium") {
+    return "thin";
   } else {
-    return 'ultraThin';
+    return "ultraThin";
   }
 }
 
@@ -539,20 +594,33 @@ export async function validateGlassConfig(config: {
 
   // Check element count against device limits
   if (config.elementCount > capabilities.performance.maxGlassElements) {
-    warnings.push(`Element count (${config.elementCount}) exceeds device limit (${capabilities.performance.maxGlassElements})`);
-    recommendations.push(`Reduce glass elements to ${capabilities.performance.maxGlassElements} or use lazy loading`);
+    warnings.push(
+      `Element count (${config.elementCount}) exceeds device limit (${capabilities.performance.maxGlassElements})`,
+    );
+    recommendations.push(
+      `Reduce glass elements to ${capabilities.performance.maxGlassElements} or use lazy loading`,
+    );
   }
 
   // Check intensity vs performance tier
-  if (capabilities.performance.tier === 'low' && (config.intensity === 'thick' || config.intensity === 'ultraThick')) {
-    warnings.push('High intensity glass may impact performance on this device');
-    recommendations.push('Consider using "thin" or "ultraThin" intensity for better performance');
+  if (
+    capabilities.performance.tier === "low" &&
+    (config.intensity === "thick" || config.intensity === "ultraThick")
+  ) {
+    warnings.push("High intensity glass may impact performance on this device");
+    recommendations.push(
+      'Consider using "thin" or "ultraThin" intensity for better performance',
+    );
   }
 
   // Check if requesting features not supported
-  if (!capabilities.isSupported && config.style !== 'systemMaterial') {
-    warnings.push('Advanced glass styles not supported, will fall back to basic blur');
-    recommendations.push('Use "systemMaterial" for consistent experience across devices');
+  if (!capabilities.isSupported && config.style !== "systemMaterial") {
+    warnings.push(
+      "Advanced glass styles not supported, will fall back to basic blur",
+    );
+    recommendations.push(
+      'Use "systemMaterial" for consistent experience across devices',
+    );
   }
 
   return {
@@ -570,7 +638,7 @@ interface PerformanceMetrics {
   glassRenderTime: number;
   frameDrops: number;
   memoryUsage: number;
-  thermalState: 'nominal' | 'fair' | 'serious' | 'critical';
+  thermalState: "nominal" | "fair" | "serious" | "critical";
 }
 
 /**
@@ -581,7 +649,7 @@ export class LiquidGlassPerformanceMonitor {
     glassRenderTime: 0,
     frameDrops: 0,
     memoryUsage: 0,
-    thermalState: 'nominal',
+    thermalState: "nominal",
   };
 
   /**
@@ -590,7 +658,7 @@ export class LiquidGlassPerformanceMonitor {
   public startMonitoring(): void {
     // Implementation would integrate with React Native performance APIs
     if (__DEV__) {
-      console.log('🎯 LiquidGlass Performance Monitoring Started');
+      console.log("🎯 LiquidGlass Performance Monitoring Started");
     }
   }
 
@@ -608,7 +676,7 @@ export class LiquidGlassPerformanceMonitor {
     return (
       this.metrics.glassRenderTime < 16.67 && // 60fps target
       this.metrics.frameDrops < 5 &&
-      this.metrics.thermalState !== 'critical'
+      this.metrics.thermalState !== "critical"
     );
   }
 }

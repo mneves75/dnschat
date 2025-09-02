@@ -2,16 +2,17 @@
 
 ## Quick Reference
 
-| Modifier/View | Purpose | Parameters |
-|---------------|---------|------------|
-| `.glassEffect()` | Apply glass to view | `Glass`, `Shape`, `isEnabled` |
-| `GlassEffectContainer` | Optimize multiple glass | `spacing`, `content` |
-| `.buttonStyle(.glass)` | Glass button style | N/A |
-| `.glassEffectID()` | Morphing transitions | `id`, `namespace` |
+| Modifier/View          | Purpose                 | Parameters                    |
+| ---------------------- | ----------------------- | ----------------------------- |
+| `.glassEffect()`       | Apply glass to view     | `Glass`, `Shape`, `isEnabled` |
+| `GlassEffectContainer` | Optimize multiple glass | `spacing`, `content`          |
+| `.buttonStyle(.glass)` | Glass button style      | N/A                           |
+| `.glassEffectID()`     | Morphing transitions    | `id`, `namespace`             |
 
 ## Basic Implementation
 
 ### Simple Glass Effect
+
 ```swift
 Text("Hello")
     .padding()
@@ -19,6 +20,7 @@ Text("Hello")
 ```
 
 ### Custom Shape & Tint
+
 ```swift
 Image(systemName: "star")
     .glassEffect(
@@ -30,6 +32,7 @@ Image(systemName: "star")
 ## Glass Variants
 
 ### Configuration Options
+
 ```swift
 // Regular glass
 .glassEffect(.regular)
@@ -47,6 +50,7 @@ Image(systemName: "star")
 ## Container Usage
 
 ### Multiple Glass Views
+
 ```swift
 GlassEffectContainer(spacing: 40) {
     HStack(spacing: 40) {
@@ -59,6 +63,7 @@ GlassEffectContainer(spacing: 40) {
 ```
 
 ### Union Effect
+
 ```swift
 @Namespace private var namespace
 
@@ -79,6 +84,7 @@ GlassEffectContainer {
 ## Morphing Transitions
 
 ### Animated Morphing
+
 ```swift
 @State private var expanded = false
 @Namespace private var namespace
@@ -100,6 +106,7 @@ GlassEffectContainer {
 ## Button Styles
 
 ### Glass Buttons
+
 ```swift
 // Standard glass button
 Button("Action") { }
@@ -113,6 +120,7 @@ Button("Important") { }
 ## Toolbar Integration
 
 ### Glass in Toolbar
+
 ```swift
 .toolbar {
     ToolbarItem(placement: .primaryAction) {
@@ -123,6 +131,7 @@ Button("Important") { }
 ```
 
 ### Custom Toolbar Background
+
 ```swift
 .toolbar {
     ToolbarItem(placement: .principal) {
@@ -135,6 +144,7 @@ Button("Important") { }
 ## Advanced Techniques
 
 ### Conditional Glass
+
 ```swift
 @State private var glassEnabled = true
 
@@ -143,6 +153,7 @@ Text("Dynamic")
 ```
 
 ### Navigation Transitions
+
 ```swift
 @Namespace private var namespace
 
@@ -170,12 +181,12 @@ NavigationStack {
 
 ## Common Patterns
 
-| Pattern | Implementation |
-|---------|---------------|
-| Toggle glass | `.glassEffect(isEnabled: condition)` |
-| Group merge | `.glassEffectUnion(id:namespace:)` |
-| Custom shape | `.glassEffect(in: .rect(cornerRadius: 20))` |
-| State indication | `.tint(isActive ? .blue : .clear)` |
+| Pattern          | Implementation                              |
+| ---------------- | ------------------------------------------- |
+| Toggle glass     | `.glassEffect(isEnabled: condition)`        |
+| Group merge      | `.glassEffectUnion(id:namespace:)`          |
+| Custom shape     | `.glassEffect(in: .rect(cornerRadius: 20))` |
+| State indication | `.tint(isActive ? .blue : .clear)`          |
 
 ## Platform Notes
 
@@ -184,6 +195,7 @@ NavigationStack {
 - **macOS**: Toolbar customization expected
 
 ## See Also
+
 - [Overview](overview.md)
 - [AppKit Implementation](appkit.md)
 - [Common Patterns](patterns.md)

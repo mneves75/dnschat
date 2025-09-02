@@ -1,7 +1,12 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { createContext, useContext, useState, useEffect } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-export type DNSMethodPreference = 'automatic' | 'prefer-https' | 'udp-only' | 'never-https' | 'native-first';
+export type DNSMethodPreference =
+  | "automatic"
+  | "prefer-https"
+  | "udp-only"
+  | "never-https"
+  | "native-first";
 
 interface SettingsContextType {
   dnsServer: string;
@@ -15,10 +20,12 @@ interface SettingsContextType {
   loading: boolean;
 }
 
-const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
+const SettingsContext = createContext<SettingsContextType | undefined>(
+  undefined,
+);
 
-const SETTINGS_STORAGE_KEY = '@chat_dns_settings';
-const DEFAULT_DNS_SERVER = 'ch.at';
+const SETTINGS_STORAGE_KEY = "@chat_dns_settings";
+const DEFAULT_DNS_SERVER = "ch.at";
 
 interface Settings {
   dnsServer: string;
@@ -30,7 +37,8 @@ interface Settings {
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const [dnsServer, setDnsServer] = useState<string>(DEFAULT_DNS_SERVER);
   const [preferDnsOverHttps, setPreferDnsOverHttps] = useState<boolean>(false);
-  const [dnsMethodPreference, setDnsMethodPreference] = useState<DNSMethodPreference>('native-first');
+  const [dnsMethodPreference, setDnsMethodPreference] =
+    useState<DNSMethodPreference>("native-first");
   const [enableMockDNS, setEnableMockDNS] = useState<boolean>(false);
   const [loading, setLoading] = useState(true);
 
@@ -41,18 +49,23 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const loadSettings = async () => {
     try {
       const settingsJson = await AsyncStorage.getItem(SETTINGS_STORAGE_KEY);
-      console.log('📥 Loading settings from storage:', settingsJson);
+      console.log("📥 Loading settings from storage:", settingsJson);
       if (settingsJson) {
         const settings: Settings = JSON.parse(settingsJson);
-        console.log('📋 Parsed settings:', settings);
+        console.log("📋 Parsed settings:", settings);
         setDnsServer(settings.dnsServer || DEFAULT_DNS_SERVER);
         setPreferDnsOverHttps(settings.preferDnsOverHttps ?? false);
-        setDnsMethodPreference(settings.dnsMethodPreference ?? 'native-first');
+        setDnsMethodPreference(settings.dnsMethodPreference ?? "native-first");
         setEnableMockDNS(settings.enableMockDNS ?? false);
-        console.log('✅ Settings loaded - DNS method:', settings.dnsMethodPreference ?? 'native-first', 'MockDNS:', settings.enableMockDNS ?? false);
+        console.log(
+          "✅ Settings loaded - DNS method:",
+          settings.dnsMethodPreference ?? "native-first",
+          "MockDNS:",
+          settings.enableMockDNS ?? false,
+        );
       }
     } catch (error) {
-      console.error('❌ Error loading settings:', error);
+      console.error("❌ Error loading settings:", error);
     } finally {
       setLoading(false);
     }
@@ -62,17 +75,20 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     try {
       const cleanServer = server.trim() || DEFAULT_DNS_SERVER;
       setDnsServer(cleanServer);
-      
+
       const settings: Settings = {
         dnsServer: cleanServer,
         preferDnsOverHttps,
         dnsMethodPreference,
         enableMockDNS,
       };
-      
-      await AsyncStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+
+      await AsyncStorage.setItem(
+        SETTINGS_STORAGE_KEY,
+        JSON.stringify(settings),
+      );
     } catch (error) {
-      console.error('Error saving DNS server setting:', error);
+      console.error("Error saving DNS server setting:", error);
       throw error;
     }
   };
@@ -80,75 +96,86 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const updatePreferDnsOverHttps = async (prefer: boolean) => {
     try {
       setPreferDnsOverHttps(prefer);
-      
+
       const settings: Settings = {
         dnsServer,
         preferDnsOverHttps: prefer,
         dnsMethodPreference,
         enableMockDNS,
       };
-      
-      await AsyncStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+
+      await AsyncStorage.setItem(
+        SETTINGS_STORAGE_KEY,
+        JSON.stringify(settings),
+      );
     } catch (error) {
-      console.error('Error saving DNS over HTTPS preference:', error);
+      console.error("Error saving DNS over HTTPS preference:", error);
       throw error;
     }
   };
 
   const updateDnsMethodPreference = async (preference: DNSMethodPreference) => {
     try {
-      console.log('🔧 Updating DNS method preference:', preference);
+      console.log("🔧 Updating DNS method preference:", preference);
       setDnsMethodPreference(preference);
-      
+
       const settings: Settings = {
         dnsServer,
         preferDnsOverHttps,
         dnsMethodPreference: preference,
         enableMockDNS,
       };
-      
-      console.log('💾 Saving settings to storage:', settings);
-      await AsyncStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
-      console.log('✅ DNS method preference saved successfully');
+
+      console.log("💾 Saving settings to storage:", settings);
+      await AsyncStorage.setItem(
+        SETTINGS_STORAGE_KEY,
+        JSON.stringify(settings),
+      );
+      console.log("✅ DNS method preference saved successfully");
     } catch (error) {
-      console.error('❌ Error saving DNS method preference:', error);
+      console.error("❌ Error saving DNS method preference:", error);
       throw error;
     }
   };
 
   const updateEnableMockDNS = async (enable: boolean) => {
     try {
-      console.log('🔧 Updating enable Mock DNS:', enable);
+      console.log("🔧 Updating enable Mock DNS:", enable);
       setEnableMockDNS(enable);
-      
+
       const settings: Settings = {
         dnsServer,
         preferDnsOverHttps,
         dnsMethodPreference,
         enableMockDNS: enable,
       };
-      
-      console.log('💾 Saving settings to storage:', settings);
-      await AsyncStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
-      console.log('✅ Enable Mock DNS preference saved successfully');
+
+      console.log("💾 Saving settings to storage:", settings);
+      await AsyncStorage.setItem(
+        SETTINGS_STORAGE_KEY,
+        JSON.stringify(settings),
+      );
+      console.log("✅ Enable Mock DNS preference saved successfully");
     } catch (error) {
-      console.error('❌ Error saving enable Mock DNS preference:', error);
+      console.error("❌ Error saving enable Mock DNS preference:", error);
       throw error;
     }
   };
 
   return (
-    <SettingsContext.Provider value={{ 
-      dnsServer, 
-      updateDnsServer,
-      preferDnsOverHttps,
-      updatePreferDnsOverHttps,
-      dnsMethodPreference,
-      updateDnsMethodPreference,
-      enableMockDNS,
-      updateEnableMockDNS,
-      loading 
-    }}>
+    <SettingsContext.Provider
+      value={{
+        dnsServer,
+        updateDnsServer,
+        preferDnsOverHttps,
+        updatePreferDnsOverHttps,
+        dnsMethodPreference,
+        updateDnsMethodPreference,
+        enableMockDNS,
+        updateEnableMockDNS,
+        loading,
+      }}
+    >
       {children}
     </SettingsContext.Provider>
   );
@@ -157,7 +184,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
 export function useSettings() {
   const context = useContext(SettingsContext);
   if (context === undefined) {
-    throw new Error('useSettings must be used within a SettingsProvider');
+    throw new Error("useSettings must be used within a SettingsProvider");
   }
   return context;
 }

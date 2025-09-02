@@ -1,21 +1,27 @@
 /**
  * LiquidGlass Native Bridge Components
- * 
+ *
  * React Native TypeScript interface to the native iOS 26 UIGlassEffect module.
  * Provides type-safe access to native glass capabilities with automatic fallbacks.
- * 
+ *
  * Key Features:
  * - Direct UIGlassEffect integration for iOS 26+
  * - Type-safe props and methods
  * - Performance monitoring integration
  * - Graceful fallback handling
  * - Real-time capability detection
- * 
+ *
  * @author DNSChat Team
  * @since 1.8.0 (iOS 26 Liquid Glass Support)
  */
 
-import React, { forwardRef, useImperativeHandle, useRef, useEffect, useState } from 'react';
+import React, {
+  forwardRef,
+  useImperativeHandle,
+  useRef,
+  useEffect,
+  useState,
+} from "react";
 import {
   Platform,
   UIManager,
@@ -25,14 +31,14 @@ import {
   ViewProps,
   StyleProp,
   ViewStyle,
-} from 'react-native';
+} from "react-native";
 
 import {
   LiquidGlassCapabilities,
   GlassStyle,
   GlassIntensity,
   getLiquidGlassCapabilities,
-} from '../../utils/liquidGlass';
+} from "../../utils/liquidGlass";
 
 // ==================================================================================
 // NATIVE MODULE INTERFACES
@@ -58,11 +64,13 @@ interface LiquidGlassNativeModuleInterface {
 }
 
 // Get native modules with error handling (for performance monitoring only)
-const LiquidGlassNativeModule = NativeModules.LiquidGlassNativeModule as LiquidGlassNativeModuleInterface | undefined;
+const LiquidGlassNativeModule = NativeModules.LiquidGlassNativeModule as
+  | LiquidGlassNativeModuleInterface
+  | undefined;
 
 // Check if native modules are available (for advanced features only)
 const isNativeModuleAvailable = () => {
-  return Platform.OS === 'ios' && LiquidGlassNativeModule;
+  return Platform.OS === "ios" && LiquidGlassNativeModule;
 };
 
 // ==================================================================================
@@ -75,34 +83,34 @@ const isNativeModuleAvailable = () => {
 export interface LiquidGlassNativeProps extends ViewProps {
   /** Glass effect intensity */
   intensity?: GlassIntensity;
-  
+
   /** Glass effect style */
   style?: GlassStyle;
-  
+
   /** Enable sensor-aware environmental adaptation */
   sensorAware?: boolean;
-  
+
   /** Enable environmental light/motion adaptation */
   environmentalAdaptation?: boolean;
-  
+
   /** Enable dynamic intensity adjustment */
   dynamicIntensity?: boolean;
-  
+
   /** Enable haptic feedback integration */
   hapticsEnabled?: boolean;
-  
+
   /** Performance optimization mode */
-  performanceMode?: 'auto' | 'performance' | 'quality' | 'battery';
-  
+  performanceMode?: "auto" | "performance" | "quality" | "battery";
+
   /** Custom container styling */
   containerStyle?: StyleProp<ViewStyle>;
-  
+
   /** Callback when glass effect is successfully applied */
   onGlassEffectApplied?: () => void;
-  
+
   /** Callback when glass effect fails to apply */
   onGlassEffectFailed?: (error: string) => void;
-  
+
   /** Callback for performance monitoring updates */
   onPerformanceUpdate?: (metrics: {
     averageRenderTime: number;
@@ -117,20 +125,20 @@ export interface LiquidGlassNativeProps extends ViewProps {
 export interface LiquidGlassNativeHandle {
   /** Update glass intensity programmatically */
   setIntensity(intensity: GlassIntensity): void;
-  
+
   /** Update glass style programmatically */
   setStyle(style: GlassStyle): void;
-  
+
   /** Toggle sensor awareness */
   setSensorAware(enabled: boolean): void;
-  
+
   /** Get current performance metrics */
   getPerformanceMetrics(): Promise<{
     averageRenderTime: number;
     frameDropRate: number;
     isPerformanceAcceptable: boolean;
   }>;
-  
+
   /** Get current environmental context */
   getEnvironmentalContext(): Promise<{
     ambientLight: number;
@@ -148,7 +156,7 @@ export interface LiquidGlassNativeHandle {
  * Import the base LiquidGlassWrapper to use its native implementation
  * This avoids duplicate native component registration while providing advanced features
  */
-import { LiquidGlassWrapper } from '../LiquidGlassWrapper';
+import { LiquidGlassWrapper } from "../LiquidGlassWrapper";
 
 // ==================================================================================
 // REACT NATIVE BRIDGE COMPONENT
@@ -157,152 +165,173 @@ import { LiquidGlassWrapper } from '../LiquidGlassWrapper';
 /**
  * React Native bridge to native iOS 26 UIGlassEffect implementation
  */
-export const LiquidGlassNative = forwardRef<LiquidGlassNativeHandle, LiquidGlassNativeProps>(
-  (props, ref) => {
-    const {
-      intensity = 'regular',
-      style = 'systemMaterial',
-      sensorAware = false,
-      environmentalAdaptation = false,
-      dynamicIntensity = false,
-      hapticsEnabled = false,
-      performanceMode = 'auto',
-      containerStyle,
-      onGlassEffectApplied,
-      onGlassEffectFailed,
-      onPerformanceUpdate,
-      children,
-      ...otherProps
-    } = props;
+export const LiquidGlassNative = forwardRef<
+  LiquidGlassNativeHandle,
+  LiquidGlassNativeProps
+>((props, ref) => {
+  const {
+    intensity = "regular",
+    style = "systemMaterial",
+    sensorAware = false,
+    environmentalAdaptation = false,
+    dynamicIntensity = false,
+    hapticsEnabled = false,
+    performanceMode = "auto",
+    containerStyle,
+    onGlassEffectApplied,
+    onGlassEffectFailed,
+    onPerformanceUpdate,
+    children,
+    ...otherProps
+  } = props;
 
-    // Refs and state
-    const nativeViewRef = useRef<any>(null);
-    const [isNativeAvailable, setIsNativeAvailable] = useState(false);
-    const [capabilities, setCapabilities] = useState<LiquidGlassCapabilities | null>(null);
-    const performanceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  // Refs and state
+  const nativeViewRef = useRef<any>(null);
+  const [isNativeAvailable, setIsNativeAvailable] = useState(false);
+  const [capabilities, setCapabilities] =
+    useState<LiquidGlassCapabilities | null>(null);
+  const performanceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-    // Check native availability on mount
-    useEffect(() => {
-      const checkAvailability = async () => {
-        try {
-          if (!isNativeModuleAvailable()) {
-            onGlassEffectFailed?.('Native module not available');
-            return;
-          }
-
-          const caps = await getLiquidGlassCapabilities();
-          setCapabilities(caps);
-          setIsNativeAvailable(caps.isSupported && caps.features.basicGlass);
-
-          if (caps.isSupported && caps.features.basicGlass) {
-            onGlassEffectApplied?.();
-          } else {
-            onGlassEffectFailed?.('iOS 26 not available or glass not supported');
-          }
-        } catch (error) {
-          console.warn('LiquidGlassNative: Capability check failed', error);
-          onGlassEffectFailed?.(error instanceof Error ? error.message : 'Unknown error');
+  // Check native availability on mount
+  useEffect(() => {
+    const checkAvailability = async () => {
+      try {
+        if (!isNativeModuleAvailable()) {
+          onGlassEffectFailed?.("Native module not available");
+          return;
         }
-      };
 
-      checkAvailability();
-    }, [onGlassEffectApplied, onGlassEffectFailed]);
+        const caps = await getLiquidGlassCapabilities();
+        setCapabilities(caps);
+        setIsNativeAvailable(caps.isSupported && caps.features.basicGlass);
 
-    // Start performance monitoring if requested
-    useEffect(() => {
-      if (!isNativeAvailable || !onPerformanceUpdate || !LiquidGlassNativeModule) {
-        return;
+        if (caps.isSupported && caps.features.basicGlass) {
+          onGlassEffectApplied?.();
+        } else {
+          onGlassEffectFailed?.("iOS 26 not available or glass not supported");
+        }
+      } catch (error) {
+        console.warn("LiquidGlassNative: Capability check failed", error);
+        onGlassEffectFailed?.(
+          error instanceof Error ? error.message : "Unknown error",
+        );
       }
+    };
 
-      const startMonitoring = async () => {
-        try {
-          await LiquidGlassNativeModule.startPerformanceMonitoring();
-          
-          // Poll performance metrics every second
-          performanceTimerRef.current = setInterval(async () => {
-            try {
-              const metrics = await LiquidGlassNativeModule.getPerformanceMetrics();
-              onPerformanceUpdate({
-                averageRenderTime: metrics.averageRenderTime,
-                frameDropRate: metrics.frameDropRate,
-                isAcceptable: metrics.isPerformanceAcceptable,
-              });
-            } catch (error) {
-              console.warn('Performance metrics fetch failed', error);
-            }
-          }, 1000);
-        } catch (error) {
-          console.warn('Performance monitoring start failed', error);
-        }
-      };
+    checkAvailability();
+  }, [onGlassEffectApplied, onGlassEffectFailed]);
 
-      startMonitoring();
+  // Start performance monitoring if requested
+  useEffect(() => {
+    if (
+      !isNativeAvailable ||
+      !onPerformanceUpdate ||
+      !LiquidGlassNativeModule
+    ) {
+      return;
+    }
 
-      return () => {
-        if (performanceTimerRef.current) {
-          clearInterval(performanceTimerRef.current);
-          performanceTimerRef.current = null;
-        }
-      };
-    }, [isNativeAvailable, onPerformanceUpdate]);
+    const startMonitoring = async () => {
+      try {
+        await LiquidGlassNativeModule.startPerformanceMonitoring();
 
-    // Imperative handle implementation (simplified for wrapper-based approach)
-    useImperativeHandle(ref, () => ({
+        // Poll performance metrics every second
+        performanceTimerRef.current = setInterval(async () => {
+          try {
+            const metrics =
+              await LiquidGlassNativeModule.getPerformanceMetrics();
+            onPerformanceUpdate({
+              averageRenderTime: metrics.averageRenderTime,
+              frameDropRate: metrics.frameDropRate,
+              isAcceptable: metrics.isPerformanceAcceptable,
+            });
+          } catch (error) {
+            console.warn("Performance metrics fetch failed", error);
+          }
+        }, 1000);
+      } catch (error) {
+        console.warn("Performance monitoring start failed", error);
+      }
+    };
+
+    startMonitoring();
+
+    return () => {
+      if (performanceTimerRef.current) {
+        clearInterval(performanceTimerRef.current);
+        performanceTimerRef.current = null;
+      }
+    };
+  }, [isNativeAvailable, onPerformanceUpdate]);
+
+  // Imperative handle implementation (simplified for wrapper-based approach)
+  useImperativeHandle(
+    ref,
+    () => ({
       setIntensity: (newIntensity: GlassIntensity) => {
         // Note: Direct native updates not available when using wrapper approach
-        console.warn('LiquidGlassNative: setIntensity not supported in wrapper mode');
+        console.warn(
+          "LiquidGlassNative: setIntensity not supported in wrapper mode",
+        );
       },
 
       setStyle: (newStyle: GlassStyle) => {
-        // Note: Direct native updates not available when using wrapper approach  
-        console.warn('LiquidGlassNative: setStyle not supported in wrapper mode');
+        // Note: Direct native updates not available when using wrapper approach
+        console.warn(
+          "LiquidGlassNative: setStyle not supported in wrapper mode",
+        );
       },
 
       setSensorAware: (enabled: boolean) => {
         // Note: Direct native updates not available when using wrapper approach
-        console.warn('LiquidGlassNative: setSensorAware not supported in wrapper mode');
+        console.warn(
+          "LiquidGlassNative: setSensorAware not supported in wrapper mode",
+        );
       },
 
       getPerformanceMetrics: async () => {
         if (!isNativeAvailable || !LiquidGlassNativeModule) {
-          throw new Error('Native module not available');
+          throw new Error("Native module not available");
         }
         return LiquidGlassNativeModule.getPerformanceMetrics();
       },
 
       getEnvironmentalContext: async () => {
         if (!isNativeAvailable || !LiquidGlassNativeModule) {
-          throw new Error('Native module not available');
+          throw new Error("Native module not available");
         }
         return LiquidGlassNativeModule.getEnvironmentalContext();
       },
-    }), [isNativeAvailable]);
+    }),
+    [isNativeAvailable],
+  );
 
-    // Map advanced props to LiquidGlassWrapper's simpler interface
-    const mappedProps = {
-      variant: intensity === 'ultraThin' ? 'regular' : 
-               intensity === 'thin' ? 'regular' :
-               intensity === 'regular' ? 'prominent' : 'interactive',
-      shape: 'capsule' as const,
-      sensorAware,
-      style: [containerStyle, otherProps.style],
-      ...otherProps
-    };
+  // Map advanced props to LiquidGlassWrapper's simpler interface
+  const mappedProps = {
+    variant:
+      intensity === "ultraThin"
+        ? "regular"
+        : intensity === "thin"
+          ? "regular"
+          : intensity === "regular"
+            ? "prominent"
+            : "interactive",
+    shape: "capsule" as const,
+    sensorAware,
+    style: [containerStyle, otherProps.style],
+    ...otherProps,
+  };
 
-    // Use LiquidGlassWrapper under the hood to avoid duplicate native registration
-    // This provides iOS 26+ support with proper fallbacks while adding advanced features
-    return (
-      <LiquidGlassWrapper
-        ref={nativeViewRef}
-        {...mappedProps}
-      >
-        {children}
-      </LiquidGlassWrapper>
-    );
-  }
-);
+  // Use LiquidGlassWrapper under the hood to avoid duplicate native registration
+  // This provides iOS 26+ support with proper fallbacks while adding advanced features
+  return (
+    <LiquidGlassWrapper ref={nativeViewRef} {...mappedProps}>
+      {children}
+    </LiquidGlassWrapper>
+  );
+});
 
-LiquidGlassNative.displayName = 'LiquidGlassNative';
+LiquidGlassNative.displayName = "LiquidGlassNative";
 
 // ==================================================================================
 // CONVENIENCE HOOKS
@@ -313,7 +342,8 @@ LiquidGlassNative.displayName = 'LiquidGlassNative';
  */
 export const useLiquidGlassNative = () => {
   const [isAvailable, setIsAvailable] = useState(false);
-  const [capabilities, setCapabilities] = useState<LiquidGlassCapabilities | null>(null);
+  const [capabilities, setCapabilities] =
+    useState<LiquidGlassCapabilities | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -330,7 +360,7 @@ export const useLiquidGlassNative = () => {
         setIsAvailable(caps.isSupported && caps.features.basicGlass);
         setIsLoading(false);
       } catch (error) {
-        console.warn('Native glass capability check failed', error);
+        console.warn("Native glass capability check failed", error);
         setIsAvailable(false);
         setCapabilities(null);
         setIsLoading(false);
@@ -372,14 +402,15 @@ export const useLiquidGlassPerformance = () => {
       // Poll metrics every 2 seconds
       const interval = setInterval(async () => {
         try {
-          const newMetrics = await LiquidGlassNativeModule.getPerformanceMetrics();
+          const newMetrics =
+            await LiquidGlassNativeModule.getPerformanceMetrics();
           setMetrics({
             averageRenderTime: newMetrics.averageRenderTime,
             frameDropRate: newMetrics.frameDropRate,
             isAcceptable: newMetrics.isPerformanceAcceptable,
           });
         } catch (error) {
-          console.warn('Performance metrics update failed', error);
+          console.warn("Performance metrics update failed", error);
         }
       }, 2000);
 
@@ -388,7 +419,7 @@ export const useLiquidGlassPerformance = () => {
         setIsMonitoring(false);
       };
     } catch (error) {
-      console.warn('Performance monitoring failed to start', error);
+      console.warn("Performance monitoring failed to start", error);
     }
   };
 
@@ -417,10 +448,11 @@ export const useLiquidGlassEnvironment = () => {
     }
 
     try {
-      const newContext = await LiquidGlassNativeModule.getEnvironmentalContext();
+      const newContext =
+        await LiquidGlassNativeModule.getEnvironmentalContext();
       setContext(newContext);
     } catch (error) {
-      console.warn('Environmental context update failed', error);
+      console.warn("Environmental context update failed", error);
     }
   };
 
@@ -469,51 +501,51 @@ export const getOptimalNativeConfig = async (): Promise<{
   intensity: GlassIntensity;
   style: GlassStyle;
   sensorAware: boolean;
-  performanceMode: 'auto' | 'performance' | 'quality' | 'battery';
+  performanceMode: "auto" | "performance" | "quality" | "battery";
 }> => {
   try {
     const capabilities = await getLiquidGlassCapabilities();
-    
+
     if (!capabilities.isSupported) {
-      throw new Error('Native glass not supported');
+      throw new Error("Native glass not supported");
     }
 
     // Configure based on device performance tier
     const config = {
-      intensity: 'regular' as GlassIntensity,
-      style: 'systemMaterial' as GlassStyle,
+      intensity: "regular" as GlassIntensity,
+      style: "systemMaterial" as GlassStyle,
       sensorAware: false,
-      performanceMode: 'auto' as const,
+      performanceMode: "auto" as const,
     };
 
     switch (capabilities.performance.tier) {
-      case 'high':
-        config.intensity = 'regular';
+      case "high":
+        config.intensity = "regular";
         config.sensorAware = capabilities.features.sensorAware;
-        config.performanceMode = 'quality';
+        config.performanceMode = "quality";
         break;
-      case 'medium':
-        config.intensity = 'thin';
+      case "medium":
+        config.intensity = "thin";
         config.sensorAware = false;
-        config.performanceMode = 'auto';
+        config.performanceMode = "auto";
         break;
-      case 'low':
-        config.intensity = 'ultraThin';
+      case "low":
+        config.intensity = "ultraThin";
         config.sensorAware = false;
-        config.performanceMode = 'performance';
+        config.performanceMode = "performance";
         break;
       default:
-        config.performanceMode = 'battery';
+        config.performanceMode = "battery";
     }
 
     return config;
   } catch (error) {
-    console.warn('Optimal config determination failed', error);
+    console.warn("Optimal config determination failed", error);
     return {
-      intensity: 'thin',
-      style: 'systemMaterial',
+      intensity: "thin",
+      style: "systemMaterial",
       sensorAware: false,
-      performanceMode: 'auto',
+      performanceMode: "auto",
     };
   }
 };

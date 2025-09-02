@@ -2,17 +2,18 @@
 
 ## Quick Reference
 
-| Feature | Modifier/Type | Purpose |
-|---------|--------------|---------|
-| `.toolbar(id:)` | Customizable toolbar | User can add/remove/reorder |
-| `ToolbarSpacer` | Spacing control | Fixed or flexible spacing |
-| `.searchToolbarBehavior()` | Search field display | Minimize/expand behavior |
-| `DefaultToolbarItem` | System items | Reposition system controls |
-| `.matchedTransitionSource()` | Transitions | Zoom from toolbar items |
+| Feature                      | Modifier/Type        | Purpose                     |
+| ---------------------------- | -------------------- | --------------------------- |
+| `.toolbar(id:)`              | Customizable toolbar | User can add/remove/reorder |
+| `ToolbarSpacer`              | Spacing control      | Fixed or flexible spacing   |
+| `.searchToolbarBehavior()`   | Search field display | Minimize/expand behavior    |
+| `DefaultToolbarItem`         | System items         | Reposition system controls  |
+| `.matchedTransitionSource()` | Transitions          | Zoom from toolbar items     |
 
 ## Customizable Toolbars
 
 ### Basic Setup
+
 ```swift
 .toolbar(id: "main") {
     ToolbarItem(id: "save") { SaveButton() }
@@ -23,6 +24,7 @@
 ```
 
 ### Spacer Types
+
 ```swift
 ToolbarSpacer(.fixed)     // Fixed width
 ToolbarSpacer(.flexible)  // Pushes items apart
@@ -31,6 +33,7 @@ ToolbarSpacer(.flexible)  // Pushes items apart
 ## Search Integration
 
 ### Minimize Behavior
+
 ```swift
 @State private var searchText = ""
 
@@ -42,6 +45,7 @@ NavigationStack {
 ```
 
 ### Repositioning Search
+
 ```swift
 .toolbar {
     ToolbarItem(placement: .bottomBar) { Button1() }
@@ -53,22 +57,24 @@ NavigationStack {
 ## Placement Options
 
 ### Common Placements
+
 ```swift
 .toolbar {
     // Navigation bar
     ToolbarItem(placement: .navigationBarLeading) { }
     ToolbarItem(placement: .navigationBarTrailing) { }
     ToolbarItem(placement: .principal) { }
-    
+
     // Bottom bar (iOS)
     ToolbarItem(placement: .bottomBar) { }
-    
+
     // Large title area
     ToolbarItem(placement: .largeSubtitle) { CustomSubtitle() }
 }
 ```
 
 ### Large Subtitle
+
 ```swift
 NavigationStack {
     Content()
@@ -86,6 +92,7 @@ NavigationStack {
 ## Visual Effects
 
 ### Matched Transitions
+
 ```swift
 @State private var showDetail = false
 @Namespace private var namespace
@@ -106,6 +113,7 @@ NavigationStack {
 ```
 
 ### Background Visibility
+
 ```swift
 .toolbar(id: "main") {
     ToolbarItem(id: "status", placement: .principal) {
@@ -118,11 +126,12 @@ NavigationStack {
 ## System Items
 
 ### Default Items
+
 ```swift
 .toolbar {
     // Reposition system search
     DefaultToolbarItem(kind: .search, placement: .bottomBar)
-    
+
     // Sidebar toggle
     DefaultToolbarItem(kind: .sidebar, placement: .navigationBarLeading)
 }
@@ -131,6 +140,7 @@ NavigationStack {
 ## Platform Considerations
 
 ### iOS/iPadOS
+
 ```swift
 #if os(iOS)
 .toolbar {
@@ -142,6 +152,7 @@ NavigationStack {
 ```
 
 ### macOS
+
 ```swift
 #if os(macOS)
 .toolbar {
@@ -155,6 +166,7 @@ NavigationStack {
 ## Common Patterns
 
 ### Dynamic Toolbar
+
 ```swift
 @State private var isEditing = false
 
@@ -168,6 +180,7 @@ NavigationStack {
 ```
 
 ### Grouped Actions
+
 ```swift
 .toolbar {
     ToolbarItemGroup(placement: .bottomBar) {
@@ -179,6 +192,7 @@ NavigationStack {
 ```
 
 ### Contextual Items
+
 ```swift
 @State private var selection: Item?
 
@@ -200,14 +214,15 @@ NavigationStack {
 
 ## Troubleshooting
 
-| Issue | Solution |
-|-------|----------|
-| Items not customizable | Add `id` to toolbar and items |
-| Search not minimizing | Apply `.searchToolbarBehavior(.minimize)` |
-| Transition not working | Check namespace and ID match |
-| Items hidden | Check placement compatibility |
+| Issue                  | Solution                                  |
+| ---------------------- | ----------------------------------------- |
+| Items not customizable | Add `id` to toolbar and items             |
+| Search not minimizing  | Apply `.searchToolbarBehavior(.minimize)` |
+| Transition not working | Check namespace and ID match              |
+| Items hidden           | Check placement compatibility             |
 
 ## References
+
 - [Apple Docs: ToolbarContent](https://developer.apple.com/documentation/SwiftUI/ToolbarContent)
 - [Apple Docs: CustomizableToolbarContent](https://developer.apple.com/documentation/SwiftUI/CustomizableToolbarContent)
 - [Liquid Glass Integration](../liquid-glass/swiftui.md)

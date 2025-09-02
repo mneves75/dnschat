@@ -5,18 +5,21 @@ Complete setup instructions for DNSChat v1.7.7 - React Native app with native DN
 ## 🎯 Prerequisites
 
 ### System Requirements
+
 - **Node.js 18+** - [Download](https://nodejs.org/)
 - **Git** - [Download](https://git-scm.com/)
 
 ### Platform-Specific Requirements
 
 #### iOS Development
+
 - **macOS** (required for iOS development)
 - **Xcode 15+** - [Download from App Store](https://apps.apple.com/us/app/xcode/id497799835)
 - **iOS 16+** device or simulator
 - **CocoaPods** - `sudo gem install cocoapods`
 
-#### Android Development  
+#### Android Development
+
 - **Java 17** (required) - `brew install openjdk@17`
 - **Android Studio** - [Download](https://developer.android.com/studio)
 - **Android SDK API 21+**
@@ -59,16 +62,19 @@ npm run web
 ### iOS Setup
 
 1. **Install Xcode Command Line Tools**
+
    ```bash
    xcode-select --install
    ```
 
 2. **Install CocoaPods**
+
    ```bash
    sudo gem install cocoapods
    ```
 
 3. **Setup iOS Dependencies**
+
    ```bash
    cd ios
    pod install
@@ -83,10 +89,11 @@ npm run web
 ### Android Setup
 
 1. **Install Java 17** (Critical - other versions cause build failures)
+
    ```bash
    # macOS
    brew install openjdk@17
-   
+
    # Verify installation
    /opt/homebrew/opt/openjdk@17/bin/java -version
    ```
@@ -108,12 +115,14 @@ npm run web
 ## 🧪 Testing Your Installation
 
 ### Basic Functionality Test
+
 ```bash
 # Test DNS connectivity
 node test-dns-simple.js "Hello world"
 ```
 
 ### Platform Tests
+
 ```bash
 # Test iOS build
 npm run ios
@@ -130,6 +139,7 @@ npm run web
 ### iOS Issues
 
 **CocoaPods Sandbox Sync Error**
+
 ```bash
 # Quick fix
 npm run fix-pods
@@ -139,6 +149,7 @@ cd ios && rm -rf Pods/ Podfile.lock && pod install
 ```
 
 **Swift Compilation Errors**
+
 ```bash
 # Clean build
 rm -rf ios/build/
@@ -148,12 +159,14 @@ npm run ios
 ### Android Issues
 
 **Java Version Errors**
+
 ```bash
 # Ensure Java 17 is being used
 npm run android  # Uses Java 17 automatically
 ```
 
 **Gradle Build Failures**
+
 ```bash
 # Clean Gradle cache
 rm -rf ~/.gradle/caches
@@ -164,6 +177,7 @@ npm run android
 ### DNS Connection Issues
 
 **Test DNS Connectivity**
+
 ```bash
 # Terminal test
 dig @ch.at "test message" TXT +short
@@ -175,6 +189,7 @@ dig @ch.at "test message" TXT +short
 ## 🔄 Development Workflow
 
 ### Version Management
+
 ```bash
 # Sync all platform versions
 npm run sync-versions
@@ -184,6 +199,7 @@ npm run sync-versions:dry
 ```
 
 ### Clean Builds
+
 ```bash
 # Clear Metro cache
 npx expo start --clear
@@ -198,12 +214,14 @@ npm run clean-ios
 ## 📱 Device Setup
 
 ### iOS Device
+
 1. Connect iPhone/iPad via USB
 2. Trust the computer when prompted
 3. Enable Developer Mode in Settings → Privacy & Security
 4. Run `npm run ios` and select your device
 
 ### Android Device
+
 1. Enable Developer Options (tap Build Number 7 times)
 2. Enable USB Debugging
 3. Connect via USB and accept debugging permissions
@@ -223,4 +241,4 @@ npm run clean-ios
 
 ---
 
-*This guide is for DNSChat v1.7.7. For older versions, check the git history.*
+_This guide is for DNSChat v1.7.7. For older versions, check the git history._

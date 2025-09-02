@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React from "react";
+import { View, Text, StyleSheet } from "react-native";
 
 interface InfoIconProps {
   size: number;
@@ -16,10 +16,10 @@ export function InfoIcon({ size, color }: InfoIconProps) {
 
 const styles = StyleSheet.create({
   container: {
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   text: {
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
 });

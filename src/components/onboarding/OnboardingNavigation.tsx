@@ -1,12 +1,12 @@
-import React from 'react';
+import React from "react";
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
   useColorScheme,
-} from 'react-native';
-import { useOnboarding } from '../../context/OnboardingContext';
+} from "react-native";
+import { useOnboarding } from "../../context/OnboardingContext";
 
 interface OnboardingNavigationProps {
   showSkip?: boolean;
@@ -18,11 +18,11 @@ interface OnboardingNavigationProps {
 export function OnboardingNavigation({
   showSkip = true,
   showBack = true,
-  nextButtonText = 'Continue',
+  nextButtonText = "Continue",
   onCustomNext,
 }: OnboardingNavigationProps) {
   const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const isDark = colorScheme === "dark";
   const {
     currentStep,
     steps,
@@ -53,28 +53,26 @@ export function OnboardingNavigation({
     <View style={styles.container}>
       <View style={styles.leftSection}>
         {showSkip && !isLastStep && (
-          <TouchableOpacity
-            onPress={handleSkip}
-            style={styles.skipButton}
-          >
-            <Text style={[
-              styles.skipButtonText,
-              isDark ? styles.darkSkipButtonText : styles.lightSkipButtonText
-            ]}>
+          <TouchableOpacity onPress={handleSkip} style={styles.skipButton}>
+            <Text
+              style={[
+                styles.skipButtonText,
+                isDark ? styles.darkSkipButtonText : styles.lightSkipButtonText,
+              ]}
+            >
               Skip
             </Text>
           </TouchableOpacity>
         )}
-        
+
         {showBack && !isFirstStep && (
-          <TouchableOpacity
-            onPress={previousStep}
-            style={styles.backButton}
-          >
-            <Text style={[
-              styles.backButtonText,
-              isDark ? styles.darkBackButtonText : styles.lightBackButtonText
-            ]}>
+          <TouchableOpacity onPress={previousStep} style={styles.backButton}>
+            <Text
+              style={[
+                styles.backButtonText,
+                isDark ? styles.darkBackButtonText : styles.lightBackButtonText,
+              ]}
+            >
               Back
             </Text>
           </TouchableOpacity>
@@ -85,14 +83,16 @@ export function OnboardingNavigation({
         onPress={handleNext}
         style={[
           styles.nextButton,
-          isDark ? styles.darkNextButton : styles.lightNextButton
+          isDark ? styles.darkNextButton : styles.lightNextButton,
         ]}
       >
-        <Text style={[
-          styles.nextButtonText,
-          isDark ? styles.darkNextButtonText : styles.lightNextButtonText
-        ]}>
-          {isLastStep ? 'Get Started' : nextButtonText}
+        <Text
+          style={[
+            styles.nextButtonText,
+            isDark ? styles.darkNextButtonText : styles.lightNextButtonText,
+          ]}
+        >
+          {isLastStep ? "Get Started" : nextButtonText}
         </Text>
       </TouchableOpacity>
     </View>
@@ -101,15 +101,15 @@ export function OnboardingNavigation({
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: 16,
     paddingVertical: 20,
     paddingBottom: 40,
   },
   leftSection: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 16,
   },
   skipButton: {
@@ -118,13 +118,13 @@ const styles = StyleSheet.create({
   },
   skipButtonText: {
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   lightSkipButtonText: {
-    color: '#666666',
+    color: "#666666",
   },
   darkSkipButtonText: {
-    color: '#999999',
+    color: "#999999",
   },
   backButton: {
     paddingVertical: 12,
@@ -132,36 +132,36 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   lightBackButtonText: {
-    color: '#007AFF',
+    color: "#007AFF",
   },
   darkBackButtonText: {
-    color: '#0A84FF',
+    color: "#0A84FF",
   },
   nextButton: {
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 24,
     minWidth: 120,
-    alignItems: 'center',
+    alignItems: "center",
   },
   lightNextButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: "#007AFF",
   },
   darkNextButton: {
-    backgroundColor: '#0A84FF',
+    backgroundColor: "#0A84FF",
   },
   nextButtonText: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFFFF',
+    fontWeight: "600",
+    color: "#FFFFFF",
   },
   lightNextButtonText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
   },
   darkNextButtonText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
   },
 });

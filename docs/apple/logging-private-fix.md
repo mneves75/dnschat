@@ -9,24 +9,28 @@ We provide a ready-to-use configuration profile that enables full debug logging 
 ### Installing the Profile
 
 #### macOS
+
 1. Double-click `apple/logging/VibeTunnel-Logging.mobileconfig`
 2. System Settings will open to the Profiles section
 3. Click "Install..." and enter your password
 4. Restart VibeTunnel
 
 #### iOS
+
 1. AirDrop or email the profile to your device
 2. Open Settings → General → VPN & Device Management
 3. Install the "VibeTunnel Debug Logging" profile
 4. Restart the VibeTunnel app
 
 ### Verifying It Works
+
 ```bash
 # You should now see full details instead of <private>
 ./scripts/vtlog.sh
 ```
 
 ### Removing the Profile
+
 - **macOS**: System Settings → Privacy & Security → Profiles → Remove
 - **iOS**: Settings → General → VPN & Device Management → Remove Profile
 
@@ -43,6 +47,7 @@ This makes debugging extremely difficult as you can't see session IDs, URLs, or 
 ## Why Apple Does This
 
 Apple redacts dynamic values in logs by default to protect user privacy:
+
 - Prevents accidental logging of passwords, tokens, or personal information
 - Logs can be accessed by other apps with proper entitlements
 - Helps apps comply with privacy regulations (GDPR, etc.)
@@ -64,6 +69,7 @@ yourusername ALL=(ALL) NOPASSWD: /usr/bin/log
 ```
 
 For example, if your username is `steipete`:
+
 ```
 steipete ALL=(ALL) NOPASSWD: /usr/bin/log
 ```
@@ -87,12 +93,14 @@ sudo -n log show --last 1s
 ## How It Works
 
 1. **Normal log viewing** (redacted):
+
    ```bash
    log show --predicate 'subsystem == "sh.vibetunnel.vibetunnel"'
    # Shows: Connected to <private>
    ```
 
 2. **With sudo and --info flag** (reveals private data):
+
    ```bash
    sudo log show --predicate 'subsystem == "sh.vibetunnel.vibetunnel"' --info
    # Shows: Connected to session-123abc
@@ -106,17 +114,20 @@ sudo -n log show --last 1s
 ## Security Considerations
 
 ### What this allows:
+
 - ✅ Passwordless access to `log` command only
 - ✅ Can view all system logs without password
 - ✅ Can stream logs in real-time
 
 ### What this does NOT allow:
+
 - ❌ Cannot run other commands with sudo
 - ❌ Cannot modify system files
 - ❌ Cannot install software
 - ❌ Cannot change system settings
 
 ### Best Practices:
+
 1. Only grant this permission to trusted developer accounts
 2. Use the most restrictive rule possible
 3. Consider removing when not actively debugging
@@ -127,11 +138,13 @@ sudo -n log show --last 1s
 ### 1. Touch ID for sudo (if you have a Mac with Touch ID)
 
 Edit `/etc/pam.d/sudo`:
+
 ```bash
 sudo vi /etc/pam.d/sudo
 ```
 
 Add this line at the top (after the comment):
+
 ```
 auth       sufficient     pam_tid.so
 ```
@@ -141,11 +154,13 @@ Now you can use your fingerprint instead of typing password.
 ### 2. Extend sudo timeout
 
 Make sudo remember your password longer:
+
 ```bash
 sudo visudo
 ```
 
 Add:
+
 ```
 Defaults timestamp_timeout=60
 ```
@@ -155,6 +170,7 @@ This keeps sudo active for 60 minutes after each use.
 ### 3. Fix in Swift code
 
 Mark non-sensitive values as public in your Swift logging:
+
 ```swift
 // Before (will show as <private>):
 logger.info("Connected to \(sessionId)")
@@ -190,6 +206,7 @@ ls -la /Library/Preferences/Logging/Subsystems/sh.vibetunnel.vibetunnel.plist
 ```
 
 To remove:
+
 ```bash
 sudo rm /Library/Preferences/Logging/Subsystems/sh.vibetunnel.vibetunnel.plist
 ```
@@ -264,12 +281,14 @@ With passwordless sudo configured, you can now use:
 ## Troubleshooting
 
 ### "sudo: a password is required"
+
 - Make sure you saved the sudoers file (`:wq` in vi)
 - Try in a new terminal window
 - Run `sudo -k` to clear sudo cache, then try again
 - Verify the line exists: `sudo grep NOPASSWD /etc/sudoers`
 
 ### "syntax error" when saving sudoers
+
 - Never edit `/etc/sudoers` directly\!
 - Always use `sudo visudo` - it checks syntax before saving
 - Make sure the line format is exactly:
@@ -278,11 +297,13 @@ With passwordless sudo configured, you can now use:
   ```
 
 ### Changes not taking effect
+
 - Close and reopen your terminal
 - Make sure you're using the exact username from `whoami`
 - Check that `/usr/bin/log` exists: `ls -la /usr/bin/log`
 
 ### Still seeing <private> with -p flag
+
 - Verify sudo works: `sudo -n log show --last 1s`
 - Check vtlog.sh has execute permissions: `chmod +x scripts/vtlog.sh`
 - Make sure you're using `-p` flag: `./scripts/vtlog.sh -p`
@@ -290,6 +311,7 @@ With passwordless sudo configured, you can now use:
 ## Summary
 
 The passwordless sudo configuration for `/usr/bin/log` is the cleanest solution:
+
 - Works immediately after setup
 - No password prompts when debugging
 - Limited security risk (only affects log viewing)

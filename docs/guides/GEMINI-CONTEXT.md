@@ -5,12 +5,13 @@
 This is a React Native mobile application named DNSChat. It provides a chat interface, similar to ChatGPT, but with an innovative communication mechanism: it uses DNS TXT queries to interact with a Large Language Model (LLM). The application is built with Expo and TypeScript, supporting iOS, Android, and web platforms.
 
 Key features include:
--   **DNS-based LLM Communication**: Uses `dig @llm.pieter.com "<message>" TXT +short` for AI conversations.
--   **Local Storage**: Persists conversation history using AsyncStorage.
--   **Modern UI**: Features a dark/light theme, message bubbles, and typing indicators.
--   **Cross-Platform**: Built with React Native and Expo.
--   **Deep Linking**: Supports URLs like `dnschat://@username`.
--   **Native DNS Service**: Includes a custom UDP socket implementation for direct DNS queries on iOS.
+
+- **DNS-based LLM Communication**: Uses `dig @llm.pieter.com "<message>" TXT +short` for AI conversations.
+- **Local Storage**: Persists conversation history using AsyncStorage.
+- **Modern UI**: Features a dark/light theme, message bubbles, and typing indicators.
+- **Cross-Platform**: Built with React Native and Expo.
+- **Deep Linking**: Supports URLs like `dnschat://@username`.
+- **Native DNS Service**: Includes a custom UDP socket implementation for direct DNS queries on iOS.
 
 The project uses React Navigation for navigation, and Expo Development Build for running on native platforms.
 
@@ -23,34 +24,36 @@ The project uses React Navigation for navigation, and Expo Development Build for
 
 ### Prerequisites
 
--   Node.js 18+ and npm
--   Expo CLI (`npm install -g @expo/cli`)
--   iOS Simulator (macOS) or Android emulator
+- Node.js 18+ and npm
+- Expo CLI (`npm install -g @expo/cli`)
+- iOS Simulator (macOS) or Android emulator
 
 ### Installation
 
 1.  **Install dependencies:**
+
     ```bash
     npm install
     ```
 
 2.  **Configure app identifiers in `app.json`:**
-    -   Update `name`, `slug`, and `scheme`.
-    -   Set `ios.bundleIdentifier` and `android.bundleIdentifier`.
+    - Update `name`, `slug`, and `scheme`.
+    - Set `ios.bundleIdentifier` and `android.bundleIdentifier`.
 
 ### Running the App
 
--   **Start the development server:**
-    ```bash
-    npm start
-    ```
+- **Start the development server:**
 
--   **Run on specific platforms (requires Expo Development Build):**
-    ```bash
-    npm run ios      # iOS development build
-    npm run android  # Android development build
-    npm run web      # Web version
-    ```
+  ```bash
+  npm start
+  ```
+
+- **Run on specific platforms (requires Expo Development Build):**
+  ```bash
+  npm run ios      # iOS development build
+  npm run android  # Android development build
+  npm run web      # Web version
+  ```
 
 ## Development Conventions
 
@@ -70,9 +73,9 @@ src/
 
 ### Key Services
 
--   **`DNSService`**: Handles DNS TXT queries and response parsing.
--   **`StorageService`**: Manages local conversation persistence.
--   **`MockDNSService`**: A development fallback with simulated responses.
+- **`DNSService`**: Handles DNS TXT queries and response parsing.
+- **`StorageService`**: Manages local conversation persistence.
+- **`MockDNSService`**: A development fallback with simulated responses.
 
 ### Testing
 
@@ -84,6 +87,6 @@ npm run ios  # or npm run android
 
 ### Code Style
 
--   The project uses TypeScript with strict mode enabled.
--   It follows standard React and React Native coding conventions.
--   The codebase is organized into feature-based directories (e.g., `components`, `services`, `navigation`).
+- The project uses TypeScript with strict mode enabled.
+- It follows standard React and React Native coding conventions.
+- The codebase is organized into feature-based directories (e.g., `components`, `services`, `navigation`).

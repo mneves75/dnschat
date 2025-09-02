@@ -33,7 +33,7 @@ react-native link react-native-udp
 
 Now, you can use the following code in your React Native component:
 
-```javascript
+````javascript
 import React, { useEffect } from 'react';
 import { View, Text, Button } from 'react-native';
 import dgram from 'react-native-udp';
@@ -85,3 +85,4 @@ const DnsQueryComponent = () => {
 export default DnsQueryComponent;```
 
 This React Native component provides a button that, when pressed, will send the DNS query and print the response to the console. This method gives you low-level control over the DNS query process, allowing you to replicate the `dig` command's functionality.
+````

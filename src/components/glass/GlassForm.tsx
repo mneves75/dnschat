@@ -1,14 +1,14 @@
 /**
  * GlassForm - Evan Bacon Glass UI inspired form components
- * 
+ *
  * Implements iOS Settings app style glass form lists and sections
  * following Apple's design guidelines and best practices.
- * 
+ *
  * @author DNSChat Team
  * @since 1.8.0 (iOS 26 Liquid Glass Support + Evan Bacon Glass UI)
  */
 
-import React from 'react';
+import React from "react";
 import {
   View,
   Text,
@@ -19,8 +19,8 @@ import {
   Platform,
   ViewStyle,
   TextStyle,
-} from 'react-native';
-import { LiquidGlassWrapper } from '../LiquidGlassWrapper';
+} from "react-native";
+import { LiquidGlassWrapper } from "../LiquidGlassWrapper";
 
 // ==================================================================================
 // TYPES AND INTERFACES
@@ -76,37 +76,31 @@ interface GlassFormLinkProps extends GlassFormItemProps {
 
 const useGlassColors = () => {
   const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const isDark = colorScheme === "dark";
 
   return {
     // Glass backgrounds (inspired by Apple's system colors)
-    glassPrimary: isDark 
-      ? 'rgba(28, 28, 30, 0.15)' // Much more transparent dark
-      : 'rgba(242, 242, 247, 0.08)', // Nearly transparent light
-    
+    glassPrimary: isDark
+      ? "rgba(28, 28, 30, 0.15)" // Much more transparent dark
+      : "rgba(242, 242, 247, 0.08)", // Nearly transparent light
+
     glassSecondary: isDark
-      ? 'rgba(44, 44, 46, 0.15)' // Much more transparent dark  
-      : 'rgba(255, 255, 255, 0.08)', // Nearly transparent light
-    
+      ? "rgba(44, 44, 46, 0.15)" // Much more transparent dark
+      : "rgba(255, 255, 255, 0.08)", // Nearly transparent light
+
     // Text colors
-    textPrimary: isDark ? '#FFFFFF' : '#000000',
-    textSecondary: isDark ? '#AEAEB2' : '#6D6D70',
-    textTertiary: isDark ? '#8E8E93' : '#8E8E93',
-    
+    textPrimary: isDark ? "#FFFFFF" : "#000000",
+    textSecondary: isDark ? "#AEAEB2" : "#6D6D70",
+    textTertiary: isDark ? "#8E8E93" : "#8E8E93",
+
     // Separators
-    separator: isDark 
-      ? 'rgba(84, 84, 88, 0.6)' 
-      : 'rgba(60, 60, 67, 0.15)',
-    
+    separator: isDark ? "rgba(84, 84, 88, 0.6)" : "rgba(60, 60, 67, 0.15)",
+
     // Interactive states
-    highlighted: isDark
-      ? 'rgba(255, 255, 255, 0.04)'
-      : 'rgba(0, 0, 0, 0.04)',
-    
+    highlighted: isDark ? "rgba(255, 255, 255, 0.04)" : "rgba(0, 0, 0, 0.04)",
+
     // Borders
-    border: isDark
-      ? 'rgba(84, 84, 88, 0.4)'
-      : 'rgba(198, 198, 200, 0.6)',
+    border: isDark ? "rgba(84, 84, 88, 0.4)" : "rgba(198, 198, 200, 0.6)",
   };
 };
 
@@ -116,19 +110,22 @@ const useGlassColors = () => {
 
 const useHapticFeedback = () => {
   const triggerSelectionFeedback = React.useCallback(() => {
-    if (Platform.OS === 'ios') {
+    if (Platform.OS === "ios") {
       // iOS haptic feedback (would need expo-haptics)
-      console.log('🔸 Haptic: Selection feedback');
+      console.log("🔸 Haptic: Selection feedback");
       // HapticFeedback.selectionAsync();
     }
   }, []);
 
-  const triggerImpactFeedback = React.useCallback((style: 'light' | 'medium' | 'heavy' = 'light') => {
-    if (Platform.OS === 'ios') {
-      console.log(`🔸 Haptic: Impact feedback (${style})`);
-      // HapticFeedback.impactAsync(HapticFeedback.ImpactFeedbackStyle[style]);
-    }
-  }, []);
+  const triggerImpactFeedback = React.useCallback(
+    (style: "light" | "medium" | "heavy" = "light") => {
+      if (Platform.OS === "ios") {
+        console.log(`🔸 Haptic: Impact feedback (${style})`);
+        // HapticFeedback.impactAsync(HapticFeedback.ImpactFeedbackStyle[style]);
+      }
+    },
+    [],
+  );
 
   return { triggerSelectionFeedback, triggerImpactFeedback };
 };
@@ -149,7 +146,7 @@ export const GlassForm: React.FC<GlassFormProps> = ({
 
   const containerStyle: ViewStyle = {
     flex: 1,
-    backgroundColor: 'transparent', // Remove solid background for glass effect visibility
+    backgroundColor: "transparent", // Remove solid background for glass effect visibility
   };
 
   return (
@@ -161,7 +158,9 @@ export const GlassForm: React.FC<GlassFormProps> = ({
       >
         {navigationTitle && (
           <View style={styles.titleContainer}>
-            <Text style={[styles.navigationTitle, { color: colors.textPrimary }]}>
+            <Text
+              style={[styles.navigationTitle, { color: colors.textPrimary }]}
+            >
               {navigationTitle}
             </Text>
           </View>
@@ -192,7 +191,7 @@ export const GlassFormSection: React.FC<GlassFormSectionProps> = ({
           </Text>
         </View>
       )}
-      
+
       <LiquidGlassWrapper
         variant="regular"
         shape="roundedRect"
@@ -203,12 +202,17 @@ export const GlassFormSection: React.FC<GlassFormSectionProps> = ({
           <React.Fragment key={index}>
             {child}
             {index < React.Children.count(children) - 1 && (
-              <View style={[styles.separator, { backgroundColor: colors.separator }]} />
+              <View
+                style={[
+                  styles.separator,
+                  { backgroundColor: colors.separator },
+                ]}
+              />
             )}
           </React.Fragment>
         ))}
       </LiquidGlassWrapper>
-      
+
       {footer && (
         <View style={styles.sectionFooterContainer}>
           <Text style={[styles.sectionFooter, { color: colors.textTertiary }]}>
@@ -244,7 +248,7 @@ export const GlassFormItem: React.FC<GlassFormItemProps> = ({
   }, [onPress, triggerSelectionFeedback, disableHaptics]);
 
   const itemStyle: ViewStyle = {
-    backgroundColor: isPressed ? colors.highlighted : 'transparent',
+    backgroundColor: isPressed ? colors.highlighted : "transparent",
   };
 
   const ItemContent = (
@@ -259,7 +263,7 @@ export const GlassFormItem: React.FC<GlassFormItemProps> = ({
           </Text>
         )}
       </View>
-      
+
       <View style={styles.itemContentRight}>
         {rightContent}
         {showChevron && (
@@ -306,13 +310,7 @@ export const GlassFormLink: React.FC<GlassFormLinkProps> = ({
     props.onPress?.();
   }, [href, url, props.onPress]);
 
-  return (
-    <GlassFormItem
-      {...props}
-      onPress={handlePress}
-      showChevron={true}
-    />
-  );
+  return <GlassFormItem {...props} onPress={handlePress} showChevron={true} />;
 };
 
 // ==================================================================================
@@ -342,7 +340,7 @@ const styles = StyleSheet.create({
   },
   navigationTitle: {
     fontSize: 34,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     letterSpacing: 0.37,
   },
   sectionContainer: {
@@ -354,12 +352,12 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 13,
-    fontWeight: '400',
+    fontWeight: "400",
     letterSpacing: -0.08,
   },
   sectionContent: {
     marginHorizontal: 20,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   sectionFooterContainer: {
     paddingHorizontal: 20,
@@ -367,7 +365,7 @@ const styles = StyleSheet.create({
   },
   sectionFooter: {
     fontSize: 13,
-    fontWeight: '400',
+    fontWeight: "400",
     lineHeight: 18,
     letterSpacing: -0.08,
   },
@@ -376,8 +374,8 @@ const styles = StyleSheet.create({
     marginLeft: 20,
   },
   itemContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     minHeight: 44,
     paddingHorizontal: 20,
     paddingVertical: 12,
@@ -386,23 +384,23 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   itemContentRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 6,
   },
   itemTitle: {
     fontSize: 17,
-    fontWeight: '400',
+    fontWeight: "400",
     letterSpacing: -0.43,
   },
   itemSubtitle: {
     fontSize: 15,
-    fontWeight: '400',
+    fontWeight: "400",
     letterSpacing: -0.24,
     marginTop: 2,
   },
   chevron: {
     fontSize: 17,
-    fontWeight: '600',
+    fontWeight: "600",
   },
 });

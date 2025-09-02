@@ -1,9 +1,9 @@
 /**
  * Liquid Glass DNS-Specific Components
- * 
+ *
  * Specialized components for DNSChat's unique DNS-over-TXT functionality.
  * Builds on core UI components with DNS-aware features and visual indicators.
- * 
+ *
  * Components:
  * - LiquidGlassChatInterface: Complete chat interface with glass effects
  * - LiquidGlassDNSStatus: Real-time DNS connection status indicator
@@ -11,18 +11,24 @@
  * - LiquidGlassMethodBadge: DNS method indicator (Native, UDP, TCP, HTTPS)
  * - LiquidGlassConnectionIndicator: Network status with adaptive styling
  * - LiquidGlassServerSelector: DNS server selection interface
- * 
+ *
  * DNS Features:
  * - Real-time method fallback visualization
  * - Query timing and success/failure indicators
  * - Server status monitoring with glass effects
  * - Interactive DNS log entries with expandable details
- * 
+ *
  * @author DNSChat Team
  * @since 1.8.0 (iOS 26 Liquid Glass Support)
  */
 
-import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import React, {
+  useState,
+  useCallback,
+  useMemo,
+  useEffect,
+  useRef,
+} from "react";
 import {
   View,
   Text,
@@ -35,7 +41,7 @@ import {
   useColorScheme,
   Platform,
   ActivityIndicator,
-} from 'react-native';
+} from "react-native";
 
 import {
   LiquidGlassView,
@@ -47,17 +53,17 @@ import {
   useLiquidGlassCapabilities,
   useAdaptiveGlassIntensity,
   type LiquidGlassProps,
-} from './';
+} from "./";
 
 // ==================================================================================
 // TYPE DEFINITIONS
 // ==================================================================================
 
 interface DNSMethod {
-  name: 'Native' | 'UDP' | 'TCP' | 'HTTPS' | 'Mock';
+  name: "Native" | "UDP" | "TCP" | "HTTPS" | "Mock";
   icon: string;
   priority: number;
-  status: 'active' | 'available' | 'failed' | 'unavailable';
+  status: "active" | "available" | "failed" | "unavailable";
   timing?: number; // ms
   error?: string;
 }
@@ -65,10 +71,10 @@ interface DNSMethod {
 interface DNSQuery {
   id: string;
   message: string;
-  method: DNSMethod['name'];
+  method: DNSMethod["name"];
   timestamp: Date;
   duration: number; // ms
-  status: 'success' | 'failed' | 'timeout';
+  status: "success" | "failed" | "timeout";
   response?: string;
   error?: string;
   retries?: number;
@@ -77,8 +83,8 @@ interface DNSQuery {
 interface DNSServer {
   name: string;
   address: string;
-  type: 'cloudflare' | 'google' | 'quad9' | 'custom';
-  status: 'online' | 'slow' | 'offline' | 'unknown';
+  type: "cloudflare" | "google" | "quad9" | "custom";
+  status: "online" | "slow" | "offline" | "unknown";
   latency?: number; // ms
 }
 
@@ -87,34 +93,34 @@ interface LiquidGlassChatInterfaceProps extends LiquidGlassProps {
   messages: Array<{
     id: string;
     content: string;
-    type: 'user' | 'assistant' | 'system';
+    type: "user" | "assistant" | "system";
     timestamp: Date;
-    status?: 'sending' | 'sent' | 'error';
+    status?: "sending" | "sent" | "error";
   }>;
-  
+
   /** Input value */
   inputValue: string;
-  
+
   /** Input change handler */
   onInputChange: (text: string) => void;
-  
+
   /** Send message handler */
   onSendMessage: () => void;
-  
+
   /** Current DNS status */
   dnsStatus: {
     isConnected: boolean;
-    currentMethod: DNSMethod['name'];
+    currentMethod: DNSMethod["name"];
     server: string;
     latency?: number;
   };
-  
+
   /** Loading state */
   isLoading?: boolean;
-  
+
   /** Enable DNS status display */
   showDNSStatus?: boolean;
-  
+
   /** Custom styling */
   style?: ViewStyle;
 }
@@ -122,22 +128,22 @@ interface LiquidGlassChatInterfaceProps extends LiquidGlassProps {
 interface LiquidGlassDNSStatusProps extends LiquidGlassProps {
   /** Available DNS methods */
   methods: DNSMethod[];
-  
+
   /** Current active method */
-  activeMethod: DNSMethod['name'];
-  
+  activeMethod: DNSMethod["name"];
+
   /** DNS server info */
   server: DNSServer;
-  
+
   /** Connection status */
   isConnected: boolean;
-  
+
   /** Show detailed status */
   showDetails?: boolean;
-  
+
   /** Status press handler */
   onPress?: () => void;
-  
+
   /** Custom styling */
   style?: ViewStyle;
 }
@@ -145,19 +151,19 @@ interface LiquidGlassDNSStatusProps extends LiquidGlassProps {
 interface LiquidGlassQueryLogProps extends LiquidGlassProps {
   /** DNS query history */
   queries: DNSQuery[];
-  
+
   /** Maximum queries to display */
   maxQueries?: number;
-  
+
   /** Show query details */
   showDetails?: boolean;
-  
+
   /** Query press handler */
   onQueryPress?: (query: DNSQuery) => void;
-  
+
   /** Clear log handler */
   onClearLog?: () => void;
-  
+
   /** Custom styling */
   style?: ViewStyle;
 }
@@ -165,30 +171,30 @@ interface LiquidGlassQueryLogProps extends LiquidGlassProps {
 interface LiquidGlassMethodBadgeProps extends LiquidGlassProps {
   /** DNS method */
   method: DNSMethod;
-  
+
   /** Badge size */
-  size?: 'small' | 'medium' | 'large';
-  
+  size?: "small" | "medium" | "large";
+
   /** Show timing */
   showTiming?: boolean;
-  
+
   /** Badge press handler */
   onPress?: () => void;
-  
+
   /** Custom styling */
   style?: ViewStyle;
 }
 
 interface LiquidGlassConnectionIndicatorProps extends LiquidGlassProps {
   /** Connection status */
-  status: 'connected' | 'connecting' | 'disconnected' | 'error';
-  
+  status: "connected" | "connecting" | "disconnected" | "error";
+
   /** Connection strength (0-1) */
   strength?: number;
-  
+
   /** Show signal animation */
   animated?: boolean;
-  
+
   /** Custom styling */
   style?: ViewStyle;
 }
@@ -196,19 +202,19 @@ interface LiquidGlassConnectionIndicatorProps extends LiquidGlassProps {
 interface LiquidGlassServerSelectorProps extends LiquidGlassProps {
   /** Available DNS servers */
   servers: DNSServer[];
-  
+
   /** Selected server */
   selectedServer: string;
-  
+
   /** Server selection handler */
   onServerSelect: (server: DNSServer) => void;
-  
+
   /** Custom server option */
   allowCustom?: boolean;
-  
+
   /** Custom server handler */
   onCustomServer?: (address: string) => void;
-  
+
   /** Custom styling */
   style?: ViewStyle;
 }
@@ -220,7 +226,9 @@ interface LiquidGlassServerSelectorProps extends LiquidGlassProps {
 /**
  * Complete chat interface with DNS status integration and glass effects
  */
-export const LiquidGlassChatInterface: React.FC<LiquidGlassChatInterfaceProps> = ({
+export const LiquidGlassChatInterface: React.FC<
+  LiquidGlassChatInterfaceProps
+> = ({
   messages,
   inputValue,
   onInputChange,
@@ -229,7 +237,7 @@ export const LiquidGlassChatInterface: React.FC<LiquidGlassChatInterfaceProps> =
   isLoading = false,
   showDNSStatus = true,
   style,
-  intensity = 'thin',
+  intensity = "thin",
   containerStyle,
   ...glassProps
 }) => {
@@ -237,18 +245,18 @@ export const LiquidGlassChatInterface: React.FC<LiquidGlassChatInterfaceProps> =
   const { capabilities } = useLiquidGlassCapabilities();
   const adaptiveIntensity = useAdaptiveGlassIntensity(intensity);
   const scrollViewRef = useRef<ScrollView>(null);
-  
+
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     scrollViewRef.current?.scrollToEnd({ animated: true });
   }, [messages]);
-  
+
   const handleSend = useCallback(() => {
     if (inputValue.trim() && !isLoading) {
       onSendMessage();
     }
   }, [inputValue, isLoading, onSendMessage]);
-  
+
   return (
     <LiquidGlassContainer
       intensity={adaptiveIntensity}
@@ -266,9 +274,9 @@ export const LiquidGlassChatInterface: React.FC<LiquidGlassChatInterfaceProps> =
           methods={[
             {
               name: dnsStatus.currentMethod,
-              icon: '🌐',
+              icon: "🌐",
               priority: 1,
-              status: dnsStatus.isConnected ? 'active' : 'failed',
+              status: dnsStatus.isConnected ? "active" : "failed",
               timing: dnsStatus.latency,
             },
           ]}
@@ -276,15 +284,15 @@ export const LiquidGlassChatInterface: React.FC<LiquidGlassChatInterfaceProps> =
           server={{
             name: dnsStatus.server,
             address: dnsStatus.server,
-            type: 'cloudflare',
-            status: dnsStatus.isConnected ? 'online' : 'offline',
+            type: "cloudflare",
+            status: dnsStatus.isConnected ? "online" : "offline",
             latency: dnsStatus.latency,
           }}
           isConnected={dnsStatus.isConnected}
           style={styles.dnsStatusHeader}
         />
       )}
-      
+
       {/* Message List */}
       <ScrollView
         ref={scrollViewRef}
@@ -304,7 +312,7 @@ export const LiquidGlassChatInterface: React.FC<LiquidGlassChatInterfaceProps> =
             animateOnAppear={true}
           />
         ))}
-        
+
         {isLoading && (
           <View style={styles.loadingIndicator}>
             <LiquidGlassCard
@@ -320,7 +328,7 @@ export const LiquidGlassChatInterface: React.FC<LiquidGlassChatInterfaceProps> =
           </View>
         )}
       </ScrollView>
-      
+
       {/* Input Area */}
       <View style={styles.inputArea}>
         <LiquidGlassInput
@@ -362,32 +370,32 @@ export const LiquidGlassDNSStatus: React.FC<LiquidGlassDNSStatusProps> = ({
   showDetails = false,
   onPress,
   style,
-  intensity = 'ultraThin',
+  intensity = "ultraThin",
   containerStyle,
   ...glassProps
 }) => {
   const colorScheme = useColorScheme();
   const adaptiveIntensity = useAdaptiveGlassIntensity(intensity);
   const [expanded, setExpanded] = useState(showDetails);
-  
+
   const statusColors = useMemo(() => {
-    const isDark = colorScheme === 'dark';
-    
+    const isDark = colorScheme === "dark";
+
     if (isConnected) {
       return {
-        background: 'rgba(52, 199, 89, 0.1)',
-        text: '#34C759',
-        indicator: '#34C759',
+        background: "rgba(52, 199, 89, 0.1)",
+        text: "#34C759",
+        indicator: "#34C759",
       };
     } else {
       return {
-        background: 'rgba(255, 59, 48, 0.1)',
-        text: '#FF3B30',
-        indicator: '#FF3B30',
+        background: "rgba(255, 59, 48, 0.1)",
+        text: "#FF3B30",
+        indicator: "#FF3B30",
       };
     }
   }, [isConnected, colorScheme]);
-  
+
   const handlePress = useCallback(() => {
     if (onPress) {
       onPress();
@@ -395,7 +403,7 @@ export const LiquidGlassDNSStatus: React.FC<LiquidGlassDNSStatusProps> = ({
       setExpanded(!expanded);
     }
   }, [onPress, expanded]);
-  
+
   return (
     <Pressable onPress={handlePress} style={style}>
       <LiquidGlassView
@@ -412,31 +420,31 @@ export const LiquidGlassDNSStatus: React.FC<LiquidGlassDNSStatusProps> = ({
         <View style={styles.dnsStatusContent}>
           {/* Connection Indicator */}
           <LiquidGlassConnectionIndicator
-            status={isConnected ? 'connected' : 'disconnected'}
+            status={isConnected ? "connected" : "disconnected"}
             strength={isConnected ? 1 : 0}
             animated={true}
             style={styles.connectionIndicator}
           />
-          
+
           {/* Status Text */}
           <View style={styles.statusInfo}>
             <Text style={[styles.statusText, { color: statusColors.text }]}>
-              {isConnected ? 'Connected' : 'Disconnected'}
+              {isConnected ? "Connected" : "Disconnected"}
             </Text>
             <Text style={styles.statusDetails}>
               {activeMethod} • {server.name}
               {server.latency && ` • ${server.latency}ms`}
             </Text>
           </View>
-          
+
           {/* Method Badge */}
           <LiquidGlassMethodBadge
-            method={methods.find(m => m.name === activeMethod) || methods[0]}
+            method={methods.find((m) => m.name === activeMethod) || methods[0]}
             size="small"
             showTiming={false}
           />
         </View>
-        
+
         {/* Expanded Details */}
         {expanded && (
           <View style={styles.expandedDetails}>
@@ -471,16 +479,16 @@ export const LiquidGlassQueryLog: React.FC<LiquidGlassQueryLogProps> = ({
   onQueryPress,
   onClearLog,
   style,
-  intensity = 'thin',
+  intensity = "thin",
   containerStyle,
   ...glassProps
 }) => {
   const adaptiveIntensity = useAdaptiveGlassIntensity(intensity);
-  const displayQueries = useMemo(() => 
-    queries.slice(-maxQueries).reverse(), 
-    [queries, maxQueries]
+  const displayQueries = useMemo(
+    () => queries.slice(-maxQueries).reverse(),
+    [queries, maxQueries],
   );
-  
+
   return (
     <LiquidGlassView
       intensity={adaptiveIntensity}
@@ -500,7 +508,7 @@ export const LiquidGlassQueryLog: React.FC<LiquidGlassQueryLogProps> = ({
           />
         )}
       </View>
-      
+
       {/* Query List */}
       <ScrollView style={styles.logList} showsVerticalScrollIndicator={false}>
         {displayQueries.map((query) => (
@@ -511,7 +519,7 @@ export const LiquidGlassQueryLog: React.FC<LiquidGlassQueryLogProps> = ({
             onPress={() => onQueryPress?.(query)}
           />
         ))}
-        
+
         {displayQueries.length === 0 && (
           <View style={styles.emptyLog}>
             <Text style={styles.emptyText}>No DNS queries yet</Text>
@@ -530,16 +538,20 @@ const QueryLogEntry: React.FC<{
 }> = ({ query, showDetails, onPress }) => {
   const colorScheme = useColorScheme();
   const [expanded, setExpanded] = useState(showDetails);
-  
+
   const statusColor = useMemo(() => {
     switch (query.status) {
-      case 'success': return '#34C759';
-      case 'failed': return '#FF3B30';
-      case 'timeout': return '#FF9500';
-      default: return '#8E8E93';
+      case "success":
+        return "#34C759";
+      case "failed":
+        return "#FF3B30";
+      case "timeout":
+        return "#FF9500";
+      default:
+        return "#8E8E93";
     }
   }, [query.status]);
-  
+
   const handlePress = useCallback(() => {
     if (onPress) {
       onPress();
@@ -547,7 +559,7 @@ const QueryLogEntry: React.FC<{
       setExpanded(!expanded);
     }
   }, [onPress, expanded]);
-  
+
   return (
     <Pressable onPress={handlePress} style={styles.logEntry}>
       <LiquidGlassCard
@@ -560,15 +572,15 @@ const QueryLogEntry: React.FC<{
           <LiquidGlassMethodBadge
             method={{
               name: query.method,
-              icon: '📡',
+              icon: "📡",
               priority: 1,
-              status: query.status === 'success' ? 'active' : 'failed',
+              status: query.status === "success" ? "active" : "failed",
               timing: query.duration,
             }}
             size="small"
             showTiming={true}
           />
-          
+
           <View style={styles.logEntryInfo}>
             <Text style={styles.logEntryMessage} numberOfLines={1}>
               {query.message}
@@ -577,31 +589,31 @@ const QueryLogEntry: React.FC<{
               {query.timestamp.toLocaleTimeString()}
             </Text>
           </View>
-          
+
           <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
         </View>
-        
+
         {expanded && (
           <View style={styles.logEntryDetails}>
             <Text style={styles.detailLabel}>Status:</Text>
             <Text style={[styles.detailValue, { color: statusColor }]}>
               {query.status.toUpperCase()}
             </Text>
-            
+
             <Text style={styles.detailLabel}>Duration:</Text>
             <Text style={styles.detailValue}>{query.duration}ms</Text>
-            
+
             {query.retries && (
               <>
                 <Text style={styles.detailLabel}>Retries:</Text>
                 <Text style={styles.detailValue}>{query.retries}</Text>
               </>
             )}
-            
+
             {query.error && (
               <>
                 <Text style={styles.detailLabel}>Error:</Text>
-                <Text style={[styles.detailValue, { color: '#FF3B30' }]}>
+                <Text style={[styles.detailValue, { color: "#FF3B30" }]}>
                   {query.error}
                 </Text>
               </>
@@ -622,33 +634,33 @@ const QueryLogEntry: React.FC<{
  */
 export const LiquidGlassMethodBadge: React.FC<LiquidGlassMethodBadgeProps> = ({
   method,
-  size = 'medium',
+  size = "medium",
   showTiming = false,
   onPress,
   style,
-  intensity = 'ultraThin',
+  intensity = "ultraThin",
   containerStyle,
   ...glassProps
 }) => {
   const adaptiveIntensity = useAdaptiveGlassIntensity(intensity);
-  
+
   const badgeConfig = useMemo(() => {
     const baseConfig = {
       small: { padding: 4, fontSize: 10 },
       medium: { padding: 6, fontSize: 12 },
       large: { padding: 8, fontSize: 14 },
     }[size];
-    
+
     const statusConfig = {
-      active: { color: '#34C759', background: 'rgba(52, 199, 89, 0.1)' },
-      available: { color: '#007AFF', background: 'rgba(0, 122, 255, 0.1)' },
-      failed: { color: '#FF3B30', background: 'rgba(255, 59, 48, 0.1)' },
-      unavailable: { color: '#8E8E93', background: 'rgba(142, 142, 147, 0.1)' },
+      active: { color: "#34C759", background: "rgba(52, 199, 89, 0.1)" },
+      available: { color: "#007AFF", background: "rgba(0, 122, 255, 0.1)" },
+      failed: { color: "#FF3B30", background: "rgba(255, 59, 48, 0.1)" },
+      unavailable: { color: "#8E8E93", background: "rgba(142, 142, 147, 0.1)" },
     }[method.status];
-    
+
     return { ...baseConfig, ...statusConfig };
   }, [size, method.status]);
-  
+
   const BadgeContent = () => (
     <LiquidGlassView
       intensity={adaptiveIntensity}
@@ -663,24 +675,34 @@ export const LiquidGlassMethodBadge: React.FC<LiquidGlassMethodBadgeProps> = ({
       ]}
       {...glassProps}
     >
-      <Text style={[styles.methodText, { 
-        fontSize: badgeConfig.fontSize,
-        color: badgeConfig.color,
-      }]}>
+      <Text
+        style={[
+          styles.methodText,
+          {
+            fontSize: badgeConfig.fontSize,
+            color: badgeConfig.color,
+          },
+        ]}
+      >
         {method.name}
       </Text>
-      
+
       {showTiming && method.timing && (
-        <Text style={[styles.timingText, {
-          fontSize: badgeConfig.fontSize - 1,
-          color: badgeConfig.color,
-        }]}>
+        <Text
+          style={[
+            styles.timingText,
+            {
+              fontSize: badgeConfig.fontSize - 1,
+              color: badgeConfig.color,
+            },
+          ]}
+        >
           {method.timing}ms
         </Text>
       )}
     </LiquidGlassView>
   );
-  
+
   if (onPress) {
     return (
       <Pressable onPress={onPress} style={style}>
@@ -688,7 +710,7 @@ export const LiquidGlassMethodBadge: React.FC<LiquidGlassMethodBadgeProps> = ({
       </Pressable>
     );
   }
-  
+
   return <BadgeContent />;
 };
 
@@ -699,21 +721,23 @@ export const LiquidGlassMethodBadge: React.FC<LiquidGlassMethodBadgeProps> = ({
 /**
  * Animated connection status indicator
  */
-export const LiquidGlassConnectionIndicator: React.FC<LiquidGlassConnectionIndicatorProps> = ({
+export const LiquidGlassConnectionIndicator: React.FC<
+  LiquidGlassConnectionIndicatorProps
+> = ({
   status,
   strength = 1,
   animated = true,
   style,
-  intensity = 'ultraThin',
+  intensity = "ultraThin",
   containerStyle,
   ...glassProps
 }) => {
   const adaptiveIntensity = useAdaptiveGlassIntensity(intensity);
   const pulseAnim = useRef(new Animated.Value(1)).current;
-  
+
   // Pulse animation for connecting state
   useEffect(() => {
-    if (animated && status === 'connecting') {
+    if (animated && status === "connecting") {
       const pulse = Animated.loop(
         Animated.sequence([
           Animated.timing(pulseAnim, {
@@ -726,31 +750,31 @@ export const LiquidGlassConnectionIndicator: React.FC<LiquidGlassConnectionIndic
             duration: 1000,
             useNativeDriver: true,
           }),
-        ])
+        ]),
       );
       pulse.start();
-      
+
       return () => pulse.stop();
     } else {
       pulseAnim.setValue(1);
     }
   }, [animated, status, pulseAnim]);
-  
+
   const indicatorConfig = useMemo(() => {
     switch (status) {
-      case 'connected':
-        return { color: '#34C759', icon: '●' };
-      case 'connecting':
-        return { color: '#FF9500', icon: '◐' };
-      case 'disconnected':
-        return { color: '#8E8E93', icon: '○' };
-      case 'error':
-        return { color: '#FF3B30', icon: '✕' };
+      case "connected":
+        return { color: "#34C759", icon: "●" };
+      case "connecting":
+        return { color: "#FF9500", icon: "◐" };
+      case "disconnected":
+        return { color: "#8E8E93", icon: "○" };
+      case "error":
+        return { color: "#FF3B30", icon: "✕" };
       default:
-        return { color: '#8E8E93', icon: '○' };
+        return { color: "#8E8E93", icon: "○" };
     }
   }, [status]);
-  
+
   return (
     <Animated.View
       style={[
@@ -781,29 +805,31 @@ export const LiquidGlassConnectionIndicator: React.FC<LiquidGlassConnectionIndic
 /**
  * DNS server selection interface with status indicators
  */
-export const LiquidGlassServerSelector: React.FC<LiquidGlassServerSelectorProps> = ({
+export const LiquidGlassServerSelector: React.FC<
+  LiquidGlassServerSelectorProps
+> = ({
   servers,
   selectedServer,
   onServerSelect,
   allowCustom = false,
   onCustomServer,
   style,
-  intensity = 'thin',
+  intensity = "thin",
   containerStyle,
   ...glassProps
 }) => {
   const adaptiveIntensity = useAdaptiveGlassIntensity(intensity);
   const [showCustomInput, setShowCustomInput] = useState(false);
-  const [customAddress, setCustomAddress] = useState('');
-  
+  const [customAddress, setCustomAddress] = useState("");
+
   const handleCustomSubmit = useCallback(() => {
     if (customAddress.trim() && onCustomServer) {
       onCustomServer(customAddress.trim());
-      setCustomAddress('');
+      setCustomAddress("");
       setShowCustomInput(false);
     }
   }, [customAddress, onCustomServer]);
-  
+
   return (
     <LiquidGlassView
       intensity={adaptiveIntensity}
@@ -812,7 +838,7 @@ export const LiquidGlassServerSelector: React.FC<LiquidGlassServerSelectorProps>
       {...glassProps}
     >
       <Text style={styles.selectorTitle}>DNS Server</Text>
-      
+
       {servers.map((server) => (
         <Pressable
           key={server.address}
@@ -833,16 +859,20 @@ export const LiquidGlassServerSelector: React.FC<LiquidGlassServerSelectorProps>
                 <Text style={styles.serverName}>{server.name}</Text>
                 <Text style={styles.serverAddress}>{server.address}</Text>
               </View>
-              
+
               <LiquidGlassConnectionIndicator
                 status={
-                  server.status === 'online' ? 'connected' :
-                  server.status === 'slow' ? 'connecting' :
-                  server.status === 'offline' ? 'error' : 'disconnected'
+                  server.status === "online"
+                    ? "connected"
+                    : server.status === "slow"
+                      ? "connecting"
+                      : server.status === "offline"
+                        ? "error"
+                        : "disconnected"
                 }
                 animated={false}
               />
-              
+
               {server.latency && (
                 <Text style={styles.latencyText}>{server.latency}ms</Text>
               )}
@@ -850,7 +880,7 @@ export const LiquidGlassServerSelector: React.FC<LiquidGlassServerSelectorProps>
           </LiquidGlassCard>
         </Pressable>
       ))}
-      
+
       {allowCustom && (
         <>
           <LiquidGlassButton
@@ -860,7 +890,7 @@ export const LiquidGlassServerSelector: React.FC<LiquidGlassServerSelectorProps>
             size="small"
             style={styles.customButton}
           />
-          
+
           {showCustomInput && (
             <LiquidGlassInput
               value={customAddress}
@@ -895,273 +925,273 @@ const styles = StyleSheet.create({
     flex: 1,
     borderRadius: 0,
   },
-  
+
   dnsStatusHeader: {
     borderRadius: 0,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(128, 128, 128, 0.3)',
+    borderBottomColor: "rgba(128, 128, 128, 0.3)",
   },
-  
+
   messageList: {
     flex: 1,
   },
-  
+
   messageListContent: {
     padding: 16,
     paddingBottom: 8,
   },
-  
+
   loadingIndicator: {
-    alignSelf: 'center',
+    alignSelf: "center",
     marginVertical: 8,
   },
-  
+
   loadingContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 8,
   },
-  
+
   loadingText: {
     fontSize: 14,
-    color: '#8E8E93',
+    color: "#8E8E93",
   },
-  
+
   inputArea: {
     padding: 16,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: 'rgba(128, 128, 128, 0.3)',
+    borderTopColor: "rgba(128, 128, 128, 0.3)",
   },
-  
+
   messageInput: {
     // Custom input styling handled by LiquidGlassInput
   },
-  
+
   // DNS Status Styles
   dnsStatus: {
     padding: 12,
     borderRadius: 8,
   },
-  
+
   dnsStatusContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
-  
+
   connectionIndicator: {
     marginRight: 8,
   },
-  
+
   statusInfo: {
     flex: 1,
   },
-  
+
   statusText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
   },
-  
+
   statusDetails: {
     fontSize: 12,
-    color: '#8E8E93',
+    color: "#8E8E93",
     marginTop: 2,
   },
-  
+
   expandedDetails: {
     marginTop: 12,
     paddingTop: 12,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: 'rgba(128, 128, 128, 0.3)',
+    borderTopColor: "rgba(128, 128, 128, 0.3)",
   },
-  
+
   detailsTitle: {
     fontSize: 12,
-    fontWeight: '600',
-    color: '#8E8E93',
+    fontWeight: "600",
+    color: "#8E8E93",
     marginBottom: 8,
   },
-  
+
   methodDetail: {
     marginBottom: 4,
   },
-  
+
   // Query Log Styles
   queryLog: {
     maxHeight: 300,
     borderRadius: 12,
   },
-  
+
   logHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     padding: 16,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(128, 128, 128, 0.3)',
+    borderBottomColor: "rgba(128, 128, 128, 0.3)",
   },
-  
+
   logTitle: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
-  
+
   logList: {
     flex: 1,
   },
-  
+
   emptyLog: {
     padding: 32,
-    alignItems: 'center',
+    alignItems: "center",
   },
-  
+
   emptyText: {
-    color: '#8E8E93',
+    color: "#8E8E93",
     fontSize: 14,
   },
-  
+
   logEntry: {
     marginHorizontal: 12,
     marginVertical: 4,
   },
-  
+
   logEntryCard: {
     borderRadius: 8,
   },
-  
+
   logEntryHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
-  
+
   logEntryInfo: {
     flex: 1,
     marginLeft: 8,
   },
-  
+
   logEntryMessage: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: "500",
   },
-  
+
   logEntryTime: {
     fontSize: 11,
-    color: '#8E8E93',
+    color: "#8E8E93",
     marginTop: 2,
   },
-  
+
   statusDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
     marginLeft: 8,
   },
-  
+
   logEntryDetails: {
     marginTop: 8,
     paddingTop: 8,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: 'rgba(128, 128, 128, 0.3)',
+    borderTopColor: "rgba(128, 128, 128, 0.3)",
   },
-  
+
   detailLabel: {
     fontSize: 12,
-    fontWeight: '600',
-    color: '#8E8E93',
+    fontWeight: "600",
+    color: "#8E8E93",
     marginTop: 4,
   },
-  
+
   detailValue: {
     fontSize: 12,
     marginTop: 2,
   },
-  
+
   // Method Badge Styles
   methodBadge: {
     borderRadius: 6,
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-start",
   },
-  
+
   methodText: {
-    fontWeight: '600',
+    fontWeight: "600",
   },
-  
+
   timingText: {
     marginLeft: 4,
     opacity: 0.8,
   },
-  
+
   // Connection Indicator Styles
   connectionIndicator: {
     width: 16,
     height: 16,
     borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
-  
+
   indicatorIcon: {
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
-  
+
   // Server Selector Styles
   serverSelector: {
     padding: 16,
     borderRadius: 12,
   },
-  
+
   selectorTitle: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
     marginBottom: 12,
   },
-  
+
   serverOption: {
     marginBottom: 8,
   },
-  
+
   serverCard: {
     borderRadius: 8,
     borderWidth: 2,
-    borderColor: 'transparent',
+    borderColor: "transparent",
   },
-  
+
   selectedServer: {
-    borderColor: '#007AFF',
+    borderColor: "#007AFF",
   },
-  
+
   serverInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
-  
+
   serverDetails: {
     flex: 1,
   },
-  
+
   serverName: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
   },
-  
+
   serverAddress: {
     fontSize: 12,
-    color: '#8E8E93',
+    color: "#8E8E93",
     marginTop: 2,
   },
-  
+
   latencyText: {
     fontSize: 12,
-    color: '#8E8E93',
+    color: "#8E8E93",
     marginLeft: 8,
   },
-  
+
   customButton: {
     marginTop: 8,
   },
-  
+
   customInput: {
     marginTop: 8,
   },

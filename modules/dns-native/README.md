@@ -23,21 +23,21 @@ npm install @dnschat/dns-native
 ## Quick Start
 
 ```typescript
-import { nativeDNS, DNSError, DNSErrorType } from '@dnschat/dns-native';
+import { nativeDNS, DNSError, DNSErrorType } from "@dnschat/dns-native";
 
 // Check platform capabilities
 const capabilities = await nativeDNS.isAvailable();
-console.log('DNS available:', capabilities.available);
-console.log('Platform:', capabilities.platform);
+console.log("DNS available:", capabilities.available);
+console.log("Platform:", capabilities.platform);
 
 // Query TXT records
 try {
-  const txtRecords = await nativeDNS.queryTXT('ch.at', 'Hello AI');
+  const txtRecords = await nativeDNS.queryTXT("ch.at", "Hello AI");
   const response = nativeDNS.parseMultiPartResponse(txtRecords);
-  console.log('AI Response:', response);
+  console.log("AI Response:", response);
 } catch (error) {
   if (error instanceof DNSError) {
-    console.error('DNS Error:', error.type, error.message);
+    console.error("DNS Error:", error.type, error.message);
   }
 }
 ```
@@ -51,7 +51,7 @@ Returns platform capabilities and availability status.
 ```typescript
 interface DNSCapabilities {
   available: boolean;
-  platform: 'ios' | 'android' | 'web';
+  platform: "ios" | "android" | "web";
   supportsCustomServer: boolean;
   supportsAsyncQuery: boolean;
   apiLevel?: number; // Android only
@@ -63,6 +63,7 @@ interface DNSCapabilities {
 Queries TXT records from a DNS server.
 
 **Parameters:**
+
 - `domain` (string): DNS server domain (e.g., 'ch.at')
 - `message` (string): Query message to send
 
@@ -73,6 +74,7 @@ Queries TXT records from a DNS server.
 Parses multi-part TXT responses with format "1/3:", "2/3:", etc.
 
 **Parameters:**
+
 - `txtRecords` (string[]): Array of TXT record strings
 
 **Returns:** string - Concatenated response content
@@ -83,28 +85,28 @@ The module provides structured error handling with specific error types:
 
 ```typescript
 enum DNSErrorType {
-  PLATFORM_UNSUPPORTED = 'PLATFORM_UNSUPPORTED',
-  NETWORK_UNAVAILABLE = 'NETWORK_UNAVAILABLE',
-  DNS_SERVER_UNREACHABLE = 'DNS_SERVER_UNREACHABLE',
-  INVALID_RESPONSE = 'INVALID_RESPONSE',
-  TIMEOUT = 'TIMEOUT',
-  PERMISSION_DENIED = 'PERMISSION_DENIED',
-  DNS_QUERY_FAILED = 'DNS_QUERY_FAILED'
+  PLATFORM_UNSUPPORTED = "PLATFORM_UNSUPPORTED",
+  NETWORK_UNAVAILABLE = "NETWORK_UNAVAILABLE",
+  DNS_SERVER_UNREACHABLE = "DNS_SERVER_UNREACHABLE",
+  INVALID_RESPONSE = "INVALID_RESPONSE",
+  TIMEOUT = "TIMEOUT",
+  PERMISSION_DENIED = "PERMISSION_DENIED",
+  DNS_QUERY_FAILED = "DNS_QUERY_FAILED",
 }
 
 try {
-  await nativeDNS.queryTXT('example.com', 'test');
+  await nativeDNS.queryTXT("example.com", "test");
 } catch (error) {
   if (error instanceof DNSError) {
     switch (error.type) {
       case DNSErrorType.TIMEOUT:
-        console.log('Query timed out, try again');
+        console.log("Query timed out, try again");
         break;
       case DNSErrorType.NETWORK_UNAVAILABLE:
-        console.log('Check internet connection');
+        console.log("Check internet connection");
         break;
       default:
-        console.log('DNS error:', error.message);
+        console.log("DNS error:", error.message);
     }
   }
 }
@@ -115,6 +117,7 @@ try {
 ### iOS (Network Framework) ✅ COMPLETE
 
 Uses Apple's Network Framework for DNS queries:
+
 - **API**: `nw_resolver_t` with custom endpoint configuration
 - **Status**: ✅ Compiled and tested successfully on iOS simulator
 - **Requirements**: iOS 12.0+
@@ -124,14 +127,16 @@ Uses Apple's Network Framework for DNS queries:
 ### Android (DnsResolver + dnsjava) ✅ COMPLETE
 
 Dual implementation strategy for maximum compatibility:
+
 - **Modern (API 29+)**: Android's `DnsResolver` API with proper async handling
-- **Legacy (API <29)**: dnsjava library for older Android versions  
+- **Legacy (API <29)**: dnsjava library for older Android versions
 - **Status**: ✅ Complete implementation with automatic API level detection
 - **Features**: Full DNS control, custom servers, async operations, seamless fallback
 
 ### Web Fallback
 
 Graceful degradation for web platforms:
+
 - Reports unavailable capabilities
 - Allows app to use alternative DNS methods
 - No native module crash on web
@@ -157,7 +162,7 @@ npm run test:coverage
 For interactive testing on device:
 
 ```typescript
-import { runManualTests } from '@dnschat/dns-native/__tests__/integration.test';
+import { runManualTests } from "@dnschat/dns-native/__tests__/integration.test";
 
 // Run in your app
 await runManualTests();
@@ -199,17 +204,20 @@ await runManualTests();
 
 ### Common Issues
 
-**Module not found**: 
+**Module not found**:
+
 1. Run `cd ios && pod install && cd ..` for iOS
 2. Clean and rebuild with `expo run:android` for Android
 3. Verify with `nativeDNS.isAvailable()`
 
-**Timeout errors**: 
+**Timeout errors**:
+
 1. Check network connectivity
 2. Verify DNS server availability with `node test-dns.js`
 3. App automatically tries multiple connection methods
 
 **Background failures**:
+
 1. Normal behavior - queries suspend in background
 2. App automatically resumes queries when returning to foreground
 3. Error messages indicate background suspension for debugging

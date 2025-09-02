@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **🍎 iOS App Store Privacy Compliance**: Added required privacy usage descriptions to Info.plist
   - **NSCameraUsageDescription**: Explains third-party library camera API references
-  - **NSMicrophoneUsageDescription**: Explains third-party library microphone API references  
+  - **NSMicrophoneUsageDescription**: Explains third-party library microphone API references
   - **NSPhotoLibraryUsageDescription**: Explains third-party library photo library API references
   - **Fix**: Resolves ITMS-90683 App Store submission rejection for missing purpose strings
   - **Cause**: react-native-device-info references device capability APIs for feature detection
@@ -26,7 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **🎨 Complete iOS 26+ Liquid Glass Integration**: Native `.glassEffect()` modifier support with comprehensive fallback system
   - **iOS 26+**: Native UIGlassEffect with sensor-aware environmental adaptation
-  - **iOS 17-25**: Enhanced blur effects with react-native-blur integration  
+  - **iOS 17-25**: Enhanced blur effects with react-native-blur integration
   - **iOS 16**: Basic blur fallback with dramatic visual styling
   - **Android**: Material Design 3 elevated surfaces
   - **Web**: CSS glassmorphism with backdrop-filter support
@@ -60,6 +60,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### 🎨 UI/UX Fixes - Yellow Color Issues & About Screen
 
 #### Bug Fixes
+
 - **🎨 Yellow Color Removal**: Replaced harsh Notion yellow (#FFC107) with iOS system blue (#007AFF)
   - **LiquidGlassWrapper**: Interactive accents now use iOS system blue for native feel
   - **GlassSettings**: Switch track color changed to iOS system blue
@@ -95,12 +96,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 **Major Fix**: Resolved duplicate native view registration error and implemented proper iOS 26+ Liquid Glass support with comprehensive fallback system.
 
 #### Bug Fixes
+
 - **🔥 Duplicate Native View Registration**: Fixed "Tried to register two views with the same name LiquidGlassView" error
   - **Root Cause**: Multiple React Native components attempting to register the same native bridge identifier
   - **Solution**: Proper architectural separation - production component maintains native bridge, advanced system uses composition
   - **Impact**: Eliminates all React Native bridge conflicts and registration crashes
 
 #### New Features
+
 - **✨ iOS/iPadOS 26+ Native Liquid Glass**: Full support for Apple's new liquid glass design system
   - **Native Integration**: SwiftUI `.glassEffect()` bridging with React Native
   - **Feature Detection**: Robust iOS version detection (`iOS 26.0+ = apiLevel 260`)
@@ -108,6 +111,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Sensor Awareness**: Environmental adaptation with ambient light and motion detection
 
 #### Enhanced Fallback System
+
 - **🌟 Multi-tier Glass Effects**: Comprehensive cross-platform glass effect implementation
   - **iOS 26+**: Native UIGlassEffect with sensor-aware environmental adaptation
   - **iOS 17-25**: Enhanced blur effects with react-native-blur integration
@@ -118,6 +122,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **🔧 Visual Enhancements**: Improved shadow effects, border styling, and opacity management
 
 #### Technical Improvements
+
 - **✅ Proper Architecture**: `LiquidGlassWrapper` (production) + `LiquidGlassNative` (advanced features via composition)
 - **✅ Type Safety**: Full TypeScript coverage with proper prop interface compatibility
 - **✅ Performance Monitoring**: Real-time glass rendering performance metrics and thermal management
@@ -125,6 +130,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **✅ Cross-platform Compatibility**: Consistent API across iOS, Android, and Web platforms
 
 #### Code Changes
+
 - **Native Bridge**: Restored proper `LiquidGlassViewManager` registration serving production component
 - **Advanced System**: `LiquidGlassNative` now uses composition over duplication to provide enhanced features
 - **Capability Detection**: Comprehensive iOS version parsing and feature matrix analysis
@@ -137,6 +143,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 **Emergency Fix**: Resolved fatal iOS crash from CheckedContinuation double resume in native DNS module.
 
 #### Bug Fixes
+
 - **🔥 iOS CheckedContinuation Double Resume Crash (FATAL)**: Fixed critical race condition causing app termination
   - **Root Cause**: CheckedContinuation being resumed multiple times in concurrent DNS operations
   - **Crash Type**: Fatal EXC_BREAKPOINT from Swift runtime protection against double resume
@@ -145,6 +152,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Impact**: Eliminates all TestFlight crashes related to DNS query concurrency
 
 #### Technical Improvements
+
 - **✅ iOS 16.0+ Compatibility**: NSLock implementation compatible with all iOS 16+ devices
 - **✅ Atomic Operations**: Thread-safe continuation management prevents race conditions
 - **✅ Resource Cleanup**: Proper connection cancellation on resume to prevent resource leaks
@@ -155,6 +163,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Nil Coalescing**: Removed unnecessary operators on guaranteed non-nil properties
 
 #### Code Changes
+
 ```swift
 // ENTERPRISE-GRADE: Thread-safe atomic flag with NSLock (iOS 16.0+ compatible)
 let resumeLock = NSLock()
@@ -163,7 +172,7 @@ var hasResumed = false
 let resumeOnce: (Result<[String], Error>) -> Void = { result in
     resumeLock.lock()
     defer { resumeLock.unlock() }
-    
+
     if !hasResumed {
         hasResumed = true
         connection.cancel() // Immediately stop any further network activity
@@ -174,21 +183,23 @@ let resumeOnce: (Result<[String], Error>) -> Void = { result in
 ```
 
 #### User Interface Improvements
+
 - **📱 Onboarding Screen Scrollability**: Fixed first onboarding screen content overflow on smaller screens
   - **Issue**: Welcome screen content was cut off on smaller devices and landscape orientation
   - **Solution**: Wrapped content in ScrollView while keeping navigation fixed at bottom
   - **Impact**: Ensures all onboarding content is accessible on any screen size
-  
 - **🎨 About Screen App Icon**: Fixed missing app icon display in About screen
   - **Issue**: App icon not displaying in About screen due to incorrect asset path
   - **Solution**: Updated to use correct DNSChat icon with fallback text display
   - **Impact**: Proper branding and visual consistency across the app
 
 ### Architecture
+
 - **Before**: Race condition allowed multiple continuation resumes causing fatal crashes
 - **After**: Atomic lock-protected resume ensures single execution and prevents crashes
 
 ### Contributors
+
 - Claude Code (Anthropic) - Critical crash analysis and enterprise-grade thread safety fix
 - @mneves75 - TestFlight crash report analysis and validation
 
@@ -199,12 +210,13 @@ let resumeOnce: (Result<[String], Error>) -> Void = { result in
 **Production Readiness**: All critical bugs identified in comprehensive code audit have been resolved.
 
 #### Bug Fixes
+
 - **🔥 iOS MainActor Threading Violation (CRASH BUG)**: Fixed critical concurrency bug causing app crashes
   - Wrapped `@MainActor` activeQueries access in proper MainActor.run blocks
   - Prevents compilation errors and runtime crashes from threading violations
   - Impact: Eliminates all iOS crash scenarios related to DNS query concurrency
 
-- **🌐 iOS DNS Protocol Violation (NETWORK FAILURE)**: Fixed DNS packet construction causing all network queries to fail  
+- **🌐 iOS DNS Protocol Violation (NETWORK FAILURE)**: Fixed DNS packet construction causing all network queries to fail
   - Changed from multi-label domain approach to single-label DNS packets
   - Now matches Android implementation and DNS RFC standards
   - Impact: All iOS DNS queries now work correctly instead of failing silently
@@ -230,23 +242,27 @@ let resumeOnce: (Result<[String], Error>) -> Void = { result in
   - Impact: Cleaner architecture with no conflicting implementation patterns
 
 #### Technical Improvements
+
 - **✅ Cross-Platform Parity**: Both iOS and Android now have identical DNS behavior
-- **✅ Thread Safety**: All concurrent access properly synchronized on both platforms  
+- **✅ Thread Safety**: All concurrent access properly synchronized on both platforms
 - **✅ DNS Protocol Compliance**: Both platforms follow DNS RFC standards exactly
 - **✅ Performance Optimization**: Query deduplication prevents redundant network requests
 - **✅ Enhanced Debugging**: Comprehensive logging added for all fallback attempts
 
 #### Architecture
+
 - **Before**: iOS crash-prone, Android missing features, inconsistent cross-platform behavior
 - **After**: Enterprise-grade reliability, complete feature parity, production-ready stability
 
 ### Contributors
+
 - Claude Code (Anthropic) - Comprehensive code audit and critical bug fixes
 - @mneves75 - Code review and validation
 
 ## [1.7.5] - 2025-08-18
 
 ### Features
+
 - **🚀 XcodeBuildMCP Integration**: Revolutionary iOS build management with Claude Code's MCP tools
   - 99% success rate vs 60% with traditional methods for iOS builds
   - Precise error diagnosis with exact file paths and line numbers
@@ -254,6 +270,7 @@ let resumeOnce: (Result<[String], Error>) -> Void = { result in
   - Comprehensive build progress tracking and superior error messages
 
 ### Bug Fixes
+
 - **🧭 React Navigation Fix**: Resolved "Screen not handled by navigator" error
   - Fixed Settings screen navigation to Logs tab using proper nested navigation
   - Updated navigation pattern from direct `navigate('Logs')` to `navigate('HomeTabs', { screen: 'Logs' })`
@@ -275,6 +292,7 @@ let resumeOnce: (Result<[String], Error>) -> Void = { result in
   - Enhanced error handling with proper MainActor usage and discardable results
 
 ### Documentation
+
 - **📚 Comprehensive XcodeBuildMCP Guide**: New dedicated documentation for advanced iOS build management
   - Complete workflow from project discovery to app installation and launch
   - Error resolution patterns with specific MCP commands and troubleshooting
@@ -291,6 +309,7 @@ let resumeOnce: (Result<[String], Error>) -> Void = { result in
   - Comprehensive coverage of Swift compilation errors and CocoaPods integration issues
 
 ### Technical Improvements
+
 - **⚡ Superior Build Diagnostics**: XcodeBuildMCP provides detailed compilation insights
   - Real-time compilation status across all dependencies and modules
   - Clear distinction between code errors and macOS security restrictions
@@ -299,6 +318,7 @@ let resumeOnce: (Result<[String], Error>) -> Void = { result in
 ## [1.7.4] - 2025-08-15
 
 ### Features
+
 - **🤖 Automated Version Sync System**: Complete multi-platform version synchronization automation
   - Automated script to sync versions across package.json, app.json, iOS, and Android projects
   - Source of truth from CHANGELOG.md with automatic build number increments
@@ -312,6 +332,7 @@ let resumeOnce: (Result<[String], Error>) -> Void = { result in
   - TestFlight and App Store Connect documentation with deployment guides
 
 ### Improvements
+
 - **🔧 Enhanced Android Network Connectivity**: Complete synchronization with iOS DNS implementation
   - Message sanitization matching iOS behavior (spaces→dashes, lowercase, 200 char limit)
   - Query deduplication with ConcurrentHashMap implementation
@@ -322,6 +343,7 @@ let resumeOnce: (Result<[String], Error>) -> Void = { result in
   - Version 1.7.2 and 1.7.3 documentation consolidation
 
 ### Bug Fixes
+
 - **🔥 CRITICAL: Hermes dSYM App Store Connect Fix**: Permanent solution for missing debug symbols blocking uploads
   - expo-build-properties plugin with comprehensive iOS dSYM generation
   - Custom build script for automatic Hermes dSYM copying during Release builds
@@ -336,11 +358,13 @@ let resumeOnce: (Result<[String], Error>) -> Void = { result in
   - Better error messages with specific diagnostics and actionable guidance
 
 ### Developer Experience
+
 - **⚙️ iOS Project Configuration**: Updated build settings and version management for v1.7.2+
 - **🔄 Feature Branch Integration**: Seamless merge of native-dns-default-landscape-support features
 - **📋 Enhanced Innovative Onboarding**: Complete onboarding flow improvements and user experience enhancements
 
 ### Security
+
 - **🛡️ App Store Security Hardening**: Enhanced security measures for production App Store deployment
   - Comprehensive security review and hardening for App Store Connect compliance
   - Production-ready security configurations across all platforms
@@ -348,6 +372,7 @@ let resumeOnce: (Result<[String], Error>) -> Void = { result in
 ## [1.7.3] - 2025-08-15
 
 ### Added
+
 - **🚀 Native DNS First Priority**: Default prioritization of platform-native DNS implementations
   - Set 'native-first' as the default DNS method preference for optimal performance
   - Native DNS methods now prioritized over fallback chains for best success rates
@@ -355,11 +380,12 @@ let resumeOnce: (Result<[String], Error>) -> Void = { result in
   - Smart platform detection ensuring optimal DNS method selection on iOS and Android
 - **📱 Universal Landscape Support**: Complete orientation flexibility across all platforms
   - iOS landscape support with proper layout adaptation for all screens
-  - Android landscape orientation with seamless rotation handling 
+  - Android landscape orientation with seamless rotation handling
   - Web landscape responsive design for enhanced desktop viewing experience
   - Automatic orientation changes with smooth UI transitions between portrait and landscape
 
 ### Changed
+
 - **⚙️ Default DNS Configuration**: 'native-first' is now the default DNS method preference
   - Previous 'automatic' default changed to 'native-first' for better performance
   - Users can still configure other DNS methods via Settings interface
@@ -370,12 +396,14 @@ let resumeOnce: (Result<[String], Error>) -> Void = { result in
   - Navigation and UI components properly adapt to orientation changes
 
 ### Technical Improvements
+
 - **🏗️ DNS Service Architecture**: Enhanced DNS method ordering with native-first strategy
 - **📱 Cross-Platform Layout**: Improved responsive design handling across all platforms
 - **⚡ Performance Optimization**: Native DNS prioritization reduces fallback overhead
 - **🔧 Configuration Management**: Simplified default settings for better out-of-the-box experience
 
 ### Fixed
+
 - **🔧 MAJOR: Complete Android Network Connectivity Sync**: Full synchronization of Android DNS implementation to match iOS behavior
   - **Message Sanitization Sync**: Android now applies identical message processing as iOS (spaces→dashes, lowercase, 200 char limit)
   - **Query Deduplication**: Implemented ConcurrentHashMap-based duplicate query prevention matching iOS @MainActor pattern
@@ -389,6 +417,7 @@ let resumeOnce: (Result<[String], Error>) -> Void = { result in
 ## [1.7.2] - 2025-08-13
 
 ### Fixed
+
 - **🔥 CRITICAL: Hermes dSYM App Store Connect Upload Issue**: Permanent fix for missing Hermes debug symbols blocking App Store uploads
   - Added expo-build-properties plugin with comprehensive iOS dSYM generation settings
   - Created EAS build configuration (eas.json) with `includeDsym: true` and `archiveHermesDsym: true`
@@ -406,6 +435,7 @@ let resumeOnce: (Result<[String], Error>) -> Void = { result in
   - Fixed About screen to display proper app icon instead of search emoji
 
 ### Enhanced
+
 - **📋 Error Messages with Actionable Guidance**: User-friendly error messages with specific troubleshooting steps
   - Network-specific guidance (WiFi ↔ cellular switching recommendations)
   - Clear port blocking detection with network administrator contact suggestions
@@ -413,16 +443,18 @@ let resumeOnce: (Result<[String], Error>) -> Void = { result in
   - Platform-specific error categorization with fallback method explanations
 - **🔍 Comprehensive Error Diagnostics**: Enhanced logging and error type detection
   - Robust error type detection across all transport methods (native, UDP, TCP, HTTPS)
-  - Enhanced native DNS error messages with iOS/Android platform-specific guidance  
+  - Enhanced native DNS error messages with iOS/Android platform-specific guidance
   - Comprehensive socket error logging with diagnostic information for debugging
 
 ### Added
+
 - **📚 Comprehensive Documentation**: Detailed troubleshooting guides for production deployment
   - Created HERMES_DSYM_FIX.md with complete technical implementation details
   - Enhanced COMMON-ISSUES.md with App Store Connect upload troubleshooting section
   - Step-by-step verification procedures for dSYM inclusion testing
 
 ### Technical Improvements
+
 - **🛡️ Production-Ready Error Handling**: Enterprise-grade error recovery and user guidance
 - **🔧 Network Resilience**: Improved detection of corporate firewalls and public WiFi restrictions
 - **📱 Cross-Platform Compatibility**: Better Metro bundler asset handling for consistent icon display
@@ -431,6 +463,7 @@ let resumeOnce: (Result<[String], Error>) -> Void = { result in
 ## [1.7.1] - 2025-08-13
 
 ### Fixed
+
 - **🚨 CRITICAL: Infinite Render Loop**: Fixed critical chat screen freeze causing iOS watchdog termination (0x8BADF00D)
   - Resolved destructuring of `useSettings()` in ChatContext causing continuous re-renders
   - Fixed infinite React Native hot reload bundle rebuilds
@@ -438,11 +471,12 @@ let resumeOnce: (Result<[String], Error>) -> Void = { result in
   - Prevented circular dependency between SettingsContext and ChatContext
 - **⚠️ MockDNSService Misuse**: Fixed inappropriate MockDNSService usage in onboarding screens
   - MockDNSService now disabled by default (users get real DNS behavior)
-  - Added `enableMockDNS` setting in Settings context (default: false)  
+  - Added `enableMockDNS` setting in Settings context (default: false)
   - Onboarding screens explicitly use real DNS methods only
   - DNS fallback chain now respects MockDNSService setting properly
 
 ### Technical Improvements
+
 - **Performance Optimization**: Eliminated useCallback dependency issues causing infinite loops
 - **Context Architecture**: Improved React Context usage patterns to prevent render cycles
 - **Error Recovery**: Enhanced app stability and crash resistance
@@ -450,10 +484,11 @@ let resumeOnce: (Result<[String], Error>) -> Void = { result in
 ## [1.7.0] - 2025-08-13
 
 ### Added
+
 - **🎯 Innovative Onboarding Experience**: Complete interactive onboarding flow with DNS demonstrations and feature showcases
 - **⚙️ Advanced DNS Method Preferences**: Four new DNS method options for fine-grained control:
   - `Automatic`: Balanced fallback chain (default)
-  - `Prefer HTTPS`: Privacy-focused with DNS-over-HTTPS first  
+  - `Prefer HTTPS`: Privacy-focused with DNS-over-HTTPS first
   - `UDP Only`: Fast direct UDP queries only
   - `Never HTTPS`: Native and UDP/TCP methods only
 - **📱 Scrollable Settings Interface**: Enhanced settings screen with improved navigation and keyboard handling
@@ -461,18 +496,21 @@ let resumeOnce: (Result<[String], Error>) -> Void = { result in
 - **🏗️ Structured DNS Fallback Logic**: Completely rewritten DNS service with method-specific fallback chains
 
 ### Fixed
+
 - **🐛 DNS Fallback Chain Compliance**: DNS method preferences now fully respected throughout entire fallback chain
 - **📊 Logs Screen Text Rendering**: Fixed React Native error "Text strings must be rendered within a <Text> component"
 - **⚡ DNS Service Error Handling**: Enhanced null checks and fallback values for undefined DNS log entries
 - **🔧 DNS Method Selection**: Improved conditional logic for UDP-only and never-HTTPS preferences
 
 ### Changed
+
 - **📋 Settings UI Architecture**: Migrated to radio button interface for DNS method selection
 - **🎨 Visual Method Indicators**: Real-time configuration display with method-specific colors and icons
 - **📡 DNS Query Parameters**: Extended DNSService.queryLLM() signature to support new method preferences
 - **💾 Settings Storage**: Enhanced AsyncStorage structure to persist DNS method preferences
 
 ### Technical Improvements
+
 - **TypeScript Enhancements**: Added DNSMethodPreference type with strict enum validation
 - **Component Architecture**: Refactored Settings component with ScrollView and improved state management
 - **Context Updates**: Extended SettingsContext and ChatContext for new DNS preferences
@@ -481,16 +519,19 @@ let resumeOnce: (Result<[String], Error>) -> Void = { result in
 ## [1.6.1] - 2025-08-11
 
 ### Fixed
+
 - **Settings Save Button Contrast**: Fixed save button visibility in dark mode with proper theme-aware colors
 - **Settings Header Button**: Resolved React child error in navigation header settings button
 - **Button Theme Adaptation**: Improved contrast ratios for better accessibility across light/dark themes
 
 ### Changed
+
 - **UI Color Schemes**: Enhanced settings button styling with theme-appropriate background and text colors
 
 ## [1.6.0] - 2025-08-11
 
 ### Added
+
 - **DNS Query Logging Tab**: New dedicated tab for viewing detailed DNS query logs with step-by-step method attempts
 - **DNS-over-HTTPS Preference**: Toggle in Settings to prefer DNS-over-HTTPS (Cloudflare) for enhanced privacy
 - **Real-time DNS Query Visualization**: Live logging of DNS method attempts, fallbacks, and response times
@@ -498,15 +539,18 @@ let resumeOnce: (Result<[String], Error>) -> Void = { result in
 - **DNS Method Statistics**: Visual indicators showing which DNS method succeeded (Native, UDP, TCP, HTTPS)
 
 ### Fixed
+
 - **Settings Button Theme**: Settings icon now properly adapts to light/dark theme colors
 
 ### Changed
+
 - **DNS Query Priority**: When DNS-over-HTTPS is enabled, it's tried first before native methods
 - **Settings UI**: Enhanced with toggle for DNS method preference and improved configuration display
 
 ## [1.5.0] - 2025-08-08
 
 ### Added
+
 - Complete documentation restructure with comprehensive technical guides
 - Technical FAQ for quick issue resolution
 - Junior Developer Guide for comprehensive onboarding
@@ -515,11 +559,13 @@ let resumeOnce: (Result<[String], Error>) -> Void = { result in
 - Native specifications for DNS module implementation
 
 ### Changed
+
 - Project references renamed from "chatdns" to "dnschat" for consistency
 - Improved documentation organization with role-based navigation
 - Enhanced technical documentation with practical examples and troubleshooting
 
 ### Documentation
+
 - New `/docs/` folder structure with organized technical documentation
 - Complete developer onboarding guide for new team members
 - Comprehensive troubleshooting resources with emergency procedures
@@ -529,8 +575,9 @@ let resumeOnce: (Result<[String], Error>) -> Void = { result in
 ## [1.0.0] - 2025-08-08
 
 ### Added
+
 - Initial release of DNSChat - React Native mobile app for DNS-based LLM communication
-- Native DNS implementation for iOS (Swift) and Android (Kotlin)  
+- Native DNS implementation for iOS (Swift) and Android (Kotlin)
 - Modern ChatGPT-like chat interface with message bubbles
 - Configurable DNS server settings with persistent storage
 - Multi-layer DNS fallback: Native → UDP → TCP → HTTPS → Mock
@@ -541,6 +588,7 @@ let resumeOnce: (Result<[String], Error>) -> Void = { result in
 - Professional documentation and installation guides
 
 ### Security
+
 - RFC 1035 compliant DNS sanitization preventing injection attacks
 - Zero security vulnerabilities in dependencies
 - Production-ready with no debug logging or sensitive data exposure
@@ -548,4 +596,4 @@ let resumeOnce: (Result<[String], Error>) -> Void = { result in
 
 ---
 
-*Generated with [Claude Code](https://claude.ai/code)*
+_Generated with [Claude Code](https://claude.ai/code)_

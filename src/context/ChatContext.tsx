@@ -1,9 +1,16 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import uuid from 'react-native-uuid';
-import { Chat, Message, ChatContextType } from '../types/chat';
-import { StorageService } from '../services/storageService';
-import { DNSService } from '../services/dnsService';
-import { useSettings } from './SettingsContext';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  ReactNode,
+} from "react";
+import uuid from "react-native-uuid";
+import { Chat, Message, ChatContextType } from "../types/chat";
+import { StorageService } from "../services/storageService";
+import { DNSService } from "../services/dnsService";
+import { useSettings } from "./SettingsContext";
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
@@ -25,7 +32,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
       setChats(loadedChats);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load chats');
+      setError(err instanceof Error ? err.message : "Failed to load chats");
     } finally {
       setIsLoading(false);
     }
@@ -38,12 +45,12 @@ export function ChatProvider({ children }: ChatProviderProps) {
   const createChat = useCallback(async (title?: string): Promise<Chat> => {
     try {
       const newChat = await StorageService.createChat(title);
-      setChats(prevChats => [newChat, ...prevChats]);
+      setChats((prevChats) => [newChat, ...prevChats]);
       setCurrentChat(newChat);
       setError(null);
       return newChat;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create chat');
+      setError(err instanceof Error ? err.message : "Failed to create chat");
       throw err;
     }
   }, []);
@@ -51,38 +58,38 @@ export function ChatProvider({ children }: ChatProviderProps) {
   const deleteChat = async (chatId: string): Promise<void> => {
     try {
       await StorageService.deleteChat(chatId);
-      setChats(prevChats => prevChats.filter(chat => chat.id !== chatId));
-      
+      setChats((prevChats) => prevChats.filter((chat) => chat.id !== chatId));
+
       // If we deleted the current chat, clear it
       if (currentChat?.id === chatId) {
         setCurrentChat(null);
       }
-      
+
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete chat');
+      setError(err instanceof Error ? err.message : "Failed to delete chat");
     }
   };
 
   const sendMessage = async (content: string): Promise<void> => {
     if (!currentChat) {
-      setError('No active chat selected');
+      setError("No active chat selected");
       return;
     }
 
     // Create user message
     const userMessage: Message = {
       id: uuid.v4() as string,
-      role: 'user',
+      role: "user",
       content,
       timestamp: new Date(),
-      status: 'sent',
+      status: "sent",
     };
 
     try {
       // Add user message to storage and state
       await StorageService.addMessage(currentChat.id, userMessage);
-      
+
       // Update current chat with user message
       const updatedChat: Chat = {
         ...currentChat,
@@ -90,53 +97,59 @@ export function ChatProvider({ children }: ChatProviderProps) {
         updatedAt: new Date(),
       };
       setCurrentChat(updatedChat);
-      
+
       // Update chats list
-      setChats(prevChats => 
-        prevChats.map(chat => 
-          chat.id === currentChat.id ? updatedChat : chat
-        )
+      setChats((prevChats) =>
+        prevChats.map((chat) =>
+          chat.id === currentChat.id ? updatedChat : chat,
+        ),
       );
 
       // Create assistant message with loading state
       const assistantMessage: Message = {
         id: uuid.v4() as string,
-        role: 'assistant',
-        content: '',
+        role: "assistant",
+        content: "",
         timestamp: new Date(),
-        status: 'sending',
+        status: "sending",
       };
 
       // Add assistant message placeholder
       await StorageService.addMessage(currentChat.id, assistantMessage);
-      
+
       const chatWithAssistantPlaceholder: Chat = {
         ...updatedChat,
         messages: [...updatedChat.messages, assistantMessage],
         updatedAt: new Date(),
       };
       setCurrentChat(chatWithAssistantPlaceholder);
-      
-      setChats(prevChats => 
-        prevChats.map(chat => 
-          chat.id === currentChat.id ? chatWithAssistantPlaceholder : chat
-        )
+
+      setChats((prevChats) =>
+        prevChats.map((chat) =>
+          chat.id === currentChat.id ? chatWithAssistantPlaceholder : chat,
+        ),
       );
 
       // Get AI response using DNS service (respects enableMockDNS setting)
       setIsLoading(true);
-      const response = await DNSService.queryLLM(content, settings.dnsServer, settings.preferDnsOverHttps, settings.dnsMethodPreference, settings.enableMockDNS);
-      
+      const response = await DNSService.queryLLM(
+        content,
+        settings.dnsServer,
+        settings.preferDnsOverHttps,
+        settings.dnsMethodPreference,
+        settings.enableMockDNS,
+      );
+
       // Update assistant message with response
       const completedAssistantMessage: Message = {
         ...assistantMessage,
         content: response,
-        status: 'sent',
+        status: "sent",
       };
 
       await StorageService.updateMessage(currentChat.id, assistantMessage.id, {
         content: response,
-        status: 'sent',
+        status: "sent",
       });
 
       // Update state with completed response
@@ -150,32 +163,41 @@ export function ChatProvider({ children }: ChatProviderProps) {
       };
 
       setCurrentChat(finalChat);
-      setChats(prevChats => 
-        prevChats.map(chat => 
-          chat.id === currentChat.id ? finalChat : chat
-        )
+      setChats((prevChats) =>
+        prevChats.map((chat) =>
+          chat.id === currentChat.id ? finalChat : chat,
+        ),
       );
 
       setError(null);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to send message';
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to send message";
       setError(errorMessage);
-      
+
       // Update assistant message with error status
       if (currentChat) {
         try {
-          const messageToUpdate = currentChat.messages[currentChat.messages.length - 1];
+          const messageToUpdate =
+            currentChat.messages[currentChat.messages.length - 1];
           if (messageToUpdate?.id) {
-            await StorageService.updateMessage(currentChat.id, messageToUpdate.id, {
-              status: 'error',
-              content: `Error: ${errorMessage}`,
-            });
+            await StorageService.updateMessage(
+              currentChat.id,
+              messageToUpdate.id,
+              {
+                status: "error",
+                content: `Error: ${errorMessage}`,
+              },
+            );
           }
-          
+
           // Reload chats to reflect error state
           await loadChats();
         } catch (updateErr) {
-          console.error('Failed to update message with error status:', updateErr);
+          console.error(
+            "Failed to update message with error status:",
+            updateErr,
+          );
         }
       }
     } finally {
@@ -201,16 +223,14 @@ export function ChatProvider({ children }: ChatProviderProps) {
   };
 
   return (
-    <ChatContext.Provider value={contextValue}>
-      {children}
-    </ChatContext.Provider>
+    <ChatContext.Provider value={contextValue}>{children}</ChatContext.Provider>
   );
 }
 
 export function useChat() {
   const context = useContext(ChatContext);
   if (context === undefined) {
-    throw new Error('useChat must be used within a ChatProvider');
+    throw new Error("useChat must be used within a ChatProvider");
   }
   return context;
 }
