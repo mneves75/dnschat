@@ -24,16 +24,19 @@ Swift 6 represents a revolutionary leap in concurrent programming, introducing c
 ### Quick Start: Enable Strict Concurrency
 
 **Xcode:**
+
 ```
 Build Settings → Swift Compiler - Language → Strict Concurrency Checking → Complete
 ```
 
 **Command Line:**
+
 ```bash
 swiftc -strict-concurrency=complete -swift-version 6 MyFile.swift
 ```
 
 **Package.swift:**
+
 ```swift
 .target(
     name: "MyTarget",
@@ -47,6 +50,7 @@ swiftc -strict-concurrency=complete -swift-version 6 MyFile.swift
 ### What is Swift 6 Concurrency?
 
 Swift 6's concurrency model builds upon Swift 5.5's async/await foundation with:
+
 - **Complete data race safety** at compile time
 - **Actor isolation** enforcement
 - **Sendable protocol** requirements
@@ -71,7 +75,7 @@ Swift 6 defines clear isolation domains where data can be safely accessed:
 @MainActor
 class ViewController: UIViewController {
     var label = UILabel() // Safe within MainActor
-    
+
     func updateUI() {
         label.text = "Updated" // No await needed - same isolation
     }
@@ -80,7 +84,7 @@ class ViewController: UIViewController {
 // Custom actor isolation domain
 actor DataManager {
     private var cache: [String: Data] = [:] // Protected by actor
-    
+
     func store(key: String, data: Data) {
         cache[key] = data // Safe within actor
     }
@@ -113,7 +117,7 @@ func process(model: Model) async {
 @MainActor
 final class Model: Sendable {
     private(set) var items: [Item] = []
-    
+
     func addItem(_ item: Item) {
         items.append(item) // Safe - MainActor synchronized
     }
@@ -146,6 +150,7 @@ func processImage(_ image: UIImage) async -> ProcessedImage {
 ### Foundation Proposals (Swift 5.5-5.10)
 
 #### SE-0302: Sendable and @Sendable
+
 Introduces the fundamental `Sendable` protocol:
 
 ```swift
@@ -164,22 +169,23 @@ struct Container<T>: Sendable where T: Sendable {
 ```
 
 #### SE-0306: Actors
+
 The actor model for protecting mutable state:
 
 ```swift
 actor BankAccount {
     private var balance: Decimal = 0
-    
+
     func deposit(amount: Decimal) {
         balance += amount
     }
-    
+
     func withdraw(amount: Decimal) -> Bool {
         guard balance >= amount else { return false }
         balance -= amount
         return true
     }
-    
+
     // Computed property accessible without await
     nonisolated var accountDescription: String {
         "Bank Account" // No state access
@@ -188,6 +194,7 @@ actor BankAccount {
 ```
 
 #### SE-0316: Global Actors
+
 System-wide isolation domains:
 
 ```swift
@@ -200,7 +207,7 @@ actor DataActor {
 @DataActor
 class DataStore {
     var items: [Item] = []
-    
+
     func add(_ item: Item) {
         items.append(item)
     }
@@ -210,12 +217,12 @@ class DataStore {
 class MixedClass {
     @DataActor var data: [String] = []
     @MainActor var uiState = UIState()
-    
+
     @DataActor
     func processData() async {
         // Runs on DataActor
     }
-    
+
     @MainActor
     func updateUI() {
         // Runs on MainActor
@@ -226,6 +233,7 @@ class MixedClass {
 ### Swift 6 Core Proposals
 
 #### SE-0337: Incremental Migration to Concurrency Checking
+
 Enables progressive adoption:
 
 ```swift
@@ -244,13 +252,14 @@ Enables progressive adoption:
 ```
 
 #### SE-0401: Remove Actor Isolation Inference from Property Wrappers
+
 Eliminates unexpected isolation:
 
 ```swift
 // Before SE-0401
 struct ContentView: View {
     @StateObject private var model = Model() // Made View MainActor-isolated!
-    
+
     func doWork() { // Implicitly @MainActor
         // ...
     }
@@ -259,7 +268,7 @@ struct ContentView: View {
 // After SE-0401
 struct ContentView: View {
     @StateObject private var model = Model() // No isolation inference
-    
+
     nonisolated func doWork() { // Explicitly non-isolated
         // ...
     }
@@ -267,6 +276,7 @@ struct ContentView: View {
 ```
 
 #### SE-0412: Strict Concurrency for Global Variables
+
 Global variable safety with `nonisolated(unsafe)`:
 
 ```swift
@@ -293,6 +303,7 @@ struct LegacyAPI {
 ```
 
 #### SE-0414: Region-Based Isolation
+
 Revolutionary improvement in isolation checking:
 
 ```swift
@@ -303,20 +314,21 @@ class MutableData {
 
 func process() async {
     let data = MutableData() // Non-Sendable
-    
+
     // ✅ Safe: data not used after transfer
     await withTaskGroup(of: Void.self) { group in
         group.addTask {
             data.value = 42 // Region analysis proves safety
         }
     }
-    
+
     // ❌ Error: data used after transfer
     // print(data.value)
 }
 ```
 
 #### SE-0420: Inheritance of Actor Isolation
+
 Dynamic isolation inheritance:
 
 ```swift
@@ -341,6 +353,7 @@ actor DataProcessor {
 ```
 
 #### SE-0430: Sending Parameter and Result Values
+
 Safe transfer without full Sendable:
 
 ```swift
@@ -360,6 +373,7 @@ extension Task where Failure == Never {
 ```
 
 #### SE-0431: @isolated(any) Function Types
+
 Isolation-agnostic function types:
 
 ```swift
@@ -374,6 +388,7 @@ struct Executor {
 ```
 
 #### SE-0434: Usability of Global-Actor-Isolated Types
+
 Improvements for global actor usage:
 
 ```swift
@@ -382,10 +397,10 @@ Improvements for global actor usage:
 final class ViewModel: Sendable {
     // ✅ Implicitly nonisolated (Sendable stored property)
     let id = UUID()
-    
+
     // ❌ Must be isolated (non-Sendable)
     var items: [Item] = []
-    
+
     // ✅ Can be explicitly nonisolated
     nonisolated let configuration: Configuration
 }
@@ -426,7 +441,7 @@ Swift 6 enforces complete checking by default:
 // ❌ Data race
 class Counter {
     var value = 0
-    
+
     func increment() {
         value += 1 // Race condition!
     }
@@ -435,11 +450,11 @@ class Counter {
 // ✅ Fix 1: Use an actor
 actor Counter {
     private var value = 0
-    
+
     func increment() {
         value += 1 // Actor-isolated
     }
-    
+
     var currentValue: Int {
         value
     }
@@ -450,11 +465,11 @@ import Atomics
 
 final class Counter: Sendable {
     private let value = ManagedAtomic<Int>(0)
-    
+
     func increment() {
         value.wrappingIncrement(ordering: .relaxed)
     }
-    
+
     var currentValue: Int {
         value.load(ordering: .relaxed)
     }
@@ -500,24 +515,24 @@ class NetworkManager {
 actor DatabaseConnection {
     private var isConnected = false
     private var activeQueries = 0
-    
+
     func connect() async throws {
         guard !isConnected else { return }
         // Connection logic...
         isConnected = true
     }
-    
+
     func query(_ sql: String) async throws -> [Row] {
         activeQueries += 1
         defer { activeQueries -= 1 }
-        
+
         // Query execution...
         return rows
     }
-    
+
     // Synchronous access for immutable data
     nonisolated let connectionString: String
-    
+
     // Computed property without state access
     nonisolated var description: String {
         "Database connection to \(connectionString)"
@@ -533,11 +548,11 @@ actor DatabaseConnection {
 final class LoginViewModel: ObservableObject {
     @Published private(set) var isLoading = false
     @Published private(set) var error: Error?
-    
+
     func login(username: String, password: String) async {
         isLoading = true
         defer { isLoading = false }
-        
+
         do {
             // This switches to background for network call
             let user = try await AuthService.shared.login(
@@ -550,7 +565,7 @@ final class LoginViewModel: ObservableObject {
             self.error = error
         }
     }
-    
+
     // Can run on any thread
     nonisolated func validateEmail(_ email: String) -> Bool {
         // Email validation logic...
@@ -565,7 +580,7 @@ final class LoginViewModel: ObservableObject {
 @globalActor
 actor DatabaseActor {
     static let shared = DatabaseActor()
-    
+
     // Custom executor for integration
     nonisolated var unownedExecutor: UnownedSerialExecutor {
         DatabaseQueue.shared.unownedExecutor
@@ -576,17 +591,17 @@ actor DatabaseActor {
 @DatabaseActor
 class UserRepository {
     private var cache: [UUID: User] = [:]
-    
+
     func findUser(id: UUID) async throws -> User {
         if let cached = cache[id] {
             return cached
         }
-        
+
         let user = try await database.fetch(User.self, id: id)
         cache[id] = user
         return user
     }
-    
+
     func saveUser(_ user: User) async throws {
         try await database.save(user)
         cache[user.id] = user
@@ -597,14 +612,14 @@ class UserRepository {
 class DataCoordinator {
     @DatabaseActor
     private var userRepo = UserRepository()
-    
+
     @MainActor
     private var viewModel = UserListViewModel()
-    
+
     func refreshUsers() async {
         // Fetch on DatabaseActor
         let users = await userRepo.fetchAllUsers()
-        
+
         // Update on MainActor
         await viewModel.update(users: users)
     }
@@ -674,11 +689,11 @@ extension Cache: @unchecked Sendable where Key: Sendable, Value: Sendable {
 final class ThreadSafeCache: @unchecked Sendable {
     private var cache: [String: Data] = [:]
     private let queue = DispatchQueue(label: "cache.queue")
-    
+
     func get(_ key: String) -> Data? {
         queue.sync { cache[key] }
     }
-    
+
     func set(_ key: String, value: Data) {
         queue.async { self.cache[key] = value }
     }
@@ -687,7 +702,7 @@ final class ThreadSafeCache: @unchecked Sendable {
 // Reference types with immutable data
 final class ImageWrapper: @unchecked Sendable {
     let cgImage: CGImage
-    
+
     init(cgImage: CGImage) {
         self.cgImage = cgImage
     }
@@ -714,7 +729,7 @@ func createTimer(interval: TimeInterval) -> AsyncStream<Date> {
         let timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { _ in
             continuation.yield(Date())
         }
-        
+
         continuation.onTermination = { @Sendable _ in
             timer.invalidate() // Must be Sendable
         }
@@ -783,7 +798,7 @@ struct User: Codable, Sendable {
 final class Configuration: Sendable {
     let apiKey: String
     let baseURL: URL
-    
+
     init(apiKey: String, baseURL: URL) {
         self.apiKey = apiKey
         self.baseURL = baseURL
@@ -797,7 +812,7 @@ final class Configuration: Sendable {
 // Before
 class ViewModel: ObservableObject {
     @Published var items: [Item] = []
-    
+
     func loadItems() {
         Task {
             items = await fetchItems() // Potential race
@@ -809,7 +824,7 @@ class ViewModel: ObservableObject {
 @MainActor
 final class ViewModel: ObservableObject {
     @Published private(set) var items: [Item] = []
-    
+
     func loadItems() async {
         items = await fetchItems() // Safe on MainActor
     }
@@ -852,20 +867,20 @@ protocol DataProvider {
 // Image processor using actors and Sendable
 actor ImageProcessor {
     private let cache = ImageCache()
-    
+
     func process(_ image: UIImage, filters: [Filter]) async throws -> UIImage {
         // Check cache
         let cacheKey = CacheKey(image: image, filters: filters)
         if let cached = await cache.get(cacheKey) {
             return cached
         }
-        
+
         // Process image
         var result = image
         for filter in filters {
             result = try await filter.apply(to: result)
         }
-        
+
         // Cache result
         await cache.set(cacheKey, image: result)
         return result
@@ -880,18 +895,18 @@ protocol Filter: Sendable {
 // Concrete filter implementation
 struct BlurFilter: Filter {
     let radius: Double
-    
+
     func apply(to image: UIImage) async throws -> UIImage {
         // Implementation using Core Image
         let ciImage = CIImage(image: image)!
         let filter = CIFilter.gaussianBlur()
         filter.inputImage = ciImage
         filter.radius = Float(radius)
-        
+
         let context = CIContext()
         let output = filter.outputImage!
         let cgImage = context.createCGImage(output, from: output.extent)!
-        
+
         return UIImage(cgImage: cgImage)
     }
 }
@@ -905,41 +920,41 @@ actor NetworkService {
     private let session: URLSession
     private let decoder = JSONDecoder()
     private var activeTasks: [UUID: URLSessionTask] = [:]
-    
+
     init(configuration: URLSessionConfiguration = .default) {
         self.session = URLSession(configuration: configuration)
     }
-    
+
     func fetch<T: Decodable & Sendable>(
         _ type: T.Type,
         from url: URL
     ) async throws -> T {
         let taskID = UUID()
-        
+
         let task = session.dataTask(with: url)
         activeTasks[taskID] = task
-        
+
         defer { activeTasks.removeValue(forKey: taskID) }
-        
+
         let (data, response) = try await withTaskCancellationHandler {
             try await session.data(from: url)
         } onCancel: {
             task.cancel()
         }
-        
+
         guard let httpResponse = response as? HTTPURLResponse,
               (200...299).contains(httpResponse.statusCode) else {
             throw NetworkError.invalidResponse
         }
-        
+
         return try decoder.decode(type, from: data)
     }
-    
+
     func cancelAll() {
         activeTasks.values.forEach { $0.cancel() }
         activeTasks.removeAll()
     }
-    
+
     nonisolated var activeTaskCount: Int {
         get async { await activeTasks.count }
     }
@@ -951,20 +966,20 @@ class UserListViewModel: ObservableObject {
     @Published private(set) var users: [User] = []
     @Published private(set) var isLoading = false
     @Published private(set) var error: Error?
-    
+
     private let networkService = NetworkService()
-    
+
     func loadUsers() async {
         isLoading = true
         error = nil
-        
+
         do {
             let url = URL(string: "https://api.example.com/users")!
             users = try await networkService.fetch([User].self, from: url)
         } catch {
             self.error = error
         }
-        
+
         isLoading = false
     }
 }
@@ -983,17 +998,17 @@ struct DataProcessor {
                     try await processFile(url)
                 }
             }
-            
+
             // Collect results
             var results: [ProcessedData] = []
             for try await result in group {
                 results.append(result)
             }
-            
+
             return results
         }
     }
-    
+
     private func processFile(_ url: URL) async throws -> ProcessedData {
         let data = try await readFile(url)
         let processed = try await transform(data)
@@ -1033,7 +1048,7 @@ struct Settings: Sendable {
 // ✅ Or use actors for mutable state
 actor SettingsManager {
     private var settings: Settings
-    
+
     func update(theme: Theme) {
         settings = Settings(
             theme: theme,
@@ -1072,16 +1087,16 @@ class ViewModel {
 ```swift
 actor Calculator {
     private var history: [Calculation] = []
-    
+
     // ✅ Pure functions don't need isolation
     nonisolated func add(_ a: Double, _ b: Double) -> Double {
         a + b
     }
-    
+
     nonisolated func multiply(_ a: Double, _ b: Double) -> Double {
         a * b
     }
-    
+
     // State-modifying functions need isolation
     func recordCalculation(_ calc: Calculation) {
         history.append(calc)
@@ -1101,12 +1116,12 @@ func downloadImages(urls: [URL]) async throws -> [UIImage] {
                 return (index, image)
             }
         }
-        
+
         var images = Array<UIImage?>(repeating: nil, count: urls.count)
         for try await (index, image) in group {
             images[index] = image
         }
-        
+
         return images.compactMap { $0 }
     }
 }
@@ -1118,16 +1133,16 @@ func downloadImages(urls: [URL]) async throws -> [UIImage] {
 func longRunningOperation() async throws -> Result {
     try await withTaskCancellationHandler {
         var progress = 0.0
-        
+
         while progress < 1.0 {
             try Task.checkCancellation()
-            
+
             // Do work...
             progress += 0.1
-            
+
             try await Task.sleep(for: .seconds(1))
         }
-        
+
         return result
     } onCancel: {
         // Cleanup resources
@@ -1151,6 +1166,7 @@ swift test -Xswiftc -sanitize=thread
 ```
 
 **When to use TSan:**
+
 - Testing legacy code with @preconcurrency imports
 - Verifying @unchecked Sendable implementations
 - Catching races in C/Objective-C interop
@@ -1169,7 +1185,7 @@ extension Task {
     static func currentPriority() -> TaskPriority {
         Task.currentPriority
     }
-    
+
     static func printTaskTree() {
         // Available in debug builds
         #if DEBUG
@@ -1191,12 +1207,12 @@ func withTimeout<T>(
         group.addTask {
             try await operation()
         }
-        
+
         group.addTask {
             try await Task.sleep(for: duration)
             throw TimeoutError()
         }
-        
+
         let result = try await group.next()!
         group.cancelAll()
         return result
@@ -1207,7 +1223,7 @@ func withTimeout<T>(
 final class ActorTests: XCTestCase {
     func testActorIsolation() async throws {
         let actor = TestActor()
-        
+
         // Verify isolation with multiple concurrent operations
         try await withThrowingTaskGroup(of: Int.self) { group in
             for i in 0..<100 {
@@ -1216,12 +1232,12 @@ final class ActorTests: XCTestCase {
                     return await actor.value
                 }
             }
-            
+
             var results: Set<Int> = []
             for try await result in group {
                 results.insert(result)
             }
-            
+
             // All results should be unique if properly isolated
             XCTAssertEqual(results.count, 100)
         }
@@ -1266,13 +1282,13 @@ func debugPriority() async {
 
 ### Error Reference Table
 
-| Diagnostic | Example | Fix |
-|------------|---------|-----|
-| **Non-Sendable type crossing actor boundary** | `Capture of 'nonSendable' with non-sendable type 'MyClass'` | 1. Make type Sendable<br>2. Use `sending` parameter<br>3. Copy/transform to Sendable type |
-| **Actor-isolated property referenced from non-isolated** | `Actor-isolated property 'items' can not be referenced from a non-isolated context` | 1. Add `await`<br>2. Move code to actor<br>3. Make property `nonisolated` |
-| **Call to main actor-isolated from non-isolated** | `Call to main actor-isolated instance method 'updateUI()' in a synchronous nonisolated context` | 1. Add `@MainActor` to caller<br>2. Use `await MainActor.run { }`<br>3. Make method `nonisolated` |
-| **Mutation of captured var** | `Mutation of captured var 'counter' in concurrently-executing code` | 1. Use actor for state<br>2. Make immutable<br>3. Use `Mutex` (Swift 6.1+) |
-| **Sendable closure captures non-Sendable** | `Capture of 'self' with non-sendable type 'ViewController?' in a `@Sendable` closure` | 1. Use `[weak self]`<br>2. Make type Sendable<br>3. Extract needed values before closure |
+| Diagnostic                                               | Example                                                                                         | Fix                                                                                               |
+| -------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| **Non-Sendable type crossing actor boundary**            | `Capture of 'nonSendable' with non-sendable type 'MyClass'`                                     | 1. Make type Sendable<br>2. Use `sending` parameter<br>3. Copy/transform to Sendable type         |
+| **Actor-isolated property referenced from non-isolated** | `Actor-isolated property 'items' can not be referenced from a non-isolated context`             | 1. Add `await`<br>2. Move code to actor<br>3. Make property `nonisolated`                         |
+| **Call to main actor-isolated from non-isolated**        | `Call to main actor-isolated instance method 'updateUI()' in a synchronous nonisolated context` | 1. Add `@MainActor` to caller<br>2. Use `await MainActor.run { }`<br>3. Make method `nonisolated` |
+| **Mutation of captured var**                             | `Mutation of captured var 'counter' in concurrently-executing code`                             | 1. Use actor for state<br>2. Make immutable<br>3. Use `Mutex` (Swift 6.1+)                        |
+| **Sendable closure captures non-Sendable**               | `Capture of 'self' with non-sendable type 'ViewController?' in a `@Sendable` closure`           | 1. Use `[weak self]`<br>2. Make type Sendable<br>3. Extract needed values before closure          |
 
 ### Detailed Error Solutions
 
@@ -1316,7 +1332,7 @@ class ImageProcessor {
 // ❌ Error: Actor-isolated property accessed without await
 actor DataStore {
     var items: [Item] = []
-    
+
     nonisolated func getItemCount() -> Int {
         items.count // Error: actor-isolated property
     }
@@ -1325,7 +1341,7 @@ actor DataStore {
 // ✅ Solution 1: Make method async
 actor DataStore {
     var items: [Item] = []
-    
+
     func getItemCount() async -> Int {
         items.count // OK: implicitly isolated to actor
     }
@@ -1334,7 +1350,7 @@ actor DataStore {
 // ✅ Solution 2: Use computed property
 actor DataStore {
     private var items: [Item] = []
-    
+
     var itemCount: Int {
         items.count // OK: computed property is isolated
     }
@@ -1442,7 +1458,7 @@ class Service {
 // ✅ Structured tasks with proper lifecycle
 class Service {
     private var workTask: Task<Void, Never>?
-    
+
     func startBackgroundWork() {
         workTask = Task {
             try await withTaskCancellationHandler {
@@ -1452,7 +1468,7 @@ class Service {
             }
         }
     }
-    
+
     func stopWork() {
         workTask?.cancel()
     }
@@ -1474,7 +1490,7 @@ Task.detached(priority: .background) {
 // ❌ High contention on single actor
 actor Counter {
     private var value = 0
-    
+
     func increment() {
         value += 1
     }
@@ -1483,11 +1499,11 @@ actor Counter {
 // ✅ Reduce contention with batching
 actor Counter {
     private var value = 0
-    
+
     func increment(by amount: Int = 1) {
         value += amount
     }
-    
+
     func batchIncrement(_ operations: [Int]) {
         value += operations.reduce(0, +)
     }
@@ -1496,16 +1512,16 @@ actor Counter {
 // ✅ Or use sharding for high throughput
 actor ShardedCounter {
     private var shards: [Int]
-    
+
     init(shardCount: Int = ProcessInfo.processInfo.activeProcessorCount) {
         self.shards = Array(repeating: 0, count: shardCount)
     }
-    
+
     func increment() {
         let shard = Int.random(in: 0..<shards.count)
         shards[shard] += 1
     }
-    
+
     var total: Int {
         shards.reduce(0, +)
     }
@@ -1517,6 +1533,7 @@ actor ShardedCounter {
 ### Swift 6.1 (Shipped)
 
 #### SE-0431: @isolated(any) Function Types
+
 ```swift
 // Function types that preserve isolation
 typealias IsolatedHandler = @isolated(any) () async -> Void
@@ -1537,20 +1554,21 @@ actor MyActor {
 ```
 
 #### SE-0433: Synchronous Mutual Exclusion Lock (Mutex)
+
 ```swift
 import Synchronization
 
 // For protecting critical sections without async
 final class Statistics: Sendable {
     private let mutex = Mutex<Stats>(.init())
-    
+
     func record(value: Double) {
         mutex.withLock { stats in
             stats.count += 1
             stats.sum += value
         }
     }
-    
+
     var average: Double {
         mutex.withLock { stats in
             stats.count > 0 ? stats.sum / Double(stats.count) : 0
@@ -1567,6 +1585,7 @@ private struct Stats {
 ### Swift 6.2 (In Development)
 
 #### SE-0461: Isolated Default Arguments
+
 ```swift
 // Default values can use isolation context
 @MainActor
@@ -1575,7 +1594,7 @@ class ViewModel {
     func configure(
         title: String = defaultTitle // Coming in 6.2
     ) { }
-    
+
     @MainActor
     static var defaultTitle: String { "Default" }
 }
@@ -1591,34 +1610,38 @@ class ViewModel {
 
 ### Migration Timeline
 
-| Version | Key Features | Migration Impact |
-|---------|--------------|------------------|
+| Version   | Key Features                  | Migration Impact              |
+| --------- | ----------------------------- | ----------------------------- |
 | Swift 6.0 | Strict concurrency by default | Major - requires code updates |
-| Swift 6.1 | Mutex, @isolated(any) | Minor - additive features |
-| Swift 6.2 | Isolated defaults, deinit | Minor - quality of life |
-| Swift 7.0 | Custom executors v2 | TBD - performance focused |
+| Swift 6.1 | Mutex, @isolated(any)         | Minor - additive features     |
+| Swift 6.2 | Isolated defaults, deinit     | Minor - quality of life       |
+| Swift 7.0 | Custom executors v2           | TBD - performance focused     |
 
 Stay updated: [Swift Evolution Dashboard](https://www.swift.org/swift-evolution/)
 
 ## Resources
 
 ### Official Documentation
+
 - [Swift.org - Concurrency](https://docs.swift.org/swift-book/documentation/the-swift-programming-language/concurrency/)
 - [Migrating to Swift 6](https://www.swift.org/migration/documentation/migrationguide/)
 - [Data Race Safety](https://www.swift.org/migration/documentation/swift-6-concurrency-migration-guide/dataracesafety/)
 
 ### Swift Evolution Proposals
+
 - [SE-0401: Remove Actor Isolation Inference](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0401-remove-property-wrapper-isolation.md)
 - [SE-0414: Region-based Isolation](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0414-region-based-isolation.md)
 - [SE-0420: Inheritance of Actor Isolation](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0420-inheritance-of-actor-isolation.md)
 - [SE-0430: Sending Parameter Values](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0430-transferring-parameters-and-results.md)
 
 ### WWDC Sessions
+
 - **WWDC 2024**: "Migrate your app to Swift 6" - Practical migration guide
 - **WWDC 2022**: "Eliminate data races using Swift Concurrency" - Foundational concepts
 - **WWDC 2021**: "Meet async/await in Swift" - Introduction to Swift concurrency
 
 ### Community Resources
+
 - [Swift Forums - Concurrency](https://forums.swift.org/c/swift-evolution/concurrency/23)
 - [Concurrency Index Thread](https://developer.apple.com/forums/thread/768776)
 - [Swift Package Index](https://swiftpackageindex.com) - Shows "Safe from data races" badge
@@ -1626,6 +1649,7 @@ Stay updated: [Swift Evolution Dashboard](https://www.swift.org/swift-evolution/
 ## Conclusion
 
 Swift 6's strict concurrency represents a paradigm shift in how we write concurrent code. By embracing:
+
 - Complete data race safety at compile time
 - Clear isolation boundaries with actors
 - Explicit Sendable requirements

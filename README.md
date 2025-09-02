@@ -2,8 +2,8 @@
 
 A React Native mobile app that revolutionizes LLM interaction by using DNS TXT queries for AI communication. Chat with AI models through DNS infrastructure for enhanced privacy and network resilience.
 
-[![React Native](https://img.shields.io/badge/React%20Native-0.79-blue.svg)](https://reactnative.dev/)
-[![Expo](https://img.shields.io/badge/Expo-53-black.svg)](https://expo.dev/)
+[![React Native](https://img.shields.io/badge/React%20Native-0.81-blue.svg)](https://reactnative.dev/)
+[![Expo](https://img.shields.io/badge/Expo-54-black.svg)](https://expo.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue.svg)](https://www.typescriptlang.org/)
 [![iOS](https://img.shields.io/badge/iOS-16%2B-lightgrey.svg)](https://developer.apple.com/ios/)
 [![Android](https://img.shields.io/badge/Android-API%2021%2B-green.svg)](https://developer.android.com/)
@@ -25,28 +25,33 @@ A React Native mobile app that revolutionizes LLM interaction by using DNS TXT q
 ## 🛠 Tech Stack
 
 ### **Core Framework**
+
 - **React Native 0.79** with New Architecture
 - **Expo SDK 53** with Development Build
 - **TypeScript** with strict mode
 
 ### **Navigation & UI**
+
 - **React Navigation v7** (Native Stack) + **react-native-bottom-tabs** (Native UITabBarController)
 - **iOS 26+ Liquid Glass**: Native `.glassEffect()` modifier with comprehensive fallback system
 - **React Native Safe Area Context** with gesture handler support
 - **Advanced Theme Support** (automatic light/dark switching with iOS system colors)
 
 ### **DNS Implementation**
+
 - **iOS**: Swift + Apple Network Framework
 - **Android**: Java + DnsResolver API + dnsjava fallback
 - **Fallback**: DNS-over-HTTPS (Cloudflare)
 
 ### **Storage & State**
+
 - **AsyncStorage** for local persistence
 - **React Context** for global state management
 
 ## 🚀 Quick Start
 
 ### Prerequisites
+
 - Node.js 18+
 - iOS: Xcode 15+ and iOS 16+ device/simulator
 - Android: Java 17 and Android SDK
@@ -90,6 +95,7 @@ npm run web
 5. **Configure DNS**: Use Settings to adjust DNS method preferences
 
 ### Example DNS Query
+
 ```bash
 # What the app does behind the scenes
 dig @ch.at "What is the meaning of life?" TXT +short
@@ -98,11 +104,13 @@ dig @ch.at "What is the meaning of life?" TXT +short
 ## 🏗 Architecture
 
 ### DNS Communication Flow
+
 ```
 User Message → DNS Service → Native DNS Module → ch.at Server → LLM → Response
 ```
 
 ### Fallback Strategy
+
 1. **Native DNS** (iOS Network Framework / Android DnsResolver)
 2. **UDP DNS** (Direct socket communication)
 3. **TCP DNS** (For UDP-blocked networks)
@@ -110,6 +118,7 @@ User Message → DNS Service → Native DNS Module → ch.at Server → LLM → 
 5. **Mock Service** (Development fallback)
 
 ### Project Structure
+
 ```
 src/
 ├── components/          # Reusable UI components
@@ -126,16 +135,35 @@ modules/dns-native/    # Android native DNS module
 ## 🔧 Development
 
 ### DNS Testing
+
 ```bash
-# Test DNS connectivity
-node test-dns.js "Hello world"
+# Test DNS connectivity (runs in RN/Metro environment)
+node test-dns-simple.js "Hello world"
 
 # Run with specific DNS method
 npm run ios -- --device-id "iPhone-UUID"
 npm run android -- --variant debug
 ```
 
+### DNS Transports & Troubleshooting
+
+- UDP/TCP: Primary transports. Some networks block port 53; the app logs fallbacks and will try TCP where possible.
+- HTTPS: DNS-over-HTTPS cannot reach ch.at’s custom TXT responses (resolver architecture). For ch.at queries, DoH is disabled and native/UDP/TCP are preferred; development can fall back to Mock.
+- Backgrounding: Queries suspend while the app is backgrounded; errors will mention suspension.
+- Rate limiting: Per-minute throttling prevents spam; errors indicate when to retry.
+
+View logs in-app: you can mount the developer log viewer to inspect attempts and fallbacks during development.
+
+```tsx
+import { DNSLogViewer } from "./src/components/DNSLogViewer";
+
+export function LogsScreen() {
+  return <DNSLogViewer maxEntries={50} />;
+}
+```
+
 ### Version Management
+
 ```bash
 # Sync all platform versions
 npm run sync-versions
@@ -147,16 +175,19 @@ npm run sync-versions:dry
 ### Common Development Tasks
 
 **Clear Caches**
+
 ```bash
 npx expo start --clear
 ```
 
 **Fix iOS CocoaPods Issues**
+
 ```bash
 npm run fix-pods
 ```
 
 **Clean Builds**
+
 ```bash
 npm run clean-ios
 ```
@@ -173,18 +204,21 @@ npm run clean-ios
 ### Quick Fixes
 
 **iOS Build Errors**
+
 ```bash
 cd ios && pod install && cd ..
 npm run ios
 ```
 
 **Android Build Errors**
+
 ```bash
 # Ensure Java 17 is used
 npm run android
 ```
 
 **DNS Connection Issues**
+
 - Switch between WiFi and cellular data
 - Try different DNS methods in Settings
 - Check network firewall restrictions
@@ -208,11 +242,13 @@ MIT License - see [LICENSE](./LICENSE) file for details.
 ## 🙏 Acknowledgments
 
 ### Inspiration
+
 - **[@arxiv_daily](https://x.com/Arxiv_Daily/status/1952452878716805172)** - Original DNS-based LLM concept
 - **[@levelsio](https://x.com/levelsio)** - Amplified the concept to wider audience
 - **[ch.at](https://github.com/Deep-ai-inc/ch.at)** - Open-source DNS LLM service
 
 ### Dependencies
+
 - **React Native Team** - Cross-platform framework
 - **Expo Team** - Development platform and tooling
 - **Cloudflare** - DNS-over-HTTPS infrastructure
@@ -221,4 +257,4 @@ MIT License - see [LICENSE](./LICENSE) file for details.
 
 **Made with ❤️ by [@mneves75](https://x.com/mneves75)**
 
-*For support, bug reports, or feature requests, please [open an issue](https://github.com/mneves75/dnschat/issues).*
+_For support, bug reports, or feature requests, please [open an issue](https://github.com/mneves75/dnschat/issues)._

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
+import { useNavigation } from "@react-navigation/native";
 import {
   View,
   Text,
@@ -6,86 +7,87 @@ import {
   Linking,
   Image,
   useColorScheme,
-} from 'react-native';
-import { 
-  Form, 
-  LiquidGlassWrapper,
-} from '../../components/glass';
+} from "react-native";
+import { Form, LiquidGlassWrapper } from "../../components/glass";
 
 // Import package.json to get version
-const packageJson = require('../../../package.json');
+const packageJson = require("../../../package.json");
 
 // Import app icon from assets (same pattern as newspaper.png)
-const AppIcon = require('../../assets/dnschat_ios26.png');
+const AppIcon = require("../../assets/dnschat_ios26.png");
 
-const createStyles = (isDark: boolean) => StyleSheet.create({
-  // Header Section
-  headerContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    marginHorizontal: 20,
-    padding: 24,
-  },
-  header: {
-    alignItems: 'center',
-  },
-  logoContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
-    marginBottom: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  logoImage: {
-    width: 60,
-    height: 60,
-    borderRadius: 15,
-  },
-  logoText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#007AFF', // iOS system blue
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  versionBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    backgroundColor: 'rgba(0, 122, 255, 0.15)', // iOS system blue background
-    marginBottom: 16,
-  },
-  versionText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#007AFF', // iOS system blue
-  },
-  description: {
-    fontSize: 16,
-    textAlign: 'center',
-    lineHeight: 24,
-    fontWeight: '400',
-  },
-  // Footer Section
-  footerContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    marginHorizontal: 20,
-    padding: 16,
-  },
-  footerText: {
-    fontSize: 14,
-    textAlign: 'center',
-    fontWeight: '400',
-  },
-});
+const createStyles = (isDark: boolean) =>
+  StyleSheet.create({
+    // Header Section
+    headerContainer: {
+      backgroundColor: "rgba(255, 255, 255, 0.08)",
+      marginHorizontal: 20,
+      padding: 24,
+    },
+    header: {
+      alignItems: "center",
+    },
+    logoContainer: {
+      width: 80,
+      height: 80,
+      borderRadius: 40,
+      backgroundColor: isDark
+        ? "rgba(255, 255, 255, 0.1)"
+        : "rgba(0, 0, 0, 0.05)",
+      marginBottom: 16,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    logoImage: {
+      width: 60,
+      height: 60,
+      borderRadius: 15,
+    },
+    logoText: {
+      fontSize: 24,
+      fontWeight: "bold",
+      color: "#007AFF", // iOS system blue
+    },
+    title: {
+      fontSize: 28,
+      fontWeight: "bold",
+      marginBottom: 8,
+      textAlign: "center",
+    },
+    versionBadge: {
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      backgroundColor: "rgba(0, 122, 255, 0.15)", // iOS system blue background
+      marginBottom: 16,
+    },
+    versionText: {
+      fontSize: 14,
+      fontWeight: "600",
+      color: "#007AFF", // iOS system blue
+    },
+    description: {
+      fontSize: 16,
+      textAlign: "center",
+      lineHeight: 24,
+      fontWeight: "400",
+    },
+    // Footer Section
+    footerContainer: {
+      backgroundColor: "rgba(255, 255, 255, 0.05)",
+      marginHorizontal: 20,
+      padding: 16,
+    },
+    footerText: {
+      fontSize: 14,
+      textAlign: "center",
+      fontWeight: "400",
+    },
+  });
 
 export function About() {
+  const navigation = useNavigation<any>();
   const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const isDark = colorScheme === "dark";
   const [iconError, setIconError] = useState(false);
 
   const openLink = (url: string) => {
@@ -96,45 +98,44 @@ export function About() {
 
   const credits = [
     {
-      name: '@arxiv_daily',
-      description: 'Ch.at original concept and LLM over DNS service',
-      url: 'https://x.com/Arxiv_Daily/status/1952452878716805172',
+      name: "@arxiv_daily",
+      description: "Ch.at original concept and LLM over DNS service",
+      url: "https://x.com/Arxiv_Daily/status/1952452878716805172",
     },
     {
-      name: '@levelsio (Pieter Levels)',
-      description: 'Retweeted @arxiv_daily',
-      url: 'https://x.com/levelsio',
+      name: "@levelsio (Pieter Levels)",
+      description: "Retweeted @arxiv_daily",
+      url: "https://x.com/levelsio",
     },
     {
-      name: 'React Native Team',
-      description: 'Cross-platform mobile framework',
-      url: 'https://reactnative.dev',
+      name: "React Native Team",
+      description: "Cross-platform mobile framework",
+      url: "https://reactnative.dev",
     },
     {
-      name: 'Expo Team',
-      description: 'Development build and tooling platform',
-      url: 'https://expo.dev',
+      name: "Expo Team",
+      description: "Development build and tooling platform",
+      url: "https://expo.dev",
     },
     {
-      name: 'React Navigation',
-      description: 'Navigation library for React Native',
-      url: 'https://reactnavigation.org',
+      name: "React Navigation",
+      description: "Navigation library for React Native",
+      url: "https://reactnavigation.org",
     },
     {
-      name: 'AsyncStorage Community',
-      description: 'Local storage solution',
-      url: 'https://react-native-async-storage.github.io',
+      name: "AsyncStorage Community",
+      description: "Local storage solution",
+      url: "https://react-native-async-storage.github.io",
     },
     {
-      name: 'Cloudflare',
-      description: 'DNS-over-HTTPS infrastructure',
-      url: 'https://cloudflare.com',
+      name: "Cloudflare",
+      description: "DNS-over-HTTPS infrastructure",
+      url: "https://cloudflare.com",
     },
   ];
 
   return (
     <Form.List>
-      
       {/* App Information Header - Prominent display without duplicate rectangles */}
       <Form.Section>
         <LiquidGlassWrapper
@@ -146,14 +147,19 @@ export function About() {
           <View style={styles.header}>
             <View style={styles.logoContainer}>
               {!iconError ? (
-                <Image 
+                <Image
                   source={AppIcon}
                   style={styles.logoImage}
                   resizeMode="contain"
-                  onLoad={() => console.log('✅ About icon loaded successfully')}
+                  onLoad={() =>
+                    console.log("✅ About icon loaded successfully")
+                  }
                   onError={(error) => {
-                    console.log('🚨 About icon load error:', error.nativeEvent?.error || 'Unknown error');
-                    console.log('🚨 AppIcon source:', AppIcon);
+                    console.log(
+                      "🚨 About icon load error:",
+                      error.nativeEvent?.error || "Unknown error",
+                    );
+                    console.log("🚨 AppIcon source:", AppIcon);
                     setIconError(true);
                   }}
                 />
@@ -161,7 +167,9 @@ export function About() {
                 <Text style={styles.logoText}>DNS</Text>
               )}
             </View>
-            <Text style={[styles.title, { color: isDark ? '#FFFFFF' : '#000000' }]}>
+            <Text
+              style={[styles.title, { color: isDark ? "#FFFFFF" : "#000000" }]}
+            >
               DNS Chat
             </Text>
             <LiquidGlassWrapper
@@ -171,32 +179,40 @@ export function About() {
             >
               <Text style={styles.versionText}>v{packageJson.version}</Text>
             </LiquidGlassWrapper>
-            <Text style={[styles.description, { color: isDark ? '#AEAEB2' : '#6D6D70' }]}>
-              Chat with AI using DNS TXT queries - a unique approach to LLM communication.
+            <Text
+              style={[
+                styles.description,
+                { color: isDark ? "#AEAEB2" : "#6D6D70" },
+              ]}
+            >
+              Chat with AI using DNS TXT queries - a unique approach to LLM
+              communication.
             </Text>
           </View>
         </LiquidGlassWrapper>
       </Form.Section>
 
       {/* Inspiration Section */}
-      <Form.Section 
+      <Form.Section
         title="Inspiration"
         footer="This project was inspired by the incredible work of the open-source community"
       >
         <Form.Link
           title="@Arxiv_Daily Tweet"
           subtitle="Original LLM over DNS concept"
-          onPress={() => openLink('https://x.com/Arxiv_Daily/status/1952452878716805172')}
+          onPress={() =>
+            openLink("https://x.com/Arxiv_Daily/status/1952452878716805172")
+          }
         />
         <Form.Link
           title="Ch.at Project"
           subtitle="Universal Basic Intelligence via DNS"
-          onPress={() => openLink('https://github.com/Deep-ai-inc/ch.at')}
+          onPress={() => openLink("https://github.com/Deep-ai-inc/ch.at")}
         />
         <Form.Link
           title="@levelsio"
           subtitle="Shared the original concept"
-          onPress={() => openLink('https://x.com/levelsio')}
+          onPress={() => openLink("https://x.com/levelsio")}
         />
       </Form.Section>
 
@@ -205,17 +221,17 @@ export function About() {
         <Form.Link
           title="GitHub Repository"
           subtitle="View source code and contribute"
-          onPress={() => openLink('https://github.com/mneves75/dnschat')}
+          onPress={() => openLink("https://github.com/mneves75/dnschat")}
         />
         <Form.Link
           title="Report an Issue"
           subtitle="Found a bug? Let us know"
-          onPress={() => openLink('https://github.com/mneves75/dnschat/issues')}
+          onPress={() => openLink("https://github.com/mneves75/dnschat/issues")}
         />
         <Form.Link
           title="@dnschat on X"
           subtitle="Follow for updates"
-          onPress={() => openLink('https://x.com/dnschat')}
+          onPress={() => openLink("https://x.com/dnschat")}
         />
       </Form.Section>
 
@@ -224,13 +240,21 @@ export function About() {
         <Form.Item
           title="Marcus Neves"
           subtitle="Created by @mneves75"
-          onPress={() => openLink('https://x.com/mneves75')}
+          onPress={() => openLink("https://x.com/mneves75")}
           showChevron
         />
+        {typeof __DEV__ !== "undefined" && __DEV__ && (
+          <Form.Item
+            title="Developer Logs (Dev)"
+            subtitle="Open DNS logs viewer screen"
+            onPress={() => navigation.navigate("DevLogs")}
+            showChevron
+          />
+        )}
       </Form.Section>
 
       {/* Special Thanks */}
-      <Form.Section 
+      <Form.Section
         title="Special Thanks"
         footer="This project wouldn't be possible without these amazing open-source projects and services"
       >

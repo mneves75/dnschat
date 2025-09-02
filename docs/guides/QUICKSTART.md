@@ -33,7 +33,7 @@ npm install
 cd ios && pod install && cd ..
 
 # 4. Test DNS (verify connectivity)
-node test-dns.js "Hello world"
+node test-dns-simple.js "Hello world"
 # Expected: ✅ DNS query successful!
 ```
 
@@ -67,6 +67,7 @@ npm run web              # Web browser
 ## 🛠️ Quick Fixes
 
 **App won't build?**
+
 ```bash
 # Universal reset
 rm -rf node_modules && npm install
@@ -74,6 +75,7 @@ cd ios && pod install && cd ..  # iOS only
 ```
 
 **Native DNS not working?**
+
 ```bash
 # iOS: Reinstall pods
 cd ios && pod deintegrate && pod install && cd ..
@@ -83,6 +85,7 @@ npm run android:java17
 ```
 
 **Network blocked?**
+
 - App automatically falls back to TCP → HTTPS → Mock
 - This is normal on corporate/public Wi-Fi
 - No action needed!
@@ -90,7 +93,7 @@ npm run android:java17
 ## 🎯 What You Get
 
 - **ChatGPT-like interface** with AI responses via DNS
-- **Native DNS** on iOS/Android for optimal performance  
+- **Native DNS** on iOS/Android for optimal performance
 - **Automatic fallbacks** work on any network
 - **Chat management** with delete functionality
 - **Dark/light themes** that follow system preferences
@@ -98,11 +101,11 @@ npm run android:java17
 ## 📚 Need More Help?
 
 - **Detailed setup**: [INSTALL.md](./INSTALL.md)
-- **Development guide**: [CLAUDE.md](./CLAUDE.md)  
+- **Development guide**: [CLAUDE.md](./CLAUDE.md)
 - **Issues**: [GitHub Issues](https://github.com/mneves75/dnschat/issues)
 
 ---
 
 **🎉 That's it! You now have a fully functional DNS-powered AI chat app!**
 
-Try asking: *"What's the weather like?"* or *"Tell me a joke"*
+Try asking: _"What's the weather like?"_ or _"Tell me a joke"_

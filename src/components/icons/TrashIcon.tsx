@@ -1,12 +1,12 @@
-import React from 'react';
-import Svg, { Path } from 'react-native-svg';
+import React from "react";
+import Svg, { Path } from "react-native-svg";
 
 interface TrashIconProps {
   size?: number;
   color?: string;
 }
 
-export function TrashIcon({ size = 20, color = '#8E8E93' }: TrashIconProps) {
+export function TrashIcon({ size = 20, color = "#8E8E93" }: TrashIconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path

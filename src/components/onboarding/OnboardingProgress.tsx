@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   View,
   Text,
@@ -6,17 +6,17 @@ import {
   useColorScheme,
   Animated,
   Dimensions,
-} from 'react-native';
-import { useOnboarding } from '../../context/OnboardingContext';
+} from "react-native";
+import { useOnboarding } from "../../context/OnboardingContext";
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const PROGRESS_WIDTH = SCREEN_WIDTH - 32;
 
 export function OnboardingProgress() {
   const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const isDark = colorScheme === "dark";
   const { currentStep, steps } = useOnboarding();
-  
+
   const progress = (currentStep + 1) / steps.length;
   const animatedWidth = React.useRef(new Animated.Value(0)).current;
 
@@ -31,19 +31,33 @@ export function OnboardingProgress() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={[styles.stepText, isDark ? styles.darkStepText : styles.lightStepText]}>
+        <Text
+          style={[
+            styles.stepText,
+            isDark ? styles.darkStepText : styles.lightStepText,
+          ]}
+        >
           Step {currentStep + 1} of {steps.length}
         </Text>
-        <Text style={[styles.titleText, isDark ? styles.darkTitleText : styles.lightTitleText]}>
-          {steps[currentStep]?.title || ''}
+        <Text
+          style={[
+            styles.titleText,
+            isDark ? styles.darkTitleText : styles.lightTitleText,
+          ]}
+        >
+          {steps[currentStep]?.title || ""}
         </Text>
       </View>
-      
+
       <View style={styles.progressContainer}>
-        <View style={[
-          styles.progressBackground,
-          isDark ? styles.darkProgressBackground : styles.lightProgressBackground
-        ]}>
+        <View
+          style={[
+            styles.progressBackground,
+            isDark
+              ? styles.darkProgressBackground
+              : styles.lightProgressBackground,
+          ]}
+        >
           <Animated.View
             style={[
               styles.progressBar,
@@ -57,7 +71,7 @@ export function OnboardingProgress() {
             ]}
           />
         </View>
-        
+
         <View style={styles.dotsContainer}>
           {steps.map((_, index) => (
             <View
@@ -65,8 +79,12 @@ export function OnboardingProgress() {
               style={[
                 styles.dot,
                 index <= currentStep
-                  ? (isDark ? styles.darkActiveDot : styles.lightActiveDot)
-                  : (isDark ? styles.darkInactiveDot : styles.lightInactiveDot),
+                  ? isDark
+                    ? styles.darkActiveDot
+                    : styles.lightActiveDot
+                  : isDark
+                    ? styles.darkInactiveDot
+                    : styles.lightInactiveDot,
               ]}
             />
           ))}
@@ -86,54 +104,54 @@ const styles = StyleSheet.create({
   },
   stepText: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: "500",
     marginBottom: 4,
   },
   lightStepText: {
-    color: '#666666',
+    color: "#666666",
   },
   darkStepText: {
-    color: '#999999',
+    color: "#999999",
   },
   titleText: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   lightTitleText: {
-    color: '#000000',
+    color: "#000000",
   },
   darkTitleText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
   },
   progressContainer: {
-    position: 'relative',
+    position: "relative",
   },
   progressBackground: {
     width: PROGRESS_WIDTH,
     height: 4,
     borderRadius: 2,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   lightProgressBackground: {
-    backgroundColor: '#E5E5EA',
+    backgroundColor: "#E5E5EA",
   },
   darkProgressBackground: {
-    backgroundColor: '#2C2C2E',
+    backgroundColor: "#2C2C2E",
   },
   progressBar: {
-    height: '100%',
+    height: "100%",
     borderRadius: 2,
   },
   lightProgressBar: {
-    backgroundColor: '#007AFF',
+    backgroundColor: "#007AFF",
   },
   darkProgressBar: {
-    backgroundColor: '#0A84FF',
+    backgroundColor: "#0A84FF",
   },
   dotsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    position: 'absolute',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    position: "absolute",
     top: -2,
     width: PROGRESS_WIDTH,
     paddingHorizontal: 4,
@@ -144,15 +162,15 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   lightActiveDot: {
-    backgroundColor: '#007AFF',
+    backgroundColor: "#007AFF",
   },
   darkActiveDot: {
-    backgroundColor: '#0A84FF',
+    backgroundColor: "#0A84FF",
   },
   lightInactiveDot: {
-    backgroundColor: '#E5E5EA',
+    backgroundColor: "#E5E5EA",
   },
   darkInactiveDot: {
-    backgroundColor: '#2C2C2E',
+    backgroundColor: "#2C2C2E",
   },
 });

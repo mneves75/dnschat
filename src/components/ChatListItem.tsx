@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   View,
   Text,
@@ -6,10 +6,10 @@ import {
   StyleSheet,
   useColorScheme,
   Alert,
-} from 'react-native';
-import { format, isToday, isYesterday } from 'date-fns';
-import { Chat } from '../types/chat';
-import { TrashIcon } from './icons/TrashIcon';
+} from "react-native";
+import { format, isToday, isYesterday } from "date-fns";
+import { Chat } from "../types/chat";
+import { TrashIcon } from "./icons/TrashIcon";
 
 interface ChatListItemProps {
   chat: Chat;
@@ -19,47 +19,52 @@ interface ChatListItemProps {
 
 export function ChatListItem({ chat, onPress, onDelete }: ChatListItemProps) {
   const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const isDark = colorScheme === "dark";
 
   const getLastMessage = () => {
     const lastMessage = chat.messages[chat.messages.length - 1];
-    if (!lastMessage) return 'No messages yet';
-    
-    return lastMessage.role === 'user' 
+    if (!lastMessage) return "No messages yet";
+
+    return lastMessage.role === "user"
       ? `You: ${lastMessage.content}`
       : lastMessage.content;
   };
 
   const formatDate = (date: Date) => {
     if (isToday(date)) {
-      return format(date, 'HH:mm');
+      return format(date, "HH:mm");
     } else if (isYesterday(date)) {
-      return 'Yesterday';
+      return "Yesterday";
     } else {
-      return format(date, 'MMM d');
+      return format(date, "MMM d");
     }
   };
 
   const handleDeletePress = () => {
     Alert.alert(
-      'Delete Chat',
+      "Delete Chat",
       `Are you sure you want to delete "${chat.title}"?`,
       [
         {
-          text: 'Cancel',
-          style: 'cancel',
+          text: "Cancel",
+          style: "cancel",
         },
         {
-          text: 'Delete',
-          style: 'destructive',
+          text: "Delete",
+          style: "destructive",
           onPress: () => onDelete(chat.id),
         },
-      ]
+      ],
     );
   };
 
   return (
-    <View style={[styles.container, isDark ? styles.darkContainer : styles.lightContainer]}>
+    <View
+      style={[
+        styles.container,
+        isDark ? styles.darkContainer : styles.lightContainer,
+      ]}
+    >
       <TouchableOpacity
         style={styles.content}
         onPress={() => onPress(chat)}
@@ -67,7 +72,10 @@ export function ChatListItem({ chat, onPress, onDelete }: ChatListItemProps) {
       >
         <View style={styles.header}>
           <Text
-            style={[styles.title, isDark ? styles.darkTitle : styles.lightTitle]}
+            style={[
+              styles.title,
+              isDark ? styles.darkTitle : styles.lightTitle,
+            ]}
             numberOfLines={1}
           >
             {chat.title}
@@ -78,24 +86,24 @@ export function ChatListItem({ chat, onPress, onDelete }: ChatListItemProps) {
             {formatDate(chat.updatedAt)}
           </Text>
         </View>
-        
+
         <Text
-          style={[styles.lastMessage, isDark ? styles.darkLastMessage : styles.lightLastMessage]}
+          style={[
+            styles.lastMessage,
+            isDark ? styles.darkLastMessage : styles.lightLastMessage,
+          ]}
           numberOfLines={2}
         >
           {getLastMessage()}
         </Text>
       </TouchableOpacity>
-      
+
       <TouchableOpacity
         style={styles.deleteButton}
         onPress={handleDeletePress}
         activeOpacity={0.7}
       >
-        <TrashIcon 
-          size={18} 
-          color={isDark ? '#8E8E93' : '#8E8E93'} 
-        />
+        <TrashIcon size={18} color={isDark ? "#8E8E93" : "#8E8E93"} />
       </TouchableOpacity>
     </View>
   );
@@ -103,19 +111,19 @@ export function ChatListItem({ chat, onPress, onDelete }: ChatListItemProps) {
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   lightContainer: {
-    backgroundColor: '#FFFFFF',
-    borderBottomColor: '#E5E5EA',
+    backgroundColor: "#FFFFFF",
+    borderBottomColor: "#E5E5EA",
   },
   darkContainer: {
-    backgroundColor: '#000000',
-    borderBottomColor: '#38383A',
+    backgroundColor: "#000000",
+    borderBottomColor: "#38383A",
   },
   content: {
     flex: 1,
@@ -125,32 +133,32 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 4,
   },
   title: {
     fontSize: 17,
-    fontWeight: '600',
+    fontWeight: "600",
     flex: 1,
     marginRight: 8,
   },
   lightTitle: {
-    color: '#000000',
+    color: "#000000",
   },
   darkTitle: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
   },
   date: {
     fontSize: 15,
     opacity: 0.6,
   },
   lightDate: {
-    color: '#8E8E93',
+    color: "#8E8E93",
   },
   darkDate: {
-    color: '#8E8E93',
+    color: "#8E8E93",
   },
   lastMessage: {
     fontSize: 15,
@@ -158,9 +166,9 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   lightLastMessage: {
-    color: '#8E8E93',
+    color: "#8E8E93",
   },
   darkLastMessage: {
-    color: '#8E8E93',
+    color: "#8E8E93",
   },
 });

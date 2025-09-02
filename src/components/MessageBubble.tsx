@@ -1,8 +1,15 @@
-import React from 'react';
-import { View, Text, StyleSheet, useColorScheme, Pressable, Alert } from 'react-native';
-import { format } from 'date-fns';
-import Markdown from 'react-native-markdown-display';
-import { Message } from '../types/chat';
+import React from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  useColorScheme,
+  Pressable,
+  Alert,
+} from "react-native";
+import { format } from "date-fns";
+import Markdown from "react-native-markdown-display";
+import { Message } from "../types/chat";
 
 interface MessageBubbleProps {
   message: Message;
@@ -10,27 +17,23 @@ interface MessageBubbleProps {
 
 export function MessageBubble({ message }: MessageBubbleProps) {
   const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
-  
-  const isUser = message.role === 'user';
-  const isLoading = message.status === 'sending';
-  const hasError = message.status === 'error';
+  const isDark = colorScheme === "dark";
+
+  const isUser = message.role === "user";
+  const isLoading = message.status === "sending";
+  const hasError = message.status === "error";
 
   const handleLongPress = () => {
-    Alert.alert(
-      'Copy Message',
-      'Do you want to copy this message?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Copy',
-          onPress: () => {
-            // In a real app, you'd use Clipboard from '@react-native-clipboard/clipboard'
-            // Copy functionality would be implemented here
-          },
+    Alert.alert("Copy Message", "Do you want to copy this message?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Copy",
+        onPress: () => {
+          // In a real app, you'd use Clipboard from '@react-native-clipboard/clipboard'
+          // Copy functionality would be implemented here
         },
-      ]
-    );
+      },
+    ]);
   };
 
   const bubbleStyles = [
@@ -51,28 +54,32 @@ export function MessageBubble({ message }: MessageBubbleProps) {
 
   const markdownStyles = {
     body: {
-      color: isDark 
-        ? (isUser ? '#FFFFFF' : '#E5E5E7') 
-        : (isUser ? '#FFFFFF' : '#000000'),
+      color: isDark
+        ? isUser
+          ? "#FFFFFF"
+          : "#E5E5E7"
+        : isUser
+          ? "#FFFFFF"
+          : "#000000",
       fontSize: 16,
       lineHeight: 20,
     },
     code_inline: {
-      backgroundColor: isDark ? '#2C2C2E' : '#F2F2F7',
-      color: isDark ? '#FF9500' : '#AF52DE',
+      backgroundColor: isDark ? "#2C2C2E" : "#F2F2F7",
+      color: isDark ? "#FF9500" : "#AF52DE",
       paddingHorizontal: 4,
       paddingVertical: 2,
       borderRadius: 4,
       fontSize: 14,
     },
     code_block: {
-      backgroundColor: isDark ? '#1C1C1E' : '#F2F2F7',
+      backgroundColor: isDark ? "#1C1C1E" : "#F2F2F7",
       padding: 12,
       borderRadius: 8,
       marginVertical: 8,
     },
     fence: {
-      backgroundColor: isDark ? '#1C1C1E' : '#F2F2F7',
+      backgroundColor: isDark ? "#1C1C1E" : "#F2F2F7",
       padding: 12,
       borderRadius: 8,
       marginVertical: 8,
@@ -80,36 +87,44 @@ export function MessageBubble({ message }: MessageBubbleProps) {
   };
 
   return (
-    <View style={[styles.container, isUser ? styles.userContainer : styles.assistantContainer]}>
+    <View
+      style={[
+        styles.container,
+        isUser ? styles.userContainer : styles.assistantContainer,
+      ]}
+    >
       <Pressable onLongPress={handleLongPress} style={bubbleStyles}>
         {isUser ? (
           <Text style={textStyles}>{message.content}</Text>
         ) : (
-          <Markdown style={markdownStyles}>
-            {message.content}
-          </Markdown>
+          <Markdown style={markdownStyles}>{message.content}</Markdown>
         )}
-        
+
         {isLoading && (
           <View style={styles.loadingIndicator}>
-            <Text style={[styles.loadingText, isDark ? styles.darkText : styles.lightText]}>
+            <Text
+              style={[
+                styles.loadingText,
+                isDark ? styles.darkText : styles.lightText,
+              ]}
+            >
               ●●●
             </Text>
           </View>
         )}
-        
+
         <View style={styles.messageInfo}>
-          <Text style={[
-            styles.timestamp, 
-            isDark ? styles.darkTimestamp : styles.lightTimestamp,
-            isUser ? styles.userTimestamp : styles.assistantTimestamp
-          ]}>
-            {format(message.timestamp, 'HH:mm')}
+          <Text
+            style={[
+              styles.timestamp,
+              isDark ? styles.darkTimestamp : styles.lightTimestamp,
+              isUser ? styles.userTimestamp : styles.assistantTimestamp,
+            ]}
+          >
+            {format(message.timestamp, "HH:mm")}
           </Text>
-          
-          {hasError && (
-            <Text style={styles.errorIndicator}>!</Text>
-          )}
+
+          {hasError && <Text style={styles.errorIndicator}>!</Text>}
         </View>
       </Pressable>
     </View>
@@ -120,33 +135,33 @@ const styles = StyleSheet.create({
   container: {
     marginVertical: 2, // Tighter vertical spacing like iMessage
     marginHorizontal: 16,
-    maxWidth: '75%', // Slightly smaller max width
+    maxWidth: "75%", // Slightly smaller max width
   },
   userContainer: {
-    alignSelf: 'flex-end',
+    alignSelf: "flex-end",
   },
   assistantContainer: {
-    alignSelf: 'flex-start',
+    alignSelf: "flex-start",
   },
   bubble: {
     paddingHorizontal: 16, // More horizontal padding
-    paddingVertical: 10,   // Less vertical padding
-    borderRadius: 20,      // More rounded like iMessage
+    paddingVertical: 10, // Less vertical padding
+    borderRadius: 20, // More rounded like iMessage
     minWidth: 60,
     // iMessage-style shadow
-    shadowColor: '#000000',
+    shadowColor: "#000000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 3,
     elevation: 2, // Android shadow
   },
   userBubble: {
-    backgroundColor: '#007AFF', // Keep iMessage blue
+    backgroundColor: "#007AFF", // Keep iMessage blue
     // User bubbles have slightly different shape
     borderBottomRightRadius: 6, // iMessage tail effect
   },
   assistantBubble: {
-    backgroundColor: '#F0F0F0', // Lighter gray like iMessage
+    backgroundColor: "#F0F0F0", // Lighter gray like iMessage
     // Assistant bubbles have tail on the left
     borderBottomLeftRadius: 6, // iMessage tail effect
   },
@@ -157,67 +172,67 @@ const styles = StyleSheet.create({
     // Base light styling handled by specific bubble types
   },
   darkUserBubble: {
-    backgroundColor: '#007AFF', // Keep same blue in dark mode
+    backgroundColor: "#007AFF", // Keep same blue in dark mode
     borderBottomRightRadius: 6, // iMessage tail effect
   },
   darkAssistantBubble: {
-    backgroundColor: '#2C2C2E', // Darker gray for dark mode
-    borderBottomLeftRadius: 6,   // iMessage tail effect
+    backgroundColor: "#2C2C2E", // Darker gray for dark mode
+    borderBottomLeftRadius: 6, // iMessage tail effect
   },
   errorBubble: {
-    backgroundColor: '#FF3B30',
+    backgroundColor: "#FF3B30",
   },
   text: {
     fontSize: 16,
     lineHeight: 20,
   },
   userText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
   },
   assistantText: {
-    color: '#000000',
+    color: "#000000",
   },
   darkText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
   },
   lightText: {
-    color: '#000000',
+    color: "#000000",
   },
   errorText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
   },
   messageInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     marginTop: 4,
   },
   timestamp: {
     fontSize: 11, // Slightly smaller like iMessage
     opacity: 0.5, // More subtle
-    marginTop: 2,  // Small margin from bubble
+    marginTop: 2, // Small margin from bubble
   },
   darkTimestamp: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
   },
   lightTimestamp: {
-    color: '#000000',
+    color: "#000000",
   },
   userTimestamp: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
   },
   assistantTimestamp: {
     // Uses dark/light color
   },
   errorIndicator: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 12,
-    fontWeight: 'bold',
-    backgroundColor: '#FF3B30',
+    fontWeight: "bold",
+    backgroundColor: "#FF3B30",
     width: 16,
     height: 16,
     borderRadius: 8,
-    textAlign: 'center',
+    textAlign: "center",
     lineHeight: 16,
   },
   loadingIndicator: {
@@ -226,6 +241,6 @@ const styles = StyleSheet.create({
   loadingText: {
     fontSize: 16,
     opacity: 0.6,
-    textAlign: 'center',
+    textAlign: "center",
   },
 });

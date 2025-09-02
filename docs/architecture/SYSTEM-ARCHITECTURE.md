@@ -17,20 +17,20 @@ graph TB
         BL[Business Logic Layer]
         NM[Native Modules]
     end
-    
+
     subgraph "Communication Layer"
         DNS[Native DNS]
         UDP[UDP Sockets]
         TCP[TCP Sockets]
         HTTPS[DNS-over-HTTPS]
     end
-    
+
     subgraph "External Services"
         CHAT[ch.at DNS Server]
         CF[Cloudflare DNS]
         MOCK[Mock Service]
     end
-    
+
     UI --> BL
     BL --> NM
     NM --> DNS
@@ -45,6 +45,7 @@ graph TB
 ### Technology Stack
 
 #### Core Technologies
+
 - **Framework**: React Native 0.75.5 with Expo SDK 53
 - **Language**: TypeScript 5.x with strict mode
 - **Navigation**: React Navigation v7 (Stack + Bottom Tabs)
@@ -53,6 +54,7 @@ graph TB
 - **Build System**: Expo Development Build with Continuous Native Generation
 
 #### Platform-Specific Technologies
+
 - **iOS**: Swift + Apple Network Framework (`nw_resolver_t`)
 - **Android**: Kotlin + DnsResolver API (API 29+) + dnsjava fallback
 - **Web**: JavaScript with mock DNS service (browser limitations)
@@ -64,6 +66,7 @@ graph TB
 ### 1. Presentation Layer
 
 #### Component Architecture
+
 ```typescript
 /src/components/
 ├── ChatInput.tsx          # Message input with validation
@@ -74,6 +77,7 @@ graph TB
 ```
 
 #### Navigation Architecture
+
 ```typescript
 /src/navigation/
 ├── index.tsx              # Root navigation configuration
@@ -85,6 +89,7 @@ graph TB
 ```
 
 **Key Design Decisions:**
+
 - **Native Stack Navigation**: Better performance than JavaScript-based navigation
 - **Bottom Tab Navigation**: Standard mobile app pattern for primary screens
 - **Modal Presentation**: Settings screen slides up from bottom
@@ -93,6 +98,7 @@ graph TB
 ### 2. Business Logic Layer
 
 #### Service Architecture
+
 ```typescript
 /src/services/
 ├── dnsService.ts          # Core DNS communication logic
@@ -100,6 +106,7 @@ graph TB
 ```
 
 #### Context Architecture
+
 ```typescript
 /src/context/
 ├── ChatContext.tsx        # Global chat state management
@@ -107,6 +114,7 @@ graph TB
 ```
 
 **Key Design Decisions:**
+
 - **Service Layer Pattern**: Separation of concerns between UI and business logic
 - **Context API**: Global state management without external dependencies
 - **Reducer Pattern**: Predictable state updates with useReducer
@@ -115,6 +123,7 @@ graph TB
 ### 3. Native Module Layer
 
 #### Platform Implementation Strategy
+
 ```
 /modules/dns-native/
 ├── index.ts               # TypeScript interface
@@ -129,6 +138,7 @@ graph TB
 ```
 
 **Key Design Decisions:**
+
 - **Platform-Native APIs**: Uses sanctioned system APIs for maximum compatibility
 - **Unified Interface**: Single TypeScript API abstracts platform differences
 - **Automatic Fallback**: Graceful degradation when native modules unavailable
@@ -169,6 +179,7 @@ graph LR
 ### Platform Implementations
 
 #### iOS Implementation (Swift)
+
 ```swift
 // Uses Apple Network Framework
 let resolver = nw_resolver_create(nw_resolver_config_create())
@@ -178,12 +189,14 @@ nw_resolver_query(resolver, hostname, NW_RESOLVER_TYPE_TXT) { result in
 ```
 
 **Advantages:**
+
 - Official Apple API, fully supported
 - Handles network changes gracefully
 - Bypasses iOS port restrictions
 - Excellent error reporting
 
 #### Android Implementation (Kotlin)
+
 ```kotlin
 // Modern Android (API 29+)
 DnsResolver.getInstance().query(
@@ -198,6 +211,7 @@ val records = lookup.run()
 ```
 
 **Advantages:**
+
 - Official Android API for modern devices
 - dnsjava library for comprehensive legacy support
 - Custom server specification
@@ -242,6 +256,7 @@ graph TB
 ```
 
 **Key Design Decisions:**
+
 - **Immutable State Updates**: Using useReducer with immutable patterns
 - **Async Storage Integration**: Automatic persistence of state changes
 - **Optimistic Updates**: UI updates immediately, storage happens async
@@ -254,6 +269,7 @@ graph TB
 ### Rendering Optimization
 
 #### VirtualizedList Architecture (Critical Fix v1.5.1)
+
 ```typescript
 // MessageList.tsx - Uses FlatList for efficient rendering
 <FlatList
@@ -266,12 +282,14 @@ graph TB
 ```
 
 **Key Optimizations:**
+
 - **Fixed VirtualizedList Nesting**: Removed nested ScrollView architecture
 - **Pre-calculated Layouts**: `getItemLayout` for smooth scrolling
 - **Item Recycling**: FlatList automatically recycles off-screen items
 - **Memory Management**: `removeClippedSubviews` reduces memory usage
 
 #### Component Memoization
+
 ```typescript
 // Memoized expensive components
 const MessageBubble = React.memo<MessageBubbleProps>(({ message }) => {
@@ -291,12 +309,14 @@ const handleSendMessage = useCallback((text: string) => {
 ### Network Performance
 
 #### Connection Optimization
+
 - **Native DNS**: Direct system calls, minimal overhead
 - **Connection Pooling**: Reuse DNS resolver instances
 - **Request Deduplication**: Prevent duplicate queries
 - **Background Handling**: Automatic query suspension/resumption
 
 #### Response Caching
+
 ```typescript
 // DNS response caching strategy
 const responseCache = new Map<string, CachedResponse>();
@@ -313,29 +333,32 @@ interface CachedResponse {
 ## Security Architecture
 
 ### Input Sanitization
+
 ```typescript
 // RFC 1035 compliant DNS sanitization
 const sanitizeMessage = (message: string): string => {
   return message
-    .replace(/[^\x20-\x7E]/g, '')    // Remove non-printable chars
-    .replace(/[.;\\]/g, '_')         // Escape DNS control characters
-    .replace(/\s+/g, ' ')            // Normalize whitespace
-    .trim()                          // Remove leading/trailing spaces
-    .substring(0, 63);               // DNS label length limit
+    .replace(/[^\x20-\x7E]/g, "") // Remove non-printable chars
+    .replace(/[.;\\]/g, "_") // Escape DNS control characters
+    .replace(/\s+/g, " ") // Normalize whitespace
+    .trim() // Remove leading/trailing spaces
+    .substring(0, 63); // DNS label length limit
 };
 ```
 
 ### Error Handling Security
+
 ```typescript
 // Sanitized error messages (no internal details exposed)
 const handleError = (error: Error): UserFriendlyError => ({
   message: "Unable to send message. Please try again.",
   code: "SEND_FAILED",
-  timestamp: new Date().toISOString()
+  timestamp: new Date().toISOString(),
 });
 ```
 
 ### Data Privacy
+
 - **Local Storage Only**: No cloud data persistence
 - **No User Tracking**: No analytics or telemetry
 - **Minimal Permissions**: Only network access required
@@ -360,6 +383,7 @@ const handleError = (error: Error): UserFriendlyError => ({
 ```
 
 #### Unit Testing (`__tests__/`)
+
 ```typescript
 // Component testing with React Native Testing Library
 import { render, fireEvent } from '@testing-library/react-native';
@@ -374,18 +398,20 @@ describe('MessageBubble', () => {
 ```
 
 #### Integration Testing
+
 ```typescript
 // DNS service integration
-describe('DNSService Integration', () => {
-  it('should handle native DNS fallback chain', async () => {
+describe("DNSService Integration", () => {
+  it("should handle native DNS fallback chain", async () => {
     const service = new DNSService();
-    const response = await service.queryTXT('ch.at', 'test message');
+    const response = await service.queryTXT("ch.at", "test message");
     expect(response).toBeDefined();
   });
 });
 ```
 
 #### Platform Testing
+
 - **iOS Simulator**: Test native Network Framework implementation
 - **Android Emulator**: Test DnsResolver API and dnsjava fallback
 - **Physical Devices**: Test real network conditions and restrictions
@@ -395,6 +421,7 @@ describe('DNSService Integration', () => {
 ## Deployment Architecture
 
 ### Build System
+
 ```typescript
 // app.json - Expo configuration
 {
@@ -412,12 +439,14 @@ describe('DNSService Integration', () => {
 ```
 
 ### Development Build Process
+
 1. **Continuous Native Generation**: Expo manages native folders automatically
 2. **Plugin System**: Custom plugin for native DNS module integration
 3. **Development Client**: Uses `expo-dev-client` for native module support
 4. **Hot Reloading**: JavaScript changes update immediately
 
 ### Production Build Process
+
 1. **EAS Build**: Expo Application Services for cloud builds
 2. **Code Signing**: Automatic certificate management
 3. **App Store Distribution**: Automated submission pipeline
@@ -428,10 +457,11 @@ describe('DNSService Integration', () => {
 ## Monitoring & Observability
 
 ### Error Tracking
+
 ```typescript
 // Structured error logging
 interface DNSError {
-  type: 'NETWORK' | 'PARSING' | 'TIMEOUT' | 'PLATFORM';
+  type: "NETWORK" | "PARSING" | "TIMEOUT" | "PLATFORM";
   message: string;
   context: {
     server: string;
@@ -443,6 +473,7 @@ interface DNSError {
 ```
 
 ### Performance Monitoring
+
 ```typescript
 // Performance metrics collection
 interface PerformanceMetrics {
@@ -454,6 +485,7 @@ interface PerformanceMetrics {
 ```
 
 ### User Experience Metrics
+
 - **DNS Query Success Rate**: Target >95%
 - **Response Time**: Target <2 seconds average
 - **App Launch Time**: Target <3 seconds
@@ -464,11 +496,13 @@ interface PerformanceMetrics {
 ## Scalability Considerations
 
 ### Current Limitations
+
 - **DNS Server Dependency**: Relies on external DNS service availability
 - **Message Length**: Limited by DNS TXT record constraints (~250 chars)
 - **Concurrent Users**: DNS server capacity dependent
 
 ### Future Scalability Enhancements
+
 - **Multiple DNS Servers**: Load balancing across multiple providers
 - **Message Chunking**: Better handling of long messages
 - **Caching Layer**: Response caching to reduce server load
@@ -481,21 +515,25 @@ interface PerformanceMetrics {
 ### Architecture Decision Records (ADRs)
 
 #### ADR-001: DNS Communication Protocol Choice
+
 - **Decision**: Use DNS TXT queries for AI communication
 - **Rationale**: Novel approach, universal DNS availability, educational value
 - **Consequences**: Complex fallback chain required, limited by DNS constraints
 
 #### ADR-002: Native Module Implementation
+
 - **Decision**: Implement platform-native DNS modules
 - **Rationale**: Better performance, bypass platform restrictions, educational value
 - **Consequences**: Increased complexity, platform-specific maintenance
 
 #### ADR-003: React Context for State Management
+
 - **Decision**: Use React Context instead of Redux/external libraries
 - **Rationale**: Simplicity, no external dependencies, sufficient for app scope
 - **Consequences**: More boilerplate for complex state updates
 
 ### Maintenance Strategy
+
 - **Quarterly Reviews**: Architecture review and optimization opportunities
 - **Dependency Updates**: Regular updates to React Native, Expo, and dependencies
 - **Platform Updates**: Adaptation to new iOS/Android API changes
@@ -508,6 +546,7 @@ interface PerformanceMetrics {
 DNSChat's architecture successfully balances innovation, performance, and maintainability. The layered design with comprehensive fallback strategies ensures reliable operation across diverse network conditions and device capabilities. The native module architecture provides educational value while delivering production-quality performance.
 
 The system demonstrates several advanced concepts:
+
 - Custom protocol design over standard infrastructure
 - Multi-platform native module development
 - Comprehensive error handling and fallback strategies

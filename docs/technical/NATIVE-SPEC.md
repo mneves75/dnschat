@@ -8,10 +8,10 @@ The primary goal is to achieve reliable, low-level DNS communication by mirrorin
 
 ## 2. Guiding Principles
 
--   **Minimal Native Surface Area:** The native modules will be "dumb pipes." Their sole responsibility is to send a pre-constructed byte array via UDP and return the raw response as a byte array. They will not contain any DNS-specific logic.
--   **JavaScript-Centric Logic:** All DNS packet construction (`dns.encode`) and response parsing (`dns.decode`) will remain in `dnsService.ts` using the existing `dns-packet` library. This centralizes the protocol logic, reduces native code complexity, and allows for easier updates to the DNS protocol handling.
--   **Performance and Responsiveness:** All native networking operations will be executed on background threads to ensure the UI remains fully responsive.
--   **Robust Error Handling:** The native modules will handle network-level errors (e.g., timeouts, host unreachable) and pass them cleanly to the JavaScript layer as rejected Promises.
+- **Minimal Native Surface Area:** The native modules will be "dumb pipes." Their sole responsibility is to send a pre-constructed byte array via UDP and return the raw response as a byte array. They will not contain any DNS-specific logic.
+- **JavaScript-Centric Logic:** All DNS packet construction (`dns.encode`) and response parsing (`dns.decode`) will remain in `dnsService.ts` using the existing `dns-packet` library. This centralizes the protocol logic, reduces native code complexity, and allows for easier updates to the DNS protocol handling.
+- **Performance and Responsiveness:** All native networking operations will be executed on background threads to ensure the UI remains fully responsive.
+- **Robust Error Handling:** The native modules will handle network-level errors (e.g., timeouts, host unreachable) and pass them cleanly to the JavaScript layer as rejected Promises.
 
 ## 3. JavaScript API & Workflow
 
@@ -21,7 +21,7 @@ The native module, registered as `NativeDns`, will expose a single, asynchronous
 
 ```typescript
 // In a new file, e.g., src/types/native.d.ts
-declare module 'react-native' {
+declare module "react-native" {
   interface NativeModulesStatic {
     NativeDns: {
       /**
@@ -40,31 +40,31 @@ declare module 'react-native' {
 ### Workflow
 
 1.  **`dnsService.ts`**:
-    -   Constructs the DNS query packet using `dns.encode(dnsQuery)`.
-    -   Encodes the resulting `Buffer` to a Base64 string.
-    -   Calls `NativeModules.NativeDns.query(base64Query, server, port)`.
+    - Constructs the DNS query packet using `dns.encode(dnsQuery)`.
+    - Encodes the resulting `Buffer` to a Base64 string.
+    - Calls `NativeModules.NativeDns.query(base64Query, server, port)`.
 2.  **Native Module (iOS/Android)**:
-    -   Receives the Base64 query, server, and port.
-    -   Decodes the Base64 string into a raw byte array.
-    -   Opens a UDP socket on a background thread.
-    -   Sends the byte array to the specified server and port from a system-assigned ephemeral port.
-    -   Listens for a response.
-    -   Implements a strict 10-second timeout.
-    -   On receiving a response, encodes the raw response byte array into a Base64 string.
-    -   Resolves the JavaScript `Promise` with the Base64 response.
-    -   If any error (timeout, network error) occurs, it rejects the `Promise` with a descriptive error message.
+    - Receives the Base64 query, server, and port.
+    - Decodes the Base64 string into a raw byte array.
+    - Opens a UDP socket on a background thread.
+    - Sends the byte array to the specified server and port from a system-assigned ephemeral port.
+    - Listens for a response.
+    - Implements a strict 10-second timeout.
+    - On receiving a response, encodes the raw response byte array into a Base64 string.
+    - Resolves the JavaScript `Promise` with the Base64 response.
+    - If any error (timeout, network error) occurs, it rejects the `Promise` with a descriptive error message.
 3.  **`dnsService.ts` (cont.)**:
-    -   Receives the Base64 response from the resolved promise.
-    -   Decodes the Base64 string back into a `Buffer`.
-    -   Parses the response `Buffer` using `dns.decode(responseBuffer)`.
-    -   Processes the TXT records as before.
+    - Receives the Base64 response from the resolved promise.
+    - Decodes the Base64 string back into a `Buffer`.
+    - Parses the response `Buffer` using `dns.decode(responseBuffer)`.
+    - Processes the TXT records as before.
 
 ## 4. iOS Implementation (Swift)
 
--   **Framework:** `Network.framework`. This is Apple's modern, preferred networking API. It is robust, asynchronous by design, and handles network path changes gracefully.
--   **Files:**
-    -   `ios/ChatDNS/NativeDns.swift`: The core Swift implementation.
-    -   `ios/ChatDNS/NativeDns.m`: The Objective-C bridge file to expose the module and its methods to React Native.
+- **Framework:** `Network.framework`. This is Apple's modern, preferred networking API. It is robust, asynchronous by design, and handles network path changes gracefully.
+- **Files:**
+  - `ios/ChatDNS/NativeDns.swift`: The core Swift implementation.
+  - `ios/ChatDNS/NativeDns.m`: The Objective-C bridge file to expose the module and its methods to React Native.
 
 ### `NativeDns.swift`
 
@@ -107,7 +107,7 @@ class NativeDns: NSObject {
             connection.cancel()
             return
           }
-          
+
           // Wait for the response
           connection.receiveMessage { (content, context, isComplete, receiveError) in
             if let error = receiveError {
@@ -115,7 +115,7 @@ class NativeDns: NSObject {
               connection.cancel()
               return
             }
-            
+
             if let responseData = content {
               let responseBase64 = responseData.base64EncodedString()
               resolver(responseBase64)
@@ -161,10 +161,10 @@ RCT_EXTERN_METHOD(query:(NSString *)queryBase64
 
 ## 5. Android Implementation (Kotlin)
 
--   **Framework:** `DatagramSocket` and Kotlin Coroutines (`kotlinx.coroutines`). This is the standard, non-blocking approach for modern Android development.
--   **Files:**
-    -   `android/app/src/main/java/com/dnschat/NativeDnsModule.kt`: The core Kotlin implementation.
-    -   `android/app/src/main/java/com/dnschat/NativeDnsPackage.kt`: The package file to register the module.
+- **Framework:** `DatagramSocket` and Kotlin Coroutines (`kotlinx.coroutines`). This is the standard, non-blocking approach for modern Android development.
+- **Files:**
+  - `android/app/src/main/java/com/dnschat/NativeDnsModule.kt`: The core Kotlin implementation.
+  - `android/app/src/main/java/com/dnschat/NativeDnsPackage.kt`: The package file to register the module.
 
 ### `NativeDnsModule.kt`
 
@@ -193,7 +193,7 @@ class NativeDnsModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
                     val serverAddress = InetAddress.getByName(server)
 
                     socket = DatagramSocket() // Uses a system-assigned ephemeral port
-                    
+
                     val sendPacket = DatagramPacket(queryBytes, queryBytes.size, serverAddress, port)
                     socket?.send(sendPacket)
 
@@ -203,7 +203,7 @@ class NativeDnsModule(reactContext: ReactApplicationContext) : ReactContextBaseJ
 
                     val responseData = receivePacket.data.copyOf(receivePacket.length)
                     val responseBase64 = Base64.encodeToString(responseData, Base64.NO_WRAP)
-                    
+
                     promise.resolve(responseBase64)
                 }
             } catch (e: TimeoutCancellationException) {
@@ -238,22 +238,23 @@ class NativeDnsPackage : ReactPackage {
     }
 }
 ```
-*Finally, this package needs to be added to the `MainApplication.kt` file.*
+
+_Finally, this package needs to be added to the `MainApplication.kt` file._
 
 ## 6. Implementation and Verification Steps
 
 1.  **Create `NATIVE-SPEC.md`**: Write this plan to the specified file.
 2.  **iOS Implementation**:
-    -   Create `NativeDns.swift` and `NativeDns.m` in the `ios/ChatDNS/` directory.
-    -   No Pod install should be needed as `Network.framework` is a system library.
+    - Create `NativeDns.swift` and `NativeDns.m` in the `ios/ChatDNS/` directory.
+    - No Pod install should be needed as `Network.framework` is a system library.
 3.  **Android Implementation**:
-    -   Create the `com/dnschat` package structure if it doesn't exist.
-    -   Create `NativeDnsModule.kt` and `NativeDnsPackage.kt`.
-    -   Register `NativeDnsPackage()` in `MainApplication.kt`'s `getPackages()` method.
+    - Create the `com/dnschat` package structure if it doesn't exist.
+    - Create `NativeDnsModule.kt` and `NativeDnsPackage.kt`.
+    - Register `NativeDnsPackage()` in `MainApplication.kt`'s `getPackages()` method.
 4.  **Update `dnsService.ts`**:
-    -   Modify `performNativeUDPQuery` to use the new `NativeDns` module and the Base64 workflow.
-    -   Remove the DNS-over-HTTPS fallback, as the native implementation is the primary and only desired path.
+    - Modify `performNativeUDPQuery` to use the new `NativeDns` module and the Base64 workflow.
+    - Remove the DNS-over-HTTPS fallback, as the native implementation is the primary and only desired path.
 5.  **Build and Test**:
-    -   Run `npm run ios` and `npm run android` to build the app with the new native code.
-    -   Thoroughly test the chat functionality on both platforms to confirm the native module is working correctly.
-    -   Verify error handling by testing with no internet connection and by querying a non-responsive server.
+    - Run `npm run ios` and `npm run android` to build the app with the new native code.
+    - Thoroughly test the chat functionality on both platforms to confirm the native module is working correctly.
+    - Verify error handling by testing with no internet connection and by querying a non-responsive server.

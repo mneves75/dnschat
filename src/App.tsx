@@ -1,22 +1,22 @@
-import { Assets as NavigationAssets } from '@react-navigation/elements';
-import { DarkTheme, DefaultTheme } from '@react-navigation/native';
-import { Asset } from 'expo-asset';
-import * as SplashScreen from 'expo-splash-screen';
-import * as React from 'react';
-import { useColorScheme, Platform, View, StyleSheet } from 'react-native';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { Navigation } from './navigation';
-import { ChatProvider } from './context/ChatContext';
-import { SettingsProvider } from './context/SettingsContext';
-import { OnboardingProvider, useOnboarding } from './context/OnboardingContext';
-import { ErrorBoundary } from './components/ErrorBoundary';
-import { OnboardingContainer } from './components/onboarding/OnboardingContainer';
-import { LiquidGlassWrapper, useLiquidGlassCapabilities } from './components/LiquidGlassWrapper';
+import { Assets as NavigationAssets } from "@react-navigation/elements";
+import { DarkTheme, DefaultTheme } from "@react-navigation/native";
+import { Asset } from "expo-asset";
+import * as SplashScreen from "expo-splash-screen";
+import * as React from "react";
+import { useColorScheme, Platform, View, StyleSheet } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { Navigation } from "./navigation";
+import { ChatProvider } from "./context/ChatContext";
+import { SettingsProvider } from "./context/SettingsContext";
+import { OnboardingProvider, useOnboarding } from "./context/OnboardingContext";
+import { ErrorBoundary } from "./components/ErrorBoundary";
+import { OnboardingContainer } from "./components/onboarding/OnboardingContainer";
+import {
+  LiquidGlassWrapper,
+  useLiquidGlassCapabilities,
+} from "./components/LiquidGlassWrapper";
 
-Asset.loadAsync([
-  ...NavigationAssets,
-  require('./assets/newspaper.png'),
-]);
+Asset.loadAsync([...NavigationAssets, require("./assets/newspaper.png")]);
 
 SplashScreen.preventAutoHideAsync();
 
@@ -25,7 +25,7 @@ function AppContent() {
   const { hasCompletedOnboarding, loading } = useOnboarding();
   const { isSupported: glassSupported } = useLiquidGlassCapabilities();
 
-  const theme = colorScheme === 'dark' ? DarkTheme : DefaultTheme;
+  const theme = colorScheme === "dark" ? DarkTheme : DefaultTheme;
 
   React.useEffect(() => {
     if (!loading) {
@@ -45,17 +45,17 @@ function AppContent() {
     <Navigation
       theme={theme}
       linking={{
-        enabled: 'auto',
+        enabled: "auto",
         prefixes: [
           // Change the scheme to match your app's scheme defined in app.json
-          'dnschat://',
+          "dnschat://",
         ],
       }}
     />
   );
 
   // Wrap in iOS 26 Liquid Glass container if supported
-  if (glassSupported && Platform.OS === 'ios') {
+  if (glassSupported && Platform.OS === "ios") {
     return (
       <LiquidGlassWrapper
         variant="regular"
@@ -91,6 +91,6 @@ export function App() {
 const styles = StyleSheet.create({
   appContainer: {
     flex: 1,
-    backgroundColor: 'transparent',
+    backgroundColor: "transparent",
   },
 });

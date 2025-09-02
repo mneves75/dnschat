@@ -1,8 +1,8 @@
-import { NativeModules } from 'react-native';
+import { NativeModules } from "react-native";
 
 export interface DNSCapabilities {
   available: boolean;
-  platform: 'ios' | 'android' | 'web';
+  platform: "ios" | "android" | "web";
   supportsCustomServer: boolean;
   supportsAsyncQuery: boolean;
   apiLevel?: number; // Android only
@@ -16,7 +16,7 @@ export interface NativeDNSModule {
    * @returns Promise resolving to array of TXT record strings
    */
   queryTXT(domain: string, message: string): Promise<string[]>;
-  
+
   /**
    * Check if native DNS functionality is available on this platform
    * @returns Promise resolving to platform capabilities
@@ -25,23 +25,23 @@ export interface NativeDNSModule {
 }
 
 export enum DNSErrorType {
-  PLATFORM_UNSUPPORTED = 'PLATFORM_UNSUPPORTED',
-  NETWORK_UNAVAILABLE = 'NETWORK_UNAVAILABLE',
-  DNS_SERVER_UNREACHABLE = 'DNS_SERVER_UNREACHABLE', 
-  INVALID_RESPONSE = 'INVALID_RESPONSE',
-  TIMEOUT = 'TIMEOUT',
-  PERMISSION_DENIED = 'PERMISSION_DENIED',
-  DNS_QUERY_FAILED = 'DNS_QUERY_FAILED'
+  PLATFORM_UNSUPPORTED = "PLATFORM_UNSUPPORTED",
+  NETWORK_UNAVAILABLE = "NETWORK_UNAVAILABLE",
+  DNS_SERVER_UNREACHABLE = "DNS_SERVER_UNREACHABLE",
+  INVALID_RESPONSE = "INVALID_RESPONSE",
+  TIMEOUT = "TIMEOUT",
+  PERMISSION_DENIED = "PERMISSION_DENIED",
+  DNS_QUERY_FAILED = "DNS_QUERY_FAILED",
 }
 
 export class DNSError extends Error {
   constructor(
     public readonly type: DNSErrorType,
     message: string,
-    public readonly cause?: Error
+    public readonly cause?: Error,
   ) {
     super(message);
-    this.name = 'DNSError';
+    this.name = "DNSError";
   }
 }
 
@@ -51,18 +51,18 @@ class NativeDNS implements NativeDNSModule {
 
   constructor() {
     // Try to get the native module, but don't crash if it's not available
-    console.log('🔧 NativeDNS constructor called');
-    console.log('🔧 Available NativeModules keys:', Object.keys(NativeModules));
-    console.log('🔧 Looking for RNDNSModule...');
-    
+    console.log("🔧 NativeDNS constructor called");
+    console.log("🔧 Available NativeModules keys:", Object.keys(NativeModules));
+    console.log("🔧 Looking for RNDNSModule...");
+
     try {
       this.nativeModule = NativeModules.RNDNSModule as NativeDNSModule;
-      console.log('✅ RNDNSModule found:', !!this.nativeModule);
+      console.log("✅ RNDNSModule found:", !!this.nativeModule);
       if (this.nativeModule) {
-        console.log('✅ RNDNSModule methods:', Object.keys(this.nativeModule));
+        console.log("✅ RNDNSModule methods:", Object.keys(this.nativeModule));
       }
     } catch (error) {
-      console.warn('❌ Native DNS module not available:', error);
+      console.warn("❌ Native DNS module not available:", error);
       this.nativeModule = null;
     }
   }
@@ -71,67 +71,77 @@ class NativeDNS implements NativeDNSModule {
     if (!this.nativeModule) {
       throw new DNSError(
         DNSErrorType.PLATFORM_UNSUPPORTED,
-        'Native DNS module is not available on this platform'
+        "Native DNS module is not available on this platform",
       );
     }
 
     if (!message?.trim()) {
       throw new DNSError(
         DNSErrorType.INVALID_RESPONSE,
-        'Message cannot be empty'
+        "Message cannot be empty",
       );
     }
 
     try {
       const result = await this.nativeModule.queryTXT(domain, message.trim());
-      
+
       if (!Array.isArray(result) || result.length === 0) {
         throw new DNSError(
           DNSErrorType.INVALID_RESPONSE,
-          'No TXT records received from DNS server'
+          "No TXT records received from DNS server",
         );
       }
 
       return result;
     } catch (error: any) {
+      // Preserve already-classified DNSError types
+      if (error instanceof DNSError) {
+        throw error;
+      }
+
       // Map native errors to our error types
-      if (error?.code === 'DNS_QUERY_FAILED') {
+      if (error?.code === "DNS_QUERY_FAILED") {
         throw new DNSError(
           DNSErrorType.DNS_QUERY_FAILED,
-          error.message || 'DNS query failed',
-          error
+          error.message || "DNS query failed",
+          error,
         );
       }
 
-      if (error?.message?.includes('timeout') || error?.message?.includes('timed out')) {
-        throw new DNSError(
-          DNSErrorType.TIMEOUT,
-          'DNS query timed out',
-          error
-        );
+      if (
+        error?.message?.includes("timeout") ||
+        error?.message?.includes("timed out")
+      ) {
+        throw new DNSError(DNSErrorType.TIMEOUT, "DNS query timed out", error);
       }
 
-      if (error?.message?.includes('network') || error?.message?.includes('connectivity')) {
+      if (
+        error?.message?.includes("network") ||
+        error?.message?.includes("connectivity")
+      ) {
         throw new DNSError(
           DNSErrorType.NETWORK_UNAVAILABLE,
-          'Network unavailable for DNS query',
-          error
+          "Network unavailable for DNS query",
+          error,
         );
       }
 
-      if (error?.message?.includes('permission') || error?.message?.includes('denied')) {
+      if (
+        error?.message?.includes("permission") ||
+        error?.message?.includes("denied")
+      ) {
         throw new DNSError(
           DNSErrorType.PERMISSION_DENIED,
-          'DNS query permission denied',
-          error
+          "DNS query permission denied",
+          error,
         );
       }
 
       // Default to DNS query failed
       throw new DNSError(
         DNSErrorType.DNS_QUERY_FAILED,
-        error?.message || 'Unknown DNS error occurred',
-        error
+        error?.message || "Unknown DNS error occurred",
+        error,
       );
     }
   }
@@ -144,9 +154,9 @@ class NativeDNS implements NativeDNSModule {
     if (!this.nativeModule) {
       this.capabilities = {
         available: false,
-        platform: 'web',
+        platform: "web",
         supportsCustomServer: false,
-        supportsAsyncQuery: false
+        supportsAsyncQuery: false,
       };
       return this.capabilities;
     }
@@ -155,12 +165,12 @@ class NativeDNS implements NativeDNSModule {
       this.capabilities = await this.nativeModule.isAvailable();
       return this.capabilities;
     } catch (error) {
-      console.warn('Failed to check DNS availability:', error);
+      console.warn("Failed to check DNS availability:", error);
       this.capabilities = {
         available: false,
-        platform: 'web',
+        platform: "web",
         supportsCustomServer: false,
-        supportsAsyncQuery: false
+        supportsAsyncQuery: false,
       };
       return this.capabilities;
     }
@@ -173,20 +183,24 @@ class NativeDNS implements NativeDNSModule {
     if (txtRecords.length === 0) {
       throw new DNSError(
         DNSErrorType.INVALID_RESPONSE,
-        'No TXT records to parse'
+        "No TXT records to parse",
       );
     }
 
     // Try to parse as multi-part response
-    const parts: Array<{ partNumber: number; totalParts: number; content: string }> = [];
-    
+    const parts: Array<{
+      partNumber: number;
+      totalParts: number;
+      content: string;
+    }> = [];
+
     for (const record of txtRecords) {
       const match = record.match(/^(\d+)\/(\d+):(.*)$/);
       if (match) {
         parts.push({
           partNumber: parseInt(match[1], 10),
           totalParts: parseInt(match[2], 10),
-          content: match[3]
+          content: match[3],
         });
       } else {
         // If no multi-part format detected, treat as single response
@@ -196,7 +210,7 @@ class NativeDNS implements NativeDNSModule {
 
     if (parts.length === 0) {
       // No multi-part format found, concatenate all records
-      return txtRecords.join(' ');
+      return txtRecords.join(" ");
     }
 
     // Sort parts by part number
@@ -207,12 +221,12 @@ class NativeDNS implements NativeDNSModule {
     if (parts.length !== expectedTotal) {
       throw new DNSError(
         DNSErrorType.INVALID_RESPONSE,
-        `Incomplete multi-part response: got ${parts.length} parts, expected ${expectedTotal}`
+        `Incomplete multi-part response: got ${parts.length} parts, expected ${expectedTotal}`,
       );
     }
 
     // Combine all parts
-    return parts.map(part => part.content).join('');
+    return parts.map((part) => part.content).join("");
   }
 
   /**

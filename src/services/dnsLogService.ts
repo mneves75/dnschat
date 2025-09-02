@@ -1,11 +1,11 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export interface DNSLogEntry {
   id: string;
   timestamp: Date;
   message: string;
-  method: 'native' | 'udp' | 'tcp' | 'https' | 'mock';
-  status: 'attempt' | 'success' | 'failure' | 'fallback';
+  method: "native" | "udp" | "tcp" | "https" | "mock";
+  status: "attempt" | "success" | "failure" | "fallback";
   details?: string;
   error?: string;
   duration?: number;
@@ -17,13 +17,13 @@ export interface DNSQueryLog {
   startTime: Date;
   endTime?: Date;
   totalDuration?: number;
-  finalStatus: 'pending' | 'success' | 'failure';
-  finalMethod?: 'native' | 'udp' | 'tcp' | 'https' | 'mock';
+  finalStatus: "pending" | "success" | "failure";
+  finalMethod?: "native" | "udp" | "tcp" | "https" | "mock";
   response?: string;
   entries: DNSLogEntry[];
 }
 
-const STORAGE_KEY = '@dns_query_logs';
+const STORAGE_KEY = "@dns_query_logs";
 const MAX_LOGS = 100;
 
 export class DNSLogService {
@@ -47,19 +47,19 @@ export class DNSLogService {
         }));
       }
     } catch (error) {
-      console.error('Failed to load DNS logs:', error);
+      console.error("Failed to load DNS logs:", error);
       this.queryLogs = [];
     }
   }
 
   static startQuery(query: string): string {
     const queryId = `query-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    
+
     this.currentQueryLog = {
       id: queryId,
       query,
       startTime: new Date(),
-      finalStatus: 'pending',
+      finalStatus: "pending",
       entries: [],
     };
 
@@ -67,8 +67,8 @@ export class DNSLogService {
       id: `${queryId}-start`,
       timestamp: new Date(),
       message: `Starting DNS query: "${query}"`,
-      method: 'native',
-      status: 'attempt',
+      method: "native",
+      status: "attempt",
     });
 
     return queryId;
@@ -81,10 +81,7 @@ export class DNSLogService {
     this.notifyListeners();
   }
 
-  static logMethodAttempt(
-    method: DNSLogEntry['method'],
-    details?: string
-  ) {
+  static logMethodAttempt(method: DNSLogEntry["method"], details?: string) {
     if (!this.currentQueryLog) return;
 
     const entry: DNSLogEntry = {
@@ -92,7 +89,7 @@ export class DNSLogService {
       timestamp: new Date(),
       message: `Attempting ${method.toUpperCase()} DNS query`,
       method,
-      status: 'attempt',
+      status: "attempt",
       details,
     };
 
@@ -100,9 +97,9 @@ export class DNSLogService {
   }
 
   static logMethodSuccess(
-    method: DNSLogEntry['method'],
+    method: DNSLogEntry["method"],
     duration: number,
-    details?: string
+    details?: string,
   ) {
     if (!this.currentQueryLog) return;
 
@@ -111,7 +108,7 @@ export class DNSLogService {
       timestamp: new Date(),
       message: `${method.toUpperCase()} query successful`,
       method,
-      status: 'success',
+      status: "success",
       details,
       duration,
     };
@@ -120,9 +117,9 @@ export class DNSLogService {
   }
 
   static logMethodFailure(
-    method: DNSLogEntry['method'],
+    method: DNSLogEntry["method"],
     error: string,
-    duration?: number
+    duration?: number,
   ) {
     if (!this.currentQueryLog) return;
 
@@ -131,7 +128,7 @@ export class DNSLogService {
       timestamp: new Date(),
       message: `${method.toUpperCase()} query failed`,
       method,
-      status: 'failure',
+      status: "failure",
       error,
       duration,
     };
@@ -140,8 +137,8 @@ export class DNSLogService {
   }
 
   static logFallback(
-    fromMethod: DNSLogEntry['method'],
-    toMethod: DNSLogEntry['method']
+    fromMethod: DNSLogEntry["method"],
+    toMethod: DNSLogEntry["method"],
   ) {
     if (!this.currentQueryLog) return;
 
@@ -150,7 +147,7 @@ export class DNSLogService {
       timestamp: new Date(),
       message: `Falling back from ${fromMethod.toUpperCase()} to ${toMethod.toUpperCase()}`,
       method: fromMethod,
-      status: 'fallback',
+      status: "fallback",
       details: `Next attempt: ${toMethod}`,
     };
 
@@ -160,7 +157,7 @@ export class DNSLogService {
   static async endQuery(
     success: boolean,
     response?: string,
-    finalMethod?: DNSLogEntry['method']
+    finalMethod?: DNSLogEntry["method"],
   ) {
     if (!this.currentQueryLog) return;
 
@@ -168,7 +165,7 @@ export class DNSLogService {
     this.currentQueryLog.totalDuration =
       this.currentQueryLog.endTime.getTime() -
       this.currentQueryLog.startTime.getTime();
-    this.currentQueryLog.finalStatus = success ? 'success' : 'failure';
+    this.currentQueryLog.finalStatus = success ? "success" : "failure";
     this.currentQueryLog.finalMethod = finalMethod;
     this.currentQueryLog.response = response;
 
@@ -177,9 +174,9 @@ export class DNSLogService {
       timestamp: new Date(),
       message: success
         ? `Query completed successfully via ${finalMethod?.toUpperCase()}`
-        : 'Query failed after all attempts',
-      method: finalMethod || 'mock',
-      status: success ? 'success' : 'failure',
+        : "Query failed after all attempts",
+      method: finalMethod || "mock",
+      status: success ? "success" : "failure",
       duration: this.currentQueryLog.totalDuration,
     };
 
@@ -187,7 +184,7 @@ export class DNSLogService {
 
     // Add to persistent storage
     this.queryLogs.unshift({ ...this.currentQueryLog });
-    
+
     // Limit the number of stored logs
     if (this.queryLogs.length > MAX_LOGS) {
       this.queryLogs = this.queryLogs.slice(0, MAX_LOGS);
@@ -202,18 +199,18 @@ export class DNSLogService {
     try {
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(this.queryLogs));
     } catch (error) {
-      console.error('Failed to save DNS logs:', error);
+      console.error("Failed to save DNS logs:", error);
     }
   }
 
   static getLogs(): DNSQueryLog[] {
     const logs = [...this.queryLogs];
-    
+
     // Include current query if in progress
     if (this.currentQueryLog) {
       logs.unshift({ ...this.currentQueryLog });
     }
-    
+
     return logs;
   }
 
@@ -235,12 +232,12 @@ export class DNSLogService {
 
   private static notifyListeners() {
     const logs = this.getLogs();
-    this.listeners.forEach(listener => listener(logs));
+    this.listeners.forEach((listener) => listener(logs));
   }
 
   static formatDuration(ms: number | undefined): string {
     if (ms === undefined || ms === null || isNaN(ms)) {
-      return '—';
+      return "—";
     }
     if (ms < 1000) {
       return `${ms}ms`;
@@ -248,28 +245,28 @@ export class DNSLogService {
     return `${(ms / 1000).toFixed(2)}s`;
   }
 
-  static getMethodColor(method: DNSLogEntry['method'] | undefined): string {
-    if (!method) return '#757575';
-    
+  static getMethodColor(method: DNSLogEntry["method"] | undefined): string {
+    if (!method) return "#757575";
+
     const colors = {
-      native: '#4CAF50',
-      udp: '#2196F3',
-      tcp: '#FF9800',
-      https: '#9C27B0',
-      mock: '#607D8B',
+      native: "#4CAF50",
+      udp: "#2196F3",
+      tcp: "#FF9800",
+      https: "#9C27B0",
+      mock: "#607D8B",
     };
-    return colors[method] || '#757575';
+    return colors[method] || "#757575";
   }
 
-  static getStatusIcon(status: DNSLogEntry['status'] | undefined): string {
-    if (!status) return '•';
-    
+  static getStatusIcon(status: DNSLogEntry["status"] | undefined): string {
+    if (!status) return "•";
+
     const icons = {
-      attempt: '🔄',
-      success: '✅',
-      failure: '❌',
-      fallback: '↩️',
+      attempt: "🔄",
+      success: "✅",
+      failure: "❌",
+      fallback: "↩️",
     };
-    return icons[status] || '•';
+    return icons[status] || "•";
   }
 }
