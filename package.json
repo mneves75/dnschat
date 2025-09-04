@@ -63,5 +63,18 @@
   "overrides": {
     "markdown-it": ">=12.3.2"
   },
-  "private": true
+  "private": true,
+  "expo": {
+    "doctor": {
+      "reactNativeDirectoryCheck": {
+        "exclude": [
+          "react-native-udp",
+          "react-native-tcp-socket",
+          "dns-packet",
+          "playwright"
+        ],
+        "listUnknownPackages": false
+      }
+    }
+  }
 }
