@@ -2,8 +2,8 @@
 
 A React Native mobile app that revolutionizes LLM interaction by using DNS TXT queries for AI communication. Chat with AI models through DNS infrastructure for enhanced privacy and network resilience.
 
-[![React Native](https://img.shields.io/badge/React%20Native-0.81-blue.svg)](https://reactnative.dev/)
-[![Expo](https://img.shields.io/badge/Expo-54-black.svg)](https://expo.dev/)
+[![React Native](https://img.shields.io/badge/React%20Native-0.81.1-blue.svg)](https://reactnative.dev/)
+[![Expo](https://img.shields.io/badge/Expo-54%20Preview-black.svg)](https://expo.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue.svg)](https://www.typescriptlang.org/)
 [![iOS](https://img.shields.io/badge/iOS-16%2B-lightgrey.svg)](https://developer.apple.com/ios/)
 [![Android](https://img.shields.io/badge/Android-API%2021%2B-green.svg)](https://developer.android.com/)
@@ -26,9 +26,9 @@ A React Native mobile app that revolutionizes LLM interaction by using DNS TXT q
 
 ### **Core Framework**
 
-- **React Native 0.79** with New Architecture
-- **Expo SDK 53** with Development Build
-- **TypeScript** with strict mode
+- **React Native 0.81.1** (SDK 54 preview compatible)
+- **Expo SDK 54 (preview)** with Development Build
+- **TypeScript** (strict mode)
 
 ### **Navigation & UI**
 
@@ -66,8 +66,10 @@ cd dnschat
 # Install dependencies
 npm install
 
-# iOS setup
-cd ios && pod install && cd ..
+# iOS build note
+# React Native is deprecating direct `pod install` usage. Prefer `npx expo run:ios`.
+# If you need to troubleshoot native deps:
+#   cd ios && pod install && cd ..
 
 # Start development server
 npm start
@@ -83,6 +85,7 @@ npm run ios
 npm run android
 
 # Web
+# Web preview defaults to Mock DNS (DoH can’t reach ch.at custom TXT).
 npm run web
 ```
 
@@ -137,8 +140,8 @@ modules/dns-native/    # Android native DNS module
 ### DNS Testing
 
 ```bash
-# Test DNS connectivity (runs in RN/Metro environment)
-node test-dns-simple.js "Hello world"
+# Node-only UDP TXT smoke test (no RN runtime required)
+node test-dns-simple.js
 
 # Run with specific DNS method
 npm run ios -- --device-id "iPhone-UUID"
@@ -148,7 +151,7 @@ npm run android -- --variant debug
 ### DNS Transports & Troubleshooting
 
 - UDP/TCP: Primary transports. Some networks block port 53; the app logs fallbacks and will try TCP where possible.
-- HTTPS: DNS-over-HTTPS cannot reach ch.at’s custom TXT responses (resolver architecture). For ch.at queries, DoH is disabled and native/UDP/TCP are preferred; development can fall back to Mock.
+- HTTPS: DNS-over-HTTPS cannot reach ch.at’s custom TXT responses (resolver architecture). For ch.at queries, DoH is disabled and native/UDP/TCP are preferred; web preview enables Mock by default.
 - Backgrounding: Queries suspend while the app is backgrounded; errors will mention suspension.
 - Rate limiting: Per-minute throttling prevents spam; errors indicate when to retry.
 
@@ -224,6 +227,26 @@ npm run android
 - Check network firewall restrictions
 
 For detailed troubleshooting, see [TROUBLESHOOTING.md](./docs/TROUBLESHOOTING.md).
+
+### SIGTERM in Xcode/Simulator during development
+
+Seeing a backtrace ending at `UIApplicationMain` with `SIGTERM` (e.g., `mach_msg2_trap` → run loop → `UIApplicationMain`) is expected when:
+
+- You press Stop in Xcode, or a new build reinstalls the app over the running one.
+- The simulator restarts the process during install.
+
+This is not a crash. If it’s noisy, you can instruct LLDB to not break on SIGTERM during dev:
+
+```
+(lldb) process handle SIGTERM -s false -n true -p true
+```
+
+If termination happens immediately without reinstall/stop:
+
+- Ensure Metro is running: `npm start`
+- Clean and rebuild iOS: `cd ios && pod install && cd .. && npm run ios`
+- Uninstall the app from the simulator and run again
+- Check device logs for errors outside of SIGTERM
 
 ## 🤝 Contributing
 
