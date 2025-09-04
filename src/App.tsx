@@ -15,6 +15,7 @@ import {
   LiquidGlassWrapper,
   useLiquidGlassCapabilities,
 } from "./components/LiquidGlassWrapper";
+import { DNSLogService } from "./services/dnsLogService";
 
 Asset.loadAsync([...NavigationAssets, require("./assets/newspaper.png")]);
 
@@ -32,6 +33,13 @@ function AppContent() {
       SplashScreen.hideAsync();
     }
   }, [loading]);
+
+  // Initialize persisted DNS logs once
+  React.useEffect(() => {
+    DNSLogService.initialize().catch(() => {
+      // Non-fatal: logs viewer will still function in-memory
+    });
+  }, []);
 
   if (loading) {
     return null; // Keep splash screen visible while loading

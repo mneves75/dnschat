@@ -317,9 +317,6 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     padding: 32,
   },
-  emptyState: {
-    alignItems: "center",
-  },
   emptyIcon: {
     fontSize: 48,
     marginBottom: 16,

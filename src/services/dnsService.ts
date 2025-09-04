@@ -11,22 +11,32 @@ let Buffer: any = null;
 
 try {
   dgram = require("react-native-udp");
-  console.log("✅ UDP library loaded successfully:", !!dgram);
+  if (typeof __DEV__ !== "undefined" && __DEV__) {
+    console.log("✅ UDP library loaded successfully:", !!dgram);
+  }
 } catch (error) {
-  console.log("❌ UDP library failed to load:", error);
+  if (typeof __DEV__ !== "undefined" && __DEV__) {
+    console.log("❌ UDP library failed to load:", error);
+  }
   // UDP not available, will use fallback methods
 }
 
 try {
   const tcpLibrary = require("react-native-tcp-socket");
-  console.log("🔍 TCP Socket library structure:", Object.keys(tcpLibrary));
+  if (typeof __DEV__ !== "undefined" && __DEV__) {
+    console.log("🔍 TCP Socket library structure:", Object.keys(tcpLibrary));
+  }
   TcpSocket = tcpLibrary; // Use the entire library object
-  console.log(
-    "✅ TCP Socket library loaded successfully:",
-    !!TcpSocket && !!TcpSocket.Socket,
-  );
+  if (typeof __DEV__ !== "undefined" && __DEV__) {
+    console.log(
+      "✅ TCP Socket library loaded successfully:",
+      !!TcpSocket && !!TcpSocket.Socket,
+    );
+  }
 } catch (error) {
-  console.log("❌ TCP Socket library failed to load:", error);
+  if (typeof __DEV__ !== "undefined" && __DEV__) {
+    console.log("❌ TCP Socket library failed to load:", error);
+  }
   // TCP Socket not available, will use DNS-over-HTTPS fallback
 }
 
@@ -55,6 +65,45 @@ try {
       obj instanceof Uint8Array ||
       (obj && typeof obj === "object" && "length" in obj),
   };
+}
+
+// Safe helpers for logging/decoding
+function safeStringify(value: any): string {
+  try {
+    if (value instanceof Error) return `${value.name}: ${value.message}`;
+    return JSON.stringify(value);
+  } catch {
+    try {
+      return String(value);
+    } catch {
+      return "<unstringifiable>";
+    }
+  }
+}
+
+function safeDecodeBytes(bytes: any): string {
+  try {
+    const TD: any =
+      (global as any)?.TextDecoder ??
+      (typeof TextDecoder !== "undefined" ? TextDecoder : null);
+    if (TD) {
+      const dec = new TD("utf-8");
+      return dec.decode(bytes as Uint8Array);
+    }
+  } catch {}
+  try {
+    if (Buffer && typeof Buffer.from === "function") {
+      return Buffer.from(bytes as Uint8Array).toString("utf8");
+    }
+  } catch {}
+  try {
+    const arr = bytes as Uint8Array;
+    let out = "";
+    for (let i = 0; i < arr.length; i++) out += String.fromCharCode(arr[i]);
+    return out;
+  } catch {
+    return "";
+  }
 }
 
 /**
@@ -143,8 +192,12 @@ export function parseTXTResponse(txtRecords: string[]): string {
     expectedTotal = Math.max(expectedTotal, totalParts);
   }
 
-  // Validate completeness: unique parts 1..N must exist
-  const uniquePartNumbers = new Set(parts.map((p) => p.partNumber));
+  // Validate completeness: unique parts 1..N must exist and no duplicates
+  const partNumbers = parts.map((p) => p.partNumber);
+  const uniquePartNumbers = new Set(partNumbers);
+  if (uniquePartNumbers.size !== partNumbers.length) {
+    throw new Error("Duplicate part numbers detected in multi-part response");
+  }
   if (
     expectedTotal <= 0 ||
     uniquePartNumbers.size !== expectedTotal ||
@@ -175,21 +228,48 @@ export class DNSService {
   private static isAppInBackground = false;
   private static backgroundListenerInitialized = false;
   private static requestHistory: number[] = [];
+  private static appStateSubscription: { remove: () => void } | null = null;
+
+  private static isVerbose(): boolean {
+    try {
+      return typeof __DEV__ !== "undefined" && !!__DEV__;
+    } catch {
+      return false;
+    }
+  }
+
+  private static vLog(...args: any[]) {
+    if (this.isVerbose()) console.log(...args);
+  }
 
   private static initializeBackgroundListener() {
     if (this.backgroundListenerInitialized || Platform.OS === "web") {
       return;
     }
 
-    AppState.addEventListener("change", (nextAppState) => {
-      if (nextAppState === "background") {
-        this.isAppInBackground = true;
-      } else if (nextAppState === "active") {
-        this.isAppInBackground = false;
-      }
-    });
+    this.appStateSubscription = AppState.addEventListener(
+      "change",
+      (nextAppState) => {
+        if (nextAppState === "background") {
+          this.isAppInBackground = true;
+        } else if (nextAppState === "active") {
+          this.isAppInBackground = false;
+        }
+      },
+    );
 
     this.backgroundListenerInitialized = true;
+  }
+
+  // Optional teardown (for tests or future lifecycle control)
+  static destroyBackgroundListener() {
+    if (this.appStateSubscription) {
+      try {
+        this.appStateSubscription.remove();
+      } catch {}
+      this.appStateSubscription = null;
+      this.backgroundListenerInitialized = false;
+    }
   }
 
   private static checkRateLimit(): boolean {
@@ -367,7 +447,7 @@ export class DNSService {
       }
 
       const socket = dgram.createSocket("udp4");
-      let timeoutId: NodeJS.Timeout | null = null;
+      let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
       const cleanup = () => {
         if (timeoutId) clearTimeout(timeoutId);
@@ -375,11 +455,11 @@ export class DNSService {
       };
 
       const onError = (e: any) => {
-        console.log("❌ UDP: Error occurred:", e);
-        console.log("❌ UDP: Error type:", typeof e);
-        console.log("❌ UDP: Error message:", e?.message);
-        console.log("❌ UDP: Error code:", e?.code);
-        console.log("❌ UDP: Error errno:", e?.errno);
+        this.vLog("❌ UDP: Error occurred:", e);
+        this.vLog("❌ UDP: Error type:", typeof e);
+        this.vLog("❌ UDP: Error message:", e?.message);
+        this.vLog("❌ UDP: Error code:", e?.code);
+        this.vLog("❌ UDP: Error errno:", e?.errno);
 
         cleanup();
 
@@ -486,7 +566,7 @@ export class DNSService {
                     typeof answer.data === "object" &&
                     "length" in answer.data)
                 ) {
-                  return new TextDecoder().decode(answer.data as Uint8Array);
+                  return safeDecodeBytes(answer.data as Uint8Array);
                 } else {
                   return answer.data ? answer.data.toString() : "";
                 }
@@ -523,9 +603,9 @@ export class DNSService {
     dnsServer: string,
   ): Promise<string[]> {
     return new Promise((resolve, reject) => {
-      console.log("🔧 TCP: Starting DNS-over-TCP query");
-      console.log("🔧 TCP: TcpSocket available:", !!TcpSocket);
-      console.log("🔧 TCP: TcpSocket.Socket available:", !!TcpSocket?.Socket);
+      this.vLog("🔧 TCP: Starting DNS-over-TCP query");
+      this.vLog("🔧 TCP: TcpSocket available:", !!TcpSocket);
+      this.vLog("🔧 TCP: TcpSocket.Socket available:", !!TcpSocket?.Socket);
 
       if (!TcpSocket) {
         console.log("❌ TCP: Socket not available");
@@ -534,20 +614,20 @@ export class DNSService {
 
       let socket: any;
       try {
-        console.log("🔧 TCP: Creating socket...");
+        this.vLog("🔧 TCP: Creating socket...");
         socket = new TcpSocket.Socket();
-        console.log("✅ TCP: Socket created successfully");
+        this.vLog("✅ TCP: Socket created successfully");
       } catch (socketError) {
-        console.log("❌ TCP: Socket creation failed:", socketError);
+        this.vLog("❌ TCP: Socket creation failed:", socketError);
         return reject(new Error(`Socket creation failed: ${socketError}`));
       }
 
-      let timeoutId: NodeJS.Timeout | null = null;
+      let timeoutId: ReturnType<typeof setTimeout> | null = null;
       let responseBuffer = Buffer.alloc(0);
       let expectedLength = 0;
 
       const cleanup = () => {
-        console.log("🧹 TCP: Cleaning up...");
+        this.vLog("🧹 TCP: Cleaning up...");
         if (timeoutId) clearTimeout(timeoutId);
         if (socket) {
           try {
@@ -559,14 +639,14 @@ export class DNSService {
       };
 
       const onError = (e: any) => {
-        console.log("❌ TCP: Error occurred:", e);
-        console.log("❌ TCP: Error type:", typeof e);
-        console.log("❌ TCP: Error constructor:", e?.constructor?.name);
-        console.log("❌ TCP: Error message:", e?.message);
-        console.log("❌ TCP: Error code:", e?.code);
-        console.log("❌ TCP: Error errno:", e?.errno);
-        console.log("❌ TCP: Error stringified:", JSON.stringify(e));
-        console.log(
+        this.vLog("❌ TCP: Error occurred:", e);
+        this.vLog("❌ TCP: Error type:", typeof e);
+        this.vLog("❌ TCP: Error constructor:", e?.constructor?.name);
+        this.vLog("❌ TCP: Error message:", e?.message);
+        this.vLog("❌ TCP: Error code:", e?.code);
+        this.vLog("❌ TCP: Error errno:", e?.errno);
+        this.vLog("❌ TCP: Error stringified:", safeStringify(e));
+        this.vLog(
           "❌ TCP: Error is undefined/null:",
           e === undefined || e === null,
         );
@@ -691,9 +771,9 @@ export class DNSService {
       };
 
       try {
-        console.log("🔧 TCP: Encoding DNS query...");
+        this.vLog("🔧 TCP: Encoding DNS query...");
         const queryBuffer = dns.encode(dnsQuery);
-        console.log("✅ TCP: DNS query encoded, length:", queryBuffer?.length);
+        this.vLog("✅ TCP: DNS query encoded, length:", queryBuffer?.length);
 
         if (!queryBuffer) {
           throw new Error(
@@ -702,9 +782,9 @@ export class DNSService {
         }
 
         // DNS-over-TCP requires 2-byte length prefix
-        console.log("🔧 TCP: Creating length prefix...");
-        console.log("🔧 TCP: Buffer available:", !!Buffer);
-        console.log(
+        this.vLog("🔧 TCP: Creating length prefix...");
+        this.vLog("🔧 TCP: Buffer available:", !!Buffer);
+        this.vLog(
           "🔧 TCP: Buffer.allocUnsafe available:",
           !!Buffer?.allocUnsafe,
         );
@@ -712,55 +792,55 @@ export class DNSService {
         let lengthPrefix;
         try {
           lengthPrefix = Buffer.allocUnsafe(2);
-          console.log("✅ TCP: Length prefix buffer created");
+          this.vLog("✅ TCP: Length prefix buffer created");
         } catch (bufferError) {
-          console.log("❌ TCP: Buffer.allocUnsafe failed:", bufferError);
+          this.vLog("❌ TCP: Buffer.allocUnsafe failed:", bufferError);
           throw new Error(`Buffer allocation failed: ${bufferError}`);
         }
 
         // For polyfill compatibility, write length manually
-        console.log("🔧 TCP: Writing length prefix...");
+        this.vLog("🔧 TCP: Writing length prefix...");
         if (lengthPrefix.writeUInt16BE) {
-          console.log("🔧 TCP: Using Buffer.writeUInt16BE method");
+          this.vLog("🔧 TCP: Using Buffer.writeUInt16BE method");
           lengthPrefix.writeUInt16BE(queryBuffer.length, 0);
         } else {
-          console.log("🔧 TCP: Using manual big-endian write (polyfill mode)");
+          this.vLog("🔧 TCP: Using manual big-endian write (polyfill mode)");
           // Manual big-endian write for polyfill
           lengthPrefix[0] = (queryBuffer.length >> 8) & 0xff;
           lengthPrefix[1] = queryBuffer.length & 0xff;
         }
-        console.log("✅ TCP: Length prefix written:", Array.from(lengthPrefix));
+        this.vLog("✅ TCP: Length prefix written:", Array.from(lengthPrefix));
 
-        console.log("🔧 TCP: Concatenating buffers...");
-        console.log("🔧 TCP: Buffer.concat available:", !!Buffer?.concat);
+        this.vLog("🔧 TCP: Concatenating buffers...");
+        this.vLog("🔧 TCP: Buffer.concat available:", !!Buffer?.concat);
 
         let tcpQuery;
         try {
           tcpQuery = Buffer.concat([lengthPrefix, queryBuffer]);
-          console.log(
+          this.vLog(
             "✅ TCP: TCP query buffer created, total length:",
             tcpQuery?.length,
           );
         } catch (concatError) {
-          console.log("❌ TCP: Buffer.concat failed:", concatError);
+          this.vLog("❌ TCP: Buffer.concat failed:", concatError);
           throw new Error(`Buffer concatenation failed: ${concatError}`);
         }
 
-        console.log("🔧 TCP: Setting up timeout...");
+        this.vLog("🔧 TCP: Setting up timeout...");
         timeoutId = setTimeout(() => {
-          console.log("⏰ TCP: Query timed out");
+          this.vLog("⏰ TCP: Query timed out");
           onError(new Error("DNS TCP query timed out"));
         }, this.TIMEOUT);
 
-        console.log("🔧 TCP: Setting up error handler...");
+        this.vLog("🔧 TCP: Setting up error handler...");
         socket.on("error", (err: any) => {
-          console.log("❌ TCP: Socket error event:", err);
+          this.vLog("❌ TCP: Socket error event:", err);
           onError(err);
         });
 
-        console.log("🔧 TCP: Setting up data handler...");
+        this.vLog("🔧 TCP: Setting up data handler...");
         socket.on("data", (data: Buffer) => {
-          console.log("📥 TCP: Received data, length:", data.length);
+          this.vLog("📥 TCP: Received data, length:", data.length);
           responseBuffer = Buffer.concat([responseBuffer, data]);
 
           // Read the length prefix if we haven't yet
@@ -803,7 +883,7 @@ export class DNSService {
                       typeof answer.data === "object" &&
                       "length" in answer.data)
                   ) {
-                    return new TextDecoder().decode(answer.data as Uint8Array);
+                    return safeDecodeBytes(answer.data as Uint8Array);
                   } else {
                     return answer.data ? answer.data.toString() : "";
                   }
@@ -818,11 +898,11 @@ export class DNSService {
           }
         });
 
-        console.log("🔧 TCP: Setting up close handler...");
+        this.vLog("🔧 TCP: Setting up close handler...");
         socket.on("close", () => {
-          console.log("🔌 TCP: Socket closed");
+          this.vLog("🔌 TCP: Socket closed");
           if (expectedLength === 0 || responseBuffer.length < expectedLength) {
-            console.log("❌ TCP: Connection closed prematurely");
+            this.vLog("❌ TCP: Connection closed prematurely");
             onError(
               new Error("Connection closed before receiving complete response"),
             );
@@ -830,7 +910,7 @@ export class DNSService {
         });
 
         // Connect and send the query
-        console.log(
+        this.vLog(
           "🔧 TCP: Attempting to connect to",
           dnsServer,
           "port",
@@ -843,18 +923,18 @@ export class DNSService {
               host: dnsServer,
             },
             (connectResult: any) => {
-              console.log("✅ TCP: Connected successfully");
-              console.log("🔍 TCP: Connect result:", connectResult);
+              this.vLog("✅ TCP: Connected successfully");
+              this.vLog("🔍 TCP: Connect result:", connectResult);
               try {
-                console.log("📤 TCP: Sending query, length:", tcpQuery.length);
+                this.vLog("📤 TCP: Sending query, length:", tcpQuery.length);
                 const writeResult = socket.write(tcpQuery);
-                console.log("✅ TCP: Query sent, write result:", writeResult);
+                this.vLog("✅ TCP: Query sent, write result:", writeResult);
               } catch (writeError) {
-                console.log("❌ TCP: Write failed:", writeError);
-                console.log("❌ TCP: Write error type:", typeof writeError);
-                console.log(
+                this.vLog("❌ TCP: Write failed:", writeError);
+                this.vLog("❌ TCP: Write error type:", typeof writeError);
+                this.vLog(
                   "❌ TCP: Write error details:",
-                  JSON.stringify(writeError),
+                  safeStringify(writeError),
                 );
                 onError(
                   writeError ||
@@ -866,19 +946,19 @@ export class DNSService {
 
           // Add specific error handling for connect failures
           socket.on("connect", () => {
-            console.log("🎉 TCP: Socket connect event fired");
+            this.vLog("🎉 TCP: Socket connect event fired");
           });
 
           socket.on("timeout", () => {
-            console.log("⏰ TCP: Socket timeout event fired");
+            this.vLog("⏰ TCP: Socket timeout event fired");
             onError(new Error("TCP Socket connection timeout"));
           });
         } catch (connectError) {
-          console.log("❌ TCP: Connect attempt failed:", connectError);
-          console.log("❌ TCP: Connect error type:", typeof connectError);
-          console.log(
+          this.vLog("❌ TCP: Connect attempt failed:", connectError);
+          this.vLog("❌ TCP: Connect error type:", typeof connectError);
+          this.vLog(
             "❌ TCP: Connect error details:",
-            JSON.stringify(connectError),
+            safeStringify(connectError),
           );
           onError(
             connectError ||
@@ -895,9 +975,9 @@ export class DNSService {
     message: string,
     dnsServer: string,
   ): Promise<string[]> {
-    console.log("🔧 HTTPS: Starting DNS-over-HTTPS query");
-    console.log("🔧 HTTPS: Message:", message);
-    console.log("🔧 HTTPS: DNS Server:", dnsServer);
+    this.vLog("🔧 HTTPS: Starting DNS-over-HTTPS query");
+    this.vLog("🔧 HTTPS: Message:", message);
+    this.vLog("🔧 HTTPS: DNS Server:", dnsServer);
 
     // ARCHITECTURE LIMITATION: DNS-over-HTTPS cannot directly query ch.at like UDP/TCP can
     // DNS-over-HTTPS services like Cloudflare act as DNS resolvers, not proxies to specific DNS servers
@@ -906,13 +986,13 @@ export class DNSService {
     // For ch.at specifically, we need direct DNS queries to their custom TXT service
     // DNS-over-HTTPS would query Cloudflare's resolvers, which don't have ch.at's custom responses
 
-    console.log(
+    this.vLog(
       "❌ HTTPS: DNS-over-HTTPS incompatible with ch.at custom TXT service architecture",
     );
-    console.log(
+    this.vLog(
       "❌ HTTPS: ch.at provides custom TXT responses that DNS-over-HTTPS resolvers cannot access",
     );
-    console.log("❌ HTTPS: Fallback to Mock service will be attempted");
+    this.vLog("❌ HTTPS: Fallback to Mock service will be attempted");
 
     throw new Error(
       `DNS-over-HTTPS cannot access ${dnsServer}'s custom TXT responses - network restrictions require Mock fallback`,
