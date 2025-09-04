@@ -2,8 +2,8 @@
 
 A React Native mobile app that revolutionizes LLM interaction by using DNS TXT queries for AI communication. Chat with AI models through DNS infrastructure for enhanced privacy and network resilience.
 
-[![React Native](https://img.shields.io/badge/React%20Native-0.81.1-blue.svg)](https://reactnative.dev/)
-[![Expo](https://img.shields.io/badge/Expo-54%20Preview-black.svg)](https://expo.dev/)
+[![React Native](https://img.shields.io/badge/React%20Native-0.79.5-blue.svg)](https://reactnative.dev/)
+[![Expo](https://img.shields.io/badge/Expo-53%20Stable-black.svg)](https://expo.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue.svg)](https://www.typescriptlang.org/)
 [![iOS](https://img.shields.io/badge/iOS-16%2B-lightgrey.svg)](https://developer.apple.com/ios/)
 [![Android](https://img.shields.io/badge/Android-API%2021%2B-green.svg)](https://developer.android.com/)
@@ -26,8 +26,8 @@ A React Native mobile app that revolutionizes LLM interaction by using DNS TXT q
 
 ### **Core Framework**
 
-- **React Native 0.81.1** (SDK 54 preview compatible)
-- **Expo SDK 54 (preview)** with Development Build
+- **React Native 0.79.5** (Expo SDK 53)
+- **Expo SDK 53 (stable)** with Development Build
 - **TypeScript** (strict mode)
 
 ### **Navigation & UI**
