@@ -123,17 +123,10 @@ export function validateDNSMessage(message: string): void {
     throw new Error("Message cannot be empty or contain only whitespace");
   }
 
-  // Disallow suspicious patterns (control chars and common injection tokens)
-  const suspiciousPatterns = [
-    /\x00/, // null bytes
-    /[\x01-\x1F\x7F-\x9F]/, // control characters
-    /[<>'"&]/, // HTML/XML injection chars
-  ];
-
-  for (const pattern of suspiciousPatterns) {
-    if (pattern.test(message)) {
-      throw new Error("Message contains invalid characters");
-    }
+  // Disallow control characters only; printable ASCII is OK
+  const controlChars = /[\x00-\x1F\x7F-\x9F]/;
+  if (controlChars.test(message)) {
+    throw new Error("Message contains invalid characters");
   }
 }
 
@@ -148,11 +141,20 @@ export function validateDNSMessage(message: string): void {
 export function sanitizeDNSMessage(message: string): string {
   validateDNSMessage(message);
 
+  // Align with native implementations (iOS/Android):
+  // - Trim
+  // - Replace spaces with hyphens
+  // - Lowercase
+  // - Remove non-printables
+  // - Replace DNS control separators with '_'
+  // - Truncate to 63 chars (single-label limit)
   return message
     .replace(/[^\x20-\x7E]/g, "")
-    .replace(/[.;\\]/g, "_")
-    .replace(/\s+/g, " ")
     .trim()
+    .replace(/\s+/g, " ")
+    .replace(/ /g, "-")
+    .replace(/[.;\\]/g, "_")
+    .toLowerCase()
     .substring(0, 63);
 }
 
@@ -429,7 +431,7 @@ export class DNSService {
       "2. Verify DNS server is accessible: ping ch.at",
       "3. Check DNS logs in app Settings for detailed failure information",
       "4. Network may be blocking DNS port 53 - contact network administrator",
-      "5. Try enabling DNS-over-HTTPS in Settings if using public WiFi",
+      "5. If using a non-ch.at DNS server, try enabling DNS-over-HTTPS in Settings",
     ].join("\n");
 
     throw new Error(
@@ -979,24 +981,54 @@ export class DNSService {
     this.vLog("🔧 HTTPS: Message:", message);
     this.vLog("🔧 HTTPS: DNS Server:", dnsServer);
 
-    // ARCHITECTURE LIMITATION: DNS-over-HTTPS cannot directly query ch.at like UDP/TCP can
-    // DNS-over-HTTPS services like Cloudflare act as DNS resolvers, not proxies to specific DNS servers
-    // They will resolve queries using their own infrastructure, not forward to ch.at
-    //
-    // For ch.at specifically, we need direct DNS queries to their custom TXT service
-    // DNS-over-HTTPS would query Cloudflare's resolvers, which don't have ch.at's custom responses
+    // DNS-over-HTTPS works through public resolvers (e.g., Cloudflare) and
+    // does not forward to custom authoritative servers. For ch.at, UDP/TCP
+    // must be used to reach its custom TXT responder. Allow DoH for other
+    // servers to keep web platform and restricted networks usable.
+    if (dnsServer.toLowerCase() === "ch.at") {
+      throw new Error(
+        `DNS-over-HTTPS cannot access ${dnsServer}'s custom TXT responses; use native/UDP/TCP methods`,
+      );
+    }
 
-    this.vLog(
-      "❌ HTTPS: DNS-over-HTTPS incompatible with ch.at custom TXT service architecture",
-    );
-    this.vLog(
-      "❌ HTTPS: ch.at provides custom TXT responses that DNS-over-HTTPS resolvers cannot access",
-    );
-    this.vLog("❌ HTTPS: Fallback to Mock service will be attempted");
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), this.TIMEOUT);
 
-    throw new Error(
-      `DNS-over-HTTPS cannot access ${dnsServer}'s custom TXT responses - network restrictions require Mock fallback`,
-    );
+      const baseURL = "https://cloudflare-dns.com/dns-query";
+      const url = `${baseURL}?name=${encodeURIComponent(message)}&type=TXT`;
+      const res = await fetch(url, {
+        method: "GET",
+        headers: { Accept: "application/dns-json" },
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!res.ok) {
+        throw new Error(`DNS-over-HTTPS request failed with status ${res.status}`);
+      }
+
+      const json: any = await res.json();
+      const answers: any[] = Array.isArray(json?.Answer) ? json.Answer : [];
+      const txtRecords = answers
+        .filter((a) => a && Number(a.type) === 16 && typeof a.data === "string")
+        .map((a) => String(a.data).replace(/^\"|\"$/g, ""))
+        .filter((s) => s.length > 0);
+
+      if (txtRecords.length === 0) {
+        throw new Error("No TXT records found in DNS-over-HTTPS response");
+      }
+
+      return txtRecords;
+    } catch (e: any) {
+      if (e?.name === "AbortError") {
+        throw new Error("DNS-over-HTTPS query timed out");
+      }
+      throw e instanceof Error
+        ? e
+        : new Error(`DNS-over-HTTPS failed: ${safeStringify(e)}`);
+    }
   }
 
   private static parseResponse(txtRecords: string[]): string {

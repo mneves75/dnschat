@@ -57,10 +57,10 @@ describe("DNS Service helpers", () => {
       expect(sanitized).toBe("hello_you_there_now");
     });
 
-    it("normalizes whitespace and trims", () => {
+    it("normalizes whitespace, trims, replaces spaces with hyphens, and lowercases", () => {
       const msg = "   hello    world   ";
       const sanitized = sanitizeDNSMessage(msg);
-      expect(sanitized).toBe("hello world");
+      expect(sanitized).toBe("hello-world");
     });
 
     it("rejects empty or whitespace-only", () => {
