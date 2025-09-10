@@ -15,6 +15,9 @@
 | VirtualizedList warnings             | React Native | [React Native Issues](#react-native-issues)                                                  |
 | DNS queries failing                  | Network      | [DNS Communication](#dns-communication-issues)                                               |
 | Build failures                       | Build        | [Build Problems](#build-issues)                                                              |
+| App crashes on iOS                   | Security     | [v2.0.1 Security Fixes](#v201-critical-security-fixes-resolved)                              |
+| DNS injection attempts               | Security     | [v2.0.1 Security Fixes](#v201-critical-security-fixes-resolved)                              |
+| Thread exhaustion on Android         | Performance  | [v2.0.1 Security Fixes](#v201-critical-security-fixes-resolved)                              |
 
 ---
 
@@ -781,6 +784,71 @@ node test-dns-simple.js "test"
 # Wipe data in AVD Manager
 # Or create new AVD
 ```
+
+---
+
+## v2.0.1 Critical Security Fixes (RESOLVED)
+
+### iOS App Crashes - CheckedContinuation Race Condition
+
+**Previous Symptoms:**
+- App crashes with `EXC_BREAKPOINT` when network state changes rapidly
+- Fatal error: "CheckedContinuation resumed multiple times"
+- 100% crash rate under concurrent DNS operations
+
+**Root Cause:** Race condition in `ios/DNSNative/DNSResolver.swift` where multiple code paths could resume the same continuation
+
+**FIXED:** NSLock-protected atomic flags ensure continuation resumes exactly once
+
+### DNS Injection Vulnerability
+
+**Previous Symptoms:**
+- Malformed DNS queries when special characters present
+- Potential redirection to malicious DNS servers
+- Inconsistent behavior with certain input characters
+
+**Root Cause:** Insufficient input validation allowed control characters and DNS special characters
+
+**FIXED:** 
+- Strict input validation rejecting all control characters
+- DNS server whitelist (only ch.at, Google DNS, Cloudflare allowed)
+- Comprehensive message sanitization
+
+### Android Thread Exhaustion
+
+**Previous Symptoms:**
+- OutOfMemory crashes under moderate load (50+ concurrent queries)
+- App becomes unresponsive before crashing
+- Memory usage grows unbounded
+
+**Root Cause:** `Executors.newCachedThreadPool()` created unlimited threads
+
+**FIXED:** Bounded ThreadPoolExecutor with 2-4 threads max and queue limits
+
+### Cross-Platform Inconsistencies
+
+**Previous Symptoms:**
+- Different DNS query results on iOS vs Android
+- Message truncation at different lengths
+- Inconsistent special character handling
+
+**Root Cause:** Different sanitization logic across platforms
+
+**FIXED:** Shared constants module (`modules/dns-native/constants.ts`) ensures identical behavior
+
+### If You're Still Experiencing These Issues
+
+If you're on v2.0.1+ and still experiencing these issues:
+
+1. **Verify version**: Check Settings → About shows v2.0.1 or higher
+2. **Clean rebuild**:
+   ```bash
+   npm run clean-ios  # iOS
+   cd android && ./gradlew clean && cd ..  # Android
+   npm install
+   ```
+3. **Check native modules**: Ensure DNSNative pod is properly registered
+4. **Report bug**: Create issue with crash logs if problems persist
 
 ---
 

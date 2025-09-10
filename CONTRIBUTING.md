@@ -95,6 +95,36 @@ npm start
 - **Exception handling**: Structured error types
 - **Resource management**: Proper cleanup in finally blocks
 
+### Security Requirements (CRITICAL - v2.0.1+)
+
+All contributions MUST follow these security requirements:
+
+#### Input Validation
+- **Always validate user input** before DNS operations
+- **Use provided validation functions**: `validateDNSMessage()`, `sanitizeDNSMessage()`
+- **Never trust external data**: Validate even if it seems safe
+- **Test with malicious input**: Include security tests in PRs
+
+#### DNS Security
+- **Server whitelist only**: Use `validateDNSServer()` for all server inputs
+- **No custom DNS servers** without security review
+- **Sanitize all messages**: Apply consistent sanitization across platforms
+- **Prevent injection**: Test with control characters and special chars
+
+#### Thread Safety
+- **iOS**: Use NSLock for CheckedContinuation operations
+- **Android**: Use bounded thread pools (never unbounded)
+- **TypeScript**: Handle async operations with proper error boundaries
+
+#### Code Review Checklist
+Before submitting PR:
+- [ ] No sensitive data in logs
+- [ ] All inputs validated
+- [ ] Resources properly cleaned up
+- [ ] Thread-safe operations
+- [ ] Cross-platform consistency
+- [ ] Security tests added
+
 ### Architecture Principles
 
 #### DNS Service Layer
