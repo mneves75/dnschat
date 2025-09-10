@@ -50,6 +50,32 @@ A modern, ChatGPT-like mobile chat interface that communicates with an LLM via D
   - Platform-specific guidance for iOS/Android restrictions
 - **Diagnostic Logging**: Comprehensive error logging for debugging and support
 
+### 2.1 Security Enhancements (v2.0.1)
+
+#### **DNS Injection Prevention**
+
+- **Input Validation**: Strict validation rejecting control characters ([\x00-\x1F\x7F-\x9F])
+- **Special Character Blocking**: Prevents DNS special chars (@, :, etc.) from corrupting queries
+- **Domain/IP Detection**: Rejects inputs that look like domains or IP addresses
+- **Server Whitelisting**: Only allows ch.at, Google DNS (8.8.8.8/8.8.4.4), and Cloudflare (1.1.1.1/1.0.0.1)
+
+#### **Message Sanitization**
+
+Consistent cross-platform sanitization process:
+1. Convert to lowercase
+2. Trim whitespace
+3. Replace spaces with dashes
+4. Remove non-alphanumeric characters (except dash)
+5. Collapse multiple dashes
+6. Remove leading/trailing dashes
+7. Truncate to 63 characters (DNS label limit)
+
+#### **Thread Safety**
+
+- **iOS**: NSLock-protected CheckedContinuation to prevent double resume
+- **Android**: Bounded ThreadPoolExecutor (2-4 threads) with queue limits
+- **Timeouts**: Proper Task cancellation instead of race conditions
+
 ### 3. Local Storage
 
 - **Conversation History**: Persist all chats using AsyncStorage

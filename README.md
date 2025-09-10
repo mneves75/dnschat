@@ -10,6 +10,7 @@ A React Native mobile app that revolutionizes LLM interaction by using DNS TXT q
 
 ## ✨ Key Features
 
+- **🔒 Production-Hardened Security**: DNS injection protection, input validation, and server whitelisting (v2.0.1)
 - **🌟 iOS 26+ Liquid Glass**: Native UIGlassEffect with environmental adaptation and comprehensive fallbacks
 - **🌐 DNS-Based AI Chat**: Revolutionary LLM communication via DNS TXT queries
 - **📱 Cross-Platform**: Native iOS, Android, and Web support with platform-specific optimizations
@@ -21,6 +22,7 @@ A React Native mobile app that revolutionizes LLM interaction by using DNS TXT q
 - **⚙️ Advanced DNS Config**: Multiple DNS service options (ch.at, llm.pieter.com)
 - **📊 Real-Time Logging**: Comprehensive DNS query monitoring and debugging
 - **🔗 Deep Linking**: Direct message sending via custom URL schemes
+- **✅ Enterprise-Grade Stability**: Thread-safe operations, proper resource management, no memory leaks
 
 ## 🛠 Tech Stack
 
@@ -134,6 +136,32 @@ src/
 ios/DNSNative/         # iOS native DNS module
 modules/dns-native/    # Android native DNS module
 ```
+
+## 🔐 Security & Stability (v2.0.1+)
+
+### Critical Issues Fixed
+
+**DNS Injection Protection**
+- Strict input validation prevents control characters and DNS special characters
+- Server whitelist allows only known-safe DNS servers (ch.at, Google DNS, Cloudflare)
+- Message sanitization ensures DNS-safe queries
+
+**Thread Safety**
+- iOS: NSLock-protected CheckedContinuation prevents race conditions
+- Android: Bounded ThreadPoolExecutor prevents thread exhaustion
+- Cross-platform: Identical message sanitization logic
+
+**Resource Management**
+- Guaranteed cleanup of network connections
+- Proper timeout handling with Task cancellation
+- Memory-efficient buffer management
+
+### Security Best Practices
+
+- Never send sensitive data through DNS queries
+- Use DNS-over-HTTPS when available for enhanced privacy
+- Monitor rate limits to prevent abuse
+- Review logs regularly for suspicious activity
 
 ## 🔧 Development
 
