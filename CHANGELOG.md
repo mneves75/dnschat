@@ -7,7 +7,54 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Bug Fixes
+## [2.0.1] - 2025-01-20
+
+### 🚨 CRITICAL SECURITY & STABILITY FIXES
+
+**Emergency patch addressing critical production-blocking issues identified in comprehensive code review.**
+
+### Security Fixes
+
+- **🔒 DNS Injection Vulnerability Fixed** (P0 CRITICAL)
+  - **Issue**: User input could corrupt DNS packets allowing query redirection to malicious servers
+  - **Fix**: Implemented strict input validation rejecting control characters, DNS special characters, and potential injection patterns
+  - **Added**: Server whitelist allowing only known-safe DNS servers (ch.at, Google DNS, Cloudflare DNS)
+  - **Impact**: Prevents attackers from redirecting DNS queries to attacker-controlled domains
+
+### Bug Fixes  
+
+- **💥 iOS CheckedContinuation Crash Fixed** (P0 CRITICAL)
+  - **Issue**: Race condition causing fatal `EXC_BREAKPOINT` crashes when network state changed rapidly
+  - **Fix**: Implemented NSLock-based atomic flags ensuring CheckedContinuation resumes exactly once
+  - **Added**: Proper timeout cancellation with DispatchWorkItem
+  - **Impact**: Eliminates 100% crash rate under concurrent DNS operations
+
+- **💣 Android Thread Exhaustion Fixed** (P0 CRITICAL)
+  - **Issue**: Unbounded thread pool creation causing OutOfMemory crashes under moderate load
+  - **Fix**: Replaced `Executors.newCachedThreadPool()` with bounded `ThreadPoolExecutor` (2-4 threads max)
+  - **Added**: CallerRunsPolicy for backpressure handling when queue is full
+  - **Impact**: Prevents OOM crashes and ensures stable performance under load
+
+- **🔧 Memory Leaks & Resource Cleanup Fixed** (P0 CRITICAL)
+  - **Issue**: NWConnection not properly disposed on failure causing resource exhaustion
+  - **Fix**: Guaranteed connection cleanup with proper cancellation in all code paths
+  - **Added**: Improved timeout mechanism using Task cancellation instead of race conditions
+  - **Impact**: Prevents memory leaks and resource exhaustion in production
+
+- **🌍 Cross-Platform Message Sanitization Fixed** (P1 HIGH)
+  - **Issue**: Different sanitization logic across iOS, Android, and TypeScript causing inconsistent behavior
+  - **Fix**: Created shared constants module with identical sanitization steps for all platforms
+  - **Implementation**: Lowercase → trim → spaces-to-dashes → remove-invalid → collapse-dashes → truncate(63)
+  - **Impact**: Ensures identical DNS query behavior across all platforms
+
+### Technical Improvements
+
+- **Architecture**: Added `modules/dns-native/constants.ts` for shared cross-platform configuration
+- **Security**: Enhanced validation patterns preventing IP addresses and domain names as messages
+- **Performance**: Optimized thread pool configuration with proper bounds and timeouts
+- **Reliability**: Fixed timeout race conditions using proper Task cancellation patterns
+
+### Previous Bug Fixes (from Unreleased)
 
 - **🍎 iOS App Store Privacy Compliance**: Added required privacy usage descriptions to Info.plist
   - **NSCameraUsageDescription**: Explains third-party library camera API references
