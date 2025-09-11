@@ -21,20 +21,28 @@ try {
   // UDP not available, will use fallback methods
 }
 
-try {
-  const tcpLibrary = require('react-native-tcp-socket');
-  if (typeof __DEV__ !== 'undefined' && __DEV__) {
-    console.log('🔍 TCP Socket library structure:', Object.keys(tcpLibrary));
+// IMPORTANT: Do not require react-native-tcp-socket at module load time.
+// In RN bridgeless mode, some libraries attempt `new NativeEventEmitter()` with undefined module,
+// causing an Invariant Violation at import-time. We lazily load it only when needed.
+async function loadTcpSocket(): Promise<any | null> {
+  if (TcpSocket) return TcpSocket;
+  try {
+    // Dynamic import so Metro can tree-shake when unused
+    const mod = require('react-native-tcp-socket');
+    if (typeof __DEV__ !== 'undefined' && __DEV__) {
+      console.log('🔍 TCP Socket library structure:', Object.keys(mod));
+    }
+    TcpSocket = mod;
+    if (typeof __DEV__ !== 'undefined' && __DEV__) {
+      console.log('✅ TCP Socket library loaded successfully:', !!TcpSocket && !!TcpSocket.Socket);
+    }
+    return TcpSocket;
+  } catch (error) {
+    if (typeof __DEV__ !== 'undefined' && __DEV__) {
+      console.log('❌ TCP Socket library failed to load (lazy):', error);
+    }
+    return null;
   }
-  TcpSocket = tcpLibrary; // Use the entire library object
-  if (typeof __DEV__ !== 'undefined' && __DEV__) {
-    console.log('✅ TCP Socket library loaded successfully:', !!TcpSocket && !!TcpSocket.Socket);
-  }
-} catch (error) {
-  if (typeof __DEV__ !== 'undefined' && __DEV__) {
-    console.log('❌ TCP Socket library failed to load:', error);
-  }
-  // TCP Socket not available, will use DNS-over-HTTPS fallback
 }
 
 // Try to import Buffer (Node.js environment) or create a minimal polyfill
@@ -1178,7 +1186,7 @@ export class DNSService {
               `TCP DNS transport not supported on web platform - use DNS-over-HTTPS instead`,
             );
           }
-          if (!TcpSocket) {
+          if (!(await loadTcpSocket())) {
             throw new Error(
               `TCP DNS transport unavailable - react-native-tcp-socket library not loaded (platform: ${Platform.OS})`,
             );
@@ -1368,7 +1376,7 @@ export class DNSService {
               `TCP forced test not supported on web platform - use HTTPS forced test instead`,
             );
           }
-          if (!TcpSocket) {
+          if (!(await loadTcpSocket())) {
             throw new Error(
               `TCP forced test unavailable - react-native-tcp-socket library not loaded (platform: ${Platform.OS})`,
             );

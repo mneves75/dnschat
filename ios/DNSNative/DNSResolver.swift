@@ -49,7 +49,7 @@ final class DNSResolver: NSObject {
                 let result = try await queryTask.value
                 
                 // Clean up
-                await MainActor.run {
+                _ = await MainActor.run {
                     activeQueries.removeValue(forKey: queryId)
                 }
                 
@@ -57,7 +57,7 @@ final class DNSResolver: NSObject {
                 
             } catch {
                 // Clean up on error
-                await MainActor.run {
+                _ = await MainActor.run {
                     activeQueries.removeValue(forKey: queryId)
                 }
                 
@@ -71,7 +71,7 @@ final class DNSResolver: NSObject {
     private func createQueryTask(server: String, message: String) -> Task<[String], Error> {
         Task {
             try await withTimeout(seconds: Self.queryTimeout) {
-                try await performUDPQuery(server: server, message: message)
+                try await self.performUDPQuery(server: server, message: message)
             }
         }
     }
