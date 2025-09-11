@@ -217,8 +217,8 @@ export const LiquidGlassWrapper: React.FC<LiquidGlassProps> = ({
     shadowOpacity: isDark ? 0.6 : 0.15, // Much stronger shadows
     shadowRadius: isDark ? 24 : 18, // Larger blur radius
     elevation: 12, // Higher Android elevation
-    // Add glassmorphism effect
-    backdropFilter: "blur(20px)", // CSS glassmorphism (web/newer RN)
+    // Add glassmorphism effect for web only
+    ...(Platform.OS === "web" ? { backdropFilter: "blur(20px)" } : {}),
     ...(Platform.OS === "ios" && {
       // iOS-specific blur enhancement
       overflow: "hidden",
