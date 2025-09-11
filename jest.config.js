@@ -24,6 +24,7 @@ module.exports = {
     "^react-native-udp$": "<rootDir>/__tests__/mocks/react-native-udp.js",
     "^react-native-tcp-socket$":
       "<rootDir>/__tests__/mocks/react-native-tcp-socket.js",
+    "^@react-native-async-storage/async-storage$": "<rootDir>/__tests__/mocks/async-storage.js",
     "\\.(png|jpg|jpeg|gif|svg)$": "<rootDir>/__tests__/mocks/fileMock.js",
   },
   setupFiles: ["<rootDir>/__tests__/setup.jest.js"],

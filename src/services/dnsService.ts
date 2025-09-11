@@ -275,6 +275,13 @@ export class DNSService {
   private static backgroundListenerInitialized = false;
   private static requestHistory: number[] = [];
   private static appStateSubscription: { remove: () => void } | null = null;
+  // iOS TCP is disabled by default (bridgeless import issues in dev)
+  private static enableIosTcp = false;
+
+  // Minimal runtime configuration for experiments and tests
+  static configure(opts: { enableIosTcp?: boolean } = {}) {
+    if (typeof opts.enableIosTcp === 'boolean') this.enableIosTcp = opts.enableIosTcp;
+  }
 
   private static isVerbose(): boolean {
     try {
@@ -978,10 +985,13 @@ export class DNSService {
         return enableMockDNS ? [...preferHttpsMethods, 'mock'] : preferHttpsMethods;
 
       case 'native-first':
-        // New default: Native DNS always first, regardless of other preferences
-        const nativeFirstMethods: ('native' | 'udp' | 'tcp' | 'https' | 'mock')[] =
+        // New default: Native DNS always first. On iOS, TCP is disabled by default (can be enabled via configure).
+        let nativeFirst: ('native' | 'udp' | 'tcp' | 'https' | 'mock')[] =
           Platform.OS === 'web' ? ['https', 'native'] : ['native', 'udp', 'tcp', 'https'];
-        return enableMockDNS ? [...nativeFirstMethods, 'mock'] : nativeFirstMethods;
+        if (Platform.OS === 'ios' && !this.enableIosTcp) {
+          nativeFirst = nativeFirst.filter((m) => m !== 'tcp');
+        }
+        return enableMockDNS ? [...nativeFirst, 'mock'] : nativeFirst;
 
       case 'automatic':
       default:
@@ -995,9 +1005,12 @@ export class DNSService {
           ];
           return enableMockDNS ? [...httpsFirstMethods, 'mock'] : httpsFirstMethods;
         } else {
-          const normalMethods: ('native' | 'udp' | 'tcp' | 'https' | 'mock')[] =
+          let normal: ('native' | 'udp' | 'tcp' | 'https' | 'mock')[] =
             Platform.OS === 'web' ? ['https'] : ['native', 'udp', 'tcp', 'https'];
-          return enableMockDNS ? [...normalMethods, 'mock'] : normalMethods;
+          if (Platform.OS === 'ios' && !this.enableIosTcp) {
+            normal = normal.filter((m) => m !== 'tcp');
+          }
+          return enableMockDNS ? [...normal, 'mock'] : normal;
         }
     }
   }
