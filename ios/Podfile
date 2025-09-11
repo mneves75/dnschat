@@ -15,6 +15,13 @@ prepare_react_native_project!
 
 target 'DNSChat' do
   use_expo_modules!
+  post_integrate do |installer|
+    begin
+      expo_patch_react_imports!(installer)
+    rescue => e
+      Pod::UI.warn e
+    end
+  end
 
   if ENV['EXPO_USE_COMMUNITY_AUTOLINKING'] == '1'
     config_command = ['node', '-e', "process.argv=['', '', 'config'];require('@react-native-community/cli').run()"];
@@ -45,8 +52,7 @@ target 'DNSChat' do
   # Native DNS Module
   pod 'DNSNative', :path => './DNSNative'
   
-  # iOS 26 Liquid Glass Module
-  pod 'LiquidGlassNative', :path => './LiquidGlassNative'
+  # LiquidGlassNative removed: using Expo GlassEffect (autolinked)
   
   # Fix for react-native-bottom-tabs Swift dependencies
   pod 'SDWebImage', :modular_headers => true

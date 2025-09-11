@@ -14,7 +14,8 @@ describe('Project configuration guards', () => {
     expect(['expo-router/entry', 'index.tsx']).toContain(pkg.main);
     const expoVer: string = pkg.dependencies?.expo || pkg.devDependencies?.expo;
     expect(typeof expoVer).toBe('string');
-    expect(expoVer).toMatch(/\^54\.0\.0/); // GA 54.x
+    // Accept any 54.x line (caret optional, patch may vary)
+    expect(expoVer).toMatch(/^\^?54\./);
     // Dev convenience scripts
     expect(pkg.scripts['dev:ios']).toBeTruthy();
     expect(pkg.scripts['dev:android']).toBeTruthy();

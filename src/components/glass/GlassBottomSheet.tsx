@@ -292,7 +292,6 @@ export const GlassBottomSheet: React.FC<GlassBottomSheetProps> = ({
           variant="prominent"
           shape="roundedRect"
           cornerRadius={16}
-          enableContainer={true}
           style={styles.sheetContent}
         >
           {/* Drag Handle */}

@@ -87,27 +87,15 @@ final class DNSResolver: NSObject {
         let params = NWParameters.udp
         let connection = NWConnection(host: host, port: port, using: params)
         
-        // CRITICAL FIX: Thread-safe atomic flag to prevent double resume
-        let readyLock = NSLock()
-        var hasResumedReady = false
-        
-        // Await ready state with atomic protection
+        // Await ready state
         try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, Error>) in
             connection.stateUpdateHandler = { state in
-                readyLock.lock()
-                defer { readyLock.unlock() }
-                
-                guard !hasResumedReady else { return }
-                
                 switch state {
                 case .ready:
-                    hasResumedReady = true
                     cont.resume()
                 case .failed(let error):
-                    hasResumedReady = true
                     cont.resume(throwing: DNSError.resolverFailed(error.localizedDescription))
                 case .cancelled:
-                    hasResumedReady = true
                     cont.resume(throwing: DNSError.cancelled)
                 default:
                     break
@@ -116,18 +104,9 @@ final class DNSResolver: NSObject {
             connection.start(queue: .global(qos: .userInitiated))
         }
         
-        // Send content with atomic protection
-        let sendLock = NSLock()
-        var hasResumedSend = false
-        
+        // Send content
         try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, Error>) in
             connection.send(content: queryData, completion: .contentProcessed { error in
-                sendLock.lock()
-                defer { sendLock.unlock() }
-                
-                guard !hasResumedSend else { return }
-                hasResumedSend = true
-                
                 if let error = error {
                     cont.resume(throwing: DNSError.queryFailed(error.localizedDescription))
                 } else {
@@ -136,35 +115,10 @@ final class DNSResolver: NSObject {
             })
         }
         
-        // Receive response with atomic protection and proper cleanup
-        let receiveLock = NSLock()
-        var hasResumedReceive = false
-        
+        // Receive response
         let responseData: Data = try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Data, Error>) in
-            // Set up timeout
-            let timeoutWorkItem = DispatchWorkItem {
-                receiveLock.lock()
-                defer { receiveLock.unlock() }
-                
-                guard !hasResumedReceive else { return }
-                hasResumedReceive = true
-                
-                connection.cancel()
-                cont.resume(throwing: DNSError.timeout)
-            }
-            
-            DispatchQueue.global().asyncAfter(deadline: .now() + Self.queryTimeout, execute: timeoutWorkItem)
-            
             connection.receiveMessage { data, _, _, error in
-                receiveLock.lock()
-                defer { receiveLock.unlock() }
-                
-                guard !hasResumedReceive else { return }
-                hasResumedReceive = true
-                
-                timeoutWorkItem.cancel()
                 connection.cancel()
-                
                 if let error = error {
                     cont.resume(throwing: DNSError.queryFailed(error.localizedDescription))
                     return
@@ -282,32 +236,11 @@ final class DNSResolver: NSObject {
     }
     
     private func sanitizeMessage(_ message: String) -> String {
-        // CRITICAL: Match TypeScript sanitization for cross-platform consistency
-        // See modules/dns-native/constants.ts for reference implementation
-        
-        var result = message.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
-        
-        // Replace spaces with dashes
-        result = result.replacingOccurrences(of: " ", with: "-")
-        
-        // Remove invalid characters (keep only alphanumeric and dash)
-        let allowedSet = CharacterSet(charactersIn: "abcdefghijklmnopqrstuvwxyz0123456789-")
-        result = result.components(separatedBy: allowedSet.inverted).joined()
-        
-        // Collapse multiple dashes
-        while result.contains("--") {
-            result = result.replacingOccurrences(of: "--", with: "-")
-        }
-        
-        // Remove leading/trailing dashes
-        result = result.trimmingCharacters(in: CharacterSet(charactersIn: "-"))
-        
-        // Truncate to DNS label limit (63 chars)
-        if result.count > 63 {
-            result = String(result.prefix(63))
-        }
-        
-        return result
+        return message
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .prefix(200)
+            .replacingOccurrences(of: " ", with: "-")
+            .lowercased()
     }
 }
 
@@ -350,27 +283,19 @@ private func withTimeout<T>(
     seconds: TimeInterval,
     operation: @escaping () async throws -> T
 ) async throws -> T {
-    // CRITICAL FIX: Proper timeout implementation without race conditions
-    let task = Task {
-        try await operation()
-    }
-    
-    let timeoutTask = Task {
-        try await Task.sleep(for: .seconds(seconds))
-        task.cancel()
-        throw DNSResolver.DNSError.timeout
-    }
-    
-    do {
-        let result = try await task.value
-        timeoutTask.cancel()
-        return result
-    } catch {
-        timeoutTask.cancel()
-        if task.isCancelled {
+    try await withThrowingTaskGroup(of: T.self) { group in
+        group.addTask {
+            try await operation()
+        }
+        
+        group.addTask {
+            try await Task.sleep(for: .seconds(seconds))
             throw DNSResolver.DNSError.timeout
         }
-        throw error
+        
+        let result = try await group.next()!
+        group.cancelAll()
+        return result
     }
 }
 

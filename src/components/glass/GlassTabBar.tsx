@@ -270,7 +270,6 @@ export const GlassTabBar: React.FC<GlassTabBarProps> = ({
     <LiquidGlassWrapper
       variant="prominent"
       shape="rect"
-      enableContainer={false}
       style={[styles.tabBarContainer, tabBarStyle, style]}
     >
       <View style={styles.tabBarContent}>

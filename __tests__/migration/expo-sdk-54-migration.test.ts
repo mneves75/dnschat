@@ -18,9 +18,9 @@ const PROJECT_ROOT = path.join(__dirname, '../..');
 describe('Expo SDK 54 Migration Validation', () => {
   
   describe('Pre-Migration State Validation', () => {
-    test('should verify current project is on Expo SDK 54 preview', () => {
+    test('should verify current project is on Expo SDK 54.x', () => {
       const packageJson = JSON.parse(fs.readFileSync(path.join(PROJECT_ROOT, 'package.json'), 'utf8'));
-      expect(packageJson.dependencies.expo).toMatch(/54\.0\.0/);
+      expect(packageJson.dependencies.expo).toMatch(/^54\./);
     });
 
     test('should verify New Architecture is enabled', () => {
@@ -38,12 +38,10 @@ describe('Expo SDK 54 Migration Validation', () => {
       expect(packageJson.dependencies.react).toBe('19.1.0');
     });
 
-    test('should verify custom native modules exist', () => {
+    test('should verify custom DNS native module exists', () => {
       const dnsNativeExists = fs.existsSync(path.join(PROJECT_ROOT, 'ios/DNSNative'));
-      const liquidGlassExists = fs.existsSync(path.join(PROJECT_ROOT, 'ios/LiquidGlassNative'));
-      
       expect(dnsNativeExists).toBe(true);
-      expect(liquidGlassExists).toBe(true);
+      // LiquidGlassNative was removed in favor of Expo GlassEffect
     });
 
     test('should verify iOS deployment target is 16.0+', () => {
@@ -84,9 +82,8 @@ describe('Expo SDK 54 Migration Validation', () => {
       const podfilePath = path.join(PROJECT_ROOT, 'ios/Podfile');
       const podfile = fs.readFileSync(podfilePath, 'utf8');
       
-      // Should have DNSNative and LiquidGlassNative pods
+      // Should have DNSNative pod; LiquidGlassNative removed (using Expo GlassEffect)
       expect(podfile).toContain("pod 'DNSNative'");
-      expect(podfile).toContain("pod 'LiquidGlassNative'");
       
       // Should have New Architecture configuration
       expect(podfile).toContain('use_expo_modules!');

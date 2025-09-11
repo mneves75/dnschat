@@ -50,19 +50,19 @@ use_frameworks! :linkage => ENV['USE_FRAMEWORKS'].to_sym if ENV['USE_FRAMEWORKS'
 - ✅ **Network.framework**: iOS 14.0+ requirement met (deployment target: 16.0)
 - ✅ **Thread Safety**: NSLock implementation compatible with precompiled frameworks
 
-### 2.2 LiquidGlassNative Module Analysis
+### 2.2 GlassEffect (Expo) Integration
 
 #### iOS 26 Liquid Glass Features
 - **Feature**: Native Liquid Glass effects for iOS 26
-- **Implementation**: UIVisualEffectView-based
-- **Backward Compatibility**: iOS 16.0+ with fallbacks
+- **Implementation**: Expo’s `expo-glass-effect` (autolinked)
+- **Backward Compatibility**: iOS <26 receives transparent fallback via wrapper
 
 #### Compatibility Considerations
-```swift
-// LiquidGlassNative requirements
-- iOS 26 SDK: Optional (backward compatible)
-- UIKit integration: ✅ Compatible with precompiled React Native
-- Effect view hierarchies: ✅ Works with New Architecture
+```text
+GlassEffect requirements
+- iOS 26+ for native effects
+- Autolinked Expo module compatible with precompiled React Native
+- No custom pod or UIKit glue code required
 ```
 
 ## 3. Xcode and Build Environment
@@ -101,7 +101,7 @@ prepare_react_native_project!
 
 # Custom Native Modules
 pod 'DNSNative', :path => './DNSNative'
-pod 'LiquidGlassNative', :path => './LiquidGlassNative'
+# GlassEffect is provided by Expo and autolinked (no custom pod)
 ```
 
 ### 4.2 SDK 54 Required Changes
@@ -134,9 +134,9 @@ install! 'cocoapods',
 ```
 
 ### 5.2 Liquid Glass Views
-- **expo-glass-effect**: New library for Liquid Glass effects
-- **Integration**: Works with existing LiquidGlassNative module
-- **Compatibility**: UIKit-based (compatible with current architecture)
+- **expo-glass-effect**: Official library for Liquid Glass effects
+- **Integration**: Used directly via `GlassView` in our wrapper
+- **Compatibility**: Autolinked and compatible with current architecture
 
 ### 5.3 Native Tabs (Expo Router v6)
 - **Feature**: Native iOS tab bars with Liquid Glass effects

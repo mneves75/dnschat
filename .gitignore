@@ -215,3 +215,8 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Expo
+.expo
+dist/
+web-build/

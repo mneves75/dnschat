@@ -62,16 +62,10 @@ function AppContent() {
     />
   );
 
-  // Wrap in iOS 26 Liquid Glass container if supported
+  // Wrap in iOS 26 GlassEffect container if supported
   if (glassSupported && Platform.OS === "ios") {
     return (
-      <LiquidGlassWrapper
-        variant="regular"
-        shape="rect"
-        enableContainer={true}
-        sensorAware={true}
-        style={styles.appContainer}
-      >
+      <LiquidGlassWrapper variant="regular" shape="rect" style={styles.appContainer}>
         {navigationComponent}
       </LiquidGlassWrapper>
     );

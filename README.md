@@ -203,6 +203,14 @@ npm run sync-versions
 npm run sync-versions:dry
 ```
 
+### iOS Glass Effect
+
+This app uses Expo’s official `expo-glass-effect` for native Liquid Glass on iOS 26+.
+
+- Wrapper: `src/components/LiquidGlassWrapper.tsx` maps app props to `GlassView`.
+- Platforms: iOS 26+ renders native glass; other platforms fall back to transparent views.
+- No custom LiquidGlass native pod is included; prebuild with `npx expo prebuild --platform ios` before running on iOS.
+
 ### Common Development Tasks
 
 **Clear Caches**

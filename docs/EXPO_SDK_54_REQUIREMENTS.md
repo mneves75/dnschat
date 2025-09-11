@@ -19,7 +19,7 @@ This document specifies the requirements for migrating the DNS Chat project from
 
 ### 1.2 Native Modules
 - **DNSNative**: Custom Swift/Java DNS resolution module
-- **LiquidGlassNative**: Custom iOS 26 Liquid Glass effects module
+- **Expo GlassEffect**: Official iOS 26 glass via `expo-glass-effect` (autolinked)
 - **react-native-bottom-tabs**: v0.10.0 (New Architecture compatible)
 - **react-native-reanimated**: v3.17.4 (Legacy - needs v4 upgrade)
 
@@ -70,9 +70,9 @@ This document specifies the requirements for migrating the DNS Chat project from
   - ✅ Already implemented with proper TurboModule interface
   - ✅ iOS CheckedContinuation crash fix implemented
   - ✅ Android thread pool optimization implemented
-- **LiquidGlassNative Module**:
-  - ✅ iOS 26 Liquid Glass support implemented
-  - 🔄 Verify compatibility with precompiled React Native
+- **Expo GlassEffect**:
+  - ✅ iOS 26 Liquid Glass support provided by Expo (no custom pod)
+  - ✅ Autolinked; compatible with precompiled React Native
 
 #### 2.2.3 Reanimated v4 Migration
 - **REQUIRED**: Upgrade from v3.17.4 to v4.x for New Architecture
@@ -101,7 +101,7 @@ This document specifies the requirements for migrating the DNS Chat project from
 - **Key Changes**:
   - Remove RCT-Folly header workarounds (fixed in 0.81)
   - Update autolinking configuration
-  - Ensure DNSNative and LiquidGlassNative pods remain compatible
+  - Ensure DNSNative pod remains compatible (GlassEffect is autolinked)
 - **Performance**: Faster pod install with precompiled frameworks
 
 #### 2.3.3 Native Module Updates
@@ -109,9 +109,9 @@ This document specifies the requirements for migrating the DNS Chat project from
   - ✅ Already fixed CheckedContinuation crash
   - ✅ Proper NWConnection cleanup implemented
   - 🔄 Verify compatibility with precompiled React Native
-- **LiquidGlassNative**:
-  - ✅ iOS 26 Liquid Glass effects implemented
-  - 🔄 Test with new UIKit integration patterns
+- **Expo GlassEffect**:
+  - ✅ iOS 26 Liquid Glass effects implemented (official Expo module)
+  - ✅ No custom UIKit integration required
 
 ### 2.4 Android Platform Requirements (Priority: P0)
 
@@ -181,7 +181,7 @@ This document specifies the requirements for migrating the DNS Chat project from
 
 #### 2.7.2 Native Module Testing
 - **DNSNative**: Test concurrent DNS operations, memory leaks, crashes
-- **LiquidGlassNative**: Test iOS 26 effects, backward compatibility
+- **Expo GlassEffect**: Test iOS 26 effects via `expo-glass-effect`
 - **Platform Testing**: iOS simulator, Android emulator, physical devices
 
 #### 2.7.3 Performance Testing
@@ -200,7 +200,7 @@ This document specifies the requirements for migrating the DNS Chat project from
 
 ### 3.2 Phase 2: Native Module Validation (Day 1-2)
 1. Test DNSNative module with New Architecture
-2. Test LiquidGlassNative module compatibility
+2. Validate Expo GlassEffect integration
 3. Upgrade Reanimated to v4
 4. Verify all native dependencies
 

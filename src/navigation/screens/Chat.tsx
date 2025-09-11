@@ -24,8 +24,7 @@ export function Chat() {
     useChat();
 
   // iOS 26 Liquid Glass capabilities
-  const { isSupported: glassSupported, supportsSwiftUIGlass } =
-    useLiquidGlassCapabilities();
+  const { isSupported: glassSupported } = useLiquidGlassCapabilities();
 
   useEffect(() => {
     // Create a new chat if none exists
@@ -72,15 +71,13 @@ export function Chat() {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 0}
       >
-        {Platform.OS === "ios" ? ( // Always use glass UI on iOS
+        {glassSupported ? (
           <>
             {/* iOS 26 Liquid Glass Message Area */}
             <LiquidGlassWrapper
               variant="regular"
               shape="roundedRect"
               cornerRadius={20}
-              sensorAware={true}
-              enableContainer={true}
               style={styles.glassMessageArea}
             >
               <MessageList

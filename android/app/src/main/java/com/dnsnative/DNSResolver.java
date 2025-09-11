@@ -30,8 +30,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import org.xbill.DNS.*;
@@ -42,21 +40,7 @@ public class DNSResolver {
     private static final int DNS_PORT = 53;
     private static final int QUERY_TIMEOUT_MS = 10000;
     
-    // CRITICAL FIX: Bounded thread pool to prevent thread exhaustion
-    private static final int CORE_POOL_SIZE = 2; // Minimum threads to keep alive
-    private static final int MAX_POOL_SIZE = 4; // Maximum threads allowed
-    private static final int KEEP_ALIVE_TIME = 60; // Seconds to keep idle threads
-    private static final int QUEUE_CAPACITY = 10; // Maximum queued tasks
-    
-    private final Executor executor = new ThreadPoolExecutor(
-        CORE_POOL_SIZE,
-        MAX_POOL_SIZE,
-        KEEP_ALIVE_TIME,
-        TimeUnit.SECONDS,
-        new LinkedBlockingQueue<Runnable>(QUEUE_CAPACITY),
-        new ThreadPoolExecutor.CallerRunsPolicy() // Backpressure: caller thread executes if queue full
-    );
-    
+    private final Executor executor = Executors.newCachedThreadPool();
     private final ConnectivityManager connectivityManager;
     
     // Query deduplication - prevents multiple identical requests (matches iOS implementation)
@@ -425,33 +409,11 @@ public class DNSResolver {
     }
 
     private String sanitizeMessage(String message) {
-        // CRITICAL: Match TypeScript/iOS sanitization for cross-platform consistency
-        // See modules/dns-native/constants.ts for reference implementation
-        
-        if (message == null || message.isEmpty()) {
-            return "";
-        }
-        
-        String result = message.toLowerCase().trim();
-        
-        // Replace spaces with dashes
-        result = result.replaceAll("\\s+", "-");
-        
-        // Remove invalid characters (keep only alphanumeric and dash)
-        result = result.replaceAll("[^a-z0-9-]", "");
-        
-        // Collapse multiple dashes
-        result = result.replaceAll("-{2,}", "-");
-        
-        // Remove leading/trailing dashes
-        result = result.replaceAll("^-+|-+$", "");
-        
-        // Truncate to DNS label limit (63 chars)
-        if (result.length() > 63) {
-            result = result.substring(0, 63);
-        }
-        
-        return result;
+        // Sanitization matching iOS implementation for cross-platform consistency
+        String trimmed = message == null ? "" : message.trim();
+        String capped = trimmed.length() > 200 ? trimmed.substring(0, 200) : trimmed;
+        String spacesReplaced = capped.replaceAll(" ", "-");
+        return spacesReplaced.toLowerCase();
     }
 
     public static class DNSCapabilities {

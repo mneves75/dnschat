@@ -92,9 +92,9 @@
   # Test DNS resolution in Android emulator
   ```
 
-- [ ] **Test LiquidGlassNative module** (if using):
-  - Verify iOS 26 Liquid Glass effects work
-  - Test backward compatibility on older iOS versions
+- [ ] **Test Expo GlassEffect integration**:
+  - Verify iOS 26 Liquid Glass effects work (expo-glass-effect)
+  - Confirm transparent fallback on older iOS/Android/Web
 
 ### Autolinking Verification
 - [ ] **Verify enhanced autolinking**: `npx expo-modules-autolinking verify -v`
@@ -109,7 +109,7 @@
 - [ ] **Update iOS Podfile** for SDK 54 compatibility:
   ```ruby
   # Remove RCT-Folly workarounds (fixed in 0.81)
-  # Verify DNSNative and LiquidGlassNative pods
+  # Verify DNSNative pod; GlassEffect is autolinked
   ```
 
 - [ ] **Run pod install**: `npx pod-install`
