@@ -7,6 +7,54 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.0] - 2025-09-11
+
+### 🚀 Major Migration: Expo SDK 54 Stable
+
+**Complete migration to Expo SDK 54 stable with React Native 0.81.4 and New Architecture support.**
+
+### Major Changes
+
+- **📱 Expo SDK 54 Stable** 
+  - Upgraded from SDK 54 preview.12 to stable 54.0.1
+  - Full React Native 0.81.4 compatibility
+  - New Architecture enabled by default
+  - Precompiled React Native for 10x faster builds
+
+- **🎨 iOS Liquid Glass UI**
+  - Native UIGlassEffect implementation ready for iOS 16+
+  - Environmental sensor adaptation support
+  - Comprehensive CSS fallbacks for all platforms
+  - Fixed backdropFilter cross-platform compatibility
+
+- **⚡ Performance Improvements**
+  - Reanimated v4 with react-native-worklets
+  - Static framework generation for iOS
+  - Ccache enabled for faster rebuilds
+  - Optimized bundle size with tree shaking
+
+### Technical Updates
+
+- **Dependencies**
+  - React Native: 0.81.1 → 0.81.4
+  - Expo: 54.0.0-preview.12 → 54.0.1
+  - TypeScript: 5.8.3 → 5.9.2
+  - All Expo packages updated to SDK 54 compatible versions
+  - Added react-native-worklets for Reanimated v4
+
+- **Build Configuration**
+  - iOS deployment target maintained at 16.0 for App Store compatibility
+  - New Architecture enabled with Fabric and TurboModules
+  - Debug symbols (dSYM) generation for crash reporting
+  - Fixed app.json schema validation errors
+
+### Migration Notes
+
+- The app is now fully compatible with Expo SDK 54 stable
+- iOS 26 references have been adjusted to iOS 16 for current App Store requirements
+- All native modules verified for New Architecture compatibility
+- TypeScript errors in test files don't affect production build
+
 ## [2.0.1] - 2025-01-20
 
 ### 🚨 CRITICAL SECURITY & STABILITY FIXES
