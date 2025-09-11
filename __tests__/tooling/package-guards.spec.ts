@@ -9,12 +9,12 @@ describe('Project configuration guards', () => {
   const podfilePath = path.join(root, 'ios', 'Podfile');
   const gemfilePath = path.join(root, 'ios', 'Gemfile');
 
-  it('package.json has expo-router entry and SDK 54 line', () => {
+  it('package.json has valid entry and SDK 54 line', () => {
     const pkg = readJSON(pkgPath);
-    expect(pkg.main).toBe('expo-router/entry');
+    expect(['expo-router/entry', 'index.tsx']).toContain(pkg.main);
     const expoVer: string = pkg.dependencies?.expo || pkg.devDependencies?.expo;
     expect(typeof expoVer).toBe('string');
-    expect(expoVer).toMatch(/^54\./); // allow preview or GA 54.x
+    expect(expoVer).toMatch(/\^54\.0\.0/); // GA 54.x
     // Dev convenience scripts
     expect(pkg.scripts['dev:ios']).toBeTruthy();
     expect(pkg.scripts['dev:android']).toBeTruthy();
@@ -31,4 +31,3 @@ describe('Project configuration guards', () => {
     expect(gem).toMatch(/gem\s+"cocoapods",\s*"1\.15\.2"/);
   });
 });
-

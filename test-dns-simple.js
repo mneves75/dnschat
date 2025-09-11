@@ -5,7 +5,12 @@
  * Tests the DNS communication functionality directly
  */
 
-const { DNSService } = require("./src/services/dnsService");
+// Enable TypeScript support for importing TS modules in this script
+try {
+  require('ts-node/register/transpile-only');
+} catch {}
+
+const { DNSService } = require("./src/services/dnsService.ts");
 
 async function testDNSMessage() {
   console.log("🧪 Testing DNS Message Functionality\n");

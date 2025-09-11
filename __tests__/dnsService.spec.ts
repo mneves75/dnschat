@@ -51,16 +51,15 @@ describe("DNS Service helpers", () => {
       expect(sanitized.length).toBe(63);
     });
 
-    it("replaces control DNS chars with underscore", () => {
+    it("rejects dangerous punctuation (security)", () => {
       const msg = "hello;you.there\\now";
-      const sanitized = sanitizeDNSMessage(msg);
-      expect(sanitized).toBe("hello_you_there_now");
+      expect(() => sanitizeDNSMessage(msg)).toThrow(/dangerous characters/);
     });
 
-    it("normalizes whitespace and trims", () => {
+    it("normalizes whitespace and trims (uses dashes)", () => {
       const msg = "   hello    world   ";
       const sanitized = sanitizeDNSMessage(msg);
-      expect(sanitized).toBe("hello world");
+      expect(sanitized).toBe("hello-world");
     });
 
     it("rejects empty or whitespace-only", () => {
@@ -74,7 +73,7 @@ describe("DNS Service helpers", () => {
 
     it("rejects invalid control characters", () => {
       expect(() => validateDNSMessage("bad\x00msg")).toThrow(
-        "Message contains invalid characters",
+        /dangerous characters/,
       );
     });
   });
