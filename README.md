@@ -2,10 +2,10 @@
 
 A React Native mobile app that revolutionizes LLM interaction by using DNS TXT queries for AI communication. Chat with AI models through DNS infrastructure for enhanced privacy and network resilience.
 
-[![React Native](https://img.shields.io/badge/React%20Native-0.81.1-blue.svg)](https://reactnative.dev/)
-[![Expo](https://img.shields.io/badge/Expo-54%20Preview-black.svg)](https://expo.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue.svg)](https://www.typescriptlang.org/)
-[![iOS](https://img.shields.io/badge/iOS-16%2B-lightgrey.svg)](https://developer.apple.com/ios/)
+[![React Native](https://img.shields.io/badge/React%20Native-0.81.4-blue.svg)](https://reactnative.dev/)
+[![Expo](https://img.shields.io/badge/Expo-54.0.1-black.svg)](https://expo.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)](https://www.typescriptlang.org/)
+[![iOS](https://img.shields.io/badge/iOS-26%2B-lightgrey.svg)](https://developer.apple.com/ios/)
 [![Android](https://img.shields.io/badge/Android-API%2021%2B-green.svg)](https://developer.android.com/)
 
 ## ✨ Key Features
@@ -28,9 +28,9 @@ A React Native mobile app that revolutionizes LLM interaction by using DNS TXT q
 
 ### **Core Framework**
 
-- **React Native 0.81.1** (SDK 54 preview compatible)
-- **Expo SDK 54 (preview)** with Development Build
-- **TypeScript** (strict mode)
+- **React Native 0.81.4** (SDK 54 stable)
+- **Expo SDK 54.0.1** (Development Build)
+- **TypeScript 5.9** (strict mode)
 
 ### **Navigation & UI**
 
@@ -55,7 +55,7 @@ A React Native mobile app that revolutionizes LLM interaction by using DNS TXT q
 ### Prerequisites
 
 - Node.js 18+
-- iOS: Xcode 15+ and iOS 16+ device/simulator
+- iOS: Xcode 26.0+ and iOS 26+ simulator for native GlassEffect (the app supports iOS 16+ otherwise)
 - Android: Java 17 and Android SDK
 
 ### Installation

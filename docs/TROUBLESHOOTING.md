@@ -62,6 +62,28 @@ npm run ios
 🔍 Native DNS capabilities: {"available": true, "platform": "ios"}
 ```
 
+### TCP Socket Crash on iOS (Bridgeless Dev)
+
+**Problem**: Invariant Violation: `new NativeEventEmitter()` requires a non-null argument — triggered by `react-native-tcp-socket` during import in bridgeless runtime.
+
+**Cause**: Some community libraries instantiate `NativeEventEmitter` at import time. In bridgeless, the native module object is undefined during early init.
+
+**Fix (Implemented)**:
+
+- The app now lazy-loads `react-native-tcp-socket` only when TCP is actually used. Import-time crashes are avoided.
+- On iOS, TCP is disabled by default in the DNS method ordering. You can enable it at runtime:
+
+```ts
+import { DNSService } from '../src/services/dnsService';
+
+DNSService.configure({ enableIosTcp: true });
+```
+
+**Notes**:
+
+- Prefer Native/UDP on iOS. Use TCP only if required and your build is non-bridgeless or the library supports bridgeless cleanly.
+- DNS-over-HTTPS cannot access ch.at’s custom TXT responses; it’s used as last resort.
+
 ## 🔧 Build Issues
 
 ### iOS Build Errors

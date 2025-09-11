@@ -161,14 +161,27 @@ npm install
 
 ### Q: "Native DNS not available" message
 
-**A:** Native DNS modules not properly compiled or registered.
+**A:** Native DNS modules not properly compiled or registered, or running in bridgeless dev mode where legacy NativeModules are not exposed. DNSChat falls back to UDP/TCP/HTTPS automatically.
 
 **Check List:**
 
 1. iOS: Run `cd ios && pod install && cd ..`
 2. Android: Ensure Java 17 is active
 3. Rebuild: `npm run ios` or `npm run android`
-4. Verify: Check console for "✅ Native DNS reports as available!"
+4. Verify: Check console for "✅ RNDNSModule found: true"
+
+### Q: TCP import crashes on iOS with NativeEventEmitter error
+
+**A:** In bridgeless runtime, some libraries that call `new NativeEventEmitter()` at import time will crash. We lazy-load the TCP library; TCP is also disabled by default in method ordering on iOS.
+
+**Enable TCP on iOS (advanced)**:
+
+```ts
+import { DNSService } from '../src/services/dnsService';
+DNSService.configure({ enableIosTcp: true });
+```
+
+Prefer Native/UDP where possible; DNS-over-HTTPS cannot reach ch.at custom TXT responses.
 
 ### Q: DNS queries failing with network errors
 

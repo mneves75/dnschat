@@ -10,6 +10,8 @@ Code blocks only: No
 
 # https://developer.apple.com/documentation/technologyoverviews/adopting-liquid-glass
 
+> Project note: DNSChat uses Expo’s official `expo-glass-effect` for Liquid Glass on iOS 26+. There is no custom `LiquidGlassNative` pod; this document is an Apple reference for design and API behavior.
+
 - Technology Overviews
 - App design and UI
 - Liquid Glass

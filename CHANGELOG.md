@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Replace custom LiquidGlassNative module with official Expo GlassEffect on iOS 26+.
+- Default DNS method order on iOS excludes TCP in bridgeless dev to avoid import-time crashes.
+- TCP socket library is now lazy-loaded only when needed.
+
+### Added
+- Tests for TCP lazy-load behavior and iOS method ordering.
+- Safe area migration for onboarding via react-native-safe-area-context.
+
 ## [3.0.0] - 2025-09-11
 
 ### 🚀 Major Migration: Expo SDK 54 Stable
