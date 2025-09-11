@@ -142,10 +142,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Perfect Theming**: White background in light mode, dark (#1C1C1E) in dark mode
   - **Haptic Feedback**: Native iOS interaction feedback
 
-- **🏗️ Architectural Excellence**: Dual-component architecture eliminating native bridge conflicts
-  - **Production Component**: `LiquidGlassWrapper` - Simple, reliable glass effects for all screens
-  - **Advanced System**: `LiquidGlassNative` - Performance monitoring + environmental adaptation
-  - **Zero Conflicts**: Eliminated duplicate native view registration errors
+- **🏗️ Architectural Excellence**: Expo GlassEffect integration
+  - **Production Component**: `LiquidGlassWrapper` maps to Expo's `GlassView` for native effects on iOS 26+
+  - **Autolinking**: No custom liquid glass pod; Expo module handles native integration
   - **Type Safety**: Full TypeScript coverage with proper prop interface compatibility
 
 #### Breaking Changes
@@ -227,16 +226,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Technical Improvements
 
-- **✅ Proper Architecture**: `LiquidGlassWrapper` (production) + `LiquidGlassNative` (advanced features via composition)
+- **✅ Proper Architecture**: `LiquidGlassWrapper` (production) -> Expo GlassEffect (`expo-glass-effect`)
 - **✅ Type Safety**: Full TypeScript coverage with proper prop interface compatibility
-- **✅ Performance Monitoring**: Real-time glass rendering performance metrics and thermal management
 - **✅ Memory Optimization**: Lazy loading and memoization for capability detection
 - **✅ Cross-platform Compatibility**: Consistent API across iOS, Android, and Web platforms
 
 #### Code Changes
 
-- **Native Bridge**: Restored proper `LiquidGlassViewManager` registration serving production component
-- **Advanced System**: `LiquidGlassNative` now uses composition over duplication to provide enhanced features
+- **Native Integration**: Adopted Expo `expo-glass-effect` module (autolinked); removed custom LiquidGlass native view manager
 - **Capability Detection**: Comprehensive iOS version parsing and feature matrix analysis
 - **Performance Tiers**: Dynamic glass intensity adjustment based on device thermal and performance states
 
