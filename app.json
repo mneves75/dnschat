@@ -41,7 +41,6 @@
             "deploymentTarget": "16.0",
             "flipper": false,
             "ccacheEnabled": true,
-            "newArchEnabled": true,
             "generateStaticFrameworks": true,
             "generateSourcemap": true,
             "includeSymbolsInDsym": true,
