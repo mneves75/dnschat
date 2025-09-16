@@ -8,20 +8,19 @@
  * @since 1.8.0 (iOS 26 Liquid Glass Support + Evan Bacon Glass UI)
  */
 
-import React from "react";
+import React from 'react';
 import {
   View,
   Text,
-  TouchableOpacity,
+  Pressable,
   StyleSheet,
   useColorScheme,
   Platform,
   ViewStyle,
   TextStyle,
-  Dimensions,
-  SafeAreaView,
-} from "react-native";
-import { LiquidGlassWrapper } from "../LiquidGlassWrapper";
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { LiquidGlassWrapper } from '../LiquidGlassWrapper';
 
 // ==================================================================================
 // TYPES AND INTERFACES
@@ -74,34 +73,45 @@ interface GlassTabItemProps {
 
 const useGlassTabColors = () => {
   const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
+  const isDark = colorScheme === 'dark';
+
+  if (Platform.OS === 'android') {
+    return {
+      tabBarBackground: isDark ? '#1F1B24' : '#FFFBFE',
+      tabBarBorder: 'transparent',
+      activeTabTint: isDark ? '#D0BCFF' : '#6750A4',
+      activeTabBackground: isDark ? 'rgba(208, 188, 255, 0.18)' : 'rgba(103, 80, 164, 0.14)',
+      inactiveTabTint: isDark ? '#CAC4D0' : '#49454F',
+      badgeBackground: isDark ? '#EFB8C8' : '#BA1A1A',
+      badgeText: isDark ? '#381E72' : '#FFFFFF',
+      pressedOverlay: isDark ? 'rgba(208, 188, 255, 0.24)' : 'rgba(103, 80, 164, 0.2)',
+      ripple: isDark ? 'rgba(208, 188, 255, 0.32)' : 'rgba(103, 80, 164, 0.24)',
+    };
+  }
 
   return {
     // Tab bar glass background
     tabBarBackground: isDark
-      ? "rgba(25, 25, 25, 0.92)" // Dark translucent
-      : "rgba(255, 255, 255, 0.92)", // Light translucent
+      ? 'rgba(25, 25, 25, 0.92)' // Dark translucent
+      : 'rgba(255, 255, 255, 0.92)', // Light translucent
 
     // Tab bar border
-    tabBarBorder: isDark ? "rgba(84, 84, 88, 0.3)" : "rgba(0, 0, 0, 0.05)",
+    tabBarBorder: isDark ? 'rgba(84, 84, 88, 0.3)' : 'rgba(0, 0, 0, 0.05)',
 
     // Active tab
-    activeTabTint: isDark ? "#007AFF" : "#007AFF", // Blue
-    activeTabBackground: isDark
-      ? "rgba(0, 122, 255, 0.15)"
-      : "rgba(0, 122, 255, 0.08)",
+    activeTabTint: isDark ? '#007AFF' : '#007AFF', // Blue
+    activeTabBackground: isDark ? 'rgba(0, 122, 255, 0.15)' : 'rgba(0, 122, 255, 0.08)',
 
     // Inactive tab
-    inactiveTabTint: isDark ? "#8E8E93" : "#8E8E93", // Gray
+    inactiveTabTint: isDark ? '#8E8E93' : '#8E8E93', // Gray
 
     // Badge
-    badgeBackground: "#FF3B30", // Red
-    badgeText: "#FFFFFF",
+    badgeBackground: '#FF3B30', // Red
+    badgeText: '#FFFFFF',
 
     // Pressed state
-    pressedOverlay: isDark
-      ? "rgba(255, 255, 255, 0.04)"
-      : "rgba(0, 0, 0, 0.04)",
+    pressedOverlay: isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.04)',
+    ripple: 'rgba(0, 0, 0, 0.06)',
   };
 };
 
@@ -114,36 +124,36 @@ const SFSymbolFallback: React.FC<{
   size?: number;
   color?: string;
   isActive?: boolean;
-}> = ({ symbol, size = 22, color = "#8E8E93", isActive = false }) => {
+}> = ({ symbol, size = 22, color = '#8E8E93', isActive = false }) => {
   // Map common SF Symbols to Unicode equivalents
   const symbolMap: { [key: string]: string } = {
-    house: "🏠",
-    "house.fill": "🏠",
-    magnifyingglass: "🔍",
-    person: "👤",
-    "person.fill": "👤",
-    gear: "⚙️",
-    message: "💬",
-    "message.fill": "💬",
-    "list.bullet": "📋",
-    "info.circle": "ℹ️",
-    "info.circle.fill": "ℹ️",
-    bell: "🔔",
-    "bell.fill": "🔔",
-    bookmark: "📖",
-    "bookmark.fill": "📖",
-    star: "⭐",
-    "star.fill": "⭐",
+    house: '🏠',
+    'house.fill': '🏠',
+    magnifyingglass: '🔍',
+    person: '👤',
+    'person.fill': '👤',
+    gear: '⚙️',
+    message: '💬',
+    'message.fill': '💬',
+    'list.bullet': '📋',
+    'info.circle': 'ℹ️',
+    'info.circle.fill': 'ℹ️',
+    bell: '🔔',
+    'bell.fill': '🔔',
+    bookmark: '📖',
+    'bookmark.fill': '📖',
+    star: '⭐',
+    'star.fill': '⭐',
   };
 
-  const fallbackIcon = symbolMap[symbol] || "●";
+  const fallbackIcon = symbolMap[symbol] || '●';
 
   return (
     <Text
       style={{
         fontSize: size,
         color,
-        fontWeight: isActive ? "600" : "400",
+        fontWeight: isActive ? '600' : '400',
       }}
     >
       {fallbackIcon}
@@ -158,57 +168,46 @@ const SFSymbolFallback: React.FC<{
 /**
  * Individual Glass Tab Item
  */
-const GlassTabItem: React.FC<GlassTabItemProps> = ({
-  tab,
-  isActive,
-  onPress,
-  style,
-}) => {
+const GlassTabItem: React.FC<GlassTabItemProps> = ({ tab, isActive, onPress, style }) => {
   const colors = useGlassTabColors();
-  const [isPressed, setIsPressed] = React.useState(false);
-
-  const tabColor = isActive ? colors.activeTabTint : colors.inactiveTabTint;
-
-  const itemStyle: ViewStyle = {
-    backgroundColor: isPressed
-      ? colors.pressedOverlay
-      : isActive
-        ? colors.activeTabBackground
-        : "transparent",
-  };
 
   const handlePress = React.useCallback(() => {
     if (!tab.disabled) {
-      // Haptic feedback
-      if (Platform.OS === "ios") {
-        console.log("🔸 Haptic: Tab selection feedback");
+      if (Platform.OS === 'ios') {
+        console.log('🔸 Haptic: Tab selection feedback');
       }
       onPress();
     }
   }, [tab.disabled, onPress]);
 
+  const tabColor = isActive ? colors.activeTabTint : colors.inactiveTabTint;
+
   return (
-    <TouchableOpacity
-      style={[styles.tabItem, itemStyle, style]}
+    <Pressable
       onPress={handlePress}
-      onPressIn={() => setIsPressed(true)}
-      onPressOut={() => setIsPressed(false)}
-      activeOpacity={1}
+      android_ripple={
+        Platform.OS === 'android' ? { color: colors.ripple, borderless: false } : undefined
+      }
+      style={({ pressed }) => [
+        styles.tabItem,
+        {
+          backgroundColor: pressed
+            ? colors.pressedOverlay
+            : isActive
+              ? colors.activeTabBackground
+              : 'transparent',
+        },
+        style,
+      ]}
       disabled={tab.disabled}
     >
       {/* Icon */}
       <View style={styles.tabIconContainer}>
         {tab.sfSymbol ? (
-          <SFSymbolFallback
-            symbol={tab.sfSymbol}
-            color={tabColor}
-            isActive={isActive}
-          />
+          <SFSymbolFallback symbol={tab.sfSymbol} color={tabColor} isActive={isActive} />
         ) : tab.icon ? (
-          typeof tab.icon === "string" ? (
-            <Text style={[styles.tabIconText, { color: tabColor }]}>
-              {tab.icon}
-            </Text>
+          typeof tab.icon === 'string' ? (
+            <Text style={[styles.tabIconText, { color: tabColor }]}>{tab.icon}</Text>
           ) : (
             tab.icon
           )
@@ -216,11 +215,9 @@ const GlassTabItem: React.FC<GlassTabItemProps> = ({
 
         {/* Badge */}
         {tab.badge && tab.badge > 0 && (
-          <View
-            style={[styles.badge, { backgroundColor: colors.badgeBackground }]}
-          >
+          <View style={[styles.badge, { backgroundColor: colors.badgeBackground }]}>
             <Text style={[styles.badgeText, { color: colors.badgeText }]}>
-              {tab.badge > 99 ? "99+" : tab.badge.toString()}
+              {tab.badge > 99 ? '99+' : tab.badge.toString()}
             </Text>
           </View>
         )}
@@ -232,14 +229,14 @@ const GlassTabItem: React.FC<GlassTabItemProps> = ({
           styles.tabTitle,
           {
             color: tabColor,
-            fontWeight: isActive ? "600" : "400",
+            fontWeight: isActive ? '600' : '400',
           },
         ]}
         numberOfLines={1}
       >
         {tab.title}
       </Text>
-    </TouchableOpacity>
+    </Pressable>
   );
 };
 
@@ -255,7 +252,6 @@ export const GlassTabBar: React.FC<GlassTabBarProps> = ({
   safeAreaInsets = true,
 }) => {
   const colors = useGlassTabColors();
-  const { height: screenHeight } = Dimensions.get("window");
 
   if (hidden) {
     return null;
@@ -264,6 +260,15 @@ export const GlassTabBar: React.FC<GlassTabBarProps> = ({
   const tabBarStyle: ViewStyle = {
     backgroundColor: colors.tabBarBackground,
     borderTopColor: colors.tabBarBorder,
+    ...(Platform.OS === 'android'
+      ? {
+          elevation: 8,
+          shadowColor: '#000000',
+          shadowOpacity: 0.2,
+          shadowRadius: 6,
+          shadowOffset: { width: 0, height: -2 },
+        }
+      : {}),
   };
 
   const TabBarContent = (
@@ -286,12 +291,8 @@ export const GlassTabBar: React.FC<GlassTabBarProps> = ({
     </LiquidGlassWrapper>
   );
 
-  if (safeAreaInsets && Platform.OS === "ios") {
-    return (
-      <SafeAreaView style={styles.safeAreaContainer}>
-        {TabBarContent}
-      </SafeAreaView>
-    );
+  if (safeAreaInsets && Platform.OS === 'ios') {
+    return <SafeAreaView style={styles.safeAreaContainer}>{TabBarContent}</SafeAreaView>;
   }
 
   return TabBarContent;
@@ -306,34 +307,26 @@ export const GlassTabBar: React.FC<GlassTabBarProps> = ({
  */
 export const FloatingGlassTabBar: React.FC<
   GlassTabBarProps & {
-    position?: "top" | "bottom";
+    position?: 'top' | 'bottom';
     margin?: number;
   }
-> = ({ position = "bottom", margin = 20, ...props }) => {
+> = ({ position = 'bottom', margin = 20, ...props }) => {
   const positionStyle: ViewStyle = {
-    position: "absolute",
+    position: 'absolute',
     left: margin,
     right: margin,
-    ...(position === "bottom"
-      ? { bottom: margin + (Platform.OS === "ios" ? 34 : 0) }
-      : { top: margin + (Platform.OS === "ios" ? 44 : 0) }),
+    ...(position === 'bottom'
+      ? { bottom: margin + (Platform.OS === 'ios' ? 34 : 0) }
+      : { top: margin + (Platform.OS === 'ios' ? 44 : 0) }),
   };
 
-  return (
-    <GlassTabBar
-      {...props}
-      safeAreaInsets={false}
-      style={[positionStyle, props.style]}
-    />
-  );
+  return <GlassTabBar {...props} safeAreaInsets={false} style={[positionStyle, props.style]} />;
 };
 
 /**
  * Segmented Glass Tab Bar (for inline usage)
  */
-export const SegmentedGlassTabBar: React.FC<
-  Omit<GlassTabBarProps, "safeAreaInsets">
-> = (props) => {
+export const SegmentedGlassTabBar: React.FC<Omit<GlassTabBarProps, 'safeAreaInsets'>> = (props) => {
   return (
     <View style={styles.segmentedContainer}>
       <GlassTabBar
@@ -357,30 +350,30 @@ export { GlassTab, GlassTabBarProps };
 
 const styles = StyleSheet.create({
   safeAreaContainer: {
-    backgroundColor: "transparent",
+    backgroundColor: 'transparent',
   },
   tabBarContainer: {
-    backgroundColor: "transparent",
+    backgroundColor: 'transparent',
     borderTopWidth: StyleSheet.hairlineWidth,
   },
   tabBarContent: {
-    flexDirection: "row",
+    flexDirection: 'row',
     height: 49, // iOS standard tab bar height
-    alignItems: "center",
-    justifyContent: "space-around",
+    alignItems: 'center',
+    justifyContent: 'space-around',
     paddingHorizontal: 4,
   },
   tabItem: {
     flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
     paddingVertical: 4,
     paddingHorizontal: 2,
     borderRadius: 8,
     minHeight: 44,
   },
   tabIconContainer: {
-    position: "relative",
+    position: 'relative',
     marginBottom: 2,
   },
   tabIconText: {
@@ -389,22 +382,22 @@ const styles = StyleSheet.create({
   tabTitle: {
     fontSize: 10,
     letterSpacing: 0.1,
-    textAlign: "center",
+    textAlign: 'center',
   },
   badge: {
-    position: "absolute",
+    position: 'absolute',
     top: -4,
     right: -8,
     minWidth: 16,
     height: 16,
     borderRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
     paddingHorizontal: 4,
   },
   badgeText: {
     fontSize: 10,
-    fontWeight: "600",
+    fontWeight: '600',
     letterSpacing: -0.1,
   },
   segmentedContainer: {
@@ -413,6 +406,6 @@ const styles = StyleSheet.create({
   },
   segmentedTabBar: {
     borderRadius: 12,
-    overflow: "hidden",
+    overflow: 'hidden',
   },
 });
