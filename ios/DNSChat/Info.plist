@@ -19,7 +19,7 @@
 	<key>CFBundlePackageType</key>
 	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
 	<key>CFBundleShortVersionString</key>
-	<string>2.0</string>
+	<string>2.0.0</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleURLTypes</key>
@@ -51,12 +51,6 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
-	<key>NSCameraUsageDescription</key>
-	<string>This app does not directly access the camera. Camera access is referenced by third-party libraries for device capability detection.</string>
-	<key>NSMicrophoneUsageDescription</key>
-	<string>This app does not access the microphone. Microphone access is referenced by third-party libraries for device capability detection.</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>This app does not access the photo library. Photo library access is referenced by third-party libraries for device capability detection.</string>
 	<key>RCTNewArchEnabled</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>

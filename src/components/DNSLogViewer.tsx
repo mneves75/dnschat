@@ -41,13 +41,15 @@ export const DNSLogViewer: React.FC<DNSLogViewerProps> = ({
               {log.finalMethod ? ` via ${log.finalMethod.toUpperCase()}` : ""}
             </Text>
             <View style={styles.entries}>
-              {log.entries.map((e) => (
-                <View key={e.id} style={styles.entryRow}>
-                  <Text
-                    style={[
-                      styles.badge,
-                      {
-                        backgroundColor: DNSLogService.getMethodColor(e.method),
+              {log.entries.map((e, idx) => {
+                const entryKey = e.id ? `${log.id}-${e.id}` : `${log.id}-entry-${idx}`;
+                return (
+                  <View key={entryKey} style={styles.entryRow}>
+                    <Text
+                      style={[
+                        styles.badge,
+                        {
+                          backgroundColor: DNSLogService.getMethodColor(e.method),
                       },
                     ]}
                   >
@@ -62,8 +64,9 @@ export const DNSLogViewer: React.FC<DNSLogViewerProps> = ({
                       {DNSLogService.formatDuration(e.duration)}
                     </Text>
                   )}
-                </View>
-              ))}
+                  </View>
+                );
+              })}
             </View>
             {log.response ? (
               <View style={styles.responseBox}>

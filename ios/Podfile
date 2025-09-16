@@ -12,6 +12,9 @@ platform :ios, podfile_properties['ios.deploymentTarget'] || '15.1'
 
 prepare_react_native_project!
 
+# Use modular headers for Swift pods compatibility
+use_modular_headers!
+
 target 'DNSChat' do
   use_expo_modules!
 
