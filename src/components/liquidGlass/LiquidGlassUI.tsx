@@ -50,13 +50,13 @@ import {
   useLiquidGlassCapabilities,
   useAdaptiveGlassIntensity,
   type LiquidGlassProps,
-} from "./";
+} from "./LiquidGlassFallback";
 
 // ==================================================================================
 // TYPE DEFINITIONS
 // ==================================================================================
 
-interface LiquidGlassButtonProps {
+export interface LiquidGlassButtonProps {
   /** Button title */
   title: string;
 
@@ -97,7 +97,7 @@ interface LiquidGlassButtonProps {
   testID?: string;
 }
 
-interface LiquidGlassChatBubbleProps {
+export interface LiquidGlassChatBubbleProps {
   /** Message content */
   message: string;
 
@@ -129,7 +129,7 @@ interface LiquidGlassChatBubbleProps {
   animateOnAppear?: boolean;
 }
 
-interface LiquidGlassInputProps {
+export interface LiquidGlassInputProps {
   /** Input value */
   value: string;
 
@@ -182,7 +182,7 @@ interface LiquidGlassInputProps {
   textStyle?: TextStyle;
 }
 
-interface LiquidGlassCardProps extends LiquidGlassProps {
+export interface LiquidGlassCardProps extends LiquidGlassProps {
   /** Card title */
   title?: string;
 
@@ -211,7 +211,7 @@ interface LiquidGlassCardProps extends LiquidGlassProps {
   footerStyle?: ViewStyle;
 }
 
-interface LiquidGlassContainerProps extends LiquidGlassProps {
+export interface LiquidGlassContainerProps extends LiquidGlassProps {
   /** Container spacing for effect merging */
   spacing?: number;
 
@@ -1170,19 +1170,3 @@ const styles = StyleSheet.create({
 // ==================================================================================
 // EXPORTS
 // ==================================================================================
-
-export {
-  LiquidGlassButton,
-  LiquidGlassChatBubble,
-  LiquidGlassInput,
-  LiquidGlassCard,
-  LiquidGlassContainer,
-};
-
-export type {
-  LiquidGlassButtonProps,
-  LiquidGlassChatBubbleProps,
-  LiquidGlassInputProps,
-  LiquidGlassCardProps,
-  LiquidGlassContainerProps,
-};

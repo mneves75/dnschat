@@ -1,0 +1,5 @@
+{
+  "extends": "./tsconfig.json",
+  "include": ["app", "src", "index.tsx"],
+  "exclude": ["__tests__", "modules/**", "scripts/**"]
+}

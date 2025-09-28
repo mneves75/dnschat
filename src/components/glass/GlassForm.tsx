@@ -20,7 +20,8 @@ import {
   ViewStyle,
   TextStyle,
 } from "react-native";
-import { LiquidGlassWrapper } from "../LiquidGlassWrapper";
+import { LiquidGlassWrapper, useLiquidGlassCapabilities } from "../LiquidGlassWrapper";
+import { useAppTheme } from "../../theme";
 
 // ==================================================================================
 // TYPES AND INTERFACES
@@ -77,6 +78,7 @@ interface GlassFormLinkProps extends GlassFormItemProps {
 const useGlassColors = () => {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
+  const { colors: themeColors } = useAppTheme();
 
   return {
     // Glass backgrounds (inspired by Apple's system colors)
@@ -100,7 +102,11 @@ const useGlassColors = () => {
     highlighted: isDark ? "rgba(255, 255, 255, 0.04)" : "rgba(0, 0, 0, 0.04)",
 
     // Borders
-    border: isDark ? "rgba(84, 84, 88, 0.4)" : "rgba(198, 198, 200, 0.6)",
+    border: themeColors.border,
+
+    // Material surfaces for fallback
+    surface: themeColors.surface,
+    card: themeColors.card,
   };
 };
 
@@ -143,10 +149,13 @@ export const GlassForm: React.FC<GlassFormProps> = ({
   style,
 }) => {
   const colors = useGlassColors();
+  const { supportsSwiftUIGlass, isSupported } = useLiquidGlassCapabilities();
+  const glassEnabled =
+    Platform.OS === "ios" && Boolean(isSupported) && Boolean(supportsSwiftUIGlass);
 
   const containerStyle: ViewStyle = {
     flex: 1,
-    backgroundColor: "transparent", // Remove solid background for glass effect visibility
+    backgroundColor: glassEnabled ? "transparent" : colors.surface,
   };
 
   return (
@@ -181,6 +190,18 @@ export const GlassFormSection: React.FC<GlassFormSectionProps> = ({
   style,
 }) => {
   const colors = useGlassColors();
+  const { supportsSwiftUIGlass, isSupported } = useLiquidGlassCapabilities();
+  const glassEnabled =
+    Platform.OS === "ios" && Boolean(isSupported) && Boolean(supportsSwiftUIGlass);
+
+  const renderedChildren = React.Children.map(children, (child, index) => (
+    <React.Fragment key={index}>
+      {child}
+      {index < React.Children.count(children) - 1 && (
+        <View style={[styles.separator, { backgroundColor: colors.separator }]} />
+      )}
+    </React.Fragment>
+  ));
 
   return (
     <View style={[styles.sectionContainer, style]}>
@@ -192,26 +213,30 @@ export const GlassFormSection: React.FC<GlassFormSectionProps> = ({
         </View>
       )}
 
-      <LiquidGlassWrapper
-        variant="regular"
-        shape="roundedRect"
-        cornerRadius={10}
-        style={styles.sectionContent}
-      >
-        {React.Children.map(children, (child, index) => (
-          <React.Fragment key={index}>
-            {child}
-            {index < React.Children.count(children) - 1 && (
-              <View
-                style={[
-                  styles.separator,
-                  { backgroundColor: colors.separator },
-                ]}
-              />
-            )}
-          </React.Fragment>
-        ))}
-      </LiquidGlassWrapper>
+      {glassEnabled ? (
+        <LiquidGlassWrapper
+          variant="regular"
+          shape="roundedRect"
+          cornerRadius={10}
+          style={styles.sectionContent}
+        >
+          {renderedChildren}
+        </LiquidGlassWrapper>
+      ) : (
+        <View
+          style={[
+            styles.sectionContent,
+            {
+              backgroundColor: colors.surface,
+              borderRadius: 10,
+              borderWidth: StyleSheet.hairlineWidth,
+              borderColor: colors.border,
+            },
+          ]}
+        >
+          {renderedChildren}
+        </View>
+      )}
 
       {footer && (
         <View style={styles.sectionFooterContainer}>

@@ -123,21 +123,42 @@ export {
 } from "./LiquidGlassFallback";
 
 // ==================================================================================
-// SENSOR-AWARE ADAPTATIONS
+// SENSOR-AWARE ADAPTATIONS (Conditional Loading)
 // ==================================================================================
 
-export {
-  // Sensor management and hooks
+// Safe dynamic loading of sensor features to prevent module conflicts
+let sensorExports: any = {};
+try {
+  sensorExports = require("./LiquidGlassSensors");
+} catch (error) {
+  console.warn("LiquidGlass: Sensor features unavailable, using fallbacks:", error);
+  // Provide safe fallback implementations
+  sensorExports = {
+    LiquidGlassSensorManager: class {
+      constructor() { console.warn("LiquidGlass: Sensor features not available"); }
+      startMonitoring() { return Promise.resolve(); }
+      stopMonitoring() { return Promise.resolve(); }
+      getCurrentData() { return null; }
+    },
+    useLiquidGlassSensorAdaptation: () => ({ sensorData: null, isActive: false }),
+    useAmbientLightAdaptation: () => ({ lightLevel: 1000, isActive: false }),
+    useBatteryOptimization: () => ({ batteryLevel: 1, isAvailable: false }),
+  };
+}
+
+export const {
   LiquidGlassSensorManager,
   useLiquidGlassSensorAdaptation,
   useAmbientLightAdaptation,
   useBatteryOptimization,
+} = sensorExports;
 
-  // Sensor types and interfaces
-  type SensorData,
-  type AdaptationConfig,
-  type SensorCallbacks,
-  type LiquidGlassSensorModule,
+// Export types separately (these are safe)
+export type {
+  SensorData,
+  AdaptationConfig,
+  SensorCallbacks,
+  LiquidGlassSensorModule,
 } from "./LiquidGlassSensors";
 
 // ==================================================================================
@@ -152,7 +173,6 @@ export {
   // Theme types and interfaces
   type ThemeConfiguration,
   type ThemeColors,
-  type EnvironmentalContext,
   type UserPreferences,
   type TimeOfDayPeriod,
   type ThemeContextValue,
@@ -166,11 +186,6 @@ export {
  * Quick access to the main liquid glass component
  */
 export { LiquidGlassView } from "./LiquidGlassFallback";
-
-/**
- * Quick access to native-only component (for advanced use cases)
- */
-export { LiquidGlassNative } from "./LiquidGlassNative";
 
 // ==================================================================================
 // VERSION INFO

@@ -69,6 +69,7 @@ export function FirstChatScreen() {
         undefined,
         undefined,
         false,
+        false,
       );
 
       setMessages((prev) =>

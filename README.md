@@ -3,7 +3,7 @@
 A React Native mobile app that revolutionizes LLM interaction by using DNS TXT queries for AI communication. Chat with AI models through DNS infrastructure for enhanced privacy and network resilience.
 
 [![React Native](https://img.shields.io/badge/React%20Native-0.81.1-blue.svg)](https://reactnative.dev/)
-[![Expo](https://img.shields.io/badge/Expo-54%20Preview-black.svg)](https://expo.dev/)
+[![Expo](https://img.shields.io/badge/Expo-54.0.10-black.svg)](https://expo.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue.svg)](https://www.typescriptlang.org/)
 [![iOS](https://img.shields.io/badge/iOS-16%2B-lightgrey.svg)](https://developer.apple.com/ios/)
 [![Android](https://img.shields.io/badge/Android-API%2021%2B-green.svg)](https://developer.android.com/)
@@ -14,12 +14,13 @@ A React Native mobile app that revolutionizes LLM interaction by using DNS TXT q
 - **🌟 iOS 26+ Liquid Glass**: Native UIGlassEffect with environmental adaptation and comprehensive fallbacks
 - **🌐 DNS-Based AI Chat**: Revolutionary LLM communication via DNS TXT queries
 - **📱 Cross-Platform**: Native iOS, Android, and Web support with platform-specific optimizations
-- **⚡ Native Bottom Tabs**: react-native-bottom-tabs with UITabBarController/BottomNavigationView primitives
+- **⚡ Expo Router Native Tabs**: Expo Router v6 `<Tabs>` with Liquid Glass tab bar (native on iOS 26+, styled fallback on iOS 16-25)
 - **🚀 Native DNS Implementation**: Platform-optimized iOS Network Framework and Android DnsResolver
 - **🔄 Multi-Layer Fallback**: UDP → TCP → DNS-over-HTTPS → Mock service
 - **💾 Local Storage**: Persistent conversation history with AsyncStorage
 - **🎨 Modern Glass UI**: iOS 26 Liquid Glass design system with sensor-aware adaptation
 - **⚙️ Advanced DNS Config**: Multiple DNS service options (ch.at, llm.pieter.com)
+- **📝 Strict DNS Contract**: Client sanitizes queries to dashed lowercase labels (≤63 chars) matching the production `dns.go` resolver
 - **📊 Real-Time Logging**: Comprehensive DNS query monitoring and debugging
 - **🔗 Deep Linking**: Direct message sending via custom URL schemes
 - **✅ Enterprise-Grade Stability**: Thread-safe operations, proper resource management, no memory leaks
@@ -29,15 +30,16 @@ A React Native mobile app that revolutionizes LLM interaction by using DNS TXT q
 ### **Core Framework**
 
 - **React Native 0.81.1** (SDK 54 preview compatible)
-- **Expo SDK 54 (preview)** with Development Build
+- **Expo SDK 54.0.10** with Development Build
 - **TypeScript** (strict mode)
 
 ### **Navigation & UI**
 
-- **React Navigation v7** (Native Stack) + **react-native-bottom-tabs** (Native UITabBarController)
+- **Expo Router v6** with Native Tabs surface
 - **iOS 26+ Liquid Glass**: Native `.glassEffect()` modifier with comprehensive fallback system
 - **React Native Safe Area Context** with gesture handler support
 - **Advanced Theme Support** (automatic light/dark switching with iOS system colors)
+- **Glass Everywhere on iOS**: Headers and tab bars use `LiquidGlassWrapper` on every supported iOS version, with native glass activating automatically on iOS 26+
 
 ### **DNS Implementation**
 
@@ -86,8 +88,8 @@ npm run ios
 # Android (requires Java 17)
 npm run android
 
-# Web
-# Web preview defaults to Mock DNS (DoH can’t reach ch.at custom TXT).
+# Web *(blocked in Expo CLI 54: `TypeError: Invalid URL`)*
+# Track the CLI fix and rerun when resolved.
 npm run web
 ```
 
@@ -104,6 +106,16 @@ npm run web
 ```bash
 # What the app does behind the scenes
 dig @ch.at "What is the meaning of life?" TXT +short
+```
+
+### CLI Smoke Test
+
+```bash
+# Native-only default
+node test-dns-simple.js "Hello" 
+
+# Log experimental intent (UDP/TCP/HTTPS fallbacks in-app)
+node test-dns-simple.js --experimental "Hello"
 ```
 
 ## 🏗 Architecture
@@ -128,8 +140,7 @@ User Message → DNS Service → Native DNS Module → ch.at Server → LLM → 
 src/
 ├── components/          # Reusable UI components
 ├── context/            # React Context providers
-├── navigation/         # Navigation configuration
-├── screens/           # Screen components
+├── screens/           # Expo Router screen implementations
 ├── services/          # DNS and storage services
 └── types/             # TypeScript definitions
 
@@ -229,6 +240,24 @@ npm run clean-ios
 - **[Troubleshooting](./docs/TROUBLESHOOTING.md)** - Common issues and solutions
 - **[API Documentation](./docs/API.md)** - DNS service API reference
 - **[Contributing](./CONTRIBUTING.md)** - Development guidelines
+
+### Swift Xcode 26 Additional Docs
+
+Always look for Swift documentation updated at this Xcode 26 folder: `/Applications/Xcode.app/Contents/PlugIns/IDEIntelligenceChat.framework/Versions/A/Resources/AdditionalDocumentation`.
+
+### Guidelines for Modern Swift
+
+Whenever possible, favor Apple programming languages and frameworks or APIs that are already available on Apple devices. Whenever suggesting code, assume the user wants Swift unless they show or tell you they are interested in another language. Always prefer Swift, Objective-C, C, and C++ over alternatives.
+
+Pay close attention to the platform that the code targets. For example, if you see clues that the user is writing a Mac app, avoid suggesting iOS-only APIs.
+
+Refer to Apple platforms with their official names, like iOS, iPadOS, macOS, watchOS, and visionOS. Avoid mentioning specific products and instead use these platform names.
+
+In general, prefer the use of Swift Concurrency (async/await, actors, etc.) over tools like Dispatch or Combine, but if the user's code or words show you they may prefer something else, you should be flexible to this preference.
+
+#### Modern Previews
+
+Instead of using the `PreviewProvider` protocol for new previews in SwiftUI, use the new `#Preview` macro.
 
 ## 🐛 Troubleshooting
 

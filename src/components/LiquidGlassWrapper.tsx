@@ -18,6 +18,7 @@ import {
   Platform,
   ViewProps,
   View,
+  ViewStyle,
   useColorScheme,
   NativeModules,
 } from "react-native";
@@ -26,6 +27,22 @@ import {
   UIManager,
   findNodeHandle,
 } from "react-native";
+// Safe import with fallback for Liquid Glass capabilities
+let liquidGlassUtils: any = {};
+try {
+  liquidGlassUtils = require("./liquidGlass");
+} catch (error) {
+  console.warn("LiquidGlass: Utilities unavailable, using fallbacks:", error);
+  // Provide safe fallback implementations
+  liquidGlassUtils = {
+    useLiquidGlassCapabilities: () => ({
+      isSupported: false,
+      supportsSwiftUIGlass: false,
+      glassIntensity: 0.5,
+      nativeGlassSupported: false,
+    }),
+  };
+}
 
 // ==================================================================================
 // TYPES AND INTERFACES
@@ -174,7 +191,9 @@ export const LiquidGlassWrapper: React.FC<LiquidGlassProps> = ({
   // Enhanced CSS fallback with glass-like effects
   const isDark = colorScheme === "dark";
 
-  const glassStyle = {
+  type GlassFallbackStyle = ViewStyle & { backdropFilter?: string };
+
+  const glassStyle: GlassFallbackStyle = {
     backgroundColor: (() => {
       if (isDark) {
         switch (variant) {
@@ -241,7 +260,7 @@ export const LiquidGlassWrapper: React.FC<LiquidGlassProps> = ({
       elevation: 20, // Highest elevation for prominent
       borderWidth: isDark ? 3 : 2, // Stronger borders for prominent
     }),
-  };
+  } as GlassFallbackStyle;
 
   return (
     <View style={[glassStyle, style]} {...props}>
@@ -255,24 +274,42 @@ export const LiquidGlassWrapper: React.FC<LiquidGlassProps> = ({
 // ==================================================================================
 
 /**
- * Hook for accessing native glass capabilities
+ * Hook for accessing native glass capabilities with logging
  */
 export const useLiquidGlassCapabilities = () => {
-  // Enable glass effects with fallback rendering (avoiding native module)
-  const capabilities = {
-    available: true,
-    platform: "ios",
-    fallbackMode: true, // Using CSS-like fallback instead of native
-    iosVersion: "26.0",
-  };
-  const loading = false;
+  // Use safe hook with fallback (renamed to avoid recursion)
+  const baseLiquidGlassHook = liquidGlassUtils.useLiquidGlassCapabilities || (() => ({
+    isSupported: false,
+    supportsSwiftUIGlass: false,
+    glassIntensity: 0.5,
+    nativeGlassSupported: false,
+  }));
+
+  const capabilities = baseLiquidGlassHook();
+  const isLoading = false; // No loading when using fallbacks
+  const hasLoggedRef = React.useRef(false);
+
+  React.useEffect(() => {
+    if (!isLoading && capabilities && !hasLoggedRef.current) {
+      console.log("💎 Liquid Glass capabilities", capabilities);
+      hasLoggedRef.current = true;
+    }
+  }, [isLoading, capabilities]);
+
+  const isSupported = Boolean(capabilities?.isSupported);
+  const supportsSwiftUIGlass = Boolean(
+    capabilities?.platform === "ios" && capabilities?.isSupported && capabilities?.apiLevel >= 260,
+  );
+  const iosVersion = capabilities?.apiLevel
+    ? (capabilities.apiLevel / 10).toFixed(1)
+    : null;
 
   return {
     capabilities,
-    loading,
-    isSupported: Platform.OS === "ios", // Enable on iOS
-    supportsSwiftUIGlass: false, // Native module disabled
-    iosVersion: "26.0",
+    loading: isLoading,
+    isSupported,
+    supportsSwiftUIGlass,
+    iosVersion,
   };
 };
 

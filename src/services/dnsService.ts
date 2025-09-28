@@ -1,8 +1,31 @@
 import { Platform, AppState } from 'react-native';
 import * as dns from 'dns-packet';
 import { nativeDNS, DNSError, DNSErrorType } from '../../modules/dns-native';
+import { DNS_CONSTANTS, sanitizeDNSMessageReference } from '../../modules/dns-native/constants';
 import { DNSLogService } from './dnsLogService';
 import { DNSMethodPreference } from '../context/SettingsContext';
+
+const DEFAULT_DNS_ZONE = 'ch.at';
+
+export function composeDNSQueryName(label: string, dnsServer: string): string {
+  const trimmedLabel = label.replace(/\.+$/g, '').trim();
+  if (!trimmedLabel) {
+    throw new Error('DNS label must be non-empty when composing query name');
+  }
+
+  const serverInput = (dnsServer || '').trim().replace(/:\d+$/, '').replace(/\.+$/g, '');
+  const ipRegex = /^(?:\d{1,3}\.){3}\d{1,3}$/;
+  const zone = !serverInput || ipRegex.test(serverInput) ? DEFAULT_DNS_ZONE : serverInput.toLowerCase();
+
+  return `${trimmedLabel}.${zone}`;
+}
+
+type DNSQueryContext = {
+  originalMessage: string;
+  label: string;
+  queryName: string;
+  targetServer: string;
+};
 
 // Try to import UDP and TCP, fallback to null if not available
 let dgram: any = null;
@@ -106,37 +129,26 @@ function safeDecodeBytes(bytes: any): string {
  * SECURITY: Enhanced validation to prevent DNS injection attacks
  */
 export function validateDNSMessage(message: string): void {
-  if (!message || typeof message !== 'string') {
+  if (typeof message !== 'string') {
     throw new Error('Message must be a non-empty string');
   }
 
-  if (message.length > 255) {
-    throw new Error('Message too long (maximum 255 characters)');
+  if (message.length === 0) {
+    throw new Error('Message must be a non-empty string');
+  }
+
+  if (message.length > DNS_CONSTANTS.MAX_MESSAGE_LENGTH) {
+    throw new Error(
+      `Message too long (maximum ${DNS_CONSTANTS.MAX_MESSAGE_LENGTH} characters before sanitization)`,
+    );
   }
 
   if (message.trim().length === 0) {
     throw new Error('Message cannot be empty or contain only whitespace');
   }
 
-  // CRITICAL: Reject ALL control characters and potential DNS injection patterns
-  const dangerousPatterns = [
-    /[\x00-\x1F\x7F-\x9F]/, // ALL control characters (including null bytes)
-    /[<>'"&`]/, // HTML/XML/Shell injection chars
-    /[@:]/, // DNS special characters that could alter queries
-    /\\\w/, // Escaped sequences
-    /\$\{/, // Template injection
-    /[()]/, // Function calls
-  ];
-
-  for (const pattern of dangerousPatterns) {
-    if (pattern.test(message)) {
-      throw new Error('Message contains invalid or potentially dangerous characters');
-    }
-  }
-  
-  // Additional check: Reject if message looks like a domain or IP
-  if (/^[\d.]+$/.test(message) || /\.[a-z]{2,}$/i.test(message)) {
-    throw new Error('Message cannot be an IP address or domain name');
+  if (/[\x00-\x1F\x7F-\x9F]/.test(message)) {
+    throw new Error('Message contains control characters that cannot be encoded safely');
   }
 }
 
@@ -152,21 +164,18 @@ export function validateDNSMessage(message: string): void {
 export function sanitizeDNSMessage(message: string): string {
   validateDNSMessage(message);
 
-  // SECURITY: Only allow known-safe characters
-  const sanitized = message
-    .toLowerCase()
-    .trim()
-    .replace(/\s+/g, '-') // spaces to dashes
-    .replace(/[^a-z0-9-]/g, '') // ONLY alphanumeric and dash
-    .replace(/^-+|-+$/g, '') // no leading/trailing dashes
-    .replace(/-{2,}/g, '-') // collapse multiple dashes
-    .substring(0, 63); // DNS label limit
-    
-  // Final safety check
-  if (sanitized.length === 0) {
-    throw new Error('Message contains no valid characters after sanitization');
+  const sanitized = sanitizeDNSMessageReference(message);
+
+  if (!sanitized) {
+    throw new Error('Message cannot be empty after sanitization');
   }
-  
+
+  if (sanitized.length > DNS_CONSTANTS.MAX_DNS_LABEL_LENGTH) {
+    throw new Error(
+      `Message too long for DNS transport (maximum ${DNS_CONSTANTS.MAX_DNS_LABEL_LENGTH} characters after sanitization)`,
+    );
+  }
+
   return sanitized;
 }
 
@@ -182,6 +191,7 @@ export function validateDNSServer(server: string): void {
   // Whitelist of allowed DNS servers
   const allowedServers = [
     'ch.at', // Primary chat DNS server
+    'llm.pieter.com', // Secondary Chat DNS endpoint
     '8.8.8.8', // Google DNS (fallback)
     '8.8.4.4', // Google DNS secondary
     '1.1.1.1', // Cloudflare DNS (fallback)
@@ -206,57 +216,75 @@ export function parseTXTResponse(txtRecords: string[]): string {
     throw new Error('No TXT records to parse');
   }
 
-  // If any record is plain text, treat it as the response (native behavior)
+  type Part = { partNumber: number; totalParts: number; content: string };
+  const parts: Part[] = [];
+  const plainSegments: string[] = [];
+
   for (const record of txtRecords) {
-    if (!/^(\d+)\/(\d+):/.test(record)) {
-      const plain = String(record || '').trim();
-      if (!plain) throw new Error('Received empty response');
-      return plain;
+    const rawValue = String(record ?? '');
+    const trimmedValue = rawValue.trim();
+    if (!trimmedValue) {
+      continue;
+    }
+
+    const match = rawValue.match(/^\s*(\d+)\/(\d+):(.*)$/);
+    if (match) {
+      parts.push({
+        partNumber: parseInt(match[1], 10),
+        totalParts: parseInt(match[2], 10),
+        content: match[3],
+      });
+    } else {
+      plainSegments.push(rawValue);
     }
   }
 
-  // All records match multipart format: collect, validate, and assemble
-  type Part = { partNumber: number; totalParts: number; content: string };
-  const parts: Part[] = [];
-  let expectedTotal = 0;
-
-  for (const record of txtRecords) {
-    const match = record.match(/^(\d+)\/(\d+):(.*)$/);
-    if (!match) continue; // Should not happen given earlier check
-    const partNumber = parseInt(match[1], 10);
-    const totalParts = parseInt(match[2], 10);
-    const content = match[3];
-    parts.push({ partNumber, totalParts, content });
-    expectedTotal = Math.max(expectedTotal, totalParts);
+  if (plainSegments.length > 0) {
+    const combinedRaw = plainSegments.join('');
+    if (!combinedRaw.trim()) {
+      throw new Error('Received empty response');
+    }
+    return combinedRaw;
   }
 
-  // Validate completeness: unique parts 1..N must exist and no duplicates
-  const partNumbers = parts.map((p) => p.partNumber);
-  const uniquePartNumbers = new Set(partNumbers);
-  if (uniquePartNumbers.size !== partNumbers.length) {
-    throw new Error('Duplicate part numbers detected in multi-part response');
+  if (parts.length === 0) {
+    throw new Error('No TXT records to parse');
   }
-  if (
-    expectedTotal <= 0 ||
-    uniquePartNumbers.size !== expectedTotal ||
-    [...uniquePartNumbers].some((n) => n < 1 || n > expectedTotal)
-  ) {
+
+  const expectedTotal = parts[0].totalParts;
+  const byPart = new Map<number, string>();
+
+  for (const part of parts) {
+    if (byPart.has(part.partNumber)) {
+      throw new Error('Duplicate part numbers detected in multi-part response');
+    }
+    byPart.set(part.partNumber, part.content);
+  }
+
+  if (expectedTotal <= 0 || byPart.size !== expectedTotal) {
     throw new Error(
-      `Incomplete multi-part response: got ${uniquePartNumbers.size} parts, expected ${expectedTotal}`,
+      `Incomplete multi-part response: got ${byPart.size} parts, expected ${expectedTotal}`,
     );
   }
 
-  // Assemble in order
-  parts.sort((a, b) => a.partNumber - b.partNumber);
-  const fullResponse = parts.map((p) => p.content).join('');
+  const ordered: string[] = [];
+  for (let i = 1; i <= expectedTotal; i++) {
+    const content = byPart.get(i);
+    if (typeof content !== 'string') {
+      throw new Error(`Incomplete multi-part response: missing part ${i}`);
+    }
+    ordered.push(content);
+  }
+
+  const fullResponse = ordered.join('');
   if (!fullResponse.trim()) {
     throw new Error('Received empty response');
   }
-  return fullResponse.trim();
+  return fullResponse;
 }
 
 export class DNSService {
-  private static readonly DEFAULT_DNS_SERVER = 'ch.at';
+  private static readonly DEFAULT_DNS_SERVER = DEFAULT_DNS_ZONE;
   private static readonly DNS_PORT: number = 53; // Ensure port is explicitly typed as number
   private static readonly TIMEOUT = 10000; // 10 seconds
   private static readonly MAX_RETRIES = 3;
@@ -267,6 +295,7 @@ export class DNSService {
   private static backgroundListenerInitialized = false;
   private static requestHistory: number[] = [];
   private static appStateSubscription: { remove: () => void } | null = null;
+  private static httpsLimitationLogged = false;
 
   private static isVerbose(): boolean {
     try {
@@ -352,6 +381,7 @@ export class DNSService {
     preferHttps?: boolean,
     methodPreference?: DNSMethodPreference,
     enableMockDNS?: boolean,
+    allowExperimentalTransports: boolean = false,
   ): Promise<string> {
     // Initialize background listener on first use
     this.initializeBackgroundListener();
@@ -371,20 +401,44 @@ export class DNSService {
     // SECURITY: Validate DNS server to prevent redirection attacks
     validateDNSServer(targetServer);
 
-    // Sanitize the message for DNS query
-    const sanitizedMessage = this.sanitizeMessage(message);
+    // Prepare DNS query context (label + fully-qualified query name)
+    const queryContext = this.createQueryContext(message, targetServer);
 
     // Start logging the query
     const queryId = DNSLogService.startQuery(message);
+    DNSLogService.addLog({
+      id: `${queryId}-query-name`,
+      timestamp: new Date(),
+      message: `Resolved DNS query name: ${queryContext.queryName}`,
+      method: 'native',
+      status: 'attempt',
+      details: `Label: ${queryContext.label}`,
+    });
 
     for (let attempt = 0; attempt < this.MAX_RETRIES; attempt++) {
       try {
         // Determine method order based on preference
-        const methodOrder = this.getMethodOrder(methodPreference, preferHttps, enableMockDNS);
+        const methodOrder = this.getMethodOrder(
+          methodPreference,
+          preferHttps,
+          enableMockDNS,
+          allowExperimentalTransports,
+        );
+
+        DNSLogService.addLog({
+          id: `${queryId}-order-${attempt}`,
+          timestamp: new Date(),
+          message: `Transport order: ${methodOrder.join(' → ')}`,
+          method: 'native',
+          status: 'attempt',
+          details: allowExperimentalTransports
+            ? 'Experimental transports enabled'
+            : 'Experimental transports disabled',
+        });
 
         for (const method of methodOrder) {
           try {
-            const result = await this.tryMethod(method, sanitizedMessage, targetServer);
+            const result = await this.tryMethod(method, queryContext);
             if (result) {
               await DNSLogService.endQuery(true, result.response, result.method);
               return result.response;
@@ -416,6 +470,11 @@ export class DNSService {
         } else if (methodOrder.includes('https')) {
           guidance =
             " • DNS-over-HTTPS was attempted but cannot access ch.at's custom responses. This is a known architectural limitation.";
+        }
+
+        if (!allowExperimentalTransports) {
+          guidance +=
+            " • Native DNS is enforced. Enable 'Allow Experimental Transports' in Settings to retry with UDP/TCP/HTTPS.";
         }
 
         throw new Error(
@@ -453,12 +512,12 @@ export class DNSService {
     ].join('\n');
 
     throw new Error(
-      `DNS query failed after ${this.MAX_RETRIES} attempts to '${targetServer}' with message '${sanitizedMessage}'.\n\nTroubleshooting steps:\n${troubleshootingSteps}`,
+      `DNS query failed after ${this.MAX_RETRIES} attempts to '${targetServer}' with label '${queryContext.label}' (query name: ${queryContext.queryName}).\n\nTroubleshooting steps:\n${troubleshootingSteps}`,
     );
   }
 
   private static async performNativeUDPQuery(
-    message: string,
+    queryName: string,
     dnsServer: string,
   ): Promise<string[]> {
     return new Promise((resolve, reject) => {
@@ -491,10 +550,11 @@ export class DNSService {
         } else if (e instanceof Error) {
           // Check for specific iOS port blocking errors
           const errorMsg = e.message?.toLowerCase() || '';
+          const errorCode = (e as any)?.code;
           if (
             errorMsg.includes('bad_port') ||
             errorMsg.includes('port') ||
-            e.code === 'ERR_SOCKET_BAD_PORT'
+            errorCode === 'ERR_SOCKET_BAD_PORT'
           ) {
             reject(
               new Error(
@@ -528,7 +588,7 @@ export class DNSService {
           {
             type: 'TXT' as const,
             class: 'IN' as const,
-            name: message,
+            name: queryName,
           },
         ],
       };
@@ -595,14 +655,14 @@ export class DNSService {
     });
   }
 
-  private static async performDNSOverTCP(message: string, dnsServer: string): Promise<string[]> {
+  private static async performDNSOverTCP(queryName: string, dnsServer: string): Promise<string[]> {
     return new Promise((resolve, reject) => {
       this.vLog('🔧 TCP: Starting DNS-over-TCP query');
       this.vLog('🔧 TCP: TcpSocket available:', !!TcpSocket);
       this.vLog('🔧 TCP: TcpSocket.Socket available:', !!TcpSocket?.Socket);
 
       if (!TcpSocket) {
-        console.log('❌ TCP: Socket not available');
+        this.vLog('❌ TCP: Socket not available');
         return reject(new Error('TCP Socket not available'));
       }
 
@@ -627,7 +687,7 @@ export class DNSService {
           try {
             socket.destroy();
           } catch (destroyError) {
-            console.log('⚠️ TCP: Error during socket destroy:', destroyError);
+            this.vLog('⚠️ TCP: Error during socket destroy:', destroyError);
           }
         }
       };
@@ -666,10 +726,11 @@ export class DNSService {
         } else if (e instanceof Error) {
           // Check for specific connection issues in Error objects
           const errorMsg = e.message?.toLowerCase() || '';
+          const errorCode = (e as any)?.code;
           if (
             errorMsg.includes('connection refused') ||
             errorMsg.includes('econnrefused') ||
-            e.code === 'ECONNREFUSED'
+            errorCode === 'ECONNREFUSED'
           ) {
             reject(
               new Error(
@@ -679,7 +740,7 @@ export class DNSService {
           } else if (
             errorMsg.includes('timeout') ||
             errorMsg.includes('etimedout') ||
-            e.code === 'ETIMEDOUT'
+            errorCode === 'ETIMEDOUT'
           ) {
             reject(
               new Error(`TCP connection timeout - network may be blocking TCP DNS: ${e.message}`),
@@ -687,7 +748,7 @@ export class DNSService {
           } else if (
             errorMsg.includes('network') ||
             errorMsg.includes('unreachable') ||
-            e.code === 'ENETUNREACH'
+            errorCode === 'ENETUNREACH'
           ) {
             reject(new Error(`TCP network unreachable - connectivity issue: ${e.message}`));
           } else {
@@ -733,7 +794,7 @@ export class DNSService {
           {
             type: 'TXT' as const,
             class: 'IN' as const,
-            name: message,
+            name: queryName,
           },
         ],
       };
@@ -906,9 +967,9 @@ export class DNSService {
     });
   }
 
-  private static async performDNSOverHTTPS(message: string, dnsServer: string): Promise<string[]> {
+  private static async performDNSOverHTTPS(queryName: string, dnsServer: string): Promise<string[]> {
     this.vLog('🔧 HTTPS: Starting DNS-over-HTTPS query');
-    this.vLog('🔧 HTTPS: Message:', message);
+    this.vLog('🔧 HTTPS: Query name:', queryName);
     this.vLog('🔧 HTTPS: DNS Server:', dnsServer);
 
     // ARCHITECTURE LIMITATION: DNS-over-HTTPS cannot directly query ch.at like UDP/TCP can
@@ -923,6 +984,18 @@ export class DNSService {
       '❌ HTTPS: ch.at provides custom TXT responses that DNS-over-HTTPS resolvers cannot access',
     );
     this.vLog('❌ HTTPS: Fallback to Mock service will be attempted');
+
+    if (!this.httpsLimitationLogged) {
+      DNSLogService.addLog({
+        id: `https-limit-${Date.now()}`,
+        timestamp: new Date(),
+        message: 'DNS-over-HTTPS is unavailable for ch.at responses; falling back to other transports.',
+        method: 'https',
+        status: 'failure',
+        details: 'Requires experimental transports with alternative resolver support.',
+      });
+      this.httpsLimitationLogged = true;
+    }
 
     throw new Error(
       `DNS-over-HTTPS cannot access ${dnsServer}'s custom TXT responses - network restrictions require Mock fallback`,
@@ -941,15 +1014,37 @@ export class DNSService {
     return sanitizeDNSMessage(message);
   }
 
+  private static createQueryContext(originalMessage: string, targetServer: string): DNSQueryContext {
+    const label = this.sanitizeMessage(originalMessage);
+    const queryName = composeDNSQueryName(label, targetServer);
+
+    return {
+      originalMessage,
+      label,
+      queryName,
+      targetServer,
+    };
+  }
+
   private static sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   private static getMethodOrder(
-    methodPreference?: DNSMethodPreference,
-    preferHttps?: boolean,
-    enableMockDNS?: boolean,
+    methodPreference: DNSMethodPreference | undefined,
+    preferHttps: boolean | undefined,
+    enableMockDNS: boolean | undefined,
+    allowExperimentalTransports: boolean,
   ): ('native' | 'udp' | 'tcp' | 'https' | 'mock')[] {
+    if (!allowExperimentalTransports) {
+      if (Platform.OS === 'web') {
+        const webDefault: ('native' | 'udp' | 'tcp' | 'https' | 'mock')[] = ['https'];
+        return enableMockDNS ? [...webDefault, 'mock'] : webDefault;
+      }
+
+      const nativeOnly: ('native' | 'udp' | 'tcp' | 'https' | 'mock')[] = ['native'];
+      return enableMockDNS ? [...nativeOnly, 'mock'] : nativeOnly;
+    }
     // Handle new method preferences
     switch (methodPreference) {
       case 'udp-only':
@@ -996,13 +1091,13 @@ export class DNSService {
 
   private static async tryMethod(
     method: 'native' | 'udp' | 'tcp' | 'https' | 'mock',
-    message: string,
-    targetServer: string,
+    context: DNSQueryContext,
   ): Promise<{
     response: string;
     method: 'native' | 'udp' | 'tcp' | 'https' | 'mock';
   } | null> {
     const startTime = Date.now();
+    const { queryName, targetServer, originalMessage, label } = context;
 
     try {
       DNSLogService.logMethodAttempt(method, `Server: ${targetServer}`);
@@ -1011,33 +1106,34 @@ export class DNSService {
 
       switch (method) {
         case 'native':
-          console.log('🌐 NATIVE: Starting native DNS transport test');
-          console.log('🌐 NATIVE: Target server:', targetServer);
-          console.log('🌐 NATIVE: Message:', message);
+          this.vLog('🌐 NATIVE: Starting native DNS transport test');
+          this.vLog('🌐 NATIVE: Target server:', targetServer);
+          this.vLog('🌐 NATIVE: Query name:', queryName);
+          this.vLog('🌐 NATIVE: Label:', label);
 
           const result = await this.handleBackgroundSuspension(async () => {
-            console.log('🔧 NATIVE: Checking native DNS capabilities...');
+            this.vLog('🔧 NATIVE: Checking native DNS capabilities...');
 
             let capabilities;
             try {
               capabilities = await nativeDNS.isAvailable();
-              console.log('🔍 NATIVE: Capabilities check completed');
-              console.log(
+              this.vLog('🔍 NATIVE: Capabilities check completed');
+              this.vLog(
                 '🔍 NATIVE: Capabilities details:',
                 JSON.stringify(capabilities, null, 2),
               );
-              console.log('🔍 NATIVE: Available:', capabilities.available);
-              console.log('🔍 NATIVE: Platform:', capabilities.platform);
-              console.log('🔍 NATIVE: Supports custom server:', capabilities.supportsCustomServer);
-              console.log('🔍 NATIVE: Supports async query:', capabilities.supportsAsyncQuery);
+              this.vLog('🔍 NATIVE: Available:', capabilities.available);
+              this.vLog('🔍 NATIVE: Platform:', capabilities.platform);
+              this.vLog('🔍 NATIVE: Supports custom server:', capabilities.supportsCustomServer);
+              this.vLog('🔍 NATIVE: Supports async query:', capabilities.supportsAsyncQuery);
 
               if (capabilities.apiLevel) {
-                console.log('🔍 NATIVE: Android API level:', capabilities.apiLevel);
+                this.vLog('🔍 NATIVE: Android API level:', capabilities.apiLevel);
               }
-            } catch (capabilitiesError) {
-              console.log('❌ NATIVE: Capabilities check failed:', capabilitiesError);
-              console.log('❌ NATIVE: Capabilities error type:', typeof capabilitiesError);
-              console.log(
+            } catch (capabilitiesError: any) {
+              this.vLog('❌ NATIVE: Capabilities check failed:', capabilitiesError);
+              this.vLog('❌ NATIVE: Capabilities error type:', typeof capabilitiesError);
+              this.vLog(
                 '❌ NATIVE: Capabilities error details:',
                 JSON.stringify(capabilitiesError),
               );
@@ -1047,23 +1143,23 @@ export class DNSService {
             }
 
             if (capabilities.available && capabilities.supportsCustomServer) {
-              console.log('✅ NATIVE: Native DNS available and supports custom servers');
-              console.log('🔧 NATIVE: Attempting to query TXT records...');
+              this.vLog('✅ NATIVE: Native DNS available and supports custom servers');
+              this.vLog('🔧 NATIVE: Attempting to query TXT records...');
 
               try {
-                console.log('📤 NATIVE: Calling nativeDNS.queryTXT with:', {
+                this.vLog('📤 NATIVE: Calling nativeDNS.queryTXT with:', {
                   server: targetServer,
-                  message: message,
+                  queryName,
                 });
 
                 const queryStartTime = Date.now();
-                const records = await nativeDNS.queryTXT(targetServer, message);
+                const records = await nativeDNS.queryTXT(targetServer, queryName);
                 const queryDuration = Date.now() - queryStartTime;
 
-                console.log('📥 NATIVE: Raw TXT records received:', records);
-                console.log('📊 NATIVE: Query took:', queryDuration, 'ms');
-                console.log('📊 NATIVE: Records count:', records?.length || 0);
-                console.log(
+                this.vLog('📥 NATIVE: Raw TXT records received:', records);
+                this.vLog('📊 NATIVE: Query took:', queryDuration, 'ms');
+                this.vLog('📊 NATIVE: Records count:', records?.length || 0);
+                this.vLog(
                   '📊 NATIVE: Records type:',
                   Array.isArray(records) ? 'array' : typeof records,
                 );
@@ -1073,9 +1169,9 @@ export class DNSService {
                 }
 
                 if (!Array.isArray(records)) {
-                  console.log('⚠️ NATIVE: Records is not an array, converting...');
+                  this.vLog('⚠️ NATIVE: Records is not an array, converting...');
                   const arrayRecords = Array.isArray(records) ? records : [String(records)];
-                  console.log('🔄 NATIVE: Converted records:', arrayRecords);
+                  this.vLog('🔄 NATIVE: Converted records:', arrayRecords);
                   return nativeDNS.parseMultiPartResponse(arrayRecords);
                 }
 
@@ -1083,25 +1179,24 @@ export class DNSService {
                   throw new Error('Native DNS query returned empty records array');
                 }
 
-                console.log('🔧 NATIVE: Parsing multi-part response...');
+                this.vLog('🔧 NATIVE: Parsing multi-part response...');
                 const parsedResponse = nativeDNS.parseMultiPartResponse(records);
-                console.log('✅ NATIVE: Response parsed successfully');
-                console.log('📄 NATIVE: Parsed response length:', parsedResponse?.length || 0);
-                console.log(
+                this.vLog('✅ NATIVE: Response parsed successfully');
+                this.vLog('📄 NATIVE: Parsed response length:', parsedResponse?.length || 0);
+                this.vLog(
                   '📄 NATIVE: Parsed response preview:',
                   parsedResponse?.substring(0, 100) + (parsedResponse?.length > 100 ? '...' : ''),
                 );
 
                 return parsedResponse;
-              } catch (nativeError) {
-                console.log('❌ NATIVE: Query failed with error:', nativeError);
-                console.log('❌ NATIVE: Error type:', typeof nativeError);
-                console.log('❌ NATIVE: Error constructor:', nativeError?.constructor?.name);
-                console.log('❌ NATIVE: Error message:', nativeError?.message);
-                console.log('❌ NATIVE: Error code:', nativeError?.code);
-                console.log('❌ NATIVE: Error details:', JSON.stringify(nativeError));
+              } catch (nativeError: any) {
+                this.vLog('❌ NATIVE: Query failed with error:', nativeError);
+                this.vLog('❌ NATIVE: Error type:', typeof nativeError);
+                this.vLog('❌ NATIVE: Error constructor:', nativeError?.constructor?.name);
+                this.vLog('❌ NATIVE: Error message:', nativeError?.message);
+                this.vLog('❌ NATIVE: Error code:', nativeError?.code);
+                this.vLog('❌ NATIVE: Error details:', JSON.stringify(nativeError));
 
-                // Enhance error message with context and actionable guidance
                 if (nativeError?.message?.includes('timeout')) {
                   throw new Error(
                     `Native DNS timeout - network may be slow or DNS server unreachable: ${nativeError.message}`,
@@ -1128,9 +1223,9 @@ export class DNSService {
                 }
               }
             } else {
-              console.log("❌ NATIVE: Native DNS not available or doesn't support custom servers");
-              console.log('❌ NATIVE: Available:', capabilities.available);
-              console.log('❌ NATIVE: Supports custom server:', capabilities.supportsCustomServer);
+              this.vLog("❌ NATIVE: Native DNS not available or doesn't support custom servers");
+              this.vLog('❌ NATIVE: Available:', capabilities.available);
+              this.vLog('❌ NATIVE: Supports custom server:', capabilities.supportsCustomServer);
 
               if (!capabilities.available) {
                 throw new Error(`Native DNS not available on platform: ${capabilities.platform}`);
@@ -1141,13 +1236,13 @@ export class DNSService {
           });
 
           if (!result) {
-            console.log('❌ NATIVE: Result is null/undefined after background suspension handling');
+            this.vLog('❌ NATIVE: Result is null/undefined after background suspension handling');
             throw new Error('Native DNS returned null result');
           }
 
           const nativeDuration = Date.now() - startTime;
-          console.log('✅ NATIVE: Native DNS query completed successfully');
-          console.log('📊 NATIVE: Total duration:', nativeDuration, 'ms');
+          this.vLog('✅ NATIVE: Native DNS query completed successfully');
+          this.vLog('📊 NATIVE: Total duration:', nativeDuration, 'ms');
           DNSLogService.logMethodSuccess(
             'native',
             nativeDuration,
@@ -1168,7 +1263,7 @@ export class DNSService {
           }
 
           txtRecords = await this.handleBackgroundSuspension(() =>
-            this.performNativeUDPQuery(message, targetServer),
+            this.performNativeUDPQuery(queryName, targetServer),
           );
           break;
 
@@ -1185,18 +1280,18 @@ export class DNSService {
           }
 
           txtRecords = await this.handleBackgroundSuspension(() =>
-            this.performDNSOverTCP(message, targetServer),
+            this.performDNSOverTCP(queryName, targetServer),
           );
           break;
 
         case 'https':
           txtRecords = await this.handleBackgroundSuspension(() =>
-            this.performDNSOverHTTPS(message, targetServer),
+            this.performDNSOverHTTPS(queryName, targetServer),
           );
           break;
 
         case 'mock':
-          const mockResponse = await MockDNSService.queryLLM(message);
+          const mockResponse = await MockDNSService.queryLLM(originalMessage);
           const mockDuration = Date.now() - startTime;
           DNSLogService.logMethodSuccess('mock', mockDuration, `Mock response generated`);
           return { response: mockResponse, method: 'mock' };
@@ -1223,7 +1318,9 @@ export class DNSService {
   // Alternative method using a custom DNS resolver service
   // This would require setting up a simple HTTP service that does the actual dig command
   static async queryViaCustomService(message: string, dnsServer?: string): Promise<string> {
-    const sanitizedMessage = this.sanitizeMessage(message);
+    const targetServer = dnsServer || this.DEFAULT_DNS_SERVER;
+    validateDNSServer(targetServer);
+    const context = this.createQueryContext(message, targetServer);
 
     try {
       const controller = new AbortController();
@@ -1235,8 +1332,9 @@ export class DNSService {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          server: dnsServer || this.DEFAULT_DNS_SERVER,
-          query: sanitizedMessage,
+          server: targetServer,
+          query: context.queryName,
+          label: context.label,
           type: 'TXT',
         }),
         signal: controller.signal,
@@ -1267,7 +1365,7 @@ export class DNSService {
     transport: 'native' | 'udp' | 'tcp' | 'https',
     dnsServer?: string,
   ): Promise<string> {
-    console.log(`🧪 Starting forced transport test: ${transport.toUpperCase()}`);
+    this.vLog(`🧪 Starting forced transport test: ${transport.toUpperCase()}`);
 
     if (!message.trim()) {
       throw new Error('Test message cannot be empty');
@@ -1280,20 +1378,28 @@ export class DNSService {
 
     // Use provided DNS server or fallback to default
     const targetServer = dnsServer || this.DEFAULT_DNS_SERVER;
-    
+
     // SECURITY: Validate DNS server to prevent redirection attacks
     validateDNSServer(targetServer);
 
-    // Sanitize the message for DNS query
-    const sanitizedMessage = this.sanitizeMessage(message);
+    const context = this.createQueryContext(message, targetServer);
 
     // Start logging the query
     const queryId = DNSLogService.startQuery(message);
+    DNSLogService.addLog({
+      id: `${queryId}-forced-query-name`,
+      timestamp: new Date(),
+      message: `Resolved DNS query name: ${context.queryName}`,
+      method: transport,
+      status: 'attempt',
+      details: `Label: ${context.label}`,
+    });
 
     const startTime = Date.now();
 
     try {
-      console.log(`🔧 Testing ${transport.toUpperCase()} transport to ${targetServer}`);
+      this.vLog(`🔧 Testing ${transport.toUpperCase()} transport to ${targetServer}`);
+      this.vLog('🔧 Forced query name:', context.queryName);
       DNSLogService.logMethodAttempt(
         transport,
         `FORCED test (no fallback) - Server: ${targetServer}`,
@@ -1303,44 +1409,44 @@ export class DNSService {
 
       switch (transport) {
         case 'native':
-          console.log('🧪 NATIVE TEST: Starting forced native DNS transport test');
+          this.vLog('🧪 NATIVE TEST: Starting forced native DNS transport test');
 
           const result = await this.handleBackgroundSuspension(async () => {
-            console.log('🔧 NATIVE TEST: Checking capabilities for forced test...');
+            this.vLog('🔧 NATIVE TEST: Checking capabilities for forced test...');
             const capabilities = await nativeDNS.isAvailable();
-            console.log('🔍 NATIVE TEST: Capabilities:', JSON.stringify(capabilities, null, 2));
+            this.vLog('🔍 NATIVE TEST: Capabilities:', JSON.stringify(capabilities, null, 2));
 
             if (capabilities.available && capabilities.supportsCustomServer) {
-              console.log('✅ NATIVE TEST: Native DNS available for forced test');
-              console.log('📤 NATIVE TEST: Executing queryTXT...');
+              this.vLog('✅ NATIVE TEST: Native DNS available for forced test');
+              this.vLog('📤 NATIVE TEST: Executing queryTXT...');
 
               const testStartTime = Date.now();
-              const records = await nativeDNS.queryTXT(targetServer, sanitizedMessage);
+              const records = await nativeDNS.queryTXT(targetServer, context.queryName);
               const testQueryDuration = Date.now() - testStartTime;
 
-              console.log('📥 NATIVE TEST: Records received:', records);
-              console.log('📊 NATIVE TEST: Query duration:', testQueryDuration, 'ms');
+              this.vLog('📥 NATIVE TEST: Records received:', records);
+              this.vLog('📊 NATIVE TEST: Query duration:', testQueryDuration, 'ms');
 
               const parsedResult = nativeDNS.parseMultiPartResponse(records);
-              console.log('✅ NATIVE TEST: Response parsed:', parsedResult?.length, 'chars');
+              this.vLog('✅ NATIVE TEST: Response parsed:', parsedResult?.length, 'chars');
 
               return parsedResult;
             }
-            console.log('❌ NATIVE TEST: Native DNS not available for forced test');
+            this.vLog('❌ NATIVE TEST: Native DNS not available for forced test');
             throw new Error(
               `Native DNS not available for forced test - available: ${capabilities.available}, custom server: ${capabilities.supportsCustomServer}`,
             );
           });
 
           const nativeDuration = Date.now() - startTime;
-          console.log('🎉 NATIVE TEST: Forced test completed successfully');
+          this.vLog('🎉 NATIVE TEST: Forced test completed successfully');
           DNSLogService.logMethodSuccess(
             'native',
             nativeDuration,
             `Forced test response received (${result.length} chars)`,
           );
           await DNSLogService.endQuery(true, result, 'native');
-          console.log(
+          this.vLog(
             `✅ Native transport test successful: ${result.substring(0, 100)}${result.length > 100 ? '...' : ''}`,
           );
           return result;
@@ -1358,7 +1464,7 @@ export class DNSService {
           }
 
           txtRecords = await this.handleBackgroundSuspension(() =>
-            this.performNativeUDPQuery(sanitizedMessage, targetServer),
+            this.performNativeUDPQuery(context.queryName, targetServer),
           );
           break;
 
@@ -1375,13 +1481,13 @@ export class DNSService {
           }
 
           txtRecords = await this.handleBackgroundSuspension(() =>
-            this.performDNSOverTCP(sanitizedMessage, targetServer),
+            this.performDNSOverTCP(context.queryName, targetServer),
           );
           break;
 
         case 'https':
           txtRecords = await this.handleBackgroundSuspension(() =>
-            this.performDNSOverHTTPS(sanitizedMessage, targetServer),
+            this.performDNSOverHTTPS(context.queryName, targetServer),
           );
           break;
 
@@ -1400,11 +1506,11 @@ export class DNSService {
         `Forced test response received`,
       );
       await DNSLogService.endQuery(true, response, transport);
-      console.log(`✅ ${transport.toUpperCase()} transport test successful: ${response}`);
+      this.vLog(`✅ ${transport.toUpperCase()} transport test successful: ${response}`);
       return response;
     } catch (error: any) {
       const testErrorDuration = Date.now() - startTime;
-      console.log(`❌ ${transport.toUpperCase()} transport test failed:`, error.message);
+      this.vLog(`❌ ${transport.toUpperCase()} transport test failed:`, error.message);
       DNSLogService.logMethodFailure(transport, error.message, testErrorDuration);
       await DNSLogService.endQuery(false, undefined, transport);
       throw error;

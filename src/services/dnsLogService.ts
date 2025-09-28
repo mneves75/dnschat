@@ -30,6 +30,22 @@ export class DNSLogService {
   private static currentQueryLog: DNSQueryLog | null = null;
   private static queryLogs: DNSQueryLog[] = [];
   private static listeners: Set<(logs: DNSQueryLog[]) => void> = new Set();
+  private static idCounter = 0;
+
+  /**
+   * Generate a truly unique ID using multiple sources of entropy
+   * Combines timestamp, performance counter, auto-incrementing counter, and random string
+   */
+  private static generateUniqueId(prefix: string): string {
+    const timestamp = Date.now();
+    const performance = typeof window !== 'undefined' && window.performance
+      ? Math.floor(window.performance.now() * 1000)
+      : 0;
+    const counter = ++this.idCounter;
+    const random = Math.random().toString(36).substr(2, 5);
+
+    return `${prefix}-${timestamp}-${performance}-${counter}-${random}`;
+  }
 
   static async initialize() {
     try {
@@ -64,7 +80,7 @@ export class DNSLogService {
     };
 
     this.addLog({
-      id: `${queryId}-start`,
+      id: this.generateUniqueId(`${queryId}-start`),
       timestamp: new Date(),
       message: `Starting DNS query: "${query}"`,
       method: "native",
@@ -85,7 +101,7 @@ export class DNSLogService {
     if (!this.currentQueryLog) return;
 
     const entry: DNSLogEntry = {
-      id: `${this.currentQueryLog.id}-${method}-${Date.now()}`,
+      id: this.generateUniqueId(`${this.currentQueryLog.id}-${method}-attempt`),
       timestamp: new Date(),
       message: `Attempting ${method.toUpperCase()} DNS query`,
       method,
@@ -104,7 +120,7 @@ export class DNSLogService {
     if (!this.currentQueryLog) return;
 
     const entry: DNSLogEntry = {
-      id: `${this.currentQueryLog.id}-${method}-success-${Date.now()}`,
+      id: this.generateUniqueId(`${this.currentQueryLog.id}-${method}-success`),
       timestamp: new Date(),
       message: `${method.toUpperCase()} query successful`,
       method,
@@ -124,7 +140,7 @@ export class DNSLogService {
     if (!this.currentQueryLog) return;
 
     const entry: DNSLogEntry = {
-      id: `${this.currentQueryLog.id}-${method}-failure-${Date.now()}`,
+      id: this.generateUniqueId(`${this.currentQueryLog.id}-${method}-failure`),
       timestamp: new Date(),
       message: `${method.toUpperCase()} query failed`,
       method,
@@ -143,7 +159,7 @@ export class DNSLogService {
     if (!this.currentQueryLog) return;
 
     const entry: DNSLogEntry = {
-      id: `${this.currentQueryLog.id}-fallback-${Date.now()}`,
+      id: this.generateUniqueId(`${this.currentQueryLog.id}-fallback`),
       timestamp: new Date(),
       message: `Falling back from ${fromMethod.toUpperCase()} to ${toMethod.toUpperCase()}`,
       method: fromMethod,
@@ -170,7 +186,7 @@ export class DNSLogService {
     this.currentQueryLog.response = response;
 
     const finalEntry: DNSLogEntry = {
-      id: `${this.currentQueryLog.id}-end`,
+      id: this.generateUniqueId(`${this.currentQueryLog.id}-end`),
       timestamp: new Date(),
       message: success
         ? `Query completed successfully via ${finalMethod?.toUpperCase()}`
@@ -192,6 +208,40 @@ export class DNSLogService {
 
     await this.saveLogs();
     this.currentQueryLog = null;
+    this.notifyListeners();
+  }
+
+  static async recordSettingsEvent(message: string, details?: string) {
+    const timestamp = new Date();
+    const id = this.generateUniqueId("settings");
+
+    const entry: DNSLogEntry = {
+      id: this.generateUniqueId(`${id}-entry`),
+      timestamp,
+      message,
+      method: "native",
+      status: "success",
+      details,
+    };
+
+    const log: DNSQueryLog = {
+      id,
+      query: `[settings] ${message}`,
+      startTime: timestamp,
+      endTime: timestamp,
+      totalDuration: 0,
+      finalStatus: "success",
+      finalMethod: "native",
+      response: details,
+      entries: [entry],
+    };
+
+    this.queryLogs.unshift(log);
+    if (this.queryLogs.length > MAX_LOGS) {
+      this.queryLogs = this.queryLogs.slice(0, MAX_LOGS);
+    }
+
+    await this.saveLogs();
     this.notifyListeners();
   }
 

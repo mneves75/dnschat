@@ -17,18 +17,47 @@ export const DNSLogViewer: React.FC<DNSLogViewerProps> = ({
 
   useEffect(() => {
     const unsub = DNSLogService.subscribe(setLogs);
-    return () => unsub();
+    return () => {
+      unsub();
+    };
   }, []);
 
+  // Development-time key validation to catch any remaining duplicates
+  const validateKeys = (logs: DNSQueryLog[]) => {
+    if (__DEV__) {
+      const allKeys = new Set<string>();
+      const duplicates: string[] = [];
+
+      logs.forEach(log => {
+        if (allKeys.has(log.id)) {
+          duplicates.push(log.id);
+        }
+        allKeys.add(log.id);
+
+        log.entries.forEach(entry => {
+          if (allKeys.has(entry.id)) {
+            duplicates.push(entry.id);
+          }
+          allKeys.add(entry.id);
+        });
+      });
+
+      if (duplicates.length > 0) {
+        console.warn('DNS Log Key Duplicates Detected:', duplicates);
+      }
+    }
+  };
+
   const display = logs.slice(0, maxEntries);
+  validateKeys(display);
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       {display.length === 0 ? (
         <Text style={styles.empty}>No DNS logs yet</Text>
       ) : (
-        display.map((log) => (
-          <View key={log.id} style={styles.card}>
+        display.map((log, logIndex) => (
+          <View key={`${log.id}-${logIndex}`} style={styles.card}>
             <View style={styles.headerRow}>
               <Text style={styles.title}>{log.query}</Text>
               <Text style={styles.duration}>
@@ -41,8 +70,8 @@ export const DNSLogViewer: React.FC<DNSLogViewerProps> = ({
               {log.finalMethod ? ` via ${log.finalMethod.toUpperCase()}` : ""}
             </Text>
             <View style={styles.entries}>
-              {log.entries.map((e) => (
-                <View key={e.id} style={styles.entryRow}>
+              {log.entries.map((e, entryIndex) => (
+                <View key={`${e.id}-${entryIndex}`} style={styles.entryRow}>
                   <Text
                     style={[
                       styles.badge,

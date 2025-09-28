@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Planned
+
+| Package | Target Version | Notes |
+| --- | --- | --- |
+| expo | 54.0.10 | Align with stable SDK 54 release |
+| expo-router | ~6.0.8 | Enables Native Tabs entry (`expo-router/entry`) |
+| @expo/ui | >=0.2.0-beta.4 | Provides Liquid Glass + Material 3 primitives |
+| expo-asset | ~11.1.8 | Required by expo-router asset loading |
+| expo-dev-client | ~5.2.6 | Rebuild dev clients post-upgrade |
+| expo-splash-screen | ~0.30.12 | Matches SDK 54 build properties |
+| expo-system-ui | ~5.0.12 | System bar theming parity |
+| react-native | 0.81.x (Expo managed) | Managed by Expo; no direct pin |
+| react-native-reanimated | ~3.18.0 | Ensure compatibility with Expo Router + React Compiler |
+| typescript | ^5.4.5 | Maintain compiler parity with Expo toolchain |
+
+> Documented prior to dependency edits (2025-09-23) for Carmack decision gate.
+
+### Added
+- Router now boots through Expo Router v6 with native tab/header glass backgrounds powered by `useLiquidGlassCapabilities`.
+- Settings screen logs every transport toggle and exposes a new **Verify Native DNS** action.
+- Theme accent updated (`#0060DF`) to meet WCAG AA contrast on light surfaces.
+- `test-dns-simple.js` CLI smoke test sends raw UDP TXT queries (optional `--experimental` flag).
+
+### Fixed
+- Liquid Glass capability hook now proxies the shared detector and logs the resolved payload for diagnostics.
+- Router layouts fallback to Material surfaces when native glass is unavailable, preventing opaque headers on Android/Web.
+- Expo Router tabs always mount `LiquidGlassWrapper`, enabling the styled fallback on iOS 16-25 while retaining native glass on iOS 26+.
+
 ## [2.0.1] - 2025-01-20
 
 ### 🚨 CRITICAL SECURITY & STABILITY FIXES

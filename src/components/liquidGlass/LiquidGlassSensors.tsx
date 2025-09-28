@@ -85,19 +85,35 @@ interface LiquidGlassSensorModule {
   }>;
 }
 
-// Get sensor module with availability check
-const SensorModule =
-  Platform.OS === "ios"
-    ? (NativeModules.LiquidGlassSensorModule as
-        | LiquidGlassSensorModule
-        | undefined)
-    : undefined;
+// Safe native module access with initialization checks
+let SensorModule: LiquidGlassSensorModule | undefined;
+let sensorEmitter: NativeEventEmitter | null = null;
 
-// Event emitter for sensor updates
-const sensorEmitter =
-  Platform.OS === "ios" && SensorModule
-    ? new NativeEventEmitter(NativeModules.LiquidGlassSensorModule)
-    : null;
+const initializeSensorModule = (): boolean => {
+  try {
+    if (Platform.OS === "ios" && NativeModules?.LiquidGlassSensorModule) {
+      const module = NativeModules.LiquidGlassSensorModule;
+
+      // Verify module has required methods before assignment
+      if (typeof module.startAmbientLightMonitoring === 'function') {
+        SensorModule = module as LiquidGlassSensorModule;
+        sensorEmitter = new NativeEventEmitter(module);
+        return true;
+      }
+    }
+  } catch (error) {
+    console.warn("LiquidGlass: Failed to initialize sensor module:", error);
+  }
+  return false;
+};
+
+// Lazy initialization - only call when needed
+const isSensorModuleAvailable = (): boolean => {
+  if (SensorModule === undefined && Platform.OS === "ios") {
+    initializeSensorModule();
+  }
+  return Boolean(SensorModule);
+};
 
 // ==================================================================================
 // TYPE DEFINITIONS
@@ -152,6 +168,12 @@ class LiquidGlassSensorManager {
   constructor(config: AdaptationConfig, callbacks: SensorCallbacks) {
     this.config = config;
     this.callbacks = callbacks;
+
+    // Verify sensor module availability before proceeding
+    if (!isSensorModuleAvailable()) {
+      console.warn("LiquidGlass: Sensor module unavailable, using fallback mode");
+      this.isMonitoring = false;
+    }
 
     // Initialize with default sensor data
     this.currentData = {
@@ -805,15 +827,71 @@ export const useBatteryOptimization = () => {
 };
 
 // ==================================================================================
-// EXPORTS
+// CONDITIONAL EXPORTS (Safe Export Pattern)
 // ==================================================================================
 
-export {
-  LiquidGlassSensorManager,
-  useLiquidGlassSensorAdaptation,
-  useAmbientLightAdaptation,
-  useBatteryOptimization,
-};
+// Stub implementations for environments without sensor support
+class LiquidGlassSensorManagerStub {
+  constructor() {
+    console.warn("LiquidGlass: Sensor features not available");
+  }
+  startMonitoring() { return Promise.resolve(); }
+  stopMonitoring() { return Promise.resolve(); }
+  getCurrentData() { return null; }
+  updateConfig() {}
+  addListener() { return () => {}; }
+  removeListener() {}
+}
+
+// Stub hooks that return safe defaults
+const useLiquidGlassSensorAdaptationStub = () => ({
+  sensorData: null,
+  isActive: false,
+  startAdaptation: () => {},
+  stopAdaptation: () => {},
+});
+
+const useAmbientLightAdaptationStub = () => ({
+  lightLevel: 1000,
+  adaptationLevel: 0.5,
+  isActive: false,
+});
+
+const useBatteryOptimizationStub = () => ({
+  batteryLevel: 1,
+  isLowPowerMode: false,
+  thermalState: "nominal" as const,
+  performanceMode: "normal" as const,
+  isAvailable: false,
+});
+
+// Export safe implementations only
+try {
+  // Only export real implementations if platform and module check pass
+  if (Platform.OS === "ios" && isSensorModuleAvailable()) {
+    module.exports = {
+      LiquidGlassSensorManager,
+      useLiquidGlassSensorAdaptation,
+      useAmbientLightAdaptation,
+      useBatteryOptimization,
+    };
+  } else {
+    module.exports = {
+      LiquidGlassSensorManager: LiquidGlassSensorManagerStub,
+      useLiquidGlassSensorAdaptation: useLiquidGlassSensorAdaptationStub,
+      useAmbientLightAdaptation: useAmbientLightAdaptationStub,
+      useBatteryOptimization: useBatteryOptimizationStub,
+    };
+  }
+} catch (error) {
+  console.warn("LiquidGlass: Failed to export sensor features, using stubs:", error);
+  module.exports = {
+    LiquidGlassSensorManager: LiquidGlassSensorManagerStub,
+    useLiquidGlassSensorAdaptation: useLiquidGlassSensorAdaptationStub,
+    useAmbientLightAdaptation: useAmbientLightAdaptationStub,
+    useBatteryOptimization: useBatteryOptimizationStub,
+  };
+}
 
 export type {
   SensorData,

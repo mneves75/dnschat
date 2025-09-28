@@ -107,6 +107,7 @@ export function DNSMagicScreen() {
         undefined,
         undefined,
         false,
+        false,
       );
       setResponse(result);
     } catch (error) {

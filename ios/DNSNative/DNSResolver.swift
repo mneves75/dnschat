@@ -2,6 +2,23 @@ import Foundation
 import Network
 import React
 
+final class AtomicFlag {
+    private let lock = NSLock()
+    private var value: Bool
+
+    init(initialValue: Bool = false) {
+        self.value = initialValue
+    }
+
+    func testAndSet() -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        if value { return false }
+        value = true
+        return true
+    }
+}
+
 @objc(DNSResolver)
 final class DNSResolver: NSObject {
     
@@ -27,9 +44,13 @@ final class DNSResolver: NSObject {
         resolver: @escaping RCTPromiseResolveBlock,
         rejecter: @escaping RCTPromiseRejectBlock
     ) {
-        // Sanitize input
-        let sanitizedMessage = sanitizeMessage(message)
-        let queryId = "\(domain)-\(sanitizedMessage)"
+        let queryName = message.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !queryName.isEmpty else {
+            rejecter("DNS_QUERY_FAILED", "Query name cannot be empty", nil)
+            return
+        }
+
+        let queryId = "\(domain)-\(queryName)"
         
         Task {
             do {
@@ -41,15 +62,15 @@ final class DNSResolver: NSObject {
                 }
                 
                 // Create new query
-                let queryTask = createQueryTask(server: domain, message: sanitizedMessage)
-                await MainActor.run {
+                let queryTask = createQueryTask(server: domain, queryName: queryName)
+                _ = await MainActor.run {
                     activeQueries[queryId] = queryTask
                 }
                 
                 let result = try await queryTask.value
                 
                 // Clean up
-                await MainActor.run {
+                _ = await MainActor.run {
                     activeQueries.removeValue(forKey: queryId)
                 }
                 
@@ -57,7 +78,7 @@ final class DNSResolver: NSObject {
                 
             } catch {
                 // Clean up on error
-                await MainActor.run {
+                _ = await MainActor.run {
                     activeQueries.removeValue(forKey: queryId)
                 }
                 
@@ -68,18 +89,21 @@ final class DNSResolver: NSObject {
     
     // MARK: - Private Implementation
     
-    private func createQueryTask(server: String, message: String) -> Task<[String], Error> {
-        Task {
-            try await withTimeout(seconds: Self.queryTimeout) {
-                try await performUDPQuery(server: server, message: message)
+    private func createQueryTask(server: String, queryName: String) -> Task<[String], Error> {
+        Task { [weak self] in
+            guard let self = self else {
+                throw DNSError.cancelled
+            }
+            return try await withTimeout(seconds: Self.queryTimeout) {
+                try await self.performUDPQuery(server: server, queryName: queryName)
             }
         }
     }
-    
+
     @available(iOS 12.0, *)
-    private func performUDPQuery(server: String, message: String) async throws -> [String] {
+    private func performUDPQuery(server: String, queryName: String) async throws -> [String] {
         // Build DNS query
-        let queryData = createDNSQuery(message: message)
+        let queryData = try createDNSQuery(queryName: queryName)
         
         // Prepare UDP connection
         let host = NWEndpoint.Host(server)
@@ -87,28 +111,23 @@ final class DNSResolver: NSObject {
         let params = NWParameters.udp
         let connection = NWConnection(host: host, port: port, using: params)
         
-        // CRITICAL FIX: Thread-safe atomic flag to prevent double resume
-        let readyLock = NSLock()
-        var hasResumedReady = false
-        
         // Await ready state with atomic protection
+        let readyFlag = AtomicFlag()
         try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, Error>) in
             connection.stateUpdateHandler = { state in
-                readyLock.lock()
-                defer { readyLock.unlock() }
-                
-                guard !hasResumedReady else { return }
-                
                 switch state {
                 case .ready:
-                    hasResumedReady = true
-                    cont.resume()
+                    if readyFlag.testAndSet() {
+                        cont.resume()
+                    }
                 case .failed(let error):
-                    hasResumedReady = true
-                    cont.resume(throwing: DNSError.resolverFailed(error.localizedDescription))
+                    if readyFlag.testAndSet() {
+                        cont.resume(throwing: DNSError.resolverFailed(error.localizedDescription))
+                    }
                 case .cancelled:
-                    hasResumedReady = true
-                    cont.resume(throwing: DNSError.cancelled)
+                    if readyFlag.testAndSet() {
+                        cont.resume(throwing: DNSError.cancelled)
+                    }
                 default:
                     break
                 }
@@ -117,17 +136,10 @@ final class DNSResolver: NSObject {
         }
         
         // Send content with atomic protection
-        let sendLock = NSLock()
-        var hasResumedSend = false
-        
+        let sendFlag = AtomicFlag()
         try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, Error>) in
             connection.send(content: queryData, completion: .contentProcessed { error in
-                sendLock.lock()
-                defer { sendLock.unlock() }
-                
-                guard !hasResumedSend else { return }
-                hasResumedSend = true
-                
+                guard sendFlag.testAndSet() else { return }
                 if let error = error {
                     cont.resume(throwing: DNSError.queryFailed(error.localizedDescription))
                 } else {
@@ -137,32 +149,20 @@ final class DNSResolver: NSObject {
         }
         
         // Receive response with atomic protection and proper cleanup
-        let receiveLock = NSLock()
-        var hasResumedReceive = false
-        
+        let receiveFlag = AtomicFlag()
         let responseData: Data = try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Data, Error>) in
-            // Set up timeout
-            let timeoutWorkItem = DispatchWorkItem {
-                receiveLock.lock()
-                defer { receiveLock.unlock() }
-                
-                guard !hasResumedReceive else { return }
-                hasResumedReceive = true
-                
-                connection.cancel()
-                cont.resume(throwing: DNSError.timeout)
+            let timeoutTask = Task {
+                let nanoseconds = UInt64(max(0, Self.queryTimeout) * 1_000_000_000)
+                try await Task.sleep(nanoseconds: nanoseconds)
+                if receiveFlag.testAndSet() {
+                    connection.cancel()
+                    cont.resume(throwing: DNSError.timeout)
+                }
             }
             
-            DispatchQueue.global().asyncAfter(deadline: .now() + Self.queryTimeout, execute: timeoutWorkItem)
-            
             connection.receiveMessage { data, _, _, error in
-                receiveLock.lock()
-                defer { receiveLock.unlock() }
-                
-                guard !hasResumedReceive else { return }
-                hasResumedReceive = true
-                
-                timeoutWorkItem.cancel()
+                guard receiveFlag.testAndSet() else { return }
+                timeoutTask.cancel()
                 connection.cancel()
                 
                 if let error = error {
@@ -182,10 +182,10 @@ final class DNSResolver: NSObject {
         return txt
     }
     
-    private func createDNSQuery(message: String) -> Data {
+    private func createDNSQuery(queryName: String) throws -> Data {
         // Create a basic DNS query packet for TXT record
         var query = Data()
-        
+
         // DNS Header (12 bytes)
         let transactionId = UInt16.random(in: 1...65535)
         query.append(contentsOf: transactionId.bigEndianBytes)  // Transaction ID
@@ -196,30 +196,39 @@ final class DNSResolver: NSObject {
         query.append(contentsOf: [0x00, 0x00])                 // Additional RRs: 0
         
         // Question section
-        let domainBytes = encodeDomainName(message)
+        let domainBytes = try encodeDomainName(
+            queryName
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+                .lowercased()
+        )
         query.append(domainBytes)                               // Domain name
         query.append(contentsOf: [0x00, 0x10])                 // Type: TXT (16)
         query.append(contentsOf: [0x00, 0x01])                 // Class: IN (1)
-        
+
         return query
     }
-    
-    private func encodeDomainName(_ domain: String) -> Data {
+
+    private func encodeDomainName(_ domain: String) throws -> Data {
         var data = Data()
-        let components = domain.components(separatedBy: ".")
-        
+        let components = domain
+            .split(separator: ".", omittingEmptySubsequences: true)
+
+        guard !components.isEmpty else {
+            throw DNSError.queryFailed("Query name is invalid")
+        }
+
         for component in components {
-            // Enforce single-label max length (63 bytes)
-            var label = component
+            let label = String(component)
             if label.utf8.count > 63 {
-                let idx = label.index(label.startIndex, offsetBy: 63)
-                label = String(label[..<idx])
+                throw DNSError.queryFailed("DNS label exceeds 63 characters")
             }
-            let componentData = label.data(using: .utf8) ?? Data()
+            guard let componentData = label.data(using: .utf8) else {
+                throw DNSError.queryFailed("Failed to encode DNS label")
+            }
             data.append(UInt8(componentData.count))
             data.append(componentData)
         }
-        
+
         data.append(0x00) // Null terminator
         return data
     }
@@ -281,34 +290,6 @@ final class DNSResolver: NSObject {
         return results
     }
     
-    private func sanitizeMessage(_ message: String) -> String {
-        // CRITICAL: Match TypeScript sanitization for cross-platform consistency
-        // See modules/dns-native/constants.ts for reference implementation
-        
-        var result = message.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
-        
-        // Replace spaces with dashes
-        result = result.replacingOccurrences(of: " ", with: "-")
-        
-        // Remove invalid characters (keep only alphanumeric and dash)
-        let allowedSet = CharacterSet(charactersIn: "abcdefghijklmnopqrstuvwxyz0123456789-")
-        result = result.components(separatedBy: allowedSet.inverted).joined()
-        
-        // Collapse multiple dashes
-        while result.contains("--") {
-            result = result.replacingOccurrences(of: "--", with: "-")
-        }
-        
-        // Remove leading/trailing dashes
-        result = result.trimmingCharacters(in: CharacterSet(charactersIn: "-"))
-        
-        // Truncate to DNS label limit (63 chars)
-        if result.count > 63 {
-            result = String(result.prefix(63))
-        }
-        
-        return result
-    }
 }
 
 // MARK: - Extensions
@@ -356,7 +337,8 @@ private func withTimeout<T>(
     }
     
     let timeoutTask = Task {
-        try await Task.sleep(for: .seconds(seconds))
+        let nanoseconds = UInt64(max(0, seconds) * 1_000_000_000)
+        try await Task.sleep(nanoseconds: nanoseconds)
         task.cancel()
         throw DNSResolver.DNSError.timeout
     }

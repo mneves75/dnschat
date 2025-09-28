@@ -13,7 +13,7 @@ This document outlines the security measures implemented in DNSChat v2.0.1+ and 
 - Control characters (0x00-0x1F, 0x7F-0x9F) are rejected
 - DNS special characters (@, :, etc.) are blocked
 - Domain and IP address patterns are detected and rejected
-- Maximum message length enforced (255 characters pre-sanitization)
+- Maximum message length enforced (120 characters pre-sanitization, 63 characters post-sanitization)
 
 **Message Sanitization Process**
 1. Convert to lowercase

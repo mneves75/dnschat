@@ -10,8 +10,7 @@
     "scheme": "dnschat",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "org.mvneves.dnschat",
-      "deploymentTarget": "16.0"
+      "bundleIdentifier": "org.mvneves.dnschat"
     },
     "android": {
       "adaptiveIcon": {
@@ -26,6 +25,12 @@
     "plugins": [
       "expo-asset",
       [
+        "expo-router",
+        {
+          "unstable_useServerMiddleware": true
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "backgroundColor": "#ffffff",
@@ -39,10 +44,8 @@
         "expo-build-properties",
         {
           "ios": {
-            "deploymentTarget": "16.0",
             "flipper": false,
             "ccacheEnabled": true,
-            "newArchEnabled": true,
             "generateStaticFrameworks": true,
             "generateSourcemap": true,
             "includeSymbolsInDsym": true,
@@ -58,7 +61,11 @@
             }
           }
         }
-      ]
-    ]
+      ],
+      "expo-localization"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
   }
 }

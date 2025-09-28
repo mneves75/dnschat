@@ -1,3 +1,29 @@
+# DNSChat v2.1.0 Release Notes (Draft)
+
+## Highlights
+
+- ✅ **Expo SDK 54 (stable)** with Expo Router v6 Native Tabs.
+- 💎 **Liquid Glass Enhancements**: iOS 26 headers/tab bar use native glass; Android/Web fall back to Material surfaces.
+- 🛡️ **Native DNS Enforcement**: Native-only default with explicit experimental toggle and CLI smoke test.
+- 🧪 **Observability**: Settings logs include transport toggles and native verification results.
+
+## What's Changed
+
+### Features
+- Replaced legacy React Navigation stack with Expo Router v6 `<Tabs>` + `<Stack>` structure (`app/_layout.tsx`, `app/(app)/(tabs)/_layout.tsx`).
+- Added Liquid Glass capability hook + logging (`src/components/LiquidGlassWrapper.tsx`) and wired glass-aware headers/tab bars.
+- Introduced "Verify Native DNS" action in settings; records capability payloads via `DNSLogService`.
+- CLI smoke test (`test-dns-simple.js`) now performs direct UDP TXT queries with optional `--experimental` flag.
+
+### Improvements
+- Theme accent updated to `#0060DF` (light) / `#0A84FF` (dark) to hit WCAG AA contrast.
+- Glass form sections provide Material surface fallback on platforms without native glass.
+- Module `modules/dns-native` test harness now uses `ts-jest` with mocked `react-native` import.
+
+### Known Issues
+- `expo start --web` fails with `TypeError: Invalid URL` (Expo CLI 54). Track CLI bug before attempting web preview.
+- Manual QA on iOS 26 / Android 16 left pending (see `docs/upgrade/status/2025-09-23.md` for checklist).
+
 # DNSChat v1.7.5 Release Notes
 
 ## Highlights

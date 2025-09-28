@@ -5,7 +5,7 @@
 
 export const DNS_CONSTANTS = {
   // Message limits
-  MAX_MESSAGE_LENGTH: 200,      // Maximum message length before truncation
+  MAX_MESSAGE_LENGTH: 120,      // Enforce limit before sanitization to avoid silent truncation
   MAX_DNS_LABEL_LENGTH: 63,     // DNS RFC 1035 single label limit
   
   // Character replacements
@@ -29,6 +29,7 @@ export const DNS_CONSTANTS = {
   // DNS server whitelist
   ALLOWED_DNS_SERVERS: [
     'ch.at',      // Primary chat DNS server
+    'llm.pieter.com', // Secondary ChatDNS endpoint
     '8.8.8.8',    // Google DNS
     '8.8.4.4',    // Google DNS secondary
     '1.1.1.1',    // Cloudflare DNS
@@ -55,6 +56,12 @@ export const DNS_CONSTANTS = {
  * This TypeScript implementation serves as the reference
  */
 export function sanitizeDNSMessageReference(message: string): string {
+  if (message.length > DNS_CONSTANTS.MAX_MESSAGE_LENGTH) {
+    throw new Error(
+      `Message too long (maximum ${DNS_CONSTANTS.MAX_MESSAGE_LENGTH} characters before sanitization)`,
+    );
+  }
+
   let result = message;
   
   // Step 1: Lowercase
@@ -75,8 +82,12 @@ export function sanitizeDNSMessageReference(message: string): string {
   // Step 6: Remove edge dashes
   result = result.replace(/^-+|-+$/g, '');
   
-  // Step 7: Truncate to DNS label limit
-  result = result.substring(0, DNS_CONSTANTS.MAX_DNS_LABEL_LENGTH);
+  // Step 7: Enforce DNS label limit
+  if (result.length > DNS_CONSTANTS.MAX_DNS_LABEL_LENGTH) {
+    throw new Error(
+      `Message exceeds DNS label limit of ${DNS_CONSTANTS.MAX_DNS_LABEL_LENGTH} characters after sanitization`,
+    );
+  }
   
   return result;
 }

@@ -138,6 +138,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
         settings.preferDnsOverHttps,
         settings.dnsMethodPreference,
         settings.enableMockDNS,
+        settings.allowExperimentalTransports,
       );
 
       // Update assistant message with response

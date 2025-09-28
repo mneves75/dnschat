@@ -46,12 +46,12 @@ graph TB
 
 #### Core Technologies
 
-- **Framework**: React Native 0.75.5 with Expo SDK 53
+- **Framework**: React Native 0.81.1 with Expo SDK 54
 - **Language**: TypeScript 5.x with strict mode
-- **Navigation**: React Navigation v7 (Stack + Bottom Tabs)
-- **State Management**: React Context + useReducer pattern
+- **Navigation**: Expo Router v6 (Stack + Tabs file-system routing)
+- **State Management**: React Context + domain-specific hooks
 - **Storage**: AsyncStorage with JSON serialization
-- **Build System**: Expo Development Build with Continuous Native Generation
+- **Build System**: Expo Development Build with native module autolinking
 
 #### Platform-Specific Technologies
 
@@ -79,19 +79,22 @@ graph TB
 #### Navigation Architecture
 
 ```typescript
-/src/navigation/
-├── index.tsx              # Root navigation configuration
-└── screens/
-    ├── ChatList.tsx       # Home screen with chat list
-    ├── Chat.tsx           # Individual chat screen
-    ├── Settings.tsx       # Configuration screen
-    └── About.tsx          # Information screen
+/app/
+├── _layout.tsx            # Top-level Expo Router layout (providers)
+├── (app)/                 # Authenticated shell
+│   ├── (tabs)/
+│   │   ├── _layout.tsx    # Tab navigator with LiquidGlass backgrounds
+│   │   ├── index.tsx      # Chats tab entry
+│   │   ├── logs.tsx       # DNS logs
+│   │   └── about.tsx      # About screen
+│   └── settings.tsx       # Settings stack screen
+└── (marketing)/...        # Future public routes
 ```
 
 **Key Design Decisions:**
 
 - **Native Stack Navigation**: Better performance than JavaScript-based navigation
-- **Bottom Tab Navigation**: Standard mobile app pattern for primary screens
+- **Bottom Tab Navigation**: Expo Router `<Tabs>` backed by `LiquidGlassWrapper` for native + fallback glass effects on all supported iOS versions
 - **Modal Presentation**: Settings screen slides up from bottom
 - **Deep Linking**: Custom URL scheme `dnschat://` with message parameter support
 

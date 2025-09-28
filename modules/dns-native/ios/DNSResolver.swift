@@ -8,7 +8,6 @@ final class DNSResolver: NSObject {
     // MARK: - Configuration
     private static let dnsPort: UInt16 = 53
     private static let queryTimeout: TimeInterval = 10.0
-    
     // MARK: - State
     @MainActor private var activeQueries: [String: Task<[String], Error>] = [:]
     
@@ -27,9 +26,13 @@ final class DNSResolver: NSObject {
         resolver: @escaping RCTPromiseResolveBlock,
         rejecter: @escaping RCTPromiseRejectBlock
     ) {
-        // Sanitize input
-        let sanitizedMessage = sanitizeMessage(message)
-        let queryId = "\(domain)-\(sanitizedMessage)"
+        let queryName = message.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !queryName.isEmpty else {
+            rejecter("DNS_QUERY_FAILED", "Query name cannot be empty", nil)
+            return
+        }
+
+        let queryId = "\(domain)-\(queryName)"
         
         Task {
             do {
@@ -41,7 +44,7 @@ final class DNSResolver: NSObject {
                 }
                 
                 // Create new query
-                let queryTask = createQueryTask(server: domain, message: sanitizedMessage)
+                let queryTask = createQueryTask(server: domain, queryName: queryName)
                 await MainActor.run {
                     activeQueries[queryId] = queryTask
                 }
@@ -68,18 +71,18 @@ final class DNSResolver: NSObject {
     
     // MARK: - Private Implementation
     
-    private func createQueryTask(server: String, message: String) -> Task<[String], Error> {
+    private func createQueryTask(server: String, queryName: String) -> Task<[String], Error> {
         Task {
             try await withTimeout(seconds: Self.queryTimeout) {
-                try await performUDPQuery(server: server, message: message)
+                try await performUDPQuery(server: server, queryName: queryName)
             }
         }
     }
-    
+
     @available(iOS 12.0, *)
-    private func performUDPQuery(server: String, message: String) async throws -> [String] {
+    private func performUDPQuery(server: String, queryName: String) async throws -> [String] {
         // Build DNS query
-        let queryData = createDNSQuery(message: message)
+        let queryData = try createDNSQuery(queryName: queryName)
         
         // Prepare UDP connection
         let host = NWEndpoint.Host(server)
@@ -130,16 +133,16 @@ final class DNSResolver: NSObject {
                 cont.resume(returning: data)
             }
         }
-        
+
         let txt = try parseDnsTxtResponse(responseData)
         if txt.isEmpty { throw DNSError.noRecordsFound }
         return txt
     }
-    
-    private func createDNSQuery(message: String) -> Data {
+
+    private func createDNSQuery(queryName: String) throws -> Data {
         // Create a basic DNS query packet for TXT record
         var query = Data()
-        
+
         // DNS Header (12 bytes)
         let transactionId = UInt16.random(in: 1...65535)
         query.append(contentsOf: transactionId.bigEndianBytes)  // Transaction ID
@@ -150,26 +153,32 @@ final class DNSResolver: NSObject {
         query.append(contentsOf: [0x00, 0x00])                 // Additional RRs: 0
         
         // Question section
-        let domainBytes = encodeDomainName(message)
+        let domainBytes = try encodeDomainName(queryName)
         query.append(domainBytes)                               // Domain name
         query.append(contentsOf: [0x00, 0x10])                 // Type: TXT (16)
         query.append(contentsOf: [0x00, 0x01])                 // Class: IN (1)
-        
+
         return query
     }
-    
-    private func encodeDomainName(_ domain: String) -> Data {
+
+    private func encodeDomainName(_ domain: String) throws -> Data {
         var data = Data()
-        let components = domain.components(separatedBy: ".")
-        
+        let components = domain
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .split(separator: ".", omittingEmptySubsequences: true)
+
+        guard !components.isEmpty else {
+            throw DNSError.queryFailed("Query name is invalid")
+        }
+
         for component in components {
-            // Enforce single-label max length (63 bytes)
-            var label = component
+            let label = String(component)
             if label.utf8.count > 63 {
-                let idx = label.index(label.startIndex, offsetBy: 63)
-                label = String(label[..<idx])
+                throw DNSError.queryFailed("DNS label exceeds 63 characters")
             }
-            let componentData = label.data(using: .utf8) ?? Data()
+            guard let componentData = label.data(using: .utf8) else {
+                throw DNSError.queryFailed("Failed to encode DNS label")
+            }
             data.append(UInt8(componentData.count))
             data.append(componentData)
         }
@@ -235,13 +244,6 @@ final class DNSResolver: NSObject {
         return results
     }
     
-    private func sanitizeMessage(_ message: String) -> String {
-        return message
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-            .prefix(200)
-            .replacingOccurrences(of: " ", with: "-")
-            .lowercased()
-    }
 }
 
 // MARK: - Extensions

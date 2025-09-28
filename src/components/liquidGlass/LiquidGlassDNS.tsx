@@ -43,23 +43,26 @@ import {
   ActivityIndicator,
 } from "react-native";
 
+// Direct imports to break circular dependency with index.ts
 import {
   LiquidGlassView,
+  useLiquidGlassCapabilities,
+  useAdaptiveGlassIntensity,
+  type LiquidGlassProps,
+} from "./LiquidGlassFallback";
+import {
   LiquidGlassButton,
   LiquidGlassChatBubble,
   LiquidGlassInput,
   LiquidGlassCard,
   LiquidGlassContainer,
-  useLiquidGlassCapabilities,
-  useAdaptiveGlassIntensity,
-  type LiquidGlassProps,
-} from "./";
+} from "./LiquidGlassUI";
 
 // ==================================================================================
 // TYPE DEFINITIONS
 // ==================================================================================
 
-interface DNSMethod {
+export interface DNSMethod {
   name: "Native" | "UDP" | "TCP" | "HTTPS" | "Mock";
   icon: string;
   priority: number;
@@ -68,7 +71,7 @@ interface DNSMethod {
   error?: string;
 }
 
-interface DNSQuery {
+export interface DNSQuery {
   id: string;
   message: string;
   method: DNSMethod["name"];
@@ -80,7 +83,7 @@ interface DNSQuery {
   retries?: number;
 }
 
-interface DNSServer {
+export interface DNSServer {
   name: string;
   address: string;
   type: "cloudflare" | "google" | "quad9" | "custom";
@@ -88,7 +91,7 @@ interface DNSServer {
   latency?: number; // ms
 }
 
-interface LiquidGlassChatInterfaceProps extends LiquidGlassProps {
+export interface LiquidGlassChatInterfaceProps extends LiquidGlassProps {
   /** Chat messages */
   messages: Array<{
     id: string;
@@ -125,7 +128,7 @@ interface LiquidGlassChatInterfaceProps extends LiquidGlassProps {
   style?: ViewStyle;
 }
 
-interface LiquidGlassDNSStatusProps extends LiquidGlassProps {
+export interface LiquidGlassDNSStatusProps extends LiquidGlassProps {
   /** Available DNS methods */
   methods: DNSMethod[];
 
@@ -148,7 +151,7 @@ interface LiquidGlassDNSStatusProps extends LiquidGlassProps {
   style?: ViewStyle;
 }
 
-interface LiquidGlassQueryLogProps extends LiquidGlassProps {
+export interface LiquidGlassQueryLogProps extends LiquidGlassProps {
   /** DNS query history */
   queries: DNSQuery[];
 
@@ -168,7 +171,7 @@ interface LiquidGlassQueryLogProps extends LiquidGlassProps {
   style?: ViewStyle;
 }
 
-interface LiquidGlassMethodBadgeProps extends LiquidGlassProps {
+export interface LiquidGlassMethodBadgeProps extends LiquidGlassProps {
   /** DNS method */
   method: DNSMethod;
 
@@ -185,7 +188,7 @@ interface LiquidGlassMethodBadgeProps extends LiquidGlassProps {
   style?: ViewStyle;
 }
 
-interface LiquidGlassConnectionIndicatorProps extends LiquidGlassProps {
+export interface LiquidGlassConnectionIndicatorProps extends LiquidGlassProps {
   /** Connection status */
   status: "connected" | "connecting" | "disconnected" | "error";
 
@@ -199,7 +202,7 @@ interface LiquidGlassConnectionIndicatorProps extends LiquidGlassProps {
   style?: ViewStyle;
 }
 
-interface LiquidGlassServerSelectorProps extends LiquidGlassProps {
+export interface LiquidGlassServerSelectorProps extends LiquidGlassProps {
   /** Available DNS servers */
   servers: DNSServer[];
 
@@ -1196,28 +1199,3 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
 });
-
-// ==================================================================================
-// EXPORTS
-// ==================================================================================
-
-export {
-  LiquidGlassChatInterface,
-  LiquidGlassDNSStatus,
-  LiquidGlassQueryLog,
-  LiquidGlassMethodBadge,
-  LiquidGlassConnectionIndicator,
-  LiquidGlassServerSelector,
-};
-
-export type {
-  LiquidGlassChatInterfaceProps,
-  LiquidGlassDNSStatusProps,
-  LiquidGlassQueryLogProps,
-  LiquidGlassMethodBadgeProps,
-  LiquidGlassConnectionIndicatorProps,
-  LiquidGlassServerSelectorProps,
-  DNSMethod,
-  DNSQuery,
-  DNSServer,
-};

@@ -41,3 +41,22 @@
 - Do not commit secrets or API keys. Default DNS server is defined in `dnsService` (`ch.at`).
 - Android requires Java 17; verify with `java -version`. iOS builds may need `cd ios && pod install`.
 - Networks may block DNS port 53; test fallbacks (TCP/HTTPS) and capture logs from the app’s Logs screen.
+- For updated Swift, SwiftUI and iOS reference materials, check `/Applications/Xcode.app/Contents/PlugIns/IDEIntelligenceChat.framework/Versions/A/Resources/AdditionalDocumentation`.
+
+## Swift Xcode 26 Additional Docs
+
+Always look for Swift, SwiftUI and iOS documentation updated at this Xcode 26 folder: `/Applications/Xcode.app/Contents/PlugIns/IDEIntelligenceChat.framework/Versions/A/Resources/AdditionalDocumentation`.
+
+# Guidelines for Modern Swift
+
+Whenever possible, favor Apple programming languages and frameworks or APIs that are already available on Apple devices. Whenever suggesting code, assume the user wants Swift unless they show or tell you they are interested in another language. Always prefer Swift, Objective-C, C, and C++ over alternatives.
+
+Pay close attention to the platform that the code targets. For example, if you see clues that the user is writing a Mac app, avoid suggesting iOS-only APIs.
+
+Refer to Apple platforms with their official names, like iOS, iPadOS, macOS, watchOS, and visionOS. Avoid mentioning specific products and instead use these platform names.
+
+In general, prefer the use of Swift Concurrency (async/await, actors, etc.) over tools like Dispatch or Combine, but if the user's code or words show you they may prefer something else, you should be flexible to this preference.
+
+## Modern Previews
+
+Instead of using the `PreviewProvider` protocol for new previews in SwiftUI, use the new `#Preview` macro.
