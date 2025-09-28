@@ -30,9 +30,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Settings screen logs every transport toggle and exposes a new **Verify Native DNS** action.
 - Theme accent updated (`#0060DF`) to meet WCAG AA contrast on light surfaces.
 - `test-dns-simple.js` CLI smoke test sends raw UDP TXT queries (optional `--experimental` flag).
+- Introduced `AccessibilityProvider` and persisted accessibility preferences to support high-contrast, reduced motion, and dynamic font sizing flows.
+- Added `EncryptionService` and encrypted-at-rest storage for chat transcripts with per-conversation keys.
+- Authored Sonnet and Supernova verification bundles (`SONNET-VERIFICATION.md`, `SUPERNOVA-VERIFICATION.md`) for Carmack review.
 
 ### Changed
 - Renamed the working branch to `ios26-liquid-glass` to align with the Expo SDK 54 modernization scope.
+- Doubled DNS request rate limit guard to 60/minute and added rolling retention for DNS logs (30-day purge + storage warning telemetry).
+- Storage layer now generates conversation keys before persisting chats, enabling future secure rotations.
 
 ### Fixed
 - Liquid Glass capability hook now proxies the shared detector and logs the resolved payload for diagnostics.
