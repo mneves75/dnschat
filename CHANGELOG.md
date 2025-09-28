@@ -31,6 +31,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Theme accent updated (`#0060DF`) to meet WCAG AA contrast on light surfaces.
 - `test-dns-simple.js` CLI smoke test sends raw UDP TXT queries (optional `--experimental` flag).
 
+### Changed
+- Renamed the working branch to `ios26-liquid-glass` to align with the Expo SDK 54 modernization scope.
+
 ### Fixed
 - Liquid Glass capability hook now proxies the shared detector and logs the resolved payload for diagnostics.
 - Router layouts fallback to Material surfaces when native glass is unavailable, preventing opaque headers on Android/Web.
