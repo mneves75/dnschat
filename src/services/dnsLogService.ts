@@ -25,6 +25,8 @@ export interface DNSQueryLog {
 
 const STORAGE_KEY = "@dns_query_logs";
 const MAX_LOGS = 100;
+const LOG_RETENTION_DAYS = 30;
+const STORAGE_SIZE_WARNING_MB = 100;
 
 export class DNSLogService {
   private static currentQueryLog: DNSQueryLog | null = null;
@@ -66,6 +68,9 @@ export class DNSLogService {
       console.error("Failed to load DNS logs:", error);
       this.queryLogs = [];
     }
+
+    // Initialize cleanup scheduler after loading logs
+    await this.initializeCleanupScheduler();
   }
 
   static startQuery(query: string): string {
@@ -278,6 +283,61 @@ export class DNSLogService {
   static subscribe(listener: (logs: DNSQueryLog[]) => void) {
     this.listeners.add(listener);
     return () => this.listeners.delete(listener);
+  }
+
+  /**
+   * Clean up old logs based on retention policy (30 days)
+   */
+  static async cleanupOldLogs(): Promise<void> {
+    const thirtyDaysAgo = new Date(Date.now() - LOG_RETENTION_DAYS * 24 * 60 * 60 * 1000);
+
+    // Filter out old logs
+    const oldLogsCount = this.queryLogs.length;
+    this.queryLogs = this.queryLogs.filter(log => {
+      const logDate = new Date(log.startTime);
+      return logDate > thirtyDaysAgo;
+    });
+
+    const removedLogsCount = oldLogsCount - this.queryLogs.length;
+
+    if (removedLogsCount > 0) {
+      console.log(`🧹 Cleaned up ${removedLogsCount} old DNS logs (older than ${LOG_RETENTION_DAYS} days)`);
+      await this.saveLogs();
+      this.notifyListeners();
+    }
+  }
+
+  /**
+   * Check storage size and warn if approaching limit
+   */
+  static async checkStorageSize(): Promise<number> {
+    try {
+      const logsJson = JSON.stringify(this.queryLogs);
+      const sizeInBytes = new Blob([logsJson]).size;
+      const sizeInMB = sizeInBytes / (1024 * 1024);
+
+      if (sizeInMB > STORAGE_SIZE_WARNING_MB) {
+        console.warn(`⚠️ DNS logs storage size (${sizeInMB.toFixed(2)}MB) exceeds warning threshold (${STORAGE_SIZE_WARNING_MB}MB)`);
+      }
+
+      return sizeInMB;
+    } catch (error) {
+      console.error("Failed to check storage size:", error);
+      return 0;
+    }
+  }
+
+  /**
+   * Initialize cleanup scheduler (call this on app startup)
+   */
+  static async initializeCleanupScheduler(): Promise<void> {
+    // Clean up old logs on startup
+    await this.cleanupOldLogs();
+
+    // Schedule periodic cleanup (daily)
+    setInterval(async () => {
+      await this.cleanupOldLogs();
+    }, 24 * 60 * 60 * 1000); // 24 hours
   }
 
   private static notifyListeners() {

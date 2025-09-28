@@ -290,7 +290,7 @@ export class DNSService {
   private static readonly MAX_RETRIES = 3;
   private static readonly RETRY_DELAY = 1000; // 1 second
   private static readonly RATE_LIMIT_WINDOW = 60000; // 1 minute
-  private static readonly MAX_REQUESTS_PER_WINDOW = 30; // 30 requests per minute
+  private static readonly MAX_REQUESTS_PER_WINDOW = 60; // 60 requests per minute
   private static isAppInBackground = false;
   private static backgroundListenerInitialized = false;
   private static requestHistory: number[] = [];

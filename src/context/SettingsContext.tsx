@@ -44,6 +44,8 @@ interface SettingsContextValue {
   preferredLocale: string | null;
   availableLocales: SupportedLocaleOption[];
   updateLocale: (locale: string | null) => Promise<void>;
+  accessibility: import("./AccessibilityContext").AccessibilityConfig;
+  updateAccessibility: (config: import("./AccessibilityContext").AccessibilityConfig) => Promise<void>;
   loading: boolean;
 }
 
@@ -222,6 +224,22 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     [persistSettings, settings],
   );
 
+  const updateAccessibility = useCallback(
+    async (accessibilityConfig: import("./AccessibilityContext").AccessibilityConfig) => {
+      if (JSON.stringify(settings.accessibility) === JSON.stringify(accessibilityConfig)) {
+        return;
+      }
+      await persistSettings({
+        ...settings,
+        accessibility: accessibilityConfig,
+      });
+      await DNSLogService.recordSettingsEvent(
+        `Accessibility settings updated: ${JSON.stringify(accessibilityConfig)}`,
+      );
+    },
+    [persistSettings, settings],
+  );
+
   const activeLocale = useMemo(
     () => resolveLocale(settings.preferredLocale ?? systemLocale),
     [settings.preferredLocale, systemLocale],
@@ -244,11 +262,14 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       preferredLocale: settings.preferredLocale,
       availableLocales: SUPPORTED_LOCALE_OPTIONS,
       updateLocale,
+      accessibility: settings.accessibility,
+      updateAccessibility,
       loading,
     }),
     [
       activeLocale,
       loading,
+      settings.accessibility,
       settings.allowExperimentalTransports,
       settings.dnsMethodPreference,
       settings.dnsServer,
@@ -256,6 +277,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       settings.preferDnsOverHttps,
       settings.preferredLocale,
       systemLocale,
+      updateAccessibility,
       updateAllowExperimentalTransports,
       updateDnsMethodPreference,
       updateDnsServer,

@@ -12,6 +12,8 @@ export interface Chat {
   createdAt: Date;
   updatedAt: Date;
   messages: Message[];
+  isEncrypted?: boolean;
+  encryptionKeyId?: string;
 }
 
 export interface ChatContextType {

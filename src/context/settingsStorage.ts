@@ -10,6 +10,13 @@ export type DNSMethodPreference =
   | "never-https"
   | "native-first";
 
+export interface AccessibilityConfig {
+  fontSize: 'small' | 'medium' | 'large' | 'extra-large';
+  highContrast: boolean;
+  reduceMotion: boolean;
+  screenReader: boolean;
+}
+
 export interface PersistedSettings {
   version: number;
   dnsServer: string;
@@ -18,6 +25,7 @@ export interface PersistedSettings {
   enableMockDNS: boolean;
   allowExperimentalTransports: boolean;
   preferredLocale: string | null;
+  accessibility: AccessibilityConfig;
 }
 
 export interface LegacySettingsV1 {
@@ -39,6 +47,12 @@ export const DEFAULT_SETTINGS: PersistedSettings = {
   enableMockDNS: false,
   allowExperimentalTransports: false,
   preferredLocale: null,
+  accessibility: {
+    fontSize: 'medium',
+    highContrast: false,
+    reduceMotion: false,
+    screenReader: false,
+  },
 };
 
 export function sanitizeDnsServer(server: string | undefined): string {
@@ -84,6 +98,12 @@ export function migrateSettings(raw: unknown): PersistedSettings {
         candidate.preferredLocale === undefined
           ? null
           : candidate.preferredLocale,
+      accessibility: {
+        fontSize: 'medium',
+        highContrast: false,
+        reduceMotion: false,
+        screenReader: false,
+      },
     };
   }
 
