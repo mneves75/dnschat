@@ -1,12 +1,6 @@
 import React from "react";
-import {
-  View,
-  StyleSheet,
-  SafeAreaView,
-  useColorScheme,
-  Dimensions,
-} from "react-native";
-import { StatusBar } from "react-native";
+import { View, StyleSheet, useColorScheme, Dimensions, StatusBar } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useOnboarding } from "../../context/OnboardingContext";
 import { OnboardingProgress } from "./OnboardingProgress";
 import { WelcomeScreen } from "./screens/WelcomeScreen";

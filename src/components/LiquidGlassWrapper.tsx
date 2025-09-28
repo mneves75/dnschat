@@ -21,34 +21,15 @@ import {
   ViewStyle,
   useColorScheme,
   NativeModules,
-} from "react-native";
-import {
   requireNativeComponent,
-  UIManager,
-  findNodeHandle,
 } from "react-native";
-// Safe import with fallback for Liquid Glass capabilities
-let liquidGlassUtils: any = {};
-try {
-  liquidGlassUtils = require("./liquidGlass");
-} catch (error) {
-  console.warn("LiquidGlass: Utilities unavailable, using fallbacks:", error);
-  // Provide safe fallback implementations
-  liquidGlassUtils = {
-    useLiquidGlassCapabilities: () => ({
-      isSupported: false,
-      supportsSwiftUIGlass: false,
-      glassIntensity: 0.5,
-      nativeGlassSupported: false,
-    }),
-  };
-}
+import { useLiquidGlassCapabilities as useFallbackLiquidGlassCapabilities } from "./liquidGlass/LiquidGlassFallback";
 
 // ==================================================================================
 // TYPES AND INTERFACES
 // ==================================================================================
 
-interface LiquidGlassProps extends ViewProps {
+export interface LiquidGlassProps extends ViewProps {
   /** Glass variant: regular, prominent, interactive */
   variant?: "regular" | "prominent" | "interactive";
 
@@ -276,23 +257,15 @@ export const LiquidGlassWrapper: React.FC<LiquidGlassProps> = ({
 /**
  * Hook for accessing native glass capabilities with logging
  */
-export const useLiquidGlassCapabilities = () => {
-  // Use safe hook with fallback (renamed to avoid recursion)
-  const baseLiquidGlassHook = liquidGlassUtils.useLiquidGlassCapabilities || (() => ({
-    isSupported: false,
-    supportsSwiftUIGlass: false,
-    glassIntensity: 0.5,
-    nativeGlassSupported: false,
-  }));
+let hasLoggedCapabilities = false;
 
-  const capabilities = baseLiquidGlassHook();
-  const isLoading = false; // No loading when using fallbacks
-  const hasLoggedRef = React.useRef(false);
+export const useLiquidGlassCapabilities = () => {
+  const { capabilities, isLoading } = useFallbackLiquidGlassCapabilities();
 
   React.useEffect(() => {
-    if (!isLoading && capabilities && !hasLoggedRef.current) {
+    if (!isLoading && capabilities && !hasLoggedCapabilities) {
       console.log("💎 Liquid Glass capabilities", capabilities);
-      hasLoggedRef.current = true;
+      hasLoggedCapabilities = true;
     }
   }, [isLoading, capabilities]);
 
