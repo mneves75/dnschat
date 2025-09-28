@@ -14,6 +14,7 @@ Welcome to the DNSChat documentation hub. This directory contains all technical 
 ### 🏗️ Architecture & Technical Deep Dives
 
 - **[System Architecture](architecture/SYSTEM-ARCHITECTURE.md)** - Complete architectural overview
+- **[Liquid Glass + Chat UI Modernization Plan](LIQUID_GLASS_MODERNIZATION_PLAN.md)** - Expo SDK 54 roadmap for glass surfaces and chat UX alignment
 - **[Native Specifications](technical/NATIVE-SPEC-CLAUDE.md)** - Native DNS module implementation details
 - **[DNS Protocol Specification](technical/DNS-PROTOCOL-SPEC.md)** - DNS communication protocol details
 
@@ -175,15 +176,16 @@ Step-by-step procedures and reference materials:
 
 ## 🏷️ Document Status
 
-| Document            | Status     | Last Updated | Maintainer |
-| ------------------- | ---------- | ------------ | ---------- |
-| Tech FAQ            | ✅ Current | v1.7.2       | Team       |
-| Junior Dev Guide    | ✅ Current | v1.7.2       | Team       |
-| System Architecture | ✅ Current | v1.7.2       | Team       |
-| Common Issues       | ✅ Current | v1.7.5       | Team       |
-| XcodeBuildMCP Guide | ✅ Current | v1.7.5       | Team       |
-| Native Specs        | ✅ Current | v1.7.2       | Team       |
-| App Store Assets    | ✅ Current | v1.7.2       | Team       |
+| Document                          | Status     | Last Updated | Maintainer |
+| --------------------------------- | ---------- | ------------ | ---------- |
+| Tech FAQ                          | ✅ Current | v1.7.2       | Team       |
+| Junior Dev Guide                  | ✅ Current | v1.7.2       | Team       |
+| System Architecture               | ✅ Current | v1.7.2       | Team       |
+| Liquid Glass Modernization Plan   | 🆕 Draft   | 2025-09-28   | Team       |
+| Common Issues                     | ✅ Current | v1.7.5       | Team       |
+| XcodeBuildMCP Guide               | ✅ Current | v1.7.5       | Team       |
+| Native Specs                      | ✅ Current | v1.7.2       | Team       |
+| App Store Assets                  | ✅ Current | v1.7.2       | Team       |
 
 ---
 

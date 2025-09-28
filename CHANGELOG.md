@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > Documented prior to dependency edits (2025-09-23) for Carmack decision gate.
 
 ### Added
+- Drafted `docs/LIQUID_GLASS_MODERNIZATION_PLAN.md` describing the Expo SDK 54 liquid glass and chat UI modernization roadmap.
 - Router now boots through Expo Router v6 with native tab/header glass backgrounds powered by `useLiquidGlassCapabilities`.
 - Settings screen logs every transport toggle and exposes a new **Verify Native DNS** action.
 - Theme accent updated (`#0060DF`) to meet WCAG AA contrast on light surfaces.
