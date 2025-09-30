@@ -310,14 +310,15 @@ export const FloatingGlassTabBar: React.FC<
   GlassTabBarProps & {
     position?: "top" | "bottom";
     margin?: number;
+    bottomInset?: number;
   }
-> = ({ position = "bottom", margin = 20, ...props }) => {
+> = ({ position = "bottom", margin = 20, bottomInset = 0, ...props }) => {
   const positionStyle: ViewStyle = {
     position: "absolute",
     left: margin,
     right: margin,
     ...(position === "bottom"
-      ? { bottom: margin + (Platform.OS === "ios" ? 34 : 0) }
+      ? { bottom: margin + bottomInset + (Platform.OS === "ios" ? 12 : 0) }
       : { top: margin + (Platform.OS === "ios" ? 44 : 0) }),
   };
 

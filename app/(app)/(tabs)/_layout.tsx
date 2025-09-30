@@ -46,16 +46,6 @@ export default function AppTabsLayout() {
     [colors.surface],
   );
 
-  const tabIconMap: Record<string, { sfSymbol: string }> = useMemo(
-    () => ({
-      index: { sfSymbol: 'message.fill' },
-      logs: { sfSymbol: 'list.bullet' },
-      about: { sfSymbol: 'info.circle' },
-      'dev-logs': { sfSymbol: 'gear' },
-    }),
-    [],
-  );
-
   return (
     <Tabs
       screenOptions={{
@@ -94,42 +84,56 @@ export default function AppTabsLayout() {
           return <BottomTabBar {...props} />;
         }
 
-        const { state, descriptors, navigation } = props;
+        const { state, descriptors, navigation, insets } = props;
         const activeRoute = state.routes[state.index];
         const visibleRoutes = state.routes.filter((route) => {
           const options = descriptors[route.key]?.options;
           return options?.href !== null;
         });
 
-        const tabs = visibleRoutes.map((route) => {
+        const tabs = visibleRoutes.map((route, index) => {
           const descriptor = descriptors[route.key];
           const options = descriptor?.options ?? {};
+          const isFocused = state.index === state.routes.findIndex((r) => r.key === route.key);
           const label =
             options.tabBarLabel ??
             options.title ??
             route.name;
-          const config = tabIconMap[route.name] ?? { sfSymbol: 'circle' };
+          const appliedLabel = typeof label === 'string' ? label : route.name;
+          const color = isFocused ? colors.accent : colors.muted;
+          const iconNode = options.tabBarIcon?.({ color, focused: isFocused, size: 22 });
+
           return {
             id: route.key,
-            title: typeof label === 'string' ? label : route.name,
-            sfSymbol: config.sfSymbol,
+            title: appliedLabel,
+            icon: iconNode,
           };
         });
+
+        const baseMargin = 12;
+        const bottomInset = insets?.bottom ?? 0;
 
         return (
           <FloatingGlassTabBar
             tabs={tabs}
             activeTabId={activeRoute.key}
             onTabPress={(tabId) => {
-              const target = state.routes.find((route) => route.key === tabId);
-              if (!target) return;
-              if (target.name === activeRoute.name) {
-                // already focused
-                return;
+              const routeIndex = state.routes.findIndex((route) => route.key === tabId);
+              if (routeIndex === -1) return;
+              const route = state.routes[routeIndex];
+
+              const event = navigation.emit({
+                type: 'tabPress',
+                target: route.key,
+                canPreventDefault: true,
+              });
+
+              if (!event.defaultPrevented) {
+                navigation.navigate(route.name);
               }
-              navigation.navigate(target.name);
             }}
-            margin={18}
+            margin={baseMargin}
+            bottomInset={bottomInset}
           />
         );
       }}
