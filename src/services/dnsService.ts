@@ -4,8 +4,9 @@ import { nativeDNS, DNSError, DNSErrorType } from '../../modules/dns-native';
 import { DNS_CONSTANTS, sanitizeDNSMessageReference } from '../../modules/dns-native/constants';
 import { DNSLogService } from './dnsLogService';
 import { DNSMethodPreference } from '../context/SettingsContext';
+import { DNS_CONSTANTS as APP_DNS_CONSTANTS, ERROR_MESSAGES } from '../constants/appConstants';
 
-const DEFAULT_DNS_ZONE = 'ch.at';
+const DEFAULT_DNS_ZONE = APP_DNS_CONSTANTS.DEFAULT_DNS_SERVER;
 
 export function composeDNSQueryName(label: string, dnsServer: string): string {
   const trimmedLabel = label.replace(/\.+$/g, '').trim();
@@ -13,7 +14,21 @@ export function composeDNSQueryName(label: string, dnsServer: string): string {
     throw new Error('DNS label must be non-empty when composing query name');
   }
 
-  const serverInput = (dnsServer || '').trim().replace(/:\d+$/, '').replace(/\.+$/g, '');
+  // SECURITY FIX: Validate DNS server before using it to prevent injection
+  // Remove port if present for validation
+  const serverForValidation = (dnsServer || '').trim().replace(/:\d+$/, '');
+  if (serverForValidation) {
+    // Only validate non-empty servers (empty defaults to ch.at which is safe)
+    try {
+      validateDNSServer(serverForValidation);
+    } catch (error) {
+      throw new Error(
+        `Invalid DNS server in composeDNSQueryName: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
+  }
+
+  const serverInput = serverForValidation.replace(/\.+$/g, '');
   const ipRegex = /^(?:\d{1,3}\.){3}\d{1,3}$/;
   const zone = !serverInput || ipRegex.test(serverInput) ? DEFAULT_DNS_ZONE : serverInput.toLowerCase();
 
@@ -184,8 +199,8 @@ export function sanitizeDNSMessage(message: string): string {
  * SECURITY: Only allow known-safe DNS servers
  */
 export function validateDNSServer(server: string): void {
-  if (!server || typeof server !== 'string') {
-    throw new Error('DNS server must be a non-empty string');
+  if (!server || typeof server !== 'string' || server.trim().length === 0) {
+    throw new Error(ERROR_MESSAGES.DNS_SERVER_INVALID);
   }
   
   // Whitelist of allowed DNS servers
@@ -198,8 +213,10 @@ export function validateDNSServer(server: string): void {
     '1.0.0.1', // Cloudflare DNS secondary
   ];
   
-  // Allow exact matches only (no subdomains or variations)
-  if (!allowedServers.includes(server.toLowerCase().trim())) {
+  const normalizedServer = server.toLowerCase().trim();
+  
+  // Strict validation - no partial matches or empty strings
+  if (!allowedServers.includes(normalizedServer)) {
     throw new Error(`DNS server '${server}' is not in the allowed list. Use: ${allowedServers.join(', ')}`);
   }
 }
@@ -228,7 +245,7 @@ export function parseTXTResponse(txtRecords: string[]): string {
     }
 
     const match = rawValue.match(/^\s*(\d+)\/(\d+):(.*)$/);
-    if (match) {
+    if (match && match[1] && match[2] && match[3] !== undefined) {
       parts.push({
         partNumber: parseInt(match[1], 10),
         totalParts: parseInt(match[2], 10),
@@ -254,9 +271,19 @@ export function parseTXTResponse(txtRecords: string[]): string {
   const expectedTotal = parts[0].totalParts;
   const byPart = new Map<number, string>();
 
+  // ROBUSTNESS FIX: Handle duplicate parts from UDP retransmission
   for (const part of parts) {
     if (byPart.has(part.partNumber)) {
-      throw new Error('Duplicate part numbers detected in multi-part response');
+      const existing = byPart.get(part.partNumber);
+      // If content matches, this is a harmless retransmission - skip it
+      if (existing === part.content) {
+        continue;
+      }
+      // If content differs, this is data corruption - fail
+      throw new Error(
+        `Conflicting content for part ${part.partNumber}: ` +
+        `existing="${existing?.substring(0, 50)}..." vs new="${part.content.substring(0, 50)}..."`
+      );
     }
     byPart.set(part.partNumber, part.content);
   }
@@ -284,13 +311,13 @@ export function parseTXTResponse(txtRecords: string[]): string {
 }
 
 export class DNSService {
-  private static readonly DEFAULT_DNS_SERVER = DEFAULT_DNS_ZONE;
-  private static readonly DNS_PORT: number = 53; // Ensure port is explicitly typed as number
-  private static readonly TIMEOUT = 10000; // 10 seconds
-  private static readonly MAX_RETRIES = 3;
-  private static readonly RETRY_DELAY = 1000; // 1 second
-  private static readonly RATE_LIMIT_WINDOW = 60000; // 1 minute
-  private static readonly MAX_REQUESTS_PER_WINDOW = 60; // 60 requests per minute
+  private static readonly DEFAULT_DNS_SERVER = APP_DNS_CONSTANTS.DEFAULT_DNS_SERVER;
+  private static readonly DNS_PORT: number = APP_DNS_CONSTANTS.DNS_PORT;
+  private static readonly TIMEOUT = APP_DNS_CONSTANTS.QUERY_TIMEOUT_MS;
+  private static readonly MAX_RETRIES = APP_DNS_CONSTANTS.MAX_RETRIES;
+  private static readonly RETRY_DELAY = APP_DNS_CONSTANTS.RETRY_DELAY_MS;
+  private static readonly RATE_LIMIT_WINDOW = APP_DNS_CONSTANTS.RATE_LIMIT_WINDOW_MS;
+  private static readonly MAX_REQUESTS_PER_WINDOW = APP_DNS_CONSTANTS.MAX_REQUESTS_PER_WINDOW;
   private static isAppInBackground = false;
   private static backgroundListenerInitialized = false;
   private static requestHistory: number[] = [];
@@ -1168,9 +1195,10 @@ export class DNSService {
                   throw new Error('Native DNS query returned null/undefined records');
                 }
 
+                // LOGIC FIX: Remove redundant Array.isArray check
                 if (!Array.isArray(records)) {
-                  this.vLog('⚠️ NATIVE: Records is not an array, converting...');
-                  const arrayRecords = Array.isArray(records) ? records : [String(records)];
+                  this.vLog('⚠️ NATIVE: Records is not an array, converting to array...');
+                  const arrayRecords = [String(records)];
                   this.vLog('🔄 NATIVE: Converted records:', arrayRecords);
                   return nativeDNS.parseMultiPartResponse(arrayRecords);
                 }
@@ -1315,46 +1343,6 @@ export class DNSService {
     }
   }
 
-  // Alternative method using a custom DNS resolver service
-  // This would require setting up a simple HTTP service that does the actual dig command
-  static async queryViaCustomService(message: string, dnsServer?: string): Promise<string> {
-    const targetServer = dnsServer || this.DEFAULT_DNS_SERVER;
-    validateDNSServer(targetServer);
-    const context = this.createQueryContext(message, targetServer);
-
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), this.TIMEOUT);
-
-      const response = await fetch('https://your-dns-service.com/query', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          server: targetServer,
-          query: context.queryName,
-          label: context.label,
-          type: 'TXT',
-        }),
-        signal: controller.signal,
-      });
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        throw new Error(`Custom DNS service error: ${response.status}`);
-      }
-
-      const data = await response.json();
-      return data.response || 'No response received';
-    } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') {
-        throw new Error('DNS query timed out');
-      }
-      throw error;
-    }
-  }
 
   /**
    * Test a specific DNS transport method with no fallback

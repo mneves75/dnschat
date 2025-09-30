@@ -1,5 +1,21 @@
 import React, { PropsWithChildren, createContext, useContext, useMemo } from "react";
-import { ColorSchemeName, useColorScheme } from "react-native";
+import { ColorSchemeName, useColorScheme, Platform } from "react-native";
+import { useLiquidGlassCapabilities } from "../components/LiquidGlassWrapper";
+
+// Glass color calculation utility
+const calculateGlassColors = (isDark: boolean, glassAvailable: boolean) => {
+  if (!glassAvailable) {
+    return {
+      glassTint: isDark ? "rgba(28, 28, 30, 0.55)" : "rgba(255, 255, 255, 0.45)",
+      glassHighlight: isDark ? "rgba(255, 255, 255, 0.18)" : "rgba(255, 255, 255, 0.75)",
+    };
+  }
+
+  return {
+    glassTint: isDark ? "rgba(28, 28, 30, 0.55)" : "rgba(255, 255, 255, 0.45)",
+    glassHighlight: isDark ? "rgba(255, 255, 255, 0.18)" : "rgba(255, 255, 255, 0.75)",
+  };
+};
 
 export interface AppThemeColors {
   background: string;
@@ -21,7 +37,7 @@ export interface AppTheme {
   colors: AppThemeColors;
 }
 
-const lightPalette: AppThemeColors = {
+const lightPalette: Omit<AppThemeColors, 'glassTint' | 'glassHighlight'> = {
   background: "#F2F2F7",
   surface: "#FFFFFF",
   card: "#FFFFFF",
@@ -32,11 +48,9 @@ const lightPalette: AppThemeColors = {
   success: "#34C759",
   warning: "#FF9F0A",
   danger: "#FF453A",
-  glassTint: "rgba(255, 255, 255, 0.45)",
-  glassHighlight: "rgba(255, 255, 255, 0.75)",
 };
 
-const darkPalette: AppThemeColors = {
+const darkPalette: Omit<AppThemeColors, 'glassTint' | 'glassHighlight'> = {
   background: "#000000",
   surface: "#1C1C1E",
   card: "#1C1C1E",
@@ -47,15 +61,21 @@ const darkPalette: AppThemeColors = {
   success: "#30D158",
   warning: "#FFD60A",
   danger: "#FF453A",
-  glassTint: "rgba(28, 28, 30, 0.55)",
-  glassHighlight: "rgba(255, 255, 255, 0.18)",
 };
 
-function selectPalette(colorScheme: ColorSchemeName): AppTheme {
+function selectPalette(colorScheme: ColorSchemeName, glassAvailable: boolean = false): AppTheme {
   const isDark = colorScheme === "dark";
+  const baseColors = isDark ? darkPalette : lightPalette;
+
+  // Dynamically calculate glass colors based on availability
+  const glassColors = calculateGlassColors(isDark, glassAvailable);
+
   return {
     isDark,
-    colors: isDark ? darkPalette : lightPalette,
+    colors: {
+      ...baseColors,
+      ...glassColors,
+    },
   };
 }
 
@@ -63,8 +83,10 @@ const AppThemeContext = createContext<AppTheme>(selectPalette("light"));
 
 export function AppThemeProvider({ children }: PropsWithChildren) {
   const colorScheme = useColorScheme();
+  const { isSupported, supportsSwiftUIGlass } = useLiquidGlassCapabilities();
+  const glassAvailable = Platform.OS === "ios" && Boolean(isSupported || supportsSwiftUIGlass);
 
-  const theme = useMemo(() => selectPalette(colorScheme), [colorScheme]);
+  const theme = useMemo(() => selectPalette(colorScheme, glassAvailable), [colorScheme, glassAvailable]);
 
   return (
     <AppThemeContext.Provider value={theme}>{children}</AppThemeContext.Provider>

@@ -1,0 +1,156 @@
+---
+globs: "*.swift,*.m,*.h,*.java,*.kt,*.podspec,*.gradle"
+description: "Guidelines for developing iOS and Android native modules"
+---
+# Native Module Development
+
+## DNS Native Module Architecture
+
+### TypeScript Interface
+- Entry point: [modules/dns-native/index.ts](mdc:modules/dns-native/index.ts)
+- Constants: [modules/dns-native/constants.ts](mdc:modules/dns-native/constants.ts)
+- Must export `nativeDNS` object with methods matching native implementations
+
+### iOS Implementation (Swift)
+- Location: [ios/DNSNative/](mdc:ios/DNSNative/)
+- Framework: Apple Network Framework (async/await)
+- Thread Safety: NSLock-protected for CheckedContinuation
+- Error Handling: Proper Swift error types with timeout handling
+- Podspec: [ios/DNSNative/DNSNative.podspec](mdc:ios/DNSNative/DNSNative.podspec)
+
+### Android Implementation (Java)
+- Location: [modules/dns-native/android/](mdc:modules/dns-native/android/)
+- API: DnsResolver API + dnsjava fallback
+- Threading: Bounded ThreadPoolExecutor to prevent exhaustion
+- Error Handling: Proper exception handling with timeout management
+- Gradle: Configured in [android/app/build.gradle](mdc:android/app/build.gradle)
+
+## Swift Code Guidelines
+
+### Modern Swift Patterns
+- **Concurrency**: Prefer async/await over Dispatch/Combine
+- **Error Handling**: Use proper Swift error types
+- **Previews**: Use `#Preview` macro instead of `PreviewProvider`
+- **Platform**: iOS 16+ (check deployment target in [app.json](mdc:app.json))
+- **Documentation**: Check `/Applications/Xcode.app/Contents/PlugIns/IDEIntelligenceChat.framework/Versions/A/Resources/AdditionalDocumentation` for latest iOS 26 docs
+
+### Swift Example (DNS Query)
+```swift
+import Foundation
+import Network
+
+@objc(DNSNativeModule)
+class DNSNativeModule: NSObject {
+  
+  @objc
+  func queryTXT(_ domain: String, 
+                server: String, 
+                resolve: @escaping RCTPromiseResolveBlock, 
+                reject: @escaping RCTPromiseRejectBlock) {
+    Task {
+      do {
+        let result = try await performDNSQuery(domain: domain, server: server)
+        resolve(result)
+      } catch {
+        reject("DNS_ERROR", error.localizedDescription, error)
+      }
+    }
+  }
+}
+```
+
+## Java/Android Guidelines
+
+### Android Requirements
+- **Java Version**: Java 17 (required, configured in [android/app/build.gradle](mdc:android/app/build.gradle))
+- **Min SDK**: API 21 (Android 5.0)
+- **Target SDK**: API 34 (Android 14)
+- **Build Command**: Use `npm run android` (sets JAVA_HOME to Java 17)
+
+### Android Best Practices
+- Use DnsResolver API for modern Android (API 29+)
+- Fallback to dnsjava for older devices
+- Proper thread pool management
+- Resource cleanup in finally blocks
+- Error code mapping to match iOS
+
+### Android Example (DNS Query)
+```java
+@ReactMethod
+public void queryTXT(String domain, String server, Promise promise) {
+    executor.execute(() -> {
+        try {
+            List<String> results = performDNSQuery(domain, server);
+            WritableArray array = Arguments.createArray();
+            for (String result : results) {
+                array.pushString(result);
+            }
+            promise.resolve(array);
+        } catch (Exception e) {
+            promise.reject("DNS_ERROR", e.getMessage(), e);
+        }
+    });
+}
+```
+
+## Liquid Glass Native Module
+
+### iOS Glass Effects
+- Location: [ios/LiquidGlassNative/](mdc:ios/LiquidGlassNative/)
+- Framework: SwiftUI + UIKit bridge
+- Feature: iOS 26+ liquid glass effects with capability detection
+- Fallback: Graceful degradation to standard blur
+
+### Implementation Pattern
+```swift
+import SwiftUI
+import ExpoGlassEffect
+
+struct LiquidGlassView: View {
+  var body: some View {
+    if #available(iOS 26.0, *) {
+      GlassView()
+    } else {
+      BlurView()
+    }
+  }
+}
+```
+
+## Native Module Testing
+
+### iOS
+```bash
+cd ios
+pod install
+npm run ios
+```
+
+### Android
+```bash
+# Ensure Java 17
+npm run android
+```
+
+### Integration Tests
+```bash
+cd modules/dns-native
+npm run test:integration
+```
+
+## Security Considerations
+
+### Input Validation
+- **iOS**: Validate domain and server before native call
+- **Android**: Same validation logic as iOS (cross-platform consistency)
+- **Sanitization**: Use `sanitizeDNSMessageReference()` from [modules/dns-native/constants.ts](mdc:modules/dns-native/constants.ts)
+
+### Thread Safety
+- **iOS**: NSLock for critical sections
+- **Android**: Synchronized methods and thread-safe collections
+- **Both**: Atomic flags to prevent race conditions
+
+### Resource Management
+- Always clean up network connections
+- Implement proper timeout handling
+- Cancel pending operations on cleanup

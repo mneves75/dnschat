@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useMemo } from "react";
 import { useRouter } from "expo-router";
 import {
   View,
@@ -6,97 +6,59 @@ import {
   StyleSheet,
   Linking,
   Image,
-  useColorScheme,
+  TouchableOpacity,
+  Animated,
+  ScrollView,
+  Platform,
 } from "react-native";
-import { Form, LiquidGlassWrapper } from "../components/glass";
+import { useGlassTheme } from "../hooks/useGlassTheme";
 
 // Import package.json to get version
 const packageJson = require("../../package.json");
 
-// Import app icon from assets (same pattern as newspaper.png)
+// Import app icon
 const AppIcon = require("../assets/dnschat_ios26.png");
 
-const createStyles = (isDark: boolean) =>
-  StyleSheet.create({
-    // Header Section
-    headerContainer: {
-      backgroundColor: "rgba(255, 255, 255, 0.08)",
-      marginHorizontal: 20,
-      padding: 24,
-    },
-    header: {
-      alignItems: "center",
-    },
-    logoContainer: {
-      width: 80,
-      height: 80,
-      borderRadius: 40,
-      backgroundColor: isDark
-        ? "rgba(255, 255, 255, 0.1)"
-        : "rgba(0, 0, 0, 0.05)",
-      marginBottom: 16,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    logoImage: {
-      width: 60,
-      height: 60,
-      borderRadius: 15,
-    },
-    logoText: {
-      fontSize: 24,
-      fontWeight: "bold",
-      color: "#007AFF", // iOS system blue
-    },
-    title: {
-      fontSize: 28,
-      fontWeight: "bold",
-      marginBottom: 8,
-      textAlign: "center",
-    },
-    versionBadge: {
-      paddingHorizontal: 12,
-      paddingVertical: 6,
-      backgroundColor: "rgba(0, 122, 255, 0.15)", // iOS system blue background
-      marginBottom: 16,
-    },
-    versionText: {
-      fontSize: 14,
-      fontWeight: "600",
-      color: "#007AFF", // iOS system blue
-    },
-    description: {
-      fontSize: 16,
-      textAlign: "center",
-      lineHeight: 24,
-      fontWeight: "400",
-    },
-    // Footer Section
-    footerContainer: {
-      backgroundColor: "rgba(255, 255, 255, 0.05)",
-      marginHorizontal: 20,
-      padding: 16,
-    },
-    footerText: {
-      fontSize: 14,
-      textAlign: "center",
-      fontWeight: "400",
-    },
-  });
+/**
+ * Credit item type
+ */
+interface Credit {
+  name: string;
+  description: string;
+  url: string;
+}
 
+/**
+ * About screen with progressive blur and scrollable glass story.
+ *
+ * Features:
+ * - Progressive blur header that morphs from prominent → regular on scroll
+ * - Glass-styled sections using useGlassTheme()
+ * - iOS 26 Liquid Glass depth effects with automatic fallbacks
+ * - Optimized ScrollView for static content
+ *
+ * Phase 3: About + Dev Tools Modernization (September 30, 2025)
+ */
 export function About() {
   const router = useRouter();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
+  const { colors, getGlassStyle } = useGlassTheme();
   const [iconError, setIconError] = useState(false);
+
+  // Scroll animation for progressive blur
+  const scrollY = useRef(new Animated.Value(0)).current;
+
+  // Interpolate header blur intensity based on scroll position
+  const headerBlurIntensity = scrollY.interpolate({
+    inputRange: [0, 100],
+    outputRange: [1, 0.6], // From prominent (1) to regular (0.6)
+    extrapolate: "clamp",
+  });
 
   const openLink = (url: string) => {
     Linking.openURL(url);
   };
 
-  const styles = createStyles(isDark);
-
-  const credits = [
+  const credits: Credit[] = useMemo(() => [
     {
       name: "@arxiv_daily",
       description: "Ch.at original concept and LLM over DNS service",
@@ -132,34 +94,46 @@ export function About() {
       description: "DNS-over-HTTPS infrastructure",
       url: "https://cloudflare.com",
     },
-  ];
+  ], []);
+
+  const styles = createStyles(colors);
 
   return (
-    <Form.List>
-      {/* App Information Header - Prominent display without duplicate rectangles */}
-      <Form.Section>
-        <LiquidGlassWrapper
-          variant="prominent"
-          shape="roundedRect"
-          cornerRadius={16}
-          style={styles.headerContainer}
+    <View style={styles.container}>
+      <Animated.ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        scrollEventThrottle={16}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: false }
+        )}
+      >
+        {/* Header Section - Progressive Blur */}
+        <Animated.View
+          style={[
+            getGlassStyle("card", "prominent", "roundedRect"),
+            styles.headerContainer,
+            { opacity: headerBlurIntensity },
+          ]}
         >
           <View style={styles.header}>
-            <View style={styles.logoContainer}>
+            <View style={[getGlassStyle("card", "regular", "roundedRect"), styles.logoContainer]}>
               {!iconError ? (
                 <Image
                   source={AppIcon}
                   style={styles.logoImage}
                   resizeMode="contain"
-                  onLoad={() =>
-                    console.log("✅ About icon loaded successfully")
-                  }
+                  onLoad={() => {
+                    if (__DEV__) {
+                      console.log("✅ About icon loaded successfully");
+                    }
+                  }}
                   onError={(error) => {
-                    console.log(
-                      "🚨 About icon load error:",
-                      error.nativeEvent?.error || "Unknown error",
-                    );
-                    console.log("🚨 AppIcon source:", AppIcon);
+                    if (__DEV__) {
+                      console.log("🚨 About icon load error:", error.nativeEvent?.error || "Unknown error");
+                    }
                     setIconError(true);
                   }}
                 />
@@ -167,109 +141,291 @@ export function About() {
                 <Text style={styles.logoText}>DNS</Text>
               )}
             </View>
-            <Text
-              style={[styles.title, { color: isDark ? "#FFFFFF" : "#000000" }]}
-            >
-              DNS Chat
-            </Text>
-            <LiquidGlassWrapper
-              variant="interactive"
-              shape="capsule"
-              style={styles.versionBadge}
-            >
+            <Text style={styles.title}>DNS Chat</Text>
+            <View style={[getGlassStyle("button", "interactive", "capsule"), styles.versionBadge]}>
               <Text style={styles.versionText}>v{packageJson.version}</Text>
-            </LiquidGlassWrapper>
-            <Text
-              style={[
-                styles.description,
-                { color: isDark ? "#AEAEB2" : "#6D6D70" },
-              ]}
-            >
-              Chat with AI using DNS TXT queries - a unique approach to LLM
-              communication.
+            </View>
+            <Text style={styles.description}>
+              Chat with AI using DNS TXT queries - a unique approach to LLM communication.
             </Text>
           </View>
-        </LiquidGlassWrapper>
-      </Form.Section>
+        </Animated.View>
 
-      {/* Inspiration Section */}
-      <Form.Section
-        title="Inspiration"
-        footer="This project was inspired by the incredible work of the open-source community"
-      >
-        <Form.Link
-          title="@Arxiv_Daily Tweet"
-          subtitle="Original LLM over DNS concept"
-          onPress={() =>
-            openLink("https://x.com/Arxiv_Daily/status/1952452878716805172")
-          }
-        />
-        <Form.Link
-          title="Ch.at Project"
-          subtitle="Universal Basic Intelligence via DNS"
-          onPress={() => openLink("https://github.com/Deep-ai-inc/ch.at")}
-        />
-        <Form.Link
-          title="@levelsio"
-          subtitle="Shared the original concept"
-          onPress={() => openLink("https://x.com/levelsio")}
-        />
-      </Form.Section>
+        {/* Inspiration Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Inspiration</Text>
+          <Text style={styles.sectionFooter}>
+            This project was inspired by the incredible work of the open-source community
+          </Text>
+          <View style={[getGlassStyle("card", "regular", "roundedRect"), styles.listContainer]}>
+            <LinkItem
+              title="@Arxiv_Daily Tweet"
+              subtitle="Original LLM over DNS concept"
+              onPress={() => openLink("https://x.com/Arxiv_Daily/status/1952452878716805172")}
+              colors={colors}
+              isFirst
+            />
+            <LinkItem
+              title="Ch.at Project"
+              subtitle="Universal Basic Intelligence via DNS"
+              onPress={() => openLink("https://github.com/Deep-ai-inc/ch.at")}
+              colors={colors}
+            />
+            <LinkItem
+              title="@levelsio"
+              subtitle="Shared the original concept"
+              onPress={() => openLink("https://x.com/levelsio")}
+              colors={colors}
+              isLast
+            />
+          </View>
+        </View>
 
-      {/* Project Links */}
-      <Form.Section title="Project">
-        <Form.Link
-          title="GitHub Repository"
-          subtitle="View source code and contribute"
-          onPress={() => openLink("https://github.com/mneves75/dnschat")}
-        />
-        <Form.Link
-          title="Report an Issue"
-          subtitle="Found a bug? Let us know"
-          onPress={() => openLink("https://github.com/mneves75/dnschat/issues")}
-        />
-        <Form.Link
-          title="@dnschat on X"
-          subtitle="Follow for updates"
-          onPress={() => openLink("https://x.com/dnschat")}
-        />
-      </Form.Section>
+        {/* Project Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Project</Text>
+          <View style={[getGlassStyle("card", "regular", "roundedRect"), styles.listContainer]}>
+            <LinkItem
+              title="GitHub Repository"
+              subtitle="View source code and contribute"
+              onPress={() => openLink("https://github.com/mneves75/dnschat")}
+              colors={colors}
+              isFirst
+            />
+            <LinkItem
+              title="Report an Issue"
+              subtitle="Found a bug? Let us know"
+              onPress={() => openLink("https://github.com/mneves75/dnschat/issues")}
+              colors={colors}
+            />
+            <LinkItem
+              title="@dnschat on X"
+              subtitle="Follow for updates"
+              onPress={() => openLink("https://x.com/dnschat")}
+              colors={colors}
+              isLast
+            />
+          </View>
+        </View>
 
-      {/* Developer */}
-      <Form.Section title="Developer">
-        <Form.Item
-          title="Marcus Neves"
-          subtitle="Created by @mneves75"
-          onPress={() => openLink("https://x.com/mneves75")}
-          showChevron
-        />
-        {typeof __DEV__ !== "undefined" && __DEV__ && (
-          <Form.Item
-            title="Developer Logs (Dev)"
-            subtitle="Open DNS logs viewer screen"
-            onPress={() => router.push("/(app)/(tabs)/dev-logs")}
-            showChevron
-          />
-        )}
-      </Form.Section>
+        {/* Developer Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Developer</Text>
+          <View style={[getGlassStyle("card", "regular", "roundedRect"), styles.listContainer]}>
+            <LinkItem
+              title="Marcus Neves"
+              subtitle="Created by @mneves75"
+              onPress={() => openLink("https://x.com/mneves75")}
+              colors={colors}
+              isFirst
+            />
+            {typeof __DEV__ !== "undefined" && __DEV__ && (
+              <LinkItem
+                title="Developer Logs (Dev)"
+                subtitle="Open DNS logs viewer screen"
+                onPress={() => router.push("/(app)/(tabs)/dev-logs")}
+                colors={colors}
+                isLast
+              />
+            )}
+          </View>
+        </View>
 
-      {/* Special Thanks */}
-      <Form.Section
-        title="Special Thanks"
-        footer="This project wouldn't be possible without these amazing open-source projects and services"
-      >
-        {credits.map((credit, index) => (
-          <Form.Link
-            key={index}
-            title={credit.name}
-            subtitle={credit.description}
-            onPress={() => openLink(credit.url)}
-          />
-        ))}
-      </Form.Section>
+        {/* Special Thanks Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Special Thanks</Text>
+          <Text style={styles.sectionFooter}>
+            This project wouldn't be possible without these amazing open-source projects and services
+          </Text>
+          <View style={[getGlassStyle("card", "regular", "roundedRect"), styles.listContainer]}>
+            {credits.map((credit, index) => (
+              <LinkItem
+                key={credit.name}
+                title={credit.name}
+                subtitle={credit.description}
+                onPress={() => openLink(credit.url)}
+                colors={colors}
+                isFirst={index === 0}
+                isLast={index === credits.length - 1}
+              />
+            ))}
+          </View>
+        </View>
 
-      {/* Footer */}
-      <Form.Section footer="© 2025 Marcus Neves • MIT Licensed">{null}</Form.Section>
-    </Form.List>
+        {/* Footer */}
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>© 2025 Marcus Neves • MIT Licensed</Text>
+        </View>
+      </Animated.ScrollView>
+    </View>
   );
 }
+
+/**
+ * Reusable link item component with glass styling
+ */
+interface LinkItemProps {
+  title: string;
+  subtitle: string;
+  onPress: () => void;
+  colors: any;
+  isFirst?: boolean;
+  isLast?: boolean;
+}
+
+const LinkItem: React.FC<LinkItemProps> = React.memo(
+  ({ title, subtitle, onPress, colors, isFirst, isLast }) => {
+    return (
+      <TouchableOpacity
+        style={[
+          linkItemStyles.linkItem,
+          isFirst && linkItemStyles.linkItemFirst,
+          isLast && linkItemStyles.linkItemLast,
+          { borderBottomColor: colors.border },
+        ]}
+        onPress={onPress}
+        activeOpacity={0.7}
+      >
+        <View style={linkItemStyles.linkContent}>
+          <Text style={[linkItemStyles.linkTitle, { color: colors.text }]}>{title}</Text>
+          <Text style={[linkItemStyles.linkSubtitle, { color: colors.muted }]}>{subtitle}</Text>
+        </View>
+        <Text style={[linkItemStyles.chevron, { color: colors.muted }]}>›</Text>
+      </TouchableOpacity>
+    );
+  }
+);
+
+LinkItem.displayName = "LinkItem";
+
+const linkItemStyles = StyleSheet.create({
+  linkItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  linkItemFirst: {
+    paddingTop: 16,
+  },
+  linkItemLast: {
+    borderBottomWidth: 0,
+    paddingBottom: 16,
+  },
+  linkContent: {
+    flex: 1,
+  },
+  linkTitle: {
+    fontSize: 16,
+    fontWeight: "500",
+    marginBottom: 2,
+  },
+  linkSubtitle: {
+    fontSize: 14,
+    lineHeight: 18,
+  },
+  chevron: {
+    fontSize: 24,
+    fontWeight: "300",
+    marginLeft: 8,
+  },
+});
+
+const createStyles = (colors: any) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    scrollView: {
+      flex: 1,
+    },
+    scrollContent: {
+      paddingHorizontal: 20,
+      paddingTop: 20,
+      paddingBottom: 40,
+    },
+    // Header Section
+    headerContainer: {
+      padding: 24,
+      marginBottom: 24,
+    },
+    header: {
+      alignItems: "center",
+    },
+    logoContainer: {
+      width: 80,
+      height: 80,
+      marginBottom: 16,
+      alignItems: "center",
+      justifyContent: "center",
+      overflow: "hidden",
+    },
+    logoImage: {
+      width: 60,
+      height: 60,
+      borderRadius: 15,
+    },
+    logoText: {
+      fontSize: 24,
+      fontWeight: "bold",
+      color: colors.accent,
+    },
+    title: {
+      fontSize: 28,
+      fontWeight: "bold",
+      marginBottom: 8,
+      textAlign: "center",
+      color: colors.text,
+    },
+    versionBadge: {
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      marginBottom: 16,
+    },
+    versionText: {
+      fontSize: 14,
+      fontWeight: "600",
+      color: colors.accent,
+    },
+    description: {
+      fontSize: 16,
+      textAlign: "center",
+      lineHeight: 24,
+      fontWeight: "400",
+      color: colors.muted,
+    },
+    // Section
+    section: {
+      marginBottom: 24,
+    },
+    sectionTitle: {
+      fontSize: 13,
+      fontWeight: "600",
+      textTransform: "uppercase",
+      letterSpacing: 0.5,
+      color: colors.muted,
+      marginBottom: 8,
+      marginLeft: 4,
+    },
+    sectionFooter: {
+      fontSize: 13,
+      lineHeight: 18,
+      color: colors.muted,
+      marginBottom: 8,
+      marginLeft: 4,
+    },
+    listContainer: {
+      overflow: "hidden",
+    },
+    // Footer
+    footer: {
+      paddingVertical: 20,
+      alignItems: "center",
+    },
+    footerText: {
+      fontSize: 13,
+      color: colors.muted,
+    },
+  });

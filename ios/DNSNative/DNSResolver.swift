@@ -148,34 +148,53 @@ final class DNSResolver: NSObject {
             })
         }
         
-        // Receive response with atomic protection and proper cleanup
+        // PERFORMANCE FIX: Create timeout task OUTSIDE continuation for proper lifecycle
+        // This ensures timeout task is cancelled immediately when query completes
         let receiveFlag = AtomicFlag()
-        let responseData: Data = try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Data, Error>) in
-            let timeoutTask = Task {
+        let timeoutTask = Task {
+            do {
                 let nanoseconds = UInt64(max(0, Self.queryTimeout) * 1_000_000_000)
                 try await Task.sleep(nanoseconds: nanoseconds)
+                // If we reach here without cancellation, trigger timeout
                 if receiveFlag.testAndSet() {
                     connection.cancel()
-                    cont.resume(throwing: DNSError.timeout)
                 }
-            }
-            
-            connection.receiveMessage { data, _, _, error in
-                guard receiveFlag.testAndSet() else { return }
-                timeoutTask.cancel()
-                connection.cancel()
-                
-                if let error = error {
-                    cont.resume(throwing: DNSError.queryFailed(error.localizedDescription))
-                    return
-                }
-                guard let data = data, data.count >= 12 else {
-                    cont.resume(throwing: DNSError.noRecordsFound)
-                    return
-                }
-                cont.resume(returning: data)
+            } catch {
+                // Task was cancelled (expected in success case)
+                return
             }
         }
+
+        // Receive response with atomic protection
+        let responseData: Data
+        do {
+            responseData = try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Data, Error>) in
+                connection.receiveMessage { data, _, _, error in
+                    guard receiveFlag.testAndSet() else { return }
+
+                    // Immediately cancel timeout task to free resources
+                    timeoutTask.cancel()
+                    connection.cancel()
+
+                    if let error = error {
+                        cont.resume(throwing: DNSError.queryFailed(error.localizedDescription))
+                        return
+                    }
+                    guard let data = data, data.count >= 12 else {
+                        cont.resume(throwing: DNSError.noRecordsFound)
+                        return
+                    }
+                    cont.resume(returning: data)
+                }
+            }
+        } catch {
+            // Ensure timeout task is cancelled even if continuation throws
+            timeoutTask.cancel()
+            throw error
+        }
+
+        // Final cleanup
+        timeoutTask.cancel()
         
         let txt = try parseDnsTxtResponse(responseData)
         if txt.isEmpty { throw DNSError.noRecordsFound }
@@ -240,49 +259,106 @@ final class DNSResolver: NSObject {
         
         let anCount = Int(bytes[6]) << 8 | Int(bytes[7])
         var offset = 12
-        // Skip QNAME
+
+        // SECURITY FIX: Skip QNAME with bounds checking to prevent malicious DNS response crashes
         while offset < bytes.count {
             let len = Int(bytes[offset])
             offset += 1
             if len == 0 { break }
+
+            // Validate that len doesn't cause buffer overflow
+            guard offset + len <= bytes.count else {
+                throw DNSError.queryFailed("Malformed DNS response: QNAME label exceeds packet bounds (offset: \(offset), len: \(len), total: \(bytes.count))")
+            }
             offset += len
         }
-        // Skip QTYPE + QCLASS
+
+        // Validate QTYPE + QCLASS bounds
+        guard offset + 4 <= bytes.count else {
+            throw DNSError.queryFailed("Malformed DNS response: insufficient bytes for QTYPE/QCLASS")
+        }
         offset += 4
         
-        for _ in 0..<anCount {
-            if offset + 10 > bytes.count { break }
-            // NAME (pointer or labels)
+        for answerIndex in 0..<anCount {
+            // Validate minimum answer record size
+            guard offset + 10 <= bytes.count else {
+                // Insufficient bytes for answer record, stop parsing
+                break
+            }
+
+            // SECURITY FIX: Parse NAME with bounds checking (pointer or labels)
             if (bytes[offset] & 0xC0) == 0xC0 {
+                // DNS compression pointer (2 bytes)
+                guard offset + 2 <= bytes.count else {
+                    throw DNSError.queryFailed("Malformed DNS response: compression pointer exceeds bounds at answer \(answerIndex)")
+                }
                 offset += 2
             } else {
+                // DNS labels
                 while offset < bytes.count {
                     let len = Int(bytes[offset])
                     offset += 1
                     if len == 0 { break }
+
+                    // Validate label length doesn't exceed bounds
+                    guard offset + len <= bytes.count else {
+                        throw DNSError.queryFailed("Malformed DNS response: NAME label exceeds bounds at answer \(answerIndex) (offset: \(offset), len: \(len), total: \(bytes.count))")
+                    }
                     offset += len
                 }
             }
-            if offset + 10 > bytes.count { break }
+
+            // Re-validate after NAME parsing
+            guard offset + 10 <= bytes.count else {
+                break
+            }
             let type = Int(bytes[offset]) << 8 | Int(bytes[offset + 1])
             offset += 2 // TYPE
             offset += 2 // CLASS
             offset += 4 // TTL
+
+            // SECURITY FIX: Validate RDLENGTH bounds before using it
+            guard offset + 2 <= bytes.count else {
+                throw DNSError.queryFailed("Malformed DNS response: insufficient bytes for RDLENGTH")
+            }
             let rdLength = Int(bytes[offset]) << 8 | Int(bytes[offset + 1])
             offset += 2
-            if type == 16 && offset + rdLength <= bytes.count { // TXT
+
+            // Validate RDATA doesn't exceed packet bounds
+            guard offset + rdLength <= bytes.count else {
+                throw DNSError.queryFailed("Malformed DNS response: RDATA length \(rdLength) exceeds packet bounds (offset: \(offset), total: \(bytes.count))")
+            }
+
+            if type == 16 { // TXT
                 let end = offset + rdLength
                 var p = offset
+
+                // Parse TXT records with strict bounds validation
                 while p < end {
+                    // Ensure we can read the length byte
+                    guard p < bytes.count && p < end else { break }
+
                     let txtLen = Int(bytes[p])
                     p += 1
-                    if txtLen > 0 && p + txtLen <= end {
+
+                    // Validate TXT string length doesn't exceed bounds
+                    if txtLen > 0 {
+                        guard p + txtLen <= end && p + txtLen <= bytes.count else {
+                            // Malformed TXT record, skip remaining RDATA
+                            break
+                        }
                         let sub = bytes[p..<(p+txtLen)]
                         if let s = String(bytes: sub, encoding: .utf8) {
                             results.append(s)
                         }
                         p += txtLen
-                    } else { break }
+                    } else if txtLen == 0 {
+                        // Empty TXT string is valid, continue
+                        continue
+                    } else {
+                        // Negative length is invalid
+                        break
+                    }
                 }
             }
             offset += rdLength

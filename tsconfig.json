@@ -3,6 +3,10 @@
   "compilerOptions": {
     "moduleResolution": "bundler",
     "strict": true,
+    // TODO: Enable stricter checks incrementally after fixing type errors
+    // "noUncheckedIndexedAccess": true,
+    // "noUnusedLocals": true,
+    // "noUnusedParameters": true,
     "types": [
       "expo-router"
     ]

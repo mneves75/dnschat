@@ -1,38 +1,62 @@
-# DNSChat Project Structure Guide
+---
+alwaysApply: true
+---
+# DNSChat Project Structure
 
-## Entry Points
-- **Main Entry**: [index.tsx](mdc:index.tsx) → [src/App.tsx](mdc:src/App.tsx)
-- **Config**: [app.json](mdc:app.json) - Expo config with scheme `dnschat://`, new architecture enabled
-- **Package**: [package.json](mdc:package.json) - React Native + Expo dependencies
+## Entry Points & Navigation
+- App entry: [index.tsx](mdc:index.tsx) → [app/_layout.tsx](mdc:app/_layout.tsx)
+- Navigation: Expo Router v6 with native tabs in [app/(app)/_layout.tsx](mdc:app/(app)/_layout.tsx)
+- Tab screens: [app/(app)/(tabs)/](mdc:app/(app)/(tabs)/) (chat, logs, settings)
 
-## Core Architecture
-- **Navigation**: [src/navigation/index.tsx](mdc:src/navigation/index.tsx) - React Navigation v7 with static navigation
-- **State Management**: 
-  - [src/context/ChatContext.tsx](mdc:src/context/ChatContext.tsx) - Chat state and DNS operations
-  - [src/context/SettingsContext.tsx](mdc:src/context/SettingsContext.tsx) - App settings
-  - [src/context/OnboardingContext.tsx](mdc:src/context/OnboardingContext.tsx) - Onboarding flow
-- **Services**:
-  - [src/services/dnsService.ts](mdc:src/services/dnsService.ts) - DNS query orchestration
-  - [src/services/dnsLogService.ts](mdc:src/services/dnsLogService.ts) - Query logging
-  - [src/services/storageService.ts](mdc:src/services/storageService.ts) - AsyncStorage wrapper
-- **Types**: [src/types/chat.ts](mdc:src/types/chat.ts) - Core data models
+## Core Application Code (src/)
+- **Components**: [src/components/](mdc:src/components/) - Reusable UI components
+- **Screens**: [src/screens/](mdc:src/screens/) - Screen implementations
+- **Navigation**: [src/navigation/](mdc:src/navigation/) - Navigation setup and types
+- **Context**: [src/context/](mdc:src/context/) - React Context providers
+  - [src/context/ChatContext.tsx](mdc:src/context/ChatContext.tsx) - Chat state management
+  - [src/context/SettingsContext.tsx](mdc:src/context/SettingsContext.tsx) - DNS & app settings
+- **Services**: [src/services/](mdc:src/services/)
+  - [src/services/dnsService.ts](mdc:src/services/dnsService.ts) - DNS query logic, fallbacks, sanitization
+  - [src/services/storageService.ts](mdc:src/services/storageService.ts) - Encrypted storage with keychain
+  - [src/services/dnsLogService.ts](mdc:src/services/dnsLogService.ts) - DNS query logging
+- **State**: [src/store/chatStore.ts](mdc:src/store/chatStore.ts) - Zustand state management
+- **Types**: [src/types/](mdc:src/types/) - TypeScript type definitions
+- **Theme**: [src/theme/](mdc:src/theme/) - Theme and styling system
+- **i18n**: [src/i18n/](mdc:src/i18n/) - Internationalization
 
-## Native DNS Integration
-- **iOS Native**: [ios/DNSNative/DNSResolver.swift](mdc:ios/DNSNative/DNSResolver.swift), [ios/DNSNative/RNDNSModule.m](mdc:ios/DNSNative/RNDNSModule.m)
-- **Android Native**: [android/app/src/main/java/com/dnschat/NativeDnsModule.kt](mdc:android/app/src/main/java/com/dnschat/NativeDnsModule.kt)
-- **JS Bridge**: [modules/dns-native/index.ts](mdc:modules/dns-native/index.ts)
-- **Expo Plugin**: [plugins/dns-native-plugin.js](mdc:plugins/dns-native-plugin.js)
+## Native Modules
+- **DNS Native Module**: [modules/dns-native/](mdc:modules/dns-native/)
+  - TypeScript interface: [modules/dns-native/index.ts](mdc:modules/dns-native/index.ts)
+  - iOS: [ios/DNSNative/](mdc:ios/DNSNative/) (Swift + Network Framework)
+  - Android: [modules/dns-native/android/](mdc:modules/dns-native/android/) (Java + DnsResolver)
+  - Constants: [modules/dns-native/constants.ts](mdc:modules/dns-native/constants.ts)
+- **Liquid Glass**: [ios/LiquidGlassNative/](mdc:ios/LiquidGlassNative/) (iOS 26+ native glass effects)
 
-## Key Behaviors
-- **Deep Linking**: Scheme `dnschat://` configured in [app.json](mdc:app.json) and consumed in [src/App.tsx](mdc:src/App.tsx)
-- **DNS Flow**: Configurable priority - Native → UDP → TCP → DoH → Mock OR DoH → Native → UDP → TCP → Mock
-- **DNS Logging**: Real-time query logging with persistent storage
-- **New Architecture**: `newArchEnabled: true` in [app.json](mdc:app.json)
+## Platform-Specific
+- **iOS**: [ios/](mdc:ios/) - Xcode project, Podfile, native modules
+- **Android**: [android/](mdc:android/) - Gradle build, Java 17 required
+- **Plugins**: [plugins/](mdc:plugins/) - Expo config plugins
 
-## Conventions
-- Keep logic in `src/services/*`; UI in `src/components/*` and screens in `src/navigation/screens/*`
-- Persist via `StorageService`; do not read/write AsyncStorage directly in components
-- Extend navigation only via [src/navigation/index.tsx](mdc:src/navigation/index.tsx)
-- Keep logic in `src/services/*`; UI in `src/components/*` and screens in `src/navigation/screens/*`
-- Persist via `StorageService`; do not read/write AsyncStorage directly in components
-- Extend navigation only via [src/navigation/index.tsx](mdc:src/navigation/index.tsx)
+## Configuration
+- [package.json](mdc:package.json) - Dependencies and scripts
+- [app.json](mdc:app.json) - Expo app configuration
+- [eas.json](mdc:eas.json) - EAS Build configuration
+- [tsconfig.json](mdc:tsconfig.json) - TypeScript configuration (strict mode)
+- [babel.config.js](mdc:babel.config.js) - Babel configuration
+- [metro.config.js](mdc:metro.config.js) - Metro bundler configuration
+
+## Testing
+- [__tests__/](mdc:__tests__/) - Jest unit tests
+- [jest.config.js](mdc:jest.config.js) - Jest configuration
+- [test-dns-simple.js](mdc:test-dns-simple.js) - DNS connectivity smoke test
+
+## Scripts & Utilities
+- [scripts/sync-versions.js](mdc:scripts/sync-versions.js) - Version synchronization across platforms
+- [scripts/fix-cocoapods.sh](mdc:scripts/fix-cocoapods.sh) - CocoaPods troubleshooting
+- [scripts/doctor-ios.sh](mdc:scripts/doctor-ios.sh) - iOS environment diagnostics
+
+## Documentation
+- [README.md](mdc:README.md) - Main documentation
+- [docs/](mdc:docs/) - Detailed guides and architecture docs
+- [CONTRIBUTING.md](mdc:CONTRIBUTING.md) - Contribution guidelines
+- [CHANGELOG.md](mdc:CHANGELOG.md) - Version history

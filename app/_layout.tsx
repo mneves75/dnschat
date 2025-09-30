@@ -1,3 +1,5 @@
+import "../src/polyfills/webCrypto";
+
 import { Asset } from "expo-asset";
 import { Slot } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
@@ -14,6 +16,7 @@ import { SettingsProvider } from "../src/context/SettingsContext";
 import { LocalizationProvider } from "../src/i18n/LocalizationProvider";
 import { AppThemeProvider } from "../src/theme/AppThemeContext";
 import { DNSLogService } from "../src/services/dnsLogService";
+import { setupWebWorkerErrorHandling } from "../src/utils/webWorkerErrorHandler";
 
 Asset.loadAsync([require("../src/assets/newspaper.png")]);
 
@@ -24,6 +27,9 @@ function RootContent() {
   const { isSupported: glassSupported } = useLiquidGlassCapabilities();
 
   React.useEffect(() => {
+    // Initialize web worker error handling for web platform
+    setupWebWorkerErrorHandling();
+
     if (!loading) {
       SplashScreen.hideAsync().catch(() => {
         // Keep splash screen hidden fallback even if the async call fails

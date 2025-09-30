@@ -23,6 +23,7 @@ describe('SettingsContext migrateSettings', () => {
       enableMockDNS: true,
       allowExperimentalTransports: false,
       preferredLocale: null,
+      accessibility: DEFAULT_SETTINGS.accessibility,
     });
   });
 
@@ -47,6 +48,7 @@ describe('SettingsContext migrateSettings', () => {
       enableMockDNS: true,
       allowExperimentalTransports: true,
       preferredLocale: 'xx-YY',
+      accessibility: DEFAULT_SETTINGS.accessibility,
     });
   });
 

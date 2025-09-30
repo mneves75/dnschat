@@ -10,20 +10,26 @@ A React Native mobile app that revolutionizes LLM interaction by using DNS TXT q
 
 ## ✨ Key Features
 
-- **🔒 Production-Hardened Security**: DNS injection protection, input validation, and server whitelisting (v2.0.1)
-- **🌟 iOS 26+ Liquid Glass**: Native UIGlassEffect with environmental adaptation and comprehensive fallbacks
+- **🔒 Production-Grade Security (v2.1.0)**:
+  - Real iOS Keychain & Android Keystore for encryption keys (no more AsyncStorage!)
+  - AES-256-GCM encryption for all conversation data
+  - Encrypted backups (zero plaintext exposure)
+  - Fail-fast crypto validation
+  - DNS parser with bounds-checked array access (prevents malicious response crashes)
+  - DNS injection protection, input validation, and server whitelisting
+- **🌟 iOS 26+ Liquid Glass**: Native `expo-glass-effect` with automatic capability detection and graceful fallbacks
 - **🌐 DNS-Based AI Chat**: Revolutionary LLM communication via DNS TXT queries
 - **📱 Cross-Platform**: Native iOS, Android, and Web support with platform-specific optimizations
-- **⚡ Expo Router Native Tabs**: Expo Router v6 `<Tabs>` with Liquid Glass tab bar (native on iOS 26+, styled fallback on iOS 16-25)
-- **🚀 Native DNS Implementation**: Platform-optimized iOS Network Framework and Android DnsResolver
-- **🔄 Multi-Layer Fallback**: UDP → TCP → DNS-over-HTTPS → Mock service
-- **💾 Local Storage**: Persistent conversation history with AsyncStorage
-- **🎨 Modern Glass UI**: iOS 26 Liquid Glass design system with sensor-aware adaptation
+- **⚡ Expo Router Native Tabs**: Expo Router v6 `<Tabs>` with native glass effects (iOS 26+) and styled fallbacks
+- **🚀 Native DNS Implementation**: Platform-optimized iOS Network Framework and Android DnsResolver with robust error handling
+- **🔄 Multi-Layer Fallback**: Native DNS → UDP → TCP → DNS-over-HTTPS → Mock service
+- **💾 Encrypted Storage**: End-to-end encrypted conversation history with automatic legacy migration
+- **🎨 Modern Glass UI**: Expo SDK 54 glass system with accessibility support and reduced transparency
 - **⚙️ Advanced DNS Config**: Multiple DNS service options (ch.at, llm.pieter.com)
 - **📝 Strict DNS Contract**: Client sanitizes queries to dashed lowercase labels (≤63 chars) matching the production `dns.go` resolver
 - **📊 Real-Time Logging**: Comprehensive DNS query monitoring and debugging
 - **🔗 Deep Linking**: Direct message sending via custom URL schemes
-- **✅ Enterprise-Grade Stability**: Thread-safe operations, proper resource management, no memory leaks
+- **✅ Enterprise-Grade Stability**: Thread-safe operations, proper resource management, atomic flags preventing race conditions
 
 ## 🛠 Tech Stack
 
@@ -35,11 +41,11 @@ A React Native mobile app that revolutionizes LLM interaction by using DNS TXT q
 
 ### **Navigation & UI**
 
-- **Expo Router v6** with Native Tabs surface
-- **iOS 26+ Liquid Glass**: Native `.glassEffect()` modifier with comprehensive fallback system
+- **Expo Router v6** with Native Tabs surface and native glass effects
+- **iOS 26+ Liquid Glass**: Native `expo-glass-effect` with automatic capability detection
 - **React Native Safe Area Context** with gesture handler support
 - **Advanced Theme Support** (automatic light/dark switching with iOS system colors)
-- **Glass Everywhere on iOS**: Headers and tab bars use `LiquidGlassWrapper` on every supported iOS version, with native glass activating automatically on iOS 26+
+- **Glass System**: Modern glass effects with accessibility support and reduced transparency compliance
 
 ### **DNS Implementation**
 
@@ -47,10 +53,14 @@ A React Native mobile app that revolutionizes LLM interaction by using DNS TXT q
 - **Android**: Java + DnsResolver API + dnsjava fallback
 - **Fallback**: DNS-over-HTTPS (Cloudflare)
 
-### **Storage & State**
+### **Security & Storage**
 
-- **AsyncStorage** for local persistence
+- **iOS Keychain / Android Keystore** for encryption key storage (via `react-native-keychain`)
+- **AES-256-GCM** encryption for all conversation data
+- **PBKDF2** key derivation (100,000 iterations)
+- **AsyncStorage** for encrypted data persistence
 - **React Context** for global state management
+- **Automatic migration** from legacy storage formats
 
 ## 🚀 Quick Start
 

@@ -34,15 +34,14 @@ export default function AppTabsLayout() {
   const { colors, isDark } = useAppTheme();
   const { t } = useLocalization();
   const { supportsSwiftUIGlass, isSupported } = useLiquidGlassCapabilities();
-  const glassEnabled = Platform.OS === 'ios';
-  const nativeGlassEnabled = glassEnabled && Boolean(isSupported) && Boolean(supportsSwiftUIGlass);
+  const glassEnabled = Platform.OS === 'ios' && Boolean(isSupported);
 
   const tabBarStyle = useMemo(
     () => ({
       backgroundColor: glassEnabled ? 'transparent' : colors.surface,
       borderTopWidth: glassEnabled ? 0 : StyleSheet.hairlineWidth,
       elevation: glassEnabled ? 0 : 2,
-      position: glassEnabled ? 'absolute' : 'relative',
+      position: glassEnabled ? 'absolute' as const : 'relative' as const,
     }),
     [glassEnabled, colors.surface],
   );
@@ -64,9 +63,12 @@ export default function AppTabsLayout() {
             <LiquidGlassWrapper
               variant="prominent"
               shape="rect"
-              enableContainer={nativeGlassEnabled}
-              sensorAware
-              style={{ flex: 1 }}
+              enableContainer={true}
+              sensorAware={supportsSwiftUIGlass}
+              style={{
+                flex: 1,
+                backgroundColor: isDark ? 'rgba(28, 28, 30, 0.80)' : 'rgba(242, 242, 247, 0.80)',
+              }}
             />
           ) : (
             <View style={{ flex: 1, backgroundColor: colors.card }} />
@@ -74,11 +76,14 @@ export default function AppTabsLayout() {
         tabBarBackground: () =>
           glassEnabled ? (
             <LiquidGlassWrapper
-              variant="regular"
+              variant="prominent"
               shape="rect"
-              enableContainer={nativeGlassEnabled}
-              sensorAware
-              style={{ flex: 1 }}
+              enableContainer={true}
+              sensorAware={supportsSwiftUIGlass}
+              style={{
+                flex: 1,
+                backgroundColor: isDark ? 'rgba(25, 25, 25, 0.85)' : 'rgba(255, 255, 255, 0.85)',
+              }}
             />
           ) : (
             <View style={{ flex: 1, backgroundColor: colors.surface }} />

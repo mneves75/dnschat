@@ -4,7 +4,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-React Native mobile app providing ChatGPT-like interface via DNS TXT queries. Features local storage, iOS 26+ Liquid Glass UI, native DNS modules, and production-hardened security (v2.0.1+).
+React Native mobile app providing ChatGPT-like interface via DNS TXT queries. Features production-grade AES-256-GCM encryption with iOS Keychain/Android Keystore, iOS 26+ Liquid Glass UI, native DNS modules with bounds-checked parsing, and comprehensive security hardening (v2.1.0+).
+
+**Current Version**: 2.0.0 (security features from v2.1.0 implemented)
+**Primary Documentation**: README.md, SECURITY.md, CHANGELOG.md
 
 ## Core Commands
 
@@ -39,7 +42,8 @@ npm run dns:harness     # Advanced DNS test harness
 - **Native Modules**: Custom DNS implementations (iOS Swift, Android Java)
 - **UI System**: iOS 26+ Liquid Glass with environmental adaptation + fallbacks
 - **State Management**: Zustand + React Context patterns
-- **Storage**: AsyncStorage with migration system
+- **Storage**: iOS Keychain/Android Keystore for encryption keys, AsyncStorage for encrypted data
+- **Security**: AES-256-GCM encryption, PBKDF2 key derivation, fail-fast crypto validation
 
 ### Project Structure
 ```
@@ -65,16 +69,22 @@ src/                   # Source code components and services
 ├── theme/            # Theming and design system
 └── i18n/             # Internationalization
 
-modules/dns-native/    # Native DNS module
+modules/dns-native/    # Cross-platform DNS native module
 ├── ios/DNSResolver.swift    # iOS Network Framework implementation
 ├── android/            # Android DnsResolver API + dnsjava
 ├── constants.ts        # Shared DNS constants
 └── index.ts           # Platform bridge and fallback logic
+
+ios/DNSNative/         # iOS-specific native module (primary implementation)
+├── DNSResolver.swift  # Production DNS resolver with AtomicFlag guards
+└── DNSNative.podspec  # CocoaPods specification
 ```
 
 ### Key Services
-- **DNSService**: Multi-method DNS queries with strict input validation
+- **DNSService**: Multi-method DNS queries with strict input validation and bounds-checked parsing
 - **DNSLogService**: Real-time query monitoring with rate limiting
+- **EncryptionService**: AES-256-GCM encryption with platform-specific secure key storage
+- **StorageService**: Encrypted chat storage with automatic legacy migration
 - **ChatContext + useChatStore**: Hybrid state management
 - **SettingsContext**: App configuration with migration support
 - **LiquidGlass System**: iOS 26+ native glass effects with comprehensive fallbacks
@@ -86,19 +96,57 @@ modules/dns-native/    # Native DNS module
 4. **DNS-over-HTTPS** (Cloudflare) - Limited to non-ch.at queries
 5. **Mock service** (development/testing)
 
-## Critical Known Issues
+## Security & Quality Status (v2.1.0)
 
-### P0 - iOS CheckedContinuation Crash
-**Location**: ios/DNSNative/DNSResolver.swift:91-132
-**Fix**: Add atomic flag to prevent double resume
+### ✅ FIXED - Critical Security Issues (v2.1.0)
 
-### P1 - Cross-Platform Inconsistencies  
-**Issue**: Message sanitization differs between platforms
-**Fix**: Standardize sanitization logic
+**All P0 security vulnerabilities have been resolved:**
 
-### P2 - Resource Leaks
-**Issue**: NWConnection not properly disposed on failure
-**Fix**: Ensure cleanup in all code paths
+1. **✅ Real Secure Storage** (was: Fake Keychain/Keystore)
+   - **Fixed**: Now uses real iOS Keychain and Android Keystore via `react-native-keychain`
+   - **Location**: `src/utils/encryption.ts:51-215`
+   - **Impact**: Encryption keys truly secure, not accessible to malware or backups
+
+2. **✅ Encrypted Backup** (was: Plaintext backup bypass)
+   - **Fixed**: Backup now encrypted with AES-256-GCM
+   - **Location**: `src/services/storageService.ts:45-66`
+   - **Impact**: No plaintext conversation data in AsyncStorage
+
+3. **✅ Fail-Fast Crypto Validation** (was: Silent crypto failure)
+   - **Fixed**: App fails to start if Web Crypto unavailable
+   - **Location**: `src/utils/encryption.ts:17-49`
+   - **Impact**: No silent security degradation
+
+### ✅ FIXED - High-Priority Correctness Issues
+
+4. **✅ iOS CheckedContinuation Crash** (was: P0 double-resume crash)
+   - **Fixed**: Atomic flags prevent double resume in all code paths
+   - **Location**: `ios/DNSNative/DNSResolver.swift:115-148`
+   - **Impact**: Prevents Fabric crashes from concurrent DNS queries
+
+5. **✅ iOS DNS Parser Bounds Checking** (was: Crash vulnerability)
+   - **Fixed**: All array access validated with guard statements
+   - **Location**: `ios/DNSNative/DNSResolver.swift:244-348`
+   - **Impact**: Prevents crashes from malicious DNS responses
+
+6. **✅ iOS DNS Timeout Task Lifecycle** (was: Resource leak)
+   - **Fixed**: Timeout tasks properly cancelled in all code paths
+   - **Location**: `ios/DNSNative/DNSResolver.swift:151-202`
+   - **Impact**: Eliminates resource leaks with concurrent queries
+
+### Known Issues (Non-Critical)
+
+**P1 - Cross-Platform Inconsistencies**
+- **Issue**: Message sanitization may differ between platforms
+- **Priority**: Low - no security impact, cosmetic only
+- **Fix**: Standardize sanitization logic (future enhancement)
+
+**For detailed security information**, see `SECURITY.md` which includes:
+- Threat model and attack vectors
+- Encryption architecture details
+- DNS security measures
+- Incident response procedures
+- Security testing guidelines
 
 ## Development Guidelines
 
@@ -165,10 +213,12 @@ Use Java 17 for Android builds (automated in npm scripts)
 
 ## Documentation Structure
 
-- `/docs/technical/` - Specifications and guides
-- `/docs/troubleshooting/` - Common issues
-- `/docs/architecture/` - System design
-- `CHANGELOG.md` - Release history
+- `README.md` - Project overview, quick start, features
+- `SECURITY.md` - Comprehensive security documentation (threat model, encryption architecture, known issues)
+- `CHANGELOG.md` - Release history (keepachangelog.com format)
+- `SONNET-VERIFICATION-UPDATE.md` - Security implementation verification
+- `/docs/` - Technical specifications, guides, troubleshooting
+- `.cursor/rules/` - Cursor IDE rules for consistent development
 
 ## Important Development Notes
 

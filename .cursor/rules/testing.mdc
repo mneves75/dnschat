@@ -1,0 +1,170 @@
+---
+globs: "*.spec.ts,*.test.ts,*.spec.tsx,*.test.tsx,__tests__/**/*"
+---
+# Testing Guidelines
+
+## Test Configuration
+- **Framework**: Jest with TypeScript support
+- **Config**: [jest.config.js](mdc:jest.config.js)
+- **Setup**: [__tests__/setup.jest.js](mdc:__tests__/setup.jest.js)
+- **Mocks**: [__tests__/mocks/](mdc:__tests__/mocks/) for native modules and RN APIs
+
+## Test Organization
+- **Unit Tests**: [__tests__/](mdc:__tests__/) at project root
+- **Test Files**: `*.spec.ts` or `*.test.ts` pattern
+- **Test Structure**: Describe blocks for logical grouping
+
+## Running Tests
+
+### All Tests
+```bash
+npm test
+```
+
+### Specific Test Files
+```bash
+npm test -- dnsService.spec.ts
+```
+
+### Watch Mode
+```bash
+npm test -- --watch
+```
+
+### DNS Smoke Test
+```bash
+node test-dns-simple.js "Hello"
+```
+
+## DNS Service Testing
+
+### Key Test Files
+- [__tests__/dnsService.spec.ts](mdc:__tests__/dnsService.spec.ts) - Core DNS logic
+- [__tests__/dnsService.parse.spec.ts](mdc:__tests__/dnsService.parse.spec.ts) - Response parsing
+- [__tests__/dnsService.pipeline.spec.ts](mdc:__tests__/dnsService.pipeline.spec.ts) - Pipeline processing
+- [__tests__/dnsService.rateLimit.spec.ts](mdc:__tests__/dnsService.rateLimit.spec.ts) - Rate limiting
+- [__tests__/dnsConstants.spec.ts](mdc:__tests__/dnsConstants.spec.ts) - Constants and sanitization
+
+### DNS Test Patterns
+```typescript
+describe('DNS Service', () => {
+  it('should sanitize message correctly', () => {
+    const result = sanitizeDNSMessageReference('Hello World!');
+    expect(result).toBe('hello-world');
+  });
+
+  it('should handle DNS query timeout', async () => {
+    await expect(
+      dnsService.query('test', { timeout: 1 })
+    ).rejects.toThrow('timeout');
+  });
+});
+```
+
+## Storage & Encryption Testing
+
+### Test Files
+- [__tests__/storageService.migration.spec.ts](mdc:__tests__/storageService.migration.spec.ts) - Storage migration
+- [__tests__/encryptionService.crypto.spec.ts](mdc:__tests__/encryptionService.crypto.spec.ts) - Encryption logic
+- [__tests__/settings.migration.spec.ts](mdc:__tests__/settings.migration.spec.ts) - Settings migration
+
+### Encryption Test Pattern
+```typescript
+describe('Encryption Service', () => {
+  it('should encrypt and decrypt data', async () => {
+    const plaintext = 'sensitive data';
+    const encrypted = await encryptionService.encrypt(plaintext);
+    const decrypted = await encryptionService.decrypt(encrypted);
+    expect(decrypted).toBe(plaintext);
+  });
+});
+```
+
+## Component Testing
+
+### Store Tests
+- [__tests__/store/chatStore.spec.ts](mdc:__tests__/store/chatStore.spec.ts) - Zustand store testing
+
+### Test Pattern
+```typescript
+import { renderHook, act } from '@testing-library/react-hooks';
+import { useChatStore } from '@/store/chatStore';
+
+describe('Chat Store', () => {
+  it('should add message', () => {
+    const { result } = renderHook(() => useChatStore());
+    
+    act(() => {
+      result.current.addMessage({ text: 'Hello', role: 'user' });
+    });
+    
+    expect(result.current.messages).toHaveLength(1);
+  });
+});
+```
+
+## Mocking Native Modules
+
+### DNS Native Mock
+```typescript
+// __tests__/mocks/modules-dns-native.js
+export const nativeDNS = {
+  queryTXT: jest.fn(),
+  cancelAll: jest.fn(),
+};
+```
+
+### React Native Mocks
+- [__tests__/mocks/react-native.js](mdc:__tests__/mocks/react-native.js)
+- [__tests__/mocks/react-native-device-info.js](mdc:__tests__/mocks/react-native-device-info.js)
+- [__tests__/mocks/react-native-udp.js](mdc:__tests__/mocks/react-native-udp.js)
+- [__tests__/mocks/react-native-tcp-socket.js](mdc:__tests__/mocks/react-native-tcp-socket.js)
+
+## Native Module Tests
+
+### Location
+```bash
+cd modules/dns-native
+```
+
+### Run Tests
+```bash
+# Unit tests
+npm test
+
+# Integration tests (requires device/simulator)
+npm run test:integration
+```
+
+## Test Coverage
+
+### Coverage Goals
+- Unit Tests: Core logic should be well-covered
+- Integration Tests: Native modules require device testing
+- Smoke Tests: Use [test-dns-simple.js](mdc:test-dns-simple.js) for quick validation
+
+### What to Test
+- DNS query sanitization and validation
+- Response parsing and error handling
+- Encryption/decryption correctness
+- Storage migration logic
+- Rate limiting behavior
+- Fallback mechanisms
+
+### What NOT to Test
+- Third-party library internals
+- React Native framework code
+- Native platform APIs (mock them instead)
+
+## Continuous Integration
+
+### Pre-Commit
+```bash
+npm run typecheck
+npm test
+```
+
+### CI Pipeline
+- Type checking: `npm run typecheck:app && npm run typecheck:test`
+- Unit tests: `npm test`
+- Integration tests: Device/simulator required

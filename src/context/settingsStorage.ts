@@ -82,6 +82,14 @@ export function migrateSettings(raw: unknown): PersistedSettings {
 
   const candidate = raw as Partial<PersistedSettings> & LegacySettingsV1;
 
+  const accessibilitySource = candidate.accessibility ?? DEFAULT_SETTINGS.accessibility;
+  const resolvedAccessibility: AccessibilityConfig = {
+    fontSize: accessibilitySource?.fontSize ?? 'medium',
+    highContrast: Boolean(accessibilitySource?.highContrast),
+    reduceMotion: Boolean(accessibilitySource?.reduceMotion),
+    screenReader: Boolean(accessibilitySource?.screenReader),
+  };
+
   if (typeof candidate.version === "number") {
     return {
       version: SETTINGS_VERSION,
@@ -98,12 +106,7 @@ export function migrateSettings(raw: unknown): PersistedSettings {
         candidate.preferredLocale === undefined
           ? null
           : candidate.preferredLocale,
-      accessibility: {
-        fontSize: 'medium',
-        highContrast: false,
-        reduceMotion: false,
-        screenReader: false,
-      },
+      accessibility: resolvedAccessibility,
     };
   }
 
@@ -118,6 +121,7 @@ export function migrateSettings(raw: unknown): PersistedSettings {
     enableMockDNS: Boolean(legacy.enableMockDNS),
     allowExperimentalTransports: false,
     preferredLocale: null,
+    accessibility: { ...DEFAULT_SETTINGS.accessibility },
   };
 }
 

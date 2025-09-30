@@ -209,7 +209,7 @@ export class NativeDNS implements NativeDNSModule {
       }
 
       const match = rawValue.match(/^\s*(\d+)\/(\d+):(.*)$/);
-      if (match) {
+      if (match && match[1] && match[2] && match[3] !== undefined) {
         parts.push({
           partNumber: parseInt(match[1], 10),
           totalParts: parseInt(match[2], 10),

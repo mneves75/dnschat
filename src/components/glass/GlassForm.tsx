@@ -19,6 +19,7 @@ import {
   Platform,
   ViewStyle,
   TextStyle,
+  StyleProp,
 } from "react-native";
 import { LiquidGlassWrapper, useLiquidGlassCapabilities } from "../LiquidGlassWrapper";
 import { useAppTheme } from "../../theme";
@@ -33,7 +34,7 @@ interface GlassFormProps {
   /** Children form sections */
   children: React.ReactNode;
   /** Custom container style */
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
 }
 
 interface GlassFormSectionProps {
@@ -44,7 +45,7 @@ interface GlassFormSectionProps {
   /** Children form items */
   children: React.ReactNode;
   /** Custom section style */
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
 }
 
 interface GlassFormItemProps {
@@ -57,7 +58,7 @@ interface GlassFormItemProps {
   /** Press handler */
   onPress?: () => void;
   /** Custom item style */
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
   /** Show chevron indicator */
   showChevron?: boolean;
   /** Disable haptic feedback */
@@ -360,16 +361,16 @@ const styles = StyleSheet.create({
   },
   titleContainer: {
     paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 10,
+    paddingTop: 16,
+    paddingBottom: 8,
   },
   navigationTitle: {
-    fontSize: 34,
+    fontSize: 28,
     fontWeight: "bold",
-    letterSpacing: 0.37,
+    letterSpacing: 0.36,
   },
   sectionContainer: {
-    marginBottom: 35,
+    marginBottom: 28,
   },
   sectionHeaderContainer: {
     paddingHorizontal: 20,

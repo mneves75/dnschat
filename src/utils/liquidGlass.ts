@@ -217,7 +217,7 @@ class LiquidGlassDetector {
       const device = this._analyzeDevice(deviceFamily, apiLevel);
 
       const capabilities: LiquidGlassCapabilities = {
-        isSupported: apiLevel >= 260, // iOS 26.0+
+        isSupported: apiLevel >= 130, // iOS 13+ provides native blur via UIBlurEffect
         apiLevel,
         platform: "ios",
         features,
@@ -244,7 +244,7 @@ class LiquidGlassDetector {
       const performance = this._analyzePerformance(apiLevel, deviceFamily);
       const device = this._analyzeDevice(deviceFamily, apiLevel);
       return {
-        isSupported: apiLevel >= 260,
+        isSupported: apiLevel >= 130,
         apiLevel,
         platform: "ios",
         features,
@@ -306,6 +306,8 @@ class LiquidGlassDetector {
     apiLevel: number,
     deviceFamily: LiquidGlassCapabilities["device"]["family"],
   ): LiquidGlassCapabilities["features"] {
+    const hasNativeBlur = apiLevel >= 130;
+
     // iOS 26+ gets full Liquid Glass support
     if (apiLevel >= 260) {
       return {
@@ -318,10 +320,10 @@ class LiquidGlassDetector {
       };
     }
 
-    // iOS 17+ gets enhanced blur support
-    if (apiLevel >= 170) {
+    // iOS 17-25 get high-quality blur with limited dynamic features
+    if (apiLevel >= 170 && hasNativeBlur) {
       return {
-        basicGlass: false, // No UIGlassEffect
+        basicGlass: true,
         sensorAware: false,
         depthContainers: false,
         environmentalCues: false,
@@ -330,10 +332,10 @@ class LiquidGlassDetector {
       };
     }
 
-    // iOS 16+ gets basic blur fallback
-    if (apiLevel >= 160) {
+    // iOS 13-16 retain native blur but no advanced affordances
+    if (hasNativeBlur) {
       return {
-        basicGlass: false,
+        basicGlass: true,
         sensorAware: false,
         depthContainers: false,
         environmentalCues: false,
@@ -385,8 +387,8 @@ class LiquidGlassDetector {
       };
     }
 
-    // Low performance for iOS 16
-    if (apiLevel >= 160) {
+    // Low performance for iOS 13-16
+    if (apiLevel >= 130) {
       return {
         tier: "low",
         maxGlassElements: 5,

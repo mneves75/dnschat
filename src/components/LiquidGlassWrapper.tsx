@@ -67,29 +67,34 @@ export interface LiquidGlassProps extends ViewProps {
  * This provides the GUARANTEE requested for iOS/iPadOS 26+ support
  * Memoized for performance optimization
  */
-const isIOS26Plus = (() => {
-  if (Platform.OS !== "ios") return false;
+const getIOSMajorVersion = (): number | null => {
+  if (Platform.OS !== "ios") return null;
 
   const version = Platform.Version;
   if (typeof version === "string") {
-    const majorVersion = parseInt(version.split(".")[0], 10);
-    return majorVersion >= 26;
-  } else if (typeof version === "number") {
-    return version >= 26;
+    const parsed = parseInt(version.split(".")[0], 10);
+    return Number.isNaN(parsed) ? null : parsed;
   }
+  if (typeof version === "number") {
+    return Math.floor(version);
+  }
+  return null;
+};
 
-  return false;
+const isIOSGlassCapable = (() => {
+  const major = getIOSMajorVersion();
+  return typeof major === "number" && major >= 13;
 })();
 
 /**
- * Gets native iOS 26+ capabilities from the native module
+ * Gets native glass capabilities from the native module
  */
 async function getNativeCapabilities(): Promise<{
   available: boolean;
   supportsLiquidGlass: boolean;
 }> {
   try {
-    if (!isIOS26Plus) {
+    if (!isIOSGlassCapable) {
       return { available: false, supportsLiquidGlass: false };
     }
 
@@ -101,10 +106,10 @@ async function getNativeCapabilities(): Promise<{
     const capabilities = await LiquidGlassNativeModule.getCapabilities();
     return {
       available: true,
-      supportsLiquidGlass: capabilities?.supportsLiquidGlass ?? false,
+      supportsLiquidGlass: Boolean(capabilities?.supportsLiquidGlass ?? capabilities?.isSupported),
     };
   } catch (error) {
-    console.warn("🚨 Failed to get native iOS 26+ capabilities:", error);
+    console.warn("🚨 Failed to get native glass capabilities:", error);
     return { available: false, supportsLiquidGlass: false };
   }
 }
@@ -113,7 +118,7 @@ async function getNativeCapabilities(): Promise<{
 // NATIVE COMPONENT
 // ==================================================================================
 
-// Native view component registration for iOS 26+ Liquid Glass
+// Native view component registration for iOS Liquid Glass
 const NativeLiquidGlassView =
   Platform.OS === "ios"
     ? requireNativeComponent<LiquidGlassProps>("LiquidGlassView")
@@ -139,8 +144,6 @@ export const LiquidGlassWrapper: React.FC<LiquidGlassProps> = ({
   style,
   ...props
 }) => {
-  const glassViewRef = React.useRef<any>(null);
-
   // IMPORTANT: Always call useColorScheme at the top level to avoid hooks ordering issues
   const colorScheme = useColorScheme();
 
@@ -150,7 +153,7 @@ export const LiquidGlassWrapper: React.FC<LiquidGlassProps> = ({
   }
 
   // iOS 26+: Use native Liquid Glass view when available
-  if (isIOS26Plus && NativeLiquidGlassView) {
+  if (isIOSGlassCapable && NativeLiquidGlassView) {
     return (
       <NativeLiquidGlassView
         variant={variant}
@@ -159,7 +162,7 @@ export const LiquidGlassWrapper: React.FC<LiquidGlassProps> = ({
         tintColor={tintColor}
         isInteractive={isInteractive}
         sensorAware={sensorAware}
-        enableContainer={true}
+        enableContainer={enableContainer}
         containerSpacing={containerSpacing}
         style={style}
         {...props}
@@ -260,14 +263,14 @@ export const LiquidGlassWrapper: React.FC<LiquidGlassProps> = ({
 let hasLoggedCapabilities = false;
 
 export const useLiquidGlassCapabilities = () => {
-  const { capabilities, isLoading } = useFallbackLiquidGlassCapabilities();
+  const { capabilities, loading } = useFallbackLiquidGlassCapabilities();
 
   React.useEffect(() => {
-    if (!isLoading && capabilities && !hasLoggedCapabilities) {
+    if (!loading && capabilities && !hasLoggedCapabilities) {
       console.log("💎 Liquid Glass capabilities", capabilities);
       hasLoggedCapabilities = true;
     }
-  }, [isLoading, capabilities]);
+  }, [loading, capabilities]);
 
   const isSupported = Boolean(capabilities?.isSupported);
   const supportsSwiftUIGlass = Boolean(
@@ -279,7 +282,7 @@ export const useLiquidGlassCapabilities = () => {
 
   return {
     capabilities,
-    loading: isLoading,
+    loading,
     isSupported,
     supportsSwiftUIGlass,
     iosVersion,
@@ -333,5 +336,3 @@ export const LiquidGlassNavBar: React.FC<LiquidGlassProps> = (props) => (
 // ==================================================================================
 
 export default LiquidGlassWrapper;
-
-export type { LiquidGlassProps };

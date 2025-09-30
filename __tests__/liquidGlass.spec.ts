@@ -31,7 +31,7 @@ describe("Liquid Glass Capabilities (iOS)", () => {
     expect(caps.performance.tier).toBe("high");
   });
 
-  it("reports not supported on iOS 16.x with fallback features", async () => {
+  it("reports baseline support on iOS 16.x with fallback features", async () => {
     jest.resetModules();
     jest.doMock("react-native-device-info", () => ({
       __esModule: true,
@@ -42,9 +42,9 @@ describe("Liquid Glass Capabilities (iOS)", () => {
     }));
     const utils = await import("../src/utils/liquidGlass");
     const caps = await utils.getLiquidGlassCapabilities();
-    expect(caps.isSupported).toBe(false);
+    expect(caps.isSupported).toBe(true);
     expect(caps.apiLevel).toBe(164);
-    expect(caps.features.basicGlass).toBe(false);
+    expect(caps.features.basicGlass).toBe(true);
     expect(caps.performance.tier).toBe("low");
   });
 
@@ -102,7 +102,7 @@ describe("Liquid Glass Capabilities (iOS)", () => {
     utils = await import("../src/utils/liquidGlass");
     style = await utils.getOptimalGlassStyle();
     intensity = await utils.getRecommendedIntensity();
-    expect(style).toBe("systemMaterial");
+    expect(style).toBe("systemUltraThinMaterial");
     expect(intensity).toBe("ultraThin");
   });
 
@@ -142,6 +142,17 @@ describe("Liquid Glass Capabilities (iOS)", () => {
       default: {
         getSystemVersion: jest.fn(async () => "16.0"),
         getModel: jest.fn(async () => "iPhone14,5"),
+      },
+    }));
+    utils = await import("../src/utils/liquidGlass");
+    expect(await utils.isLiquidGlassSupported()).toBe(true);
+
+    jest.resetModules();
+    jest.doMock("react-native-device-info", () => ({
+      __esModule: true,
+      default: {
+        getSystemVersion: jest.fn(async () => "12.4"),
+        getModel: jest.fn(async () => "iPhone10,6"),
       },
     }));
     utils = await import("../src/utils/liquidGlass");

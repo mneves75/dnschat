@@ -6,29 +6,32 @@ class LiquidGlassNativeModule: NSObject {
   @objc static func requiresMainQueueSetup() -> Bool { false }
 
   @objc func getCapabilities(_ resolve: RCTPromiseResolveBlock, rejecter reject: RCTPromiseRejectBlock) {
-    let is26: Bool
-    if #available(iOS 26.0, *) { is26 = true } else { is26 = false }
+    let hasNativeBlur: Bool
+    if #available(iOS 13.0, *) { hasNativeBlur = true } else { hasNativeBlur = false }
+    let supportsSwiftUIGlass: Bool
+    if #available(iOS 26.0, *) { supportsSwiftUIGlass = true } else { supportsSwiftUIGlass = false }
     let result: [String: Any] = [
-      "isSupported": is26,
+      "isSupported": hasNativeBlur,
       "platform": "ios",
+      "supportsLiquidGlass": hasNativeBlur,
       "features": [
-        "basicGlass": is26,
-        "sensorAware": is26,
-        "depthContainers": is26,
-        "environmentalCues": is26,
+        "basicGlass": hasNativeBlur,
+        "sensorAware": supportsSwiftUIGlass,
+        "depthContainers": supportsSwiftUIGlass,
+        "environmentalCues": supportsSwiftUIGlass,
         "hapticsIntegration": true,
-        "dynamicIntensity": is26
+        "dynamicIntensity": supportsSwiftUIGlass
       ],
       "performance": [
-        "tier": is26 ? "high" : "low",
-        "maxGlassElements": is26 ? 50 : 5,
+        "tier": supportsSwiftUIGlass ? "high" : (hasNativeBlur ? "low" : "fallback"),
+        "maxGlassElements": supportsSwiftUIGlass ? 50 : (hasNativeBlur ? 8 : 0),
         "supports60fps": true,
         "metalAcceleration": true
       ],
       "device": [
         "family": UIDevice.current.userInterfaceIdiom == .pad ? "iPad" : "iPhone",
         "thermalGuidance": "moderate",
-        "memoryProfile": is26 ? "high" : "medium"
+        "memoryProfile": supportsSwiftUIGlass ? "high" : (hasNativeBlur ? "medium" : "low")
       ]
     ]
     resolve(result)
@@ -55,4 +58,3 @@ class LiquidGlassNativeModule: NSObject {
     ])
   }
 }
-

@@ -1,0 +1,97 @@
+---
+globs: "*.ts,*.tsx"
+---
+# TypeScript & React Native Coding Standards
+
+## TypeScript Configuration
+- **Strict Mode**: Always enabled ([tsconfig.json](mdc:tsconfig.json))
+- **No `any`**: Define proper types/interfaces in [src/types/](mdc:src/types/)
+- **Type Definitions**: Check [src/types.d.ts](mdc:src/types.d.ts) for global types
+
+## Naming Conventions
+- **Components**: `PascalCase.tsx` in [src/components/](mdc:src/components/)
+- **Screens**: `PascalCase.tsx` in [src/screens/](mdc:src/screens/) or [app/](mdc:app/)
+- **Contexts**: `*Context.tsx` in [src/context/](mdc:src/context/)
+- **Services**: `*Service.ts` in [src/services/](mdc:src/services/)
+- **Utilities**: `camelCase.ts` in [src/utils/](mdc:src/utils/)
+
+## React Patterns
+- **Functional Components**: Always use function components with hooks
+- **Hooks**: Follow React hooks rules (useState, useEffect, useMemo, useCallback)
+- **Context**: Use React Context from [src/context/](mdc:src/context/) for global state
+- **State Management**: Zustand in [src/store/chatStore.ts](mdc:src/store/chatStore.ts)
+
+## React Native Specifics
+- **Platform Detection**: Use `Platform.OS` for platform-specific code
+- **SafeArea**: Always wrap screens with SafeAreaView
+- **Navigation**: Expo Router v6 - screens in [app/](mdc:app/) directory
+- **Styling**: Use StyleSheet.create() or inline styles with theme
+
+## Formatting
+- **Indentation**: 2 spaces (enforced by Prettier)
+- **Quotes**: Single quotes for strings
+- **Semicolons**: Optional (Prettier default)
+- **Max Line Length**: 100 characters (recommended)
+
+## Code Quality
+- **Linting**: Run `npm run typecheck` before committing
+- **Imports**: Use absolute imports via `@/` prefix (configured in babel)
+- **Comments**: Add JSDoc for complex functions and exported APIs
+- **Error Handling**: Always handle Promise rejections and async errors
+
+## Performance
+- **Memoization**: Use `React.memo()`, `useMemo()`, `useCallback()` for expensive operations
+- **FlatList**: Use for long lists instead of ScrollView
+- **Image Optimization**: Use appropriate image formats and sizes
+- **Bundle Size**: Be mindful of dependencies (check with `npx expo bundle:size`)
+
+## Examples
+
+### Good Component Structure
+```tsx
+import { View, Text, StyleSheet } from 'react-native';
+import { useTheme } from '@/theme/ThemeContext';
+
+interface Props {
+  title: string;
+  onPress?: () => void;
+}
+
+export function MyComponent({ title, onPress }: Props) {
+  const { colors } = useTheme();
+  
+  return (
+    <View style={styles.container}>
+      <Text style={{ color: colors.text }}>{title}</Text>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    padding: 16,
+  },
+});
+```
+
+### Good Service Pattern
+```tsx
+// src/services/myService.ts
+interface ServiceConfig {
+  timeout: number;
+}
+
+class MyService {
+  private config: ServiceConfig;
+
+  constructor(config: ServiceConfig) {
+    this.config = config;
+  }
+
+  async performAction(): Promise<Result> {
+    // Implementation
+  }
+}
+
+export const myService = new MyService({ timeout: 5000 });
+```

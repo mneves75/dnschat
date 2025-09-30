@@ -1,0 +1,394 @@
+---
+globs: "*.tsx,src/theme/**/*,src/components/**/*"
+description: "UI styling, theming, and design system guidelines"
+---
+# UI Styling & Design System
+
+## Theme System
+
+### Theme Context
+[src/theme/ThemeContext.tsx](mdc:src/theme/ThemeContext.tsx) - Global theme provider
+- Light/dark mode support
+- iOS system colors integration
+- Automatic theme switching
+
+### Theme Constants
+[src/theme/colors.ts](mdc:src/theme/colors.ts) - Color definitions
+
+### Usage Pattern
+```tsx
+import { useTheme } from '@/theme/ThemeContext';
+
+function MyComponent() {
+  const { colors, isDark } = useTheme();
+  
+  return (
+    <View style={{ backgroundColor: colors.background }}>
+      <Text style={{ color: colors.text }}>Hello</Text>
+    </View>
+  );
+}
+```
+
+## Liquid Glass Effects
+
+### iOS 26+ Native Glass
+[ios/LiquidGlassNative/](mdc:ios/LiquidGlassNative/) - Native implementation
+- Uses `expo-glass-effect` for iOS 26+
+- Automatic capability detection
+- Graceful fallback to blur for older iOS
+
+### Glass Components
+```tsx
+import { GlassView } from '@/components/GlassView';
+
+<GlassView intensity={0.8}>
+  <Text>Content with glass background</Text>
+</GlassView>
+```
+
+### Accessibility
+- Reduced transparency support
+- High contrast mode
+- VoiceOver compatibility
+
+## Layout Guidelines
+
+### Safe Area
+```tsx
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+function Screen() {
+  return (
+    <SafeAreaView style={{ flex: 1 }}>
+      {/* Content */}
+    </SafeAreaView>
+  );
+}
+```
+
+### Responsive Design
+```tsx
+import { Dimensions, Platform } from 'react-native';
+
+const { width, height } = Dimensions.get('window');
+const isSmallDevice = width < 375;
+const isTablet = width >= 768;
+
+const styles = StyleSheet.create({
+  container: {
+    padding: isSmallDevice ? 12 : 16,
+  },
+});
+```
+
+## Navigation UI
+
+### Expo Router Tabs
+[app/(app)/_layout.tsx](mdc:app/(app)/_layout.tsx) - Tab navigation with native glass
+
+```tsx
+import { Tabs } from 'expo-router';
+
+export default function TabLayout() {
+  return (
+    <Tabs
+      screenOptions={{
+        headerShown: false,
+        tabBarStyle: {
+          // Glass effect applied
+        },
+      }}
+    >
+      <Tabs.Screen name="chat" />
+      <Tabs.Screen name="logs" />
+      <Tabs.Screen name="settings" />
+    </Tabs>
+  );
+}
+```
+
+### Navigation Options
+```tsx
+import { Stack } from 'expo-router';
+
+<Stack.Screen
+  options={{
+    title: 'Chat',
+    headerLargeTitle: true, // iOS
+    headerTransparent: true, // Glass effect
+  }}
+/>
+```
+
+## Component Styling
+
+### StyleSheet Pattern
+```tsx
+import { StyleSheet } from 'react-native';
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 16,
+  },
+  text: {
+    fontSize: 16,
+    lineHeight: 24,
+  },
+});
+```
+
+### Dynamic Styles
+```tsx
+const dynamicStyles = (colors) => StyleSheet.create({
+  container: {
+    backgroundColor: colors.background,
+  },
+  text: {
+    color: colors.text,
+  },
+});
+```
+
+### Inline Styles (Use Sparingly)
+```tsx
+// Only for truly dynamic values
+<View style={{ opacity: isVisible ? 1 : 0 }} />
+```
+
+## Typography
+
+### Text Styles
+```tsx
+const typography = {
+  title: {
+    fontSize: 28,
+    fontWeight: '700',
+    lineHeight: 34,
+  },
+  heading: {
+    fontSize: 20,
+    fontWeight: '600',
+    lineHeight: 28,
+  },
+  body: {
+    fontSize: 16,
+    fontWeight: '400',
+    lineHeight: 24,
+  },
+  caption: {
+    fontSize: 12,
+    fontWeight: '400',
+    lineHeight: 16,
+  },
+};
+```
+
+### Platform-Specific Fonts
+```tsx
+import { Platform } from 'react-native';
+
+const fontFamily = Platform.select({
+  ios: 'System',
+  android: 'Roboto',
+  default: 'System',
+});
+```
+
+## Icons & Images
+
+### Icon Libraries
+- Expo Icons (preferred)
+- Custom SVG via `react-native-svg`
+
+### Usage
+```tsx
+import { Ionicons } from '@expo/vector-icons';
+
+<Ionicons name="chatbubble-outline" size={24} color={colors.primary} />
+```
+
+### Images
+```tsx
+import { Image } from 'react-native';
+
+<Image
+  source={require('@/assets/logo.png')}
+  style={{ width: 100, height: 100 }}
+  resizeMode="contain"
+/>
+```
+
+## Animation
+
+### React Native Reanimated
+```tsx
+import Animated, { 
+  useSharedValue, 
+  useAnimatedStyle,
+  withSpring 
+} from 'react-native-reanimated';
+
+function AnimatedComponent() {
+  const offset = useSharedValue(0);
+  
+  const animatedStyles = useAnimatedStyle(() => ({
+    transform: [{ translateX: offset.value }],
+  }));
+  
+  return <Animated.View style={animatedStyles} />;
+}
+```
+
+### Layout Animation
+```tsx
+import { LayoutAnimation, Platform, UIManager } from 'react-native';
+
+if (Platform.OS === 'android') {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
+
+function animateChange() {
+  LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+  // Update state
+}
+```
+
+## Performance
+
+### List Optimization
+```tsx
+import { FlatList } from 'react-native';
+
+<FlatList
+  data={items}
+  renderItem={({ item }) => <Item data={item} />}
+  keyExtractor={(item) => item.id}
+  initialNumToRender={10}
+  maxToRenderPerBatch={5}
+  windowSize={5}
+  removeClippedSubviews={true}
+/>
+```
+
+### Memoization
+```tsx
+import React, { memo } from 'react';
+
+const ExpensiveComponent = memo(({ data }) => {
+  // Component logic
+}, (prevProps, nextProps) => {
+  // Custom comparison
+  return prevProps.data === nextProps.data;
+});
+```
+
+## Accessibility
+
+### Labels
+```tsx
+<TouchableOpacity
+  accessible={true}
+  accessibilityLabel="Send message"
+  accessibilityHint="Sends your message"
+  accessibilityRole="button"
+>
+  <Text>Send</Text>
+</TouchableOpacity>
+```
+
+### Dynamic Type
+```tsx
+import { Text } from 'react-native';
+
+<Text
+  style={styles.text}
+  adjustsFontSizeToFit
+  numberOfLines={1}
+>
+  Content
+</Text>
+```
+
+## Platform-Specific Styling
+
+### Platform Select
+```tsx
+import { Platform, StyleSheet } from 'react-native';
+
+const styles = StyleSheet.create({
+  container: {
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
+  },
+});
+```
+
+### Platform-Specific Components
+```tsx
+import { Platform } from 'react-native';
+
+{Platform.OS === 'ios' && <IOSSpecificComponent />}
+{Platform.OS === 'android' && <AndroidSpecificComponent />}
+```
+
+## Design Tokens
+
+### Spacing
+```tsx
+const spacing = {
+  xs: 4,
+  sm: 8,
+  md: 16,
+  lg: 24,
+  xl: 32,
+};
+```
+
+### Border Radius
+```tsx
+const borderRadius = {
+  sm: 4,
+  md: 8,
+  lg: 16,
+  xl: 24,
+  full: 9999,
+};
+```
+
+### Shadows
+```tsx
+const shadows = {
+  sm: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  md: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+};
+```
+
+## Design System Documentation
+
+For detailed design plans:
+- [docs/ui-liquid-glass-redesign-plan.md](mdc:docs/ui-liquid-glass-redesign-plan.md)
+- [docs/liquid-glass-tabbar-plan.md](mdc:docs/liquid-glass-tabbar-plan.md)
+- [UI_UX_MODERNIZATION_PLAN.md](mdc:UI_UX_MODERNIZATION_PLAN.md)

@@ -1,4 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { LOGGING_CONSTANTS } from '../constants/appConstants';
 
 export interface DNSLogEntry {
   id: string;
@@ -24,9 +25,9 @@ export interface DNSQueryLog {
 }
 
 const STORAGE_KEY = "@dns_query_logs";
-const MAX_LOGS = 100;
-const LOG_RETENTION_DAYS = 30;
-const STORAGE_SIZE_WARNING_MB = 100;
+const MAX_LOGS = LOGGING_CONSTANTS.MAX_LOGS;
+const LOG_RETENTION_DAYS = LOGGING_CONSTANTS.LOG_RETENTION_DAYS;
+const STORAGE_SIZE_WARNING_MB = LOGGING_CONSTANTS.STORAGE_SIZE_WARNING_MB;
 
 export class DNSLogService {
   private static currentQueryLog: DNSQueryLog | null = null;
@@ -40,11 +41,19 @@ export class DNSLogService {
    */
   private static generateUniqueId(prefix: string): string {
     const timestamp = Date.now();
-    const performance = typeof window !== 'undefined' && window.performance
-      ? Math.floor(window.performance.now() * 1000)
-      : 0;
     const counter = ++this.idCounter;
     const random = Math.random().toString(36).substr(2, 5);
+
+    // Platform-safe performance counter
+    let performance = 0;
+    try {
+      if (typeof globalThis.performance !== 'undefined' && globalThis.performance.now) {
+        performance = Math.floor(globalThis.performance.now() * 1000);
+      }
+    } catch {
+      // Fallback if performance API is not available
+      performance = Math.floor(Math.random() * 1000000);
+    }
 
     return `${prefix}-${timestamp}-${performance}-${counter}-${random}`;
   }
@@ -71,6 +80,13 @@ export class DNSLogService {
 
     // Initialize cleanup scheduler after loading logs
     await this.initializeCleanupScheduler();
+  }
+
+  /**
+   * Clean up all listeners to prevent memory leaks
+   */
+  static cleanupListeners(): void {
+    this.listeners.clear();
   }
 
   static startQuery(query: string): string {
@@ -287,21 +303,25 @@ export class DNSLogService {
 
   /**
    * Clean up old logs based on retention policy (30 days)
+   * PERFORMANCE FIX: Use more efficient cleanup with early termination
    */
   static async cleanupOldLogs(): Promise<void> {
     const thirtyDaysAgo = new Date(Date.now() - LOG_RETENTION_DAYS * 24 * 60 * 60 * 1000);
-
-    // Filter out old logs
     const oldLogsCount = this.queryLogs.length;
-    this.queryLogs = this.queryLogs.filter(log => {
-      const logDate = new Date(log.startTime);
-      return logDate > thirtyDaysAgo;
-    });
 
-    const removedLogsCount = oldLogsCount - this.queryLogs.length;
+    // PERFORMANCE FIX: Use splice for in-place removal instead of filter
+    // This is more efficient for large arrays
+    let removedCount = 0;
+    for (let i = this.queryLogs.length - 1; i >= 0; i--) {
+      const logDate = new Date(this.queryLogs[i].startTime);
+      if (logDate <= thirtyDaysAgo) {
+        this.queryLogs.splice(i, 1);
+        removedCount++;
+      }
+    }
 
-    if (removedLogsCount > 0) {
-      console.log(`🧹 Cleaned up ${removedLogsCount} old DNS logs (older than ${LOG_RETENTION_DAYS} days)`);
+    if (removedCount > 0) {
+      console.log(`🧹 Cleaned up ${removedCount} old DNS logs (older than ${LOG_RETENTION_DAYS} days)`);
       await this.saveLogs();
       this.notifyListeners();
     }
@@ -337,7 +357,7 @@ export class DNSLogService {
     // Schedule periodic cleanup (daily)
     setInterval(async () => {
       await this.cleanupOldLogs();
-    }, 24 * 60 * 60 * 1000); // 24 hours
+    }, LOGGING_CONSTANTS.CLEANUP_INTERVAL_MS);
   }
 
   private static notifyListeners() {

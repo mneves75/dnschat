@@ -1,0 +1,220 @@
+---
+description: "DNS service architecture, query flow, and implementation details"
+---
+# DNS Service Architecture
+
+## Core Service Files
+
+### Main DNS Service
+[src/services/dnsService.ts](mdc:src/services/dnsService.ts) - Primary DNS query logic
+- Query name composition
+- Multi-layer fallback strategy
+- Message sanitization and validation
+- Rate limiting
+- Response parsing
+
+### DNS Logging
+[src/services/dnsLogService.ts](mdc:src/services/dnsLogService.ts) - Query logging and monitoring
+
+### Native Module
+[modules/dns-native/index.ts](mdc:modules/dns-native/index.ts) - TypeScript interface to native DNS
+[modules/dns-native/constants.ts](mdc:modules/dns-native/constants.ts) - DNS constants and sanitization
+
+## DNS Query Flow
+
+### Query Pipeline
+```
+User Message
+  ↓
+Message Sanitization (sanitizeDNSMessageReference)
+  ↓
+DNS Query Name Composition (composeDNSQueryName)
+  ↓
+Query Method Selection (based on preference)
+  ↓
+Fallback Chain:
+  1. Native DNS (iOS Network Framework / Android DnsResolver)
+  2. UDP DNS (dgram socket)
+  3. TCP DNS (tcp-socket)
+  4. DNS-over-HTTPS (Cloudflare API)
+  5. Mock Service (development)
+  ↓
+Response Parsing & Validation
+  ↓
+LLM Response to User
+```
+
+## DNS Sanitization
+
+### Message Sanitization Rules
+From [modules/dns-native/constants.ts](mdc:modules/dns-native/constants.ts):
+- Convert to lowercase
+- Replace spaces and special chars with hyphens
+- Strip multiple consecutive hyphens
+- Strip leading/trailing hyphens
+- Enforce 63-character label limit (DNS spec)
+- Remove DNS control characters
+
+### Example
+```typescript
+sanitizeDNSMessageReference('Hello World! 123')
+// Returns: "hello-world-123"
+
+sanitizeDNSMessageReference('A'.repeat(100))
+// Returns: "aaa..." (truncated to 63 chars)
+```
+
+## DNS Server Configuration
+
+### Default Server
+`ch.at` - Configured in [src/constants/appConstants.ts](mdc:src/constants/appConstants.ts)
+
+### Server Validation
+- Whitelist of allowed DNS servers (security)
+- Server format validation
+- Port stripping for validation
+- IP address detection
+
+### Configurable in Settings
+Users can select DNS method preference:
+- `native-only` - Native DNS only
+- `native-preferred` - Native with fallbacks (default)
+- `udp-preferred` - UDP first, then fallbacks
+- `tcp-preferred` - TCP first, then fallbacks
+- `https-preferred` - DNS-over-HTTPS first
+
+## DNS Methods
+
+### 1. Native DNS (Preferred)
+- **iOS**: Network Framework with async/await
+- **Android**: DnsResolver API (API 29+) with dnsjava fallback
+- **Pros**: Fastest, most reliable, OS-managed
+- **Cons**: Platform-specific implementation
+
+### 2. UDP DNS
+- **Implementation**: `react-native-udp`
+- **Pros**: Standard DNS protocol, fast
+- **Cons**: Some networks block UDP port 53
+
+### 3. TCP DNS
+- **Implementation**: `react-native-tcp-socket`
+- **Pros**: Works when UDP blocked
+- **Cons**: Slower connection establishment
+
+### 4. DNS-over-HTTPS (DoH)
+- **Implementation**: Cloudflare DoH API
+- **Pros**: Works everywhere, encrypted
+- **Cons**: Cannot reach ch.at custom TXT responses (disabled for ch.at)
+
+### 5. Mock Service
+- **Use**: Development and testing
+- **Location**: Inline in [src/services/dnsService.ts](mdc:src/services/dnsService.ts)
+
+## Rate Limiting
+
+### Configuration
+- Default: 20 queries per minute per server
+- Prevents abuse and server overload
+- Configurable via DNS_CONSTANTS
+
+### Implementation
+```typescript
+// In dnsService.ts
+if (isRateLimited(server)) {
+  throw new Error('Rate limit exceeded. Please wait before retrying.');
+}
+```
+
+## Error Handling
+
+### Error Types (from native module)
+```typescript
+enum DNSErrorType {
+  TIMEOUT = 'TIMEOUT',
+  NETWORK = 'NETWORK',
+  INVALID_RESPONSE = 'INVALID_RESPONSE',
+  SERVER_FAILURE = 'SERVER_FAILURE',
+  NOT_FOUND = 'NOT_FOUND',
+  CANCELLED = 'CANCELLED',
+  UNKNOWN = 'UNKNOWN',
+}
+```
+
+### Error Handling Pattern
+```typescript
+try {
+  const result = await dnsService.queryTXT(message, server);
+  // Handle success
+} catch (error) {
+  if (error instanceof DNSError) {
+    // Handle specific DNS error types
+    switch (error.type) {
+      case DNSErrorType.TIMEOUT:
+        // Retry or fallback
+        break;
+      case DNSErrorType.NETWORK:
+        // Network-specific handling
+        break;
+    }
+  }
+}
+```
+
+## Security Considerations
+
+### Input Validation
+- Sanitize all user messages before DNS query
+- Validate DNS server against whitelist
+- Prevent DNS injection attacks
+- Strip control characters
+
+### Server Whitelist
+- ch.at (default)
+- Google DNS (8.8.8.8, 8.8.4.4)
+- Cloudflare (1.1.1.1, 1.0.0.1)
+- Custom servers must be explicitly validated
+
+### Thread Safety
+- iOS: NSLock-protected continuations
+- Android: Thread-safe executor service
+- Cross-platform: Atomic cancellation flags
+
+## Response Parsing
+
+### TXT Record Parsing
+```typescript
+// Parse DNS packet response
+const answer = dns.decode(buffer);
+const txtRecords = answer.answers
+  .filter(a => a.type === 'TXT')
+  .map(a => a.data.toString());
+```
+
+### Chunked Response Assembly
+- LLM responses may span multiple TXT records
+- Records assembled in order
+- Proper handling of truncated responses
+
+## Troubleshooting
+
+### Common Issues
+1. **UDP Blocked**: Fallback to TCP or HTTPS
+2. **Timeout**: Increase timeout or check network
+3. **Rate Limited**: Wait before retrying
+4. **Invalid Response**: Check DNS server configuration
+
+### Debug Logs
+Use [src/components/DNSLogViewer.tsx](mdc:src/components/DNSLogViewer.tsx) to inspect:
+- Query methods attempted
+- Fallback sequence
+- Response times
+- Error details
+
+### Testing
+```bash
+# Quick smoke test
+node test-dns-simple.js "Hello"
+
+# Test with specific method
+node test-dns-simple.js --experimental "Hello"
+```

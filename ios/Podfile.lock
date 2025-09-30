@@ -249,9 +249,13 @@ PODS:
     - Yoga
   - ExpoAsset (12.0.9):
     - ExpoModulesCore
+  - ExpoCrypto (15.0.7):
+    - ExpoModulesCore
   - ExpoFileSystem (19.0.15):
     - ExpoModulesCore
   - ExpoFont (14.0.8):
+    - ExpoModulesCore
+  - ExpoGlassEffect (0.1.4):
     - ExpoModulesCore
   - ExpoHead (6.0.8):
     - ExpoModulesCore
@@ -309,6 +313,7 @@ PODS:
   - LiquidGlassNative (2.0.0):
     - React
     - React-Core
+  - OpenSSL-Universal (3.3.3001)
   - RCT-Folly (2024.11.18.00):
     - boost
     - DoubleConversion
@@ -2049,6 +2054,38 @@ PODS:
     - React-RCTFBReactNativeSpec
     - ReactCommon/turbomodule/core
     - SocketRocket
+  - react-native-quick-base64 (2.2.2):
+    - React-Core
+  - react-native-quick-crypto (0.7.17):
+    - boost
+    - DoubleConversion
+    - fast_float
+    - fmt
+    - glog
+    - hermes-engine
+    - OpenSSL-Universal
+    - RCT-Folly
+    - RCT-Folly/Fabric
+    - RCTRequired
+    - RCTTypeSafety
+    - React
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - SocketRocket
+    - Yoga
   - react-native-safe-area-context (5.6.1):
     - boost
     - DoubleConversion
@@ -2705,6 +2742,34 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
+  - RNKeychain (9.2.3):
+    - boost
+    - DoubleConversion
+    - fast_float
+    - fmt
+    - glog
+    - hermes-engine
+    - RCT-Folly
+    - RCT-Folly/Fabric
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - SocketRocket
+    - Yoga
   - RNReanimated (4.1.2):
     - boost
     - DoubleConversion
@@ -3002,9 +3067,9 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
-  - SDWebImage (5.21.1):
-    - SDWebImage/Core (= 5.21.1)
-  - SDWebImage/Core (5.21.1)
+  - SDWebImage (5.21.2):
+    - SDWebImage/Core (= 5.21.2)
+  - SDWebImage/Core (5.21.2)
   - SDWebImageSVGCoder (1.8.0):
     - SDWebImage/Core (~> 5.6)
   - SocketRocket (0.7.1)
@@ -3023,8 +3088,10 @@ DEPENDENCIES:
   - expo-dev-menu (from `../node_modules/expo-dev-menu`)
   - expo-dev-menu-interface (from `../node_modules/expo-dev-menu-interface/ios`)
   - ExpoAsset (from `../node_modules/expo-asset/ios`)
+  - ExpoCrypto (from `../node_modules/expo-crypto/ios`)
   - ExpoFileSystem (from `../node_modules/expo-file-system/ios`)
   - ExpoFont (from `../node_modules/expo-font/ios`)
+  - ExpoGlassEffect (from `../node_modules/expo-glass-effect/ios`)
   - ExpoHead (from `../node_modules/expo-router/ios`)
   - ExpoKeepAwake (from `../node_modules/expo-keep-awake/ios`)
   - ExpoLinking (from `../node_modules/expo-linking/ios`)
@@ -3074,6 +3141,8 @@ DEPENDENCIES:
   - React-logger (from `../node_modules/react-native/ReactCommon/logger`)
   - React-Mapbuffer (from `../node_modules/react-native/ReactCommon`)
   - React-microtasksnativemodule (from `../node_modules/react-native/ReactCommon/react/nativemodule/microtasks`)
+  - react-native-quick-base64 (from `../node_modules/react-native-quick-base64`)
+  - react-native-quick-crypto (from `../node_modules/react-native-quick-crypto`)
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
   - react-native-tcp-socket (from `../node_modules/react-native-tcp-socket`)
   - react-native-udp (from `../node_modules/react-native-udp`)
@@ -3110,6 +3179,7 @@ DEPENDENCIES:
   - "RNCAsyncStorage (from `../node_modules/@react-native-async-storage/async-storage`)"
   - RNDeviceInfo (from `../node_modules/react-native-device-info`)
   - RNGestureHandler (from `../node_modules/react-native-gesture-handler`)
+  - RNKeychain (from `../node_modules/react-native-keychain`)
   - RNReanimated (from `../node_modules/react-native-reanimated`)
   - RNScreens (from `../node_modules/react-native-screens`)
   - RNSVG (from `../node_modules/react-native-svg`)
@@ -3122,6 +3192,7 @@ DEPENDENCIES:
 SPEC REPOS:
   trunk:
     - CocoaAsyncSocket
+    - OpenSSL-Universal
     - SDWebImage
     - SDWebImageSVGCoder
     - SocketRocket
@@ -3151,10 +3222,14 @@ EXTERNAL SOURCES:
     :path: "../node_modules/expo-dev-menu-interface/ios"
   ExpoAsset:
     :path: "../node_modules/expo-asset/ios"
+  ExpoCrypto:
+    :path: "../node_modules/expo-crypto/ios"
   ExpoFileSystem:
     :path: "../node_modules/expo-file-system/ios"
   ExpoFont:
     :path: "../node_modules/expo-font/ios"
+  ExpoGlassEffect:
+    :path: "../node_modules/expo-glass-effect/ios"
   ExpoHead:
     :path: "../node_modules/expo-router/ios"
   ExpoKeepAwake:
@@ -3252,6 +3327,10 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon"
   React-microtasksnativemodule:
     :path: "../node_modules/react-native/ReactCommon/react/nativemodule/microtasks"
+  react-native-quick-base64:
+    :path: "../node_modules/react-native-quick-base64"
+  react-native-quick-crypto:
+    :path: "../node_modules/react-native-quick-crypto"
   react-native-safe-area-context:
     :path: "../node_modules/react-native-safe-area-context"
   react-native-tcp-socket:
@@ -3324,6 +3403,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-device-info"
   RNGestureHandler:
     :path: "../node_modules/react-native-gesture-handler"
+  RNKeychain:
+    :path: "../node_modules/react-native-keychain"
   RNReanimated:
     :path: "../node_modules/react-native-reanimated"
   RNScreens:
@@ -3349,8 +3430,10 @@ SPEC CHECKSUMS:
   expo-dev-menu: 19de9e2b7a4c5d0ff2afe5d7f1d8913d4699b32d
   expo-dev-menu-interface: 600df12ea01efecdd822daaf13cc0ac091775533
   ExpoAsset: 9ba6fbd677fb8e241a3899ac00fa735bc911eadf
+  ExpoCrypto: c1fbce112d1b6b79652bbe380b4fd4cc91676595
   ExpoFileSystem: 5fb091ea11198e109ceef2bdef2e6e66523e62c4
   ExpoFont: 86ceec09ffed1c99cfee36ceb79ba149074901b5
+  ExpoGlassEffect: 744bf0c58c26a1b0212dff92856be07b98d01d8c
   ExpoHead: 5570e5edbe54fd8f88e51e8b94bf2931caaa7363
   ExpoKeepAwake: 1a2e820692e933c94a565ec3fbbe38ac31658ffe
   ExpoLinking: f051f28e50ea9269ff539317c166adec81d9342d
@@ -3366,7 +3449,8 @@ SPEC CHECKSUMS:
   glog: 5683914934d5b6e4240e497e0f4a3b42d1854183
   hermes-engine: 35c763d57c9832d0eef764316ca1c4d043581394
   LiquidGlassNative: 0650d981ca9eaf733210ec4615631681cea41197
-  RCT-Folly: 59ec0ac1f2f39672a0c6e6cecdd39383b764646f
+  OpenSSL-Universal: 6082b0bf950e5636fe0d78def171184e2b3899c2
+  RCT-Folly: 846fda9475e61ec7bcbf8a3fe81edfcaeb090669
   RCTDeprecation: c0ed3249a97243002615517dff789bf4666cf585
   RCTRequired: 58719f5124f9267b5f9649c08bf23d9aea845b23
   RCTTypeSafety: 4aefa8328ab1f86da273f08517f1f6b343f6c2cc
@@ -3399,6 +3483,8 @@ SPEC CHECKSUMS:
   React-logger: a3cb5b29c32b8e447b5a96919340e89334062b48
   React-Mapbuffer: 9d2434a42701d6144ca18f0ca1c4507808ca7696
   React-microtasksnativemodule: 75b6604b667d297292345302cc5bfb6b6aeccc1b
+  react-native-quick-base64: 6568199bb2ac8e72ecdfdc73a230fbc5c1d3aac4
+  react-native-quick-crypto: dac9db2adb0a61b4881909b6db7c51eaaada66a8
   react-native-safe-area-context: c6e2edd1c1da07bdce287fa9d9e60c5f7b514616
   react-native-tcp-socket: 120072c8020262032773f80f0daaf3964aaa08a1
   react-native-udp: 806f16ab890dd838bc073afcebd6a221d4965572
@@ -3435,11 +3521,12 @@ SPEC CHECKSUMS:
   RNCAsyncStorage: 29f0230e1a25f36c20b05f65e2eb8958d6526e82
   RNDeviceInfo: d863506092aef7e7af3a1c350c913d867d795047
   RNGestureHandler: 3a73f098d74712952870e948b3d9cf7b6cae9961
+  RNKeychain: 483402cf2b90647eb0cf569cebbc069d32addea4
   RNReanimated: 3c450abad323c7d57a98d34ab9ff642c18da9021
   RNScreens: 0bbf16c074ae6bb1058a7bf2d1ae017f4306797c
   RNSVG: 6f39605a4c4d200b11435c35bd077553c6b5963a
   RNWorklets: ad0606bee2a8103c14adb412149789c60b72bfb2
-  SDWebImage: f29024626962457f3470184232766516dee8dfea
+  SDWebImage: 9f177d83116802728e122410fb25ad88f5c7608a
   SDWebImageSVGCoder: 8e10c8f6cc879c7dfb317b284e13dd589379f01c
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748
   Yoga: a3ed390a19db0459bd6839823a6ac6d9c6db198d

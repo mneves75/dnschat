@@ -210,18 +210,21 @@ export function Settings(): React.JSX.Element {
           description="Use Cloudflare's DoH when available"
           value={preferDnsOverHttps}
           onValueChange={handleToggle(setPreferDnsOverHttps)}
+          colors={colors}
         />
         <Row
           label="Allow Experimental Transports"
           description="Enable UDP/TCP/HTTPS fallbacks"
           value={allowExperimentalTransports}
           onValueChange={handleToggle(setAllowExperimentalTransports)}
+          colors={colors}
         />
         <Row
           label="Enable Mock DNS"
           description="Serve responses from local mock"
           value={enableMockDNS}
           onValueChange={handleToggle(setEnableMockDNS)}
+          colors={colors}
         />
       </View>
 
@@ -235,6 +238,7 @@ export function Settings(): React.JSX.Element {
             onPress={handleSelectPreference}
             textColor={colors.text}
             borderColor={colors.border}
+            accentColor={colors.accent}
           />
         ))}
       </View>
@@ -282,17 +286,24 @@ function Row({
   description,
   value,
   onValueChange,
+  colors,
 }: {
   label: string;
   description: string;
   value: boolean;
   onValueChange: (value: boolean) => void;
+  colors?: any;
 }): React.JSX.Element {
+  const themeColors = colors || {
+    text: "#000000",
+    muted: "#6D6D70",
+  };
+
   return (
     <View style={styles.row}>
       <View style={styles.rowText}>
-        <Text style={styles.rowLabel}>{label}</Text>
-        <Text style={styles.rowDescription}>{description}</Text>
+        <Text style={[styles.rowLabel, { color: themeColors.text }]}>{label}</Text>
+        <Text style={[styles.rowDescription, { color: themeColors.muted }]}>{description}</Text>
       </View>
       <Switch value={value} onValueChange={onValueChange} />
     </View>
@@ -305,13 +316,17 @@ function PreferenceButton({
   onPress,
   textColor,
   borderColor,
+  accentColor,
 }: {
   option: (typeof PREFERENCE_OPTIONS)[number];
   active: boolean;
   onPress: (key: DNSMethodPreference) => void;
   textColor: string;
   borderColor: string;
+  accentColor?: string;
 }): React.JSX.Element {
+  const themeAccent = accentColor || "#007AFF";
+
   return (
     <Text
       onPress={() => onPress(option.key)}
@@ -319,14 +334,14 @@ function PreferenceButton({
         styles.preferenceButton,
         {
           borderColor,
-          backgroundColor: active ? "rgba(0, 122, 255, 0.15)" : "transparent",
+          backgroundColor: active ? themeAccent + "15" : "transparent",
           color: textColor,
         },
       ]}
     >
       {option.label}
       {"\n"}
-      <Text style={styles.preferenceDescription}>{option.description}</Text>
+      <Text style={[styles.preferenceDescription, { color: textColor + "80" }]}>{option.description}</Text>
     </Text>
   );
 }

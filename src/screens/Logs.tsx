@@ -1,36 +1,449 @@
-import React, { useEffect, useState } from "react";
+/**
+ * Logs - Modernized DNS Query Logs with FlashList + Liquid Glass
+ *
+ * Phase 2 rebuild featuring:
+ * - FlashList with section headers (active vs historical)
+ * - Timeline ribbon with glass capsule badges
+ * - Filter and sort controls with glass styling
+ * - Glass action sheet for log management
+ * - Performance monitoring
+ *
+ * @author DNSChat Team
+ * @since 2.1.0 (Phase 2 - Liquid Glass UI Redesign)
+ */
+
+import React, { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import {
   View,
   Text,
-  FlatList,
   StyleSheet,
   TouchableOpacity,
   Alert,
-  RefreshControl,
-  ScrollView,
+  Platform,
+  Animated,
   ActivityIndicator,
-  useColorScheme,
 } from "react-native";
-import { useAppTheme } from "../theme";
+import { FlashList, ListRenderItem } from "@shopify/flash-list";
+import { useGlassTheme } from "../hooks/useGlassTheme";
 import {
   DNSLogService,
   DNSQueryLog,
   DNSLogEntry,
 } from "../services/dnsLogService";
-import { Form, LiquidGlassWrapper } from "../components/glass";
+import { GlassActionSheet, useGlassBottomSheet } from "../components/glass";
+
+// ==================================================================================
+// PERFORMANCE MONITORING
+// ==================================================================================
+
+interface PerformanceMetrics {
+  renderCount: number;
+  lastRenderTime: number;
+}
+
+const usePerformanceMonitoring = () => {
+  const renderCount = useRef(0);
+  const lastRenderTime = useRef(Date.now());
+  const [metrics, setMetrics] = useState<PerformanceMetrics>({
+    renderCount: 0,
+    lastRenderTime: 0,
+  });
+
+  useEffect(() => {
+    renderCount.current += 1;
+    const now = Date.now();
+    const renderDuration = now - lastRenderTime.current;
+
+    setMetrics({
+      renderCount: renderCount.current,
+      lastRenderTime: renderDuration,
+    });
+
+    lastRenderTime.current = now;
+
+    if (__DEV__) {
+      console.log(`📊 Logs render #${renderCount.current} took ${renderDuration}ms`);
+    }
+  });
+
+  return metrics;
+};
+
+// ==================================================================================
+// TYPES
+// ==================================================================================
+
+type FilterType = "all" | "success" | "failure" | "pending";
+type SortType = "newest" | "oldest" | "duration";
+
+interface LogListItem {
+  type: "header" | "log" | "timeline" | "empty";
+  id: string;
+  data?: DNSQueryLog;
+  title?: string;
+  count?: number;
+}
+
+// ==================================================================================
+// TIMELINE RIBBON COMPONENT
+// ==================================================================================
+
+const TimelineRibbon: React.FC<{ logs: DNSQueryLog[] }> = ({ logs }) => {
+  const { getGlassStyle, colors } = useGlassTheme();
+
+  // Group logs by hour for the last 24 hours
+  const timelineData = useMemo(() => {
+    const now = Date.now();
+    const hours = 24;
+    const buckets = Array(hours).fill(0);
+
+    logs.forEach((log) => {
+      const age = now - log.startTime.getTime();
+      const hourAgo = Math.floor(age / (1000 * 60 * 60));
+      if (hourAgo < hours) {
+        buckets[hours - 1 - hourAgo]++;
+      }
+    });
+
+    return buckets;
+  }, [logs]);
+
+  const maxCount = Math.max(...timelineData, 1);
+
+  return (
+    <View style={[getGlassStyle("card", "prominent", "roundedRect"), styles.timelineContainer]}>
+      <Text style={[styles.timelineTitle, { color: colors.text }]}>
+        Query Activity (24h)
+      </Text>
+      <View style={styles.timelineChart}>
+        {timelineData.map((count, index) => {
+          const height = (count / maxCount) * 40;
+          return (
+            <View
+              key={index}
+              style={[
+                styles.timelineBar,
+                {
+                  height: Math.max(height, 2),
+                  backgroundColor: count > 0 ? colors.accent : colors.muted,
+                  opacity: count > 0 ? 0.8 : 0.3,
+                },
+              ]}
+            />
+          );
+        })}
+      </View>
+      <View style={styles.timelineLabels}>
+        <Text style={[styles.timelineLabel, { color: colors.muted }]}>24h ago</Text>
+        <Text style={[styles.timelineLabel, { color: colors.muted }]}>Now</Text>
+      </View>
+    </View>
+  );
+};
+
+// ==================================================================================
+// FILTER/SORT CONTROLS
+// ==================================================================================
+
+interface FilterControlsProps {
+  filter: FilterType;
+  sort: SortType;
+  onFilterChange: (filter: FilterType) => void;
+  onSortChange: (sort: SortType) => void;
+}
+
+const FilterControls: React.FC<FilterControlsProps> = ({
+  filter,
+  sort,
+  onFilterChange,
+  onSortChange,
+}) => {
+  const { getGlassStyle, colors } = useGlassTheme();
+
+  const filters: FilterType[] = ["all", "success", "failure", "pending"];
+  const sorts: SortType[] = ["newest", "oldest", "duration"];
+
+  return (
+    <View style={styles.controlsContainer}>
+      {/* Filter Pills */}
+      <View style={styles.filterRow}>
+        <Text style={[styles.controlLabel, { color: colors.muted }]}>Filter:</Text>
+        <View style={styles.pillContainer}>
+          {filters.map((f) => (
+            <TouchableOpacity
+              key={f}
+              onPress={() => onFilterChange(f)}
+              style={[
+                getGlassStyle("button", filter === f ? "interactive" : "regular", "capsule"),
+                styles.pill,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.pillText,
+                  { color: filter === f ? colors.accent : colors.text },
+                ]}
+              >
+                {f.charAt(0).toUpperCase() + f.slice(1)}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+
+      {/* Sort Pills */}
+      <View style={styles.filterRow}>
+        <Text style={[styles.controlLabel, { color: colors.muted }]}>Sort:</Text>
+        <View style={styles.pillContainer}>
+          {sorts.map((s) => (
+            <TouchableOpacity
+              key={s}
+              onPress={() => onSortChange(s)}
+              style={[
+                getGlassStyle("button", sort === s ? "interactive" : "regular", "capsule"),
+                styles.pill,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.pillText,
+                  { color: sort === s ? colors.accent : colors.text },
+                ]}
+              >
+                {s.charAt(0).toUpperCase() + s.slice(1)}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+    </View>
+  );
+};
+
+// ==================================================================================
+// LOG ENTRY COMPONENT (for expanded view)
+// ==================================================================================
+
+const LogEntryItem: React.FC<{ entry: DNSLogEntry }> = ({ entry }) => {
+  const { colors } = useGlassTheme();
+  const statusIcon = DNSLogService.getStatusIcon(entry.status);
+  const methodColor = DNSLogService.getMethodColor(entry.method);
+
+  return (
+    <View style={styles.logEntryItem}>
+      <View style={styles.entryHeader}>
+        <Text style={styles.entryIcon}>{statusIcon}</Text>
+        <View
+          style={[
+            styles.methodBadge,
+            { backgroundColor: methodColor + "20" },
+          ]}
+        >
+          <Text style={[styles.methodText, { color: methodColor }]}>
+            {entry.method?.toUpperCase() || "UNKNOWN"}
+          </Text>
+        </View>
+        {entry.duration !== undefined && (
+          <Text style={[styles.duration, { color: colors.muted }]}>
+            {DNSLogService.formatDuration(entry.duration)}
+          </Text>
+        )}
+      </View>
+      <Text style={[styles.entryMessage, { color: colors.text }]}>
+        {entry.message || "No message"}
+      </Text>
+      {entry.details && (
+        <Text style={[styles.entryDetails, { color: colors.muted }]}>
+          {entry.details}
+        </Text>
+      )}
+      {entry.error && (
+        <Text style={[styles.entryError, { color: colors.danger }]}>
+          Error: {entry.error}
+        </Text>
+      )}
+    </View>
+  );
+};
+
+// ==================================================================================
+// LOG CARD COMPONENT
+// ==================================================================================
+
+interface LogCardProps {
+  log: DNSQueryLog;
+  isExpanded: boolean;
+  onToggle: () => void;
+  onLongPress: () => void;
+}
+
+const LogCard: React.FC<LogCardProps> = React.memo(({
+  log,
+  isExpanded,
+  onToggle,
+  onLongPress,
+}) => {
+  const { getGlassStyle, colors } = useGlassTheme();
+  const [isPressed, setIsPressed] = useState(false);
+
+  const isActive = log.finalStatus === "pending";
+  const statusColor =
+    log.finalStatus === "success"
+      ? colors.success
+      : log.finalStatus === "failure"
+        ? colors.danger
+        : colors.warning;
+
+  const cardStyle = getGlassStyle(
+    "card",
+    isActive ? "interactive" : isPressed ? "interactive" : "regular",
+    "roundedRect",
+  );
+
+  return (
+    <TouchableOpacity
+      onPress={onToggle}
+      onLongPress={onLongPress}
+      onPressIn={() => setIsPressed(true)}
+      onPressOut={() => setIsPressed(false)}
+      style={styles.logCardWrapper}
+      activeOpacity={0.95}
+    >
+      <View style={[cardStyle, styles.logCard]}>
+        <View style={styles.logHeader}>
+          <View style={styles.logHeaderLeft}>
+            <Text style={[styles.queryText, { color: colors.text }]} numberOfLines={1}>
+              {log.query || "No query"}
+            </Text>
+            <View style={styles.logMeta}>
+              <Text style={[styles.timestamp, { color: colors.muted }]}>
+                {new Date(log.startTime).toLocaleTimeString()}
+              </Text>
+              {log.finalMethod && (
+                <View
+                  style={[
+                    getGlassStyle("button", "interactive", "capsule"),
+                    styles.methodBadge,
+                  ]}
+                >
+                  <Text style={[styles.methodText, { color: colors.accent }]}>
+                    {log.finalMethod.toUpperCase()}
+                  </Text>
+                </View>
+              )}
+              {log.totalDuration !== undefined && (
+                <Text style={[styles.duration, { color: colors.muted }]}>
+                  {DNSLogService.formatDuration(log.totalDuration)}
+                </Text>
+              )}
+            </View>
+          </View>
+
+          {/* Status Indicator */}
+          <View style={[styles.statusIndicator, { backgroundColor: statusColor }]}>
+            {isActive && <ActivityIndicator size="small" color="white" />}
+            {!isActive && (
+              <Text style={styles.statusText}>
+                {log.finalStatus === "success" ? "✓" : "✗"}
+              </Text>
+            )}
+          </View>
+        </View>
+
+        {/* Expanded Details */}
+        {isExpanded && (
+          <View style={styles.logDetails}>
+            <View style={[styles.divider, { backgroundColor: colors.border }]} />
+
+            {log.response && (
+              <View style={styles.responseSection}>
+                <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                  Response:
+                </Text>
+                <Text style={[styles.responseText, { color: colors.text }]}>
+                  {log.response}
+                </Text>
+              </View>
+            )}
+
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>
+              Query Steps ({log.entries.length}):
+            </Text>
+            <View style={styles.entriesContainer}>
+              {log.entries.map((entry, index) => (
+                <LogEntryItem key={`${log.id}-${entry.id || index}`} entry={entry} />
+              ))}
+            </View>
+          </View>
+        )}
+      </View>
+    </TouchableOpacity>
+  );
+});
+
+LogCard.displayName = "LogCard";
+
+// ==================================================================================
+// SECTION HEADER COMPONENT
+// ==================================================================================
+
+const SectionHeader: React.FC<{ title: string; count: number }> = ({ title, count }) => {
+  const { colors } = useGlassTheme();
+
+  return (
+    <View style={styles.sectionHeader}>
+      <Text style={[styles.sectionHeaderText, { color: colors.text }]}>
+        {title}
+      </Text>
+      <View style={[styles.countBadge, { backgroundColor: colors.accent + "20" }]}>
+        <Text style={[styles.countBadgeText, { color: colors.accent }]}>
+          {count}
+        </Text>
+      </View>
+    </View>
+  );
+};
+
+// ==================================================================================
+// EMPTY STATE
+// ==================================================================================
+
+const EmptyState: React.FC = () => {
+  const { getGlassStyle, colors } = useGlassTheme();
+
+  return (
+    <View style={[getGlassStyle("card", "regular", "roundedRect"), styles.emptyContainer]}>
+      <Text style={styles.emptyIcon}>🔍</Text>
+      <Text style={[styles.emptyTitle, { color: colors.text }]}>
+        No DNS Queries Yet
+      </Text>
+      <Text style={[styles.emptySubtitle, { color: colors.muted }]}>
+        Send a message to see DNS query logs appear here. All query attempts and
+        methods will be tracked.
+      </Text>
+    </View>
+  );
+};
+
+// ==================================================================================
+// MAIN LOGS COMPONENT
+// ==================================================================================
 
 export function Logs() {
-  const { colors } = useAppTheme();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
+  const { colors } = useGlassTheme();
   const [logs, setLogs] = useState<DNSQueryLog[]>([]);
-  const [refreshing, setRefreshing] = useState(false);
   const [expandedLogs, setExpandedLogs] = useState<Set<string>>(new Set());
+  const [filter, setFilter] = useState<FilterType>("all");
+  const [sort, setSort] = useState<SortType>("newest");
+  const [refreshing, setRefreshing] = useState(false);
+
+  const metrics = usePerformanceMonitoring();
+  const actionSheet = useGlassBottomSheet();
+  const selectedLogRef = useRef<DNSQueryLog | null>(null);
 
   useEffect(() => {
     loadLogs();
 
-    // Subscribe to log updates
     const unsubscribe = DNSLogService.subscribe((updatedLogs) => {
       setLogs(updatedLogs);
     });
@@ -47,13 +460,13 @@ export function Logs() {
     setLogs(DNSLogService.getLogs());
   };
 
-  const handleRefresh = async () => {
+  const handleRefresh = useCallback(async () => {
     setRefreshing(true);
     await loadLogs();
     setRefreshing(false);
-  };
+  }, []);
 
-  const toggleExpanded = (logId: string) => {
+  const toggleExpanded = useCallback((logId: string) => {
     setExpandedLogs((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(logId)) {
@@ -63,11 +476,37 @@ export function Logs() {
       }
       return newSet;
     });
-  };
+  }, []);
 
-  const clearLogs = () => {
+  const handleLogLongPress = useCallback((log: DNSQueryLog) => {
+    selectedLogRef.current = log;
+    actionSheet.show();
+  }, [actionSheet]);
+
+  const handleDeleteLog = useCallback(() => {
+    if (!selectedLogRef.current) return;
+
+    const log = selectedLogRef.current;
     Alert.alert(
-      "Clear Logs",
+      "Delete Log",
+      `Delete query log for "${log.query}"?`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            // TODO: Implement single log deletion in DNSLogService
+            console.log("Delete log:", log.id);
+          },
+        },
+      ],
+    );
+  }, []);
+
+  const handleClearAllLogs = useCallback(() => {
+    Alert.alert(
+      "Clear All Logs",
       "Are you sure you want to clear all DNS query logs?",
       [
         { text: "Cancel", style: "cancel" },
@@ -81,284 +520,290 @@ export function Logs() {
         },
       ],
     );
-  };
+  }, []);
 
-  const renderLogEntry = (entry: DNSLogEntry, parentId?: string) => {
-    const statusIcon = DNSLogService.getStatusIcon(entry.status);
-    const methodColor = DNSLogService.getMethodColor(entry.method);
+  // Filter and sort logs
+  const processedLogs = useMemo(() => {
+    let filtered = logs;
 
-    return (
-      <View key={`${parentId}-${entry.id}`} style={styles.logEntry}>
-        <View style={styles.entryHeader}>
-          <Text style={styles.entryIcon}>{statusIcon}</Text>
-          <View
-            style={[
-              styles.methodBadge,
-              { backgroundColor: methodColor + "20" },
-            ]}
-          >
-            <Text style={[styles.methodText, { color: methodColor }]}>
-              {entry.method?.toUpperCase() || "UNKNOWN"}
-            </Text>
-          </View>
-          {entry.duration !== undefined && (
-            <Text style={[styles.duration, { color: colors.text + "80" }]}>
-              {DNSLogService.formatDuration(entry.duration)}
-            </Text>
-          )}
-        </View>
-        <Text style={[styles.entryMessage, { color: colors.text }]}>
-          {entry.message || "No message"}
-        </Text>
-        {entry.details && (
-          <Text style={[styles.entryDetails, { color: colors.text + "80" }]}>
-            {entry.details}
-          </Text>
-        )}
-        {entry.error && (
-          <Text style={[styles.entryError, { color: "#FF5252" }]}>
-            Error: {entry.error}
-          </Text>
-        )}
-      </View>
-    );
-  };
+    // Apply filter
+    if (filter !== "all") {
+      filtered = logs.filter((log) => log.finalStatus === filter);
+    }
 
-  const renderQueryLog = ({ item }: { item: DNSQueryLog }) => {
-    const isExpanded = expandedLogs.has(item.id);
-    const isActive = item.finalStatus === "pending";
-    const statusColor =
-      item.finalStatus === "success"
-        ? "#4CAF50"
-        : item.finalStatus === "failure"
-          ? "#FF453A"
-          : "#34C759"; // Success green
+    // Apply sort
+    const sorted = [...filtered].sort((a, b) => {
+      switch (sort) {
+        case "oldest":
+          return a.startTime.getTime() - b.startTime.getTime();
+        case "duration":
+          return (b.totalDuration || 0) - (a.totalDuration || 0);
+        case "newest":
+        default:
+          return b.startTime.getTime() - a.startTime.getTime();
+      }
+    });
 
-    return (
-      <TouchableOpacity
-        onPress={() => toggleExpanded(item.id)}
-        style={styles.logItemWrapper}
-        activeOpacity={0.95}
-      >
-        <LiquidGlassWrapper
-          variant={isActive ? "interactive" : "regular"}
-          shape="roundedRect"
-          cornerRadius={12}
-          isInteractive={true}
-          style={[styles.logCard, isActive && styles.activeLogCard]}
-        >
-          <View style={styles.logHeader}>
-            <View style={styles.logHeaderLeft}>
-              <Text
-                style={[
-                  styles.queryText,
-                  { color: isDark ? "#FFFFFF" : "#000000" },
-                ]}
-                numberOfLines={1}
-              >
-                {item.query || "No query"}
-              </Text>
-              <View style={styles.logMeta}>
-                <Text
-                  style={[
-                    styles.timestamp,
-                    { color: isDark ? "#AEAEB2" : "#6D6D70" },
-                  ]}
-                >
-                  {new Date(item.startTime).toLocaleTimeString()}
-                </Text>
-                {item.finalMethod && (
-                  <LiquidGlassWrapper
-                    variant="interactive"
-                    shape="capsule"
-                    style={[
-                      styles.methodBadge,
-                      { backgroundColor: "rgba(0, 122, 255, 0.15)" },
-                    ]}
-                  >
-                    <Text style={[styles.methodText, { color: "#007AFF" }]}>
-                      {item.finalMethod?.toUpperCase() || "UNKNOWN"}
-                    </Text>
-                  </LiquidGlassWrapper>
-                )}
-                {item.totalDuration !== undefined && (
-                  <Text
-                    style={[
-                      styles.duration,
-                      { color: isDark ? "#8E8E93" : "#8E8E93" },
-                    ]}
-                  >
-                    {DNSLogService.formatDuration(item.totalDuration)}
-                  </Text>
-                )}
-              </View>
-            </View>
-            <View
-              style={[styles.statusIndicator, { backgroundColor: statusColor }]}
-            >
-              {isActive && <ActivityIndicator size="small" color="white" />}
-              {!isActive && (
-                <Text style={styles.statusText}>
-                  {item.finalStatus === "success"
-                    ? "✓"
-                    : item.finalStatus === "failure"
-                      ? "✗"
-                      : "?"}
-                </Text>
-              )}
-            </View>
-          </View>
+    return sorted;
+  }, [logs, filter, sort]);
 
-          {isExpanded && (
-            <View style={styles.logDetails}>
-              <View
-                style={[styles.divider, { backgroundColor: colors.border }]}
-              />
+  // Separate active and completed logs
+  const activeLogs = useMemo(
+    () => processedLogs.filter((log) => log.finalStatus === "pending"),
+    [processedLogs],
+  );
 
-              {item.response && (
-                <View style={styles.responseSection}>
-                  <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                    Response:
-                  </Text>
-                  <Text
-                    style={[styles.responseText, { color: colors.text + "CC" }]}
-                    numberOfLines={3}
-                  >
-                    {item.response || "No response"}
-                  </Text>
-                </View>
-              )}
+  const completedLogs = useMemo(
+    () => processedLogs.filter((log) => log.finalStatus !== "pending"),
+    [processedLogs],
+  );
 
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                Query Steps:
-              </Text>
-              <ScrollView style={styles.entriesScroll} nestedScrollEnabled>
-                {item.entries.map((entry, index) => (
-                  <View key={`${item.id}-${entry.id || index}`}>
-                    {renderLogEntry(entry, item.id)}
-                  </View>
-                ))}
-              </ScrollView>
-            </View>
-          )}
-        </LiquidGlassWrapper>
-      </TouchableOpacity>
-    );
-  };
+  // Build FlashList data with sections
+  const listData: LogListItem[] = useMemo(() => {
+    const items: LogListItem[] = [];
+
+    // Timeline
+    if (logs.length > 0) {
+      items.push({ type: "timeline", id: "timeline" });
+    }
+
+    // Active queries section
+    if (activeLogs.length > 0) {
+      items.push({
+        type: "header",
+        id: "active-header",
+        title: "Active Queries",
+        count: activeLogs.length,
+      });
+      activeLogs.forEach((log) => {
+        items.push({ type: "log", id: log.id, data: log });
+      });
+    }
+
+    // Completed queries section
+    if (completedLogs.length > 0) {
+      items.push({
+        type: "header",
+        id: "completed-header",
+        title: "Query History",
+        count: completedLogs.length,
+      });
+      completedLogs.forEach((log) => {
+        items.push({ type: "log", id: log.id, data: log });
+      });
+    }
+
+    // Empty state
+    if (items.length === 0) {
+      items.push({ type: "empty", id: "empty" });
+    }
+
+    return items;
+  }, [logs, activeLogs, completedLogs]);
+
+  const renderItem: ListRenderItem<LogListItem> = useCallback(
+    ({ item }) => {
+      switch (item.type) {
+        case "timeline":
+          return <TimelineRibbon logs={logs} />;
+
+        case "header":
+          return <SectionHeader title={item.title!} count={item.count!} />;
+
+        case "log":
+          return (
+            <LogCard
+              log={item.data!}
+              isExpanded={expandedLogs.has(item.id)}
+              onToggle={() => toggleExpanded(item.id)}
+              onLongPress={() => handleLogLongPress(item.data!)}
+            />
+          );
+
+        case "empty":
+          return <EmptyState />;
+
+        default:
+          return null;
+      }
+    },
+    [logs, expandedLogs, toggleExpanded, handleLogLongPress],
+  );
+
+  const getItemType = useCallback((item: LogListItem) => item.type, []);
 
   return (
-    <Form.List navigationTitle="DNS Query Logs">
-      {logs.length === 0 ? (
-        <Form.Section>
-          <LiquidGlassWrapper
-            variant="regular"
-            shape="roundedRect"
-            cornerRadius={12}
-            style={styles.emptyStateContainer}
-          >
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyIcon}>🔍</Text>
-              <Text
-                style={[
-                  styles.emptyTitle,
-                  { color: isDark ? "#FFFFFF" : "#000000" },
-                ]}
-              >
-                No DNS Queries Yet
-              </Text>
-              <Text
-                style={[
-                  styles.emptySubtitle,
-                  { color: isDark ? "#AEAEB2" : "#6D6D70" },
-                ]}
-              >
-                Send a message to see DNS query logs appear here. All query
-                attempts and methods will be tracked.
-              </Text>
-            </View>
-          </LiquidGlassWrapper>
-        </Form.Section>
-      ) : (
-        <Form.Section
-          title={`DNS Query History`}
-          footer={`${logs.length} quer${logs.length === 1 ? "y" : "ies"} logged`}
-        >
-          <View style={styles.logsList}>
-            {logs.map((item) => (
-              <View key={item.id}>{renderQueryLog({ item })}</View>
-            ))}
-          </View>
-        </Form.Section>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      {__DEV__ && (
+        <View style={styles.debugBar}>
+          <Text style={[styles.debugText, { color: colors.muted }]}>
+            Renders: {metrics.renderCount} | Last: {metrics.lastRenderTime}ms | Logs:{" "}
+            {logs.length}
+          </Text>
+        </View>
       )}
 
+      {/* Filter/Sort Controls */}
       {logs.length > 0 && (
-        <Form.Section title="Actions">
-          <Form.Item
-            title="Clear All Logs"
-            subtitle="Remove all DNS query history"
-            rightContent={
-              <LiquidGlassWrapper
-                variant="interactive"
-                shape="capsule"
-                style={styles.clearBadge}
-              >
-                <Text style={styles.clearIcon}>🗑️</Text>
-              </LiquidGlassWrapper>
-            }
-            onPress={clearLogs}
-            showChevron
-          />
-        </Form.Section>
+        <FilterControls
+          filter={filter}
+          sort={sort}
+          onFilterChange={setFilter}
+          onSortChange={setSort}
+        />
       )}
-    </Form.List>
+
+      {/* Logs List */}
+      <FlashList
+        data={listData}
+        renderItem={renderItem}
+        estimatedSize={140}
+        keyExtractor={(item) => item.id}
+        getItemType={getItemType}
+        onRefresh={handleRefresh}
+        refreshing={refreshing}
+        contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
+        removeClippedSubviews={Platform.OS === "android"}
+        maxToRenderPerBatch={10}
+        updateCellsBatchingPeriod={50}
+        windowSize={11}
+      />
+
+      {/* Log Actions Sheet */}
+      <GlassActionSheet
+        visible={actionSheet.visible}
+        onClose={actionSheet.hide}
+        title={selectedLogRef.current?.query || "DNS Query"}
+        message="Choose an action for this log entry"
+        actions={[
+          {
+            title: "Delete Log",
+            onPress: handleDeleteLog,
+            style: "destructive" as const,
+            icon: <Text>🗑️</Text>,
+          },
+          {
+            title: "Clear All Logs",
+            onPress: handleClearAllLogs,
+            style: "destructive" as const,
+            icon: <Text>⚠️</Text>,
+          },
+          {
+            title: "Cancel",
+            onPress: () => {},
+            style: "cancel" as const,
+          },
+        ]}
+      />
+    </View>
   );
 }
 
+// ==================================================================================
+// STYLES
+// ==================================================================================
+
 const styles = StyleSheet.create({
-  // New glass-based styles
-  emptyStateContainer: {
-    backgroundColor: "rgba(255, 255, 255, 0.05)",
-    marginHorizontal: 20,
-    padding: 32,
+  container: {
+    flex: 1,
   },
-  emptyIcon: {
-    fontSize: 48,
-    marginBottom: 16,
+  debugBar: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(255, 255, 255, 0.1)",
   },
-  emptyTitle: {
-    fontSize: 20,
-    fontWeight: "600",
-    marginBottom: 8,
-    textAlign: "center",
+  debugText: {
+    fontSize: 10,
+    fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
   },
-  emptySubtitle: {
-    fontSize: 16,
-    fontWeight: "400",
-    textAlign: "center",
-    lineHeight: 22,
+  listContent: {
+    paddingHorizontal: 16,
+    paddingBottom: 32,
   },
-  clearBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    backgroundColor: "rgba(255, 69, 58, 0.15)", // Notion red
+  controlsContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    gap: 12,
   },
-  clearIcon: {
-    fontSize: 16,
+  filterRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
   },
-  logsList: {
+  controlLabel: {
+    fontSize: 14,
+    fontWeight: "500",
+    minWidth: 50,
+  },
+  pillContainer: {
+    flex: 1,
+    flexDirection: "row",
     gap: 8,
+    flexWrap: "wrap",
   },
-  logItemWrapper: {
-    paddingHorizontal: 0,
+  pill: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  pillText: {
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  timelineContainer: {
+    padding: 16,
+    marginVertical: 16,
+  },
+  timelineTitle: {
+    fontSize: 14,
+    fontWeight: "600",
+    marginBottom: 12,
+  },
+  timelineChart: {
+    flexDirection: "row",
+    height: 50,
+    alignItems: "flex-end",
+    gap: 2,
+  },
+  timelineBar: {
+    flex: 1,
+    borderRadius: 2,
+    minHeight: 2,
+  },
+  timelineLabels: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 8,
+  },
+  timelineLabel: {
+    fontSize: 11,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 12,
+    paddingHorizontal: 4,
+  },
+  sectionHeaderText: {
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  countBadge: {
+    paddingHorizontal: 10,
     paddingVertical: 4,
+    borderRadius: 12,
+  },
+  countBadgeText: {
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  logCardWrapper: {
+    marginBottom: 12,
   },
   logCard: {
-    backgroundColor: "rgba(255, 255, 255, 0.05)",
     padding: 16,
-    marginHorizontal: 20,
-  },
-  activeLogCard: {
-    backgroundColor: "rgba(0, 122, 255, 0.1)", // iOS system blue for active
   },
   logHeader: {
     flexDirection: "row",
@@ -378,20 +823,21 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
+    flexWrap: "wrap",
   },
   timestamp: {
-    fontSize: 14,
+    fontSize: 13,
   },
   methodBadge: {
     paddingHorizontal: 8,
-    paddingVertical: 2,
+    paddingVertical: 3,
   },
   methodText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "600",
   },
   duration: {
-    fontSize: 14,
+    fontSize: 13,
   },
   statusIndicator: {
     width: 32,
@@ -423,13 +869,14 @@ const styles = StyleSheet.create({
   responseText: {
     fontSize: 14,
     lineHeight: 20,
+    opacity: 0.9,
   },
-  entriesScroll: {
-    maxHeight: 300,
+  entriesContainer: {
+    gap: 8,
   },
-  logEntry: {
-    marginBottom: 12,
+  logEntryItem: {
     paddingLeft: 8,
+    paddingVertical: 6,
   },
   entryHeader: {
     flexDirection: "row",
@@ -438,47 +885,42 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   entryIcon: {
-    fontSize: 16,
+    fontSize: 14,
   },
   entryMessage: {
-    fontSize: 14,
-    marginLeft: 24,
+    fontSize: 13,
+    marginLeft: 20,
   },
   entryDetails: {
-    fontSize: 12,
-    marginLeft: 24,
+    fontSize: 11,
+    marginLeft: 20,
     marginTop: 2,
   },
   entryError: {
-    fontSize: 12,
-    marginLeft: 24,
+    fontSize: 11,
+    marginLeft: 20,
     marginTop: 2,
   },
-  emptyState: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+  emptyContainer: {
+    marginHorizontal: 16,
+    marginVertical: 32,
     padding: 32,
+    alignItems: "center",
   },
-  emptyText: {
-    fontSize: 18,
+  emptyIcon: {
+    fontSize: 48,
+    marginBottom: 16,
+  },
+  emptyTitle: {
+    fontSize: 20,
+    fontWeight: "600",
     marginBottom: 8,
-  },
-  emptySubtext: {
-    fontSize: 14,
     textAlign: "center",
   },
-  clearButton: {
-    position: "absolute",
-    bottom: 20,
-    alignSelf: "center",
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 20,
-    borderWidth: 1,
-  },
-  clearButtonText: {
-    fontSize: 14,
-    fontWeight: "600",
+  emptySubtitle: {
+    fontSize: 16,
+    fontWeight: "400",
+    textAlign: "center",
+    lineHeight: 22,
   },
 });

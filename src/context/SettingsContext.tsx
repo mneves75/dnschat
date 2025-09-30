@@ -23,6 +23,7 @@ import {
   sanitizeDnsServer,
   resolveLocale,
 } from "./settingsStorage";
+import { AccessibilityConfig } from "./AccessibilityContext";
 import { DNSLogService } from "../services/dnsLogService";
 import { validateDNSServer } from "../services/dnsService";
 
@@ -44,8 +45,8 @@ interface SettingsContextValue {
   preferredLocale: string | null;
   availableLocales: SupportedLocaleOption[];
   updateLocale: (locale: string | null) => Promise<void>;
-  accessibility: import("./AccessibilityContext").AccessibilityConfig;
-  updateAccessibility: (config: import("./AccessibilityContext").AccessibilityConfig) => Promise<void>;
+  accessibility: AccessibilityConfig;
+  updateAccessibility: (config: AccessibilityConfig) => Promise<void>;
   loading: boolean;
 }
 

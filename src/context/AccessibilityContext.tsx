@@ -71,7 +71,11 @@ export function AccessibilityProvider({ children }: AccessibilityProviderProps) 
     checkScreenReader();
 
     // Check periodically for screen reader status changes
-    const interval = setInterval(checkScreenReader, 5000);
+    const interval = setInterval(() => {
+      if (mounted) {
+        checkScreenReader();
+      }
+    }, 5000);
 
     return () => {
       mounted = false;

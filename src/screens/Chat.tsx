@@ -12,10 +12,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { MessageList } from "../components/MessageList";
 import { ChatInput } from "../components/ChatInput";
 import { useChat } from "../context/ChatContext";
-import {
-  LiquidGlassWrapper,
-  useLiquidGlassCapabilities,
-} from "../components/LiquidGlassWrapper";
+import { UniversalGlassView } from "../components/glass/UniversalGlassView";
+import { useLiquidGlassAvailability } from "../components/glass/GlassCapabilityBridge";
 
 export function Chat() {
   const colorScheme = useColorScheme();
@@ -23,9 +21,8 @@ export function Chat() {
   const { currentChat, isLoading, error, sendMessage, clearError, createChat } =
     useChat();
 
-  // iOS 26 Liquid Glass capabilities
-  const { isSupported: glassSupported, supportsSwiftUIGlass } =
-    useLiquidGlassCapabilities();
+  // Liquid Glass capabilities
+  const { available: glassAvailable } = useLiquidGlassAvailability();
 
   useEffect(() => {
     // Create a new chat if none exists
@@ -72,29 +69,25 @@ export function Chat() {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 0}
       >
-        {Platform.OS === "ios" ? ( // Always use glass UI on iOS
+        {Platform.OS === "ios" && glassAvailable ? ( // Use glass UI when available
           <>
-            {/* iOS 26 Liquid Glass Message Area */}
-            <LiquidGlassWrapper
+            {/* Liquid Glass Message Area */}
+            <UniversalGlassView
               variant="regular"
               shape="roundedRect"
               cornerRadius={20}
-              sensorAware={true}
-              enableContainer={true}
               style={styles.glassMessageArea}
             >
               <MessageList
                 messages={currentChat?.messages || []}
                 isLoading={isLoading}
               />
-            </LiquidGlassWrapper>
+            </UniversalGlassView>
 
-            {/* iOS 26 Liquid Glass Chat Input */}
-            <LiquidGlassWrapper
+            {/* Liquid Glass Chat Input */}
+            <UniversalGlassView
               variant="prominent"
               shape="capsule"
-              isInteractive={true}
-              tintColor={isDark ? "#007AFF" : "#007AFF"} // iOS system blue
               style={styles.glassInputArea}
             >
               <ChatInput
@@ -102,10 +95,10 @@ export function Chat() {
                 isLoading={isLoading}
                 placeholder="Ask me anything..."
               />
-            </LiquidGlassWrapper>
+            </UniversalGlassView>
           </>
         ) : (
-          // Fallback for non-iOS or older iOS versions
+          // Fallback for non-iOS or when glass unavailable
           <>
             <MessageList
               messages={currentChat?.messages || []}

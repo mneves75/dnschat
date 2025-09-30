@@ -1,0 +1,254 @@
+---
+description: "Security best practices, encryption, and threat mitigation"
+---
+# Security Guidelines & Best Practices
+
+## Encryption (v2.0.0+)
+
+### Key Storage
+- **iOS**: Keychain via `react-native-keychain`
+- **Android**: Keystore via `react-native-keychain`
+- **Never**: Store encryption keys in AsyncStorage
+
+### Encryption Service
+[src/services/storageService.ts](mdc:src/services/storageService.ts)
+- **Algorithm**: AES-256-GCM
+- **Key Derivation**: PBKDF2 with 100,000 iterations
+- **Random IV**: Generated per encryption operation
+- **Authentication**: GCM provides authentication tag
+
+### Encrypted Data
+- All conversation history
+- User messages and LLM responses
+- Settings containing sensitive data
+- Backup files
+
+### Example Usage
+```typescript
+import { storageService } from '@/services/storageService';
+
+// Save encrypted
+await storageService.saveConversations(conversations);
+
+// Load decrypted
+const conversations = await storageService.loadConversations();
+```
+
+## DNS Security
+
+### Input Sanitization
+[modules/dns-native/constants.ts](mdc:modules/dns-native/constants.ts) - `sanitizeDNSMessageReference()`
+
+**Rules:**
+- Strip control characters (\\x00-\\x1F, \\x7F-\\x9F)
+- Remove DNS special chars (@ $ % ^ & * = + [ ] { } | \\ / : ; < > ? " ')
+- Convert to lowercase
+- Replace whitespace with hyphens
+- Enforce 63-character label limit
+- Prevent leading/trailing hyphens
+
+**Why:** Prevents DNS injection, buffer overflow, and protocol manipulation
+
+### DNS Server Validation
+
+**Whitelist** (in [src/services/dnsService.ts](mdc:src/services/dnsService.ts)):
+```typescript
+const ALLOWED_DNS_SERVERS = [
+  'ch.at',
+  'llm.pieter.com',
+  '8.8.8.8',        // Google
+  '8.8.4.4',        // Google
+  '1.1.1.1',        // Cloudflare
+  '1.0.0.1',        // Cloudflare
+];
+```
+
+**Validation:**
+- Check against whitelist
+- Validate IP address format
+- Strip and validate ports
+- Reject malformed servers
+
+**Why:** Prevents DNS redirection attacks and server spoofing
+
+### DNS Injection Prevention
+
+**Attack Vectors Mitigated:**
+- Null byte injection (stripped)
+- CRLF injection (control chars removed)
+- Label overflow (63-char limit enforced)
+- Special character exploitation (sanitized)
+- Server redirection (whitelist validation)
+
+**Example Attack Prevented:**
+```typescript
+// Attacker input
+"hello\\x00evil.com"
+
+// After sanitization
+"hello-evil-com"  // Sanitized to safe label
+
+// Invalid server rejected
+dnsService.query("msg", { server: "evil.com" })
+// Throws: "Invalid DNS server"
+```
+
+## Thread Safety
+
+### iOS Implementation
+[ios/DNSNative/](mdc:ios/DNSNative/)
+- NSLock protection for CheckedContinuation
+- Atomic cancellation flags
+- Proper Task cancellation in Swift
+
+### Android Implementation  
+[modules/dns-native/android/](mdc:modules/dns-native/android/)
+- Bounded ThreadPoolExecutor (prevents thread exhaustion)
+- Synchronized methods for shared state
+- Thread-safe collections
+
+### Race Condition Prevention
+- Single active query per domain
+- Cancellation before new query
+- Cleanup in finally blocks
+
+## Network Security
+
+### DNS-over-HTTPS (DoH)
+- **Encryption**: TLS 1.2+ required
+- **Provider**: Cloudflare (trusted CA)
+- **Privacy**: Prevents ISP monitoring
+- **Limitation**: Cannot reach ch.at custom TXT (disabled for ch.at)
+
+### Rate Limiting
+- 20 queries/minute per server (default)
+- Prevents abuse and DoS
+- Per-server tracking
+- Configurable limits
+
+### Timeout Configuration
+- Native DNS: 5 seconds
+- UDP/TCP: 5 seconds
+- HTTPS: 10 seconds
+- Prevents resource exhaustion
+
+## Data Privacy
+
+### Local Storage Only
+- No remote analytics
+- No crash reporting (unless explicitly added)
+- No user tracking
+- All data stays on device
+
+### Encrypted Backups
+- Export includes encryption
+- Import validates and decrypts
+- Backup files are encrypted JSON
+
+### Memory Management
+- Clear sensitive data after use
+- No debug logging of user messages in production
+- Proper disposal of crypto keys
+
+## Code Security
+
+### Input Validation Pattern
+```typescript
+function validateInput(input: string): string {
+  // 1. Type check
+  if (typeof input !== 'string') {
+    throw new Error('Input must be string');
+  }
+  
+  // 2. Length check
+  if (input.length > MAX_LENGTH) {
+    throw new Error('Input too long');
+  }
+  
+  // 3. Sanitize
+  const sanitized = sanitizeDNSMessageReference(input);
+  
+  // 4. Validate result
+  if (!sanitized) {
+    throw new Error('Input sanitization failed');
+  }
+  
+  return sanitized;
+}
+```
+
+### Error Handling
+```typescript
+try {
+  await riskyOperation();
+} catch (error) {
+  // 1. Log error (but not sensitive data)
+  console.error('Operation failed:', error.message);
+  
+  // 2. Don't expose internals to user
+  showUserError('An error occurred. Please try again.');
+  
+  // 3. Clean up resources
+  cleanup();
+}
+```
+
+## Secure Defaults
+
+### Configuration
+- Native DNS preferred (more secure than UDP)
+- HTTPS fallback enabled
+- Rate limiting enabled
+- Strict input validation
+
+### Constants
+[src/constants/appConstants.ts](mdc:src/constants/appConstants.ts)
+```typescript
+export const DNS_CONSTANTS = {
+  DEFAULT_DNS_SERVER: 'ch.at',
+  MAX_MESSAGE_LENGTH: 63,
+  RATE_LIMIT_PER_MINUTE: 20,
+  QUERY_TIMEOUT_MS: 5000,
+};
+```
+
+## Threat Model
+
+### In-Scope Threats
+✅ DNS injection attacks
+✅ Server redirection
+✅ Data at rest (encrypted)
+✅ Input validation bypass
+✅ Thread race conditions
+✅ Resource exhaustion
+
+### Out-of-Scope
+❌ Network traffic analysis (use DoH for additional privacy)
+❌ Device compromise (OS responsibility)
+❌ Physical access attacks
+❌ Side-channel attacks on crypto
+
+## Security Checklist
+
+When adding new features:
+- [ ] Sanitize all user inputs
+- [ ] Validate DNS servers against whitelist
+- [ ] Use encrypted storage for sensitive data
+- [ ] Implement proper error handling
+- [ ] Add timeout to network operations
+- [ ] Test with malicious inputs
+- [ ] Review thread safety
+- [ ] Check resource cleanup
+- [ ] No sensitive data in logs
+- [ ] Follow principle of least privilege
+
+## Vulnerability Reporting
+
+See [SECURITY.md](mdc:SECURITY.md) for vulnerability disclosure policy.
+
+## Compliance
+
+- **iOS**: Follows App Store security requirements
+- **Android**: Follows Google Play security requirements
+- **Data**: GDPR-friendly (no data collection)
+- **Privacy**: No tracking, analytics, or telemetry

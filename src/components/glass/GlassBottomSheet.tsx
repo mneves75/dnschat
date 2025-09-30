@@ -21,6 +21,7 @@ import {
   ViewStyle,
   Dimensions,
   Animated,
+  StyleProp,
 } from "react-native";
 import { PanGestureHandler, State } from "react-native-gesture-handler";
 import { LiquidGlassWrapper } from "../LiquidGlassWrapper";
@@ -42,7 +43,7 @@ interface GlassBottomSheetProps {
   /** Sheet subtitle */
   subtitle?: string;
   /** Custom sheet style */
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
   /** Sheet height (percentage of screen) */
   height?: number;
   /** Enable drag to dismiss */

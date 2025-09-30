@@ -1,49 +1,100 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Chat, Message } from "../types/chat";
 import uuid from "react-native-uuid";
+
+import { Chat, Message } from "../types/chat";
 import { EncryptionService } from "../utils/encryption";
 
 const CHATS_KEY = "@chat_dns_chats";
 const ENCRYPTION_VERSION_KEY = "@chat_dns_encryption_version";
+const CHAT_BACKUP_KEY = "@chat_dns_chats_backup";
+
+interface SerializedMessage {
+  id: string;
+  role: Message["role"];
+  content: string;
+  timestamp: string;
+  status: Message["status"];
+}
+
+interface SerializedChat {
+  id: string;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
+  messages?: SerializedMessage[];
+}
+
+interface EncryptedChatRecord {
+  id: string;
+  encryptionKeyId?: string;
+  encryptedData: string;
+  payloadVersion?: number;
+  title?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+interface EncryptedChatPayloadV1 {
+  version: 1;
+  chat: SerializedChat;
+}
+
+type RawChatRecord = EncryptedChatRecord | SerializedChat;
 
 export class StorageService {
+  private static readonly BACKUP_KEY_ID = '__backup_master__';
+
   static async saveChats(chats: Chat[]): Promise<void> {
     try {
-      // Ensure all chats have encryption keys
-      for (const chat of chats) {
-        const isEncrypted = await EncryptionService.isConversationEncrypted(chat.id);
-        if (!isEncrypted) {
-          await EncryptionService.generateConversationKey(chat.id);
-        }
+      // SECURITY FIX: Encrypt the backup snapshot to prevent plaintext exposure
+      // The backup is used for recovery when encryption keys are lost
+      const plainSnapshot = JSON.stringify(
+        chats.map((chat) => this.serializeChat(chat)),
+      );
+
+      // Ensure backup encryption key exists
+      const hasBackupKey = await EncryptionService.isConversationEncrypted(this.BACKUP_KEY_ID);
+      if (!hasBackupKey) {
+        await EncryptionService.generateConversationKey(this.BACKUP_KEY_ID);
       }
 
-      // Encrypt each chat individually
-      const encryptedChats: any[] = [];
+      // Encrypt the backup snapshot
+      const encryptedBackup = await EncryptionService.encryptConversation(
+        plainSnapshot,
+        this.BACKUP_KEY_ID
+      );
+      await AsyncStorage.setItem(CHAT_BACKUP_KEY, encryptedBackup);
+
+      const encryptedRecords: EncryptedChatRecord[] = [];
       for (const chat of chats) {
-        const chatData = {
+        // Ensure each conversation has a key before encrypting
+        const hasKey = await EncryptionService.isConversationEncrypted(chat.id);
+        if (!hasKey) {
+          await EncryptionService.generateConversationKey(chat.id);
+        }
+
+        const payload: EncryptedChatPayloadV1 = {
+          version: 1,
+          chat: this.serializeChat(chat),
+        };
+
+        const encryptedData = await EncryptionService.encryptConversation(
+          JSON.stringify(payload),
+          chat.id,
+        );
+
+        encryptedRecords.push({
           id: chat.id,
+          encryptionKeyId: chat.id,
+          encryptedData,
+          payloadVersion: 1,
           title: chat.title,
           createdAt: chat.createdAt.toISOString(),
           updatedAt: chat.updatedAt.toISOString(),
-          isEncrypted: true,
-          encryptionKeyId: chat.id,
-        };
-
-        const encryptedChatData = await EncryptionService.encryptConversation(
-          JSON.stringify(chatData),
-          chat.id
-        );
-
-        encryptedChats.push({
-          ...chatData,
-          encryptedData: encryptedChatData,
         });
       }
 
-      const serializedChats = JSON.stringify(encryptedChats);
-      await AsyncStorage.setItem(CHATS_KEY, serializedChats);
-
-      // Store encryption version for future migrations
+      await AsyncStorage.setItem(CHATS_KEY, JSON.stringify(encryptedRecords));
       await AsyncStorage.setItem(ENCRYPTION_VERSION_KEY, "1.0");
     } catch (error) {
       console.error("Error saving chats:", error);
@@ -52,67 +103,219 @@ export class StorageService {
   }
 
   static async loadChats(): Promise<Chat[]> {
+    const serializedChats = await AsyncStorage.getItem(CHATS_KEY);
+    if (!serializedChats) {
+      return [];
+    }
+
     try {
-      const serializedChats = await AsyncStorage.getItem(CHATS_KEY);
-      if (!serializedChats) {
+      const rawRecords: RawChatRecord[] = JSON.parse(serializedChats);
+      if (!Array.isArray(rawRecords) || rawRecords.length === 0) {
         return [];
       }
 
-      const encryptedChats = JSON.parse(serializedChats);
+      const resolvedChats: Chat[] = [];
+      let legacyDetected = false;
+      const failedDecryptions: string[] = [];
+      const backupMap = await this.loadBackupChatMap();
 
-      // Decrypt each chat individually
-      const chats: Chat[] = [];
-      for (const encryptedChat of encryptedChats) {
-        try {
-          const decryptedData = await EncryptionService.decryptConversation(
-            encryptedChat.encryptedData,
-            encryptedChat.id
-          );
+      for (const record of rawRecords) {
+        if (this.isEncryptedRecord(record)) {
+          const encryptionKeyId = record.encryptionKeyId ?? record.id;
+          if (!record.encryptedData || !encryptionKeyId) {
+            legacyDetected = true;
+            const legacyChat = this.deserializeLegacyChat(record as SerializedChat);
+            resolvedChats.push(legacyChat);
+            continue;
+          }
 
-          const chatData = JSON.parse(decryptedData, (key, value) => {
-            if (key === "createdAt" || key === "updatedAt" || key === "timestamp") {
-              return new Date(value);
+          try {
+            const decrypted = await EncryptionService.decryptConversation(
+              record.encryptedData,
+              encryptionKeyId,
+            );
+            const payload = JSON.parse(decrypted) as EncryptedChatPayloadV1;
+            resolvedChats.push(this.deserializeChatPayload(payload));
+          } catch (error) {
+            failedDecryptions.push(record.id);
+            const recovered = this.recoverChatFromBackup(record.id, backupMap);
+            if (recovered) {
+              resolvedChats.push(recovered);
+              legacyDetected = true;
+            } else if (this.looksLikeLegacyChat(record)) {
+            const legacyChat = this.deserializeLegacyChat(
+                record as unknown as SerializedChat,
+              );
+              resolvedChats.push(legacyChat);
+              legacyDetected = true;
             }
-            return value;
-          });
-
-          chats.push(chatData as Chat);
-        } catch (error) {
-          console.error(`Failed to decrypt chat ${encryptedChat.id}:`, error);
-          // Skip corrupted chats instead of failing completely
-          continue;
+          }
+        } else if (this.looksLikeLegacyChat(record)) {
+          legacyDetected = true;
+          resolvedChats.push(this.deserializeLegacyChat(record));
         }
       }
 
-      return chats;
+      if (failedDecryptions.length > 0) {
+        console.warn(
+          "⚠️ Failed to decrypt chats, attempting migration for:",
+          failedDecryptions,
+        );
+      }
+
+      if (legacyDetected) {
+        // Re-encrypt using the latest schema so we do not enter this path again
+        await this.saveChats(resolvedChats);
+      }
+
+      return resolvedChats;
     } catch (error) {
       console.error("Error loading chats:", error);
-      // Fallback to unencrypted data for backward compatibility
       return this.loadChatsUnencrypted();
     }
   }
 
   /**
    * Backward compatibility: Load unencrypted chats from older versions
+   * Also handles loading from encrypted backup
    */
   private static async loadChatsUnencrypted(): Promise<Chat[]> {
     try {
-      const serializedChats = await AsyncStorage.getItem("@chat_dns_chats_backup");
+      const serializedChats = await AsyncStorage.getItem(CHAT_BACKUP_KEY);
       if (!serializedChats) {
         return [];
       }
 
-      const chats = JSON.parse(serializedChats, (key, value) => {
-        if (key === "createdAt" || key === "updatedAt" || key === "timestamp") {
-          return new Date(value);
-        }
-        return value;
-      });
+      // Try to decrypt if this is an encrypted backup
+      try {
+        const decryptedBackup = await EncryptionService.decryptConversation(
+          serializedChats,
+          this.BACKUP_KEY_ID
+        );
+        const chats = JSON.parse(decryptedBackup) as SerializedChat[];
+        return chats.map((chat) => this.deserializeLegacyChat(chat));
+      } catch (decryptError) {
+        // If decryption fails, this might be a legacy plaintext backup
+        console.warn("⚠️ Backup decryption failed, trying plaintext:", decryptError);
 
-      return chats as Chat[];
+        // Try parsing as plaintext (legacy backup)
+        try {
+          const chats = JSON.parse(serializedChats) as SerializedChat[];
+          return chats.map((chat) => this.deserializeLegacyChat(chat));
+        } catch (parseError) {
+          console.error("Failed to parse backup as plaintext:", parseError);
+          return [];
+        }
+      }
     } catch (error) {
       console.error("Error loading unencrypted chats:", error);
       return [];
+    }
+  }
+
+  private static serializeChat(chat: Chat): SerializedChat {
+    return {
+      id: chat.id,
+      title: chat.title,
+      createdAt: chat.createdAt.toISOString(),
+      updatedAt: chat.updatedAt.toISOString(),
+      messages: chat.messages.map((message) => ({
+        id: message.id,
+        role: message.role,
+        content: message.content,
+        status: message.status,
+        timestamp: message.timestamp.toISOString(),
+      })),
+    };
+  }
+
+  private static deserializeChatPayload(payload: EncryptedChatPayloadV1): Chat {
+    if (payload.version !== 1) {
+      throw new Error(`Unsupported chat payload version: ${payload.version}`);
+    }
+
+    return this.deserializeLegacyChat(payload.chat);
+  }
+
+  private static deserializeLegacyChat(data: SerializedChat): Chat {
+    return {
+      id: data.id,
+      title: data.title,
+      createdAt: new Date(data.createdAt),
+      updatedAt: new Date(data.updatedAt),
+      messages: (data.messages ?? []).map((message) => ({
+        id: message.id,
+        role: message.role,
+        content: message.content,
+        status: message.status,
+        timestamp: new Date(message.timestamp),
+      })),
+    };
+  }
+
+  private static looksLikeLegacyChat(record: any): record is SerializedChat {
+    return (
+      record &&
+      typeof record === "object" &&
+      typeof record.id === "string" &&
+      typeof record.title === "string" &&
+      typeof record.createdAt === "string" &&
+      typeof record.updatedAt === "string"
+    );
+  }
+
+  private static isEncryptedRecord(record: any): record is EncryptedChatRecord {
+    return (
+      record &&
+      typeof record === "object" &&
+      typeof record.id === "string" &&
+      typeof record.encryptedData === "string"
+    );
+  }
+
+  private static recoverChatFromBackup(
+    chatId: string,
+    backupMap: Map<string, SerializedChat>,
+  ): Chat | null {
+    const serialized = backupMap.get(chatId);
+    if (!serialized) {
+      return null;
+    }
+
+    return this.deserializeLegacyChat(serialized);
+  }
+
+  private static async loadBackupChatMap(): Promise<Map<string, SerializedChat>> {
+    try {
+      const serialized = await AsyncStorage.getItem(CHAT_BACKUP_KEY);
+      if (!serialized) {
+        return new Map();
+      }
+
+      // Try to decrypt the encrypted backup
+      let plaintext: string;
+      try {
+        plaintext = await EncryptionService.decryptConversation(
+          serialized,
+          this.BACKUP_KEY_ID
+        );
+      } catch (decryptError) {
+        // If decryption fails, might be legacy plaintext backup
+        console.warn("⚠️ Backup decryption failed, trying plaintext");
+        plaintext = serialized;
+      }
+
+      const parsed = JSON.parse(plaintext) as SerializedChat[];
+      const map = new Map<string, SerializedChat>();
+      for (const chat of parsed) {
+        if (chat?.id) {
+          map.set(chat.id, chat);
+        }
+      }
+      return map;
+    } catch (error) {
+      console.warn("⚠️ Unable to read chat backup snapshot:", error);
+      return new Map();
     }
   }
 
