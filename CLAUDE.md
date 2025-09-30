@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 React Native mobile app providing ChatGPT-like interface via DNS TXT queries. Features production-grade AES-256-GCM encryption with iOS Keychain/Android Keystore, iOS 26+ Liquid Glass UI, native DNS modules with bounds-checked parsing, and comprehensive security hardening (v2.1.0+).
 
-**Current Version**: 2.0.0 (security features from v2.1.0 implemented)
+**Current Version**: 2.1.0 (security features from v2.1.0 implemented)
 **Primary Documentation**: README.md, SECURITY.md, CHANGELOG.md
 
 ## Core Commands

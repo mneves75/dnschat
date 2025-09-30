@@ -53,6 +53,12 @@ export default function AppStackLayout() {
           title: t('devLogs.title'),
         }}
       />
+      <Stack.Screen
+        name="glass-debug"
+        options={{
+          title: 'Glass Debug',
+        }}
+      />
     </Stack>
   );
 }

@@ -9,6 +9,8 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useHeaderHeight } from "@react-navigation/elements";
 import { MessageList } from "../components/MessageList";
 import { ChatInput } from "../components/ChatInput";
 import { useChat } from "../context/ChatContext";
@@ -23,13 +25,15 @@ export function Chat() {
 
   // Liquid Glass capabilities
   const { available: glassAvailable } = useLiquidGlassAvailability();
+  const insets = useSafeAreaInsets();
+  const headerHeight = useHeaderHeight();
 
   useEffect(() => {
     // Create a new chat if none exists
     if (!currentChat) {
       createChat();
     }
-  }, [currentChat]);
+  }, [currentChat, createChat]);
 
   useEffect(() => {
     // Show error alert when error occurs
@@ -54,20 +58,26 @@ export function Chat() {
 
   return (
     <SafeAreaView
+      edges={["bottom", "left", "right"]}
       style={[
         styles.container,
-        isDark ? styles.darkContainer : styles.lightContainer,
+        { backgroundColor: isDark ? "#000000" : "#FFFFFF" },
       ]}
     >
       <StatusBar
         barStyle={isDark ? "light-content" : "dark-content"}
-        backgroundColor={isDark ? "#000000" : "#FFFFFF"}
+        backgroundColor="transparent"
+        translucent
       />
 
       <KeyboardAvoidingView
         style={styles.content}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 0}
+        keyboardVerticalOffset={
+          Platform.OS === "ios"
+            ? Math.max(headerHeight, 0) + insets.top
+            : 0
+        }
       >
         {Platform.OS === "ios" && glassAvailable ? ( // Use glass UI when available
           <>
@@ -121,15 +131,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  lightContainer: {
-    backgroundColor: "transparent", // Transparent for glass effects
-  },
-  darkContainer: {
-    backgroundColor: "transparent", // Transparent for glass effects
-  },
   content: {
     flex: 1,
     gap: 8, // Spacing between glass elements
+    paddingBottom: Platform.OS === "android" ? 16 : 0,
   },
   glassMessageArea: {
     flex: 1,

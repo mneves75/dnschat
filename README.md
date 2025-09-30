@@ -158,7 +158,7 @@ ios/DNSNative/         # iOS native DNS module
 modules/dns-native/    # Android native DNS module
 ```
 
-## 🔐 Security & Stability (v2.0.1+)
+## 🔐 Security & Stability (v2.1.0+)
 
 ### Critical Issues Fixed
 

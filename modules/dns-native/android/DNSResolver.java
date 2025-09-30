@@ -25,12 +25,12 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 import org.xbill.DNS.*;
 
@@ -39,6 +39,8 @@ public class DNSResolver {
     private static final String DNS_SERVER = "ch.at";
     private static final int DNS_PORT = 53;
     private static final int QUERY_TIMEOUT_MS = 10000;
+    private static final int MAX_LABEL_LENGTH = 63;
+    private static final int MAX_QNAME_LENGTH = 255;
     
     private final Executor executor = Executors.newCachedThreadPool();
     private final ConnectivityManager connectivityManager;
@@ -64,10 +66,18 @@ public class DNSResolver {
     }
 
     public CompletableFuture<List<String>> queryTXT(String domain, String message) {
-        // Sanitize message to match iOS implementation for cross-platform consistency
-        final String sanitizedMessage = sanitizeMessage(message);
-        final String queryId = domain + "-" + sanitizedMessage;
-        
+        // Normalize the fully-qualified query name provided by the JS bridge
+        final String queryName;
+        try {
+            queryName = normalizeQueryName(message);
+        } catch (DNSError error) {
+            CompletableFuture<List<String>> failed = new CompletableFuture<>();
+            failed.completeExceptionally(error);
+            return failed;
+        }
+
+        final String queryId = domain + "-" + queryName;
+
         // Check for existing query (deduplication) - matches iOS behavior
         CompletableFuture<List<String>> existingQuery = activeQueries.get(queryId);
         if (existingQuery != null) {
@@ -83,7 +93,7 @@ public class DNSResolver {
         Log.d(TAG, "📊 DNS: Active queries count: " + activeQueries.size());
         
         // 3-tier fallback strategy (matches iOS): Raw UDP → DNS-over-HTTPS → Legacy
-        queryTXTRawUDP(sanitizedMessage, domain)
+        queryTXTRawUDP(queryName, domain)
             .thenAccept(txtRecords -> {
                 activeQueries.remove(queryId);
                 Log.d(TAG, "🧹 DNS: Query completed, active queries: " + activeQueries.size());
@@ -93,7 +103,7 @@ public class DNSResolver {
                 // Gate DoH: disable for ch.at, otherwise try DoH then legacy
                 if (domain != null && !domain.equalsIgnoreCase("ch.at")) {
                     Log.d(TAG, "🥈 DNS: Trying DNS-over-HTTPS (fallback 1)");
-                    queryTXTDNSOverHTTPS(sanitizedMessage)
+                    queryTXTDNSOverHTTPS(queryName)
                         .thenAccept(txtRecords -> {
                             activeQueries.remove(queryId);
                             Log.d(TAG, "🧹 DNS: Query completed (HTTPS), active queries: " + activeQueries.size());
@@ -101,7 +111,7 @@ public class DNSResolver {
                         })
                         .exceptionally(err2 -> {
                             Log.d(TAG, "🥉 DNS: Trying legacy DNS (fallback 2)");
-                            queryTXTLegacy(domain, sanitizedMessage)
+                            queryTXTLegacy(domain, queryName)
                                 .thenAccept(txtRecords -> {
                                     activeQueries.remove(queryId);
                                     Log.d(TAG, "🧹 DNS: Query completed (legacy), active queries: " + activeQueries.size());
@@ -117,7 +127,7 @@ public class DNSResolver {
                         });
                 } else {
                     Log.d(TAG, "🥈 DNS: Skipping DoH for ch.at, trying legacy DNS");
-                    queryTXTLegacy(domain, sanitizedMessage)
+                    queryTXTLegacy(domain, queryName)
                         .thenAccept(txtRecords -> {
                             activeQueries.remove(queryId);
                             Log.d(TAG, "🧹 DNS: Query completed (legacy), active queries: " + activeQueries.size());
@@ -136,11 +146,11 @@ public class DNSResolver {
     }
 
 
-    private CompletableFuture<List<String>> queryTXTLegacy(String domain, String message) {
+    private CompletableFuture<List<String>> queryTXTLegacy(String domain, String queryName) {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 // Use dnsjava for older Android versions
-                Lookup lookup = new Lookup(message, Type.TXT);
+                Lookup lookup = new Lookup(queryName, Type.TXT);
                 
                 // Configure custom resolver
                 SimpleResolver resolver = new SimpleResolver(domain);
@@ -182,15 +192,14 @@ public class DNSResolver {
     }
 
     /**
-     * Send a raw UDP DNS TXT query using the entire message as a single DNS label,
-     * mirroring the iOS implementation and the user's dig usage.
+     * Send a raw UDP DNS TXT query for the fully-qualified domain name provided by the JS bridge.
      */
-    private CompletableFuture<List<String>> queryTXTRawUDP(String message, String server) {
+    private CompletableFuture<List<String>> queryTXTRawUDP(String queryName, String server) {
         return CompletableFuture.supplyAsync(() -> {
             DatagramSocket socket = null;
             try {
                 // Build DNS query packet
-                byte[] query = buildDnsQuery(message);
+                byte[] query = buildDnsQuery(queryName);
 
                 // Send UDP packet
                 socket = new DatagramSocket();
@@ -226,17 +235,11 @@ public class DNSResolver {
         }, executor);
     }
 
-    private byte[] buildDnsQuery(String message) {
-        // DNS Header (12 bytes) + QNAME + QTYPE + QCLASS
-        byte[] label = message.getBytes(StandardCharsets.UTF_8);
-        if (label.length > 63) {
-            // Basic guard to avoid invalid label length; truncate conservatively
-            byte[] truncated = new byte[63];
-            System.arraycopy(label, 0, truncated, 0, 63);
-            label = truncated;
-        }
+    private byte[] buildDnsQuery(String queryName) throws DNSError {
+        byte[] qname = encodeDomainName(queryName);
 
-        ByteBuffer buffer = ByteBuffer.allocate(12 + 1 + label.length + 1 + 2 + 2);
+        // DNS Header (12 bytes) + QNAME + QTYPE + QCLASS
+        ByteBuffer buffer = ByteBuffer.allocate(12 + qname.length + 2 + 2);
 
         int transactionId = (int) (Math.random() * 0xFFFF) & 0xFFFF;
         buffer.putShort((short) transactionId);      // ID
@@ -246,16 +249,117 @@ public class DNSResolver {
         buffer.putShort((short) 0);                  // NSCOUNT
         buffer.putShort((short) 0);                  // ARCOUNT
 
-        // QNAME: single label = message, then 0 terminator
-        buffer.put((byte) (label.length & 0xFF));
-        buffer.put(label);
-        buffer.put((byte) 0x00);
+        buffer.put(qname);                          // Encoded domain name
 
         // QTYPE = TXT (16), QCLASS = IN (1)
         buffer.putShort((short) 16);
         buffer.putShort((short) 1);
 
         return buffer.array();
+    }
+
+    private byte[] encodeDomainName(String fqdn) throws DNSError {
+        String[] rawLabels = fqdn.split("\\.");
+        if (rawLabels.length == 0) {
+            throw new DNSError(DNSError.Type.QUERY_FAILED, "Query name is invalid");
+        }
+
+        List<byte[]> labelBytes = new ArrayList<>();
+        int totalLength = 1; // null terminator
+
+        for (String rawLabel : rawLabels) {
+            String label = rawLabel.trim();
+            if (label.isEmpty()) {
+                throw new DNSError(DNSError.Type.QUERY_FAILED, "Query name contains empty label");
+            }
+
+            String normalizedLabel = label.toLowerCase(Locale.US);
+            if (!isLabelSafe(normalizedLabel)) {
+                throw new DNSError(
+                    DNSError.Type.QUERY_FAILED,
+                    "Invalid characters in DNS label: " + label
+                );
+            }
+
+            byte[] bytes = normalizedLabel.getBytes(StandardCharsets.US_ASCII);
+            if (bytes.length > MAX_LABEL_LENGTH) {
+                throw new DNSError(DNSError.Type.QUERY_FAILED, "DNS label exceeds 63 bytes: " + label);
+            }
+
+            labelBytes.add(bytes);
+            totalLength += 1 + bytes.length;
+            if (totalLength > MAX_QNAME_LENGTH) {
+                throw new DNSError(DNSError.Type.QUERY_FAILED, "DNS query name exceeds 255 bytes");
+            }
+        }
+
+        ByteBuffer buffer = ByteBuffer.allocate(totalLength);
+        for (byte[] label : labelBytes) {
+            buffer.put((byte) (label.length & 0xFF));
+            buffer.put(label);
+        }
+        buffer.put((byte) 0x00);
+
+        return buffer.array();
+    }
+
+    private String normalizeQueryName(String message) throws DNSError {
+        if (message == null) {
+            throw new DNSError(DNSError.Type.QUERY_FAILED, "Query name cannot be null");
+        }
+
+        String trimmed = message.trim();
+        if (trimmed.isEmpty()) {
+            throw new DNSError(DNSError.Type.QUERY_FAILED, "Query name cannot be empty");
+        }
+
+        String normalizedInput = trimmed.toLowerCase(Locale.US);
+
+        // Validate structure and labels (same rules as encodeDomainName)
+        String[] labels = normalizedInput.split("\\.");
+        if (labels.length == 0) {
+            throw new DNSError(DNSError.Type.QUERY_FAILED, "Query name is invalid");
+        }
+
+        int totalLength = 1; // null terminator
+        StringBuilder normalized = new StringBuilder();
+        for (int i = 0; i < labels.length; i++) {
+            String label = labels[i].trim();
+            if (label.isEmpty()) {
+                throw new DNSError(DNSError.Type.QUERY_FAILED, "Query name contains empty label");
+            }
+
+            if (!isLabelSafe(label)) {
+                throw new DNSError(DNSError.Type.QUERY_FAILED, "Invalid characters in DNS label: " + label);
+            }
+
+            if (label.length() > MAX_LABEL_LENGTH) {
+                throw new DNSError(DNSError.Type.QUERY_FAILED, "DNS label exceeds 63 bytes: " + label);
+            }
+
+            if (normalized.length() > 0) {
+                normalized.append('.');
+            }
+            normalized.append(label);
+
+            totalLength += 1 + label.length();
+            if (totalLength > MAX_QNAME_LENGTH) {
+                throw new DNSError(DNSError.Type.QUERY_FAILED, "DNS query name exceeds 255 characters");
+            }
+        }
+
+        return normalized.toString();
+    }
+
+    private boolean isLabelSafe(String label) {
+        for (int i = 0; i < label.length(); i++) {
+            char ch = label.charAt(i);
+            if ((ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9') || ch == '-') {
+                continue;
+            }
+            return false;
+        }
+        return true;
     }
 
     private List<String> parseDnsTxtResponse(byte[] data) throws Exception {
@@ -406,14 +510,6 @@ public class DNSResolver {
             return connectivityManager.getActiveNetwork();
         }
         return null;
-    }
-
-    private String sanitizeMessage(String message) {
-        // Sanitization matching iOS implementation for cross-platform consistency
-        String trimmed = message == null ? "" : message.trim();
-        String capped = trimmed.length() > 200 ? trimmed.substring(0, 200) : trimmed;
-        String spacesReplaced = capped.replaceAll(" ", "-");
-        return spacesReplaced.toLowerCase();
     }
 
     public static class DNSCapabilities {

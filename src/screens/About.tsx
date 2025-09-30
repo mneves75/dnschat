@@ -6,11 +6,13 @@ import {
   StyleSheet,
   Linking,
   Image,
-  TouchableOpacity,
   Animated,
   ScrollView,
   Platform,
+  Alert,
+  Pressable,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useGlassTheme } from "../hooks/useGlassTheme";
 
 // Import package.json to get version
@@ -54,8 +56,17 @@ export function About() {
     extrapolate: "clamp",
   });
 
-  const openLink = (url: string) => {
-    Linking.openURL(url);
+  const openLink = async (url: string) => {
+    try {
+      const supported = await Linking.canOpenURL(url);
+      if (!supported) {
+        Alert.alert("Unable to open link", "No app can handle this link.");
+        return;
+      }
+      await Linking.openURL(url);
+    } catch (error: any) {
+      Alert.alert("Unable to open link", error?.message || String(error));
+    }
   };
 
   const credits: Credit[] = useMemo(() => [
@@ -99,15 +110,16 @@ export function About() {
   const styles = createStyles(colors);
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <Animated.ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        contentInsetAdjustmentBehavior="automatic"
         scrollEventThrottle={16}
         onScroll={Animated.event(
           [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-          { useNativeDriver: false }
+          { useNativeDriver: true }
         )}
       >
         {/* Header Section - Progressive Blur */}
@@ -257,7 +269,7 @@ export function About() {
           <Text style={styles.footerText}>© 2025 Marcus Neves • MIT Licensed</Text>
         </View>
       </Animated.ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -276,22 +288,24 @@ interface LinkItemProps {
 const LinkItem: React.FC<LinkItemProps> = React.memo(
   ({ title, subtitle, onPress, colors, isFirst, isLast }) => {
     return (
-      <TouchableOpacity
-        style={[
+      <Pressable
+        accessibilityRole="link"
+        onPress={onPress}
+        android_ripple={{ color: colors.accent + "22" }}
+        style={({ pressed }) => [
           linkItemStyles.linkItem,
           isFirst && linkItemStyles.linkItemFirst,
           isLast && linkItemStyles.linkItemLast,
           { borderBottomColor: colors.border },
+          pressed && linkItemStyles.linkItemPressed,
         ]}
-        onPress={onPress}
-        activeOpacity={0.7}
       >
         <View style={linkItemStyles.linkContent}>
           <Text style={[linkItemStyles.linkTitle, { color: colors.text }]}>{title}</Text>
           <Text style={[linkItemStyles.linkSubtitle, { color: colors.muted }]}>{subtitle}</Text>
         </View>
         <Text style={[linkItemStyles.chevron, { color: colors.muted }]}>›</Text>
-      </TouchableOpacity>
+      </Pressable>
     );
   }
 );
@@ -305,6 +319,9 @@ const linkItemStyles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  linkItemPressed: {
+    opacity: 0.7,
   },
   linkItemFirst: {
     paddingTop: 16,

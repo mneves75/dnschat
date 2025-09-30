@@ -242,10 +242,23 @@ export class NativeDNS implements NativeDNSModule {
     const seen = new Map<number, string>();
 
     for (const part of parts) {
-      if (seen.has(part.partNumber)) {
+      if (part.totalParts !== expectedTotal) {
         throw new DNSError(
           DNSErrorType.INVALID_RESPONSE,
-          'Duplicate part numbers detected in multi-part response',
+          `Inconsistent total parts. Expected ${expectedTotal}, received ${part.totalParts}`,
+        );
+      }
+
+      const existingContent = seen.get(part.partNumber);
+      if (existingContent !== undefined) {
+        if (existingContent === part.content) {
+          // Harmless retransmission; skip duplicates with identical payloads
+          continue;
+        }
+
+        throw new DNSError(
+          DNSErrorType.INVALID_RESPONSE,
+          `Conflicting content for part ${part.partNumber}`,
         );
       }
       seen.set(part.partNumber, part.content);

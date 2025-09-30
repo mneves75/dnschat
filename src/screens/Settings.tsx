@@ -1,8 +1,8 @@
 import React from "react";
 import {
   Alert,
-  Button,
   Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   Switch,
@@ -10,6 +10,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { DNSMethodPreference } from "../context/SettingsContext";
 import { useAppTheme } from "../theme";
@@ -51,6 +52,7 @@ const PREFERENCE_OPTIONS: Array<{
 
 export function Settings(): React.JSX.Element {
   const { colors } = useAppTheme();
+  const insets = useSafeAreaInsets();
   const {
     state: {
       dnsServer,
@@ -86,8 +88,16 @@ export function Settings(): React.JSX.Element {
     if (loading || savingDnsServer) {
       return;
     }
+
+    const trimmedServer = dnsServerInput.trim();
+    if (!trimmedServer) {
+      Alert.alert("Save Failed", "DNS server cannot be empty.");
+      setDnsServerInput(dnsServer);
+      return;
+    }
+
     setSavingDnsServer(true);
-    const result = await setDnsServer(dnsServerInput.trim());
+    const result = await setDnsServer(trimmedServer);
     setSavingDnsServer(false);
 
     if (!result.ok) {
@@ -95,8 +105,8 @@ export function Settings(): React.JSX.Element {
       return;
     }
 
-    Alert.alert("Saved", `DNS server updated to ${dnsServerInput.trim()}`);
-  }, [dnsServerInput, loading, savingDnsServer, setDnsServer]);
+    Alert.alert("Saved", `DNS server updated to ${trimmedServer}`);
+  }, [dnsServer, dnsServerInput, loading, savingDnsServer, setDnsServer]);
 
   const handleToggle = React.useCallback(
     (updater: (value: boolean) => Promise<{ ok: boolean; message?: string }> ) =>
@@ -184,9 +194,17 @@ export function Settings(): React.JSX.Element {
   }, [resetOnboarding]);
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>DNS Server</Text>
+    <ScrollView
+      contentContainerStyle={[styles.container, { paddingBottom: insets.bottom + 24 }]}
+      keyboardShouldPersistTaps="handled"
+      keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
+      contentInsetAdjustmentBehavior="automatic"
+    >
+      <SectionCard
+        title="DNS Server"
+        description="Choose which resolver handles TXT queries"
+        colors={colors}
+      >
         <TextInput
           style={[styles.input, { borderColor: colors.border, color: colors.text }]}
           value={dnsServerInput}
@@ -195,22 +213,30 @@ export function Settings(): React.JSX.Element {
           editable={!loading}
           onChangeText={setDnsServerInput}
           placeholder="ch.at"
+          placeholderTextColor={colors.muted}
+          keyboardType="url"
+          accessibilityLabel="DNS server hostname"
         />
-        <Button
-          title={savingDnsServer ? "Saving..." : "Save"}
+        <ThemedButton
+          label={savingDnsServer ? "Saving…" : "Save DNS Server"}
           onPress={saveDnsServer}
           disabled={loading || savingDnsServer}
+          colors={colors}
         />
-      </View>
+      </SectionCard>
 
-      <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>Preferences</Text>
+      <SectionCard
+        title="Preferences"
+        description="Toggle routing and fallback behavior"
+        colors={colors}
+      >
         <Row
           label="Prefer DNS-over-HTTPS"
           description="Use Cloudflare's DoH when available"
           value={preferDnsOverHttps}
           onValueChange={handleToggle(setPreferDnsOverHttps)}
           colors={colors}
+          accessibilityLabel="Toggle to prefer DNS-over-HTTPS"
         />
         <Row
           label="Allow Experimental Transports"
@@ -218,6 +244,7 @@ export function Settings(): React.JSX.Element {
           value={allowExperimentalTransports}
           onValueChange={handleToggle(setAllowExperimentalTransports)}
           colors={colors}
+          accessibilityLabel="Toggle to allow experimental transports"
         />
         <Row
           label="Enable Mock DNS"
@@ -225,11 +252,15 @@ export function Settings(): React.JSX.Element {
           value={enableMockDNS}
           onValueChange={handleToggle(setEnableMockDNS)}
           colors={colors}
+          accessibilityLabel="Toggle to enable mock DNS"
         />
-      </View>
+      </SectionCard>
 
-      <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>Transport Order</Text>
+      <SectionCard
+        title="Transport Order"
+        description="Select the priority order for transports"
+        colors={colors}
+      >
         {PREFERENCE_OPTIONS.map((option) => (
           <PreferenceButton
             key={option.key}
@@ -241,43 +272,114 @@ export function Settings(): React.JSX.Element {
             accentColor={colors.accent}
           />
         ))}
-      </View>
+      </SectionCard>
 
-      <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>Diagnostics</Text>
-        <Button
-          title={verifyingNative ? "Verifying..." : "Verify Native DNS"}
+      <SectionCard
+        title="Diagnostics"
+        description="Validate connectivity and transports"
+        colors={colors}
+      >
+        <ThemedButton
+          label={verifyingNative ? "Verifying…" : "Verify Native DNS"}
           onPress={verifyNativeDns}
           disabled={verifyingNative}
+          colors={colors}
         />
-        <View style={styles.spacer} />
         <TextInput
           style={[styles.input, { borderColor: colors.border, color: colors.text }]}
           value={testMessage}
           onChangeText={setTestMessage}
           placeholder="ping"
+          placeholderTextColor={colors.muted}
+          accessibilityLabel="Diagnostic message"
+          autoCapitalize="none"
+          autoCorrect={false}
         />
-        <Button
-          title={testRunning ? "Testing..." : "Run Transport Test"}
+        <ThemedButton
+          label={testRunning ? "Testing…" : "Run Transport Test"}
           onPress={runTransportTest}
           disabled={testRunning}
+          colors={colors}
         />
         {lastTestResult && (
-          <Text style={[styles.resultText, { color: colors.text }]}>
-            Result: {lastTestResult}
-          </Text>
+          <View style={[styles.resultCard, { borderColor: colors.border }]}> 
+            <Text style={[styles.resultText, { color: colors.text }]}>Result</Text>
+            <Text style={[styles.resultBody, { color: colors.text }]}>{lastTestResult}</Text>
+          </View>
         )}
         {lastTestError && (
-          <Text style={[styles.errorText, { color: "#FF453A" }]}>
-            Error: {lastTestError}
-          </Text>
+          <View style={[styles.resultCard, { borderColor: colors.border }]}> 
+            <Text style={[styles.errorText, { color: "#FF453A" }]}>Error</Text>
+            <Text style={[styles.resultBody, { color: "#FF453A" }]}>{lastTestError}</Text>
+          </View>
         )}
-      </View>
+      </SectionCard>
 
-      <View style={styles.section}>
-        <Button title="Reset Onboarding" onPress={handleResetOnboarding} />
-      </View>
+      <SectionCard
+        title="Onboarding"
+        description="Replay the intro guide"
+        colors={colors}
+      >
+        <ThemedButton
+          label="Reset Onboarding"
+          onPress={handleResetOnboarding}
+          colors={colors}
+        />
+      </SectionCard>
     </ScrollView>
+  );
+}
+
+function SectionCard({
+  title,
+  description,
+  children,
+  colors,
+}: {
+  title: string;
+  description?: string;
+  children: React.ReactNode;
+  colors: any;
+}) {
+  return (
+    <View style={[styles.sectionCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
+      accessible
+      accessibilityRole="summary"
+    >
+      <Text style={[styles.sectionTitle, { color: colors.text }]}>{title}</Text>
+      {description ? (
+        <Text style={[styles.sectionSubtitle, { color: colors.muted }]}>{description}</Text>
+      ) : null}
+      <View style={styles.sectionBody}>{children}</View>
+    </View>
+  );
+}
+
+function ThemedButton({
+  label,
+  onPress,
+  disabled = false,
+  colors,
+}: {
+  label: string;
+  onPress: () => void;
+  disabled?: boolean;
+  colors: any;
+}) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      onPress={disabled ? undefined : onPress}
+      disabled={disabled}
+      style={({ pressed }) => [
+        styles.button,
+        { backgroundColor: colors.accent },
+        pressed && !disabled && styles.buttonPressed,
+        disabled && styles.buttonDisabled,
+      ]}
+    >
+      <Text style={styles.buttonLabel}>{label}</Text>
+    </Pressable>
   );
 }
 
@@ -287,12 +389,14 @@ function Row({
   value,
   onValueChange,
   colors,
+  accessibilityLabel,
 }: {
   label: string;
   description: string;
   value: boolean;
   onValueChange: (value: boolean) => void;
   colors?: any;
+  accessibilityLabel?: string;
 }): React.JSX.Element {
   const themeColors = colors || {
     text: "#000000",
@@ -305,7 +409,12 @@ function Row({
         <Text style={[styles.rowLabel, { color: themeColors.text }]}>{label}</Text>
         <Text style={[styles.rowDescription, { color: themeColors.muted }]}>{description}</Text>
       </View>
-      <Switch value={value} onValueChange={onValueChange} />
+      <Switch
+        value={value}
+        onValueChange={onValueChange}
+        accessibilityLabel={accessibilityLabel || label}
+        accessibilityHint={description}
+      />
     </View>
   );
 }
@@ -328,21 +437,24 @@ function PreferenceButton({
   const themeAccent = accentColor || "#007AFF";
 
   return (
-    <Text
+    <Pressable
+      accessibilityRole="button"
+      android_ripple={{ color: themeAccent + "22" }}
       onPress={() => onPress(option.key)}
-      style={[
+      style={({ pressed }) => [
         styles.preferenceButton,
         {
           borderColor,
           backgroundColor: active ? themeAccent + "15" : "transparent",
-          color: textColor,
         },
+        pressed && styles.preferenceButtonPressed,
       ]}
     >
-      {option.label}
-      {"\n"}
-      <Text style={[styles.preferenceDescription, { color: textColor + "80" }]}>{option.description}</Text>
-    </Text>
+      <Text style={[styles.preferenceLabel, { color: textColor }]}>{option.label}</Text>
+      <Text style={[styles.preferenceDescription, { color: textColor + "80" }]}>
+        {option.description}
+      </Text>
+    </Pressable>
   );
 }
 
@@ -351,12 +463,17 @@ const styles = StyleSheet.create({
     padding: 20,
     gap: 24,
   },
-  section: {
-    gap: 12,
-  },
   sectionTitle: {
     fontSize: 18,
     fontWeight: "600",
+  },
+  sectionSubtitle: {
+    fontSize: 13,
+    marginTop: 4,
+  },
+  sectionBody: {
+    marginTop: 16,
+    gap: 16,
   },
   input: {
     borderWidth: 1,
@@ -387,7 +504,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 10,
     padding: 12,
+    gap: 4,
+  },
+  preferenceButtonPressed: {
+    transform: [{ scale: 0.98 }],
+  },
+  preferenceLabel: {
     fontSize: 16,
+    fontWeight: "600",
   },
   preferenceDescription: {
     fontSize: 12,
@@ -396,13 +520,45 @@ const styles = StyleSheet.create({
   spacer: {
     height: 12,
   },
+  resultCard: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 12,
+    padding: 12,
+    gap: 4,
+  },
   resultText: {
-    marginTop: 8,
     fontSize: 14,
+    fontWeight: "600",
+  },
+  resultBody: {
+    fontSize: 13,
+    lineHeight: 18,
   },
   errorText: {
-    marginTop: 8,
     fontSize: 14,
+    fontWeight: "700",
+  },
+  sectionCard: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 16,
+    padding: 20,
+    gap: 12,
+  },
+  button: {
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    alignItems: "center",
+  },
+  buttonPressed: {
+    opacity: 0.75,
+  },
+  buttonDisabled: {
+    opacity: 0.4,
+  },
+  buttonLabel: {
+    color: "#FFFFFF",
+    fontSize: 16,
     fontWeight: "600",
   },
 });

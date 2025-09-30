@@ -1,8 +1,9 @@
 import React from "react";
-import { View, StyleSheet, TouchableOpacity, Text } from "react-native";
+import { View, StyleSheet, Pressable, Text } from "react-native";
 import { useRouter } from "expo-router";
 import { DNSLogViewer } from "../components/DNSLogViewer";
 import { useGlassTheme } from "../hooks/useGlassTheme";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 /**
  * DevLogs screen with minimal glass styling for developer-only features.
@@ -20,9 +21,19 @@ import { useGlassTheme } from "../hooks/useGlassTheme";
 export function DevLogs() {
   const router = useRouter();
   const { colors, getGlassStyle } = useGlassTheme();
+  const insets = useSafeAreaInsets();
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View
+      style={[
+        styles.container,
+        {
+          backgroundColor: colors.background,
+          paddingTop: insets.top + 12,
+          paddingBottom: Math.max(insets.bottom, 12),
+        },
+      ]}
+    >
       {/* Glass Toolbar */}
       <View style={[getGlassStyle("navbar", "prominent", "rect"), styles.toolbar]}>
         <Text style={[styles.toolbarTitle, { color: colors.text }]}>Developer Logs</Text>
@@ -33,15 +44,19 @@ export function DevLogs() {
 
       {/* Glass Debug Button */}
       <View style={styles.buttonContainer}>
-        <TouchableOpacity
-          style={[getGlassStyle("button", "interactive", "capsule"), styles.debugButton]}
+        <Pressable
+          accessibilityRole="button"
+          style={({ pressed }) => [
+            getGlassStyle("button", "interactive", "capsule"),
+            styles.debugButton,
+            pressed && styles.debugButtonPressed,
+          ]}
           onPress={() => router.push("/glass-debug")}
-          activeOpacity={0.7}
         >
           <Text style={[styles.debugButtonText, { color: colors.accent }]}>
             🔍 Glass Debug
           </Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
 
       {/* DNS Log Viewer */}
@@ -76,6 +91,9 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 20,
     alignItems: "center",
+  },
+  debugButtonPressed: {
+    opacity: 0.75,
   },
   debugButtonText: {
     fontSize: 16,

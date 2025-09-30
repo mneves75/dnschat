@@ -17,11 +17,11 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   Alert,
   Platform,
   Animated,
   ActivityIndicator,
+  Pressable,
 } from "react-native";
 import { FlashList, ListRenderItem } from "@shopify/flash-list";
 import { useGlassTheme } from "../hooks/useGlassTheme";
@@ -31,43 +31,6 @@ import {
   DNSLogEntry,
 } from "../services/dnsLogService";
 import { GlassActionSheet, useGlassBottomSheet } from "../components/glass";
-
-// ==================================================================================
-// PERFORMANCE MONITORING
-// ==================================================================================
-
-interface PerformanceMetrics {
-  renderCount: number;
-  lastRenderTime: number;
-}
-
-const usePerformanceMonitoring = () => {
-  const renderCount = useRef(0);
-  const lastRenderTime = useRef(Date.now());
-  const [metrics, setMetrics] = useState<PerformanceMetrics>({
-    renderCount: 0,
-    lastRenderTime: 0,
-  });
-
-  useEffect(() => {
-    renderCount.current += 1;
-    const now = Date.now();
-    const renderDuration = now - lastRenderTime.current;
-
-    setMetrics({
-      renderCount: renderCount.current,
-      lastRenderTime: renderDuration,
-    });
-
-    lastRenderTime.current = now;
-
-    if (__DEV__) {
-      console.log(`📊 Logs render #${renderCount.current} took ${renderDuration}ms`);
-    }
-  });
-
-  return metrics;
-};
 
 // ==================================================================================
 // TYPES
@@ -170,12 +133,15 @@ const FilterControls: React.FC<FilterControlsProps> = ({
         <Text style={[styles.controlLabel, { color: colors.muted }]}>Filter:</Text>
         <View style={styles.pillContainer}>
           {filters.map((f) => (
-            <TouchableOpacity
+            <Pressable
               key={f}
+              accessibilityRole="button"
+              android_ripple={{ color: colors.accent + "33" }}
               onPress={() => onFilterChange(f)}
-              style={[
+              style={({ pressed }) => [
                 getGlassStyle("button", filter === f ? "interactive" : "regular", "capsule"),
                 styles.pill,
+                pressed && styles.pillPressed,
               ]}
             >
               <Text
@@ -186,7 +152,7 @@ const FilterControls: React.FC<FilterControlsProps> = ({
               >
                 {f.charAt(0).toUpperCase() + f.slice(1)}
               </Text>
-            </TouchableOpacity>
+            </Pressable>
           ))}
         </View>
       </View>
@@ -196,12 +162,15 @@ const FilterControls: React.FC<FilterControlsProps> = ({
         <Text style={[styles.controlLabel, { color: colors.muted }]}>Sort:</Text>
         <View style={styles.pillContainer}>
           {sorts.map((s) => (
-            <TouchableOpacity
+            <Pressable
               key={s}
+              accessibilityRole="button"
+              android_ripple={{ color: colors.accent + "33" }}
               onPress={() => onSortChange(s)}
-              style={[
+              style={({ pressed }) => [
                 getGlassStyle("button", sort === s ? "interactive" : "regular", "capsule"),
                 styles.pill,
+                pressed && styles.pillPressed,
               ]}
             >
               <Text
@@ -212,7 +181,7 @@ const FilterControls: React.FC<FilterControlsProps> = ({
               >
                 {s.charAt(0).toUpperCase() + s.slice(1)}
               </Text>
-            </TouchableOpacity>
+            </Pressable>
           ))}
         </View>
       </View>
@@ -301,13 +270,17 @@ const LogCard: React.FC<LogCardProps> = React.memo(({
   );
 
   return (
-    <TouchableOpacity
+    <Pressable
       onPress={onToggle}
       onLongPress={onLongPress}
       onPressIn={() => setIsPressed(true)}
       onPressOut={() => setIsPressed(false)}
-      style={styles.logCardWrapper}
-      activeOpacity={0.95}
+      accessibilityRole="button"
+      android_ripple={{ color: colors.accent + "22" }}
+      style={({ pressed }) => [
+        styles.logCardWrapper,
+        pressed && styles.logCardWrapperPressed,
+      ]}
     >
       <View style={[cardStyle, styles.logCard]}>
         <View style={styles.logHeader}>
@@ -377,7 +350,7 @@ const LogCard: React.FC<LogCardProps> = React.memo(({
           </View>
         )}
       </View>
-    </TouchableOpacity>
+    </Pressable>
   );
 });
 
@@ -437,7 +410,12 @@ export function Logs() {
   const [sort, setSort] = useState<SortType>("newest");
   const [refreshing, setRefreshing] = useState(false);
 
-  const metrics = usePerformanceMonitoring();
+  const renderCountRef = useRef(0);
+  const lastRenderTimeRef = useRef(Date.now());
+  renderCountRef.current += 1;
+  const now = Date.now();
+  const lastRenderDuration = now - lastRenderTimeRef.current;
+  lastRenderTimeRef.current = now;
   const actionSheet = useGlassBottomSheet();
   const selectedLogRef = useRef<DNSQueryLog | null>(null);
 
@@ -637,8 +615,7 @@ export function Logs() {
       {__DEV__ && (
         <View style={styles.debugBar}>
           <Text style={[styles.debugText, { color: colors.muted }]}>
-            Renders: {metrics.renderCount} | Last: {metrics.lastRenderTime}ms | Logs:{" "}
-            {logs.length}
+            Renders: {renderCountRef.current} | Last: {lastRenderDuration}ms | Logs: {logs.length}
           </Text>
         </View>
       )}
@@ -657,7 +634,7 @@ export function Logs() {
       <FlashList
         data={listData}
         renderItem={renderItem}
-        estimatedSize={140}
+        estimatedItemSize={140}
         keyExtractor={(item) => item.id}
         getItemType={getItemType}
         onRefresh={handleRefresh}
@@ -691,7 +668,7 @@ export function Logs() {
           },
           {
             title: "Cancel",
-            onPress: () => {},
+            onPress: actionSheet.hide,
             style: "cancel" as const,
           },
         ]}
@@ -747,6 +724,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
+  pillPressed: {
+    transform: [{ scale: 0.96 }],
+  },
   pillText: {
     fontSize: 13,
     fontWeight: "600",
@@ -801,6 +781,9 @@ const styles = StyleSheet.create({
   },
   logCardWrapper: {
     marginBottom: 12,
+  },
+  logCardWrapperPressed: {
+    transform: [{ scale: 0.98 }],
   },
   logCard: {
     padding: 16,

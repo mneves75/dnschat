@@ -1,5 +1,6 @@
 import { StyleSheet, View, Text, Pressable } from "react-native";
 import { useRouter } from "expo-router";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { UniversalGlassView } from "../components/glass/UniversalGlassView";
 import { useAppTheme } from "../theme";
 
@@ -8,7 +9,7 @@ export function NotFound() {
   const { colors } = useAppTheme();
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <UniversalGlassView
         variant="regular"
         shape="roundedRect"
@@ -20,13 +21,18 @@ export function NotFound() {
           Page Not Found
         </Text>
         <Pressable
-          style={[styles.button, { backgroundColor: colors.accent }]}
+          accessibilityRole="button"
+          accessibilityHint="Return to the home screen"
+          style={({ pressed }) => [
+            styles.button,
+            { backgroundColor: colors.accent, opacity: pressed ? 0.8 : 1 },
+          ]}
           onPress={() => router.replace('/')}
         >
           <Text style={[styles.buttonText, { color: colors.surface }]}>Go to Home</Text>
         </Pressable>
       </UniversalGlassView>
-    </View>
+    </SafeAreaView>
   );
 }
 

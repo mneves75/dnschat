@@ -4,9 +4,9 @@ import { nativeDNS, DNSError, DNSErrorType } from '../../modules/dns-native';
 import { DNS_CONSTANTS, sanitizeDNSMessageReference } from '../../modules/dns-native/constants';
 import { DNSLogService } from './dnsLogService';
 import { DNSMethodPreference } from '../context/SettingsContext';
-import { DNS_CONSTANTS as APP_DNS_CONSTANTS, ERROR_MESSAGES } from '../constants/appConstants';
+import { ERROR_MESSAGES } from '../constants/appConstants';
 
-const DEFAULT_DNS_ZONE = APP_DNS_CONSTANTS.DEFAULT_DNS_SERVER;
+const DEFAULT_DNS_ZONE = DNS_CONSTANTS.DEFAULT_DNS_SERVER;
 
 export function composeDNSQueryName(label: string, dnsServer: string): string {
   const trimmedLabel = label.replace(/\.+$/g, '').trim();
@@ -311,13 +311,13 @@ export function parseTXTResponse(txtRecords: string[]): string {
 }
 
 export class DNSService {
-  private static readonly DEFAULT_DNS_SERVER = APP_DNS_CONSTANTS.DEFAULT_DNS_SERVER;
-  private static readonly DNS_PORT: number = APP_DNS_CONSTANTS.DNS_PORT;
-  private static readonly TIMEOUT = APP_DNS_CONSTANTS.QUERY_TIMEOUT_MS;
-  private static readonly MAX_RETRIES = APP_DNS_CONSTANTS.MAX_RETRIES;
-  private static readonly RETRY_DELAY = APP_DNS_CONSTANTS.RETRY_DELAY_MS;
-  private static readonly RATE_LIMIT_WINDOW = APP_DNS_CONSTANTS.RATE_LIMIT_WINDOW_MS;
-  private static readonly MAX_REQUESTS_PER_WINDOW = APP_DNS_CONSTANTS.MAX_REQUESTS_PER_WINDOW;
+  private static readonly DEFAULT_DNS_SERVER = DNS_CONSTANTS.DEFAULT_DNS_SERVER;
+  private static readonly DNS_PORT: number = DNS_CONSTANTS.DNS_PORT;
+  private static readonly TIMEOUT = DNS_CONSTANTS.QUERY_TIMEOUT_MS;
+  private static readonly MAX_RETRIES = DNS_CONSTANTS.MAX_RETRIES;
+  private static readonly RETRY_DELAY = DNS_CONSTANTS.RETRY_DELAY_MS;
+  private static readonly RATE_LIMIT_WINDOW = DNS_CONSTANTS.RATE_LIMIT_WINDOW_MS;
+  private static readonly MAX_REQUESTS_PER_WINDOW = DNS_CONSTANTS.MAX_REQUESTS_PER_WINDOW;
   private static isAppInBackground = false;
   private static backgroundListenerInitialized = false;
   private static requestHistory: number[] = [];
@@ -1191,16 +1191,11 @@ export class DNSService {
                   Array.isArray(records) ? 'array' : typeof records,
                 );
 
-                if (!records) {
-                  throw new Error('Native DNS query returned null/undefined records');
-                }
-
-                // LOGIC FIX: Remove redundant Array.isArray check
-                if (!Array.isArray(records)) {
-                  this.vLog('⚠️ NATIVE: Records is not an array, converting to array...');
-                  const arrayRecords = [String(records)];
-                  this.vLog('🔄 NATIVE: Converted records:', arrayRecords);
-                  return nativeDNS.parseMultiPartResponse(arrayRecords);
+                // Validate records - native module contract guarantees string[] or throws
+                if (!records || !Array.isArray(records)) {
+                  throw new Error(
+                    `Native DNS query returned invalid records type: ${typeof records} (expected string[])`
+                  );
                 }
 
                 if (records.length === 0) {

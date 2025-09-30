@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { Image, Pressable, Platform, View, StyleSheet } from 'react-native';
 import { Tabs, useRouter } from 'expo-router';
+import { BottomTabBar } from '@react-navigation/bottom-tabs';
 
 import { LogsIcon } from '../../../src/components/icons/LogsIcon';
 import { SettingsIcon } from '../../../src/components/icons/SettingsIcon';
@@ -10,6 +11,7 @@ import {
   useLiquidGlassCapabilities,
 } from '../../../src/components/LiquidGlassWrapper';
 import { useLocalization } from '../../../src/i18n/LocalizationProvider';
+import { FloatingGlassTabBar } from '../../../src/components/glass/GlassTabBar';
 
 const newspaper = require('../../../src/assets/newspaper.png');
 
@@ -38,12 +40,20 @@ export default function AppTabsLayout() {
 
   const tabBarStyle = useMemo(
     () => ({
-      backgroundColor: glassEnabled ? 'transparent' : colors.surface,
-      borderTopWidth: glassEnabled ? 0 : StyleSheet.hairlineWidth,
-      elevation: glassEnabled ? 0 : 2,
-      position: glassEnabled ? 'absolute' as const : 'relative' as const,
+      backgroundColor: colors.surface,
+      borderTopWidth: StyleSheet.hairlineWidth,
     }),
-    [glassEnabled, colors.surface],
+    [colors.surface],
+  );
+
+  const tabIconMap: Record<string, { sfSymbol: string }> = useMemo(
+    () => ({
+      index: { sfSymbol: 'message.fill' },
+      logs: { sfSymbol: 'list.bullet' },
+      about: { sfSymbol: 'info.circle' },
+      'dev-logs': { sfSymbol: 'gear' },
+    }),
+    [],
   );
 
   return (
@@ -53,10 +63,12 @@ export default function AppTabsLayout() {
         headerTitle: t('app.title'),
         headerStyle: { backgroundColor: glassEnabled ? 'transparent' : colors.card },
         headerTintColor: colors.text,
+        headerBackVisible: false,
+        headerLeft: () => null,
         headerRight: () => <SettingsButton />,
         tabBarActiveTintColor: colors.accent,
         tabBarInactiveTintColor: colors.muted,
-        tabBarStyle,
+        tabBarStyle: glassEnabled ? { display: 'none' } : tabBarStyle,
         tabBarLabelStyle: { fontSize: 12, fontWeight: '600' },
         headerBackground: () =>
           glassEnabled ? (
@@ -73,21 +85,53 @@ export default function AppTabsLayout() {
           ) : (
             <View style={{ flex: 1, backgroundColor: colors.card }} />
           ),
-        tabBarBackground: () =>
-          glassEnabled ? (
-            <LiquidGlassWrapper
-              variant="prominent"
-              shape="rect"
-              enableContainer={true}
-              sensorAware={supportsSwiftUIGlass}
-              style={{
-                flex: 1,
-                backgroundColor: isDark ? 'rgba(25, 25, 25, 0.85)' : 'rgba(255, 255, 255, 0.85)',
-              }}
-            />
-          ) : (
-            <View style={{ flex: 1, backgroundColor: colors.surface }} />
-          ),
+        tabBarBackground: glassEnabled
+          ? undefined
+          : () => <View style={{ flex: 1, backgroundColor: colors.surface }} />,
+      }}
+      tabBar={(props) => {
+        if (!glassEnabled) {
+          return <BottomTabBar {...props} />;
+        }
+
+        const { state, descriptors, navigation } = props;
+        const activeRoute = state.routes[state.index];
+        const visibleRoutes = state.routes.filter((route) => {
+          const options = descriptors[route.key]?.options;
+          return options?.href !== null;
+        });
+
+        const tabs = visibleRoutes.map((route) => {
+          const descriptor = descriptors[route.key];
+          const options = descriptor?.options ?? {};
+          const label =
+            options.tabBarLabel ??
+            options.title ??
+            route.name;
+          const config = tabIconMap[route.name] ?? { sfSymbol: 'circle' };
+          return {
+            id: route.key,
+            title: typeof label === 'string' ? label : route.name,
+            sfSymbol: config.sfSymbol,
+          };
+        });
+
+        return (
+          <FloatingGlassTabBar
+            tabs={tabs}
+            activeTabId={activeRoute.key}
+            onTabPress={(tabId) => {
+              const target = state.routes.find((route) => route.key === tabId);
+              if (!target) return;
+              if (target.name === activeRoute.name) {
+                // already focused
+                return;
+              }
+              navigation.navigate(target.name);
+            }}
+            margin={18}
+          />
+        );
       }}
     >
       <Tabs.Screen

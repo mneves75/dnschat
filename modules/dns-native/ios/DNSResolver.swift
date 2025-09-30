@@ -8,6 +8,8 @@ final class DNSResolver: NSObject {
     // MARK: - Configuration
     private static let dnsPort: UInt16 = 53
     private static let queryTimeout: TimeInterval = 10.0
+    private static let maxNativeAttempts: Int = 3
+    private static let retryDelayNanoseconds: UInt64 = 200_000_000 // 200ms
     // MARK: - State
     @MainActor private var activeQueries: [String: Task<[String], Error>] = [:]
     
@@ -74,7 +76,20 @@ final class DNSResolver: NSObject {
     private func createQueryTask(server: String, queryName: String) -> Task<[String], Error> {
         Task {
             try await withTimeout(seconds: Self.queryTimeout) {
-                try await performUDPQuery(server: server, queryName: queryName)
+                for attempt in 0..<Self.maxNativeAttempts {
+                    do {
+                        return try await performUDPQuery(server: server, queryName: queryName)
+                    } catch let error as DNSError {
+                        if case .noRecordsFound = error, attempt < Self.maxNativeAttempts - 1 {
+                            try await Task.sleep(nanoseconds: Self.retryDelayNanoseconds)
+                            continue
+                        }
+                        throw error
+                    } catch {
+                        throw error
+                    }
+                }
+                throw DNSError.noRecordsFound
             }
         }
     }

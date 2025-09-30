@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.0] - 2025-09-30
+
+### Added
+- **Floating Liquid Glass Tab Bar** that replaces Expo's default bottom bar on iOS, aligning with the redesigned navigation shell.
+- **Glass Debug screen** (`app/(app)/glass-debug.tsx`) exposing liquid-glass capability diagnostics and live material previews.
+- **Sectioned settings UI** with themed cards, accessible toggles, and reusable primary buttons to match native Expo guidelines.
+- **Native DNS retry logic on iOS** to smooth out first-attempt UDP misses before surfacing an error.
+
+### Changed
+- Tabs stack now hides default chevrons/back affordances when the floating glass bar is active.
+- Diagnostics output in settings renders inside styled cards rather than plain text, improving readability.
+
+### Fixed
+- Dev Logs “Glass Debug” button now navigates correctly after adding the missing route.
+- Intermittent `No TXT records found` responses on iOS are auto-retried before the app reports failure.
+
 ### 🎨 Liquid Glass UI Redesign - Phase 0 & Phase 1 (In Progress)
 
 **Phase 0: Foundation** ✅ Complete (September 30, 2025)

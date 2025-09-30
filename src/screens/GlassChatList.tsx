@@ -11,15 +11,16 @@
  * @since 2.1.0 (Phase 1 - Liquid Glass UI Redesign)
  */
 
-import React, { useCallback, useState, useEffect, useRef } from "react";
+import React, { useCallback, useState, useRef, useEffect } from "react";
 import {
   StyleSheet,
   Text,
   View,
   Alert,
   Platform,
-  TouchableOpacity,
   Animated,
+  Pressable,
+  Share,
 } from "react-native";
 import { FlashList, ListRenderItem } from "@shopify/flash-list";
 import { useRouter, useFocusEffect } from "expo-router";
@@ -32,46 +33,6 @@ import {
 import { TrashIcon } from "../components/icons/TrashIcon";
 import { PlusIcon } from "../components/icons/PlusIcon";
 import { formatDistanceToNow } from "date-fns";
-
-// ==================================================================================
-// PERFORMANCE MONITORING
-// ==================================================================================
-
-interface PerformanceMetrics {
-  renderCount: number;
-  lastRenderTime: number;
-  memoryWarning: boolean;
-}
-
-const usePerformanceMonitoring = () => {
-  const renderCount = useRef(0);
-  const lastRenderTime = useRef(Date.now());
-  const [metrics, setMetrics] = useState<PerformanceMetrics>({
-    renderCount: 0,
-    lastRenderTime: 0,
-    memoryWarning: false,
-  });
-
-  useEffect(() => {
-    renderCount.current += 1;
-    const now = Date.now();
-    const renderDuration = now - lastRenderTime.current;
-
-    setMetrics({
-      renderCount: renderCount.current,
-      lastRenderTime: renderDuration,
-      memoryWarning: false, // TODO: Integrate with React Native performance API
-    });
-
-    lastRenderTime.current = now;
-
-    if (__DEV__) {
-      console.log(`📊 GlassChatList render #${renderCount.current} took ${renderDuration}ms`);
-    }
-  });
-
-  return metrics;
-};
 
 // ==================================================================================
 // TYPES
@@ -88,7 +49,7 @@ interface ChatItemProps {
   chat: Chat;
   onPress: () => void;
   onDelete: () => void;
-  onShare?: () => void;
+  onShare?: () => Promise<void> | void;
 }
 
 // ==================================================================================
@@ -184,6 +145,18 @@ const GlassChatItem: React.FC<ChatItemProps> = React.memo(({
     actionSheet.show();
   }, [actionSheet]);
 
+  const handleSharePress = useCallback(async () => {
+    if (onShare) {
+      await onShare();
+    }
+    actionSheet.hide();
+  }, [actionSheet, onShare]);
+
+  const handleDeletePress = useCallback(() => {
+    onDelete();
+    actionSheet.hide();
+  }, [actionSheet, onDelete]);
+
   const cardStyle = getGlassStyle(
     "card",
     isPressed ? "interactive" : "regular",
@@ -192,13 +165,17 @@ const GlassChatItem: React.FC<ChatItemProps> = React.memo(({
 
   return (
     <>
-      <TouchableOpacity
+      <Pressable
         onPress={onPress}
         onLongPress={handleLongPress}
         onPressIn={() => setIsPressed(true)}
         onPressOut={() => setIsPressed(false)}
-        style={styles.chatItemWrapper}
-        activeOpacity={0.95}
+        accessibilityRole="button"
+        android_ripple={{ color: colors.accent + "33" }}
+        style={({ pressed }) => [
+          styles.chatItemWrapper,
+          pressed && styles.chatItemWrapperPressed,
+        ]}
       >
         <View style={[cardStyle, styles.chatItemContainer]}>
           <View style={styles.chatItemContent}>
@@ -244,7 +221,7 @@ const GlassChatItem: React.FC<ChatItemProps> = React.memo(({
             </View>
           </View>
         </View>
-      </TouchableOpacity>
+      </Pressable>
 
       {/* Chat Action Sheet */}
       <GlassActionSheet
@@ -262,20 +239,20 @@ const GlassChatItem: React.FC<ChatItemProps> = React.memo(({
             ? [
                 {
                   title: "Share Chat",
-                  onPress: onShare,
+                  onPress: handleSharePress,
                   icon: <Text>📤</Text>,
                 },
               ]
             : []),
           {
             title: "Delete Chat",
-            onPress: onDelete,
+            onPress: handleDeletePress,
             style: "destructive" as const,
             icon: <TrashIcon size={20} color="#FF453A" />,
           },
           {
             title: "Cancel",
-            onPress: () => {},
+            onPress: actionSheet.hide,
             style: "cancel" as const,
           },
         ]}
@@ -318,14 +295,19 @@ const ChatListHeader: React.FC<{ onNewChat: () => void }> = ({ onNewChat }) => {
 
   return (
     <View style={styles.headerContainer}>
-      <TouchableOpacity
+      <Pressable
         onPress={onNewChat}
-        style={[getGlassStyle("button", "interactive", "roundedRect"), styles.newChatButton]}
-        activeOpacity={0.8}
+        accessibilityRole="button"
+        android_ripple={{ color: colors.accent + "33" }}
+        style={({ pressed }) => [
+          getGlassStyle("button", "interactive", "roundedRect"),
+          styles.newChatButton,
+          pressed && styles.newChatButtonPressed,
+        ]}
       >
         <PlusIcon size={20} color="#FFFFFF" circleColor={colors.accent} />
         <Text style={[styles.newChatText, { color: colors.text }]}>New Chat</Text>
-      </TouchableOpacity>
+      </Pressable>
     </View>
   );
 };
@@ -377,7 +359,12 @@ export function GlassChatList() {
     isLoading,
   } = useChat();
 
-  const metrics = usePerformanceMonitoring();
+  const renderCountRef = useRef(0);
+  const lastRenderTimeRef = useRef(Date.now());
+  renderCountRef.current += 1;
+  const now = Date.now();
+  const lastRenderDuration = now - lastRenderTimeRef.current;
+  lastRenderTimeRef.current = now;
 
   // Load chats when screen is focused
   useFocusEffect(
@@ -438,8 +425,14 @@ export function GlassChatList() {
     }
   }, [loadChats]);
 
-  const handleShareChat = useCallback((chat: Chat) => {
-    console.log("Sharing chat:", chat.title);
+  const handleShareChat = useCallback(async (chat: Chat) => {
+    try {
+      await Share.share({
+        message: `DNSChat conversation: ${chat.title}`,
+      });
+    } catch (error) {
+      console.warn("Failed to share chat", error);
+    }
   }, []);
 
   const renderChatItem: ListRenderItem<Chat> = useCallback(
@@ -485,7 +478,7 @@ export function GlassChatList() {
       {__DEV__ && (
         <View style={styles.debugBar}>
           <Text style={[styles.debugText, { color: colors.muted }]}>
-            Renders: {metrics.renderCount} | Last: {metrics.lastRenderTime}ms | Chats: {chats.length}
+            Renders: {renderCountRef.current} | Last: {lastRenderDuration}ms | Chats: {chats.length}
           </Text>
         </View>
       )}
@@ -493,7 +486,7 @@ export function GlassChatList() {
       <FlashList
         data={chats}
         renderItem={renderChatItem}
-        estimatedSize={120}
+        estimatedItemSize={120}
         keyExtractor={(item) => item.id}
         ListHeaderComponent={renderHeaderComponent}
         ListEmptyComponent={renderEmptyComponent}
@@ -546,12 +539,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     gap: 12,
   },
+  newChatButtonPressed: {
+    transform: [{ scale: 0.98 }],
+  },
   newChatText: {
     fontSize: 17,
     fontWeight: "600",
   },
   chatItemWrapper: {
     marginBottom: 12,
+  },
+  chatItemWrapperPressed: {
+    transform: [{ scale: 0.98 }],
   },
   chatItemContainer: {
     padding: 16,

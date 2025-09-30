@@ -21,7 +21,9 @@ import {
   View,
   Linking,
   useColorScheme,
+  Pressable,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { DNSMethodPreference } from "../context/SettingsContext";
 import {
   Form,
@@ -60,6 +62,7 @@ export function GlassSettings() {
 
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
+  const insets = useSafeAreaInsets();
 
   // Bottom sheet states
   const dnsServerSheet = useGlassBottomSheet();
@@ -83,6 +86,19 @@ export function GlassSettings() {
   const currentDnsOption =
     dnsServerOptions.find((option) => option.value === dnsServer) ||
     dnsServerOptions[0];
+
+  const openExternalUrl = React.useCallback(async (url: string) => {
+    try {
+      const supported = await Linking.canOpenURL(url);
+      if (!supported) {
+        Alert.alert("Unable to open link", "No installed application can handle this link.");
+        return;
+      }
+      await Linking.openURL(url);
+    } catch (error: any) {
+      Alert.alert("Unable to open link", error?.message || String(error));
+    }
+  }, []);
 
   // Action handlers
   const handleDnsServerSelect = React.useCallback(
@@ -110,13 +126,16 @@ export function GlassSettings() {
         url: "https://github.com/mneves75/dnschat",
       });
     } catch (error) {
-      console.error("Share failed:", error);
+      Alert.alert(
+        "Share Failed",
+        error instanceof Error ? error.message : String(error),
+      );
     }
   }, []);
 
   const handleOpenGitHub = React.useCallback(() => {
-    Linking.openURL("https://github.com/mneves75/dnschat");
-  }, []);
+    openExternalUrl("https://github.com/mneves75/dnschat");
+  }, [openExternalUrl]);
 
   const handleResetSettings = React.useCallback(() => {
     Alert.alert(
@@ -165,28 +184,40 @@ export function GlassSettings() {
   ) => {
     const result = await setDnsMethodPreference(preference);
     if (!result.ok) {
-      console.log("Failed to save DNS method preference", result.message);
+      Alert.alert(
+        "Update Failed",
+        result.message || "Unable to update DNS method preference.",
+      );
     }
   };
 
   const handleToggleMockDNS = async (value: boolean) => {
     const result = await setEnableMockDNS(value);
     if (!result.ok) {
-      console.log("Failed to save Mock DNS preference", result.message);
+      Alert.alert(
+        "Update Failed",
+        result.message || "Unable to update Mock DNS preference.",
+      );
     }
   };
 
   const handleTogglePreferHttps = async (value: boolean) => {
     const result = await setPreferDnsOverHttps(value);
     if (!result.ok) {
-      console.log("Failed to save Prefer HTTPS toggle", result.message);
+      Alert.alert(
+        "Update Failed",
+        result.message || "Unable to update HTTPS preference.",
+      );
     }
   };
 
   const handleToggleExperimentalTransports = async (value: boolean) => {
     const result = await setAllowExperimentalTransports(value);
     if (!result.ok) {
-      console.log("Failed to update experimental transports", result.message);
+      Alert.alert(
+        "Update Failed",
+        result.message || "Unable to update experimental transports.",
+      );
     }
   };
 
@@ -283,7 +314,16 @@ export function GlassSettings() {
 
   return (
     <>
-      <Form.List navigationTitle="Settings">
+      <View
+        style={[
+          styles.screenContainer,
+          {
+            paddingTop: insets.top + 8,
+            paddingBottom: Math.max(insets.bottom, 16),
+          },
+        ]}
+      >
+        <Form.List navigationTitle="Settings">
         {/* DNS Configuration Section */}
         <Form.Section
           title="DNS Configuration"
@@ -326,13 +366,13 @@ export function GlassSettings() {
           subtitle="Use local mock responses when real DNS fails"
           rightContent={
             <Switch
-                value={enableMockDNS}
-                onValueChange={handleToggleMockDNS}
-                trackColor={{ false: "#767577", true: "#007AFF" }}
-                thumbColor={Platform.OS === "ios" ? undefined : "#f4f3f4"}
-              />
-            }
-          />
+              value={enableMockDNS}
+              onValueChange={handleToggleMockDNS}
+              trackColor={{ false: "#767577", true: "#007AFF" }}
+              thumbColor={Platform.OS === "ios" ? undefined : "#f4f3f4"}
+            />
+          }
+        />
         </Form.Section>
 
         {/* DNS Method Preference */}
@@ -433,12 +473,16 @@ export function GlassSettings() {
             shape="capsule"
             style={{ marginVertical: 8, alignItems: "center", padding: 10 }}
           >
-            <Text
+            <Pressable
+              accessibilityRole="button"
               onPress={handleTestSelectedPreference}
-              style={{ color: "#007AFF" }}
+              disabled={testRunning}
+              style={({ pressed }) => ({ opacity: pressed || testRunning ? 0.6 : 1 })}
             >
-              {testRunning ? "Testing…" : "Test Selected Preference"}
-            </Text>
+              <Text style={{ color: "#007AFF", fontWeight: "600" }}>
+                {testRunning ? "Testing…" : "Test Selected Preference"}
+              </Text>
+            </Pressable>
           </LiquidGlassWrapper>
           <View
             style={{ flexDirection: "row", justifyContent: "space-around" }}
@@ -450,9 +494,16 @@ export function GlassSettings() {
                 shape="capsule"
                 style={{ paddingHorizontal: 12, paddingVertical: 6 }}
               >
-                <Text onPress={() => handleForceTransport(t)}>
-                  {t.toUpperCase()}
-                </Text>
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => handleForceTransport(t)}
+                  disabled={testRunning}
+                  style={({ pressed }) => ({ opacity: pressed || testRunning ? 0.6 : 1 })}
+                >
+                  <Text style={{ fontWeight: "600", color: isDark ? "#FFFFFF" : "#1C1C1E" }}>
+                    {t.toUpperCase()}
+                  </Text>
+                </Pressable>
               </LiquidGlassWrapper>
             ))}
           </View>
@@ -473,7 +524,7 @@ export function GlassSettings() {
         <Form.Section title="About">
           <Form.Item
             title="App Version"
-            subtitle="DNSChat v2.0.0"
+            subtitle="DNSChat v2.1.0"
             rightContent={
               <LiquidGlassWrapper
                 variant="interactive"
@@ -532,13 +583,12 @@ export function GlassSettings() {
           <Form.Item
             title="Report Bug"
             subtitle="Found an issue? Let us know"
-            onPress={() =>
-              Linking.openURL("https://github.com/mneves75/dnschat/issues")
-            }
+            onPress={() => openExternalUrl("https://github.com/mneves75/dnschat/issues")}
             showChevron
           />
         </Form.Section>
       </Form.List>
+      </View>
 
       {/* DNS Service Selection Bottom Sheet */}
       <GlassBottomSheet
@@ -659,7 +709,7 @@ export function GlassSettings() {
           {
             title: "View Documentation",
             onPress: () =>
-              Linking.openURL(
+              openExternalUrl(
                 "https://github.com/mneves75/dnschat/blob/main/README.md",
               ),
             icon: <Text>📚</Text>,
@@ -667,7 +717,7 @@ export function GlassSettings() {
           {
             title: "Join Community",
             onPress: () =>
-              Linking.openURL(
+              openExternalUrl(
                 "https://github.com/mneves75/dnschat/discussions",
               ),
             icon: <Text>💬</Text>,
@@ -675,14 +725,14 @@ export function GlassSettings() {
           {
             title: "Send Email",
             onPress: () =>
-              Linking.openURL(
+              openExternalUrl(
                 "mailto:support@dnschat.app?subject=DNSChat Support",
               ),
             icon: <Text>📧</Text>,
           },
           {
             title: "Cancel",
-            onPress: () => {},
+            onPress: supportSheet.hide,
             style: "cancel",
           },
         ]}
@@ -696,6 +746,9 @@ export function GlassSettings() {
 // ==================================================================================
 
 const styles = StyleSheet.create({
+  screenContainer: {
+    flex: 1,
+  },
   valueText: {
     fontSize: 15,
     color: "#8E8E93",
