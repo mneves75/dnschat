@@ -144,7 +144,7 @@ describe("Native DNS Module", () => {
       const dns = new NativeDNS();
       expect(() =>
         dns.parseMultiPartResponse(["1/2:Hello", "1/2:Duplicate", "2/2: world"]),
-      ).toThrow('Duplicate part numbers detected in multi-part response');
+      ).toThrow('Conflicting content for part 1');
     });
 
     it("should handle native module unavailable", async () => {

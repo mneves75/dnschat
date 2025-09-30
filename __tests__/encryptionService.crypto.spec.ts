@@ -15,7 +15,7 @@ describe("EncryptionService Web Crypto guard", () => {
     global.crypto = undefined;
 
     await expect(EncryptionService.generateConversationKey("guard-test")).rejects.toThrow(
-      /Web Crypto API is unavailable/
+      /CRITICAL: Web Crypto API became unavailable/
     );
   });
 });

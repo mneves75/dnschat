@@ -18,6 +18,8 @@ A high-performance, cross-platform native DNS TXT query module for React Native 
 - Messages are limited to **120 characters before sanitization**. After sanitization, the resulting DNS label must be ≤63 characters; otherwise the client surfaces an error.
 - The TypeScript layer composes the fully qualified domain (`<label>.ch.at`) and hands it to the native modules unchanged. iOS and Android validate the FQDN but no longer rewrite or append zones on-device.
 - TXT responses may span multiple 255-byte strings. The shared parser now concatenates plain segments in order and validates numbered `n/N:` sequences.
+- The server streams with a **4 second hard deadline** and trims responses to **500 characters**; clients should surface `... (incomplete)` when the server indicates truncation.
+- Duplicate numbered TXT segments produced by UDP retransmissions are accepted when their payload matches; conflicting duplicates trigger an error on all platforms.
 
 ## Swift Xcode 26 Additional Docs
 

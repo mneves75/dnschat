@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { Image, Pressable, Platform, View, StyleSheet } from 'react-native';
 import { Tabs, useRouter } from 'expo-router';
 import { BottomTabBar } from '@react-navigation/bottom-tabs';
+import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 
 import { LogsIcon } from '../../../src/components/icons/LogsIcon';
 import { SettingsIcon } from '../../../src/components/icons/SettingsIcon';
@@ -12,6 +13,7 @@ import {
 } from '../../../src/components/LiquidGlassWrapper';
 import { useLocalization } from '../../../src/i18n/LocalizationProvider';
 import { FloatingGlassTabBar } from '../../../src/components/glass/GlassTabBar';
+import { buildGlassTabs } from './tabHelpers';
 
 const newspaper = require('../../../src/assets/newspaper.png');
 
@@ -53,7 +55,6 @@ export default function AppTabsLayout() {
         headerTitle: t('app.title'),
         headerStyle: { backgroundColor: glassEnabled ? 'transparent' : colors.card },
         headerTintColor: colors.text,
-        headerBackVisible: false,
         headerLeft: () => null,
         headerRight: () => <SettingsButton />,
         tabBarActiveTintColor: colors.accent,
@@ -85,30 +86,13 @@ export default function AppTabsLayout() {
         }
 
         const { state, descriptors, navigation, insets } = props;
-        const activeRoute = state.routes[state.index];
-        const visibleRoutes = state.routes.filter((route) => {
-          const options = descriptors[route.key]?.options;
-          return options?.href !== null;
-        });
-
-        const tabs = visibleRoutes.map((route, index) => {
-          const descriptor = descriptors[route.key];
-          const options = descriptor?.options ?? {};
-          const isFocused = state.index === state.routes.findIndex((r) => r.key === route.key);
-          const label =
-            options.tabBarLabel ??
-            options.title ??
-            route.name;
-          const appliedLabel = typeof label === 'string' ? label : route.name;
-          const color = isFocused ? colors.accent : colors.muted;
-          const iconNode = options.tabBarIcon?.({ color, focused: isFocused, size: 22 });
-
-          return {
-            id: route.key,
-            title: appliedLabel,
-            icon: iconNode,
-          };
-        });
+        const { tabs, activeRouteKey } = buildGlassTabs(
+          state,
+          descriptors,
+          state.index,
+          colors.accent,
+          colors.muted,
+        );
 
         const baseMargin = 12;
         const bottomInset = insets?.bottom ?? 0;
@@ -116,7 +100,7 @@ export default function AppTabsLayout() {
         return (
           <FloatingGlassTabBar
             tabs={tabs}
-            activeTabId={activeRoute.key}
+            activeTabId={activeRouteKey}
             onTabPress={(tabId) => {
               const routeIndex = state.routes.findIndex((route) => route.key === tabId);
               if (routeIndex === -1) return;

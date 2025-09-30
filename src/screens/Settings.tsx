@@ -343,10 +343,13 @@ function SectionCard({
 }) {
   return (
     <View style={[styles.sectionCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
-      accessible
-      accessibilityRole="summary"
     >
-      <Text style={[styles.sectionTitle, { color: colors.text }]}>{title}</Text>
+      <Text
+        accessibilityRole="header"
+        style={[styles.sectionTitle, { color: colors.text }]}
+      >
+        {title}
+      </Text>
       {description ? (
         <Text style={[styles.sectionSubtitle, { color: colors.muted }]}>{description}</Text>
       ) : null}

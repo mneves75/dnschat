@@ -41,6 +41,8 @@ public class DNSResolver {
     private static final int QUERY_TIMEOUT_MS = 10000;
     private static final int MAX_LABEL_LENGTH = 63;
     private static final int MAX_QNAME_LENGTH = 255;
+    private static final int MAX_NATIVE_ATTEMPTS = 3;
+    private static final long RETRY_DELAY_MS = 200L;
     
     private final Executor executor = Executors.newCachedThreadPool();
     private final ConnectivityManager connectivityManager;
@@ -148,46 +150,60 @@ public class DNSResolver {
 
     private CompletableFuture<List<String>> queryTXTLegacy(String domain, String queryName) {
         return CompletableFuture.supplyAsync(() -> {
-            try {
-                // Use dnsjava for older Android versions
-                Lookup lookup = new Lookup(queryName, Type.TXT);
-                
-                // Configure custom resolver
-                SimpleResolver resolver = new SimpleResolver(domain);
-                resolver.setPort(DNS_PORT);
-                resolver.setTimeout(QUERY_TIMEOUT_MS / 1000);
-                lookup.setResolver(resolver);
-                
-                Record[] records = lookup.run();
-                
-                if (records == null || records.length == 0) {
-                    throw new DNSError(DNSError.Type.NO_RECORDS_FOUND, "No TXT records found in legacy query");
-                }
+            DNSError lastError = null;
+            for (int attempt = 0; attempt < MAX_NATIVE_ATTEMPTS; attempt++) {
+                try {
+                    Lookup lookup = new Lookup(queryName, Type.TXT);
 
-                List<String> txtRecords = new ArrayList<>();
-                for (Record record : records) {
-                    if (record instanceof TXTRecord) {
-                        TXTRecord txtRecord = (TXTRecord) record;
-                        List<?> strings = txtRecord.getStrings();
-                        for (Object str : strings) {
-                            txtRecords.add(str.toString());
+                    SimpleResolver resolver = new SimpleResolver(domain);
+                    resolver.setPort(DNS_PORT);
+                    resolver.setTimeout(QUERY_TIMEOUT_MS / 1000);
+                    lookup.setResolver(resolver);
+
+                    Record[] records = lookup.run();
+
+                    if (records == null || records.length == 0) {
+                        throw new DNSError(DNSError.Type.NO_RECORDS_FOUND, "No TXT records found in legacy query");
+                    }
+
+                    List<String> txtRecords = new ArrayList<>();
+                    for (Record record : records) {
+                        if (record instanceof TXTRecord) {
+                            TXTRecord txtRecord = (TXTRecord) record;
+                            List<?> strings = txtRecord.getStrings();
+                            for (Object str : strings) {
+                                txtRecords.add(str.toString());
+                            }
                         }
                     }
+
+                    if (txtRecords.isEmpty()) {
+                        throw new DNSError(DNSError.Type.NO_RECORDS_FOUND, "No valid TXT records found in legacy query");
+                    }
+
+                    return txtRecords;
+
+                } catch (DNSError e) {
+                    lastError = e;
+                    if (e.getType() == DNSError.Type.NO_RECORDS_FOUND && attempt < MAX_NATIVE_ATTEMPTS - 1) {
+                        try {
+                            Thread.sleep((long) (RETRY_DELAY_MS * Math.pow(2, attempt)));
+                        } catch (InterruptedException ie) {
+                            Thread.currentThread().interrupt();
+                            throw e;
+                        }
+                        continue;
+                    }
+                    Log.e(TAG, "DNS query failed", e);
+                    throw e;
+                } catch (Exception e) {
+                    Log.e(TAG, "DNS query failed", e);
+                    throw new DNSError(DNSError.Type.QUERY_FAILED, "Legacy DNS query failed: " + e.getMessage(), e);
                 }
-
-                if (txtRecords.isEmpty()) {
-                    throw new DNSError(DNSError.Type.NO_RECORDS_FOUND, "No valid TXT records found in legacy query");
-                }
-
-                return txtRecords;
-
-            } catch (DNSError e) {
-                Log.e(TAG, "DNS query failed", e);
-                throw e;  // Re-throw structured errors
-            } catch (Exception e) {
-                Log.e(TAG, "DNS query failed", e);
-                throw new DNSError(DNSError.Type.QUERY_FAILED, "Legacy DNS query failed: " + e.getMessage(), e);
             }
+            throw lastError != null
+                ? lastError
+                : new DNSError(DNSError.Type.NO_RECORDS_FOUND, "No TXT records found in legacy query");
         }, executor);
     }
 
@@ -196,42 +212,55 @@ public class DNSResolver {
      */
     private CompletableFuture<List<String>> queryTXTRawUDP(String queryName, String server) {
         return CompletableFuture.supplyAsync(() -> {
-            DatagramSocket socket = null;
-            try {
-                // Build DNS query packet
-                byte[] query = buildDnsQuery(queryName);
+            DNSError lastError = null;
+            for (int attempt = 0; attempt < MAX_NATIVE_ATTEMPTS; attempt++) {
+                DatagramSocket socket = null;
+                try {
+                    byte[] query = buildDnsQuery(queryName);
 
-                // Send UDP packet
-                socket = new DatagramSocket();
-                socket.setSoTimeout(QUERY_TIMEOUT_MS);
-                InetAddress serverAddr = InetAddress.getByName(server);
+                    socket = new DatagramSocket();
+                    socket.setSoTimeout(QUERY_TIMEOUT_MS);
+                    InetAddress serverAddr = InetAddress.getByName(server);
 
-                DatagramPacket packet = new DatagramPacket(query, query.length, serverAddr, DNS_PORT);
-                socket.send(packet);
+                    DatagramPacket packet = new DatagramPacket(query, query.length, serverAddr, DNS_PORT);
+                    socket.send(packet);
 
-                // Receive response
-                byte[] buffer = new byte[2048];
-                DatagramPacket responsePacket = new DatagramPacket(buffer, buffer.length);
-                socket.receive(responsePacket);
+                    byte[] buffer = new byte[2048];
+                    DatagramPacket responsePacket = new DatagramPacket(buffer, buffer.length);
+                    socket.receive(responsePacket);
 
-                int length = responsePacket.getLength();
-                byte[] response = new byte[length];
-                System.arraycopy(buffer, 0, response, 0, length);
+                    int length = responsePacket.getLength();
+                    byte[] response = new byte[length];
+                    System.arraycopy(buffer, 0, response, 0, length);
 
-                List<String> txtRecords = parseDnsTxtResponse(response);
-                if (txtRecords.isEmpty()) {
-                    throw new DNSError(DNSError.Type.NO_RECORDS_FOUND, "No TXT records found in UDP response");
-                }
-                return txtRecords;
-            } catch (DNSError e) {
-                throw e;  // Re-throw structured errors
-            } catch (Exception e) {
-                throw new DNSError(DNSError.Type.QUERY_FAILED, "UDP DNS query failed: " + e.getMessage(), e);
-            } finally {
-                if (socket != null) {
-                    socket.close();
+                    List<String> txtRecords = parseDnsTxtResponse(response);
+                    if (txtRecords.isEmpty()) {
+                        throw new DNSError(DNSError.Type.NO_RECORDS_FOUND, "No TXT records found in UDP response");
+                    }
+                    return txtRecords;
+                } catch (DNSError e) {
+                    lastError = e;
+                    if (e.getType() == DNSError.Type.NO_RECORDS_FOUND && attempt < MAX_NATIVE_ATTEMPTS - 1) {
+                        try {
+                            Thread.sleep((long) (RETRY_DELAY_MS * Math.pow(2, attempt)));
+                        } catch (InterruptedException ie) {
+                            Thread.currentThread().interrupt();
+                            throw e;
+                        }
+                        continue;
+                    }
+                    throw e;
+                } catch (Exception e) {
+                    throw new DNSError(DNSError.Type.QUERY_FAILED, "UDP DNS query failed: " + e.getMessage(), e);
+                } finally {
+                    if (socket != null) {
+                        socket.close();
+                    }
                 }
             }
+            throw lastError != null
+                ? lastError
+                : new DNSError(DNSError.Type.NO_RECORDS_FOUND, "No TXT records found in UDP response");
         }, executor);
     }
 

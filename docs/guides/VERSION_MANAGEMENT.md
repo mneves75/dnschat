@@ -46,11 +46,11 @@ Follow [Semantic Versioning](https://semver.org/):
 
 ## Recent Version History
 
+- **v2.1.0** (2025-09-30): Floating liquid glass tab bar, glass debug diagnostics, native DNS retry parity
+- **v2.0.0** (2025-09-28): Liquid Glass UI phase rollout (Chats + Logs)
 - **v1.7.2** (2025-08-13): Enhanced DNS transport robustness and error handling
 - **v1.7.1** (2025-08-13): Critical infinite render loop fixes
 - **v1.7.0** (2025-08-13): Interactive onboarding and advanced DNS preferences
-- **v1.6.1** (2025-08-11): UI fixes and enhanced features
-- **v1.6.0** (2025-08-11): DNS query logging and HTTPS preferences
 
 ## Release Checklist
 

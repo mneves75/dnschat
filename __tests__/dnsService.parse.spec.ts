@@ -14,9 +14,7 @@ describe('parseTXTResponse', () => {
 
   it('throws on duplicate multipart part numbers', () => {
     const records = ['1/2:Hel', '1/2:lo'];
-    expect(() => parseTXTResponse(records)).toThrow(
-      /Duplicate part numbers detected/,
-    );
+    expect(() => parseTXTResponse(records)).toThrow(/Conflicting content for part/);
   });
 
   it('throws on incomplete multipart sequence', () => {

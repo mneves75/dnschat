@@ -1,7 +1,7 @@
 PODS:
   - boost (1.84.0)
   - CocoaAsyncSocket (7.6.5)
-  - DNSNative (2.0.0):
+  - DNSNative (2.1.0):
     - React-Core
   - DoubleConversion (1.1.6)
   - EXConstants (18.0.9):
@@ -310,7 +310,7 @@ PODS:
   - hermes-engine (0.81.4):
     - hermes-engine/Pre-built (= 0.81.4)
   - hermes-engine/Pre-built (0.81.4)
-  - LiquidGlassNative (2.0.0):
+  - LiquidGlassNative (2.1.0):
     - React
     - React-Core
   - OpenSSL-Universal (3.3.3001)

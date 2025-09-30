@@ -41,7 +41,7 @@ export const DNS_CONSTANTS = {
   DNS_PORT: 53,                 // Standard DNS port
   QUERY_TIMEOUT_MS: 10000,      // 10 seconds
   MAX_RETRIES: 3,               // Maximum retry attempts
-  RETRY_DELAY_MS: 1000,         // 1 second between retries
+  RETRY_DELAY_MS: 200,          // 200ms between retries (exponential backoff applied natively)
 
   // Thread pool configuration (Android)
   THREAD_POOL_CORE_SIZE: 2,     // Minimum threads

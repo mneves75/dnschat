@@ -1,6 +1,7 @@
 import React from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
+  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -21,11 +22,27 @@ export default function GlassDebugScreen() {
 
   const capabilityRows = [
     { label: "Supported", value: capabilities.isSupported ? "Yes" : "No" },
-    { label: "SwiftUI Glass", value: capabilities.supportsSwiftUIGlass ? "Yes" : "No" },
+    ...(Platform.OS === "ios"
+      ? [
+          {
+            label: "SwiftUI Glass",
+            value: capabilities.supportsSwiftUIGlass ? "Yes" : "No",
+          },
+        ]
+      : []),
     { label: "Platform", value: Platform.OS },
-    { label: "OS Version", value: Platform.Version?.toString() ?? "unknown" },
-    { label: "Material Variant", value: capabilities.materialVariant ?? "n/a" },
+    { label: "OS/API", value: capabilities.capabilities?.apiLevel?.toString() ?? "unknown" },
+    {
+      label: "Performance Tier",
+      value: capabilities.capabilities?.performance.tier ?? "unknown",
+    },
+    {
+      label: "Metal Acceleration",
+      value: capabilities.capabilities?.performance.metalAcceleration ? "Yes" : "No",
+    },
   ];
+
+  const featureFlags = capabilities.capabilities?.features ?? null;
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}> 
@@ -59,7 +76,11 @@ export default function GlassDebugScreen() {
           <Text style={[styles.previewBody, { color: colors.muted }]}>Move your device to see sensor parallax (supported hardware only).</Text>
           <Pressable
             accessibilityRole="button"
-            onPress={() => {}}
+            accessibilityHint="Triggers a glass haptic demo"
+            onPress={() => {
+              console.log("Glass debug tap: capabilities", capabilities);
+              Alert.alert("Glass Effect", "Tap registered. Check console for capability payload.");
+            }}
             style={({ pressed }) => [
               styles.previewButton,
               { backgroundColor: colors.accent },
@@ -69,6 +90,18 @@ export default function GlassDebugScreen() {
             <Text style={styles.previewButtonLabel}>Tap Effect</Text>
           </Pressable>
         </LiquidGlassWrapper>
+
+        {featureFlags ? (
+          <View style={[styles.section, { borderColor: colors.border }]}> 
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Feature Flags</Text>
+            {Object.entries(featureFlags).map(([key, enabled]) => (
+              <View key={key} style={styles.row}>
+                <Text style={[styles.rowLabel, { color: colors.text }]}>{key}</Text>
+                <Text style={[styles.rowValue, { color: colors.muted }]}>{enabled ? "On" : "Off"}</Text>
+              </View>
+            ))}
+          </View>
+        ) : null}
       </ScrollView>
     </SafeAreaView>
   );
