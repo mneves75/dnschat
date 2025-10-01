@@ -130,17 +130,17 @@ const resolveNativeLiquidGlassView = (): ReturnType<typeof requireNativeComponen
     return null;
   }
 
-  const config = (UIManager as any)?.getViewManagerConfig?.("LiquidGlassView");
+  const config = (UIManager as any)?.getViewManagerConfig?.("LiquidGlass");
   if (config) {
-    return requireNativeComponent<LiquidGlassProps>("LiquidGlassView");
+    return requireNativeComponent<LiquidGlassProps>("LiquidGlass");
   }
 
-  if (typeof (UIManager as any)?.LiquidGlassView !== "undefined") {
-    return requireNativeComponent<LiquidGlassProps>("LiquidGlassView");
+  if (typeof (UIManager as any)?.LiquidGlass !== "undefined") {
+    return requireNativeComponent<LiquidGlassProps>("LiquidGlass");
   }
 
   console.warn(
-    "LiquidGlassView is not registered. Ensure the Liquid Glass native plugin ran and pods are installed",
+    "LiquidGlass native component is not registered. Ensure the Liquid Glass native plugin ran and pods are installed",
   );
   return null;
 };
