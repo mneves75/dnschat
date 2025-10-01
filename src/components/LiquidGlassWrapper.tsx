@@ -63,8 +63,8 @@ export interface LiquidGlassProps extends ViewProps {
 // ==================================================================================
 
 /**
- * Checks if the current iOS version supports Liquid Glass (iOS 26+)
- * This provides the GUARANTEE requested for iOS/iPadOS 26+ support
+ * Checks if the current iOS version supports Liquid Glass features
+ * This provides proper capability detection for different iOS versions
  * Memoized for performance optimization
  */
 const getIOSMajorVersion = (): number | null => {
@@ -83,8 +83,8 @@ const getIOSMajorVersion = (): number | null => {
 
 const isIOSGlassCapable = (() => {
   const major = getIOSMajorVersion();
-  // CRITICAL FIX: iOS 26+ required for .glassEffect() API
-  return typeof major === "number" && major >= 26;
+  // iOS 17+ supports basic blur effects, iOS 26+ supports SwiftUI glass effects
+  return typeof major === "number" && major >= 17;
 })();
 
 /**
@@ -93,25 +93,29 @@ const isIOSGlassCapable = (() => {
 async function getNativeCapabilities(): Promise<{
   available: boolean;
   supportsLiquidGlass: boolean;
+  supportsBasicBlur: boolean;
+  apiLevel: number;
 }> {
   try {
     if (!isIOSGlassCapable) {
-      return { available: false, supportsLiquidGlass: false };
+      return { available: false, supportsLiquidGlass: false, supportsBasicBlur: false, apiLevel: 0 };
     }
 
     const { LiquidGlassNativeModule } = NativeModules;
     if (!LiquidGlassNativeModule) {
-      return { available: false, supportsLiquidGlass: false };
+      return { available: false, supportsLiquidGlass: false, supportsBasicBlur: false, apiLevel: 0 };
     }
 
     const capabilities = await LiquidGlassNativeModule.getCapabilities();
     return {
-      available: true,
-      supportsLiquidGlass: Boolean(capabilities?.supportsLiquidGlass ?? capabilities?.isSupported),
+      available: Boolean(capabilities?.available ?? capabilities?.isSupported),
+      supportsLiquidGlass: Boolean(capabilities?.supportsSwiftUIGlass),
+      supportsBasicBlur: Boolean(capabilities?.supportsBasicBlur),
+      apiLevel: capabilities?.apiLevel ?? 0,
     };
   } catch (error) {
     console.warn("🚨 Failed to get native glass capabilities:", error);
-    return { available: false, supportsLiquidGlass: false };
+    return { available: false, supportsLiquidGlass: false, supportsBasicBlur: false, apiLevel: 0 };
   }
 }
 
@@ -155,6 +159,15 @@ export const LiquidGlassWrapper: React.FC<LiquidGlassProps> = ({
 
   // iOS 26+: Use native Liquid Glass view when available
   if (isIOSGlassCapable && NativeLiquidGlassView) {
+    // For iOS 17-25, we need to check if we have basic blur support
+    // For iOS 26+, we use the full SwiftUI glass effects
+    const shouldUseNativeGlass = async () => {
+      const capabilities = await getNativeCapabilities();
+      return capabilities.supportsLiquidGlass;
+    };
+
+    // For now, use the native view if iOS 17+ and we have the native component
+    // The native view will handle the fallback internally
     return (
       <NativeLiquidGlassView
         variant={variant}
@@ -273,10 +286,9 @@ export const useLiquidGlassCapabilities = () => {
     }
   }, [loading, capabilities]);
 
-  const isSupported = Boolean(capabilities?.isSupported);
-  const supportsSwiftUIGlass = Boolean(
-    capabilities?.platform === "ios" && capabilities?.isSupported && capabilities?.apiLevel >= 260,
-  );
+  const isSupported = Boolean(capabilities?.available || capabilities?.isSupported);
+  const supportsSwiftUIGlass = Boolean(capabilities?.supportsSwiftUIGlass);
+  const supportsBasicBlur = Boolean(capabilities?.supportsBasicBlur);
   const iosVersion = capabilities?.apiLevel
     ? (capabilities.apiLevel / 10).toFixed(1)
     : null;
@@ -286,6 +298,7 @@ export const useLiquidGlassCapabilities = () => {
     loading,
     isSupported,
     supportsSwiftUIGlass,
+    supportsBasicBlur,
     iosVersion,
   };
 };

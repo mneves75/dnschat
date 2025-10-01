@@ -355,30 +355,30 @@ extension Color {
 }
 
 /**
- * UIKit wrapper for React Native integration
- * 🚨 TARGETING iOS 26.0+ for Liquid Glass Guarantee
+ * UIBlurEffectView - Basic blur effect for iOS 17-25
+ * Provides UIVisualEffectView with blur for older iOS versions
  */
-@objc(LiquidGlassView)
-public class LiquidGlassView: UIView {
+@objc(UIBlurEffectView)
+public class UIBlurEffectView: UIView {
   private var config = LiquidGlassConfig()
-  private var hostingController: UIHostingController<LiquidGlassContentView>?
+  private var blurView: UIVisualEffectView?
   private var contentView: UIView = UIView()
-  
+
   // MARK: - Initialization
-  
+
   public override init(frame: CGRect) {
     super.init(frame: frame)
     setupView()
   }
-  
+
   required init?(coder: NSCoder) {
     super.init(coder: coder)
     setupView()
   }
-  
+
   private func setupView() {
     backgroundColor = .clear
-    
+
     // Add content view that will host React Native content
     contentView.backgroundColor = .clear
     addSubview(contentView)
@@ -389,10 +389,134 @@ public class LiquidGlassView: UIView {
       contentView.trailingAnchor.constraint(equalTo: trailingAnchor),
       contentView.bottomAnchor.constraint(equalTo: bottomAnchor)
     ])
-    
+
+    // Setup blur effect
+    setupBlurEffect()
+
+    logger.info("UIBlurEffectView initialized for iOS 17-25")
+  }
+
+  private func setupBlurEffect() {
+    // Remove existing blur view
+    blurView?.removeFromSuperview()
+
+    // Create blur effect based on variant
+    let blurEffect: UIBlurEffect = {
+      switch config.variant {
+      case "prominent":
+        return UIBlurEffect(style: .systemUltraThinMaterial)
+      case "interactive":
+        return UIBlurEffect(style: .systemThinMaterial)
+      default:
+        return UIBlurEffect(style: .systemMaterial)
+      }
+    }()
+
+    // Create blur view
+    blurView = UIVisualEffectView(effect: blurEffect)
+    blurView?.frame = bounds
+    blurView?.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+
+    // Insert behind content
+    insertSubview(blurView!, at: 0)
+
+    // Apply shape
+    applyShape()
+  }
+
+  private func applyShape() {
+    switch config.shape {
+    case "rect":
+      layer.cornerRadius = 0
+    case "roundedRect":
+      layer.cornerRadius = config.cornerRadius
+      blurView?.layer.cornerRadius = config.cornerRadius
+      blurView?.clipsToBounds = true
+    default: // "capsule"
+      layer.cornerRadius = min(bounds.width, bounds.height) / 2
+      blurView?.layer.cornerRadius = min(bounds.width, bounds.height) / 2
+      blurView?.clipsToBounds = true
+    }
+
+    layer.masksToBounds = true
+  }
+
+  // MARK: - Public Configuration API
+
+  @objc public func updateConfig(_ newConfig: LiquidGlassConfig) {
+    config = newConfig
+    setupBlurEffect()
+
+    logger.debug("UIBlurEffectView config updated: variant=\(newConfig.variant), shape=\(newConfig.shape)")
+  }
+
+  @objc public func setVariant(_ variant: String) {
+    config.variant = variant
+    setupBlurEffect()
+  }
+
+  @objc public func setShape(_ shape: String) {
+    config.shape = shape
+    setupBlurEffect()
+  }
+
+  @objc public func setGlassTintColor(_ tintColor: String) {
+    config.tintColor = tintColor
+    setupBlurEffect()
+  }
+
+  @objc public func setCornerRadius(_ radius: CGFloat) {
+    config.cornerRadius = radius
+    setupBlurEffect()
+  }
+
+  // MARK: - Layout
+
+  public override func layoutSubviews() {
+    super.layoutSubviews()
+    blurView?.frame = bounds
+  }
+}
+
+/**
+ * UIKit wrapper for React Native integration
+ * 🚨 TARGETING iOS 26.0+ for Liquid Glass Guarantee
+ */
+@objc(LiquidGlassView)
+public class LiquidGlassView: UIView {
+  private var config = LiquidGlassConfig()
+  private var hostingController: UIHostingController<LiquidGlassContentView>?
+  private var contentView: UIView = UIView()
+
+  // MARK: - Initialization
+
+  public override init(frame: CGRect) {
+    super.init(frame: frame)
+    setupView()
+  }
+
+  required init?(coder: NSCoder) {
+    super.init(coder: coder)
+    setupView()
+  }
+
+  private func setupView() {
+    backgroundColor = .clear
+
+    // Add content view that will host React Native content
+    contentView.backgroundColor = .clear
+    addSubview(contentView)
+    contentView.translatesAutoresizingMaskIntoConstraints = false
+    NSLayoutConstraint.activate([
+      contentView.topAnchor.constraint(equalTo: topAnchor),
+      contentView.leadingAnchor.constraint(equalTo: leadingAnchor),
+      contentView.trailingAnchor.constraint(equalTo: trailingAnchor),
+      contentView.bottomAnchor.constraint(equalTo: bottomAnchor)
+    ])
+
     // Create SwiftUI glass effect wrapping the content
     setupGlassEffect()
-    
+
     logger.info("SwiftUI Liquid Glass View initialized")
   }
   
@@ -517,13 +641,34 @@ public class LiquidGlassView: UIView {
 public class LiquidGlassViewManager: RCTViewManager {
   
   public override func view() -> UIView! {
-    // Runtime iOS 26+ detection - return appropriate view
+    // Runtime iOS version detection for proper fallback
     if #available(iOS 26.0, *) {
       return LiquidGlassView()
+    } else if #available(iOS 17.0, *) {
+      // iOS 17-25: Use UIVisualEffectView with blur for basic glass effect
+      return UIBlurEffectView()
     } else {
-      // Return basic UIView for iOS 16-25 - fallback handled by React Native layer
+      // iOS 16 and below: Return basic UIView - no glass effects
       return UIView()
     }
+  }
+
+  // MARK: - React Native Props for UIBlurEffectView
+
+  @objc public func setVariant(_ view: UIBlurEffectView, variant: String) {
+    view.setVariant(variant)
+  }
+
+  @objc public func setShape(_ view: UIBlurEffectView, shape: String) {
+    view.setShape(shape)
+  }
+
+  @objc public func setTintColor(_ view: UIBlurEffectView, tintColor: String) {
+    view.setGlassTintColor(tintColor)
+  }
+
+  @objc public func setCornerRadius(_ view: UIBlurEffectView, cornerRadius: CGFloat) {
+    view.setCornerRadius(cornerRadius)
   }
   
   public override static func requiresMainQueueSetup() -> Bool {
@@ -589,27 +734,31 @@ public class LiquidGlassNativeModule: NSObject, RCTBridgeModule {
     _ resolve: @escaping RCTPromiseResolveBlock,
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
-    // Runtime iOS 26+ detection for capabilities
-    let isIOS26Plus = {
-      if #available(iOS 26.0, *) {
-        return true
-      } else {
-        return false
-      }
-    }()
-    
+    // Get actual iOS version for proper detection
+    let iosVersion = UIDevice.current.systemVersion
+    let apiLevel = getIOSAPILevel()
+
+    // iOS 17+ supports basic blur effects (UIBlurEffect)
+    let supportsBasicBlur = apiLevel >= 170
+
+    // iOS 26+ supports advanced SwiftUI glass effects
+    let supportsSwiftUIGlass = apiLevel >= 260
+
+    logger.info("iOS Version Detection: \(iosVersion), API Level: \(apiLevel), Basic Blur: \(supportsBasicBlur), SwiftUI Glass: \(supportsSwiftUIGlass)")
+
     let capabilities: [String: Any] = [
-      "available": isIOS26Plus,
+      "available": supportsBasicBlur,
       "platform": "ios",
-      "supportsSwiftUIGlass": isIOS26Plus,
-      "supportsGlassContainer": isIOS26Plus,
-      "supportsSensorAware": isIOS26Plus,
-      "supportsInteractive": isIOS26Plus,
-      "iosVersion": UIDevice.current.systemVersion,
-      "apiLevel": getIOSAPILevel(),
-      "glassEffectAPI": isIOS26Plus ? "swiftui" : "fallback"
+      "supportsSwiftUIGlass": supportsSwiftUIGlass,
+      "supportsGlassContainer": supportsSwiftUIGlass,
+      "supportsSensorAware": supportsSwiftUIGlass,
+      "supportsInteractive": supportsSwiftUIGlass,
+      "supportsBasicBlur": supportsBasicBlur,
+      "iosVersion": iosVersion,
+      "apiLevel": apiLevel,
+      "glassEffectAPI": supportsSwiftUIGlass ? "swiftui" : "uiblureffect"
     ]
-    
+
     resolve(capabilities)
   }
   

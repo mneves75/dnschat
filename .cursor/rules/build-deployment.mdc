@@ -5,158 +5,153 @@ description: "Build, deployment, and version management guidelines"
 
 ## Development Commands
 
-### Start Development Server
+### Starting Development
 ```bash
-npm start              # Start Expo dev server
-npm run ios           # Build and run on iOS
-npm run android       # Build and run on Android (Java 17)
-npm run web           # Run web preview
+# Start Metro bundler
+npm start
+
+# Run on iOS simulator
+npm run ios
+
+# Run on Android emulator (requires Java 17)
+npm run android
+
+# Run on web
+npm run web
 ```
 
-### Type Checking
+### Alternative Android Build
 ```bash
-npm run typecheck           # Check all
-npm run typecheck:app       # App code only
-npm run typecheck:test      # Test code only
-```
-
-### Testing
-```bash
-npm test                    # Run Jest tests
-node test-dns-simple.js     # DNS smoke test
+# If Java 17 not in PATH, use the helper script
+./android-java17.sh
 ```
 
 ## Version Management
 
-### Sync Versions
-[scripts/sync-versions.js](mdc:scripts/sync-versions.js) - Synchronize version across:
+### Version Synchronization
+Use [scripts/sync-versions.js](mdc:scripts/sync-versions.js) to keep versions in sync across:
 - [package.json](mdc:package.json)
 - [app.json](mdc:app.json)
-- [ios/DNSChat.xcodeproj/project.pbxproj](mdc:ios/DNSChat.xcodeproj/project.pbxproj)
+- [ios/DNSChat/Info.plist](mdc:ios/DNSChat/Info.plist)
 - [android/app/build.gradle](mdc:android/app/build.gradle)
-- [modules/dns-native/package.json](mdc:modules/dns-native/package.json)
 
 ```bash
-npm run sync-versions         # Sync all versions
-npm run sync-versions:dry     # Preview changes
+# Sync versions across all platforms
+npm run sync-versions
+
+# Dry run to preview changes
+npm run sync-versions:dry
 ```
 
-### Version Bump Process
-1. Update version in [package.json](mdc:package.json)
-2. Run `npm run sync-versions`
-3. Verify changes with `npm run sync-versions:dry`
-4. Update [CHANGELOG.md](mdc:CHANGELOG.md)
-5. Commit: `git commit -m "chore: bump version to X.Y.Z"`
+### Version Format
+- **App Version**: Semantic versioning (1.2.3)
+- **Build Number**: Auto-incremented integer
+- **iOS**: CFBundleShortVersionString + CFBundleVersion
+- **Android**: versionName + versionCode
 
 ## iOS Build
 
-### Requirements
-- Xcode 15+
-- iOS 16+ device/simulator
-- CocoaPods installed
+### Prerequisites
+1. **Xcode**: Latest stable version
+2. **CocoaPods**: `sudo gem install cocoapods`
+3. **Developer Account**: For device testing and App Store
 
-### Build Process
+### Build Steps
 ```bash
-# Recommended: Use Expo
+# Install dependencies
+npm install
+
+# Install pods
+cd ios && pod install && cd ..
+
+# Build for simulator
 npm run ios
 
-# Manual (if needed for troubleshooting)
+# Build for device
+npm run ios -- --device
+
+# Clean build if issues
 cd ios
+rm -rf Pods Podfile.lock
 pod install
 cd ..
-xcodebuild -workspace ios/DNSChat.xcworkspace -scheme DNSChat
 ```
-
-### Troubleshooting iOS
-```bash
-npm run fix-pods              # Fix CocoaPods issues
-npm run clean-ios            # Clean and rebuild
-scripts/doctor-ios.sh        # Diagnose environment
-```
-
-### iOS Configuration
-- **Project**: [ios/DNSChat.xcodeproj/](mdc:ios/DNSChat.xcodeproj/)
-- **Workspace**: [ios/DNSChat.xcworkspace/](mdc:ios/DNSChat.xcworkspace/)
-- **Podfile**: [ios/Podfile](mdc:ios/Podfile)
-- **Info.plist**: [ios/DNSChat/Info.plist](mdc:ios/DNSChat/Info.plist)
 
 ### iOS Signing
-- Development: Automatic signing
-- Production: Manual signing via Xcode
-- Certificates: Manage in Apple Developer Portal
+- Development: Automatic signing in Xcode
+- Production: Manual signing with distribution certificate
+- Provisioning profiles: Manage in Apple Developer Portal
+
+### iOS Troubleshooting
+```bash
+# Diagnose iOS environment
+./scripts/doctor-ios.sh
+
+# Fix CocoaPods issues
+./scripts/fix-cocoapods.sh
+```
 
 ## Android Build
 
-### Requirements
-- **Java 17** (required)
-- Android SDK (API 21-34)
-- Android Studio (recommended)
+### Prerequisites
+1. **Android Studio**: Latest stable version
+2. **Java 17**: Required (not Java 11 or 21)
+3. **Android SDK**: API 33+ (see [android/app/build.gradle](mdc:android/app/build.gradle))
 
 ### Verify Java Version
 ```bash
-java -version  # Should show Java 17
+java -version
+# Should show version 17.x.x
 ```
 
-### Build Process
+### Build Steps
 ```bash
-# Use wrapper script (sets Java 17)
+# Install dependencies
+npm install
+
+# Build for emulator
 npm run android
 
-# Alternative with explicit Java path
-./android-java17.sh
-
-# Manual Gradle
+# Build APK
 cd android
-./gradlew assembleDebug
-./gradlew installDebug
+./gradlew assembleRelease
+cd ..
+
+# Build AAB for Play Store
+cd android
+./gradlew bundleRelease
+cd ..
 ```
 
-### Android Configuration
-- **Build**: [android/app/build.gradle](mdc:android/app/build.gradle)
-- **Project**: [android/build.gradle](mdc:android/build.gradle)
-- **Gradle**: [android/gradle.properties](mdc:android/gradle.properties)
-- **Manifest**: [android/app/src/main/AndroidManifest.xml](mdc:android/app/src/main/AndroidManifest.xml)
+### Android Signing
+- Development: Debug keystore (auto-generated)
+- Production: Release keystore (not in repo)
+- Store keystore in secure location
+- Configure in [android/app/build.gradle](mdc:android/app/build.gradle)
 
-### Gradle Settings
-```gradle
-// android/app/build.gradle
-android {
-    compileSdkVersion 34
-    defaultConfig {
-        minSdkVersion 21
-        targetSdkVersion 34
-    }
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
-    }
-}
+### Android Troubleshooting
+```bash
+# Clean build
+cd android
+./gradlew clean
+cd ..
+
+# Check Java version
+java -version
+
+# Use specific Java version
+./android-java17.sh
 ```
 
 ## EAS Build (Expo Application Services)
 
 ### Configuration
-[eas.json](mdc:eas.json) - EAS Build configuration
+EAS build config in [eas.json](mdc:eas.json):
+- Development builds
+- Preview builds
+- Production builds
 
-### Build Profiles
-```json
-{
-  "build": {
-    "development": {
-      "developmentClient": true,
-      "distribution": "internal"
-    },
-    "preview": {
-      "distribution": "internal"
-    },
-    "production": {
-      "distribution": "store"
-    }
-  }
-}
-```
-
-### Build Commands
+### EAS Commands
 ```bash
 # Install EAS CLI
 npm install -g eas-cli
@@ -164,147 +159,145 @@ npm install -g eas-cli
 # Login
 eas login
 
-# Build for iOS
-eas build --platform ios --profile production
+# Configure project
+eas build:configure
 
-# Build for Android
+# Build for iOS (development)
+eas build --platform ios --profile development
+
+# Build for Android (production)
 eas build --platform android --profile production
 
-# Build both
-eas build --platform all --profile production
+# Build for both platforms
+eas build --platform all
 ```
 
-## Native Module Updates
+### Build Profiles
+- **development**: Local development, includes dev client
+- **preview**: Internal testing, TestFlight/internal distribution
+- **production**: App Store/Play Store submission
 
-### DNS Native Module
-After changing native code in [modules/dns-native/](mdc:modules/dns-native/):
+## Testing Builds
 
-**iOS:**
+### Local Testing
 ```bash
-cd ios
-pod install
-cd ..
-npm run ios
+# DNS connectivity test
+node test-dns-simple.js
+
+# Run unit tests
+npm test
+
+# Run native module tests
+cd modules/dns-native && npm test
 ```
 
-**Android:**
-```bash
-cd android
-./gradlew clean
-cd ..
-npm run android
-```
+### Device Testing
+1. **iOS**: Install via Xcode or TestFlight
+2. **Android**: Install APK via `adb install`
+3. **Real DNS**: Test with actual DNS servers
+4. **Network Conditions**: Test on WiFi, cellular, offline
 
-### Version Sync
-Native module version must match app version:
-```bash
-npm run sync-versions
-```
+## Release Process
 
-## App Store Deployment
+### Pre-Release Checklist
+- [ ] Version bumped via `npm run sync-versions`
+- [ ] CHANGELOG.md updated
+- [ ] All tests passing
+- [ ] DNS connectivity verified
+- [ ] Build successful on both platforms
+- [ ] No secrets in code
+- [ ] Code signing configured
+- [ ] Release notes prepared
 
-### iOS App Store
-1. **Prepare**
-   - Update version: `npm run sync-versions`
-   - Update changelog: [CHANGELOG.md](mdc:CHANGELOG.md)
-   - Build release: `eas build --platform ios --profile production`
+### iOS Release
+1. Build with EAS or Xcode
+2. Archive and upload to TestFlight
+3. Submit for App Store review
+4. Monitor review status
+5. Release to App Store
 
-2. **Upload**
-   - EAS handles upload to App Store Connect
-   - Or manual: Xcode → Archive → Upload
-
-3. **Metadata**
-   - Screenshots: [_APP_STORE/screenshots/](mdc:_APP_STORE/screenshots/)
-   - Description: See [_APP_STORE/AppStoreConnect.md](mdc:_APP_STORE/AppStoreConnect.md)
-
-4. **Submit**
-   - App Store Connect → Submit for Review
-   - TestFlight: See [_APP_STORE/TESTFLIGHT.md](mdc:_APP_STORE/TESTFLIGHT.md)
-
-### Google Play Store
-1. **Prepare**
-   - Update version: `npm run sync-versions`
-   - Build release: `eas build --platform android --profile production`
-
-2. **Upload**
-   - EAS downloads AAB file
-   - Upload to Google Play Console
-
-3. **Metadata**
-   - Screenshots: [_APP_STORE/app-store-screenshots/](mdc:_APP_STORE/app-store-screenshots/)
-   - Description: Update in Play Console
-
-4. **Release**
-   - Internal testing → Closed testing → Production
-
-## Continuous Integration
-
-### GitHub Actions (recommended setup)
-```yaml
-# .github/workflows/ci.yml
-name: CI
-on: [push, pull_request]
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 18
-      - run: npm ci
-      - run: npm run typecheck
-      - run: npm test
-```
+### Android Release
+1. Build AAB with EAS or Gradle
+2. Upload to Play Console
+3. Create internal/closed testing release
+4. Promote to production
+5. Monitor rollout
 
 ## Environment Variables
 
-### Development
-No environment variables required for basic development.
+### Configuration
+- Don't commit `.env` files
+- Use `app.json` for public config
+- Use EAS Secrets for sensitive values
 
-### Production
-Configure in [eas.json](mdc:eas.json) if needed:
-```json
-{
-  "build": {
-    "production": {
-      "env": {
-        "APP_ENV": "production"
-      }
-    }
-  }
-}
+### EAS Secrets
+```bash
+# Set secret
+eas secret:create --scope project --name MY_SECRET --value "secret-value"
+
+# List secrets
+eas secret:list
 ```
-
-## Release Checklist
-
-Before releasing a new version:
-- [ ] Run `npm run typecheck` (no errors)
-- [ ] Run `npm test` (all tests pass)
-- [ ] Run `node test-dns-simple.js` (DNS smoke test passes)
-- [ ] Test on iOS device
-- [ ] Test on Android device
-- [ ] Update version: `npm run sync-versions`
-- [ ] Update [CHANGELOG.md](mdc:CHANGELOG.md)
-- [ ] Update [README.md](mdc:README.md) if needed
-- [ ] Commit: `git commit -m "chore: release vX.Y.Z"`
-- [ ] Tag: `git tag vX.Y.Z`
-- [ ] Push: `git push && git push --tags`
-- [ ] Build: `eas build --platform all --profile production`
-- [ ] Submit to stores
 
 ## Build Artifacts
 
-### Ignore in Git
-- `ios/build/`
-- `ios/Pods/`
-- `android/build/`
-- `android/app/build/`
-- `node_modules/`
-- `dist/`
+### iOS Artifacts
+- `.app` - Simulator build
+- `.ipa` - Device/App Store build
+- `dSYM` - Debug symbols
 
-### Keep in Git
-- `ios/DNSChat.xcodeproj/`
-- `ios/DNSChat.xcworkspace/`
-- `android/app/build.gradle`
-- Configuration files
+### Android Artifacts
+- `.apk` - Debug/release APK
+- `.aab` - Play Store bundle
+- `mapping.txt` - ProGuard mapping
+
+## CI/CD Integration
+
+### GitHub Actions (if configured)
+- Automated tests on PR
+- Build verification
+- Version checks
+- Security scans
+
+### Best Practices
+1. Run tests before build
+2. Validate version consistency
+3. Check for secrets in code
+4. Verify signing configuration
+5. Test on real devices before release
+
+## Performance Monitoring
+
+### Build Performance
+- Monitor build times
+- Optimize native modules
+- Cache dependencies
+- Use EAS build cache
+
+### App Performance
+- Monitor app size
+- Check startup time
+- Profile JS bundle
+- Optimize images and assets
+
+## Troubleshooting
+
+### Common Build Issues
+1. **CocoaPods**: Run `./scripts/fix-cocoapods.sh`
+2. **Java Version**: Ensure Java 17 is active
+3. **Metro Cache**: Clear with `npx expo start --clear`
+4. **Node Modules**: Delete and reinstall
+5. **Native Cache**: Clean iOS/Android build folders
+
+### Getting Help
+- Check [TROUBLESHOOTING.md](mdc:docs/TROUBLESHOOTING.md)
+- Run diagnostics: `./scripts/doctor-ios.sh`
+- Review [INSTALL.md](mdc:INSTALL.md)
+- Check [docs/guides/](mdc:docs/guides/)
+
+## References
+- [EAS Build Docs](https://docs.expo.dev/build/introduction/)
+- [Version Sync Script](mdc:scripts/sync-versions.js)
+- [EAS Configuration](mdc:eas.json)
+- [App Configuration](mdc:app.json)
+- [Troubleshooting Guide](mdc:docs/TROUBLESHOOTING.md)

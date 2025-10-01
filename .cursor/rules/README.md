@@ -75,6 +75,69 @@ This directory contains Cursor rules that help with development by providing con
 - Native module security
 - Privacy considerations and platform security
 
+### 9. Native Module Development (`native-modules.mdc`)
+
+**Fetchable Rule** - Guidelines for iOS and Android native module development
+
+- DNS native module architecture
+- iOS and Android implementation patterns
+- Native module testing and debugging
+- Platform-specific considerations
+
+### 10. DNS Service Implementation (`dns-service.mdc`)
+
+**Fetchable Rule** - Detailed DNS service architecture and implementation
+
+- Query flow and pipeline
+- Response parsing and rate limiting
+- Native module integration
+- Performance metrics and optimization
+
+### 11. Security Best Practices (`security.mdc`)
+
+**Fetchable Rule** - In-depth security implementation details
+
+- Encryption and storage service
+- DNS query sanitization
+- Code and network security
+- Platform-specific security measures
+
+### 12. UI Styling & Design System (`ui-styling.mdc`)
+
+**Fetchable Rule** - UI styling, theming, and component guidelines
+
+- Theme system and color palette
+- Component styling patterns
+- Liquid Glass native effects
+- Accessibility requirements
+
+### 13. Build & Deployment (`build-deployment.mdc`)
+
+**Fetchable Rule** - Build, deployment, and version management
+
+- Development and build commands
+- iOS and Android build processes
+- EAS Build configuration
+- Release process and CI/CD
+
+### 14. TypeScript Patterns (`typescript-patterns.mdc`)
+
+**Applies to**: `*.ts`, `*.tsx` files
+
+- TypeScript strict mode patterns
+- React component type patterns
+- Service and context types
+- Common utilities and error handling
+
+### 15. Testing Guidelines (`testing.mdc`)
+
+**Fetchable Rule** - Testing patterns and best practices
+
+- Unit and integration testing
+- Service and component testing
+- Mocking patterns
+- Coverage and debugging
+
 ## Usage
 
 These rules are automatically applied by Cursor based on their configuration:

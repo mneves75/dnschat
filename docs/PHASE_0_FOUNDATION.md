@@ -26,8 +26,8 @@ Phase 0 establishes the foundational hooks, design tokens, and capability detect
   - Thermal and memory profile guidance
 
 - **Version thresholds**:
-  - iOS 26+: Full Liquid Glass with sensor awareness and dynamic intensity
-  - iOS 17-25: High-quality blur with limited dynamic features
+  - iOS 26+: Full Liquid Glass with sensor awareness, dynamic intensity, and SwiftUI .glassEffect() API
+  - iOS 17-25: High-quality UIVisualEffectView blur effects with static parameters
   - iOS 13-16: Basic UIBlurEffect without advanced affordances
   - Non-iOS: Graceful fallback to solid surfaces
 
@@ -130,9 +130,9 @@ Components can adopt the new hook incrementally without disrupting existing code
 
 | Platform | Glass Available? | Behavior |
 |----------|-----------------|----------|
-| iOS 26+ | Yes (Liquid Glass) | Full native glass with sensor awareness, dynamic intensity, and environmental cues |
-| iOS 17-25 | Yes (Standard Blur) | High-quality UIBlurEffect with static parameters, no sensor integration |
-| iOS 13-16 | Limited (Basic Blur) | Basic UIBlurEffect, conservative performance settings |
+| iOS 26+ | Yes (Liquid Glass) | Full native SwiftUI .glassEffect() with sensor awareness, dynamic intensity, and environmental cues |
+| iOS 17-25 | Yes (UIVisualEffectView) | High-quality UIVisualEffectView blur effects with static parameters, no sensor integration |
+| iOS 13-16 | Limited (UIBlurEffect) | Basic UIBlurEffect, conservative performance settings |
 | Android | No | Solid `colors.card` surface with elevation shadows |
 | Web | No | Solid `colors.card` surface with CSS shadows |
 
@@ -149,7 +149,7 @@ Components can adopt the new hook incrementally without disrupting existing code
 **Dark Mode**:
 - Separate material parameters for light and dark themes
 - Automatic tint adjustment based on `useAppTheme().isDark`
-- iOS 26+ gets enhanced shadows in dark mode
+- iOS 26+ gets enhanced shadows in dark mode and full SwiftUI .glassEffect() support
 
 ---
 

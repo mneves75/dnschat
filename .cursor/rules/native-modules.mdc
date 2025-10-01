@@ -1,156 +1,115 @@
 ---
-globs: "*.swift,*.m,*.h,*.java,*.kt,*.podspec,*.gradle"
 description: "Guidelines for developing iOS and Android native modules"
 ---
-# Native Module Development
+# Native Module Development Guidelines
 
 ## DNS Native Module Architecture
 
-### TypeScript Interface
-- Entry point: [modules/dns-native/index.ts](mdc:modules/dns-native/index.ts)
-- Constants: [modules/dns-native/constants.ts](mdc:modules/dns-native/constants.ts)
-- Must export `nativeDNS` object with methods matching native implementations
+The DNS native module provides low-level DNS query capabilities using platform-native APIs.
 
-### iOS Implementation (Swift)
-- Location: [ios/DNSNative/](mdc:ios/DNSNative/)
-- Framework: Apple Network Framework (async/await)
-- Thread Safety: NSLock-protected for CheckedContinuation
-- Error Handling: Proper Swift error types with timeout handling
-- Podspec: [ios/DNSNative/DNSNative.podspec](mdc:ios/DNSNative/DNSNative.podspec)
+### Module Structure
+- **Interface**: [modules/dns-native/index.ts](mdc:modules/dns-native/index.ts) - TypeScript interface
+- **iOS Implementation**: [ios/DNSNative/DNSNative.swift](mdc:ios/DNSNative/DNSNative.swift)
+  - Uses Apple's Network Framework for native DNS queries
+  - Supports UDP, TCP, and DNS-over-HTTPS (DoH)
+  - Handles IPv4 and IPv6
+- **Android Implementation**: [modules/dns-native/android/](mdc:modules/dns-native/android/)
+  - Uses Android DnsResolver API (Android 10+)
+  - Fallback mechanisms for older versions
+- **Constants**: [modules/dns-native/constants.ts](mdc:modules/dns-native/constants.ts)
 
-### Android Implementation (Java)
-- Location: [modules/dns-native/android/](mdc:modules/dns-native/android/)
-- API: DnsResolver API + dnsjava fallback
-- Threading: Bounded ThreadPoolExecutor to prevent exhaustion
-- Error Handling: Proper exception handling with timeout management
-- Gradle: Configured in [android/app/build.gradle](mdc:android/app/build.gradle)
+### iOS Native Module Guidelines
+1. **Swift Version**: Use Swift 5.5+ with async/await where applicable
+2. **Expo Modules API**: Follow Expo Modules API patterns
+3. **Error Handling**: Return structured errors with codes and messages
+4. **Memory Management**: Use weak references for delegates, avoid retain cycles
+5. **Threading**: Perform network operations on background queues
+6. **Testing**: Add unit tests in module's test directory
 
-## Swift Code Guidelines
+### Android Native Module Guidelines
+1. **Java Version**: Requires Java 17 (see [android-java17.sh](mdc:android-java17.sh))
+2. **Expo Modules API**: Follow Expo Modules API patterns
+3. **Error Handling**: Return structured errors matching iOS format
+4. **Threading**: Use proper async handling with Kotlin coroutines or Java async
+5. **Permissions**: Handle network permissions properly
+6. **Testing**: Add unit tests in module's test directory
 
-### Modern Swift Patterns
-- **Concurrency**: Prefer async/await over Dispatch/Combine
-- **Error Handling**: Use proper Swift error types
-- **Previews**: Use `#Preview` macro instead of `PreviewProvider`
-- **Platform**: iOS 16+ (check deployment target in [app.json](mdc:app.json))
-- **Documentation**: Check `/Applications/Xcode.app/Contents/PlugIns/IDEIntelligenceChat.framework/Versions/A/Resources/AdditionalDocumentation` for latest iOS 26 docs
+### Liquid Glass Native Module (iOS 26+)
+- **Implementation**: [ios/LiquidGlassNative/](mdc:ios/LiquidGlassNative/)
+- **Purpose**: Provides native glass morphism effects for iOS 26+
+- **API**: Exposes material effects and blur options
+- **Fallback**: Gracefully degrades on older iOS versions
 
-### Swift Example (DNS Query)
-```swift
-import Foundation
-import Network
+## Development Workflow
 
-@objc(DNSNativeModule)
-class DNSNativeModule: NSObject {
-  
-  @objc
-  func queryTXT(_ domain: String, 
-                server: String, 
-                resolve: @escaping RCTPromiseResolveBlock, 
-                reject: @escaping RCTPromiseRejectBlock) {
-    Task {
-      do {
-        let result = try await performDNSQuery(domain: domain, server: server)
-        resolve(result)
-      } catch {
-        reject("DNS_ERROR", error.localizedDescription, error)
-      }
-    }
-  }
-}
-```
+### Adding New Native Methods
+1. Define TypeScript interface in module's index.ts
+2. Implement iOS method in Swift
+3. Implement Android method in Java/Kotlin
+4. Add tests for both platforms
+5. Update module documentation
+6. Test on both physical devices and simulators
 
-## Java/Android Guidelines
-
-### Android Requirements
-- **Java Version**: Java 17 (required, configured in [android/app/build.gradle](mdc:android/app/build.gradle))
-- **Min SDK**: API 21 (Android 5.0)
-- **Target SDK**: API 34 (Android 14)
-- **Build Command**: Use `npm run android` (sets JAVA_HOME to Java 17)
-
-### Android Best Practices
-- Use DnsResolver API for modern Android (API 29+)
-- Fallback to dnsjava for older devices
-- Proper thread pool management
-- Resource cleanup in finally blocks
-- Error code mapping to match iOS
-
-### Android Example (DNS Query)
-```java
-@ReactMethod
-public void queryTXT(String domain, String server, Promise promise) {
-    executor.execute(() -> {
-        try {
-            List<String> results = performDNSQuery(domain, server);
-            WritableArray array = Arguments.createArray();
-            for (String result : results) {
-                array.pushString(result);
-            }
-            promise.resolve(array);
-        } catch (Exception e) {
-            promise.reject("DNS_ERROR", e.getMessage(), e);
-        }
-    });
-}
-```
-
-## Liquid Glass Native Module
-
-### iOS Glass Effects
-- Location: [ios/LiquidGlassNative/](mdc:ios/LiquidGlassNative/)
-- Framework: SwiftUI + UIKit bridge
-- Feature: iOS 26+ liquid glass effects with capability detection
-- Fallback: Graceful degradation to standard blur
-
-### Implementation Pattern
-```swift
-import SwiftUI
-import ExpoGlassEffect
-
-struct LiquidGlassView: View {
-  var body: some View {
-    if #available(iOS 26.0, *) {
-      GlassView()
-    } else {
-      BlurView()
-    }
-  }
-}
-```
-
-## Native Module Testing
-
-### iOS
+### Testing Native Modules
 ```bash
-cd ios
-pod install
+# Test DNS native module
+cd modules/dns-native
+npm test                    # Unit tests
+npm run test:integration    # Integration tests (requires device/simulator)
+
+# Test iOS module directly
 npm run ios
-```
 
-### Android
-```bash
-# Ensure Java 17
+# Test Android module directly  
 npm run android
 ```
 
-### Integration Tests
-```bash
-cd modules/dns-native
-npm run test:integration
+### Debugging Native Code
+- **iOS**: Use Xcode debugger, set breakpoints in .swift files
+- **Android**: Use Android Studio debugger, set breakpoints in .java files
+- **Logs**: Use native logging (NSLog/Log.d) that appears in Metro bundler
+
+## Common Patterns
+
+### Error Handling
+```typescript
+// Always return structured errors
+interface DNSError {
+  code: string;
+  message: string;
+  platform?: string;
+}
 ```
 
-## Security Considerations
+### Async Operations
+```swift
+// iOS - Use promises or async/await
+AsyncFunction("queryDNS") { (hostname: String, recordType: String) -> String in
+  // Implementation
+}
+```
 
-### Input Validation
-- **iOS**: Validate domain and server before native call
-- **Android**: Same validation logic as iOS (cross-platform consistency)
-- **Sanitization**: Use `sanitizeDNSMessageReference()` from [modules/dns-native/constants.ts](mdc:modules/dns-native/constants.ts)
+### Type Conversions
+- Always validate input types from JavaScript
+- Convert platform types to portable JSON formats
+- Handle null/undefined gracefully
 
-### Thread Safety
-- **iOS**: NSLock for critical sections
-- **Android**: Synchronized methods and thread-safe collections
-- **Both**: Atomic flags to prevent race conditions
+## Platform-Specific Considerations
 
-### Resource Management
-- Always clean up network connections
-- Implement proper timeout handling
-- Cancel pending operations on cleanup
+### iOS
+- Minimum iOS version: Check [app.json](mdc:app.json)
+- CocoaPods: Run `pod install` after native changes
+- App Transport Security: Configure for network access
+- Capabilities: Enable required entitlements
+
+### Android
+- Minimum SDK version: Check [android/app/build.gradle](mdc:android/app/build.gradle)
+- Gradle: Sync after native changes
+- Permissions: Declare in AndroidManifest.xml
+- ProGuard: Add rules for native modules
+
+## References
+- [Native Module Guide](mdc:docs/guides/) 
+- [Expo Modules API](https://docs.expo.dev/modules/)
+- [iOS Network Framework](https://developer.apple.com/documentation/network)
+- [Android DnsResolver](https://developer.android.com/reference/android/net/DnsResolver)

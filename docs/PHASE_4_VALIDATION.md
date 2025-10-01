@@ -108,8 +108,8 @@ npm test
 
 | Platform | Glass Support | Behavior | Status |
 |----------|--------------|----------|--------|
-| **iOS 26+** | Full Liquid Glass | Native glass with sensor awareness, dynamic intensity | ✅ Implemented |
-| **iOS 17-25** | Standard Blur | High-quality UIBlurEffect with static parameters | ✅ Implemented |
+| **iOS 26+** | Full Liquid Glass | Native SwiftUI .glassEffect() with sensor awareness, dynamic intensity | ✅ Implemented |
+| **iOS 17-25** | UIVisualEffectView | High-quality UIVisualEffectView blur effects with static parameters | ✅ Implemented |
 | **iOS 13-16** | Basic Blur | Basic UIBlurEffect with conservative settings | ✅ Implemented |
 | **Android** | Solid Surfaces | `colors.card` with elevation shadows | ✅ Implemented |
 | **Web** | Solid Surfaces | `colors.card` with CSS shadows | ✅ Implemented |

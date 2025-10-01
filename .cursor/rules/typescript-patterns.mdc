@@ -1,0 +1,371 @@
+---
+globs: *.ts,*.tsx
+---
+# TypeScript Patterns & Standards
+
+## TypeScript Configuration
+
+This project uses **strict mode** TypeScript. See [tsconfig.json](mdc:tsconfig.json).
+
+### Strict Mode Rules
+- No implicit `any`
+- Strict null checks enabled
+- Strict function types
+- No unused locals/parameters
+- No implicit returns
+
+## Type Definitions
+
+### Location
+- **Global Types**: [src/types.d.ts](mdc:src/types.d.ts)
+- **Feature Types**: [src/types/](mdc:src/types/)
+- **Component Types**: Defined inline or in adjacent `.types.ts` files
+
+### Type vs Interface
+```typescript
+// ✅ Use interface for objects that can be extended
+interface User {
+  id: string;
+  name: string;
+}
+
+// ✅ Use type for unions, primitives, utilities
+type Status = 'idle' | 'loading' | 'success' | 'error';
+type Nullable<T> = T | null;
+```
+
+## React Component Patterns
+
+### Functional Components
+```typescript
+import React from 'react';
+
+interface MyComponentProps {
+  title: string;
+  onPress?: () => void;
+  children?: React.ReactNode;
+}
+
+export function MyComponent({ title, onPress, children }: MyComponentProps) {
+  return (
+    <View>
+      <Text>{title}</Text>
+      {children}
+    </View>
+  );
+}
+```
+
+### Hooks
+```typescript
+// ✅ Type hooks explicitly
+const [count, setCount] = useState<number>(0);
+const [user, setUser] = useState<User | null>(null);
+
+// ✅ Use type inference when obvious
+const [isLoading, setIsLoading] = useState(false);
+```
+
+### Custom Hooks
+```typescript
+interface UseDNSQueryResult {
+  data: string | null;
+  error: Error | null;
+  isLoading: boolean;
+  refetch: () => Promise<void>;
+}
+
+export function useDNSQuery(hostname: string): UseDNSQueryResult {
+  // Implementation
+}
+```
+
+## Context Patterns
+
+### Context Definition
+```typescript
+interface ChatContextType {
+  messages: Message[];
+  sendMessage: (text: string) => Promise<void>;
+  isLoading: boolean;
+}
+
+const ChatContext = createContext<ChatContextType | undefined>(undefined);
+
+export function useChatContext() {
+  const context = useContext(ChatContext);
+  if (!context) {
+    throw new Error('useChatContext must be used within ChatProvider');
+  }
+  return context;
+}
+```
+
+## Service Patterns
+
+### Service Interface
+```typescript
+// Define service interface
+interface DNSService {
+  query(hostname: string, type: string): Promise<DNSResponse>;
+  clearCache(): void;
+}
+
+// Implement service
+class DNSServiceImpl implements DNSService {
+  async query(hostname: string, type: string): Promise<DNSResponse> {
+    // Implementation
+  }
+  
+  clearCache(): void {
+    // Implementation
+  }
+}
+
+export const dnsService: DNSService = new DNSServiceImpl();
+```
+
+## Error Handling
+
+### Typed Errors
+```typescript
+// Define error types
+class DNSError extends Error {
+  constructor(
+    message: string,
+    public code: string,
+    public retry: boolean = false
+  ) {
+    super(message);
+    this.name = 'DNSError';
+  }
+}
+
+// Use in code
+try {
+  await dnsService.query(hostname, 'TXT');
+} catch (error) {
+  if (error instanceof DNSError) {
+    console.error(`DNS Error [${error.code}]: ${error.message}`);
+  } else {
+    console.error('Unknown error:', error);
+  }
+}
+```
+
+### Result Type Pattern
+```typescript
+type Result<T, E = Error> =
+  | { success: true; data: T }
+  | { success: false; error: E };
+
+async function queryDNS(hostname: string): Promise<Result<string>> {
+  try {
+    const data = await dnsService.query(hostname, 'TXT');
+    return { success: true, data };
+  } catch (error) {
+    return { success: false, error: error as Error };
+  }
+}
+```
+
+## Utility Types
+
+### Common Patterns
+```typescript
+// Partial updates
+type UpdateUser = Partial<User>;
+
+// Required fields
+type RequiredUser = Required<User>;
+
+// Pick specific fields
+type UserPreview = Pick<User, 'id' | 'name'>;
+
+// Omit fields
+type UserWithoutPassword = Omit<User, 'password'>;
+
+// Extract from union
+type SuccessStatus = Extract<Status, 'success'>;
+
+// Exclude from union
+type NonIdleStatus = Exclude<Status, 'idle'>;
+```
+
+## Async Patterns
+
+### Promises
+```typescript
+// ✅ Always type promise return
+async function fetchData(): Promise<Data> {
+  const response = await fetch('/api/data');
+  return response.json();
+}
+
+// ✅ Handle errors
+async function fetchDataSafely(): Promise<Data | null> {
+  try {
+    return await fetchData();
+  } catch (error) {
+    console.error('Fetch failed:', error);
+    return null;
+  }
+}
+```
+
+### Callbacks
+```typescript
+// ✅ Type callbacks explicitly
+type OnSuccess = (data: string) => void;
+type OnError = (error: Error) => void;
+
+function queryDNS(
+  hostname: string,
+  onSuccess: OnSuccess,
+  onError: OnError
+): void {
+  // Implementation
+}
+```
+
+## Native Module Types
+
+### Module Interface
+```typescript
+// Define native module interface
+export interface DNSNativeModule {
+  queryDNS(params: DNSQueryParams): Promise<DNSQueryResult>;
+}
+
+interface DNSQueryParams {
+  hostname: string;
+  recordType: string;
+  server?: string;
+  timeout?: number;
+}
+
+interface DNSQueryResult {
+  records: string[];
+  ttl: number;
+}
+```
+
+## Store Patterns (Zustand)
+
+### Store Definition
+```typescript
+interface ChatState {
+  messages: Message[];
+  addMessage: (message: Message) => void;
+  clearMessages: () => void;
+}
+
+export const useChatStore = create<ChatState>((set) => ({
+  messages: [],
+  addMessage: (message) =>
+    set((state) => ({ messages: [...state.messages, message] })),
+  clearMessages: () => set({ messages: [] }),
+}));
+```
+
+## Common Mistakes to Avoid
+
+### ❌ Don't Use `any`
+```typescript
+// ❌ BAD
+function processData(data: any) {
+  return data.value;
+}
+
+// ✅ GOOD
+function processData(data: { value: string }): string {
+  return data.value;
+}
+```
+
+### ❌ Don't Use `as any`
+```typescript
+// ❌ BAD
+const result = (data as any).someProperty;
+
+// ✅ GOOD - Define proper type
+interface DataWithProperty {
+  someProperty: string;
+}
+const result = (data as DataWithProperty).someProperty;
+```
+
+### ❌ Don't Ignore Type Errors
+```typescript
+// ❌ BAD
+// @ts-ignore
+const value = obj.unknownProperty;
+
+// ✅ GOOD - Fix the type
+interface Obj {
+  unknownProperty: string;
+}
+const value = (obj as Obj).unknownProperty;
+```
+
+## Testing Types
+
+### Test Setup
+```typescript
+import { render } from '@testing-library/react-native';
+
+// ✅ Type test props
+const mockProps: MyComponentProps = {
+  title: 'Test',
+  onPress: jest.fn(),
+};
+
+// ✅ Type test results
+const { getByText }: RenderResult = render(<MyComponent {...mockProps} />);
+```
+
+## Import Patterns
+
+### Path Aliases
+```typescript
+// ✅ Use configured path aliases
+import { dnsService } from '@/services/dnsService';
+import { ChatContext } from '@/context/ChatContext';
+import { Button } from '@/components/Button';
+
+// ❌ Avoid relative paths for shared code
+import { dnsService } from '../../../services/dnsService';
+```
+
+## Documentation
+
+### JSDoc Comments
+```typescript
+/**
+ * Queries DNS for TXT records
+ * @param hostname - The hostname to query
+ * @param options - Query options
+ * @returns Promise resolving to DNS response
+ * @throws {DNSError} If query fails
+ */
+async function queryDNS(
+  hostname: string,
+  options?: QueryOptions
+): Promise<DNSResponse> {
+  // Implementation
+}
+```
+
+## Performance
+
+### Type Performance
+- Avoid complex conditional types
+- Use simpler types when possible
+- Limit deep nesting
+- Cache computed types
+
+## References
+- [TypeScript Handbook](https://www.typescriptlang.org/docs/handbook/intro.html)
+- [React TypeScript Cheatsheet](https://react-typescript-cheatsheet.netlify.app/)
+- [tsconfig.json](mdc:tsconfig.json)
+- [Type Definitions](mdc:src/types/)

@@ -1,170 +1,439 @@
 ---
-globs: "*.spec.ts,*.test.ts,*.spec.tsx,*.test.tsx,__tests__/**/*"
+description: "Testing guidelines, patterns, and best practices"
 ---
 # Testing Guidelines
 
-## Test Configuration
-- **Framework**: Jest with TypeScript support
-- **Config**: [jest.config.js](mdc:jest.config.js)
-- **Setup**: [__tests__/setup.jest.js](mdc:__tests__/setup.jest.js)
-- **Mocks**: [__tests__/mocks/](mdc:__tests__/mocks/) for native modules and RN APIs
+## Test Structure
 
-## Test Organization
-- **Unit Tests**: [__tests__/](mdc:__tests__/) at project root
-- **Test Files**: `*.spec.ts` or `*.test.ts` pattern
-- **Test Structure**: Describe blocks for logical grouping
+### Test Location
+- **Unit Tests**: [__tests__/](mdc:__tests__/) - App unit tests
+- **Module Tests**: [modules/dns-native/__tests__/](mdc:modules/dns-native/__tests__/) - Native module tests
+- **Integration Tests**: Run via `npm run test:integration`
+
+### Test Configuration
+- **Jest Config**: [jest.config.js](mdc:jest.config.js)
+- **Setup**: [__tests__/setup.jest.js](mdc:__tests__/setup.jest.js)
+- **Mocks**: [__tests__/mocks/](mdc:__tests__/mocks/)
 
 ## Running Tests
 
-### All Tests
+### Basic Commands
 ```bash
+# Run all tests
 npm test
-```
 
-### Specific Test Files
-```bash
-npm test -- dnsService.spec.ts
-```
-
-### Watch Mode
-```bash
+# Run tests in watch mode
 npm test -- --watch
+
+# Run specific test file
+npm test dnsService.spec.ts
+
+# Run with coverage
+npm test -- --coverage
+
+# Run native module tests
+cd modules/dns-native && npm test
 ```
 
 ### DNS Smoke Test
 ```bash
-node test-dns-simple.js "Hello"
+# Quick connectivity test
+node test-dns-simple.js
 ```
 
-## DNS Service Testing
+## Test Patterns
 
-### Key Test Files
-- [__tests__/dnsService.spec.ts](mdc:__tests__/dnsService.spec.ts) - Core DNS logic
-- [__tests__/dnsService.parse.spec.ts](mdc:__tests__/dnsService.parse.spec.ts) - Response parsing
-- [__tests__/dnsService.pipeline.spec.ts](mdc:__tests__/dnsService.pipeline.spec.ts) - Pipeline processing
-- [__tests__/dnsService.rateLimit.spec.ts](mdc:__tests__/dnsService.rateLimit.spec.ts) - Rate limiting
-- [__tests__/dnsConstants.spec.ts](mdc:__tests__/dnsConstants.spec.ts) - Constants and sanitization
-
-### DNS Test Patterns
+### Unit Test Structure
 ```typescript
-describe('DNS Service', () => {
-  it('should sanitize message correctly', () => {
-    const result = sanitizeDNSMessageReference('Hello World!');
-    expect(result).toBe('hello-world');
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+
+describe('MyComponent', () => {
+  beforeEach(() => {
+    // Setup
   });
 
-  it('should handle DNS query timeout', async () => {
-    await expect(
-      dnsService.query('test', { timeout: 1 })
-    ).rejects.toThrow('timeout');
+  afterEach(() => {
+    // Cleanup
   });
-});
-```
 
-## Storage & Encryption Testing
-
-### Test Files
-- [__tests__/storageService.migration.spec.ts](mdc:__tests__/storageService.migration.spec.ts) - Storage migration
-- [__tests__/encryptionService.crypto.spec.ts](mdc:__tests__/encryptionService.crypto.spec.ts) - Encryption logic
-- [__tests__/settings.migration.spec.ts](mdc:__tests__/settings.migration.spec.ts) - Settings migration
-
-### Encryption Test Pattern
-```typescript
-describe('Encryption Service', () => {
-  it('should encrypt and decrypt data', async () => {
-    const plaintext = 'sensitive data';
-    const encrypted = await encryptionService.encrypt(plaintext);
-    const decrypted = await encryptionService.decrypt(encrypted);
-    expect(decrypted).toBe(plaintext);
-  });
-});
-```
-
-## Component Testing
-
-### Store Tests
-- [__tests__/store/chatStore.spec.ts](mdc:__tests__/store/chatStore.spec.ts) - Zustand store testing
-
-### Test Pattern
-```typescript
-import { renderHook, act } from '@testing-library/react-hooks';
-import { useChatStore } from '@/store/chatStore';
-
-describe('Chat Store', () => {
-  it('should add message', () => {
-    const { result } = renderHook(() => useChatStore());
+  it('should render correctly', () => {
+    // Arrange
+    const props = { title: 'Test' };
     
-    act(() => {
-      result.current.addMessage({ text: 'Hello', role: 'user' });
+    // Act
+    const { getByText } = render(<MyComponent {...props} />);
+    
+    // Assert
+    expect(getByText('Test')).toBeTruthy();
+  });
+});
+```
+
+### Testing React Components
+```typescript
+import { render, fireEvent, waitFor } from '@testing-library/react-native';
+
+describe('Button Component', () => {
+  it('should call onPress when pressed', async () => {
+    const onPress = jest.fn();
+    const { getByRole } = render(
+      <Button onPress={onPress}>Click Me</Button>
+    );
+    
+    fireEvent.press(getByRole('button'));
+    
+    await waitFor(() => {
+      expect(onPress).toHaveBeenCalledTimes(1);
     });
-    
-    expect(result.current.messages).toHaveLength(1);
   });
 });
 ```
 
-## Mocking Native Modules
+## Service Testing
 
-### DNS Native Mock
+### DNS Service Tests
+See [__tests__/dnsService.spec.ts](mdc:__tests__/dnsService.spec.ts) for examples:
+
 ```typescript
-// __tests__/mocks/modules-dns-native.js
-export const nativeDNS = {
-  queryTXT: jest.fn(),
-  cancelAll: jest.fn(),
+import { dnsService } from '@/services/dnsService';
+
+describe('DNS Service', () => {
+  it('should query DNS successfully', async () => {
+    const result = await dnsService.query('example.com', 'TXT');
+    
+    expect(result).toBeDefined();
+    expect(result.records).toBeInstanceOf(Array);
+  });
+  
+  it('should handle errors gracefully', async () => {
+    await expect(
+      dnsService.query('invalid..domain', 'TXT')
+    ).rejects.toThrow();
+  });
+});
+```
+
+### Storage Service Tests
+```typescript
+import { storageService } from '@/services/storageService';
+
+describe('Storage Service', () => {
+  beforeEach(async () => {
+    await storageService.clear();
+  });
+  
+  it('should encrypt and decrypt data', async () => {
+    const data = 'sensitive data';
+    await storageService.setEncrypted('key', data);
+    
+    const retrieved = await storageService.getEncrypted('key');
+    expect(retrieved).toBe(data);
+  });
+});
+```
+
+## Mocking
+
+### Mocking Native Modules
+```typescript
+// In __tests__/mocks/@modules/dns-native.js
+export default {
+  queryDNS: jest.fn().mockResolvedValue({
+    records: ['test record'],
+    ttl: 300,
+  }),
 };
 ```
 
-### React Native Mocks
-- [__tests__/mocks/react-native.js](mdc:__tests__/mocks/react-native.js)
-- [__tests__/mocks/react-native-device-info.js](mdc:__tests__/mocks/react-native-device-info.js)
-- [__tests__/mocks/react-native-udp.js](mdc:__tests__/mocks/react-native-udp.js)
-- [__tests__/mocks/react-native-tcp-socket.js](mdc:__tests__/mocks/react-native-tcp-socket.js)
+### Mocking React Native APIs
+```typescript
+jest.mock('react-native/Libraries/Alert/Alert', () => ({
+  alert: jest.fn(),
+}));
 
-## Native Module Tests
-
-### Location
-```bash
-cd modules/dns-native
+jest.mock('@react-native-async-storage/async-storage', () => ({
+  setItem: jest.fn(),
+  getItem: jest.fn(),
+  removeItem: jest.fn(),
+  clear: jest.fn(),
+}));
 ```
 
-### Run Tests
-```bash
-# Unit tests
-npm test
+### Mocking Context
+```typescript
+import { ChatContext } from '@/context/ChatContext';
 
-# Integration tests (requires device/simulator)
+const mockChatContext = {
+  messages: [],
+  sendMessage: jest.fn(),
+  isLoading: false,
+};
+
+// In test
+<ChatContext.Provider value={mockChatContext}>
+  <ComponentUnderTest />
+</ChatContext.Provider>
+```
+
+## Testing Async Code
+
+### Promises
+```typescript
+it('should handle async operations', async () => {
+  const result = await asyncFunction();
+  expect(result).toBe('expected value');
+});
+```
+
+### Callbacks
+```typescript
+it('should handle callbacks', (done) => {
+  functionWithCallback((result) => {
+    expect(result).toBe('expected value');
+    done();
+  });
+});
+```
+
+### Timers
+```typescript
+jest.useFakeTimers();
+
+it('should handle timeouts', () => {
+  const callback = jest.fn();
+  setTimeout(callback, 1000);
+  
+  jest.advanceTimersByTime(1000);
+  expect(callback).toHaveBeenCalled();
+});
+
+jest.useRealTimers();
+```
+
+## Snapshot Testing
+
+### Component Snapshots
+```typescript
+it('should match snapshot', () => {
+  const { toJSON } = render(<MyComponent />);
+  expect(toJSON()).toMatchSnapshot();
+});
+```
+
+### Updating Snapshots
+```bash
+# Update all snapshots
+npm test -- -u
+
+# Update specific snapshot
+npm test MyComponent.spec.ts -- -u
+```
+
+## Coverage
+
+### Coverage Reports
+```bash
+# Generate coverage report
+npm test -- --coverage
+
+# View coverage in browser
+open coverage/lcov-report/index.html
+```
+
+### Coverage Thresholds
+Configured in [jest.config.js](mdc:jest.config.js):
+- Statements: 80%
+- Branches: 75%
+- Functions: 80%
+- Lines: 80%
+
+## Testing Best Practices
+
+### DO
+- ✅ Test behavior, not implementation
+- ✅ Write descriptive test names
+- ✅ Use AAA pattern (Arrange, Act, Assert)
+- ✅ Keep tests isolated and independent
+- ✅ Mock external dependencies
+- ✅ Test error cases
+- ✅ Test edge cases
+- ✅ Clean up after tests
+
+### DON'T
+- ❌ Don't test implementation details
+- ❌ Don't write flaky tests
+- ❌ Don't share state between tests
+- ❌ Don't test third-party libraries
+- ❌ Don't over-mock
+- ❌ Don't ignore failing tests
+- ❌ Don't skip cleanup
+
+## Specific Test Categories
+
+### DNS Service Tests
+- [dnsService.spec.ts](mdc:__tests__/dnsService.spec.ts) - Core DNS functionality
+- [dnsService.parse.spec.ts](mdc:__tests__/dnsService.parse.spec.ts) - Response parsing
+- [dnsService.pipeline.spec.ts](mdc:__tests__/dnsService.pipeline.spec.ts) - Query pipeline
+- [dnsService.rateLimit.spec.ts](mdc:__tests__/dnsService.rateLimit.spec.ts) - Rate limiting
+- [dnsService.nativeRetry.spec.ts](mdc:__tests__/dnsService.nativeRetry.spec.ts) - Retry logic
+
+### Security Tests
+- [encryptionService.crypto.spec.ts](mdc:__tests__/encryptionService.crypto.spec.ts) - Encryption
+- [storageService.migration.spec.ts](mdc:__tests__/storageService.migration.spec.ts) - Storage migration
+
+### Component Tests
+- Test rendering
+- Test user interactions
+- Test props
+- Test state changes
+- Test error boundaries
+
+## Integration Testing
+
+### Running Integration Tests
+```bash
+# Requires device/simulator
+npm run test:integration
+
+# Or for native module
+cd modules/dns-native
 npm run test:integration
 ```
 
-## Test Coverage
+### Integration Test Guidelines
+1. Test real DNS queries (use test domains)
+2. Test storage persistence
+3. Test navigation flows
+4. Test context integration
+5. Test native module integration
 
-### Coverage Goals
-- Unit Tests: Core logic should be well-covered
-- Integration Tests: Native modules require device testing
-- Smoke Tests: Use [test-dns-simple.js](mdc:test-dns-simple.js) for quick validation
+## E2E Testing (Future)
 
-### What to Test
-- DNS query sanitization and validation
-- Response parsing and error handling
-- Encryption/decryption correctness
-- Storage migration logic
-- Rate limiting behavior
-- Fallback mechanisms
+### Tools
+- Detox for React Native E2E
+- Appium as alternative
+- Maestro for simple flows
 
-### What NOT to Test
-- Third-party library internals
-- React Native framework code
-- Native platform APIs (mock them instead)
-
-## Continuous Integration
-
-### Pre-Commit
-```bash
-npm run typecheck
-npm test
+### E2E Patterns
+```typescript
+// Example Detox test
+describe('Chat Flow', () => {
+  it('should send and receive message', async () => {
+    await element(by.id('message-input')).typeText('Hello');
+    await element(by.id('send-button')).tap();
+    await expect(element(by.text('Hello'))).toBeVisible();
+  });
+});
 ```
 
-### CI Pipeline
-- Type checking: `npm run typecheck:app && npm run typecheck:test`
-- Unit tests: `npm test`
-- Integration tests: Device/simulator required
+## Performance Testing
+
+### Measuring Performance
+```typescript
+import { performance } from 'perf_hooks';
+
+it('should query DNS within acceptable time', async () => {
+  const start = performance.now();
+  await dnsService.query('example.com', 'TXT');
+  const end = performance.now();
+  
+  expect(end - start).toBeLessThan(1000); // < 1 second
+});
+```
+
+## Debugging Tests
+
+### Debug Mode
+```bash
+# Run tests with node debugger
+node --inspect-brk node_modules/.bin/jest --runInBand
+
+# Debug specific test
+node --inspect-brk node_modules/.bin/jest dnsService.spec.ts
+```
+
+### Console Logging
+```typescript
+it('should debug test', () => {
+  console.log('Debug info:', someValue);
+  // Test code
+});
+```
+
+### Test Only/Skip
+```typescript
+// Run only this test
+it.only('should run this test', () => {
+  // Test code
+});
+
+// Skip this test
+it.skip('should skip this test', () => {
+  // Test code
+});
+```
+
+## CI/CD Testing
+
+### Pre-commit Tests
+- Run linter
+- Run type check
+- Run unit tests
+- Run smoke test
+
+### CI Pipeline Tests
+1. Install dependencies
+2. Run linter
+3. Run type check
+4. Run all unit tests
+5. Generate coverage report
+6. Run integration tests (if configured)
+7. Build apps (iOS/Android)
+
+## Test Data
+
+### Fixtures
+```typescript
+// Create test fixtures
+export const mockUser = {
+  id: '123',
+  name: 'Test User',
+};
+
+export const mockMessages = [
+  { id: '1', text: 'Hello', timestamp: Date.now() },
+  { id: '2', text: 'World', timestamp: Date.now() },
+];
+```
+
+### Test Helpers
+```typescript
+// Create test helpers
+export function createMockDNSResponse(records: string[]) {
+  return {
+    records,
+    ttl: 300,
+    timestamp: Date.now(),
+  };
+}
+```
+
+## Accessibility Testing
+
+### Testing Accessibility
+```typescript
+import { axe } from 'jest-axe';
+
+it('should have no accessibility violations', async () => {
+  const { container } = render(<MyComponent />);
+  const results = await axe(container);
+  expect(results).toHaveNoViolations();
+});
+```
+
+## References
+- [Jest Documentation](https://jestjs.io/docs/getting-started)
+- [React Native Testing Library](https://callstack.github.io/react-native-testing-library/)
+- [Testing Library Best Practices](https://testing-library.com/docs/guiding-principles)
+- [Jest Config](mdc:jest.config.js)
+- [Test Setup](mdc:__tests__/setup.jest.js)

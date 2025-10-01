@@ -37,7 +37,7 @@ function SettingsButton() {
 export default function AppTabsLayout() {
   const { colors, isDark } = useAppTheme();
   const { t } = useLocalization();
-  const { supportsSwiftUIGlass, isSupported } = useLiquidGlassCapabilities();
+  const { supportsSwiftUIGlass, supportsBasicBlur, isSupported } = useLiquidGlassCapabilities();
   const glassEnabled = Platform.OS === 'ios' && Boolean(isSupported);
 
   const tabBarStyle = useMemo(
@@ -67,7 +67,7 @@ export default function AppTabsLayout() {
               variant="prominent"
               shape="rect"
               enableContainer={true}
-              sensorAware={supportsSwiftUIGlass}
+              sensorAware={supportsSwiftUIGlass || supportsBasicBlur}
               style={{
                 flex: 1,
                 backgroundColor: isDark ? 'rgba(28, 28, 30, 0.80)' : 'rgba(242, 242, 247, 0.80)',
@@ -118,7 +118,7 @@ export default function AppTabsLayout() {
             }}
             margin={baseMargin}
             bottomInset={bottomInset}
-            sensorAware={supportsSwiftUIGlass}
+            sensorAware={supportsSwiftUIGlass || supportsBasicBlur}
           />
         );
       }}
