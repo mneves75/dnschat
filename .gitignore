@@ -81,6 +81,9 @@ ios/DerivedData/
 android/app/release/
 android/app/debug/
 
+# Generated native modules (copied by Expo config plugins)
+android/app/src/main/java/com/dnsnative/
+
 # IDE and editor files
 .vscode/settings.json
 .idea/

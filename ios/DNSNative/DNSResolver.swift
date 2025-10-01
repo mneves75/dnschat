@@ -310,7 +310,11 @@ private func withTimeout<T>(
             throw DNSResolver.DNSError.timeout
         }
         
-        let result = try await group.next()!
+        // Safe unwrap: Prevent crash if both tasks fail/cancel simultaneously
+        guard let result = try await group.next() else {
+            throw DNSResolver.DNSError.queryFailed("Task group completed without result")
+        }
+        
         group.cancelAll()
         return result
     }
