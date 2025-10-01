@@ -1,7 +1,7 @@
 import { StyleSheet, View, Text, Pressable } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { UniversalGlassView } from "../components/glass/UniversalGlassView";
+import { LiquidGlassWrapper } from "../components/LiquidGlassWrapper";
 import { useAppTheme } from "../theme";
 
 export function NotFound() {
@@ -10,10 +10,11 @@ export function NotFound() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <UniversalGlassView
+      <LiquidGlassWrapper
         variant="regular"
         shape="roundedRect"
         cornerRadius={16}
+        enableContainer={true}
         style={styles.errorCard}
       >
         <Text style={[styles.title, { color: colors.text }]}>404</Text>
@@ -31,7 +32,7 @@ export function NotFound() {
         >
           <Text style={[styles.buttonText, { color: colors.surface }]}>Go to Home</Text>
         </Pressable>
-      </UniversalGlassView>
+      </LiquidGlassWrapper>
     </SafeAreaView>
   );
 }

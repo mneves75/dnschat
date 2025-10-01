@@ -17,14 +17,14 @@ A React Native mobile app that revolutionizes LLM interaction by using DNS TXT q
   - Fail-fast crypto validation
   - DNS parser with bounds-checked array access (prevents malicious response crashes)
   - DNS injection protection, input validation, and server whitelisting
-- **🌟 iOS 26+ Liquid Glass**: Native `expo-glass-effect` with automatic capability detection and graceful fallbacks
+- **🌟 iOS 26+ Liquid Glass**: Custom `LiquidGlassWrapper` with environmental adaptation, thermal monitoring, and GlassEffectContainer optimization (~40% GPU reduction)
 - **🌐 DNS-Based AI Chat**: Revolutionary LLM communication via DNS TXT queries
 - **📱 Cross-Platform**: Native iOS, Android, and Web support with platform-specific optimizations
-- **⚡ Expo Router Native Tabs**: Expo Router v6 `<Tabs>` with native glass effects (iOS 26+) and styled fallbacks
+- **⚡ Expo Router Native Tabs**: Expo Router v6 `<Tabs>` with floating glass tab bar (iOS 26+) using `useTabBarPadding()` hook for dynamic content clearance
 - **🚀 Native DNS Implementation**: Platform-optimized iOS Network Framework and Android DnsResolver with robust error handling
 - **🔄 Multi-Layer Fallback**: Native DNS → UDP → TCP → DNS-over-HTTPS → Mock service
 - **💾 Encrypted Storage**: End-to-end encrypted conversation history with automatic legacy migration
-- **🎨 Modern Glass UI**: Expo SDK 54 glass system with accessibility support and reduced transparency
+- **🎨 Modern Glass UI**: Custom liquid glass system with 3 material variants (regular, prominent, interactive), ambient light sensing, and CoreMotion parallax effects
 - **⚙️ Advanced DNS Config**: Multiple DNS service options (ch.at, llm.pieter.com)
 - **📝 Strict DNS Contract**: Client sanitizes queries to dashed lowercase labels (≤63 chars) matching the production `dns.go` resolver
 - **📊 Real-Time Logging**: Comprehensive DNS query monitoring and debugging
@@ -41,11 +41,11 @@ A React Native mobile app that revolutionizes LLM interaction by using DNS TXT q
 
 ### **Navigation & UI**
 
-- **Expo Router v6** with Native Tabs surface and native glass effects
-- **iOS 26+ Liquid Glass**: Native `expo-glass-effect` with automatic capability detection
+- **Expo Router v6** with Native Tabs and floating glass tab bar
+- **iOS 26+ Liquid Glass**: Custom `LiquidGlassWrapper` with environmental adaptation, thermal monitoring, and `GlassEffectContainer` optimization
 - **React Native Safe Area Context** with gesture handler support
 - **Advanced Theme Support** (automatic light/dark switching with iOS system colors)
-- **Glass System**: Modern glass effects with accessibility support and reduced transparency compliance
+- **Glass System**: 3 material variants (regular, prominent, interactive) with ambient light sensing, CoreMotion parallax, and ~40% GPU reduction via container merging
 
 ### **DNS Implementation**
 

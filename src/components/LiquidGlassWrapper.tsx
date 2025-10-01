@@ -83,7 +83,8 @@ const getIOSMajorVersion = (): number | null => {
 
 const isIOSGlassCapable = (() => {
   const major = getIOSMajorVersion();
-  return typeof major === "number" && major >= 13;
+  // CRITICAL FIX: iOS 26+ required for .glassEffect() API
+  return typeof major === "number" && major >= 26;
 })();
 
 /**

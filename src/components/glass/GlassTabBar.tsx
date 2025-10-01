@@ -25,6 +25,23 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { LiquidGlassWrapper } from "../LiquidGlassWrapper";
 
 // ==================================================================================
+// EXPORTED CONSTANTS
+// ==================================================================================
+
+/**
+ * Tab bar dimension constants for consistent spacing across the app.
+ * Used by useTabBarPadding() hook to calculate proper content padding.
+ */
+export const TAB_BAR_DIMENSIONS = {
+  /** Standard iOS tab bar height */
+  HEIGHT: 49,
+  /** Base margin around floating tab bar */
+  BASE_MARGIN: 12,
+  /** Extra offset for iOS positioning */
+  IOS_EXTRA_OFFSET: Platform.OS === 'ios' ? 12 : 0,
+} as const;
+
+// ==================================================================================
 // TYPES AND INTERFACES
 // ==================================================================================
 
@@ -56,6 +73,8 @@ interface GlassTabBarProps {
   hidden?: boolean;
   /** Safe area handling */
   safeAreaInsets?: boolean;
+  /** Environmental sensor adaptation (Dynamic Island, ambient light) */
+  sensorAware?: boolean;
 }
 
 interface GlassTabItemProps {
@@ -254,6 +273,7 @@ export const GlassTabBar: React.FC<GlassTabBarProps> = ({
   style,
   hidden = false,
   safeAreaInsets = true,
+  sensorAware = false,
 }) => {
   const colors = useGlassTabColors();
   const { height: screenHeight } = Dimensions.get("window");
@@ -262,16 +282,19 @@ export const GlassTabBar: React.FC<GlassTabBarProps> = ({
     return null;
   }
 
+  // Note: Do NOT set backgroundColor here - it overrides the glass effect!
+  // LiquidGlassWrapper handles the translucent background
   const tabBarStyle: ViewStyle = {
-    backgroundColor: colors.tabBarBackground,
     borderTopColor: colors.tabBarBorder,
   };
 
   const TabBarContent = (
     <LiquidGlassWrapper
       variant="prominent"
-      shape="rect"
-      enableContainer={false}
+      shape="roundedRect"
+      cornerRadius={16}
+      enableContainer={true}
+      sensorAware={sensorAware}
       style={[styles.tabBarContainer, tabBarStyle, style]}
     >
       <View style={styles.tabBarContent}>
@@ -318,7 +341,7 @@ export const FloatingGlassTabBar: React.FC<
     left: margin,
     right: margin,
     ...(position === "bottom"
-      ? { bottom: margin + bottomInset + (Platform.OS === "ios" ? 12 : 0) }
+      ? { bottom: margin + bottomInset + TAB_BAR_DIMENSIONS.IOS_EXTRA_OFFSET }
       : { top: margin + (Platform.OS === "ios" ? 44 : 0) }),
   };
 

@@ -9,7 +9,7 @@ PODS:
   - EXJSONUtils (0.15.0)
   - EXManifests (1.0.8):
     - ExpoModulesCore
-  - Expo (54.0.10):
+  - Expo (54.0.11):
     - boost
     - DoubleConversion
     - ExpoModulesCore
@@ -40,17 +40,17 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
-  - expo-dev-client (6.0.12):
+  - expo-dev-client (6.0.13):
     - EXManifests
     - expo-dev-launcher
     - expo-dev-menu
     - expo-dev-menu-interface
     - EXUpdatesInterface
-  - expo-dev-launcher (6.0.11):
+  - expo-dev-launcher (6.0.13):
     - boost
     - DoubleConversion
     - EXManifests
-    - expo-dev-launcher/Main (= 6.0.11)
+    - expo-dev-launcher/Main (= 6.0.13)
     - expo-dev-menu
     - expo-dev-menu-interface
     - ExpoModulesCore
@@ -83,7 +83,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
-  - expo-dev-launcher/Main (6.0.11):
+  - expo-dev-launcher/Main (6.0.13):
     - boost
     - DoubleConversion
     - EXManifests
@@ -120,7 +120,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
-  - expo-dev-launcher/Unsafe (6.0.11):
+  - expo-dev-launcher/Unsafe (6.0.13):
     - boost
     - DoubleConversion
     - EXManifests
@@ -156,11 +156,11 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
-  - expo-dev-menu (7.0.11):
+  - expo-dev-menu (7.0.13):
     - boost
     - DoubleConversion
-    - expo-dev-menu/Main (= 7.0.11)
-    - expo-dev-menu/ReactNativeCompatibles (= 7.0.11)
+    - expo-dev-menu/Main (= 7.0.13)
+    - expo-dev-menu/ReactNativeCompatibles (= 7.0.13)
     - fast_float
     - fmt
     - glog
@@ -187,7 +187,7 @@ PODS:
     - SocketRocket
     - Yoga
   - expo-dev-menu-interface (2.0.0)
-  - expo-dev-menu/Main (7.0.11):
+  - expo-dev-menu/Main (7.0.13):
     - boost
     - DoubleConversion
     - EXManifests
@@ -219,7 +219,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
-  - expo-dev-menu/ReactNativeCompatibles (7.0.11):
+  - expo-dev-menu/ReactNativeCompatibles (7.0.13):
     - boost
     - DoubleConversion
     - fast_float
@@ -251,13 +251,11 @@ PODS:
     - ExpoModulesCore
   - ExpoCrypto (15.0.7):
     - ExpoModulesCore
-  - ExpoFileSystem (19.0.15):
+  - ExpoFileSystem (19.0.16):
     - ExpoModulesCore
   - ExpoFont (14.0.8):
     - ExpoModulesCore
-  - ExpoGlassEffect (0.1.4):
-    - ExpoModulesCore
-  - ExpoHead (6.0.8):
+  - ExpoHead (6.0.9):
     - ExpoModulesCore
     - RNScreens
   - ExpoKeepAwake (15.0.7):
@@ -266,7 +264,7 @@ PODS:
     - ExpoModulesCore
   - ExpoLocalization (17.0.7):
     - ExpoModulesCore
-  - ExpoModulesCore (3.0.18):
+  - ExpoModulesCore (3.0.19):
     - boost
     - DoubleConversion
     - fast_float
@@ -299,7 +297,7 @@ PODS:
     - ExpoModulesCore
   - ExpoSystemUI (6.0.7):
     - ExpoModulesCore
-  - ExpoUI (0.2.0-beta.4):
+  - ExpoUI (0.2.0-beta.5):
     - ExpoModulesCore
   - EXUpdatesInterface (2.0.0):
     - ExpoModulesCore
@@ -3091,7 +3089,6 @@ DEPENDENCIES:
   - ExpoCrypto (from `../node_modules/expo-crypto/ios`)
   - ExpoFileSystem (from `../node_modules/expo-file-system/ios`)
   - ExpoFont (from `../node_modules/expo-font/ios`)
-  - ExpoGlassEffect (from `../node_modules/expo-glass-effect/ios`)
   - ExpoHead (from `../node_modules/expo-router/ios`)
   - ExpoKeepAwake (from `../node_modules/expo-keep-awake/ios`)
   - ExpoLinking (from `../node_modules/expo-linking/ios`)
@@ -3228,8 +3225,6 @@ EXTERNAL SOURCES:
     :path: "../node_modules/expo-file-system/ios"
   ExpoFont:
     :path: "../node_modules/expo-font/ios"
-  ExpoGlassEffect:
-    :path: "../node_modules/expo-glass-effect/ios"
   ExpoHead:
     :path: "../node_modules/expo-router/ios"
   ExpoKeepAwake:
@@ -3419,36 +3414,35 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   boost: 7e761d76ca2ce687f7cc98e698152abd03a18f90
   CocoaAsyncSocket: 065fd1e645c7abab64f7a6a2007a48038fdc6a99
-  DNSNative: 81019065a0d5f1a4cc9c27ca228ccb5d88f8ff3e
+  DNSNative: 553186a770d1102b60d9d6cfc9ccf89242e197ab
   DoubleConversion: cb417026b2400c8f53ae97020b2be961b59470cb
   EXConstants: a95804601ee4a6aa7800645f9b070d753b1142b3
   EXJSONUtils: 1d3e4590438c3ee593684186007028a14b3686cd
   EXManifests: 224345a575fca389073c416297b6348163f28d1a
-  Expo: 99022d0107ee878b9e6c474ff3637b37ff986dbf
-  expo-dev-client: f3434d6ca09ecb14ae48c2a3912bdbb07464cc85
-  expo-dev-launcher: 746f60f75a8d229581710299e37a9db0c1baa360
-  expo-dev-menu: 19de9e2b7a4c5d0ff2afe5d7f1d8913d4699b32d
+  Expo: 674fb719cc0ce85e81cfd90cb2ba0de27ad1617a
+  expo-dev-client: 1a85ab54efbaddd5fcce4c8b12935092e47dedd1
+  expo-dev-launcher: 48e37fe65420f974c36611b53fcd20082d3e5bdd
+  expo-dev-menu: f23f574e692bc0dd7f86510639a0637ea292e6ae
   expo-dev-menu-interface: 600df12ea01efecdd822daaf13cc0ac091775533
   ExpoAsset: 9ba6fbd677fb8e241a3899ac00fa735bc911eadf
   ExpoCrypto: c1fbce112d1b6b79652bbe380b4fd4cc91676595
-  ExpoFileSystem: 5fb091ea11198e109ceef2bdef2e6e66523e62c4
+  ExpoFileSystem: f4bf6bac4ede3b6671c22777f01102a02a028412
   ExpoFont: 86ceec09ffed1c99cfee36ceb79ba149074901b5
-  ExpoGlassEffect: 744bf0c58c26a1b0212dff92856be07b98d01d8c
-  ExpoHead: 5570e5edbe54fd8f88e51e8b94bf2931caaa7363
+  ExpoHead: 903ed9ea60da1e0fd13fdd885ea697f27df7ef92
   ExpoKeepAwake: 1a2e820692e933c94a565ec3fbbe38ac31658ffe
   ExpoLinking: f051f28e50ea9269ff539317c166adec81d9342d
   ExpoLocalization: b852a5d8ec14c5349c1593eca87896b5b3ebfcca
-  ExpoModulesCore: 7cb6eef0deb6f346fc21e02e9645120f2fb5d4f0
+  ExpoModulesCore: d25fb87a1c9e9be27f8c3b5b20f18d2f8d7bfcb4
   ExpoSplashScreen: cbb839de72110dea1851dd3e85080b7923af2540
   ExpoSystemUI: 6cd74248a2282adf6dec488a75fa532d69dee314
-  ExpoUI: 5e44b62e2589b7bc8a6123943105a230c693d000
+  ExpoUI: c0d733b03e85ba437decd9d0e144a69c3fcd25e9
   EXUpdatesInterface: 5adf50cb41e079c861da6d9b4b954c3db9a50734
   fast_float: b32c788ed9c6a8c584d114d0047beda9664e7cc6
   FBLazyVector: 941bef1c8eeabd9fe1f501e30a5220beee913886
   fmt: a40bb5bd0294ea969aaaba240a927bd33d878cdd
   glog: 5683914934d5b6e4240e497e0f4a3b42d1854183
   hermes-engine: 35c763d57c9832d0eef764316ca1c4d043581394
-  LiquidGlassNative: 0650d981ca9eaf733210ec4615631681cea41197
+  LiquidGlassNative: fa08aeec9b15dba893954bb482736eb2ec525ae1
   OpenSSL-Universal: 6082b0bf950e5636fe0d78def171184e2b3899c2
   RCT-Folly: 846fda9475e61ec7bcbf8a3fe81edfcaeb090669
   RCTDeprecation: c0ed3249a97243002615517dff789bf4666cf585

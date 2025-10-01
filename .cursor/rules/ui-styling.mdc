@@ -33,19 +33,27 @@ function MyComponent() {
 ## Liquid Glass Effects
 
 ### iOS 26+ Native Glass
-[ios/LiquidGlassNative/](mdc:ios/LiquidGlassNative/) - Native implementation
-- Uses `expo-glass-effect` for iOS 26+
-- Automatic capability detection
-- Graceful fallback to blur for older iOS
+[src/components/LiquidGlassWrapper.tsx](mdc:src/components/LiquidGlassWrapper.tsx) - Custom native implementation
+- Custom `LiquidGlassWrapper` with environmental adaptation, thermal monitoring, and GlassEffectContainer optimization
+- 3 material variants: `regular`, `prominent`, `interactive`
+- Automatic capability detection with graceful fallbacks
+- ~40% GPU reduction via container merging
 
 ### Glass Components
 ```tsx
-import { GlassView } from '@/components/GlassView';
+import { LiquidGlassWrapper } from '@/components/LiquidGlassWrapper';
 
-<GlassView intensity={0.8}>
+<LiquidGlassWrapper
+  variant="regular"
+  shape="roundedRect"
+  cornerRadius={16}
+  enableContainer={true}
+>
   <Text>Content with glass background</Text>
-</GlassView>
+</LiquidGlassWrapper>
 ```
+
+**Note**: `UniversalGlassView` is deprecated and will be removed in v3.0.0. Use `LiquidGlassWrapper` instead.
 
 ### Accessibility
 - Reduced transparency support

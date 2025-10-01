@@ -43,9 +43,12 @@
 - Networks may block DNS port 53; test fallbacks (TCP/HTTPS) and capture logs from the app’s Logs screen.
 - For updated Swift, SwiftUI and iOS reference materials, check `/Applications/Xcode.app/Contents/PlugIns/IDEIntelligenceChat.framework/Versions/A/Resources/AdditionalDocumentation`.
 
+## Expo and React Native Additional Docs
+- Always look for React Native and Expo documentation and guidelines in @docs/EXPO_REACT_NATIVE_DOCS
+
 ## Swift Xcode 26 Additional Docs
 
-Always look for Swift, SwiftUI and iOS documentation updated at this Xcode 26 folder: `/Applications/Xcode.app/Contents/PlugIns/IDEIntelligenceChat.framework/Versions/A/Resources/AdditionalDocumentation`.
+- Always look for Swift, SwiftUI and iOS documentation updated at this Xcode 26 folder: `/Applications/Xcode.app/Contents/PlugIns/IDEIntelligenceChat.framework/Versions/A/Resources/AdditionalDocumentation`.
 
 # Guidelines for Modern Swift
 

@@ -244,11 +244,15 @@ Use Java 17 for Android builds (automated in npm scripts)
 ### Development Tools
 - **Use `ast-grep`** for syntax-aware searches: `ast-grep --lang typescript -p '<pattern>'`
 - **Consult Swift docs** at `/Applications/Xcode.app/Contents/PlugIns/IDEIntelligenceChat.framework/Versions/A/Resources/AdditionalDocumentation`
+- **Expo and React Native Additional Docs** at @docs/EXPO_REACT_NATIVE_DOCS
 - **VibeTunnel integration**: Use `vt title` commands to communicate progress
+
+## Expo and React Native Additional Docs
+- Always look for React Native and Expo documentation and guidelines in @docs/EXPO_REACT_NATIVE_DOCS
 
 ## Swift Xcode 26 Additional Docs
 
-Always look for Swift documentation updated at this Xcode 26 folder: `/Applications/Xcode.app/Contents/PlugIns/IDEIntelligenceChat.framework/Versions/A/Resources/AdditionalDocumentation`.
+- Always look for Swift, SwiftUI and iOS documentation updated at this Xcode 26 folder: `/Applications/Xcode.app/Contents/PlugIns/IDEIntelligenceChat.framework/Versions/A/Resources/AdditionalDocumentation`.
 
 # Guidelines for Modern Swift
 
@@ -263,3 +267,4 @@ In general, prefer the use of Swift Concurrency (async/await, actors, etc.) over
 ## Modern Previews
 
 Instead of using the `PreviewProvider` protocol for new previews in SwiftUI, use the new `#Preview` macro.
+- Expo and React Native Additional Docs: Always look for React Native and Expo documentation and guidelines in @docs/EXPO_REACT_NATIVE_DOCS/

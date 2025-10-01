@@ -46,6 +46,15 @@ export {
   type LiquidGlassProps,
 } from "../LiquidGlassWrapper";
 
+/**
+ * @deprecated UniversalGlassView is deprecated. Use LiquidGlassWrapper instead.
+ * Will be removed in v3.0.0
+ */
+export {
+  UniversalGlassView,
+  type UniversalGlassViewProps,
+} from "./UniversalGlassView";
+
 // Glass Component Namespace (alternative import style)
 export * as Glass from "./GlassForm";
 export * as GlassTabs from "./GlassTabBar";

@@ -369,6 +369,16 @@ export class StorageService {
       const chats = await this.loadChats();
       const filteredChats = chats.filter((chat) => chat.id !== chatId);
       await this.saveChats(filteredChats);
+
+      // P0-3 FIX: Clean up encryption key to prevent security/compliance violations
+      // Without this, deleted conversation keys remain accessible forever
+      try {
+        await EncryptionService.deleteConversationKey(chatId);
+        console.log(`✅ Deleted encryption key for chat ${chatId}`);
+      } catch (keyDeleteError) {
+        // Log but don't fail the entire deletion if key cleanup fails
+        console.error(`⚠️ Failed to delete encryption key for ${chatId}:`, keyDeleteError);
+      }
     } catch (error) {
       console.error("Error deleting chat:", error);
       throw error;

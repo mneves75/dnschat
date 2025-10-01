@@ -14,7 +14,7 @@ import { useHeaderHeight } from "@react-navigation/elements";
 import { MessageList } from "../components/MessageList";
 import { ChatInput } from "../components/ChatInput";
 import { useChat } from "../context/ChatContext";
-import { UniversalGlassView } from "../components/glass/UniversalGlassView";
+import { LiquidGlassWrapper } from "../components/LiquidGlassWrapper";
 import { useLiquidGlassAvailability } from "../components/glass/GlassCapabilityBridge";
 
 export function Chat() {
@@ -82,22 +82,24 @@ export function Chat() {
         {Platform.OS === "ios" && glassAvailable ? ( // Use glass UI when available
           <>
             {/* Liquid Glass Message Area */}
-            <UniversalGlassView
+            <LiquidGlassWrapper
               variant="regular"
               shape="roundedRect"
               cornerRadius={20}
+              enableContainer={true}
               style={styles.glassMessageArea}
             >
               <MessageList
                 messages={currentChat?.messages || []}
                 isLoading={isLoading}
               />
-            </UniversalGlassView>
+            </LiquidGlassWrapper>
 
             {/* Liquid Glass Chat Input */}
-            <UniversalGlassView
+            <LiquidGlassWrapper
               variant="prominent"
               shape="capsule"
+              enableContainer={true}
               style={styles.glassInputArea}
             >
               <ChatInput
@@ -105,7 +107,7 @@ export function Chat() {
                 isLoading={isLoading}
                 placeholder="Ask me anything..."
               />
-            </UniversalGlassView>
+            </LiquidGlassWrapper>
           </>
         ) : (
           // Fallback for non-iOS or when glass unavailable

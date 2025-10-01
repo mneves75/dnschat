@@ -13,7 +13,7 @@ import {
 } from '../../../src/components/LiquidGlassWrapper';
 import { useLocalization } from '../../../src/i18n/LocalizationProvider';
 import { FloatingGlassTabBar } from '../../../src/components/glass/GlassTabBar';
-import { buildGlassTabs } from './tabHelpers';
+import { buildGlassTabs } from '../../../src/utils/tabHelpers';
 
 const newspaper = require('../../../src/assets/newspaper.png');
 
@@ -118,6 +118,7 @@ export default function AppTabsLayout() {
             }}
             margin={baseMargin}
             bottomInset={bottomInset}
+            sensorAware={supportsSwiftUIGlass}
           />
         );
       }}

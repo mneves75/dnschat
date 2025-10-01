@@ -7,6 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **CRITICAL: Liquid Glass Module Conflict** - Fixed tab bar not showing glass effect due to duplicate view managers
+  - Removed duplicate `LiquidGlassViewManager` files from ios/ root directory
+  - Only LiquidGlassNative pod implementation remains (SwiftUI .glassEffect() wrapper)
+  - Fixed iOS version check bug: changed from iOS 13+ to iOS 26+ for native glass capability detection
+  - Glass effects now properly fall back to enhanced CSS-based glass when iOS < 26
+  - Tab bar now displays translucent glass background with blur and vibrancy on all iOS versions
+- **Liquid Glass Tab Bar Rendering** - Fixed tab bar not displaying proper glass effects
+  - Enabled `GlassEffectContainer` optimization (`enableContainer={true}`)
+  - Changed shape from `rect` to `roundedRect` with 16px corner radius for iOS-native appearance
+  - Added `sensorAware` prop for Dynamic Island and ambient light adaptation
+  - Tab bar now renders with full translucent blur, vibrancy, and environmental adaptation
+- **Tab Bar Content Overlap** - Fixed content flowing underneath floating glass tab bar
+  - Created `useTabBarPadding()` hook to calculate proper bottom padding
+  - Applied dynamic padding to all tab screens (Chats, Logs, About, DevLogs)
+  - Padding accounts for tab bar height (49px), margins (24px), iOS offset (12px), and safe area insets
+  - Content now fully visible when scrolled to bottom on all iOS devices
+
+### Changed
+- **Glass Effect Architecture Consolidation** - Unified all glass effects on superior custom implementation
+  - Migrated `NotFound.tsx` from `UniversalGlassView` to `LiquidGlassWrapper`
+  - Migrated `Chat.tsx` (2 instances) from `UniversalGlassView` to `LiquidGlassWrapper`
+  - All components now use consistent glass API with `enableContainer={true}` optimization
+- **Deprecated Components**
+  - `UniversalGlassView` marked as deprecated with runtime warning
+  - Component redirects to `LiquidGlassWrapper` internally for backward compatibility
+  - Will be removed in v3.0.0 (migration guide included in component documentation)
+  - Custom `LiquidGlassWrapper` implementation provides superior features:
+    * Environmental adaptation (ambient light, device orientation, thermal state)
+    * GlassEffectContainer optimization (~40% GPU reduction)
+    * CoreMotion integration for parallax effects
+    * 3 material variants vs Expo SDK's 2 styles
+    * Enhanced fallback system for iOS 13-25 and Android
+
 ## [2.1.0] - 2025-09-30
 
 ### Added

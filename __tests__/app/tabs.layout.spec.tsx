@@ -2,7 +2,7 @@ import React from 'react';
 import type { BottomTabNavigationOptions } from '@react-navigation/bottom-tabs';
 import type { NavigationState } from '@react-navigation/native';
 
-import { buildGlassTabs } from '../../app/(app)/(tabs)/tabHelpers';
+import { buildGlassTabs } from '../../app/(app)/(tabs)/_tabHelpers';
 
 // Minimal TabBar descriptor shape used by React Navigation
 interface Descriptor {
