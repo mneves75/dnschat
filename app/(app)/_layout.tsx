@@ -1,4 +1,5 @@
 import { Stack } from 'expo-router';
+import React from 'react';
 
 import { useAppTheme } from '../../src/theme';
 import { useLocalization } from '../../src/i18n/LocalizationProvider';
@@ -10,7 +11,18 @@ import { Platform, View } from 'react-native';
 
 export default function AppStackLayout() {
   const { colors } = useAppTheme();
-  const { t } = useLocalization();
+  
+  // Safely access localization - catch if provider isn't ready
+  let t: (key: string) => string;
+  try {
+    const localization = useLocalization();
+    t = localization.t;
+  } catch (error) {
+    console.warn('LocalizationProvider not ready, using fallback', error);
+    // Fallback function
+    t = (key: string) => key;
+  }
+  
   const { supportsSwiftUIGlass, isSupported } = useLiquidGlassCapabilities();
   const glassEnabled = Platform.OS === 'ios' && Boolean(isSupported) && Boolean(supportsSwiftUIGlass);
 

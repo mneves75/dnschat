@@ -48,13 +48,6 @@ const TAB_CONFIG = [
 export default function AppTabsLayout() {
   const { t } = useLocalization();
 
-  // iOS 26+ liquid glass color adaptation
-  // DynamicColorIOS automatically adjusts tint colors for light/dark backgrounds
-  const iosLabelStyle = {
-    color: DynamicColorIOS({ dark: 'white', light: 'black' }),
-    tintColor: DynamicColorIOS({ dark: '#007AFF', light: '#007AFF' }),
-  };
-
   const enableGlassEffects = Platform.OS === 'ios' && isIOSGlassCapable();
 
   // DEBUG: Log tab configuration
@@ -63,23 +56,24 @@ export default function AppTabsLayout() {
   console.log('🔵 [TABS] Glass effects enabled:', enableGlassEffects);
   console.log('🔵 [TABS] __DEV__:', __DEV__);
 
-  const tabsToRender = TAB_CONFIG.map((tab) => {
-    const hidden = tab.hideInProduction && (typeof __DEV__ === 'undefined' || !__DEV__);
-    return {
-      name: tab.name,
-      hidden,
-      label: t(tab.labelKey),
-    };
-  });
-  console.log('🔵 [TABS] Tabs to render:', JSON.stringify(tabsToRender, null, 2));
-
   return (
     <NativeTabs
-      labelStyle={Platform.OS === 'ios' ? iosLabelStyle : undefined}
+      labelStyle={
+        Platform.OS === 'ios'
+          ? {
+              color: DynamicColorIOS({ dark: 'white', light: 'black' }),
+            }
+          : undefined
+      }
+      tintColor={
+        Platform.OS === 'ios'
+          ? DynamicColorIOS({ dark: '#007AFF', light: '#007AFF' })
+          : undefined
+      }
       minimizeBehavior={enableGlassEffects ? 'onScrollDown' : undefined}
     >
       {TAB_CONFIG.map((tab) => {
-        const hidden = tab.hideInProduction && (typeof __DEV__ === 'undefined' || !__DEV__);
+        const hidden = tab.hideInProduction && !__DEV__;
 
         console.log(`🔵 [TABS] Rendering trigger for ${tab.name}, hidden=${hidden}`);
 
