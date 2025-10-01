@@ -29,11 +29,35 @@ export interface LiquidGlassCapabilities {
   /** Overall Liquid Glass support status */
   isSupported: boolean;
 
-  /** iOS API level (160 = iOS 16.0, 260 = iOS 26.0, etc.) */
+  /** Legacy support flag (for backward compatibility) */
+  available?: boolean;
+
+  /** iOS API level (170 = iOS 17.0, 260 = iOS 26.0, etc.) */
   apiLevel: number;
 
   /** Platform identification */
   platform: "ios" | "android" | "web" | "unknown";
+
+  /** iOS version string (e.g., "17.0") */
+  iosVersion?: string;
+
+  /** Glass effect API being used */
+  glassEffectAPI?: "swiftui" | "uiblureffect" | "fallback";
+
+  /** Basic blur support (iOS 17+) */
+  supportsBasicBlur?: boolean;
+
+  /** Advanced SwiftUI glass effects (iOS 26+) */
+  supportsSwiftUIGlass?: boolean;
+
+  /** Glass container support */
+  supportsGlassContainer?: boolean;
+
+  /** Sensor awareness support */
+  supportsSensorAware?: boolean;
+
+  /** Interactive glass support */
+  supportsInteractive?: boolean;
 
   /** Detailed feature support matrix */
   features: {

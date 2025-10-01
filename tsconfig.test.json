@@ -1,7 +1,7 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "types": ["jest", "node", "expo-router/entry"],
+    "types": ["jest", "node"],
     "noEmit": true
   },
   "include": ["__tests__", "src/tests", "src/**/*.test.ts", "src/**/*.test.tsx"]

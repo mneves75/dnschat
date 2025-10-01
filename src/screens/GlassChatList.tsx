@@ -34,17 +34,11 @@ import {
 import { TrashIcon } from "../components/icons/TrashIcon";
 import { PlusIcon } from "../components/icons/PlusIcon";
 import { formatDistanceToNow } from "date-fns";
+import { Chat } from "../types/chat";
 
 // ==================================================================================
 // TYPES
 // ==================================================================================
-
-interface Chat {
-  id: string;
-  title: string;
-  createdAt: Date;
-  messages: any[];
-}
 
 interface ChatItemProps {
   chat: Chat;
@@ -488,7 +482,6 @@ export function GlassChatList() {
       <FlashList
         data={chats}
         renderItem={renderChatItem}
-        estimatedItemSize={120}
         keyExtractor={(item) => item.id}
         ListHeaderComponent={renderHeaderComponent}
         ListEmptyComponent={renderEmptyComponent}
@@ -499,9 +492,6 @@ export function GlassChatList() {
         showsVerticalScrollIndicator={false}
         // Performance optimizations
         removeClippedSubviews={Platform.OS === "android"}
-        maxToRenderPerBatch={10}
-        updateCellsBatchingPeriod={50}
-        windowSize={11}
       />
     </View>
   );

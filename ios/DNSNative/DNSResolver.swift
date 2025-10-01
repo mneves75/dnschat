@@ -2,30 +2,14 @@ import Foundation
 import Network
 import React
 
-final class AtomicFlag {
-    private let lock = NSLock()
-    private var value: Bool
-
-    init(initialValue: Bool = false) {
-        self.value = initialValue
-    }
-
-    func testAndSet() -> Bool {
-        lock.lock()
-        defer { lock.unlock() }
-        if value { return false }
-        value = true
-        return true
-    }
-}
-
 @objc(DNSResolver)
 final class DNSResolver: NSObject {
     
     // MARK: - Configuration
     private static let dnsPort: UInt16 = 53
     private static let queryTimeout: TimeInterval = 10.0
-    
+    private static let maxNativeAttempts: Int = 3
+    private static let retryDelayNanoseconds: UInt64 = 200_000_000 // 200ms
     // MARK: - State
     @MainActor private var activeQueries: [String: Task<[String], Error>] = [:]
     
@@ -63,14 +47,14 @@ final class DNSResolver: NSObject {
                 
                 // Create new query
                 let queryTask = createQueryTask(server: domain, queryName: queryName)
-                _ = await MainActor.run {
+                await MainActor.run {
                     activeQueries[queryId] = queryTask
                 }
                 
                 let result = try await queryTask.value
                 
                 // Clean up
-                _ = await MainActor.run {
+                await MainActor.run {
                     activeQueries.removeValue(forKey: queryId)
                 }
                 
@@ -78,7 +62,7 @@ final class DNSResolver: NSObject {
                 
             } catch {
                 // Clean up on error
-                _ = await MainActor.run {
+                await MainActor.run {
                     activeQueries.removeValue(forKey: queryId)
                 }
                 
@@ -90,12 +74,22 @@ final class DNSResolver: NSObject {
     // MARK: - Private Implementation
     
     private func createQueryTask(server: String, queryName: String) -> Task<[String], Error> {
-        Task { [weak self] in
-            guard let self = self else {
-                throw DNSError.cancelled
-            }
-            return try await withTimeout(seconds: Self.queryTimeout) {
-                try await self.performUDPQuery(server: server, queryName: queryName)
+        Task {
+            try await withTimeout(seconds: Self.queryTimeout) {
+                for attempt in 0..<Self.maxNativeAttempts {
+                    do {
+                        return try await performUDPQuery(server: server, queryName: queryName)
+                    } catch let error as DNSError {
+                        if case .noRecordsFound = error, attempt < Self.maxNativeAttempts - 1 {
+                            try await Task.sleep(nanoseconds: Self.retryDelayNanoseconds)
+                            continue
+                        }
+                        throw error
+                    } catch {
+                        throw error
+                    }
+                }
+                throw DNSError.noRecordsFound
             }
         }
     }
@@ -111,23 +105,16 @@ final class DNSResolver: NSObject {
         let params = NWParameters.udp
         let connection = NWConnection(host: host, port: port, using: params)
         
-        // Await ready state with atomic protection
-        let readyFlag = AtomicFlag()
+        // Await ready state
         try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, Error>) in
             connection.stateUpdateHandler = { state in
                 switch state {
                 case .ready:
-                    if readyFlag.testAndSet() {
-                        cont.resume()
-                    }
+                    cont.resume()
                 case .failed(let error):
-                    if readyFlag.testAndSet() {
-                        cont.resume(throwing: DNSError.resolverFailed(error.localizedDescription))
-                    }
+                    cont.resume(throwing: DNSError.resolverFailed(error.localizedDescription))
                 case .cancelled:
-                    if readyFlag.testAndSet() {
-                        cont.resume(throwing: DNSError.cancelled)
-                    }
+                    cont.resume(throwing: DNSError.cancelled)
                 default:
                     break
                 }
@@ -135,11 +122,9 @@ final class DNSResolver: NSObject {
             connection.start(queue: .global(qos: .userInitiated))
         }
         
-        // Send content with atomic protection
-        let sendFlag = AtomicFlag()
+        // Send content
         try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, Error>) in
             connection.send(content: queryData, completion: .contentProcessed { error in
-                guard sendFlag.testAndSet() else { return }
                 if let error = error {
                     cont.resume(throwing: DNSError.queryFailed(error.localizedDescription))
                 } else {
@@ -148,59 +133,27 @@ final class DNSResolver: NSObject {
             })
         }
         
-        // PERFORMANCE FIX: Create timeout task OUTSIDE continuation for proper lifecycle
-        // This ensures timeout task is cancelled immediately when query completes
-        let receiveFlag = AtomicFlag()
-        let timeoutTask = Task {
-            do {
-                let nanoseconds = UInt64(max(0, Self.queryTimeout) * 1_000_000_000)
-                try await Task.sleep(nanoseconds: nanoseconds)
-                // If we reach here without cancellation, trigger timeout
-                if receiveFlag.testAndSet() {
-                    connection.cancel()
+        // Receive response
+        let responseData: Data = try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Data, Error>) in
+            connection.receiveMessage { data, _, _, error in
+                connection.cancel()
+                if let error = error {
+                    cont.resume(throwing: DNSError.queryFailed(error.localizedDescription))
+                    return
                 }
-            } catch {
-                // Task was cancelled (expected in success case)
-                return
+                guard let data = data, data.count >= 12 else {
+                    cont.resume(throwing: DNSError.noRecordsFound)
+                    return
+                }
+                cont.resume(returning: data)
             }
         }
 
-        // Receive response with atomic protection
-        let responseData: Data
-        do {
-            responseData = try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Data, Error>) in
-                connection.receiveMessage { data, _, _, error in
-                    guard receiveFlag.testAndSet() else { return }
-
-                    // Immediately cancel timeout task to free resources
-                    timeoutTask.cancel()
-                    connection.cancel()
-
-                    if let error = error {
-                        cont.resume(throwing: DNSError.queryFailed(error.localizedDescription))
-                        return
-                    }
-                    guard let data = data, data.count >= 12 else {
-                        cont.resume(throwing: DNSError.noRecordsFound)
-                        return
-                    }
-                    cont.resume(returning: data)
-                }
-            }
-        } catch {
-            // Ensure timeout task is cancelled even if continuation throws
-            timeoutTask.cancel()
-            throw error
-        }
-
-        // Final cleanup
-        timeoutTask.cancel()
-        
         let txt = try parseDnsTxtResponse(responseData)
         if txt.isEmpty { throw DNSError.noRecordsFound }
         return txt
     }
-    
+
     private func createDNSQuery(queryName: String) throws -> Data {
         // Create a basic DNS query packet for TXT record
         var query = Data()
@@ -215,11 +168,7 @@ final class DNSResolver: NSObject {
         query.append(contentsOf: [0x00, 0x00])                 // Additional RRs: 0
         
         // Question section
-        let domainBytes = try encodeDomainName(
-            queryName
-                .trimmingCharacters(in: .whitespacesAndNewlines)
-                .lowercased()
-        )
+        let domainBytes = try encodeDomainName(queryName)
         query.append(domainBytes)                               // Domain name
         query.append(contentsOf: [0x00, 0x10])                 // Type: TXT (16)
         query.append(contentsOf: [0x00, 0x01])                 // Class: IN (1)
@@ -230,6 +179,7 @@ final class DNSResolver: NSObject {
     private func encodeDomainName(_ domain: String) throws -> Data {
         var data = Data()
         let components = domain
+            .trimmingCharacters(in: .whitespacesAndNewlines)
             .split(separator: ".", omittingEmptySubsequences: true)
 
         guard !components.isEmpty else {
@@ -247,7 +197,7 @@ final class DNSResolver: NSObject {
             data.append(UInt8(componentData.count))
             data.append(componentData)
         }
-
+        
         data.append(0x00) // Null terminator
         return data
     }
@@ -259,106 +209,49 @@ final class DNSResolver: NSObject {
         
         let anCount = Int(bytes[6]) << 8 | Int(bytes[7])
         var offset = 12
-
-        // SECURITY FIX: Skip QNAME with bounds checking to prevent malicious DNS response crashes
+        // Skip QNAME
         while offset < bytes.count {
             let len = Int(bytes[offset])
             offset += 1
             if len == 0 { break }
-
-            // Validate that len doesn't cause buffer overflow
-            guard offset + len <= bytes.count else {
-                throw DNSError.queryFailed("Malformed DNS response: QNAME label exceeds packet bounds (offset: \(offset), len: \(len), total: \(bytes.count))")
-            }
             offset += len
         }
-
-        // Validate QTYPE + QCLASS bounds
-        guard offset + 4 <= bytes.count else {
-            throw DNSError.queryFailed("Malformed DNS response: insufficient bytes for QTYPE/QCLASS")
-        }
+        // Skip QTYPE + QCLASS
         offset += 4
         
-        for answerIndex in 0..<anCount {
-            // Validate minimum answer record size
-            guard offset + 10 <= bytes.count else {
-                // Insufficient bytes for answer record, stop parsing
-                break
-            }
-
-            // SECURITY FIX: Parse NAME with bounds checking (pointer or labels)
+        for _ in 0..<anCount {
+            if offset + 10 > bytes.count { break }
+            // NAME (pointer or labels)
             if (bytes[offset] & 0xC0) == 0xC0 {
-                // DNS compression pointer (2 bytes)
-                guard offset + 2 <= bytes.count else {
-                    throw DNSError.queryFailed("Malformed DNS response: compression pointer exceeds bounds at answer \(answerIndex)")
-                }
                 offset += 2
             } else {
-                // DNS labels
                 while offset < bytes.count {
                     let len = Int(bytes[offset])
                     offset += 1
                     if len == 0 { break }
-
-                    // Validate label length doesn't exceed bounds
-                    guard offset + len <= bytes.count else {
-                        throw DNSError.queryFailed("Malformed DNS response: NAME label exceeds bounds at answer \(answerIndex) (offset: \(offset), len: \(len), total: \(bytes.count))")
-                    }
                     offset += len
                 }
             }
-
-            // Re-validate after NAME parsing
-            guard offset + 10 <= bytes.count else {
-                break
-            }
+            if offset + 10 > bytes.count { break }
             let type = Int(bytes[offset]) << 8 | Int(bytes[offset + 1])
             offset += 2 // TYPE
             offset += 2 // CLASS
             offset += 4 // TTL
-
-            // SECURITY FIX: Validate RDLENGTH bounds before using it
-            guard offset + 2 <= bytes.count else {
-                throw DNSError.queryFailed("Malformed DNS response: insufficient bytes for RDLENGTH")
-            }
             let rdLength = Int(bytes[offset]) << 8 | Int(bytes[offset + 1])
             offset += 2
-
-            // Validate RDATA doesn't exceed packet bounds
-            guard offset + rdLength <= bytes.count else {
-                throw DNSError.queryFailed("Malformed DNS response: RDATA length \(rdLength) exceeds packet bounds (offset: \(offset), total: \(bytes.count))")
-            }
-
-            if type == 16 { // TXT
+            if type == 16 && offset + rdLength <= bytes.count { // TXT
                 let end = offset + rdLength
                 var p = offset
-
-                // Parse TXT records with strict bounds validation
                 while p < end {
-                    // Ensure we can read the length byte
-                    guard p < bytes.count && p < end else { break }
-
                     let txtLen = Int(bytes[p])
                     p += 1
-
-                    // Validate TXT string length doesn't exceed bounds
-                    if txtLen > 0 {
-                        guard p + txtLen <= end && p + txtLen <= bytes.count else {
-                            // Malformed TXT record, skip remaining RDATA
-                            break
-                        }
+                    if txtLen > 0 && p + txtLen <= end {
                         let sub = bytes[p..<(p+txtLen)]
                         if let s = String(bytes: sub, encoding: .utf8) {
                             results.append(s)
                         }
                         p += txtLen
-                    } else if txtLen == 0 {
-                        // Empty TXT string is valid, continue
-                        continue
-                    } else {
-                        // Negative length is invalid
-                        break
-                    }
+                    } else { break }
                 }
             }
             offset += rdLength
@@ -407,28 +300,19 @@ private func withTimeout<T>(
     seconds: TimeInterval,
     operation: @escaping () async throws -> T
 ) async throws -> T {
-    // CRITICAL FIX: Proper timeout implementation without race conditions
-    let task = Task {
-        try await operation()
-    }
-    
-    let timeoutTask = Task {
-        let nanoseconds = UInt64(max(0, seconds) * 1_000_000_000)
-        try await Task.sleep(nanoseconds: nanoseconds)
-        task.cancel()
-        throw DNSResolver.DNSError.timeout
-    }
-    
-    do {
-        let result = try await task.value
-        timeoutTask.cancel()
-        return result
-    } catch {
-        timeoutTask.cancel()
-        if task.isCancelled {
+    try await withThrowingTaskGroup(of: T.self) { group in
+        group.addTask {
+            try await operation()
+        }
+        
+        group.addTask {
+            try await Task.sleep(for: .seconds(seconds))
             throw DNSResolver.DNSError.timeout
         }
-        throw error
+        
+        let result = try await group.next()!
+        group.cancelAll()
+        return result
     }
 }
 

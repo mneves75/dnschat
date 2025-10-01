@@ -636,7 +636,6 @@ export function Logs() {
       <FlashList
         data={listData}
         renderItem={renderItem}
-        estimatedItemSize={140}
         keyExtractor={(item) => item.id}
         getItemType={getItemType}
         onRefresh={handleRefresh}
@@ -644,9 +643,6 @@ export function Logs() {
         contentContainerStyle={[styles.listContent, tabBarPadding]}
         showsVerticalScrollIndicator={false}
         removeClippedSubviews={Platform.OS === "android"}
-        maxToRenderPerBatch={10}
-        updateCellsBatchingPeriod={50}
-        windowSize={11}
       />
 
       {/* Log Actions Sheet */}
