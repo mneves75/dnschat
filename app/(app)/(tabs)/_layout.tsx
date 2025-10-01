@@ -1,163 +1,82 @@
-import { useMemo } from 'react';
-import { Image, Pressable, Platform, View, StyleSheet } from 'react-native';
-import { Tabs, useRouter } from 'expo-router';
-import { BottomTabBar } from '@react-navigation/bottom-tabs';
-import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
-
-import { LogsIcon } from '../../../src/components/icons/LogsIcon';
-import { SettingsIcon } from '../../../src/components/icons/SettingsIcon';
-import { useAppTheme } from '../../../src/theme';
-import {
-  LiquidGlassWrapper,
-  useLiquidGlassCapabilities,
-} from '../../../src/components/LiquidGlassWrapper';
+import { NativeTabs, Icon, Label } from 'expo-router/unstable-native-tabs';
+import { DynamicColorIOS, Platform } from 'react-native';
 import { useLocalization } from '../../../src/i18n/LocalizationProvider';
-import { FloatingGlassTabBar } from '../../../src/components/glass/GlassTabBar';
-import { buildGlassTabs } from '../../../src/utils/tabHelpers';
 
-const newspaper = require('../../../src/assets/newspaper.png');
-
-function SettingsButton() {
-  const router = useRouter();
-  const { colors } = useAppTheme();
-  const { t } = useLocalization();
-
-  return (
-    <Pressable
-      accessibilityLabel={t('settings.header')}
-      onPress={() => router.push('/settings')}
-      hitSlop={16}
-      style={{ paddingHorizontal: 8 }}
-    >
-      <SettingsIcon size={22} color={colors.text} />
-    </Pressable>
-  );
-}
-
+/**
+ * Native Tab Navigation
+ * 
+ * Uses Expo Router's native tabs for iOS 26+ liquid glass effects.
+ * System automatically handles:
+ * - Tab bar positioning (bottom/top/side based on device)
+ * - Liquid glass translucency
+ * - Minimize behavior on scroll
+ * - Safe area insets
+ * 
+ * Note: Falls back to standard tabs on Android.
+ * 
+ * @see https://docs.expo.dev/router/advanced/native-tabs/
+ */
 export default function AppTabsLayout() {
-  const { colors, isDark } = useAppTheme();
   const { t } = useLocalization();
-  const { supportsSwiftUIGlass, supportsBasicBlur, isSupported } = useLiquidGlassCapabilities();
-  const glassEnabled = Platform.OS === 'ios' && Boolean(isSupported);
 
-  const tabBarStyle = useMemo(
-    () => ({
-      backgroundColor: colors.surface,
-      borderTopWidth: StyleSheet.hairlineWidth,
-    }),
-    [colors.surface],
-  );
+  // iOS 26+ liquid glass color adaptation
+  // DynamicColorIOS automatically adjusts tint colors for light/dark backgrounds
+  const labelStyle = Platform.OS === 'ios' ? {
+    color: DynamicColorIOS({ dark: 'white', light: 'black' }),
+    tintColor: DynamicColorIOS({ dark: '#007AFF', light: '#007AFF' }),
+  } : {};
 
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: true,
-        headerTitle: t('app.title'),
-        headerStyle: { backgroundColor: glassEnabled ? 'transparent' : colors.card },
-        headerTintColor: colors.text,
-        headerLeft: () => null,
-        headerRight: () => <SettingsButton />,
-        tabBarActiveTintColor: colors.accent,
-        tabBarInactiveTintColor: colors.muted,
-        tabBarStyle: glassEnabled ? { display: 'none' } : tabBarStyle,
-        tabBarLabelStyle: { fontSize: 12, fontWeight: '600' },
-        headerBackground: () =>
-          glassEnabled ? (
-            <LiquidGlassWrapper
-              variant="prominent"
-              shape="rect"
-              enableContainer={true}
-              sensorAware={supportsSwiftUIGlass || supportsBasicBlur}
-              style={{
-                flex: 1,
-                backgroundColor: isDark ? 'rgba(28, 28, 30, 0.80)' : 'rgba(242, 242, 247, 0.80)',
-              }}
-            />
-          ) : (
-            <View style={{ flex: 1, backgroundColor: colors.card }} />
-          ),
-        tabBarBackground: glassEnabled
-          ? undefined
-          : () => <View style={{ flex: 1, backgroundColor: colors.surface }} />,
-      }}
-      tabBar={(props) => {
-        if (!glassEnabled) {
-          return <BottomTabBar {...props} />;
-        }
-
-        const { state, descriptors, navigation, insets } = props;
-        const { tabs, activeRouteKey } = buildGlassTabs(
-          state,
-          descriptors,
-          state.index,
-          colors.accent,
-          colors.muted,
-        );
-
-        const baseMargin = 12;
-        const bottomInset = insets?.bottom ?? 0;
-
-        return (
-          <FloatingGlassTabBar
-            tabs={tabs}
-            activeTabId={activeRouteKey}
-            onTabPress={(tabId) => {
-              const routeIndex = state.routes.findIndex((route) => route.key === tabId);
-              if (routeIndex === -1) return;
-              const route = state.routes[routeIndex];
-
-              const event = navigation.emit({
-                type: 'tabPress',
-                target: route.key,
-                canPreventDefault: true,
-              });
-
-              if (!event.defaultPrevented) {
-                navigation.navigate(route.name);
-              }
-            }}
-            margin={baseMargin}
-            bottomInset={bottomInset}
-            sensorAware={supportsSwiftUIGlass || supportsBasicBlur}
-          />
-        );
-      }}
+    <NativeTabs 
+      labelStyle={labelStyle}
+      minimizeBehavior="onScrollDown"
     >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: t('tabs.chats'),
-          tabBarIcon: ({ color }) => (
-            <Image
-              source={newspaper}
-              style={{ width: 22, height: 22, tintColor: color }}
-              resizeMode="contain"
-            />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="logs"
-        options={{
-          title: t('tabs.logs'),
-          tabBarIcon: ({ color }) => <LogsIcon size={22} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="about"
-        options={{
-          title: t('tabs.about'),
-          tabBarIcon: ({ color }) => <SettingsIcon size={22} color={color} />, // placeholder icon
-        }}
-      />
-      <Tabs.Screen
-        name="dev-logs"
-        options={{
-          title: t('tabs.devLogs'),
-          href: typeof __DEV__ !== 'undefined' && __DEV__ ? undefined : null,
-          tabBarIcon: ({ color }) => <SettingsIcon size={22} color={color} />, // placeholder icon
-        }}
-      />
-    </Tabs>
+      {/* Home/Chats Tab */}
+      <NativeTabs.Trigger name="index">
+        <Icon 
+          sf={{ 
+            default: "newspaper", 
+            selected: "newspaper.fill" 
+          }} 
+        />
+        <Label>{t('tabs.chats')}</Label>
+      </NativeTabs.Trigger>
+
+      {/* Logs Tab */}
+      <NativeTabs.Trigger name="logs">
+        <Icon 
+          sf={{ 
+            default: "list.bullet.rectangle", 
+            selected: "list.bullet.rectangle.fill" 
+          }} 
+        />
+        <Label>{t('tabs.logs')}</Label>
+      </NativeTabs.Trigger>
+
+      {/* About Tab */}
+      <NativeTabs.Trigger name="about">
+        <Icon 
+          sf={{ 
+            default: "info.circle", 
+            selected: "info.circle.fill" 
+          }} 
+        />
+        <Label>{t('tabs.about')}</Label>
+      </NativeTabs.Trigger>
+
+      {/* Dev Logs Tab (hidden in production) */}
+      <NativeTabs.Trigger 
+        name="dev-logs" 
+        hidden={typeof __DEV__ === 'undefined' || !__DEV__}
+      >
+        <Icon 
+          sf={{ 
+            default: "terminal", 
+            selected: "terminal.fill" 
+          }} 
+        />
+        <Label>{t('tabs.devLogs')}</Label>
+      </NativeTabs.Trigger>
+    </NativeTabs>
   );
 }

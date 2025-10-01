@@ -26,7 +26,6 @@ import { FlashList, ListRenderItem } from "@shopify/flash-list";
 import { useRouter, useFocusEffect } from "expo-router";
 import { useChat } from "../context/ChatContext";
 import { useGlassTheme } from "../hooks/useGlassTheme";
-import { useTabBarPadding } from "../hooks/useTabBarPadding";
 import {
   GlassActionSheet,
   useGlassBottomSheet,
@@ -345,7 +344,6 @@ const ChatListFooter: React.FC<{ chats: Chat[] }> = ({ chats }) => {
 export function GlassChatList() {
   const router = useRouter();
   const { colors } = useGlassTheme();
-  const tabBarPadding = useTabBarPadding();
   const {
     chats,
     createChat,
@@ -488,7 +486,7 @@ export function GlassChatList() {
         ListFooterComponent={renderFooterComponent}
         onRefresh={handleRefresh}
         refreshing={refreshing}
-        contentContainerStyle={[styles.listContent, tabBarPadding]}
+        contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         // Performance optimizations
         removeClippedSubviews={Platform.OS === "android"}

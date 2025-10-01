@@ -14,7 +14,6 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useGlassTheme } from "../hooks/useGlassTheme";
-import { useTabBarPadding } from "../hooks/useTabBarPadding";
 
 // Import package.json to get version
 const packageJson = require("../../package.json");
@@ -45,7 +44,6 @@ interface Credit {
 export function About() {
   const router = useRouter();
   const { colors, getGlassStyle } = useGlassTheme();
-  const tabBarPadding = useTabBarPadding();
   const [iconError, setIconError] = useState(false);
 
   // Scroll animation for progressive blur
@@ -115,7 +113,7 @@ export function About() {
     <SafeAreaView style={styles.container}>
       <Animated.ScrollView
         style={styles.scrollView}
-        contentContainerStyle={[styles.scrollContent, tabBarPadding]}
+        contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         contentInsetAdjustmentBehavior="automatic"
         scrollEventThrottle={16}

@@ -20,7 +20,7 @@ A React Native mobile app that revolutionizes LLM interaction by using DNS TXT q
 - **🌟 iOS 26+ Liquid Glass**: Custom `LiquidGlassWrapper` with environmental adaptation, thermal monitoring, and GlassEffectContainer optimization (~40% GPU reduction)
 - **🌐 DNS-Based AI Chat**: Revolutionary LLM communication via DNS TXT queries
 - **📱 Cross-Platform**: Native iOS, Android, and Web support with platform-specific optimizations
-- **⚡ Expo Router Native Tabs**: Expo Router v6 `<Tabs>` with floating glass tab bar (iOS 26+) using `useTabBarPadding()` hook for dynamic content clearance
+- **⚡ Expo Router Native Tabs**: System native tabs with iOS 26+ liquid glass effects, automatic positioning (iPhone/iPad/Vision Pro), and minimize-on-scroll behavior
 - **🚀 Native DNS Implementation**: Platform-optimized iOS Network Framework and Android DnsResolver with robust error handling
 - **🔄 Multi-Layer Fallback**: Native DNS → UDP → TCP → DNS-over-HTTPS → Mock service
 - **💾 Encrypted Storage**: End-to-end encrypted conversation history with automatic legacy migration
@@ -41,7 +41,7 @@ A React Native mobile app that revolutionizes LLM interaction by using DNS TXT q
 
 ### **Navigation & UI**
 
-- **Expo Router v6** with Native Tabs and floating glass tab bar
+- **Expo Router v6** with Native Tabs (system native liquid glass on iOS 26+)
 - **iOS 26+ Liquid Glass**: Custom `LiquidGlassWrapper` with environmental adaptation, thermal monitoring, and `GlassEffectContainer` optimization
 - **React Native Safe Area Context** with gesture handler support
 - **Advanced Theme Support** (automatic light/dark switching with iOS system colors)

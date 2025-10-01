@@ -26,7 +26,6 @@ import {
 } from "react-native";
 import { FlashList, ListRenderItem } from "@shopify/flash-list";
 import { useGlassTheme } from "../hooks/useGlassTheme";
-import { useTabBarPadding } from "../hooks/useTabBarPadding";
 import {
   DNSLogService,
   DNSQueryLog,
@@ -406,7 +405,6 @@ const EmptyState: React.FC = () => {
 
 export function Logs() {
   const { colors } = useGlassTheme();
-  const tabBarPadding = useTabBarPadding();
   const [logs, setLogs] = useState<DNSQueryLog[]>([]);
   const [expandedLogs, setExpandedLogs] = useState<Set<string>>(new Set());
   const [filter, setFilter] = useState<FilterType>("all");
@@ -640,7 +638,7 @@ export function Logs() {
         getItemType={getItemType}
         onRefresh={handleRefresh}
         refreshing={refreshing}
-        contentContainerStyle={[styles.listContent, tabBarPadding]}
+        contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         removeClippedSubviews={Platform.OS === "android"}
       />

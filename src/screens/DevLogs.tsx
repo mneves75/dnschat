@@ -3,7 +3,6 @@ import { View, StyleSheet, Pressable, Text } from "react-native";
 import { useRouter } from "expo-router";
 import { DNSLogViewer } from "../components/DNSLogViewer";
 import { useGlassTheme } from "../hooks/useGlassTheme";
-import { useTabBarPadding } from "../hooks/useTabBarPadding";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 /**
@@ -22,7 +21,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 export function DevLogs() {
   const router = useRouter();
   const { colors, getGlassStyle } = useGlassTheme();
-  const tabBarPadding = useTabBarPadding();
   const insets = useSafeAreaInsets();
 
   return (
@@ -32,7 +30,7 @@ export function DevLogs() {
         {
           backgroundColor: colors.background,
           paddingTop: insets.top + 12,
-          ...tabBarPadding,
+          paddingBottom: insets.bottom + 16,
         },
       ]}
     >

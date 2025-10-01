@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **BREAKING: Native Tabs Migration** - Migrated from custom glass tabs to Expo Router Native Tabs
+  - Replaced 550+ lines of custom tab bar code with native `NativeTabs` component
+  - iOS 26+ now uses system native liquid glass tab bar (automatic translucency)
+  - Tab bar automatically minimizes on scroll down (iOS 26+ only)
+  - System handles tab bar positioning: bottom (iPhone), top (iPad), side (Vision Pro)
+  - Dynamic color adaptation with `DynamicColorIOS` (light/dark mode)
+  - Removed `FloatingGlassTabBar`, `GlassTabBar`, `buildGlassTabs` helper
+  - Removed `useTabBarPadding` hook (native tabs handle padding automatically)
+  - Simplified all screen files to remove custom padding calculations
+  - Android uses standard Material tabs (5 tab limit applies)
+  - Tab icons now use SF Symbols with default/selected states
+  - Migration reduces codebase by 94% for tab functionality
+  - See `docs/NATIVE_TABS_MIGRATION_PLAN.md` for full details
+
 ### Fixed
 - **CRITICAL: Liquid Glass Module Conflict** - Fixed tab bar not showing glass effect due to duplicate view managers
   - Removed duplicate `LiquidGlassViewManager` files from ios/ root directory
