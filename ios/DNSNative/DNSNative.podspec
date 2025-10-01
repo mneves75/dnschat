@@ -1,6 +1,11 @@
 require "json"
 
-package = JSON.parse(File.read(File.join(__dir__, "../../../package.json")))
+# Try both possible locations for package.json
+package_json_path = File.join(__dir__, "../../../package.json")
+if !File.exist?(package_json_path)
+  package_json_path = File.join(__dir__, "../../package.json")
+end
+package = JSON.parse(File.read(package_json_path))
 
 Pod::Spec.new do |s|
   s.name         = "DNSNative"

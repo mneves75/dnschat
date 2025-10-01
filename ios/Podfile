@@ -23,9 +23,6 @@ prepare_react_native_project!
 target 'DNSChat' do
   use_expo_modules!
 
-  # DNS Native Module
-  pod 'DNSNative', :path => './DNSNative'
-
   if ENV['EXPO_USE_COMMUNITY_AUTOLINKING'] == '1'
     config_command = ['node', '-e', "process.argv=['', '', 'config'];require('@react-native-community/cli').run()"];
   else
