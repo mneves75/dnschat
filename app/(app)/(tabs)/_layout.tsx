@@ -1,5 +1,4 @@
 import { NativeTabs, Icon, Label } from 'expo-router/unstable-native-tabs';
-import { Tabs } from 'expo-router';
 import { DynamicColorIOS, Platform } from 'react-native';
 import { useLocalization } from '../../../src/i18n/LocalizationProvider';
 import { isIOSGlassCapable } from '../../../src/utils/platform';
@@ -51,50 +50,46 @@ export default function AppTabsLayout() {
 
   // iOS 26+ liquid glass color adaptation
   // DynamicColorIOS automatically adjusts tint colors for light/dark backgrounds
-  const labelStyle = Platform.OS === 'ios' ? {
+  const iosLabelStyle = {
     color: DynamicColorIOS({ dark: 'white', light: 'black' }),
     tintColor: DynamicColorIOS({ dark: '#007AFF', light: '#007AFF' }),
-  } : {};
+  };
 
-  const useNativeTabs = isIOSGlassCapable();
+  const enableGlassEffects = Platform.OS === 'ios' && isIOSGlassCapable();
 
-  if (useNativeTabs) {
-    return (
-      <NativeTabs 
-        labelStyle={labelStyle}
-        minimizeBehavior="onScrollDown"
-      >
-        {TAB_CONFIG.map((tab) => {
-          const hidden = tab.hideInProduction && (typeof __DEV__ === 'undefined' || !__DEV__);
-          return (
-            <NativeTabs.Trigger key={tab.name} name={tab.name} hidden={hidden}>
-              <Icon sf={tab.icon} />
-              <Label>{t(tab.labelKey)}</Label>
-            </NativeTabs.Trigger>
-          );
-        })}
-      </NativeTabs>
-    );
-  }
+  // DEBUG: Log tab configuration
+  console.log('🔵 [TABS] AppTabsLayout rendering');
+  console.log('🔵 [TABS] Platform:', Platform.OS, 'Version:', Platform.Version);
+  console.log('🔵 [TABS] Glass effects enabled:', enableGlassEffects);
+  console.log('🔵 [TABS] __DEV__:', __DEV__);
+
+  const tabsToRender = TAB_CONFIG.map((tab) => {
+    const hidden = tab.hideInProduction && (typeof __DEV__ === 'undefined' || !__DEV__);
+    return {
+      name: tab.name,
+      hidden,
+      label: t(tab.labelKey),
+    };
+  });
+  console.log('🔵 [TABS] Tabs to render:', JSON.stringify(tabsToRender, null, 2));
 
   return (
-    <Tabs
-      screenOptions={{
-        tabBarLabelStyle: { fontSize: 12 },
-        tabBarActiveTintColor: '#007AFF',
-        tabBarInactiveTintColor: '#8E8E93',
-      }}
+    <NativeTabs
+      labelStyle={Platform.OS === 'ios' ? iosLabelStyle : undefined}
+      minimizeBehavior={enableGlassEffects ? 'onScrollDown' : undefined}
     >
-      {TAB_CONFIG.map((tab) => (
-        <Tabs.Screen
-          key={tab.name}
-          name={tab.name}
-          options={{
-            title: t(tab.labelKey),
-            href: tab.hideInProduction && (typeof __DEV__ === 'undefined' || !__DEV__) ? null : undefined,
-          }}
-        />
-      ))}
-    </Tabs>
+      {TAB_CONFIG.map((tab) => {
+        const hidden = tab.hideInProduction && (typeof __DEV__ === 'undefined' || !__DEV__);
+
+        console.log(`🔵 [TABS] Rendering trigger for ${tab.name}, hidden=${hidden}`);
+
+        return (
+          <NativeTabs.Trigger key={tab.name} name={tab.name} hidden={hidden}>
+            {Platform.OS === 'ios' && <Icon sf={tab.icon} />}
+            <Label>{t(tab.labelKey)}</Label>
+          </NativeTabs.Trigger>
+        );
+      })}
+    </NativeTabs>
   );
 }
