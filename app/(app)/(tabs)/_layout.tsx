@@ -2,38 +2,22 @@ import { NativeTabs, Icon, Label } from 'expo-router/unstable-native-tabs';
 import { Tabs } from 'expo-router';
 import { DynamicColorIOS, Platform } from 'react-native';
 import { useLocalization } from '../../../src/i18n/LocalizationProvider';
+import { isIOSGlassCapable } from '../../../src/utils/platform';
 
 /**
  * Native Tab Navigation
- * 
+ *
  * Uses Expo Router's native tabs for iOS 26+ liquid glass effects.
  * System automatically handles:
  * - Tab bar positioning (bottom/top/side based on device)
  * - Liquid glass translucency
  * - Minimize behavior on scroll
  * - Safe area insets
- * 
+ *
  * Note: Falls back to standard tabs on Android.
- * 
+ *
  * @see https://docs.expo.dev/router/advanced/native-tabs/
  */
-const isIOSNativeTabsSupported = () => {
-  if (Platform.OS !== 'ios') {
-    return false;
-  }
-
-  const version = Platform.Version;
-  if (typeof version === 'string') {
-    const major = parseInt(version.split('.')[0] ?? '0', 10);
-    return major >= 26;
-  }
-
-  if (typeof version === 'number') {
-    return Math.floor(version) >= 26;
-  }
-
-  return false;
-};
 
 const TAB_CONFIG = [
   {
@@ -72,7 +56,7 @@ export default function AppTabsLayout() {
     tintColor: DynamicColorIOS({ dark: '#007AFF', light: '#007AFF' }),
   } : {};
 
-  const useNativeTabs = isIOSNativeTabsSupported();
+  const useNativeTabs = isIOSGlassCapable();
 
   if (useNativeTabs) {
     return (

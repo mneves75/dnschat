@@ -16,7 +16,7 @@ Pod::Spec.new do |s|
   s.license      = package["license"]
   s.authors      = package["author"]
 
-  s.platforms    = { :ios => "15.1" }
+  s.platforms    = { :ios => "16.0" }
   s.source       = { :git => "https://github.com/mneves75/dnschat.git", :tag => "#{s.version}" }
 
   s.source_files = "*.{h,m,mm,swift}"
@@ -25,10 +25,10 @@ Pod::Spec.new do |s|
 
   # Dependencies
   s.dependency "React-Core"
-  
+
   # Network framework
   s.frameworks = "Network"
-  
-  # Deployment target aligned with app
-  s.ios.deployment_target = "15.1"
+
+  # Deployment target aligned with modern iOS (16.0+)
+  s.ios.deployment_target = "16.0"
 end

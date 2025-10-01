@@ -1074,8 +1074,8 @@ export class DNSService {
     enableMockDNS: boolean | undefined,
     allowExperimentalTransports: boolean,
   ): ('native' | 'udp' | 'tcp' | 'https' | 'mock')[] {
-    const appendMock = (order: ('native' | 'udp' | 'tcp' | 'https' | 'mock')[]) =>
-      enableMockDNS ? [...order, 'mock'] : order;
+    const appendMock = (order: ('native' | 'udp' | 'tcp' | 'https')[]) =>
+      enableMockDNS ? ([...order, 'mock'] as ('native' | 'udp' | 'tcp' | 'https' | 'mock')[]) : order;
 
     // Web never supports native/UDP/TCP. honor preferHttps flag for clarity.
     if (Platform.OS === 'web') {

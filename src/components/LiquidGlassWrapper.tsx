@@ -20,14 +20,60 @@ import {
   View,
   ViewStyle,
   useColorScheme,
+  Text,
 } from "react-native";
 import {
   GlassContainer,
   GlassView,
   isLiquidGlassAvailable,
 } from "expo-glass-effect";
-import type { GlassStyle } from "expo-glass-effect";
+import type { GlassStyle as ExpoGlassStyle } from "expo-glass-effect";
 import { useLiquidGlassCapabilities as useFallbackLiquidGlassCapabilities } from "./liquidGlass/LiquidGlassFallback";
+import { isIOSGlassCapable } from "../utils/platform";
+
+// ==================================================================================
+// ERROR BOUNDARY FOR GLASS COMPONENTS
+// ==================================================================================
+
+interface GlassErrorBoundaryProps {
+  children: React.ReactNode;
+  fallback: React.ReactNode;
+}
+
+interface GlassErrorBoundaryState {
+  hasError: boolean;
+  error?: Error;
+}
+
+/**
+ * Error boundary specifically for glass effect components
+ * Catches native module failures and renders fallback UI
+ */
+class GlassErrorBoundary extends React.Component<
+  GlassErrorBoundaryProps,
+  GlassErrorBoundaryState
+> {
+  constructor(props: GlassErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error: Error): GlassErrorBoundaryState {
+    console.warn("💎 Glass effect error caught by boundary:", error.message);
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error("💎 Glass effect component error:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return this.props.fallback;
+    }
+    return this.props.children;
+  }
+}
 
 // ==================================================================================
 // TYPES AND INTERFACES
@@ -63,35 +109,6 @@ export interface LiquidGlassProps extends ViewProps {
 }
 
 // ==================================================================================
-// iOS VERSION DETECTION FOR LIQUID GLASS GUARANTEE
-// ==================================================================================
-
-/**
- * Checks if the current iOS version supports Liquid Glass features
- * This provides proper capability detection for different iOS versions
- * Memoized for performance optimization
- */
-const getIOSMajorVersion = (): number | null => {
-  if (Platform.OS !== "ios") return null;
-
-  const version = Platform.Version;
-  if (typeof version === "string") {
-    const parsed = parseInt(version.split(".")[0], 10);
-    return Number.isNaN(parsed) ? null : parsed;
-  }
-  if (typeof version === "number") {
-    return Math.floor(version);
-  }
-  return null;
-};
-
-const isIOSGlassCapable = (() => {
-  const major = getIOSMajorVersion();
-  // iOS 17+ supports basic blur effects, iOS 26+ supports SwiftUI glass effects
-  return typeof major === "number" && major >= 17;
-})();
-
-// ==================================================================================
 // REACT COMPONENT
 // ==================================================================================
 
@@ -115,13 +132,23 @@ export const LiquidGlassWrapper: React.FC<LiquidGlassProps> = ({
   const colorScheme = useColorScheme();
   const { supportsSwiftUIGlass } = useLiquidGlassCapabilities();
 
+  // Memoize the native glass availability check to prevent re-render instability
+  const isGlassAvailable = React.useMemo(() => {
+    try {
+      return isLiquidGlassAvailable();
+    } catch (error) {
+      console.warn("💎 Failed to check glass availability:", error);
+      return false;
+    }
+  }, []);
+
   const shouldUseNativeGlass =
     Platform.OS === "ios" &&
-    isIOSGlassCapable &&
+    isIOSGlassCapable() &&
     supportsSwiftUIGlass &&
-    isLiquidGlassAvailable();
+    isGlassAvailable;
 
-  const resolvedGlassStyle: GlassStyle = variant === "prominent" ? "regular" : "clear";
+  const resolvedGlassStyle: ExpoGlassStyle = variant === "prominent" ? "regular" : "clear";
   const resolvedCornerRadius = (() => {
     switch (shape) {
       case "capsule":
@@ -168,23 +195,34 @@ export const LiquidGlassWrapper: React.FC<LiquidGlassProps> = ({
       overflow: "hidden",
     };
 
-    const content = (
-      <GlassView
-        glassEffectStyle={resolvedGlassStyle}
-        tintColor={resolvedTint}
-        isInteractive={interactive}
-        style={[nativeStyle, style]}
-        {...props}
-      >
+    // Fallback UI if native module fails - use CSS fallback
+    const fallbackUI = (
+      <View style={[nativeStyle, style]} {...props}>
         {children}
-      </GlassView>
+      </View>
+    );
+
+    const content = (
+      <GlassErrorBoundary fallback={fallbackUI}>
+        <GlassView
+          glassEffectStyle={resolvedGlassStyle}
+          tintColor={resolvedTint}
+          isInteractive={interactive}
+          style={[nativeStyle, style]}
+          {...props}
+        >
+          {children}
+        </GlassView>
+      </GlassErrorBoundary>
     );
 
     if (enableContainer) {
       return (
-        <GlassContainer spacing={containerSpacing}>
-          {content}
-        </GlassContainer>
+        <GlassErrorBoundary fallback={fallbackUI}>
+          <GlassContainer spacing={containerSpacing}>
+            {content}
+          </GlassContainer>
+        </GlassErrorBoundary>
       );
     }
 
