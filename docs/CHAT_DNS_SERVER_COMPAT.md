@@ -8,9 +8,18 @@
 
 ## Client Review Highlights
 
+- Transport sequencing for JS/native paths now matches the documented order:
+  1. Native module (`allowExperimentalTransports=true` and platform ≠ web)
+  2. UDP
+  3. TCP
+  4. HTTPS
+  5. Mock (only when enabled)
+  - `preferDnsOverHttps` flips HTTPS to the front while keeping native/UDP/TCP as fallbacks.
+  - When `allowExperimentalTransports` is disabled, only the native bridge runs (with optional Mock).
+
 ### TypeScript service (`src/services/dnsService.ts`)
-- `createQueryContext` sanitizes the user message, then composes a fully-qualified query name `<label>.ch.at` (or `<label>.<custom server>`).
-- Native transports receive this FQDN verbatim (`nativeDNS.queryTXT(targetServer, queryName)`), so platform modules must encode multi-label names correctly.
+- `createQueryContext` sanitizes the user message, then composes a fully-qualified query name `<label>.zone`.
+- Native transports receive this FQDN verbatim (`nativeDNS.queryTXT(targetServer, queryName)`), so platform modules must encode multi-label names correctly and respect configurability of the DNS server.
 
 ### iOS native module (`modules/dns-native/ios/DNSResolver.swift`)
 - `encodeDomainName` splits on `.` and encodes each label with length prefixes, matching RFC 1035 expectations for names like `prompt.ch.at`.

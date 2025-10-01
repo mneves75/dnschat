@@ -22,6 +22,7 @@ import {
   Animated,
   ActivityIndicator,
   Pressable,
+  Share,
 } from "react-native";
 import { FlashList, ListRenderItem } from "@shopify/flash-list";
 import { useGlassTheme } from "../hooks/useGlassTheme";
@@ -476,8 +477,7 @@ export function Logs() {
           text: "Delete",
           style: "destructive",
           onPress: async () => {
-            // TODO: Implement single log deletion in DNSLogService
-            console.log("Delete log:", log.id);
+            await DNSLogService.deleteLog(log.id);
           },
         },
       ],

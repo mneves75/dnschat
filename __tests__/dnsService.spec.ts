@@ -147,14 +147,22 @@ describe("DNS Service helpers", () => {
       expect(order[0]).toBe("https");
     });
 
-    it("automatic respects preferHttps flag", () => {
-      const httpsFirst = getOrder("automatic", true, false, true);
-      const normal = getOrder("automatic", false, false, true);
-      expect(httpsFirst[0]).toBe("https");
-      expect(normal[0] === "native" || normal[0] === "https").toBe(true);
+    it("automatic prefers native when experimental transports enabled", () => {
+      const order = getOrder("automatic", false, false, true);
+      expect(order).toEqual(["native", "udp", "tcp", "https"]);
     });
 
-    it("disables experimental transports when not allowed", () => {
+    it("automatic prefers https when privacy flag set", () => {
+      const order = getOrder("automatic", true, false, true);
+      expect(order).toEqual(["https", "native", "udp", "tcp"]);
+    });
+
+    it("mock appended when enabled", () => {
+      const order = getOrder("native-first", false, true, true);
+      expect(order[order.length - 1]).toBe("mock");
+    });
+
+    it("honors native-only mode when experimental disabled", () => {
       const order = getOrder("udp-only", undefined, false, false);
       expect(order).toEqual(["native"]);
     });

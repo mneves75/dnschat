@@ -274,6 +274,19 @@ export class DNSLogService {
     }
   }
 
+  static async deleteLog(logId: string) {
+    const nextLogs = this.queryLogs.filter((log) => log.id !== logId);
+    if (nextLogs.length === this.queryLogs.length) {
+      return;
+    }
+    this.queryLogs = nextLogs;
+    if (this.currentQueryLog?.id === logId) {
+      this.currentQueryLog = null;
+    }
+    await this.saveLogs();
+    this.notifyListeners();
+  }
+
   static getLogs(): DNSQueryLog[] {
     const logs = [...this.queryLogs];
 

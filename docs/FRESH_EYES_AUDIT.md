@@ -14,7 +14,7 @@ Date: 2025-10-01
 ## Key Findings (High Signal)
 
 1) DNS fallbacks and documentation drift
-- Docs describe slightly different fallback orders: some say Native → UDP → TCP → DoH; another says UDP → TCP → DoH (with Native implicit). Ensure the implementation in `DNSService.queryLLM()` and the docs match a single, authoritative order for predictability and testing.
+- Docs describe slightly different fallback orders: `DNSService.getMethodOrder()` currently prioritizes native → UDP → TCP → HTTPS when experimental transports are enabled and preferHttps=false (web defaults to HTTPS). Other docs imply UDP → TCP → DoH without calling out the native bridge. Pick a single authoritative sequence and mirror it across `.cursor/rules/dns-service-architecture.mdc`, `docs/CHAT_DNS_SERVER_COMPAT.md`, and inline code comments/tests.
 
 2) Type-safety gaps in core files
 - Frequent `any` usage in `src/services/dnsService.ts`, `src/utils/liquidGlass.ts`, screens (e.g., `About`, `Settings`, `GlassSettings`) weakens compile-time guarantees. `tsconfig.json` notes stricter settings are TODO. This raises risk of runtime shape errors on networking, logs, and UI props.
@@ -23,7 +23,7 @@ Date: 2025-10-01
 - `src/screens/Logs.tsx` shows a TODO for single-log deletion, while `src/services/dnsLogService.ts` lacks a targeted delete API. This causes friction for users triaging noisy logs.
 
 4) Android/iOS native module cohesion
-- Ensure there is a single source for the React Native bridge (`RNDNSModule`) and resolver implementations on Android and iOS. The project relies on both `modules/dns-native/*` and platform folders; double-check build-time copy/autolinking from `plugins/dns-native-plugin.js` to prevent drift or duplication.
+- Ensure there is a single source for the React Native bridge (`RNDNSModule`) and resolver implementations on Android and iOS. The project relies on Expo config plugins (`plugins/dns-native-plugin.js`, `plugins/liquid-glass-plugin.js`) to copy files from `modules/dns-native/*` and `native/liquid-glass/*` into the platform folders. Verify no stale copies linger under `android/app/src/main/java/com/dnsnative` or `ios/` after plugin runs.
 
 5) Security posture: positive, but validate invariants
 - Crypto code (`src/utils/encryption.ts`) shows AES-256-GCM, PBKDF2, and secure Keychain/Keystore usage with mutexes to avoid races. Keep an eye on:
@@ -38,9 +38,9 @@ Date: 2025-10-01
 
 P0 — Correctness & Security
 - Align fallback order across code and docs
-  - Update `DNSService.queryLLM()` comments and docs to match actual order; ensure tests in `__tests__/dnsService.*.spec.ts` exercise that order.
-- Validate DNS server sanitization consistently
-  - Confirm `validateDNSServer` (in `src/services/dnsService.ts`) enforces hostname rules and 63-char label limits before native calls.
+  - Update `DNSService.getMethodOrder()` documentation/tests and `.cursor/rules/dns-service-architecture.mdc` to describe the same order. Ensure retry logging matches.
+- Validate DNS server inputs consistently
+  - Replace the current whitelist in `validateDNSServer` with format and safety checks so custom resolvers allowed in Settings continue working while blocking injection or invalid hostnames.
 
 P1 — Developer Experience & Resilience
 - Add targeted log deletion
@@ -52,14 +52,13 @@ P1 — Developer Experience & Resilience
 
 P2 — Platform Cohesion & Docs
 - Consolidate native module source-of-truth
-  - Confirm Android/iOS bridge files loaded at build-time are from `modules/dns-native/` to avoid duplication under `android/app` or `ios/` unless intentionally vendored. Verify `plugins/dns-native-plugin.js` behavior.
+  - Confirm Expo plugins copy from the expected source directories only; remove manually committed duplicates from `ios/` or `android/` if the plugin now vends them automatically.
 - Clarify DoH gating
-  - Ensure the rule for skipping DoH for `ch.at` (if implemented in native) is mirrored in JS docs and tests.
+  - Ensure the rule for skipping DoH for `ch.at` (if implemented in JS/native) is mirrored in docs and tests, emphasizing that DoH currently cannot reach ch.at custom records.
 - Update documentation
   - Unify fallback order across `docs/*` and `.cursor/rules/*`; add a short “source of truth” section linking to `src/services/dnsService.ts`.
 
 P3 — Nice-to-haves
-- Add single-record log export/share action in `Logs` screen.
 - Improve `GlassSettings` error typing and user-facing error messages.
 
 ## Acceptance Criteria (for closure)

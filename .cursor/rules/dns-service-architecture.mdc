@@ -5,41 +5,47 @@
 - **Logging Integration**: All queries logged via [src/services/dnsLogService.ts](mdc:src/services/dnsLogService.ts)
 
 ## DNS Query Flow
-### Default Order (preferHttps=false)
+### Default Order (allowExperimentalTransports=true, preferHttps=false)
 1. **Native module** via `nativeDNS` ([modules/dns-native/index.ts](mdc:modules/dns-native/index.ts))
-2. **UDP** (react-native-udp)
-3. **TCP** (react-native-tcp-socket)
-4. **DoH** (Cloudflare) using base64url-encoded DNS message
+2. **UDP** (`react-native-udp` polyfill)
+3. **TCP** (`react-native-tcp-socket`)
+4. **DNS-over-HTTPS** (Cloudflare DoH helper; currently limited for `ch.at` responses)
+5. **Mock** (optional, when enabled via settings)
 
-### Privacy-First Order (preferHttps=true)
-1. **DoH** (Cloudflare) - prioritized for enhanced privacy
-2. **Native module** fallback
-3. **UDP** fallback
-4. **TCP** fallback
+### Experimental disabled / Native-only mode
+- Native module only (with optional Mock when enabled). This path is enforced when `allowExperimentalTransports` is false.
+
+### preferHttps=true (privacy-first)
+1. **DNS-over-HTTPS**
+2. **Native module**
+3. **UDP**
+4. **TCP**
+5. **Mock** (optional)
+
+### Web platform default
+- HTTPS only (Mock optional), because native/UDP/TCP transports are unavailable.
 
 ### Mock Fallback
-- Applied by `ChatContext` if service throws (see `MockDNSService` in [src/services/dnsService.ts](mdc:src/services/dnsService.ts))
+- Applied when enabled via Settings or automated tests if service throws (see `MockDNSService` in [src/services/dnsService.ts](mdc:src/services/dnsService.ts))
 
 ## Native Integration
 - **iOS**: [ios/DNSNative/DNSResolver.swift](mdc:ios/DNSNative/DNSResolver.swift) with `NWConnection` UDP and TXT parsing
 - **Bridge**: [ios/DNSNative/RNDNSModule.m](mdc:ios/DNSNative/RNDNSModule.m)
-- **Android**: [android/app/src/main/java/com/dnschat/NativeDnsModule.kt](mdc:android/app/src/main/java/com/dnschat/NativeDnsModule.kt)
+- **Android**: [modules/dns-native/android/DNSResolver.java](mdc:modules/dns-native/android/DNSResolver.java)
 - **Expo Plugin**: [plugins/dns-native-plugin.js](mdc:plugins/dns-native-plugin.js) copies native code into platform projects
 
 ## Message Sanitization
-- **JS Paths (UDP/TCP)**: Minimal `trim()` and length limit to preserve natural language
-- **JS DoH Path**: Stricter sanitization in `createDNSQuery` (removes quotes/punctuation) before encoding
-- **iOS Native**: Preserves original message (trims only); single-label encoding with truncation to 63 bytes when necessary
+- **Shared JS**: `sanitizeDNSMessage()` enforces RFC 1035 single-label constraints and caps at 63 chars
+- **Native modules**: Expect fully-qualified name (`<label>.<zone>`) and validate without rewriting
 
 ## Configuration
 - **Port**: 53 (standard DNS)
 - **Default Server**: `ch.at` unless overridden by settings
 - **Timeout**: 10 seconds with 3 retries
 - **Rate Limiting**: 30 requests per minute window
+- **DoH caveat**: Cloudflare DoH cannot reach custom TXT responses served directly by `ch.at`
 
 ## Background Handling
 - **AppState monitoring** suspends/guards network operations
 - **Background suspension** throws error to prevent hanging queries
-  - Keep message sanitization minimal for native/UDP/TCP path
-  - Port is 53; default server `ch.at` unless overridden by settings
-  - All queries are logged via DNSLogService with timing and method tracking
+- All queries are logged via DNSLogService with timing and method tracking

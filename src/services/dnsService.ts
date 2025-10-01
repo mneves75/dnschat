@@ -202,22 +202,33 @@ export function validateDNSServer(server: string): void {
   if (!server || typeof server !== 'string' || server.trim().length === 0) {
     throw new Error(ERROR_MESSAGES.DNS_SERVER_INVALID);
   }
-  
-  // Whitelist of allowed DNS servers
-  const allowedServers = [
-    'ch.at', // Primary chat DNS server
-    'llm.pieter.com', // Secondary Chat DNS endpoint
-    '8.8.8.8', // Google DNS (fallback)
-    '8.8.4.4', // Google DNS secondary
-    '1.1.1.1', // Cloudflare DNS (fallback)
-    '1.0.0.1', // Cloudflare DNS secondary
-  ];
-  
+
   const normalizedServer = server.toLowerCase().trim();
-  
-  // Strict validation - no partial matches or empty strings
-  if (!allowedServers.includes(normalizedServer)) {
-    throw new Error(`DNS server '${server}' is not in the allowed list. Use: ${allowedServers.join(', ')}`);
+
+  const ipv4Pattern = /^(25[0-5]|2[0-4]\d|1?\d?\d)(\.(25[0-5]|2[0-4]\d|1?\d?\d)){3}$/;
+  const ipv6Pattern = /^([0-9a-f]{1,4}:){2,7}[0-9a-f]{1,4}$/i;
+  const hostnamePattern = /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)(?:\.(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?))*$/;
+
+  const isIPAddress = ipv4Pattern.test(normalizedServer) || ipv6Pattern.test(normalizedServer);
+  const isHostname = hostnamePattern.test(normalizedServer);
+
+  if (!isIPAddress && !isHostname) {
+    throw new Error(`DNS server '${server}' is not a valid hostname or IP address`);
+  }
+
+  if (isHostname) {
+    const labels = normalizedServer.split('.');
+    if (
+      labels.some(
+        (label) =>
+          label.length === 0 ||
+          label.length > DNS_CONSTANTS.MAX_DNS_LABEL_LENGTH,
+      )
+    ) {
+      throw new Error(
+        `DNS server '${server}' contains label exceeding ${DNS_CONSTANTS.MAX_DNS_LABEL_LENGTH} characters`,
+      );
+    }
   }
 }
 
@@ -332,7 +343,7 @@ export class DNSService {
     }
   }
 
-  private static vLog(...args: any[]) {
+  private static vLog(...args: unknown[]) {
     if (this.isVerbose()) console.log(...args);
   }
 
@@ -1063,56 +1074,33 @@ export class DNSService {
     enableMockDNS: boolean | undefined,
     allowExperimentalTransports: boolean,
   ): ('native' | 'udp' | 'tcp' | 'https' | 'mock')[] {
-    if (!allowExperimentalTransports) {
-      if (Platform.OS === 'web') {
-        const webDefault: ('native' | 'udp' | 'tcp' | 'https' | 'mock')[] = ['https'];
-        return enableMockDNS ? [...webDefault, 'mock'] : webDefault;
-      }
+    const appendMock = (order: ('native' | 'udp' | 'tcp' | 'https' | 'mock')[]) =>
+      enableMockDNS ? [...order, 'mock'] : order;
 
-      const nativeOnly: ('native' | 'udp' | 'tcp' | 'https' | 'mock')[] = ['native'];
-      return enableMockDNS ? [...nativeOnly, 'mock'] : nativeOnly;
+    // Web never supports native/UDP/TCP. honor preferHttps flag for clarity.
+    if (Platform.OS === 'web') {
+      return appendMock(preferHttps ? ['https'] : ['https']);
     }
-    // Handle new method preferences
+
+    if (!allowExperimentalTransports) {
+      return appendMock(['native']);
+    }
+
     switch (methodPreference) {
       case 'udp-only':
-        return enableMockDNS ? ['udp', 'mock'] : ['udp'];
-
+        return appendMock(['udp']);
       case 'never-https':
-        const neverHttpsMethods: ('native' | 'udp' | 'tcp' | 'https' | 'mock')[] =
-          Platform.OS === 'web' ? ['native', 'udp', 'tcp'] : ['native', 'udp', 'tcp'];
-        return enableMockDNS ? [...neverHttpsMethods, 'mock'] : neverHttpsMethods;
-
+        return appendMock(['native', 'udp', 'tcp']);
       case 'prefer-https':
-        const preferHttpsMethods: ('native' | 'udp' | 'tcp' | 'https' | 'mock')[] = [
-          'https',
-          'native',
-          'udp',
-          'tcp',
-        ];
-        return enableMockDNS ? [...preferHttpsMethods, 'mock'] : preferHttpsMethods;
-
+        return appendMock(['https', 'native', 'udp', 'tcp']);
       case 'native-first':
-        // New default: Native DNS always first, regardless of other preferences
-        const nativeFirstMethods: ('native' | 'udp' | 'tcp' | 'https' | 'mock')[] =
-          Platform.OS === 'web' ? ['https', 'native'] : ['native', 'udp', 'tcp', 'https'];
-        return enableMockDNS ? [...nativeFirstMethods, 'mock'] : nativeFirstMethods;
-
+        return appendMock(['native', 'udp', 'tcp', 'https']);
       case 'automatic':
       default:
-        // Legacy behavior: respect preferHttps flag
         if (preferHttps) {
-          const httpsFirstMethods: ('native' | 'udp' | 'tcp' | 'https' | 'mock')[] = [
-            'https',
-            'native',
-            'udp',
-            'tcp',
-          ];
-          return enableMockDNS ? [...httpsFirstMethods, 'mock'] : httpsFirstMethods;
-        } else {
-          const normalMethods: ('native' | 'udp' | 'tcp' | 'https' | 'mock')[] =
-            Platform.OS === 'web' ? ['https'] : ['native', 'udp', 'tcp', 'https'];
-          return enableMockDNS ? [...normalMethods, 'mock'] : normalMethods;
+          return appendMock(['https', 'native', 'udp', 'tcp']);
         }
+        return appendMock(['native', 'udp', 'tcp', 'https']);
     }
   }
 

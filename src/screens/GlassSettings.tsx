@@ -237,8 +237,9 @@ export function GlassSettings() {
         allowExperimentalTransports,
       );
       setLastTestResult(response);
-    } catch (e: any) {
-      setLastTestError(e?.message || String(e));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error ?? "Test failed");
+      setLastTestError(message);
     } finally {
       setTestRunning(false);
     }
@@ -259,8 +260,9 @@ export function GlassSettings() {
         dnsServer,
       );
       setLastTestResult(response);
-    } catch (e: any) {
-      setLastTestError(e?.message || String(e));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error ?? "Test failed");
+      setLastTestError(message);
     } finally {
       setTestRunning(false);
     }
@@ -279,8 +281,8 @@ export function GlassSettings() {
         "Native DNS Available",
         `Platform: ${capabilities.platform}\nSupports Custom Server: ${capabilities.supportsCustomServer ? 'Yes' : 'No'}\nSupports Async Query: ${capabilities.supportsAsyncQuery ? 'Yes' : 'No'}`,
       );
-    } catch (error: any) {
-      const message = error?.message || String(error);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error ?? "Native DNS verification failed");
       await DNSLogService.recordSettingsEvent(
         "Native DNS verification failed",
         message,

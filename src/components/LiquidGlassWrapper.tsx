@@ -22,6 +22,7 @@ import {
   useColorScheme,
   NativeModules,
   requireNativeComponent,
+  UIManager,
 } from "react-native";
 import { useLiquidGlassCapabilities as useFallbackLiquidGlassCapabilities } from "./liquidGlass/LiquidGlassFallback";
 
@@ -124,10 +125,27 @@ async function getNativeCapabilities(): Promise<{
 // ==================================================================================
 
 // Native view component registration for iOS Liquid Glass
-const NativeLiquidGlassView =
-  Platform.OS === "ios"
-    ? requireNativeComponent<LiquidGlassProps>("LiquidGlassView")
-    : (null as any);
+const resolveNativeLiquidGlassView = (): ReturnType<typeof requireNativeComponent> | null => {
+  if (Platform.OS !== "ios") {
+    return null;
+  }
+
+  const config = (UIManager as any)?.getViewManagerConfig?.("LiquidGlassView");
+  if (config) {
+    return requireNativeComponent<LiquidGlassProps>("LiquidGlassView");
+  }
+
+  if (typeof (UIManager as any)?.LiquidGlassView !== "undefined") {
+    return requireNativeComponent<LiquidGlassProps>("LiquidGlassView");
+  }
+
+  console.warn(
+    "LiquidGlassView is not registered. Ensure the Liquid Glass native plugin ran and pods are installed",
+  );
+  return null;
+};
+
+const NativeLiquidGlassView = resolveNativeLiquidGlassView();
 
 // ==================================================================================
 // REACT COMPONENT
