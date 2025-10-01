@@ -24,6 +24,7 @@ import {
   Pressable,
   Share,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { FlashList, ListRenderItem } from "@shopify/flash-list";
 import { useGlassTheme } from "../hooks/useGlassTheme";
 import {
@@ -611,7 +612,10 @@ export function Logs() {
   const getItemType = useCallback((item: LogListItem) => item.type, []);
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView 
+      edges={["top"]} 
+      style={[styles.container, { backgroundColor: colors.background }]}
+    >
       {__DEV__ && (
         <View style={styles.debugBar}>
           <Text style={[styles.debugText, { color: colors.muted }]}>
@@ -669,7 +673,7 @@ export function Logs() {
           },
         ]}
       />
-    </View>
+    </SafeAreaView>
   );
 }
 

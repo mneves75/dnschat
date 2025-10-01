@@ -22,6 +22,7 @@ import {
   Pressable,
   Share,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { FlashList, ListRenderItem } from "@shopify/flash-list";
 import { useRouter, useFocusEffect } from "expo-router";
 import { useChat } from "../context/ChatContext";
@@ -456,19 +457,25 @@ export function GlassChatList() {
   // Show skeleton loading state
   if (isLoading && chats.length === 0) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <SafeAreaView 
+        edges={["top"]} 
+        style={[styles.container, { backgroundColor: colors.background }]}
+      >
         <ChatListHeader onNewChat={handleNewChat} />
         <View style={styles.skeletonContainer}>
           {[...Array(5)].map((_, i) => (
             <GlassSkeletonCard key={i} />
           ))}
         </View>
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView 
+      edges={["top"]} 
+      style={[styles.container, { backgroundColor: colors.background }]}
+    >
       {__DEV__ && (
         <View style={styles.debugBar}>
           <Text style={[styles.debugText, { color: colors.muted }]}>
@@ -491,7 +498,7 @@ export function GlassChatList() {
         // Performance optimizations
         removeClippedSubviews={Platform.OS === "android"}
       />
-    </View>
+    </SafeAreaView>
   );
 }
 

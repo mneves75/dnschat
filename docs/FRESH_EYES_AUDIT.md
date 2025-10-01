@@ -13,6 +13,11 @@ Date: 2025-10-01
 
 ## Key Findings (High Signal)
 
+0) iOS native DNS resolver no longer compiles
+- Current Expo run fails with `result of call to 'run' is unused`, `call to method 'performUDPQuery' ... requires explicit use of 'self'`, and iOS 16-only `Task.sleep(for:)` API usage in `modules/dns-native/ios/DNSResolver.swift` (lines 57, 65, 81, 309). These regressions block the iOS build entirely.
+- `queryTXT` also reads `activeQueries` (a `@MainActor` property) off-main-thread without hopping back, which is flagged once concurrency checks are strict.
+- Fix requires explicit `self`, discarding `MainActor.run` return values safely, swapping to `Task.sleep(nanoseconds:)`, and wrapping `activeQueries` access in `MainActor.run`.
+
 1) DNS fallbacks and documentation drift
 - Docs describe slightly different fallback orders: `DNSService.getMethodOrder()` currently prioritizes native → UDP → TCP → HTTPS when experimental transports are enabled and preferHttps=false (web defaults to HTTPS). Other docs imply UDP → TCP → DoH without calling out the native bridge. Pick a single authoritative sequence and mirror it across `.cursor/rules/dns-service-architecture.mdc`, `docs/CHAT_DNS_SERVER_COMPAT.md`, and inline code comments/tests.
 
@@ -37,6 +42,8 @@ Date: 2025-10-01
 ## Prioritized TODO (Actionable)
 
 P0 — Correctness & Security
+- Restore iOS native resolver build
+  - Update `modules/dns-native/ios/DNSResolver.swift` to (a) capture `self` explicitly inside task closures, (b) use `Task.sleep(nanoseconds:)` so iOS < 16 remains supported, (c) acknowledge `MainActor.run` return values with `_ =` and consolidate all `activeQueries` access behind `MainActor.run`.
 - Align fallback order across code and docs
   - Update `DNSService.getMethodOrder()` documentation/tests and `.cursor/rules/dns-service-architecture.mdc` to describe the same order. Ensure retry logging matches.
 - Validate DNS server inputs consistently
@@ -64,6 +71,7 @@ P3 — Nice-to-haves
 ## Acceptance Criteria (for closure)
 
 - Fallback order is consistent in code, tests, and docs; tests pass locally and in CI.
+- iOS resolver builds cleanly (no Swift concurrency errors) and `node test-dns-simple.js` exercises the native path without regressions.
 - `dnsLogService` exposes `deleteLog(id)` and `Logs` implements it.
 - Core `any` usages in `dnsService` helpers and `liquidGlass` version parsing are replaced with explicit types.
 - One stricter TS flag enabled without introducing new errors in CI.
@@ -74,3 +82,12 @@ P3 — Nice-to-haves
 - Avoid broad refactors. Prefer narrow, well-tested edits aligned with existing patterns.
 - Keep security-sensitive code paths (crypto, DNS parsing/sanitization) conservative and well typed.
 
+## TODO (Working List)
+
+- [ ] Patch `modules/dns-native/ios/DNSResolver.swift` to remove iOS 16 APIs, discard `MainActor.run` return values, and gate all `activeQueries` touches on `MainActor`.
+- [ ] Re-run iOS build (`npm run ios`) and snapshot the fixed Expo output.
+- [ ] Synchronize documented fallback order with `DNSService.getMethodOrder()` and native fallbacks.
+- [ ] Replace DNS server whitelist with validation helper scoped in `dnsService` and propagate to `SettingsContext`.
+- [ ] Add targeted log deletion flow (`dnsLogService` + `Logs` screen) and accompanying tests.
+- [ ] Triage top `any` hot spots and enable one stricter TS compiler flag.
+- [ ] Verify Expo plugins remain the single source for native module files; delete stale copies if found.

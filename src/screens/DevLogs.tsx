@@ -1,9 +1,9 @@
 import React from "react";
 import { View, StyleSheet, Pressable, Text } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { DNSLogViewer } from "../components/DNSLogViewer";
 import { useGlassTheme } from "../hooks/useGlassTheme";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 /**
  * DevLogs screen with minimal glass styling for developer-only features.
@@ -21,18 +21,11 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 export function DevLogs() {
   const router = useRouter();
   const { colors, getGlassStyle } = useGlassTheme();
-  const insets = useSafeAreaInsets();
 
   return (
-    <View
-      style={[
-        styles.container,
-        {
-          backgroundColor: colors.background,
-          paddingTop: insets.top + 12,
-          paddingBottom: insets.bottom + 16,
-        },
-      ]}
+    <SafeAreaView 
+      edges={["top"]} 
+      style={[styles.container, { backgroundColor: colors.background }]}
     >
       {/* Glass Toolbar */}
       <View style={[getGlassStyle("navbar", "prominent", "rect"), styles.toolbar]}>
@@ -61,7 +54,7 @@ export function DevLogs() {
 
       {/* DNS Log Viewer */}
       <DNSLogViewer maxEntries={50} />
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -70,7 +63,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   toolbar: {
-    paddingTop: 60, // Safe area spacing
+    paddingTop: 16,
     paddingBottom: 16,
     paddingHorizontal: 20,
   },

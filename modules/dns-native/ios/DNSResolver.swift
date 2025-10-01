@@ -39,7 +39,8 @@ final class DNSResolver: NSObject {
         Task {
             do {
                 // Check for existing query
-                if let existingQuery = await activeQueries[queryId] {
+                let existingQuery = await MainActor.run { self.activeQueries[queryId] }
+                if let existingQuery {
                     let result = try await existingQuery.value
                     resolver(result)
                     return
@@ -47,25 +48,19 @@ final class DNSResolver: NSObject {
                 
                 // Create new query
                 let queryTask = createQueryTask(server: domain, queryName: queryName)
-                await MainActor.run {
-                    activeQueries[queryId] = queryTask
-                }
-                
+                _ = await MainActor.run { self.activeQueries[queryId] = queryTask }
+
                 let result = try await queryTask.value
                 
                 // Clean up
-                await MainActor.run {
-                    activeQueries.removeValue(forKey: queryId)
-                }
-                
+                _ = await MainActor.run { self.activeQueries.removeValue(forKey: queryId) }
+
                 resolver(result)
                 
             } catch {
                 // Clean up on error
-                await MainActor.run {
-                    activeQueries.removeValue(forKey: queryId)
-                }
-                
+                _ = await MainActor.run { self.activeQueries.removeValue(forKey: queryId) }
+
                 rejecter("DNS_QUERY_FAILED", error.localizedDescription, error)
             }
         }
@@ -78,7 +73,7 @@ final class DNSResolver: NSObject {
             try await withTimeout(seconds: Self.queryTimeout) {
                 for attempt in 0..<Self.maxNativeAttempts {
                     do {
-                        return try await performUDPQuery(server: server, queryName: queryName)
+                        return try await self.performUDPQuery(server: server, queryName: queryName)
                     } catch let error as DNSError {
                         if case .noRecordsFound = error, attempt < Self.maxNativeAttempts - 1 {
                             try await Task.sleep(nanoseconds: Self.retryDelayNanoseconds)
@@ -306,7 +301,8 @@ private func withTimeout<T>(
         }
         
         group.addTask {
-            try await Task.sleep(for: .seconds(seconds))
+            let nanoseconds = UInt64((max(seconds, 0) * 1_000_000_000).rounded())
+            try await Task.sleep(nanoseconds: nanoseconds)
             throw DNSResolver.DNSError.timeout
         }
         

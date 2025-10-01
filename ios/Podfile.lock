@@ -1,5 +1,7 @@
 PODS:
   - CocoaAsyncSocket (7.6.5)
+  - DNSNative (1.5.0):
+    - React-Core
   - EXConstants (18.0.9):
     - ExpoModulesCore
   - EXJSONUtils (0.15.0)
@@ -2292,6 +2294,7 @@ PODS:
   - Yoga (0.0.0)
 
 DEPENDENCIES:
+  - DNSNative (from `../modules/dns-native`)
   - EXConstants (from `../node_modules/expo-constants/ios`)
   - EXJSONUtils (from `../node_modules/expo-json-utils/ios`)
   - EXManifests (from `../node_modules/expo-manifests/ios`)
@@ -2401,6 +2404,8 @@ SPEC REPOS:
     - OpenSSL-Universal
 
 EXTERNAL SOURCES:
+  DNSNative:
+    :path: "../modules/dns-native"
   EXConstants:
     :path: "../node_modules/expo-constants/ios"
   EXJSONUtils:
@@ -2607,6 +2612,7 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   CocoaAsyncSocket: 065fd1e645c7abab64f7a6a2007a48038fdc6a99
+  DNSNative: 3d22831713e73c157b9a4a9125e5fefbc00df7e6
   EXConstants: a95804601ee4a6aa7800645f9b070d753b1142b3
   EXJSONUtils: 1d3e4590438c3ee593684186007028a14b3686cd
   EXManifests: 224345a575fca389073c416297b6348163f28d1a
