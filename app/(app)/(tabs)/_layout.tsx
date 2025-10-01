@@ -1,4 +1,5 @@
 import { NativeTabs, Icon, Label } from 'expo-router/unstable-native-tabs';
+import { Tabs } from 'expo-router';
 import { DynamicColorIOS, Platform } from 'react-native';
 import { useLocalization } from '../../../src/i18n/LocalizationProvider';
 
@@ -16,6 +17,51 @@ import { useLocalization } from '../../../src/i18n/LocalizationProvider';
  * 
  * @see https://docs.expo.dev/router/advanced/native-tabs/
  */
+const isIOSNativeTabsSupported = () => {
+  if (Platform.OS !== 'ios') {
+    return false;
+  }
+
+  const version = Platform.Version;
+  if (typeof version === 'string') {
+    const major = parseInt(version.split('.')[0] ?? '0', 10);
+    return major >= 26;
+  }
+
+  if (typeof version === 'number') {
+    return Math.floor(version) >= 26;
+  }
+
+  return false;
+};
+
+const TAB_CONFIG = [
+  {
+    name: 'index' as const,
+    icon: { default: 'newspaper', selected: 'newspaper.fill' },
+    labelKey: 'tabs.chats',
+    hideInProduction: false,
+  },
+  {
+    name: 'logs' as const,
+    icon: { default: 'list.bullet.rectangle', selected: 'list.bullet.rectangle.fill' },
+    labelKey: 'tabs.logs',
+    hideInProduction: false,
+  },
+  {
+    name: 'about' as const,
+    icon: { default: 'info.circle', selected: 'info.circle.fill' },
+    labelKey: 'tabs.about',
+    hideInProduction: false,
+  },
+  {
+    name: 'dev-logs' as const,
+    icon: { default: 'terminal', selected: 'terminal.fill' },
+    labelKey: 'tabs.devLogs',
+    hideInProduction: true,
+  },
+] as const;
+
 export default function AppTabsLayout() {
   const { t } = useLocalization();
 
@@ -26,57 +72,45 @@ export default function AppTabsLayout() {
     tintColor: DynamicColorIOS({ dark: '#007AFF', light: '#007AFF' }),
   } : {};
 
-  return (
-    <NativeTabs 
-      labelStyle={labelStyle}
-      minimizeBehavior="onScrollDown"
-    >
-      {/* Home/Chats Tab */}
-      <NativeTabs.Trigger name="index">
-        <Icon 
-          sf={{ 
-            default: "newspaper", 
-            selected: "newspaper.fill" 
-          }} 
-        />
-        <Label>{t('tabs.chats')}</Label>
-      </NativeTabs.Trigger>
+  const useNativeTabs = isIOSNativeTabsSupported();
 
-      {/* Logs Tab */}
-      <NativeTabs.Trigger name="logs">
-        <Icon 
-          sf={{ 
-            default: "list.bullet.rectangle", 
-            selected: "list.bullet.rectangle.fill" 
-          }} 
-        />
-        <Label>{t('tabs.logs')}</Label>
-      </NativeTabs.Trigger>
-
-      {/* About Tab */}
-      <NativeTabs.Trigger name="about">
-        <Icon 
-          sf={{ 
-            default: "info.circle", 
-            selected: "info.circle.fill" 
-          }} 
-        />
-        <Label>{t('tabs.about')}</Label>
-      </NativeTabs.Trigger>
-
-      {/* Dev Logs Tab (hidden in production) */}
-      <NativeTabs.Trigger 
-        name="dev-logs" 
-        hidden={typeof __DEV__ === 'undefined' || !__DEV__}
+  if (useNativeTabs) {
+    return (
+      <NativeTabs 
+        labelStyle={labelStyle}
+        minimizeBehavior="onScrollDown"
       >
-        <Icon 
-          sf={{ 
-            default: "terminal", 
-            selected: "terminal.fill" 
-          }} 
+        {TAB_CONFIG.map((tab) => {
+          const hidden = tab.hideInProduction && (typeof __DEV__ === 'undefined' || !__DEV__);
+          return (
+            <NativeTabs.Trigger key={tab.name} name={tab.name} hidden={hidden}>
+              <Icon sf={tab.icon} />
+              <Label>{t(tab.labelKey)}</Label>
+            </NativeTabs.Trigger>
+          );
+        })}
+      </NativeTabs>
+    );
+  }
+
+  return (
+    <Tabs
+      screenOptions={{
+        tabBarLabelStyle: { fontSize: 12 },
+        tabBarActiveTintColor: '#007AFF',
+        tabBarInactiveTintColor: '#8E8E93',
+      }}
+    >
+      {TAB_CONFIG.map((tab) => (
+        <Tabs.Screen
+          key={tab.name}
+          name={tab.name}
+          options={{
+            title: t(tab.labelKey),
+            href: tab.hideInProduction && (typeof __DEV__ === 'undefined' || !__DEV__) ? null : undefined,
+          }}
         />
-        <Label>{t('tabs.devLogs')}</Label>
-      </NativeTabs.Trigger>
-    </NativeTabs>
+      ))}
+    </Tabs>
   );
 }

@@ -40,7 +40,6 @@
       ],
       "react-native-edge-to-edge",
       "./plugins/dns-native-plugin",
-      "./plugins/liquid-glass-plugin",
       [
         "expo-build-properties",
         {

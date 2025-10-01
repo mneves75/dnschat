@@ -20,10 +20,13 @@ import {
   View,
   ViewStyle,
   useColorScheme,
-  NativeModules,
-  requireNativeComponent,
-  UIManager,
 } from "react-native";
+import {
+  GlassContainer,
+  GlassView,
+  isLiquidGlassAvailable,
+} from "expo-glass-effect";
+import type { GlassStyle } from "expo-glass-effect";
 import { useLiquidGlassCapabilities as useFallbackLiquidGlassCapabilities } from "./liquidGlass/LiquidGlassFallback";
 
 // ==================================================================================
@@ -88,65 +91,6 @@ const isIOSGlassCapable = (() => {
   return typeof major === "number" && major >= 17;
 })();
 
-/**
- * Gets native glass capabilities from the native module
- */
-async function getNativeCapabilities(): Promise<{
-  available: boolean;
-  supportsLiquidGlass: boolean;
-  supportsBasicBlur: boolean;
-  apiLevel: number;
-}> {
-  try {
-    if (!isIOSGlassCapable) {
-      return { available: false, supportsLiquidGlass: false, supportsBasicBlur: false, apiLevel: 0 };
-    }
-
-    const { LiquidGlassNativeModule } = NativeModules;
-    if (!LiquidGlassNativeModule) {
-      return { available: false, supportsLiquidGlass: false, supportsBasicBlur: false, apiLevel: 0 };
-    }
-
-    const capabilities = await LiquidGlassNativeModule.getCapabilities();
-    return {
-      available: Boolean(capabilities?.available ?? capabilities?.isSupported),
-      supportsLiquidGlass: Boolean(capabilities?.supportsSwiftUIGlass),
-      supportsBasicBlur: Boolean(capabilities?.supportsBasicBlur),
-      apiLevel: capabilities?.apiLevel ?? 0,
-    };
-  } catch (error) {
-    console.warn("🚨 Failed to get native glass capabilities:", error);
-    return { available: false, supportsLiquidGlass: false, supportsBasicBlur: false, apiLevel: 0 };
-  }
-}
-
-// ==================================================================================
-// NATIVE COMPONENT
-// ==================================================================================
-
-// Native view component registration for iOS Liquid Glass
-const resolveNativeLiquidGlassView = (): ReturnType<typeof requireNativeComponent> | null => {
-  if (Platform.OS !== "ios") {
-    return null;
-  }
-
-  const config = (UIManager as any)?.getViewManagerConfig?.("LiquidGlass");
-  if (config) {
-    return requireNativeComponent<LiquidGlassProps>("LiquidGlass");
-  }
-
-  if (typeof (UIManager as any)?.LiquidGlass !== "undefined") {
-    return requireNativeComponent<LiquidGlassProps>("LiquidGlass");
-  }
-
-  console.warn(
-    "LiquidGlass native component is not registered. Ensure the Liquid Glass native plugin ran and pods are installed",
-  );
-  return null;
-};
-
-const NativeLiquidGlassView = resolveNativeLiquidGlassView();
-
 // ==================================================================================
 // REACT COMPONENT
 // ==================================================================================
@@ -169,39 +113,87 @@ export const LiquidGlassWrapper: React.FC<LiquidGlassProps> = ({
 }) => {
   // IMPORTANT: Always call useColorScheme at the top level to avoid hooks ordering issues
   const colorScheme = useColorScheme();
+  const { supportsSwiftUIGlass } = useLiquidGlassCapabilities();
+
+  const shouldUseNativeGlass =
+    Platform.OS === "ios" &&
+    isIOSGlassCapable &&
+    supportsSwiftUIGlass &&
+    isLiquidGlassAvailable();
+
+  const resolvedGlassStyle: GlassStyle = variant === "prominent" ? "regular" : "clear";
+  const resolvedCornerRadius = (() => {
+    switch (shape) {
+      case "capsule":
+        return 24;
+      case "roundedRect":
+        return cornerRadius || 16;
+      case "rect":
+        return 0;
+      default:
+        return 12;
+    }
+  })();
+
+  const resolvedTint = (() => {
+    if (tintColor && tintColor.trim().length > 0) {
+      return tintColor;
+    }
+
+    if (colorScheme === "dark") {
+      switch (variant) {
+        case "prominent":
+          return "rgba(40, 40, 42, 0.45)";
+        case "interactive":
+          return "rgba(255, 69, 58, 0.35)";
+        default:
+          return "rgba(30, 30, 32, 0.35)";
+      }
+    }
+
+    switch (variant) {
+      case "prominent":
+        return "rgba(255, 255, 255, 0.35)";
+      case "interactive":
+        return "rgba(0, 122, 255, 0.28)";
+      default:
+        return "rgba(248, 249, 250, 0.25)";
+    }
+  })();
+
+  if (shouldUseNativeGlass) {
+    const interactive = isInteractive || variant === "interactive";
+    const nativeStyle: ViewStyle = {
+      borderRadius: resolvedCornerRadius,
+      overflow: "hidden",
+    };
+
+    const content = (
+      <GlassView
+        glassEffectStyle={resolvedGlassStyle}
+        tintColor={resolvedTint}
+        isInteractive={interactive}
+        style={[nativeStyle, style]}
+        {...props}
+      >
+        {children}
+      </GlassView>
+    );
+
+    if (enableContainer) {
+      return (
+        <GlassContainer spacing={containerSpacing}>
+          {content}
+        </GlassContainer>
+      );
+    }
+
+    return content;
+  }
 
   // Non-iOS platforms get no glass effects
   if (Platform.OS !== "ios") {
     return <>{children}</>;
-  }
-
-  // iOS 26+: Use native Liquid Glass view when available
-  if (isIOSGlassCapable && NativeLiquidGlassView) {
-    // For iOS 17-25, we need to check if we have basic blur support
-    // For iOS 26+, we use the full SwiftUI glass effects
-    const shouldUseNativeGlass = async () => {
-      const capabilities = await getNativeCapabilities();
-      return capabilities.supportsLiquidGlass;
-    };
-
-    // For now, use the native view if iOS 17+ and we have the native component
-    // The native view will handle the fallback internally
-    return (
-      <NativeLiquidGlassView
-        variant={variant}
-        shape={shape}
-        cornerRadius={cornerRadius}
-        tintColor={tintColor}
-        isInteractive={isInteractive}
-        sensorAware={sensorAware}
-        enableContainer={enableContainer}
-        containerSpacing={containerSpacing}
-        style={style}
-        {...props}
-      >
-        {children}
-      </NativeLiquidGlassView>
-    );
   }
 
   // Enhanced CSS fallback with glass-like effects
@@ -231,18 +223,7 @@ export const LiquidGlassWrapper: React.FC<LiquidGlassProps> = ({
         }
       }
     })(),
-    borderRadius: (() => {
-      switch (shape) {
-        case "capsule":
-          return 24; // More modern radius
-        case "roundedRect":
-          return cornerRadius || 16; // Default 16px
-        case "rect":
-          return 0;
-        default:
-          return 12;
-      }
-    })(),
+    borderRadius: resolvedCornerRadius,
     borderWidth: isDark ? 2 : 1, // Stronger borders
     borderColor: isDark
       ? "rgba(255, 255, 255, 0.2)" // More visible white border in dark

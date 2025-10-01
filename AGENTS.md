@@ -1,65 +1,34 @@
 # Repository Guidelines
 
-## Project Structure & Modules
-
-- `src/`: App code (TypeScript). Key areas: `components/`, `navigation/`, `context/`, `services/` (e.g., `src/services/dnsService.ts`), `utils/`, `assets/`.
-- `modules/dns-native/`: Native DNS TXT module (iOS/Android) with its own tests and build config.
-- Platform: `ios/`, `android/` (native build artifacts), `app.json`, `eas.json`.
-- Tooling: `scripts/` (e.g., `sync-versions.js`, `fix-cocoapods.sh`), `test-dns-simple.js` (DNS smoke test), `index.tsx` (entry).
+## Project Structure & Module Organization
+- `src/` holds the Expo/React Native app. Key subfolders: `components/`, `navigation/`, `context/`, `services/` (e.g., `dnsService.ts`), `utils/`, and `assets/`.
+- `modules/dns-native/` contains the shared DNS bridge (TypeScript plus `ios/` and `android/` native code). Native platform folders live under `ios/` and `android/`.
+- `scripts/` provides maintenance utilities (`sync-versions.js`, `fix-cocoapods.sh`). `test-dns-simple.js` is the DNS smoke test entry point.
+- Tests reside in `__tests__/` for app-level checks and `modules/dns-native/__tests__/` for bridge unit coverage.
 
 ## Build, Test, and Development Commands
-
-- `npm start`: Start Expo dev server (dev client).
-- `npm run ios`: Build/run iOS (ensure `pod install` in `ios/`).
-- `npm run android`: Build/run Android with Java 17 (uses path in script). Use `./android-java17.sh` if needed.
-- `npm run web`: Run web preview.
-- `node test-dns-simple.js`: DNS connectivity smoke test through `DNSService`.
-- `npm run sync-versions` / `:dry`: Sync and preview version numbers across app and module.
-- Native module tests: `cd modules/dns-native && npm test` (unit), `npm run test:integration` (device/simulator required).
+- `npm start` – launches the Expo dev server (Dev Client enabled).
+- `npm run ios` / `npm run android` – builds and runs the native app; ensure `cd ios && pod install` and Java 17 (use `./android-java17.sh`).
+- `npm run web` – quick web preview of the client.
+- `node test-dns-simple.js` – validates DNS connectivity through `DNSService`.
+- `cd modules/dns-native && npm test` – runs Jest unit tests for the native module; `npm run test:integration` targets device/simulator.
 
 ## Coding Style & Naming Conventions
-
-- TypeScript strict mode (see `tsconfig.json`). Prefer functional React components and hooks.
-- Indentation: 2 spaces. No `any`; define interfaces/types in `src/types/`.
-- Files: Components `PascalCase.tsx` in `src/components/`; screens in `src/navigation/screens/`; contexts as `*Context.tsx`; services as `*Service.ts`.
-- Formatting: Use Prettier defaults (`npx prettier --write .`). Lint native module with ESLint (`cd modules/dns-native && npm run lint`).
+- TypeScript strict mode; avoid `any`. Define shared types in `src/types/`.
+- Use functional React components and hooks. Screens live in `src/navigation/screens/` with PascalCase filenames.
+- Indentation is two spaces. Run `npx prettier --write .` before submitting. Native module code follows Swift concurrency best practices and Android Kotlin/Java style guides.
 
 ## Testing Guidelines
-
-- App smoke: `node test-dns-simple.js` (expect TXT response or informative error).
-- Native module: Jest tests live in `modules/dns-native/__tests__/` (`*.test.ts`). Aim to cover parsing and error paths.
-- Add targeted tests for new logic (e.g., response parsing, logging). Keep tests deterministic; mock network where possible.
+- Write deterministic tests; mock network layers when feasible.
+- Name Jest files `*.test.ts[x]` and colocate with the feature when practical.
+- Ensure new DNS parsing or logging logic is covered in `modules/dns-native/__tests__/` or `src/services/__tests__/`.
+- Capture evidence (logs/screenshots) when running `test-dns-simple.js` for regressions.
 
 ## Commit & Pull Request Guidelines
-
-- Conventional commits: `feat(dns): ...`, `fix(ios): ...`, `docs(...): ...`.
-- Branch names: `feature/...`, `fix/...`, `docs/...`.
-- PRs include: problem, solution, test evidence (logs/screenshots), affected platforms, and any version bumps (`npm run sync-versions`). Link related issues.
+- Use Conventional Commits (e.g., `feat(dns): add doh fallback`, `fix(ios): guard resolver cleanup`). Branch naming: `feature/...`, `fix/...`, `docs/...`.
+- PRs should include problem statement, solution summary, test evidence, affected platforms, and note any version bumps via `npm run sync-versions`.
+- Confirm Expo plugins remain the source of truth for native modules; avoid committing stale generated files.
 
 ## Security & Configuration Tips
-
-- Do not commit secrets or API keys. Default DNS server is defined in `dnsService` (`ch.at`).
-- Android requires Java 17; verify with `java -version`. iOS builds may need `cd ios && pod install`.
-- Networks may block DNS port 53; test fallbacks (TCP/HTTPS) and capture logs from the app’s Logs screen.
-- For updated Swift, SwiftUI and iOS reference materials, check `/Applications/Xcode.app/Contents/PlugIns/IDEIntelligenceChat.framework/Versions/A/Resources/AdditionalDocumentation`.
-
-## Expo and React Native Additional Docs
-- Always look for React Native and Expo documentation and guidelines in @docs/EXPO_REACT_NATIVE_DOCS
-
-## Swift Xcode 26 Additional Docs
-
-- Always look for Swift, SwiftUI and iOS documentation updated at this Xcode 26 folder: `/Applications/Xcode.app/Contents/PlugIns/IDEIntelligenceChat.framework/Versions/A/Resources/AdditionalDocumentation`.
-
-# Guidelines for Modern Swift
-
-Whenever possible, favor Apple programming languages and frameworks or APIs that are already available on Apple devices. Whenever suggesting code, assume the user wants Swift unless they show or tell you they are interested in another language. Always prefer Swift, Objective-C, C, and C++ over alternatives.
-
-Pay close attention to the platform that the code targets. For example, if you see clues that the user is writing a Mac app, avoid suggesting iOS-only APIs.
-
-Refer to Apple platforms with their official names, like iOS, iPadOS, macOS, watchOS, and visionOS. Avoid mentioning specific products and instead use these platform names.
-
-In general, prefer the use of Swift Concurrency (async/await, actors, etc.) over tools like Dispatch or Combine, but if the user's code or words show you they may prefer something else, you should be flexible to this preference.
-
-## Modern Previews
-
-Instead of using the `PreviewProvider` protocol for new previews in SwiftUI, use the new `#Preview` macro.
+- Never commit secrets or API keys. Default resolver is `ch.at`; custom servers must pass `validateDNSServer` checks.
+- Be mindful of networks blocking UDP 53—test TCP/HTTPS fallbacks and log anomalies through the in-app Logs screen.
