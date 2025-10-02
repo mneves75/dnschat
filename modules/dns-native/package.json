@@ -32,6 +32,7 @@
     "@typescript-eslint/parser": "^6.0.0",
     "eslint": "^8.50.0",
     "jest": "^29.5.0",
+    "ts-jest": "^29.2.4",
     "typescript": "^5.0.0"
   },
   "peerDependencies": {
@@ -51,5 +52,17 @@
   "homepage": "https://github.com/mneves75/dnschat#readme",
   "bugs": {
     "url": "https://github.com/mneves75/dnschat/issues"
+  },
+  "react-native": "index.ts",
+  "codegenConfig": {
+    "name": "RNDNSModuleSpec",
+    "type": "modules",
+    "jsSrcsDir": ".",
+    "ios": {
+      "sourceDir": "ios"
+    },
+    "android": {
+      "javaPackageName": "com.dnsnative"
+    }
   }
 }
