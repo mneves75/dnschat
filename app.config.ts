@@ -22,6 +22,7 @@ export default function createConfig(context: ConfigContext): ExpoConfig {
       },
     ],
     'react-native-edge-to-edge',
+    'expo-localization',
     './plugins/dns-native-plugin',
     './plugins/liquid-glass-plugin',
     [

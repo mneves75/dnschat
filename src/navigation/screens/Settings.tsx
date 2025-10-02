@@ -496,7 +496,7 @@ export function Settings() {
               },
             ]}
             onPress={() => {
-              navigation.navigate("HomeTabs", { screen: "Logs" });
+              navigation.navigate("HomeTabs" as never);
             }}
             disabled={testRunning}
           >

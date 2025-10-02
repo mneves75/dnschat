@@ -60,13 +60,17 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
   testID,
 }) => {
   const colorScheme = useColorScheme();
+  const isDark = colorScheme === "dark";
   const actionSheet = useGlassBottomSheet();
   const [isPressed, setIsPressed] = React.useState(false);
-
-  const isDark = colorScheme === "dark";
-  const lastMessage = chat.messages[chat.messages.length - 1];
-  const messageCount = chat.messages.length;
-  const timeAgo = formatDistanceToNow(chat.createdAt, { addSuffix: true });
+  const messages = Array.isArray(chat.messages) ? chat.messages : [];
+  const lastMessage = messages[messages.length - 1];
+  const messageCount = messages.length;
+  const createdAtDate =
+    chat.createdAt instanceof Date
+      ? chat.createdAt
+      : new Date(chat.createdAt ?? Date.now());
+  const timeAgo = formatDistanceToNow(createdAtDate, { addSuffix: true });
 
   const handleLongPress = React.useCallback(() => {
     // Haptic feedback
@@ -228,19 +232,26 @@ export function GlassChatList() {
   const isDark = colorScheme === "dark";
   const [refreshing, setRefreshing] = React.useState(false);
 
-  const handleNewChat = React.useCallback(() => {
-    const newChat = createChat();
-    setCurrentChat(newChat);
-    navigation.navigate("Chat" as never);
+  const handleNewChat = React.useCallback(async () => {
+    try {
+      const newChat = await createChat();
+      setCurrentChat(newChat);
+      navigation.navigate("Chat" as never);
 
-    // Haptic feedback
-    if (Platform.OS === "ios") {
-      console.log("🔸 Haptic: New chat created");
+      if (Platform.OS === "ios") {
+        console.log("🔸 Haptic: New chat created");
+      }
+    } catch (error) {
+      console.error("Failed to create chat", error);
+      Alert.alert("Unable to start chat", "Please try again in a moment.");
     }
-  }, [createChat, setCurrentChat, navigation]);
+  }, [createChat, navigation, setCurrentChat]);
 
   const handleChatPress = React.useCallback(
     (chat: any) => {
+      if (!chat) {
+        return;
+      }
       setCurrentChat(chat);
       navigation.navigate("Chat" as never);
     },
@@ -363,10 +374,13 @@ export function GlassChatList() {
         <Form.Section title="Statistics">
           <Form.Item
             title="Total Messages"
-            subtitle={`${chats.reduce((total, chat) => total + chat.messages.length, 0)} messages sent`}
+            subtitle={`${chats.reduce((total, chat) => total + (chat.messages?.length ?? 0), 0)} messages sent`}
             rightContent={
               <Text style={styles.statValue}>
-                {chats.reduce((total, chat) => total + chat.messages.length, 0)}
+                {chats.reduce(
+                  (total, chat) => total + (chat.messages?.length ?? 0),
+                  0,
+                )}
               </Text>
             }
           />
@@ -377,7 +391,7 @@ export function GlassChatList() {
               <Text style={styles.statValue}>
                 {Math.round(
                   chats.reduce(
-                    (total, chat) => total + chat.messages.length,
+                    (total, chat) => total + (chat.messages?.length ?? 0),
                     0,
                   ) / chats.length,
                 )}

@@ -35,7 +35,9 @@ export function Logs() {
       setLogs(updatedLogs);
     });
 
-    return unsubscribe;
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   const loadLogs = async () => {
