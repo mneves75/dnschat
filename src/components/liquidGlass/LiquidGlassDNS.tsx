@@ -19,7 +19,7 @@
  * - Interactive DNS log entries with expandable details
  *
  * @author DNSChat Team
- * @since 1.8.0 (iOS 26 Liquid Glass Support)
+ * @since 1.8.0 (iOS 17 Liquid Glass Support)
  */
 
 import React, {

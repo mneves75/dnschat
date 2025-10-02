@@ -5,7 +5,7 @@
  * providing a more sophisticated and visually appealing interface.
  *
  * @author DNSChat Team
- * @since 1.8.0 (iOS 26 Liquid Glass Support + Evan Bacon Glass UI)
+ * @since 1.8.0 (iOS 17 Liquid Glass Support + Evan Bacon Glass UI)
  */
 
 import React from "react";
@@ -45,6 +45,7 @@ interface ChatItemProps {
   onPress: () => void;
   onDelete: () => void;
   onShare?: () => void;
+  testID?: string;
 }
 
 // ==================================================================================
@@ -56,6 +57,7 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
   onPress,
   onDelete,
   onShare,
+  testID,
 }) => {
   const colorScheme = useColorScheme();
   const actionSheet = useGlassBottomSheet();
@@ -157,6 +159,7 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
         onPressOut={() => setIsPressed(false)}
         style={styles.chatItemWrapper}
         activeOpacity={0.95}
+        testID={testID}
       >
         {ChatContent}
       </TouchableOpacity>
@@ -300,6 +303,7 @@ export function GlassChatList() {
           }
           onPress={handleNewChat}
           showChevron
+          testID="chat-new"
         />
       </Form.Section>
 
@@ -317,6 +321,7 @@ export function GlassChatList() {
                 onPress={() => handleChatPress(chat)}
                 onDelete={() => handleDeleteChat(chat.id, chat.title)}
                 onShare={() => handleShareChat(chat)}
+                testID={`chat-item-${chat.id}`}
               />
             ))}
           </View>

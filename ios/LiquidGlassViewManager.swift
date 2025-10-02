@@ -21,8 +21,8 @@ class LiquidGlassContainerView: UIView {
     super.init(frame: frame)
     self.backgroundColor = .clear
 
-    if #available(iOS 26.0, *) {
-      // Prefer official iOS 26 glass effect when available
+    if #available(iOS 17.0, *) {
+      // Prefer official iOS 17 glass effect when available
       let initial = Self.mapVariantToGlassStyle(String(variant))
       let vev = UIVisualEffectView(effect: UIGlassEffect(style: initial))
       self.effectView = vev
@@ -42,8 +42,8 @@ class LiquidGlassContainerView: UIView {
     contentView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
     self.addSubview(contentView)
 
-    // Optional background extension effect on iOS 26 when enabled
-    if #available(iOS 26.0, *), enableContainer {
+    // Optional background extension effect on iOS 17 when enabled
+    if #available(iOS 17.0, *), enableContainer {
       if let bgeClass = NSClassFromString("UIBackgroundExtensionView") as? UIView.Type {
         let bgExt = bgeClass.init(frame: self.bounds)
         bgExt.autoresizingMask = [.flexibleWidth, .flexibleHeight]
@@ -64,7 +64,7 @@ class LiquidGlassContainerView: UIView {
   required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
   private func applyVariant() {
-    if #available(iOS 26.0, *), isUsingNativeGlass, let blur = effectView {
+    if #available(iOS 17.0, *), isUsingNativeGlass, let blur = effectView {
       let style = Self.mapVariantToGlassStyle(String(variant))
       blur.effect = UIGlassEffect(style: style)
       return
@@ -150,9 +150,9 @@ class LiquidGlassContainerView: UIView {
     }
   }
 
-  // MARK: - iOS 26 Glass Integration (Dynamic)
+  // MARK: - iOS 17 Glass Integration (Dynamic)
   private static func makeNativeGlassViewIfAvailable() -> UIView? {
-    if #available(iOS 26.0, *) {
+    if #available(iOS 17.0, *) {
       let candidates = ["UIGlassEffectView", "UIGlassView", "_UIGlassEffectView"]
       for name in candidates {
         if let cls = NSClassFromString(name) as? UIView.Type {
@@ -163,7 +163,7 @@ class LiquidGlassContainerView: UIView {
     return nil
   }
 
-  @available(iOS 26.0, *)
+  @available(iOS 17.0, *)
   private static func mapVariantToGlassStyle(_ v: String) -> UIGlassEffect.Style {
     switch v {
     case "prominent": return .prominent
@@ -189,8 +189,8 @@ class LiquidGlassContainerView: UIView {
 class LiquidGlassViewManager: RCTViewManager {
   override static func requiresMainQueueSetup() -> Bool { true }
   override func view() -> UIView! {
-    if #available(iOS 26.0, *) {
-      // Placeholder for iOS 26 native Liquid Glass integration
+    if #available(iOS 17.0, *) {
+      // Placeholder for iOS 17 native Liquid Glass integration
       // Use existing container until official APIs are wired
       return LiquidGlassContainerView()
     } else {

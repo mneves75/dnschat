@@ -5,7 +5,7 @@
  * following Apple's Human Interface Guidelines for tab bars.
  *
  * @author DNSChat Team
- * @since 1.8.0 (iOS 26 Liquid Glass Support + Evan Bacon Glass UI)
+ * @since 1.8.0 (iOS 17 Liquid Glass Support + Evan Bacon Glass UI)
  */
 
 import React from "react";

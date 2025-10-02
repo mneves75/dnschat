@@ -1,7 +1,7 @@
 # LiquidGlassNative.podspec
 # 
 # CocoaPods specification for the DNSChat Liquid Glass native module.
-# Provides iOS 26 UIGlassEffect integration with graceful fallbacks.
+# Provides iOS 17 UIGlassEffect integration with graceful fallbacks.
 
 require 'json'
 
@@ -10,9 +10,9 @@ package = JSON.parse(File.read(File.join(__dir__, '..', '..', 'package.json')))
 Pod::Spec.new do |s|
   s.name             = 'LiquidGlassNative'
   s.version          = package['version']
-  s.summary          = 'iOS 26 Liquid Glass effects for React Native'
+  s.summary          = 'iOS 17 Liquid Glass effects for React Native'
   s.description      = <<-DESC
-    Native iOS module providing direct access to iOS 26's UIGlassEffect API
+    Native iOS module providing direct access to iOS 17's UIGlassEffect API
     for React Native applications. Includes sensor-aware environmental adaptation,
     performance monitoring, and graceful fallbacks for older iOS versions.
   DESC
@@ -22,7 +22,7 @@ Pod::Spec.new do |s|
   s.author           = package['author']
   s.source           = { :git => 'https://github.com/mneves75/dnschat.git', :tag => s.version.to_s }
 
-  # Platform requirements - Support iOS 16+ with runtime iOS 26+ detection
+  # Platform requirements - Support iOS 16+ with runtime iOS 17+ detection
   s.platform         = :ios, '16.0'
   s.swift_version    = '5.9'
 
@@ -37,7 +37,7 @@ Pod::Spec.new do |s|
   # iOS frameworks
   s.frameworks = 'UIKit', 'Foundation', 'CoreMotion', 'QuartzCore', 'OSLog'
 
-  # iOS 26+ conditional framework
+  # iOS 17+ conditional framework
   s.weak_frameworks = 'UIKit' # UIGlassEffect will be weak-linked
 
   # Build settings for framework target - iOS 16+ compatible
@@ -48,7 +48,7 @@ Pod::Spec.new do |s|
     'CLANG_ENABLE_MODULES' => 'YES'
   }
 
-  # Compiler flags for iOS 26+ features
+  # Compiler flags for iOS 17+ features
   s.compiler_flags = '-DRCT_NEW_ARCH_ENABLED=1'
 
 end

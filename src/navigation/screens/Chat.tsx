@@ -23,7 +23,7 @@ export function Chat() {
   const { currentChat, isLoading, error, sendMessage, clearError, createChat } =
     useChat();
 
-  // iOS 26 Liquid Glass capabilities
+  // iOS 17 Liquid Glass capabilities
   const { isSupported: glassSupported, supportsSwiftUIGlass } =
     useLiquidGlassCapabilities();
 
@@ -74,7 +74,7 @@ export function Chat() {
       >
         {Platform.OS === "ios" ? ( // Always use glass UI on iOS
           <>
-            {/* iOS 26 Liquid Glass Message Area */}
+            {/* iOS 17 Liquid Glass Message Area */}
             <LiquidGlassWrapper
               variant="regular"
               shape="roundedRect"
@@ -89,7 +89,7 @@ export function Chat() {
               />
             </LiquidGlassWrapper>
 
-            {/* iOS 26 Liquid Glass Chat Input */}
+            {/* iOS 17 Liquid Glass Chat Input */}
             <LiquidGlassWrapper
               variant="prominent"
               shape="capsule"

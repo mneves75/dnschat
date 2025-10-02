@@ -72,6 +72,8 @@ export function ChatInput({
           contextMenuHidden={true}
           keyboardAppearance={isDark ? "dark" : "light"}
           onSubmitEditing={handleSend}
+          testID="chat-input"
+          accessibilityLabel="Chat message input"
         />
 
         <TouchableOpacity
@@ -82,6 +84,8 @@ export function ChatInput({
           ]}
           onPress={handleSend}
           disabled={!canSend}
+          testID="chat-send"
+          accessibilityLabel="Send message"
         >
           <Text
             style={[
