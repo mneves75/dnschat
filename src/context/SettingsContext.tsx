@@ -1,181 +1,295 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  ReactNode,
+} from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Localization from "expo-localization";
 
-export type DNSMethodPreference =
-  | "automatic"
-  | "prefer-https"
-  | "udp-only"
-  | "never-https"
-  | "native-first";
+import {
+  DEFAULT_SETTINGS,
+  DNSMethodPreference,
+  PersistedSettings,
+  SETTINGS_STORAGE_KEY,
+  SUPPORTED_LOCALE_OPTIONS,
+  SupportedLocale,
+  SupportedLocaleOption,
+  coerceDnsMethodPreference,
+  migrateSettings,
+  sanitizeDnsServer,
+  resolveLocale,
+} from "./settingsStorage";
+import { AccessibilityConfig } from "./AccessibilityContext";
+import { DNSLogService } from "../services/dnsLogService";
+import { validateDNSServer } from "../services/dnsService";
 
-interface SettingsContextType {
+interface SettingsContextValue {
   dnsServer: string;
   updateDnsServer: (server: string) => Promise<void>;
   preferDnsOverHttps: boolean;
   updatePreferDnsOverHttps: (prefer: boolean) => Promise<void>;
   dnsMethodPreference: DNSMethodPreference;
-  updateDnsMethodPreference: (preference: DNSMethodPreference) => Promise<void>;
+  updateDnsMethodPreference: (
+    preference: DNSMethodPreference,
+  ) => Promise<void>;
   enableMockDNS: boolean;
   updateEnableMockDNS: (enable: boolean) => Promise<void>;
+  allowExperimentalTransports: boolean;
+  updateAllowExperimentalTransports: (enable: boolean) => Promise<void>;
+  locale: SupportedLocale;
+  systemLocale: SupportedLocale;
+  preferredLocale: string | null;
+  availableLocales: SupportedLocaleOption[];
+  updateLocale: (locale: string | null) => Promise<void>;
+  accessibility: AccessibilityConfig;
+  updateAccessibility: (config: AccessibilityConfig) => Promise<void>;
   loading: boolean;
 }
 
-const SettingsContext = createContext<SettingsContextType | undefined>(
+const SettingsContext = createContext<SettingsContextValue | undefined>(
   undefined,
 );
 
-const SETTINGS_STORAGE_KEY = "@chat_dns_settings";
-const DEFAULT_DNS_SERVER = "ch.at";
+export function SettingsProvider({ children }: { children: ReactNode }) {
+  const localizationLocales = Localization.getLocales();
+  const defaultSystemLocale = resolveLocale(
+    localizationLocales[0]?.languageTag ?? localizationLocales[0]?.languageCode,
+  );
 
-interface Settings {
-  dnsServer: string;
-  preferDnsOverHttps?: boolean;
-  dnsMethodPreference?: DNSMethodPreference;
-  enableMockDNS?: boolean;
-}
-
-export function SettingsProvider({ children }: { children: React.ReactNode }) {
-  const [dnsServer, setDnsServer] = useState<string>(DEFAULT_DNS_SERVER);
-  const [preferDnsOverHttps, setPreferDnsOverHttps] = useState<boolean>(false);
-  const [dnsMethodPreference, setDnsMethodPreference] =
-    useState<DNSMethodPreference>("native-first");
-  const [enableMockDNS, setEnableMockDNS] = useState<boolean>(false);
+  const [systemLocale] = useState<SupportedLocale>(defaultSystemLocale);
+  const [settings, setSettings] = useState<PersistedSettings>(
+    () => DEFAULT_SETTINGS,
+  );
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
+
+    const loadSettings = async () => {
+      try {
+        const settingsJson = await AsyncStorage.getItem(SETTINGS_STORAGE_KEY);
+        if (!settingsJson) {
+          if (isMounted) {
+            setSettings({ ...DEFAULT_SETTINGS });
+          }
+          return;
+        }
+
+        const parsed = JSON.parse(settingsJson) as unknown;
+        const migrated = migrateSettings(parsed);
+        if (isMounted) {
+          setSettings(migrated);
+        }
+      } catch (error) {
+        console.error("❌ Error loading settings:", error);
+        if (isMounted) {
+          setSettings({ ...DEFAULT_SETTINGS });
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
     loadSettings();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  const loadSettings = async () => {
+  const persistSettings = useCallback(async (next: PersistedSettings) => {
+    setSettings(next);
     try {
-      const settingsJson = await AsyncStorage.getItem(SETTINGS_STORAGE_KEY);
-      console.log("📥 Loading settings from storage:", settingsJson);
-      if (settingsJson) {
-        const settings: Settings = JSON.parse(settingsJson);
-        console.log("📋 Parsed settings:", settings);
-        setDnsServer(settings.dnsServer || DEFAULT_DNS_SERVER);
-        setPreferDnsOverHttps(settings.preferDnsOverHttps ?? false);
-        setDnsMethodPreference(settings.dnsMethodPreference ?? "native-first");
-        setEnableMockDNS(settings.enableMockDNS ?? false);
-        console.log(
-          "✅ Settings loaded - DNS method:",
-          settings.dnsMethodPreference ?? "native-first",
-          "MockDNS:",
-          settings.enableMockDNS ?? false,
+      await AsyncStorage.setItem(
+        SETTINGS_STORAGE_KEY,
+        JSON.stringify(next),
+      );
+    } catch (error) {
+      console.error("❌ Error saving settings:", error);
+      throw error;
+    }
+  }, []);
+
+  const updateDnsServer = useCallback(
+    async (server: string) => {
+      const cleaned = sanitizeDnsServer(server);
+      try {
+        validateDNSServer(cleaned);
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : String(error ?? "Validation failed");
+        await DNSLogService.recordSettingsEvent(
+          `DNS server validation failed for input '${server}'`,
+          message,
         );
+        throw error;
       }
-    } catch (error) {
-      console.error("❌ Error loading settings:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const updateDnsServer = async (server: string) => {
-    try {
-      const cleanServer = server.trim() || DEFAULT_DNS_SERVER;
-      setDnsServer(cleanServer);
-
-      const settings: Settings = {
-        dnsServer: cleanServer,
-        preferDnsOverHttps,
-        dnsMethodPreference,
-        enableMockDNS,
-      };
-
-      await AsyncStorage.setItem(
-        SETTINGS_STORAGE_KEY,
-        JSON.stringify(settings),
+      if (settings.dnsServer === cleaned) {
+        return;
+      }
+      await persistSettings({
+        ...settings,
+        dnsServer: cleaned,
+      });
+      await DNSLogService.recordSettingsEvent(
+        `DNS server set to ${cleaned}`,
+        settings.dnsServer ? `previous: ${settings.dnsServer}` : undefined,
       );
-    } catch (error) {
-      console.error("Error saving DNS server setting:", error);
-      throw error;
-    }
-  };
+    },
+    [persistSettings, settings],
+  );
 
-  const updatePreferDnsOverHttps = async (prefer: boolean) => {
-    try {
-      setPreferDnsOverHttps(prefer);
-
-      const settings: Settings = {
-        dnsServer,
+  const updatePreferDnsOverHttps = useCallback(
+    async (prefer: boolean) => {
+      if (settings.preferDnsOverHttps === prefer) {
+        return;
+      }
+      await persistSettings({
+        ...settings,
         preferDnsOverHttps: prefer,
-        dnsMethodPreference,
-        enableMockDNS,
-      };
-
-      await AsyncStorage.setItem(
-        SETTINGS_STORAGE_KEY,
-        JSON.stringify(settings),
+      });
+      await DNSLogService.recordSettingsEvent(
+        `Prefer DNS-over-HTTPS set to ${prefer}`,
       );
-    } catch (error) {
-      console.error("Error saving DNS over HTTPS preference:", error);
-      throw error;
-    }
-  };
+    },
+    [persistSettings, settings],
+  );
 
-  const updateDnsMethodPreference = async (preference: DNSMethodPreference) => {
-    try {
-      console.log("🔧 Updating DNS method preference:", preference);
-      setDnsMethodPreference(preference);
-
-      const settings: Settings = {
-        dnsServer,
-        preferDnsOverHttps,
-        dnsMethodPreference: preference,
-        enableMockDNS,
-      };
-
-      console.log("💾 Saving settings to storage:", settings);
-      await AsyncStorage.setItem(
-        SETTINGS_STORAGE_KEY,
-        JSON.stringify(settings),
+  const updateDnsMethodPreference = useCallback(
+    async (preference: DNSMethodPreference) => {
+      if (settings.dnsMethodPreference === preference) {
+        return;
+      }
+      await persistSettings({
+        ...settings,
+        dnsMethodPreference: coerceDnsMethodPreference(preference),
+      });
+      await DNSLogService.recordSettingsEvent(
+        `DNS transport preference set to ${preference}`,
       );
-      console.log("✅ DNS method preference saved successfully");
-    } catch (error) {
-      console.error("❌ Error saving DNS method preference:", error);
-      throw error;
-    }
-  };
+    },
+    [persistSettings, settings],
+  );
 
-  const updateEnableMockDNS = async (enable: boolean) => {
-    try {
-      console.log("🔧 Updating enable Mock DNS:", enable);
-      setEnableMockDNS(enable);
-
-      const settings: Settings = {
-        dnsServer,
-        preferDnsOverHttps,
-        dnsMethodPreference,
+  const updateEnableMockDNS = useCallback(
+    async (enable: boolean) => {
+      if (settings.enableMockDNS === enable) {
+        return;
+      }
+      await persistSettings({
+        ...settings,
         enableMockDNS: enable,
-      };
-
-      console.log("💾 Saving settings to storage:", settings);
-      await AsyncStorage.setItem(
-        SETTINGS_STORAGE_KEY,
-        JSON.stringify(settings),
+      });
+      await DNSLogService.recordSettingsEvent(
+        `Mock DNS ${enable ? 'enabled' : 'disabled'}`,
       );
-      console.log("✅ Enable Mock DNS preference saved successfully");
-    } catch (error) {
-      console.error("❌ Error saving enable Mock DNS preference:", error);
-      throw error;
-    }
-  };
+    },
+    [persistSettings, settings],
+  );
+
+  const updateAllowExperimentalTransports = useCallback(
+    async (enable: boolean) => {
+      if (settings.allowExperimentalTransports === enable) {
+        return;
+      }
+      await persistSettings({
+        ...settings,
+        allowExperimentalTransports: enable,
+      });
+      await DNSLogService.recordSettingsEvent(
+        `Experimental transports ${enable ? 'enabled' : 'disabled'}`,
+      );
+    },
+    [persistSettings, settings],
+  );
+
+  const updateLocale = useCallback(
+    async (locale: string | null) => {
+      if (settings.preferredLocale === locale) {
+        return;
+      }
+      await persistSettings({
+        ...settings,
+        preferredLocale: locale,
+      });
+      await DNSLogService.recordSettingsEvent(
+        `Preferred locale set to ${locale ?? 'system default'}`,
+      );
+    },
+    [persistSettings, settings],
+  );
+
+  const updateAccessibility = useCallback(
+    async (accessibilityConfig: import("./AccessibilityContext").AccessibilityConfig) => {
+      if (JSON.stringify(settings.accessibility) === JSON.stringify(accessibilityConfig)) {
+        return;
+      }
+      await persistSettings({
+        ...settings,
+        accessibility: accessibilityConfig,
+      });
+      await DNSLogService.recordSettingsEvent(
+        `Accessibility settings updated: ${JSON.stringify(accessibilityConfig)}`,
+      );
+    },
+    [persistSettings, settings],
+  );
+
+  const activeLocale = useMemo(
+    () => resolveLocale(settings.preferredLocale ?? systemLocale),
+    [settings.preferredLocale, systemLocale],
+  );
+
+  const contextValue = useMemo<SettingsContextValue>(
+    () => ({
+      dnsServer: settings.dnsServer,
+      updateDnsServer,
+      preferDnsOverHttps: settings.preferDnsOverHttps,
+      updatePreferDnsOverHttps,
+      dnsMethodPreference: settings.dnsMethodPreference,
+      updateDnsMethodPreference,
+      enableMockDNS: settings.enableMockDNS,
+      updateEnableMockDNS,
+      allowExperimentalTransports: settings.allowExperimentalTransports,
+      updateAllowExperimentalTransports,
+      locale: activeLocale,
+      systemLocale,
+      preferredLocale: settings.preferredLocale,
+      availableLocales: SUPPORTED_LOCALE_OPTIONS,
+      updateLocale,
+      accessibility: settings.accessibility,
+      updateAccessibility,
+      loading,
+    }),
+    [
+      activeLocale,
+      loading,
+      settings.accessibility,
+      settings.allowExperimentalTransports,
+      settings.dnsMethodPreference,
+      settings.dnsServer,
+      settings.enableMockDNS,
+      settings.preferDnsOverHttps,
+      settings.preferredLocale,
+      systemLocale,
+      updateAccessibility,
+      updateAllowExperimentalTransports,
+      updateDnsMethodPreference,
+      updateDnsServer,
+      updateEnableMockDNS,
+      updateLocale,
+      updatePreferDnsOverHttps,
+    ],
+  );
 
   return (
-    <SettingsContext.Provider
-      value={{
-        dnsServer,
-        updateDnsServer,
-        preferDnsOverHttps,
-        updatePreferDnsOverHttps,
-        dnsMethodPreference,
-        updateDnsMethodPreference,
-        enableMockDNS,
-        updateEnableMockDNS,
-        loading,
-      }}
-    >
+    <SettingsContext.Provider value={contextValue}>
       {children}
     </SettingsContext.Provider>
   );
@@ -188,3 +302,10 @@ export function useSettings() {
   }
   return context;
 }
+
+export type {
+  PersistedSettings as SettingsStorageSnapshot,
+  DNSMethodPreference,
+  SupportedLocale,
+  SupportedLocaleOption,
+} from "./settingsStorage";
