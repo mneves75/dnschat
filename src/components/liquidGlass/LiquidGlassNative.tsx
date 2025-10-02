@@ -1,18 +1,18 @@
 /**
  * LiquidGlass Native Bridge Components
  *
- * React Native TypeScript interface to the native iOS 26 UIGlassEffect module.
+ * React Native TypeScript interface to the native iOS 17 UIGlassEffect module.
  * Provides type-safe access to native glass capabilities with automatic fallbacks.
  *
  * Key Features:
- * - Direct UIGlassEffect integration for iOS 26+
+ * - Direct UIGlassEffect integration for iOS 17+
  * - Type-safe props and methods
  * - Performance monitoring integration
  * - Graceful fallback handling
  * - Real-time capability detection
  *
  * @author DNSChat Team
- * @since 1.8.0 (iOS 26 Liquid Glass Support)
+ * @since 1.8.0 (iOS 17 Liquid Glass Support)
  */
 
 import React, {
@@ -163,7 +163,7 @@ import { LiquidGlassWrapper } from "../LiquidGlassWrapper";
 // ==================================================================================
 
 /**
- * React Native bridge to native iOS 26 UIGlassEffect implementation
+ * React Native bridge to native iOS 17 UIGlassEffect implementation
  */
 export const LiquidGlassNative = forwardRef<
   LiquidGlassNativeHandle,
@@ -208,7 +208,7 @@ export const LiquidGlassNative = forwardRef<
         if (caps.isSupported && caps.features.basicGlass) {
           onGlassEffectApplied?.();
         } else {
-          onGlassEffectFailed?.("iOS 26 not available or glass not supported");
+          onGlassEffectFailed?.("iOS 17 not available or glass not supported");
         }
       } catch (error) {
         console.warn("LiquidGlassNative: Capability check failed", error);
@@ -323,7 +323,7 @@ export const LiquidGlassNative = forwardRef<
   };
 
   // Use LiquidGlassWrapper under the hood to avoid duplicate native registration
-  // This provides iOS 26+ support with proper fallbacks while adding advanced features
+  // This provides iOS 17+ support with proper fallbacks while adding advanced features
   return (
     <LiquidGlassWrapper ref={nativeViewRef} {...mappedProps}>
       {children}
@@ -479,7 +479,7 @@ export const useLiquidGlassEnvironment = () => {
 // ==================================================================================
 
 /**
- * Check if iOS 26 native glass is available
+ * Check if iOS 17 native glass is available
  */
 export const isNativeGlassAvailable = async (): Promise<boolean> => {
   try {

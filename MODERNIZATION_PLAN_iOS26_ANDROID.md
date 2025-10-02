@@ -1,5 +1,7 @@
 # 📱 DNSChat Modernization Plan - iOS 26 + Android Material You
 
+> **Archived**: Superseded by `PLAN_MODERNIZATION.md` (2025-10-02). Retain for historical context only.
+
 **Version**: 1.0.0
 **Date**: 2025-10-02
 **Status**: 🔴 AWAITING JOHN CARMACK'S REVIEW

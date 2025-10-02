@@ -100,6 +100,8 @@ Platform target?
 | Glass Button Style    | 17.0+      | 14.0+ | 1.0+     |
 | Matched Transitions   | 17.0+      | 14.0+ | 1.0+     |
 
+> Availability per Apple’s Liquid Glass announcement (WWDC24).¹
+
 ## Migration Guide
 
 ### AppKit → SwiftUI
@@ -136,7 +138,6 @@ View()
 ### Apple Documentation
 
 - [NSGlassEffectView](https://developer.apple.com/documentation/AppKit/NSGlassEffectView)
-- [View.glassEffect](https://developer.apple.com/documentation/SwiftUI/View/glassEffect)
 - [CustomizableToolbarContent](https://developer.apple.com/documentation/SwiftUI/CustomizableToolbarContent)
 
 ### Sample Projects
@@ -147,3 +148,7 @@ View()
 
 - Liquid Glass design principles
 - Toolbar customization in SwiftUI
+
+---
+
+¹ https://www.apple.com/newsroom/2025/06/apple-introduces-a-delightful-and-elegant-new-software-design/

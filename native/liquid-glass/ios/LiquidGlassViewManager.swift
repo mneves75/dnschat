@@ -65,7 +65,7 @@ class LGContainerView: UIView {
 class LiquidGlassViewManager: RCTViewManager {
   override static func requiresMainQueueSetup() -> Bool { true }
   override func view() -> UIView! {
-    if #available(iOS 26.0, *) {
+    if #available(iOS 17.0, *) {
       // TODO: Integrate with official Liquid Glass APIs when available
       return LGContainerView()
     } else {

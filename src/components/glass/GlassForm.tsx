@@ -5,7 +5,7 @@
  * following Apple's design guidelines and best practices.
  *
  * @author DNSChat Team
- * @since 1.8.0 (iOS 26 Liquid Glass Support + Evan Bacon Glass UI)
+ * @since 1.8.0 (iOS 17 Liquid Glass Support + Evan Bacon Glass UI)
  */
 
 import React from "react";
@@ -61,6 +61,8 @@ interface GlassFormItemProps {
   showChevron?: boolean;
   /** Disable haptic feedback */
   disableHaptics?: boolean;
+  /** Accessibility identifier */
+  testID?: string;
 }
 
 interface GlassFormLinkProps extends GlassFormItemProps {
@@ -235,6 +237,7 @@ export const GlassFormItem: React.FC<GlassFormItemProps> = ({
   style,
   showChevron = false,
   disableHaptics = false,
+  testID,
 }) => {
   const colors = useGlassColors();
   const { triggerSelectionFeedback } = useHapticFeedback();
@@ -282,9 +285,19 @@ export const GlassFormItem: React.FC<GlassFormItemProps> = ({
         onPressIn={() => setIsPressed(true)}
         onPressOut={() => setIsPressed(false)}
         activeOpacity={1}
+        testID={testID}
+        accessibilityLabel={testID}
       >
         {ItemContent}
       </TouchableOpacity>
+    );
+  }
+
+  if (testID) {
+    return (
+      <View testID={testID} accessibilityLabel={testID}>
+        {ItemContent}
+      </View>
     );
   }
 

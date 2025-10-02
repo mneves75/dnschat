@@ -1,7 +1,7 @@
 /**
  * Liquid Glass Core UI Components
  *
- * Essential building blocks for iOS 26 Liquid Glass interface.
+ * Essential building blocks for iOS 17 Liquid Glass interface.
  * Following Apple's latest patterns and modern Swift principles.
  *
  * Components:
@@ -18,7 +18,7 @@
  * - Lazy loading and conditional glass application
  *
  * @author DNSChat Team
- * @since 1.8.0 (iOS 26 Liquid Glass Support)
+ * @since 1.8.0 (iOS 17 Liquid Glass Support)
  */
 
 import React, {

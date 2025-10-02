@@ -8,7 +8,7 @@ Write idiomatic SwiftUI code following Apple's latest architectural recommendati
 - Avoid legacy UIKit patterns and unnecessary abstractions
 - Focus on simplicity, clarity, and native data flow
 - Let SwiftUI handle the complexity - don't fight the framework
-- **iOS 26+ Liquid Glass**: Leverage `.glassEffect()` modifier for native liquid glass design system integration
+- **iOS 17+ Liquid Glass**: Leverage `.glassEffect()` modifier for native liquid glass design system integration
 
 ## Architecture Guidelines
 
@@ -141,7 +141,7 @@ struct ProfileView: View {
 - Handle loading and error states explicitly
 - Keep views focused on presentation
 - Use Swift's type system for safety
-- **iOS 26+**: Use `.glassEffect()` modifier for native liquid glass effects
+- **iOS 17+**: Use `.glassEffect()` modifier for native liquid glass effects
 - **React Native Bridge**: Implement proper @objc exposure for cross-platform components
 
 ### DON'T:
@@ -150,7 +150,7 @@ struct ProfileView: View {
 - Move state out of views unnecessarily
 - Add abstraction layers without clear benefit
 - Use Combine for simple async operations
-- **iOS 26+**: Don't create custom glass effects when native `.glassEffect()` is available
+- **iOS 17+**: Don't create custom glass effects when native `.glassEffect()` is available
 - **Bridge Architecture**: Don't register duplicate native component names
 - Fight SwiftUI's update mechanism
 - Overcomplicate simple features
@@ -171,12 +171,12 @@ struct ProfileView: View {
 - Embrace value types where appropriate
 - Use protocols for abstraction, not just for testing
 
-## iOS 26+ Liquid Glass Implementation
+## iOS 17+ Liquid Glass Implementation
 
-When implementing liquid glass effects for iOS 26+:
+When implementing liquid glass effects for iOS 17 and later:
 
 ```swift
-@available(iOS 26.0, *)
+@available(iOS 17.0, *)
 struct LiquidGlassView: View {
     let variant: GlassVariant
     let sensorAware: Bool
@@ -192,7 +192,7 @@ struct LiquidGlassView: View {
 
 // React Native Bridge
 @objc(LiquidGlassViewManager)
-@available(iOS 26.0, *)
+@available(iOS 17.0, *)
 public class LiquidGlassViewManager: RCTViewManager {
     public override func view() -> UIView! {
         return LiquidGlassView()
@@ -203,10 +203,14 @@ public class LiquidGlassViewManager: RCTViewManager {
 **Key principles:**
 
 - Use native `.glassEffect()` modifier when available
-- Implement proper availability checks (`@available(iOS 26.0, *)`)
+- Implement proper availability checks (`@available(iOS 17.0, *)`)
 - Provide graceful fallbacks for older iOS versions
 - Follow React Native bridge naming conventions to avoid conflicts
 
 ## Summary
 
-Write SwiftUI code that looks and feels like SwiftUI. The framework has matured significantly - trust its patterns and tools. Focus on solving user problems rather than implementing architectural patterns from other platforms. For iOS 26+, embrace the native liquid glass design system for authentic Apple experiences.
+Write SwiftUI code that looks and feels like SwiftUI. The framework has matured significantly - trust its patterns and tools. Focus on solving user problems rather than implementing architectural patterns from other platforms. For iOS 17+, embrace the native liquid glass design system for authentic Apple experiences.¹
+
+---
+
+¹ https://www.apple.com/newsroom/2025/06/apple-introduces-a-delightful-and-elegant-new-software-design/

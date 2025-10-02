@@ -14,27 +14,27 @@ class LiquidGlassNativeModule: NSObject {
     #if compiler(>=6.0)
     // Placeholder – use availability check at runtime
     #endif
-    // Runtime glass availability: require iOS 26 and presence of glass class
-    var is26 = false
-    if #available(iOS 26.0, *) {
+    // Runtime glass availability: require iOS 17 and presence of glass class
+    var is17 = false
+    if #available(iOS 17.0, *) {
       let candidates = ["UIGlassEffectView", "UIGlassView", "_UIGlassEffectView"]
-      is26 = candidates.contains { NSClassFromString($0) != nil }
+      is17 = candidates.contains { NSClassFromString($0) != nil }
     }
 
     let result: [String: Any] = [
-      "isSupported": is26,
+      "isSupported": is17,
       "platform": "ios",
       "features": [
-        "basicGlass": is26,
-        "sensorAware": is26,
-        "depthContainers": is26,
-        "environmentalCues": is26,
+        "basicGlass": is17,
+        "sensorAware": is17,
+        "depthContainers": is17,
+        "environmentalCues": is17,
         "hapticsIntegration": true,
-        "dynamicIntensity": is26
+        "dynamicIntensity": is17
       ],
       "performance": [
-        "tier": is26 ? "high" : "low",
-        "maxGlassElements": is26 ? 50 : 5,
+        "tier": is17 ? "high" : "low",
+        "maxGlassElements": is17 ? 50 : 5,
         "supports60fps": true,
         "metalAcceleration": true
       ],

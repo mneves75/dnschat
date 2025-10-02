@@ -1,7 +1,7 @@
 /**
  * Liquid Glass Sensor-Aware Adaptations
  *
- * Advanced iOS 26 sensor integration for environmental context awareness.
+ * Advanced iOS 17 sensor integration for environmental context awareness.
  * Adapts glass effects based on ambient light, device motion, thermal state,
  * and user interaction patterns following Apple's sensor frameworks.
  *
@@ -20,7 +20,7 @@
  * - UIDevice: Battery state and proximity sensor
  *
  * @author DNSChat Team
- * @since 1.8.0 (iOS 26 Liquid Glass Support)
+ * @since 1.8.0 (iOS 17 Liquid Glass Support)
  */
 
 import React, {
@@ -51,7 +51,7 @@ import {
 // ==================================================================================
 
 /**
- * Native sensor module interface for iOS 26+ sensor access
+ * Native sensor module interface for iOS 17+ sensor access
  */
 interface LiquidGlassSensorModule {
   // Ambient Light Sensor
@@ -167,7 +167,7 @@ class LiquidGlassSensorManager {
   }
 
   /**
-   * Start sensor monitoring with iOS 26+ native integration
+   * Start sensor monitoring with iOS 17+ native integration
    */
   async startMonitoring(): Promise<void> {
     if (this.isMonitoring || !SensorModule || !sensorEmitter) {

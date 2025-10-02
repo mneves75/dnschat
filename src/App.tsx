@@ -62,7 +62,7 @@ function AppContent() {
     />
   );
 
-  // Wrap in iOS 26 Liquid Glass container if supported
+  // Wrap in iOS 17 Liquid Glass container if supported
   if (glassSupported && Platform.OS === "ios") {
     return (
       <LiquidGlassWrapper

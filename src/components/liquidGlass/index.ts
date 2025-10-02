@@ -1,12 +1,12 @@
 /**
  * Liquid Glass Components - Public API
  *
- * Comprehensive iOS 26 Liquid Glass implementation with graceful fallbacks
+ * Comprehensive iOS 17 Liquid Glass implementation with graceful fallbacks
  * for React Native applications. Provides platform-appropriate glass effects
- * across iOS 26+, iOS 16-25, Android, and Web.
+ * across iOS 17+, iOS 16-25, Android, and Web.
  *
  * @author DNSChat Team
- * @since 1.8.0 (iOS 26 Liquid Glass Support)
+ * @since 1.8.0 (iOS 17 Liquid Glass Support)
  */
 
 // ==================================================================================
@@ -72,11 +72,11 @@ export {
 } from "./LiquidGlassDNS";
 
 // ==================================================================================
-// NATIVE COMPONENTS (iOS 26+)
+// NATIVE COMPONENTS (iOS 17+)
 // ==================================================================================
 
 export {
-  // Direct native component access (iOS 26+ only)
+  // Direct native component access (iOS 17+ only)
   LiquidGlassNative,
 
   // Native component props and handle

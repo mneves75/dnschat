@@ -1,5 +1,7 @@
 # iOS 26 + Android Material You Modernization - Executive Summary
 
+> **Archived**: Superseded by `PLAN_MODERNIZATION.md` (2025-10-02). Kept for history; follow the new plan for current guidance.
+
 **Date**: 2025-10-02
 **Status**: 🔴 **AWAITING JOHN CARMACK'S TECHNICAL REVIEW**
 **Full Plan**: [MODERNIZATION_PLAN_iOS26_ANDROID.md](./MODERNIZATION_PLAN_iOS26_ANDROID.md)

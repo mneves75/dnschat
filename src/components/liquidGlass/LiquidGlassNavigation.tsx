@@ -1,7 +1,7 @@
 /**
  * Liquid Glass Navigation Components
  *
- * Enhanced navigation components with iOS 26 Liquid Glass effects.
+ * Enhanced navigation components with iOS 17 Liquid Glass effects.
  * Provides adaptive, sensor-aware navigation interfaces that respond
  * to environmental changes and user interaction patterns.
  *
@@ -13,7 +13,7 @@
  * - Graceful fallbacks for all platforms
  *
  * @author DNSChat Team
- * @since 1.8.0 (iOS 26 Liquid Glass Support)
+ * @since 1.8.0 (iOS 17 Liquid Glass Support)
  */
 
 import React, {
@@ -116,7 +116,7 @@ interface LiquidGlassModalProps extends LiquidGlassProps {
 // ==================================================================================
 
 /**
- * Enhanced tab bar with iOS 26 Liquid Glass effects and dynamic behavior
+ * Enhanced tab bar with iOS 17 Liquid Glass effects and dynamic behavior
  */
 export const LiquidGlassTabBar: React.FC<LiquidGlassTabBarProps> = ({
   state,

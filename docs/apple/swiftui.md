@@ -10,6 +10,8 @@ Comprehensive filtering: Yes
 
 # https://developer.apple.com/documentation/swiftui/
 
+> **Note:** This file is a machine-exported snapshot (June 2025). Availability annotations that reference "26.0" reflect future beta placeholders from Apple’s docs; verify against the official developer portal for stable builds before implementation.
+
 Framework
 
 # SwiftUI

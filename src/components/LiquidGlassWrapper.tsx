@@ -1,5 +1,5 @@
 /**
- * LiquidGlassWrapper - React Native component for iOS 26 SwiftUI Glass Effects
+ * LiquidGlassWrapper - React Native component for iOS 17 SwiftUI Glass Effects
  *
  * Provides a simple wrapper around the native LiquidGlassView following
  * Apple's SwiftUI .glassEffect() patterns and modern Swift development.
@@ -10,7 +10,7 @@
  * </LiquidGlassWrapper>
  *
  * @author DNSChat Team
- * @since 1.8.0 (iOS 26 Liquid Glass Support)
+ * @since 1.8.0 (iOS 17 Liquid Glass Support)
  */
 
 import React from "react";
@@ -65,26 +65,25 @@ interface LiquidGlassProps extends ViewProps {
 // ==================================================================================
 
 /**
- * Checks if the current iOS version supports Liquid Glass (iOS 26+)
- * This provides the GUARANTEE requested for iOS/iPadOS 26+ support
+ * Checks if the current iOS version supports Liquid Glass (iOS 17+)
  * Memoized for performance optimization
  */
-const isIOS26Plus = (() => {
+const isIOS17Plus = (() => {
   if (Platform.OS !== "ios") return false;
 
   const version = Platform.Version;
   if (typeof version === "string") {
     const majorVersion = parseInt(version.split(".")[0], 10);
-    return majorVersion >= 26;
+    return majorVersion >= 17;
   } else if (typeof version === "number") {
-    return version >= 26;
+    return version >= 17;
   }
 
   return false;
 })();
 
 /**
- * Gets native iOS 26+ capabilities from the native module
+ * Gets native iOS 17+ capabilities from the native module
  */
 async function getNativeCapabilities(): Promise<{
   available: boolean;
@@ -106,7 +105,7 @@ async function getNativeCapabilities(): Promise<{
       supportsLiquidGlass: capabilities?.supportsLiquidGlass ?? false,
     };
   } catch (error) {
-    console.warn("🚨 Failed to get native iOS 26+ capabilities:", error);
+    console.warn("🚨 Failed to get native iOS 17+ capabilities:", error);
     return { available: false, supportsLiquidGlass: false };
   }
 }
@@ -115,7 +114,7 @@ async function getNativeCapabilities(): Promise<{
 // NATIVE COMPONENT
 // ==================================================================================
 
-// Native view component registration for iOS 26+ Liquid Glass
+// Native view component registration for iOS 17+ Liquid Glass
 const NativeLiquidGlassView =
   Platform.OS === "ios"
     ? requireNativeComponent<LiquidGlassProps>("LiquidGlassView")
@@ -151,8 +150,8 @@ export const LiquidGlassWrapper: React.FC<LiquidGlassProps> = ({
     return <>{children}</>;
   }
 
-  // iOS 26+: Use native Liquid Glass view when available
-  if (isIOS26Plus && NativeLiquidGlassView) {
+  // iOS 17+: Use native Liquid Glass view when available
+  if (isIOS17Plus && NativeLiquidGlassView) {
     return (
       <NativeLiquidGlassView
         variant={variant}
