@@ -102,45 +102,84 @@ final class DNSResolver: NSObject {
         
         // Await ready state
         try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, Error>) in
+            var hasResumed = false
+            func resume(_ result: Result<Void, Error>) {
+                guard !hasResumed else { return }
+                hasResumed = true
+                connection.stateUpdateHandler = nil
+                switch result {
+                case .success:
+                    cont.resume()
+                case .failure(let error):
+                    cont.resume(throwing: error)
+                }
+            }
+
             connection.stateUpdateHandler = { state in
                 switch state {
                 case .ready:
-                    cont.resume()
+                    resume(.success(()))
                 case .failed(let error):
-                    cont.resume(throwing: DNSError.resolverFailed(error.localizedDescription))
+                    resume(.failure(DNSError.resolverFailed(error.localizedDescription)))
                 case .cancelled:
-                    cont.resume(throwing: DNSError.cancelled)
+                    resume(.failure(DNSError.cancelled))
                 default:
                     break
                 }
             }
+
             connection.start(queue: .global(qos: .userInitiated))
         }
         
         // Send content
         try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, Error>) in
+            var hasResumed = false
+            func resume(_ result: Result<Void, Error>) {
+                guard !hasResumed else { return }
+                hasResumed = true
+                switch result {
+                case .success:
+                    cont.resume()
+                case .failure(let error):
+                    cont.resume(throwing: error)
+                }
+            }
+
             connection.send(content: queryData, completion: .contentProcessed { error in
                 if let error = error {
-                    cont.resume(throwing: DNSError.queryFailed(error.localizedDescription))
+                    resume(.failure(DNSError.queryFailed(error.localizedDescription)))
                 } else {
-                    cont.resume()
+                    resume(.success(()))
                 }
             })
         }
         
         // Receive response
         let responseData: Data = try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Data, Error>) in
+            var hasResumed = false
+            func resume(_ result: Result<Data, Error>) {
+                guard !hasResumed else { return }
+                hasResumed = true
+                connection.stateUpdateHandler = nil
+                switch result {
+                case .success(let data):
+                    cont.resume(returning: data)
+                case .failure(let error):
+                    cont.resume(throwing: error)
+                }
+            }
+
             connection.receiveMessage { data, _, _, error in
                 connection.cancel()
                 if let error = error {
-                    cont.resume(throwing: DNSError.queryFailed(error.localizedDescription))
+                    resume(.failure(DNSError.queryFailed(error.localizedDescription)))
                     return
                 }
                 guard let data = data, data.count >= 12 else {
-                    cont.resume(throwing: DNSError.noRecordsFound)
+                    resume(.failure(DNSError.noRecordsFound))
                     return
                 }
-                cont.resume(returning: data)
+                resume(.success(data))
             }
         }
 

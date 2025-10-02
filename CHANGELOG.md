@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Prevent native iOS DNS resolver crashes by ensuring UDP continuations only resume once and cleaning up connection handlers deterministically.
+- Replace deprecated `SafeAreaView` usages with `react-native-safe-area-context` wrappers across chat, onboarding, and glass components.
+- Remove the `react-native-bottom-tabs` dependency in favor of React Navigation's `createBottomTabNavigator`, eliminating the missing `RNNCTabView` native component error.
+
 ## [2.0.1] - 2025-01-20
 
 ### 🚨 CRITICAL SECURITY & STABILITY FIXES

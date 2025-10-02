@@ -1,7 +1,6 @@
 import React, { useEffect } from "react";
 import {
   StyleSheet,
-  SafeAreaView,
   useColorScheme,
   Alert,
   StatusBar,
@@ -9,6 +8,7 @@ import {
   KeyboardAvoidingView,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { MessageList } from "../../components/MessageList";
 import { ChatInput } from "../../components/ChatInput";
 import { useChat } from "../../context/ChatContext";

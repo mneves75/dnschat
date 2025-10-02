@@ -8,8 +8,6 @@ import React, {
   ReactNode,
 } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as Localization from "expo-localization";
-
 import {
   DEFAULT_SETTINGS,
   DNSMethodPreference,
@@ -26,6 +24,26 @@ import {
 import { AccessibilityConfig } from "./AccessibilityContext";
 import { DNSLogService } from "../services/dnsLogService";
 import { validateDNSServer } from "../services/dnsService";
+
+type ExpoLocale = {
+  languageTag?: string;
+  languageCode?: string;
+};
+
+function getLocalizationLocales(): ExpoLocale[] {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const localization = require("expo-localization") as {
+      getLocales?: () => ExpoLocale[];
+    };
+    return localization.getLocales?.() ?? [];
+  } catch (error) {
+    if (__DEV__) {
+      console.warn("expo-localization unavailable; falling back to default locale", error);
+    }
+    return [];
+  }
+}
 
 interface SettingsContextValue {
   dnsServer: string;
@@ -55,7 +73,7 @@ const SettingsContext = createContext<SettingsContextValue | undefined>(
 );
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
-  const localizationLocales = Localization.getLocales();
+  const localizationLocales = getLocalizationLocales();
   const defaultSystemLocale = resolveLocale(
     localizationLocales[0]?.languageTag ?? localizationLocales[0]?.languageCode,
   );
