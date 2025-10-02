@@ -4,7 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-React Native mobile app providing ChatGPT-like interface via DNS TXT queries. Features local storage, dark/light themes, and native DNS modules for iOS/Android.
+React Native mobile app providing ChatGPT-like interface via DNS TXT queries. Features production-grade AES-256-GCM encryption with iOS Keychain/Android Keystore, iOS 26+ Liquid Glass UI, native DNS modules with bounds-checked parsing, and comprehensive security hardening (v2.1.0+).
+
+**Current Version**: 2.0.1
+**Modernization Status**: 🔴 iOS 26 + Android Material You modernization planned (see MODERNIZATION_PLAN_iOS26_ANDROID.md)
+**Primary Documentation**: README.md, SECURITY.md, CHANGELOG.md, MODERNIZATION_PLAN_iOS26_ANDROID.md
 
 ## Core Commands
 
@@ -24,10 +28,14 @@ node test-dns.js "message"  # Test DNS functionality
 ## Architecture
 
 ### Tech Stack
-- **Framework**: React Native with Expo v53
+- **Framework**: React Native 0.81.1 with Expo SDK 54.0.0-preview.12 ⚠️ *Upgrade to 54.0.12 stable pending*
 - **Language**: TypeScript (strict mode)
-- **Navigation**: React Navigation v7
+- **Navigation**: Expo Router v6 with Native Tabs (file-based routing)
 - **Native Modules**: Custom DNS implementations (iOS Swift, Android Java)
+- **UI System**: iOS 26+ Liquid Glass with environmental adaptation + fallbacks
+- **State Management**: Zustand + React Context patterns
+- **Storage**: iOS Keychain/Android Keystore for encryption keys, AsyncStorage for encrypted data
+- **Security**: AES-256-GCM encryption, PBKDF2 key derivation, fail-fast crypto validation
 
 ### Key Services
 - **DNSService**: Multi-method DNS queries with fallback chain
@@ -42,11 +50,31 @@ node test-dns.js "message"  # Test DNS functionality
 4. DNS-over-HTTPS (Cloudflare)
 5. Mock service (development)
 
-## Critical Known Issues
+## Modernization Plan
 
-### P0 - iOS CheckedContinuation Crash
-**Location**: ios/DNSNative/DNSResolver.swift:91-132
-**Fix**: Add atomic flag to prevent double resume
+**Status**: 🔴 **AWAITING JOHN CARMACK'S REVIEW**
+
+A comprehensive iOS 26 + Android Material You modernization plan has been created. See [MODERNIZATION_PLAN_iOS26_ANDROID.md](MODERNIZATION_PLAN_iOS26_ANDROID.md) for full details.
+
+### Key Modernization Goals:
+1. **Expo SDK 54 Stable**: Upgrade from preview to 54.0.12 stable release
+2. **iOS 26 Liquid Glass**: Replace custom wrapper with official `expo-glass-effect`
+3. **Android Material You**: Full Material Design 3 integration with dynamic theming
+4. **Performance**: FlashList, remove console.logs, achieve 60fps
+5. **Accessibility**: WCAG 2.1 AA compliance + i18n (EN/PT/ES)
+
+### Timeline: 4-6 weeks (8 phases)
+- Week 1: Dependencies + iOS 26 Liquid Glass
+- Week 2: Android Material You + Screen redesigns
+- Week 3-4: Performance + Accessibility
+- Week 5: Testing & QA
+- Week 6: Documentation & Release
+
+## Critical Known Issues (FIXED in v2.0.1)
+
+### ✅ P0 - iOS CheckedContinuation Crash (FIXED)
+**Location**: ios/DNSNative/DNSResolver.swift:115-148
+**Fix**: Atomic flags prevent double resume in all code paths
 
 ### P1 - Cross-Platform Inconsistencies  
 **Issue**: Message sanitization differs between platforms
