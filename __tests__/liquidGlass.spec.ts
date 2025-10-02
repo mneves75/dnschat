@@ -11,22 +11,19 @@ describe("Liquid Glass Capabilities (iOS)", () => {
     expect(Platform.OS).toBe("ios");
   });
 
-  it("reports supported on iOS 26+", async () => {
+  it("reports supported on iOS 17+", async () => {
     jest.resetModules();
     jest.doMock("react-native-device-info", () => ({
       __esModule: true,
       default: {
-        getSystemVersion: jest.fn(async () => "26.1"),
-        getModel: jest.fn(async () => "iPhone17,1"),
+        getSystemVersion: jest.fn(async () => "17.1"),
+        getModel: jest.fn(async () => "iPhone15,4"),
       },
     }));
     const utils = await import("../src/utils/liquidGlass");
     const caps = await utils.getLiquidGlassCapabilities();
-    // Debug log to understand failure in CI
-    // eslint-disable-next-line no-console
-    console.log("DBG caps (26.1):", caps);
     expect(caps.isSupported).toBe(true);
-    expect(caps.apiLevel).toBe(261);
+    expect(caps.apiLevel).toBe(171);
     expect(caps.features.basicGlass).toBe(true);
     expect(caps.performance.tier).toBe("high");
   });
@@ -67,8 +64,8 @@ describe("Liquid Glass Capabilities (iOS)", () => {
     jest.doMock("react-native-device-info", () => ({
       __esModule: true,
       default: {
-        getSystemVersion: jest.fn(async () => "26.0"),
-        getModel: jest.fn(async () => "iPhone17,1"),
+        getSystemVersion: jest.fn(async () => "18.0"),
+        getModel: jest.fn(async () => "iPhone16,1"),
       },
     }));
     let utils = await import("../src/utils/liquidGlass");
@@ -88,8 +85,8 @@ describe("Liquid Glass Capabilities (iOS)", () => {
     utils = await import("../src/utils/liquidGlass");
     style = await utils.getOptimalGlassStyle();
     intensity = await utils.getRecommendedIntensity();
-    expect(style).toBe("systemThinMaterial");
-    expect(intensity).toBe("thin");
+    expect(style).toBe("systemMaterial");
+    expect(intensity).toBe("regular");
 
     jest.resetModules();
     jest.doMock("react-native-device-info", () => ({
@@ -130,8 +127,8 @@ describe("Liquid Glass Capabilities (iOS)", () => {
     jest.doMock("react-native-device-info", () => ({
       __esModule: true,
       default: {
-        getSystemVersion: jest.fn(async () => "26.0"),
-        getModel: jest.fn(async () => "iPhone17,1"),
+        getSystemVersion: jest.fn(async () => "17.0"),
+        getModel: jest.fn(async () => "iPhone15,3"),
       },
     }));
     let utils = await import("../src/utils/liquidGlass");

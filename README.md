@@ -11,14 +11,14 @@ A React Native mobile app that revolutionizes LLM interaction by using DNS TXT q
 ## ✨ Key Features
 
 - **🔒 Production-Hardened Security**: DNS injection protection, input validation, and server whitelisting (v2.0.1)
-- **🌟 iOS 26+ Liquid Glass**: Native UIGlassEffect with environmental adaptation and comprehensive fallbacks
+- **🌟 iOS 17+ Liquid Glass**: Native `.glassEffect()` design language with environmental adaptation and comprehensive fallbacks
 - **🌐 DNS-Based AI Chat**: Revolutionary LLM communication via DNS TXT queries
 - **📱 Cross-Platform**: Native iOS, Android, and Web support with platform-specific optimizations
 - **⚡ Native Bottom Tabs**: react-native-bottom-tabs with UITabBarController/BottomNavigationView primitives
 - **🚀 Native DNS Implementation**: Platform-optimized iOS Network Framework and Android DnsResolver
 - **🔄 Multi-Layer Fallback**: UDP → TCP → DNS-over-HTTPS → Mock service
 - **💾 Local Storage**: Persistent conversation history with AsyncStorage
-- **🎨 Modern Glass UI**: iOS 26 Liquid Glass design system with sensor-aware adaptation
+- **🎨 Modern Glass UI**: iOS 17+ Liquid Glass design system with sensor-aware adaptation
 - **⚙️ Advanced DNS Config**: Multiple DNS service options (ch.at, llm.pieter.com)
 - **📊 Real-Time Logging**: Comprehensive DNS query monitoring and debugging
 - **🔗 Deep Linking**: Direct message sending via custom URL schemes
@@ -35,7 +35,7 @@ A React Native mobile app that revolutionizes LLM interaction by using DNS TXT q
 ### **Navigation & UI**
 
 - **React Navigation v7** (Native Stack) + **react-native-bottom-tabs** (Native UITabBarController)
-- **iOS 26+ Liquid Glass**: Native `.glassEffect()` modifier with comprehensive fallback system
+- **iOS 17+ Liquid Glass**: Native `.glassEffect()` modifier with comprehensive fallback system
 - **React Native Safe Area Context** with gesture handler support
 - **Advanced Theme Support** (automatic light/dark switching with iOS system colors)
 
@@ -54,8 +54,8 @@ A React Native mobile app that revolutionizes LLM interaction by using DNS TXT q
 
 ### Prerequisites
 
-- Node.js 18+
-- iOS: Xcode 15+ and iOS 16+ device/simulator
+- Node.js 20+
+- iOS: Xcode 16+ and iOS 16+ device/simulator
 - Android: Java 17 and Android SDK
 
 ### Installation

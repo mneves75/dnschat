@@ -5,7 +5,7 @@
  * inspired by Evan Bacon's Glass UI demo and Apple's design system.
  *
  * @author DNSChat Team
- * @since 1.8.0 (iOS 26 Liquid Glass Support + Evan Bacon Glass UI)
+ * @since 1.8.0 (iOS 17 Liquid Glass Support + Evan Bacon Glass UI)
  */
 
 import React from "react";

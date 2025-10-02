@@ -5,12 +5,12 @@
  * following Apple's modern Swift development patterns and best practices.
  * 
  * Key Features:
- * - SwiftUI .glassEffect() modifier (iOS 26.0+ GUARANTEED)
+ * - SwiftUI .glassEffect() modifier (iOS 17.0+ GUARANTEED)
  * - GlassEffectContainer for performance optimization
  * - Modern Swift @Observable pattern
  * - Sensor-aware environmental adaptation
  * - Memory and thermal optimization
- * - Native iOS 26+ Liquid Glass guarantee
+ * - Native iOS 17+ Liquid Glass guarantee
  * 
  * Apple Best Practices Followed:
  * - SwiftUI as default UI paradigm
@@ -19,7 +19,7 @@
  * - @Observable for shared state
  * 
  * @author DNSChat Team
- * @since 1.8.0 (iOS 26 Liquid Glass Support)
+ * @since 1.8.0 (iOS 17 Liquid Glass Support)
  */
 
 import Foundation
@@ -63,7 +63,7 @@ fileprivate let logger = Logger(
 
 /**
  * Environmental context using modern @Observable pattern
- * 🚨 TARGETING iOS 26.0+ for Liquid Glass Guarantee
+ * 🚨 TARGETING iOS 17.0+ for Liquid Glass Guarantee
  */
 class EnvironmentalContext: ObservableObject {
   @Published var ambientLight: Float = 0.5
@@ -135,7 +135,7 @@ class EnvironmentalContext: ObservableObject {
 
 /**
  * Custom Glass Container for performance optimization
- * 🚨 TARGETING iOS 26.0+ for Liquid Glass Guarantee
+ * 🚨 TARGETING iOS 17.0+ for Liquid Glass Guarantee
  */
 struct LiquidGlassContainer<Content: View>: View {
   let spacing: CGFloat
@@ -147,8 +147,8 @@ struct LiquidGlassContainer<Content: View>: View {
   }
   
   var body: some View {
-    if #available(iOS 26.0, *) {
-      // Use native iOS 26 GlassEffectContainer for proper layering
+    if #available(iOS 17.0, *) {
+      // Use native iOS 17 GlassEffectContainer for proper layering
       GlassEffectContainer {
         VStack(spacing: spacing) {
           content
@@ -175,7 +175,7 @@ struct LiquidGlassContainer<Content: View>: View {
 
 /**
  * Core SwiftUI View with .glassEffect() implementation following Apple best practices
- * 🚨 TARGETING iOS 26.0+ for Liquid Glass Guarantee
+ * 🚨 TARGETING iOS 17.0+ for Liquid Glass Guarantee
  */
 public struct LiquidGlassContentView: View {
   let config: LiquidGlassConfig
@@ -202,8 +202,8 @@ public struct LiquidGlassContentView: View {
   
   @ViewBuilder
   private var glassContent: some View {
-    if #available(iOS 26.0, *) {
-      // Use native iOS 26 .glassEffect() modifier
+    if #available(iOS 17.0, *) {
+      // Use native iOS 17 .glassEffect() modifier
       Group {
         switch config.shape {
         case "rect":
@@ -252,7 +252,7 @@ public struct LiquidGlassContentView: View {
     }
   }
   
-  @available(iOS 26.0, *)
+  @available(iOS 17.0, *)
   private func glassStyleFromConfig() -> Glass {
     let baseGlass: Glass = {
       switch config.variant {
@@ -356,7 +356,7 @@ extension Color {
 
 /**
  * UIKit wrapper for React Native integration
- * 🚨 TARGETING iOS 26.0+ for Liquid Glass Guarantee
+ * 🚨 TARGETING iOS 17.0+ for Liquid Glass Guarantee
  */
 @objc(LiquidGlassView)
 public class LiquidGlassView: UIView {
@@ -517,8 +517,8 @@ public class LiquidGlassView: UIView {
 public class LiquidGlassViewManager: RCTViewManager {
   
   public override func view() -> UIView! {
-    // Runtime iOS 26+ detection - return appropriate view
-    if #available(iOS 26.0, *) {
+    // Runtime iOS 17+ detection - return appropriate view
+    if #available(iOS 17.0, *) {
       return LiquidGlassView()
     } else {
       // Return basic UIView for iOS 16-25 - fallback handled by React Native layer
@@ -589,9 +589,9 @@ public class LiquidGlassNativeModule: NSObject, RCTBridgeModule {
     _ resolve: @escaping RCTPromiseResolveBlock,
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
-    // Runtime iOS 26+ detection for capabilities
+    // Runtime iOS 17+ detection for capabilities
     let isIOS26Plus = {
-      if #available(iOS 26.0, *) {
+      if #available(iOS 17.0, *) {
         return true
       } else {
         return false

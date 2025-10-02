@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -34,7 +35,11 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import org.xbill.DNS.*;
+import org.xbill.DNS.Lookup;
+import org.xbill.DNS.Record;
+import org.xbill.DNS.SimpleResolver;
+import org.xbill.DNS.TXTRecord;
+import org.xbill.DNS.Type;
 
 public class DNSResolver {
     private static final String TAG = "DNSResolver";
@@ -166,9 +171,9 @@ public class DNSResolver {
                 
                 Record[] records = lookup.run();
                 
-                if (records == null || records.length == 0) {
-                    throw new DNSError(DNSError.Type.NO_RECORDS_FOUND, "No TXT records found in legacy query");
-                }
+                    if (records == null || records.length == 0) {
+                        throw new DNSError(DNSError.Type.NO_RECORDS_FOUND, "No TXT records found in legacy query");
+                    }
 
                 List<String> txtRecords = new ArrayList<>();
                 for (Record record : records) {
@@ -181,18 +186,18 @@ public class DNSResolver {
                     }
                 }
 
-                if (txtRecords.isEmpty()) {
-                    throw new DNSError(DNSError.Type.NO_RECORDS_FOUND, "No valid TXT records found in legacy query");
-                }
+                    if (txtRecords.isEmpty()) {
+                        throw new DNSError(DNSError.Type.NO_RECORDS_FOUND, "No valid TXT records found in legacy query");
+                    }
 
                 return txtRecords;
 
             } catch (DNSError e) {
                 Log.e(TAG, "DNS query failed", e);
-                throw e;  // Re-throw structured errors
+                throw wrap(e);  // Re-throw structured errors
             } catch (Exception e) {
                 Log.e(TAG, "DNS query failed", e);
-                throw new DNSError(DNSError.Type.QUERY_FAILED, "Legacy DNS query failed: " + e.getMessage(), e);
+                throw wrap(new DNSError(DNSError.Type.QUERY_FAILED, "Legacy DNS query failed: " + e.getMessage(), e));
             }
         }, executor);
     }
@@ -226,14 +231,14 @@ public class DNSResolver {
                 System.arraycopy(buffer, 0, response, 0, length);
 
                 List<String> txtRecords = parseDnsTxtResponse(response);
-                if (txtRecords.isEmpty()) {
-                    throw new DNSError(DNSError.Type.NO_RECORDS_FOUND, "No TXT records found in UDP response");
-                }
+                    if (txtRecords.isEmpty()) {
+                        throw new DNSError(DNSError.Type.NO_RECORDS_FOUND, "No TXT records found in UDP response");
+                    }
                 return txtRecords;
             } catch (DNSError e) {
-                throw e;  // Re-throw structured errors
+                throw wrap(e);  // Re-throw structured errors
             } catch (Exception e) {
-                throw new DNSError(DNSError.Type.QUERY_FAILED, "UDP DNS query failed: " + e.getMessage(), e);
+                throw wrap(new DNSError(DNSError.Type.QUERY_FAILED, "UDP DNS query failed: " + e.getMessage(), e));
             } finally {
                 if (socket != null) {
                     socket.close();
@@ -376,9 +381,9 @@ public class DNSResolver {
                 return parseDNSOverHTTPSResponse(response.toString());
                 
             } catch (DNSError e) {
-                throw e; // Re-throw structured errors
+                throw wrap(e); // Re-throw structured errors
             } catch (Exception e) {
-                throw new DNSError(DNSError.Type.QUERY_FAILED, "DNS-over-HTTPS query failed: " + e.getMessage(), e);
+                throw wrap(new DNSError(DNSError.Type.QUERY_FAILED, "DNS-over-HTTPS query failed: " + e.getMessage(), e));
             }
         }, executor);
     }
@@ -403,14 +408,14 @@ public class DNSResolver {
                     txtRecords.add(cleanData);
                 }
             }
-            
+
             if (txtRecords.isEmpty()) {
                 throw new DNSError(DNSError.Type.NO_RECORDS_FOUND, "No TXT records found in DNS-over-HTTPS response");
             }
-            
+
             Log.d(TAG, "📦 DNS-over-HTTPS: Found " + txtRecords.size() + " TXT records");
             return txtRecords;
-            
+
         } catch (Exception e) {
             throw new DNSError(DNSError.Type.QUERY_FAILED, "Failed to parse DNS-over-HTTPS response: " + e.getMessage(), e);
         }
@@ -422,6 +427,13 @@ public class DNSResolver {
             return connectivityManager.getActiveNetwork();
         }
         return null;
+    }
+
+    private CompletionException wrap(Throwable throwable) {
+        if (throwable instanceof CompletionException) {
+            return (CompletionException) throwable;
+        }
+        return new CompletionException(throwable);
     }
 
     private String sanitizeMessage(String message) {

@@ -5,7 +5,7 @@
  * glass UI components, showcasing all glass effects and interactions.
  *
  * @author DNSChat Team
- * @since 1.8.0 (iOS 26 Liquid Glass Support + Evan Bacon Glass UI)
+ * @since 1.8.0 (iOS 17 Liquid Glass Support + Evan Bacon Glass UI)
  */
 
 import React from "react";
@@ -505,7 +505,7 @@ export function GlassSettings() {
                 { color: isDark ? "#AEAEB2" : "#6D6D70" },
               ]}
             >
-              • Native DNS module with iOS 26 support
+              • Native DNS module with iOS 17 support
             </Text>
             <Text
               style={[

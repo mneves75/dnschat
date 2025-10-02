@@ -1,143 +1,76 @@
-# CLAUDE.md
+# Claude Agent Handbook
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+## Overview
+- **App**: DNSChat (React Native + Expo) with native DNS TXT transports.
+- **Package version**: `2.0.0` (run `npm run sync-versions` to sync with `CHANGELOG.md` `2.0.1` before shipping).
+- **Frontend stack**: Expo SDK 54 preview (`54.0.0-preview.12`), React Native 0.81.1, React 19, TypeScript strict mode.
+- **Navigation**: `@react-navigation` stack + `react-native-bottom-tabs`; no Expo Router usage.
+- **State**: Context providers in `src/context/` (`ChatContext`, `SettingsContext`, `OnboardingContext`, `AccessibilityContext`).
+- **Native modules**: `modules/dns-native` (Swift + Java) and `ios/LiquidGlassNative`.
+- **Design**: Liquid glass wrapper (native bridge on iOS 17+, CSS fallback otherwise) and Material-edge styling.
+- **Docs ownership**: Mobile Platform team (`@mvneves`) signs off on Apple/modernization docs.
 
-## Project Overview
+> **Canonical docs**: `README.md`, this file, `CHANGELOG.md`, `TECH_REVIEW.md` (architecture), `PLAN_MODERNIZATION.md` (roadmap).
 
-React Native mobile app providing ChatGPT-like interface via DNS TXT queries. Features production-grade AES-256-GCM encryption with iOS Keychain/Android Keystore, iOS 26+ Liquid Glass UI, native DNS modules with bounds-checked parsing, and comprehensive security hardening (v2.1.0+).
+## Setup
+1. **Prerequisites**
+   - Node.js 20.19.x LTS (Expo SDK 54 toolchain baseline). Install via asdf/nvm; verify with `node -v`. [¹]
+   - npm 9+ (ships with Node 20). Yarn is optional; repo uses `package-lock.json`.
+   - Watchman (macOS) for fast rebuilds: `brew install watchman`.
+   - Xcode 16.x + Command Line Tools for iOS builds; install Rosetta when prompts appear on Apple Silicon. [²]
+   - Android Studio Iguana with SDK Platform 35, build-tools 35.0.0, and Java 17 (install via `brew install openjdk@17`). [³]
 
-**Current Version**: 2.0.1
-**Modernization Status**: 🔴 iOS 26 + Android Material You modernization planned (see MODERNIZATION_PLAN_iOS26_ANDROID.md)
-**Primary Documentation**: README.md, SECURITY.md, CHANGELOG.md, MODERNIZATION_PLAN_iOS26_ANDROID.md
+2. **Bootstrap commands**
+   ```bash
+   npm install
+   npm run sync-versions:dry   # check version drift
+   npx expo-doctor             # validate expo project status
+   node test-dns-simple.js "hello"  # DNS smoke test
+   ```
 
-## Core Commands
+3. **Expo CLI usage**
+   - Start dev client: `npm start`
+   - Web preview: `npm run web`
+   - Verify CLI ≥11: `npx expo --version`; upgrade globally if required.
 
-```bash
-# Development
-npm start                # Start dev server
-npm run ios             # Build iOS (requires Java 17)
-npm run android         # Build Android (requires Java 17)
-npm run fix-pods        # Fix iOS CocoaPods issues
-npm run sync-versions   # Sync versions across platforms
-/changelog              # Generate changelog (in Claude Code)
+## Build & Release
+### Local workflows
+- **iOS**: `npm run ios`
+  - Invokes `expo run:ios`, regenerates native project in `ios/`, and runs `pod install` as needed.
+  - `ios/Podfile` forces classic architecture even though `app.json` sets `newArchEnabled: true`; flagged in modernization plan.
+- **Android**: `npm run android`
+  - Configures `JAVA_HOME` for Java 17.
+  - For Gradle-only builds, run `./android-java17.sh`, then `cd android && ./gradlew assembleDebug`.
 
-# Testing
-node test-dns.js "message"  # Test DNS functionality
-```
+### EAS pipelines (`eas.json`)
+- Profiles: `development` (dev client, simulator), `preview` (internal), `production` (store).
+- Production iOS profile enables dSYM exports and Hermes symbol uploads; ensure App Store Connect credentials are current before `eas build --profile production --platform ios`.
+- Tag releases (`git tag vX.Y.Z`) prior to running `eas build` so OTA updates map to git history.
 
-## Architecture
+### Store compliance reminders
+- App Store submissions must use the latest Xcode toolchain and include 1024×1024 icons starting April 29, 2025; new privacy updates (January 31, 2026) will require manifest updates—see plan. [²]
+- Google Play requires target API ≥35 for new uploads after August 31, 2025; plan upgrades to adjust Gradle ext values. [³]
 
-### Tech Stack
-- **Framework**: React Native 0.81.1 with Expo SDK 54.0.0-preview.12 ⚠️ *Upgrade to 54.0.12 stable pending*
-- **Language**: TypeScript (strict mode)
-- **Navigation**: Expo Router v6 with Native Tabs (file-based routing)
-- **Native Modules**: Custom DNS implementations (iOS Swift, Android Java)
-- **UI System**: iOS 26+ Liquid Glass with environmental adaptation + fallbacks
-- **State Management**: Zustand + React Context patterns
-- **Storage**: iOS Keychain/Android Keystore for encryption keys, AsyncStorage for encrypted data
-- **Security**: AES-256-GCM encryption, PBKDF2 key derivation, fail-fast crypto validation
+## Troubleshooting
+- **Version drift**: If `package.json`, `app.json`, or native project numbers differ from `CHANGELOG.md`, run `npm run sync-versions` (dry run first) to align marketing/build versions.
+- **CocoaPods errors**: `npm run fix-pods` cleans Pods and reinstalls; requires CocoaPods ≥1.15.
+- **Expo doctor warnings**:
+  - `newArchEnabled` mismatch stems from Podfile override—documented technical debt.
+  - Preview SDK: Current Expo SDK build is preview; restrict to dev/test until upgrading to 54 stable.
+- **DNS smoke test failure**: `node test-dns-simple.js` should return Cloudflare TXT payload. If `ECONNREFUSED`, check VPN/firewall and verify UDP port 53 access.
+- **Native module not found**: Ensure `pod install` (iOS) or Gradle sync (Android) completed; `modules/dns-native/index.ts` expects `RNDNSModule` registration.
 
-### Key Services
-- **DNSService**: Multi-method DNS queries with fallback chain
-- **StorageService**: AsyncStorage persistence  
-- **DNSLogService**: Query logging and debugging
-- **ChatContext**: Global state management
+## FAQ
+- **Navigation edits?** Stack + tabs live in `src/navigation/index.tsx`; screens in `src/navigation/screens/`.
+- **Where is persistent state handled?** AsyncStorage-backed services in `src/services/storageService.ts` and contexts in `src/context/`.
+- **Toggle mock DNS?** Settings screen flips `enableMockDNS`, persisted via `SettingsContext`.
+- **Stale references to Expo Router/Zustand?** Ignore—current stack uses React Navigation and React Context only.
+- **Liquid glass requirements?** Native bridge applies on iOS 17+; falls back elsewhere. See Apple Liquid Glass announcement for design language. [⁴]
 
-### DNS Query Methods (in order)
-1. Native DNS modules (iOS/Android optimized)
-2. UDP DNS (react-native-udp)
-3. TCP DNS (react-native-tcp-socket)
-4. DNS-over-HTTPS (Cloudflare)
-5. Mock service (development)
+---
+Updated: 2025-10-02.
 
-## Modernization Plan
-
-**Status**: 🔴 **AWAITING JOHN CARMACK'S REVIEW**
-
-A comprehensive iOS 26 + Android Material You modernization plan has been created. See [MODERNIZATION_PLAN_iOS26_ANDROID.md](MODERNIZATION_PLAN_iOS26_ANDROID.md) for full details.
-
-### Key Modernization Goals:
-1. **Expo SDK 54 Stable**: Upgrade from preview to 54.0.12 stable release
-2. **iOS 26 Liquid Glass**: Replace custom wrapper with official `expo-glass-effect`
-3. **Android Material You**: Full Material Design 3 integration with dynamic theming
-4. **Performance**: FlashList, remove console.logs, achieve 60fps
-5. **Accessibility**: WCAG 2.1 AA compliance + i18n (EN/PT/ES)
-
-### Timeline: 4-6 weeks (8 phases)
-- Week 1: Dependencies + iOS 26 Liquid Glass
-- Week 2: Android Material You + Screen redesigns
-- Week 3-4: Performance + Accessibility
-- Week 5: Testing & QA
-- Week 6: Documentation & Release
-
-## Critical Known Issues (FIXED in v2.0.1)
-
-### ✅ P0 - iOS CheckedContinuation Crash (FIXED)
-**Location**: ios/DNSNative/DNSResolver.swift:115-148
-**Fix**: Atomic flags prevent double resume in all code paths
-
-### P1 - Cross-Platform Inconsistencies  
-**Issue**: Message sanitization differs between platforms
-**Fix**: Standardize sanitization logic
-
-### P2 - Resource Leaks
-**Issue**: NWConnection not properly disposed on failure
-**Fix**: Ensure cleanup in all code paths
-
-## Development Guidelines
-
-### iOS Development
-- Requires CocoaPods: Run `npm run fix-pods` for issues
-- Native module in `ios/DNSNative/`
-- Uses Network.framework (iOS 14.0+)
-
-### Android Development  
-- **Requires Java 17**: Set via `npm run android`
-- Native module in `android/app/src/main/java/com/dnsnative/`
-- Uses DnsResolver API (API 29+) with dnsjava fallback
-
-### Version Management
-- CHANGELOG.md is source of truth
-- Run `npm run sync-versions` before builds
-- Updates package.json, app.json, iOS, and Android
-
-## Testing Checklist
-
-Before committing:
-1. Test on iOS simulator
-2. Test on Android emulator  
-3. Verify DNS queries work: `node test-dns.js "test"`
-4. Check native module registration
-5. Run version sync if needed
-
-## Common Issues & Fixes
-
-### iOS Build Failures
-```bash
-npm run fix-pods  # Cleans and reinstalls pods
-```
-
-### Native Module Not Found
-Verify DNSNative pod in ios/Podfile:
-```ruby
-pod 'DNSNative', :path => './DNSNative'
-```
-
-### Java Version Issues
-Use Java 17 for Android builds (automated in npm scripts)
-
-## Documentation Structure
-
-- `/docs/technical/` - Specifications and guides
-- `/docs/troubleshooting/` - Common issues
-- `/docs/architecture/` - System design
-- `CHANGELOG.md` - Release history
-
-## Important Notes
-
-- John Carmack reviews all code - maintain high quality
-- Update CHANGELOG.md for all changes
-- Follow KISS principle
-- Test thoroughly before releases
-- Native DNS is prioritized over network methods
-- You run in an environment where `ast-grep` is available; whenever a search requires syntax-aware or structural matching, default to `ast-grep --lang ruby -p '<pattern>'` (or set `--lang` appropriately) and avoid falling back to text-only tools like `rg` or `grep` unless I explicitly request a plain-text search.
+[¹]: https://docs.expo.dev/more/expo-cli/#system-requirements
+[²]: https://developer.apple.com/news/upcoming-requirements/
+[³]: https://support.google.com/googleplay/android-developer/answer/11926878
+[⁴]: https://www.apple.com/newsroom/2025/06/apple-introduces-a-delightful-and-elegant-new-software-design/

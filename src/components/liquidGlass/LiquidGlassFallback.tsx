@@ -2,7 +2,7 @@
  * Liquid Glass Fallback System
  *
  * Provides graceful degradation across all platforms with appropriate visual effects:
- * - iOS 26+: Full UIGlassEffect integration (via native module)
+ * - iOS 17+: Full UIGlassEffect integration (via native module)
  * - iOS 17-25: Enhanced blur with react-native-blur
  * - iOS 16: Basic blur fallback
  * - Android: Material Design 3 elevated surfaces
@@ -11,7 +11,7 @@
  * Performance-optimized with lazy loading and memoization.
  *
  * @author DNSChat Team
- * @since 1.8.0 (iOS 26 Liquid Glass Support)
+ * @since 1.8.0 (iOS 17 Liquid Glass Support)
  */
 
 import React, { useMemo, useCallback, useRef, useEffect } from "react";
@@ -43,16 +43,16 @@ export interface LiquidGlassProps {
   /** Glass intensity level */
   intensity?: GlassIntensity;
 
-  /** System glass style (iOS 26+ only) */
+  /** System glass style (iOS 17+ only) */
   style?: GlassStyle;
 
   /** Custom styling */
   containerStyle?: ViewStyle;
 
-  /** Enable sensor-aware adaptations (iOS 26+ only) */
+  /** Enable sensor-aware adaptations (iOS 17+ only) */
   sensorAware?: boolean;
 
-  /** Enable environmental adaptation (iOS 26+ only) */
+  /** Enable environmental adaptation (iOS 17+ only) */
   environmentalAdaptation?: boolean;
 
   /** Override platform detection for testing */
@@ -85,7 +85,7 @@ interface FallbackStrategy {
 // ==================================================================================
 
 /**
- * iOS 26+ Native UIGlassEffect Implementation
+ * iOS 17+ Native UIGlassEffect Implementation
  */
 const NativeGlassView: React.FC<LiquidGlassProps> = ({
   children,

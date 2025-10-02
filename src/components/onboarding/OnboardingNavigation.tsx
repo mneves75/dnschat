@@ -53,7 +53,12 @@ export function OnboardingNavigation({
     <View style={styles.container}>
       <View style={styles.leftSection}>
         {showSkip && !isLastStep && (
-          <TouchableOpacity onPress={handleSkip} style={styles.skipButton}>
+          <TouchableOpacity
+            onPress={handleSkip}
+            style={styles.skipButton}
+            testID="onboarding-skip"
+            accessibilityLabel="Skip onboarding"
+          >
             <Text
               style={[
                 styles.skipButtonText,
@@ -66,7 +71,12 @@ export function OnboardingNavigation({
         )}
 
         {showBack && !isFirstStep && (
-          <TouchableOpacity onPress={previousStep} style={styles.backButton}>
+          <TouchableOpacity
+            onPress={previousStep}
+            style={styles.backButton}
+            testID="onboarding-back"
+            accessibilityLabel="Go back"
+          >
             <Text
               style={[
                 styles.backButtonText,
@@ -85,6 +95,8 @@ export function OnboardingNavigation({
           styles.nextButton,
           isDark ? styles.darkNextButton : styles.lightNextButton,
         ]}
+        testID={isLastStep ? 'onboarding-finish' : 'onboarding-next'}
+        accessibilityLabel={isLastStep ? 'Finish onboarding' : 'Continue onboarding'}
       >
         <Text
           style={[

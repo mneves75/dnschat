@@ -1,7 +1,7 @@
 /**
- * iOS 26 Liquid Glass Detection and Capability Management
+ * iOS 17 Liquid Glass Detection and Capability Management
  *
- * This module provides comprehensive detection and capability management for iOS 26's
+ * This module provides comprehensive detection and capability management for iOS 17's
  * Liquid Glass design system. It implements a robust fallback strategy for cross-platform
  * compatibility while maximizing native iOS experience when available.
  *
@@ -12,7 +12,7 @@
  * - Type-safe: Full TypeScript coverage with strict typing
  *
  * @author DNSChat Team
- * @since 1.8.0 (iOS 26 Liquid Glass Support)
+ * @since 1.8.0 (iOS 17 Liquid Glass Support)
  */
 
 import { Platform } from "react-native";
@@ -29,7 +29,7 @@ export interface LiquidGlassCapabilities {
   /** Overall Liquid Glass support status */
   isSupported: boolean;
 
-  /** iOS API level (160 = iOS 16.0, 260 = iOS 26.0, etc.) */
+  /** iOS API level (160 = iOS 16.0, 170 = iOS 17.0, etc.) */
   apiLevel: number;
 
   /** Platform identification */
@@ -95,7 +95,7 @@ export type GlassIntensity =
   | "ultraThick";
 
 /**
- * Glass effect styles matching iOS 26 system materials
+ * Glass effect styles matching iOS 17 system materials
  */
 export type GlassStyle =
   | "systemMaterial"
@@ -217,7 +217,7 @@ class LiquidGlassDetector {
       const device = this._analyzeDevice(deviceFamily, apiLevel);
 
       const capabilities: LiquidGlassCapabilities = {
-        isSupported: apiLevel >= 260, // iOS 26.0+
+        isSupported: apiLevel >= 170, // iOS 17.0+
         apiLevel,
         platform: "ios",
         features,
@@ -244,7 +244,7 @@ class LiquidGlassDetector {
       const performance = this._analyzePerformance(apiLevel, deviceFamily);
       const device = this._analyzeDevice(deviceFamily, apiLevel);
       return {
-        isSupported: apiLevel >= 260,
+        isSupported: apiLevel >= 170,
         apiLevel,
         platform: "ios",
         features,
@@ -275,7 +275,7 @@ class LiquidGlassDetector {
       const minor = parseInt(parts[1] || "0", 10);
       if (Number.isNaN(major) || major <= 0) return 160;
       if (Number.isNaN(minor) || minor < 0) return major * 10;
-      // Convert to API level: iOS 16.0 = 160, iOS 26.1 = 261
+      // Convert to API level: iOS 16.0 = 160, iOS 17.1 = 261
       return major * 10 + minor;
     } catch {
       return 160;
@@ -306,8 +306,8 @@ class LiquidGlassDetector {
     apiLevel: number,
     deviceFamily: LiquidGlassCapabilities["device"]["family"],
   ): LiquidGlassCapabilities["features"] {
-    // iOS 26+ gets full Liquid Glass support
-    if (apiLevel >= 260) {
+    // iOS 17+ gets full Liquid Glass support
+    if (apiLevel >= 170) {
       return {
         basicGlass: true,
         sensorAware: true,
@@ -360,9 +360,9 @@ class LiquidGlassDetector {
     apiLevel: number,
     deviceFamily: LiquidGlassCapabilities["device"]["family"],
   ): LiquidGlassCapabilities["performance"] {
-    // High-end devices with iOS 26+
+    // High-end devices with iOS 17+
     if (
-      apiLevel >= 260 &&
+      apiLevel >= 170 &&
       (deviceFamily === "iPhone" ||
         deviceFamily === "iPad" ||
         deviceFamily === "Mac")
@@ -420,7 +420,7 @@ class LiquidGlassDetector {
     switch (deviceFamily) {
       case "iPhone":
         thermalGuidance = "moderate";
-        memoryProfile = apiLevel >= 260 ? "high" : "medium";
+        memoryProfile = apiLevel >= 170 ? "high" : "medium";
         break;
 
       case "iPad":

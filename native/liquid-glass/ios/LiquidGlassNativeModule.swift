@@ -6,29 +6,29 @@ class LiquidGlassNativeModule: NSObject {
   @objc static func requiresMainQueueSetup() -> Bool { false }
 
   @objc func getCapabilities(_ resolve: RCTPromiseResolveBlock, rejecter reject: RCTPromiseRejectBlock) {
-    let is26: Bool
-    if #available(iOS 26.0, *) { is26 = true } else { is26 = false }
+    let is17: Bool
+    if #available(iOS 17.0, *) { is17 = true } else { is17 = false }
     let result: [String: Any] = [
-      "isSupported": is26,
+      "isSupported": is17,
       "platform": "ios",
       "features": [
-        "basicGlass": is26,
-        "sensorAware": is26,
-        "depthContainers": is26,
-        "environmentalCues": is26,
+        "basicGlass": is17,
+        "sensorAware": is17,
+        "depthContainers": is17,
+        "environmentalCues": is17,
         "hapticsIntegration": true,
-        "dynamicIntensity": is26
+        "dynamicIntensity": is17
       ],
       "performance": [
-        "tier": is26 ? "high" : "low",
-        "maxGlassElements": is26 ? 50 : 5,
+        "tier": is17 ? "high" : "low",
+        "maxGlassElements": is17 ? 50 : 5,
         "supports60fps": true,
         "metalAcceleration": true
       ],
       "device": [
         "family": UIDevice.current.userInterfaceIdiom == .pad ? "iPad" : "iPhone",
         "thermalGuidance": "moderate",
-        "memoryProfile": is26 ? "high" : "medium"
+        "memoryProfile": is17 ? "high" : "medium"
       ]
     ]
     resolve(result)
@@ -55,4 +55,3 @@ class LiquidGlassNativeModule: NSObject {
     ])
   }
 }
-
