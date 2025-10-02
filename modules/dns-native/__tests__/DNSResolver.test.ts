@@ -124,6 +124,29 @@ describe("Native DNS Module", () => {
       await expect(testDNS.queryTXT("ch.at", "   ")).rejects.toThrow(DNSError);
     });
 
+    it("parses plain TXT segments without numbering", () => {
+      const dns = new NativeDNS();
+      const result = dns.parseMultiPartResponse(["Hello ", "world", "! from DNS"]);
+      expect(result).toBe("Hello world! from DNS");
+    });
+
+    it("parses numbered multi-part TXT responses", () => {
+      const dns = new NativeDNS();
+      const result = dns.parseMultiPartResponse([
+        "2/3:from DNS.",
+        "1/3:Hello ",
+        "3/3: Enjoy!",
+      ]);
+      expect(result).toBe("Hello from DNS. Enjoy!");
+    });
+
+    it("throws on duplicate numbered parts", () => {
+      const dns = new NativeDNS();
+      expect(() =>
+        dns.parseMultiPartResponse(["1/2:Hello", "1/2:Duplicate", "2/2: world"]),
+      ).toThrow('Conflicting content for part 1');
+    });
+
     it("should handle native module unavailable", async () => {
       // Create DNS instance without native module
       const dnsWithoutNative = new (class extends NativeDNS {
@@ -225,7 +248,7 @@ describe("Native DNS Module", () => {
         "Another regular response",
       ];
       const result = testDNS.parseMultiPartResponse(txtRecords);
-      expect(result).toBe("Regular response without part format");
+      expect(result).toBe("Regular response without part formatAnother regular response");
     });
   });
 

@@ -1,4 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { LOGGING_CONSTANTS } from '../constants/appConstants';
 
 export interface DNSLogEntry {
   id: string;
@@ -24,12 +25,38 @@ export interface DNSQueryLog {
 }
 
 const STORAGE_KEY = "@dns_query_logs";
-const MAX_LOGS = 100;
+const MAX_LOGS = LOGGING_CONSTANTS.MAX_LOGS;
+const LOG_RETENTION_DAYS = LOGGING_CONSTANTS.LOG_RETENTION_DAYS;
+const STORAGE_SIZE_WARNING_MB = LOGGING_CONSTANTS.STORAGE_SIZE_WARNING_MB;
 
 export class DNSLogService {
   private static currentQueryLog: DNSQueryLog | null = null;
   private static queryLogs: DNSQueryLog[] = [];
   private static listeners: Set<(logs: DNSQueryLog[]) => void> = new Set();
+  private static idCounter = 0;
+
+  /**
+   * Generate a truly unique ID using multiple sources of entropy
+   * Combines timestamp, performance counter, auto-incrementing counter, and random string
+   */
+  private static generateUniqueId(prefix: string): string {
+    const timestamp = Date.now();
+    const counter = ++this.idCounter;
+    const random = Math.random().toString(36).substr(2, 5);
+
+    // Platform-safe performance counter
+    let performance = 0;
+    try {
+      if (typeof globalThis.performance !== 'undefined' && globalThis.performance.now) {
+        performance = Math.floor(globalThis.performance.now() * 1000);
+      }
+    } catch {
+      // Fallback if performance API is not available
+      performance = Math.floor(Math.random() * 1000000);
+    }
+
+    return `${prefix}-${timestamp}-${performance}-${counter}-${random}`;
+  }
 
   static async initialize() {
     try {
@@ -50,6 +77,16 @@ export class DNSLogService {
       console.error("Failed to load DNS logs:", error);
       this.queryLogs = [];
     }
+
+    // Initialize cleanup scheduler after loading logs
+    await this.initializeCleanupScheduler();
+  }
+
+  /**
+   * Clean up all listeners to prevent memory leaks
+   */
+  static cleanupListeners(): void {
+    this.listeners.clear();
   }
 
   static startQuery(query: string): string {
@@ -64,7 +101,7 @@ export class DNSLogService {
     };
 
     this.addLog({
-      id: `${queryId}-start`,
+      id: this.generateUniqueId(`${queryId}-start`),
       timestamp: new Date(),
       message: `Starting DNS query: "${query}"`,
       method: "native",
@@ -85,7 +122,7 @@ export class DNSLogService {
     if (!this.currentQueryLog) return;
 
     const entry: DNSLogEntry = {
-      id: `${this.currentQueryLog.id}-${method}-${Date.now()}`,
+      id: this.generateUniqueId(`${this.currentQueryLog.id}-${method}-attempt`),
       timestamp: new Date(),
       message: `Attempting ${method.toUpperCase()} DNS query`,
       method,
@@ -104,7 +141,7 @@ export class DNSLogService {
     if (!this.currentQueryLog) return;
 
     const entry: DNSLogEntry = {
-      id: `${this.currentQueryLog.id}-${method}-success-${Date.now()}`,
+      id: this.generateUniqueId(`${this.currentQueryLog.id}-${method}-success`),
       timestamp: new Date(),
       message: `${method.toUpperCase()} query successful`,
       method,
@@ -124,7 +161,7 @@ export class DNSLogService {
     if (!this.currentQueryLog) return;
 
     const entry: DNSLogEntry = {
-      id: `${this.currentQueryLog.id}-${method}-failure-${Date.now()}`,
+      id: this.generateUniqueId(`${this.currentQueryLog.id}-${method}-failure`),
       timestamp: new Date(),
       message: `${method.toUpperCase()} query failed`,
       method,
@@ -143,7 +180,7 @@ export class DNSLogService {
     if (!this.currentQueryLog) return;
 
     const entry: DNSLogEntry = {
-      id: `${this.currentQueryLog.id}-fallback-${Date.now()}`,
+      id: this.generateUniqueId(`${this.currentQueryLog.id}-fallback`),
       timestamp: new Date(),
       message: `Falling back from ${fromMethod.toUpperCase()} to ${toMethod.toUpperCase()}`,
       method: fromMethod,
@@ -170,7 +207,7 @@ export class DNSLogService {
     this.currentQueryLog.response = response;
 
     const finalEntry: DNSLogEntry = {
-      id: `${this.currentQueryLog.id}-end`,
+      id: this.generateUniqueId(`${this.currentQueryLog.id}-end`),
       timestamp: new Date(),
       message: success
         ? `Query completed successfully via ${finalMethod?.toUpperCase()}`
@@ -195,12 +232,59 @@ export class DNSLogService {
     this.notifyListeners();
   }
 
+  static async recordSettingsEvent(message: string, details?: string) {
+    const timestamp = new Date();
+    const id = this.generateUniqueId("settings");
+
+    const entry: DNSLogEntry = {
+      id: this.generateUniqueId(`${id}-entry`),
+      timestamp,
+      message,
+      method: "native",
+      status: "success",
+      details,
+    };
+
+    const log: DNSQueryLog = {
+      id,
+      query: `[settings] ${message}`,
+      startTime: timestamp,
+      endTime: timestamp,
+      totalDuration: 0,
+      finalStatus: "success",
+      finalMethod: "native",
+      response: details,
+      entries: [entry],
+    };
+
+    this.queryLogs.unshift(log);
+    if (this.queryLogs.length > MAX_LOGS) {
+      this.queryLogs = this.queryLogs.slice(0, MAX_LOGS);
+    }
+
+    await this.saveLogs();
+    this.notifyListeners();
+  }
+
   static async saveLogs() {
     try {
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(this.queryLogs));
     } catch (error) {
       console.error("Failed to save DNS logs:", error);
     }
+  }
+
+  static async deleteLog(logId: string) {
+    const nextLogs = this.queryLogs.filter((log) => log.id !== logId);
+    if (nextLogs.length === this.queryLogs.length) {
+      return;
+    }
+    this.queryLogs = nextLogs;
+    if (this.currentQueryLog?.id === logId) {
+      this.currentQueryLog = null;
+    }
+    await this.saveLogs();
+    this.notifyListeners();
   }
 
   static getLogs(): DNSQueryLog[] {
@@ -228,6 +312,65 @@ export class DNSLogService {
   static subscribe(listener: (logs: DNSQueryLog[]) => void) {
     this.listeners.add(listener);
     return () => this.listeners.delete(listener);
+  }
+
+  /**
+   * Clean up old logs based on retention policy (30 days)
+   * PERFORMANCE FIX: Use more efficient cleanup with early termination
+   */
+  static async cleanupOldLogs(): Promise<void> {
+    const thirtyDaysAgo = new Date(Date.now() - LOG_RETENTION_DAYS * 24 * 60 * 60 * 1000);
+    const oldLogsCount = this.queryLogs.length;
+
+    // PERFORMANCE FIX: Use splice for in-place removal instead of filter
+    // This is more efficient for large arrays
+    let removedCount = 0;
+    for (let i = this.queryLogs.length - 1; i >= 0; i--) {
+      const logDate = new Date(this.queryLogs[i].startTime);
+      if (logDate <= thirtyDaysAgo) {
+        this.queryLogs.splice(i, 1);
+        removedCount++;
+      }
+    }
+
+    if (removedCount > 0) {
+      console.log(`🧹 Cleaned up ${removedCount} old DNS logs (older than ${LOG_RETENTION_DAYS} days)`);
+      await this.saveLogs();
+      this.notifyListeners();
+    }
+  }
+
+  /**
+   * Check storage size and warn if approaching limit
+   */
+  static async checkStorageSize(): Promise<number> {
+    try {
+      const logsJson = JSON.stringify(this.queryLogs);
+      const sizeInBytes = new Blob([logsJson]).size;
+      const sizeInMB = sizeInBytes / (1024 * 1024);
+
+      if (sizeInMB > STORAGE_SIZE_WARNING_MB) {
+        console.warn(`⚠️ DNS logs storage size (${sizeInMB.toFixed(2)}MB) exceeds warning threshold (${STORAGE_SIZE_WARNING_MB}MB)`);
+      }
+
+      return sizeInMB;
+    } catch (error) {
+      console.error("Failed to check storage size:", error);
+      return 0;
+    }
+  }
+
+  /**
+   * Initialize cleanup scheduler (call this on app startup)
+   */
+  static async initializeCleanupScheduler(): Promise<void> {
+    // Clean up old logs on startup
+    await this.cleanupOldLogs();
+
+    // Schedule periodic cleanup (daily)
+    setInterval(async () => {
+      await this.cleanupOldLogs();
+    }, LOGGING_CONSTANTS.CLEANUP_INTERVAL_MS);
   }
 
   private static notifyListeners() {

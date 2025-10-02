@@ -1,5 +1,12 @@
 import { NativeModules } from "react-native";
 
+const DEV_LOGGING = typeof __DEV__ !== "undefined" ? !!__DEV__ : false;
+const debugLog = (...args: unknown[]) => {
+  if (DEV_LOGGING) {
+    console.log(...args);
+  }
+};
+
 export interface DNSCapabilities {
   available: boolean;
   platform: "ios" | "android" | "web";
@@ -11,8 +18,8 @@ export interface DNSCapabilities {
 export interface NativeDNSModule {
   /**
    * Query TXT records from a DNS server
-   * @param domain - The domain to query (typically ignored, message is used instead)
-   * @param message - The message/query to send to the DNS server
+   * @param domain - DNS server hostname (e.g., 'ch.at')
+   * @param message - Fully qualified domain name to query (already sanitized)
    * @returns Promise resolving to array of TXT record strings
    */
   queryTXT(domain: string, message: string): Promise<string[]>;
@@ -45,21 +52,21 @@ export class DNSError extends Error {
   }
 }
 
-class NativeDNS implements NativeDNSModule {
+export class NativeDNS implements NativeDNSModule {
   private readonly nativeModule: NativeDNSModule | null;
   private capabilities: DNSCapabilities | null = null;
 
   constructor() {
     // Try to get the native module, but don't crash if it's not available
-    console.log("🔧 NativeDNS constructor called");
-    console.log("🔧 Available NativeModules keys:", Object.keys(NativeModules));
-    console.log("🔧 Looking for RNDNSModule...");
+    debugLog("🔧 NativeDNS constructor called");
+    debugLog("🔧 Available NativeModules keys:", Object.keys(NativeModules));
+    debugLog("🔧 Looking for RNDNSModule...");
 
     try {
       this.nativeModule = NativeModules.RNDNSModule as NativeDNSModule;
-      console.log("✅ RNDNSModule found:", !!this.nativeModule);
+      debugLog("✅ RNDNSModule found:", !!this.nativeModule);
       if (this.nativeModule) {
-        console.log("✅ RNDNSModule methods:", Object.keys(this.nativeModule));
+        debugLog("✅ RNDNSModule methods:", Object.keys(this.nativeModule));
       }
     } catch (error) {
       console.warn("❌ Native DNS module not available:", error);
@@ -187,7 +194,7 @@ class NativeDNS implements NativeDNSModule {
       );
     }
 
-    // Try to parse as multi-part response
+    const plainSegments: string[] = [];
     const parts: Array<{
       partNumber: number;
       totalParts: number;
@@ -195,38 +202,96 @@ class NativeDNS implements NativeDNSModule {
     }> = [];
 
     for (const record of txtRecords) {
-      const match = record.match(/^(\d+)\/(\d+):(.*)$/);
-      if (match) {
+      const rawValue = String(record ?? '');
+      const trimmedValue = rawValue.trim();
+      if (!trimmedValue) {
+        continue;
+      }
+
+      const match = rawValue.match(/^\s*(\d+)\/(\d+):(.*)$/);
+      if (match && match[1] && match[2] && match[3] !== undefined) {
         parts.push({
           partNumber: parseInt(match[1], 10),
           totalParts: parseInt(match[2], 10),
           content: match[3],
         });
       } else {
-        // If no multi-part format detected, treat as single response
-        return record;
+        plainSegments.push(rawValue);
       }
     }
 
-    if (parts.length === 0) {
-      // No multi-part format found, concatenate all records
-      return txtRecords.join(" ");
+    if (plainSegments.length > 0) {
+      const combined = plainSegments.join('');
+      if (!combined.trim()) {
+        throw new DNSError(
+          DNSErrorType.INVALID_RESPONSE,
+          'Received empty response',
+        );
+      }
+      return combined;
     }
 
-    // Sort parts by part number
-    parts.sort((a, b) => a.partNumber - b.partNumber);
-
-    // Validate we have all parts
-    const expectedTotal = parts[0]?.totalParts || 1;
-    if (parts.length !== expectedTotal) {
+    if (parts.length === 0) {
       throw new DNSError(
         DNSErrorType.INVALID_RESPONSE,
-        `Incomplete multi-part response: got ${parts.length} parts, expected ${expectedTotal}`,
+        'No TXT records to parse',
       );
     }
 
-    // Combine all parts
-    return parts.map((part) => part.content).join("");
+    const expectedTotal = parts[0]?.totalParts || 0;
+    const seen = new Map<number, string>();
+
+    for (const part of parts) {
+      if (part.totalParts !== expectedTotal) {
+        throw new DNSError(
+          DNSErrorType.INVALID_RESPONSE,
+          `Inconsistent total parts. Expected ${expectedTotal}, received ${part.totalParts}`,
+        );
+      }
+
+      const existingContent = seen.get(part.partNumber);
+      if (existingContent !== undefined) {
+        if (existingContent === part.content) {
+          // Harmless retransmission; skip duplicates with identical payloads
+          continue;
+        }
+
+        throw new DNSError(
+          DNSErrorType.INVALID_RESPONSE,
+          `Conflicting content for part ${part.partNumber}`,
+        );
+      }
+      seen.set(part.partNumber, part.content);
+    }
+
+    if (expectedTotal <= 0 || seen.size !== expectedTotal) {
+      throw new DNSError(
+        DNSErrorType.INVALID_RESPONSE,
+        `Incomplete multi-part response: got ${seen.size} parts, expected ${expectedTotal}`,
+      );
+    }
+
+    const ordered: string[] = [];
+    for (let i = 1; i <= expectedTotal; i += 1) {
+      const content = seen.get(i);
+      if (typeof content !== 'string') {
+        throw new DNSError(
+          DNSErrorType.INVALID_RESPONSE,
+          `Incomplete multi-part response: missing part ${i}`,
+        );
+      }
+      ordered.push(content);
+    }
+
+    const full = ordered.join('');
+    if (!full.trim()) {
+      throw new DNSError(
+        DNSErrorType.INVALID_RESPONSE,
+        'Received empty response',
+      );
+    }
+
+    return full;
   }
 
   /**
@@ -239,9 +304,3 @@ class NativeDNS implements NativeDNSModule {
 
 // Export singleton instance
 export const nativeDNS = new NativeDNS();
-
-// For testing and advanced usage
-export { NativeDNS };
-
-// Re-export the native module type for external use
-export type { NativeDNSModule };

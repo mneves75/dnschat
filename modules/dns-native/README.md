@@ -12,6 +12,33 @@ A high-performance, cross-platform native DNS TXT query module for React Native 
 - 🔄 **Multi-part Responses**: Automatic parsing of segmented DNS responses
 - 📱 **Mobile Optimized**: Handles network changes and app lifecycle
 
+## DNS Server Contract
+
+- The Go resolver at [`dns.go`](https://github.com/Deep-ai-inc/ch.at/blob/main/dns.go) is authoritative. Clients must emit dashed, lowercase labels that map `"hello world" → "hello-world"` and never rely on base32 for the primary TXT flow.
+- Messages are limited to **120 characters before sanitization**. After sanitization, the resulting DNS label must be ≤63 characters; otherwise the client surfaces an error.
+- The TypeScript layer composes the fully qualified domain (`<label>.ch.at`) and hands it to the native modules unchanged. iOS and Android validate the FQDN but no longer rewrite or append zones on-device.
+- TXT responses may span multiple 255-byte strings. The shared parser now concatenates plain segments in order and validates numbered `n/N:` sequences.
+- The server streams with a **4 second hard deadline** and trims responses to **500 characters**; clients should surface `... (incomplete)` when the server indicates truncation.
+- Duplicate numbered TXT segments produced by UDP retransmissions are accepted when their payload matches; conflicting duplicates trigger an error on all platforms.
+
+## Swift Xcode 26 Additional Docs
+
+Always look for Swift documentation updated at this Xcode 26 folder: `/Applications/Xcode.app/Contents/PlugIns/IDEIntelligenceChat.framework/Versions/A/Resources/AdditionalDocumentation`.
+
+# Guidelines for Modern Swift
+
+Whenever possible, favor Apple programming languages and frameworks or APIs that are already available on Apple devices. Whenever suggesting code, assume the user wants Swift unless they show or tell you they are interested in another language. Always prefer Swift, Objective-C, C, and C++ over alternatives.
+
+Pay close attention to the platform that the code targets. For example, if you see clues that the user is writing a Mac app, avoid suggesting iOS-only APIs.
+
+Refer to Apple platforms with their official names, like iOS, iPadOS, macOS, watchOS, and visionOS. Avoid mentioning specific products and instead use these platform names.
+
+In general, prefer the use of Swift Concurrency (async/await, actors, etc.) over tools like Dispatch or Combine, but if the user's code or words show you they may prefer something else, you should be flexible to this preference.
+
+## Modern Previews
+
+Instead of using the `PreviewProvider` protocol for new previews in SwiftUI, use the new `#Preview` macro.
+
 ## Installation
 
 This module is integrated into the ChatDNS app via an Expo config plugin. For standalone usage:
@@ -156,6 +183,8 @@ npm run test:watch
 # Coverage report
 npm run test:coverage
 ```
+
+> **Note:** The Jest config in this monorepo maps `react-native` to `../../__tests__/mocks/react-native.js`. If you consume `@dnschat/dns-native` elsewhere, provide an equivalent mock in your Jest setup.
 
 ### Manual Testing
 
