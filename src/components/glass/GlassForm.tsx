@@ -19,6 +19,7 @@ import {
   Platform,
   ViewStyle,
   TextStyle,
+  StyleProp,
 } from "react-native";
 import { LiquidGlassWrapper } from "../LiquidGlassWrapper";
 
@@ -32,7 +33,7 @@ interface GlassFormProps {
   /** Children form sections */
   children: React.ReactNode;
   /** Custom container style */
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
 }
 
 interface GlassFormSectionProps {
@@ -41,9 +42,9 @@ interface GlassFormSectionProps {
   /** Section footer text */
   footer?: string;
   /** Children form items */
-  children: React.ReactNode;
+  children?: React.ReactNode;
   /** Custom section style */
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
 }
 
 interface GlassFormItemProps {
@@ -56,7 +57,7 @@ interface GlassFormItemProps {
   /** Press handler */
   onPress?: () => void;
   /** Custom item style */
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
   /** Show chevron indicator */
   showChevron?: boolean;
   /** Disable haptic feedback */

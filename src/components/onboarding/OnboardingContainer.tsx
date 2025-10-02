@@ -1,19 +1,20 @@
 import React from "react";
 import {
   View,
+  Text,
   StyleSheet,
-  SafeAreaView,
   useColorScheme,
   Dimensions,
+  StatusBar,
 } from "react-native";
-import { StatusBar } from "react-native";
-import { useOnboarding } from "../../context/OnboardingContext";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { OnboardingProgress } from "./OnboardingProgress";
 import { WelcomeScreen } from "./screens/WelcomeScreen";
 import { DNSMagicScreen } from "./screens/DNSMagicScreen";
 import { NetworkSetupScreen } from "./screens/NetworkSetupScreen";
 import { FirstChatScreen } from "./screens/FirstChatScreen";
 import { FeaturesScreen } from "./screens/FeaturesScreen";
+import { useOnboarding } from "../../context/OnboardingContext";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 

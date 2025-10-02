@@ -3,7 +3,6 @@ import {
   View,
   FlatList,
   StyleSheet,
-  SafeAreaView,
   useColorScheme,
   Text,
   TouchableOpacity,
@@ -11,6 +10,7 @@ import {
   StatusBar,
   ListRenderItemInfo,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { ChatListItem } from "../../components/ChatListItem";
 import { useChat } from "../../context/ChatContext";

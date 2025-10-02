@@ -1,15 +1,13 @@
-import React, { useState } from "react";
+import React from "react";
 import { HeaderButton, Text } from "@react-navigation/elements";
 import {
   createStaticNavigation,
   StaticParamList,
 } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { Image, Platform, useColorScheme } from "react-native";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { Image, useColorScheme } from "react-native";
 import { useTheme } from "@react-navigation/native";
-import TabView, { SceneMap } from "react-native-bottom-tabs";
-import type { BaseRoute } from "react-native-bottom-tabs";
-import { LiquidGlassNavBar } from "../components/LiquidGlassWrapper";
 
 // Import newspaper icon properly for Metro bundler
 const newspaper = require("../assets/newspaper.png");
@@ -35,69 +33,68 @@ function SettingsHeaderButton({ onPress }: { onPress: () => void }) {
   );
 }
 
-type TabRoute = BaseRoute & {
-  key: "ChatList" | "Logs" | "About" | "DevLogs";
-  title: string;
-  focusedIcon: any;
-  unfocusedIcon: any;
-};
+const Tab = createBottomTabNavigator();
 
 function HomeTabs() {
-  const [index, setIndex] = useState(0);
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
 
-  const routes: TabRoute[] = [
-    {
-      key: "ChatList",
-      title: "DNS Chat",
-      focusedIcon: newspaper,
-      unfocusedIcon: newspaper,
-    },
-    {
-      key: "Logs",
-      title: "Logs",
-      focusedIcon: { sfSymbol: "list.bullet.rectangle" },
-      unfocusedIcon: { sfSymbol: "list.bullet.rectangle" },
-    },
-    {
-      key: "About",
-      title: "About",
-      focusedIcon: { sfSymbol: "info.circle" },
-      unfocusedIcon: { sfSymbol: "info.circle" },
-    },
-  ];
-
-  if (typeof __DEV__ !== "undefined" && __DEV__) {
-    routes.push({
-      key: "DevLogs",
-      title: "Dev Logs",
-      focusedIcon: { sfSymbol: "wrench.and.screwdriver" },
-      unfocusedIcon: { sfSymbol: "wrench.and.screwdriver" },
-    });
-  }
-
-  const renderScene = SceneMap({
-    ChatList: GlassChatList,
-    Logs: Logs,
-    About: About,
-    DevLogs: DevLogs,
-  });
+  const showDevLogs = typeof __DEV__ !== "undefined" && __DEV__;
 
   return (
-    <TabView
-      navigationState={{ index, routes }}
-      renderScene={renderScene}
-      onIndexChange={setIndex}
-      labeled={true}
-      hapticFeedbackEnabled={true}
-      tabBarActiveTintColor={isDark ? "#007AFF" : "#007AFF"}
-      tabBarInactiveTintColor={isDark ? "#8E8E93" : "#8E8E93"}
-      tabBarStyle={{
-        backgroundColor: isDark ? "#1C1C1E" : "#FFFFFF", // Fix: White background in light mode
-      }}
-      translucent={false}
-    />
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        headerShown: false,
+        tabBarActiveTintColor: "#007AFF",
+        tabBarInactiveTintColor: "#8E8E93",
+        tabBarStyle: {
+          backgroundColor: isDark ? "#1C1C1E" : "#FFFFFF",
+        },
+        tabBarIcon: ({ color = "#8E8E93", size = 24 }) => {
+          switch (route.name) {
+            case "ChatList":
+              return (
+                <Image
+                  source={newspaper}
+                  style={{ width: size, height: size, tintColor: color }}
+                  resizeMode="contain"
+                />
+              );
+            case "Logs":
+              return <LogsIcon size={size} color={color} />;
+            case "About":
+              return <InfoIcon size={size} color={color} />;
+            case "DevLogs":
+              return <LogsIcon size={size} color={color} />;
+            default:
+              return null;
+          }
+        },
+      })}
+    >
+      <Tab.Screen
+        name="ChatList"
+        component={GlassChatList}
+        options={{ title: "DNS Chat" }}
+      />
+      <Tab.Screen
+        name="Logs"
+        component={Logs}
+        options={{ title: "Logs" }}
+      />
+      <Tab.Screen
+        name="About"
+        component={About}
+        options={{ title: "About" }}
+      />
+      {showDevLogs ? (
+        <Tab.Screen
+          name="DevLogs"
+          component={DevLogs}
+          options={{ title: "Dev Logs" }}
+        />
+      ) : null}
+    </Tab.Navigator>
   );
 }
 

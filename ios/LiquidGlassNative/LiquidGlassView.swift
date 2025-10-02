@@ -140,32 +140,21 @@ class EnvironmentalContext: ObservableObject {
 struct LiquidGlassContainer<Content: View>: View {
   let spacing: CGFloat
   let content: Content
-  
+
   init(spacing: CGFloat, @ViewBuilder content: () -> Content) {
     self.spacing = spacing
     self.content = content()
   }
-  
+
   var body: some View {
-    if #available(iOS 17.0, *) {
-      // Use native iOS 17 GlassEffectContainer for proper layering
-      GlassEffectContainer {
-        VStack(spacing: spacing) {
-          content
-        }
-      }
-    } else {
-      // Fallback for iOS < 26
-      VStack(spacing: spacing) {
-        content
-      }
-      .background(
-        // Enhanced glass container background
-        RoundedRectangle(cornerRadius: 20)
-          .fill(Material.ultraThinMaterial)
-          .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 4)
-      )
+    VStack(spacing: spacing) {
+      content
     }
+    .background(
+      RoundedRectangle(cornerRadius: 20)
+        .fill(Material.ultraThinMaterial)
+        .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 4)
+    )
   }
 }
 
@@ -202,78 +191,24 @@ public struct LiquidGlassContentView: View {
   
   @ViewBuilder
   private var glassContent: some View {
-    if #available(iOS 17.0, *) {
-      // Use native iOS 17 .glassEffect() modifier
-      Group {
-        switch config.shape {
-        case "rect":
-          content
-            .glassEffect(glassStyleFromConfig(), in: Rectangle())
-        case "roundedRect":
-          content
-            .glassEffect(glassStyleFromConfig(), in: RoundedRectangle(cornerRadius: config.cornerRadius))
-        default: // "capsule"
-          content
-            .glassEffect(glassStyleFromConfig(), in: Capsule())
-        }
+    glassShapeView {
+      ZStack {
+        glassBackground
+        content
       }
-        .task {
-          if config.sensorAware {
-            await environmentalContext.startAdaptation()
-          }
-        }
-        .onDisappear {
-          if config.sensorAware {
-            environmentalContext.stopAdaptation()
-          }
-        }
-    } else {
-      // Fallback for iOS < 26
-      glassShapeView {
-        ZStack {
-          // Glass background effect
-          glassBackground
-            .background(Material.ultraThinMaterial)
-          
-          // Content overlay
-          content
-        }
+    }
+    .task {
+      if config.sensorAware {
+        await environmentalContext.startAdaptation()
       }
-      .task {
-        if config.sensorAware {
-          await environmentalContext.startAdaptation()
-        }
-      }
-      .onDisappear {
-        if config.sensorAware {
-          environmentalContext.stopAdaptation()
-        }
+    }
+    .onDisappear {
+      if config.sensorAware {
+        environmentalContext.stopAdaptation()
       }
     }
   }
-  
-  @available(iOS 17.0, *)
-  private func glassStyleFromConfig() -> Glass {
-    let baseGlass: Glass = {
-      switch config.variant {
-      case "prominent":
-        return .regular  // prominent uses regular with tint
-      case "interactive":
-        return config.isInteractive ? .regular.interactive() : .regular
-      default:
-        return .regular
-      }
-    }()
-    
-    // Apply interactive modifier if configured
-    if config.isInteractive && config.variant != "interactive" {
-      return baseGlass.interactive()
-    }
-    
-    return baseGlass
-  }
-  
-  
+
   private var glassBackground: some View {
     let baseMaterial: Material = {
       switch config.variant {
