@@ -60,6 +60,22 @@ npm audit --production
 
 **Baseline Metrics (Target vs Actual):**
 
+**Before Performance Testing:**
+- [ ] Verify React Native version matches baseline
+  ```bash
+  # Check current React Native version
+  npm list react-native
+  # Expected: react-native@0.81.4 (matches baseline from BASELINE_METRICS.md)
+
+  # If version changed since baseline:
+  # ⚠️ WARNING: Different RN version = invalid comparison
+  # Action required: Re-baseline all metrics with new RN version
+  ```
+- [ ] If React Native version changed → Re-baseline required:
+  - Document new baseline in `.modernization/BASELINE_METRICS.md`
+  - Update performance targets if needed
+  - Note: RN version changes can significantly impact TTI/FPS
+
 Run performance profiler on preview build:
 ```bash
 # Build preview profile
@@ -256,8 +272,35 @@ eas build --profile production --platform all
 - [ ] EAS build succeeds (no errors in logs)
 - [ ] iOS build includes dSYM files (for crash symbolication)
 - [ ] Android build targets API 35 (verify in build logs)
-- [ ] Source maps uploaded to Sentry (check Sentry → Settings → Releases)
 - [ ] Build size within limits (iOS <200 MB, Android <100 MB for OBB+APK)
+
+**Source Map Upload Verification:**
+- [ ] iOS dSYM uploaded to Sentry
+  ```bash
+  # Check Sentry release files
+  sentry-cli releases files <version> list
+  # Expected: main.jsbundle.map, *.js.map files
+  ```
+- [ ] Android source maps uploaded to Sentry
+  ```bash
+  # Check Android release files
+  sentry-cli releases files <version> list --project dnschat
+  # Expected: index.android.bundle.map
+  ```
+- [ ] Test crash symbolication (CRITICAL):
+  ```bash
+  # 1. Trigger test crash in preview build
+  # 2. Open Sentry issue
+  # 3. Verify stack trace shows:
+  #    ✅ Real source file names (e.g., src/services/DNSService.ts:45)
+  #    ✅ Original line numbers
+  #    ❌ NOT minified (e.g., index.android.bundle:1:45234)
+  ```
+- [ ] If source maps missing → Re-upload:
+  ```bash
+  # Upload source maps manually if EAS failed
+  sentry-cli sourcemaps upload --release <version> --dist 1 ./dist
+  ```
 
 ---
 

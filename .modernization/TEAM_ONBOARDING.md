@@ -36,6 +36,7 @@ Ensure you have the correct toolchain versions installed:
 | **Java** | 17 (for Android) | `brew install openjdk@17` |
 | **Watchman** | Latest | `brew install watchman` |
 | **EAS CLI** | Latest | `npm install -g eas-cli` |
+| **Sentry CLI** | Latest | `npm install -g @sentry/cli` or `brew install getsentry/tools/sentry-cli` |
 
 **Environment Setup:**
 
@@ -56,6 +57,12 @@ npx expo-doctor
 node test-dns-simple.js "hello"
 
 # Expected output: Successfully sent DNS TXT query
+
+# 5. Configure Sentry CLI (for source map verification)
+sentry-cli login
+# Or use auth token:
+# export SENTRY_AUTH_TOKEN=<your-token>
+# Get token from: https://sentry.io/settings/account/api/auth-tokens/
 ```
 
 ### First Build (iOS)
@@ -404,6 +411,7 @@ eas build --profile production --platform all
 eas submit --profile production --platform all
 
 # 6. Monitor Sentry after release
+# Note: Replace <org> with your Sentry organization slug (e.g., mneves75)
 open https://sentry.io/organizations/<org>/releases/2.0.3/
 ```
 

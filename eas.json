@@ -18,6 +18,11 @@
         "simulator": false,
         "includeDsym": true,
         "generateSourcemaps": true
+      },
+      "android": {
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleRelease",
+        "generateSourcemaps": true
       }
     },
     "e2e": {
@@ -54,6 +59,11 @@
           "DWARF_DSYM_FILE_NAME": "$(PRODUCT_NAME).app.dSYM",
           "DWARF_DSYM_FOLDER_PATH": "$(BUILT_PRODUCTS_DIR)"
         }
+      },
+      "android": {
+        "buildType": "aab",
+        "gradleCommand": ":app:bundleRelease",
+        "generateSourcemaps": true
       }
     }
   },

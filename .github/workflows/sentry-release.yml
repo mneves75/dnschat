@@ -87,7 +87,7 @@ jobs:
               "https://sentry.io/api/0/organizations/${{ secrets.SENTRY_ORG }}/releases/${{ steps.version.outputs.version }}/commits/" \
               -H "Authorization: Bearer ${{ secrets.SENTRY_AUTH_TOKEN }}" \
               -H "Content-Type: application/json" \
-              -d "{\"commit\": \"$COMMIT\", \"repository\": \"mneves75/dnschat\"}" \
+              -d "{\"commit\": \"$COMMIT\", \"repository\": \"${{ github.repository }}\"}" \
               || echo "Warning: Failed to associate commit $COMMIT"
           done
 

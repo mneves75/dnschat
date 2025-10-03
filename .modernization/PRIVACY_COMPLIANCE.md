@@ -187,6 +187,59 @@ Sentry.init({
 | `@react-navigation/native` | None | ✅ Safe |
 | `dns-packet`, `react-native-tcp-socket`, `react-native-udp` | None (networking only) | ✅ Safe |
 
+### SDK Privacy Manifests Verification
+
+**Apple Requirement (Spring 2024):**
+Third-party SDKs must also ship privacy manifests. Apps must include all SDK privacy manifests to avoid App Store rejection.
+
+**Verification Steps:**
+
+**1. Check if Sentry React Native has PrivacyInfo.xcprivacy:**
+```bash
+# Search for Sentry privacy manifest
+find node_modules/@sentry/react-native -name "PrivacyInfo.xcprivacy" -o -name "PrivacyManifest.xcprivacy"
+```
+
+**Expected:** Sentry SDK should include privacy manifest (check version ≥5.x)
+
+**2. Check all Expo modules for privacy manifests:**
+```bash
+# Search all node_modules for privacy manifests
+find node_modules -name "PrivacyInfo.xcprivacy" -o -name "PrivacyManifest.xcprivacy"
+```
+
+**3. Verify privacy manifests are included in Xcode project:**
+```bash
+# Check Xcode project includes privacy manifests
+grep -r "PrivacyInfo.xcprivacy" ios/DNSChat.xcodeproj/project.pbxproj
+```
+
+**4. Add missing SDK privacy manifests to Xcode:**
+```
+1. Open Xcode → DNSChat.xcworkspace
+2. Right-click DNSChat folder → Add Files to "DNSChat"
+3. Navigate to node_modules/@sentry/react-native (or other SDK)
+4. Select PrivacyInfo.xcprivacy
+5. Check "Copy items if needed"
+6. Click "Add"
+7. Verify in Build Phases → Copy Bundle Resources
+```
+
+**5. Validate all privacy manifests:**
+```bash
+# Validate each privacy manifest
+find ios -name "PrivacyInfo.xcprivacy" -exec plutil -lint {} \;
+
+# Expected output: <file>: OK
+```
+
+**SDK Privacy Manifest Checklist:**
+- [ ] Sentry privacy manifest verified and included
+- [ ] Expo modules privacy manifests verified
+- [ ] All manifests added to Xcode project
+- [ ] All manifests pass plutil validation
+- [ ] Build succeeds with all manifests included
+
 **No tracking SDKs detected:**
 - ❌ No Google Analytics
 - ❌ No Facebook SDK

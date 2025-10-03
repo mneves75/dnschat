@@ -254,7 +254,23 @@ eas update:list --branch production
 # ID: def456, Message: "Release 2.0.2", Created: 2025-10-02 10:00
 ```
 
-**Step 2: Rollback to previous stable update:**
+**Step 2: VERIFY the update ID before rollback:**
+```bash
+# Inspect the update details to confirm it's the correct stable version
+eas update:view --update-id def456
+
+# Verify:
+# ✅ Message: "Release 2.0.2" (NOT the buggy 2.0.3)
+# ✅ Created date: Before the incident (e.g., 2025-10-02 10:00)
+# ✅ No associated errors in Sentry for this update ID
+
+# Check Sentry for this version (optional but recommended)
+# Note: Replace <org> with your Sentry organization slug (e.g., mneves75)
+open https://sentry.io/organizations/<org>/releases/2.0.2/
+# Confirm: Crash-free sessions >99.5%, no critical errors
+```
+
+**Step 3: Execute rollback:**
 ```bash
 # Publish previous stable update (def456) as new update
 eas update:republish --update-id def456 --branch production --message "Rollback: Revert to 2.0.2"
@@ -264,7 +280,7 @@ git checkout v2.0.2
 eas update --branch production --message "Rollback: Revert to stable 2.0.2"
 ```
 
-**Step 3: Verify rollback:**
+**Step 4: Verify rollback:**
 - Check Sentry: Error rate should drop within 15 minutes
 - Test on device: Download latest update, verify functionality
 - Monitor: Watch for 1 hour to confirm stability
