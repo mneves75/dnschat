@@ -1,48 +1,41 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  DNSChat Privacy Manifest
+
+  Required by Apple for App Store submission (effective Jan 31, 2026)
+  Documents usage of required reason APIs per Apple's privacy guidelines
+
+  Reference: https://developer.apple.com/documentation/bundleresources/privacy_manifest_files
+-->
 <plist version="1.0">
 <dict>
+	<!-- App Privacy Configuration -->
+	<key>NSPrivacyTracking</key>
+	<false/>
+
+	<!-- Tracking Domains (none - app does not track users) -->
+	<key>NSPrivacyTrackingDomains</key>
+	<array/>
+
+	<!-- Data Collection (none for tracking purposes) -->
+	<key>NSPrivacyCollectedDataTypes</key>
+	<array/>
+
+	<!-- Required Reason API Usage -->
 	<key>NSPrivacyAccessedAPITypes</key>
 	<array>
+		<!-- UserDefaults API (via AsyncStorage) -->
 		<dict>
 			<key>NSPrivacyAccessedAPIType</key>
 			<string>NSPrivacyAccessedAPICategoryUserDefaults</string>
+
 			<key>NSPrivacyAccessedAPITypeReasons</key>
 			<array>
+				<!-- CA92.1: Access info from same app, for app functionality -->
 				<string>CA92.1</string>
 			</array>
 		</dict>
-		<dict>
-			<key>NSPrivacyAccessedAPIType</key>
-			<string>NSPrivacyAccessedAPICategoryFileTimestamp</string>
-			<key>NSPrivacyAccessedAPITypeReasons</key>
-			<array>
-				<string>0A2A.1</string>
-				<string>3B52.1</string>
-				<string>C617.1</string>
-			</array>
-		</dict>
-		<dict>
-			<key>NSPrivacyAccessedAPIType</key>
-			<string>NSPrivacyAccessedAPICategoryDiskSpace</string>
-			<key>NSPrivacyAccessedAPITypeReasons</key>
-			<array>
-				<string>E174.1</string>
-				<string>85F4.1</string>
-			</array>
-		</dict>
-		<dict>
-			<key>NSPrivacyAccessedAPIType</key>
-			<string>NSPrivacyAccessedAPICategorySystemBootTime</string>
-			<key>NSPrivacyAccessedAPITypeReasons</key>
-			<array>
-				<string>35F9.1</string>
-			</array>
-		</dict>
 	</array>
-	<key>NSPrivacyCollectedDataTypes</key>
-	<array/>
-	<key>NSPrivacyTracking</key>
-	<false/>
 </dict>
 </plist>

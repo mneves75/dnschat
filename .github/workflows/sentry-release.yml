@@ -1,0 +1,111 @@
+name: Sentry Release Automation
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # Trigger on version tags (e.g., v2.0.1)
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., 2.0.1)'
+        required: true
+      environment:
+        description: 'Environment (production, preview, development)'
+        required: true
+        default: 'production'
+
+# Required secrets:
+# - SENTRY_AUTH_TOKEN: Sentry API token with releases:write scope
+# - SENTRY_ORG: Sentry organization slug
+# - SENTRY_PROJECT: Sentry project name
+
+jobs:
+  create-sentry-release:
+    name: Create Sentry Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for commit log
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            # Extract from git tag (strip 'v' prefix)
+            VERSION=${GITHUB_REF#refs/tags/v}
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Release version: $VERSION"
+
+      - name: Determine environment
+        id: env
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            ENV="${{ github.event.inputs.environment }}"
+          else
+            # Auto-detect based on tag pattern
+            if [[ "${{ steps.version.outputs.version }}" =~ beta|alpha|rc ]]; then
+              ENV="preview"
+            else
+              ENV="production"
+            fi
+          fi
+          echo "environment=$ENV" >> $GITHUB_OUTPUT
+          echo "Environment: $ENV"
+
+      - name: Create Sentry release
+        uses: getsentry/action-release@v1
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+        with:
+          environment: ${{ steps.env.outputs.environment }}
+          version: ${{ steps.version.outputs.version }}
+          ignore_missing: true  # Don't fail if some commits are missing
+
+      - name: Set release commits
+        run: |
+          # Get commits since last tag
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          if [ -z "$PREV_TAG" ]; then
+            COMMITS=$(git log --pretty=format:"%H" HEAD~10..HEAD)
+          else
+            COMMITS=$(git log --pretty=format:"%H" $PREV_TAG..HEAD)
+          fi
+
+          # Send commits to Sentry
+          echo "Associating commits with Sentry release..."
+          for COMMIT in $COMMITS; do
+            curl -X POST \
+              "https://sentry.io/api/0/organizations/${{ secrets.SENTRY_ORG }}/releases/${{ steps.version.outputs.version }}/commits/" \
+              -H "Authorization: Bearer ${{ secrets.SENTRY_AUTH_TOKEN }}" \
+              -H "Content-Type: application/json" \
+              -d "{\"commit\": \"$COMMIT\", \"repository\": \"mneves75/dnschat\"}" \
+              || echo "Warning: Failed to associate commit $COMMIT"
+          done
+
+      - name: Deploy release to environment
+        run: |
+          curl -X POST \
+            "https://sentry.io/api/0/organizations/${{ secrets.SENTRY_ORG }}/releases/${{ steps.version.outputs.version }}/deploys/" \
+            -H "Authorization: Bearer ${{ secrets.SENTRY_AUTH_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"environment\": \"${{ steps.env.outputs.environment }}\"}"
+
+      - name: Post summary
+        run: |
+          echo "## Sentry Release Created ✅" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** ${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** ${{ steps.env.outputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Organization:** ${{ secrets.SENTRY_ORG }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Project:** ${{ secrets.SENTRY_PROJECT }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "[View in Sentry](https://sentry.io/organizations/${{ secrets.SENTRY_ORG }}/releases/${{ steps.version.outputs.version }}/)" >> $GITHUB_STEP_SUMMARY
