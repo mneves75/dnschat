@@ -352,7 +352,7 @@ const styles = StyleSheet.create({
     opacity: 0.8,
   },
   lightSubtitle: {
-    color: "#666666",
+    color: "#4A4A4A",
   },
   darkSubtitle: {
     color: "#999999",
@@ -405,7 +405,7 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   lightTestDescription: {
-    color: "#666666",
+    color: "#4A4A4A",
   },
   darkTestDescription: {
     color: "#999999",
@@ -427,7 +427,7 @@ const styles = StyleSheet.create({
     opacity: 0.8,
   },
   lightLoadingText: {
-    color: "#666666",
+    color: "#4A4A4A",
   },
   darkLoadingText: {
     color: "#999999",

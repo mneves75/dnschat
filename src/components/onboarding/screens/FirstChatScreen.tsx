@@ -299,7 +299,7 @@ const styles = StyleSheet.create({
     opacity: 0.8,
   },
   lightSubtitle: {
-    color: "#666666",
+    color: "#4A4A4A",
   },
   darkSubtitle: {
     color: "#999999",
@@ -353,7 +353,7 @@ const styles = StyleSheet.create({
     opacity: 0.7,
     marginTop: 4,
     fontStyle: "italic",
-    color: "#666666",
+    color: "#4A4A4A",
   },
   suggestionsContainer: {
     marginTop: 20,
@@ -365,14 +365,14 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   lightSuggestionsTitle: {
-    color: "#666666",
+    color: "#4A4A4A",
   },
   darkSuggestionsTitle: {
     color: "#999999",
   },
   suggestionButton: {
     paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingVertical: 14, // ✅ Increased for 44pt minimum touch target (iOS HIG)
     borderRadius: 20,
     borderWidth: 1,
     alignSelf: "flex-start",

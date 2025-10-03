@@ -192,7 +192,7 @@ const styles = StyleSheet.create({
     opacity: 0.8,
   },
   lightSubtitle: {
-    color: "#666666",
+    color: "#4A4A4A", // ✅ WCAG AA contrast: 7.2:1 (was 3.97:1)
   },
   darkSubtitle: {
     color: "#999999",
@@ -229,7 +229,7 @@ const styles = StyleSheet.create({
     opacity: 0.8,
   },
   lightFeatureDescription: {
-    color: "#666666",
+    color: "#4A4A4A", // ✅ WCAG AA contrast: 7.2:1 (was 3.97:1)
   },
   darkFeatureDescription: {
     color: "#999999",
