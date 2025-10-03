@@ -20,6 +20,23 @@
         "generateSourcemaps": true
       }
     },
+    "e2e": {
+      "distribution": "internal",
+      "env": {
+        "DETOX_ENABLED": "true"
+      },
+      "ios": {
+        "buildConfiguration": "Release",
+        "simulator": true,
+        "includeDsym": true,
+        "resourceClass": "m-medium"
+      },
+      "android": {
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleRelease :app:assembleAndroidTest -DtestBuildType=release",
+        "resourceClass": "medium"
+      }
+    },
     "production": {
       "distribution": "store",
       "ios": {

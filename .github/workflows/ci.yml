@@ -65,13 +65,6 @@ jobs:
       - name: TypeScript type-check
         run: npx tsc --noEmit
 
-  # Placeholder for future jobs (Phase 4)
-  # test-e2e-ios:
-  #   name: E2E Tests (iOS)
-  #   runs-on: macos-latest
-  #   ...
-
-  # test-e2e-android:
-  #   name: E2E Tests (Android)
-  #   runs-on: ubuntu-latest
-  #   ...
+  # E2E tests run in separate workflow (.github/workflows/e2e-tests.yml)
+  # Triggered automatically for PRs and main/develop pushes
+  # Required to pass before merging (see branch protection rules)
