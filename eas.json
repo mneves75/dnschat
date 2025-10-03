@@ -65,5 +65,16 @@
         "appleTeamId": "N4BTRJM68S"
       }
     }
+  },
+  "update": {
+    "development": {
+      "channel": "development"
+    },
+    "preview": {
+      "channel": "preview"
+    },
+    "production": {
+      "channel": "production"
+    }
   }
 }
