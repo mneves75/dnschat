@@ -20,6 +20,8 @@ import {
   ViewStyle,
   TextStyle,
   StyleProp,
+  RefreshControl,
+  RefreshControlProps,
 } from "react-native";
 import { LiquidGlassWrapper } from "../LiquidGlassWrapper";
 
@@ -34,6 +36,8 @@ interface GlassFormProps {
   children: React.ReactNode;
   /** Custom container style */
   style?: StyleProp<ViewStyle>;
+  /** Pull-to-refresh control */
+  refreshControl?: React.ReactElement<RefreshControlProps>;
 }
 
 interface GlassFormSectionProps {
@@ -144,6 +148,7 @@ export const GlassForm: React.FC<GlassFormProps> = ({
   navigationTitle,
   children,
   style,
+  refreshControl,
 }) => {
   const colors = useGlassColors();
 
@@ -158,6 +163,7 @@ export const GlassForm: React.FC<GlassFormProps> = ({
         style={styles.scrollContainer}
         contentInsetAdjustmentBehavior="automatic"
         showsVerticalScrollIndicator={false}
+        refreshControl={refreshControl}
       >
         {navigationTitle && (
           <View style={styles.titleContainer}>

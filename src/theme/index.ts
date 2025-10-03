@@ -31,6 +31,7 @@
 export * from './colors';
 export * from './typography';
 export * from './spacing';
+export * from './animations';
 
 // ============================================================================
 // DEFAULT EXPORTS
@@ -39,6 +40,7 @@ export * from './spacing';
 export { default as COLORS } from './colors';
 export { default as TYPOGRAPHY } from './typography';
 export { default as SPACING } from './spacing';
+export { default as ANIMATIONS } from './animations';
 
 // ============================================================================
 // TYPE DEFINITIONS

@@ -6,16 +6,19 @@ import {
   useColorScheme,
   Pressable,
   Alert,
+  Linking,
 } from "react-native";
 import { format } from "date-fns";
 import Markdown from "react-native-markdown-display";
 import { Message } from "../types/chat";
+import { COLORS } from "../theme";
 
 interface MessageBubbleProps {
   message: Message;
+  onRetry?: (messageId: string) => void;
 }
 
-export function MessageBubble({ message }: MessageBubbleProps) {
+export function MessageBubble({ message, onRetry }: MessageBubbleProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
 
@@ -36,6 +39,12 @@ export function MessageBubble({ message }: MessageBubbleProps) {
     ]);
   };
 
+  const handleRetry = () => {
+    if (onRetry && hasError) {
+      onRetry(message.id);
+    }
+  };
+
   const bubbleStyles = [
     styles.bubble,
     isUser ? styles.userBubble : styles.assistantBubble,
@@ -52,6 +61,16 @@ export function MessageBubble({ message }: MessageBubbleProps) {
     hasError ? styles.errorText : {},
   ];
 
+  const handleLinkPress = (url: string) => {
+    Linking.canOpenURL(url).then((supported) => {
+      if (supported) {
+        Linking.openURL(url);
+      } else {
+        Alert.alert("Cannot open link", `Invalid URL: ${url}`);
+      }
+    });
+  };
+
   const markdownStyles = {
     body: {
       color: isDark
@@ -63,6 +82,24 @@ export function MessageBubble({ message }: MessageBubbleProps) {
           : "#000000",
       fontSize: 16,
       lineHeight: 20,
+    },
+    link: {
+      color: isUser
+        ? "#FFFFFF" // White links in user bubbles (blue background)
+        : COLORS.primary.blue, // iOS blue for assistant bubbles
+      textDecorationLine: "underline",
+      textDecorationColor: isUser
+        ? "rgba(255, 255, 255, 0.6)"
+        : COLORS.primary.blue,
+    },
+    textlink: {
+      color: isUser
+        ? "#FFFFFF"
+        : COLORS.primary.blue,
+      textDecorationLine: "underline",
+      textDecorationColor: isUser
+        ? "rgba(255, 255, 255, 0.6)"
+        : COLORS.primary.blue,
     },
     code_inline: {
       backgroundColor: isDark ? "#2C2C2E" : "#F2F2F7",
@@ -101,7 +138,9 @@ export function MessageBubble({ message }: MessageBubbleProps) {
         {isUser ? (
           <Text style={textStyles}>{message.content}</Text>
         ) : (
-          <Markdown style={markdownStyles}>{message.content}</Markdown>
+          <Markdown style={markdownStyles} onLinkPress={handleLinkPress}>
+            {message.content}
+          </Markdown>
         )}
 
         {isLoading && (
@@ -128,7 +167,20 @@ export function MessageBubble({ message }: MessageBubbleProps) {
             {format(message.timestamp, "HH:mm")}
           </Text>
 
-          {hasError && <Text style={styles.errorIndicator}>!</Text>}
+          {hasError && (
+            <Pressable
+              onPress={handleRetry}
+              style={styles.retryButton}
+              accessibilityLabel="Retry sending message"
+              accessibilityRole="button"
+              accessibilityHint="Tap to retry sending this message"
+            >
+              <View style={styles.retryButtonContent}>
+                <Text style={styles.retryIcon}>↻</Text>
+                <Text style={styles.retryText}>Retry</Text>
+              </View>
+            </Pressable>
+          )}
         </View>
       </Pressable>
     </View>
@@ -246,5 +298,28 @@ const styles = StyleSheet.create({
     fontSize: 16,
     opacity: 0.6,
     textAlign: "center",
+  },
+  retryButton: {
+    marginLeft: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    backgroundColor: COLORS.semantic.error.light,
+    borderRadius: 12,
+    minHeight: 24, // Touch target
+  },
+  retryButtonContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  retryIcon: {
+    fontSize: 14,
+    color: "#FFFFFF",
+    fontWeight: "600",
+  },
+  retryText: {
+    fontSize: 12,
+    color: "#FFFFFF",
+    fontWeight: "600",
   },
 });
