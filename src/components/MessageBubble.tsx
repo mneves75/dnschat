@@ -73,13 +73,17 @@ export function MessageBubble({ message }: MessageBubbleProps) {
       fontSize: 14,
     },
     code_block: {
-      backgroundColor: isDark ? "#1C1C1E" : "#F2F2F7",
+      backgroundColor: isDark ? "#0D0D0F" : "#E5E5EA", // ✅ Darker in dark mode for distinction
+      borderWidth: 1,
+      borderColor: isDark ? "#3A3A3C" : "#D1D1D6", // ✅ Add border for definition
       padding: 12,
       borderRadius: 8,
       marginVertical: 8,
     },
     fence: {
-      backgroundColor: isDark ? "#1C1C1E" : "#F2F2F7",
+      backgroundColor: isDark ? "#0D0D0F" : "#E5E5EA", // ✅ Darker in dark mode
+      borderWidth: 1,
+      borderColor: isDark ? "#3A3A3C" : "#D1D1D6", // ✅ Add border
       padding: 12,
       borderRadius: 8,
       marginVertical: 8,
@@ -158,12 +162,12 @@ const styles = StyleSheet.create({
   userBubble: {
     backgroundColor: "#007AFF", // Keep iMessage blue
     // User bubbles have slightly different shape
-    borderBottomRightRadius: 6, // iMessage tail effect
+    borderBottomRightRadius: 4, // ✅ More pronounced iMessage tail (was 6px)
   },
   assistantBubble: {
     backgroundColor: "#F0F0F0", // Lighter gray like iMessage
     // Assistant bubbles have tail on the left
-    borderBottomLeftRadius: 6, // iMessage tail effect
+    borderBottomLeftRadius: 4, // ✅ More pronounced iMessage tail (was 6px)
   },
   darkBubble: {
     // Base dark styling handled by specific bubble types
@@ -173,11 +177,11 @@ const styles = StyleSheet.create({
   },
   darkUserBubble: {
     backgroundColor: "#007AFF", // Keep same blue in dark mode
-    borderBottomRightRadius: 6, // iMessage tail effect
+    borderBottomRightRadius: 4, // ✅ More pronounced iMessage tail (was 6px)
   },
   darkAssistantBubble: {
     backgroundColor: "#2C2C2E", // Darker gray for dark mode
-    borderBottomLeftRadius: 6, // iMessage tail effect
+    borderBottomLeftRadius: 4, // ✅ More pronounced iMessage tail (was 6px)
   },
   errorBubble: {
     backgroundColor: "#FF3B30",

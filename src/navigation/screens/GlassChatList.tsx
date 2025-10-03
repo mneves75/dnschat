@@ -437,7 +437,7 @@ const styles = StyleSheet.create({
   },
   chatItemPressed: {
     backgroundColor: "rgba(255, 255, 255, 0.1)",
-    transform: [{ scale: 0.98 }],
+    transform: [{ scale: 0.96 }], // ✅ More noticeable feedback (Material Design standard)
   },
   chatItemContent: {
     flexDirection: "row",
