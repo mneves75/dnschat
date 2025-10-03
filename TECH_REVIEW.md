@@ -17,7 +17,7 @@
 | `react-native` | 0.81.4 | ✅ Current | Stable RN 0.81 line (Aug 2025). [2]
 | `react` / `react-dom` | 19.1.0 | ✅ | Matches RN 0.81 requirement with React Compiler enabled.
 | `@react-navigation/*` | ^7.0–7.1 | ✅ | Aligns with Navigation v7 docs; includes native-stack, elements, bottom-tabs.
-| `react-native-reanimated` | ~4.1.1 | ⚠️ | Requires Fabric on both platforms; Android OK, iOS Podfile still disables new arch.
+| `react-native-reanimated` | ~4.1.1 | ✅ | Requires Fabric on both platforms; Android + iOS now aligned (Podfile fixed Phase 2.1).
 | `react-native-screens` | ~4.16.0 | ✅ | Recommended for SDK 54; compatible with Fabric.
 | `react-native-worklets` | 0.5.1 | ✅ | Shared runtime for Reanimated 4.
 | `expo-dev-client` | ~6.0.13 | ✅ | Bundled with SDK 54.0.12. [1]
@@ -34,7 +34,7 @@ _Module: `modules/dns-native`_
   - `app.config.ts` enables Fabric/TurboModules, sets iOS deployment target 16, Android `compileSdk/targetSdk` 35, build tools 35.0.0, Kotlin 1.9.24, edge-to-edge plugin, Sentry hook.
   - `eas.json` defines `development` (Debug, simulator), `preview` (Release internal), `production` (store) profiles plus `submit` credentials.
 - **iOS**:
-  - Podfile autolinks Expo modules, injects custom pods (`LiquidGlassNative`, SDWebImage) and sets `ENV['RCT_NEW_ARCH_ENABLED'] = '0'`, effectively disabling Fabric despite Expo config.
+  - Podfile autolinks Expo modules, injects custom pods (`LiquidGlassNative`, SDWebImage) and explicitly enables Fabric via `ENV['RCT_NEW_ARCH_ENABLED'] = podfile_properties['newArchEnabled'] == 'true' ? '1' : '0'` (aligned with Expo config as of Phase 2.1).
   - Release builds enable dSYM export and Hermes symbol upload via `expo-build-properties` + EAS profile.
 - **Android**:
   - `android/app/build.gradle` pulls `compileSdk`/`targetSdk` from root ext (set to 35 by Expo plugin) and enables Hermes, edge-to-edge, TurboModules (`newArchEnabled=true`).
@@ -59,7 +59,7 @@ _Module: `modules/dns-native`_
 
 ## Compatibility notes & follow-ups
 
-1. **Fabric alignment** – Resolve iOS Podfile override so Fabric/TurboModules match Expo config when modernization plan schedules switch.
+1. **Fabric alignment** – ✅ **RESOLVED (Phase 2.1)** – iOS Podfile now explicitly aligns with `app.config.ts` and `Podfile.properties.json`. Both iOS and Android run Fabric. Native module integration tests pending user execution per `.modernization/FABRIC_TEST_PROCEDURE.md`.
 2. **Performance budgets** – Establish TTI and FPS targets post-Fabric; current guide highlights 60fps goal but lacks measurement.
 3. **E2E automation** – Add Detox or Maestro flows covering onboarding → chat send → settings transport test.
 4. **Android signing** – Release build currently uses debug keystore; ensure production keystore configured before store submission.
@@ -69,7 +69,7 @@ _Module: `modules/dns-native`_
 
 | Topic | Question | Proposed next step |
 | --- | --- | --- |
-| Fabric on iOS | When should we re-enable `RCT_NEW_ARCH_ENABLED` in Podfile? | Run stabilization sprint with native module regression tests; track in modernization Phase 3. |
+| ~~Fabric on iOS~~ | ~~When should we re-enable `RCT_NEW_ARCH_ENABLED` in Podfile?~~ | ✅ **RESOLVED (Phase 2.1)** – Podfile updated; `.modernization/FABRIC_DECISION.md` documents rollout plan. User must validate via test procedure before production. |
 | Crash analytics scope | Are Sentry release/environment tags wired through EAS build automation? | Confirm `SENTRY_*` secrets available in CI; add checklist to release template. |
 | DNS server allowlist | Should we expose configurable allowlist beyond `ch.at` + manual entries? | Review product requirements; add to modernization backlog if needed. |
 | Bundle size | No current automated measurement. | Integrate `expo export --dump-sourcemap` / `react-native-bundle-visualizer` in CI once budgets defined. |
