@@ -1,0 +1,77 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop, 'docs/**', 'feat/**', 'fix/**']
+  pull_request:
+    branches: [main, develop]
+
+# Cancel in-progress runs for the same workflow + branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-and-typecheck:
+    name: Lint & TypeCheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js from .nvmrc
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+
+      - name: Verify Node version
+        run: |
+          echo "Expected: 20.19.1"
+          echo "Actual: $(node --version)"
+          node --version | grep -q "v20.19" || (echo "❌ Wrong Node version" && exit 1)
+
+      - name: Verify npm version
+        run: |
+          echo "Required: ≥10.8.2"
+          echo "Actual: $(npm --version)"
+          npm --version | awk '{if ($1 < 10.8) exit 1}'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify dependency integrity
+        run: |
+          echo "Checking package-lock.json integrity..."
+          shasum -a 256 package-lock.json
+          # Future: compare against .modernization/package-lock-baseline.sha256
+
+      - name: Run Expo Doctor
+        run: npx expo-doctor || echo "⚠️  Expo Doctor found warnings (non-blocking)"
+
+      - name: Check version sync
+        run: npm run sync-versions:dry
+
+      # TODO: Add when linter is configured
+      # - name: Lint code
+      #   run: npm run lint
+
+      # TODO: Add when tests exist
+      # - name: Run unit tests
+      #   run: npm test
+
+      - name: TypeScript type-check
+        run: npx tsc --noEmit
+
+  # Placeholder for future jobs (Phase 4)
+  # test-e2e-ios:
+  #   name: E2E Tests (iOS)
+  #   runs-on: macos-latest
+  #   ...
+
+  # test-e2e-android:
+  #   name: E2E Tests (Android)
+  #   runs-on: ubuntu-latest
+  #   ...

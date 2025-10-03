@@ -2,11 +2,11 @@
 
 A React Native mobile app that revolutionizes LLM interaction by using DNS TXT queries for AI communication. Chat with AI models through DNS infrastructure for enhanced privacy and network resilience.
 
-[![React Native](https://img.shields.io/badge/React%20Native-0.81.1-blue.svg)](https://reactnative.dev/)
-[![Expo](https://img.shields.io/badge/Expo-54%20Preview-black.svg)](https://expo.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue.svg)](https://www.typescriptlang.org/)
-[![iOS](https://img.shields.io/badge/iOS-16%2B-lightgrey.svg)](https://developer.apple.com/ios/)
-[![Android](https://img.shields.io/badge/Android-API%2021%2B-green.svg)](https://developer.android.com/)
+[![React Native](https://img.shields.io/badge/React%20Native-0.81.4-blue.svg)](https://reactnative.dev/)
+[![Expo](https://img.shields.io/badge/Expo-54.0.12-black.svg)](https://expo.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)](https://www.typescriptlang.org/)
+[![iOS](https://img.shields.io/badge/iOS-17%2B-lightgrey.svg)](https://developer.apple.com/ios/)
+[![Android](https://img.shields.io/badge/Android-API%2035-green.svg)](https://developer.android.com/)
 
 ## ✨ Key Features
 
@@ -52,11 +52,14 @@ A React Native mobile app that revolutionizes LLM interaction by using DNS TXT q
 
 ## 🚀 Quick Start
 
+> **For detailed environment setup, see [SETUP.md](./SETUP.md)** (includes Node.js, Java 17, Xcode, Android Studio installation)
+
 ### Prerequisites
 
-- Node.js 20+
-- iOS: Xcode 16+ and iOS 16+ device/simulator
-- Android: Java 17 and Android SDK
+- **Node.js 20.19.1** (enforced via `.nvmrc` - use `nvm install && nvm use`)
+- **npm ≥10.8.2** (ships with Node 20.19.x)
+- **iOS:** Xcode 16+ and iOS 17+ device/simulator
+- **Android:** Java 17 and Android SDK Platform 35
 
 ### Installation
 
@@ -65,13 +68,14 @@ A React Native mobile app that revolutionizes LLM interaction by using DNS TXT q
 git clone https://github.com/mneves75/dnschat.git
 cd dnschat
 
+# Ensure correct Node version (if using nvm)
+nvm use  # reads .nvmrc
+
 # Install dependencies
 npm install
 
-# iOS build note
-# React Native is deprecating direct `pod install` usage. Prefer `npx expo run:ios`.
-# If you need to troubleshoot native deps:
-#   cd ios && pod install && cd ..
+# Verify environment
+npx expo-doctor
 
 # Start development server
 npm start
@@ -80,16 +84,17 @@ npm start
 ### Run on Device
 
 ```bash
-# iOS (requires Xcode)
+# iOS (requires Xcode 16+ on macOS)
 npm run ios
 
 # Android (requires Java 17)
 npm run android
 
-# Web
-# Web preview defaults to Mock DNS (DoH can’t reach ch.at custom TXT).
+# Web (experimental - uses Mock DNS)
 npm run web
 ```
+
+**Troubleshooting:** See [SETUP.md](./SETUP.md) for Java 17 setup, CocoaPods issues, and platform-specific guides.
 
 ## 💬 Usage
 
@@ -225,6 +230,16 @@ npm run clean-ios
 
 ## 📚 Documentation
 
+### Getting Started
+- **[SETUP.md](./SETUP.md)** - Complete environment setup (Node.js, Java, Xcode, Android Studio)
+- **[CLAUDE.md](./CLAUDE.md)** - Architecture overview and development workflows
+
+### Project Planning
+- **[PLAN_MODERNIZATION.md](./PLAN_MODERNIZATION.md)** - 6-phase modernization roadmap
+- **[OPEN_QUESTIONS.md](./OPEN_QUESTIONS.md)** - Decision points requiring resolution
+- **[TECH_REVIEW.md](./TECH_REVIEW.md)** - Technical deep-dives and findings
+
+### Reference (planned)
 - **[Installation Guide](./docs/INSTALL.md)** - Detailed setup instructions
 - **[Troubleshooting](./docs/TROUBLESHOOTING.md)** - Common issues and solutions
 - **[API Documentation](./docs/API.md)** - DNS service API reference
