@@ -209,7 +209,7 @@ const styles = StyleSheet.create({
   },
   timestamp: {
     fontSize: 11, // Slightly smaller like iMessage
-    opacity: 0.5, // More subtle
+    opacity: 0.7, // ✅ Higher opacity for better readability (WCAG compliance)
     marginTop: 2, // Small margin from bubble
   },
   darkTimestamp: {

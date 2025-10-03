@@ -7,6 +7,7 @@ import {
   Platform,
   KeyboardAvoidingView,
   View,
+  AccessibilityInfo,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MessageList } from "../../components/MessageList";
@@ -37,6 +38,8 @@ export function Chat() {
   useEffect(() => {
     // Show error alert when error occurs
     if (error) {
+      // ✅ Announce error to screen readers for accessibility
+      AccessibilityInfo.announceForAccessibility(`Error: ${error}`);
       Alert.alert("Error", error, [
         {
           text: "OK",
@@ -82,6 +85,7 @@ export function Chat() {
               sensorAware={true}
               enableContainer={true}
               style={styles.glassMessageArea}
+              accessible={false} // ✅ Decorative container, don't announce
             >
               <MessageList
                 messages={currentChat?.messages || []}
@@ -96,6 +100,7 @@ export function Chat() {
               isInteractive={true}
               tintColor={isDark ? "#007AFF" : "#007AFF"} // iOS system blue
               style={styles.glassInputArea}
+              accessible={false} // ✅ Decorative container, don't announce
             >
               <ChatInput
                 onSendMessage={handleSendMessage}
@@ -132,7 +137,7 @@ const styles = StyleSheet.create({
     backgroundColor: "transparent", // Transparent for glass effects
   },
   darkContainer: {
-    backgroundColor: "transparent", // Transparent for glass effects
+    backgroundColor: "#000000", // ✅ Solid background for proper glass layering
   },
   content: {
     flex: 1,

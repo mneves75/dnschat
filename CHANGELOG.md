@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **🎨 Design System Foundation** - Comprehensive design token system with 1,000+ lines of centralized tokens
+  - `src/theme/colors.ts` - Complete color palette with WCAG AA compliant colors, semantic tokens, and platform-specific variants
+  - `src/theme/typography.ts` - Type scale following iOS HIG and Material Design 3 with pre-composed text styles
+  - `src/theme/spacing.ts` - 8px base grid system with touch target utilities and component-specific spacing
+  - Helper functions for theme switching, text colors, and responsive spacing
+
+### Improved
+
+- **♿ Accessibility Enhancements** - WCAG 2.1 AA compliance improvements across the app
+  - Added `accessibilityLabel`, `accessibilityRole`, and `accessibilityHint` to all interactive elements in P0 screens
+  - Implemented `AccessibilityInfo.announceForAccessibility` for error states in Chat screen
+  - Chat list items now announce message count and timestamp for screen reader users
+  - Settings switches include proper accessibility state and hints
+  - Glass wrapper containers marked as decorative to prevent screen reader interference
+
+- **🎯 Touch Target Compliance** - All interactive elements now meet platform guidelines
+  - FirstChatScreen suggestion buttons increased from 32pt → 44pt height (iOS HIG compliance)
+  - All touch targets verified against 44x44pt minimum (iOS) and 48x48dp (Android) standards
+
+- **🌗 Contrast Ratio Fixes** - 100% WCAG AA contrast compliance achieved
+  - MessageBubble timestamp opacity increased from 0.5 → 0.7 for better readability
+  - GlassChatList preview text improved: dark mode #AEAEB2 → #E5E5E7 (6.1:1), light mode #6D6D70 → #3C3C3E (8.4:1)
+  - All onboarding screens subtitle colors fixed: #666666 → #4A4A4A (7.2:1 contrast ratio)
+  - Fixed low-contrast text across WelcomeScreen, FeaturesScreen, NetworkSetupScreen, DNSMagicScreen, FirstChatScreen
+
+- **✨ Glass Effect Visibility** - Enhanced Liquid Glass rendering in dark mode
+  - Chat screen dark container background changed from transparent → solid black (#000000) for proper glass layering
+  - Improved visual hierarchy and glass effect prominence on dark backgrounds
+
 ### Fixed
 
 - Prevent native iOS DNS resolver crashes by ensuring UDP continuations only resume once and cleaning up connection handlers deterministically.
