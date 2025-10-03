@@ -1,0 +1,226 @@
+{
+  "version": "2.0.1",
+  "name": "chat-dns",
+  "dependencies": {
+    "@babel/core": {
+      "version": "7.28.0",
+      "resolved": "https://registry.npmjs.org/@babel/core/-/core-7.28.0.tgz",
+      "overridden": false
+    },
+    "@expo/metro-runtime": {
+      "version": "6.1.2",
+      "resolved": "https://registry.npmjs.org/@expo/metro-runtime/-/metro-runtime-6.1.2.tgz",
+      "overridden": false
+    },
+    "@react-native-async-storage/async-storage": {
+      "version": "2.2.0",
+      "resolved": "https://registry.npmjs.org/@react-native-async-storage/async-storage/-/async-storage-2.2.0.tgz",
+      "overridden": false
+    },
+    "@react-navigation/bottom-tabs": {
+      "version": "7.4.5",
+      "resolved": "https://registry.npmjs.org/@react-navigation/bottom-tabs/-/bottom-tabs-7.4.5.tgz",
+      "overridden": false
+    },
+    "@react-navigation/elements": {
+      "version": "2.6.2",
+      "resolved": "https://registry.npmjs.org/@react-navigation/elements/-/elements-2.6.2.tgz",
+      "overridden": false
+    },
+    "@react-navigation/native-stack": {
+      "version": "7.3.24",
+      "resolved": "https://registry.npmjs.org/@react-navigation/native-stack/-/native-stack-7.3.24.tgz",
+      "overridden": false
+    },
+    "@react-navigation/native": {
+      "version": "7.1.17",
+      "resolved": "https://registry.npmjs.org/@react-navigation/native/-/native-7.1.17.tgz",
+      "overridden": false
+    },
+    "@sentry/react-native": {
+      "version": "7.1.0",
+      "resolved": "https://registry.npmjs.org/@sentry/react-native/-/react-native-7.1.0.tgz",
+      "overridden": false
+    },
+    "@types/detox": {
+      "version": "17.14.3",
+      "resolved": "https://registry.npmjs.org/@types/detox/-/detox-17.14.3.tgz",
+      "overridden": false
+    },
+    "@types/dns-packet": {
+      "version": "5.6.5",
+      "resolved": "https://registry.npmjs.org/@types/dns-packet/-/dns-packet-5.6.5.tgz",
+      "overridden": false
+    },
+    "@types/jest": {
+      "version": "29.5.14",
+      "resolved": "https://registry.npmjs.org/@types/jest/-/jest-29.5.14.tgz",
+      "overridden": false
+    },
+    "@types/react": {
+      "version": "19.1.12",
+      "resolved": "https://registry.npmjs.org/@types/react/-/react-19.1.12.tgz",
+      "overridden": false
+    },
+    "date-fns": {
+      "version": "4.1.0",
+      "resolved": "https://registry.npmjs.org/date-fns/-/date-fns-4.1.0.tgz",
+      "overridden": false
+    },
+    "detox": {
+      "version": "20.42.0",
+      "resolved": "https://registry.npmjs.org/detox/-/detox-20.42.0.tgz",
+      "overridden": false
+    },
+    "dns-packet": {
+      "version": "5.6.1",
+      "resolved": "https://registry.npmjs.org/dns-packet/-/dns-packet-5.6.1.tgz",
+      "overridden": false
+    },
+    "expo-asset": {
+      "version": "12.0.9",
+      "resolved": "https://registry.npmjs.org/expo-asset/-/expo-asset-12.0.9.tgz",
+      "overridden": false
+    },
+    "expo-build-properties": {
+      "version": "1.0.9",
+      "resolved": "https://registry.npmjs.org/expo-build-properties/-/expo-build-properties-1.0.9.tgz",
+      "overridden": false
+    },
+    "expo-dev-client": {
+      "version": "6.0.13",
+      "resolved": "https://registry.npmjs.org/expo-dev-client/-/expo-dev-client-6.0.13.tgz",
+      "overridden": false
+    },
+    "expo-localization": {
+      "version": "17.0.7",
+      "resolved": "https://registry.npmjs.org/expo-localization/-/expo-localization-17.0.7.tgz",
+      "overridden": false
+    },
+    "expo-splash-screen": {
+      "version": "31.0.10",
+      "resolved": "https://registry.npmjs.org/expo-splash-screen/-/expo-splash-screen-31.0.10.tgz",
+      "overridden": false
+    },
+    "expo-system-ui": {
+      "version": "6.0.7",
+      "resolved": "https://registry.npmjs.org/expo-system-ui/-/expo-system-ui-6.0.7.tgz",
+      "overridden": false
+    },
+    "expo": {
+      "version": "54.0.12",
+      "resolved": "https://registry.npmjs.org/expo/-/expo-54.0.12.tgz",
+      "overridden": false
+    },
+    "jest": {
+      "version": "29.7.0",
+      "resolved": "https://registry.npmjs.org/jest/-/jest-29.7.0.tgz",
+      "overridden": false
+    },
+    "playwright": {
+      "version": "1.55.0",
+      "resolved": "https://registry.npmjs.org/playwright/-/playwright-1.55.0.tgz",
+      "overridden": false
+    },
+    "react-dom": {
+      "version": "19.1.0",
+      "resolved": "https://registry.npmjs.org/react-dom/-/react-dom-19.1.0.tgz",
+      "overridden": false
+    },
+    "react-native-bottom-tabs": {
+      "version": "0.10.0",
+      "resolved": "https://registry.npmjs.org/react-native-bottom-tabs/-/react-native-bottom-tabs-0.10.0.tgz",
+      "overridden": false
+    },
+    "react-native-device-info": {
+      "version": "14.0.4",
+      "resolved": "https://registry.npmjs.org/react-native-device-info/-/react-native-device-info-14.0.4.tgz",
+      "overridden": false
+    },
+    "react-native-edge-to-edge": {
+      "version": "1.6.0",
+      "resolved": "https://registry.npmjs.org/react-native-edge-to-edge/-/react-native-edge-to-edge-1.6.0.tgz",
+      "overridden": false
+    },
+    "react-native-gesture-handler": {
+      "version": "2.28.0",
+      "resolved": "https://registry.npmjs.org/react-native-gesture-handler/-/react-native-gesture-handler-2.28.0.tgz",
+      "overridden": false
+    },
+    "react-native-markdown-display": {
+      "version": "7.0.2",
+      "resolved": "https://registry.npmjs.org/react-native-markdown-display/-/react-native-markdown-display-7.0.2.tgz",
+      "overridden": false
+    },
+    "react-native-reanimated": {
+      "version": "4.1.2",
+      "resolved": "https://registry.npmjs.org/react-native-reanimated/-/react-native-reanimated-4.1.2.tgz",
+      "overridden": false
+    },
+    "react-native-safe-area-context": {
+      "version": "5.6.1",
+      "resolved": "https://registry.npmjs.org/react-native-safe-area-context/-/react-native-safe-area-context-5.6.1.tgz",
+      "overridden": false
+    },
+    "react-native-screens": {
+      "version": "4.16.0",
+      "resolved": "https://registry.npmjs.org/react-native-screens/-/react-native-screens-4.16.0.tgz",
+      "overridden": false
+    },
+    "react-native-svg": {
+      "version": "15.12.1",
+      "resolved": "https://registry.npmjs.org/react-native-svg/-/react-native-svg-15.12.1.tgz",
+      "overridden": false
+    },
+    "react-native-tcp-socket": {
+      "version": "6.3.0",
+      "resolved": "https://registry.npmjs.org/react-native-tcp-socket/-/react-native-tcp-socket-6.3.0.tgz",
+      "overridden": false
+    },
+    "react-native-udp": {
+      "version": "4.1.7",
+      "resolved": "https://registry.npmjs.org/react-native-udp/-/react-native-udp-4.1.7.tgz",
+      "overridden": false
+    },
+    "react-native-uuid": {
+      "version": "2.0.3",
+      "resolved": "https://registry.npmjs.org/react-native-uuid/-/react-native-uuid-2.0.3.tgz",
+      "overridden": false
+    },
+    "react-native-web": {
+      "version": "0.21.1",
+      "resolved": "https://registry.npmjs.org/react-native-web/-/react-native-web-0.21.1.tgz",
+      "overridden": false
+    },
+    "react-native-worklets": {
+      "version": "0.5.1",
+      "resolved": "https://registry.npmjs.org/react-native-worklets/-/react-native-worklets-0.5.1.tgz",
+      "overridden": false
+    },
+    "react-native": {
+      "version": "0.81.4",
+      "resolved": "https://registry.npmjs.org/react-native/-/react-native-0.81.4.tgz",
+      "overridden": false
+    },
+    "react": {
+      "version": "19.1.0",
+      "resolved": "https://registry.npmjs.org/react/-/react-19.1.0.tgz",
+      "overridden": false
+    },
+    "ts-jest": {
+      "version": "29.4.1",
+      "resolved": "https://registry.npmjs.org/ts-jest/-/ts-jest-29.4.1.tgz",
+      "overridden": false
+    },
+    "ts-node": {
+      "version": "10.9.2",
+      "resolved": "https://registry.npmjs.org/ts-node/-/ts-node-10.9.2.tgz",
+      "overridden": false
+    },
+    "typescript": {
+      "version": "5.9.3",
+      "resolved": "https://registry.npmjs.org/typescript/-/typescript-5.9.3.tgz",
+      "overridden": false
+    }
+  }
+}

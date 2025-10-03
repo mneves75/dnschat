@@ -1,0 +1,21 @@
+{
+  "timestamp": "2025-10-03T06:34:30Z",
+  "version": "2.0.1",
+  "expo_sdk": "54.0.12",
+  "react_native": "0.81.4",
+  "note": "Baseline performance metrics - to be measured after Phase 3 instrumentation",
+  "metrics_to_capture": {
+    "app_launch_tti": "Time to Interactive (ms)",
+    "js_bundle_size": "Main bundle size (bytes)",
+    "hermes_startup": "Hermes engine startup time (ms)",
+    "fps_main_screen": "Frames per second on main chat screen",
+    "memory_footprint": "Peak memory usage (MB)",
+    "context_init_time": "React Context initialization time (ms)"
+  },
+  "current_observations": {
+    "architecture": "Paper (legacy) on iOS, Fabric on Android",
+    "fabric_enabled_app_config": true,
+    "fabric_enabled_podfile": false,
+    "note": "Architecture mismatch to be resolved in Phase 2"
+  }
+}
