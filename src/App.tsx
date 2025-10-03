@@ -16,12 +16,16 @@ import {
   useLiquidGlassCapabilities,
 } from "./components/LiquidGlassWrapper";
 import { DNSLogService } from "./services/dnsLogService";
+import { useTimeToInteractive, usePerformanceProfiler } from "./hooks/usePerformanceProfiler";
 
 Asset.loadAsync([...NavigationAssets, require("./assets/newspaper.png")]);
 
 SplashScreen.preventAutoHideAsync();
 
 function AppContent() {
+  usePerformanceProfiler('AppContent');
+  useTimeToInteractive();
+
   const colorScheme = useColorScheme();
   const { hasCompletedOnboarding, loading } = useOnboarding();
   const { isSupported: glassSupported } = useLiquidGlassCapabilities();
