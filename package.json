@@ -23,7 +23,12 @@
     "test": "jest --runInBand",
     "dns:harness": "ts-node scripts/run-dns-harness.ts",
     "detox:build:ios": "detox build --configuration ios.sim.release",
-    "detox:test:ios": "detox test --configuration ios.sim.release --headless"
+    "detox:test:ios": "detox test --configuration ios.sim.release --headless",
+    "detox:build:android": "detox build --configuration android.emu.release",
+    "detox:test:android": "detox test --configuration android.emu.release --headless",
+    "e2e:ios": "npm run detox:build:ios && npm run detox:test:ios",
+    "e2e:android": "npm run detox:build:android && npm run detox:test:android",
+    "e2e:all": "npm run e2e:ios && npm run e2e:android"
   },
   "dependencies": {
     "@expo/metro-runtime": "~6.1.2",
@@ -102,6 +107,14 @@
         },
         "binaryPath": "ios/build/Build/Products/Release-iphonesimulator/DNSChat.app",
         "build": "xcodebuild -workspace ios/DNSChat.xcworkspace -scheme DNSChat -configuration Release -sdk iphonesimulator -derivedDataPath ios/build"
+      },
+      "android.emu.release": {
+        "type": "android.emulator",
+        "device": {
+          "avdName": "Pixel_8_API_35"
+        },
+        "binaryPath": "android/app/build/outputs/apk/release/app-release.apk",
+        "build": "cd android && JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home ./gradlew assembleRelease assembleAndroidTest -DtestBuildType=release"
       }
     }
   }

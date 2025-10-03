@@ -201,6 +201,18 @@
 
 _Decisions will be moved here once resolved, with rationale and date._
 
+### **[Q4.1] E2E framework choice** - _Resolved 2025-10-03_
+**Decision:** Continue with Detox (do not migrate to Maestro)
+**Rationale:**
+- Existing investment: ~50% configured (jest, smoke test, scripts)
+- Native module testing critical: DNSChat relies on DNS TXT queries via native module
+- Team skill alignment: TypeScript/Jest familiar, no YAML learning curve
+- EAS Build compatibility: Official Expo + Detox documentation
+- Comprehensive testing: Can validate both UI flows AND native module internals
+**Weighted Score:** Detox 8.4/10 vs Maestro 5.3/10
+**Reference:** `.modernization/E2E_FRAMEWORK_DECISION.md`
+**Owner:** Phase 4 Team
+
 ### Example (template)
 **[Q1.1] Node.js version enforcement** - _Resolved 2025-10-XX_
 **Decision:** Flexible range `>=20.19.0 <21`
