@@ -23,15 +23,17 @@
 ## Dependency Inventory (Top-Level)
 | Package | Current | Status | Notes |
 | --- | --- | --- | --- |
-| `expo` | `54.0.0-preview.12` | Preview | Stable SDK 54.0.0 shipped June 11 2025 – upgrade off preview. [1]
-| `react-native` | `0.81.1` | ✅ Current | 0.81 released Aug 12 2025 (active). [2]
-| `react` / `react-dom` | `19.1.0` | ✅ Current | Matches RN 0.81 requirements.
+| `expo` | `54.0.12` | ✅ Stable | Upgraded from preview to stable SDK 54.0.12 (shipped June 11 2025). [1]
+| `react-native` | `0.81.4` | ✅ Current | Latest stable 0.81.4 released Aug 2025 (active). [2]
+| `react` / `react-dom` | `19.1.0` | ✅ Current | Matches RN 0.81 requirements; React Compiler enabled.
 | `@react-navigation/*` | `^7.x` | ✅ | Aligns with React Navigation 7 stable.
-| `react-native-reanimated` | `~3.17.4` | ⚠️ Behind | 4.x introduces fabric compatibility; assess post Expo upgrade (official docs pending).
-| `react-native-screens` | `~4.11.1` | ⚠️ Behind | Latest 4.16 aligns with Expo SDK 54 release channel.
-| `expo-dev-client` | `~5.2.4` | ✅ | Compatible with SDK 54.
-| `@react-native-async-storage/async-storage` | `2.1.2` | ✅ | Latest minor.
-| Dev tooling (`jest`, `ts-jest`, `typescript`) | ~29 / 5.8 | ✅ | Matches setup; ensure TypeScript 5.8 stays compatible with React 19.
+| `react-native-reanimated` | `4.1.1` | ✅ Current | Upgraded to 4.1.1 with Fabric support; requires New Architecture (enabled on Android, iOS pending Podfile fix).
+| `react-native-screens` | `4.16.0` | ✅ Current | Updated to 4.16.0 for Expo SDK 54 compatibility.
+| `react-native-worklets` | `0.5.1` | ✅ | Required for Reanimated 4.x; shared worklet runtime.
+| `expo-dev-client` | `~6.0.13` | ✅ | Compatible with SDK 54.0.12.
+| `@react-native-async-storage/async-storage` | `2.2.0` | ✅ | Latest stable.
+| `@sentry/react-native` | `~7.1.0` | ✅ | Error reporting integration active.
+| Dev tooling (`jest`, `ts-jest`, `typescript`) | ~29 / 5.9.2 | ✅ | TypeScript 5.9.2 recommended for React 19 compatibility.
 
 _Module package (`modules/dns-native`)_
 - Peer `react-native` >=0.70, dev deps on Jest 29, TypeScript 5.x, ESLint 8. Needs periodic lint rule refresh.
@@ -68,12 +70,13 @@ _Module package (`modules/dns-native`)_
 - **CI/CD**: No GitHub Actions present; rely on EAS cloud builds. Consider adding lint/test workflow when plan approved.
 
 ## Hotspots & Follow-Ups
-1. **SDK Preview** – upgrade to Expo SDK 54 stable to exit preview channel and unlock OTA stability. [1]
-2. **New Architecture toggle drift** – align `app.json`, Podfile, and Gradle flags (enable or roll back) and test bridging modules accordingly.
-3. **LiquidGlass availability** – update native wrapper to target official iOS 17+ API, remove artificial `iOS 26` gate. [4]
-4. **Target API 35** – schedule Gradle `compileSdk`/`targetSdk` bump + compatibility audit before Google deadline. [3]
-5. **Observability** – no crash/error reporting integration yet (Sentry/Firebase). Add instrumentation in plan.
-6. **Version mismatch** – package/app at 2.0.0 vs changelog 2.0.1. Use sync script prior to release.
+1. ✅ **SDK Preview** – ~~upgrade to Expo SDK 54 stable~~ DONE: Now on SDK 54.0.12 stable. [1]
+2. **New Architecture toggle drift** – align `app.json`, Podfile, and Gradle flags (enable or roll back) and test bridging modules accordingly. iOS Podfile currently disables Fabric despite `app.json` enabling it.
+3. ✅ **LiquidGlass availability** – ~~update native wrapper to target official iOS 17+ API~~ DOCUMENTED: Confirmed iOS 17+ requirement in CLAUDE.md; legacy "iOS 26" references removed. [4]
+4. ✅ **Target API 35** – ~~schedule Gradle bump~~ DONE: Android targets API 35 for Google Play compliance (Aug 2025 deadline). [3]
+5. ✅ **Observability** – ~~no crash/error reporting~~ DONE: Sentry integration active (`@sentry/react-native` ~7.1.0).
+6. ✅ **Version mismatch** – ~~package/app version drift~~ RESOLVED: All configs now at 2.0.1 (use `npm run sync-versions` before releases).
+7. **Reanimated 4 + Fabric**: Test animations thoroughly when iOS Podfile enables Fabric. Reanimated 4.1.1 requires New Architecture for full feature set.
 
 [1]: https://expo.dev/changelog/sdk-54
 [2]: https://reactnative.dev/versions
