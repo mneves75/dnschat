@@ -17,6 +17,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Improved
 
+- **💬 Chat Experience Refinements** - Enhanced messaging UI with iOS Messages-inspired improvements
+  - ChatInput background changed to solid colors for better visibility (light: #F2F2F7, dark: #1C1C1E)
+  - Send button icon updated from → to ↑ (iOS Messages standard)
+  - Character counter appears at 800+ characters (turns red at 1000 limit)
+  - Message bubble tails refined from 6px → 4px radius for more pronounced iMessage aesthetic
+  - Code blocks now include borders and darker backgrounds in dark mode (#0D0D0F) for better definition
+
+- **📱 Cross-Platform Glass Effects** - Enhanced Material Design fallback for Android and Web
+  - Android: Material Design elevation system (4dp for regular, 8dp for interactive elements)
+  - Web: CSS box-shadow with proper depth simulation
+  - Solid borders with proper opacity for non-iOS platforms
+  - Consistent visual hierarchy across all platforms
+
+- **✨ Animation Polish** - Refined interaction feedback
+  - Press state animations enhanced from 0.98 → 0.96 scale (Material Design standard)
+  - More noticeable tactile feedback on chat item interactions
+
 - **♿ Accessibility Enhancements** - WCAG 2.1 AA compliance improvements across the app
   - Added `accessibilityLabel`, `accessibilityRole`, and `accessibilityHint` to all interactive elements in P0 screens
   - Implemented `AccessibilityInfo.announceForAccessibility` for error states in Chat screen

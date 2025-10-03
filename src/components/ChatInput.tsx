@@ -76,6 +76,19 @@ export function ChatInput({
           accessibilityLabel="Chat message input"
         />
 
+        {/* ✅ Character counter when approaching limit */}
+        {message.length > 800 && (
+          <Text
+            style={[
+              styles.characterCounter,
+              isDark ? styles.darkCharacterCounter : styles.lightCharacterCounter,
+              message.length >= 1000 && styles.characterCounterLimit,
+            ]}
+          >
+            {message.length}/1000
+          </Text>
+        )}
+
         <TouchableOpacity
           style={[
             styles.sendButton,
@@ -96,7 +109,7 @@ export function ChatInput({
               isDark ? styles.darkSendButtonText : styles.lightSendButtonText,
             ]}
           >
-            {isLoading ? "..." : "→"}
+            {isLoading ? "●●●" : "↑"} {/* ✅ iOS Messages standard (upward arrow) */}
           </Text>
         </TouchableOpacity>
       </View>
@@ -133,13 +146,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   lightTextInput: {
-    backgroundColor: "rgba(242, 242, 247, 0.8)", // Semi-transparent for glass effect
-    borderColor: "rgba(229, 229, 234, 0.6)",
+    backgroundColor: "#F2F2F7", // ✅ Solid background for clarity (was 0.8 opacity)
+    borderColor: "#D1D1D6", // Solid border
     color: "#000000",
   },
   darkTextInput: {
-    backgroundColor: "rgba(28, 28, 30, 0.8)", // Semi-transparent for glass effect
-    borderColor: "rgba(56, 56, 58, 0.6)",
+    backgroundColor: "#1C1C1E", // ✅ Solid background for clarity (was 0.8 opacity)
+    borderColor: "#3A3A3C", // Solid border
     color: "#FFFFFF",
   },
   sendButton: {
@@ -176,5 +189,22 @@ const styles = StyleSheet.create({
   },
   lightSendButtonText: {
     // Light mode text colors handled by active/inactive states
+  },
+  characterCounter: {
+    position: "absolute",
+    top: -20,
+    right: 48,
+    fontSize: 11,
+    fontWeight: "500",
+  },
+  lightCharacterCounter: {
+    color: "#6D6D70",
+  },
+  darkCharacterCounter: {
+    color: "#AEAEB2",
+  },
+  characterCounterLimit: {
+    color: "#FF3B30", // Red when at limit
+    fontWeight: "600",
   },
 });
