@@ -30,6 +30,7 @@ import {
 import { TrashIcon } from "../../components/icons/TrashIcon";
 import { PlusIcon } from "../../components/icons/PlusIcon";
 import { formatDistanceToNow } from "date-fns";
+import { COLORS } from "../../theme";
 
 // ==================================================================================
 // TYPES
@@ -300,7 +301,19 @@ export function GlassChatList() {
   }, []);
 
   return (
-    <Form.List navigationTitle="DNS Chat" style={styles.container}>
+    <Form.List
+      navigationTitle="DNS Chat"
+      style={styles.container}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={handleRefresh}
+          tintColor={isDark ? COLORS.light.text.primary : COLORS.dark.text.primary}
+          colors={[COLORS.primary.blue]} // Android
+          progressBackgroundColor={isDark ? COLORS.dark.background.primary : COLORS.light.background.primary} // Android
+        />
+      }
+    >
       {/* New Chat Section */}
       <Form.Section title="Start New Conversation">
         <Form.Item

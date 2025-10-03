@@ -9,6 +9,7 @@ import {
   ListRenderItemInfo,
 } from "react-native";
 import { MessageBubble } from "./MessageBubble";
+import { TypingIndicator } from "./TypingIndicator";
 import { Message } from "../types/chat";
 
 interface MessageListProps {
@@ -16,6 +17,7 @@ interface MessageListProps {
   isLoading?: boolean;
   onRefresh?: () => void;
   isRefreshing?: boolean;
+  onRetryMessage?: (messageId: string) => void;
 }
 
 export function MessageList({
@@ -23,6 +25,7 @@ export function MessageList({
   isLoading = false,
   onRefresh,
   isRefreshing = false,
+  onRetryMessage,
 }: MessageListProps) {
   const flatListRef = useRef<FlatList<Message>>(null);
   const colorScheme = useColorScheme();
@@ -38,7 +41,7 @@ export function MessageList({
   }, [messages]);
 
   const renderMessage = ({ item }: ListRenderItemInfo<Message>) => {
-    return <MessageBubble message={item} />;
+    return <MessageBubble message={item} onRetry={onRetryMessage} />;
   };
 
   const keyExtractor = (item: Message) => item.id;
@@ -72,6 +75,11 @@ export function MessageList({
     />
   ) : undefined;
 
+  const renderFooterComponent = () => {
+    if (!isLoading) return null;
+    return <TypingIndicator />;
+  };
+
   return (
     <FlatList
       ref={flatListRef}
@@ -86,11 +94,12 @@ export function MessageList({
       showsVerticalScrollIndicator={false}
       onContentSizeChange={() => {
         // Auto-scroll to bottom when content size changes
-        if (messages.length > 0) {
+        if (messages.length > 0 || isLoading) {
           flatListRef.current?.scrollToEnd({ animated: false });
         }
       }}
       ListEmptyComponent={renderEmptyComponent}
+      ListFooterComponent={renderFooterComponent}
       refreshControl={refreshControl}
       keyboardShouldPersistTaps="handled"
       // Performance optimizations

@@ -58,6 +58,15 @@ export function Chat() {
     }
   };
 
+  const handleRetryMessage = async (messageId: string) => {
+    // Find the failed message
+    const failedMessage = currentChat?.messages.find((msg) => msg.id === messageId);
+    if (failedMessage && failedMessage.role === "user") {
+      // Resend the message content
+      await sendMessage(failedMessage.content);
+    }
+  };
+
   return (
     <SafeAreaView
       style={[
@@ -90,6 +99,7 @@ export function Chat() {
               <MessageList
                 messages={currentChat?.messages || []}
                 isLoading={isLoading}
+                onRetryMessage={handleRetryMessage}
               />
             </LiquidGlassWrapper>
 
@@ -115,6 +125,7 @@ export function Chat() {
             <MessageList
               messages={currentChat?.messages || []}
               isLoading={isLoading}
+              onRetryMessage={handleRetryMessage}
             />
 
             <ChatInput
