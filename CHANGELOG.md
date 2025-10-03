@@ -9,11 +9,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **🎨 Design System Foundation** - Comprehensive design token system with 1,000+ lines of centralized tokens
+- **🎨 Design System Foundation** - Comprehensive design token system with 1,400+ lines of centralized tokens
   - `src/theme/colors.ts` - Complete color palette with WCAG AA compliant colors, semantic tokens, and platform-specific variants
   - `src/theme/typography.ts` - Type scale following iOS HIG and Material Design 3 with pre-composed text styles
   - `src/theme/spacing.ts` - 8px base grid system with touch target utilities and component-specific spacing
-  - Helper functions for theme switching, text colors, and responsive spacing
+  - `src/theme/animations.ts` - Animation timing constants (instant to verySlow), easing curves (iOS/Material), presets (fade, slide, scale, loading), React Navigation transitions, and haptic feedback constants
+  - Helper functions for theme switching, text colors, responsive spacing, and animation configs
+
+- **💬 iOS Messages-Style Typing Indicator** - Animated loading state for AI responses
+  - `src/components/TypingIndicator.tsx` - Three-dot pulse animation with staggered timing
+  - Uses design system animation constants (ANIMATIONS.duration, ANIMATIONS.easing.ios)
+  - Automatically appears at message list bottom when AI is thinking
+  - Matches assistant bubble styling with proper glass effects and shadows
+
+- **🔄 Pull-to-Refresh on Chat List** - Native refresh gesture for chat reloading
+  - Pull down on GlassChatList to refresh conversations
+  - Theme-aware spinner colors (iOS tintColor, Android colors)
+  - Integrated with existing loadChats() functionality
+
+- **🔗 Markdown Link Styling** - iOS-style hyperlinks with proper contrast
+  - Links in assistant bubbles: iOS system blue (#007AFF) with underlines
+  - Links in user bubbles: White text for contrast against blue background
+  - Tappable with proper Linking.openURL() integration
+  - Uses theme color constants for consistency
 
 ### Improved
 
@@ -54,6 +72,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **✨ Glass Effect Visibility** - Enhanced Liquid Glass rendering in dark mode
   - Chat screen dark container background changed from transparent → solid black (#000000) for proper glass layering
   - Improved visual hierarchy and glass effect prominence on dark backgrounds
+
+- **🔄 Error State UI with Retry** - Failed messages now show actionable retry button
+  - Replaced static error indicator ("!") with pressable retry button
+  - Button shows "↻ Retry" with red background (COLORS.semantic.error.light)
+  - Tapping retry button resends the failed message
+  - Full accessibility support (accessibilityLabel, accessibilityRole, accessibilityHint)
+  - Integrated with existing sendMessage() flow for seamless retry
 
 ### Fixed
 
