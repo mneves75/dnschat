@@ -134,8 +134,28 @@ export const LiquidGlassWrapper: React.FC<LiquidGlassProps> = ({
   }, [cornerRadius, isDark, isInteractive, shape, tintColor, variant, isIOS]);
 
   if (!isIOS) {
-    // On non-iOS platforms we still render children to maintain layout.
-    return <View style={style} {...rest}>{children}</View>;
+    // ✅ Enhanced fallback for Android/Web with Material Design elevation
+    const fallbackStyle = [
+      {
+        backgroundColor: getVariantBackground(variant, isDark),
+        borderRadius: typeof cornerRadius === 'number' ? cornerRadius : 20,
+        ...Platform.select({
+          android: {
+            elevation: isInteractive ? 8 : 4, // Material Design elevation
+          },
+          web: {
+            boxShadow: isInteractive
+              ? '0 8px 16px rgba(0,0,0,0.15)'
+              : '0 2px 8px rgba(0,0,0,0.10)',
+          },
+          default: {},
+        }),
+        borderWidth: 1,
+        borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)',
+      },
+      style,
+    ];
+    return <View style={fallbackStyle} {...rest}>{children}</View>;
   }
 
   return (
