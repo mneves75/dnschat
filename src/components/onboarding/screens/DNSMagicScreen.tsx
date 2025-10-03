@@ -320,7 +320,7 @@ const styles = StyleSheet.create({
     opacity: 0.8,
   },
   lightSubtitle: {
-    color: "#666666",
+    color: "#4A4A4A",
   },
   darkSubtitle: {
     color: "#999999",
@@ -407,7 +407,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   lightResponseLabel: {
-    color: "#666666",
+    color: "#4A4A4A",
   },
   darkResponseLabel: {
     color: "#999999",

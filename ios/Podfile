@@ -87,6 +87,14 @@ target 'DNSChat' do
           config.build_settings['DEFINES_MODULE'] = 'YES'
         end
       end
+
+      # Ensure Hermes produces dSYM files in release archives
+      if target.name.include?('hermes')
+        target.build_configurations.each do |config|
+          config.build_settings['DEBUG_INFORMATION_FORMAT'] = 'dwarf-with-dsym'
+          config.build_settings['COPY_DSYM'] = 'YES'
+        end
+      end
     end
   end
 end

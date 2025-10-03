@@ -241,6 +241,10 @@ export function GlassSettings() {
                 onValueChange={updatePreferDnsOverHttps}
                 trackColor={{ false: "#767577", true: "#007AFF" }}
                 thumbColor={Platform.OS === "ios" ? undefined : "#f4f3f4"}
+                accessibilityLabel="Prefer DNS-over-HTTPS"
+                accessibilityRole="switch"
+                accessibilityState={{ checked: preferDnsOverHttps }}
+                accessibilityHint="Toggle to prefer secure HTTPS DNS queries"
               />
             }
           />
@@ -253,6 +257,10 @@ export function GlassSettings() {
                 onValueChange={handleToggleMockDNS}
                 trackColor={{ false: "#767577", true: "#007AFF" }}
                 thumbColor={Platform.OS === "ios" ? undefined : "#f4f3f4"}
+                accessibilityLabel="Enable Mock DNS"
+                accessibilityRole="switch"
+                accessibilityState={{ checked: enableMockDNS }}
+                accessibilityHint="Toggle to use mock DNS responses when real DNS fails"
               />
             }
           />
