@@ -1,0 +1,6 @@
+Light
+
+Dark
+
+Auto
+

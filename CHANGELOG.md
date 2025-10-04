@@ -33,6 +33,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Tappable with proper Linking.openURL() integration
   - Uses theme color constants for consistency
 
+- **📚 Documentation Reorganization** - Consolidated reference documentation structure
+  - `docs/docs_apple/` - Unified Apple platform documentation (Swift 6.2, SwiftUI, Liquid Glass, HIG, full API references)
+  - `docs/docs_expo_dev/` - Complete Expo SDK documentation snapshot (build, deploy, EAS, router, updates)
+  - `docs/docs_ai-sdk_dev/` - AI SDK documentation (Vercel AI SDK, GPT-5 specs, cookbook examples)
+  - Removed scattered `docs/apple/` and `docs/ios26/` directories for cleaner structure
+  - Aligns with modernization effort and provides comprehensive offline reference materials
+
 ### Improved
 
 - **💬 Chat Experience Refinements** - Enhanced messaging UI with iOS Messages-inspired improvements

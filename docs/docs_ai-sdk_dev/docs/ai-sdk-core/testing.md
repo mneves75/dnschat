@@ -1,0 +1,291 @@
+[AI SDK Core](/docs/ai-sdk-core)Testing
+
+Copy markdown
+
+# Testing
+
+Testing language models can be challenging, because they are non-deterministic
+and calling them is slow and expensive.
+
+To enable you to unit test your code that uses the AI SDK, the AI SDK Core
+includes mock providers and test helpers. You can import the following helpers
+from `ai/test`:
+
+  * `MockEmbeddingModelV2`: A mock embedding model using the [embedding model v2 specification](https://github.com/vercel/ai/blob/v5/packages/provider/src/embedding-model/v2/embedding-model-v2.ts).
+  * `MockLanguageModelV2`: A mock language model using the [language model v2 specification](https://github.com/vercel/ai/blob/v5/packages/provider/src/language-model/v2/language-model-v2.ts).
+  * `mockId`: Provides an incrementing integer ID.
+  * `mockValues`: Iterates over an array of values with each call. Returns the last value when the array is exhausted.
+  * [`simulateReadableStream`](/docs/reference/ai-sdk-core/simulate-readable-stream): Simulates a readable stream with delays.
+
+With mock providers and test helpers, you can control the output of the AI SDK
+and test your code in a repeatable and deterministic way without actually
+calling a language model provider.
+
+## Examples
+
+You can use the test helpers with the AI Core functions in your unit tests:
+
+### generateText
+
+    
+    
+    import { generateText } from 'ai';
+    
+    import { MockLanguageModelV2 } from 'ai/test';
+    
+    
+    
+    
+    const result = await generateText({
+    
+      model: new MockLanguageModelV2({
+    
+        doGenerate: async () => ({
+    
+          finishReason: 'stop',
+    
+          usage: { inputTokens: 10, outputTokens: 20, totalTokens: 30 },
+    
+          content: [{ type: 'text', text: `Hello, world!` }],
+    
+          warnings: [],
+    
+        }),
+    
+      }),
+    
+      prompt: 'Hello, test!',
+    
+    });
+
+### streamText
+
+    
+    
+    import { streamText, simulateReadableStream } from 'ai';
+    
+    import { MockLanguageModelV2 } from 'ai/test';
+    
+    
+    
+    
+    const result = streamText({
+    
+      model: new MockLanguageModelV2({
+    
+        doStream: async () => ({
+    
+          stream: simulateReadableStream({
+    
+            chunks: [
+    
+              { type: 'text-start', id: 'text-1' },
+    
+              { type: 'text-delta', id: 'text-1', delta: 'Hello' },
+    
+              { type: 'text-delta', id: 'text-1', delta: ', ' },
+    
+              { type: 'text-delta', id: 'text-1', delta: 'world!' },
+    
+              { type: 'text-end', id: 'text-1' },
+    
+              {
+    
+                type: 'finish',
+    
+                finishReason: 'stop',
+    
+                logprobs: undefined,
+    
+                usage: { inputTokens: 3, outputTokens: 10, totalTokens: 13 },
+    
+              },
+    
+            ],
+    
+          }),
+    
+        }),
+    
+      }),
+    
+      prompt: 'Hello, test!',
+    
+    });
+
+### generateObject
+
+    
+    
+    import { generateObject } from 'ai';
+    
+    import { MockLanguageModelV2 } from 'ai/test';
+    
+    import { z } from 'zod';
+    
+    
+    
+    
+    const result = await generateObject({
+    
+      model: new MockLanguageModelV2({
+    
+        doGenerate: async () => ({
+    
+          finishReason: 'stop',
+    
+          usage: { inputTokens: 10, outputTokens: 20, totalTokens: 30 },
+    
+          content: [{ type: 'text', text: `{"content":"Hello, world!"}` }],
+    
+          warnings: [],
+    
+        }),
+    
+      }),
+    
+      schema: z.object({ content: z.string() }),
+    
+      prompt: 'Hello, test!',
+    
+    });
+
+### streamObject
+
+    
+    
+    import { streamObject, simulateReadableStream } from 'ai';
+    
+    import { MockLanguageModelV2 } from 'ai/test';
+    
+    import { z } from 'zod';
+    
+    
+    
+    
+    const result = streamObject({
+    
+      model: new MockLanguageModelV2({
+    
+        doStream: async () => ({
+    
+          stream: simulateReadableStream({
+    
+            chunks: [
+    
+              { type: 'text-start', id: 'text-1' },
+    
+              { type: 'text-delta', id: 'text-1', delta: '{ ' },
+    
+              { type: 'text-delta', id: 'text-1', delta: '"content": ' },
+    
+              { type: 'text-delta', id: 'text-1', delta: `"Hello, ` },
+    
+              { type: 'text-delta', id: 'text-1', delta: `world` },
+    
+              { type: 'text-delta', id: 'text-1', delta: `!"` },
+    
+              { type: 'text-delta', id: 'text-1', delta: ' }' },
+    
+              { type: 'text-end', id: 'text-1' },
+    
+              {
+    
+                type: 'finish',
+    
+                finishReason: 'stop',
+    
+                logprobs: undefined,
+    
+                usage: { inputTokens: 3, outputTokens: 10, totalTokens: 13 },
+    
+              },
+    
+            ],
+    
+          }),
+    
+        }),
+    
+      }),
+    
+      schema: z.object({ content: z.string() }),
+    
+      prompt: 'Hello, test!',
+    
+    });
+
+### Simulate UI Message Stream Responses
+
+You can also simulate [UI Message Stream](/docs/ai-sdk-ui/stream-protocol#ui-
+message-stream) responses for testing, debugging, or demonstration purposes.
+
+Here is a Next example:
+
+route.ts
+
+    
+    
+    import { simulateReadableStream } from 'ai';
+    
+    
+    
+    
+    export async function POST(req: Request) {
+    
+      return new Response(
+    
+        simulateReadableStream({
+    
+          initialDelayInMs: 1000, // Delay before the first chunk
+    
+          chunkDelayInMs: 300, // Delay between chunks
+    
+          chunks: [
+    
+            `data: {"type":"start","messageId":"msg-123"}\n\n`,
+    
+            `data: {"type":"text-start","id":"text-1"}\n\n`,
+    
+            `data: {"type":"text-delta","id":"text-1","delta":"This"}\n\n`,
+    
+            `data: {"type":"text-delta","id":"text-1","delta":" is an"}\n\n`,
+    
+            `data: {"type":"text-delta","id":"text-1","delta":" example."}\n\n`,
+    
+            `data: {"type":"text-end","id":"text-1"}\n\n`,
+    
+            `data: {"type":"finish"}\n\n`,
+    
+            `data: [DONE]\n\n`,
+    
+          ],
+    
+        }).pipeThrough(new TextEncoderStream()),
+    
+        {
+    
+          status: 200,
+    
+          headers: {
+    
+            'Content-Type': 'text/event-stream',
+    
+            'Cache-Control': 'no-cache',
+    
+            Connection: 'keep-alive',
+    
+            'x-vercel-ai-ui-message-stream': 'v1',
+    
+          },
+    
+        },
+    
+      );
+    
+    }
+
+[PreviousError Handling](/docs/ai-sdk-core/error-handling)
+
+[NextTelemetry](/docs/ai-sdk-core/telemetry)
+

@@ -1,0 +1,631 @@
+[AI SDK UI](/docs/ai-sdk-ui)Object Generation
+
+Copy markdown
+
+# Object Generation
+
+`useObject` is an experimental feature and only available in React, Svelte,
+and Vue.
+
+The [`useObject`](/docs/reference/ai-sdk-ui/use-object) hook allows you to
+create interfaces that represent a structured JSON object that is being
+streamed.
+
+In this guide, you will learn how to use the `useObject` hook in your
+application to generate UIs for structured data on the fly.
+
+## Example
+
+The example shows a small notifications demo app that generates fake
+notifications in real-time.
+
+### Schema
+
+It is helpful to set up the schema in a separate file that is imported on both
+the client and server.
+
+app/api/notifications/schema.ts
+
+    
+    
+    import { z } from 'zod';
+    
+    
+    
+    
+    // define a schema for the notifications
+    
+    export const notificationSchema = z.object({
+    
+      notifications: z.array(
+    
+        z.object({
+    
+          name: z.string().describe('Name of a fictional person.'),
+    
+          message: z.string().describe('Message. Do not use emojis or links.'),
+    
+        }),
+    
+      ),
+    
+    });
+
+### Client
+
+The client uses [`useObject`](/docs/reference/ai-sdk-ui/use-object) to stream
+the object generation process.
+
+The results are partial and are displayed as they are received. Please note
+the code for handling `undefined` values in the JSX.
+
+app/page.tsx
+
+    
+    
+    'use client';
+    
+    
+    
+    
+    import { experimental_useObject as useObject } from '@ai-sdk/react';
+    
+    import { notificationSchema } from './api/notifications/schema';
+    
+    
+    
+    
+    export default function Page() {
+    
+      const { object, submit } = useObject({
+    
+        api: '/api/notifications',
+    
+        schema: notificationSchema,
+    
+      });
+    
+    
+    
+    
+      return (
+    
+        <>
+    
+          <button onClick={() => submit('Messages during finals week.')}>
+    
+            Generate notifications
+    
+          </button>
+    
+    
+    
+    
+          {object?.notifications?.map((notification, index) => (
+    
+            <div key={index}>
+    
+              <p>{notification?.name}</p>
+    
+              <p>{notification?.message}</p>
+    
+            </div>
+    
+          ))}
+    
+        </>
+    
+      );
+    
+    }
+
+### Server
+
+On the server, we use [`streamObject`](/docs/reference/ai-sdk-core/stream-
+object) to stream the object generation process.
+
+app/api/notifications/route.ts
+
+    
+    
+    import { openai } from '@ai-sdk/openai';
+    
+    import { streamObject } from 'ai';
+    
+    import { notificationSchema } from './schema';
+    
+    
+    
+    
+    // Allow streaming responses up to 30 seconds
+    
+    export const maxDuration = 30;
+    
+    
+    
+    
+    export async function POST(req: Request) {
+    
+      const context = await req.json();
+    
+    
+    
+    
+      const result = streamObject({
+    
+        model: openai('gpt-4.1'),
+    
+        schema: notificationSchema,
+    
+        prompt:
+    
+          `Generate 3 notifications for a messages app in this context:` + context,
+    
+      });
+    
+    
+    
+    
+      return result.toTextStreamResponse();
+    
+    }
+
+## Enum Output Mode
+
+When you need to classify or categorize input into predefined options, you can
+use the `enum` output mode with `useObject`. This requires a specific schema
+structure where the object has `enum` as a key with `z.enum` containing your
+possible values.
+
+### Example: Text Classification
+
+This example shows how to build a simple text classifier that categorizes
+statements as true or false.
+
+#### Client
+
+When using `useObject` with enum output mode, your schema must be an object
+with `enum` as the key:
+
+app/classify/page.tsx
+
+    
+    
+    'use client';
+    
+    
+    
+    
+    import { experimental_useObject as useObject } from '@ai-sdk/react';
+    
+    import { z } from 'zod';
+    
+    
+    
+    
+    export default function ClassifyPage() {
+    
+      const { object, submit, isLoading } = useObject({
+    
+        api: '/api/classify',
+    
+        schema: z.object({ enum: z.enum(['true', 'false']) }),
+    
+      });
+    
+    
+    
+    
+      return (
+    
+        <>
+    
+          <button onClick={() => submit('The earth is flat')} disabled={isLoading}>
+    
+            Classify statement
+    
+          </button>
+    
+    
+    
+    
+          {object && <div>Classification: {object.enum}</div>}
+    
+        </>
+    
+      );
+    
+    }
+
+#### Server
+
+On the server, use `streamObject` with `output: 'enum'` to stream the
+classification result:
+
+app/api/classify/route.ts
+
+    
+    
+    import { openai } from '@ai-sdk/openai';
+    
+    import { streamObject } from 'ai';
+    
+    
+    
+    
+    export async function POST(req: Request) {
+    
+      const context = await req.json();
+    
+    
+    
+    
+      const result = streamObject({
+    
+        model: openai('gpt-4.1'),
+    
+        output: 'enum',
+    
+        enum: ['true', 'false'],
+    
+        prompt: `Classify this statement as true or false: ${context}`,
+    
+      });
+    
+    
+    
+    
+      return result.toTextStreamResponse();
+    
+    }
+
+## Customized UI
+
+`useObject` also provides ways to show loading and error states:
+
+### Loading State
+
+The `isLoading` state returned by the `useObject` hook can be used for several
+purposes:
+
+  * To show a loading spinner while the object is generated.
+  * To disable the submit button.
+
+app/page.tsx
+
+    
+    
+    'use client';
+    
+    
+    
+    
+    import { useObject } from '@ai-sdk/react';
+    
+    
+    
+    
+    export default function Page() {
+    
+      const { isLoading, object, submit } = useObject({
+    
+        api: '/api/notifications',
+    
+        schema: notificationSchema,
+    
+      });
+    
+    
+    
+    
+      return (
+    
+        <>
+    
+          {isLoading && <Spinner />}
+    
+    
+    
+    
+          <button
+    
+            onClick={() => submit('Messages during finals week.')}
+    
+            disabled={isLoading}
+    
+          >
+    
+            Generate notifications
+    
+          </button>
+    
+    
+    
+    
+          {object?.notifications?.map((notification, index) => (
+    
+            <div key={index}>
+    
+              <p>{notification?.name}</p>
+    
+              <p>{notification?.message}</p>
+    
+            </div>
+    
+          ))}
+    
+        </>
+    
+      );
+    
+    }
+
+### Stop Handler
+
+The `stop` function can be used to stop the object generation process. This
+can be useful if the user wants to cancel the request or if the server is
+taking too long to respond.
+
+app/page.tsx
+
+    
+    
+    'use client';
+    
+    
+    
+    
+    import { useObject } from '@ai-sdk/react';
+    
+    
+    
+    
+    export default function Page() {
+    
+      const { isLoading, stop, object, submit } = useObject({
+    
+        api: '/api/notifications',
+    
+        schema: notificationSchema,
+    
+      });
+    
+    
+    
+    
+      return (
+    
+        <>
+    
+          {isLoading && (
+    
+            <button type="button" onClick={() => stop()}>
+    
+              Stop
+    
+            </button>
+    
+          )}
+    
+    
+    
+    
+          <button onClick={() => submit('Messages during finals week.')}>
+    
+            Generate notifications
+    
+          </button>
+    
+    
+    
+    
+          {object?.notifications?.map((notification, index) => (
+    
+            <div key={index}>
+    
+              <p>{notification?.name}</p>
+    
+              <p>{notification?.message}</p>
+    
+            </div>
+    
+          ))}
+    
+        </>
+    
+      );
+    
+    }
+
+### Error State
+
+Similarly, the `error` state reflects the error object thrown during the fetch
+request. It can be used to display an error message, or to disable the submit
+button:
+
+We recommend showing a generic error message to the user, such as "Something
+went wrong." This is a good practice to avoid leaking information from the
+server.
+
+    
+    
+    'use client';
+    
+    
+    
+    
+    import { useObject } from '@ai-sdk/react';
+    
+    
+    
+    
+    export default function Page() {
+    
+      const { error, object, submit } = useObject({
+    
+        api: '/api/notifications',
+    
+        schema: notificationSchema,
+    
+      });
+    
+    
+    
+    
+      return (
+    
+        <>
+    
+          {error && <div>An error occurred.</div>}
+    
+    
+    
+    
+          <button onClick={() => submit('Messages during finals week.')}>
+    
+            Generate notifications
+    
+          </button>
+    
+    
+    
+    
+          {object?.notifications?.map((notification, index) => (
+    
+            <div key={index}>
+    
+              <p>{notification?.name}</p>
+    
+              <p>{notification?.message}</p>
+    
+            </div>
+    
+          ))}
+    
+        </>
+    
+      );
+    
+    }
+
+## Event Callbacks
+
+`useObject` provides optional event callbacks that you can use to handle life-
+cycle events.
+
+  * `onFinish`: Called when the object generation is completed.
+  * `onError`: Called when an error occurs during the fetch request.
+
+These callbacks can be used to trigger additional actions, such as logging,
+analytics, or custom UI updates.
+
+app/page.tsx
+
+    
+    
+    'use client';
+    
+    
+    
+    
+    import { experimental_useObject as useObject } from '@ai-sdk/react';
+    
+    import { notificationSchema } from './api/notifications/schema';
+    
+    
+    
+    
+    export default function Page() {
+    
+      const { object, submit } = useObject({
+    
+        api: '/api/notifications',
+    
+        schema: notificationSchema,
+    
+        onFinish({ object, error }) {
+    
+          // typed object, undefined if schema validation fails:
+    
+          console.log('Object generation completed:', object);
+    
+    
+    
+    
+          // error, undefined if schema validation succeeds:
+    
+          console.log('Schema validation error:', error);
+    
+        },
+    
+        onError(error) {
+    
+          // error during fetch request:
+    
+          console.error('An error occurred:', error);
+    
+        },
+    
+      });
+    
+    
+    
+    
+      return (
+    
+        <div>
+    
+          <button onClick={() => submit('Messages during finals week.')}>
+    
+            Generate notifications
+    
+          </button>
+    
+    
+    
+    
+          {object?.notifications?.map((notification, index) => (
+    
+            <div key={index}>
+    
+              <p>{notification?.name}</p>
+    
+              <p>{notification?.message}</p>
+    
+            </div>
+    
+          ))}
+    
+        </div>
+    
+      );
+    
+    }
+
+## Configure Request Options
+
+You can configure the API endpoint, optional headers and credentials using the
+`api`, `headers` and `credentials` settings.
+
+    
+    
+    const { submit, object } = useObject({
+    
+      api: '/api/use-object',
+    
+      headers: {
+    
+        'X-Custom-Header': 'CustomValue',
+    
+      },
+    
+      credentials: 'include',
+    
+      schema: yourSchema,
+    
+    });
+
+[PreviousCompletion](/docs/ai-sdk-ui/completion)
+
+[NextStreaming Custom Data](/docs/ai-sdk-ui/streaming-data)
+
