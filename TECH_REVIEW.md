@@ -54,7 +54,7 @@ _Module: `modules/dns-native`_
 
 - TypeScript strict mode with shared domain types (`src/types`).
 - Scripts: Prettier not enforced automatically—add lint/format to CI backlog. Module package uses ESLint config; root lacks lint script.
-- Documentation refreshed (`CLAUDE.md`, `AGENTS.md`). Additional platform deep dives in `docs/apple/` (SwiftUI/Liquid Glass) and modernization roadmap.
+- Documentation refreshed (`CLAUDE.md`, `AGENTS.md`). Comprehensive reference docs in `docs/docs_apple/` (Swift 6.2, SwiftUI, Liquid Glass, HIG), `docs/docs_expo_dev/` (Expo SDK), and `docs/docs_ai-sdk_dev/` (AI SDK).
 - CI: No GitHub Actions; rely on manual/EAS flows. Add pipeline for `npm test`, type-check, lint before production rollout.
 
 ## Compatibility notes & follow-ups

@@ -149,7 +149,7 @@ import { GlassView, GlassContainer, isLiquidGlassAvailable } from 'expo-glass-ef
 </GlassView>
 
 // iOS 17-25: Use SwiftUI native view controller
-// See docs/apple/liquid-glass/swiftui.md for .glassEffect() implementation
+// See docs/docs_apple/swiftui.md for .glassEffect() implementation
 ```
 
 **Option B: SwiftUI native view (iOS 17-25 support)**
@@ -826,9 +826,9 @@ const Chat = () => {
 
 ### iOS 26 Liquid Glass
 - [Apple Developer Docs - Adopting Liquid Glass](https://developer.apple.com/documentation/technologyoverviews/adopting-liquid-glass)
-- [docs/apple/liquid-glass/overview.md](docs/apple/liquid-glass/overview.md)
-- [docs/apple/liquid-glass/swiftui.md](docs/apple/liquid-glass/swiftui.md) - For iOS 17-25 fallback
-- [docs/ios26-liquidglass-docs.md](docs/ios26-liquidglass-docs.md)
+- [docs/docs_apple/liquid-glass.md](docs/docs_apple/liquid-glass.md)
+- [docs/docs_apple/swiftui.md](docs/docs_apple/swiftui.md) - SwiftUI comprehensive reference
+- [docs/docs_apple/adopting-liquid-glass.md](docs/docs_apple/adopting-liquid-glass.md)
 
 ### Expo SDK 54
 - [Expo SDK 54 Changelog](https://expo.dev/changelog/2025/01-21-sdk-54)

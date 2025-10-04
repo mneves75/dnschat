@@ -5,4 +5,4 @@
 3. **Liquid Glass Scope** – Official support targets iOS 17+. Update native wrappers to fall back gracefully below 17 and remove iOS 26 assumptions.
 4. **Observability Stack** – Adopt Sentry (`@sentry/react-native` via Expo plugin) for crash reporting and performance tracing; DNS telemetry continues via in-app logs.
 5. **E2E Automation** – Implement Detox (Android & iOS) with a smoke test covering onboarding → chat send path. Integrate into CI once pipeline exists.
-6. **Documentation Ownership** – Mobile Platform team (maintainer: `@mvneves`) approves future updates to `docs/apple/` and modernization docs; note responsibility in `CLAUDE.md`.
+6. **Documentation Ownership** – Mobile Platform team (maintainer: `@mvneves`) approves future updates to `docs/docs_apple/`, `docs/docs_expo_dev/`, `docs/docs_ai-sdk_dev/` and modernization docs; note responsibility in `CLAUDE.md`.

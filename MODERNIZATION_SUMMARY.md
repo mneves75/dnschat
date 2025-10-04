@@ -202,9 +202,9 @@ Comprehensive 8-phase modernization plan to bring DNSChat to iOS 26 Liquid Glass
 - **Full Plan**: [MODERNIZATION_PLAN_iOS26_ANDROID.md](./MODERNIZATION_PLAN_iOS26_ANDROID.md)
 - **Current Version**: [CHANGELOG.md](./CHANGELOG.md) (v2.0.1)
 - **Security**: [SECURITY.md](./SECURITY.md)
-- **iOS 26 Liquid Glass**: [docs/ios26-liquidglass-docs.md](./docs/ios26-liquidglass-docs.md)
-- **Expo SDK 54**: [docs/EXPO_REACT_NATIVE_DOCS/expo-sdk-54.md](./docs/EXPO_REACT_NATIVE_DOCS/expo-sdk-54.md)
-- **Apple Liquid Glass**: [docs/apple/liquid-glass/overview.md](./docs/apple/liquid-glass/overview.md)
+- **Apple Platform**: [docs/docs_apple/](./docs/docs_apple/) - Swift 6.2, SwiftUI, Liquid Glass, HIG, full API references
+- **Expo SDK**: [docs/docs_expo_dev/](./docs/docs_expo_dev/) - Complete Expo SDK documentation
+- **AI SDK**: [docs/docs_ai-sdk_dev/](./docs/docs_ai-sdk_dev/) - Vercel AI SDK and GPT-5 documentation
 
 ---
 

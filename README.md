@@ -239,11 +239,13 @@ npm run clean-ios
 - **[OPEN_QUESTIONS.md](./OPEN_QUESTIONS.md)** - Decision points requiring resolution
 - **[TECH_REVIEW.md](./TECH_REVIEW.md)** - Technical deep-dives and findings
 
-### Reference (planned)
-- **[Installation Guide](./docs/INSTALL.md)** - Detailed setup instructions
-- **[Troubleshooting](./docs/TROUBLESHOOTING.md)** - Common issues and solutions
-- **[API Documentation](./docs/API.md)** - DNS service API reference
-- **[Contributing](./CONTRIBUTING.md)** - Development guidelines
+### Reference Documentation
+- **[Apple Platform](./docs/docs_apple/)** - Swift 6.2, SwiftUI, Liquid Glass, HIG, and full iOS/macOS API references
+- **[Expo SDK](./docs/docs_expo_dev/)** - Complete Expo documentation (build, deploy, EAS, router, updates)
+- **[AI SDK](./docs/docs_ai-sdk_dev/)** - Vercel AI SDK, GPT-5 specs, and cookbook examples
+
+### Contributing
+- **[CONTRIBUTING.md](./CONTRIBUTING.md)** - Development guidelines and best practices
 
 ## 🐛 Troubleshooting
 

@@ -59,6 +59,6 @@ Companion checklist for automation agents and humans. See `CLAUDE.md` for narrat
 - `CLAUDE.md`: High-level onboarding, setup, troubleshooting.
 - `TECH_REVIEW.md`: Architecture, dependency inventory, pipeline snapshot, OPEN_QUESTIONS.
 - `PLAN_MODERNIZATION.md`: Phased roadmap, risks, rollback, compliance.
-- `docs/apple/` & `docs/EXPO_REACT_NATIVE_DOCS/`: Platform-specific guidance (SwiftUI, Liquid Glass, Expo migration notes).
+- `docs/docs_apple/`, `docs/docs_expo_dev/`, `docs/docs_ai-sdk_dev/`: Comprehensive reference documentation (Swift 6.2, SwiftUI, Liquid Glass, HIG, Expo SDK, AI SDK).
 
 [1]: https://github.com/th3rdwave/react-native-safe-area-context

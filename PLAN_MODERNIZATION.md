@@ -86,7 +86,7 @@ Total estimated effort (single engineer): ~24 days; parallel tracks (tooling/tes
 - Automate Sentry release tagging (EAS env vars) and ensure DSN configured per environment.
 - Extend `DNSLogService` to export anonymised logs for support; add retention policy.
 - Add performance dashboards (TTI, request latency) in Sentry or alternative APM.
-- Document log redaction runbook referencing `docs/apple/logging-private-fix.md`.
+- Document log redaction runbook referencing `docs/docs_apple/logging-private-fix.md`.
 
 ## 10. Dependency upgrade matrix (annex)
 
