@@ -29,6 +29,89 @@ Welcome to the DNSChat documentation hub. This directory contains all technical 
 - **[Gemini Context](guides/GEMINI-CONTEXT.md)** - AI assistant context and conventions
 - **[Version Management](guides/VERSION_MANAGEMENT.md)** - Release and versioning procedures
 
+### 📚 Reference Documentation (`/REF_DOC/`)
+
+**CRITICAL RESOURCE**: Curated reference documentation for platform-specific development
+
+The `docs/REF_DOC/` directory contains up-to-date reference materials that **MUST** be consulted before making platform-specific implementations, framework upgrades, or AI integrations.
+
+#### Quick Reference Map
+
+| Technology | Directory | Essential for |
+| --- | --- | --- |
+| **iOS/iPadOS/macOS 26** | `REF_DOC/docs_apple/` | Native modules, Liquid Glass UI, HIG compliance, App Store guidelines, Swift 6.2/SwiftUI APIs |
+| **Expo SDK** | `REF_DOC/docs_expo_dev/` | Config changes, EAS workflows, SDK upgrades, native module integration |
+| **React Native** | `REF_DOC/docs_reactnative_getting-started/` | New Architecture (Fabric/TurboModules), version upgrades, platform guides |
+| **AI SDK / GPT-5 / Gemini** | `REF_DOC/docs_ai-sdk_dev/` | AI features, model integrations, streaming, tool calling, embeddings |
+
+#### When to Consult REF_DOC
+
+**Always verify against `REF_DOC/` when:**
+
+- ✅ Upgrading Expo SDK, React Native, or native dependencies
+- ✅ Implementing iOS 26 Liquid Glass or macOS 26 features
+- ✅ Integrating GPT-5, Gemini 2.5, or AI models
+- ✅ Migrating to New Architecture (Fabric/TurboModules)
+- ✅ Adding native Swift/Kotlin modules
+- ✅ Updating EAS Build/Submit workflows
+- ✅ Resolving deprecation warnings or platform crashes
+- ✅ Designing UI/UX components (consult Apple HIG, Material Design 3)
+
+#### Key Documentation Highlights
+
+**Apple Platforms** (`REF_DOC/docs_apple/`):
+- `apple_com_full_documentation/documentation/SwiftUI.md` - SwiftUI APIs and patterns
+- `apple_com_full_documentation/documentation/TechnologyOverviews/liquid-glass.md` - Liquid Glass implementation
+- `apple_design_human-interface-guidelines/` - Complete Apple HIG
+- `apple_com_full_documentation/app-store/review/guidelines.md` - App Store compliance
+
+**Expo SDK** (`REF_DOC/docs_expo_dev/`):
+- Latest Expo SDK features, config schema, and API changes
+- EAS Build/Submit/Update workflows and best practices
+
+**AI Integration** (`REF_DOC/docs_ai-sdk_dev/`):
+- `cookbook/guides/gpt-5.md` - GPT-5 integration examples
+- `cookbook/guides/gemini-2-5.md` - Gemini model capabilities
+- `docs/ai-sdk-core/stream-text.md` - Streaming implementations
+- `docs/ai-sdk-ui/` - UI integration patterns
+
+**Detailed usage instructions available in:**
+- Root `CLAUDE.md` - Comprehensive REF_DOC workflow guide with examples
+- Root `AGENTS.md` - Quick reference protocol checklist
+
+### 🔍 Development Tools
+
+#### ast-grep (Syntax-Aware Code Search)
+
+**CRITICAL**: This environment provides `ast-grep` for structural code searching—always prefer it over plain-text tools when searching code.
+
+**Quick examples**:
+```bash
+# TypeScript/JavaScript/TSX (React components, services)
+ast-grep --lang typescript -p 'function $NAME($$$) { $$$ }'
+ast-grep --lang tsx -p '<$COMPONENT $$$>$$$</$COMPONENT>'
+
+# Swift (iOS native modules)
+ast-grep --lang swift -p 'func $NAME($$$) -> $TYPE { $$$ }'
+
+# Kotlin (Android native modules)
+ast-grep --lang kotlin -p 'class $NAME : $INTERFACE { $$$ }'
+```
+
+**When to use**:
+- ✅ Finding function/method/component definitions
+- ✅ Locating interface/protocol implementations
+- ✅ Refactoring: ensuring complete coverage
+- ✅ Code review: identifying patterns
+
+**Fall back to `grep`/`rg` only for**:
+- Documentation text searches
+- Log messages and string literals
+- Configuration values (JSON, YAML)
+- Explicitly requested plain-text searches
+
+**Comprehensive ast-grep guide**: See root `CLAUDE.md` → "Development Tools & Workflows"
+
 ## 🎯 Documentation Quick Links by Role
 
 ### New Developer Joining the Team
