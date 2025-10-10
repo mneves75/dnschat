@@ -42,9 +42,9 @@ target 'DNSChat' do
     :privacy_file_aggregation_enabled => podfile_properties['apple.privacyManifestAggregationEnabled'] != 'false',
   )
 
-  # Native DNS Module
-  pod 'DNSNative', :path => './DNSNative'
-  
+  # Note: DNSNative is autolinked from modules/dns-native via Expo autolinking
+  # Do not add manual pod entry as it causes duplicate dependency errors
+
   # iOS 26 Liquid Glass Module
   pod 'LiquidGlassNative', :path => './LiquidGlassNative'
   
