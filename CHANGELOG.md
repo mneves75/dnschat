@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **🔧 iOS CocoaPods Duplicate Dependency**: Resolved duplicate DNSNative pod dependency error preventing iOS builds
+  - **Root Cause**: Manual pod entry in Podfile conflicting with Expo autolinking system
+  - **Solution**: Removed manual `pod 'DNSNative', :path => './DNSNative'` from Podfile, deleted duplicate `ios/DNSNative/` directory
+  - **Architecture**: Expo autolinking now properly discovers module from `modules/dns-native/` without conflicts
+  - **Impact**: Clean pod install with 105 pods, eliminates "multiple dependencies with different sources" error
+  - **Commit**: `521a3a3`
+
+- **📦 Expo Configuration Schema Validation**: Fixed expo-doctor schema error for invalid deploymentTarget property
+  - **Root Cause**: Duplicate `deploymentTarget` configuration in `ios` section and `expo-build-properties` plugin
+  - **Solution**: Removed `deploymentTarget` from top-level `ios` object in app.json, kept proper configuration in plugin
+  - **Impact**: Improved expo-doctor score from 14/17 to 15/17 checks passing
+  - **Commit**: `1badf9b`
+
+### Changed
+
+- **⬆️ Dependency Updates**: Updated to Expo SDK 54.0.13 stable and React Native 0.81.4
+  - **Expo SDK**: 54.0.0-preview.12 → 54.0.13 (stable release)
+  - **React Native**: 0.81.1 → 0.81.4 (patch updates)
+  - **Core Packages**: Updated @expo/metro-runtime, async-storage, gesture-handler, reanimated, safe-area-context, screens, SVG
+  - **Deduplication**: Resolved duplicate expo-dev-menu dependency versions (7.0.14 vs 7.0.13)
+  - **Method**: Clean npm reinstall to resolve nested dependency conflicts
+  - **Impact**: Aligned project to latest stable Expo SDK release with improved stability
+  - **Commit**: `1badf9b`
+
 ## [2.0.1] - 2025-01-20
 
 ### 🚨 CRITICAL SECURITY & STABILITY FIXES
