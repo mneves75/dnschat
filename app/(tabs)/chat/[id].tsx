@@ -27,7 +27,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { MessageList } from '../../../src/components/MessageList';
 import { ChatInput } from '../../../src/components/ChatInput';
 import { useChat } from '../../../src/context/ChatContext';
-import { GlassCard } from '../../../src/design-system/glass';
+import { GlassCard, GlassScreen } from '../../../src/design-system/glass';
 import { useTranslation } from '../../../src/i18n';
 
 /**
@@ -94,12 +94,13 @@ export default function ChatDetailScreen() {
   // PERFORMANCE NOTE: Limit to 2 glass elements for 60fps
   // GlassProvider auto-tracks element count
   return (
-    <SafeAreaView
-      style={[
-        styles.container,
-        isDark ? styles.darkContainer : styles.lightContainer,
-      ]}
-    >
+    <GlassScreen style={styles.screen}>
+      <SafeAreaView
+        style={[
+          styles.container,
+          isDark ? styles.darkContainer : styles.lightContainer,
+        ]}
+      >
       <StatusBar
         barStyle={isDark ? 'light-content' : 'dark-content'}
         backgroundColor={isDark ? '#000000' : '#FFFFFF'}
@@ -133,7 +134,8 @@ export default function ChatDetailScreen() {
           />
         </GlassCard>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+      </SafeAreaView>
+    </GlassScreen>
   );
 }
 
@@ -142,6 +144,9 @@ export default function ChatDetailScreen() {
  * Never use inline styles in render
  */
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+  },
   container: {
     flex: 1,
   },

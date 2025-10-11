@@ -13,6 +13,7 @@
 
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
+import { GlassScreen } from '../../src/design-system/glass';
 import { DNSLogViewer } from '../../src/components/DNSLogViewer';
 
 /**
@@ -23,13 +24,18 @@ import { DNSLogViewer } from '../../src/components/DNSLogViewer';
  */
 export default function DevLogsScreen() {
   return (
-    <View style={styles.container}>
-      <DNSLogViewer maxEntries={50} />
-    </View>
+    <GlassScreen style={styles.screen}>
+      <View style={styles.container}>
+        <DNSLogViewer maxEntries={50} />
+      </View>
+    </GlassScreen>
   );
 }
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+  },
   container: {
     flex: 1,
   },

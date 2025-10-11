@@ -18,6 +18,7 @@ export { GlassProvider, useGlass, useGlassRegistration } from './GlassProvider';
 // Components
 export { GlassCard } from './GlassCard';
 export { GlassButton } from './GlassButton';
+export { GlassScreen } from './GlassScreen';
 
 // Utilities
 export {

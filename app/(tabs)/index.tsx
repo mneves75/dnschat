@@ -35,7 +35,7 @@ import {
   GlassActionSheet,
   useGlassBottomSheet,
 } from '../../src/components/glass';
-import { GlassCard } from '../../src/design-system/glass';
+import { GlassCard, GlassScreen } from '../../src/design-system/glass';
 import { useTranslation } from '../../src/i18n';
 import { TrashIcon } from '../../src/components/icons/TrashIcon';
 import { PlusIcon } from '../../src/components/icons/PlusIcon';
@@ -299,7 +299,8 @@ export default function ChatListScreen() {
   }, []);
 
   return (
-    <Form.List navigationTitle={t('screens.chatList')} style={styles.container}>
+    <GlassScreen style={styles.screen}>
+      <Form.List navigationTitle={t('screens.chatList')} style={styles.container}>
       {/* New Chat Section */}
       <Form.Section title="Start New Conversation">
         <Form.Item
@@ -392,7 +393,8 @@ export default function ChatListScreen() {
           />
         </Form.Section>
       )}
-    </Form.List>
+      </Form.List>
+    </GlassScreen>
   );
 }
 
@@ -405,6 +407,9 @@ export default function ChatListScreen() {
  * This ensures styles are optimized and don't recreate on every render
  */
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+  },
   container: {
     flex: 1,
   },

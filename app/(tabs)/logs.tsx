@@ -27,7 +27,7 @@ import {
   DNSLogEntry,
 } from '../../src/services/dnsLogService';
 import { Form } from '../../src/components/glass';
-import { GlassCard } from '../../src/design-system/glass';
+import { GlassCard, GlassScreen } from '../../src/design-system/glass';
 import { useTranslation } from '../../src/i18n';
 
 /**
@@ -251,7 +251,8 @@ export default function LogsScreen() {
   };
 
   return (
-    <Form.List navigationTitle={t('logs.title')}>
+    <GlassScreen style={styles.screen}>
+      <Form.List navigationTitle={t('logs.title')} style={styles.list}>
       {logs.length === 0 ? (
         <Form.Section>
           <GlassCard
@@ -311,12 +312,19 @@ export default function LogsScreen() {
           />
         </Form.Section>
       )}
-    </Form.List>
+      </Form.List>
+    </GlassScreen>
   );
 }
 
 // CRITICAL: StyleSheet.create for performance
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+  },
+  list: {
+    flex: 1,
+  },
   emptyStateContainer: {
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
     marginHorizontal: 20,

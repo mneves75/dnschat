@@ -40,6 +40,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Removed `src/components/liquidGlass/` internals (unused)
     - Kept `LiquidGlassWrapper.tsx` temporarily (still used by Form components)
     - Updated CHANGELOG with comprehensive migration documentation
+- **🪟 GlassScreen Wrapper & Native Tabs Polish**
+  - Added `GlassScreen` design-system component to wrap screens with native iOS 26 glass while preserving Android/Web fallbacks
+  - Updated all tab routes to use the new wrapper for consistent backgrounds, Reduce Transparency handling, and element counting
+  - Tuned `NativeTabs` configuration (blur effect, minimize behavior, glass-aware colors) to match Apple liquid glass guidance
 
 ### Added
 

@@ -24,10 +24,11 @@
  * @since 2.0.0 (Expo Router Migration)
  */
 
-import { Platform } from 'react-native';
-import { NativeTabs, Icon, Label } from 'expo-router/unstable-native-tabs';
+import { useMemo } from 'react';
 import { useColorScheme } from 'react-native';
+import { NativeTabs, Icon } from 'expo-router/unstable-native-tabs';
 import { useTranslation } from '../../src/i18n';
+import { useGlass, getGlassBackgroundFallback } from '../../src/design-system/glass';
 
 /**
  * Native Tabs Layout Component
@@ -50,29 +51,41 @@ import { useTranslation } from '../../src/i18n';
 export default function TabsLayout() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
+  const { capabilities, shouldRenderGlass } = useGlass();
 
   // CRITICAL: Get translations for tab labels
   const { t } = useTranslation();
 
-  // CRITICAL: Tab bar colors should adapt to theme
-  // iOS uses system colors by default, but we can customize
-  const tabBarTintColor = isDark ? '#007AFF' : '#007AFF'; // Active tab color
-  const tabBarInactiveTintColor = isDark ? '#8E8E93' : '#8E8E93'; // Inactive tab color
-  const tabBarBackgroundColor = isDark
-    ? 'rgba(28, 28, 30, 0.85)' // iOS dark mode bar color with blur
-    : 'rgba(255, 255, 255, 0.85)'; // iOS light mode bar color with blur
+  // Determine when we can lean on native liquid glass (iOS 26+) – fall back otherwise.
+  const canRenderNativeGlass = capabilities.isNativeGlassSupported && shouldRenderGlass();
+
+  const tabBarTintColor = '#007AFF';
+  const tabBarInactiveTintColor = '#8E8E93';
+
+  const tabBarBackgroundColor = useMemo(() => {
+    if (canRenderNativeGlass) {
+      return 'transparent';
+    }
+
+    // Fallback: approximate glass with semi-transparent backgrounds across platforms.
+    return getGlassBackgroundFallback(isDark, 'prominent');
+  }, [canRenderNativeGlass, isDark]);
 
   return (
     <NativeTabs
+      tintColor={tabBarTintColor}
+      iconColor={tabBarInactiveTintColor}
+      backgroundColor={tabBarBackgroundColor}
+      blurEffect={canRenderNativeGlass ? 'systemUltraThinMaterial' : undefined}
+      minimizeBehavior={canRenderNativeGlass ? 'onScrollDown' : undefined}
+      shadowColor={canRenderNativeGlass ? 'transparent' : isDark ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.1)'}
+      disableTransparentOnScrollEdge={!canRenderNativeGlass}
+      labelStyle={{ color: tabBarInactiveTintColor }}
       screenOptions={{
         // CRITICAL: These options apply to all tabs
         headerShown: false, // Hide navigation header (tabs have their own headers)
         tabBarActiveTintColor: tabBarTintColor,
         tabBarInactiveTintColor: tabBarInactiveTintColor,
-        tabBarStyle: {
-          backgroundColor: tabBarBackgroundColor,
-          // FUTURE: Add glass effect using expo-glass-effect in Phase 7
-        },
       }}
     >
       {/*

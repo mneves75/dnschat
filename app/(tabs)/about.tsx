@@ -20,7 +20,7 @@ import {
   useColorScheme,
 } from 'react-native';
 import { Form } from '../../src/components/glass';
-import { GlassCard } from '../../src/design-system/glass';
+import { GlassCard, GlassScreen } from '../../src/design-system/glass';
 import { useTranslation } from '../../src/i18n';
 
 // Import package.json to get version
@@ -88,7 +88,8 @@ export default function AboutScreen() {
   ];
 
   return (
-    <Form.List>
+    <GlassScreen style={styles.screen}>
+      <Form.List style={styles.list}>
       {/* App Information Header */}
       <Form.Section>
         <GlassCard
@@ -201,7 +202,8 @@ export default function AboutScreen() {
 
       {/* Footer */}
       <Form.Section footer="© 2025 Marcus Neves • MIT Licensed" />
-    </Form.List>
+      </Form.List>
+    </GlassScreen>
   );
 }
 
@@ -213,6 +215,12 @@ export default function AboutScreen() {
  */
 const createStyles = (isDark: boolean) =>
   StyleSheet.create({
+    screen: {
+      flex: 1,
+    },
+    list: {
+      flex: 1,
+    },
     headerContainer: {
       backgroundColor: 'rgba(255, 255, 255, 0.08)',
       marginHorizontal: 20,
