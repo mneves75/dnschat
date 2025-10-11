@@ -34,8 +34,9 @@ import {
   Form,
   GlassActionSheet,
   useGlassBottomSheet,
-  LiquidGlassWrapper,
 } from '../../src/components/glass';
+import { GlassCard } from '../../src/design-system/glass';
+import { useTranslation } from '../../src/i18n';
 import { TrashIcon } from '../../src/components/icons/TrashIcon';
 import { PlusIcon } from '../../src/components/icons/PlusIcon';
 import { formatDistanceToNow } from 'date-fns';
@@ -63,8 +64,8 @@ interface ChatItemProps {
 /**
  * Individual Chat Item with Glass Effect
  *
- * PERFORMANCE NOTE: Each chat item uses glass effects.
- * Limit visible chats to 8-10 to maintain 60fps on iOS.
+ * Uses expo-glass-effect via GlassCard for iOS 26+ liquid glass.
+ * PERFORMANCE NOTE: Auto-registered with GlassProvider for element counting.
  */
 const GlassChatItem: React.FC<ChatItemProps> = ({
   chat,
@@ -75,6 +76,7 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
   const colorScheme = useColorScheme();
   const actionSheet = useGlassBottomSheet();
   const [isPressed, setIsPressed] = React.useState(false);
+  const { t } = useTranslation();
 
   const isDark = colorScheme === 'dark';
   const lastMessage = chat.messages[chat.messages.length - 1];
@@ -98,11 +100,8 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
         accessibilityRole="button"
         accessibilityLabel={`Chat: ${chat.title}. ${messageCount} messages. Created ${timeAgo}`}
       >
-        <LiquidGlassWrapper
+        <GlassCard
           variant={isPressed ? 'interactive' : 'regular'}
-          shape="roundedRect"
-          cornerRadius={12}
-          isInteractive={true}
           style={[styles.chatItemContainer, isPressed && styles.chatItemPressed]}
         >
           <View style={styles.chatItemContent}>
@@ -142,9 +141,8 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
 
                 <View style={styles.chatBadges}>
                   {messageCount > 0 && (
-                    <LiquidGlassWrapper
+                    <GlassCard
                       variant="interactive"
-                      shape="capsule"
                       style={[
                         styles.messageBadge,
                         { backgroundColor: 'rgba(0, 122, 255, 0.15)' },
@@ -153,7 +151,7 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
                       <Text style={[styles.messageBadgeText, { color: '#007AFF' }]}>
                         {messageCount} {messageCount === 1 ? 'message' : 'messages'}
                       </Text>
-                    </LiquidGlassWrapper>
+                    </GlassCard>
                   )}
                 </View>
               </View>
@@ -167,7 +165,7 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
               </Text>
             </View>
           </View>
-        </LiquidGlassWrapper>
+        </GlassCard>
       </TouchableOpacity>
 
       {/* Chat Action Sheet */}
@@ -175,10 +173,10 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
         visible={actionSheet.visible}
         onClose={actionSheet.hide}
         title={chat.title}
-        message="Choose an action for this conversation"
+        message={t('chat.deleteChat')}
         actions={[
           {
-            title: 'Open Chat',
+            title: t('common.ok'),
             onPress: onPress,
             icon: <Text>💬</Text>,
           },
@@ -192,13 +190,13 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
               ]
             : []),
           {
-            title: 'Delete Chat',
+            title: t('common.delete'),
             onPress: onDelete,
             style: 'destructive' as const,
             icon: <TrashIcon size={20} color="#FF453A" />,
           },
           {
-            title: 'Cancel',
+            title: t('common.cancel'),
             onPress: () => {},
             style: 'cancel' as const,
           },
@@ -220,6 +218,7 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
  */
 export default function ChatListScreen() {
   const colorScheme = useColorScheme();
+  const { t } = useTranslation();
   const {
     chats,
     createChat,
@@ -300,20 +299,19 @@ export default function ChatListScreen() {
   }, []);
 
   return (
-    <Form.List navigationTitle="DNS Chat" style={styles.container}>
+    <Form.List navigationTitle={t('screens.chatList')} style={styles.container}>
       {/* New Chat Section */}
       <Form.Section title="Start New Conversation">
         <Form.Item
-          title="New Chat"
+          title={t('chat.newChat')}
           subtitle="Start a new conversation with DNS AI"
           rightContent={
-            <LiquidGlassWrapper
+            <GlassCard
               variant="interactive"
-              shape="capsule"
               style={styles.newChatBadge}
             >
               <PlusIcon size={20} color="#FFFFFF" circleColor="#007AFF" />
-            </LiquidGlassWrapper>
+            </GlassCard>
           }
           onPress={handleNewChat}
           showChevron
@@ -340,10 +338,8 @@ export default function ChatListScreen() {
         </Form.Section>
       ) : (
         <Form.Section>
-          <LiquidGlassWrapper
+          <GlassCard
             variant="regular"
-            shape="roundedRect"
-            cornerRadius={12}
             style={styles.emptyStateContainer}
           >
             <View style={styles.emptyState}>
@@ -354,7 +350,7 @@ export default function ChatListScreen() {
                   { color: isDark ? '#FFFFFF' : '#000000' },
                 ]}
               >
-                No Conversations Yet
+                {t('chat.emptyState')}
               </Text>
               <Text
                 style={[
@@ -366,7 +362,7 @@ export default function ChatListScreen() {
                 chats will appear here.
               </Text>
             </View>
-          </LiquidGlassWrapper>
+          </GlassCard>
         </Form.Section>
       )}
 
