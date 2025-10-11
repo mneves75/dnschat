@@ -27,6 +27,7 @@
 import { Platform } from 'react-native';
 import { NativeTabs, Icon, Label } from 'expo-router/unstable-native-tabs';
 import { useColorScheme } from 'react-native';
+import { useTranslation } from '../../src/i18n';
 
 /**
  * Native Tabs Layout Component
@@ -49,6 +50,9 @@ import { useColorScheme } from 'react-native';
 export default function TabsLayout() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
+
+  // CRITICAL: Get translations for tab labels
+  const { t } = useTranslation();
 
   // CRITICAL: Tab bar colors should adapt to theme
   // iOS uses system colors by default, but we can customize
@@ -78,10 +82,9 @@ export default function TabsLayout() {
       <NativeTabs.Screen
         name="index"
         options={{
-          title: 'Chat',
+          title: t('tabs.chat'),
           tabBarIcon: ({ focused, color }) => (
             // CRITICAL: SF Symbol "house.fill" for iOS, fallback for Android
-            // TODO: Add Material icon for Android in Phase 7
             <Icon
               sf="house.fill"
               ios={{
@@ -94,7 +97,7 @@ export default function TabsLayout() {
               }}
             />
           ),
-          tabBarLabel: 'Chat',
+          tabBarLabel: t('tabs.chat'),
         }}
       />
 
@@ -105,7 +108,7 @@ export default function TabsLayout() {
       <NativeTabs.Screen
         name="logs"
         options={{
-          title: 'Logs',
+          title: t('tabs.logs'),
           tabBarIcon: ({ focused, color }) => (
             <Icon
               sf="list.bullet.rectangle"
@@ -119,7 +122,7 @@ export default function TabsLayout() {
               }}
             />
           ),
-          tabBarLabel: 'Logs',
+          tabBarLabel: t('tabs.logs'),
           // FUTURE: Add badge for unread logs count
           // tabBarBadge: unreadLogsCount > 0 ? unreadLogsCount : undefined,
         }}
@@ -132,7 +135,7 @@ export default function TabsLayout() {
       <NativeTabs.Screen
         name="about"
         options={{
-          title: 'About',
+          title: t('tabs.about'),
           tabBarIcon: ({ focused, color }) => (
             <Icon
               sf="info.circle"
@@ -146,7 +149,7 @@ export default function TabsLayout() {
               }}
             />
           ),
-          tabBarLabel: 'About',
+          tabBarLabel: t('tabs.about'),
         }}
       />
 
@@ -159,7 +162,7 @@ export default function TabsLayout() {
         <NativeTabs.Screen
           name="dev-logs"
           options={{
-            title: 'Dev Logs',
+            title: t('tabs.devLogs'),
             tabBarIcon: ({ focused, color }) => (
               <Icon
                 sf="ladybug.fill"
@@ -173,7 +176,7 @@ export default function TabsLayout() {
                 }}
               />
             ),
-            tabBarLabel: 'Dev',
+            tabBarLabel: t('tabs.devLogs'),
           }}
         />
       )}
@@ -189,7 +192,7 @@ export default function TabsLayout() {
         name="chat/[id]"
         options={{
           href: null, // CRITICAL: href: null prevents this from showing in tab bar
-          title: 'Chat Detail',
+          title: t('screens.chatDetail'),
           headerShown: true, // Show header for chat detail screen
           // FUTURE: Add glass header in Phase 7
         }}

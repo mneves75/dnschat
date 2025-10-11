@@ -11,8 +11,9 @@
  * 1. GestureHandlerRootView - Required for gesture handling (react-navigation)
  * 2. ErrorBoundary - Catches and displays React errors
  * 3. SettingsProvider - Global settings and theme configuration
- * 4. ChatProvider - Chat state management
- * 5. Stack - Expo Router navigation stack
+ * 4. GlassProvider - Glass design system with performance monitoring
+ * 5. ChatProvider - Chat state management
+ * 6. Stack - Expo Router navigation stack
  *
  * @author DNSChat Team
  * @since 2.0.0 (Expo Router Migration)
@@ -23,6 +24,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ErrorBoundary } from '../src/components/ErrorBoundary';
 import { SettingsProvider } from '../src/context/SettingsContext';
 import { ChatProvider } from '../src/context/ChatContext';
+import { GlassProvider } from '../src/design-system/glass';
 import { useColorScheme } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
@@ -54,30 +56,32 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ErrorBoundary>
         <SettingsProvider>
-          <ChatProvider>
-            <Stack
-              screenOptions={{
-                // Default screen options for all routes
-                // CRITICAL: These can be overridden per-screen in individual layouts
-                headerShown: false, // Hide header by default (tabs will show their own)
-                contentStyle: {
-                  backgroundColor: colorScheme === 'dark' ? '#000000' : '#FFFFFF',
-                },
-                animation: 'default', // iOS-style slide animation
-              }}
-            >
-              {/*
-                CRITICAL: Screen configuration is automatic with file-based routing.
-                Expo Router automatically creates routes from the app/ directory structure:
-                - app/(tabs)/ → Tab navigation group
-                - app/(modals)/ → Modal presentation group
-                - app/profile/[user].tsx → Dynamic route with parameter
-                - app/+not-found.tsx → 404 handler
+          <GlassProvider>
+            <ChatProvider>
+              <Stack
+                screenOptions={{
+                  // Default screen options for all routes
+                  // CRITICAL: These can be overridden per-screen in individual layouts
+                  headerShown: false, // Hide header by default (tabs will show their own)
+                  contentStyle: {
+                    backgroundColor: colorScheme === 'dark' ? '#000000' : '#FFFFFF',
+                  },
+                  animation: 'default', // iOS-style slide animation
+                }}
+              >
+                {/*
+                  CRITICAL: Screen configuration is automatic with file-based routing.
+                  Expo Router automatically creates routes from the app/ directory structure:
+                  - app/(tabs)/ → Tab navigation group
+                  - app/(modals)/ → Modal presentation group
+                  - app/profile/[user].tsx → Dynamic route with parameter
+                  - app/+not-found.tsx → 404 handler
 
-                No need to manually define <Stack.Screen> components here.
-              */}
-            </Stack>
-          </ChatProvider>
+                  No need to manually define <Stack.Screen> components here.
+                */}
+              </Stack>
+            </ChatProvider>
+          </GlassProvider>
         </SettingsProvider>
       </ErrorBoundary>
     </GestureHandlerRootView>
