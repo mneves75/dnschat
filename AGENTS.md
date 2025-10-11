@@ -1,43 +1,37 @@
 # Repository Guidelines
 
-## Project Structure & Modules
-
-- `src/`: App code (TypeScript). Key areas: `components/`, `navigation/`, `context/`, `services/` (e.g., `src/services/dnsService.ts`), `utils/`, `assets/`.
-- `modules/dns-native/`: Native DNS TXT module (iOS/Android) with its own tests and build config.
-- Platform: `ios/`, `android/` (native build artifacts), `app.json`, `eas.json`.
-- Tooling: `scripts/` (e.g., `sync-versions.js`, `fix-cocoapods.sh`), `test-dns-simple.js` (DNS smoke test), `index.tsx` (entry).
+## Project Structure & Module Organization
+- `src/`: TypeScript app source. Key subfolders include `components/` (UI primitives), `navigation/screens/` (Expo routes), `context/` (React providers), `services/` such as `dnsService.ts`, `utils/`, and `assets/`.
+- `modules/dns-native/`: Native DNS TXT resolver with its own `package.json`, Jest tests, and integration harness.
+- Platform roots `ios/` and `android/` hold native build artifacts. Run `pod install` inside `ios/` before iOS builds.
+- Tooling lives in `scripts/` (e.g., `sync-versions.js`, `fix-cocoapods.sh`), plus `test-dns-simple.js` for quick DNS smoke checks.
 
 ## Build, Test, and Development Commands
-
-- `npm start`: Start Expo dev server (dev client).
-- `npm run ios`: Build/run iOS (ensure `pod install` in `ios/`).
-- `npm run android`: Build/run Android with Java 17 (uses path in script). Use `./android-java17.sh` if needed.
-- `npm run web`: Run web preview.
-- `node test-dns-simple.js`: DNS connectivity smoke test through `DNSService`.
-- `npm run sync-versions` / `:dry`: Sync and preview version numbers across app and module.
-- Native module tests: `cd modules/dns-native && npm test` (unit), `npm run test:integration` (device/simulator required).
+- `npm start`: Launch Expo dev client.
+- `npm run ios` / `npm run android`: Build and run on simulators. Android expects Java 17 (`./android-java17.sh` is available).
+- `npm run web`: Web preview via Expo.
+- `node test-dns-simple.js`: Resolve TXT via `DNSService`; validate connectivity before shipping.
+- `npm run sync-versions` (`:dry` to preview): Align app and native module version numbers.
+- `cd modules/dns-native && npm test`: Run native module unit tests; `npm run test:integration` targets a device or simulator.
 
 ## Coding Style & Naming Conventions
-
-- TypeScript strict mode (see `tsconfig.json`). Prefer functional React components and hooks.
-- Indentation: 2 spaces. No `any`; define interfaces/types in `src/types/`.
-- Files: Components `PascalCase.tsx` in `src/components/`; screens in `src/navigation/screens/`; contexts as `*Context.tsx`; services as `*Service.ts`.
-- Formatting: Use Prettier defaults (`npx prettier --write .`). Lint native module with ESLint (`cd modules/dns-native && npm run lint`).
+- TypeScript strict mode with functional React components and hooks.
+- Indentation: 2 spaces; avoid `any`. Place shared types in `src/types/`.
+- Components use `PascalCase.tsx`; contexts follow `*Context.tsx`; services end in `*Service.ts`.
+- Format with Prettier (`npx prettier --write .`). Lint native module via `cd modules/dns-native && npm run lint`.
 
 ## Testing Guidelines
-
-- App smoke: `node test-dns-simple.js` (expect TXT response or informative error).
-- Native module: Jest tests live in `modules/dns-native/__tests__/` (`*.test.ts`). Aim to cover parsing and error paths.
-- Add targeted tests for new logic (e.g., response parsing, logging). Keep tests deterministic; mock network where possible.
+- App smoke test: `node test-dns-simple.js` (expect TXT payload or actionable error).
+- Native module unit tests live under `modules/dns-native/__tests__/` and should cover parsing and failure paths.
+- Keep tests deterministic; mock network layers where feasible. Add targeted tests for new logic before opening a PR.
 
 ## Commit & Pull Request Guidelines
-
-- Conventional commits: `feat(dns): ...`, `fix(ios): ...`, `docs(...): ...`.
-- Branch names: `feature/...`, `fix/...`, `docs/...`.
-- PRs include: problem, solution, test evidence (logs/screenshots), affected platforms, and any version bumps (`npm run sync-versions`). Link related issues.
+- Follow Conventional Commits (`feat(dns): …`, `fix(ios): …`, `docs(readme): …`).
+- Branch naming: `feature/...`, `fix/...`, `docs/...`.
+- PRs document the problem, solution, and test evidence (logs, screenshots, or command output). Note affected platforms and any version syncs.
+- Reference related issues and ensure `npm run sync-versions :dry` has no unexpected deltas before requesting review.
 
 ## Security & Configuration Tips
-
-- Do not commit secrets or API keys. Default DNS server is defined in `dnsService` (`ch.at`).
-- Android requires Java 17; verify with `java -version`. iOS builds may need `cd ios && pod install`.
-- Networks may block DNS port 53; test fallbacks (TCP/HTTPS) and capture logs from the app’s Logs screen.
+- Never commit secrets or API keys; DNS defaults live in `dnsService`.
+- Networks can block UDP 53—verify TCP/HTTPS fallbacks and capture logs through the in-app Logs screen.
+- Ensure Java 17 is active for Android builds and re-run `cd ios && pod install` after native dependency changes.

@@ -36,12 +36,23 @@ DNSChat is a revolutionary mobile chat application that communicates with AI usi
 
 ### Tech Stack Summary
 
-- **Framework**: React Native + Expo (v53)
+- **Framework**: React Native 0.81 + Expo SDK 54
+- **React**: React 19.1 with React Compiler enabled (auto-memoization)
+- **Architecture**: New Architecture (Fabric) enabled with TurboModules
 - **Language**: TypeScript (strict mode)
 - **Navigation**: React Navigation v7
 - **State Management**: React Context + AsyncStorage
 - **Networking**: Native DNS modules + comprehensive fallbacks
+- **Performance**: `@shopify/flash-list` for list rendering optimization
 - **Platforms**: iOS, Android, Web
+
+### Critical Development Guidelines
+
+**IMPORTANT**: **DO NOT** externalize or document your work, usage guidelines, or benchmarks in markdown files after completing the task, unless explicitly instructed to do so. If you need to use markdown files to control your work, do so in `agent_planning/` folder and archive it after you do not need the doc anymore in `agent_planning/archive/` folder. You may include a brief summary of your work. FOLLOW THESE GUIDELINES ALWAYS!
+
+**IMPORTANT**: You run in an environment where `ast-grep` is available; whenever a search requires syntax-aware or structural matching, default to `ast-grep --lang typescript -p '<pattern>'` (or set `--lang` appropriately for JavaScript, Swift, Java, etc.) and avoid falling back to text-only tools like `rg` or `grep` unless I explicitly request a plain-text search.
+
+**Important**: Expo Go does not support custom native modules. Use Development Builds (`npm run ios/android`) to test DNS functionality and other native features.
 
 ---
 
@@ -507,15 +518,56 @@ const sendMessage = async (text: string): Promise<void> => {
 
 ### Performance Guidelines
 
-1. **Component Optimization**
+#### React Native Performance Best Practices
+
+1. **StyleSheet.create**: Always use for style definitions, never inline objects in render
+2. **Console.log Removal**: Strip all `console.log` statements in production builds
+3. **FlashList**: Use `@shopify/flash-list` for lists with 10+ items
+4. **Memoization**: Let React Compiler handle auto-memoization; remove manual `useMemo`/`useCallback` unless profiled
+5. **Release Build Testing**: Always test performance in release mode with `--no-dev --minify`
+
+#### Component Style Patterns
 
 ```typescript
-// Use React.memo for expensive components
+// Good: StyleSheet with theme integration
+export function Card({ children, style }: CardProps) {
+  const { colors } = useColors();
+  return (
+    <View style={[styles.card, { backgroundColor: colors.surface }, style]}>
+      {children}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  card: {
+    borderRadius: 16,
+    padding: 20,
+    marginVertical: 8,
+  },
+});
+
+// Bad: Inline objects (creates new object every render)
+<View style={{ borderRadius: 16, padding: 20 }}>
+```
+
+#### Accessibility Requirements
+
+- **Labels**: All interactive elements need `accessibilityLabel`
+- **Roles**: Use `accessibilityRole` ("button", "link", "header", etc.)
+- **States**: Apply `accessibilityState` for disabled, selected, checked
+- **Screen Readers**: Test with VoiceOver (iOS) and TalkBack (Android)
+- **Contrast**: Minimum 4.5:1 for text, 3:1 for large text/UI components
+
+1. **Component Optimization (Legacy - React Compiler now handles this)**
+
+```typescript
+// React Compiler auto-memoizes, but for manual optimization:
 const MessageBubble = React.memo<Props>(({ message }) => {
   return <View>{/* render */}</View>;
 });
 
-// Use useCallback for stable references
+// Use useCallback only if profiling shows it's needed
 const handleSend = useCallback((text: string) => {
   sendMessage(text);
 }, [sendMessage]);
