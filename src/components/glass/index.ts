@@ -36,15 +36,20 @@ export {
   type GlassActionSheetProps,
 } from "./GlassBottomSheet";
 
-// Re-export base LiquidGlassWrapper for convenience
+// Core glass utilities/components
 export {
-  LiquidGlassWrapper,
-  LiquidGlassButton,
-  LiquidGlassCard,
-  LiquidGlassNavBar,
-  useLiquidGlassCapabilities,
-  type LiquidGlassProps,
-} from "../LiquidGlassWrapper";
+  GlassCard,
+  GlassButton,
+  GlassScreen,
+  GlassProvider,
+  useGlass,
+  useGlassRegistration,
+  getGlassCapabilities,
+  getGlassBackgroundFallback,
+  getGlassTintColor,
+  shouldRenderGlass,
+  type GlassCapabilities,
+} from "../../design-system/glass";
 
 // Glass Component Namespace (alternative import style)
 export * as Glass from "./GlassForm";

@@ -84,6 +84,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **TypeScript Test Config**: Added baseUrl "." and paths {"@/*": ["src/*"]} to tsconfig.test.json
   - **App Directory Support**: Extended test includes to cover app/**/*.ts and app/**/*.tsx files
   - **Import Consistency**: Enables consistent import patterns across test files (e.g., "@/services/dnsService")
+  
+- **🪟 Glass Component Modernization**: Completed migration away from deprecated `LiquidGlassWrapper` in shared UI primitives
+  - **Components Updated**: `GlassFormSection`, `GlassTabBar`, and `GlassBottomSheet` now render `GlassCard` variants for glass surfaces
+  - **Performance**: Leverages `GlassProvider` element tracking to respect max glass element guidance in docs/REF_DOC
+  - **Developer Experience**: Simplified barrel exports under `src/design-system/glass/index.ts`, removing stale form/tab imports and preventing Metro resolution errors
+  - **Warnings Resolved**: Eliminates runtime deprecation spam about LiquidGlassWrapper and keeps bundler output clean
 
 - **📦 Dependencies**: Added expo-localization (~15.0.3) for locale detection and internationalization support
 

@@ -23,7 +23,7 @@ import {
   Animated,
 } from "react-native";
 import { PanGestureHandler, State } from "react-native-gesture-handler";
-import { LiquidGlassWrapper } from "../LiquidGlassWrapper";
+import { GlassCard } from "../../design-system/glass";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 // ==================================================================================
@@ -288,12 +288,9 @@ export const GlassBottomSheet: React.FC<GlassBottomSheetProps> = ({
           style,
         ]}
       >
-        <LiquidGlassWrapper
+        <GlassCard
           variant="prominent"
-          shape="roundedRect"
-          cornerRadius={16}
-          enableContainer={true}
-          style={styles.sheetContent}
+          style={[styles.sheetContent, { backgroundColor: colors.sheetBackground }]}
         >
           {/* Drag Handle */}
           {dragToDismiss && (
@@ -359,7 +356,7 @@ export const GlassBottomSheet: React.FC<GlassBottomSheetProps> = ({
 
           {/* Safe area bottom */}
           <View style={{ height: insets.bottom }} />
-        </LiquidGlassWrapper>
+        </GlassCard>
       </Animated.View>
     </Modal>
   );

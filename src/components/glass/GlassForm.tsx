@@ -20,7 +20,7 @@ import {
   ViewStyle,
   TextStyle,
 } from "react-native";
-import { LiquidGlassWrapper } from "../LiquidGlassWrapper";
+import { GlassCard } from "../../design-system/glass";
 
 // ==================================================================================
 // TYPES AND INTERFACES
@@ -192,11 +192,9 @@ export const GlassFormSection: React.FC<GlassFormSectionProps> = ({
         </View>
       )}
 
-      <LiquidGlassWrapper
+      <GlassCard
         variant="regular"
-        shape="roundedRect"
-        cornerRadius={10}
-        style={styles.sectionContent}
+        style={[styles.sectionContent, { borderRadius: 10 }]}
       >
         {React.Children.map(children, (child, index) => (
           <React.Fragment key={index}>
@@ -211,7 +209,7 @@ export const GlassFormSection: React.FC<GlassFormSectionProps> = ({
             )}
           </React.Fragment>
         ))}
-      </LiquidGlassWrapper>
+      </GlassCard>
 
       {footer && (
         <View style={styles.sectionFooterContainer}>

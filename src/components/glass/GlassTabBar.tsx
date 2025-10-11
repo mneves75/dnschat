@@ -21,7 +21,7 @@ import {
   Dimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { LiquidGlassWrapper } from "../LiquidGlassWrapper";
+import { GlassCard } from "../../design-system/glass";
 
 // ==================================================================================
 // TYPES AND INTERFACES
@@ -267,10 +267,8 @@ export const GlassTabBar: React.FC<GlassTabBarProps> = ({
   };
 
   const TabBarContent = (
-    <LiquidGlassWrapper
+    <GlassCard
       variant="prominent"
-      shape="rect"
-      enableContainer={false}
       style={[styles.tabBarContainer, tabBarStyle, style]}
     >
       <View style={styles.tabBarContent}>
@@ -284,7 +282,7 @@ export const GlassTabBar: React.FC<GlassTabBarProps> = ({
           />
         ))}
       </View>
-    </LiquidGlassWrapper>
+    </GlassCard>
   );
 
   if (safeAreaInsets && Platform.OS === "ios") {
