@@ -27,10 +27,8 @@ import { useLocalSearchParams } from 'expo-router';
 import { MessageList } from '../../../src/components/MessageList';
 import { ChatInput } from '../../../src/components/ChatInput';
 import { useChat } from '../../../src/context/ChatContext';
-import {
-  LiquidGlassWrapper,
-  useLiquidGlassCapabilities,
-} from '../../../src/components/LiquidGlassWrapper';
+import { GlassCard } from '../../../src/design-system/glass';
+import { useTranslation } from '../../../src/i18n';
 
 /**
  * Chat Detail Screen Component
@@ -38,14 +36,13 @@ import {
  * CRITICAL: This is a dynamic route - the [id] in the filename
  * becomes a route parameter accessible via useLocalSearchParams().
  *
- * FUTURE ENHANCEMENTS (Phase 4):
- * - Replace LiquidGlassWrapper with GlassView from expo-glass-effect
- * - Add GlassHeader for navigation header
- * - Optimize message list rendering with FlashList
+ * Uses expo-glass-effect via GlassCard for iOS 26+ liquid glass.
+ * Automatic platform fallbacks handled by GlassProvider.
  */
 export default function ChatDetailScreen() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
+  const { t } = useTranslation();
 
   // CRITICAL: Get chat ID from route parameter
   // In Expo Router, [id].tsx creates a dynamic route where id is the parameter
@@ -61,10 +58,6 @@ export default function ChatDetailScreen() {
     clearError,
     setCurrentChat,
   } = useChat();
-
-  // iOS 26 Liquid Glass capabilities
-  const { isSupported: glassSupported, supportsSwiftUIGlass } =
-    useLiquidGlassCapabilities();
 
   // CRITICAL: Load chat when chat ID changes
   // This ensures the correct chat is displayed when navigating
@@ -98,8 +91,8 @@ export default function ChatDetailScreen() {
     }
   };
 
-  // PERFORMANCE NOTE: iOS glass effects are expensive
-  // We limit to 2 glass surfaces: message area + input
+  // PERFORMANCE NOTE: Limit to 2 glass elements for 60fps
+  // GlassProvider auto-tracks element count
   return (
     <SafeAreaView
       style={[
@@ -117,54 +110,28 @@ export default function ChatDetailScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
       >
-        {Platform.OS === 'ios' ? (
-          // iOS: Use Liquid Glass UI
-          <>
-            {/* iOS 26 Liquid Glass Message Area */}
-            <LiquidGlassWrapper
-              variant="regular"
-              shape="roundedRect"
-              cornerRadius={20}
-              sensorAware={true}
-              enableContainer={true}
-              style={styles.glassMessageArea}
-            >
-              <MessageList
-                messages={currentChat?.messages || []}
-                isLoading={isLoading}
-              />
-            </LiquidGlassWrapper>
+        {/* Message Area with Glass Effect */}
+        <GlassCard
+          variant="regular"
+          style={styles.glassMessageArea}
+        >
+          <MessageList
+            messages={currentChat?.messages || []}
+            isLoading={isLoading}
+          />
+        </GlassCard>
 
-            {/* iOS 26 Liquid Glass Chat Input */}
-            <LiquidGlassWrapper
-              variant="prominent"
-              shape="capsule"
-              isInteractive={true}
-              tintColor={isDark ? '#007AFF' : '#007AFF'}
-              style={styles.glassInputArea}
-            >
-              <ChatInput
-                onSendMessage={handleSendMessage}
-                isLoading={isLoading}
-                placeholder="Ask me anything..."
-              />
-            </LiquidGlassWrapper>
-          </>
-        ) : (
-          // Android/Web: Standard UI
-          <>
-            <MessageList
-              messages={currentChat?.messages || []}
-              isLoading={isLoading}
-            />
-
-            <ChatInput
-              onSendMessage={handleSendMessage}
-              isLoading={isLoading}
-              placeholder="Ask me anything..."
-            />
-          </>
-        )}
+        {/* Chat Input with Interactive Glass */}
+        <GlassCard
+          variant="prominent"
+          style={styles.glassInputArea}
+        >
+          <ChatInput
+            onSendMessage={handleSendMessage}
+            isLoading={isLoading}
+            placeholder={t('chat.messagePlaceholder')}
+          />
+        </GlassCard>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
