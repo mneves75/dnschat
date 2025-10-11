@@ -28,6 +28,7 @@ import {
   ViewStyle,
   StyleProp,
   TouchableOpacity,
+  Pressable,
   Platform,
   useColorScheme,
 } from 'react-native';
@@ -59,6 +60,15 @@ interface GlassCardProps {
 
   /** Accessibility role */
   accessibilityRole?: 'button' | 'none';
+
+  /**
+   * Skip glass registration for decorative overlays.
+   * Still renders glass when available but does not count toward budget.
+   */
+  register?: boolean;
+
+  /** Force rendering the solid fallback regardless of provider state */
+  forceFallback?: boolean;
 }
 
 /**
@@ -81,6 +91,8 @@ export function GlassCard({
   onPress,
   accessibilityLabel,
   accessibilityRole,
+  register = true,
+  forceFallback = false,
 }: GlassCardProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
@@ -88,11 +100,11 @@ export function GlassCard({
   // Glass context for capabilities and performance
   const { capabilities, shouldRenderGlass } = useGlass();
 
-  // Auto-register this glass element
-  useGlassRegistration();
+  // Determine if glass should render based on provider heuristics
+  const renderGlass = !forceFallback && shouldRenderGlass();
 
-  // Determine if glass should render based on performance
-  const renderGlass = shouldRenderGlass();
+  // Only register when we expect to render glass; solid fallbacks shouldn't exhaust the budget.
+  useGlassRegistration(register && renderGlass);
 
   // Get platform-specific colors
   const tintColor = getGlassTintColor(isDark, variant);
@@ -132,13 +144,93 @@ export function GlassCard({
   };
 
   /**
+   * Get Material 3 Elevation Level
+   *
+   * ANDROID ONLY: Returns appropriate elevation based on variant.
+   * Material Design 3 elevation levels:
+   * - Level 0: Flat surface
+   * - Level 1: Subtle raised (regular)
+   * - Level 2: Slightly elevated (interactive default)
+   * - Level 3: Standard card (prominent)
+   *
+   * Interactive cards use level 2 by default, level 8 on press.
+   */
+  const getAndroidElevation = (): number => {
+    if (Platform.OS !== 'android') return 0;
+
+    switch (variant) {
+      case 'regular':
+        return 1; // Subtle raised surface
+      case 'prominent':
+        return 3; // Standard Material 3 card elevation
+      case 'interactive':
+        return 2; // Slightly elevated, increases on press
+      default:
+        return 1;
+    }
+  };
+
+  /**
    * Render Fallback (iOS <26, Android, Web, or Solid)
    *
    * DESIGN: Uses semi-transparent backgrounds with shadows to
    * simulate glass appearance on platforms without native support.
+   *
+   * ANDROID: Material Design 3 elevation with dynamic press states.
+   * Uses Pressable to avoid layered elevation shadows.
+   *
+   * CRITICAL FIX: Previous implementation had two elevations (View + wrapper)
+   * causing double shadows. Now uses single dynamic elevation value.
    */
   const renderFallback = () => {
-    const content = (
+    const baseElevation = getAndroidElevation();
+
+    // Interactive card with press-based elevation (Material 3)
+    if (onPress) {
+      return (
+        <Pressable
+          onPress={onPress}
+          accessibilityRole={accessibilityRole || 'button'}
+          accessibilityLabel={accessibilityLabel}
+        >
+          {({ pressed }) => {
+            /**
+             * CRITICAL: Calculate elevation based on press state
+             * Material 3 Interactive Pattern:
+             * - Default state: base elevation (2dp for interactive variant)
+             * - Pressed state: raised elevation (8dp for interactive variant)
+             * - Only ONE elevation applied to avoid shadow layering
+             */
+            const dynamicElevation =
+              Platform.OS === 'android' && variant === 'interactive' && pressed
+                ? 8 // Raised state (pressed)
+                : baseElevation; // Base state (regular/prominent/interactive default)
+
+            return (
+              <View
+                style={[
+                  styles.card,
+                  styles.fallbackCard,
+                  {
+                    backgroundColor: fallbackBackground,
+                    // iOS/Web: Use opacity for press feedback
+                    opacity: pressed && Platform.OS !== 'android' ? 0.7 : 1,
+                  },
+                  // Material 3 dynamic elevation on Android
+                  Platform.OS === 'android' && { elevation: dynamicElevation },
+                  style,
+                ]}
+              >
+                {children}
+              </View>
+            );
+          }}
+        </Pressable>
+      );
+    }
+
+    // Non-interactive card (static elevation)
+    return (
       <View
         style={[
           styles.card,
@@ -146,30 +238,14 @@ export function GlassCard({
           {
             backgroundColor: fallbackBackground,
           },
-          // Material 3 elevation on Android
-          Platform.OS === 'android' && styles.androidElevation,
+          // Material 3 static elevation on Android
+          Platform.OS === 'android' && { elevation: baseElevation },
           style,
         ]}
       >
         {children}
       </View>
     );
-
-    // Wrap in TouchableOpacity if pressable
-    if (onPress) {
-      return (
-        <TouchableOpacity
-          onPress={onPress}
-          activeOpacity={0.7}
-          accessibilityRole={accessibilityRole || 'button'}
-          accessibilityLabel={accessibilityLabel}
-        >
-          {content}
-        </TouchableOpacity>
-      );
-    }
-
-    return content;
   };
 
   /**
@@ -214,15 +290,12 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.1,
         shadowRadius: 8,
       },
-      // Android: Material 3 elevation is applied via androidElevation style
+      // Android: Material 3 elevation applied dynamically based on variant
       android: {},
       // Web: Box shadow
       web: {
         boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
       } as any,
     }),
-  },
-  androidElevation: {
-    elevation: 4, // Material 3 elevation level 2
   },
 });

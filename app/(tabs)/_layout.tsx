@@ -1,106 +1,127 @@
 /**
- * Tabs Layout - Expo Router Navigation
+ * NativeTabs Layout - iOS 26+ Liquid Glass Navigation
  *
- * Uses the stable <Tabs> component so only Tabs.Screen children are rendered,
- * eliminating the layout warnings triggered by the experimental native tabs API.
- * Glass-aware styling is preserved via the design-system helpers.
+ * CRITICAL MIGRATION: This uses the experimental NativeTabs API from expo-router/unstable-native-tabs.
+ * This provides iOS 26+ features including:
+ * - Native tab bar with liquid glass effects
+ * - Badge support for notifications (Phase 3.2)
+ * - Tab bar minimize behavior (Phase 3.3)
+ * - System search integration (Phase 3.4)
+ * - DynamicColorIOS for adaptive colors (Phase 3.5)
+ *
+ * ARCHITECTURE:
+ * - Uses NativeTabs.Trigger instead of Tabs.Screen
+ * - SF Symbols for icons instead of MaterialCommunityIcons
+ * - Badge component for unread counts
+ * - Glass-aware styling preserved
+ *
+ * @author DNSChat Team
+ * @since 2.0.0 (NativeTabs Migration)
  */
 
-import { useMemo } from 'react';
-import { Platform, useColorScheme } from 'react-native';
-import { Tabs } from 'expo-router';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { Platform, DynamicColorIOS } from 'react-native';
+import { NativeTabs, Icon, Label, Badge } from 'expo-router/unstable-native-tabs';
 
 import { useTranslation } from '../../src/i18n';
-import { useGlass, getGlassBackgroundFallback } from '../../src/design-system/glass';
+import { useChat } from '../../src/context/ChatContext';
 
 export default function TabsLayout() {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
-  const { capabilities, shouldRenderGlass } = useGlass();
   const { t } = useTranslation();
+  const { chats } = useChat();
 
-  const canRenderNativeGlass = capabilities.isNativeGlassSupported && shouldRenderGlass();
+  /**
+   * Tab Bar Color Configuration with iOS Accessibility Support
+   *
+   * IMPORTANT: DynamicColorIOS is CROSS-PLATFORM SAFE
+   *
+   * iOS Behavior (adapts to system settings):
+   * - Light mode: #007AFF (iOS system blue)
+   * - Dark mode: #0A84FF (iOS system blue - lighter for dark backgrounds)
+   * - High contrast light: #0040DD (darker blue - 8:1 contrast ratio)
+   * - High contrast dark: #409CFF (lighter blue - 8:1 contrast ratio)
+   *
+   * Android/Web Behavior (static color):
+   * - Always uses 'light' value: #007AFF
+   * - No dynamic adaptation (platform limitation)
+   * - Still provides consistent brand color across platforms
+   *
+   * CRITICAL: DynamicColorIOS does NOT crash on non-iOS platforms.
+   * React Native automatically returns the 'light' value when the API
+   * is unavailable (Android, Web, etc). No Platform.select needed.
+   *
+   * ACCESSIBILITY: iOS high contrast modes meet WCAG AAA (7:1+ contrast).
+   */
+  const tabBarTintColor = DynamicColorIOS({
+    light: '#007AFF',
+    dark: '#0A84FF',
+    highContrastLight: '#0040DD',
+    highContrastDark: '#409CFF',
+  });
 
-  const tabBarTintColor = '#007AFF';
-  const tabBarInactiveTintColor = '#8E8E93';
-
-  const tabBarBackgroundColor = useMemo(() => {
-    if (canRenderNativeGlass) {
-      return 'transparent';
-    }
-    return getGlassBackgroundFallback(isDark, 'prominent');
-  }, [canRenderNativeGlass, isDark]);
-
-  const tabBarStyle = useMemo(
-    () => ({
-      backgroundColor: tabBarBackgroundColor,
-      borderTopWidth: 0,
-      elevation: 0,
-      shadowOpacity: 0,
-      position: Platform.OS === 'ios' ? 'absolute' : 'relative',
-    }),
-    [tabBarBackgroundColor],
-  );
-
-  const renderIcon = (name: string) => ({ color }: { focused: boolean; color: string }) => (
-    <MaterialCommunityIcons name={name} size={24} color={color} />
-  );
+  /**
+   * Badge Calculation - Chat Count
+   *
+   * Shows the total number of active chats on the Chat List tab.
+   * Badge is hidden when there are no chats (undefined badge value).
+   *
+   * FUTURE ENHANCEMENT: Could be extended to show unread message counts
+   * by adding lastViewed tracking to the Chat type.
+   */
+  const chatBadgeCount = chats.length;
 
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: tabBarTintColor,
-        tabBarInactiveTintColor: tabBarInactiveTintColor,
-        tabBarStyle,
-      }}
+    <NativeTabs
+      tintColor={tabBarTintColor}
+      /**
+       * iOS 26+ Feature: Tab Bar Minimize Behavior
+       *
+       * Automatically hides the tab bar when user scrolls down,
+       * maximizing content visibility. Tab bar reappears when scrolling up.
+       *
+       * Options: 'automatic' | 'never' | 'onScrollDown' | 'onScrollUp'
+       * Default: 'automatic'
+       */
+      minimizeBehavior="onScrollDown"
     >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: t('tabs.chat'),
-          tabBarLabel: t('tabs.chat'),
-          tabBarIcon: renderIcon('home-variant'),
-        }}
-      />
+      {/* Chat List Tab (Home/Index) */}
+      <NativeTabs.Trigger name="index">
+        <Icon sf="house" />
+        <Label>{t('tabs.chat')}</Label>
+        {/* Shows total number of active chats. Badge is hidden when count is 0. */}
+        <Badge>{chatBadgeCount > 0 ? String(chatBadgeCount) : undefined}</Badge>
+      </NativeTabs.Trigger>
 
-      <Tabs.Screen
-        name="logs"
-        options={{
-          title: t('tabs.logs'),
-          tabBarLabel: t('tabs.logs'),
-          tabBarIcon: renderIcon('clipboard-list-outline'),
-        }}
-      />
+      {/* Search Tab (iOS System Integration) */}
+      {/* Uses role="search" for system-provided icon and search functionality */}
+      <NativeTabs.Trigger name="search" role="search">
+        {/* Icon and Label are optional when using role - system provides defaults */}
+        <Icon sf="magnifyingglass" />
+        <Label>Search</Label>
+      </NativeTabs.Trigger>
 
-      <Tabs.Screen
-        name="about"
-        options={{
-          title: t('tabs.about'),
-          tabBarLabel: t('tabs.about'),
-          tabBarIcon: renderIcon('information-outline'),
-        }}
-      />
+      {/* DNS Logs Tab */}
+      <NativeTabs.Trigger name="logs">
+        <Icon sf="list.clipboard" />
+        <Label>{t('tabs.logs')}</Label>
+      </NativeTabs.Trigger>
 
-      <Tabs.Screen
-        name="dev-logs"
-        options={{
-          href: __DEV__ ? undefined : null,
-          title: t('tabs.devLogs'),
-          tabBarLabel: t('tabs.devLogs'),
-          tabBarIcon: renderIcon('ladybug'),
-        }}
-      />
+      {/* About Tab */}
+      <NativeTabs.Trigger name="about">
+        <Icon sf="info.circle" />
+        <Label>{t('tabs.about')}</Label>
+      </NativeTabs.Trigger>
 
-      <Tabs.Screen
-        name="chat/[id]"
-        options={{
-          href: null,
-          title: t('screens.chatDetail'),
-          headerShown: true,
-        }}
-      />
-    </Tabs>
+      {/* Development Logs Tab (Dev Only) */}
+      {__DEV__ && (
+        <NativeTabs.Trigger name="dev-logs">
+          <Icon sf="ladybug" />
+          <Label>{t('tabs.devLogs')}</Label>
+        </NativeTabs.Trigger>
+      )}
+
+      {/* Chat Detail Screen (Hidden from Tab Bar) */}
+      {/* This route exists for navigation but is not shown in tabs */}
+      {/* Dynamic route: /chat/[id] */}
+    </NativeTabs>
   );
 }

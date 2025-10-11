@@ -44,6 +44,8 @@ interface GlassFormSectionProps {
   children: React.ReactNode;
   /** Custom section style */
   style?: ViewStyle;
+  /** Opt out of glass registration to stay under budget */
+  register?: boolean;
 }
 
 interface GlassFormItemProps {
@@ -61,6 +63,12 @@ interface GlassFormItemProps {
   showChevron?: boolean;
   /** Disable haptic feedback */
   disableHaptics?: boolean;
+  /** Accessibility label (defaults to title) */
+  accessibilityLabel?: string;
+  /** Accessibility hint */
+  accessibilityHint?: string;
+  /** Accessibility role (defaults to 'button' if onPress is provided) */
+  accessibilityRole?: 'button' | 'link' | 'menuitem' | 'none';
 }
 
 interface GlassFormLinkProps extends GlassFormItemProps {
@@ -112,7 +120,10 @@ const useHapticFeedback = () => {
   const triggerSelectionFeedback = React.useCallback(() => {
     if (Platform.OS === "ios") {
       // iOS haptic feedback (would need expo-haptics)
-      console.log("🔸 Haptic: Selection feedback");
+      // Development logging only
+      if (__DEV__) {
+        console.log("🔸 Haptic: Selection feedback");
+      }
       // HapticFeedback.selectionAsync();
     }
   }, []);
@@ -120,7 +131,10 @@ const useHapticFeedback = () => {
   const triggerImpactFeedback = React.useCallback(
     (style: "light" | "medium" | "heavy" = "light") => {
       if (Platform.OS === "ios") {
-        console.log(`🔸 Haptic: Impact feedback (${style})`);
+        // Development logging only
+        if (__DEV__) {
+          console.log(`🔸 Haptic: Impact feedback (${style})`);
+        }
         // HapticFeedback.impactAsync(HapticFeedback.ImpactFeedbackStyle[style]);
       }
     },
@@ -179,6 +193,7 @@ export const GlassFormSection: React.FC<GlassFormSectionProps> = ({
   footer,
   children,
   style,
+  register = true,
 }) => {
   const colors = useGlassColors();
 
@@ -194,6 +209,7 @@ export const GlassFormSection: React.FC<GlassFormSectionProps> = ({
 
       <GlassCard
         variant="regular"
+        register={register}
         style={[styles.sectionContent, { borderRadius: 10 }]}
       >
         {React.Children.map(children, (child, index) => (
@@ -233,6 +249,9 @@ export const GlassFormItem: React.FC<GlassFormItemProps> = ({
   style,
   showChevron = false,
   disableHaptics = false,
+  accessibilityLabel,
+  accessibilityHint,
+  accessibilityRole,
 }) => {
   const colors = useGlassColors();
   const { triggerSelectionFeedback } = useHapticFeedback();
@@ -248,6 +267,30 @@ export const GlassFormItem: React.FC<GlassFormItemProps> = ({
   const itemStyle: ViewStyle = {
     backgroundColor: isPressed ? colors.highlighted : "transparent",
   };
+
+  // CRITICAL: Generate default accessibility label from title and subtitle
+  // This ensures all form items are accessible to VoiceOver/TalkBack
+  const defaultAccessibilityLabel = subtitle ? `${title}. ${subtitle}` : title;
+  const finalAccessibilityLabel = accessibilityLabel || defaultAccessibilityLabel;
+
+  // Default role: 'button' if interactive, otherwise 'none'
+  const finalAccessibilityRole = accessibilityRole || (onPress ? 'button' : 'none');
+
+  /**
+   * ACCESSIBILITY ENHANCEMENT: Generate default hint based on interaction type
+   *
+   * Provides clear instructions for screen reader users:
+   * - Items with chevrons indicate navigation/expansion
+   * - Interactive items without chevrons indicate actions
+   *
+   * User can override by providing custom accessibilityHint prop.
+   */
+  const defaultAccessibilityHint = onPress
+    ? showChevron
+      ? 'Double tap to view more'
+      : 'Double tap to activate'
+    : undefined;
+  const finalAccessibilityHint = accessibilityHint || defaultAccessibilityHint;
 
   const ItemContent = (
     <View style={[styles.itemContainer, itemStyle, style]}>
@@ -280,6 +323,9 @@ export const GlassFormItem: React.FC<GlassFormItemProps> = ({
         onPressIn={() => setIsPressed(true)}
         onPressOut={() => setIsPressed(false)}
         activeOpacity={1}
+        accessibilityRole={finalAccessibilityRole as any}
+        accessibilityLabel={finalAccessibilityLabel}
+        accessibilityHint={finalAccessibilityHint}
       >
         {ItemContent}
       </TouchableOpacity>
@@ -299,16 +345,40 @@ export const GlassFormLink: React.FC<GlassFormLinkProps> = ({
 }) => {
   const handlePress = React.useCallback(() => {
     if (href) {
-      console.log(`🔗 Navigate to: ${href}`);
+      // Development logging only
+      if (__DEV__) {
+        console.log(`🔗 Navigate to: ${href}`);
+      }
       // Navigation logic would go here
     } else if (url) {
-      console.log(`🌐 Open URL: ${url}`);
+      // Development logging only
+      if (__DEV__) {
+        console.log(`🌐 Open URL: ${url}`);
+      }
       // URL opening logic would go here
     }
     props.onPress?.();
   }, [href, url, props.onPress]);
 
-  return <GlassFormItem {...props} onPress={handlePress} showChevron={true} />;
+  /**
+   * CRITICAL: Link accessibility defaults
+   * - Role: 'link' for proper screen reader semantics
+   * - Hint: Distinguishes between internal navigation and external URLs
+   * - Always shows chevron for visual affordance
+   */
+  const defaultLinkHint = url
+    ? 'Double tap to open in browser'
+    : 'Double tap to navigate';
+
+  return (
+    <GlassFormItem
+      {...props}
+      onPress={handlePress}
+      showChevron={true}
+      accessibilityRole={props.accessibilityRole || 'link'}
+      accessibilityHint={props.accessibilityHint || defaultLinkHint}
+    />
+  );
 };
 
 // ==================================================================================
