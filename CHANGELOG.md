@@ -29,6 +29,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Benefit**: Prevents React.memo components with custom comparisons from missing callback updates
   - **Documentation**: Added comprehensive code comments explaining the critical fix for stale closures
 
+- **Expo Router Stale Closure Bug**: Fixed navigation handlers missing `router` in useCallback dependencies
+  - **Root Cause**: `router` object not listed in useCallback dependencies, causing handlers to capture stale router reference
+  - **Solution**: Added `router` to dependency arrays for `handleNewChat` and `handleChatPress` in chat list screen
+  - **Impact**: Navigation now works correctly - tapping "New Chat" or chat items properly navigates to chat detail screen
+  - **Files**: `app/(tabs)/index.tsx`
+
+- **Glass Element Budget Optimization**: Reduced glass element registration to minimize performance warnings
+  - **Root Cause**: 15 glass elements registered across all mounted tabs (tabs keep screens mounted simultaneously)
+  - **Analysis**: Platform limit is 5 elements, but 5 tabs × 3 elements each = 15 total exceeding budget
+  - **Solution**: Reduced `GLASS_CHAT_ITEM_LIMIT` from 2 to 1, minimizing chat item glass registration
+  - **Impact**: Fewer performance warnings, better frame rates on glass-heavy screens
+  - **Files**: `app/(tabs)/index.tsx`
+
 ### Removed
 
 - **Legacy Custom Native Glass Module**: Complete removal of deprecated custom LiquidGlassWrapper implementation

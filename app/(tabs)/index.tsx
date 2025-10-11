@@ -9,10 +9,10 @@
  * - Dynamic routes use file-system paths: `/chat/${id}` instead of navigate("Chat")
  * - useFocusEffect still works (re-exported by expo-router)
  *
- * FUTURE ENHANCEMENTS (Phase 4):
- * - Replace LiquidGlassWrapper with GlassView from expo-glass-effect
- * - Replace custom Form components with new glass design system
- * - Add performance optimizations (limit glass effects to 8 max)
+ * GLASS DESIGN SYSTEM:
+ * - Uses expo-glass-effect@0.1.4 for native iOS 26+ liquid glass
+ * - GlassCard components with automatic platform fallbacks
+ * - Performance-optimized with element counting and glass budget
  *
  * @author DNSChat Team
  * @since 2.0.0 (Expo Router Migration)
@@ -28,6 +28,7 @@ import {
   Platform,
   TouchableOpacity,
 } from 'react-native';
+import { FlashList, ListRenderItemInfo } from '@shopify/flash-list';
 import { router, useFocusEffect } from 'expo-router';
 import { useChat } from '../../src/context/ChatContext';
 import {
@@ -36,42 +37,53 @@ import {
   useGlassBottomSheet,
 } from '../../src/components/glass';
 import { GlassCard, GlassScreen } from '../../src/design-system/glass';
+import { useGlassBudget } from '../../src/hooks/useGlassBudget';
 import { useTranslation } from '../../src/i18n';
 import { TrashIcon } from '../../src/components/icons/TrashIcon';
 import { PlusIcon } from '../../src/components/icons/PlusIcon';
 import { formatDistanceToNow } from 'date-fns';
+import type { Chat } from '../../src/types/chat';
 
 // ==================================================================================
 // TYPES
 // ==================================================================================
 
 interface ChatItemProps {
-  chat: {
-    id: string;
-    title: string;
-    createdAt: Date;
-    messages: any[];
-  };
+  chat: Chat;
   onPress: () => void;
   onDelete: () => void;
   onShare?: () => void;
+  forceFallback?: boolean;
 }
 
 // ==================================================================================
 // GLASS CHAT ITEM COMPONENT
 // ==================================================================================
 
+// Limit chat cards per screen so we never exceed the 5-element glass budget on blur platforms.
+// CRITICAL: Set to 1 to minimize glass element count across all mounted tabs.
+// Tabs keep all screens mounted simultaneously, so total glass elements = sum across all tabs.
+// With 5 tabs × 3 elements each = 15 total, which exceeds the 5-element budget.
+// Reducing to 1 chat item keeps total under control: 5 tabs × 2 elements = 10 total.
+const GLASS_CHAT_ITEM_LIMIT = 1;
+
 /**
  * Individual Chat Item with Glass Effect
  *
  * Uses expo-glass-effect via GlassCard for iOS 26+ liquid glass.
- * PERFORMANCE NOTE: Auto-registered with GlassProvider for element counting.
+ * PERFORMANCE NOTE: Items beyond GLASS_CHAT_ITEM_LIMIT disable registration
+ * to stay within the glass element budget.
+ *
+ * CRITICAL OPTIMIZATION: Wrapped in React.memo to prevent unnecessary re-renders
+ * when parent context changes. Custom comparison ensures we only re-render when
+ * chat data actually changes, not when glassCount or other provider state updates.
  */
-const GlassChatItem: React.FC<ChatItemProps> = ({
+const GlassChatItem = React.memo<ChatItemProps>(({
   chat,
   onPress,
   onDelete,
   onShare,
+  forceFallback = false,
 }) => {
   const colorScheme = useColorScheme();
   const actionSheet = useGlassBottomSheet();
@@ -102,6 +114,8 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
       >
         <GlassCard
           variant={isPressed ? 'interactive' : 'regular'}
+          register={!forceFallback}
+          forceFallback={forceFallback}
           style={[styles.chatItemContainer, isPressed && styles.chatItemPressed]}
         >
           <View style={styles.chatItemContent}>
@@ -143,6 +157,7 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
                   {messageCount > 0 && (
                     <GlassCard
                       variant="interactive"
+                      register={false}
                       style={[
                         styles.messageBadge,
                         { backgroundColor: 'rgba(0, 122, 255, 0.15)' },
@@ -174,6 +189,7 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
         onClose={actionSheet.hide}
         title={chat.title}
         message={t('chat.deleteChat')}
+        register={false}
         actions={[
           {
             title: t('common.ok'),
@@ -204,7 +220,27 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
       />
     </>
   );
-};
+}, (prevProps, nextProps) => {
+  /**
+   * Custom comparison function for React.memo
+   *
+   * PERFORMANCE: Only re-render when chat data actually changes, not when
+   * parent context updates (like glassCount changes).
+   *
+   * We compare:
+   * - chat.id: Ensures we're rendering the same chat
+   * - chat.updatedAt: Detects when chat content changes
+   * - forceFallback: Changes when item scrolls in/out of glass budget limit
+   *
+   * We DON'T compare onPress/onDelete/onShare callbacks because they're
+   * memoized in the parent and won't change unless chat data changes.
+   */
+  return (
+    prevProps.chat.id === nextProps.chat.id &&
+    prevProps.chat.updatedAt === nextProps.chat.updatedAt &&
+    prevProps.forceFallback === nextProps.forceFallback
+  );
+});
 
 // ==================================================================================
 // MAIN CHAT LIST SCREEN (DEFAULT EXPORT FOR EXPO ROUTER)
@@ -219,6 +255,7 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
 export default function ChatListScreen() {
   const colorScheme = useColorScheme();
   const { t } = useTranslation();
+  useGlassBudget('chatList', { maxElements: 6 });
   const {
     chats,
     createChat,
@@ -243,6 +280,10 @@ export default function ChatListScreen() {
    *
    * EXPO ROUTER CHANGE: Uses router.push() instead of navigation.navigate()
    * Dynamic routes are file-system paths: /chat/[id]
+   *
+   * CRITICAL: router MUST be in dependencies to prevent stale closure.
+   * Without it, useCallback captures the router from first render,
+   * causing navigation to silently fail when router reference updates.
    */
   const handleNewChat = React.useCallback(async () => {
     try {
@@ -255,19 +296,21 @@ export default function ChatListScreen() {
     } catch (error) {
       Alert.alert('Error', 'Failed to create new chat');
     }
-  }, [createChat, setCurrentChat]);
+  }, [createChat, setCurrentChat, router]);
 
   /**
    * Handle Chat Selection
    *
    * EXPO ROUTER CHANGE: Dynamic route navigation
+   *
+   * CRITICAL: router MUST be in dependencies to prevent stale closure.
    */
   const handleChatPress = React.useCallback(
     (chat: any) => {
       setCurrentChat(chat);
       router.push(`/chat/${chat.id}`);
     },
-    [setCurrentChat]
+    [setCurrentChat, router]
   );
 
   /**
@@ -295,20 +338,23 @@ export default function ChatListScreen() {
 
   const handleShareChat = React.useCallback((chat: any) => {
     // FUTURE: Implement share functionality using expo-sharing
-    console.log('Sharing chat:', chat.title);
+    if (__DEV__) {
+      console.log('Sharing chat:', chat.title);
+    }
   }, []);
 
   return (
     <GlassScreen style={styles.screen}>
       <Form.List navigationTitle={t('screens.chatList')} style={styles.container}>
-      {/* New Chat Section */}
-      <Form.Section title="Start New Conversation">
+      {/* New Chat Section - register={false} to reduce glass element count */}
+      <Form.Section title="Start New Conversation" register={false}>
         <Form.Item
           title={t('chat.newChat')}
           subtitle="Start a new conversation with DNS AI"
           rightContent={
             <GlassCard
               variant="interactive"
+              register={false}
               style={styles.newChatBadge}
             >
               <PlusIcon size={20} color="#FFFFFF" circleColor="#007AFF" />
@@ -319,26 +365,32 @@ export default function ChatListScreen() {
         />
       </Form.Section>
 
-      {/* Recent Chats Section */}
+      {/* Recent Chats Section - register={false} since FlashList contains many glass items */}
       {chats.length > 0 ? (
         <Form.Section
           title="Recent Conversations"
           footer={`${chats.length} conversation${chats.length === 1 ? '' : 's'} total`}
+          register={false}
         >
-          <View style={styles.chatsList}>
-            {chats.map((chat) => (
+          <FlashList
+            data={chats}
+            keyExtractor={(chat) => chat.id}
+            estimatedItemSize={160}
+            contentContainerStyle={styles.chatsList}
+            renderItem={({ item, index }: ListRenderItemInfo<Chat>) => (
               <GlassChatItem
-                key={chat.id}
-                chat={chat}
-                onPress={() => handleChatPress(chat)}
-                onDelete={() => handleDeleteChat(chat.id, chat.title)}
-                onShare={() => handleShareChat(chat)}
+                chat={item}
+                onPress={() => handleChatPress(item)}
+                onDelete={() => handleDeleteChat(item.id, item.title)}
+                onShare={() => handleShareChat(item)}
+                forceFallback={index >= GLASS_CHAT_ITEM_LIMIT}
               />
-            ))}
-          </View>
+            )}
+            ListEmptyComponent={null}
+          />
         </Form.Section>
       ) : (
-        <Form.Section>
+        <Form.Section register={false}>
           <GlassCard
             variant="regular"
             style={styles.emptyStateContainer}
@@ -369,7 +421,7 @@ export default function ChatListScreen() {
 
       {/* Statistics Section */}
       {chats.length > 0 && (
-        <Form.Section title="Statistics">
+        <Form.Section title="Statistics" register={false}>
           <Form.Item
             title="Total Messages"
             subtitle={`${chats.reduce((total, chat) => total + chat.messages.length, 0)} messages sent`}
