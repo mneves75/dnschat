@@ -78,6 +78,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **📦 Expo Bundler Locale Dependency**: Installed `expo-localization` so SettingsContext locale detection resolves during iOS bundling
 - **🔧 iOS CocoaPods Duplicate Dependency**: Resolved duplicate DNSNative pod dependency error preventing iOS builds
   - **Root Cause**: Manual pod entry in Podfile conflicting with Expo autolinking system
   - **Solution**: Removed manual `pod 'DNSNative', :path => './DNSNative'` from Podfile, deleted duplicate `ios/DNSNative/` directory
