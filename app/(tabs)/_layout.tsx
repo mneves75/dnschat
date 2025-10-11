@@ -169,30 +169,29 @@ export default function TabsLayout() {
       {/*
         Developer Logs Tab (Development Only)
         CRITICAL: This tab only appears in __DEV__ mode
-        Production builds will not show this tab
+        Production builds will not show this tab using href: null pattern
       */}
-      {__DEV__ && (
-        <NativeTabs.Screen
-          name="dev-logs"
-          options={{
-            title: t('tabs.devLogs'),
-            tabBarIcon: ({ focused, color }) => (
-              <Icon
-                sf="ladybug.fill"
-                ios={{
-                  name: 'ladybug.fill',
-                  color: color,
-                }}
-                android={{
-                  name: 'bug_report', // Material icon
-                  color: color,
-                }}
-              />
-            ),
-            tabBarLabel: t('tabs.devLogs'),
-          }}
-        />
-      )}
+      <NativeTabs.Screen
+        name="dev-logs"
+        options={{
+          href: __DEV__ ? undefined : null, // Hide in production builds
+          title: t('tabs.devLogs'),
+          tabBarIcon: ({ focused, color }) => (
+            <Icon
+              sf="ladybug.fill"
+              ios={{
+                name: 'ladybug.fill',
+                color: color,
+              }}
+              android={{
+                name: 'bug_report', // Material icon
+                color: color,
+              }}
+            />
+          ),
+          tabBarLabel: t('tabs.devLogs'),
+        }}
+      />
 
       {/*
         Chat Detail Route (Dynamic)

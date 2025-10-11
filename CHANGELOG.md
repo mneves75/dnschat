@@ -116,6 +116,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **⚠️ React Native Deprecation Warnings**: Fixed deprecated SafeAreaView usage and Expo Router layout structure
+  - **SafeAreaView Migration**: Replaced deprecated `SafeAreaView` from `react-native` with `react-native-safe-area-context` in 3 files
+    - `app/(tabs)/chat/[id].tsx`: Chat detail screen
+    - `src/components/onboarding/OnboardingContainer.tsx`: Onboarding flow
+    - `src/components/glass/GlassTabBar.tsx`: Custom glass tab bar component
+  - **Layout Structure Fix**: Removed conditional `{__DEV__ && ...}` wrapper in `app/(tabs)/_layout.tsx`
+    - Changed dev-logs tab to use `href: __DEV__ ? undefined : null` pattern
+    - Eliminates "Layout children must be of type Screen" warnings (20+ repetitions)
+  - **Impact**: Cleaner console output, future-proof API usage, no functional changes
 - **📦 Expo Bundler Locale Dependency**: Installed `expo-localization` so SettingsContext locale detection resolves during iOS bundling
 - **📦 Expo Router Bundler Dependency**: Fixed missing expo-linking dependency causing Metro bundler failure
   - **Root Cause**: expo-router requires expo-linking as a peer dependency but it was not installed

@@ -16,13 +16,13 @@
 import React, { useEffect } from 'react';
 import {
   StyleSheet,
-  SafeAreaView,
   useColorScheme,
   Alert,
   StatusBar,
   Platform,
   KeyboardAvoidingView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams } from 'expo-router';
 import { MessageList } from '../../../src/components/MessageList';
 import { ChatInput } from '../../../src/components/ChatInput';
