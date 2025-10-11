@@ -149,6 +149,19 @@ export function GlassProvider({ children }: GlassProviderProps) {
     getGlassCapabilities(false)
   );
 
+  /**
+   * CRITICAL FIX: effectiveMaxRef for Warning Logic
+   *
+   * WHY A REF: We need the current limit in updateGlassCount's RAF callback,
+   * but adding effectiveMaxGlassElements to deps would recreate updateGlassCount
+   * every time the limit changes, which would cascade-recreate registerGlass/unregisterGlass,
+   * causing all glass components to re-run their useEffect registrations.
+   *
+   * SOLUTION: Update ref synchronously (before render completes), read in callback.
+   * No race condition because ref update happens BEFORE any RAF callback runs.
+   */
+  const effectiveMaxRef = useRef<number>(0);
+
   // Update capabilities only when accessibility setting actually changes
   useEffect(() => {
     const newCapabilities = getGlassCapabilities(reduceTransparencyEnabled);
@@ -166,6 +179,10 @@ export function GlassProvider({ children }: GlassProviderProps) {
 
     return Math.min(capabilities.maxGlassElements, ...overrideValues);
   }, [budgetOverrides, capabilities.maxGlassElements]);
+
+  // Update ref synchronously whenever computed value changes
+  // This ensures updateGlassCount always reads current value without needing it in deps
+  effectiveMaxRef.current = effectiveMaxGlassElements;
 
 
   const setGlassBudget = useCallback((screenId: string, maxElements: number) => {
@@ -261,12 +278,9 @@ export function GlassProvider({ children }: GlassProviderProps) {
           return prev;
         }
 
-        // CRITICAL FIX: Use effectiveMaxGlassElements directly from closure
-        // Previous bug: Used effectiveMaxRef.current which had race condition -
-        // ref updated in useEffect but warning fired before useEffect ran.
-        // Now we capture effectiveMaxGlassElements from the closure, ensuring
-        // we always use the current computed value.
-        const limit = effectiveMaxGlassElements;
+        // Read from ref - always current, no deps needed
+        // Ref is updated synchronously above, so no race condition
+        const limit = effectiveMaxRef.current;
 
         if (next > limit) {
           if (lastWarningCountRef.current !== next) {
@@ -280,14 +294,16 @@ export function GlassProvider({ children }: GlassProviderProps) {
             }
             lastWarningCountRef.current = next;
           }
-        } else if (lastWarningCountRef.current !== null) {
+        } else {
+          // CRITICAL: Reset warning ref synchronously when back under limit
+          // Previous bug: Separate useEffect caused timing issues
           lastWarningCountRef.current = null;
         }
 
         return next;
       });
     });
-  }, [effectiveMaxGlassElements]);
+  }, []); // STABLE - never recreates, preventing cascade re-registrations
 
   const registerGlass = useCallback(() => {
     const registrationId = nextRegistrationIdRef.current++;
@@ -459,12 +475,6 @@ export function GlassProvider({ children }: GlassProviderProps) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Empty deps - run ONCE on mount only
-
-  useEffect(() => {
-    if (glassCount <= effectiveMaxGlassElements) {
-      lastWarningCountRef.current = null;
-    }
-  }, [glassCount, effectiveMaxGlassElements]);
 
   return (
     <GlassRegistrationContext.Provider value={registrationContextValue}>
