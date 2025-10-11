@@ -127,7 +127,6 @@ export function GlassProvider({ children }: GlassProviderProps) {
   const [isAnimating, setIsAnimating] = useState(false);
   const [budgetOverrides, setBudgetOverrides] = useState<Record<string, number>>({});
   const lastWarningCountRef = useRef<number | null>(null);
-  const effectiveMaxRef = useRef<number>(0);
   const nextRegistrationIdRef = useRef(0);
   const activeRegistrationsRef = useRef<Set<number>>(new Set());
   const pendingUpdateRef = useRef<number | null>(null);
@@ -150,22 +149,19 @@ export function GlassProvider({ children }: GlassProviderProps) {
     getGlassCapabilities(false)
   );
 
+  /**
+   * CRITICAL FIX: Initialize effectiveMaxRef with correct value immediately
+   * Previous bug: ref started at 0, causing incorrect "6/0" or "6/5" warnings
+   * before useEffect runs. Now initializes with capabilities.maxGlassElements
+   * from the lazy useState initializer above.
+   */
+  const effectiveMaxRef = useRef<number>(getGlassCapabilities(false).maxGlassElements);
+
   // Update capabilities only when accessibility setting actually changes
   useEffect(() => {
     const newCapabilities = getGlassCapabilities(reduceTransparencyEnabled);
-
-    // Deep equality check - only update if values actually changed
-    // This prevents unnecessary re-renders from object reference changes
-    if (
-      capabilities.isNativeGlassSupported !== newCapabilities.isNativeGlassSupported ||
-      capabilities.canRenderGlass !== newCapabilities.canRenderGlass ||
-      capabilities.shouldReduceTransparency !== newCapabilities.shouldReduceTransparency ||
-      capabilities.glassType !== newCapabilities.glassType ||
-      capabilities.maxGlassElements !== newCapabilities.maxGlassElements
-    ) {
-      setCapabilities(newCapabilities);
-    }
-  }, [reduceTransparencyEnabled, capabilities]);
+    setCapabilities(newCapabilities);
+  }, [reduceTransparencyEnabled]);
 
   const effectiveMaxGlassElements = useMemo(() => {
     const overrideValues = Object.values(budgetOverrides).filter(
