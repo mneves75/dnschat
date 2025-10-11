@@ -58,6 +58,20 @@ export default function RootLayout() {
         <SettingsProvider>
           <GlassProvider>
             <ChatProvider>
+              {/*
+                TRICKY PART: Stack children validation with file-based routing
+
+                Expo Router automatically creates routes from app/ directory structure:
+                - app/(tabs)/ → Tab navigation group
+                - app/(modals)/ → Modal presentation group
+                - app/profile/[user].tsx → Dynamic route with parameter
+                - app/+not-found.tsx → 404 handler
+
+                CRITICAL: NO JSX comments allowed inside <Stack> component!
+                Stack expects only Stack.Screen children. React treats JSX comments
+                {/* like this */} as actual child nodes, causing "Layout children must
+                be of type Screen" warnings. All documentation must be OUTSIDE the JSX.
+              */}
               <Stack
                 screenOptions={{
                   // Default screen options for all routes
@@ -68,18 +82,7 @@ export default function RootLayout() {
                   },
                   animation: 'default', // iOS-style slide animation
                 }}
-              >
-                {/*
-                  CRITICAL: Screen configuration is automatic with file-based routing.
-                  Expo Router automatically creates routes from the app/ directory structure:
-                  - app/(tabs)/ → Tab navigation group
-                  - app/(modals)/ → Modal presentation group
-                  - app/profile/[user].tsx → Dynamic route with parameter
-                  - app/+not-found.tsx → 404 handler
-
-                  No need to manually define <Stack.Screen> components here.
-                */}
-              </Stack>
+              />
             </ChatProvider>
           </GlassProvider>
         </SettingsProvider>

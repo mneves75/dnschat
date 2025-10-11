@@ -19,6 +19,11 @@ import { useColorScheme } from 'react-native';
  *
  * IMPORTANT: This layout configures all routes in app/(modals)/ to
  * present as modals with iOS-style slide-up animation.
+ *
+ * TRICKY PART: Stack children validation
+ * Stack component expects ONLY Stack.Screen children. NO JSX comments
+ * allowed inside the component - they create child nodes that trigger
+ * "Layout children must be of type Screen" warnings.
  */
 export default function ModalsLayout() {
   const colorScheme = useColorScheme();
@@ -41,7 +46,6 @@ export default function ModalsLayout() {
         animation: 'slide_from_bottom',
       }}
     >
-      {/* Settings Modal */}
       <Stack.Screen
         name="settings"
         options={{
