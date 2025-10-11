@@ -286,14 +286,20 @@ export default function ChatListScreen() {
    * causing navigation to silently fail when router reference updates.
    */
   const handleNewChat = React.useCallback(async () => {
+    console.log('[NAV DEBUG] handleNewChat called');
     try {
+      console.log('[NAV DEBUG] Creating new chat...');
       const newChat = await createChat();
+      console.log('[NAV DEBUG] New chat created:', newChat.id);
       setCurrentChat(newChat);
 
       // CRITICAL: Expo Router navigation uses file-system paths
       // /chat/[id] maps to app/(tabs)/chat/[id].tsx
+      console.log('[NAV DEBUG] Calling router.push with path:', `/chat/${newChat.id}`);
       router.push(`/chat/${newChat.id}`);
+      console.log('[NAV DEBUG] router.push called successfully');
     } catch (error) {
+      console.error('[NAV DEBUG] Error in handleNewChat:', error);
       Alert.alert('Error', 'Failed to create new chat');
     }
   }, [createChat, setCurrentChat, router]);
@@ -307,8 +313,11 @@ export default function ChatListScreen() {
    */
   const handleChatPress = React.useCallback(
     (chat: any) => {
+      console.log('[NAV DEBUG] handleChatPress called for chat:', chat.id);
       setCurrentChat(chat);
+      console.log('[NAV DEBUG] Calling router.push with path:', `/chat/${chat.id}`);
       router.push(`/chat/${chat.id}`);
+      console.log('[NAV DEBUG] router.push called successfully');
     },
     [setCurrentChat, router]
   );

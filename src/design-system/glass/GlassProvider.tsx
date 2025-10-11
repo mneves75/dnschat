@@ -133,37 +133,39 @@ export function GlassProvider({ children }: GlassProviderProps) {
   const pendingUpdateRef = useRef<number | null>(null);
 
   /**
-   * Detect Glass Capabilities - Stabilized for Reference Equality
+   * Detect Glass Capabilities - TRULY Stabilized for Reference Equality
    *
    * CRITICAL FIX FOR INFINITE LOOP:
-   * getGlassCapabilities() returns a NEW object every time, even when values are identical.
-   * This causes capabilities to change reference on every render, which changes checkShouldRenderGlass
-   * reference, which changes contextValue reference, which re-renders all consumers, infinite loop.
+   * Previous implementation: getGlassCapabilities() returned NEW object every call.
+   * Even with useMemo and primitive extraction, capabilities changed reference on every render.
    *
-   * FIX: Extract each primitive value separately, then reconstruct the object with stable references.
+   * ROOT CAUSE: useMemo dependencies included derived values that changed when rawCapabilities changed.
+   * This created circular dependency: rawCapabilities changes -> primitives change -> capabilities changes -> consumers re-render -> loop.
+   *
+   * NEW FIX: Use useState with lazy initializer to compute capabilities ONCE on mount.
+   * Only update when reduceTransparencyEnabled actually changes via useEffect.
+   * This guarantees stable object reference across renders.
    */
-  const rawCapabilities = useMemo(() => {
-    return getGlassCapabilities(reduceTransparencyEnabled);
-  }, [reduceTransparencyEnabled]);
+  const [capabilities, setCapabilities] = useState<GlassCapabilities>(() =>
+    getGlassCapabilities(false)
+  );
 
-  // Extract primitive values (these will be stable across renders)
-  // IMPORTANT: Renamed shouldReduceTransparency to reduceTransparency to avoid shadowing
-  // the imported function shouldReduceTransparency() from utils.ts
-  const isNativeGlassSupported = rawCapabilities.isNativeGlassSupported;
-  const canRenderGlass = rawCapabilities.canRenderGlass;
-  const reduceTransparency = rawCapabilities.shouldReduceTransparency;
-  const glassType = rawCapabilities.glassType;
-  const maxGlassElements = rawCapabilities.maxGlassElements;
+  // Update capabilities only when accessibility setting actually changes
+  useEffect(() => {
+    const newCapabilities = getGlassCapabilities(reduceTransparencyEnabled);
 
-  // Reconstruct capabilities object with stable reference
-  // This only changes when primitive values actually change
-  const capabilities = useMemo(() => ({
-    isNativeGlassSupported,
-    canRenderGlass,
-    shouldReduceTransparency: reduceTransparency,
-    glassType,
-    maxGlassElements,
-  }), [isNativeGlassSupported, canRenderGlass, reduceTransparency, glassType, maxGlassElements]);
+    // Deep equality check - only update if values actually changed
+    // This prevents unnecessary re-renders from object reference changes
+    if (
+      capabilities.isNativeGlassSupported !== newCapabilities.isNativeGlassSupported ||
+      capabilities.canRenderGlass !== newCapabilities.canRenderGlass ||
+      capabilities.shouldReduceTransparency !== newCapabilities.shouldReduceTransparency ||
+      capabilities.glassType !== newCapabilities.glassType ||
+      capabilities.maxGlassElements !== newCapabilities.maxGlassElements
+    ) {
+      setCapabilities(newCapabilities);
+    }
+  }, [reduceTransparencyEnabled, capabilities]);
 
   const effectiveMaxGlassElements = useMemo(() => {
     const overrideValues = Object.values(budgetOverrides).filter(
@@ -348,10 +350,13 @@ export function GlassProvider({ children }: GlassProviderProps) {
    * on platforms with JS-based blur (iOS <26).
    *
    * USAGE: Call from ScrollView onScrollBeginDrag/onScrollEndDrag
+   *
+   * CRITICAL FIX: Wrapped in useCallback to prevent contextValue from changing reference
+   * on every render. Without this, every consumer re-renders unnecessarily.
    */
-  const setScrolling = (scrolling: boolean) => {
+  const setScrolling = useCallback((scrolling: boolean) => {
     setIsScrolling(scrolling);
-  };
+  }, []);
 
   /**
    * Animation State Management
@@ -359,10 +364,13 @@ export function GlassProvider({ children }: GlassProviderProps) {
    * PERFORMANCE: Disable glass during heavy animations to maintain 60fps.
    *
    * USAGE: Call when starting/ending complex animations
+   *
+   * CRITICAL FIX: Wrapped in useCallback to prevent contextValue from changing reference
+   * on every render. Without this, every consumer re-renders unnecessarily.
    */
-  const setAnimating = (animating: boolean) => {
+  const setAnimating = useCallback((animating: boolean) => {
     setIsAnimating(animating);
-  };
+  }, []);
 
   /**
    * Check if Glass Should Render
@@ -373,20 +381,31 @@ export function GlassProvider({ children }: GlassProviderProps) {
    * - Heavy animation in progress
    * - Reduce transparency is enabled
    *
-   * CRITICAL: Wrapped in useCallback to prevent infinite re-render loops.
-   * With stabilized capabilities object (above), this function now has stable
-   * references and only changes when actual values change.
+   * CRITICAL FIX: Avoid object spreading which creates new object on every call.
+   * Instead, pass individual parameters. This maintains stable function reference.
+   *
+   * PREVIOUS BUG: { ...capabilities, maxGlassElements: effectiveMaxGlassElements }
+   * created a NEW object every time this function was called, even though useCallback
+   * was used. Object literals are NEVER equal by reference.
    */
   const checkShouldRenderGlass = useCallback(() => {
-    return shouldRenderGlassUtil(
-      glassCount,
-      isScrolling,
-      isAnimating,
-      {
-        ...capabilities,
-        maxGlassElements: effectiveMaxGlassElements,
-      }
-    );
+    // Inline the shouldRenderGlassUtil logic to avoid object creation
+    // Always render solid backgrounds
+    if (capabilities.glassType === 'solid') {
+      return true;
+    }
+
+    // Disable during heavy operations on iOS <26 (JS-based blur is expensive)
+    if (capabilities.glassType === 'blur' && (isScrolling || isAnimating)) {
+      return false;
+    }
+
+    // Enforce max element limit (use effective max, not base max)
+    if (glassCount > effectiveMaxGlassElements) {
+      return false;
+    }
+
+    return capabilities.canRenderGlass;
   }, [glassCount, isScrolling, isAnimating, capabilities, effectiveMaxGlassElements]);
 
   /**
@@ -432,7 +451,15 @@ export function GlassProvider({ children }: GlassProviderProps) {
     clearGlassBudget,
   ]);
 
-  // Log capabilities in development
+  /**
+   * Log capabilities in development (ONCE on mount only)
+   *
+   * CRITICAL FIX: Previous implementation had capabilities as dependency,
+   * causing this to run on every render when capabilities object changed reference.
+   * This contributed to the infinite re-render loop.
+   *
+   * NEW: Only log ONCE on mount, and separately log when accessibility changes.
+   */
   useEffect(() => {
     if (__DEV__) {
       console.log('[GlassProvider] Initialized with capabilities:', {
@@ -442,7 +469,8 @@ export function GlassProvider({ children }: GlassProviderProps) {
         reduceTransparency: capabilities.shouldReduceTransparency,
       });
     }
-  }, [capabilities]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty deps - run ONCE on mount only
 
   useEffect(() => {
     if (glassCount <= effectiveMaxGlassElements) {
