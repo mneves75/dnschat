@@ -149,14 +149,6 @@ export function GlassProvider({ children }: GlassProviderProps) {
     getGlassCapabilities(false)
   );
 
-  /**
-   * CRITICAL FIX: Initialize effectiveMaxRef with correct value immediately
-   * Previous bug: ref started at 0, causing incorrect "6/0" or "6/5" warnings
-   * before useEffect runs. Now initializes with capabilities.maxGlassElements
-   * from the lazy useState initializer above.
-   */
-  const effectiveMaxRef = useRef<number>(getGlassCapabilities(false).maxGlassElements);
-
   // Update capabilities only when accessibility setting actually changes
   useEffect(() => {
     const newCapabilities = getGlassCapabilities(reduceTransparencyEnabled);
@@ -269,7 +261,12 @@ export function GlassProvider({ children }: GlassProviderProps) {
           return prev;
         }
 
-        const limit = effectiveMaxRef.current;
+        // CRITICAL FIX: Use effectiveMaxGlassElements directly from closure
+        // Previous bug: Used effectiveMaxRef.current which had race condition -
+        // ref updated in useEffect but warning fired before useEffect ran.
+        // Now we capture effectiveMaxGlassElements from the closure, ensuring
+        // we always use the current computed value.
+        const limit = effectiveMaxGlassElements;
 
         if (next > limit) {
           if (lastWarningCountRef.current !== next) {
@@ -290,7 +287,7 @@ export function GlassProvider({ children }: GlassProviderProps) {
         return next;
       });
     });
-  }, []);
+  }, [effectiveMaxGlassElements]);
 
   const registerGlass = useCallback(() => {
     const registrationId = nextRegistrationIdRef.current++;
@@ -324,11 +321,6 @@ export function GlassProvider({ children }: GlassProviderProps) {
     }
     updateGlassCount(activeRegistrationsRef.current.size);
   }, [updateGlassCount]);
-
-  useEffect(() => {
-    effectiveMaxRef.current = effectiveMaxGlassElements;
-    updateGlassCount(activeRegistrationsRef.current.size);
-  }, [effectiveMaxGlassElements, updateGlassCount]);
 
   // Cleanup pending animation frames on unmount
   useEffect(() => {
