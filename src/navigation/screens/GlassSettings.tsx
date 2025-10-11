@@ -31,6 +31,7 @@ import {
   useGlassBottomSheet,
   LiquidGlassWrapper,
 } from "../../components/glass";
+import { useTransportTestThrottle } from "../../ui/hooks/useTransportTestThrottle";
 
 // ==================================================================================
 // GLASS SETTINGS SCREEN COMPONENT
@@ -136,6 +137,14 @@ export function GlassSettings() {
   );
   const [lastTestError, setLastTestError] = React.useState<string | null>(null);
 
+  // Shared throttle keeps diagnostics aligned with docs/SETTINGS.md guidance.
+  const {
+    checkChainAvailability,
+    checkForcedAvailability,
+    registerChainRun,
+    registerForcedRun,
+  } = useTransportTestThrottle();
+
   const handleSelectMethodPreference = async (
     preference: DNSMethodPreference,
   ) => {
@@ -156,6 +165,13 @@ export function GlassSettings() {
 
   const handleTestSelectedPreference = async () => {
     if (testRunning) return;
+    const throttleMessage = checkChainAvailability();
+    if (throttleMessage) {
+      setLastTestError(throttleMessage);
+      return;
+    }
+
+    registerChainRun();
     setTestRunning(true);
     setLastTestResult(null);
     setLastTestError(null);
@@ -180,6 +196,13 @@ export function GlassSettings() {
     transport: "native" | "udp" | "tcp" | "https",
   ) => {
     if (testRunning) return;
+    const throttleMessage = checkForcedAvailability(transport);
+    if (throttleMessage) {
+      setLastTestError(throttleMessage);
+      return;
+    }
+
+    registerForcedRun(transport);
     setTestRunning(true);
     setLastTestResult(null);
     setLastTestError(null);

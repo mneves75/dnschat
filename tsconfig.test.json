@@ -2,7 +2,18 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "types": ["jest", "node"],
-    "noEmit": true
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    }
   },
-  "include": ["__tests__", "src/tests", "src/**/*.test.ts", "src/**/*.test.tsx"]
+  "include": [
+    "__tests__",
+    "src/tests",
+    "src/**/*.test.ts",
+    "src/**/*.test.tsx",
+    "app/**/*.ts",
+    "app/**/*.tsx"
+  ]
 }
