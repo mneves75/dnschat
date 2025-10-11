@@ -1,6 +1,7 @@
 import { Platform, AppState } from 'react-native';
 import * as dns from 'dns-packet';
 import { nativeDNS, DNSError, DNSErrorType } from '../../modules/dns-native';
+export { DNSError, DNSErrorType } from '../../modules/dns-native';
 import { DNS_CONSTANTS, sanitizeDNSMessageReference } from '../../modules/dns-native/constants';
 import { DNSLogService } from './dnsLogService';
 import { DNSMethodPreference } from '../context/SettingsContext';
@@ -42,12 +43,18 @@ type DNSQueryContext = {
   targetServer: string;
 };
 
-// Try to import UDP and TCP, fallback to null if not available
+// CRITICAL: Dynamic library loading with graceful fallback
+// These packages are INTENTIONALLY excluded from expo-doctor checks (see EXPO-DOCTOR-CONFIGURATION.md)
+// - react-native-udp: Unmaintained but critical for DNS fallback on restricted networks
+// - react-native-tcp-socket: Untested on New Architecture but works via Interop Layer
+// If libraries fail to load, app gracefully falls back to native DNS → DNS-over-HTTPS → Mock
 let dgram: any = null;
 let TcpSocket: any = null;
 let Buffer: any = null;
 
 try {
+  // UDP DNS transport (fallback #2 after native DNS)
+  // Used when native DNS unavailable or fails
   dgram = require('react-native-udp');
   if (typeof __DEV__ !== 'undefined' && __DEV__) {
     console.log('✅ UDP library loaded successfully:', !!dgram);
@@ -56,10 +63,12 @@ try {
   if (typeof __DEV__ !== 'undefined' && __DEV__) {
     console.log('❌ UDP library failed to load:', error);
   }
-  // UDP not available, will use fallback methods
+  // UDP not available, will use TCP/HTTPS/Mock fallback methods
 }
 
 try {
+  // TCP DNS transport (fallback #3 after UDP)
+  // Critical for corporate networks that block UDP port 53
   const tcpLibrary = require('react-native-tcp-socket');
   if (typeof __DEV__ !== 'undefined' && __DEV__) {
     console.log('🔍 TCP Socket library structure:', Object.keys(tcpLibrary));
@@ -72,15 +81,18 @@ try {
   if (typeof __DEV__ !== 'undefined' && __DEV__) {
     console.log('❌ TCP Socket library failed to load:', error);
   }
-  // TCP Socket not available, will use DNS-over-HTTPS fallback
+  // TCP Socket not available, will use DNS-over-HTTPS/Mock fallback
 }
 
-// Try to import Buffer (Node.js environment) or create a minimal polyfill
+// TRICKY: Buffer polyfill for cross-platform compatibility
+// React Native, Web, and Node.js environments handle binary data differently
+// This polyfill ensures dns-packet library works across all platforms
 try {
-  // In React Native, Buffer might be available via a polyfill
+  // Try to use native Buffer (React Native with polyfill or Node.js)
   Buffer = global.Buffer || require('buffer').Buffer;
 } catch (error) {
-  // Create minimal Buffer polyfill for web environments
+  // FALLBACK: Create minimal Buffer polyfill for web environments
+  // Provides only methods needed by dns-packet library for DNS protocol handling
   Buffer = {
     alloc: (size: number) => new Uint8Array(size),
     allocUnsafe: (size: number) => new Uint8Array(size),
@@ -282,15 +294,21 @@ export function parseTXTResponse(txtRecords: string[]): string {
   const expectedTotal = parts[0].totalParts;
   const byPart = new Map<number, string>();
 
-  // ROBUSTNESS FIX: Handle duplicate parts from UDP retransmission
+  // TRICKY: Handle duplicate parts from UDP retransmission
+  // UDP is unreliable - packets can be duplicated, reordered, or lost
+  // DNS servers may send the same TXT record multiple times
+  // We must detect duplicates and handle them correctly:
+  // - Identical duplicates (same content): Safe to ignore (normal retransmission)
+  // - Conflicting duplicates (different content): Data corruption, must fail
+  // Example: "1/3:Hello" received twice is OK, but "1/3:Hello" + "1/3:Goodbye" is corruption
   for (const part of parts) {
     if (byPart.has(part.partNumber)) {
       const existing = byPart.get(part.partNumber);
       // If content matches, this is a harmless retransmission - skip it
       if (existing === part.content) {
-        continue;
+        continue;  // Duplicate but identical - safe to ignore
       }
-      // If content differs, this is data corruption - fail
+      // If content differs, this is data corruption - fail immediately
       throw new Error(
         `Conflicting content for part ${part.partNumber}: ` +
         `existing="${existing?.substring(0, 50)}..." vs new="${part.content.substring(0, 50)}..."`
@@ -846,7 +864,11 @@ export class DNSService {
           throw new Error('DNS packet encoding failed - queryBuffer is null/undefined');
         }
 
-        // DNS-over-TCP requires 2-byte length prefix
+        // TRICKY: DNS-over-TCP requires 2-byte length prefix (RFC 7766)
+        // This is the key difference between UDP and TCP DNS:
+        // - UDP: Send raw DNS packet
+        // - TCP: Send [2-byte length prefix] + [DNS packet]
+        // The length prefix tells the server how many bytes to read
         this.vLog('🔧 TCP: Creating length prefix...');
         this.vLog('🔧 TCP: Buffer available:', !!Buffer);
         this.vLog('🔧 TCP: Buffer.allocUnsafe available:', !!Buffer?.allocUnsafe);
@@ -860,16 +882,19 @@ export class DNSService {
           throw new Error(`Buffer allocation failed: ${bufferError}`);
         }
 
-        // For polyfill compatibility, write length manually
+        // TRICKY: Write length as big-endian 16-bit integer
+        // Big-endian (network byte order): most significant byte first
+        // For polyfill compatibility, support both Buffer.writeUInt16BE and manual write
         this.vLog('🔧 TCP: Writing length prefix...');
         if (lengthPrefix.writeUInt16BE) {
           this.vLog('🔧 TCP: Using Buffer.writeUInt16BE method');
           lengthPrefix.writeUInt16BE(queryBuffer.length, 0);
         } else {
           this.vLog('🔧 TCP: Using manual big-endian write (polyfill mode)');
-          // Manual big-endian write for polyfill
-          lengthPrefix[0] = (queryBuffer.length >> 8) & 0xff;
-          lengthPrefix[1] = queryBuffer.length & 0xff;
+          // Manual big-endian write for Buffer polyfill
+          // Example: length 512 = 0x0200 -> [0x02, 0x00]
+          lengthPrefix[0] = (queryBuffer.length >> 8) & 0xff;  // High byte
+          lengthPrefix[1] = queryBuffer.length & 0xff;          // Low byte
         }
         this.vLog('✅ TCP: Length prefix written:', Array.from(lengthPrefix));
 
