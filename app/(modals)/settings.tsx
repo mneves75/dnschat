@@ -12,7 +12,7 @@
  */
 
 import React from 'react';
-import { Settings as SettingsComponent } from '../../src/navigation/screens/Settings';
+import { SettingsScreen } from '../../src/screens/SettingsScreen';
 
 /**
  * Settings Modal Screen
@@ -25,6 +25,6 @@ import { Settings as SettingsComponent } from '../../src/navigation/screens/Sett
  * - Add glass design system components
  * - Add locale-aware text using i18n hook
  */
-export default function SettingsScreen() {
-  return <SettingsComponent />;
+export default function SettingsModal() {
+  return <SettingsScreen />;
 }

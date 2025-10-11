@@ -123,6 +123,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Architecture**: Expo autolinking now properly discovers module from `modules/dns-native/` without conflicts
   - **Impact**: Clean pod install with 105 pods, eliminates "multiple dependencies with different sources" error
   - **Commit**: `521a3a3`
+- **🧭 Expo Router Entry Restoration**: Replaced legacy `Navigation` bootstrap with Expo Router's `ExpoRoot` in `src/App.tsx`, removing obsolete React Navigation assets and fixing the bundler "Unable to resolve ./navigation" failure introduced after the tabs migration.
+- **⚙️ Settings Modal Migration**: Rebuilt `SettingsScreen` under `src/screens/SettingsScreen.tsx` and updated the settings modal to consume it, eliminating the stale `../../src/navigation/screens/Settings` import that broke bundling.
 
 - **📦 Expo Configuration Schema Validation**: Fixed expo-doctor schema error for invalid deploymentTarget property
   - **Root Cause**: Duplicate `deploymentTarget` configuration in `ios` section and `expo-build-properties` plugin
