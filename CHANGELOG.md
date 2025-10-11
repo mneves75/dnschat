@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **📚 Documentation Updates - Development Guidelines & Framework Updates**: Comprehensive update to project documentation with critical development guidelines and latest framework specifications
+  - **CLAUDE.md**: Added critical development guidelines prohibiting markdown file creation without explicit instruction, ast-grep usage requirements, Expo Go limitations, New Architecture (Fabric) details, Liquid Glass UI specifications, React Native 0.81 & React 19.1 features, Expo SDK 54 API updates, performance guidelines, component style patterns, accessibility requirements, and documentation structure with REF_DOC references
+  - **AGENTS.md**: Added critical development guidelines, ast-grep usage, tech stack updates (React Native 0.81, Expo SDK 54, React 19.1, New Architecture), performance guidelines, accessibility requirements, and Material Design 3 specifications
+  - **Junior Developer Guide**: Updated tech stack to React Native 0.81 + Expo SDK 54, React 19.1 with React Compiler, New Architecture (Fabric), added critical development guidelines, performance best practices, component style patterns, and accessibility requirements
+  - **Version Updates**: Updated all framework references from Expo v53 to SDK 54, React Native 0.81, React 19.1 with React Compiler enabled
+  - **Architecture**: Documented New Architecture (Fabric) with TurboModules, @shopify/flash-list performance optimizations, and React Compiler auto-memoization
+  - **Future Enhancements**: Added comprehensive Liquid Glass UI documentation for iOS 26+ with fallback strategies for older platforms and Android Material You integration
+
 ### Fixed
 
 - **🔧 iOS CocoaPods Duplicate Dependency**: Resolved duplicate DNSNative pod dependency error preventing iOS builds
