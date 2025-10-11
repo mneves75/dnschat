@@ -20,6 +20,34 @@
  * - No nested native tabs (use JavaScript tabs if needed)
  * - FlatList has limited support in tab content
  *
+ * TAB STRUCTURE:
+ * This layout defines 5 screens, 4 visible as tabs + 1 hidden detail screen:
+ *
+ * 1. index.tsx (ChatList) - Main chat interface [house.fill icon]
+ *    CRITICAL: "index" is special in Expo Router - becomes default route
+ *
+ * 2. logs.tsx - DNS query logs [list.bullet.rectangle icon]
+ *    Shows real-time DNS query attempts, fallbacks, and response times
+ *
+ * 3. about.tsx - App information [info.circle icon]
+ *    Version details, privacy policy, attribution
+ *
+ * 4. dev-logs.tsx - Developer logs [ladybug.fill icon]
+ *    CONDITIONAL: Only visible in __DEV__ mode via href pattern
+ *    Production builds hide this tab using href: null
+ *
+ * 5. chat/[id] - Chat detail screen (NOT A TAB)
+ *    Dynamic route for individual chat conversations
+ *    Uses href: null to hide from tab bar
+ *    Accessed via navigation from ChatList
+ *
+ * TRICKY PARTS:
+ * - Conditional dev-logs tab uses href: __DEV__ ? undefined : null pattern
+ *   This is cleaner than wrapping Screen in conditional rendering
+ * - Glass effects require capability detection (iOS 26+ native glass)
+ * - Tab bar styling adapts based on glass support availability
+ * - All inline JSX comments removed to prevent React children warnings
+ *
  * @author DNSChat Team
  * @since 2.0.0 (Expo Router Migration)
  */
@@ -36,38 +64,33 @@ import { useGlass, getGlassBackgroundFallback } from '../../src/design-system/gl
  * CRITICAL: This component must be a default export for Expo Router.
  * The tabs will render with platform-native styling automatically.
  *
- * Tab Order:
- * 1. index.tsx (ChatList) - Main chat interface
- * 2. logs.tsx - DNS query logs
- * 3. about.tsx - App information
- * 4. dev-logs.tsx - Developer logs (__DEV__ only)
- *
- * SF Symbols (iOS):
- * - house.fill: Home/Chat tab
- * - list.bullet.rectangle: Logs tab
- * - info.circle: About tab
- * - ladybug.fill: Dev logs tab
+ * IMPORTANT: NativeTabs children MUST be Screen components only.
+ * No wrappers, fragments, or inline comments between Screen components.
+ * All documentation is kept outside the JSX return statement.
  */
 export default function TabsLayout() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const { capabilities, shouldRenderGlass } = useGlass();
-
-  // CRITICAL: Get translations for tab labels
   const { t } = useTranslation();
 
-  // Determine when we can lean on native liquid glass (iOS 26+) – fall back otherwise.
+  // TRICKY PART: Glass capability detection
+  // Determines if we can use iOS 26+ native liquid glass effects
+  // Falls back to semi-transparent backgrounds on older platforms
   const canRenderNativeGlass = capabilities.isNativeGlassSupported && shouldRenderGlass();
 
+  // Tab bar color configuration
+  // Using iOS system colors for native feel: #007AFF (blue), #8E8E93 (gray)
   const tabBarTintColor = '#007AFF';
   const tabBarInactiveTintColor = '#8E8E93';
 
+  // TRICKY PART: Dynamic background based on glass support
+  // - iOS 26+: transparent (relies on native blur effect)
+  // - Older: semi-transparent color approximating glass
   const tabBarBackgroundColor = useMemo(() => {
     if (canRenderNativeGlass) {
       return 'transparent';
     }
-
-    // Fallback: approximate glass with semi-transparent backgrounds across platforms.
     return getGlassBackgroundFallback(isDark, 'prominent');
   }, [canRenderNativeGlass, isDark]);
 
@@ -82,22 +105,16 @@ export default function TabsLayout() {
       disableTransparentOnScrollEdge={!canRenderNativeGlass}
       labelStyle={{ color: tabBarInactiveTintColor }}
       screenOptions={{
-        // CRITICAL: These options apply to all tabs
-        headerShown: false, // Hide navigation header (tabs have their own headers)
+        headerShown: false,
         tabBarActiveTintColor: tabBarTintColor,
         tabBarInactiveTintColor: tabBarInactiveTintColor,
       }}
     >
-      {/*
-        Main Chat Tab (index.tsx)
-        CRITICAL: "index" is a special name in Expo Router - it becomes the default route
-      */}
       <NativeTabs.Screen
         name="index"
         options={{
           title: t('tabs.chat'),
           tabBarIcon: ({ focused, color }) => (
-            // CRITICAL: SF Symbol "house.fill" for iOS, fallback for Android
             <Icon
               sf="house.fill"
               ios={{
@@ -105,7 +122,7 @@ export default function TabsLayout() {
                 color: color,
               }}
               android={{
-                name: 'home', // Material icon name
+                name: 'home',
                 color: color,
               }}
             />
@@ -114,10 +131,6 @@ export default function TabsLayout() {
         }}
       />
 
-      {/*
-        Logs Tab
-        Shows DNS query logs for debugging
-      */}
       <NativeTabs.Screen
         name="logs"
         options={{
@@ -130,21 +143,15 @@ export default function TabsLayout() {
                 color: color,
               }}
               android={{
-                name: 'format_list_bulleted', // Material icon
+                name: 'format_list_bulleted',
                 color: color,
               }}
             />
           ),
           tabBarLabel: t('tabs.logs'),
-          // FUTURE: Add badge for unread logs count
-          // tabBarBadge: unreadLogsCount > 0 ? unreadLogsCount : undefined,
         }}
       />
 
-      {/*
-        About Tab
-        App information and version details
-      */}
       <NativeTabs.Screen
         name="about"
         options={{
@@ -157,7 +164,7 @@ export default function TabsLayout() {
                 color: color,
               }}
               android={{
-                name: 'info', // Material icon
+                name: 'info',
                 color: color,
               }}
             />
@@ -166,15 +173,10 @@ export default function TabsLayout() {
         }}
       />
 
-      {/*
-        Developer Logs Tab (Development Only)
-        CRITICAL: This tab only appears in __DEV__ mode
-        Production builds will not show this tab using href: null pattern
-      */}
       <NativeTabs.Screen
         name="dev-logs"
         options={{
-          href: __DEV__ ? undefined : null, // Hide in production builds
+          href: __DEV__ ? undefined : null,
           title: t('tabs.devLogs'),
           tabBarIcon: ({ focused, color }) => (
             <Icon
@@ -184,7 +186,7 @@ export default function TabsLayout() {
                 color: color,
               }}
               android={{
-                name: 'bug_report', // Material icon
+                name: 'bug_report',
                 color: color,
               }}
             />
@@ -193,20 +195,12 @@ export default function TabsLayout() {
         }}
       />
 
-      {/*
-        Chat Detail Route (Dynamic)
-        CRITICAL: This is a nested route within tabs, but not a tab itself
-        The route is app/(tabs)/chat/[id].tsx
-
-        This screen won't show in the tab bar - it's a push navigation from the Chat tab
-      */}
       <NativeTabs.Screen
         name="chat/[id]"
         options={{
-          href: null, // CRITICAL: href: null prevents this from showing in tab bar
+          href: null,
           title: t('screens.chatDetail'),
-          headerShown: true, // Show header for chat detail screen
-          // FUTURE: Add glass header in Phase 7
+          headerShown: true,
         }}
       />
     </NativeTabs>

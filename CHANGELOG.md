@@ -116,6 +116,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **🧹 Expo Router Console Warnings Elimination**: Comprehensive fix for all Expo Router and React Native warnings
+  - **Phantom Dashboard Route (CRITICAL)**: Removed `app/(dashboard)/[threadId].ts` causing "missing default export" warning
+    - **Root Cause**: Utility file (exports functions, not React component) incorrectly placed in `app/` routing directory
+    - **Solution**: Moved to `src/utils/dnsErrorMessages.ts` with proper module documentation
+    - **Updated**: Test file imports in `__tests__/threadScreen.errors.spec.ts`
+    - **Impact**: Eliminates "Route missing required default export" warning
+  - **NativeTabs Layout Structure (CRITICAL)**: Removed ALL inline JSX comments from `app/(tabs)/_layout.tsx`
+    - **Root Cause**: Multi-line JSX comments `{/* ... */}` between NativeTabs.Screen components treated as non-Screen children
+    - **Theory**: React validates children during re-renders (initial mount, hot reload, provider updates, translation changes)
+    - **Solution**: Moved ALL documentation to JSDoc comments and inline comments outside JSX return
+    - **Structure**: Only NativeTabs.Screen components as direct children - NO wrappers, NO fragments, NO comment nodes
+    - **Impact**: Eliminates 10+ "Layout children must be of type Screen" warnings
+  - **Comprehensive Documentation**: Added extensive JSDoc explaining tab structure, conditional rendering, glass effects
+    - **Tricky Parts Documented**: Glass capability detection, conditional dev-logs tab, href pattern for hidden screens
+    - **Code Comments**: Explain all non-obvious logic (useMemo for performance, canRenderNativeGlass fallback)
+    - **Architecture Notes**: Document why inline comments were removed and where documentation now lives
+  - **Expected Result**: Console output reduced from 10+ warnings to 0 on fresh app restart
 - **⚠️ React Native Deprecation Warnings**: Fixed deprecated SafeAreaView usage and Expo Router layout structure
   - **SafeAreaView Migration**: Replaced deprecated `SafeAreaView` from `react-native` with `react-native-safe-area-context` in 3 files
     - `app/(tabs)/chat/[id].tsx`: Chat detail screen

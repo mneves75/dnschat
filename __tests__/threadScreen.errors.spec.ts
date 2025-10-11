@@ -1,5 +1,7 @@
 import { DNSError, DNSErrorType } from "@/services/dnsService";
-import { resolveDnsErrorMessage } from "../app/(dashboard)/[threadId]";
+// UPDATED: Moved from app/(dashboard)/[threadId] to proper utils location
+// This eliminates Expo Router warnings about non-route files in app/ directory
+import { resolveDnsErrorMessage } from "@/utils/dnsErrorMessages";
 
 describe("resolveDnsErrorMessage", () => {
   it("covers DNSErrorType mappings", () => {
