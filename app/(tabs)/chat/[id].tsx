@@ -21,14 +21,18 @@ import {
   StatusBar,
   Platform,
   KeyboardAvoidingView,
+  View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams } from 'expo-router';
 import { MessageList } from '../../../src/components/MessageList';
 import { ChatInput } from '../../../src/components/ChatInput';
 import { useChat } from '../../../src/context/ChatContext';
 import { GlassCard, GlassScreen } from '../../../src/design-system/glass';
 import { useTranslation } from '../../../src/i18n';
+import { getKeyboardVerticalOffset } from '../../../src/utils/keyboard';
+
+const TAB_BAR_HEIGHT = 49;
 
 /**
  * Chat Detail Screen Component
@@ -43,6 +47,13 @@ export default function ChatDetailScreen() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
+  // Keyboard offset needs to account for bottom safe area and the persistent tab bar height.
+  const keyboardOffset = getKeyboardVerticalOffset({
+    insets,
+    tabBarHeight: TAB_BAR_HEIGHT,
+    extraOffset: 12,
+  });
 
   // CRITICAL: Get chat ID from route parameter
   // In Expo Router, [id].tsx creates a dynamic route where id is the parameter
@@ -108,12 +119,14 @@ export default function ChatDetailScreen() {
 
       <KeyboardAvoidingView
         style={styles.content}
+        contentContainerStyle={styles.keyboardContent}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
+        keyboardVerticalOffset={keyboardOffset}
       >
         {/* Message Area with Glass Effect */}
         <GlassCard
           variant="regular"
+          register={false}
           style={styles.glassMessageArea}
         >
           <MessageList
@@ -122,17 +135,22 @@ export default function ChatDetailScreen() {
           />
         </GlassCard>
 
-        {/* Chat Input with Interactive Glass */}
-        <GlassCard
-          variant="prominent"
-          style={styles.glassInputArea}
+        {/* Chat Input Container */}
+        <View
+          style={[
+            styles.inputContainer,
+            {
+              backgroundColor: isDark ? 'rgba(28, 28, 30, 0.96)' : 'rgba(255, 255, 255, 0.96)',
+              paddingBottom: insets.bottom + 12,
+            },
+          ]}
         >
           <ChatInput
             onSendMessage={handleSendMessage}
             isLoading={isLoading}
             placeholder={t('chat.messagePlaceholder')}
           />
-        </GlassCard>
+        </View>
       </KeyboardAvoidingView>
       </SafeAreaView>
     </GlassScreen>
@@ -160,15 +178,29 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: 8, // Spacing between glass elements
   },
+  keyboardContent: {
+    flexGrow: 1,
+  },
   glassMessageArea: {
     flex: 1,
     margin: 8,
     backgroundColor: 'transparent',
   },
-  glassInputArea: {
-    margin: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    backgroundColor: 'transparent',
+  inputContainer: {
+    marginHorizontal: 12,
+    marginBottom: 8,
+    paddingHorizontal: 12,
+    paddingTop: 12,
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    ...Platform.select({
+      android: {
+        elevation: 4,
+      },
+      default: {},
+    }),
   },
 });

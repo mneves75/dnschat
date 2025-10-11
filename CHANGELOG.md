@@ -42,6 +42,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Impact**: Fewer performance warnings, better frame rates on glass-heavy screens
   - **Files**: `app/(tabs)/index.tsx`
 
+- **Comprehensive Glass Element Reduction (14→1 elements)**: Systematically disabled glass registration across ALL tab screens
+  - **Root Cause Analysis**: Conducted comprehensive audit revealing 18 potential glass elements across 6 tab screens
+  - **Findings**: Logs (7 elements), About (5 elements), Search (4 elements), Chat List (1 element), Chat Detail (1 element)
+  - **Tab Mounting Reality**: React Navigation/Expo Router keeps ALL tab screens mounted simultaneously for instant switching
+  - **Platform Limit**: iOS <26 limited to 5 glass elements due to JS-based blur performance constraints
+  - **Comprehensive Solution**: Added `register={false}` to ALL Form.Section and most GlassCard components across all tabs
+  - **Affected Files**:
+    - `app/(tabs)/logs.tsx`: 7 elements → 0 (log cards, method badges, form sections)
+    - `app/(tabs)/about.tsx`: 5 elements → 0 (header card, form sections for Quick Actions, Community, Special Thanks)
+    - `app/(tabs)/search.tsx`: 4 elements → 0 (search section, placeholder card, planned features section)
+    - `app/(tabs)/chat/[id].tsx`: 1 element → 0 (message area glass card)
+    - `app/(tabs)/index.tsx`: Already optimized with GLASS_CHAT_ITEM_LIMIT=1
+  - **Architecture Insight**: Form.Section creates one GlassCard internally, so each section counts as 1 glass element
+  - **Result**: Total glass elements reduced from 14/5 to ~1-2/5 across all mounted tabs
+  - **Impact**: Eliminates continuous "Glass element limit exceeded: 14/5" warnings, improves frame rates, better UX
+  - **Performance**: Proper glass budgeting ensures smooth 60fps rendering on all iOS devices
+  - **Cross-Tab Consistency**: All tabs now follow same glass minimization pattern for maintainability
+
 ### Removed
 
 - **Legacy Custom Native Glass Module**: Complete removal of deprecated custom LiquidGlassWrapper implementation

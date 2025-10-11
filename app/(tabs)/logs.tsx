@@ -54,7 +54,10 @@ export default function LogsScreen() {
       setLogs(updatedLogs);
     });
 
-    return unsubscribe;
+    // CRITICAL: Wrap cleanup to ensure void return type for React useEffect
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   const loadLogs = async () => {
@@ -158,6 +161,7 @@ export default function LogsScreen() {
       >
         <GlassCard
           variant={isActive ? 'interactive' : 'regular'}
+          register={false}
           style={[styles.logCard, isActive && styles.activeLogCard]}
         >
           <View style={styles.logHeader}>
@@ -183,6 +187,7 @@ export default function LogsScreen() {
                 {item.finalMethod && (
                   <GlassCard
                     variant="interactive"
+                    register={false}
                     style={[
                       styles.methodBadgeSmall,
                       { backgroundColor: 'rgba(0, 122, 255, 0.15)' },
@@ -254,9 +259,10 @@ export default function LogsScreen() {
     <GlassScreen style={styles.screen}>
       <Form.List navigationTitle={t('logs.title')} style={styles.list}>
       {logs.length === 0 ? (
-        <Form.Section>
+        <Form.Section register={false}>
           <GlassCard
             variant="regular"
+            register={false}
             style={styles.emptyStateContainer}
           >
             <View style={styles.emptyState}>
@@ -285,6 +291,7 @@ export default function LogsScreen() {
         <Form.Section
           title="DNS Query History"
           footer={`${logs.length} quer${logs.length === 1 ? 'y' : 'ies'} logged`}
+          register={false}
         >
           <View style={styles.logsList}>
             {logs.map((item) => (
@@ -295,13 +302,14 @@ export default function LogsScreen() {
       )}
 
       {logs.length > 0 && (
-        <Form.Section title={t('logs.filter')}>
+        <Form.Section title={t('logs.filter')} register={false}>
           <Form.Item
             title={t('logs.clear')}
             subtitle="Remove all DNS query history"
             rightContent={
               <GlassCard
                 variant="interactive"
+                register={false}
                 style={styles.clearBadge}
               >
                 <Text style={styles.clearIcon}>🗑️</Text>
