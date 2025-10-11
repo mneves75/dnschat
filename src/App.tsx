@@ -9,6 +9,7 @@ import { ErrorBoundary } from "./components/ErrorBoundary";
 import { OnboardingContainer } from "./components/onboarding/OnboardingContainer";
 import { ExpoRoot } from "expo-router";
 import { DNSLogService } from "./services/dnsLogService";
+import { GlassProvider } from "./design-system/glass";
 
 Asset.loadAsync([require("./assets/newspaper.png")]);
 
@@ -54,11 +55,13 @@ export function App() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ErrorBoundary>
         <SettingsProvider>
-          <OnboardingProvider>
-            <ChatProvider>
-              <AppContent />
-            </ChatProvider>
-          </OnboardingProvider>
+          <GlassProvider>
+            <OnboardingProvider>
+              <ChatProvider>
+                <AppContent />
+              </ChatProvider>
+            </OnboardingProvider>
+          </GlassProvider>
         </SettingsProvider>
       </ErrorBoundary>
     </GestureHandlerRootView>

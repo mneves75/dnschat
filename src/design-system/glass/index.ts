@@ -1,24 +1,48 @@
 /**
- * Glass Design System - Barrel Exports
+ * Glass UI Components - Evan Bacon Glass UI Demo Implementation
  *
- * Centralized exports for all glass-related components and utilities.
- *
- * USAGE:
- * ```tsx
- * import { GlassCard, GlassButton, GlassProvider, useGlass } from '@/design-system/glass';
- * ```
+ * Complete glass component system inspired by Evan Bacon's glass UI demo,
+ * providing iOS Settings app style components with translucent backgrounds.
  *
  * @author DNSChat Team
- * @since 2.0.0 (Expo Router + Glass Migration)
+ * @since 1.8.0 (iOS 26 Liquid Glass Support + Evan Bacon Glass UI)
  */
 
-// Provider and Hooks
-export { GlassProvider, useGlass, useGlassRegistration } from './GlassProvider';
+// Form Components
+export {
+  GlassForm,
+  GlassFormSection,
+  GlassFormItem,
+  GlassFormLink,
+  Form, // Namespace export
+} from './GlassForm';
 
-// Components
+// Tab Bar Components
+export {
+  GlassTabBar,
+  FloatingGlassTabBar,
+  SegmentedGlassTabBar,
+  type GlassTab,
+  type GlassTabBarProps,
+} from './GlassTabBar';
+
+// Bottom Sheet Components
+export {
+  GlassBottomSheet,
+  GlassActionSheet,
+  useGlassBottomSheet,
+  type GlassBottomSheetProps,
+  type GlassSheetAction,
+  type GlassActionSheetProps,
+} from './GlassBottomSheet';
+
+// Core glass components
 export { GlassCard } from './GlassCard';
 export { GlassButton } from './GlassButton';
 export { GlassScreen } from './GlassScreen';
+
+// Provider and hooks
+export { GlassProvider, useGlass, useGlassRegistration } from './GlassProvider';
 
 // Utilities
 export {
@@ -34,3 +58,12 @@ export {
 
 // Types
 export type { GlassCapabilities } from './utils';
+
+// Backwards compatibility warning wrappers
+export {
+  LegacyLiquidGlassWrapper,
+  LegacyLiquidGlassCard,
+  LegacyLiquidGlassButton,
+  LegacyLiquidGlassNavBar,
+  useLegacyLiquidGlassCapabilities,
+} from './legacy-liquid-glass';
