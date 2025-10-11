@@ -26,15 +26,15 @@ import {
   DNSQueryLog,
   DNSLogEntry,
 } from '../../src/services/dnsLogService';
-import { Form, LiquidGlassWrapper } from '../../src/components/glass';
+import { Form } from '../../src/components/glass';
+import { GlassCard } from '../../src/design-system/glass';
+import { useTranslation } from '../../src/i18n';
 
 /**
  * DNS Logs Screen Component
  *
- * FUTURE ENHANCEMENTS (Phase 4):
- * - Replace LiquidGlassWrapper with GlassView from expo-glass-effect
- * - Add virtualization with @shopify/flash-list for better performance
- * - Limit glass effects to max 10 visible logs
+ * Uses expo-glass-effect via GlassCard for iOS 26+ liquid glass.
+ * FUTURE: Add virtualization with @shopify/flash-list for 100+ logs
  */
 export default function LogsScreen() {
   const colorScheme = useColorScheme();
@@ -42,6 +42,9 @@ export default function LogsScreen() {
   const [logs, setLogs] = useState<DNSQueryLog[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [expandedLogs, setExpandedLogs] = useState<Set<string>>(new Set());
+
+  // CRITICAL: Get translations
+  const { t } = useTranslation();
 
   useEffect(() => {
     loadLogs();
@@ -153,11 +156,8 @@ export default function LogsScreen() {
         accessibilityRole="button"
         accessibilityLabel={`DNS query: ${item.query}. Status: ${item.finalStatus}`}
       >
-        <LiquidGlassWrapper
+        <GlassCard
           variant={isActive ? 'interactive' : 'regular'}
-          shape="roundedRect"
-          cornerRadius={12}
-          isInteractive={true}
           style={[styles.logCard, isActive && styles.activeLogCard]}
         >
           <View style={styles.logHeader}>
@@ -181,9 +181,8 @@ export default function LogsScreen() {
                   {new Date(item.startTime).toLocaleTimeString()}
                 </Text>
                 {item.finalMethod && (
-                  <LiquidGlassWrapper
+                  <GlassCard
                     variant="interactive"
-                    shape="capsule"
                     style={[
                       styles.methodBadgeSmall,
                       { backgroundColor: 'rgba(0, 122, 255, 0.15)' },
@@ -192,7 +191,7 @@ export default function LogsScreen() {
                     <Text style={[styles.methodTextSmall, { color: '#007AFF' }]}>
                       {item.finalMethod?.toUpperCase() || 'UNKNOWN'}
                     </Text>
-                  </LiquidGlassWrapper>
+                  </GlassCard>
                 )}
                 {item.totalDuration !== undefined && (
                   <Text
@@ -246,19 +245,17 @@ export default function LogsScreen() {
               </ScrollView>
             </View>
           )}
-        </LiquidGlassWrapper>
+        </GlassCard>
       </TouchableOpacity>
     );
   };
 
   return (
-    <Form.List navigationTitle="DNS Query Logs">
+    <Form.List navigationTitle={t('logs.title')}>
       {logs.length === 0 ? (
         <Form.Section>
-          <LiquidGlassWrapper
+          <GlassCard
             variant="regular"
-            shape="roundedRect"
-            cornerRadius={12}
             style={styles.emptyStateContainer}
           >
             <View style={styles.emptyState}>
@@ -269,7 +266,7 @@ export default function LogsScreen() {
                   { color: isDark ? '#FFFFFF' : '#000000' },
                 ]}
               >
-                No DNS Queries Yet
+                {t('logs.noLogs')}
               </Text>
               <Text
                 style={[
@@ -281,7 +278,7 @@ export default function LogsScreen() {
                 attempts and methods will be tracked.
               </Text>
             </View>
-          </LiquidGlassWrapper>
+          </GlassCard>
         </Form.Section>
       ) : (
         <Form.Section
@@ -297,18 +294,17 @@ export default function LogsScreen() {
       )}
 
       {logs.length > 0 && (
-        <Form.Section title="Actions">
+        <Form.Section title={t('logs.filter')}>
           <Form.Item
-            title="Clear All Logs"
+            title={t('logs.clear')}
             subtitle="Remove all DNS query history"
             rightContent={
-              <LiquidGlassWrapper
+              <GlassCard
                 variant="interactive"
-                shape="capsule"
                 style={styles.clearBadge}
               >
                 <Text style={styles.clearIcon}>🗑️</Text>
-              </LiquidGlassWrapper>
+              </GlassCard>
             }
             onPress={clearLogs}
             showChevron

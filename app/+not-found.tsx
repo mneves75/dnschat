@@ -10,8 +10,10 @@
  * @since 2.0.0 (Expo Router Migration)
  */
 
-import { StyleSheet, View, Text, TouchableOpacity, useColorScheme } from 'react-native';
+import { StyleSheet, View, Text, useColorScheme } from 'react-native';
 import { router } from 'expo-router';
+import { GlassCard, GlassButton } from '../src/design-system/glass';
+import { useTranslation } from '../src/i18n';
 
 /**
  * Not Found Screen Component
@@ -22,6 +24,9 @@ import { router } from 'expo-router';
 export default function NotFoundScreen() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
+
+  // CRITICAL: Get translations
+  const { t } = useTranslation();
 
   const handleGoHome = () => {
     router.replace('/'); // Navigate to home (ChatList)
@@ -34,24 +39,26 @@ export default function NotFoundScreen() {
         { backgroundColor: isDark ? '#000000' : '#FFFFFF' },
       ]}
     >
-      <Text style={[styles.emoji]}>🔍</Text>
-      <Text style={[styles.title, { color: isDark ? '#FFFFFF' : '#000000' }]}>
-        Page Not Found
-      </Text>
-      <Text
-        style={[styles.message, { color: isDark ? '#AEAEB2' : '#6D6D70' }]}
-      >
-        The page you're looking for doesn't exist or has been moved.
-      </Text>
+      <GlassCard variant="prominent" style={styles.card}>
+        <Text style={[styles.emoji]}>🔍</Text>
+        <Text style={[styles.title, { color: isDark ? '#FFFFFF' : '#000000' }]}>
+          {t('screens.notFound')}
+        </Text>
+        <Text
+          style={[styles.message, { color: isDark ? '#AEAEB2' : '#6D6D70' }]}
+        >
+          {t('errors.notFound')}
+        </Text>
 
-      <TouchableOpacity
-        style={[styles.button, { backgroundColor: '#007AFF' }]}
-        onPress={handleGoHome}
-        accessibilityRole="button"
-        accessibilityLabel="Go to home screen"
-      >
-        <Text style={styles.buttonText}>Go to Home</Text>
-      </TouchableOpacity>
+        <GlassButton
+          variant="interactive"
+          onPress={handleGoHome}
+          accessibilityLabel="Go to home screen"
+          style={styles.button}
+        >
+          <Text style={styles.buttonText}>{t('common.back')}</Text>
+        </GlassButton>
+      </GlassCard>
     </View>
   );
 }
@@ -65,6 +72,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 32,
+  },
+  card: {
+    maxWidth: 400,
+    alignItems: 'center',
   },
   emoji: {
     fontSize: 64,
@@ -83,9 +94,7 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   button: {
-    paddingHorizontal: 32,
-    paddingVertical: 16,
-    borderRadius: 24,
+    minWidth: 200,
   },
   buttonText: {
     color: '#FFFFFF',

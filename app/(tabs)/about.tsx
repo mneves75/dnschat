@@ -19,7 +19,9 @@ import {
   Image,
   useColorScheme,
 } from 'react-native';
-import { Form, LiquidGlassWrapper } from '../../src/components/glass';
+import { Form } from '../../src/components/glass';
+import { GlassCard } from '../../src/design-system/glass';
+import { useTranslation } from '../../src/i18n';
 
 // Import package.json to get version
 const packageJson = require('../../package.json');
@@ -30,14 +32,16 @@ const AppIcon = require('../../src/assets/dnschat_ios26.png');
 /**
  * About Screen Component
  *
- * FUTURE ENHANCEMENTS (Phase 4):
- * - Replace LiquidGlassWrapper with GlassView from expo-glass-effect
- * - Add locale-aware text using i18n hook
+ * Uses expo-glass-effect via GlassCard component for iOS 26+ liquid glass.
+ * Includes locale-aware text via useTranslation hook.
  */
 export default function AboutScreen() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const [iconError, setIconError] = useState(false);
+
+  // CRITICAL: Get translations
+  const { t } = useTranslation();
 
   const openLink = (url: string) => {
     Linking.openURL(url);
@@ -87,10 +91,8 @@ export default function AboutScreen() {
     <Form.List>
       {/* App Information Header */}
       <Form.Section>
-        <LiquidGlassWrapper
+        <GlassCard
           variant="prominent"
-          shape="roundedRect"
-          cornerRadius={16}
           style={styles.headerContainer}
         >
           <View style={styles.header}>
@@ -109,24 +111,24 @@ export default function AboutScreen() {
             <Text style={[styles.title, { color: isDark ? '#FFFFFF' : '#000000' }]}>
               DNS Chat
             </Text>
-            <LiquidGlassWrapper
+            <GlassCard
               variant="interactive"
-              shape="capsule"
               style={styles.versionBadge}
             >
-              <Text style={styles.versionText}>v{packageJson.version}</Text>
-            </LiquidGlassWrapper>
+              <Text style={styles.versionText}>
+                {t('about.version')} {packageJson.version}
+              </Text>
+            </GlassCard>
             <Text
               style={[
                 styles.description,
                 { color: isDark ? '#AEAEB2' : '#6D6D70' },
               ]}
             >
-              Chat with AI using DNS TXT queries - a unique approach to LLM
-              communication.
+              {t('about.description')}
             </Text>
           </View>
-        </LiquidGlassWrapper>
+        </GlassCard>
       </Form.Section>
 
       {/* Inspiration Section */}
