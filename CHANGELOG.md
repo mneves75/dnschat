@@ -17,6 +17,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Architecture**: Documented New Architecture (Fabric) with TurboModules, @shopify/flash-list performance optimizations, and React Compiler auto-memoization
   - **Future Enhancements**: Added comprehensive Liquid Glass UI documentation for iOS 26+ with fallback strategies for older platforms and Android Material You integration
 
+- **🔧 Expo Doctor Configuration**: Resolved expo-doctor warnings with documented intentional deviations (16/17 checks now passing)
+  - **Configuration**: Added expo.doctor.reactNativeDirectoryCheck.exclude in package.json for critical DNS fallback packages
+  - **Excluded Packages**:
+    - `react-native-udp` (unmaintained but critical for UDP DNS fallback on restricted networks)
+    - `react-native-tcp-socket` (untested on New Architecture but works via Interop Layer, critical for corporate networks)
+    - `@dnschat/dns-native` (local custom module, not in React Native Directory)
+  - **Documentation**: Created comprehensive `docs/technical/EXPO-DOCTOR-CONFIGURATION.md` explaining:
+    - Intentional native folder management with custom DNS modules (non-CNG architecture)
+    - Complete DNS fallback chain architecture (Native → UDP → TCP → HTTPS → Mock)
+    - New Architecture Interop Layer compatibility
+    - Technical debt monitoring and mitigation strategies
+    - Manual sync process for app.json ↔ native configuration
+  - **Code Comments**: Added extensive inline documentation to DNS service tricky sections:
+    - Dynamic library loading with graceful fallback
+    - Buffer polyfill for cross-platform binary data handling
+    - DNS-over-TCP 2-byte length prefix (RFC 7766)
+    - Multi-part response parsing with UDP retransmission duplicate handling
+  - **Result**: Improved from 15/17 to 16/17 checks passing, with remaining warning intentionally documented
+
 ### Fixed
 
 - **🔧 iOS CocoaPods Duplicate Dependency**: Resolved duplicate DNSNative pod dependency error preventing iOS builds
