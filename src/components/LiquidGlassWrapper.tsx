@@ -1,14 +1,38 @@
 /**
  * LiquidGlassWrapper - React Native component for iOS 26 SwiftUI Glass Effects
  *
- * Provides a simple wrapper around the native LiquidGlassView following
- * Apple's SwiftUI .glassEffect() patterns and modern Swift development.
+ * DEPRECATION WARNING:
+ * This component is deprecated as of v2.0.0 in favor of the new glass design system.
+ * Please migrate to the official expo-glass-effect components:
  *
- * Usage:
+ * Migration Guide:
+ * - LiquidGlassWrapper → GlassCard (from src/design-system/glass)
+ * - LiquidGlassButton → GlassButton (from src/design-system/glass)
+ * - LiquidGlassCard → GlassCard variant="regular"
+ * - LiquidGlassNavBar → GlassCard variant="prominent"
+ *
+ * Benefits of New System:
+ * - Official expo-glass-effect@0.1.4 with native UIVisualEffectView
+ * - Automatic platform fallbacks (iOS <26, Android, Web)
+ * - Performance monitoring and element counting
+ * - GlassProvider integration with accessibility support
+ * - Type-safe with TypeScript
+ *
+ * This component will be removed in v3.0.0.
+ * Currently kept for backward compatibility with Form components only.
+ *
+ * Old Usage (DEPRECATED):
  * <LiquidGlassWrapper variant="regular" shape="capsule">
  *   <Text>Your content</Text>
  * </LiquidGlassWrapper>
  *
+ * New Usage (RECOMMENDED):
+ * import { GlassCard } from '../design-system/glass';
+ * <GlassCard variant="regular" style={{ borderRadius: 24 }}>
+ *   <Text>Your content</Text>
+ * </GlassCard>
+ *
+ * @deprecated Use GlassCard from src/design-system/glass instead
  * @author DNSChat Team
  * @since 1.8.0 (iOS 26 Liquid Glass Support)
  */
@@ -145,6 +169,18 @@ export const LiquidGlassWrapper: React.FC<LiquidGlassProps> = ({
 
   // IMPORTANT: Always call useColorScheme at the top level to avoid hooks ordering issues
   const colorScheme = useColorScheme();
+
+  // DEPRECATION WARNING: Log warning in development
+  React.useEffect(() => {
+    if (__DEV__) {
+      console.warn(
+        '⚠️ LiquidGlassWrapper is DEPRECATED as of v2.0.0.\n' +
+        '   Please migrate to GlassCard from src/design-system/glass.\n' +
+        '   This component will be removed in v3.0.0.\n' +
+        '   See file header for migration guide.'
+      );
+    }
+  }, []);
 
   // Non-iOS platforms get no glass effects
   if (Platform.OS !== "ios") {

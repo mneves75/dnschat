@@ -9,6 +9,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **🚀 Expo Router + iOS 26 Liquid Glass Migration (MAJOR)**: Complete migration from React Navigation to Expo Router with native tabs and official expo-glass-effect integration
+  - **Phase 3: App Structure Migration** (19 files, 4,025 insertions)
+    - Migrated all screens to file-based routing: `app/(tabs)/`, `app/(modals)/`, `app/+not-found.tsx`
+    - Dynamic routes with `useLocalSearchParams()`: `/chat/[id]` replaces React Navigation patterns
+    - Native tabs using `expo-router/unstable-native-tabs` with SF Symbols (iOS) and Material icons (Android)
+    - Route groups for organized navigation: (tabs), (modals), chat/[id]
+  - **Phase 4: Glass Design System** (5 files, 1,167 insertions)
+    - Complete design system using official `expo-glass-effect@0.1.4`
+    - `GlassProvider` with capabilities detection, performance monitoring, accessibility integration
+    - `GlassCard` and `GlassButton` components with iOS 26+ native `UIVisualEffectView`
+    - Platform fallbacks: iOS <26 (blur), Android (Material 3), Web (CSS backdrop-filter)
+    - Automatic element counting and scroll/animation detection for 60fps performance
+  - **Phase 5-6: Localization & Integration** (4 files, 527 insertions)
+    - Type-safe i18n system with `useTranslation` hook and 3-tier fallback chain
+    - 100+ strings in en-US and pt-BR with compile-time validated translation keys
+    - GlassProvider integrated in root layout with SettingsProvider for theme/accessibility
+    - Native tabs updated with translated labels
+  - **Phase 7: Screen Enhancement** (5 screens migrated)
+    - All screens migrated: 404, About, Logs, ChatList, Chat detail
+    - Eliminated all `LiquidGlassWrapper` usage in favor of new glass system
+    - Unified platform rendering (no more iOS vs Android branches)
+    - Automatic glass capabilities via GlassProvider context
+  - **Phase 8: Cleanup**
+    - Removed `src/navigation/` directory (13 files)
+    - Removed `src/components/liquidGlass/` internals (unused)
+    - Kept `LiquidGlassWrapper.tsx` temporarily (still used by Form components)
+    - Updated CHANGELOG with comprehensive migration documentation
+
+### Added
+
 - **🚦 DNS Transport Test Throttling**: Implemented rate limiting for DNS diagnostic tests in Settings screen
   - **Hook**: `useTransportTestThrottle` provides shared throttling logic for chain and forced transport tests
   - **Chain Throttle**: 1200ms minimum interval between full DNS chain tests to prevent resolver spam
