@@ -14,11 +14,20 @@
  * @since 2.0.0 (Expo Router + Glass Migration)
  */
 
-import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+  useMemo,
+  useCallback,
+  useRef,
+} from 'react';
 import { AccessibilityInfo } from 'react-native';
 import {
   getGlassCapabilities,
-  shouldReduceTransparency,
+  shouldReduceTransparency as checkAccessibilitySetting,
   GlassCapabilities,
   shouldRenderGlass as shouldRenderGlassUtil,
 } from './utils';
@@ -39,11 +48,20 @@ interface GlassContextValue {
   /** Heavy animation in progress */
   isAnimating: boolean;
 
-  /** Register a new glass element */
-  registerGlass: () => void;
+  /** Register a new glass element and receive cleanup callback */
+  registerGlass: () => () => void;
 
-  /** Unregister a glass element */
+  /** Unregister a glass element (legacy fallback) */
   unregisterGlass: () => void;
+
+  /** Effective max elements after per-screen overrides */
+  effectiveMaxGlassElements: number;
+
+  /** Override glass budget for specific screen */
+  setGlassBudget: (screenId: string, maxElements: number) => void;
+
+  /** Remove glass budget override */
+  clearGlassBudget: (screenId: string) => void;
 
   /** Set scrolling state */
   setScrolling: (scrolling: boolean) => void;
@@ -62,6 +80,21 @@ interface GlassContextValue {
  * to ensure all glass components have access to capabilities.
  */
 const GlassContext = createContext<GlassContextValue | undefined>(undefined);
+
+/**
+ * Glass Registration Context
+ *
+ * PERFORMANCE OPTIMIZATION: Separated from GlassContext to prevent unnecessary re-renders.
+ * Registration functions (registerGlass, unregisterGlass) are stable and rarely change,
+ * so components using useGlassRegistration don't need to re-render when glassCount changes.
+ *
+ * This separation breaks the infinite loop: when glassCount updates, only components
+ * consuming GlassContext re-render, not components that only register/unregister.
+ */
+const GlassRegistrationContext = createContext<{
+  registerGlass: () => () => void;
+  unregisterGlass: () => void;
+} | undefined>(undefined);
 
 /**
  * Glass Provider Props
@@ -92,16 +125,91 @@ export function GlassProvider({ children }: GlassProviderProps) {
   const [glassCount, setGlassCount] = useState(0);
   const [isScrolling, setIsScrolling] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [budgetOverrides, setBudgetOverrides] = useState<Record<string, number>>({});
+  const lastWarningCountRef = useRef<number | null>(null);
+  const effectiveMaxRef = useRef<number>(0);
+  const nextRegistrationIdRef = useRef(0);
+  const activeRegistrationsRef = useRef<Set<number>>(new Set());
+  const pendingUpdateRef = useRef<number | null>(null);
 
   /**
-   * Detect Glass Capabilities
+   * Detect Glass Capabilities - Stabilized for Reference Equality
    *
-   * CRITICAL: This runs once on mount to determine platform support.
-   * The result is memoized and only updates when accessibility changes.
+   * CRITICAL FIX FOR INFINITE LOOP:
+   * getGlassCapabilities() returns a NEW object every time, even when values are identical.
+   * This causes capabilities to change reference on every render, which changes checkShouldRenderGlass
+   * reference, which changes contextValue reference, which re-renders all consumers, infinite loop.
+   *
+   * FIX: Extract each primitive value separately, then reconstruct the object with stable references.
    */
-  const capabilities = useMemo(() => {
+  const rawCapabilities = useMemo(() => {
     return getGlassCapabilities(reduceTransparencyEnabled);
   }, [reduceTransparencyEnabled]);
+
+  // Extract primitive values (these will be stable across renders)
+  // IMPORTANT: Renamed shouldReduceTransparency to reduceTransparency to avoid shadowing
+  // the imported function shouldReduceTransparency() from utils.ts
+  const isNativeGlassSupported = rawCapabilities.isNativeGlassSupported;
+  const canRenderGlass = rawCapabilities.canRenderGlass;
+  const reduceTransparency = rawCapabilities.shouldReduceTransparency;
+  const glassType = rawCapabilities.glassType;
+  const maxGlassElements = rawCapabilities.maxGlassElements;
+
+  // Reconstruct capabilities object with stable reference
+  // This only changes when primitive values actually change
+  const capabilities = useMemo(() => ({
+    isNativeGlassSupported,
+    canRenderGlass,
+    shouldReduceTransparency: reduceTransparency,
+    glassType,
+    maxGlassElements,
+  }), [isNativeGlassSupported, canRenderGlass, reduceTransparency, glassType, maxGlassElements]);
+
+  const effectiveMaxGlassElements = useMemo(() => {
+    const overrideValues = Object.values(budgetOverrides).filter(
+      (value) => typeof value === 'number' && value > 0,
+    );
+
+    if (overrideValues.length === 0) {
+      return capabilities.maxGlassElements;
+    }
+
+    return Math.min(capabilities.maxGlassElements, ...overrideValues);
+  }, [budgetOverrides, capabilities.maxGlassElements]);
+
+
+  const setGlassBudget = useCallback((screenId: string, maxElements: number) => {
+    if (!screenId) {
+      return;
+    }
+
+    setBudgetOverrides((prev) => {
+      if (prev[screenId] === maxElements) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        [screenId]: maxElements,
+      };
+    });
+  }, []);
+
+  const clearGlassBudget = useCallback((screenId: string) => {
+    if (!screenId) {
+      return;
+    }
+
+    setBudgetOverrides((prev) => {
+      if (!(screenId in prev)) {
+        return prev;
+      }
+
+      const next = { ...prev };
+      delete next[screenId];
+      return next;
+    });
+  }, []);
 
   /**
    * Monitor Reduce Transparency Setting
@@ -112,7 +220,7 @@ export function GlassProvider({ children }: GlassProviderProps) {
   useEffect(() => {
     // Initial check
     const checkAccessibility = async () => {
-      const enabled = await shouldReduceTransparency();
+      const enabled = await checkAccessibilitySetting();
       setReduceTransparencyEnabled(enabled);
     };
     checkAccessibility();
@@ -122,7 +230,10 @@ export function GlassProvider({ children }: GlassProviderProps) {
       'reduceTransparencyChanged',
       (enabled) => {
         setReduceTransparencyEnabled(enabled);
-        console.log('[GlassProvider] Reduce Transparency changed:', enabled);
+        // Log accessibility changes in development only
+        if (__DEV__) {
+          console.log('[GlassProvider] Reduce Transparency changed:', enabled);
+        }
       }
     );
 
@@ -132,28 +243,103 @@ export function GlassProvider({ children }: GlassProviderProps) {
   }, []);
 
   /**
-   * Glass Element Registration
+   * Glass Element Registration with Batching
    *
-   * PERFORMANCE: Each glass component calls registerGlass() on mount
-   * and unregisterGlass() on unmount. This allows the provider to
-   * enforce the max glass element limit.
+   * PERFORMANCE: Uses requestAnimationFrame to batch multiple registration updates
+   * into a single state update. This prevents FlashList from triggering 17+ sequential
+   * state updates when rendering many items simultaneously.
+   *
+   * CRITICAL FIX FOR INFINITE LOOP:
+   * Without batching, each registerGlass() call immediately triggers setGlassCount(),
+   * which re-renders the provider, which updates contextValue, which causes all
+   * consumers to re-render, which triggers useGlassRegistration effects, creating
+   * a feedback loop. Batching breaks this cycle by accumulating registrations across
+   * a single frame and applying them atomically.
    */
-  const registerGlass = () => {
-    setGlassCount((prev) => {
-      const newCount = prev + 1;
-      if (newCount > capabilities.maxGlassElements) {
-        console.warn(
-          `[GlassProvider] Glass element limit exceeded: ${newCount}/${capabilities.maxGlassElements}. ` +
-          'Performance may degrade. Consider limiting glass elements per screen.'
-        );
-      }
-      return newCount;
-    });
-  };
+  const updateGlassCount = useCallback((next: number) => {
+    // Cancel any pending update
+    if (pendingUpdateRef.current !== null) {
+      cancelAnimationFrame(pendingUpdateRef.current);
+    }
 
-  const unregisterGlass = () => {
-    setGlassCount((prev) => Math.max(0, prev - 1));
-  };
+    // Batch updates in next frame
+    pendingUpdateRef.current = requestAnimationFrame(() => {
+      pendingUpdateRef.current = null;
+
+      setGlassCount((prev) => {
+        if (prev === next) {
+          return prev;
+        }
+
+        const limit = effectiveMaxRef.current;
+
+        if (next > limit) {
+          if (lastWarningCountRef.current !== next) {
+            // Warn about performance issues in development only
+            // CRITICAL: Too many glass elements can cause frame drops
+            if (__DEV__) {
+              console.warn(
+                `[GlassProvider] Glass element limit exceeded: ${next}/${limit}. ` +
+                'Performance may degrade. Consider limiting glass elements per screen.'
+              );
+            }
+            lastWarningCountRef.current = next;
+          }
+        } else if (lastWarningCountRef.current !== null) {
+          lastWarningCountRef.current = null;
+        }
+
+        return next;
+      });
+    });
+  }, []);
+
+  const registerGlass = useCallback(() => {
+    const registrationId = nextRegistrationIdRef.current++;
+    activeRegistrationsRef.current.add(registrationId);
+    updateGlassCount(activeRegistrationsRef.current.size);
+
+    let released = false;
+
+    return () => {
+      if (released) {
+        return;
+      }
+      released = true;
+
+      if (activeRegistrationsRef.current.delete(registrationId)) {
+        updateGlassCount(activeRegistrationsRef.current.size);
+      }
+    };
+  }, [updateGlassCount]);
+
+  const unregisterGlass = useCallback(() => {
+    if (activeRegistrationsRef.current.size === 0) {
+      updateGlassCount(0);
+      return;
+    }
+
+    // Fallback path for legacy callers without explicit registration IDs.
+    const iterator = activeRegistrationsRef.current.values().next();
+    if (!iterator.done) {
+      activeRegistrationsRef.current.delete(iterator.value);
+    }
+    updateGlassCount(activeRegistrationsRef.current.size);
+  }, [updateGlassCount]);
+
+  useEffect(() => {
+    effectiveMaxRef.current = effectiveMaxGlassElements;
+    updateGlassCount(activeRegistrationsRef.current.size);
+  }, [effectiveMaxGlassElements, updateGlassCount]);
+
+  // Cleanup pending animation frames on unmount
+  useEffect(() => {
+    return () => {
+      if (pendingUpdateRef.current !== null) {
+        cancelAnimationFrame(pendingUpdateRef.current);
+      }
+    };
+  }, []);
 
   /**
    * Scrolling State Management
@@ -186,18 +372,41 @@ export function GlassProvider({ children }: GlassProviderProps) {
    * - User is scrolling (on iOS <26)
    * - Heavy animation in progress
    * - Reduce transparency is enabled
+   *
+   * CRITICAL: Wrapped in useCallback to prevent infinite re-render loops.
+   * With stabilized capabilities object (above), this function now has stable
+   * references and only changes when actual values change.
    */
-  const checkShouldRenderGlass = () => {
+  const checkShouldRenderGlass = useCallback(() => {
     return shouldRenderGlassUtil(
       glassCount,
       isScrolling,
       isAnimating,
-      capabilities
+      {
+        ...capabilities,
+        maxGlassElements: effectiveMaxGlassElements,
+      }
     );
-  };
+  }, [glassCount, isScrolling, isAnimating, capabilities, effectiveMaxGlassElements]);
 
-  // Context value
-  const contextValue: GlassContextValue = {
+  /**
+   * Separate Registration Context Value
+   *
+   * CRITICAL FIX FOR INFINITE LOOP:
+   * Registration functions are extracted into their own context with stable memoization.
+   * This prevents components using useGlassRegistration from re-rendering when glassCount
+   * changes, breaking the feedback loop.
+   *
+   * Only registerGlass and unregisterGlass are dependencies, both of which are stable
+   * via useCallback with no changing dependencies.
+   */
+  const registrationContextValue = useMemo(() => ({
+    registerGlass,
+    unregisterGlass,
+  }), [registerGlass, unregisterGlass]);
+
+  // Context value - memoized to prevent unnecessary re-renders
+  const contextValue: GlassContextValue = useMemo(() => ({
     capabilities,
     glassCount,
     isScrolling,
@@ -207,7 +416,21 @@ export function GlassProvider({ children }: GlassProviderProps) {
     setScrolling,
     setAnimating,
     shouldRenderGlass: checkShouldRenderGlass,
-  };
+    effectiveMaxGlassElements,
+    setGlassBudget,
+    clearGlassBudget,
+  }), [
+    capabilities,
+    glassCount,
+    isScrolling,
+    isAnimating,
+    registerGlass,
+    unregisterGlass,
+    checkShouldRenderGlass,
+    effectiveMaxGlassElements,
+    setGlassBudget,
+    clearGlassBudget,
+  ]);
 
   // Log capabilities in development
   useEffect(() => {
@@ -221,10 +444,18 @@ export function GlassProvider({ children }: GlassProviderProps) {
     }
   }, [capabilities]);
 
+  useEffect(() => {
+    if (glassCount <= effectiveMaxGlassElements) {
+      lastWarningCountRef.current = null;
+    }
+  }, [glassCount, effectiveMaxGlassElements]);
+
   return (
-    <GlassContext.Provider value={contextValue}>
-      {children}
-    </GlassContext.Provider>
+    <GlassRegistrationContext.Provider value={registrationContextValue}>
+      <GlassContext.Provider value={contextValue}>
+        {children}
+      </GlassContext.Provider>
+    </GlassRegistrationContext.Provider>
   );
 }
 
@@ -278,14 +509,33 @@ export function useGlass(): GlassContextValue {
  *
  * PERFORMANCE: Use this in every glass component to enable
  * automatic element counting and limit enforcement.
+ *
+ * CRITICAL FIX FOR INFINITE LOOP:
+ * Now uses GlassRegistrationContext instead of GlassContext. This prevents
+ * components from re-rendering when glassCount changes, breaking the feedback loop.
+ * The registration context only contains stable functions (registerGlass, unregisterGlass),
+ * so it never changes reference unless the functions themselves change (which they don't).
  */
-export function useGlassRegistration() {
-  const { registerGlass, unregisterGlass } = useGlass();
+export function useGlassRegistration(enabled: boolean = true) {
+  const context = useContext(GlassRegistrationContext);
+
+  if (context === undefined) {
+    throw new Error(
+      'useGlassRegistration must be used within a GlassProvider. ' +
+      'Wrap your app with <GlassProvider> in app/_layout.tsx'
+    );
+  }
+
+  const { registerGlass } = context;
 
   useEffect(() => {
-    registerGlass();
+    if (!enabled) {
+      return;
+    }
+
+    const unregister = registerGlass();
     return () => {
-      unregisterGlass();
+      unregister();
     };
-  }, [registerGlass, unregisterGlass]);
+  }, [enabled, registerGlass]); // Now safe to include registerGlass - it's stable
 }

@@ -31,6 +31,15 @@
 - PRs document the problem, solution, and test evidence (logs, screenshots, or command output). Note affected platforms and any version syncs.
 - Reference related issues and ensure `npm run sync-versions :dry` has no unexpected deltas before requesting review.
 
+## React Context Best Practices
+- All Context providers MUST memoize callback functions with `useCallback` and context values with `useMemo`.
+- Missing memoization causes stale closures where navigation handlers and callbacks reference outdated state.
+- Use functional setState updates (`setState(prev => ...)`) in callbacks to minimize dependencies.
+- setState functions from `useState` are already stable and don't need wrapping in `useCallback`.
+- List ALL dependencies in useCallback/useMemo arrays; ESLint exhaustive-deps will help catch missing ones.
+- Example: `src/context/ChatContext.tsx` demonstrates proper memoization patterns.
+- Symptom of broken memoization: Navigation stops working, callbacks execute with stale data, excessive re-renders.
+
 ## Security & Configuration Tips
 - Never commit secrets or API keys; DNS defaults live in `dnsService`.
 - Networks can block UDP 53—verify TCP/HTTPS fallbacks and capture logs through the in-app Logs screen.

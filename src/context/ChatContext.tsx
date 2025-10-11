@@ -4,6 +4,7 @@ import React, {
   useState,
   useEffect,
   useCallback,
+  useMemo,
   ReactNode,
 } from "react";
 import uuid from "react-native-uuid";
@@ -55,23 +56,40 @@ export function ChatProvider({ children }: ChatProviderProps) {
     }
   }, []);
 
-  const deleteChat = async (chatId: string): Promise<void> => {
+  /**
+   * Delete Chat
+   *
+   * CRITICAL: Wrapped in useCallback for stable reference.
+   * Without memoization, this function gets a new reference on every render,
+   * causing all components using it to re-render unnecessarily.
+   */
+  const deleteChat = useCallback(async (chatId: string): Promise<void> => {
     try {
       await StorageService.deleteChat(chatId);
       setChats((prevChats) => prevChats.filter((chat) => chat.id !== chatId));
 
       // If we deleted the current chat, clear it
-      if (currentChat?.id === chatId) {
-        setCurrentChat(null);
-      }
+      setCurrentChat((current) => {
+        if (current?.id === chatId) {
+          return null;
+        }
+        return current;
+      });
 
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete chat");
     }
-  };
+  }, []); // No dependencies - uses functional setState updates
 
-  const sendMessage = async (content: string): Promise<void> => {
+  /**
+   * Send Message
+   *
+   * CRITICAL: Wrapped in useCallback for stable reference.
+   * This function closes over currentChat and settings, so it depends on them.
+   * When these change, the function reference updates, which is correct behavior.
+   */
+  const sendMessage = useCallback(async (content: string): Promise<void> => {
     if (!currentChat) {
       setError("No active chat selected");
       return;
@@ -203,13 +221,25 @@ export function ChatProvider({ children }: ChatProviderProps) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [currentChat, settings, loadChats]); // Dependencies: Functions that read these values need to update when they change
 
   const clearError = useCallback(() => {
     setError(null);
   }, []);
 
-  const contextValue: ChatContextType = {
+  /**
+   * Context Value Memoization
+   *
+   * CRITICAL FIX FOR STALE CLOSURES AND NAVIGATION BUGS:
+   * Without useMemo, contextValue is a NEW object on every render, causing:
+   * 1. All consuming components re-render unnecessarily
+   * 2. Callbacks in child components get new references
+   * 3. React.memo components with custom comparisons miss callback updates
+   * 4. Navigation handlers reference stale closures with old state
+   *
+   * With useMemo, contextValue only changes when actual dependencies change.
+   */
+  const contextValue: ChatContextType = useMemo(() => ({
     chats,
     currentChat,
     isLoading,
@@ -220,7 +250,18 @@ export function ChatProvider({ children }: ChatProviderProps) {
     loadChats,
     setCurrentChat,
     clearError,
-  };
+  }), [
+    chats,
+    currentChat,
+    isLoading,
+    error,
+    createChat,
+    deleteChat,
+    sendMessage,
+    loadChats,
+    clearError,
+    // setCurrentChat is a setState function, already stable
+  ]);
 
   return (
     <ChatContext.Provider value={contextValue}>{children}</ChatContext.Provider>

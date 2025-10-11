@@ -9,6 +9,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **React Context Navigation Bug**: Fixed critical navigation failure where "New Chat" button and chat item clicks did nothing
+  - **Root Cause**: ChatContext was creating a new `contextValue` object on every render, causing navigation callbacks to reference stale closures
+  - **Solution**:
+    - Wrapped `deleteChat` in `useCallback` with no dependencies (uses functional setState updates)
+    - Wrapped `sendMessage` in `useCallback` with proper dependencies `[currentChat, settings, loadChats]`
+    - Wrapped `contextValue` in `useMemo` with all dependencies listed
+  - **Impact**: Navigation handlers (`handleNewChat`, `handleChatPress`) now receive stable callback references and update correctly
+  - **Files**: `src/context/ChatContext.tsx`
+
+- **GlassProvider Function Shadowing Bug**: Fixed critical runtime error "shouldReduceTransparency is not a function (it is false)"
+  - **Root Cause**: Variable shadowing caused imported function `shouldReduceTransparency()` to resolve to boolean value instead of function
+  - **Solution**: Renamed imported function with alias `shouldReduceTransparency as checkAccessibilitySetting` to eliminate naming conflicts
+  - **Impact**: Accessibility checking now works correctly without Metro cache corruption
+  - **Files**: `src/design-system/glass/GlassProvider.tsx`
+
+- **React Context Memoization Pattern**: Implemented proper context memoization to prevent stale closures
+  - **Pattern**: All context functions use `useCallback` with proper dependencies, context value uses `useMemo`
+  - **Benefit**: Prevents React.memo components with custom comparisons from missing callback updates
+  - **Documentation**: Added comprehensive code comments explaining the critical fix for stale closures
+
+### Removed
+
+- **Legacy Custom Native Glass Module**: Complete removal of deprecated custom LiquidGlassWrapper implementation
+  - **Deleted Native Code**: Removed 4 custom Swift/Objective-C files (LiquidGlassViewManager.swift/m, LiquidGlassNativeModule.swift/m)
+  - **Deleted React Components**: Removed deprecated LiquidGlassWrapper.tsx (364 lines) with migration warnings
+  - **Deleted Legacy Tab Bar**: Removed custom GlassTabBar.tsx in favor of expo-router native tabs
+  - **Impact**: Eliminates 800+ lines of custom bridging code, reduces maintenance burden
+  - **Migration Complete**: All usage migrated to official expo-glass-effect@0.1.4 package
+
+### Changed
+
+- **Complete expo-glass-effect Migration**: Fully adopted official Expo glass package throughout codebase
+  - **Design System**: GlassCard, GlassButton, GlassScreen now exclusively use expo-glass-effect API
+  - **Native Tabs**: Already using expo-router/unstable-native-tabs correctly (no changes needed)
+  - **Documentation Updates**: CLAUDE.md updated to reflect official expo-glass-effect usage
+  - **Architecture Simplification**: Removed custom UIVisualEffectView bridging in favor of Expo's official implementation
+  - **Cross-Platform Consistency**: All platforms now use same expo-glass-effect API with automatic fallbacks
+
+### Fixed
+
 - **🔧 CRITICAL: Android Material 3 Elevation Bug**: Fixed double shadow rendering violation
   - **Root Cause**: GlassCard.tsx had layered elevations (View + TouchableOpacity wrapper) causing two competing shadows
   - **Solution**: Replaced TouchableOpacity with Pressable for single dynamic elevation value
