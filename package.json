@@ -34,6 +34,7 @@
     "expo-build-properties": "~1.0.9",
     "expo-dev-client": "~6.0.15",
     "expo-glass-effect": "^0.1.4",
+    "expo-linking": "~8.0.8",
     "expo-localization": "~15.0.3",
     "expo-router": "^6.0.12",
     "expo-splash-screen": "~31.0.10",

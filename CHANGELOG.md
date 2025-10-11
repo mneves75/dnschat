@@ -117,6 +117,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **📦 Expo Bundler Locale Dependency**: Installed `expo-localization` so SettingsContext locale detection resolves during iOS bundling
+- **📦 Expo Router Bundler Dependency**: Fixed missing expo-linking dependency causing Metro bundler failure
+  - **Root Cause**: expo-router requires expo-linking as a peer dependency but it was not installed
+  - **Solution**: Installed expo-linking@~8.0.8 via `npx expo install expo-linking`
+  - **Error**: "Unable to resolve 'expo-linking' from 'node_modules/expo-router/build/views/Unmatched.js'"
+  - **Impact**: Metro bundler now successfully compiles 2109 modules without errors
 - **🔧 iOS CocoaPods Duplicate Dependency**: Resolved duplicate DNSNative pod dependency error preventing iOS builds
   - **Root Cause**: Manual pod entry in Podfile conflicting with Expo autolinking system
   - **Solution**: Removed manual `pod 'DNSNative', :path => './DNSNative'` from Podfile, deleted duplicate `ios/DNSNative/` directory
