@@ -15,6 +15,7 @@ module.exports = {
     "^react-native-udp$": "<rootDir>/__tests__/mocks/react-native-udp.js",
     "^react-native-tcp-socket$":
       "<rootDir>/__tests__/mocks/react-native-tcp-socket.js",
+    "^@/(.*)$": "<rootDir>/src/$1",
   },
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
   setupFiles: ["<rootDir>/__tests__/setup.jest.js"],

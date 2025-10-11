@@ -7,7 +7,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **🚦 DNS Transport Test Throttling**: Implemented rate limiting for DNS diagnostic tests in Settings screen
+  - **Hook**: `useTransportTestThrottle` provides shared throttling logic for chain and forced transport tests
+  - **Chain Throttle**: 1200ms minimum interval between full DNS chain tests to prevent resolver spam
+  - **Forced Throttle**: Per-transport 1200ms cooldown for native/UDP/TCP/HTTPS tests
+  - **User Feedback**: Clear error messages when tests are throttled ("Aguarde um instante antes de testar novamente")
+  - **Settings Integration**: GlassSettings.tsx now validates availability before running diagnostics
+  - **Documentation**: Aligns with docs/SETTINGS.md guidance on DNS test frequency
+
+- **🛤️ Expo Router Authentication Provider**: Implemented RouterProvider for authentication and onboarding flow
+  - **Authentication Guards**: Protects (tabs), (dashboard), and (modals) routes from unauthenticated access
+  - **Onboarding Flow**: Redirects to /(auth)/onboarding until user completes initial setup
+  - **State Management**: Integrates with Zustand app store for hydration, auth status, and onboarding state
+  - **Navigation Safety**: Waits for root navigator mount to prevent "navigate before mounting" errors
+  - **Auto Redirect**: Authenticated users automatically redirected to /(tabs) when accessing auth routes
+
+- **🌍 Internationalization Infrastructure**: Added locale resolution system for en-US and pt-BR support
+  - **Type-Safe Locales**: SupportedLocale type with "en-US" and "pt-BR" support
+  - **Normalization**: Tolerates both hyphen and underscore variants (en-US, en_us, pt-BR, pt_br)
+  - **Default Locale**: Falls back to en-US for unsupported or missing locale inputs
+  - **Locale Options**: SUPPORTED_LOCALE_OPTIONS array for UI picker components
+  - **Helper Functions**: resolveLocale() and isSupportedLocale() for locale validation
+
+- **🔴 Centralized DNS Error Handling**: Implemented localized error message resolution for thread screens
+  - **Portuguese Localization**: All DNSErrorType messages mapped to pt-BR strings
+  - **Error Types Covered**: PLATFORM_UNSUPPORTED, NETWORK_UNAVAILABLE, TIMEOUT, DNS_SERVER_UNREACHABLE, INVALID_RESPONSE, PERMISSION_DENIED, DNS_QUERY_FAILED
+  - **Robust Fallback**: Handles unknown errors, undefined values, and string errors gracefully
+  - **Test Coverage**: Comprehensive unit tests in __tests__/threadScreen.errors.spec.ts
+  - **Type Safety**: resolveDnsErrorMessage() normalizes arbitrary error values to user-friendly strings
+  - **Error Normalization**: normalizeDnsError() guarantees Error instances for Promise chains
+
 ### Changed
+
+- **🧪 Test Configuration Enhancements**: Improved Jest and TypeScript test setup for path aliases
+  - **Jest Path Mapping**: Added "@/*" alias mapping to "<rootDir>/src/$1" in jest.config.js
+  - **TypeScript Test Config**: Added baseUrl "." and paths {"@/*": ["src/*"]} to tsconfig.test.json
+  - **App Directory Support**: Extended test includes to cover app/**/*.ts and app/**/*.tsx files
+  - **Import Consistency**: Enables consistent import patterns across test files (e.g., "@/services/dnsService")
+
+- **📦 Dependencies**: Added expo-localization (~15.0.3) for locale detection and internationalization support
 
 - **📚 Documentation Updates - Development Guidelines & Framework Updates**: Comprehensive update to project documentation with critical development guidelines and latest framework specifications
   - **CLAUDE.md**: Added critical development guidelines prohibiting markdown file creation without explicit instruction, ast-grep usage requirements, Expo Go limitations, New Architecture (Fabric) details, Liquid Glass UI specifications, React Native 0.81 & React 19.1 features, Expo SDK 54 API updates, performance guidelines, component style patterns, accessibility requirements, and documentation structure with REF_DOC references
