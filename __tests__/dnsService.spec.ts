@@ -1,3 +1,23 @@
+jest.mock('react-native', () => {
+  const actual = jest.requireActual('react-native');
+  return {
+    ...actual,
+    NativeModules: {
+      ...actual.NativeModules,
+      UdpSockets: actual.NativeModules?.UdpSockets ?? {},
+      TcpSockets: actual.NativeModules?.TcpSockets ?? {},
+    },
+  };
+});
+
+jest.mock('react-native-udp', () => ({
+  createSocket: jest.fn(),
+}));
+
+jest.mock('react-native-tcp-socket', () => ({
+  Socket: class MockSocket {},
+}));
+
 import {
   parseTXTResponse,
   sanitizeDNSMessage,

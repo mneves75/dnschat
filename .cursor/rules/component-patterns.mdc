@@ -25,14 +25,20 @@
 
 ## Component Categories
 ### Screen Components
-- **Location**: [src/navigation/screens/](mdc:src/navigation/screens/)
-- **Navigation**: Use navigation props for screen transitions
-- **Header Configuration**: Configure headers in navigation options
+- **Location**: [app/](mdc:app/) directory with file-based routing
+- **Navigation**: Use Expo Router hooks for navigation
+- **Layout**: Configure in layout files (app/(tabs)/_layout.tsx, app/(modals)/_layout.tsx)
 
 ### UI Components
 - **Location**: [src/components/](mdc:src/components/)
 - **Reusability**: Design for reuse across different screens
 - **Props Interface**: Keep props interface minimal and focused
+
+### Design System Components
+- **Location**: [src/design-system/](mdc:src/design-system/)
+- **Glass Components**: [src/design-system/glass/](mdc:src/design-system/glass/) - iOS 26+ liquid glass
+- **Theme Components**: [src/design-system/theme/](mdc:src/design-system/theme/) - Color system
+- **Platform Fallbacks**: Automatic fallbacks for unsupported platforms
 
 ### Icon Components
 - **Location**: [src/components/icons/](mdc:src/components/icons/)

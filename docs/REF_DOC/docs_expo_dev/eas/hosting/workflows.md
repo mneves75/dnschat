@@ -1,0 +1,65 @@
+# Web deployments with EAS Workflows
+
+[Edit](https://github.com/expo/expo/edit/main/docs/pages/eas/hosting/workflows.mdx)
+
+Copy
+
+Learn how to automate website and server deployments with EAS Hosting and
+Workflows.
+
+[Edit](https://github.com/expo/expo/edit/main/docs/pages/eas/hosting/workflows.mdx)
+
+Copy
+
+* * *
+
+EAS Workflows is a great way to automate the React Native CI/CD pipeline for
+deploying your project's website and API routes to EAS Hosting with pull
+request (PR) previews and production deployments.
+
+## Set up workflows
+
+To use [EAS Workflows](/eas/workflows/get-started) to automatically deploy
+your project, follow the instructions in [Get started with EAS
+Workflows](/eas/workflows/get-started). You can also add the [GitHub
+integration](/eas/workflows/get-started#configure-your-project) to connect a
+GitHub repository to your workflows.
+
+## Create a deployment workflow
+
+Add the following file to .eas/workflows/deploy.yml. This will use the
+production environment variables, export the web bundle, deploy your project
+and promote it to production whenever you push to the `main` branch.
+
+.eas/workflows/deploy.yml
+
+Copy
+
+    
+    
+    name: Deploy
+    
+    on:
+      push:
+        branches: ['main']
+    
+    jobs:
+      deploy:
+        type: deploy
+        name: Deploy
+        environment: production
+        params:
+          prod: true
+    
+
+Now, whenever a commit is pushed to `main` or a PR is merged, the workflow
+will run to deploy your website.
+
+You can also test this workflow by triggering it manually:
+
+Terminal
+
+Copy
+
+`- ``eas workflow:run .eas/workflows/deploy.yml`
+

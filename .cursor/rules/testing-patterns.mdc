@@ -1,0 +1,363 @@
+---
+globs: __tests__/**/*.spec.ts,__tests__/**/*.test.ts,__tests__/**/*.spec.tsx,__tests__/**/*.test.tsx
+description: Jest testing patterns, mocking strategies, and test organization
+---
+
+# Testing Patterns and Jest Configuration
+
+## Jest Configuration
+
+### Core Setup
+- **Config**: [jest.config.js](mdc:jest.config.js) - Node environment with TypeScript support
+- **Setup**: [__tests__/setup.jest.js](mdc:__tests__/setup.jest.js) - AsyncStorage mocking and crypto polyfill
+- **Test Environment**: Node.js (not jsdom) for DNS service testing
+- **TypeScript**: Uses `ts-jest` with [tsconfig.test.json](mdc:tsconfig.test.json)
+
+### Test Discovery
+```javascript
+// Test file patterns
+"<rootDir>/__tests__/**/*.spec.(ts|tsx|js)"
+"<rootDir>/modules/**/__tests__/**/*.test.(ts|tsx|js)"
+```
+
+### Module Mapping
+```javascript
+// React Native mocks
+"^react-native$": "<rootDir>/__tests__/mocks/react-native.js"
+"^react-native-udp$": "<rootDir>/__tests__/mocks/react-native-udp.js"
+"^react-native-tcp-socket$": "<rootDir>/__tests__/mocks/react-native-tcp-socket.js"
+
+// Path aliases
+"^@/(.*)$": "<rootDir>/src/$1"
+```
+
+## Mock Strategy
+
+### React Native Core Mocks
+- **Location**: [__tests__/mocks/react-native.js](mdc:__tests__/mocks/react-native.js)
+- **Platform**: iOS 26.0 (for glass testing)
+- **NativeModules**: Empty object for native module testing
+
+### Native Module Mocks
+- **DNS Native**: [__tests__/mocks/modules-dns-native.js](mdc:__tests__/mocks/modules-dns-native.js)
+- **UDP Socket**: [__tests__/mocks/react-native-udp.js](mdc:__tests__/mocks/react-native-udp.js)
+- **TCP Socket**: [__tests__/mocks/react-native-tcp-socket.js](mdc:__tests__/mocks/react-native-tcp-socket.js)
+- **Device Info**: [__tests__/mocks/react-native-device-info.js](mdc:__tests__/mocks/react-native-device-info.js)
+
+### AsyncStorage Mock
+```javascript
+// Automatic mocking in setup.jest.js
+jest.mock('@react-native-async-storage/async-storage', () => 
+  require('@react-native-async-storage/async-storage/jest/async-storage-mock')
+);
+```
+
+## Test Organization
+
+### File Structure
+```
+__tests__/
+├── setup.jest.js                    # Global test setup
+├── mocks/                          # Mock implementations
+│   ├── react-native.js
+│   ├── modules-dns-native.js
+│   ├── react-native-udp.js
+│   ├── react-native-tcp-socket.js
+│   └── react-native-device-info.js
+├── dnsService.spec.ts              # DNS service core tests
+├── dnsService.parse.spec.ts        # DNS parsing tests
+├── dnsService.pipeline.spec.ts     # DNS pipeline tests
+├── dnsService.rateLimit.spec.ts    # Rate limiting tests
+├── dnsService.nativeRetry.spec.ts  # Native retry tests
+├── liquidGlass.spec.ts             # Glass system tests
+├── settings.migration.spec.ts      # Settings migration tests
+└── threadScreen.errors.spec.ts     # Error handling tests
+```
+
+### Test Categories
+
+#### Service Tests
+- **DNS Service**: [__tests__/dnsService.spec.ts](mdc:__tests__/dnsService.spec.ts)
+- **DNS Parsing**: [__tests__/dnsService.parse.spec.ts](mdc:__tests__/dnsService.parse.spec.ts)
+- **DNS Pipeline**: [__tests__/dnsService.pipeline.spec.ts](mdc:__tests__/dnsService.pipeline.spec.ts)
+- **Rate Limiting**: [__tests__/dnsService.rateLimit.spec.ts](mdc:__tests__/dnsService.rateLimit.spec.ts)
+
+#### Component Tests
+- **Glass System**: [__tests__/liquidGlass.spec.ts](mdc:__tests__/liquidGlass.spec.ts)
+- **Design System**: [__tests__/design-system/](mdc:__tests__/design-system/)
+
+#### Integration Tests
+- **Settings Migration**: [__tests__/settings.migration.spec.ts](mdc:__tests__/settings.migration.spec.ts)
+- **Error Handling**: [__tests__/threadScreen.errors.spec.ts](mdc:__tests__/threadScreen.errors.spec.ts)
+
+## Testing Patterns
+
+### DNS Service Testing
+```typescript
+// Test private methods via module import
+import * as DNSServiceModule from "../src/services/dnsService";
+
+describe("DNS Service", () => {
+  it("should parse TXT responses correctly", () => {
+    const result = parseTXTResponse(["Hello world"]);
+    expect(result).toBe("Hello world");
+  });
+
+  it("should handle multi-part responses", () => {
+    const input = ["1/3:Hello ", "2/3:world ", "3/3:!"];
+    const result = parseTXTResponse(input);
+    expect(result).toBe("Hello world !");
+  });
+});
+```
+
+### Mock Implementation
+```typescript
+// Mock native modules
+jest.mock('react-native-udp', () => ({
+  createSocket: jest.fn(() => ({
+    bind: jest.fn(),
+    send: jest.fn(),
+    close: jest.fn(),
+  })),
+}));
+
+// Mock async functions
+const mockQueryLLM = jest.fn();
+jest.mock('../src/services/dnsService', () => ({
+  queryLLM: mockQueryLLM,
+}));
+```
+
+### Glass System Testing
+```typescript
+// Test glass capabilities
+import { getGlassCapabilities, isNativeGlassSupported } from '../src/design-system/glass/utils';
+
+describe('Glass System', () => {
+  it('should detect iOS 26+ native glass support', () => {
+    const capabilities = getGlassCapabilities();
+    expect(capabilities.isNativeGlassSupported).toBe(true);
+  });
+
+  it('should provide appropriate fallbacks', () => {
+    const capabilities = getGlassCapabilities(true); // reduce transparency
+    expect(capabilities.glassType).toBe('solid');
+  });
+});
+```
+
+### Context Testing
+```typescript
+// Test React Context providers
+import { render, screen } from '@testing-library/react-native';
+import { GlassProvider } from '../src/design-system/glass/GlassProvider';
+
+const renderWithGlass = (component) => {
+  return render(
+    <GlassProvider>
+      {component}
+    </GlassProvider>
+  );
+};
+
+describe('GlassProvider', () => {
+  it('should provide glass context', () => {
+    renderWithGlass(<TestComponent />);
+    expect(screen.getByText('Glass Available')).toBeTruthy();
+  });
+});
+```
+
+## Test Utilities
+
+### Custom Matchers
+```typescript
+// DNS response matchers
+expect.extend({
+  toBeValidDNSResponse(received) {
+    const isValid = typeof received === 'string' && received.length > 0;
+    return {
+      pass: isValid,
+      message: () => `Expected ${received} to be a valid DNS response`,
+    };
+  },
+});
+```
+
+### Test Helpers
+```typescript
+// DNS test helpers
+export const createMockDNSResponse = (parts: string[]) => ({
+  answers: parts.map(part => ({ data: part })),
+});
+
+export const createMockDNSError = (message: string) => 
+  new Error(`DNS Error: ${message}`);
+
+// Glass test helpers
+export const mockGlassCapabilities = (overrides = {}) => ({
+  isNativeGlassSupported: true,
+  canRenderGlass: true,
+  shouldReduceTransparency: false,
+  glassType: 'native',
+  maxGlassElements: 8,
+  ...overrides,
+});
+```
+
+## Performance Testing
+
+### DNS Service Performance
+```typescript
+describe('DNS Performance', () => {
+  it('should complete queries within timeout', async () => {
+    const start = Date.now();
+    await DNSService.queryLLM('test message');
+    const duration = Date.now() - start;
+    expect(duration).toBeLessThan(10000); // 10 second timeout
+  });
+});
+```
+
+### Glass Performance
+```typescript
+describe('Glass Performance', () => {
+  it('should limit glass elements per screen', () => {
+    const { glassCount } = useGlass();
+    expect(glassCount).toBeLessThanOrEqual(8);
+  });
+});
+```
+
+## Error Testing
+
+### DNS Error Scenarios
+```typescript
+describe('DNS Error Handling', () => {
+  it('should handle network timeouts', async () => {
+    mockUDP.mockRejectedValue(new Error('Network timeout'));
+    
+    await expect(DNSService.queryLLM('test')).rejects.toThrow('Network timeout');
+  });
+
+  it('should fallback to mock service on all failures', async () => {
+    mockNativeDNS.mockRejectedValue(new Error('Native failed'));
+    mockUDP.mockRejectedValue(new Error('UDP failed'));
+    mockTCP.mockRejectedValue(new Error('TCP failed'));
+    mockDoH.mockRejectedValue(new Error('DoH failed'));
+    
+    const result = await DNSService.queryLLM('test');
+    expect(result).toContain('Mock response');
+  });
+});
+```
+
+### Glass Error Scenarios
+```typescript
+describe('Glass Error Handling', () => {
+  it('should fallback to solid when glass fails', () => {
+    const { shouldRenderGlass } = useGlass();
+    // Mock glass failure
+    expect(shouldRenderGlass()).toBe(false);
+  });
+});
+```
+
+## Integration Testing
+
+### End-to-End DNS Flow
+```typescript
+describe('DNS Integration', () => {
+  it('should complete full DNS query flow', async () => {
+    // Setup mocks
+    mockNativeDNS.mockResolvedValue('Native response');
+    
+    // Execute flow
+    const result = await DNSService.queryLLM('Hello AI');
+    
+    // Verify
+    expect(result).toBe('Native response');
+    expect(mockNativeDNS).toHaveBeenCalledWith('hello-ai.ch.at');
+  });
+});
+```
+
+### Glass Integration
+```typescript
+describe('Glass Integration', () => {
+  it('should render glass components correctly', () => {
+    renderWithGlass(
+      <GlassCard variant="prominent">
+        <Text>Test Content</Text>
+      </GlassCard>
+    );
+    
+    expect(screen.getByText('Test Content')).toBeTruthy();
+  });
+});
+```
+
+## Test Commands
+
+### Running Tests
+```bash
+# Run all tests
+npm test
+
+# Run specific test file
+npm test dnsService.spec.ts
+
+# Run tests with coverage
+npm test -- --coverage
+
+# Run tests in watch mode
+npm test -- --watch
+
+# Run tests for specific pattern
+npm test -- --testNamePattern="DNS parsing"
+```
+
+### Test Scripts
+```json
+{
+  "scripts": {
+    "test": "jest --runInBand",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:ci": "jest --ci --coverage --watchAll=false"
+  }
+}
+```
+
+## Best Practices
+
+### Test Structure
+- **Arrange-Act-Assert**: Clear test structure with setup, execution, verification
+- **Descriptive Names**: Use clear, descriptive test names
+- **Single Responsibility**: One test per behavior
+- **Independent Tests**: Tests should not depend on each other
+
+### Mocking Strategy
+- **Mock at Boundaries**: Mock external dependencies, not internal logic
+- **Realistic Mocks**: Use realistic mock data and responses
+- **Reset Mocks**: Clear mocks between tests
+- **Verify Interactions**: Check that mocks were called correctly
+
+### Performance
+- **Fast Tests**: Keep individual tests under 100ms
+- **Parallel Execution**: Use `--runInBand` for DNS tests to avoid port conflicts
+- **Mock Heavy Operations**: Mock network calls and native modules
+
+### Coverage
+- **Aim for 80%+**: Target high test coverage for critical paths
+- **Focus on Logic**: Test business logic, not implementation details
+- **Edge Cases**: Test error conditions and edge cases
+
+## Do Not
+- **Test Implementation Details**: Don't test private methods unless necessary
+- **Mock Everything**: Don't over-mock; test real behavior when possible
+- **Slow Tests**: Don't create tests that take more than a few seconds
+- **Flaky Tests**: Don't create tests that depend on timing or external state
+- **Skip Error Cases**: Always test error handling and edge cases
+- **Ignore Async**: Properly handle async operations in tests

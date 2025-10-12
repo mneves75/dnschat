@@ -1,13 +1,13 @@
 import React, { useRef, useEffect } from "react";
 import {
-  FlatList,
   View,
   StyleSheet,
   useColorScheme,
   Text,
   RefreshControl,
-  ListRenderItemInfo,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { FlashList, ListRenderItemInfo } from "@shopify/flash-list";
 import { MessageBubble } from "./MessageBubble";
 import { Message } from "../types/chat";
 
@@ -24,9 +24,12 @@ export function MessageList({
   onRefresh,
   isRefreshing = false,
 }: MessageListProps) {
-  const flatListRef = useRef<FlatList<Message>>(null);
+  const flatListRef = useRef<FlashList<Message>>(null);
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
+  const insets = useSafeAreaInsets();
+  // Ensure the list never collides with the input surface once keyboard/tab bar offsets are applied.
+  const contentBottomPadding = insets.bottom + 16;
 
   useEffect(() => {
     // Auto-scroll to bottom when new messages arrive
@@ -73,17 +76,27 @@ export function MessageList({
   ) : undefined;
 
   return (
-    <FlatList
+    <FlashList
       ref={flatListRef}
       data={messages}
       renderItem={renderMessage}
       keyExtractor={keyExtractor}
+      estimatedItemSize={80}
+      contentInsetAdjustmentBehavior="automatic"
       style={[
         styles.container,
         isDark ? styles.darkContainer : styles.lightContainer,
       ]}
-      contentContainerStyle={styles.contentContainer}
+      contentContainerStyle={[
+        styles.contentContainer,
+        { paddingBottom: contentBottomPadding },
+      ]}
       showsVerticalScrollIndicator={false}
+      onLoad={({ elapsedTimeInMs }) => {
+        if (__DEV__) {
+          console.log(`[MessageList] FlashList initial load ${elapsedTimeInMs}ms`);
+        }
+      }}
       onContentSizeChange={() => {
         // Auto-scroll to bottom when content size changes
         if (messages.length > 0) {
@@ -93,17 +106,6 @@ export function MessageList({
       ListEmptyComponent={renderEmptyComponent}
       refreshControl={refreshControl}
       keyboardShouldPersistTaps="handled"
-      // Performance optimizations
-      removeClippedSubviews={true}
-      maxToRenderPerBatch={10}
-      updateCellsBatchingPeriod={100}
-      initialNumToRender={20}
-      windowSize={10}
-      getItemLayout={(data, index) => ({
-        length: 80, // Approximate message height
-        offset: 80 * index,
-        index,
-      })}
     />
   );
 }

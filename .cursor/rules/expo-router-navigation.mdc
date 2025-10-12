@@ -1,0 +1,149 @@
+---
+globs: app/**/*.tsx,app/**/*.ts
+description: Expo Router navigation patterns and file-based routing
+---
+
+# Expo Router Navigation Patterns
+
+## File-Based Routing Structure
+
+### Root Layout
+- **Entry Point**: [app/_layout.tsx](mdc:app/_layout.tsx) - Minimal root layout with Stack navigator
+- **Provider Setup**: Providers are managed in [app/App.tsx](mdc:app/App.tsx) (Expo handles provider composition)
+- **Screen Options**: `headerShown: false` by default, `animation: 'default'`
+
+### Tab Navigation
+- **Layout**: [app/(tabs)/_layout.tsx](mdc:app/(tabs)/_layout.tsx) - Uses stable `<Tabs>` component
+- **Glass Integration**: Uses `getGlassBackgroundFallback()` for tab bar styling
+- **Platform Handling**: iOS absolute positioning, Android relative positioning
+- **Icons**: MaterialCommunityIcons with consistent sizing (24px)
+
+### Screen Organization
+```
+app/
+├── _layout.tsx              # Root Stack layout
+├── +not-found.tsx           # 404 error screen
+├── (tabs)/                  # Tab group
+│   ├── _layout.tsx          # Tab navigator
+│   ├── index.tsx            # Chat list (home)
+│   ├── chat/[id].tsx        # Dynamic chat route
+│   ├── logs.tsx             # DNS logs
+│   ├── dev-logs.tsx         # Dev logs (__DEV__ only)
+│   └── about.tsx            # About screen
+└── (modals)/                # Modal group
+    ├── _layout.tsx          # Modal stack
+    └── settings.tsx         # Settings modal
+```
+
+## Navigation Patterns
+
+### Tab Configuration
+- **Active Tint**: `#007AFF` (iOS blue)
+- **Inactive Tint**: `#8E8E93` (iOS gray)
+- **Background**: Glass-aware with platform fallbacks
+- **Height**: 60px with iOS padding bottom (6px)
+- **Keyboard**: `tabBarHideOnKeyboard: true`
+
+### Dynamic Routes
+- **Chat Detail**: `chat/[id].tsx` - Dynamic chat conversation
+- **Hidden Tabs**: Use `href: null` for non-tab screens
+- **Dev-Only**: Use `href: __DEV__ ? undefined : null` for dev screens
+
+### Modal Presentation
+- **Settings**: Presented as modal via `(modals)/` group
+- **Layout**: [app/(modals)/_layout.tsx](mdc:app/(modals)/_layout.tsx) for modal stack
+
+## Screen Implementation
+
+### Screen Structure
+```typescript
+// Standard screen pattern
+import { View, Text } from 'react-native';
+import { useLocalSearchParams } from 'expo-router';
+
+export default function ScreenName() {
+  const params = useLocalSearchParams();
+  
+  return (
+    <View>
+      <Text>Screen Content</Text>
+    </View>
+  );
+}
+```
+
+### Dynamic Route Parameters
+- **Access**: Use `useLocalSearchParams()` hook
+- **Type Safety**: Define parameter types in screen components
+- **Validation**: Validate parameters before use
+
+### Navigation Hooks
+- **useRouter()**: Programmatic navigation
+- **useLocalSearchParams()**: Access route parameters
+- **useGlobalSearchParams()**: Access global search params
+- **usePathname()**: Get current pathname
+- **useSegments()**: Get current route segments
+
+## Deep Linking
+
+### URL Structure
+- **Scheme**: `dnschat://` (configured in [app.json](mdc:app.json))
+- **Tab Routes**: `dnschat:///(tabs)/logs`
+- **Dynamic Routes**: `dnschat:///chat/123`
+- **Modal Routes**: `dnschat:///(modals)/settings`
+
+### Linking Configuration
+- **Auto Detection**: `enabled: 'auto'` in [app.json](mdc:app.json)
+- **Prefix Handling**: Automatic scheme detection
+- **Fallback**: 404 screen for invalid routes
+
+## Best Practices
+
+### Layout Composition
+- **Minimal Root**: Keep [app/_layout.tsx](mdc:app/_layout.tsx) minimal
+- **Provider Separation**: Move providers to [app/App.tsx](mdc:app/App.tsx)
+- **Screen Children Only**: Only `<Screen>` components as direct children
+
+### Performance
+- **Lazy Loading**: Screens are automatically lazy-loaded
+- **Static Navigation**: Use static navigation for better performance
+- **Memory Management**: Screens unmount when not in use
+
+### Accessibility
+- **Screen Titles**: Set proper `title` in screen options
+- **Tab Labels**: Use internationalized labels via `useTranslation()`
+- **Focus Management**: Handle focus for dynamic content
+
+## Common Patterns
+
+### Tab Icons
+```typescript
+const renderIcon = (name: string) => ({ color }: { focused: boolean; color: string }) => (
+  <MaterialCommunityIcons name={name} size={24} color={color} />
+);
+```
+
+### Glass-Aware Styling
+```typescript
+const tabBarBackgroundColor = useMemo(() => {
+  return getGlassBackgroundFallback(isDark, 'prominent');
+}, [isDark]);
+```
+
+### Dev-Only Screens
+```typescript
+<Tabs.Screen
+  name="dev-logs"
+  options={{
+    href: __DEV__ ? undefined : null,
+    title: t('tabs.devLogs'),
+  }}
+/>
+```
+
+## Do Not
+- **Bypass File-Based Routing**: Don't create custom navigation outside Expo Router
+- **Mutate Route Params**: Don't directly modify search params
+- **Create Circular Routes**: Avoid circular navigation dependencies
+- **Use Inline Styles**: Use StyleSheet.create for styling
+- **Skip Error Boundaries**: Always handle navigation errors gracefully

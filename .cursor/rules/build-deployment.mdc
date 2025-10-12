@@ -1,0 +1,379 @@
+---
+globs: package.json,app.json,eas.json,scripts/**/*.js,ios/**/*.pbxproj,android/**/*.gradle,CHANGELOG.md
+description: Build, deployment, and version management patterns
+---
+
+# Build, Deployment, and Version Management
+
+## Version Management
+
+### Source of Truth
+- **CHANGELOG.md**: [CHANGELOG.md](mdc:CHANGELOG.md) is the single source of truth for version numbers
+- **Format**: Follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) format
+- **Semantic Versioning**: Uses [Semantic Versioning](https://semver.org/) (MAJOR.MINOR.PATCH)
+
+### Version Sync Script
+- **Script**: [scripts/sync-versions.js](mdc:scripts/sync-versions.js) - Automatically syncs versions across all files
+- **Usage**: `npm run sync-versions` (apply) or `npm run sync-versions:dry` (preview)
+- **Files Updated**:
+  - `package.json` - NPM package version
+  - `app.json` - Expo app version
+  - `ios/DNSChat.xcodeproj/project.pbxproj` - iOS marketing version and build number
+  - `android/app/build.gradle` - Android version name and code
+
+### Version Sync Process
+```bash
+# 1. Update CHANGELOG.md with new version
+## [2.1.0] - 2025-01-15
+
+### Added
+- New feature description
+
+# 2. Preview version sync changes
+npm run sync-versions:dry
+
+# 3. Apply version sync
+npm run sync-versions
+
+# 4. Commit and build
+git add .
+git commit -m "chore: bump version to 2.1.0"
+```
+
+## Build Configuration
+
+### Expo Configuration
+- **Config**: [app.json](mdc:app.json) - Expo app configuration
+- **New Architecture**: `newArchEnabled: true` for React Native 0.81+ Fabric/TurboModules
+- **Scheme**: `dnschat://` for deep linking
+- **Bundle ID**: `org.mvneves.dnschat` (iOS/Android)
+
+### EAS Build Configuration
+- **Config**: [eas.json](mdc:eas.json) - EAS Build profiles
+- **Profiles**:
+  - `development`: Development client with simulator support
+  - `preview`: Internal distribution with debug symbols
+  - `production`: App Store distribution with full optimization
+
+### Build Profiles
+
+#### Development Build
+```json
+{
+  "development": {
+    "developmentClient": true,
+    "distribution": "internal",
+    "ios": {
+      "buildConfiguration": "Debug",
+      "simulator": true
+    }
+  }
+}
+```
+
+#### Preview Build
+```json
+{
+  "preview": {
+    "distribution": "internal",
+    "ios": {
+      "buildConfiguration": "Release",
+      "simulator": false,
+      "includeDsym": true,
+      "generateSourcemaps": true
+    }
+  }
+}
+```
+
+#### Production Build
+```json
+{
+  "production": {
+    "distribution": "store",
+    "ios": {
+      "buildConfiguration": "Release",
+      "simulator": false,
+      "includeDsym": true,
+      "generateSourcemaps": true,
+      "archiveHermesDsym": true
+    }
+  }
+}
+```
+
+## Build Commands
+
+### Development Commands
+```bash
+# Start development server
+npm start
+
+# Run on iOS simulator
+npm run ios
+
+# Run on Android emulator
+npm run android
+
+# Run on web
+npm run web
+```
+
+### Build Commands
+```bash
+# EAS Build commands
+eas build --platform ios --profile development
+eas build --platform android --profile preview
+eas build --platform all --profile production
+
+# Local build commands (requires Xcode/Android Studio)
+expo run:ios
+expo run:android
+```
+
+### Maintenance Commands
+```bash
+# Fix iOS CocoaPods issues
+npm run fix-pods
+
+# Clean iOS build
+npm run clean-ios
+
+# Sync versions
+npm run sync-versions
+npm run sync-versions:dry
+```
+
+## Platform-Specific Builds
+
+### iOS Build Requirements
+- **Xcode**: Latest version with iOS 16.0+ SDK
+- **CocoaPods**: Run `cd ios && pod install` after dependency changes
+- **Deployment Target**: iOS 16.0+ (configured in [app.json](mdc:app.json))
+- **New Architecture**: Enabled with Fabric + TurboModules
+- **Native Modules**: DNS native module in `modules/dns-native/`
+
+### Android Build Requirements
+- **Java 17**: Required for React Native 0.81+ (automated in `npm run android`)
+- **Gradle**: 8.0+ with Android Gradle Plugin 8.0+
+- **Min SDK**: API 21 (Android 5.0)
+- **Target SDK**: API 34+ (Android 14)
+- **Native Modules**: DNS native module with JNI integration
+
+### Build Optimization
+- **Hermes**: Enabled for better performance
+- **Code Splitting**: Automatic with Expo Router
+- **Tree Shaking**: Enabled for smaller bundle sizes
+- **Source Maps**: Generated for debugging (preview/production)
+
+## Deployment Process
+
+### App Store Deployment
+```bash
+# 1. Update version in CHANGELOG.md
+# 2. Sync versions
+npm run sync-versions
+
+# 3. Build for production
+eas build --platform ios --profile production
+
+# 4. Submit to App Store
+eas submit --platform ios --profile production
+```
+
+### TestFlight Deployment
+```bash
+# 1. Build preview version
+eas build --platform ios --profile preview
+
+# 2. Submit to TestFlight
+eas submit --platform ios --profile preview
+```
+
+### Android Play Store
+```bash
+# 1. Build production version
+eas build --platform android --profile production
+
+# 2. Submit to Play Store
+eas submit --platform android --profile production
+```
+
+## Native Module Integration
+
+### DNS Native Module
+- **Location**: `modules/dns-native/` - Cross-platform native DNS implementation
+- **iOS**: Swift + Network Framework (iOS 16.0+)
+- **Android**: Java + DnsResolver API (API 29+) with dnsjava fallback
+- **Expo Plugin**: [plugins/dns-native-plugin.js](mdc:plugins/dns-native-plugin.js) - Autolinking configuration
+
+### Liquid Glass Native Module
+- **Location**: `ios/LiquidGlassNative/` - iOS 26+ liquid glass effects
+- **Implementation**: Swift + UIVisualEffectView
+- **Expo Plugin**: [plugins/liquid-glass-plugin.js](mdc:plugins/liquid-glass-plugin.js)
+
+### Native Module Build Process
+1. **Expo Autolinking**: Automatically links native modules
+2. **CocoaPods**: iOS dependencies installed via `pod install`
+3. **Gradle**: Android dependencies resolved automatically
+4. **Build Integration**: Native code compiled during app build
+
+## Build Troubleshooting
+
+### Common iOS Issues
+```bash
+# CocoaPods issues
+npm run fix-pods
+cd ios && pod install && cd ..
+
+# Clean build
+npm run clean-ios
+
+# Xcode build issues
+cd ios && xcodebuild clean
+```
+
+### Common Android Issues
+```bash
+# Java version issues
+npm run android  # Uses Java 17 automatically
+
+# Gradle issues
+cd android && ./gradlew clean
+
+# Build cache issues
+cd android && ./gradlew cleanBuildCache
+```
+
+### Build Debugging
+```bash
+# Verbose build logs
+eas build --platform ios --profile development --verbose
+
+# Local build with logs
+expo run:ios --verbose
+
+# Check build status
+eas build:list
+```
+
+## Release Management
+
+### Release Checklist
+1. **Update CHANGELOG.md** with new version and changes
+2. **Run version sync**: `npm run sync-versions`
+3. **Test on both platforms**: iOS and Android
+4. **Run tests**: `npm test`
+5. **Build preview version**: `eas build --platform all --profile preview`
+6. **Test preview build** on physical devices
+7. **Build production version**: `eas build --platform all --profile production`
+8. **Submit to stores**: `eas submit --platform all --profile production`
+
+### Release Types
+- **Patch Release** (2.0.1): Bug fixes, no breaking changes
+- **Minor Release** (2.1.0): New features, backward compatible
+- **Major Release** (3.0.0): Breaking changes, major updates
+
+### Release Notes
+- **Format**: Follow [Keep a Changelog](https://keepachangelog.com/) format
+- **Categories**: Added, Changed, Deprecated, Removed, Fixed, Security
+- **Breaking Changes**: Clearly marked with migration instructions
+- **Platform Notes**: Specify iOS/Android specific changes
+
+## Environment Management
+
+### Development Environment
+- **Node.js**: 18+ (LTS recommended)
+- **npm**: 9+ (comes with Node.js)
+- **Expo CLI**: Latest version
+- **Xcode**: Latest with iOS 16.0+ SDK
+- **Android Studio**: Latest with API 34+ SDK
+
+### Build Environment
+- **EAS Build**: Cloud-based builds with consistent environment
+- **Node.js**: 18 LTS
+- **Xcode**: Latest stable
+- **Android**: Latest SDK with API 34+
+
+### Environment Variables
+```bash
+# Required for Android builds
+JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home
+PATH=/opt/homebrew/opt/openjdk@17/bin:$PATH
+
+# EAS Build credentials (set in EAS)
+EXPO_TOKEN=your_expo_token
+```
+
+## Performance Optimization
+
+### Build Performance
+- **Incremental Builds**: EAS Build caches dependencies
+- **Parallel Builds**: iOS and Android build simultaneously
+- **Build Caching**: Gradle and CocoaPods caches preserved
+
+### App Performance
+- **Hermes Engine**: Enabled for better JavaScript performance
+- **New Architecture**: Fabric + TurboModules for native performance
+- **Code Splitting**: Automatic with Expo Router
+- **Tree Shaking**: Dead code elimination
+
+### Bundle Size Optimization
+- **Metro Bundler**: Automatic tree shaking and minification
+- **Native Modules**: Only include used native modules
+- **Assets**: Optimized images and icons
+- **Source Maps**: Separate files for debugging
+
+## Security Considerations
+
+### Build Security
+- **Code Signing**: Automatic with EAS Build
+- **App Store Connect**: Secure distribution
+- **Play Console**: Google Play security scanning
+- **Native Modules**: Security review for custom native code
+
+### Runtime Security
+- **Deep Linking**: Secure URL scheme validation
+- **DNS Queries**: Input sanitization and validation
+- **Storage**: Encrypted local storage
+- **Network**: HTTPS-only for external requests
+
+## Monitoring and Analytics
+
+### Build Monitoring
+- **EAS Build**: Build status and logs
+- **App Store Connect**: Build processing status
+- **Play Console**: Build review status
+
+### App Monitoring
+- **Crash Reporting**: Automatic crash collection
+- **Performance**: App launch and runtime metrics
+- **Usage Analytics**: User engagement metrics
+
+## Best Practices
+
+### Version Management
+- **Always update CHANGELOG.md first** before syncing versions
+- **Use semantic versioning** for clear version progression
+- **Test version sync** with `--dry-run` before applying
+- **Commit version changes** separately from feature changes
+
+### Build Process
+- **Test on both platforms** before production builds
+- **Use preview builds** for internal testing
+- **Monitor build logs** for warnings and errors
+- **Keep build profiles** up to date with requirements
+
+### Release Process
+- **Follow release checklist** for consistent releases
+- **Test thoroughly** on physical devices
+- **Document breaking changes** clearly
+- **Monitor app store reviews** after release
+
+## Do Not
+- **Skip version sync**: Always run `npm run sync-versions` before builds
+- **Build without testing**: Test on both platforms before production
+- **Ignore build warnings**: Address all build warnings and errors
+- **Skip changelog updates**: Always update CHANGELOG.md for releases
+- **Use outdated dependencies**: Keep all dependencies up to date
+- **Skip security review**: Review native modules and external dependencies

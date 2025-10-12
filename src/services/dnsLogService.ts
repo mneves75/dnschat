@@ -334,7 +334,9 @@ export class DNSLogService {
     }
 
     if (removedCount > 0) {
-      console.log(`🧹 Cleaned up ${removedCount} old DNS logs (older than ${LOG_RETENTION_DAYS} days)`);
+      if (__DEV__) {
+        console.log(`🧹 Cleaned up ${removedCount} old DNS logs (older than ${LOG_RETENTION_DAYS} days)`);
+      }
       await this.saveLogs();
       this.notifyListeners();
     }

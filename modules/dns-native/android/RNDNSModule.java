@@ -6,16 +6,17 @@ import android.net.ConnectivityManager;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
-import com.facebook.react.bridge.ReactContextBaseJavaModule;
-import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
+import com.facebook.react.module.annotations.ReactModule;
+import com.facebook.fbreact.specs.NativeRNDNSModuleSpec;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-public class RNDNSModule extends ReactContextBaseJavaModule {
-    private static final String MODULE_NAME = "RNDNSModule";
+@ReactModule(name = RNDNSModule.NAME)
+public class RNDNSModule extends NativeRNDNSModuleSpec {
+    static final String NAME = "RNDNSModule";
     private final DNSResolver dnsResolver;
 
     public RNDNSModule(ReactApplicationContext reactContext) {
@@ -27,10 +28,10 @@ public class RNDNSModule extends ReactContextBaseJavaModule {
 
     @Override
     public String getName() {
-        return MODULE_NAME;
+        return NAME;
     }
 
-    @ReactMethod
+    @Override
     public void queryTXT(String domain, String message, Promise promise) {
         CompletableFuture<List<String>> future = dnsResolver.queryTXT(domain, message);
         
@@ -51,7 +52,7 @@ public class RNDNSModule extends ReactContextBaseJavaModule {
             });
     }
 
-    @ReactMethod
+    @Override
     public void isAvailable(Promise promise) {
         DNSResolver.DNSCapabilities capabilities = new DNSResolver.DNSCapabilities();
         

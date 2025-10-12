@@ -1,1 +1,11 @@
-<resources/>
+<resources>
+  <color name="md_theme_light_primary">#4DD0E1</color>
+  <color name="md_theme_light_onPrimary">#00363D</color>
+  <color name="md_theme_light_surface">#081817</color>
+  <color name="md_theme_light_onSurface">#CCEDEA</color>
+
+  <color name="md_theme_dark_primary">#4DD0E1</color>
+  <color name="md_theme_dark_onPrimary">#00363D</color>
+  <color name="md_theme_dark_surface">#081817</color>
+  <color name="md_theme_dark_onSurface">#CCEDEA</color>
+</resources>

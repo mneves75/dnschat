@@ -1,4 +1,6 @@
 import { NativeModules } from "react-native";
+import { getDNSModule } from "./NativeDNSModule";
+import type { Spec as TurboDNSModule } from "./NativeDNSModule";
 
 const DEV_LOGGING = typeof __DEV__ !== "undefined" ? !!__DEV__ : false;
 const debugLog = (...args: unknown[]) => {
@@ -6,6 +8,8 @@ const debugLog = (...args: unknown[]) => {
     console.log(...args);
   }
 };
+
+let hasLoggedMissingNativeModule = false;
 
 export interface DNSCapabilities {
   available: boolean;
@@ -53,7 +57,8 @@ export class DNSError extends Error {
 }
 
 export class NativeDNS implements NativeDNSModule {
-  private readonly nativeModule: NativeDNSModule | null;
+  private readonly nativeModule: NativeDNSModule | (TurboDNSModule & NativeDNSModule) | null;
+  private readonly moduleAvailable: boolean;
   private capabilities: DNSCapabilities | null = null;
 
   constructor() {
@@ -62,16 +67,42 @@ export class NativeDNS implements NativeDNSModule {
     debugLog("🔧 Available NativeModules keys:", Object.keys(NativeModules));
     debugLog("🔧 Looking for RNDNSModule...");
 
+    let resolvedModule: NativeDNSModule | (TurboDNSModule & NativeDNSModule) | null = null;
+    let resolutionError: unknown = null;
+
     try {
-      this.nativeModule = NativeModules.RNDNSModule as NativeDNSModule;
-      debugLog("✅ RNDNSModule found:", !!this.nativeModule);
-      if (this.nativeModule) {
-        debugLog("✅ RNDNSModule methods:", Object.keys(this.nativeModule));
+      const turboModuleInstance = getDNSModule() as (TurboDNSModule & NativeDNSModule) | null;
+      const fallbackModule = NativeModules.RNDNSModule as NativeDNSModule | undefined;
+      resolvedModule = turboModuleInstance ?? fallbackModule ?? null;
+      debugLog("✅ RNDNSModule found:", !!resolvedModule);
+      if (resolvedModule) {
+        debugLog("✅ RNDNSModule methods:", Object.keys(resolvedModule));
       }
     } catch (error) {
       console.warn("❌ Native DNS module not available:", error);
-      this.nativeModule = null;
+      resolutionError = error;
     }
+
+    this.nativeModule = resolvedModule;
+    this.moduleAvailable = resolvedModule !== null;
+
+    if (!this.moduleAvailable && DEV_LOGGING && !hasLoggedMissingNativeModule) {
+      if (resolutionError) {
+        console.warn(
+          "[dns-native] Native DNS module not found. Build a development client with 'expo run:ios' or 'expo run:android' to enable native DNS transport.",
+          resolutionError,
+        );
+      } else {
+        console.warn(
+          "[dns-native] Native DNS module not found. Build a development client with 'expo run:ios' or 'expo run:android' to enable native DNS transport.",
+        );
+      }
+      hasLoggedMissingNativeModule = true;
+    }
+  }
+
+  hasNativeModule(): boolean {
+    return this.moduleAvailable;
   }
 
   async queryTXT(domain: string, message: string): Promise<string[]> {
@@ -169,7 +200,8 @@ export class NativeDNS implements NativeDNSModule {
     }
 
     try {
-      this.capabilities = await this.nativeModule.isAvailable();
+      const result = await this.nativeModule.isAvailable();
+      this.capabilities = result as DNSCapabilities;
       return this.capabilities;
     } catch (error) {
       console.warn("Failed to check DNS availability:", error);

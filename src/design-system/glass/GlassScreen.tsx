@@ -36,15 +36,28 @@ export function GlassScreen({ children, variant = 'regular', style }: GlassScree
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const { capabilities, shouldRenderGlass } = useGlass();
-  // Register at the screen level so the provider can throttle total glass usage when heavy layouts mount.
-  useGlassRegistration();
 
   const fallbackBackground = useMemo(
     () => getGlassBackgroundFallback(isDark, variant === 'prominent' ? 'prominent' : 'regular'),
     [isDark, variant]
   );
 
-  const renderNativeGlass = capabilities.isNativeGlassSupported && shouldRenderGlass();
+  /**
+   * Determine if native glass should render
+   *
+   * CRITICAL: Memoized to prevent unnecessary effect triggers in useGlassRegistration.
+   * Dependencies: capabilities and shouldRenderGlass (now stable from context)
+   */
+  const renderNativeGlass = useMemo(() => {
+    return capabilities.isNativeGlassSupported && shouldRenderGlass();
+  }, [capabilities.isNativeGlassSupported, shouldRenderGlass]);
+
+  /**
+   * CRITICAL: Only register when actually rendering native glass.
+   * Screens that render fallback backgrounds shouldn't count against the glass budget.
+   * This prevents multiple pre-rendered tab screens from exhausting the budget.
+   */
+  useGlassRegistration(renderNativeGlass);
 
   // Native liquid glass path (iOS 26+ when accessibility allows transparency)
   if (renderNativeGlass) {

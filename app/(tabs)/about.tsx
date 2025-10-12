@@ -119,7 +119,7 @@ export default function AboutScreen() {
   ];
 
   return (
-    <GlassScreen style={styles.screen}>
+    <GlassScreen register={false} style={styles.screen}>
       <Form.List style={styles.list}>
         <View style={styles.headerSection}>
           <GlassCard

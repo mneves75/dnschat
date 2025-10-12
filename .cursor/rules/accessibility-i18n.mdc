@@ -1,0 +1,417 @@
+---
+globs: src/i18n/**/*.ts,src/context/AccessibilityContext.tsx,src/components/**/*.tsx
+description: Accessibility and internationalization patterns and best practices
+---
+
+# Accessibility and Internationalization
+
+## Internationalization (i18n) System
+
+### Core Architecture
+- **Hook**: [src/i18n/useTranslation.ts](mdc:src/i18n/useTranslation.ts) - Main translation hook
+- **Translations**: [src/i18n/translations.ts](mdc:src/i18n/translations.ts) - Translation dictionary
+- **Barrel Exports**: [src/i18n/index.ts](mdc:src/i18n/index.ts) - Centralized exports
+- **Supported Locales**: `en-US` (default), `pt-BR`
+
+### Translation Hook Usage
+```typescript
+import { useTranslation } from '@/i18n';
+
+function MyComponent() {
+  const { t, locale } = useTranslation();
+  
+  return (
+    <Text>{t('tabs.chat')}</Text>
+  );
+}
+```
+
+### Translation Key Structure
+```typescript
+// Translation keys organized by feature
+const translations = {
+  'en-US': {
+    tabs: {
+      chat: 'Chat',
+      logs: 'Logs',
+      about: 'About',
+      devLogs: 'Dev Logs',
+    },
+    screens: {
+      chatDetail: 'Chat Detail',
+      settings: 'Settings',
+    },
+    common: {
+      save: 'Save',
+      cancel: 'Cancel',
+      done: 'Done',
+    },
+  },
+  'pt-BR': {
+    tabs: {
+      chat: 'Chat',
+      logs: 'Logs',
+      sobre: 'Sobre',
+      devLogs: 'Logs Dev',
+    },
+    // ... complete translations
+  },
+};
+```
+
+### Locale Resolution
+```typescript
+import { resolveLocale, isSupportedLocale } from '@/i18n';
+
+// Automatic locale detection from system
+const locale = resolveLocale(deviceLocale);
+
+// Check if locale is supported
+if (isSupportedLocale(userLocale)) {
+  // Use supported locale
+}
+```
+
+### Translation Key Types
+```typescript
+// Type-safe translation keys
+type TranslationKey = 
+  | 'tabs.chat'
+  | 'tabs.logs'
+  | 'tabs.about'
+  | 'screens.chatDetail'
+  | 'common.save'
+  | 'common.cancel';
+
+// Compile-time validation
+const { t } = useTranslation();
+const title = t('tabs.chat'); // ✅ Valid
+const invalid = t('invalid.key'); // ❌ TypeScript error
+```
+
+## Accessibility System
+
+### Accessibility Context
+- **Provider**: [src/context/AccessibilityContext.tsx](mdc:src/context/AccessibilityContext.tsx) - Global accessibility state
+- **Configuration**: Font size, high contrast, motion reduction, screen reader support
+- **Integration**: Works with system accessibility settings
+
+### Accessibility Configuration
+```typescript
+interface AccessibilityConfig {
+  fontSize: 'small' | 'medium' | 'large' | 'extra-large';
+  highContrast: boolean;
+  reduceMotion: boolean;
+  screenReader: boolean;
+}
+```
+
+### Accessibility Hooks
+```typescript
+import { 
+  useAccessibility, 
+  useScreenReader, 
+  useMotionReduction, 
+  useHighContrast, 
+  useFontSize 
+} from '@/context/AccessibilityContext';
+
+// Main accessibility hook
+const { config, updateConfig, announceToScreenReader } = useAccessibility();
+
+// Specialized hooks
+const { isEnabled, announce } = useScreenReader();
+const { shouldReduceMotion, animationDuration } = useMotionReduction();
+const { isHighContrast } = useHighContrast();
+const { scale } = useFontSize();
+```
+
+### Screen Reader Support
+```typescript
+// Announce messages to screen readers
+const { announce } = useScreenReader();
+
+const handlePress = () => {
+  // Perform action
+  doSomething();
+  
+  // Announce result to screen reader
+  announce('Action completed successfully');
+};
+
+// Check if screen reader is enabled
+const { isEnabled } = useScreenReader();
+if (isEnabled) {
+  // Provide additional context or instructions
+}
+```
+
+### Motion Reduction
+```typescript
+// Respect user's motion preferences
+const { shouldReduceMotion, animationDuration } = useMotionReduction();
+
+const animatedStyle = useAnimatedStyle(() => {
+  return {
+    transform: [
+      {
+        translateX: shouldReduceMotion ? 0 : withSpring(100),
+      },
+    ],
+  };
+}, [shouldReduceMotion]);
+
+// Use reduced motion duration
+const duration = animationDuration || 300;
+```
+
+### High Contrast Support
+```typescript
+// Adapt colors for high contrast
+const { isHighContrast } = useHighContrast();
+
+const textColor = isHighContrast 
+  ? '#000000' // High contrast black
+  : '#333333'; // Regular dark gray
+
+const backgroundColor = isHighContrast
+  ? '#FFFFFF' // High contrast white
+  : '#F5F5F5'; // Regular light gray
+```
+
+### Font Size Scaling
+```typescript
+// Apply font size scaling
+const { scale } = useFontSize();
+
+const styles = StyleSheet.create({
+  text: {
+    fontSize: 16 * scale, // Scale with user preference
+    lineHeight: 24 * scale,
+  },
+});
+```
+
+## Component Accessibility Patterns
+
+### Interactive Elements
+```typescript
+// All interactive elements must have accessibility props
+<TouchableOpacity
+  onPress={handlePress}
+  accessibilityRole="button"
+  accessibilityLabel="Save changes"
+  accessibilityHint="Double tap to save your changes"
+  accessibilityState={{ disabled: isLoading }}
+>
+  <Text>Save</Text>
+</TouchableOpacity>
+```
+
+### Form Elements
+```typescript
+// Text inputs with proper labels
+<TextInput
+  value={message}
+  onChangeText={setMessage}
+  placeholder={t('chat.inputPlaceholder')}
+  accessibilityLabel={t('chat.inputLabel')}
+  accessibilityHint={t('chat.inputHint')}
+  accessibilityRole="text"
+/>
+```
+
+### Lists and Navigation
+```typescript
+// List items with proper roles
+<FlatList
+  data={chats}
+  renderItem={({ item }) => (
+    <TouchableOpacity
+      onPress={() => navigateToChat(item.id)}
+      accessibilityRole="button"
+      accessibilityLabel={`Chat with ${item.name}`}
+      accessibilityHint="Double tap to open this chat"
+    >
+      <Text>{item.name}</Text>
+    </TouchableOpacity>
+  )}
+/>
+```
+
+### Glass Components Accessibility
+```typescript
+// Glass components with accessibility fallbacks
+<GlassCard
+  variant="interactive"
+  onPress={handlePress}
+  accessibilityLabel={t('settings.general')}
+  accessibilityRole="button"
+  accessibilityHint={t('settings.generalHint')}
+>
+  <Text>{t('settings.general')}</Text>
+</GlassCard>
+```
+
+## Internationalization Best Practices
+
+### Translation Key Naming
+```typescript
+// Use hierarchical naming
+'tabs.chat'           // Tab labels
+'screens.settings'    // Screen titles
+'buttons.save'        // Button labels
+'errors.network'      // Error messages
+'labels.username'     // Form labels
+'hints.password'      // Accessibility hints
+```
+
+### Pluralization
+```typescript
+// Handle pluralization in translations
+const messageCount = 5;
+const messageText = messageCount === 1 
+  ? t('chat.messageCount.singular', { count: messageCount })
+  : t('chat.messageCount.plural', { count: messageCount });
+
+// Translation strings
+'messageCount.singular': '{{count}} message',
+'messageCount.plural': '{{count}} messages',
+```
+
+### Date and Time Formatting
+```typescript
+// Use locale-aware date formatting
+import { format } from 'date-fns';
+import { enUS, ptBR } from 'date-fns/locale';
+
+const { locale } = useTranslation();
+const dateLocale = locale === 'pt-BR' ? ptBR : enUS;
+
+const formattedDate = format(new Date(), 'PPP', { locale: dateLocale });
+```
+
+### Number Formatting
+```typescript
+// Use locale-aware number formatting
+const formatNumber = (num: number) => {
+  return new Intl.NumberFormat(locale).format(num);
+};
+
+const formattedCount = formatNumber(1234); // "1,234" (en-US) or "1.234" (pt-BR)
+```
+
+## Accessibility Testing
+
+### Screen Reader Testing
+```typescript
+// Test with screen reader enabled
+const { isEnabled } = useScreenReader();
+
+if (__DEV__ && isEnabled) {
+  console.log('Screen reader is enabled - test navigation');
+}
+```
+
+### Accessibility Inspector
+```typescript
+// Use React Native's accessibility inspector
+import { AccessibilityInfo } from 'react-native';
+
+// Check if accessibility inspector is enabled
+const isAccessibilityInspectorEnabled = await AccessibilityInfo.isAccessibilityInspectorEnabled();
+
+if (isAccessibilityInspectorEnabled) {
+  // Provide additional debugging info
+}
+```
+
+### Manual Testing Checklist
+- [ ] **Screen Reader**: Test with VoiceOver (iOS) and TalkBack (Android)
+- [ ] **Keyboard Navigation**: Test tab order and focus management
+- [ ] **High Contrast**: Test with high contrast mode enabled
+- [ ] **Font Scaling**: Test with different font sizes
+- [ ] **Motion Reduction**: Test with reduced motion enabled
+- [ ] **Color Blindness**: Test with color blindness simulators
+
+## Performance Considerations
+
+### Translation Loading
+```typescript
+// Lazy load translations for better performance
+const loadTranslations = async (locale: SupportedLocale) => {
+  const translations = await import(`./translations/${locale}.ts`);
+  return translations.default;
+};
+```
+
+### Accessibility Performance
+```typescript
+// Debounce accessibility announcements
+const debouncedAnnounce = useMemo(
+  () => debounce(announceToScreenReader, 300),
+  [announceToScreenReader]
+);
+```
+
+### Memory Management
+```typescript
+// Clean up accessibility listeners
+useEffect(() => {
+  const subscription = AccessibilityInfo.addEventListener(
+    'screenReaderChanged',
+    handleScreenReaderChange
+  );
+  
+  return () => subscription.remove();
+}, []);
+```
+
+## Common Patterns
+
+### Conditional Accessibility
+```typescript
+// Show/hide elements based on accessibility needs
+const { isScreenReaderEnabled } = useScreenReader();
+
+return (
+  <View>
+    {!isScreenReaderEnabled && (
+      <Text style={styles.visualHint}>Swipe to dismiss</Text>
+    )}
+    <Text accessibilityHint="Swipe to dismiss">Content</Text>
+  </View>
+);
+```
+
+### Dynamic Labels
+```typescript
+// Generate dynamic accessibility labels
+const getAccessibilityLabel = (item: ChatItem) => {
+  const baseLabel = t('chat.itemLabel');
+  const status = item.unreadCount > 0 ? t('chat.unread') : t('chat.read');
+  return `${baseLabel}: ${item.name}, ${status}`;
+};
+```
+
+### Error Handling
+```typescript
+// Provide accessible error messages
+const [error, setError] = useState<string | null>(null);
+
+useEffect(() => {
+  if (error) {
+    announceToScreenReader(t('errors.general', { error }));
+  }
+}, [error, announceToScreenReader, t]);
+```
+
+## Do Not
+- **Hardcode strings**: Always use translation keys
+- **Skip accessibility props**: All interactive elements need accessibility labels
+- **Ignore motion preferences**: Always respect `reduceMotion` setting
+- **Use low contrast colors**: Ensure sufficient color contrast
+- **Forget screen reader testing**: Test with actual screen readers
+- **Skip keyboard navigation**: Ensure all functionality is keyboard accessible
+- **Use unclear labels**: Make accessibility labels descriptive and helpful
+- **Ignore font scaling**: Always scale text with user preferences

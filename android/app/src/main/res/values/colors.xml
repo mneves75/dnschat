@@ -1,6 +1,14 @@
 <resources>
   <color name="splashscreen_background">#ffffff</color>
   <color name="iconBackground">#0D7377</color>
-  <color name="colorPrimary">#023c69</color>
-  <color name="colorPrimaryDark">#ffffff</color>
+  <!-- Material 3 fallback palette when dynamic colors are unavailable -->
+  <color name="md_theme_light_primary">#0D7377</color>
+  <color name="md_theme_light_onPrimary">#FFFFFF</color>
+  <color name="md_theme_light_surface">#F0FBFA</color>
+  <color name="md_theme_light_onSurface">#0F1C1C</color>
+
+  <color name="md_theme_dark_primary">#4DD0E1</color>
+  <color name="md_theme_dark_onPrimary">#00363D</color>
+  <color name="md_theme_dark_surface">#081817</color>
+  <color name="md_theme_dark_onSurface">#CCEDEA</color>
 </resources>

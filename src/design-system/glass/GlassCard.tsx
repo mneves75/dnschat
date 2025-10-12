@@ -21,7 +21,7 @@
  * @since 2.0.0 (Expo Router + Glass Migration)
  */
 
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useMemo } from 'react';
 import {
   View,
   StyleSheet,
@@ -100,8 +100,25 @@ export function GlassCard({
   // Glass context for capabilities and performance
   const { capabilities, shouldRenderGlass } = useGlass();
 
-  // Determine if glass should render based on provider heuristics
-  const renderGlass = !forceFallback && shouldRenderGlass();
+  /**
+   * Determine if glass should render based on provider heuristics
+   *
+   * CRITICAL: Memoized to prevent infinite re-render loops.
+   * Without memoization, every parent re-render causes this to recalculate,
+   * potentially changing the value and triggering useGlassRegistration effect,
+   * which updates glassCount, causing more re-renders.
+   *
+   * DEPENDENCIES EXPLANATION:
+   * - forceFallback: Prop that forces solid rendering
+   * - shouldRenderGlass: Function from context (now stable via useCallback)
+   *
+   * DO NOT add glassCount, isScrolling, etc. as dependencies - they're already
+   * captured by shouldRenderGlass function. Including them causes double-triggering
+   * and infinite loops.
+   */
+  const renderGlass = useMemo(() => {
+    return !forceFallback && shouldRenderGlass();
+  }, [forceFallback, shouldRenderGlass]);
 
   // Only register when we expect to render glass; solid fallbacks shouldn't exhaust the budget.
   useGlassRegistration(register && renderGlass);

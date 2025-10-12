@@ -256,7 +256,7 @@ export default function LogsScreen() {
   };
 
   return (
-    <GlassScreen style={styles.screen}>
+    <GlassScreen register={false} style={styles.screen}>
       <Form.List navigationTitle={t('logs.title')} style={styles.list}>
       {logs.length === 0 ? (
         <Form.Section register={false}>

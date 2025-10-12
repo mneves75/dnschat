@@ -16,6 +16,7 @@
 
 import { Platform, AccessibilityInfo } from 'react-native';
 import * as Device from 'react-native-device-info';
+import { isLiquidGlassAvailable } from 'expo-glass-effect';
 
 /**
  * Glass Capabilities Interface
@@ -57,7 +58,10 @@ export function getIOSVersion(): number {
     const majorVersion = parseInt(systemVersion.split('.')[0], 10);
     return isNaN(majorVersion) ? 0 : majorVersion;
   } catch (error) {
-    console.warn('Failed to detect iOS version:', error);
+    // Only log in development to avoid polluting production logs
+    if (__DEV__) {
+      console.warn('[Glass] Failed to detect iOS version:', error);
+    }
     return 0;
   }
 }
@@ -65,13 +69,19 @@ export function getIOSVersion(): number {
 /**
  * Native Glass Support Detection
  *
- * Determines if the current platform supports native liquid glass effects.
+ * Uses the official expo-glass-effect API to determine if Liquid Glass is available.
+ * This checks both platform support AND proper configuration (Info.plist, etc).
  *
- * PLATFORM REQUIREMENTS:
- * - iOS 26+: Full support via UIVisualEffectView
- * - iOS <26: No native support (use fallback)
- * - Android: No native support (use Material 3)
- * - Web: No native support (use CSS backdrop-filter)
+ * OFFICIAL API: isLiquidGlassAvailable() from expo-glass-effect
+ * - iOS 26+: Returns true when properly configured
+ * - iOS <26: Returns false (use fallback)
+ * - Android: Returns false (use Material 3)
+ * - Web: Returns false (use CSS backdrop-filter)
+ *
+ * TESTING OVERRIDE (DEV ONLY):
+ * Set environment variable or global flag to force enable on iOS < 26:
+ * - Environment: LIQUID_GLASS_PRE_IOS26=1
+ * - Global: global.__DEV_LIQUID_GLASS_PRE_IOS26__ = true
  *
  * @returns True if native glass is supported
  */
@@ -80,8 +90,57 @@ export function isNativeGlassSupported(): boolean {
     return false;
   }
 
-  const iosVersion = getIOSVersion();
-  return iosVersion >= 26;
+  // Development testing override for iOS < 26
+  if (__DEV__ && shouldForceGlassPreIOS26()) {
+    console.log('[Glass] Force-enabling native glass for iOS < 26 testing');
+    return true;
+  }
+
+  // Use official expo-glass-effect API
+  // This checks iOS version AND proper configuration
+  try {
+    return isLiquidGlassAvailable();
+  } catch (error) {
+    // Only log in development - production should silently fall back
+    if (__DEV__) {
+      console.warn('[Glass] Failed to check liquid glass availability:', error);
+    }
+    // Fallback to version-based check
+    const iosVersion = getIOSVersion();
+    return iosVersion >= 26;
+  }
+}
+
+/**
+ * Check Force Enable Flag for iOS < 26
+ *
+ * TESTING FEATURE: Allows testing native glass effects on iOS < 26.
+ * This is useful for development and testing liquid glass UI before iOS 26 release.
+ *
+ * ENABLE VIA:
+ * 1. Environment variable: LIQUID_GLASS_PRE_IOS26=1
+ * 2. Global flag: global.__DEV_LIQUID_GLASS_PRE_IOS26__ = true
+ *
+ * CRITICAL: Only works in __DEV__ mode for safety.
+ *
+ * @returns True if force enable is active
+ */
+function shouldForceGlassPreIOS26(): boolean {
+  if (!__DEV__) {
+    return false;
+  }
+
+  // Check global flag (set in app/_layout.tsx or other entry point)
+  if ((global as any).__DEV_LIQUID_GLASS_PRE_IOS26__ === true) {
+    return true;
+  }
+
+  // Check environment variable (from .env or Expo config)
+  if (process.env.LIQUID_GLASS_PRE_IOS26 === '1') {
+    return true;
+  }
+
+  return false;
 }
 
 /**
@@ -99,7 +158,10 @@ export async function shouldReduceTransparency(): Promise<boolean> {
     const enabled = await AccessibilityInfo.isReduceTransparencyEnabled();
     return enabled || false;
   } catch (error) {
-    console.warn('Failed to check reduce transparency setting:', error);
+    // Only log in development - production defaults to showing glass
+    if (__DEV__) {
+      console.warn('[Glass] Failed to check reduce transparency setting:', error);
+    }
     return false; // Default to showing glass if check fails
   }
 }
@@ -145,14 +207,14 @@ export function getGlassCapabilities(
     };
   }
 
-  // Android: Material 3 elevated surfaces
+  // Android: Material Design 3 elevated surfaces
   if (isAndroid) {
     return {
       isNativeGlassSupported: false,
       canRenderGlass: true,
       shouldReduceTransparency: false,
       glassType: 'material',
-      maxGlassElements: 10, // Material elevation is less expensive
+      maxGlassElements: 12, // Material 3 elevation is GPU-accelerated
     };
   }
 
@@ -206,15 +268,22 @@ export function getGlassTintColor(
     return 'transparent'; // Regular glass has no tint
   }
 
-  // Android Material 3 colors
+  // Android: Material Design 3 color tokens
+  // Following Material You dynamic color system
   if (Platform.OS === 'android') {
     if (variant === 'interactive') {
-      return isDark ? '#A8C7FA' : '#1E88E5'; // Material blue
+      // Primary color for interactive elements
+      return isDark
+        ? '#D0BCFF' // Primary 80 (dark mode)
+        : '#6750A4'; // Primary 40 (light mode)
     }
     if (variant === 'prominent') {
-      return isDark ? '#3C4043' : '#F1F3F4'; // Material surface
+      // Tertiary color for prominent elements
+      return isDark
+        ? '#EFB8C8' // Tertiary 80 (dark mode)
+        : '#7D5260'; // Tertiary 40 (light mode)
     }
-    return 'transparent';
+    return 'transparent'; // Regular surfaces have no tint
   }
 
   // Web: Brand color
@@ -255,15 +324,25 @@ export function getGlassBackgroundFallback(
       : 'rgba(255, 255, 255, 0.7)';
   }
 
-  // Android: Material 3 elevation levels
+  // Android: Material Design 3 surface colors
+  // Following Material You color system with proper elevation tints
   if (Platform.OS === 'android') {
     if (variant === 'prominent') {
-      return isDark ? '#2C2C2E' : '#F5F5F5';
+      // Surface Container: Standard card background
+      return isDark
+        ? '#2B2B2F' // Surface container dark (elevation 3)
+        : '#F3EDF7'; // Surface container light (elevation 3)
     }
     if (variant === 'interactive') {
-      return isDark ? '#3A3A3C' : '#EEEEEE';
+      // Surface Container Low: Interactive elements
+      return isDark
+        ? '#26262A' // Surface container low dark (elevation 2)
+        : '#F7F2FA'; // Surface container low light (elevation 2)
     }
-    return isDark ? '#1C1C1E' : '#FFFFFF';
+    // Regular: Surface (base elevation)
+    return isDark
+      ? '#1C1B1F' // Surface dark (elevation 1)
+      : '#FFFBFE'; // Surface light (elevation 1)
   }
 
   // Web: Semi-transparent with backdrop-filter support

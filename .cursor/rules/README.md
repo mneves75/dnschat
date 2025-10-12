@@ -8,9 +8,9 @@ This directory contains Cursor rules that help with development by providing con
 
 **Always Applied** - Provides comprehensive overview of the entire project
 
-- Entry points and configuration
-- Core architecture and navigation
-- Native DNS integration
+- Expo Router architecture with file-based routing
+- Core architecture and state management
+- Native DNS and Liquid Glass integration
 - Key behaviors and conventions
 
 ### 2. TypeScript Conventions (`typescript-conventions.mdc`)
@@ -21,7 +21,52 @@ This directory contains Cursor rules that help with development by providing con
 - Import patterns and code style
 - Best practices and anti-patterns
 
-### 3. DNS Service Architecture (`dns-service-architecture.mdc`)
+### 3. Expo Router Navigation (`expo-router-navigation.mdc`)
+
+**Applies to**: `app/**/*.tsx`, `app/**/*.ts` files
+
+- File-based routing patterns and structure
+- Tab and modal navigation configuration
+- Deep linking and dynamic routes
+- Navigation hooks and best practices
+
+### 4. Liquid Glass Design System (`liquid-glass-design-system.mdc`)
+
+**Applies to**: `src/design-system/**/*.tsx`, `src/design-system/**/*.ts`, `src/components/glass/**/*.tsx`
+
+- iOS 26+ native liquid glass effects
+- Platform fallbacks and performance optimization
+- Glass component patterns and usage
+- Accessibility integration
+
+### 5. Testing Patterns (`testing-patterns.mdc`)
+
+**Applies to**: `__tests__/**/*.spec.ts`, `__tests__/**/*.test.ts`, `__tests__/**/*.spec.tsx`, `__tests__/**/*.test.tsx`
+
+- Jest configuration and test organization
+- Mock strategies and test utilities
+- DNS service and glass system testing
+- Performance and integration testing
+
+### 6. Build and Deployment (`build-deployment.mdc`)
+
+**Applies to**: `package.json`, `app.json`, `eas.json`, `scripts/**/*.js`, `ios/**/*.pbxproj`, `android/**/*.gradle`, `CHANGELOG.md`
+
+- Version management and sync process
+- EAS Build configuration and profiles
+- Platform-specific build requirements
+- Release management and deployment
+
+### 7. Accessibility and Internationalization (`accessibility-i18n.mdc`)
+
+**Applies to**: `src/i18n/**/*.ts`, `src/context/AccessibilityContext.tsx`, `src/components/**/*.tsx`
+
+- Multi-language support (en-US, pt-BR)
+- Accessibility patterns and screen reader support
+- Motion reduction and high contrast support
+- Font scaling and keyboard navigation
+
+### 8. DNS Service Architecture (`dns-service-architecture.mdc`)
 
 **Applies to**: DNS-related files and services
 
@@ -30,7 +75,7 @@ This directory contains Cursor rules that help with development by providing con
 - Message sanitization and configuration
 - Background handling
 
-### 4. State and Storage Management (`state-and-storage.mdc`)
+### 9. State and Storage Management (`state-and-storage.mdc`)
 
 **Applies to**: Context and service files
 
@@ -39,25 +84,7 @@ This directory contains Cursor rules that help with development by providing con
 - Data types and key principles
 - Storage conventions
 
-### 5. Navigation Patterns (`navigation-patterns.mdc`)
-
-**Applies to**: Navigation and screen files
-
-- Navigation architecture and screen structure
-- Deep linking configuration
-- Adding new screens and icons
-- Navigation patterns and best practices
-
-### 6. Expo Config and Commands (`expo-config-and-commands.mdc`)
-
-**Applies to**: Configuration and build files
-
-- Expo configuration details
-- Build commands and scripts
-- Native setup and development workflow
-- Platform-specific considerations
-
-### 7. React Component Patterns (`component-patterns.mdc`)
+### 10. React Component Patterns (`component-patterns.mdc`)
 
 **Applies to**: React component files
 
@@ -66,7 +93,7 @@ This directory contains Cursor rules that help with development by providing con
 - Styling and UI patterns
 - Component categories and best practices
 
-### 8. Security and Privacy (`security-and-privacy.mdc`)
+### 11. Security and Privacy (`security-and-privacy.mdc`)
 
 **Always Applied** - Security guidelines for all development
 

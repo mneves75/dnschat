@@ -83,7 +83,7 @@ export default function TabsLayout() {
        */
       minimizeBehavior="onScrollDown"
     >
-      {/* Chat List Tab (Home/Index) */}
+      {/* Chat List Tab (Home) */}
       <NativeTabs.Trigger name="index">
         <Icon sf="house" />
         <Label>{t('tabs.chat')}</Label>
@@ -96,7 +96,7 @@ export default function TabsLayout() {
       <NativeTabs.Trigger name="search" role="search">
         {/* Icon and Label are optional when using role - system provides defaults */}
         <Icon sf="magnifyingglass" />
-        <Label>Search</Label>
+        <Label>{t('common.search')}</Label>
       </NativeTabs.Trigger>
 
       {/* DNS Logs Tab */}

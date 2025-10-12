@@ -1,0 +1,1 @@
+- Swift Xcode 26 additional docs:  to look for Swift, SwiftUI and iOS documentation updated at this xcode 26 folder: "/Applications/Xcode.app/Contents/PlugIns/IDEIntelligenceChat.framework/Versions/A/Resources/AdditionalDocumentation"

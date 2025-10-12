@@ -1,4 +1,4 @@
-import { Platform, AppState } from 'react-native';
+import { Platform, AppState, NativeModules } from 'react-native';
 import * as dns from 'dns-packet';
 import { nativeDNS, DNSError, DNSErrorType } from '../../modules/dns-native';
 export { DNSError, DNSErrorType } from '../../modules/dns-native';
@@ -43,6 +43,58 @@ type DNSQueryContext = {
   targetServer: string;
 };
 
+type TransportMethod = 'native' | 'udp' | 'tcp' | 'https' | 'mock';
+type PrimaryTransport = Exclude<TransportMethod, 'mock'>;
+
+const UDP_NATIVE_MODULE_NAMES = ['UdpSockets'];
+const TCP_NATIVE_MODULE_NAMES = ['TcpSockets'];
+
+type TurboModuleRegistryLike = {
+  get?: (name: string) => unknown;
+};
+
+let turboModuleRegistryCache: TurboModuleRegistryLike | null | undefined;
+
+const resolveTurboModuleRegistry = (): TurboModuleRegistryLike | null => {
+  if (turboModuleRegistryCache !== undefined) {
+    return turboModuleRegistryCache;
+  }
+
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    turboModuleRegistryCache = require('react-native/Libraries/TurboModule/TurboModuleRegistry');
+  } catch {
+    turboModuleRegistryCache = null;
+  }
+
+  return turboModuleRegistryCache ?? null;
+};
+
+const nativeModuleExists = (candidateNames: string[]): boolean => {
+  const modules = NativeModules as Record<string, unknown> | undefined;
+  for (const name of candidateNames) {
+    if (modules?.[name]) {
+      return true;
+    }
+  }
+
+  if ((globalThis as any)?.__turboModuleProxy != null) {
+    const registry = resolveTurboModuleRegistry();
+    if (registry && typeof registry.get === 'function') {
+      for (const name of candidateNames) {
+        if (registry.get(name)) {
+          return true;
+        }
+      }
+    }
+  }
+
+  return false;
+};
+
+let udpTransportAvailable = false;
+let tcpTransportAvailable = false;
+
 // CRITICAL: Dynamic library loading with graceful fallback
 // These packages are INTENTIONALLY excluded from expo-doctor checks (see EXPO-DOCTOR-CONFIGURATION.md)
 // - react-native-udp: Unmaintained but critical for DNS fallback on restricted networks
@@ -52,36 +104,80 @@ let dgram: any = null;
 let TcpSocket: any = null;
 let Buffer: any = null;
 
-try {
-  // UDP DNS transport (fallback #2 after native DNS)
-  // Used when native DNS unavailable or fails
-  dgram = require('react-native-udp');
-  if (typeof __DEV__ !== 'undefined' && __DEV__) {
-    console.log('✅ UDP library loaded successfully:', !!dgram);
+const disabledTransports = new Set<'udp' | 'tcp'>();
+
+const shouldLoadUdp = nativeModuleExists(UDP_NATIVE_MODULE_NAMES);
+
+if (shouldLoadUdp) {
+  try {
+    // UDP DNS transport (fallback #2 after native DNS)
+    // Used when native DNS unavailable or fails
+    dgram = require('react-native-udp');
+    udpTransportAvailable = !!dgram && typeof dgram.createSocket === 'function';
+    if (typeof __DEV__ !== 'undefined' && __DEV__) {
+      console.log('✅ UDP library loaded successfully:', udpTransportAvailable);
+    }
+    if (!udpTransportAvailable) {
+      disabledTransports.add('udp');
+    }
+  } catch (error) {
+    udpTransportAvailable = false;
+    disabledTransports.add('udp');
+    if (typeof __DEV__ !== 'undefined' && __DEV__) {
+      console.log('❌ UDP library failed to load:', error);
+    }
+    // UDP not available, will use TCP/HTTPS/Mock fallback methods
   }
-} catch (error) {
-  if (typeof __DEV__ !== 'undefined' && __DEV__) {
-    console.log('❌ UDP library failed to load:', error);
-  }
-  // UDP not available, will use TCP/HTTPS/Mock fallback methods
+} else {
+  udpTransportAvailable = false;
+  disabledTransports.add('udp');
 }
 
-try {
-  // TCP DNS transport (fallback #3 after UDP)
-  // Critical for corporate networks that block UDP port 53
-  const tcpLibrary = require('react-native-tcp-socket');
-  if (typeof __DEV__ !== 'undefined' && __DEV__) {
-    console.log('🔍 TCP Socket library structure:', Object.keys(tcpLibrary));
+const shouldLoadTcp = nativeModuleExists(TCP_NATIVE_MODULE_NAMES);
+
+if (shouldLoadTcp) {
+  try {
+    // TCP DNS transport (fallback #3 after UDP)
+    // Critical for corporate networks that block UDP port 53
+    const tcpLibrary = require('react-native-tcp-socket');
+    TcpSocket = tcpLibrary; // Use the entire library object
+    tcpTransportAvailable =
+      !!TcpSocket && typeof TcpSocket.Socket === 'function';
+    if (typeof __DEV__ !== 'undefined' && __DEV__) {
+      if (tcpTransportAvailable) {
+        console.log('✅ TCP Socket library loaded successfully:', true);
+      } else {
+        console.log('TCP Socket library loaded without Socket constructor');
+      }
+    }
+    if (!tcpTransportAvailable) {
+      disabledTransports.add('tcp');
+    }
+  } catch (error) {
+    TcpSocket = null;
+    tcpTransportAvailable = false;
+    disabledTransports.add('tcp');
+    if (typeof __DEV__ !== 'undefined' && __DEV__) {
+      console.log('❌ TCP Socket library failed to load:', error);
+    }
+    // TCP Socket not available, will use DNS-over-HTTPS/Mock fallback
   }
-  TcpSocket = tcpLibrary; // Use the entire library object
-  if (typeof __DEV__ !== 'undefined' && __DEV__) {
-    console.log('✅ TCP Socket library loaded successfully:', !!TcpSocket && !!TcpSocket.Socket);
-  }
-} catch (error) {
-  if (typeof __DEV__ !== 'undefined' && __DEV__) {
-    console.log('❌ TCP Socket library failed to load:', error);
-  }
-  // TCP Socket not available, will use DNS-over-HTTPS/Mock fallback
+} else {
+  tcpTransportAvailable = false;
+  disabledTransports.add('tcp');
+}
+
+if (
+  disabledTransports.size > 0 &&
+  typeof __DEV__ !== 'undefined' &&
+  __DEV__ &&
+  Platform.OS !== 'web'
+) {
+  console.log(
+    `[dns-service] Disabled transports: ${Array.from(disabledTransports).join(
+      ', ',
+    )}. Expo Go cannot load custom native modules. Run "expo run:ios" or "expo run:android" to enable them.`,
+  );
 }
 
 // TRICKY: Buffer polyfill for cross-platform compatibility
@@ -1098,9 +1194,20 @@ export class DNSService {
     preferHttps: boolean | undefined,
     enableMockDNS: boolean | undefined,
     allowExperimentalTransports: boolean,
-  ): ('native' | 'udp' | 'tcp' | 'https' | 'mock')[] {
-    const appendMock = (order: ('native' | 'udp' | 'tcp' | 'https')[]) =>
-      enableMockDNS ? ([...order, 'mock'] as ('native' | 'udp' | 'tcp' | 'https' | 'mock')[]) : order;
+  ): TransportMethod[] {
+    const appendMock = (order: PrimaryTransport[]): TransportMethod[] => {
+      const filtered = this.filterTransportOrder(order);
+      const fallbackOrder: PrimaryTransport[] =
+        filtered.length > 0
+          ? filtered
+          : (preferHttps ? (['https'] as PrimaryTransport[]) : (['https'] as PrimaryTransport[]));
+
+      if (enableMockDNS) {
+        return [...fallbackOrder, 'mock'];
+      }
+
+      return fallbackOrder as TransportMethod[];
+    };
 
     // Web never supports native/UDP/TCP. honor preferHttps flag for clarity.
     if (Platform.OS === 'web') {
@@ -1129,17 +1236,61 @@ export class DNSService {
     }
   }
 
+  private static filterTransportOrder(order: PrimaryTransport[]): PrimaryTransport[] {
+    const seen = new Set<PrimaryTransport>();
+    return order.filter((method) => {
+      if (seen.has(method)) {
+        return false;
+      }
+      seen.add(method);
+      return true;
+    });
+  }
+
+  private static isTransportOperational(method: TransportMethod): boolean {
+    switch (method) {
+      case 'native':
+        return nativeDNS.hasNativeModule();
+      case 'udp':
+        return udpTransportAvailable && !!dgram?.createSocket;
+      case 'tcp':
+        return tcpTransportAvailable && !!TcpSocket?.Socket;
+      case 'https':
+      case 'mock':
+      default:
+        return true;
+    }
+  }
+
+  private static transportUnavailableMessage(method: TransportMethod): string {
+    switch (method) {
+      case 'native':
+        return 'Native DNS transport unavailable: custom native module not linked. Run "expo run:ios" or "expo run:android" to enable it.';
+      case 'udp':
+        return 'UDP DNS transport unavailable: react-native-udp native module is missing. Build a development client with expo run:ios or expo run:android.';
+      case 'tcp':
+        return 'TCP DNS transport unavailable: react-native-tcp-socket native module is missing. Build a development client with expo run:ios or expo run:android.';
+      default:
+        return `${method.toUpperCase()} DNS transport unavailable.`;
+    }
+  }
+
   private static async tryMethod(
-    method: 'native' | 'udp' | 'tcp' | 'https' | 'mock',
+    method: TransportMethod,
     context: DNSQueryContext,
   ): Promise<{
     response: string;
-    method: 'native' | 'udp' | 'tcp' | 'https' | 'mock';
+    method: TransportMethod;
   } | null> {
     const startTime = Date.now();
     const { queryName, targetServer, originalMessage, label } = context;
 
     try {
+      if (!this.isTransportOperational(method)) {
+        this.vLog(`${method.toUpperCase()} transport disabled; skipping attempt`);
+        throw new Error(this.transportUnavailableMessage(method));
+      }
+
       DNSLogService.logMethodAttempt(method, `Server: ${targetServer}`);
 
       let txtRecords: string[];
@@ -1293,9 +1444,7 @@ export class DNSService {
             );
           }
           if (!dgram) {
-            throw new Error(
-              `UDP DNS transport unavailable - react-native-udp library not loaded (platform: ${Platform.OS})`,
-            );
+            throw new Error(this.transportUnavailableMessage('udp'));
           }
 
           txtRecords = await this.handleBackgroundSuspension(() =>
@@ -1310,9 +1459,7 @@ export class DNSService {
             );
           }
           if (!TcpSocket) {
-            throw new Error(
-              `TCP DNS transport unavailable - react-native-tcp-socket library not loaded (platform: ${Platform.OS})`,
-            );
+            throw new Error(this.transportUnavailableMessage('tcp'));
           }
 
           txtRecords = await this.handleBackgroundSuspension(() =>
@@ -1358,13 +1505,17 @@ export class DNSService {
    */
   static async testTransport(
     message: string,
-    transport: 'native' | 'udp' | 'tcp' | 'https',
+    transport: PrimaryTransport,
     dnsServer?: string,
   ): Promise<string> {
     this.vLog(`🧪 Starting forced transport test: ${transport.toUpperCase()}`);
 
     if (!message.trim()) {
       throw new Error('Test message cannot be empty');
+    }
+
+    if (!this.isTransportOperational(transport)) {
+      throw new Error(this.transportUnavailableMessage(transport));
     }
 
     // Check rate limit

@@ -17,7 +17,10 @@ export const DNSLogViewer: React.FC<DNSLogViewerProps> = ({
 
   useEffect(() => {
     const unsub = DNSLogService.subscribe(setLogs);
-    return () => unsub();
+    // CRITICAL: Wrap cleanup to ensure void return type for React useEffect
+    return () => {
+      unsub();
+    };
   }, []);
 
   const display = logs.slice(0, maxEntries);

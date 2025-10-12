@@ -24,7 +24,7 @@ import { DNSLogViewer } from '../../src/components/DNSLogViewer';
  */
 export default function DevLogsScreen() {
   return (
-    <GlassScreen style={styles.screen}>
+    <GlassScreen register={false} style={styles.screen}>
       <View style={styles.container}>
         <DNSLogViewer maxEntries={50} />
       </View>

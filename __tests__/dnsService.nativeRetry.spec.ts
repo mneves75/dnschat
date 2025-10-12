@@ -5,8 +5,28 @@ jest.mock('react-native', () => {
     AppState: {
       addEventListener: jest.fn(() => ({ remove: jest.fn() })),
     },
+    NativeModules: {
+      ...actual.NativeModules,
+      UdpSockets: {
+        createSocket: jest.fn(),
+        bind: jest.fn(),
+        close: jest.fn(),
+      },
+      TcpSockets: {
+        connect: jest.fn(),
+        destroy: jest.fn(),
+      },
+    },
   };
 });
+
+jest.mock('react-native-udp', () => ({
+  createSocket: jest.fn(),
+}));
+
+jest.mock('react-native-tcp-socket', () => ({
+  Socket: class MockSocket {},
+}));
 
 import { DNSService } from '../src/services/dnsService';
 import * as DNSLogService from '../src/services/dnsLogService';
@@ -29,6 +49,7 @@ jest.mock('../modules/dns-native', () => {
         supportsCustomServer: true,
         supportsAsyncQuery: true,
       }),
+      hasNativeModule: jest.fn().mockReturnValue(true),
     },
   };
 });

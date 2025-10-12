@@ -1,0 +1,310 @@
+---
+globs: src/design-system/**/*.tsx,src/design-system/**/*.ts,src/components/glass/**/*.tsx
+description: Liquid Glass design system for iOS 26+ glass effects and platform fallbacks
+---
+
+# Liquid Glass Design System
+
+## Architecture Overview
+
+### Core Components
+- **GlassProvider**: [src/design-system/glass/GlassProvider.tsx](mdc:src/design-system/glass/GlassProvider.tsx) - Global context and performance management
+- **GlassCard**: [src/design-system/glass/GlassCard.tsx](mdc:src/design-system/glass/GlassCard.tsx) - Primary glass component with platform fallbacks
+- **GlassButton**: [src/design-system/glass/GlassButton.tsx](mdc:src/design-system/glass/GlassButton.tsx) - Interactive glass elements
+- **GlassScreen**: [src/design-system/glass/GlassScreen.tsx](mdc:src/design-system/glass/GlassScreen.tsx) - Screen-level glass backgrounds
+- **Utils**: [src/design-system/glass/utils.ts](mdc:src/design-system/glass/utils.ts) - Platform detection and capability checking
+
+### Platform Support Matrix
+| Platform | iOS 26+ | iOS <26 | Android | Web |
+|----------|---------|---------|---------|-----|
+| **Native Glass** | ✅ UIVisualEffectView | ❌ | ❌ | ❌ |
+| **Fallback** | N/A | Semi-transparent View | Material 3 Card | CSS backdrop-filter |
+| **Max Elements** | 8 | 5 | 10 | 10 |
+
+## Glass Provider Setup
+
+### Root Integration
+```typescript
+// In app/_layout.tsx
+import { GlassProvider } from '../src/design-system/glass';
+
+export default function RootLayout() {
+  return (
+    <GlassProvider>
+      <Stack screenOptions={{ headerShown: false }} />
+    </GlassProvider>
+  );
+}
+```
+
+### Context Usage
+```typescript
+import { useGlass, useGlassRegistration } from '../design-system/glass';
+
+function MyComponent() {
+  const { capabilities, shouldRenderGlass } = useGlass();
+  
+  // Auto-register glass element for performance tracking
+  useGlassRegistration();
+  
+  if (!shouldRenderGlass()) {
+    return <View>{children}</View>; // Fallback
+  }
+  
+  return <GlassCard>{children}</GlassCard>;
+}
+```
+
+## Component Patterns
+
+### GlassCard Usage
+```typescript
+// Basic glass card
+<GlassCard variant="regular">
+  <Text>Card Content</Text>
+</GlassCard>
+
+// Interactive glass card
+<GlassCard 
+  variant="interactive" 
+  onPress={handlePress}
+  accessibilityLabel="Settings"
+  accessibilityRole="button"
+>
+  <Text>Pressable Card</Text>
+</GlassCard>
+
+// Decorative overlay (doesn't count toward budget)
+<GlassCard register={false}>
+  <Text>Overlay Content</Text>
+</GlassCard>
+```
+
+### GlassButton Usage
+```typescript
+// Primary glass button
+<GlassButton 
+  variant="primary" 
+  onPress={handlePress}
+  disabled={isLoading}
+>
+  <Text>Submit</Text>
+</GlassButton>
+
+// Secondary glass button
+<GlassButton 
+  variant="secondary" 
+  onPress={handlePress}
+  size="small"
+>
+  <Text>Cancel</Text>
+</GlassButton>
+```
+
+### GlassScreen Usage
+```typescript
+// Screen with glass background
+<GlassScreen variant="prominent">
+  <ScrollView>
+    <Text>Screen Content</Text>
+  </ScrollView>
+</GlassScreen>
+```
+
+## Performance Guidelines
+
+### Element Limits
+- **iOS 26+**: Maximum 8 glass elements per screen
+- **iOS <26**: Maximum 5 glass elements (JS-based blur is expensive)
+- **Android**: Maximum 10 glass elements (Material elevation is efficient)
+- **Web**: Maximum 10 glass elements (CSS backdrop-filter is GPU-accelerated)
+
+### Performance Monitoring
+```typescript
+// GlassProvider automatically tracks:
+// - glassCount: Number of active glass elements
+// - isScrolling: Disable glass during heavy scrolling
+// - isAnimating: Disable glass during complex animations
+// - effectiveMaxGlassElements: Per-screen budget overrides
+
+const { glassCount, setScrolling, setAnimating } = useGlass();
+
+// In ScrollView
+<ScrollView
+  onScrollBeginDrag={() => setScrolling(true)}
+  onScrollEndDrag={() => setScrolling(false)}
+>
+  {/* Content */}
+</ScrollView>
+```
+
+### Budget Management
+```typescript
+// Override glass budget for specific screens
+const { setGlassBudget, clearGlassBudget } = useGlass();
+
+useEffect(() => {
+  setGlassBudget('chat-screen', 3); // Limit to 3 glass elements
+  return () => clearGlassBudget('chat-screen');
+}, []);
+```
+
+## Accessibility Integration
+
+### Reduce Transparency Support
+- **Automatic Detection**: GlassProvider monitors `AccessibilityInfo.reduceTransparencyChanged`
+- **Graceful Fallback**: Shows solid backgrounds when "Reduce Transparency" is enabled
+- **Real-time Updates**: Responds to system setting changes without app restart
+
+### ARIA Labels
+```typescript
+<GlassCard
+  accessibilityLabel="Settings card"
+  accessibilityRole="button"
+  accessibilityHint="Double tap to open settings"
+>
+  <Text>Settings</Text>
+</GlassCard>
+```
+
+## Platform-Specific Styling
+
+### iOS 26+ (Native Liquid Glass)
+- **Implementation**: Uses `expo-glass-effect` GlassView with UIVisualEffectView
+- **Tint Colors**: System blue (#007AFF) for interactive elements
+- **Performance**: Hardware-accelerated, minimal JS overhead
+
+### iOS <26 (Blur Fallback)
+- **Implementation**: Semi-transparent View with shadow
+- **Colors**: `rgba(255, 255, 255, 0.85)` (light) / `rgba(28, 28, 30, 0.85)` (dark)
+- **Performance**: Disabled during scrolling/animations
+
+### Android (Material 3)
+- **Implementation**: Elevated Card with Material 3 styling
+- **Colors**: Dynamic Material You colors
+- **Elevation**: Level 2 (4dp) for cards, Level 1 (1dp) for buttons
+
+### Web (CSS Backdrop Filter)
+- **Implementation**: CSS `backdrop-filter: blur(20px)`
+- **Colors**: Semi-transparent backgrounds
+- **Performance**: GPU-accelerated, good performance
+
+## Color System
+
+### Tint Colors
+```typescript
+// Interactive elements (buttons, pressable cards)
+getGlassTintColor(isDark, 'interactive') // #007AFF (iOS), Material blue (Android)
+
+// Prominent elements (headers, important cards)
+getGlassTintColor(isDark, 'prominent') // Lighter blue (iOS), Material surface (Android)
+
+// Regular elements (standard cards)
+getGlassTintColor(isDark, 'regular') // transparent
+```
+
+### Background Fallbacks
+```typescript
+// iOS <26: Blur-like semi-transparent
+getGlassBackgroundFallback(isDark, 'prominent') // rgba(255, 255, 255, 0.85)
+
+// Android: Material 3 elevation
+getGlassBackgroundFallback(isDark, 'prominent') // #F5F5F5 (light) / #2C2C2E (dark)
+
+// Web: CSS backdrop-filter compatible
+getGlassBackgroundFallback(isDark, 'prominent') // rgba(255, 255, 255, 0.9)
+```
+
+## Development Tools
+
+### Force Glass Mode (Development Only)
+```typescript
+// In development, force glass on unsupported platforms
+if (__DEV__) {
+  (global as any).__DEV_FORCE_GLASS__ = true;
+}
+```
+
+### Capability Detection
+```typescript
+import { getGlassCapabilities, isNativeGlassSupported } from '../design-system/glass/utils';
+
+const capabilities = getGlassCapabilities();
+console.log('Glass capabilities:', {
+  isNativeGlassSupported: capabilities.isNativeGlassSupported,
+  glassType: capabilities.glassType,
+  maxGlassElements: capabilities.maxGlassElements,
+});
+```
+
+## Best Practices
+
+### Component Design
+- **Always use GlassProvider**: Wrap app root with GlassProvider
+- **Register glass elements**: Use `useGlassRegistration()` in glass components
+- **Respect performance limits**: Don't exceed max elements per screen
+- **Provide fallbacks**: Always handle cases where glass can't render
+
+### Performance Optimization
+- **Limit glass elements**: Use 5-10 glass elements maximum per screen
+- **Disable during scrolling**: Call `setScrolling(true/false)` in ScrollViews
+- **Disable during animations**: Call `setAnimating(true/false)` for complex animations
+- **Use solid backgrounds**: For decorative overlays, use `register={false}`
+
+### Accessibility
+- **Test with Reduce Transparency**: Verify solid fallbacks work correctly
+- **Provide ARIA labels**: Always include accessibility labels for interactive elements
+- **Test with screen readers**: Ensure glass elements are properly announced
+
+## Common Patterns
+
+### Tab Bar Glass
+```typescript
+// In app/(tabs)/_layout.tsx
+const tabBarBackgroundColor = useMemo(() => {
+  return getGlassBackgroundFallback(isDark, 'prominent');
+}, [isDark]);
+
+<Tabs
+  screenOptions={{
+    tabBarStyle: {
+      backgroundColor: tabBarBackgroundColor,
+      borderTopWidth: 0,
+    },
+  }}
+>
+```
+
+### Modal Glass
+```typescript
+// Glass modal background
+<GlassScreen variant="prominent">
+  <Modal visible={visible}>
+    <GlassCard variant="interactive">
+      <Text>Modal Content</Text>
+    </GlassCard>
+  </Modal>
+</GlassScreen>
+```
+
+### List Item Glass
+```typescript
+// Glass list items with performance awareness
+{items.map((item) => (
+  <GlassCard 
+    key={item.id}
+    variant="regular"
+    onPress={() => handlePress(item)}
+  >
+    <Text>{item.title}</Text>
+  </GlassCard>
+))}
+```
+
+## Do Not
+- **Exceed element limits**: Don't render more than 8 glass elements on iOS 26+
+- **Use glass during scrolling**: Disable glass during heavy scrolling on iOS <26
+- **Skip accessibility**: Always provide solid fallbacks for accessibility
+- **Forget performance**: Monitor glass count and disable when needed
+- **Use inline styles**: Use StyleSheet.create for all glass styling
+- **Bypass registration**: Always use `useGlassRegistration()` in glass components

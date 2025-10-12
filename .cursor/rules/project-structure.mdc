@@ -1,38 +1,57 @@
 # DNSChat Project Structure Guide
 
 ## Entry Points
-- **Main Entry**: [index.tsx](mdc:index.tsx) → [src/App.tsx](mdc:src/App.tsx)
+- **Main Entry**: [index.tsx](mdc:index.tsx) → [app/App.tsx](mdc:app/App.tsx) - Expo Router entry point
+- **Root Layout**: [app/_layout.tsx](mdc:app/_layout.tsx) - Root Stack navigator with providers
 - **Config**: [app.json](mdc:app.json) - Expo config with scheme `dnschat://`, new architecture enabled
 - **Package**: [package.json](mdc:package.json) - React Native + Expo dependencies
 
+## Expo Router Architecture
+- **File-Based Routing**: [app/](mdc:app/) directory with automatic route generation
+- **Tab Navigation**: [app/(tabs)/_layout.tsx](mdc:app/(tabs)/_layout.tsx) - Native tabs with glass styling
+- **Modal Navigation**: [app/(modals)/_layout.tsx](mdc:app/(modals)/_layout.tsx) - Modal stack for settings
+- **Dynamic Routes**: [app/(tabs)/chat/[id].tsx](mdc:app/(tabs)/chat/[id].tsx) - Dynamic chat routes
+- **Error Handling**: [app/+not-found.tsx](mdc:app/+not-found.tsx) - 404 error screen
+
 ## Core Architecture
-- **Navigation**: [src/navigation/index.tsx](mdc:src/navigation/index.tsx) - React Navigation v7 with static navigation
 - **State Management**: 
   - [src/context/ChatContext.tsx](mdc:src/context/ChatContext.tsx) - Chat state and DNS operations
   - [src/context/SettingsContext.tsx](mdc:src/context/SettingsContext.tsx) - App settings
   - [src/context/OnboardingContext.tsx](mdc:src/context/OnboardingContext.tsx) - Onboarding flow
+  - [src/context/AccessibilityContext.tsx](mdc:src/context/AccessibilityContext.tsx) - Accessibility settings
 - **Services**:
   - [src/services/dnsService.ts](mdc:src/services/dnsService.ts) - DNS query orchestration
   - [src/services/dnsLogService.ts](mdc:src/services/dnsLogService.ts) - Query logging
   - [src/services/storageService.ts](mdc:src/services/storageService.ts) - AsyncStorage wrapper
+- **Design System**:
+  - [src/design-system/glass/](mdc:src/design-system/glass/) - iOS 26+ Liquid Glass components
+  - [src/design-system/theme/](mdc:src/design-system/theme/) - Color system and theming
+- **Internationalization**: [src/i18n/](mdc:src/i18n/) - Multi-language support (en-US, pt-BR)
 - **Types**: [src/types/chat.ts](mdc:src/types/chat.ts) - Core data models
 
 ## Native DNS Integration
-- **iOS Native**: [ios/DNSNative/DNSResolver.swift](mdc:ios/DNSNative/DNSResolver.swift), [ios/DNSNative/RNDNSModule.m](mdc:ios/DNSNative/RNDNSModule.m)
-- **Android Native**: [android/app/src/main/java/com/dnschat/NativeDnsModule.kt](mdc:android/app/src/main/java/com/dnschat/NativeDnsModule.kt)
-- **JS Bridge**: [modules/dns-native/index.ts](mdc:modules/dns-native/index.ts)
-- **Expo Plugin**: [plugins/dns-native-plugin.js](mdc:plugins/dns-native-plugin.js)
+- **Cross-Platform Module**: [modules/dns-native/](mdc:modules/dns-native/) - Shared native DNS implementation
+- **iOS Native**: Swift + Network Framework (iOS 16.0+) with UIVisualEffectView
+- **Android Native**: Java + DnsResolver API (API 29+) with dnsjava fallback
+- **Expo Plugin**: [plugins/dns-native-plugin.js](mdc:plugins/dns-native-plugin.js) - Autolinking configuration
+
+## Liquid Glass Integration
+- **iOS 26+ Native**: [ios/LiquidGlassNative/](mdc:ios/LiquidGlassNative/) - Native liquid glass effects
+- **Expo Plugin**: [plugins/liquid-glass-plugin.js](mdc:plugins/liquid-glass-plugin.js) - Glass effect integration
+- **Design System**: [src/design-system/glass/](mdc:src/design-system/glass/) - Glass components with fallbacks
 
 ## Key Behaviors
-- **Deep Linking**: Scheme `dnschat://` configured in [app.json](mdc:app.json) and consumed in [src/App.tsx](mdc:src/App.tsx)
+- **Deep Linking**: Scheme `dnschat://` configured in [app.json](mdc:app.json) with Expo Router
 - **DNS Flow**: Configurable priority - Native → UDP → TCP → DoH → Mock OR DoH → Native → UDP → TCP → Mock
 - **DNS Logging**: Real-time query logging with persistent storage
-- **New Architecture**: `newArchEnabled: true` in [app.json](mdc:app.json)
+- **New Architecture**: `newArchEnabled: true` in [app.json](mdc:app.json) with Fabric + TurboModules
+- **Glass Effects**: iOS 26+ native liquid glass with platform fallbacks
 
 ## Conventions
-- Keep logic in `src/services/*`; UI in `src/components/*` and screens in `src/navigation/screens/*`
-- Persist via `StorageService`; do not read/write AsyncStorage directly in components
-- Extend navigation only via [src/navigation/index.tsx](mdc:src/navigation/index.tsx)
-- Keep logic in `src/services/*`; UI in `src/components/*` and screens in `src/navigation/screens/*`
-- Persist via `StorageService`; do not read/write AsyncStorage directly in components
-- Extend navigation only via [src/navigation/index.tsx](mdc:src/navigation/index.tsx)
+- **File-Based Routing**: Use [app/](mdc:app/) directory for all screens and navigation
+- **Services**: Keep business logic in `src/services/*`
+- **Components**: Reusable UI in `src/components/*` and `src/design-system/*`
+- **Context**: Global state in `src/context/*`
+- **Storage**: Always use `StorageService`; never access AsyncStorage directly
+- **Glass Components**: Use design system components for consistent glass effects
+- **Internationalization**: Use `useTranslation()` hook for all user-facing text

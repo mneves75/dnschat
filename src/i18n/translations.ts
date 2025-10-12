@@ -62,6 +62,11 @@ export interface TranslationStrings {
     devLogs: string;
   };
 
+  // Search
+  search: {
+    placeholder: string;
+  };
+
   // Screen Titles
   screens: {
     chatList: string;
@@ -161,6 +166,9 @@ const enUS: TranslationStrings = {
     about: "About",
     devLogs: "Dev Logs",
   },
+  search: {
+    placeholder: "Search chats and messages",
+  },
   screens: {
     chatList: "Chats",
     chatDetail: "Chat",
@@ -246,6 +254,9 @@ const ptBR: TranslationStrings = {
     logs: "Logs",
     about: "Sobre",
     devLogs: "Logs Dev",
+  },
+  search: {
+    placeholder: "Buscar conversas e mensagens",
   },
   screens: {
     chatList: "Conversas",

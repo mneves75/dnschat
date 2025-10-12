@@ -23,7 +23,6 @@ import {
   Animated,
 } from "react-native";
 import { PanGestureHandler, State } from "react-native-gesture-handler";
-import { GlassCard } from "../../design-system/glass";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 // ==================================================================================
@@ -57,6 +56,8 @@ interface GlassBottomSheetProps {
   showCloseButton?: boolean;
   /** Custom header content */
   headerContent?: React.ReactNode;
+  /** Disable glass registration for modal overlays */
+  register?: boolean;
 }
 
 interface GlassSheetAction {
@@ -201,6 +202,7 @@ export const GlassBottomSheet: React.FC<GlassBottomSheetProps> = ({
   animationDuration = 300,
   showCloseButton = true,
   headerContent,
+  register = true,
 }) => {
   const colors = useGlassSheetColors();
   const insets = useSafeAreaInsets();
@@ -223,7 +225,9 @@ export const GlassBottomSheet: React.FC<GlassBottomSheetProps> = ({
   const handleClosePress = React.useCallback(() => {
     // Haptic feedback
     if (Platform.OS === "ios") {
-      console.log("🔸 Haptic: Sheet close feedback");
+      if (__DEV__) {
+        console.log("🔸 Haptic: Sheet close feedback");
+      }
     }
     onClose();
   }, [onClose]);
@@ -288,8 +292,7 @@ export const GlassBottomSheet: React.FC<GlassBottomSheetProps> = ({
           style,
         ]}
       >
-        <GlassCard
-          variant="prominent"
+        <View
           style={[styles.sheetContent, { backgroundColor: colors.sheetBackground }]}
         >
           {/* Drag Handle */}
@@ -356,7 +359,7 @@ export const GlassBottomSheet: React.FC<GlassBottomSheetProps> = ({
 
           {/* Safe area bottom */}
           <View style={{ height: insets.bottom }} />
-        </GlassCard>
+        </View>
       </Animated.View>
     </Modal>
   );

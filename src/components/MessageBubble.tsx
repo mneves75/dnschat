@@ -86,6 +86,17 @@ export function MessageBubble({ message }: MessageBubbleProps) {
     },
   };
 
+  // CRITICAL: Generate accessibility label for screen readers
+  // Includes sender role, content, time, and status
+  const accessibilityLabel = [
+    isUser ? "You" : "Assistant",
+    message.content,
+    format(message.timestamp, "HH:mm"),
+    hasError ? "Failed to send" : isLoading ? "Sending" : "",
+  ]
+    .filter(Boolean)
+    .join(". ");
+
   return (
     <View
       style={[
@@ -93,7 +104,13 @@ export function MessageBubble({ message }: MessageBubbleProps) {
         isUser ? styles.userContainer : styles.assistantContainer,
       ]}
     >
-      <Pressable onLongPress={handleLongPress} style={bubbleStyles}>
+      <Pressable
+        onLongPress={handleLongPress}
+        style={bubbleStyles}
+        accessibilityRole="text"
+        accessibilityLabel={accessibilityLabel}
+        accessibilityHint="Long press to copy this message"
+      >
         {isUser ? (
           <Text style={textStyles}>{message.content}</Text>
         ) : (

@@ -82,6 +82,10 @@ export function ChatInput({
           ]}
           onPress={handleSend}
           disabled={!canSend}
+          accessibilityRole="button"
+          accessibilityLabel="Send message"
+          accessibilityHint="Sends your message to the assistant"
+          accessibilityState={{ disabled: !canSend, busy: isLoading }}
         >
           <Text
             style={[

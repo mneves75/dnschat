@@ -38,7 +38,7 @@ export default function SearchScreen() {
   const [searchQuery, setSearchQuery] = useState('');
 
   return (
-    <GlassScreen style={styles.screen}>
+    <GlassScreen register={false} style={styles.screen}>
       <Form.List navigationTitle="Search" style={styles.container}>
         {/* Search Input Section */}
         <Form.Section title="Search Chats" register={false}>

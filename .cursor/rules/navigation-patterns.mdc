@@ -1,49 +1,66 @@
 # Navigation Patterns
 
-## Architecture
-- **Root Navigation**: [src/navigation/index.tsx](mdc:src/navigation/index.tsx) defines `HomeTabs` and `RootStack` via `createStaticNavigation`
-- **React Navigation v7**: Uses static navigation pattern for better performance
+## Expo Router Architecture
+- **File-Based Routing**: [app/](mdc:app/) directory with automatic route generation
+- **Root Layout**: [app/_layout.tsx](mdc:app/_layout.tsx) - Root Stack navigator with providers
+- **Tab Layout**: [app/(tabs)/_layout.tsx](mdc:app/(tabs)/_layout.tsx) - Native tabs with glass styling
+- **Modal Layout**: [app/(modals)/_layout.tsx](mdc:app/(modals)/_layout.tsx) - Modal stack for settings
 
 ## Screen Structure
-### Tab Navigation (HomeTabs)
-- **ChatList**: Main chat interface with newspaper icon
-- **Logs**: DNS query logging with logs icon
-- **About**: App information with info icon and settings header button
+### Tab Navigation (app/(tabs)/)
+- **index.tsx**: Main chat interface (home tab)
+- **logs.tsx**: DNS query logging with logs icon
+- **about.tsx**: App information with info icon
+- **dev-logs.tsx**: Developer logs (__DEV__ only)
+- **chat/[id].tsx**: Dynamic chat conversation route
 
-### Stack Navigation (RootStack)
-- **HomeTabs**: Root tab navigator
-- **Chat**: Individual chat conversation
-- **Profile**: User profile with deep linking support
-- **Settings**: Modal settings screen
-- **NotFound**: 404 error handling
+### Modal Navigation (app/(modals)/)
+- **settings.tsx**: Settings modal screen
+
+### Error Handling
+- **+not-found.tsx**: 404 error screen for invalid routes
 
 ## Deep Linking
-- **Scheme**: `dnschat://` configured in [src/App.tsx](mdc:src/App.tsx) and [app.json](mdc:app.json)
-- **Profile Path**: `:user(@[a-zA-Z0-9-_]+)` with parse/stringify functions
-- **Linking Config**: `enabled: 'auto'` with automatic prefix detection
+- **Scheme**: `dnschat://` configured in [app.json](mdc:app.json)
+- **Tab Routes**: `dnschat:///(tabs)/logs`
+- **Dynamic Routes**: `dnschat:///chat/123`
+- **Modal Routes**: `dnschat:///(modals)/settings`
+- **Linking Config**: `enabled: 'auto'` with automatic scheme detection
 
 ## Adding New Screens
-1. **Create Component**: Add under `src/navigation/screens/*`
-2. **Register Screen**: Add to `screens` map in `HomeTabs` or `RootStack`
-3. **Configure Options**: Provide `title`, `tabBarIcon`, `headerRight` as needed
-4. **Keep Options Clean**: Avoid side-effects in options; use functions for dynamic values
+1. **Create File**: Add new `.tsx` file in appropriate directory
+2. **Tab Screens**: Add to `app/(tabs)/` directory
+3. **Modal Screens**: Add to `app/(modals)/` directory
+4. **Dynamic Routes**: Use `[param].tsx` naming for dynamic segments
+5. **Configure Options**: Use `Tabs.Screen` options in layout files
 
 ## Icon Usage
-- **Tab Icons**: [src/components/InfoIcon.tsx](mdc:src/components/InfoIcon.tsx), [src/components/icons/SettingsIcon.tsx](mdc:src/components/icons/SettingsIcon.tsx), [src/components/icons/LogsIcon.tsx](mdc:src/components/icons/LogsIcon.tsx)
+- **Tab Icons**: MaterialCommunityIcons with consistent sizing (24px)
 - **Custom Icons**: Use SVG components from `src/components/icons/`
-- **Image Assets**: Import from `src/assets/` for custom tab icons
+- **Icon Rendering**: `renderIcon` function in [app/(tabs)/_layout.tsx](mdc:app/(tabs)/_layout.tsx)
+
+## Navigation Hooks
+- **useRouter()**: Programmatic navigation
+- **useLocalSearchParams()**: Access route parameters
+- **useGlobalSearchParams()**: Access global search params
+- **usePathname()**: Get current pathname
+- **useSegments()**: Get current route segments
 
 ## Navigation Patterns
-- **Tab Switching**: Use `navigation.navigate('ScreenName')` for tab navigation
-- **Stack Pushing**: Use `navigation.navigate('ScreenName')` for stack navigation
-- **Modal Presentation**: Settings screen is presented modally
-- **Deep Link Handling**: Profile screen supports URL-based navigation
+- **Tab Switching**: Use `router.push('/(tabs)/screenName')` for tab navigation
+- **Stack Navigation**: Use `router.push('/screenName')` for stack navigation
+- **Modal Presentation**: Settings screen is presented modally via `(modals)` group
+- **Deep Link Handling**: Dynamic routes support URL-based navigation
+- **Back Navigation**: Use `router.back()` for back navigation
+
+## Glass Integration
+- **Tab Bar Styling**: Uses `getGlassBackgroundFallback()` for glass-aware styling
+- **Platform Handling**: iOS absolute positioning, Android relative positioning
+- **Performance**: Disables glass during heavy scrolling/animations
 
 ## Do Not
-- **Instantiate navigators** outside `src/navigation/index.tsx`
-- **Bypass static navigation** pattern
-- **Add navigation logic** in screen components
-- **Create circular navigation** dependencies
-- **Do not**
-  - Instantiate navigators outside `src/navigation/index.tsx`
-  - Bypass the static navigation pattern
+- **Bypass File-Based Routing**: Don't create custom navigation outside Expo Router
+- **Mutate Route Params**: Don't directly modify search params
+- **Create Circular Routes**: Avoid circular navigation dependencies
+- **Use Inline Styles**: Use StyleSheet.create for styling
+- **Skip Error Boundaries**: Always handle navigation errors gracefully
