@@ -1,11 +1,11 @@
 import { useCallback, useMemo, useState } from 'react';
-import { FlatList, Pressable, RefreshControl, StyleSheet } from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet } from 'react-native';
 
 import { Link, useRouter } from 'expo-router';
 
 import { Text, View } from '@/components/Themed';
 import { MessageListItem } from '@/components/messages/MessageListItem';
-import { useMessageActions, useMessages } from '@/context/MessageProvider';
+import { useMessageActions, useMessages, useMessagesHydration } from '@/context/MessageProvider';
 import { useColorScheme } from '@/components/useColorScheme';
 
 export default function MessageListScreen() {
@@ -13,6 +13,7 @@ export default function MessageListScreen() {
   const conversations = useMessages();
   const { refreshConversations, markConversationRead } = useMessageActions();
   const [refreshing, setRefreshing] = useState(false);
+  const isHydrated = useMessagesHydration();
   const colorScheme = useColorScheme() ?? 'light';
 
   const data = useMemo(() => conversations, [conversations]);
@@ -41,7 +42,14 @@ export default function MessageListScreen() {
 
   return (
     <View style={styles.container}>
+      {!isHydrated ? (
+        <View style={styles.loader}>
+          <ActivityIndicator size="small" />
+          <Text style={styles.loaderLabel}>Loading conversations…</Text>
+        </View>
+      ) : null}
       <FlatList
+        pointerEvents={isHydrated ? 'auto' : 'none'}
         data={data}
         keyExtractor={(item) => item.id}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
@@ -92,5 +100,14 @@ const styles = StyleSheet.create({
   infoLabel: {
     fontSize: 14,
     fontWeight: '600'
+  },
+  loader: {
+    paddingVertical: 24,
+    alignItems: 'center',
+    gap: 8
+  },
+  loaderLabel: {
+    fontSize: 14,
+    opacity: 0.8
   }
 });

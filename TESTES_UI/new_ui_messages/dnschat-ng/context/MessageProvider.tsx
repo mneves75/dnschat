@@ -53,6 +53,7 @@ type MessageContextValue = {
   markConversationRead: (conversationId: string) => void;
   refreshConversations: () => Promise<void>;
   getConversation: (conversationId: string) => Conversation | undefined;
+  isHydrated: boolean;
 };
 
 const MessageContext = createContext<MessageContextValue | undefined>(undefined);
@@ -277,8 +278,7 @@ export function MessageProvider({ children }: PropsWithChildren) {
     let mounted = true;
     (async () => {
       const stored = await loadConversations();
-      const conversations =
-        stored && stored.length > 0 ? stored : seedConversations;
+      const conversations = stored && stored.length > 0 ? stored : seedConversations;
       if (!mounted) return;
       dispatch({ type: 'HYDRATE', payload: { conversations } });
       setHydrated(true);
@@ -342,6 +342,7 @@ export function MessageProvider({ children }: PropsWithChildren) {
 
   const sendMessage = useCallback(
     (conversationId: string, text: string) => {
+      if (!isHydrated) return;
       if (!text.trim()) return;
       const message: Message = {
         id: buildId(),
@@ -354,7 +355,7 @@ export function MessageProvider({ children }: PropsWithChildren) {
       dispatch({ type: 'SEND_MESSAGE', payload: { conversationId, message } });
       scheduleReply(conversationId);
     },
-    [scheduleReply]
+    [isHydrated, scheduleReply]
   );
 
   const value = useMemo<MessageContextValue>(
@@ -363,9 +364,17 @@ export function MessageProvider({ children }: PropsWithChildren) {
       sendMessage,
       markConversationRead,
       refreshConversations,
-      getConversation
+      getConversation,
+      isHydrated
     }),
-    [state.conversations, sendMessage, markConversationRead, refreshConversations, getConversation]
+    [
+      state.conversations,
+      sendMessage,
+      markConversationRead,
+      refreshConversations,
+      getConversation,
+      isHydrated
+    ]
   );
 
   return <MessageContext.Provider value={value}>{children}</MessageContext.Provider>;
@@ -391,4 +400,10 @@ export function useMessageActions() {
     refreshConversations: context.refreshConversations,
     markConversationRead: context.markConversationRead
   };
+}
+
+export function useMessagesHydration() {
+  const context = useContext(MessageContext);
+  if (!context) throw new Error('useMessagesHydration must be used within MessageProvider');
+  return context.isHydrated;
 }

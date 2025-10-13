@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  ActivityIndicator,
   KeyboardAvoidingView,
   NativeSyntheticEvent,
   Platform,
@@ -17,7 +18,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Text } from '@/components/Themed';
 import { ChatView, ChatViewHandle, ChatViewMessage } from '@/components/chat/ChatView';
-import { useConversation, useMessageActions } from '@/context/MessageProvider';
+import {
+  useConversation,
+  useMessageActions,
+  useMessagesHydration
+} from '@/context/MessageProvider';
 import { useColorScheme } from '@/components/useColorScheme';
 
 export default function ConversationScreen() {
@@ -26,6 +31,7 @@ export default function ConversationScreen() {
   const navigation = useNavigation();
   const { sendMessage, markConversationRead } = useMessageActions();
   const conversation = useConversation(conversationId ?? '');
+  const isHydrated = useMessagesHydration();
   const [input, setInput] = useState('');
   const [showScrollToEnd, setShowScrollToEnd] = useState(false);
   const inputRef = useRef<TextInput | null>(null);
@@ -77,7 +83,7 @@ export default function ConversationScreen() {
   }, [messages.length, scrollToEnd]);
 
   const handleSend = useCallback(() => {
-    if (!conversationId || !input.trim()) return;
+    if (!conversationId || !input.trim() || !isHydrated) return;
     sendMessage(conversationId, input.trim());
     setInput('');
     setShowScrollToEnd(false);
@@ -115,6 +121,14 @@ export default function ConversationScreen() {
       if (conversationId) markConversationRead(conversationId);
     }, [conversationId, markConversationRead])
   );
+
+  if (!isHydrated) {
+    return (
+      <View style={[styles.center, { paddingBottom: insets.bottom }]}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
 
   if (!conversation) {
     return (
@@ -183,10 +197,10 @@ export default function ConversationScreen() {
           </View>
           <Pressable
             onPress={handleSend}
-            disabled={!input.trim()}
+            disabled={!input.trim() || !isHydrated}
             style={({ pressed }) => [
               styles.sendButton,
-              (!input.trim() || pressed) && styles.sendButtonDisabled
+              ((!input.trim() || !isHydrated || pressed) && styles.sendButtonDisabled)
             ]}>
             <Text style={styles.sendLabel}>Send</Text>
           </Pressable>
