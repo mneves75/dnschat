@@ -1,0 +1,21 @@
+{
+  "name": "expo-chatview",
+  "version": "0.1.0",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "module": "src/index.ts",
+  "source": "src/index.ts",
+  "files": [
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "clean": "rm -rf dist"
+  },
+  "peerDependencies": {
+    "expo": ">=54.0.0"
+  },
+  "dependencies": {
+    "expo-modules-core": "^1.6.0"
+  }
+}

@@ -4,14 +4,15 @@
   "version": "1.0.0",
   "scripts": {
     "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
     "web": "expo start --web"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.2",
     "@react-navigation/native": "^7.1.8",
     "expo": "~54.0.13",
+    "expo-chatview": "file:modules/expo-chatview",
     "expo-constants": "~18.0.9",
     "expo-font": "~14.0.9",
     "expo-linking": "~8.0.8",

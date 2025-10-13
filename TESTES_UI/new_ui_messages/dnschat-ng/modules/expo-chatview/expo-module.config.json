@@ -1,0 +1,7 @@
+{
+  "name": "ExpoChatView",
+  "platforms": ["ios"],
+  "ios": {
+    "modules": ["ExpoChatViewModule"]
+  }
+}

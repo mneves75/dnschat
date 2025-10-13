@@ -1,0 +1,57 @@
+# EAS Submit
+
+[Edit](https://github.com/expo/expo/edit/main/docs/pages/submit/introduction.mdx)
+
+Copy
+
+EAS Submit is a hosted service for uploading and submitting an app binary to
+the app stores.
+
+[Edit](https://github.com/expo/expo/edit/main/docs/pages/submit/introduction.mdx)
+
+Copy
+
+* * *
+
+EAS Submit is a hosted service for submitting your app binaries to the Google
+Play Store and the Apple App Store.
+
+It makes submitting your apps simple and easy by creating and handling
+submission credentials and running the submission process. You can trigger a
+submission from a CLI command, after a build is finished, or from a CI/CD
+service. It's the fastest way to take Android and iOS builds and submit them
+to the app stores.
+
+### How does EAS Submit work?
+
+EAS Submit delivers your app to the app stores' distribution pipelines (a
+chosen track on Google Play or TestFlight for iOS), following the [default
+submission behavior for app stores](/build/automate-submissions#default-
+submission-behavior-for-app-stores). It queues up your app for distribution on
+the Play Store Console and App Store Connect, and then you can log into those
+sites to send your apps off to review, so then they can be distributed to your
+users.
+
+#### Android (Google Play Store)
+
+  * Where it goes: EAS Submit uploads the build to Google Play Console.
+  * What happens then: The build is placed in the track you specify (internal, alpha, beta, or production).
+  * Does this mean production?
+    * If you use internal, alpha, or beta, the app is only available to testers in that track.
+    * If you explicitly choose production, then yes — once Google approves the release, it will be available to all users.
+
+#### iOS (App Store Connect/TestFlight)
+
+  * Where it goes: EAS Submit uploads the build to App Store Connect.
+  * What happens then: The build becomes available in TestFlight.
+  * Does this mean production?: No — a TestFlight build is not automatically released to the Apple App Store.
+  * How production happens: You must log into Apple App Store Connect, choose the build, and submit it for App Review before it can be released to production.
+
+### Get started
+
+[Submit to the Google Play StoreLearn how to submit an Android app to the
+Google Play Store.](/submit/android) [Submit to the Apple App StoreLearn how
+to submit an iOS/iPadOS app to the Apple App Store.](/submit/ios)
+[Configuration with eas.jsonSee how to configure your submissions with
+eas.json.](/submit/eas-json)
+

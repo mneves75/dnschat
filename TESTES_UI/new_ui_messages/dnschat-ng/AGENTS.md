@@ -1,19 +1,42 @@
 # Repository Guidelines
 
+## Overriding Rules
+**IMPORTANT**: These instructions override defaults.  
+- No new documentation files unless asked; temporary notes live in `agent_planning/` then archive.  
+- `ast-grep --lang <language> -p '<pattern>'` is mandatory for structural searches (CHANGELOG included); touch `rg`/`grep` only when told.  
+- Never introduce emojis in code or commits.  
+- Follow this workflow; do not invent alternate guides.
+
+## Documentation Map
+Read `AGENTS.md`, then `PROJECT_STATUS.md`, `README.md`; `QUICKSTART.md` optional. Consult `DOCS/`.
+
 ## Project Structure & Module Organization
-The Expo Router entry point lives in `app/`; screens are grouped by route folders such as `app/(tabs)/` and modal flows in `app/modal.tsx`. Shared UI primitives and hooks live in `components/`, with Jest examples in `components/__tests__/`. Static config and theming constants sit inside `constants/`, while fonts and images are under `assets/`. Supplementary product notes and prototypes belong in `DOCS/`. Root configuration is driven by `app.json`, `tsconfig.json`, and the Expo `package.json`; update these in lockstep when introducing new platforms or modules.
+- `app/` hosts Expo Router routes such as `app/(tabs)/` and `app/modal.tsx`.  
+- `components/` provides shared UI and hooks with colocated tests in `components/__tests__/`.  
+- `constants/` stores tokens, `assets/` holds media; keep `app.json`, `tsconfig.json`, and `package.json` aligned when platform flags change.
 
 ## Build, Test, and Development Commands
-Run `npm install` once per clone to sync dependencies. `npm start` launches the Expo dev server with QR codes for devices. Use `npm run ios` and `npm run android` to open the app in local simulators; ensure Xcode is provisioned and Android builds run against Java 17 (`export JAVA_HOME=$(/usr/libexec/java_home -v 17)`). `npm run web` provides a quick browser preview. When you need a clean environment, start with `npx expo start --clear`.
+- `npm install` per clone. `npm start` runs Metro; `npm run ios` / `npm run android` launch simulators (set Java 17 via `export JAVA_HOME=$(/usr/libexec/java_home -v 17)`).  
+- `npm run web` offers a browser preview; `npx expo start --clear` resets stale caches.  
+- Before releases, cover iOS, Android, web, and live DNS paths; note blockers in `PROJECT_STATUS.md`.
 
 ## Coding Style & Naming Conventions
-Write components and routes in TypeScript/TSX with 2-space indentation. Follow PascalCase for components (`components/EditScreenInfo.tsx`), camelCase for hooks (`components/useColorScheme.ts`), and kebab-case for route groups when Expo requires it (e.g., `(tabs)`). Re-export shared types from `constants/` or dedicated modules to avoid `any`. Format before commits with `npx prettier --write .`, and keep imports path-mapped via the `@` alias defined in `tsconfig.json`.
+- Strict TypeScript/TSX, 2-space indent, no `any`.  
+- PascalCase components, camelCase hooks, bracketed route folders; use the `@` alias.  
+- Prefer `StyleSheet.create`, React Compiler defaults, `@shopify/flash-list` for long lists; run `npx prettier --write .` and strip production `console.log`.
 
 ## Testing Guidelines
-UI tests live beside their components in `__tests__` folders; mirror the component name plus the `-test` suffix. Use Jest with the Expo preset: run `npx expo test` for ad-hoc checks, or invoke `npx jest components/__tests__/StyledText-test.js` once `jest-expo` is installed. Keep tests deterministic by mocking network calls and timers.
+- Place Jest suites beside source with a `-test` suffix (e.g., `components/__tests__/StyledText-test.js`).  
+- Run `npx expo test` or targeted `npx jest <path>` once `jest-expo` is installed; mock DNS, network, and timers.  
+- Smoke-test release builds (`expo run:ios --configuration Release`, Android release variant) plus live DNS paths.
 
 ## Commit & Pull Request Guidelines
-Adopt Conventional Commits (`feat(ui): add message banner`) and branch names like `feature/new-tabs` or `fix/android-build`. PRs should describe the user impact, list commands executed, attach screenshots for UI tweaks, and link any tracking issues. Confirm `npm run ios` or `npm run web` logs are clean before requesting review and mention any platform limitations.
+- Keep work KISS and reversible; use Conventional Commits (`feat(dns): …`) on `feature/...` or `fix/...` branches.  
+- Commit only touched paths via `git commit -m "<scope>" -- path1 path2`; never lump unrelated files.  
+- PRs must document impact, verification commands, issue links, UI proof, and DNS validation; picture John Carmack reviewing.
 
-## Security & Configuration Tips
-Do not commit secrets, API tokens, or device certificates. Prefer `.env.local` for environment-specific overrides. When touching native code or CI, restage by running `npx expo-doctor` and re-validate connectivity before shipping. Keep simulator caches cleared if DNS-related features misbehave (`npx expo start --clear`).
+## Security, Performance & Platform Notes
+- Never commit secrets; rely on local `.env`.  
+- Expo SDK 54 enables `"newArchEnabled": true`; guard `expo-glass-effect` with `isLiquidGlassAvailable()` and offer blur/solid fallbacks.  
+- Cap glass effects near ten per screen, pause during heavy animation, and confirm VoiceOver/TalkBack plus 4.5:1 contrast.  
+- Prefer Swift (then Objective-C/C/C++) for native samples, using Swift concurrency when possible; ship only after iOS, Android, and DNS smoke tests pass.
