@@ -48,7 +48,7 @@ export default function MessageListScreen() {
         ListHeaderComponent={
           <View style={styles.header}>
             <Text style={styles.headerTitle}>Messages</Text>
-            <Link href="/modal" asChild>
+            <Link href="../modal" asChild>
               <Pressable
                 style={({ pressed }) => [
                   styles.infoButton,
