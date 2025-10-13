@@ -1,4 +1,16 @@
-import { PropsWithChildren, createContext, useCallback, useContext, useMemo, useReducer, useRef } from 'react';
+import {
+  PropsWithChildren,
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState
+} from 'react';
+
+import { loadConversations, saveConversations } from '@/storage/conversationStorage';
 
 type Participant = {
   id: string;
@@ -32,7 +44,8 @@ type Action =
   | { type: 'SEND_MESSAGE'; payload: { conversationId: string; message: Message } }
   | { type: 'RECEIVE_MESSAGE'; payload: { conversationId: string; message: Message } }
   | { type: 'MARK_READ'; payload: { conversationId: string } }
-  | { type: 'REFRESH' };
+  | { type: 'REFRESH' }
+  | { type: 'HYDRATE'; payload: { conversations: Conversation[] } };
 
 type MessageContextValue = {
   conversations: Conversation[];
@@ -184,11 +197,18 @@ const seedConversations: Conversation[] = [
 ];
 
 const initialState: MessageState = {
-  conversations: seedConversations
+  conversations: []
 };
 
 function messageReducer(state: MessageState, action: Action): MessageState {
   switch (action.type) {
+    case 'HYDRATE': {
+      return {
+        conversations: action.payload.conversations
+          .slice()
+          .sort((a, b) => b.lastMessageAt - a.lastMessageAt)
+      };
+    }
     case 'SEND_MESSAGE': {
       const { conversationId, message } = action.payload;
       return {
@@ -250,7 +270,31 @@ const buildId = () => {
 
 export function MessageProvider({ children }: PropsWithChildren) {
   const [state, dispatch] = useReducer(messageReducer, initialState);
+  const [isHydrated, setHydrated] = useState(false);
   const replyTimeouts = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      const stored = await loadConversations();
+      const conversations =
+        stored && stored.length > 0 ? stored : seedConversations;
+      if (!mounted) return;
+      dispatch({ type: 'HYDRATE', payload: { conversations } });
+      setHydrated(true);
+      if (!stored || stored.length === 0) {
+        await saveConversations(conversations);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isHydrated) return;
+    void saveConversations(state.conversations);
+  }, [isHydrated, state.conversations]);
 
   const getConversation = useCallback(
     (conversationId: string) => state.conversations.find((c) => c.id === conversationId),
@@ -262,7 +306,10 @@ export function MessageProvider({ children }: PropsWithChildren) {
   }, []);
 
   const refreshConversations = useCallback(async () => {
-    dispatch({ type: 'REFRESH' });
+    const stored = await loadConversations();
+    if (stored) {
+      dispatch({ type: 'HYDRATE', payload: { conversations: stored } });
+    }
   }, []);
 
   const scheduleReply = useCallback(
