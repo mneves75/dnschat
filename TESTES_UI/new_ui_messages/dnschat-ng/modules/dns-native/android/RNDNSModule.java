@@ -6,6 +6,7 @@ import android.net.ConnectivityManager;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
+import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.module.annotations.ReactModule;
@@ -64,5 +65,21 @@ public class RNDNSModule extends NativeRNDNSModuleSpec {
         result.putInt("apiLevel", capabilities.apiLevel);
         
         promise.resolve(result);
+    }
+
+    @Override
+    public void configure(ReadableMap options, Promise promise) {
+        Double timeoutMs = null;
+        Integer maxConcurrent = null;
+
+        if (options.hasKey("timeoutMs") && !options.isNull("timeoutMs")) {
+            timeoutMs = options.getDouble("timeoutMs");
+        }
+        if (options.hasKey("maxConcurrent") && !options.isNull("maxConcurrent")) {
+            maxConcurrent = options.getInt("maxConcurrent");
+        }
+
+        dnsResolver.configure(timeoutMs, maxConcurrent);
+        promise.resolve(null);
     }
 }

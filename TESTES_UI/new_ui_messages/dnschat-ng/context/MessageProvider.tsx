@@ -10,7 +10,7 @@ import {
   useState
 } from 'react';
 
-import { loadConversations, saveConversations } from '@/storage/conversationStorage';
+import { loadConversations, saveConversations } from '@/storage/conversations';
 
 type Participant = {
   id: string;
@@ -41,15 +41,19 @@ type MessageState = {
 };
 
 type Action =
+  | { type: 'HYDRATE'; payload: { conversations: Conversation[] } }
+  | { type: 'UPSERT_CONVERSATION'; payload: { conversation: Conversation } }
+  | { type: 'REMOVE_CONVERSATION'; payload: { conversationId: string } }
   | { type: 'SEND_MESSAGE'; payload: { conversationId: string; message: Message } }
   | { type: 'RECEIVE_MESSAGE'; payload: { conversationId: string; message: Message } }
-  | { type: 'MARK_READ'; payload: { conversationId: string } }
-  | { type: 'REFRESH' }
-  | { type: 'HYDRATE'; payload: { conversations: Conversation[] } };
+  | { type: 'MARK_READ'; payload: { conversationId: string } };
 
 type MessageContextValue = {
   conversations: Conversation[];
-  sendMessage: (conversationId: string, text: string) => void;
+  sendMessage: (conversationId: string, text: string) => Message | null;
+  receiveMessage: (conversationId: string, message: Message) => void;
+  createConversation: (options: { title: string; initialMessage?: string }) => string;
+  deleteConversation: (conversationId: string) => void;
   markConversationRead: (conversationId: string) => void;
   refreshConversations: () => Promise<void>;
   getConversation: (conversationId: string) => Conversation | undefined;
@@ -58,192 +62,113 @@ type MessageContextValue = {
 
 const MessageContext = createContext<MessageContextValue | undefined>(undefined);
 
-const SELF_ID = 'me';
-
-const replyPool = [
-  'Sounds good! I can circle back this afternoon.',
-  'Let me check on that and get back to you.',
-  'Perfect, thanks for the update.',
-  '😂 love it. Sending it your way now.',
-  'Can we ship this by tomorrow?',
-  'Copy that. Ping me if you need anything else.',
-  'On a call atm, I will reply in 10.',
-  'That screenshot looks great!'
-];
-
-const seedParticipants: Record<string, Participant> = {
-  me: { id: SELF_ID, name: 'You' },
-  ana: { id: 'ana', name: 'Ana Bridges' },
-  devon: { id: 'devon', name: 'Devon Carter' },
-  priya: { id: 'priya', name: 'Priya Patel' },
-  max: { id: 'max', name: 'Max Ortega' },
-  june: { id: 'june', name: 'June Park' }
-};
-
-const seedConversations: Conversation[] = [
-  {
-    id: 'thread-ana',
-    title: 'Ana Bridges',
-    participants: [seedParticipants.me, seedParticipants.ana],
-    lastMessagePreview: 'See you at studio around 5?',
-    lastMessageAt: Date.now() - 1000 * 60 * 12,
-    unreadCount: 0,
-    messages: [
-      {
-        id: 'm1',
-        conversationId: 'thread-ana',
-        authorId: 'ana',
-        text: 'See you at studio around 5?',
-        createdAt: Date.now() - 1000 * 60 * 12,
-        status: 'received'
-      },
-      {
-        id: 'm2',
-        conversationId: 'thread-ana',
-        authorId: SELF_ID,
-        text: 'Locked in. I will bring the new DNS logs.',
-        createdAt: Date.now() - 1000 * 60 * 15,
-        status: 'sent'
-      }
-    ]
-  },
-  {
-    id: 'thread-devon',
-    title: 'Devon Carter',
-    participants: [seedParticipants.me, seedParticipants.devon],
-    lastMessagePreview: 'Just pushed the Liquid Glass experiment. Thoughts?',
-    lastMessageAt: Date.now() - 1000 * 60 * 45,
-    unreadCount: 2,
-    messages: [
-      {
-        id: 'm3',
-        conversationId: 'thread-devon',
-        authorId: 'devon',
-        text: 'Just pushed the Liquid Glass experiment. Thoughts?',
-        createdAt: Date.now() - 1000 * 60 * 45,
-        status: 'received'
-      },
-      {
-        id: 'm4',
-        conversationId: 'thread-devon',
-        authorId: SELF_ID,
-        text: 'Reviewing now!',
-        createdAt: Date.now() - 1000 * 60 * 50,
-        status: 'sent'
-      }
-    ]
-  },
-  {
-    id: 'thread-priya',
-    title: 'Priya Patel',
-    participants: [seedParticipants.me, seedParticipants.priya],
-    lastMessagePreview: 'Need any logs before standup?',
-    lastMessageAt: Date.now() - 1000 * 60 * 90,
-    unreadCount: 0,
-    messages: [
-      {
-        id: 'm5',
-        conversationId: 'thread-priya',
-        authorId: 'priya',
-        text: 'Need any logs before standup?',
-        createdAt: Date.now() - 1000 * 60 * 90,
-        status: 'received'
-      },
-      {
-        id: 'm6',
-        conversationId: 'thread-priya',
-        authorId: SELF_ID,
-        text: 'All good, thanks!',
-        createdAt: Date.now() - 1000 * 60 * 95,
-        status: 'sent'
-      }
-    ]
-  },
-  {
-    id: 'thread-max',
-    title: 'Max Ortega',
-    participants: [seedParticipants.me, seedParticipants.max],
-    lastMessagePreview: 'The DNS tests passed on Android too.',
-    lastMessageAt: Date.now() - 1000 * 60 * 135,
-    unreadCount: 1,
-    messages: [
-      {
-        id: 'm7',
-        conversationId: 'thread-max',
-        authorId: 'max',
-        text: 'The DNS tests passed on Android too.',
-        createdAt: Date.now() - 1000 * 60 * 135,
-        status: 'received'
-      }
-    ]
-  },
-  {
-    id: 'thread-june',
-    title: 'June Park',
-    participants: [seedParticipants.me, seedParticipants.june],
-    lastMessagePreview: 'Prototype is ready for review.',
-    lastMessageAt: Date.now() - 1000 * 60 * 200,
-    unreadCount: 0,
-    messages: [
-      {
-        id: 'm8',
-        conversationId: 'thread-june',
-        authorId: 'june',
-        text: 'Prototype is ready for review.',
-        createdAt: Date.now() - 1000 * 60 * 200,
-        status: 'received'
-      }
-    ]
-  }
-];
+export const CURRENT_USER_ID = 'me';
+const SELF_ID = CURRENT_USER_ID;
+const SELF_PARTICIPANT: Participant = { id: SELF_ID, name: 'You' };
 
 const initialState: MessageState = {
   conversations: []
 };
 
-function messageReducer(state: MessageState, action: Action): MessageState {
+const sortConversations = (conversations: Conversation[]) =>
+  conversations.slice().sort((a, b) => b.lastMessageAt - a.lastMessageAt);
+
+const ensureConversationParticipants = (title: string): Participant[] => {
+  const safeTitle = title.trim() || 'Conversation';
+  const remoteId = `participant-${safeTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'remote'}`;
+  return [
+    SELF_PARTICIPANT,
+    {
+      id: remoteId,
+      name: safeTitle
+    }
+  ];
+};
+
+export const buildMessageId = () => {
+  const random = globalThis.crypto?.randomUUID?.();
+  return random ?? `msg_${Math.random().toString(36).slice(2, 11)}_${Date.now()}`;
+};
+
+const buildConversationId = () => {
+  const random = globalThis.crypto?.randomUUID?.();
+  return random ?? `conv_${Math.random().toString(36).slice(2, 11)}_${Date.now()}`;
+};
+
+const createOutgoingMessage = (conversationId: string, text: string): Message => ({
+  id: buildMessageId(),
+  conversationId,
+  authorId: SELF_ID,
+  text,
+  createdAt: Date.now(),
+  status: 'sent'
+});
+
+export const createIncomingMessage = (
+  conversationId: string,
+  authorId: string,
+  text: string
+): Message => ({
+  id: buildMessageId(),
+  conversationId,
+  authorId,
+  text,
+  createdAt: Date.now(),
+  status: 'received'
+});
+
+const messageReducer = (state: MessageState, action: Action): MessageState => {
   switch (action.type) {
     case 'HYDRATE': {
+      return { conversations: sortConversations(action.payload.conversations) };
+    }
+    case 'UPSERT_CONVERSATION': {
+      const exists = state.conversations.some((item) => item.id === action.payload.conversation.id);
+      const conversations = exists
+        ? state.conversations.map((item) =>
+            item.id === action.payload.conversation.id ? action.payload.conversation : item
+          )
+        : [...state.conversations, action.payload.conversation];
+      return { conversations: sortConversations(conversations) };
+    }
+    case 'REMOVE_CONVERSATION': {
       return {
-        conversations: action.payload.conversations
-          .slice()
-          .sort((a, b) => b.lastMessageAt - a.lastMessageAt)
+        conversations: state.conversations.filter(
+          (conversation) => conversation.id !== action.payload.conversationId
+        )
       };
     }
     case 'SEND_MESSAGE': {
-      const { conversationId, message } = action.payload;
       return {
-        conversations: state.conversations
-          .map((conversation) => {
-            if (conversation.id !== conversationId) return conversation;
-            const messages = [...conversation.messages, message];
+        conversations: sortConversations(
+          state.conversations.map((conversation) => {
+            if (conversation.id !== action.payload.conversationId) return conversation;
+            const messages = [...conversation.messages, action.payload.message];
             return {
               ...conversation,
               messages,
-              lastMessagePreview: message.text,
-              lastMessageAt: message.createdAt,
-              unreadCount: conversation.unreadCount
+              lastMessagePreview: action.payload.message.text,
+              lastMessageAt: action.payload.message.createdAt
             };
           })
-          .sort((a, b) => b.lastMessageAt - a.lastMessageAt)
+        )
       };
     }
     case 'RECEIVE_MESSAGE': {
-      const { conversationId, message } = action.payload;
       return {
-        conversations: state.conversations
-          .map((conversation) => {
-            if (conversation.id !== conversationId) return conversation;
-            const messages = [...conversation.messages, message];
+        conversations: sortConversations(
+          state.conversations.map((conversation) => {
+            if (conversation.id !== action.payload.conversationId) return conversation;
+            const messages = [...conversation.messages, action.payload.message];
             return {
               ...conversation,
               messages,
-              lastMessagePreview: message.text,
-              lastMessageAt: message.createdAt,
+              lastMessagePreview: action.payload.message.text,
+              lastMessageAt: action.payload.message.createdAt,
               unreadCount: conversation.unreadCount + 1
             };
           })
-          .sort((a, b) => b.lastMessageAt - a.lastMessageAt)
+        )
       };
     }
     case 'MARK_READ': {
@@ -255,49 +180,59 @@ function messageReducer(state: MessageState, action: Action): MessageState {
         )
       };
     }
-    case 'REFRESH': {
-      return state;
-    }
     default:
       return state;
   }
-}
-
-const buildId = () => {
-  const random = globalThis.crypto?.randomUUID?.();
-  if (random) return random;
-  return `msg_${Math.random().toString(36).slice(2, 9)}_${Date.now()}`;
 };
 
 export function MessageProvider({ children }: PropsWithChildren) {
   const [state, dispatch] = useReducer(messageReducer, initialState);
   const [isHydrated, setHydrated] = useState(false);
-  const replyTimeouts = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const conversationsRef = useRef<Conversation[]>([]);
 
   useEffect(() => {
-    let mounted = true;
+    let cancelled = false;
     (async () => {
       const stored = await loadConversations();
-      const conversations = stored && stored.length > 0 ? stored : seedConversations;
-      if (!mounted) return;
-      dispatch({ type: 'HYDRATE', payload: { conversations } });
+      if (cancelled) return;
+      dispatch({ type: 'HYDRATE', payload: { conversations: stored } });
       setHydrated(true);
-      if (!stored || stored.length === 0) {
-        await saveConversations(conversations);
-      }
     })();
     return () => {
-      mounted = false;
+      cancelled = true;
     };
   }, []);
 
   useEffect(() => {
+    conversationsRef.current = state.conversations;
     if (!isHydrated) return;
-    void saveConversations(state.conversations);
+
+    if (saveTimer.current) {
+      clearTimeout(saveTimer.current);
+    }
+
+    // Debounce writes to avoid excessive AsyncStorage churn while typing.
+    saveTimer.current = setTimeout(() => {
+      saveTimer.current = null;
+      void saveConversations(conversationsRef.current);
+    }, 350);
   }, [isHydrated, state.conversations]);
 
+  useEffect(() => {
+    return () => {
+      if (saveTimer.current) {
+        clearTimeout(saveTimer.current);
+        saveTimer.current = null;
+      }
+      if (isHydrated) {
+        void saveConversations(conversationsRef.current);
+      }
+    };
+  }, [isHydrated]);
+
   const getConversation = useCallback(
-    (conversationId: string) => state.conversations.find((c) => c.id === conversationId),
+    (conversationId: string) => state.conversations.find((conversation) => conversation.id === conversationId),
     [state.conversations]
   );
 
@@ -307,61 +242,72 @@ export function MessageProvider({ children }: PropsWithChildren) {
 
   const refreshConversations = useCallback(async () => {
     const stored = await loadConversations();
-    if (stored) {
-      dispatch({ type: 'HYDRATE', payload: { conversations: stored } });
-    }
+    dispatch({ type: 'HYDRATE', payload: { conversations: stored } });
   }, []);
 
-  const scheduleReply = useCallback(
-    (conversationId: string) => {
-      if (replyTimeouts.current[conversationId]) return;
+  const deleteConversation = useCallback((conversationId: string) => {
+    dispatch({ type: 'REMOVE_CONVERSATION', payload: { conversationId } });
+  }, []);
 
-      const existingConversation = getConversation(conversationId);
-      if (!existingConversation) return;
+  const createConversation = useCallback(
+    ({ title, initialMessage }: { title: string; initialMessage?: string }) => {
+      const conversationId = buildConversationId();
+      const trimmedTitle = title.trim() || 'Conversation';
+      const participants = ensureConversationParticipants(trimmedTitle);
+      const now = Date.now();
 
-      const others = existingConversation.participants.filter((p) => p.id !== SELF_ID);
-      const author = others[Math.floor(Math.random() * others.length)] ?? seedParticipants.devon;
-      const replyText = replyPool[Math.floor(Math.random() * replyPool.length)];
-      const delay = 600 + Math.floor(Math.random() * 900);
+      let messages: Message[] = [];
+      let lastMessagePreview = '';
+      let lastMessageAt = now;
 
-      replyTimeouts.current[conversationId] = setTimeout(() => {
-        const replyMessage: Message = {
-          id: buildId(),
-          conversationId,
-          authorId: author.id,
-          text: replyText,
-          createdAt: Date.now(),
-          status: 'received'
-        };
-        dispatch({ type: 'RECEIVE_MESSAGE', payload: { conversationId, message: replyMessage } });
-        delete replyTimeouts.current[conversationId];
-      }, delay);
+      if (initialMessage && initialMessage.trim()) {
+        const message = createOutgoingMessage(conversationId, initialMessage.trim());
+        messages = [message];
+        lastMessagePreview = message.text;
+        lastMessageAt = message.createdAt;
+      }
+
+      const conversation: Conversation = {
+        id: conversationId,
+        title: trimmedTitle,
+        participants,
+        messages,
+        unreadCount: 0,
+        lastMessagePreview,
+        lastMessageAt
+      };
+
+      dispatch({ type: 'UPSERT_CONVERSATION', payload: { conversation } });
+      return conversationId;
     },
-    [getConversation]
+    []
   );
 
   const sendMessage = useCallback(
     (conversationId: string, text: string) => {
-      if (!isHydrated) return;
-      if (!text.trim()) return;
-      const message: Message = {
-        id: buildId(),
-        conversationId,
-        authorId: SELF_ID,
-        text: text.trim(),
-        createdAt: Date.now(),
-        status: 'sent'
-      };
+      if (!isHydrated) return null;
+      const conversation = getConversation(conversationId);
+      if (!conversation) return null;
+      const trimmed = text.trim();
+      if (!trimmed) return null;
+      const message = createOutgoingMessage(conversationId, trimmed);
       dispatch({ type: 'SEND_MESSAGE', payload: { conversationId, message } });
-      scheduleReply(conversationId);
+      return message;
     },
-    [isHydrated, scheduleReply]
+    [getConversation, isHydrated]
   );
+
+  const receiveMessage = useCallback((conversationId: string, message: Message) => {
+    dispatch({ type: 'RECEIVE_MESSAGE', payload: { conversationId, message } });
+  }, []);
 
   const value = useMemo<MessageContextValue>(
     () => ({
       conversations: state.conversations,
       sendMessage,
+      createConversation,
+      receiveMessage,
+      deleteConversation,
       markConversationRead,
       refreshConversations,
       getConversation,
@@ -370,6 +316,9 @@ export function MessageProvider({ children }: PropsWithChildren) {
     [
       state.conversations,
       sendMessage,
+      createConversation,
+      receiveMessage,
+      deleteConversation,
       markConversationRead,
       refreshConversations,
       getConversation,
@@ -397,6 +346,9 @@ export function useMessageActions() {
   if (!context) throw new Error('useMessageActions must be used within MessageProvider');
   return {
     sendMessage: context.sendMessage,
+    receiveMessage: context.receiveMessage,
+    createConversation: context.createConversation,
+    deleteConversation: context.deleteConversation,
     refreshConversations: context.refreshConversations,
     markConversationRead: context.markConversationRead
   };

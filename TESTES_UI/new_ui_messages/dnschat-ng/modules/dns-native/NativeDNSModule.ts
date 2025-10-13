@@ -12,6 +12,7 @@ export type DNSCapabilities = {
 export interface Spec extends TurboModule {
   queryTXT(domain: string, message: string): Promise<string[]>;
   isAvailable(): Promise<DNSCapabilities>;
+  configure(options: { timeoutMs?: number; maxConcurrent?: number }): Promise<void>;
 }
 
 export function getDNSModule(): Spec | null {

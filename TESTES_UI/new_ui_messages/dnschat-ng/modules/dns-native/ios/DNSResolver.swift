@@ -2,26 +2,91 @@ import Foundation
 import Network
 import React
 
+actor QueryLimiter {
+    private var current = 0
+    private var waiters: [CheckedContinuation<Void, Never>] = []
+    private var maxConcurrent: Int
+
+    init(maxConcurrent: Int) {
+        self.maxConcurrent = max(1, maxConcurrent)
+    }
+
+    func updateLimit(_ value: Int) {
+        maxConcurrent = max(1, value)
+        resolveWaiters()
+    }
+
+    func acquire() async {
+        if current < maxConcurrent {
+            current += 1
+            return
+        }
+        await withCheckedContinuation { continuation in
+            waiters.append(continuation)
+        }
+    }
+
+    func release() {
+        if current > 0 {
+            current -= 1
+        }
+        resolveWaiters()
+    }
+
+    private func resolveWaiters() {
+        while current < maxConcurrent, !waiters.isEmpty {
+            current += 1
+            let continuation = waiters.removeFirst()
+            continuation.resume()
+        }
+    }
+}
+
+struct ResolverConfiguration {
+    var timeout: TimeInterval = 10.0
+    var maxConcurrent: Int = 4
+}
+
 @objc(DNSResolver)
 final class DNSResolver: NSObject {
     
     // MARK: - Configuration
     private static let dnsPort: UInt16 = 53
-    private static let queryTimeout: TimeInterval = 10.0
     private static let maxNativeAttempts: Int = 3
     private static let retryDelayNanoseconds: UInt64 = 200_000_000 // 200ms
     // MARK: - State
     @MainActor private var activeQueries: [String: Task<[String], Error>] = [:]
+    @MainActor private var configuration = ResolverConfiguration()
+    @MainActor private var limiter = QueryLimiter(maxConcurrent: 4)
     
     // MARK: - Public Interface
     
     @objc static func isAvailable() -> Bool {
         if #available(iOS 12.0, *) {
             return true
-        }
-        return false
     }
-    
+    return false
+  }
+
+    @MainActor
+    func configure(timeoutMs: Double?, maxConcurrent: Int?) throws {
+        var updated = configuration
+        if let timeoutMs {
+            guard timeoutMs.isFinite, timeoutMs > 0 else {
+                throw DNSError.queryFailed("Invalid timeout value")
+            }
+            updated.timeout = min(max(timeoutMs / 1000.0, 1.0), 30.0)
+        }
+        if let maxConcurrent {
+            guard maxConcurrent > 0 else {
+                throw DNSError.queryFailed("maxConcurrent must be greater than zero")
+            }
+            updated.maxConcurrent = maxConcurrent
+        }
+        configuration = updated
+        limiter = QueryLimiter(maxConcurrent: updated.maxConcurrent)
+    }
+
     @objc func queryTXT(
         domain: String,
         message: String,
@@ -56,7 +121,7 @@ final class DNSResolver: NSObject {
                 _ = await MainActor.run { self.activeQueries.removeValue(forKey: queryId) }
 
                 resolver(result)
-                
+
             } catch {
                 // Clean up on error
                 _ = await MainActor.run { self.activeQueries.removeValue(forKey: queryId) }
@@ -70,8 +135,16 @@ final class DNSResolver: NSObject {
     
     private func createQueryTask(server: String, queryName: String) -> Task<[String], Error> {
         Task {
-            try await withTimeout(seconds: Self.queryTimeout) {
+            let configuration = await MainActor.run { self.configuration }
+            let limiter = await MainActor.run { self.limiter }
+            await limiter.acquire()
+            defer {
+                Task { await limiter.release() }
+            }
+
+            return try await withTimeout(seconds: configuration.timeout) {
                 for attempt in 0..<Self.maxNativeAttempts {
+                    try Task.checkCancellation()
                     do {
                         return try await self.performUDPQuery(server: server, queryName: queryName)
                     } catch let error as DNSError {
@@ -347,5 +420,23 @@ final class RNDNSModule: NSObject {
             "supportsAsyncQuery": true
         ]
         resolver(capabilities)
+    }
+
+    @objc func configure(
+        _ options: NSDictionary,
+        resolver: @escaping RCTPromiseResolveBlock,
+        rejecter: @escaping RCTPromiseRejectBlock
+    ) {
+        let timeoutMs = (options["timeoutMs"] as? NSNumber)?.doubleValue
+        let maxConcurrent = (options["maxConcurrent"] as? NSNumber)?.intValue
+
+        Task {
+            do {
+                try await self.resolver.configure(timeoutMs: timeoutMs, maxConcurrent: maxConcurrent)
+                resolver(nil)
+            } catch {
+                rejecter("DNS_CONFIG_FAILED", error.localizedDescription, error)
+            }
+        }
     }
 }

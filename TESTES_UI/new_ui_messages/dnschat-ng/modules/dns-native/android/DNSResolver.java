@@ -28,9 +28,13 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 
 import org.xbill.DNS.*;
 
@@ -38,20 +42,31 @@ public class DNSResolver {
     private static final String TAG = "DNSResolver";
     private static final String DNS_SERVER = "ch.at";
     private static final int DNS_PORT = 53;
-    private static final int QUERY_TIMEOUT_MS = 10000;
+    private static final int DEFAULT_QUERY_TIMEOUT_MS = 10000;
     private static final int MAX_LABEL_LENGTH = 63;
     private static final int MAX_QNAME_LENGTH = 255;
     private static final int MAX_NATIVE_ATTEMPTS = 3;
     private static final long RETRY_DELAY_MS = 200L;
-    
-    private final Executor executor = Executors.newCachedThreadPool();
+
+    private final ExecutorService executor = Executors.newCachedThreadPool();
     private final ConnectivityManager connectivityManager;
-    
+    private final Object configLock = new Object();
+    private volatile Semaphore concurrencyLimiter = new Semaphore(4, true);
+    private volatile int queryTimeoutMs = DEFAULT_QUERY_TIMEOUT_MS;
+
     // Query deduplication - prevents multiple identical requests (matches iOS implementation)
     private static final Map<String, CompletableFuture<List<String>>> activeQueries = new ConcurrentHashMap<>();
 
     public DNSResolver(ConnectivityManager connectivityManager) {
         this.connectivityManager = connectivityManager;
+    }
+
+    private void adjustConcurrencyLimiter(int newLimit) {
+        concurrencyLimiter = new Semaphore(newLimit, true);
+    }
+
+    private int getQueryTimeoutMs() {
+        return queryTimeoutMs;
     }
 
     public static boolean isAvailable() {
@@ -64,6 +79,19 @@ public class DNSResolver {
             return true;
         } catch (ClassNotFoundException e) {
             return false;
+        }
+    }
+
+    public void configure(Double timeoutMs, Integer maxConcurrent) {
+        synchronized (configLock) {
+            if (timeoutMs != null && !timeoutMs.isNaN() && timeoutMs > 0) {
+                int coercedTimeout = (int) Math.min(Math.max(timeoutMs, 500.0), 30_000.0);
+                queryTimeoutMs = coercedTimeout;
+            }
+            if (maxConcurrent != null && maxConcurrent > 0) {
+                int clamped = Math.min(Math.max(maxConcurrent, 1), 8);
+                adjustConcurrencyLimiter(clamped);
+            }
         }
     }
 
@@ -88,64 +116,72 @@ public class DNSResolver {
         }
         
         Log.d(TAG, "🆕 DNS: Creating new query for: " + queryId);
-        
-        // Create new query with automatic cleanup
+
         CompletableFuture<List<String>> result = new CompletableFuture<>();
         activeQueries.put(queryId, result);
         Log.d(TAG, "📊 DNS: Active queries count: " + activeQueries.size());
-        
-        // 3-tier fallback strategy (matches iOS): Raw UDP → DNS-over-HTTPS → Legacy
-        queryTXTRawUDP(queryName, domain)
-            .thenAccept(txtRecords -> {
-                activeQueries.remove(queryId);
-                Log.d(TAG, "🧹 DNS: Query completed, active queries: " + activeQueries.size());
-                result.complete(txtRecords);
-            })
-            .exceptionally(err -> {
-                // Gate DoH: disable for ch.at, otherwise try DoH then legacy
-                if (domain != null && !domain.equalsIgnoreCase("ch.at")) {
-                    Log.d(TAG, "🥈 DNS: Trying DNS-over-HTTPS (fallback 1)");
-                    queryTXTDNSOverHTTPS(queryName)
-                        .thenAccept(txtRecords -> {
-                            activeQueries.remove(queryId);
-                            Log.d(TAG, "🧹 DNS: Query completed (HTTPS), active queries: " + activeQueries.size());
-                            result.complete(txtRecords);
-                        })
-                        .exceptionally(err2 -> {
-                            Log.d(TAG, "🥉 DNS: Trying legacy DNS (fallback 2)");
-                            queryTXTLegacy(domain, queryName)
-                                .thenAccept(txtRecords -> {
-                                    activeQueries.remove(queryId);
-                                    Log.d(TAG, "🧹 DNS: Query completed (legacy), active queries: " + activeQueries.size());
-                                    result.complete(txtRecords);
-                                })
-                                .exceptionally(err3 -> {
-                                    activeQueries.remove(queryId);
-                                    Log.d(TAG, "❌ DNS: All fallback methods failed, active queries: " + activeQueries.size());
-                                    result.completeExceptionally(err3);
-                                    return null;
-                                });
-                            return null;
-                        });
-                } else {
-                    Log.d(TAG, "🥈 DNS: Skipping DoH for ch.at, trying legacy DNS");
-                    queryTXTLegacy(domain, queryName)
-                        .thenAccept(txtRecords -> {
-                            activeQueries.remove(queryId);
-                            Log.d(TAG, "🧹 DNS: Query completed (legacy), active queries: " + activeQueries.size());
-                            result.complete(txtRecords);
-                        })
-                        .exceptionally(err3 -> {
-                            activeQueries.remove(queryId);
-                            Log.d(TAG, "❌ DNS: All fallback methods failed, active queries: " + activeQueries.size());
-                            result.completeExceptionally(err3);
-                            return null;
-                        });
+
+        final AtomicBoolean semaphoreAcquired = new AtomicBoolean(false);
+        final Semaphore[] acquiredLimiterRef = new Semaphore[1];
+
+        executor.execute(() -> {
+            try {
+                // Capture the semaphore we actually acquired so releases still target the same
+                // instance even if JS reconfigures concurrency mid-flight.
+                Semaphore limiterSnapshot = concurrencyLimiter;
+                limiterSnapshot.acquire();
+                acquiredLimiterRef[0] = limiterSnapshot;
+                semaphoreAcquired.set(true);
+                // Run the fallback chain asynchronously so the semaphore governs concurrency while
+                // work happens off the UI thread.
+                performQueryWithFallbacks(queryName, domain)
+                    .thenAccept(result::complete)
+                    .exceptionally(error -> {
+                        result.completeExceptionally(error);
+                        return null;
+                    });
+            } catch (InterruptedException interruptedException) {
+                Thread.currentThread().interrupt();
+                result.completeExceptionally(interruptedException);
+            }
+        });
+
+        result.whenComplete((value, error) -> {
+            activeQueries.remove(queryId);
+            Log.d(TAG, "🧹 DNS: Query finished, active queries: " + activeQueries.size());
+            if (semaphoreAcquired.get()) {
+                Semaphore limiterSnapshot = acquiredLimiterRef[0];
+                if (limiterSnapshot != null) {
+                    limiterSnapshot.release();
                 }
-                return null;
-            });
+            }
+        });
+
         return result;
     }
+
+    private CompletableFuture<List<String>> performQueryWithFallbacks(String queryName, String domain) {
+        CompletableFuture<List<String>> primary = queryTXTRawUDP(queryName, domain);
+        return exceptionallyCompose(primary, rawError -> {
+            if (domain != null && !domain.equalsIgnoreCase("ch.at")) {
+                return exceptionallyCompose(queryTXTDNSOverHTTPS(queryName), dohError -> queryTXTLegacy(domain, queryName));
+            }
+            return queryTXTLegacy(domain, queryName);
+        });
+    }
+
+    private <T> CompletableFuture<T> exceptionallyCompose(CompletableFuture<T> future, Function<Throwable, CompletableFuture<T>> fallback) {
+        return future.handle((value, error) -> {
+            if (error == null) {
+                return CompletableFuture.completedFuture(value);
+            }
+            Throwable cause = error instanceof CompletionException && error.getCause() != null
+                ? error.getCause()
+                : error;
+            return fallback.apply(cause);
+        }).thenCompose(Function.identity());
+    }
+
 
 
     private CompletableFuture<List<String>> queryTXTLegacy(String domain, String queryName) {
@@ -157,7 +193,7 @@ public class DNSResolver {
 
                     SimpleResolver resolver = new SimpleResolver(domain);
                     resolver.setPort(DNS_PORT);
-                    resolver.setTimeout(QUERY_TIMEOUT_MS / 1000);
+                    resolver.setTimeout(getQueryTimeoutMs() / 1000.0);
                     lookup.setResolver(resolver);
 
                     Record[] records = lookup.run();
@@ -219,7 +255,7 @@ public class DNSResolver {
                     byte[] query = buildDnsQuery(queryName);
 
                     socket = new DatagramSocket();
-                    socket.setSoTimeout(QUERY_TIMEOUT_MS);
+                    socket.setSoTimeout(getQueryTimeoutMs());
                     InetAddress serverAddr = InetAddress.getByName(server);
 
                     DatagramPacket packet = new DatagramPacket(query, query.length, serverAddr, DNS_PORT);
@@ -471,8 +507,8 @@ public class DNSResolver {
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                 connection.setRequestMethod("GET");
                 connection.setRequestProperty("Accept", "application/dns-json");
-                connection.setConnectTimeout(QUERY_TIMEOUT_MS);
-                connection.setReadTimeout(QUERY_TIMEOUT_MS);
+                connection.setConnectTimeout(getQueryTimeoutMs());
+                connection.setReadTimeout(getQueryTimeoutMs());
                 
                 int responseCode = connection.getResponseCode();
                 if (responseCode != 200) {

@@ -33,6 +33,11 @@ export interface NativeDNSModule {
    * @returns Promise resolving to platform capabilities
    */
   isAvailable(): Promise<DNSCapabilities>;
+
+  /**
+   * Configure native resolver parameters (timeout, concurrency)
+   */
+  configure(options: { timeoutMs?: number; maxConcurrent?: number }): Promise<void>;
 }
 
 export enum DNSErrorType {
@@ -99,6 +104,20 @@ export class NativeDNS implements NativeDNSModule {
       }
       hasLoggedMissingNativeModule = true;
     }
+  }
+
+  async configure(options: { timeoutMs?: number; maxConcurrent?: number }): Promise<void> {
+    if (!this.nativeModule?.configure) {
+      return;
+    }
+    const payload: { timeoutMs?: number; maxConcurrent?: number } = {};
+    if (typeof options.timeoutMs === "number" && Number.isFinite(options.timeoutMs)) {
+      payload.timeoutMs = Math.max(0, options.timeoutMs);
+    }
+    if (typeof options.maxConcurrent === "number" && Number.isFinite(options.maxConcurrent)) {
+      payload.maxConcurrent = Math.max(1, Math.floor(options.maxConcurrent));
+    }
+    await this.nativeModule.configure(payload);
   }
 
   hasNativeModule(): boolean {

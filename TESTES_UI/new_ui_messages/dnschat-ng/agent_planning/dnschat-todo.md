@@ -1,0 +1,38 @@
+# DNS Chat Execution Plan (2025-10-13)
+
+- [x] Item 1 — Application Data Model & Persistence
+  - [x] Remove seeded conversations, implement AsyncStorage hydration with debounced persistence.
+  - [x] Enforce message validation (≤200 chars, control-char stripping) with inline UI messaging.
+  - [x] Add conversation creation + deletion flows with modal UI.
+  - [x] Introduce `PreferencesProvider` for onboarding flag, locale, transport toggles.
+- [x] Item 2 — Chat UI & Navigation
+  - [x] Migrate inbox and chat detail to FlashList, add localized timestamps.
+  - [x] Provide loading overlay + error banner while awaiting DNS response.
+  - [x] Align routes to `/chat/[conversationId]` and apply Liquid Glass composer.
+- [x] Item 3 — DNS Transport Layer (JavaScript)
+  - [x] Build `DNSTransportService` fallback chain (native → UDP → TCP → HTTPS) with sanitization utilities.
+  - [x] Enforce whitelist validation + rate limiting + exponential backoff.
+  - [x] Persist transport preference toggles and pause queries when backgrounded.
+- [ ] Item 4 — Native Module Enhancements
+  - [x] Update Swift/Android implementations for adjustable timeout, concurrency, fallback.
+  - [ ] Export consistent TS interface and add native tests.
+- [x] Item 5 — Settings, Logs & Diagnostics
+  - [x] Modern settings screen with transport toggles, server management, locale picker.
+  - [x] DNS logs tab backed by persistent log service with filters + visualization.
+- [x] Item 6 — Internationalization & Onboarding
+  - [x] Integrate localization framework with typed keys and translation files.
+  - [x] Build onboarding flow gated by AsyncStorage flag, including live DNS demo.
+- [ ] Item 7 — DNS Server Alignment
+  - [ ] Verify client sanitization & fallback chain matches `ch_at_dns_server_code.go`.
+- [ ] Item 8 — Security, Performance & Compliance
+  - [ ] Validate input hardening, audit dependencies, document ASVS coverage, enforce accessibility fallbacks.
+- [ ] Item 9 — Tooling, Testing & Release Process
+  - [ ] Expand unit/integration/E2E coverage, automate version sync, update CHANGELOG.
+- [ ] Item 10 — Deployment Readiness
+  - [ ] Configure EAS profiles, Java 17 enforcement, CocoaPods updates, App Store privacy strings.
+- [x] Item 11 — Settings Screen Extras
+  - [x] Add modern settings UI hooks from About screen (modal button) to the new settings experience.
+- [x] Item 12 — Onboarding extras
+  - [x] Provide settings toggle to re-enable onboarding screens.
+- [ ] Finalization
+  - [ ] Run lint/tests, update TODO doc, self-critique to confirm 100% compliance.

@@ -9,7 +9,6 @@ import {
   useRef
 } from 'react';
 import {
-  FlatList,
   ListRenderItem,
   NativeScrollEvent,
   NativeSyntheticEvent,
@@ -22,10 +21,14 @@ import {
   findNodeHandle
 } from 'react-native';
 
+import { FlashList } from '@shopify/flash-list';
+
 import { ExpoChatViewModule, NativeChatView, type NativeChatViewProps } from 'expo-chatview';
 
 import { Text } from '@/components/Themed';
 import { useColorScheme } from '@/components/useColorScheme';
+import { useResolvedLocale } from '@/hooks/useResolvedLocale';
+import { formatMessageTimestamp } from '@/utils/datetime';
 
 export type ChatViewMessage = {
   id: string;
@@ -61,6 +64,11 @@ const ChatBubble = memo(function ChatBubble({
   const isSent = message.status === 'sent';
   const colorScheme = useColorScheme() ?? 'light';
   const isDark = colorScheme === 'dark';
+  const locale = useResolvedLocale();
+  const timestamp = useMemo(() => formatMessageTimestamp(message.createdAt, locale), [
+    message.createdAt,
+    locale
+  ]);
   return (
     <View style={[styles.bubbleRow, isSent ? styles.alignEnd : styles.alignStart]}>
       <Pressable
@@ -81,6 +89,12 @@ const ChatBubble = memo(function ChatBubble({
           darkColor={isSent ? '#fff' : '#F2F2F7'}
           style={styles.bubbleText}>
           {message.text}
+        </Text>
+        <Text
+          lightColor={isSent ? 'rgba(255,255,255,0.8)' : 'rgba(60,60,67,0.7)'}
+          darkColor={isSent ? 'rgba(255,255,255,0.8)' : 'rgba(235,235,245,0.65)'}
+          style={styles.timestamp}>
+          {timestamp}
         </Text>
       </Pressable>
     </View>
@@ -141,28 +155,29 @@ const FallbackChatView = forwardRef<ChatViewHandle, ChatViewProps>(function Fall
   { messages, onNearTop, onPressMessage, onVisibleIdsChange, style, contentBottomInset = 0 },
   ref
 ) {
-  const listRef = useRef<FlatList<ChatViewMessage>>(null);
+  const listRef = useRef<FlashList<ChatViewMessage>>(null);
+  const sortedMessages = useMemo(
+    () => [...messages].sort((a, b) => a.createdAt - b.createdAt),
+    [messages]
+  );
 
   useImperativeHandle(
     ref,
     () => ({
       scrollToEnd(animated = true) {
         requestAnimationFrame(() => {
-          listRef.current?.scrollToEnd({ animated });
+          const lastIndex = sortedMessages.length - 1;
+          if (lastIndex < 0) return;
+          listRef.current?.scrollToIndex({ index: lastIndex, animated, viewPosition: 1 });
         });
       }
     }),
-    []
+    [sortedMessages]
   );
 
   const renderItem = useCallback<ListRenderItem<ChatViewMessage>>(
     ({ item }) => <ChatBubble message={item} onPress={onPressMessage} />,
     [onPressMessage]
-  );
-
-  const sortedMessages = useMemo(
-    () => [...messages].sort((a, b) => a.createdAt - b.createdAt),
-    [messages]
   );
 
   const handleScroll = useCallback(
@@ -188,7 +203,7 @@ const FallbackChatView = forwardRef<ChatViewHandle, ChatViewProps>(function Fall
   );
 
   return (
-    <FlatList
+    <FlashList
       ref={listRef}
       data={sortedMessages}
       renderItem={renderItem}
@@ -201,6 +216,7 @@ const FallbackChatView = forwardRef<ChatViewHandle, ChatViewProps>(function Fall
       viewabilityConfig={{
         itemVisiblePercentThreshold: 40
       }}
+      estimatedItemSize={72}
     />
   );
 });
@@ -226,7 +242,8 @@ const styles = StyleSheet.create({
     maxWidth: '80%',
     borderRadius: 18,
     paddingHorizontal: 12,
-    paddingVertical: 8
+    paddingVertical: 8,
+    gap: 6
   },
   bubbleSentLight: {
     backgroundColor: '#0A84FF'
@@ -245,5 +262,9 @@ const styles = StyleSheet.create({
   },
   bubbleText: {
     fontSize: 16
+  },
+  timestamp: {
+    fontSize: 12,
+    alignSelf: 'flex-end'
   }
 });

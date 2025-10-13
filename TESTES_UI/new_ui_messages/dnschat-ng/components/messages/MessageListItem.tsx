@@ -3,33 +3,34 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Text } from '@/components/Themed';
 import { Conversation } from '@/context/MessageProvider';
+import { useResolvedLocale } from '@/hooks/useResolvedLocale';
+import { formatConversationTimestamp } from '@/utils/datetime';
+import { useTranslation } from '@/i18n';
 
 type Props = {
   conversation: Conversation;
   onPress: (conversationId: string) => void;
+  onLongPress?: (conversationId: string) => void;
 };
 
-const formatTimestamp = (value: number) => {
-  const diff = Date.now() - value;
-  const minutes = Math.floor(diff / 60000);
-  if (minutes < 1) return 'now';
-  if (minutes < 60) return `${minutes}m`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h`;
-  const days = Math.floor(hours / 24);
-  if (days < 7) return `${days}d`;
-  const date = new Date(value);
-  return date.toLocaleDateString();
-};
-
-function MessageListItemComponent({ conversation, onPress }: Props) {
+function MessageListItemComponent({ conversation, onPress, onLongPress }: Props) {
+  const locale = useResolvedLocale();
+  const { t } = useTranslation();
   const initials = useMemo(() => {
     const parts = conversation.title.split(' ');
     return parts.slice(0, 2).map((part) => part.charAt(0)).join('').toUpperCase();
   }, [conversation.title]);
+  const timestamp = useMemo(
+    () => formatConversationTimestamp(conversation.lastMessageAt, locale),
+    [conversation.lastMessageAt, locale]
+  );
 
   return (
-    <Pressable onPress={() => onPress(conversation.id)} style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}>
+    <Pressable
+      onPress={() => onPress(conversation.id)}
+      onLongPress={onLongPress ? () => onLongPress(conversation.id) : undefined}
+      delayLongPress={250}
+      style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}>
       <View style={styles.avatar}>
         <Text style={styles.avatarLabel}>{initials}</Text>
       </View>
@@ -38,11 +39,11 @@ function MessageListItemComponent({ conversation, onPress }: Props) {
           <Text style={styles.title} numberOfLines={1}>
             {conversation.title}
           </Text>
-          <Text style={styles.timestamp}>{formatTimestamp(conversation.lastMessageAt)}</Text>
+          <Text style={styles.timestamp}>{timestamp}</Text>
         </View>
         <View style={styles.previewRow}>
           <Text style={styles.preview} numberOfLines={1}>
-            {conversation.lastMessagePreview}
+            {conversation.lastMessagePreview || t('messages.preview.empty')}
           </Text>
           {conversation.unreadCount > 0 ? (
             <View style={styles.badge}>

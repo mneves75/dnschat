@@ -31,6 +31,14 @@ export default function NativeTabsLayout() {
         )}
         <Label>Inbox</Label>
       </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="logs">
+        {Platform.OS === 'ios' ? (
+          <Icon sf={{ default: 'list.bullet.rectangle', selected: 'list.bullet.rectangle.fill' }} />
+        ) : (
+          <VectorIcon family={MaterialCommunityIcons} name="chart-box-outline" />
+        )}
+        <Label>Logs</Label>
+      </NativeTabs.Trigger>
       <NativeTabs.Trigger name="settings">
         {Platform.OS === 'ios' ? (
           <Icon sf={{ default: 'gearshape', selected: 'gearshape.fill' }} />

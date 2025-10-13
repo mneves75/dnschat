@@ -7,6 +7,7 @@ jest.mock("react-native", () => ({
     RNDNSModule: {
       queryTXT: jest.fn(),
       isAvailable: jest.fn(),
+      configure: jest.fn(),
     },
   },
 }));
@@ -24,6 +25,8 @@ describe("Native DNS Module", () => {
 
     // Reset capabilities cache
     testDNS.resetCapabilities();
+
+    mockNativeModule.configure.mockResolvedValue(undefined);
   });
 
   describe("Platform Capabilities", () => {
@@ -107,6 +110,7 @@ describe("Native DNS Module", () => {
         "test message",
       );
       expect(result).toEqual(mockResponse);
+      expect(mockNativeModule.configure).toHaveBeenCalledWith({ timeoutMs: expect.any(Number), maxConcurrent: 4 });
     });
 
     it("passes custom server to native module", async () => {
@@ -163,6 +167,15 @@ describe("Native DNS Module", () => {
           "Native DNS module is not available on this platform",
         ),
       );
+    });
+
+    it("configures native resolver only once", async () => {
+      mockNativeModule.queryTXT.mockResolvedValue(["hello"]);
+
+      await testDNS.queryTXT("ch.at", "alpha");
+      await testDNS.queryTXT("ch.at", "beta");
+
+      expect(mockNativeModule.configure).toHaveBeenCalledTimes(1);
     });
 
     it("should handle empty response from native module", async () => {
