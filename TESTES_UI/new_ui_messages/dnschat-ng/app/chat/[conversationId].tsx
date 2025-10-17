@@ -28,6 +28,7 @@ import {
 } from '@/context/MessageProvider';
 import { useColorScheme } from '@/components/useColorScheme';
 import { MAX_MESSAGE_LENGTH, validateMessageInput } from '@/utils/validation';
+import { sortDnsRecords } from '@/utils/dnsLabel';
 import { GlassContainer } from '@/components/ui/GlassContainer';
 import { useTransport } from '@/context/TransportProvider';
 import { useTranslation } from '@/i18n';
@@ -138,15 +139,33 @@ export default function ConversationScreen() {
           conversationId: outgoing.conversationId,
           message: outgoing.text
         });
-        const ordered = [...result.records].sort((a, b) => {
-          const aId = Number.parseInt(a.id, 10);
-          const bId = Number.parseInt(b.id, 10);
-          if (Number.isFinite(aId) && Number.isFinite(bId)) {
-            return aId - bId;
-          }
-          return a.id.localeCompare(b.id);
-        });
-        const responseText = ordered.map((record) => record.content).join('').trim();
+
+        /**
+         * CRITICAL FIX: Use proper DNS record sorting utility (sortDnsRecords)
+         * instead of inline sorting logic that fails on mixed ID types.
+         *
+         * Previous code:
+         *   const ordered = [...result.records].sort((a, b) => {
+         *     const aId = Number.parseInt(a.id, 10);
+         *     const bId = Number.parseInt(b.id, 10);
+         *     if (Number.isFinite(aId) && Number.isFinite(bId)) {
+         *       return aId - bId;  // Works only if BOTH are numeric
+         *     }
+         *     return a.id.localeCompare(b.id);  // Falls back to string sort if mixed types
+         *   });
+         *   const responseText = ordered.map((record) => record.content).join('').trim();
+         *
+         * Problem: If response has mixed ID types (e.g., ["1", "2", "msg-id"]),
+         * the sort gives unpredictable results like ["1", "2", "msg-id"] vs ["1", "msg-id", "2"]
+         * depending on which condition matches.
+         *
+         * Fix: sortDnsRecords() properly handles:
+         * - Multi-part format: "N/M" (e.g., "1/3", "2/3", "3/3")
+         * - Numeric format: "N" (e.g., "1", "2", "3")
+         * - Single-part format: any string (e.g., "response data")
+         * Returns content concatenated in correct order.
+         */
+        const responseText = sortDnsRecords(result.records).trim();
         const text = responseText.length > 0 ? responseText : 'No TXT records returned.';
         const incoming = createIncomingMessage(outgoing.conversationId, remoteAuthorId, text);
         receiveMessage(outgoing.conversationId, incoming);
