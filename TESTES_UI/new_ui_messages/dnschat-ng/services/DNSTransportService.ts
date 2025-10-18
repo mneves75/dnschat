@@ -130,8 +130,9 @@ const parseRecords = (records: string[]): DNSRecord[] => {
       content = rest.join(':');
     }
 
-    const [id] = position.split('/');
-    map.set(id, content);
+    // Store full "N/M" position as ID for proper sorting detection by sortDnsRecords
+    // This allows sortDnsRecords to use regex /^(\d+)\/(\d+)$/ to detect multi-part responses
+    map.set(position, content);
   }
   return Array.from(map.entries()).map(([id, content]) => ({ id, content }));
 };
