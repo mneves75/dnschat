@@ -17,15 +17,15 @@ export type Preferences = {
   updatedAt: number;
 };
 
-const STORAGE_KEY = 'dnschat-ng/preferences/v1';
+const STORAGE_KEY = 'dnschat-ng/preferences/v2';
 
 export const createDefaultPreferences = (): Preferences => ({
   onboardingCompleted: false,
   locale: 'system',
   transport: {
     native: true,
-    udp: false,
-    tcp: false,
+    udp: true,
+    tcp: true,
     https: true
   },
   serverHost: DEFAULT_DNS_SERVER,
