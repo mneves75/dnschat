@@ -24,8 +24,8 @@ export const createDefaultPreferences = (): Preferences => ({
   locale: 'system',
   transport: {
     native: true,
-    udp: false,
-    tcp: false,
+    udp: true,
+    tcp: true,
     https: true
   },
   serverHost: DEFAULT_DNS_SERVER,
