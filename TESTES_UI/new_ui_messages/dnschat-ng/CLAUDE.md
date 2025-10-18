@@ -162,10 +162,17 @@ Multi-transport DNS query service with automatic fallback:
 **Query Flow**:
 1. User sends message → `TransportProvider.executeQuery()`
 2. Message sanitized and converted to DNS label via `buildDnsQueryLabel()`
+   - Format: `{conversationId}-{sanitizedMessage}.{server}`
+   - Example: `onboarding-demo-hello-from-onboarding.ch.at`
+   - Sanitization: lowercase, spaces→dashes, max 63 chars per label
 3. DNSTransportService tries transports in order (based on user preferences)
 4. Implements retry logic (max 3 attempts) with exponential backoff
 5. Returns parsed TXT records as `QueryResult`
-6. Records parsed for multi-part responses (e.g., `1/3:part1`, `2/3:part2`)
+6. **CRITICAL**: ch.at server returns plain chunks (no "N/M:" prefix)
+   - Server format: Single TXT record with array of 255-byte chunks
+   - Example: `["chunk1 (255 bytes)", "chunk2 (255 bytes)", "chunk3 (remaining)"]`
+   - Client assigns sequential IDs: `"1/N", "2/N", "3/N"` for proper sorting
+   - Full response reconstructed by combining all chunks
 
 **Rate Limiting**:
 - Max 10 requests per 60 seconds (prevents DNS abuse)
@@ -496,6 +503,26 @@ Located in `modules/dns-native/` (if present):
 - Try different DNS server
 - Enable verbose logging in `__DEV__` mode
 - Test with HTTPS transport (always available)
+
+### DNS Response Truncation (FIXED)
+
+**Symptom**: Responses limited to 255 bytes (rest of message cut off)
+
+**Root Cause** (NOW FIXED): ch.at server sends plain chunks without `N/M:` prefix:
+- Server format: `["chunk1 (255 bytes)", "chunk2 (255 bytes)", "chunk3 (remaining)"]`
+- Old client code: Assigned all chunks ID "1/1", Map deduplication kept only first chunk
+- Result: Only first 255 bytes of response received
+
+**Solution** (implemented in DNSTransportService.ts):
+- Detect plain chunks (no ":" separator)
+- Assign sequential IDs: `"1/N", "2/N", "3/N"`
+- All chunks preserved and combined correctly
+- Works with both plain chunks and explicit `N/M:content` format
+
+**Impact**:
+- Full DNS responses now work (not just 255 bytes)
+- Long responses (500+, 1000+ bytes) now handled correctly
+- See `__tests__/parseRecords.test.ts` for test cases
 
 ### AsyncStorage Issues
 
