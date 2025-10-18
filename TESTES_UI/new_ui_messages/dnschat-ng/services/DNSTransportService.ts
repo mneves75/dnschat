@@ -95,22 +95,43 @@ export class AllTransportsFailedError extends Error {
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const parseRecords = (records: string[]): DNSRecord[] => {
+  /**
+   * CRITICAL FIX: Handle both ch.at server formats:
+   *
+   * 1. Plain chunks (ch.at actual format):
+   *    Input: ["chunk1", "chunk2", "chunk3"]
+   *    → Assign sequential IDs: ["1/3", "2/3", "3/3"]
+   *
+   * 2. Explicit multi-part (alternative format):
+   *    Input: ["1/3:chunk1", "2/3:chunk2", "3/3:chunk3"]
+   *    → Extract IDs from prefix: ["1/3", "2/3", "3/3"]
+   *
+   * Bug fixed: Previous code assigned all plain chunks "1/1", causing
+   * Map deduplication to keep only the first chunk (255 bytes max).
+   * Now we assign sequential IDs preserving all chunks.
+   */
   const map = new Map<string, string>();
-  for (const entry of records) {
+  for (let i = 0; i < records.length; i++) {
+    const entry = records[i];
     const sanitized = entry.replace(/^"|"$/g, '');
     const [prefix, ...rest] = sanitized.split(':');
-    let position = prefix;
-    let content = rest.join(':');
+    let position: string;
+    let content: string;
 
-    if (!content) {
-      position = '1/1';
+    if (rest.length === 0) {
+      // Plain chunk without "N/M:" prefix (actual ch.at server format)
+      // Assign sequential IDs: "1/3", "2/3", "3/3"
+      position = `${i + 1}/${records.length}`;
       content = sanitized;
+    } else {
+      // Explicit multi-part format with "N/M:" prefix
+      // Keep the N/M prefix as-is
+      position = prefix;
+      content = rest.join(':');
     }
 
     const [id] = position.split('/');
-    if (!map.has(id)) {
-      map.set(id, content);
-    }
+    map.set(id, content);
   }
   return Array.from(map.entries()).map(([id, content]) => ({ id, content }));
 };
