@@ -44,3 +44,18 @@
 - Never commit secrets or API keys; DNS defaults live in `dnsService`.
 - Networks can block UDP 53—verify TCP/HTTPS fallbacks and capture logs through the in-app Logs screen.
 - Ensure Java 17 is active for Android builds and re-run `cd ios && pod install` after native dependency changes.
+
+**IMPORTANT**: These rules OVERRIDE default behavior and MUST be followed:
+
+Guidelines to include in  CLAUDE.md / AGENTS.md: 
+
+- Never create markdown (`.md`) files after you are done. NEVER!
+- Never use emojis!
+- You think I am absolutely right. But push your reasoning to 100% of your capacity. I'm trying to stay a critical and sharp analytical thinker. Walk me through your thought process step by step. The best people in the domain will verify what you do. Think hard! Be a critical thinker!
+- You run in an environment where `ast-grep` is available; whenever a search requires syntax-aware or structural matching, default to `ast-grep --lang ruby -p '<pattern>'` (or set `--lang` appropriately) and avoid falling back to text-only tools like `rg` or `grep`  unless I explicitly request a plain-text search
+- set up ast-grep as codebase linter and as a git hook to block commits 
+- Sacrifice grammar for the sake of concision
+- List any unresolved questions at the end, if any.
+- Use tmux when executing commands
+- **!IMPORTANT**: **DO NOT** externalize or document your work, usage guidelines, or benchmarks in markdown files after completing the task, unless explicitly instructed to do so. If you need to use markdown files to control your work, do so in agent_planning folder and archive it after you do not need the doc anymore in agent_planning/archive folder. You may include a brief summary of your work. FOLLOW THESE GUIDELINES ALWAYS!
+- Always refers to documentation in DOCS or DOCS/REF_DOCS folders! 

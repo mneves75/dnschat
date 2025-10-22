@@ -190,9 +190,18 @@ class DNSTransportServiceImpl {
   private tcpSupport: 'unknown' | 'available' | 'unavailable' = 'unknown';
   private tcpLoadError: Error | null = null;
   private nativeConfigured = false;
+  private appStateSubscription: { remove: () => void } | null = null;
 
   constructor() {
-    AppState.addEventListener('change', this.handleAppStateChange);
+    const existingCleanup = (globalThis as any).__dnsTransportCleanup as (() => void) | undefined;
+    existingCleanup?.();
+
+    this.appStateSubscription = AppState.addEventListener('change', this.handleAppStateChange);
+    // Track cleanup on global scope so fast refresh tears down the previous instance, preventing
+    // duplicate listeners that would keep the app in a "backgrounded" state.
+    (globalThis as any).__dnsTransportCleanup = () => {
+      this.dispose();
+    };
   }
 
   async executeQuery(options: QueryOptions): Promise<QueryResult> {
@@ -668,6 +677,11 @@ class DNSTransportServiceImpl {
   private handleAppStateChange = (state: AppStateStatus) => {
     this.paused = state !== 'active';
   };
+
+  dispose() {
+    this.appStateSubscription?.remove?.();
+    this.appStateSubscription = null;
+  }
 }
 
 export const DNSTransportService = new DNSTransportServiceImpl();

@@ -74,6 +74,6 @@
   "onboarding.step2.error": "Sample query failed: {{error}}",
   "onboarding.step3.title": "You are ready",
   "onboarding.step3.caption": "Open the inbox to start chatting over DNS.",
-  "onboarding.finish": "Finish"
+  "onboarding.finish": "Finish",
+  "common.cancel": "Cancel"
 }
-  "common.cancel": "Cancel",

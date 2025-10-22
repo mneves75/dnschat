@@ -74,6 +74,6 @@
   "onboarding.step2.error": "Falha na consulta: {{error}}",
   "onboarding.step3.title": "Tudo pronto",
   "onboarding.step3.caption": "Abra a caixa de entrada para começar a conversar.",
-  "onboarding.finish": "Concluir"
+  "onboarding.finish": "Concluir",
+  "common.cancel": "Cancelar"
 }
-  "common.cancel": "Cancelar",

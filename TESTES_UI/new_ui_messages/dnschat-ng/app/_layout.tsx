@@ -49,7 +49,13 @@ export default function RootLayout() {
     return null;
   }
 
-  return <RootLayoutNav />;
+  return (
+    // Wrap the navigation tree so downstream hooks (usePreferences/useTranslation) always run
+    // inside their providers; this guards against initialization order regressions.
+    <PreferencesProvider>
+      <RootLayoutNav />
+    </PreferencesProvider>
+  );
 }
 
 function RootLayoutNav() {
@@ -72,25 +78,23 @@ function RootLayoutNav() {
   }, [hydrated, preferences.onboardingCompleted, router, segments]);
 
   return (
-    <PreferencesProvider>
-      <I18nProvider>
-        <DNSLogProvider>
-          <TransportProvider>
-            <MessageProvider>
-              <SafeAreaProvider>
-                <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-                  <Stack>
-                    <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                    <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-                    <Stack.Screen name="new-chat" options={{ presentation: 'modal' }} />
-                    <Stack.Screen name="onboarding" options={{ headerShown: false }} />
-                  </Stack>
-                </ThemeProvider>
-              </SafeAreaProvider>
-            </MessageProvider>
-          </TransportProvider>
-        </DNSLogProvider>
-      </I18nProvider>
-    </PreferencesProvider>
+    <I18nProvider>
+      <DNSLogProvider>
+        <TransportProvider>
+          <MessageProvider>
+            <SafeAreaProvider>
+              <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+                <Stack>
+                  <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                  <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+                  <Stack.Screen name="new-chat" options={{ presentation: 'modal' }} />
+                  <Stack.Screen name="onboarding" options={{ headerShown: false }} />
+                </Stack>
+              </ThemeProvider>
+            </SafeAreaProvider>
+          </MessageProvider>
+        </TransportProvider>
+      </DNSLogProvider>
+    </I18nProvider>
   );
 }

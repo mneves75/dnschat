@@ -15,6 +15,7 @@ import {
   loadPreferences,
   savePreferences
 } from '@/storage/preferences';
+import { DEFAULT_DNS_SERVER, DNS_SERVER_WHITELIST } from '@/constants/dns';
 
 type PreferencesContextValue = {
   preferences: Preferences;
@@ -74,11 +75,22 @@ export function PreferencesProvider({ children }: PropsWithChildren) {
   }, []);
 
   const setServerHost = useCallback((serverHost: string) => {
-    setPreferences((current) => ({
-      ...current,
-      serverHost,
-      updatedAt: Date.now()
-    }));
+    setPreferences((current) => {
+      const normalized = serverHost.trim().toLowerCase();
+      const whitelistEntry =
+        DNS_SERVER_WHITELIST[normalized] ??
+        Object.values(DNS_SERVER_WHITELIST).find(
+          (candidate) => candidate.host.toLowerCase() === normalized
+        );
+      // Defensive: Persisted settings can drift or be tampered with; clamp to whitelist so we never
+      // point queries at an unexpected domain. Falls back to default if lookup fails.
+      const resolvedHost = whitelistEntry?.host ?? DEFAULT_DNS_SERVER;
+      return {
+        ...current,
+        serverHost: resolvedHost,
+        updatedAt: Date.now()
+      };
+    });
   }, []);
 
   const value = useMemo(

@@ -23,6 +23,13 @@ npm test                     # Run Jest tests
 npm run dns:harness         # Run DNS test harness
 ```
 
+## Package Manager Preferences
+
+- **Bun**: Preferred package manager when available (fast, modern, all-in-one)
+- **pnpm**: Alternative for projects requiring pnpm-specific features
+- **npm**: Fallback for maximum compatibility
+- Always check `package.json` for `"packageManager"` field to respect project configuration
+
 ## Critical Development Guidelines
 
 **IMPORTANT**: These rules OVERRIDE default behavior and MUST be followed:
@@ -30,6 +37,7 @@ npm run dns:harness         # Run DNS test harness
 1. **No Documentation Files**: Never create markdown files after completing tasks unless explicitly instructed. Use `agent_planning/` for planning docs only, archive when done.
 
 2. **Use ast-grep**: For syntax-aware searches, always use `ast-grep --lang typescript -p '<pattern>'` (or appropriate language) instead of rg/grep.
+   - Set up ast-grep as codebase linter and git hook to block commits with violations
 
 3. **No Emojis**: Never use emojis in code or commit messages.
 
@@ -38,6 +46,25 @@ npm run dns:harness         # Run DNS test harness
 5. **Expo Go Limitation**: Expo Go does not support custom native modules. Use Development Builds (`npm run ios/android`) to test DNS functionality.
 
 6. **Development Build Required**: Custom native DNS modules require `expo run:ios` or `expo run:android` - Expo Go will not work.
+
+7. **Critical Thinking**: Push reasoning to 100% capacity. Walk through thought process step by step. John Carmack and domain experts will verify work.
+
+8. **Communication Style**:
+   - Sacrifice grammar for concision
+   - List unresolved questions at end
+   - No unnecessary documentation unless requested
+
+9. **Execution Environment**:
+   - Use tmux when executing commands
+   - Always refer to documentation in `docs/` and `docs/REF_DOC/` folders
+
+10. **Atomic Commits**: Commit only files touched, list each path explicitly
+    - Tracked files: `git commit -m "<scoped message>" -- path/to/file1 path/to/file2`
+    - New files: `git restore --staged :/ && git add "path/to/file1" "path/to/file2" && git commit -m "<scoped message>" -- path/to/file1 path/to/file2`
+
+## ExecPlans
+
+When writing complex features or significant refactors, use an ExecPlan (as described in `/PLANS.md`) from design to implementation.
 
 ## Tech Stack
 
@@ -62,6 +89,154 @@ npm run dns:harness         # Run DNS test harness
   - iOS: Swift + Apple Network Framework (iOS 16.0+)
   - Android: Java + DnsResolver API (API 29+) with dnsjava fallback
   - Expo autolinking (no manual Podfile entries needed)
+
+## Expo SDK Best Practices
+
+### New Architecture (Fabric + TurboModules)
+
+- **Enabled**: `"newArchEnabled": true` in `app.json`
+- Uses TurboModules where appropriate
+- Native tabs leverage iOS 26 Liquid Glass and Android Material You
+- Performance optimizations with `@shopify/flash-list` for lists
+
+### Expo Glass Effect (iOS 26 Liquid Glass)
+
+Uses official `expo-glass-effect` with graceful fallbacks:
+
+**Platform Support**:
+- **iOS 26+**: Native Liquid Glass rendering via UIVisualEffectView
+- **iOS < 26 / Android / Web**: Alternative blur/transparency effects
+- **Force enable for testing**: Set `LIQUID_GLASS_PRE_IOS26=1` or `global.__DEV_LIQUID_GLASS_PRE_IOS26__ = true`
+
+**Core Components** (see `src/design-system/glass/`):
+- `<GlassView>`: Native glass view component
+- `<GlassContainer>`: Container with spacing for morphing effects
+- `isLiquidGlassAvailable()`: Check for iOS 26+ support
+- `AccessibilityInfo.isReduceTransparencyEnabled()`: Fallback to solid backgrounds
+
+**Performance Guidance**:
+- Limit to 5-10 glass effects on static screens
+- Disable during heavy animations/scrolling
+- `isInteractive` prop set-once on mount (remount with different key to toggle)
+
+### React Native 0.81 & React 19.1 Features
+
+- **React 19.1**: Improved hooks (`use` hook, enhanced refs)
+- **React Compiler**: Enabled by default (auto-memoization)
+- **Owner stacks**: Better error messages
+- **Unhandled promise rejections**: Logged as errors
+- **First-party JSC removed**: Use community JSC if needed
+
+### Expo SDK 54 Stable APIs
+
+**expo-file-system**: Stable object-oriented API
+```typescript
+import { File, Directory } from 'expo-file-system';
+// Legacy API at 'expo-file-system/legacy' (deprecated in SDK 55)
+```
+
+**expo-sqlite**: localStorage API for web compatibility
+```typescript
+import { loadExtensionAsync } from 'expo-sqlite';
+// SQLite extensions support
+// sqlite-vec bundled for vector data
+```
+
+**expo-app-integrity**: DeviceCheck (iOS) & Play Integrity API (Android)
+
+**expo/blob**: Binary data handling (beta)
+
+**expo-updates**:
+```typescript
+import { setUpdateRequestHeadersOverride, useUpdates } from 'expo-updates';
+// Runtime header overrides
+// downloadProgress in useUpdates() hook
+// reloadScreenOptions for custom reload screens
+```
+
+### Liquid Glass Design Patterns
+
+**Glass Cards**:
+```typescript
+import { GlassView } from 'expo-glass-effect';
+
+<GlassView variant="regular">
+  <Text>Card Content</Text>
+</GlassView>
+```
+
+**Containers**:
+```typescript
+<GlassContainer spacing={16}>
+  <GlassView>Item 1</GlassView>
+  <GlassView>Item 2</GlassView>
+</GlassContainer>
+```
+
+**Fallbacks**:
+- Provide `BlurView` or solid backgrounds for iOS < 26
+- Respect reduced transparency mode
+- Apply subtle `tintColor` to match theme
+
+**Performance**:
+- Disable glass during scrolling/animations
+- Limit to 5-10 effects per screen
+- Monitor with GlassProvider element counting
+
+### Material Design 3 (Android Parity)
+
+- **Color System**: Theme-based Material You colors
+- **Components**: Elevated cards, filled buttons, outlined text fields
+- **Motion**: Container transforms and shared element transitions
+- **Accessibility**: 4.5:1 contrast ratios, 48dp minimum touch targets
+
+### React Native Performance Rules
+
+**StyleSheet.create** (REQUIRED):
+```typescript
+// CORRECT: StyleSheet with theme integration
+export function Card({ children, style }: CardProps) {
+  const { colors } = useColors();
+  return (
+    <View style={[styles.card, { backgroundColor: colors.surface }, style]}>
+      {children}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  card: {
+    borderRadius: 16,
+    padding: 20,
+    marginVertical: 8,
+  },
+});
+
+// WRONG: Inline objects create new object every render
+<View style={{ borderRadius: 16, padding: 20 }}>
+```
+
+**Critical Performance Rules**:
+- **StyleSheet.create**: Always use, never inline styles
+- **Console.log**: Remove from production builds
+- **FlashList**: Use for lists with 10+ items instead of FlatList
+- **Memoization**: Let React Compiler handle, avoid manual useMemo/useCallback unless profiled
+- **Release Testing**: Always test performance in release mode: `--no-dev --minify`
+
+### Accessibility Requirements
+
+All interactive elements MUST have:
+- `accessibilityLabel`: Descriptive label
+- `accessibilityRole`: "button", "link", "header", etc.
+- `accessibilityState`: For disabled, selected, checked states
+
+**Screen Reader Testing**:
+- iOS: VoiceOver
+- Android: TalkBack
+
+**Contrast Requirements**:
+- Text: Minimum 4.5:1
+- Large text/UI components: Minimum 3:1
 
 ## Architecture
 
@@ -479,6 +654,141 @@ Before committing:
 6. Update CHANGELOG.md for significant changes
 7. Run tests: `npm test`
 
+## Apple Platforms
+
+### Swift & iOS Development
+
+**Language Preferences**:
+- Favor Apple programming languages and frameworks: Swift, Objective-C, C, C++
+- Default to Swift unless user indicates another language
+- Pay attention to platform context (iOS vs macOS vs watchOS vs visionOS)
+- Use official platform names: iOS, iPadOS, macOS, watchOS, visionOS
+
+**Modern Concurrency**:
+- Prefer Swift Concurrency (async/await, actors) over Dispatch or Combine
+- Be flexible if user's code shows different preference
+
+**Modern Previews**:
+- Use `#Preview` macro for SwiftUI previews
+- Avoid legacy `PreviewProvider` protocol for new code
+
+### Xcode CLI Usage
+
+When building/testing with Xcode CLI:
+
+1. Identify correct scheme and destination
+2. Workspace location: `./XXX.xcworkspace`
+3. Use: `.claude/scripts/xcodebuild <params>`
+
+**Rules**:
+- Parameters same as system `xcodebuild`
+- NEVER add clean option
+- Build results written to output file
+- Use Read/Search tools to interpret output (file is large)
+- NEVER read output file whole
+- Use specified scheme and destination
+
+**Build Commands**:
+```bash
+# Build for iOS
+xcodebuild -project project.xcodeproj -scheme SchemeName -sdk iphoneos build
+
+# Run tests
+xcodebuild test -project project.xcodeproj -scheme SchemeName -destination 'platform=iOS Simulator,name=iPhone 15 Pro'
+```
+
+### iOS 26 Liquid Glass Requirements
+
+All UI MUST follow iOS 26 Liquid Glass design (see `docs/REF_DOC/docs_apple/liquid-glass.md`):
+
+```swift
+// Tab bar with glass effect
+TabView {
+    ConvertView()
+        .tabItem { Label("Convert", systemImage: "photo.on.rectangle") }
+}
+.tabBarStyle(.sidebarAdaptable)  // iPad sidebar adaptation
+
+// Custom elements with glass
+VStack {
+    Image(systemName: "photo.stack")
+    Text("Select Files")
+}
+.glassEffect(.regular.interactive())  // Interactive glass
+
+// Glass container for morphing animations
+GlassEffectContainer(spacing: 20) {
+    HStack {
+        Button("Lossless") { }
+            .glassEffect()
+        Button("Lossy") { }
+            .glassEffect()
+    }
+}
+
+// Glass button styles
+Button("Convert") { }
+    .buttonStyle(.glassProminent)  // Primary actions
+```
+
+**Critical Requirements**:
+- Tab bar uses `.sidebarAdaptable` on iPad
+- `.glassEffect()` on custom UI cards
+- `.buttonStyle(.glass)` or `.glassProminent` for buttons
+- `GlassEffectContainer` for morphing animations
+- Edge-to-edge content with background extension
+
+### Modern SwiftUI Patterns (NO MVVM)
+
+**CRITICAL: NO ViewModels, NO MVVM**
+
+Use modern SwiftUI patterns (iOS 17+), NOT UIKit/MVVM:
+
+**DO**:
+- Use `@State` for local view state
+- Use `@Observable` classes for shared state (NOT `@ObservableObject`)
+- Use `@Environment` for dependency injection
+- Use `actor` for isolated concurrency
+- Keep state ownership in views unless sharing required
+
+**DON'T**:
+- Create `ViewModel` classes for every view
+- Use `@ObservableObject` or `@Published` (legacy iOS 16)
+- Use Combine for simple async operations
+- Move state out of views unnecessarily
+
+**State Management Examples**:
+```swift
+// CORRECT: Local view state
+struct ConvertView: View {
+    @State private var selectedFiles: [URL] = []
+    @State private var conversionProgress: Double = 0.0
+}
+
+// CORRECT: Shared state with @Observable
+@Observable
+class ConversionCoordinator {
+    var tasks: [ConversionTask] = []
+    var isProcessing: Bool = false
+}
+
+// WRONG: Don't create ViewModels
+class ConvertViewModel: ObservableObject { } // NO!
+```
+
+**Concurrency**:
+- Use `async/await` for ALL async operations
+- Use `.task { }` modifier for view lifecycle-aware async work
+- Use `actor` for state isolation (conversion queue, file operations)
+- Handle errors with `do/try/catch`, not completion handlers
+
+### Code Organization
+
+- Feature-based folders (NOT Models/, Views/, ViewModels/)
+- Related code in same file when appropriate
+- Extensions for organization within large files
+- Keep files < 300 lines when possible
+
 ## Documentation Structure
 
 - `/docs/technical/` - Specifications and guides
@@ -492,10 +802,40 @@ Before committing:
 
 **CRITICAL**: Always consult `docs/REF_DOC/` BEFORE implementing features or answering questions about Expo, React Native, iOS, or Swift.
 
-## Important Notes
+## Important Notes & Guidelines
 
-- **John Carmack** reviews all code - maintain high quality
-- **Update CHANGELOG.md** for all changes following [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
+### Code Quality Standards
+
+- **John Carmack** reviews all code - maintain highest quality
 - **Follow KISS principle** - Keep It Simple, Stupid
+- **Critical thinking required** - Push reasoning to 100%, think step-by-step
+- **Domain experts verify** - Best people in field will review
+
+### Documentation & Communication
+
+- **Update CHANGELOG.md** for all changes following [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
+- **Always refer to docs** - Check `docs/` and `docs/REF_DOC/` before implementing
+- **No unnecessary markdown** - Only create docs if explicitly requested
+- **Concise communication** - Sacrifice grammar for brevity
+- **List unresolved questions** - At end of responses if any
+
+### Development Workflow
+
 - **Test thoroughly** before releases (iOS, Android, real DNS queries)
-- **Native DNS prioritized** over network methods for best performance
+- **Atomic commits** - Commit only touched files, list paths explicitly
+- **Use tmux** - Execute commands in tmux when possible
+- **Native DNS prioritized** - Over network methods for best performance
+
+### Documentation Structure
+
+**AGENTS.md / CLAUDE.md** - How to work on this codebase (READ FIRST)
+**PROJECT_STATUS.md** - Current progress, what's next, blockers (READ SECOND)
+**README.md** - Human-readable project overview
+**QUICKSTART.md** - User getting started guide (optional)
+
+### Reference Documentation
+
+See `docs/REF_DOC/` for comprehensive reference:
+- `docs/REF_DOC/docs_apple/` - Swift, SwiftUI, Liquid Glass, HIG (1096+ files)
+- `docs/REF_DOC/docs_expo_dev/` - Complete Expo guides and API references
+- `docs/REF_DOC/docs_reactnative_getting-started/` - New Architecture, platform integration
