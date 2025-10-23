@@ -18,7 +18,7 @@
     "clean-ios": "cd ios && rm -rf Pods/ Podfile.lock build/ && pod install",
     "test": "jest --runInBand",
     "dns:harness:build": "tsc -p scripts/tsconfig.harness.json",
-    "dns:harness": "npm run dns:harness:build && node scripts/dist/run-dns-harness.js" 
+    "dns:harness": "npm run dns:harness:build && node scripts/dist/run-dns-harness.js"
   },
   "dependencies": {
     "@expo/metro-runtime": "~6.1.2",
@@ -34,6 +34,7 @@
     "expo-asset": "~12.0.9",
     "expo-build-properties": "~1.0.9",
     "expo-dev-client": "~6.0.16",
+    "expo-glass-effect": "~0.1.4",
     "expo-localization": "~17.0.7",
     "expo-splash-screen": "~31.0.10",
     "expo-system-ui": "~6.0.8",

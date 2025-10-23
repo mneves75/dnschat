@@ -7,6 +7,87 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.2.0] - 2025-10-23
+
+### BREAKING CHANGES
+
+- **iOS 26 Liquid Glass Official API Migration**: Migrated from custom native implementation to official `expo-glass-effect` package
+  - **Custom LiquidGlassNative removed**: All custom native modules replaced with expo-glass-effect
+  - **GlassStyle type changed**: Now supports only `'clear' | 'regular'` (removed `systemThinMaterial`, `systemUltraThinMaterial`, etc.)
+  - **Native module registration**: LiquidGlassNative pod removed from Podfile (now autolinked via Expo)
+  - **Plugin deprecated**: `liquid-glass-plugin.js` converted to no-op (expo-glass-effect handles everything)
+
+### Added
+
+- **expo-glass-effect Package**: Official Expo SDK 54 support for iOS 26 Liquid Glass
+  - `GlassView` component with `glassEffectStyle` prop ('clear' | 'regular')
+  - `GlassContainer` for morphing animations with `spacing` prop
+  - `isLiquidGlassAvailable()` for runtime iOS 26+ detection
+  - Proper iOS 26 `UIGlassEffect` integration via native modules
+- **Accessibility Support**: Full reduce transparency fallback implementation
+  - `AccessibilityInfo.isReduceTransparencyEnabled()` detection
+  - Solid backgrounds when transparency disabled
+  - Real-time accessibility setting change monitoring
+- **Platform Fallbacks**: Graceful degradation for all platforms
+  - iOS < 26: Blur-like CSS styles with proper shadows and borders
+  - Android: Material Design 3-style elevated surfaces
+  - Web: CSS backdrop-filter with fallback to solid backgrounds
+- **Performance Guidance**: Conservative glass element limits per Apple guidelines
+  - High-end iOS 26+ devices: 10 glass elements max
+  - Medium-tier iOS 17-25: 5 glass elements max
+  - Low-tier iOS 16: 3 glass elements max
+  - Validation warnings when exceeding device limits
+- **Type Safety**: Aligned TypeScript types with official expo-glass-effect API
+  - Simplified `GlassStyle` type to match official API
+  - Updated `LiquidGlassCapabilities` interface
+  - Removed deprecated custom glass styles
+
+### Changed
+
+- **LiquidGlassWrapper**: Complete rewrite using expo-glass-effect
+  - Now wraps official `GlassView` component for iOS 26+
+  - Maintains backwards-compatible prop interface
+  - Automatic platform/version fallback selection
+  - Accessibility-aware rendering (reduce transparency)
+- **liquidGlass.ts Utility**: Simplified to use official APIs
+  - Uses `isLiquidGlassAvailable()` from expo-glass-effect
+  - Removed custom UIGlassEffect class detection
+  - Removed mocked performance monitoring
+  - Removed stub environmental sensor integration
+- **iOS Native Code**: Cleaned up custom implementations
+  - Removed manual UIGlassEffect class string lookups
+  - Removed duplicate native modules in `native/liquid-glass/`
+  - Kept `ios/LiquidGlassNative/` for future custom extensions only
+
+### Removed
+
+- **Duplicate Native Modules**: Removed `native/liquid-glass/` directory
+  - Duplicate Swift/Objective-C files causing conflicts
+  - expo-glass-effect handles all native bridge code
+- **Custom Podfile Entry**: Removed manual LiquidGlassNative pod
+  - Now autolinked via expo-modules-autolinking
+  - Prevents duplicate dependency errors
+- **liquid-glass-plugin.js Logic**: Plugin converted to no-op
+  - No longer copies native files during build
+  - expo-glass-effect handles iOS 26 integration
+  - Kept for backwards compatibility during migration
+
+### Fixed
+
+- **Native Module Conflicts**: Eliminated duplicate registration errors
+  - Single source of truth: expo-glass-effect native modules
+  - No more manual pod entries conflicting with autolinking
+- **iOS 26 Detection**: Now uses official runtime checks
+  - Replaced fragile NSClassFromString lookups
+  - Uses `isLiquidGlassAvailable()` from expo-glass-effect
+  - Proper compile-time and runtime iOS 26 detection
+
+### Documentation
+
+- **CLAUDE.md**: Updated with expo-glass-effect usage patterns
+- **Migration Guide**: Added breaking changes and migration steps
+- **API Alignment**: All references updated to match official expo-glass-effect API
+
 ## [2.1.1] - 2025-10-23
 
 ### Added

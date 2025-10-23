@@ -45,9 +45,9 @@ target 'DNSChat' do
   # Note: DNSNative is autolinked from modules/dns-native via Expo autolinking
   # Do not add manual pod entry as it causes duplicate dependency errors
 
-  # iOS 26 Liquid Glass Module
-  pod 'LiquidGlassNative', :path => './LiquidGlassNative'
-  
+  # Note: LiquidGlassNative and expo-glass-effect are autolinked via Expo autolinking
+  # Manual pod entries removed to prevent duplicate dependency errors
+
   # Fix for react-native-bottom-tabs Swift dependencies
   pod 'SDWebImage', :modular_headers => true
   pod 'SDWebImageSVGCoder', :modular_headers => true

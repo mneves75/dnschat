@@ -74,25 +74,70 @@ node test-dns.js "message"  # Test DNS functionality
 - Performance optimizations with `@shopify/flash-list` for list rendering
 - React Compiler enabled by default (auto-memoization)
 
-### Liquid Glass UI (Future Enhancement)
-Uses official `expo-glass-effect` with graceful fallbacks:
-- iOS 26+: Native Liquid Glass rendering
-- iOS < 26 / Android / Web: Alternative blur/transparency effects
-- Force enable for testing on iOS < 26: Set `LIQUID_GLASS_PRE_IOS26=1` or `global.__DEV_LIQUID_GLASS_PRE_IOS26__ = true`
-- Check availability: `isLiquidGlassAvailable()` before rendering glass components
-- Accessibility: `AccessibilityInfo.isReduceTransparencyEnabled()` for fallback to solid backgrounds
-- **Performance Guidance**: Limit to 5-10 glass effects on static screens, disable during heavy animations/scrolling
-- **Interactive Glass**: `isInteractive` prop set-once on mount (remount with different key to toggle)
+### Liquid Glass UI (iOS 26+)
+Uses official `expo-glass-effect` (v0.1.4) with graceful fallbacks:
 
-### iOS 26 & Liquid Glass (Future)
-- **expo-glass-effect**: `<GlassView>`, `<GlassContainer>` components with native UIVisualEffectView
-- **Icon Composer Support**: `.icon` format for Liquid Glass app icons (macOS only tooling)
-- **NativeTabs Enhancements**:
-  - Badge support for notifications
-  - Tab bar minimize behavior (`minimizeBehavior="onScrollDown"`)
-  - Separate search tab (`role="search"`)
-  - Tab bar search input with `headerSearchBarOptions`
-  - DynamicColorIOS for adaptive colors in glass contexts
+**Official API (expo-glass-effect)**:
+```tsx
+import { GlassView, GlassContainer, isLiquidGlassAvailable } from 'expo-glass-effect';
+
+// Basic glass view
+<GlassView
+  glassEffectStyle="regular"  // 'clear' | 'regular'
+  isInteractive={false}        // Enable touch interactions
+  tintColor="#007AFF"          // Optional tint
+  style={{ borderRadius: 16 }}
+>
+  <Text>Content</Text>
+</GlassView>
+
+// Glass container for morphing animations
+<GlassContainer spacing={10}>
+  <GlassView style={styles.glass1} />
+  <GlassView style={styles.glass2} />
+</GlassContainer>
+
+// Runtime check
+if (isLiquidGlassAvailable()) {
+  // iOS 26+ glass effects available
+}
+```
+
+**Wrapper Component (LiquidGlassWrapper)**:
+```tsx
+import { LiquidGlassWrapper } from '@/components/LiquidGlassWrapper';
+
+<LiquidGlassWrapper
+  variant="regular"      // regular | prominent | interactive
+  shape="capsule"        // capsule | rect | roundedRect
+  isInteractive={false}
+>
+  <Text>Content</Text>
+</LiquidGlassWrapper>
+```
+
+**Platform Support**:
+- iOS 26+: Native UIGlassEffect rendering via expo-glass-effect
+- iOS < 26: Blur-like CSS fallback with shadows/borders
+- Android: Material Design 3 elevated surfaces
+- Web: CSS backdrop-filter with solid fallback
+
+**Accessibility**:
+- Automatically detects `AccessibilityInfo.isReduceTransparencyEnabled()`
+- Falls back to solid backgrounds when transparency disabled
+- Real-time accessibility setting change monitoring
+
+**Performance Guidance**:
+- **iOS 26+ High-end**: Max 10 glass elements per screen
+- **iOS 17-25 Medium**: Max 5 glass elements per screen
+- **iOS 16 Low-tier**: Max 3 glass elements per screen
+- Disable glass during heavy animations/scrolling
+- Use `GlassContainer` for morphing groups
+
+**Known Limitations**:
+- `isInteractive` prop set-once on mount (remount with different key to toggle)
+- Custom native modules in `ios/LiquidGlassNative/` kept for future extensions only
+- No sensor-aware adaptation in v0.1.4 (placeholder in LiquidGlassWrapper)
 
 ### React Native 0.81 & React 19.1
 - **React 19.1** with improved hooks (`use` hook, enhanced refs)
