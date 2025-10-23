@@ -241,16 +241,11 @@ async function attemptNative(
 }
 
 async function importNativeModule() {
-  try {
-    const mod = await import('../modules/dns-native');
-    if (mod && mod.nativeDNS) {
-      return mod;
-    }
-  } catch (error) {
-    // Silence errors – absence is expected in Node harness environments.
-    if (process.env.DNS_HARNESS_DEBUG === '1') {
-      console.warn('Native module import failed:', error);
-    }
+  // Native module only works in React Native environment, not Node.js
+  // The harness always runs in Node.js, so we always skip the native module
+  // and rely on UDP/TCP transports instead
+  if (process.env.DNS_HARNESS_DEBUG === '1') {
+    console.warn('Native module skipped: DNS harness runs in Node.js (not React Native)');
   }
   return null;
 }
