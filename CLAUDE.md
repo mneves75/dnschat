@@ -2,9 +2,33 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## IMPORTANT: Critical Development Guidelines
+
+**These rules OVERRIDE default behavior and MUST be followed:**
+
+1. **No Documentation Files**: Never create markdown (`.md`) files after completing tasks unless explicitly instructed. Use `agent_planning/` for planning docs only, archive when done in `agent_planning/archive/`.
+
+2. **No Emojis**: Never use emojis in code, commit messages, or communications.
+
+3. **Critical Thinking**: Push reasoning to 100% capacity. Walk through thought process step-by-step. John Carmack and domain experts will verify all work. Challenge assumptions, think harder, question everything.
+
+4. **ast-grep Usage**: For syntax-aware searches, always use `ast-grep --lang typescript -p '<pattern>'` (or set `--lang` appropriately for JavaScript, Swift, Java, etc.) instead of `rg` or `grep` unless explicitly requested. Set up ast-grep as codebase linter and git hook to block commits with violations.
+
+5. **Tmux Usage**: Execute commands in tmux sessions when available.
+
+6. **Communication Style**: Sacrifice grammar for concision. List unresolved questions at end if any.
+
+7. **Atomic Commits**: Commit only files touched, list each path explicitly:
+   - Tracked files: `git commit -m "<scoped message>" -- path/to/file1 path/to/file2`
+   - New files: `git restore --staged :/ && git add "path/to/file1" "path/to/file2" && git commit -m "<scoped message>" -- path/to/file1 path/to/file2`
+
+8. **ExecPlans**: For complex features or significant refactors, use an ExecPlan (as described in `/PLANS.md` or `DOCS/PLANS.md`) from design to implementation.
+
+9. **Reference Documentation**: Always refer to documentation in `docs/` and `docs/REF_DOC/` folders before implementing.
+
 ## Project Overview
 
-React Native mobile app providing ChatGPT-like interface via DNS TXT queries. Features local storage, dark/light themes, and native DNS modules for iOS/Android.
+React Native mobile app providing ChatGPT-like interface via DNS TXT queries. Features local storage, dark/light themes, native DNS modules for iOS/Android, and iOS 26+ Liquid Glass design system.
 
 ## Core Commands
 
@@ -173,14 +197,175 @@ const styles = StyleSheet.create({
 - **Screen Readers**: Test with VoiceOver (iOS) and TalkBack (Android)
 - **Contrast**: Minimum 4.5:1 for text, 3:1 for large text/UI components
 
+## Documentation Structure
+
+**AGENTS.md / CLAUDE.md** - How to work on this codebase (READ THIS FIRST)
+**PROJECT_STATUS.md** - Current progress, what's next, blockers (READ THIS SECOND)
+**README.md** - Human-readable project overview
+**QUICKSTART.md** - User getting started guide (optional)
+
+- `/docs/technical/` - Specifications and guides
+- `/docs/troubleshooting/` - Common issues
+- `/docs/architecture/` - System design
+- `/docs/REF_DOC/` - Reference documentation (1096+ markdown files)
+  - `docs/REF_DOC/docs_apple/` - Swift, SwiftUI, Liquid Glass, HIG
+  - `docs/REF_DOC/docs_expo_dev/` - Complete Expo guides and API references
+  - `docs/REF_DOC/docs_reactnative_getting-started/` - New Architecture, platform integration
+
+**CRITICAL**: Always consult `docs/REF_DOC/` BEFORE implementing features or answering questions about Expo, React Native, iOS, or Swift.
+
+## Apple Platform Guidelines
+
+### Swift & iOS Development
+
+**Language Preferences**:
+- Favor Apple programming languages: Swift, Objective-C, C, C++
+- Default to Swift unless user indicates another language
+- Pay attention to platform context (iOS vs macOS vs watchOS vs visionOS)
+- Use official platform names: iOS, iPadOS, macOS, watchOS, visionOS
+
+**Modern Concurrency**:
+- Prefer Swift Concurrency (async/await, actors) over Dispatch or Combine
+- Be flexible if user's code shows different preference
+
+**Modern Previews**:
+- Use `#Preview` macro for SwiftUI previews
+- Avoid legacy `PreviewProvider` protocol for new code
+
+### Xcode CLI Usage
+
+When building/testing with Xcode CLI:
+
+1. Identify correct scheme and destination
+2. Workspace location: `./XXX.xcworkspace`
+3. Use: `.claude/scripts/xcodebuild <params>`
+
+**Rules**:
+- Parameters same as system `xcodebuild`
+- NEVER add clean option
+- Build results written to output file
+- Use Read/Search tools to interpret output (file is large)
+- NEVER read output file whole
+- Use specified scheme and destination
+
+**Build Commands**:
+```bash
+# Build for iOS
+xcodebuild -project project.xcodeproj -scheme SchemeName -sdk iphoneos build
+
+# Run tests
+xcodebuild test -project project.xcodeproj -scheme SchemeName -destination 'platform=iOS Simulator,name=iPhone 15 Pro'
+```
+
+### iOS 26 Liquid Glass Requirements
+
+All UI MUST follow iOS 26 Liquid Glass design (see `docs/REF_DOC/docs_apple/liquid-glass.md`):
+
+```swift
+// Tab bar with glass effect
+TabView {
+    ConvertView()
+        .tabItem { Label("Convert", systemImage: "photo.on.rectangle") }
+}
+.tabBarStyle(.sidebarAdaptable)  // iPad sidebar adaptation
+
+// Custom elements with glass
+VStack {
+    Image(systemName: "photo.stack")
+    Text("Select Files")
+}
+.glassEffect(.regular.interactive())  // Interactive glass
+
+// Glass container for morphing animations
+GlassEffectContainer(spacing: 20) {
+    HStack {
+        Button("Lossless") { }
+            .glassEffect()
+        Button("Lossy") { }
+            .glassEffect()
+    }
+}
+
+// Glass button styles
+Button("Convert") { }
+    .buttonStyle(.glassProminent)  // Primary actions
+```
+
+**Critical Requirements**:
+- Tab bar uses `.sidebarAdaptable` on iPad
+- `.glassEffect()` on custom UI cards
+- `.buttonStyle(.glass)` or `.glassProminent` for buttons
+- `GlassEffectContainer` for morphing animations
+- Edge-to-edge content with background extension
+
+### Modern SwiftUI Patterns (NO MVVM)
+
+**CRITICAL: NO ViewModels, NO MVVM**
+
+Use modern SwiftUI patterns (iOS 17+), NOT UIKit/MVVM:
+
+**DO**:
+- Use `@State` for local view state
+- Use `@Observable` classes for shared state (NOT `@ObservableObject`)
+- Use `@Environment` for dependency injection
+- Use `actor` for isolated concurrency
+- Keep state ownership in views unless sharing required
+
+**DON'T**:
+- Create `ViewModel` classes for every view
+- Use `@ObservableObject` or `@Published` (legacy iOS 16)
+- Use Combine for simple async operations
+- Move state out of views unnecessarily
+
+**State Management Examples**:
+```swift
+// CORRECT: Local view state
+struct ConvertView: View {
+    @State private var selectedFiles: [URL] = []
+    @State private var conversionProgress: Double = 0.0
+}
+
+// CORRECT: Shared state with @Observable
+@Observable
+class ConversionCoordinator {
+    var tasks: [ConversionTask] = []
+    var isProcessing: Bool = false
+}
+
+// WRONG: Don't create ViewModels
+class ConvertViewModel: ObservableObject { } // NO!
+```
+
+**Concurrency**:
+- Use `async/await` for ALL async operations
+- Use `.task { }` modifier for view lifecycle-aware async work
+- Use `actor` for state isolation (conversion queue, file operations)
+- Handle errors with `do/try/catch`, not completion handlers
+
+**Code Organization**:
+- Feature-based folders (NOT Models/, Views/, ViewModels/)
+- Related code in same file when appropriate
+- Extensions for organization within large files
+- Keep files < 300 lines when possible
+
+## Guidelines
+
+- **Follow KISS principle** - Keep It Simple, Stupid
+- **Test thoroughly** before releases (iOS, Android, real DNS queries)
+- **John Carmack reviews all work** - Maintain highest quality standards
+- **Keep commits atomic** - Use explicit file paths as shown in IMPORTANT section above
+- Always look for reference documentation in `docs/` and `docs/REF_DOC/` folders
+
 ## Testing Checklist
 
 Before committing:
-1. Test on iOS simulator
-2. Test on Android emulator  
-3. Verify DNS queries work: `node test-dns.js "test"`
-4. Check native module registration
-5. Run version sync if needed
+1. Test on iOS simulator (`npm run ios`)
+2. Test on Android emulator (`npm run android`)
+3. Verify DNS queries work: `node test-dns-simple.js "test message"`
+4. Run DNS harness: `npm run dns:harness -- --message "harness test"`
+5. Check native module registration (console logs)
+6. Run version sync if needed: `npm run sync-versions`
+7. Update CHANGELOG.md for significant changes (following [Keep a Changelog](https://keepachangelog.com/en/1.1.0/))
 
 ## Common Issues & Fixes
 
@@ -198,31 +383,8 @@ pod 'DNSNative', :path => './DNSNative'
 ### Java Version Issues
 Use Java 17 for Android builds (automated in npm scripts)
 
-## Documentation Structure
-
-- `/docs/technical/` - Specifications and guides
-- `/docs/troubleshooting/` - Common issues
-- `/docs/architecture/` - System design
-- `/docs/REF_DOC/` - Reference documentation (1096+ markdown files)
-  - `docs/REF_DOC/docs_apple/` - Swift, SwiftUI, Liquid Glass, HIG
-  - `docs/REF_DOC/docs_expo_dev/` - Complete Expo guides and API references
-  - `docs/REF_DOC/docs_reactnative_getting-started/` - New Architecture, platform integration
-- `CHANGELOG.md` - Release history
-
-**CRITICAL**: Always consult `docs/REF_DOC/` BEFORE implementing features or answering questions about Expo, React Native, iOS, or Swift.
-
-## Critical Development Guidelines
-
-**IMPORTANT**: **DO NOT** externalize or document your work, usage guidelines, or benchmarks in markdown files after completing the task, unless explicitly instructed to do so. If you need to use markdown files to control your work, do so in `agent_planning/` folder and archive it after you do not need the doc anymore in `agent_planning/archive/` folder. You may include a brief summary of your work. FOLLOW THESE GUIDELINES ALWAYS!
-
-**IMPORTANT**: You run in an environment where `ast-grep` is available; whenever a search requires syntax-aware or structural matching, default to `ast-grep --lang typescript -p '<pattern>'` (or set `--lang` appropriately for JavaScript, Swift, Java, etc.) and avoid falling back to text-only tools like `rg` or `grep` unless I explicitly request a plain-text search.
-
-**Important**: Expo Go does not support custom native modules. Use Development Builds (`npm run ios/android`) to test DNS functionality and other native features.
-
 ## Important Notes
 
-- John Carmack reviews all code - maintain high quality
-- Update CHANGELOG.md for all changes
-- Follow KISS principle
-- Test thoroughly before releases
-- Native DNS is prioritized over network methods
+- **Expo Go Limitation**: Expo Go does not support custom native modules. Use Development Builds (`npm run ios/android`) to test DNS functionality and other native features.
+- Update CHANGELOG.md for all changes following [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
+- Native DNS is prioritized over network methods for best performance
