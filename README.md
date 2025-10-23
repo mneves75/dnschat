@@ -35,7 +35,7 @@ A React Native mobile app that revolutionizes LLM interaction by using DNS TXT q
 ### **Navigation & UI**
 
 - **React Navigation v7** (Native Stack) + **react-native-bottom-tabs** (Native UITabBarController)
-- **iOS 26+ Liquid Glass**: Native `.glassEffect()` modifier with comprehensive fallback system
+- **expo-glass-effect (v0.1.4)**: Official iOS 26+ Liquid Glass with `GlassView` and comprehensive fallback system
 - **React Native Safe Area Context** with gesture handler support
 - **Advanced Theme Support** (automatic light/dark switching with iOS system colors)
 

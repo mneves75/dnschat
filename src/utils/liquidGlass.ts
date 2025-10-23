@@ -1,26 +1,42 @@
 /**
  * iOS 26 Liquid Glass Detection and Capability Management
  *
- * This module provides comprehensive detection and capability management for iOS 26's
- * Liquid Glass design system. It implements a robust fallback strategy for cross-platform
- * compatibility while maximizing native iOS experience when available.
+ * Simplified utility aligned with official expo-glass-effect package.
+ * Provides capability detection and performance guidance for iOS 26+ Liquid Glass.
  *
  * Architecture Philosophy:
- * - Performance-first: Lazy evaluation with memoization
- * - Extensible: Easy to add new capabilities as iOS evolves
- * - Defensive: Graceful degradation for unknown/future iOS versions
- * - Type-safe: Full TypeScript coverage with strict typing
+ * - Use official expo-glass-effect APIs where possible
+ * - Provide extended capability detection for optimization
+ * - Graceful degradation for unsupported platforms
+ * - Type-safe with strict TypeScript coverage
  *
  * @author DNSChat Team
- * @since 1.8.0 (iOS 26 Liquid Glass Support)
+ * @since 2.2.0 (Aligned with expo-glass-effect)
  */
 
 import { Platform } from "react-native";
 import DeviceInfo from "react-native-device-info";
+import { isLiquidGlassAvailable } from "expo-glass-effect";
 
 // ==================================================================================
 // TYPE DEFINITIONS
 // ==================================================================================
+
+/**
+ * Glass effect styles from expo-glass-effect
+ * Official API supports only: 'clear' | 'regular'
+ */
+export type GlassStyle = "clear" | "regular";
+
+/**
+ * Extended glass intensity levels for custom implementations
+ */
+export type GlassIntensity =
+  | "ultraThin"
+  | "thin"
+  | "regular"
+  | "thick"
+  | "ultraThick";
 
 /**
  * Comprehensive capabilities analysis for Liquid Glass features
@@ -37,23 +53,17 @@ export interface LiquidGlassCapabilities {
 
   /** Detailed feature support matrix */
   features: {
-    /** Basic UIGlassEffect API availability */
+    /** Basic GlassView API availability (from expo-glass-effect) */
     basicGlass: boolean;
 
-    /** Advanced sensor-aware glass responses */
-    sensorAware: boolean;
+    /** Interactive glass (isInteractive prop) */
+    interactiveGlass: boolean;
 
-    /** 3D depth containers with spatial awareness */
-    depthContainers: boolean;
+    /** GlassContainer for morphing animations */
+    glassContainer: boolean;
 
-    /** Environmental light/motion adaptation */
-    environmentalCues: boolean;
-
-    /** Haptic feedback integration with glass */
-    hapticsIntegration: boolean;
-
-    /** Real-time glass intensity adjustment */
-    dynamicIntensity: boolean;
+    /** Reduce transparency accessibility support */
+    reduceTransparency: boolean;
   };
 
   /** Performance characteristics for optimization */
@@ -66,9 +76,6 @@ export interface LiquidGlassCapabilities {
 
     /** Supports 60fps glass animations */
     supports60fps: boolean;
-
-    /** Metal shader acceleration available */
-    metalAcceleration: boolean;
   };
 
   /** Device-specific optimizations */
@@ -76,57 +83,9 @@ export interface LiquidGlassCapabilities {
     /** Device model family */
     family: "iPhone" | "iPad" | "Mac" | "AppleTV" | "AppleWatch" | "unknown";
 
-    /** Thermal management recommendations */
-    thermalGuidance: "aggressive" | "moderate" | "conservative";
-
-    /** Memory pressure considerations */
+    /** Memory profile considerations */
     memoryProfile: "high" | "medium" | "low";
   };
-}
-
-/**
- * Glass effect intensity levels
- */
-export type GlassIntensity =
-  | "ultraThin"
-  | "thin"
-  | "regular"
-  | "thick"
-  | "ultraThick";
-
-/**
- * Glass effect styles matching iOS 26 system materials
- */
-export type GlassStyle =
-  | "systemMaterial"
-  | "systemThinMaterial"
-  | "systemUltraThinMaterial"
-  | "systemThickMaterial"
-  | "hudMaterial"
-  | "menuMaterial"
-  | "popoverMaterial"
-  | "sidebarMaterial"
-  | "headerMaterial"
-  | "footerMaterial";
-
-/**
- * Environmental adaptation parameters
- */
-export interface EnvironmentalContext {
-  /** Ambient light level (0.0 - 1.0) */
-  ambientLight: number;
-
-  /** Device orientation */
-  orientation: "portrait" | "landscape" | "faceUp" | "faceDown";
-
-  /** Motion state for dynamic adjustments */
-  motionState: "static" | "gentle" | "active" | "rapid";
-
-  /** Proximity detection for interaction hints */
-  proximityDetected: boolean;
-
-  /** User interface style */
-  userInterfaceStyle: "light" | "dark" | "unspecified";
 }
 
 // ==================================================================================
@@ -190,34 +149,35 @@ class LiquidGlassDetector {
         return this._getFallbackCapabilities(platform);
       }
 
-      // iOS-specific detection (with fallback to Platform.Version)
+      // iOS-specific detection using official expo-glass-effect API
+      const isSupported = isLiquidGlassAvailable();
+
+      // Get iOS version
       let apiLevel = 0;
       try {
         const systemVersion = await DeviceInfo.getSystemVersion();
         apiLevel = this._parseIOSVersion(String(systemVersion || ""));
       } catch {
-        // ignore and fallback below
-      }
-
-      if (!apiLevel || Number.isNaN(apiLevel)) {
-        // Fallback: derive from Platform.Version
+        // Fallback to Platform.Version
         const ver: any = (Platform as any).Version;
         const verStr = typeof ver === "string" ? ver : String(ver ?? "");
         apiLevel = this._parseIOSVersion(verStr);
       }
+
+      // Get device model
       let deviceModel = "iPhone";
       try {
         deviceModel = await DeviceInfo.getModel();
       } catch {}
       const deviceFamily = this._getDeviceFamily(deviceModel);
 
-      // Feature detection based on iOS version and device capabilities
-      const features = this._detectFeatures(apiLevel, deviceFamily);
+      // Feature detection based on expo-glass-effect availability
+      const features = this._detectFeatures(isSupported);
       const performance = this._analyzePerformance(apiLevel, deviceFamily);
       const device = this._analyzeDevice(deviceFamily, apiLevel);
 
       const capabilities: LiquidGlassCapabilities = {
-        isSupported: apiLevel >= 260, // iOS 26.0+
+        isSupported,
         apiLevel,
         platform: "ios",
         features,
@@ -230,27 +190,8 @@ class LiquidGlassDetector {
 
       return capabilities;
     } catch (error) {
-      console.warn(
-        "LiquidGlass: Detection failed, constructing ios fallback",
-        error,
-      );
-      // Build a best-effort iOS capability from Platform.Version
-      const ver: any = (Platform as any).Version;
-      const verStr = typeof ver === "string" ? ver : String(ver ?? "");
-      const apiLevel = this._parseIOSVersion(verStr);
-      const deviceFamily: LiquidGlassCapabilities["device"]["family"] =
-        "iPhone";
-      const features = this._detectFeatures(apiLevel, deviceFamily);
-      const performance = this._analyzePerformance(apiLevel, deviceFamily);
-      const device = this._analyzeDevice(deviceFamily, apiLevel);
-      return {
-        isSupported: apiLevel >= 260,
-        apiLevel,
-        platform: "ios",
-        features,
-        performance,
-        device,
-      };
+      console.warn("LiquidGlass: Detection failed, using fallback", error);
+      return this._getFallbackCapabilities("ios");
     }
   }
 
@@ -275,7 +216,6 @@ class LiquidGlassDetector {
       const minor = parseInt(parts[1] || "0", 10);
       if (Number.isNaN(major) || major <= 0) return 160;
       if (Number.isNaN(minor) || minor < 0) return major * 10;
-      // Convert to API level: iOS 16.0 = 160, iOS 26.1 = 261
       return major * 10 + minor;
     } catch {
       return 160;
@@ -286,7 +226,7 @@ class LiquidGlassDetector {
    * Determine device family from model string
    */
   private _getDeviceFamily(
-    model: string,
+    model: string
   ): LiquidGlassCapabilities["device"]["family"] {
     const modelLower = model.toLowerCase();
 
@@ -300,56 +240,27 @@ class LiquidGlassDetector {
   }
 
   /**
-   * Detect available features based on iOS version and device
+   * Detect available features based on expo-glass-effect availability
    */
   private _detectFeatures(
-    apiLevel: number,
-    deviceFamily: LiquidGlassCapabilities["device"]["family"],
+    isSupported: boolean
   ): LiquidGlassCapabilities["features"] {
-    // iOS 26+ gets full Liquid Glass support
-    if (apiLevel >= 260) {
+    // iOS 26+ with expo-glass-effect support
+    if (isSupported) {
       return {
         basicGlass: true,
-        sensorAware: true,
-        depthContainers: true,
-        environmentalCues: true,
-        hapticsIntegration: true,
-        dynamicIntensity: true,
+        interactiveGlass: true,
+        glassContainer: true,
+        reduceTransparency: true,
       };
     }
 
-    // iOS 17+ gets enhanced blur support
-    if (apiLevel >= 170) {
-      return {
-        basicGlass: false, // No UIGlassEffect
-        sensorAware: false,
-        depthContainers: false,
-        environmentalCues: false,
-        hapticsIntegration: true, // Basic haptics available
-        dynamicIntensity: false,
-      };
-    }
-
-    // iOS 16+ gets basic blur fallback
-    if (apiLevel >= 160) {
-      return {
-        basicGlass: false,
-        sensorAware: false,
-        depthContainers: false,
-        environmentalCues: false,
-        hapticsIntegration: false,
-        dynamicIntensity: false,
-      };
-    }
-
-    // No support for older iOS
+    // iOS < 26 or glass not available
     return {
       basicGlass: false,
-      sensorAware: false,
-      depthContainers: false,
-      environmentalCues: false,
-      hapticsIntegration: false,
-      dynamicIntensity: false,
+      interactiveGlass: false,
+      glassContainer: false,
+      reduceTransparency: true, // Always available via AccessibilityInfo
     };
   }
 
@@ -358,7 +269,7 @@ class LiquidGlassDetector {
    */
   private _analyzePerformance(
     apiLevel: number,
-    deviceFamily: LiquidGlassCapabilities["device"]["family"],
+    deviceFamily: LiquidGlassCapabilities["device"]["family"]
   ): LiquidGlassCapabilities["performance"] {
     // High-end devices with iOS 26+
     if (
@@ -369,9 +280,8 @@ class LiquidGlassDetector {
     ) {
       return {
         tier: "high",
-        maxGlassElements: 50,
+        maxGlassElements: 10, // Conservative limit per Apple guidelines
         supports60fps: true,
-        metalAcceleration: true,
       };
     }
 
@@ -379,9 +289,8 @@ class LiquidGlassDetector {
     if (apiLevel >= 170 && deviceFamily !== "AppleWatch") {
       return {
         tier: "medium",
-        maxGlassElements: 20,
+        maxGlassElements: 5,
         supports60fps: true,
-        metalAcceleration: true,
       };
     }
 
@@ -389,9 +298,8 @@ class LiquidGlassDetector {
     if (apiLevel >= 160) {
       return {
         tier: "low",
-        maxGlassElements: 5,
+        maxGlassElements: 3,
         supports60fps: false,
-        metalAcceleration: false,
       };
     }
 
@@ -400,7 +308,6 @@ class LiquidGlassDetector {
       tier: "fallback",
       maxGlassElements: 0,
       supports60fps: false,
-      metalAcceleration: false,
     };
   }
 
@@ -409,43 +316,35 @@ class LiquidGlassDetector {
    */
   private _analyzeDevice(
     deviceFamily: LiquidGlassCapabilities["device"]["family"],
-    apiLevel: number,
+    apiLevel: number
   ): LiquidGlassCapabilities["device"] {
-    let thermalGuidance: LiquidGlassCapabilities["device"]["thermalGuidance"] =
-      "moderate";
     let memoryProfile: LiquidGlassCapabilities["device"]["memoryProfile"] =
       "medium";
 
     // Device-specific optimizations
     switch (deviceFamily) {
       case "iPhone":
-        thermalGuidance = "moderate";
         memoryProfile = apiLevel >= 260 ? "high" : "medium";
         break;
 
       case "iPad":
-        thermalGuidance = "aggressive"; // iPads have better cooling
         memoryProfile = "high";
         break;
 
       case "Mac":
-        thermalGuidance = "aggressive"; // Macs have active cooling
         memoryProfile = "high";
         break;
 
       case "AppleWatch":
-        thermalGuidance = "conservative"; // Limited thermal headroom
         memoryProfile = "low";
         break;
 
       default:
-        thermalGuidance = "conservative";
         memoryProfile = "low";
     }
 
     return {
       family: deviceFamily,
-      thermalGuidance,
       memoryProfile,
     };
   }
@@ -454,7 +353,7 @@ class LiquidGlassDetector {
    * Get fallback capabilities for non-iOS platforms
    */
   private _getFallbackCapabilities(
-    platform: "android" | "web" | "unknown",
+    platform: "ios" | "android" | "web" | "unknown"
   ): LiquidGlassCapabilities {
     return {
       isSupported: false,
@@ -462,21 +361,17 @@ class LiquidGlassDetector {
       platform,
       features: {
         basicGlass: false,
-        sensorAware: false,
-        depthContainers: false,
-        environmentalCues: false,
-        hapticsIntegration: platform === "android", // Android has haptics
-        dynamicIntensity: false,
+        interactiveGlass: false,
+        glassContainer: false,
+        reduceTransparency: platform === "ios",
       },
       performance: {
         tier: "fallback",
         maxGlassElements: 0,
-        supports60fps: true, // Assume modern devices
-        metalAcceleration: false,
+        supports60fps: true,
       },
       device: {
         family: "unknown",
-        thermalGuidance: "conservative",
         memoryProfile: "medium",
       },
     };
@@ -487,7 +382,7 @@ class LiquidGlassDetector {
    */
   private _logCapabilities(capabilities: LiquidGlassCapabilities): void {
     if (typeof __DEV__ !== "undefined" && __DEV__) {
-      console.log("🔍 LiquidGlass Capabilities Detected:", {
+      console.log("Liquid Glass Capabilities:", {
         supported: capabilities.isSupported,
         apiLevel: capabilities.apiLevel,
         platform: capabilities.platform,
@@ -510,11 +405,11 @@ export async function getLiquidGlassCapabilities(): Promise<LiquidGlassCapabilit
 }
 
 /**
- * Check if basic Liquid Glass support is available
+ * Check if Liquid Glass is supported (wrapper around expo-glass-effect)
  */
-export async function isLiquidGlassSupported(): Promise<boolean> {
-  const capabilities = await getLiquidGlassCapabilities();
-  return capabilities.isSupported;
+export function isLiquidGlassSupported(): boolean {
+  if (Platform.OS !== "ios") return false;
+  return isLiquidGlassAvailable();
 }
 
 /**
@@ -524,49 +419,12 @@ export async function getOptimalGlassStyle(): Promise<GlassStyle> {
   const capabilities = await getLiquidGlassCapabilities();
 
   if (!capabilities.isSupported) {
-    // Prefer thinner materials on mid-tier iOS (17–25)
-    if (capabilities.platform === "ios") {
-      if (capabilities.apiLevel >= 170) return "systemThinMaterial";
-      if (capabilities.apiLevel >= 160) return "systemMaterial";
-    }
-    return "systemMaterial";
-  }
-
-  // Choose style based on performance tier
-  switch (capabilities.performance.tier) {
-    case "high":
-      return "systemMaterial";
-    case "medium":
-      return "systemThinMaterial";
-    case "low":
-      return "systemUltraThinMaterial";
-    default:
-      return "systemMaterial";
-  }
-}
-
-/**
- * Get recommended glass intensity for current device
- */
-export async function getRecommendedIntensity(): Promise<GlassIntensity> {
-  const capabilities = await getLiquidGlassCapabilities();
-
-  if (!capabilities.isSupported) {
-    if (capabilities.platform === "ios") {
-      if (capabilities.apiLevel >= 170) return "thin";
-      if (capabilities.apiLevel >= 160) return "ultraThin";
-    }
-    return "thin";
-  }
-
-  // Adjust intensity based on device capabilities
-  if (capabilities.performance.tier === "high") {
     return "regular";
-  } else if (capabilities.performance.tier === "medium") {
-    return "thin";
-  } else {
-    return "ultraThin";
   }
+
+  // expo-glass-effect supports 'clear' | 'regular'
+  // Use 'regular' for most cases, 'clear' for more transparent effects
+  return capabilities.performance.tier === "high" ? "regular" : "regular";
 }
 
 /**
@@ -580,7 +438,6 @@ export async function refreshLiquidGlassCapabilities(): Promise<LiquidGlassCapab
  * Validate glass configuration against device capabilities
  */
 export async function validateGlassConfig(config: {
-  intensity: GlassIntensity;
   style: GlassStyle;
   elementCount: number;
 }): Promise<{
@@ -595,31 +452,20 @@ export async function validateGlassConfig(config: {
   // Check element count against device limits
   if (config.elementCount > capabilities.performance.maxGlassElements) {
     warnings.push(
-      `Element count (${config.elementCount}) exceeds device limit (${capabilities.performance.maxGlassElements})`,
+      `Element count (${config.elementCount}) exceeds device limit (${capabilities.performance.maxGlassElements})`
     );
     recommendations.push(
-      `Reduce glass elements to ${capabilities.performance.maxGlassElements} or use lazy loading`,
-    );
-  }
-
-  // Check intensity vs performance tier
-  if (
-    capabilities.performance.tier === "low" &&
-    (config.intensity === "thick" || config.intensity === "ultraThick")
-  ) {
-    warnings.push("High intensity glass may impact performance on this device");
-    recommendations.push(
-      'Consider using "thin" or "ultraThin" intensity for better performance',
+      `Reduce glass elements to ${capabilities.performance.maxGlassElements} or use lazy loading`
     );
   }
 
   // Check if requesting features not supported
-  if (!capabilities.isSupported && config.style !== "systemMaterial") {
+  if (!capabilities.isSupported) {
     warnings.push(
-      "Advanced glass styles not supported, will fall back to basic blur",
+      "Liquid Glass not supported, will fall back to standard styling"
     );
     recommendations.push(
-      'Use "systemMaterial" for consistent experience across devices',
+      "Test fallback appearance on iOS < 26 and other platforms"
     );
   }
 
@@ -631,62 +477,17 @@ export async function validateGlassConfig(config: {
 }
 
 // ==================================================================================
-// PERFORMANCE MONITORING
+// RE-EXPORTS FROM EXPO-GLASS-EFFECT
 // ==================================================================================
 
-interface PerformanceMetrics {
-  glassRenderTime: number;
-  frameDrops: number;
-  memoryUsage: number;
-  thermalState: "nominal" | "fair" | "serious" | "critical";
-}
-
-/**
- * Monitor glass rendering performance
- */
-export class LiquidGlassPerformanceMonitor {
-  private metrics: PerformanceMetrics = {
-    glassRenderTime: 0,
-    frameDrops: 0,
-    memoryUsage: 0,
-    thermalState: "nominal",
-  };
-
-  /**
-   * Start performance monitoring
-   */
-  public startMonitoring(): void {
-    // Implementation would integrate with React Native performance APIs
-    if (__DEV__) {
-      console.log("🎯 LiquidGlass Performance Monitoring Started");
-    }
-  }
-
-  /**
-   * Get current performance metrics
-   */
-  public getMetrics(): PerformanceMetrics {
-    return { ...this.metrics };
-  }
-
-  /**
-   * Check if performance is within acceptable bounds
-   */
-  public isPerformanceAcceptable(): boolean {
-    return (
-      this.metrics.glassRenderTime < 16.67 && // 60fps target
-      this.metrics.frameDrops < 5 &&
-      this.metrics.thermalState !== "critical"
-    );
-  }
-}
+// Re-export official API for convenience
+export { isLiquidGlassAvailable } from "expo-glass-effect";
 
 export default {
   getLiquidGlassCapabilities,
   isLiquidGlassSupported,
   getOptimalGlassStyle,
-  getRecommendedIntensity,
   refreshLiquidGlassCapabilities,
   validateGlassConfig,
-  LiquidGlassPerformanceMonitor,
+  isLiquidGlassAvailable,
 };
