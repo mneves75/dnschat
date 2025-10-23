@@ -9,6 +9,9 @@ dist/
 web-build/
 expo-env.d.ts
 
+# Case-insensitive filesystem duplicates
+/DOCS/
+
 # Native
 *.orig.*
 *.jks
