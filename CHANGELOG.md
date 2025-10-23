@@ -7,8 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.1] - 2025-10-23
+
 ### Added
 
+- **DNS Harness TypeScript Compilation**: Compile-first approach preventing Node.js import cycles
+  - Created `scripts/tsconfig.harness.json` for CommonJS compilation
+  - Added `npm run dns:harness:build` script to compile before execution
+  - Harness now outputs to `scripts/dist/` directory
+  - Eliminates ERR_REQUIRE_CYCLE_MODULE error in Node.js environment
 - **🚦 DNS Transport Test Throttling**: Implemented rate limiting for DNS diagnostic tests in Settings screen
   - **Hook**: `useTransportTestThrottle` provides shared throttling logic for chain and forced transport tests
   - **Chain Throttle**: 1200ms minimum interval between full DNS chain tests to prevent resolver spam
@@ -16,21 +23,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **User Feedback**: Clear error messages when tests are throttled ("Aguarde um instante antes de testar novamente")
   - **Settings Integration**: GlassSettings.tsx now validates availability before running diagnostics
   - **Documentation**: Aligns with docs/SETTINGS.md guidance on DNS test frequency
-
 - **🛤️ Expo Router Authentication Provider**: Implemented RouterProvider for authentication and onboarding flow
   - **Authentication Guards**: Protects (tabs), (dashboard), and (modals) routes from unauthenticated access
   - **Onboarding Flow**: Redirects to /(auth)/onboarding until user completes initial setup
   - **State Management**: Integrates with Zustand app store for hydration, auth status, and onboarding state
   - **Navigation Safety**: Waits for root navigator mount to prevent "navigate before mounting" errors
   - **Auto Redirect**: Authenticated users automatically redirected to /(tabs) when accessing auth routes
-
 - **🌍 Internationalization Infrastructure**: Added locale resolution system for en-US and pt-BR support
   - **Type-Safe Locales**: SupportedLocale type with "en-US" and "pt-BR" support
   - **Normalization**: Tolerates both hyphen and underscore variants (en-US, en_us, pt-BR, pt_br)
   - **Default Locale**: Falls back to en-US for unsupported or missing locale inputs
   - **Locale Options**: SUPPORTED_LOCALE_OPTIONS array for UI picker components
   - **Helper Functions**: resolveLocale() and isSupportedLocale() for locale validation
-
 - **🔴 Centralized DNS Error Handling**: Implemented localized error message resolution for thread screens
   - **Portuguese Localization**: All DNSErrorType messages mapped to pt-BR strings
   - **Error Types Covered**: PLATFORM_UNSUPPORTED, NETWORK_UNAVAILABLE, TIMEOUT, DNS_SERVER_UNREACHABLE, INVALID_RESPONSE, PERMISSION_DENIED, DNS_QUERY_FAILED
@@ -38,6 +42,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Test Coverage**: Comprehensive unit tests in __tests__/threadScreen.errors.spec.ts
   - **Type Safety**: resolveDnsErrorMessage() normalizes arbitrary error values to user-friendly strings
   - **Error Normalization**: normalizeDnsError() guarantees Error instances for Promise chains
+
+### Fixed
+
+- **DNS Harness Import Cycle**: Simplified native module import to prevent module resolution conflicts
+  - Native module always skipped in Node.js environment (only works in React Native runtime)
+  - Harness relies solely on UDP/TCP transports for cross-layer DNS verification
+  - Updated `importNativeModule()` to avoid dynamic import attempts
+
+### Changed
+
+- **Development Guidelines**: Comprehensive CLAUDE.md and AGENTS.md updates
+  - Added no-markdown-after-completion policy
+  - Added critical thinking requirements (John Carmack review standard)
+  - Added ast-grep usage requirements for syntax-aware searches
+  - Added atomic commit guidelines with explicit path listing
+  - Updated testing checklist to include DNS harness (`npm run dns:harness`)
+  - Added Apple platform guidelines (Swift, iOS 26 Liquid Glass, modern SwiftUI patterns)
+
+## [2.1.0] - 2025-10-23
+
+### Added
+
+- **TXT Decoder Module**: Shared `modules/dns-native/txtDecoder.ts` repairs UTF-8 boundaries and automatically decodes Base32 payloads so UI consumers always get clean strings.
+- **Host:Port Support**: `DNSService` and native resolvers now accept `host:port` (including IPv6) enabling high-port gateways such as `ch.at:8053`.
+
+### Changed
+
+- **Native Chunk Handling**: iOS and Android modules emit ISO-8859-1 strings to preserve raw DNS bytes across React Native bridges and avoid data loss.
+- **Testing & Docs**: Jest suite covers Base32 scenarios, CLI smoke test output documented, and troubleshooting guides detail high-port usage and decoder behavior.
 
 ### Changed
 

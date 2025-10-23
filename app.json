@@ -2,7 +2,7 @@
   "expo": {
     "name": "DNS Chat",
     "slug": "chat-dns",
-    "version": "2.0.0",
+    "version": "2.1.1",
     "orientation": "default",
     "icon": "./icons/dnschat_ios26.png",
     "userInterfaceStyle": "automatic",
@@ -57,7 +57,8 @@
             }
           }
         }
-      ]
+      ],
+      "expo-localization"
     ]
   }
 }
