@@ -2,8 +2,8 @@
 
 A React Native mobile app that revolutionizes LLM interaction by using DNS TXT queries for AI communication. Chat with AI models through DNS infrastructure for enhanced privacy and network resilience.
 
-[![React Native](https://img.shields.io/badge/React%20Native-0.81.1-blue.svg)](https://reactnative.dev/)
-[![Expo](https://img.shields.io/badge/Expo-54%20Preview-black.svg)](https://expo.dev/)
+[![React Native](https://img.shields.io/badge/React%20Native-0.81.5-blue.svg)](https://reactnative.dev/)
+[![Expo](https://img.shields.io/badge/Expo-54.0.19-black.svg)](https://expo.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue.svg)](https://www.typescriptlang.org/)
 [![iOS](https://img.shields.io/badge/iOS-16%2B-lightgrey.svg)](https://developer.apple.com/ios/)
 [![Android](https://img.shields.io/badge/Android-API%2021%2B-green.svg)](https://developer.android.com/)
@@ -168,8 +168,14 @@ modules/dns-native/    # Android native DNS module
 ### DNS Testing
 
 ```bash
-# Node-only UDP TXT smoke test (no RN runtime required)
-node test-dns-simple.js
+# Quick DNS smoke test (no React Native runtime required)
+node test-dns-simple.js "test message"
+
+# Comprehensive DNS harness test (UDP/TCP transports)
+npm run dns:harness -- --message "test message"
+
+# With debugging output
+npm run dns:harness -- --message "test" --json-out harness-output.json --raw-out raw-dns.bin
 
 # Run with specific DNS method
 npm run ios -- --device-id "iPhone-UUID"
