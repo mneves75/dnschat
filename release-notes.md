@@ -1,4 +1,4 @@
-# DNSChat v2.1.1 Release Notes
+# DNSChat v2.1.2 Release Notes
 
 ## What's New
 
@@ -52,7 +52,7 @@ See [CHANGELOG.md](./CHANGELOG.md) for detailed technical changelog following Ke
 
 ---
 
-**Version**: 2.1.1
-**Release Date**: October 23, 2025
+**Version**: 2.1.2
+**Release Date**: October 24, 2025
 **React Native**: 0.81.5
 **Expo SDK**: 54.0.19
