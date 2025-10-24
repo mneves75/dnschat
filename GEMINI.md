@@ -1,4 +1,4 @@
-# Gemini Project: DNSChat v2.1.1
+# Gemini Project: DNSChat v2.1.2
 
 ## Project Overview
 
