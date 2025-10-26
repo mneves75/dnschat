@@ -15,12 +15,17 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  useColorScheme,
   Platform,
   ViewStyle,
   TextStyle,
+  StyleProp,
 } from "react-native";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { LiquidGlassWrapper } from "../LiquidGlassWrapper";
+import { useImessagePalette } from "../../ui/theme/imessagePalette";
 
 // ==================================================================================
 // TYPES AND INTERFACES
@@ -32,7 +37,9 @@ interface GlassFormProps {
   /** Children form sections */
   children: React.ReactNode;
   /** Custom container style */
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
+  /** Enable nested scrolling on Android */
+  nestedScrollEnabled?: boolean;
 }
 
 interface GlassFormSectionProps {
@@ -43,7 +50,7 @@ interface GlassFormSectionProps {
   /** Children form items */
   children: React.ReactNode;
   /** Custom section style */
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
 }
 
 interface GlassFormItemProps {
@@ -56,7 +63,7 @@ interface GlassFormItemProps {
   /** Press handler */
   onPress?: () => void;
   /** Custom item style */
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
   /** Show chevron indicator */
   showChevron?: boolean;
   /** Disable haptic feedback */
@@ -75,32 +82,20 @@ interface GlassFormLinkProps extends GlassFormItemProps {
 // ==================================================================================
 
 const useGlassColors = () => {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
+  const palette = useImessagePalette();
 
   return {
-    // Glass backgrounds (inspired by Apple's system colors)
-    glassPrimary: isDark
-      ? "rgba(28, 28, 30, 0.15)" // Much more transparent dark
-      : "rgba(242, 242, 247, 0.08)", // Nearly transparent light
-
-    glassSecondary: isDark
-      ? "rgba(44, 44, 46, 0.15)" // Much more transparent dark
-      : "rgba(255, 255, 255, 0.08)", // Nearly transparent light
-
-    // Text colors
-    textPrimary: isDark ? "#FFFFFF" : "#000000",
-    textSecondary: isDark ? "#AEAEB2" : "#6D6D70",
-    textTertiary: isDark ? "#8E8E93" : "#8E8E93",
-
-    // Separators
-    separator: isDark ? "rgba(84, 84, 88, 0.6)" : "rgba(60, 60, 67, 0.15)",
-
-    // Interactive states
-    highlighted: isDark ? "rgba(255, 255, 255, 0.04)" : "rgba(0, 0, 0, 0.04)",
-
-    // Borders
-    border: isDark ? "rgba(84, 84, 88, 0.4)" : "rgba(198, 198, 200, 0.6)",
+    palette,
+    glassPrimary: palette.surface,
+    glassSecondary: palette.accentSurface,
+    textPrimary: palette.textPrimary,
+    textSecondary: palette.textSecondary,
+    textTertiary: palette.textTertiary,
+    separator: palette.separator,
+    highlighted: palette.highlight,
+    border: palette.border,
+    background: palette.background,
+    backgroundSecondary: palette.backgroundSecondary,
   };
 };
 
@@ -141,20 +136,30 @@ export const GlassForm: React.FC<GlassFormProps> = ({
   navigationTitle,
   children,
   style,
+  nestedScrollEnabled = false,
 }) => {
   const colors = useGlassColors();
+  const insets = useSafeAreaInsets();
 
-  const containerStyle: ViewStyle = {
-    flex: 1,
-    backgroundColor: "transparent", // Remove solid background for glass effect visibility
-  };
+  const contentPaddingBottom = Math.max(insets.bottom, 24);
+  const contentStyle = React.useMemo(
+    () =>
+      [styles.scrollContent, { paddingBottom: contentPaddingBottom }, style]
+        .filter(Boolean) as ViewStyle[],
+    [contentPaddingBottom, style],
+  );
 
   return (
-    <View style={[containerStyle, style]}>
+    <SafeAreaView
+      edges={["top", "right", "bottom", "left"]}
+      style={[styles.safeAreaContainer, { backgroundColor: colors.background }]}
+    >
       <ScrollView
         style={styles.scrollContainer}
         contentInsetAdjustmentBehavior="automatic"
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={contentStyle}
+        nestedScrollEnabled={nestedScrollEnabled}
       >
         {navigationTitle && (
           <View style={styles.titleContainer}>
@@ -167,7 +172,7 @@ export const GlassForm: React.FC<GlassFormProps> = ({
         )}
         {children}
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -330,8 +335,14 @@ export const Form = {
 // ==================================================================================
 
 const styles = StyleSheet.create({
+  safeAreaContainer: {
+    flex: 1,
+  },
   scrollContainer: {
     flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 24,
   },
   titleContainer: {
     paddingHorizontal: 20,

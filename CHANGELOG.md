@@ -21,6 +21,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - CI/CD ready with GitHub Actions example
   - See `SCREENSHOT_AUTOMATION_SUMMARY.md` for complete implementation details
 
+## [3.0.2] - 2025-10-26
+
+### Fixed
+
+- **Gray Rectangle Overlays**: Removed redundant backgroundColor overlays from glass components
+  - Logs.tsx: Removed `backgroundColor: "rgba(255, 255, 255, 0.05)"` from logCard and emptyStateContainer styles
+  - GlassChatList.tsx: Removed `backgroundColor: "rgba(255, 255, 255, 0.05)"` from chatItemContainer and emptyStateContainer styles
+  - LiquidGlassWrapper now provides proper backgrounds via buildFallbackStyle() using iMessage palette colors
+  - Eliminates gray rectangles inside white glass cards for cleaner visual appearance
+
+- **Detail Log Scrolling**: Fixed nested ScrollView not receiving touch events in Logs screen
+  - GlassForm.tsx: Added nestedScrollEnabled prop support to GlassForm component
+  - Logs.tsx: Enabled nestedScrollEnabled on Form.List to allow inner ScrollView to scroll properly
+  - Users can now scroll through DNS query step details when expanded
+
 ## [3.0.1] - 2025-10-26
 
 ### BREAKING CHANGES

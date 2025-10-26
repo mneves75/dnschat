@@ -11,21 +11,31 @@ import {
   ActivityIndicator,
   useColorScheme,
 } from "react-native";
-import { useTheme } from "@react-navigation/native";
+import { useTheme, useNavigation } from "@react-navigation/native";
 import {
   DNSLogService,
   DNSQueryLog,
   DNSLogEntry,
 } from "../../services/dnsLogService";
 import { Form, LiquidGlassWrapper } from "../../components/glass";
+import { useTranslation } from "../../i18n";
 
 export function Logs() {
   const { colors } = useTheme();
+  const navigation = useNavigation<any>();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
   const [logs, setLogs] = useState<DNSQueryLog[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [expandedLogs, setExpandedLogs] = useState<Set<string>>(new Set());
+  const { t } = useTranslation();
+  useEffect(() => {
+    navigation.setOptions({ title: t("screen.logs.navigationTitle") });
+  }, [navigation, t]);
+  const historyFooter =
+    logs.length === 1
+      ? t("screen.logs.history.footerSingle", { count: logs.length })
+      : t("screen.logs.history.footerMultiple", { count: logs.length });
 
   useEffect(() => {
     loadLogs();
@@ -63,12 +73,12 @@ export function Logs() {
 
   const clearLogs = () => {
     Alert.alert(
-      "Clear Logs",
-      "Are you sure you want to clear all DNS query logs?",
+      t("screen.logs.alerts.clearTitle"),
+      t("screen.logs.alerts.clearMessage"),
       [
-        { text: "Cancel", style: "cancel" },
+        { text: t("common.cancel"), style: "cancel" },
         {
-          text: "Clear",
+          text: t("screen.logs.alerts.clearConfirm"),
           style: "destructive",
           onPress: async () => {
             await DNSLogService.clearLogs();
@@ -93,27 +103,27 @@ export function Logs() {
               { backgroundColor: methodColor + "20" },
             ]}
           >
-            <Text style={[styles.methodText, { color: methodColor }]}>
-              {entry.method?.toUpperCase() || "UNKNOWN"}
+            <Text style={[styles.methodText, { color: methodColor }]}> 
+              {entry.method?.toUpperCase() || t("screen.logs.labels.unknownMethod")}
             </Text>
           </View>
           {entry.duration !== undefined && (
-            <Text style={[styles.duration, { color: colors.text + "80" }]}>
+            <Text style={[styles.duration, { color: colors.text + "80" }]}> 
               {DNSLogService.formatDuration(entry.duration)}
             </Text>
           )}
         </View>
-        <Text style={[styles.entryMessage, { color: colors.text }]}>
-          {entry.message || "No message"}
+        <Text style={[styles.entryMessage, { color: colors.text }]}> 
+          {entry.message || t("screen.logs.labels.noMessage")}
         </Text>
         {entry.details && (
-          <Text style={[styles.entryDetails, { color: colors.text + "80" }]}>
+          <Text style={[styles.entryDetails, { color: colors.text + "80" }]}> 
             {entry.details}
           </Text>
         )}
         {entry.error && (
-          <Text style={[styles.entryError, { color: "#FF5252" }]}>
-            Error: {entry.error}
+          <Text style={[styles.entryError, { color: "#FF5252" }]}> 
+            {t("screen.logs.labels.errorPrefix", { message: entry.error })}
           </Text>
         )}
       </View>
@@ -152,7 +162,7 @@ export function Logs() {
                 ]}
                 numberOfLines={1}
               >
-                {item.query || "No query"}
+                {item.query || t("screen.logs.labels.noQuery")}
               </Text>
               <View style={styles.logMeta}>
                 <Text
@@ -213,20 +223,20 @@ export function Logs() {
 
               {item.response && (
                 <View style={styles.responseSection}>
-                  <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                    Response:
+                  <Text style={[styles.sectionTitle, { color: colors.text }]}> 
+                    {t("screen.logs.labels.response")}
                   </Text>
                   <Text
                     style={[styles.responseText, { color: colors.text + "CC" }]}
                     numberOfLines={3}
                   >
-                    {item.response || "No response"}
+                    {item.response || t("screen.logs.labels.noResponse")}
                   </Text>
                 </View>
               )}
 
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                Query Steps:
+              <Text style={[styles.sectionTitle, { color: colors.text }]}> 
+                {t("screen.logs.labels.querySteps")}
               </Text>
               <ScrollView style={styles.entriesScroll} nestedScrollEnabled>
                 {item.entries.map((entry, index) => (
@@ -243,7 +253,7 @@ export function Logs() {
   };
 
   return (
-    <Form.List navigationTitle="DNS Query Logs">
+    <Form.List navigationTitle={t("screen.logs.navigationTitle")} nestedScrollEnabled>
       {logs.length === 0 ? (
         <Form.Section>
           <LiquidGlassWrapper
@@ -260,7 +270,7 @@ export function Logs() {
                   { color: isDark ? "#FFFFFF" : "#000000" },
                 ]}
               >
-                No DNS Queries Yet
+                {t("screen.logs.empty.title")}
               </Text>
               <Text
                 style={[
@@ -268,16 +278,15 @@ export function Logs() {
                   { color: isDark ? "#AEAEB2" : "#6D6D70" },
                 ]}
               >
-                Send a message to see DNS query logs appear here. All query
-                attempts and methods will be tracked.
+                {t("screen.logs.empty.subtitle")}
               </Text>
             </View>
           </LiquidGlassWrapper>
         </Form.Section>
       ) : (
         <Form.Section
-          title={`DNS Query History`}
-          footer={`${logs.length} quer${logs.length === 1 ? "y" : "ies"} logged`}
+          title={t("screen.logs.history.title")}
+          footer={historyFooter}
         >
           <View style={styles.logsList}>
             {logs.map((item) => (
@@ -288,10 +297,10 @@ export function Logs() {
       )}
 
       {logs.length > 0 && (
-        <Form.Section title="Actions">
+        <Form.Section title={t("screen.logs.actions.title")}>
           <Form.Item
-            title="Clear All Logs"
-            subtitle="Remove all DNS query history"
+            title={t("screen.logs.actions.clearAll")}
+            subtitle={t("screen.logs.actions.clearAllSubtitle")}
             rightContent={
               <LiquidGlassWrapper
                 variant="interactive"
@@ -313,7 +322,6 @@ export function Logs() {
 const styles = StyleSheet.create({
   // New glass-based styles
   emptyStateContainer: {
-    backgroundColor: "rgba(255, 255, 255, 0.05)",
     marginHorizontal: 20,
     padding: 32,
   },
@@ -349,7 +357,6 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   logCard: {
-    backgroundColor: "rgba(255, 255, 255, 0.05)",
     padding: 16,
     marginHorizontal: 20,
   },
