@@ -25,9 +25,11 @@ import { persistHapticsPreference } from "../../utils/haptics";
 import { useTranslation } from "../../i18n";
 import { LOCALE_LABEL_KEYS } from "../../i18n/localeMeta";
 import { DEFAULT_DNS_SERVER } from "../../context/settingsStorage";
+import { useImessagePalette } from "../../ui/theme/imessagePalette";
 
 export function Settings() {
   const { colors } = useTheme();
+  const palette = useImessagePalette();
   const { t } = useTranslation();
   const navigation = useNavigation<NavigationProp<ParamListBase>>();
   const {
@@ -418,8 +420,8 @@ export function Settings() {
                   style={[
                     styles.methodOption,
                     {
-                      backgroundColor: isActive ? "#007AFF20" : colors.card,
-                      borderColor: isActive ? "#007AFF" : colors.border,
+                      backgroundColor: isActive ? palette.accentSurface : colors.card,
+                      borderColor: isActive ? palette.accentBorder : colors.border,
                     },
                   ]}
                   onPress={() => handleSelectLocale(option.value)}
@@ -435,9 +437,9 @@ export function Settings() {
                         style={[
                           styles.radioButton,
                           {
-                            borderColor: isActive ? "#007AFF" : colors.border,
+                            borderColor: isActive ? palette.accentTint : colors.border,
                             backgroundColor: isActive
-                              ? "#007AFF"
+                              ? palette.accentTint
                               : "transparent",
                           },
                         ]}
@@ -495,14 +497,14 @@ export function Settings() {
             style={[
               styles.testButton,
               {
-                backgroundColor: testRunning ? colors.border : "#007AFF",
+                backgroundColor: testRunning ? colors.border : palette.accentTint,
                 opacity: testRunning ? 0.6 : 1,
               },
             ]}
             onPress={handleTestSelectedPreference}
             disabled={testRunning || !testMessage.trim()}
           >
-            <Text style={[styles.testButtonText, { color: "#FFFFFF" }]}>
+            <Text style={[styles.testButtonText, { color: palette.solid }]}>
               {testRunning
                 ? t("screen.settings.sections.transportTest.testingButton")
                 : t("screen.settings.sections.transportTest.testButton")}
@@ -540,8 +542,8 @@ export function Settings() {
                 style={[
                   styles.transportButton,
                   {
-                    backgroundColor: testRunning ? colors.border : colors.card,
-                    borderColor: colors.border,
+                    backgroundColor: testRunning ? colors.border : palette.accentSurface,
+                    borderColor: testRunning ? colors.border : palette.accentBorder,
                     opacity: testRunning ? 0.6 : 1,
                   },
                 ]}
@@ -553,7 +555,7 @@ export function Settings() {
                 disabled={testRunning}
               >
                 <Text
-                  style={[styles.transportButtonText, { color: colors.text }]}
+                  style={[styles.transportButtonText, { color: palette.textPrimary }]}
                 >
                   {transport.label}
                 </Text>
@@ -583,10 +585,13 @@ export function Settings() {
             <View
               style={[
                 styles.resultBox,
-                { backgroundColor: "#4CAF5020", borderColor: "#4CAF50" },
+                {
+                  backgroundColor: palette.success + "20",
+                  borderColor: palette.success,
+                },
               ]}
             >
-              <Text style={[styles.resultLabel, { color: "#4CAF50" }]}>
+              <Text style={[styles.resultLabel, { color: palette.success }]}>
                 {t("screen.settings.sections.transportTest.resultLabel")}
               </Text>
               <Text style={[styles.resultText, { color: colors.text }]}>
@@ -599,10 +604,13 @@ export function Settings() {
             <View
               style={[
                 styles.resultBox,
-                { backgroundColor: "#F4433620", borderColor: "#F44336" },
+                {
+                  backgroundColor: palette.destructive + "20",
+                  borderColor: palette.destructive,
+                },
               ]}
             >
-              <Text style={[styles.resultLabel, { color: "#F44336" }]}>
+              <Text style={[styles.resultLabel, { color: palette.destructive }]}>
                 {t("screen.settings.sections.transportTest.errorLabel")}
               </Text>
               <Text style={[styles.resultText, { color: colors.text }]}>
@@ -683,7 +691,7 @@ export function Settings() {
               styles.saveButton,
               {
                 backgroundColor:
-                  isDirty && isValidServer ? "#007AFF" : colors.border,
+                  isDirty && isValidServer ? palette.accentTint : colors.border,
                 opacity: saving ? 0.6 : 1,
               },
             ]}
@@ -693,7 +701,7 @@ export function Settings() {
             <Text
               style={[
                 styles.saveButtonText,
-                { color: isDirty && isValidServer ? "#FFFFFF" : colors.text },
+                { color: isDirty && isValidServer ? palette.solid : colors.text },
               ]}
             >
               {saving

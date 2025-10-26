@@ -55,6 +55,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Settings Transport Test Buttons**: Fixed color legibility in light/dark mode
+  - "Test selected preference" button: Migrated from hardcoded `#007AFF` to `palette.accentTint`
+  - Button text: Changed from hardcoded `#FFFFFF` to `palette.solid` for proper semantic color
+  - Transport buttons (Nativo, UDP, TCP): Now use `palette.accentSurface` and `palette.accentBorder` for better visibility
+  - Success result box: Migrated from hardcoded `#4CAF50` to `palette.success`
+  - Error result box: Migrated from hardcoded `#F44336` to `palette.destructive`
+  - Save button: Migrated from hardcoded `#007AFF` to `palette.accentTint`
+  - Language selection radio buttons: Migrated from hardcoded `#007AFF` to `palette.accentTint` and `palette.accentSurface`
+  - All colors now adapt properly to light/dark mode and high contrast accessibility settings
+
+- **Reset Onboarding**: Feature already implemented and working
+  - Available in Settings > Development section
+  - Button labeled "Reset Onboarding" / "Redefinir onboarding" (pt-BR)
+  - Allows users to see the onboarding flow again
+  - Confirmation dialog prevents accidental resets
+
 - **iOS DNS Resolver**: Fixed CheckedContinuation double-resume crash in DNSResolver.performUDPQuery
   - Added resume guards to prevent multiple continuation resumes when connection state changes
   - Fixed crash on line 112 when timeout cancels task after connection reaches ready state
