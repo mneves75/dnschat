@@ -4,27 +4,25 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## IMPORTANT: Critical Development Guidelines
 
-**These rules OVERRIDE default behavior and MUST be followed:**
+**FOLLOW THESE GUIDELINES ALWAYS! These rules OVERRIDE default behavior and MUST be followed:**
 
-1. **No Documentation Files**: Never create markdown (`.md`) files after completing tasks unless explicitly instructed. Use `agent_planning/` for planning docs only, archive when done in `agent_planning/archive/`.
+1. **No Documentation Files**: Never create markdown (`.md`) files after completing tasks unless explicitly instructed. **DO NOT** externalize or document your work, usage guidelines, or benchmarks in markdown files after completing the task. If you need to use markdown files to control your work, do so in `agent_planning/` folder and archive it after you do not need the doc anymore in `agent_planning/archive/`. You may include a brief summary of your work.
 
-2. **No Emojis**: Never use emojis in code, commit messages, or communications.
+2. **No Emojis**: Never use emojis in code, commit messages, or communications. NEVER!
 
-3. **Critical Thinking**: Push reasoning to 100% capacity. Walk through thought process step-by-step. John Carmack and domain experts will verify all work. Challenge assumptions, think harder, question everything.
+3. **Critical Thinking**: You think I am absolutely right. But push your reasoning to 100% of your capacity. I'm trying to stay a critical and sharp analytical thinker. Walk me through your thought process step-by-step. The best people in the domain will verify what you do. Think hard! Be a critical thinker! John Carmack and domain experts will verify all work. Challenge assumptions, think harder, question everything.
 
-4. **ast-grep Usage**: For syntax-aware searches, always use `ast-grep --lang typescript -p '<pattern>'` (or set `--lang` appropriately for JavaScript, Swift, Java, etc.) instead of `rg` or `grep` unless explicitly requested. Set up ast-grep as codebase linter and git hook to block commits with violations.
+4. **ast-grep Usage**: You run in an environment where `ast-grep` is available; whenever a search requires syntax-aware or structural matching, default to `ast-grep --lang typescript -p '<pattern>'` (or set `--lang` appropriately for JavaScript, Swift, Java, Ruby, etc.) and avoid falling back to text-only tools like `rg` or `grep` unless explicitly requested.
 
-5. **Tmux Usage**: Execute commands in tmux sessions when available.
+5. **Communication Style**: Sacrifice grammar for the sake of concision. List any unresolved questions at the end, if any.
 
-6. **Communication Style**: Sacrifice grammar for concision. List unresolved questions at end if any.
-
-7. **Atomic Commits**: Commit only files touched, list each path explicitly:
+6. **Atomic Commits**: Commit only files touched, list each path explicitly:
    - Tracked files: `git commit -m "<scoped message>" -- path/to/file1 path/to/file2`
    - New files: `git restore --staged :/ && git add "path/to/file1" "path/to/file2" && git commit -m "<scoped message>" -- path/to/file1 path/to/file2`
 
-8. **ExecPlans**: For complex features or significant refactors, use an ExecPlan (as described in `/PLANS.md` or `DOCS/PLANS.md`) from design to implementation.
+7. **ExecPlans**: When writing complex features or significant refactors, use an ExecPlan (as described in `/PLANS.md`) from design to implementation. See `/PLANS.md` for full specification.
 
-9. **Reference Documentation**: Always refer to documentation in `docs/` and `docs/REF_DOC/` folders before implementing.
+8. **Reference Documentation**: Always refer to documentation in `docs/` and `docs/REF_DOC/` folders before implementing.
 
 ## Project Overview
 
@@ -35,14 +33,15 @@ React Native mobile app providing ChatGPT-like interface via DNS TXT queries. Fe
 ```bash
 # Development
 npm start                # Start dev server
-npm run ios             # Build iOS (requires Java 17)
+npm run ios             # Build iOS
 npm run android         # Build Android (requires Java 17)
 npm run fix-pods        # Fix iOS CocoaPods issues
 npm run sync-versions   # Sync versions across platforms
 /changelog              # Generate changelog (in Claude Code)
 
 # Testing
-node test-dns.js "message"  # Test DNS functionality
+node test-dns-simple.js "message"     # Quick DNS smoke test
+npm run dns:harness -- --message "x"  # Comprehensive DNS harness test
 ```
 
 ## Architecture
@@ -51,22 +50,34 @@ node test-dns.js "message"  # Test DNS functionality
 - **Framework**: React Native 0.81 with Expo SDK 54
 - **React**: React 19.1 with React Compiler enabled
 - **Language**: TypeScript (strict mode)
-- **Navigation**: React Navigation v7
+- **Navigation**: React Navigation v7 with react-native-bottom-tabs (native UITabBarController/BottomNavigationView)
 - **Native Modules**: Custom DNS implementations (iOS Swift, Android Java)
 - **Architecture**: New Architecture (Fabric) enabled with TurboModules
+- **Internationalization**: expo-localization with structured messages (en-US, pt-BR)
 
 ### Key Services
 - **DNSService**: Multi-method DNS queries with fallback chain
-- **StorageService**: AsyncStorage persistence  
+- **StorageService**: AsyncStorage persistence
 - **DNSLogService**: Query logging and debugging
 - **ChatContext**: Global state management
+- **I18n**: Localized strings with pt-BR and en-US support
 
 ### DNS Query Methods (in order)
 1. Native DNS modules (iOS/Android optimized)
 2. UDP DNS (react-native-udp)
 3. TCP DNS (react-native-tcp-socket)
-4. DNS-over-HTTPS (Cloudflare)
-5. Mock service (development)
+4. Mock service (development)
+
+### Module Structure
+- **modules/dns-native/**: Standalone DNS native module package
+  - Self-contained with own package.json and tests
+  - iOS Swift implementation using Network.framework
+  - Android Java implementation using DnsResolver API
+  - Integration test harness: `npm run dns:harness`
+  - Smoke tests: `node test-dns-simple.js "message"`
+- **plugins/dns-native-plugin.js**: Expo config plugin for native module registration
+- **iOS bridge**: ios/DNSChat/ contains AppDelegate and native setup
+- **Android bridge**: android/app/src/main/java/com/dnsnative/ contains native DNS implementation
 
 ### New Architecture (Fabric)
 - **Enabled**: `"newArchEnabled": true` in `app.json`
@@ -136,8 +147,10 @@ import { LiquidGlassWrapper } from '@/components/LiquidGlassWrapper';
 
 **Known Limitations**:
 - `isInteractive` prop set-once on mount (remount with different key to toggle)
-- Custom native modules in `ios/LiquidGlassNative/` kept for future extensions only
-- No sensor-aware adaptation in v0.1.4 (placeholder in LiquidGlassWrapper)
+- Expo's `GlassView`/`GlassContainer` are the single source of truth; the old
+  `ios/LiquidGlassNative/` bridge was removed in favour of Expo autolinking.
+- Sensor-aware adaptation is intentionally omitted until the official SDK
+  exposes those hooks.
 
 ### React Native 0.81 & React 19.1
 - **React 19.1** with improved hooks (`use` hook, enhanced refs)
@@ -160,31 +173,49 @@ import { LiquidGlassWrapper } from '@/components/LiquidGlassWrapper';
   - `downloadProgress` in `useUpdates()` hook
   - `reloadScreenOptions` for custom reload screens
 
-## Critical Known Issues
+## Project Structure
 
-### P0 - iOS CheckedContinuation Crash
-**Location**: ios/DNSNative/DNSResolver.swift:91-132
-**Fix**: Add atomic flag to prevent double resume
+```
+src/
+├── components/          # Reusable UI components
+│   ├── glass/          # Liquid Glass wrappers and components
+│   ├── icons/          # Icon components
+│   ├── layout/         # Screen and layout components
+│   └── onboarding/     # Onboarding flow screens
+├── context/            # React Context providers (Chat, Settings, Accessibility)
+├── navigation/         # Navigation configuration and screens
+│   ├── providers/      # Router providers
+│   └── screens/        # Main app screens (Chat, Settings, Logs, etc.)
+├── services/           # Core services (DNS, Storage, Logging)
+├── types/              # TypeScript type definitions
+├── ui/                 # UI utilities (theme, hooks)
+└── i18n/               # Internationalization (en-US, pt-BR)
 
-### P1 - Cross-Platform Inconsistencies  
-**Issue**: Message sanitization differs between platforms
-**Fix**: Standardize sanitization logic
+modules/dns-native/     # Standalone DNS native module
+├── src/                # TypeScript DNS service implementations
+├── ios/                # iOS Swift Network.framework implementation
+├── android/            # Android Java DnsResolver implementation
+└── __tests__/          # Module unit tests
 
-### P2 - Resource Leaks
-**Issue**: NWConnection not properly disposed on failure
-**Fix**: Ensure cleanup in all code paths
+ios/DNSChat/            # iOS native app
+android/                # Android native app
+plugins/                # Expo config plugins
+scripts/                # Build and version sync scripts
+```
 
 ## Development Guidelines
 
 ### iOS Development
 - Requires CocoaPods: Run `npm run fix-pods` for issues
-- Native module in `ios/DNSNative/`
+- Native DNS module in `modules/dns-native/` with iOS bridge in `ios/DNSChat/`
 - Uses Network.framework (iOS 14.0+)
+- Deployment target: iOS 16.0+
 
-### Android Development  
-- **Requires Java 17**: Set via `npm run android`
-- Native module in `android/app/src/main/java/com/dnsnative/`
+### Android Development
+- **Requires Java 17**: Automatically set via `npm run android` script
+- Native DNS module in `modules/dns-native/` with Android bridge in `android/app/src/main/java/com/dnsnative/`
 - Uses DnsResolver API (API 29+) with dnsjava fallback
+- Minimum SDK: API 21+
 
 ### Version Management
 - CHANGELOG.md is source of truth
@@ -210,6 +241,46 @@ import { LiquidGlassWrapper } from '@/components/LiquidGlassWrapper';
 - **FlashList**: Use `@shopify/flash-list` for lists with 10+ items
 - **Memoization**: Let React Compiler handle, remove manual `useMemo`/`useCallback` unless profiled
 - **Release Build Testing**: Always test performance in release mode with `--no-dev --minify`
+
+### React Best Practices: You Might Not Need an Effect
+
+**CRITICAL**: Most side effects belong in event handlers, not useEffect. Reference: https://react.dev/learn/you-might-not-need-an-effect
+
+**When NOT to use useEffect**:
+
+1. **Deriving State from Props/State**
+   - Compute values during render instead of synchronizing with effects
+   - Bad: `useEffect(() => { setFullName(firstName + ' ' + lastName); }, [firstName, lastName])`
+   - Good: `const fullName = firstName + ' ' + lastName;`
+
+2. **Caching Expensive Calculations**
+   - Use `useMemo` for pure calculations, not effects
+   - Good: `const sortedList = useMemo(() => items.sort(compareItems), [items])`
+   - Runs during rendering, avoids unnecessary re-renders
+
+3. **Resetting State on Prop Changes**
+   - Use `key` prop to reset component state instead of effects
+   - Bad: `useEffect(() => { setCount(0); }, [userId])`
+   - Good: `<Profile key={userId} />` treats different userIds as different components
+
+4. **Adjusting State During Render**
+   - Update state directly during rendering when props change
+   - Requires careful condition-checking to avoid infinite loops
+
+5. **Event-Specific Logic**
+   - Critical question: Should this run because component displayed, or because user interacted?
+   - User interactions belong in event handlers, NOT effects
+   - Example: Form submission, button clicks, input changes
+
+**When TO use useEffect**:
+- Synchronizing with external systems (WebSocket connections, browser APIs)
+- Fetching data (with proper cleanup for race conditions)
+- Subscribing to external stores (prefer `useSyncExternalStore` when possible)
+
+**React 19.1 & React Compiler**:
+- React Compiler automatically memoizes components and values
+- Remove manual `useMemo`/`useCallback` unless profiling shows benefit
+- Compiler handles optimization, focus on readable code
 
 ### Component Style Patterns
 ```typescript
@@ -420,10 +491,9 @@ npm run fix-pods  # Cleans and reinstalls pods
 ```
 
 ### Native Module Not Found
-Verify DNSNative pod in ios/Podfile:
-```ruby
-pod 'DNSNative', :path => './DNSNative'
-```
+- Ensure `modules/dns-native/` package is properly linked
+- Check expo config plugin in app.json: `"./plugins/dns-native-plugin"`
+- Run `npm run fix-pods` to reinstall CocoaPods dependencies
 
 ### Java Version Issues
 Use Java 17 for Android builds (automated in npm scripts)
