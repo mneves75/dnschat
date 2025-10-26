@@ -10,6 +10,10 @@ import {
 import { format } from "date-fns";
 import Markdown from "react-native-markdown-display";
 import { Message } from "../types/chat";
+import { useTypography } from "../ui/hooks/useTypography";
+import { useImessagePalette } from "../ui/theme/imessagePalette";
+import { LiquidGlassSpacing, getCornerRadius } from "../ui/theme/liquidGlassSpacing";
+import { HapticFeedback } from "../utils/haptics";
 
 interface MessageBubbleProps {
   message: Message;
@@ -18,12 +22,17 @@ interface MessageBubbleProps {
 export function MessageBubble({ message }: MessageBubbleProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
+  const typography = useTypography();
+  const palette = useImessagePalette();
 
   const isUser = message.role === "user";
   const isLoading = message.status === "sending";
   const hasError = message.status === "error";
 
   const handleLongPress = () => {
+    // Haptic feedback on long press
+    HapticFeedback.medium();
+
     Alert.alert("Copy Message", "Do you want to copy this message?", [
       { text: "Cancel", style: "cancel" },
       {
@@ -31,58 +40,62 @@ export function MessageBubble({ message }: MessageBubbleProps) {
         onPress: () => {
           // In a real app, you'd use Clipboard from '@react-native-clipboard/clipboard'
           // Copy functionality would be implemented here
+          HapticFeedback.light();
         },
       },
     ]);
   };
 
+  // iOS 26 HIG: Use semantic colors from palette for all bubble states
   const bubbleStyles = [
     styles.bubble,
-    isUser ? styles.userBubble : styles.assistantBubble,
-    isDark ? styles.darkBubble : styles.lightBubble,
-    isUser && isDark ? styles.darkUserBubble : {},
-    !isUser && isDark ? styles.darkAssistantBubble : {},
-    hasError ? styles.errorBubble : {},
+    {
+      backgroundColor: hasError
+        ? palette.destructive
+        : isUser
+          ? palette.accentTint
+          : palette.surface,
+      borderBottomRightRadius: isUser ? 6 : getCornerRadius('message'),
+      borderBottomLeftRadius: isUser ? getCornerRadius('message') : 6,
+    },
   ];
 
   const textStyles = [
     styles.text,
-    isUser ? styles.userText : styles.assistantText,
-    isDark ? styles.darkText : styles.lightText,
-    hasError ? styles.errorText : {},
+    {
+      color: isUser || hasError ? "#FFFFFF" : palette.textPrimary,
+    },
   ];
 
   const markdownStyles = {
     body: {
-      color: isDark
-        ? isUser
-          ? "#FFFFFF"
-          : "#E5E5E7"
-        : isUser
-          ? "#FFFFFF"
-          : "#000000",
-      fontSize: 16,
-      lineHeight: 20,
+      color: isUser ? "#FFFFFF" : palette.textPrimary,
+      fontSize: typography.body.fontSize,
+      lineHeight: typography.body.lineHeight,
+      letterSpacing: typography.body.letterSpacing,
     },
     code_inline: {
-      backgroundColor: isDark ? "#2C2C2E" : "#F2F2F7",
+      backgroundColor: isDark ? palette.solid : palette.surface,
       color: isDark ? "#FF9500" : "#AF52DE",
       paddingHorizontal: 4,
       paddingVertical: 2,
       borderRadius: 4,
-      fontSize: 14,
+      fontSize: typography.footnote.fontSize,
+      fontFamily: 'Courier',
     },
     code_block: {
-      backgroundColor: isDark ? "#1C1C1E" : "#F2F2F7",
-      padding: 12,
-      borderRadius: 8,
-      marginVertical: 8,
+      backgroundColor: isDark ? palette.solid : palette.surface,
+      padding: LiquidGlassSpacing.sm,
+      borderRadius: getCornerRadius('input'),
+      marginVertical: LiquidGlassSpacing.xs,
+      fontFamily: 'Courier',
     },
     fence: {
-      backgroundColor: isDark ? "#1C1C1E" : "#F2F2F7",
-      padding: 12,
-      borderRadius: 8,
-      marginVertical: 8,
+      backgroundColor: isDark ? palette.solid : palette.surface,
+      padding: LiquidGlassSpacing.sm,
+      borderRadius: getCornerRadius('input'),
+      marginVertical: LiquidGlassSpacing.xs,
+      fontFamily: 'Courier',
     },
   };
 
@@ -93,9 +106,16 @@ export function MessageBubble({ message }: MessageBubbleProps) {
         isUser ? styles.userContainer : styles.assistantContainer,
       ]}
     >
-      <Pressable onLongPress={handleLongPress} style={bubbleStyles}>
+      <Pressable
+        onLongPress={handleLongPress}
+        style={bubbleStyles}
+        accessible={true}
+        accessibilityRole="text"
+        accessibilityLabel={`${isUser ? 'Your' : 'Assistant'} message: ${message.content}`}
+        accessibilityHint="Long press to copy message"
+      >
         {isUser ? (
-          <Text style={textStyles}>{message.content}</Text>
+          <Text style={[textStyles, typography.body]}>{message.content}</Text>
         ) : (
           <Markdown style={markdownStyles}>{message.content}</Markdown>
         )}
@@ -105,7 +125,8 @@ export function MessageBubble({ message }: MessageBubbleProps) {
             <Text
               style={[
                 styles.loadingText,
-                isDark ? styles.darkText : styles.lightText,
+                typography.body,
+                { color: isUser ? "#FFFFFF" : palette.textPrimary },
               ]}
             >
               ●●●
@@ -117,14 +138,22 @@ export function MessageBubble({ message }: MessageBubbleProps) {
           <Text
             style={[
               styles.timestamp,
-              isDark ? styles.darkTimestamp : styles.lightTimestamp,
-              isUser ? styles.userTimestamp : styles.assistantTimestamp,
+              typography.caption1,
+              { color: isUser ? "#FFFFFF" : palette.textTertiary },
             ]}
           >
             {format(message.timestamp, "HH:mm")}
           </Text>
 
-          {hasError && <Text style={styles.errorIndicator}>!</Text>}
+          {hasError && (
+            <Text
+              style={[styles.errorIndicator, { backgroundColor: palette.destructive }]}
+              accessible={true}
+              accessibilityLabel="Message failed to send"
+            >
+              !
+            </Text>
+          )}
         </View>
       </Pressable>
     </View>
@@ -133,9 +162,9 @@ export function MessageBubble({ message }: MessageBubbleProps) {
 
 const styles = StyleSheet.create({
   container: {
-    marginVertical: 2, // Tighter vertical spacing like iMessage
-    marginHorizontal: 16,
-    maxWidth: "75%", // Slightly smaller max width
+    marginVertical: LiquidGlassSpacing.xxs,
+    marginHorizontal: LiquidGlassSpacing.md,
+    maxWidth: "75%",
   },
   userContainer: {
     alignSelf: "flex-end",
@@ -144,91 +173,37 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
   },
   bubble: {
-    paddingHorizontal: 16, // More horizontal padding
-    paddingVertical: 10, // Less vertical padding
-    borderRadius: 20, // More rounded like iMessage
+    paddingHorizontal: LiquidGlassSpacing.md,
+    paddingVertical: LiquidGlassSpacing.sm,
+    borderRadius: getCornerRadius('message'),
     minWidth: 60,
-    // iMessage-style shadow
     shadowColor: "#000000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 3,
-    elevation: 2, // Android shadow
-  },
-  userBubble: {
-    backgroundColor: "#007AFF", // Keep iMessage blue
-    // User bubbles have slightly different shape
-    borderBottomRightRadius: 6, // iMessage tail effect
-  },
-  assistantBubble: {
-    backgroundColor: "#F0F0F0", // Lighter gray like iMessage
-    // Assistant bubbles have tail on the left
-    borderBottomLeftRadius: 6, // iMessage tail effect
-  },
-  darkBubble: {
-    // Base dark styling handled by specific bubble types
-  },
-  lightBubble: {
-    // Base light styling handled by specific bubble types
-  },
-  darkUserBubble: {
-    backgroundColor: "#007AFF", // Keep same blue in dark mode
-    borderBottomRightRadius: 6, // iMessage tail effect
-  },
-  darkAssistantBubble: {
-    backgroundColor: "#2C2C2E", // Darker gray for dark mode
-    borderBottomLeftRadius: 6, // iMessage tail effect
-  },
-  errorBubble: {
-    backgroundColor: "#FF3B30",
+    elevation: 2,
+    // backgroundColor applied inline from palette (user/assistant/error)
+    // borderBottomLeftRadius/borderBottomRightRadius applied inline based on isUser
   },
   text: {
-    fontSize: 16,
-    lineHeight: 20,
-  },
-  userText: {
-    color: "#FFFFFF",
-  },
-  assistantText: {
-    color: "#000000",
-  },
-  darkText: {
-    color: "#FFFFFF",
-  },
-  lightText: {
-    color: "#000000",
-  },
-  errorText: {
-    color: "#FFFFFF",
+    // Typography and color applied inline from palette
   },
   messageInfo: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginTop: 4,
+    marginTop: LiquidGlassSpacing.xxs,
   },
   timestamp: {
-    fontSize: 11, // Slightly smaller like iMessage
-    opacity: 0.5, // More subtle
-    marginTop: 2, // Small margin from bubble
-  },
-  darkTimestamp: {
-    color: "#FFFFFF",
-  },
-  lightTimestamp: {
-    color: "#000000",
-  },
-  userTimestamp: {
-    color: "#FFFFFF",
-  },
-  assistantTimestamp: {
-    // Uses dark/light color
+    opacity: 0.5,
+    marginTop: 2,
+    // Color applied inline from palette
   },
   errorIndicator: {
     color: "#FFFFFF",
     fontSize: 12,
     fontWeight: "bold",
-    backgroundColor: "#FF3B30",
+    // backgroundColor applied inline from palette.destructive
     width: 16,
     height: 16,
     borderRadius: 8,
@@ -236,11 +211,11 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
   loadingIndicator: {
-    marginTop: 4,
+    marginTop: LiquidGlassSpacing.xxs,
   },
   loadingText: {
-    fontSize: 16,
     opacity: 0.6,
     textAlign: "center",
+    // Color applied inline from palette
   },
 });

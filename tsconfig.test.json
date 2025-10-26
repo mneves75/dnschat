@@ -1,9 +1,10 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "types": ["jest", "node"],
+    "types": ["jest", "node", "react-test-renderer"],
     "noEmit": true,
     "baseUrl": ".",
+    "jsx": "react-jsx",
     "paths": {
       "@/*": ["src/*"]
     }

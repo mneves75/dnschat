@@ -8,6 +8,20 @@ import {
   Text,
   Platform,
 } from "react-native";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+} from "react-native-reanimated";
+import { useTypography } from "../ui/hooks/useTypography";
+import { useImessagePalette } from "../ui/theme/imessagePalette";
+import { LiquidGlassSpacing, getMinimumTouchTarget } from "../ui/theme/liquidGlassSpacing";
+import { SpringConfig, buttonPressScale } from "../utils/animations";
+import { HapticFeedback } from "../utils/haptics";
+import { SendIcon } from "./icons/SendIcon";
+import { useTranslation } from "../i18n";
+
+const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
 interface ChatInputProps {
   onSendMessage: (message: string) => void;
@@ -18,15 +32,30 @@ interface ChatInputProps {
 export function ChatInput({
   onSendMessage,
   isLoading = false,
-  placeholder = "Message...",
+  placeholder,
 }: ChatInputProps) {
   const [message, setMessage] = useState("");
   const textInputRef = useRef<TextInput>(null);
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
+  const typography = useTypography();
+  const palette = useImessagePalette();
+  const scale = useSharedValue(1);
+  const { t } = useTranslation();
+
+  const minimumTouchTarget = getMinimumTouchTarget();
+  const resolvedPlaceholder = placeholder ?? t("screen.chatInput.placeholder");
+
+  // Animated scale for send button press feedback
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
 
   const handleSend = () => {
     if (message.trim() && !isLoading) {
+      // Haptic feedback on send
+      HapticFeedback.medium();
+
       onSendMessage(message.trim());
       setMessage("");
       // Refocus the input after sending on iOS
@@ -36,6 +65,19 @@ export function ChatInput({
         }, 100);
       }
     }
+  };
+
+  // Handle press in with animation and haptics
+  const handlePressIn = () => {
+    if (canSend) {
+      scale.value = withSpring(buttonPressScale, SpringConfig.bouncy);
+      HapticFeedback.light();
+    }
+  };
+
+  // Handle press out
+  const handlePressOut = () => {
+    scale.value = withSpring(1, SpringConfig.bouncy);
   };
 
   const canSend = message.trim().length > 0 && !isLoading;
@@ -52,12 +94,18 @@ export function ChatInput({
           ref={textInputRef}
           style={[
             styles.textInput,
+            {
+              fontSize: typography.body.fontSize,
+              lineHeight: typography.body.lineHeight,
+              letterSpacing: typography.body.letterSpacing,
+              color: palette.textPrimary,
+            },
             isDark ? styles.darkTextInput : styles.lightTextInput,
           ]}
           value={message}
           onChangeText={setMessage}
-          placeholder={placeholder}
-          placeholderTextColor={isDark ? "#8E8E93" : "#8E8E93"}
+          placeholder={resolvedPlaceholder}
+          placeholderTextColor={palette.textTertiary}
           multiline={true}
           maxLength={1000}
           editable={!isLoading}
@@ -72,29 +120,47 @@ export function ChatInput({
           contextMenuHidden={true}
           keyboardAppearance={isDark ? "dark" : "light"}
           onSubmitEditing={handleSend}
+          accessible={true}
+          accessibilityLabel={t("components.chatInput.accessibilityLabel")}
+          accessibilityHint={t("components.chatInput.accessibilityHint")}
         />
 
-        <TouchableOpacity
+        <AnimatedTouchable
           style={[
+            animatedStyle,
             styles.sendButton,
-            canSend ? styles.sendButtonActive : styles.sendButtonInactive,
-            isDark ? styles.darkSendButton : styles.lightSendButton,
+            {
+              width: minimumTouchTarget,
+              height: minimumTouchTarget,
+              borderRadius: minimumTouchTarget / 2, // Perfectly circular on all platforms
+              backgroundColor: canSend ? palette.accentTint : palette.tint,
+            },
           ]}
           onPress={handleSend}
+          onPressIn={handlePressIn}
+          onPressOut={handlePressOut}
           disabled={!canSend}
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel={
+            isLoading
+              ? t("components.chatInput.sendingLabel")
+              : t("components.chatInput.sendLabel")
+          }
+          accessibilityHint={t("components.chatInput.sendHint")}
+          accessibilityState={{ disabled: !canSend }}
+          activeOpacity={1}
         >
-          <Text
-            style={[
-              styles.sendButtonText,
-              canSend
-                ? styles.sendButtonTextActive
-                : styles.sendButtonTextInactive,
-              isDark ? styles.darkSendButtonText : styles.lightSendButtonText,
-            ]}
-          >
-            {isLoading ? "..." : "→"}
-          </Text>
-        </TouchableOpacity>
+          {/* iOS 26 HIG-compliant send icon using semantic colors */}
+          {isLoading ? (
+            <Text style={[styles.sendButtonText, { color: palette.textPrimary }]}>...</Text>
+          ) : (
+            <SendIcon
+              size={20}
+              isActive={canSend}
+            />
+          )}
+        </AnimatedTouchable>
       </View>
     </View>
   );
@@ -102,8 +168,8 @@ export function ChatInput({
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: LiquidGlassSpacing.md,
+    paddingVertical: LiquidGlassSpacing.sm,
     // Remove borders and backgrounds for glass compatibility
   },
   lightContainer: {
@@ -115,62 +181,37 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: "row",
     alignItems: "flex-end",
-    gap: 12,
+    gap: LiquidGlassSpacing.sm,
   },
   textInput: {
     flex: 1,
     maxHeight: 120,
     minHeight: 36,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: LiquidGlassSpacing.md,
+    paddingVertical: LiquidGlassSpacing.xs,
     borderRadius: 18,
-    fontSize: 16,
-    lineHeight: 20,
     borderWidth: 1,
+    // fontSize, lineHeight, letterSpacing applied inline from typography
   },
   lightTextInput: {
     backgroundColor: "rgba(242, 242, 247, 0.8)", // Semi-transparent for glass effect
-    borderColor: "rgba(229, 229, 234, 0.6)",
-    color: "#000000",
+    borderColor: "rgba(229, 229, 234, 0.6)", // Keep for glass compatibility
+    // color applied from palette.textPrimary inline
   },
   darkTextInput: {
     backgroundColor: "rgba(28, 28, 30, 0.8)", // Semi-transparent for glass effect
-    borderColor: "rgba(56, 56, 58, 0.6)",
-    color: "#FFFFFF",
+    borderColor: "rgba(56, 56, 58, 0.6)", // Keep for glass compatibility
+    // color applied from palette.textPrimary inline
   },
   sendButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    // width, height, borderRadius, and backgroundColor set inline
+    // backgroundColor from palette: accentTint (active) or tint (inactive)
     alignItems: "center",
     justifyContent: "center",
-  },
-  sendButtonActive: {
-    backgroundColor: "#007AFF",
-  },
-  sendButtonInactive: {
-    backgroundColor: "#E5E5EA",
-  },
-  darkSendButton: {
-    // Dark mode colors handled by active/inactive states
-  },
-  lightSendButton: {
-    // Light mode colors handled by active/inactive states
   },
   sendButtonText: {
     fontSize: 18,
     fontWeight: "bold",
-  },
-  sendButtonTextActive: {
-    color: "#FFFFFF",
-  },
-  sendButtonTextInactive: {
-    color: "#8E8E93",
-  },
-  darkSendButtonText: {
-    // Dark mode text colors handled by active/inactive states
-  },
-  lightSendButtonText: {
-    // Light mode text colors handled by active/inactive states
+    // Color applied inline from palette
   },
 });

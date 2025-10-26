@@ -5,31 +5,32 @@ default_platform(:ios)
 
 platform :ios do
   # Configuration
-  APP_IDENTIFIER = "com.mvneves.dnschat"
+  # Note: Fastlane runs from ios/fastlane/, so we need absolute paths for gym
+  APP_IDENTIFIER = "org.mvneves.dnschat"
   SCHEME = "DNSChat"
-  WORKSPACE = "./ios/DNSChat.xcworkspace"
-
-  # Screenshot output directory
-  SCREENSHOTS_DIR = "./screenshots"
+  WORKSPACE = File.expand_path("../DNSChat.xcworkspace", __dir__)
+  BUILD_DIR = File.expand_path("../build", __dir__)
+  SCREENSHOTS_DIR = "../screenshots"
 
   # Device definitions with exact App Store dimensions
+  # Using iOS 26.1 devices to showcase Liquid Glass design system
   IPHONE_DEVICES = [
     {
-      name: "iPhone 16 Pro Max",
+      name: "iPhone 17 Pro Max",
       udid: nil, # Will be found dynamically
       width: 2868,
       height: 1320,
       folder: "iPhone-6.9"
     },
     {
-      name: "iPhone 16 Pro",
+      name: "iPhone 17 Pro",
       udid: nil,
       width: 2622,
       height: 1206,
       folder: "iPhone-6.3"
     },
     {
-      name: "iPhone 16",
+      name: "iPhone 17",
       udid: nil,
       width: 2556,
       height: 1179,
@@ -46,14 +47,14 @@ platform :ios do
 
   IPAD_DEVICES = [
     {
-      name: "iPad Pro 13-inch (M4)",
+      name: "iPad Pro 13-inch (M5)",
       udid: nil,
       width: 2064,
       height: 2752,
       folder: "iPad-13"
     },
     {
-      name: "iPad Pro 11-inch (M4)",
+      name: "iPad Pro 11-inch (M5)",
       udid: nil,
       width: 1668,
       height: 2388,
@@ -123,16 +124,17 @@ platform :ios do
       configuration: "Release",
       sdk: "iphonesimulator",
       destination: "id=#{udid}",
-      derived_data_path: "./ios/build",
+      derived_data_path: BUILD_DIR,
       skip_package_ipa: true,
       skip_archive: true
     )
 
     # Find the .app bundle
-    app_path = Dir.glob("./ios/build/Build/Products/Release-iphonesimulator/#{SCHEME}.app").first
+    app_path = "#{BUILD_DIR}/Build/Products/Release-iphonesimulator/#{SCHEME}.app"
 
-    if app_path.nil?
-      raise "Could not find .app bundle at expected path"
+    unless File.exist?(app_path)
+      UI.error("Expected app path: #{File.expand_path(app_path)}")
+      raise "Could not find .app bundle at #{app_path}"
     end
 
     UI.success("Found app bundle: #{app_path}")
@@ -145,12 +147,12 @@ platform :ios do
     UI.success("App installed successfully")
   end
 
-  desc "Launch app using AXe CLI"
+  desc "Launch app using xcrun simctl"
   private_lane :launch_app_axe do |options|
     udid = options[:udid]
 
-    UI.message("Launching app with AXe...")
-    sh("axe launch --bundle-id #{APP_IDENTIFIER} --udid #{udid}")
+    UI.message("Launching app...")
+    sh("xcrun simctl launch #{udid} #{APP_IDENTIFIER}")
     sleep(3) # Wait for app to load
   end
 
@@ -172,7 +174,8 @@ platform :ios do
     UI.message("Navigating to: #{screen}")
 
     # Execute navigation script
-    script_path = "./ios/fastlane/scripts/navigate_#{screen}.sh"
+    # Note: Fastlane runs from ios/fastlane/, so scripts are in ./scripts/
+    script_path = "./scripts/navigate_#{screen}.sh"
 
     if File.exist?(script_path)
       sh("bash #{script_path} #{udid}")
@@ -181,9 +184,9 @@ platform :ios do
       UI.user_error!("Navigation script not found: #{script_path}")
     end
 
-    # Capture screenshot using AXe
+    # Capture screenshot using xcrun simctl
     UI.message("Capturing screenshot...")
-    sh("axe screenshot --udid #{udid} --output '#{output_path}'")
+    sh("xcrun simctl io #{udid} screenshot '#{output_path}'")
 
     UI.success("Screenshot saved: #{output_path}")
   end
@@ -278,14 +281,14 @@ platform :ios do
     UI.message("\nReady for App Store upload!")
   end
 
-  desc "Quick test: Capture screenshots for one device only (iPhone 16 Pro Max)"
+  desc "Quick test: Capture screenshots for one device only (iPhone 17 Pro)"
   lane :screenshots_test do
-    UI.header("Test: Capturing screenshots for iPhone 16 Pro Max only")
+    UI.header("Test: Capturing screenshots for iPhone 17 Pro only (iOS 26.1)")
 
     FileUtils.rm_rf(SCREENSHOTS_DIR)
     FileUtils.mkdir_p(SCREENSHOTS_DIR)
 
-    device = IPHONE_DEVICES[0] # iPhone 16 Pro Max
+    device = IPHONE_DEVICES[1] # iPhone 17 Pro
     capture_device_screenshots(device: device, device_type: "iphone")
 
     UI.success("Test completed! Check #{SCREENSHOTS_DIR}")
