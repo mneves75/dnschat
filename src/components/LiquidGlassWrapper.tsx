@@ -1,384 +1,316 @@
-/**
- * LiquidGlassWrapper - React Native wrapper for iOS 26 Liquid Glass effects
- *
- * Uses official expo-glass-effect package for iOS 26+ with graceful fallbacks
- * for older iOS versions, Android, and web platforms.
- *
- * Usage:
- * <LiquidGlassWrapper variant="regular" shape="capsule">
- *   <Text>Your content</Text>
- * </LiquidGlassWrapper>
- *
- * @author DNSChat Team
- * @since 2.2.0 (Migrated to expo-glass-effect)
- */
-
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
-  Platform,
-  ViewProps,
-  View,
-  StyleSheet,
   AccessibilityInfo,
+  Platform,
+  View,
+  ViewProps,
   useColorScheme,
 } from "react-native";
 import {
   GlassView,
   GlassContainer,
-  isLiquidGlassAvailable,
-  type GlassStyle as ExpoGlassStyle,
+  isLiquidGlassAvailable as expoIsLiquidGlassAvailable,
 } from "expo-glass-effect";
+import { getImessagePalette } from "../ui/theme/imessagePalette";
 
-// ==================================================================================
-// TYPES AND INTERFACES
-// ==================================================================================
+type GlassVariant = "regular" | "prominent" | "interactive";
 
-interface LiquidGlassProps extends ViewProps {
-  /** Glass variant: regular, prominent, interactive */
-  variant?: "regular" | "prominent" | "interactive";
+type GlassShape = "capsule" | "rect" | "roundedRect";
 
-  /** Glass shape: capsule, rect, roundedRect */
-  shape?: "capsule" | "rect" | "roundedRect";
-
-  /** Corner radius for rect shapes */
+export interface LiquidGlassProps extends ViewProps {
+  variant?: GlassVariant;
+  shape?: GlassShape;
   cornerRadius?: number;
-
-  /** Tint color (hex string) */
   tintColor?: string;
-
-  /** Interactive response to touch */
   isInteractive?: boolean;
-
-  /** Environmental sensor adaptation (placeholder for future) */
-  sensorAware?: boolean;
-
-  /** Use GlassEffectContainer for performance (morphing animations) */
   enableContainer?: boolean;
-
-  /** Container merge distance for morphing */
   containerSpacing?: number;
-
-  /** Children to render inside glass effect */
   children?: React.ReactNode;
 }
 
-// ==================================================================================
-// FALLBACK STYLES
-// ==================================================================================
-
-/**
- * Fallback styles for platforms/versions without Liquid Glass support
- */
-const createFallbackStyles = (
-  variant: string,
-  shape: string,
-  cornerRadius: number,
-  isDark: boolean,
-  isInteractive: boolean
-) => {
-  const baseStyle = {
-    backgroundColor: (() => {
-      if (isDark) {
-        switch (variant) {
-          case "prominent":
-            return "rgba(40, 40, 42, 0.98)";
-          case "interactive":
-            return "rgba(255, 69, 58, 0.3)";
-          default:
-            return "rgba(28, 28, 30, 0.95)";
-        }
-      } else {
-        switch (variant) {
-          case "prominent":
-            return "rgba(255, 255, 255, 0.15)";
-          case "interactive":
-            return "rgba(0, 122, 255, 0.25)";
-          default:
-            return "rgba(248, 249, 250, 0.1)";
-        }
-      }
-    })(),
-    borderRadius: (() => {
-      switch (shape) {
-        case "capsule":
-          return 24;
-        case "roundedRect":
-          return cornerRadius || 16;
-        case "rect":
-          return 0;
-        default:
-          return 12;
-      }
-    })(),
-    borderWidth: isDark ? 2 : 1,
-    borderColor: isDark
-      ? "rgba(255, 255, 255, 0.2)"
-      : "rgba(0, 0, 0, 0.12)",
-    shadowColor: "#000000",
-    shadowOffset: { width: 0, height: isDark ? 12 : 8 },
-    shadowOpacity: isDark ? 0.6 : 0.15,
-    shadowRadius: isDark ? 24 : 18,
-    elevation: 12,
-    overflow: "hidden" as const,
-  };
-
-  if (isInteractive) {
-    return {
-      ...baseStyle,
-      backgroundColor: isDark
-        ? "rgba(255, 69, 58, 0.35)"
-        : "rgba(0, 122, 255, 0.3)",
-      shadowOpacity: isDark ? 0.7 : 0.2,
-      shadowRadius: isDark ? 28 : 22,
-      elevation: 16,
-      borderWidth: isDark ? 3 : 2,
-    };
+const shapeRadius = (shape: GlassShape, explicit?: number) => {
+  switch (shape) {
+    case "capsule":
+      return 24;
+    case "rect":
+      return 0;
+    case "roundedRect":
+      return explicit ?? 16;
+    default:
+      return explicit ?? 16;
   }
-
-  if (variant === "prominent") {
-    return {
-      ...baseStyle,
-      shadowOffset: { width: 0, height: isDark ? 16 : 12 },
-      shadowOpacity: isDark ? 0.7 : 0.2,
-      shadowRadius: isDark ? 32 : 24,
-      elevation: 20,
-      borderWidth: isDark ? 3 : 2,
-    };
-  }
-
-  return baseStyle;
 };
 
-// ==================================================================================
-// MAIN COMPONENT
-// ==================================================================================
+const ensureOpaqueColor = (color: string) => {
+  const match = color
+    .trim()
+    .match(
+      /^rgba\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*\)$/i,
+    );
 
-/**
- * LiquidGlassWrapper - Main React Native component
- */
+  if (!match) {
+    return color;
+  }
+
+  const [, r, g, b] = match;
+
+  return `rgb(${r.trim()}, ${g.trim()}, ${b.trim()})`;
+};
+
+export const buildFallbackStyle = (
+  variant: GlassVariant,
+  isDark: boolean,
+  shape: GlassShape,
+  cornerRadius?: number,
+  isInteractive?: boolean,
+  options: { forceOpaque?: boolean } = {},
+) => {
+  const palette = getImessagePalette(isDark);
+  const forceOpaque = options.forceOpaque ?? false;
+  const backgroundColor =
+    variant === "interactive" || variant === "prominent"
+      ? palette.accentSurface
+      : palette.surface;
+  const borderColor =
+    variant === "interactive" || variant === "prominent"
+      ? palette.accentBorder
+      : palette.border;
+
+  const normalizeColor = (value: string) =>
+    forceOpaque ? ensureOpaqueColor(value) : value;
+
+  return {
+    backgroundColor: normalizeColor(backgroundColor),
+    borderRadius: shapeRadius(shape, cornerRadius),
+    borderWidth: 1,
+    borderColor: normalizeColor(borderColor),
+    overflow: "hidden" as const,
+    ...(isInteractive
+      ? {
+          shadowColor: "#0A84FF",
+          shadowOpacity: isDark ? 0.35 : 0.25,
+          shadowRadius: 24,
+          shadowOffset: { width: 0, height: 10 },
+        }
+      : {
+          shadowColor: "#000000",
+          shadowOpacity: isDark ? 0.4 : 0.12,
+          shadowRadius: 20,
+          shadowOffset: { width: 0, height: isDark ? 12 : 8 },
+        }),
+  };
+};
+
+const glassEffectForVariant = (variant: GlassVariant): "regular" | "clear" => {
+  switch (variant) {
+    case "regular":
+      return "regular";
+    case "prominent":
+    case "interactive":
+      return "regular";
+    default:
+      return "regular";
+  }
+};
+
+const tintForVariant = (
+  variant: GlassVariant,
+  isDark: boolean,
+  override?: string,
+) => {
+  if (override) return override;
+  const palette = getImessagePalette(isDark);
+  if (variant === "interactive" || variant === "prominent") {
+    return palette.accentTint;
+  }
+  return palette.tint;
+};
+
+export const shouldUseGlassEffect = (reduceTransparency: boolean) => {
+  if (reduceTransparency) return false;
+  if (Platform.OS !== "ios") return false;
+  // Expo API synchronous boolean; safe to call every render.
+  if (!expoIsLiquidGlassAvailable()) return false;
+  return true;
+};
+
 export const LiquidGlassWrapper: React.FC<LiquidGlassProps> = ({
   variant = "regular",
-  shape = "capsule",
-  cornerRadius = 12,
-  tintColor = "",
+  shape = "roundedRect",
+  cornerRadius,
+  tintColor,
   isInteractive = false,
-  sensorAware = false,
-  enableContainer = true,
-  containerSpacing = 40,
-  children,
+  enableContainer = false,
+  containerSpacing = 12,
   style,
-  ...props
+  children,
+  ...rest
 }) => {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
+  const [reduceTransparency, setReduceTransparency] = useState(false);
 
-  // Check if reduce transparency is enabled (accessibility)
-  const [reduceTransparency, setReduceTransparency] = React.useState(false);
+  useEffect(() => {
+    if (Platform.OS !== "ios") return;
 
-  React.useEffect(() => {
-    if (Platform.OS === "ios") {
-      AccessibilityInfo.isReduceTransparencyEnabled().then(
-        setReduceTransparency
-      );
+    let isMounted = true;
 
-      const subscription = AccessibilityInfo.addEventListener(
-        "reduceTransparencyChanged",
-        setReduceTransparency
-      );
+    AccessibilityInfo.isReduceTransparencyEnabled().then((value) => {
+      if (isMounted) {
+        setReduceTransparency(Boolean(value));
+      }
+    });
 
-      return () => subscription.remove();
-    }
+    const subscription = AccessibilityInfo.addEventListener(
+      "reduceTransparencyChanged",
+      setReduceTransparency,
+    );
+
+    return () => {
+      isMounted = false;
+      subscription.remove();
+    };
   }, []);
 
-  // Determine if we should use native glass
-  const shouldUseNativeGlass = useMemo(() => {
-    if (Platform.OS !== "ios") return false;
-    if (reduceTransparency) return false; // Accessibility: no transparency
-    return isLiquidGlassAvailable();
-  }, [reduceTransparency]);
+  const glassKey = isInteractive ? "interactive" : "static";
+  const radius = shapeRadius(shape, cornerRadius);
 
-  // Map variant to expo-glass-effect glassEffectStyle
-  const glassEffectStyle: ExpoGlassStyle = useMemo(() => {
-    // expo-glass-effect supports: 'clear' | 'regular'
-    // We map our variants to these two options
-    switch (variant) {
-      case "prominent":
-      case "interactive":
-        return "regular"; // Use regular for prominent/interactive
-      default:
-        return "regular"; // Default to regular
-    }
-  }, [variant]);
-
-  // Apply shape styling
-  const shapeStyle = useMemo(() => {
-    return {
-      borderRadius: (() => {
-        switch (shape) {
-          case "capsule":
-            return 24;
-          case "roundedRect":
-            return cornerRadius || 16;
-          case "rect":
-            return 0;
-          default:
-            return 12;
-        }
-      })(),
-    };
-  }, [shape, cornerRadius]);
-
-  // Non-iOS platforms: use fallback styles
-  if (Platform.OS !== "ios") {
-    const fallbackStyle = createFallbackStyles(
-      variant,
-      shape,
-      cornerRadius,
-      isDark,
-      isInteractive
-    );
-
-    return (
-      <View style={[fallbackStyle, style]} {...props}>
-        {children}
-      </View>
-    );
-  }
-
-  // iOS with reduce transparency enabled: solid backgrounds
-  if (reduceTransparency) {
-    const solidStyle = {
-      backgroundColor: isDark ? "rgb(28, 28, 30)" : "rgb(255, 255, 255)",
-      ...shapeStyle,
-    };
-
-    return (
-      <View style={[solidStyle, style]} {...props}>
-        {children}
-      </View>
-    );
-  }
-
-  // iOS 26+ with Liquid Glass available
-  if (shouldUseNativeGlass) {
-    return (
-      <GlassView
-        glassEffectStyle={glassEffectStyle}
-        isInteractive={isInteractive}
-        tintColor={tintColor || undefined}
-        style={[shapeStyle, style]}
-        {...props}
-      >
-        {children}
-      </GlassView>
-    );
-  }
-
-  // iOS < 26: use fallback styles (blur-like appearance)
-  const fallbackStyle = createFallbackStyles(
-    variant,
-    shape,
-    cornerRadius,
-    isDark,
-    isInteractive
+  const baseContainerStyle = useMemo(
+    () => ({
+      borderRadius: radius,
+    }),
+    [radius],
   );
 
-  return (
-    <View style={[fallbackStyle, style]} {...props}>
+  const fallbackStyle = useMemo(
+    () =>
+      buildFallbackStyle(variant, isDark, shape, cornerRadius, isInteractive, {
+        forceOpaque: reduceTransparency,
+      }),
+    [variant, isDark, shape, cornerRadius, isInteractive, reduceTransparency],
+  );
+
+  const tint = tintForVariant(variant, isDark, tintColor);
+  const glassEffect = glassEffectForVariant(variant);
+
+  const useGlass = shouldUseGlassEffect(reduceTransparency);
+
+  if (!useGlass) {
+    return (
+      <View style={[baseContainerStyle, fallbackStyle, style]} {...rest}>
+        {children}
+      </View>
+    );
+  }
+
+  const glassContent = (
+    <GlassView
+      key={glassKey}
+      glassEffectStyle={glassEffect}
+      isInteractive={isInteractive}
+      tintColor={tint}
+      style={[baseContainerStyle, style]}
+      {...rest}
+    >
       {children}
-    </View>
+    </GlassView>
   );
+
+  if (enableContainer) {
+    return (
+      <GlassContainer
+        spacing={containerSpacing}
+        style={[baseContainerStyle, style]}
+      >
+        {glassContent}
+      </GlassContainer>
+    );
+  }
+
+  return glassContent;
 };
 
-// ==================================================================================
-// UTILITY HOOKS
-// ==================================================================================
+export const LiquidGlassButton: React.FC<LiquidGlassProps> = ({
+  variant = "interactive",
+  shape = "capsule",
+  isInteractive = true,
+  ...rest
+}) => (
+  <LiquidGlassWrapper
+    variant={variant}
+    shape={shape}
+    isInteractive={isInteractive}
+    {...rest}
+  />
+);
 
-/**
- * Hook for accessing liquid glass capabilities
- */
+export const LiquidGlassCard: React.FC<LiquidGlassProps> = ({
+  variant = "regular",
+  shape = "roundedRect",
+  cornerRadius = 16,
+  enableContainer = true,
+  ...rest
+}) => (
+  <LiquidGlassWrapper
+    variant={variant}
+    shape={shape}
+    cornerRadius={cornerRadius}
+    enableContainer={enableContainer}
+    {...rest}
+  />
+);
+
+export const LiquidGlassNavBar: React.FC<LiquidGlassProps> = ({
+  variant = "prominent",
+  shape = "rect",
+  ...rest
+}) => (
+  <LiquidGlassWrapper
+    variant={variant}
+    shape={shape}
+    enableContainer={true}
+    containerSpacing={8}
+    {...rest}
+  />
+);
+
 export const useLiquidGlassCapabilities = () => {
-  const [available, setAvailable] = React.useState(false);
-  const [loading, setLoading] = React.useState(true);
+  const [available, setAvailable] = useState(false);
+  const [loading, setLoading] = useState(Platform.OS === "ios");
+  const [reduceTransparency, setReduceTransparency] = useState(false);
 
-  React.useEffect(() => {
-    if (Platform.OS === "ios") {
-      const checkAvailability = async () => {
-        try {
-          const isAvailable = isLiquidGlassAvailable();
-          setAvailable(isAvailable);
-        } catch (error) {
-          console.warn("Failed to check Liquid Glass availability", error);
-          setAvailable(false);
-        } finally {
-          setLoading(false);
-        }
-      };
-
-      checkAvailability();
-    } else {
-      setLoading(false);
+  useEffect(() => {
+    if (Platform.OS !== "ios") {
       setAvailable(false);
+      setLoading(false);
+      return;
     }
+
+    setAvailable(expoIsLiquidGlassAvailable());
+    setLoading(false);
+
+    const subscription = AccessibilityInfo.addEventListener(
+      "reduceTransparencyChanged",
+      setReduceTransparency,
+    );
+
+    AccessibilityInfo.isReduceTransparencyEnabled().then((value) => {
+      setReduceTransparency(Boolean(value));
+    });
+
+    return () => {
+      subscription.remove();
+    };
   }, []);
 
   return {
-    available,
+    available: available && !reduceTransparency,
     loading,
-    isSupported: Platform.OS === "ios" && available,
-    supportsLiquidGlass: available,
+    isSupported: Platform.OS === "ios" && available && !reduceTransparency,
+    supportsLiquidGlass: available && !reduceTransparency,
   };
 };
 
-// ==================================================================================
-// CONVENIENCE COMPONENTS
-// ==================================================================================
-
-/**
- * Pre-configured glass button
- */
-export const LiquidGlassButton: React.FC<LiquidGlassProps> = (props) => (
-  <LiquidGlassWrapper
-    variant="interactive"
-    shape="capsule"
-    isInteractive={true}
-    {...props}
-  />
-);
-
-/**
- * Pre-configured glass card
- */
-export const LiquidGlassCard: React.FC<LiquidGlassProps> = (props) => (
-  <LiquidGlassWrapper
-    variant="regular"
-    shape="roundedRect"
-    cornerRadius={16}
-    enableContainer={true}
-    {...props}
-  />
-);
-
-/**
- * Pre-configured glass navigation bar
- */
-export const LiquidGlassNavBar: React.FC<LiquidGlassProps> = (props) => (
-  <LiquidGlassWrapper
-    variant="prominent"
-    shape="rect"
-    enableContainer={true}
-    sensorAware={true}
-    {...props}
-  />
-);
-
-// ==================================================================================
-// EXPORTS
-// ==================================================================================
+export { expoIsLiquidGlassAvailable as isLiquidGlassAvailable };
 
 export default LiquidGlassWrapper;
-
-export type { LiquidGlassProps };
-
-// Re-export official expo-glass-effect components for direct usage
-export { GlassView, GlassContainer, isLiquidGlassAvailable };

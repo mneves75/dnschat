@@ -3,18 +3,20 @@ import {
   View,
   Text,
   StyleSheet,
-  useColorScheme,
   Animated,
   Dimensions,
 } from "react-native";
 import { useOnboarding } from "../../context/OnboardingContext";
+import { useImessagePalette } from "../../ui/theme/imessagePalette";
+import { useTypography } from "../../ui/hooks/useTypography";
+import { LiquidGlassSpacing } from "../../ui/theme/liquidGlassSpacing";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
-const PROGRESS_WIDTH = SCREEN_WIDTH - 32;
+const PROGRESS_WIDTH = SCREEN_WIDTH - (LiquidGlassSpacing.md * 2);
 
 export function OnboardingProgress() {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
+  const palette = useImessagePalette();
+  const typography = useTypography();
   const { currentStep, steps } = useOnboarding();
 
   const progress = (currentStep + 1) / steps.length;
@@ -33,16 +35,18 @@ export function OnboardingProgress() {
       <View style={styles.header}>
         <Text
           style={[
+            typography.footnote,
             styles.stepText,
-            isDark ? styles.darkStepText : styles.lightStepText,
+            { color: palette.textSecondary },
           ]}
         >
           Step {currentStep + 1} of {steps.length}
         </Text>
         <Text
           style={[
+            typography.title3,
             styles.titleText,
-            isDark ? styles.darkTitleText : styles.lightTitleText,
+            { color: palette.textPrimary },
           ]}
         >
           {steps[currentStep]?.title || ""}
@@ -53,15 +57,13 @@ export function OnboardingProgress() {
         <View
           style={[
             styles.progressBackground,
-            isDark
-              ? styles.darkProgressBackground
-              : styles.lightProgressBackground,
+            { backgroundColor: palette.separator },
           ]}
         >
           <Animated.View
             style={[
               styles.progressBar,
-              isDark ? styles.darkProgressBar : styles.lightProgressBar,
+              { backgroundColor: palette.accentTint },
               {
                 width: animatedWidth.interpolate({
                   inputRange: [0, 1],
@@ -78,13 +80,10 @@ export function OnboardingProgress() {
               key={index}
               style={[
                 styles.dot,
-                index <= currentStep
-                  ? isDark
-                    ? styles.darkActiveDot
-                    : styles.lightActiveDot
-                  : isDark
-                    ? styles.darkInactiveDot
-                    : styles.lightInactiveDot,
+                {
+                  backgroundColor:
+                    index <= currentStep ? palette.accentTint : palette.separator,
+                },
               ]}
             />
           ))}
@@ -96,57 +95,31 @@ export function OnboardingProgress() {
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 16,
-    paddingVertical: 20,
+    paddingHorizontal: LiquidGlassSpacing.md,
+    paddingVertical: LiquidGlassSpacing.lg,
   },
   header: {
-    marginBottom: 16,
+    marginBottom: LiquidGlassSpacing.md,
   },
   stepText: {
-    fontSize: 14,
     fontWeight: "500",
-    marginBottom: 4,
-  },
-  lightStepText: {
-    color: "#666666",
-  },
-  darkStepText: {
-    color: "#999999",
+    marginBottom: LiquidGlassSpacing.xxs,
   },
   titleText: {
-    fontSize: 24,
-    fontWeight: "bold",
-  },
-  lightTitleText: {
-    color: "#000000",
-  },
-  darkTitleText: {
-    color: "#FFFFFF",
+    fontWeight: "700",
   },
   progressContainer: {
     position: "relative",
   },
   progressBackground: {
     width: PROGRESS_WIDTH,
-    height: 4,
+    height: LiquidGlassSpacing.xxs,
     borderRadius: 2,
     overflow: "hidden",
-  },
-  lightProgressBackground: {
-    backgroundColor: "#E5E5EA",
-  },
-  darkProgressBackground: {
-    backgroundColor: "#2C2C2E",
   },
   progressBar: {
     height: "100%",
     borderRadius: 2,
-  },
-  lightProgressBar: {
-    backgroundColor: "#007AFF",
-  },
-  darkProgressBar: {
-    backgroundColor: "#0A84FF",
   },
   dotsContainer: {
     flexDirection: "row",
@@ -154,23 +127,11 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: -2,
     width: PROGRESS_WIDTH,
-    paddingHorizontal: 4,
+    paddingHorizontal: LiquidGlassSpacing.xxs,
   },
   dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  lightActiveDot: {
-    backgroundColor: "#007AFF",
-  },
-  darkActiveDot: {
-    backgroundColor: "#0A84FF",
-  },
-  lightInactiveDot: {
-    backgroundColor: "#E5E5EA",
-  },
-  darkInactiveDot: {
-    backgroundColor: "#2C2C2E",
+    width: LiquidGlassSpacing.xs,
+    height: LiquidGlassSpacing.xs,
+    borderRadius: LiquidGlassSpacing.xxs,
   },
 });

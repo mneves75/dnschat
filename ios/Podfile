@@ -45,7 +45,7 @@ target 'DNSChat' do
   # Note: DNSNative is autolinked from modules/dns-native via Expo autolinking
   # Do not add manual pod entry as it causes duplicate dependency errors
 
-  # Note: LiquidGlassNative and expo-glass-effect are autolinked via Expo autolinking
+  # Note: expo-glass-effect is autolinked via Expo; no custom LiquidGlassNative pod remains
   # Manual pod entries removed to prevent duplicate dependency errors
 
   # Fix for react-native-bottom-tabs Swift dependencies

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, ScrollView, StyleSheet } from "react-native";
 import { DNSLogService, DNSQueryLog } from "../services/dnsLogService";
+import { useTranslation } from "../i18n";
 
 interface DNSLogViewerProps {
   maxEntries?: number;
@@ -14,6 +15,7 @@ export const DNSLogViewer: React.FC<DNSLogViewerProps> = ({
   maxEntries = 20,
 }) => {
   const [logs, setLogs] = useState<DNSQueryLog[]>(DNSLogService.getLogs());
+  const { t } = useTranslation();
 
   useEffect(() => {
     const unsub = DNSLogService.subscribe(setLogs);
@@ -25,7 +27,7 @@ export const DNSLogViewer: React.FC<DNSLogViewerProps> = ({
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       {display.length === 0 ? (
-        <Text style={styles.empty}>No DNS logs yet</Text>
+        <Text style={styles.empty}>{t("components.dnsLogViewer.empty")}</Text>
       ) : (
         display.map((log) => (
           <View key={log.id} style={styles.card}>
@@ -67,7 +69,9 @@ export const DNSLogViewer: React.FC<DNSLogViewerProps> = ({
             </View>
             {log.response ? (
               <View style={styles.responseBox}>
-                <Text style={styles.responseLabel}>Response</Text>
+                <Text style={styles.responseLabel}>
+                  {t("components.dnsLogViewer.responseLabel")}
+                </Text>
                 <Text style={styles.response}>{log.response}</Text>
               </View>
             ) : null}

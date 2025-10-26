@@ -93,22 +93,36 @@ final class DNSResolver: NSObject {
     private func performUDPQuery(server: String, queryName: String) async throws -> [String] {
         // Build DNS query
         let queryData = try createDNSQuery(queryName: queryName)
-        
+
         // Prepare UDP connection
         let host = NWEndpoint.Host(server)
         let port = NWEndpoint.Port(integerLiteral: Self.dnsPort)
         let params = NWParameters.udp
         let connection = NWConnection(host: host, port: port, using: params)
-        
-        // Await ready state
+
+        // CRITICAL: Wait for connection ready state
+        // Thread Safety: All callbacks execute on .global(qos: .userInitiated) queue (specified in start()),
+        // providing serial execution guarantees. No concurrent access to isResumed is possible.
         try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, Error>) in
+            // Guard against double-resume: NWConnection.stateUpdateHandler fires multiple times
+            // (e.g., .ready, then later .cancelled when timeout fires or connection is torn down)
+            var isResumed = false
+
             connection.stateUpdateHandler = { state in
+                // CRITICAL: CheckedContinuation can only resume ONCE. If stateUpdateHandler fires
+                // after we've already resumed (e.g., .ready followed by .cancelled), attempting
+                // a second resume triggers EXC_BREAKPOINT crash. This guard prevents that.
+                guard !isResumed else { return }
+
                 switch state {
                 case .ready:
+                    isResumed = true
                     cont.resume()
                 case .failed(let error):
+                    isResumed = true
                     cont.resume(throwing: DNSError.resolverFailed(error.localizedDescription))
                 case .cancelled:
+                    isResumed = true
                     cont.resume(throwing: DNSError.cancelled)
                 default:
                     break
@@ -116,10 +130,16 @@ final class DNSResolver: NSObject {
             }
             connection.start(queue: .global(qos: .userInitiated))
         }
-        
-        // Send content
+
+        // Send DNS query packet
         try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, Error>) in
+            var isResumed = false
+
             connection.send(content: queryData, completion: .contentProcessed { error in
+                // Defensive: NWConnection.send completion should only fire once, but guard anyway
+                guard !isResumed else { return }
+                isResumed = true
+
                 if let error = error {
                     cont.resume(throwing: DNSError.queryFailed(error.localizedDescription))
                 } else {
@@ -127,11 +147,22 @@ final class DNSResolver: NSObject {
                 }
             })
         }
-        
-        // Receive response
+
+        // Receive DNS response packet
         let responseData: Data = try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Data, Error>) in
+            var isResumed = false
+
             connection.receiveMessage { data, _, _, error in
+                // CRITICAL ORDER: Set isResumed flag BEFORE calling connection.cancel()
+                // Reason: cancel() may synchronously trigger stateUpdateHandler with .cancelled state.
+                // If we cancel first, stateUpdateHandler sees isResumed=false and attempts to resume
+                // the continuation with .cancelled, then we try to resume with data → double-resume crash.
+                guard !isResumed else { return }
+                isResumed = true
+
+                // Now safe to cancel: flag is set, preventing stateUpdateHandler from resuming
                 connection.cancel()
+
                 if let error = error {
                     cont.resume(throwing: DNSError.queryFailed(error.localizedDescription))
                     return

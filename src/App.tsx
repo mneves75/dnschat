@@ -5,9 +5,11 @@ import * as SplashScreen from "expo-splash-screen";
 import * as React from "react";
 import { useColorScheme, Platform, View, StyleSheet } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import { Navigation } from "./navigation";
 import { ChatProvider } from "./context/ChatContext";
 import { SettingsProvider } from "./context/SettingsContext";
+import { AccessibilityProvider } from "./context/AccessibilityContext";
 import { OnboardingProvider, useOnboarding } from "./context/OnboardingContext";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { OnboardingContainer } from "./components/onboarding/OnboardingContainer";
@@ -15,7 +17,9 @@ import {
   LiquidGlassWrapper,
   useLiquidGlassCapabilities,
 } from "./components/LiquidGlassWrapper";
+import { HapticsConfigurator } from "./components/HapticsConfigurator";
 import { DNSLogService } from "./services/dnsLogService";
+import { I18nProvider } from "./i18n";
 
 Asset.loadAsync([...NavigationAssets, require("./assets/newspaper.png")]);
 
@@ -69,7 +73,6 @@ function AppContent() {
         variant="regular"
         shape="rect"
         enableContainer={true}
-        sensorAware={true}
         style={styles.appContainer}
       >
         {navigationComponent}
@@ -83,15 +86,22 @@ function AppContent() {
 export function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <ErrorBoundary>
-        <SettingsProvider>
-          <OnboardingProvider>
-            <ChatProvider>
-              <AppContent />
-            </ChatProvider>
-          </OnboardingProvider>
-        </SettingsProvider>
-      </ErrorBoundary>
+      <SafeAreaProvider>
+        <ErrorBoundary>
+          <SettingsProvider>
+            <AccessibilityProvider>
+              <I18nProvider>
+                <OnboardingProvider>
+                  <ChatProvider>
+                    <HapticsConfigurator />
+                    <AppContent />
+                  </ChatProvider>
+                </OnboardingProvider>
+              </I18nProvider>
+            </AccessibilityProvider>
+          </SettingsProvider>
+        </ErrorBoundary>
+      </SafeAreaProvider>
     </GestureHandlerRootView>
   );
 }

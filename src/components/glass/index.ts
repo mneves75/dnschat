@@ -43,8 +43,9 @@ export {
   LiquidGlassCard,
   LiquidGlassNavBar,
   useLiquidGlassCapabilities,
-  type LiquidGlassProps,
 } from "../LiquidGlassWrapper";
+
+export type { LiquidGlassProps } from "../LiquidGlassWrapper";
 
 // Glass Component Namespace (alternative import style)
 export * as Glass from "./GlassForm";

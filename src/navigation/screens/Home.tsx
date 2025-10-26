@@ -1,15 +1,17 @@
 import { Button, Text } from "@react-navigation/elements";
 import { StyleSheet, View } from "react-native";
+import { useTranslation } from "../../i18n";
 
 export function Home() {
+  const { t } = useTranslation();
   return (
     <View style={styles.container}>
-      <Text>Home Screen</Text>
-      <Text>Open up 'src/App.tsx' to start working on your app!</Text>
+      <Text>{t("screen.home.title")}</Text>
+      <Text>{t("screen.home.subtitle")}</Text>
       <Button screen="Profile" params={{ user: "jane" }}>
-        Go to Profile
+        {t("screen.home.goToProfile")}
       </Button>
-      <Button screen="Settings">Go to Settings</Button>
+      <Button screen="Settings">{t("screen.home.goToSettings")}</Button>
     </View>
   );
 }

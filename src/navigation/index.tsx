@@ -9,13 +9,12 @@ import { Image, Platform, useColorScheme } from "react-native";
 import { useTheme } from "@react-navigation/native";
 import TabView, { SceneMap } from "react-native-bottom-tabs";
 import type { BaseRoute } from "react-native-bottom-tabs";
-import { LiquidGlassNavBar } from "../components/LiquidGlassWrapper";
-
 // Import newspaper icon properly for Metro bundler
 const newspaper = require("../assets/newspaper.png");
 import { InfoIcon } from "../components/InfoIcon";
 import { SettingsIcon } from "../components/icons/SettingsIcon";
 import { LogsIcon } from "../components/icons/LogsIcon";
+import { useTranslation } from "../i18n";
 import { Home } from "./screens/Home";
 import { Profile } from "./screens/Profile";
 import { GlassSettings } from "./screens/GlassSettings";
@@ -36,7 +35,7 @@ function SettingsHeaderButton({ onPress }: { onPress: () => void }) {
 }
 
 type TabRoute = BaseRoute & {
-  key: "ChatList" | "Logs" | "About" | "DevLogs";
+  key: "ChatList" | "Logs" | "About";
   title: string;
   focusedIcon: any;
   unfocusedIcon: any;
@@ -46,42 +45,36 @@ function HomeTabs() {
   const [index, setIndex] = useState(0);
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
+  const { t } = useTranslation();
 
-  const routes: TabRoute[] = [
-    {
-      key: "ChatList",
-      title: "DNS Chat",
-      focusedIcon: newspaper,
-      unfocusedIcon: newspaper,
-    },
-    {
-      key: "Logs",
-      title: "Logs",
-      focusedIcon: { sfSymbol: "list.bullet.rectangle" },
-      unfocusedIcon: { sfSymbol: "list.bullet.rectangle" },
-    },
-    {
-      key: "About",
-      title: "About",
-      focusedIcon: { sfSymbol: "info.circle" },
-      unfocusedIcon: { sfSymbol: "info.circle" },
-    },
-  ];
-
-  if (typeof __DEV__ !== "undefined" && __DEV__) {
-    routes.push({
-      key: "DevLogs",
-      title: "Dev Logs",
-      focusedIcon: { sfSymbol: "wrench.and.screwdriver" },
-      unfocusedIcon: { sfSymbol: "wrench.and.screwdriver" },
-    });
-  }
+  const routes: TabRoute[] = React.useMemo(
+    () => [
+      {
+        key: "ChatList",
+        title: t("navigation.tabs.chat"),
+        focusedIcon: newspaper,
+        unfocusedIcon: newspaper,
+      },
+      {
+        key: "Logs",
+        title: t("navigation.tabs.logs"),
+        focusedIcon: { sfSymbol: "list.bullet.rectangle" },
+        unfocusedIcon: { sfSymbol: "list.bullet.rectangle" },
+      },
+      {
+        key: "About",
+        title: t("navigation.tabs.about"),
+        focusedIcon: { sfSymbol: "info.circle" },
+        unfocusedIcon: { sfSymbol: "info.circle" },
+      },
+    ],
+    [t],
+  );
 
   const renderScene = SceneMap({
     ChatList: GlassChatList,
     Logs: Logs,
     About: About,
-    DevLogs: DevLogs,
   });
 
   return (

@@ -9,7 +9,7 @@ PODS:
   - EXJSONUtils (0.15.0)
   - EXManifests (1.0.8):
     - ExpoModulesCore
-  - Expo (54.0.19):
+  - Expo (54.0.20):
     - boost
     - DoubleConversion
     - ExpoModulesCore
@@ -254,6 +254,8 @@ PODS:
   - ExpoFont (14.0.9):
     - ExpoModulesCore
   - ExpoGlassEffect (0.1.4):
+    - ExpoModulesCore
+  - ExpoHaptics (15.0.7):
     - ExpoModulesCore
   - ExpoKeepAwake (15.0.7):
     - ExpoModulesCore
@@ -3050,6 +3052,7 @@ DEPENDENCIES:
   - ExpoFileSystem (from `../node_modules/expo-file-system/ios`)
   - ExpoFont (from `../node_modules/expo-font/ios`)
   - ExpoGlassEffect (from `../node_modules/expo-glass-effect/ios`)
+  - ExpoHaptics (from `../node_modules/expo-haptics/ios`)
   - ExpoKeepAwake (from `../node_modules/expo-keep-awake/ios`)
   - ExpoLocalization (from `../node_modules/expo-localization/ios`)
   - ExpoModulesCore (from `../node_modules/expo-modules-core`)
@@ -3180,6 +3183,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/expo-font/ios"
   ExpoGlassEffect:
     :path: "../node_modules/expo-glass-effect/ios"
+  ExpoHaptics:
+    :path: "../node_modules/expo-haptics/ios"
   ExpoKeepAwake:
     :path: "../node_modules/expo-keep-awake/ios"
   ExpoLocalization:
@@ -3362,7 +3367,7 @@ SPEC CHECKSUMS:
   EXConstants: fd688cef4e401dcf798a021cfb5d87c890c30ba3
   EXJSONUtils: 1d3e4590438c3ee593684186007028a14b3686cd
   EXManifests: 224345a575fca389073c416297b6348163f28d1a
-  Expo: 4bfaee37de1372b5408ea118005ecff4b95018a0
+  Expo: 038e807e43fecf6e306f04df6542d22f2da92d5e
   expo-dev-client: 974463bca58c100a32f099450e9413893bee3de8
   expo-dev-launcher: 95f3469129bea989178e35dd3ba877daed87c837
   expo-dev-menu: 2b07bff6534770f36edc284948fd4a98e28cf2cb
@@ -3371,6 +3376,7 @@ SPEC CHECKSUMS:
   ExpoFileSystem: b79eadbda7b7f285f378f95f959cc9313a1c9c61
   ExpoFont: cf9d90ec1d3b97c4f513211905724c8171f82961
   ExpoGlassEffect: 744bf0c58c26a1b0212dff92856be07b98d01d8c
+  ExpoHaptics: 807476b0c39e9d82b7270349d6487928ce32df84
   ExpoKeepAwake: 1a2e820692e933c94a565ec3fbbe38ac31658ffe
   ExpoLocalization: b852a5d8ec14c5349c1593eca87896b5b3ebfcca
   ExpoModulesCore: c38e2b16c117698c4ac907d1b929d111601d5db8
@@ -3462,6 +3468,6 @@ SPEC CHECKSUMS:
   SwiftUIIntrospect: fee9aa07293ee280373a591e1824e8ddc869ba5d
   Yoga: 728df40394d49f3f471688747cf558158b3a3bd1
 
-PODFILE CHECKSUM: 5c4142f426177685c076f261a4939ecfacdb9dd0
+PODFILE CHECKSUM: 32ed19e06423701d16a8f2b8db29ace09ee97b09
 
 COCOAPODS: 1.16.2
