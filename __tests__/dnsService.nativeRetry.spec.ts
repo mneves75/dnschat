@@ -58,8 +58,6 @@ describe('DNSService native retry integration', () => {
       'test fallback',
       'ch.at',
       false,
-      'native-first',
-      false,
       true,
     );
 

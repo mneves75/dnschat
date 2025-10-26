@@ -5,11 +5,9 @@ import {
 } from '../src/context/settingsStorage';
 
 describe('SettingsContext migrateSettings', () => {
-  it('migrates legacy payload without version', () => {
+  it('migrates legacy v1 payload (no version) to v3', () => {
     const legacyPayload = {
       dnsServer: '8.8.8.8',
-      preferDnsOverHttps: true,
-      dnsMethodPreference: 'prefer-https',
       enableMockDNS: true,
     };
 
@@ -18,24 +16,70 @@ describe('SettingsContext migrateSettings', () => {
     expect(result).toEqual({
       version: SETTINGS_VERSION,
       dnsServer: '8.8.8.8',
-      preferDnsOverHttps: true,
-      dnsMethodPreference: 'prefer-https',
       enableMockDNS: true,
-      allowExperimentalTransports: false,
+      allowExperimentalTransports: true,
+      enableHaptics: true,
       preferredLocale: null,
       accessibility: DEFAULT_SETTINGS.accessibility,
     });
   });
 
-  it('sanitizes invalid values in versioned payloads', () => {
+  it('migrates v2 payload to v3 (removes HTTPS fields, enables experimental transports)', () => {
+    const v2Payload = {
+      version: 2,
+      dnsServer: 'ch.at',
+      preferDnsOverHttps: true,
+      dnsMethodPreference: 'prefer-https',
+      enableMockDNS: false,
+      allowExperimentalTransports: false,
+      enableHaptics: true,
+      preferredLocale: 'en-US',
+    };
+
+    const result = migrateSettings(v2Payload);
+
+    expect(result).toEqual({
+      version: SETTINGS_VERSION,
+      dnsServer: 'ch.at',
+      enableMockDNS: false,
+      allowExperimentalTransports: true,
+      enableHaptics: true,
+      preferredLocale: 'en-US',
+      accessibility: DEFAULT_SETTINGS.accessibility,
+    });
+  });
+
+  it('preserves v3 payload with correct fields', () => {
+    const v3Payload = {
+      version: 3,
+      dnsServer: 'llm.pieter.com',
+      enableMockDNS: true,
+      allowExperimentalTransports: false,
+      enableHaptics: false,
+      preferredLocale: 'pt-BR',
+      accessibility: DEFAULT_SETTINGS.accessibility,
+    };
+
+    const result = migrateSettings(v3Payload);
+
+    expect(result).toEqual({
+      version: SETTINGS_VERSION,
+      dnsServer: 'llm.pieter.com',
+      enableMockDNS: true,
+      allowExperimentalTransports: false,
+      enableHaptics: false,
+      preferredLocale: 'pt-BR',
+      accessibility: DEFAULT_SETTINGS.accessibility,
+    });
+  });
+
+  it('sanitizes invalid values in v3 payloads', () => {
     const malformedPayload = {
-      version: 1,
+      version: 3,
       dnsServer: '   ',
-      preferDnsOverHttps: 'yes',
-      dnsMethodPreference: 'invalid-option',
       enableMockDNS: 'truthy',
       allowExperimentalTransports: 'truthy',
-      preferredLocale: 'xx-YY',
+      preferredLocale: 'en-US',
     } as unknown;
 
     const result = migrateSettings(malformedPayload);
@@ -43,11 +87,10 @@ describe('SettingsContext migrateSettings', () => {
     expect(result).toEqual({
       version: SETTINGS_VERSION,
       dnsServer: DEFAULT_SETTINGS.dnsServer,
-      preferDnsOverHttps: true,
-      dnsMethodPreference: 'native-first',
       enableMockDNS: true,
       allowExperimentalTransports: true,
-      preferredLocale: 'xx-YY',
+      enableHaptics: true,
+      preferredLocale: 'en-US',
       accessibility: DEFAULT_SETTINGS.accessibility,
     });
   });
@@ -55,5 +98,16 @@ describe('SettingsContext migrateSettings', () => {
   it('falls back to defaults for invalid payload', () => {
     expect(migrateSettings(undefined)).toEqual(DEFAULT_SETTINGS);
     expect(migrateSettings('bad')).toEqual(DEFAULT_SETTINGS);
+  });
+
+  it('normalizes preferredLocale values when present', () => {
+    const payload = {
+      version: 3,
+      preferredLocale: 'pt',
+    };
+
+    const result = migrateSettings(payload);
+
+    expect(result.preferredLocale).toBe('pt-BR');
   });
 });

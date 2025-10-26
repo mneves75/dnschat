@@ -11,30 +11,42 @@ import {
   Switch,
   ScrollView,
 } from "react-native";
-import { useTheme, useNavigation } from "@react-navigation/native";
+import {
+  useTheme,
+  useNavigation,
+  NavigationProp,
+  ParamListBase,
+} from "@react-navigation/native";
 import {
   useSettings,
-  DNSMethodPreference,
 } from "../../context/SettingsContext";
 import { useOnboarding } from "../../context/OnboardingContext";
+import { persistHapticsPreference } from "../../utils/haptics";
+import { useTranslation } from "../../i18n";
+import { LOCALE_LABEL_KEYS } from "../../i18n/localeMeta";
+import { DEFAULT_DNS_SERVER } from "../../context/settingsStorage";
 
 export function Settings() {
   const { colors } = useTheme();
-  const navigation = useNavigation();
+  const { t } = useTranslation();
+  const navigation = useNavigation<NavigationProp<ParamListBase>>();
   const {
     dnsServer,
     updateDnsServer,
-    preferDnsOverHttps,
-    updatePreferDnsOverHttps,
-    dnsMethodPreference,
-    updateDnsMethodPreference,
+    enableMockDNS,
+    updateEnableMockDNS,
+    enableHaptics,
+    updateEnableHaptics,
+    systemLocale,
+    preferredLocale,
+    availableLocales,
+    updateLocale,
     loading,
   } = useSettings();
   const { resetOnboarding } = useOnboarding();
   const [tempDnsServer, setTempDnsServer] = useState(dnsServer);
-  const [tempPreferHttps, setTempPreferHttps] = useState(preferDnsOverHttps);
-  const [tempMethodPreference, setTempMethodPreference] =
-    useState<DNSMethodPreference>(dnsMethodPreference);
+  const [tempEnableMockDNS, setTempEnableMockDNS] = useState(enableMockDNS);
+  const [tempEnableHaptics, setTempEnableHaptics] = useState(enableHaptics);
   const [saving, setSaving] = useState(false);
 
   // Transport test state
@@ -44,31 +56,15 @@ export function Settings() {
   const [lastTestError, setLastTestError] = useState<string | null>(null);
 
   // Auto-save handlers
-  const handleSelectMethodPreference = async (
-    preference: DNSMethodPreference,
-  ) => {
+  const handleToggleMockDNS = async (value: boolean) => {
     if (loading) return;
     try {
-      setTempMethodPreference(preference);
+      setTempEnableMockDNS(value);
       setSaving(true);
-      await updateDnsMethodPreference(preference);
-      console.log("✅ DNS method preference saved:", preference);
+      await updateEnableMockDNS(value);
+      console.log("✅ Mock DNS saved:", value);
     } catch (e: any) {
-      console.log("❌ Failed to save DNS method preference:", e?.message || e);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleTogglePreferHttps = async (value: boolean) => {
-    if (loading) return;
-    try {
-      setTempPreferHttps(value);
-      setSaving(true);
-      await updatePreferDnsOverHttps(value);
-      console.log("✅ Prefer HTTPS (legacy) saved:", value);
-    } catch (e: any) {
-      console.log("❌ Failed to save Prefer HTTPS (legacy):", e?.message || e);
+      console.log("❌ Failed to save Mock DNS:", e?.message || e);
     } finally {
       setSaving(false);
     }
@@ -82,18 +78,43 @@ export function Settings() {
       console.log("✅ DNS server saved on blur:", tempDnsServer);
     } catch (e: any) {
       console.log("❌ Failed to save DNS server:", e?.message || e);
-      Alert.alert("Save Failed", "Could not save DNS server.");
+      Alert.alert(
+        t("screen.settings.alerts.dnsSaveErrorTitle"),
+        t("screen.settings.alerts.dnsSaveErrorMessage"),
+      );
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleToggleHaptics = async (value: boolean) => {
+    await persistHapticsPreference(value, {
+      loading,
+      setSaving,
+      setTempValue: setTempEnableHaptics,
+      updateEnableHaptics,
+      logLabel: "Enable haptics saved",
+    });
+  };
+
+  const handleSelectLocale = async (nextLocale: string | null) => {
+    try {
+      await updateLocale(nextLocale);
+    } catch (error) {
+      console.log("❌ Failed to update locale:", error);
+      Alert.alert(
+        t("screen.settings.alerts.saveErrorTitle"),
+        t("screen.settings.alerts.saveErrorMessage"),
+      );
     }
   };
 
   // Sync temp state with context values when they change
   React.useEffect(() => {
     setTempDnsServer(dnsServer);
-    setTempPreferHttps(preferDnsOverHttps);
-    setTempMethodPreference(dnsMethodPreference);
-  }, [dnsServer, preferDnsOverHttps, dnsMethodPreference]);
+    setTempEnableMockDNS(enableMockDNS);
+    setTempEnableHaptics(enableHaptics);
+  }, [dnsServer, enableMockDNS, enableHaptics]);
 
   const handleSave = async () => {
     if (saving) return;
@@ -101,15 +122,18 @@ export function Settings() {
     try {
       setSaving(true);
       await updateDnsServer(tempDnsServer);
-      await updatePreferDnsOverHttps(tempPreferHttps);
-      await updateDnsMethodPreference(tempMethodPreference);
+      await updateEnableMockDNS(tempEnableMockDNS);
+      await updateEnableHaptics(tempEnableHaptics);
       Alert.alert(
-        "Settings Saved",
-        "Settings have been updated successfully.",
-        [{ text: "OK", onPress: () => (navigation as any)?.goBack?.() }],
+        t("screen.settings.alerts.saveSuccessTitle"),
+        t("screen.settings.alerts.saveSuccessMessage"),
+        [{ text: t("common.ok"), onPress: () => (navigation as any)?.goBack?.() }],
       );
     } catch (error) {
-      Alert.alert("Error", "Failed to save settings. Please try again.");
+      Alert.alert(
+        t("screen.settings.alerts.saveErrorTitle"),
+        t("screen.settings.alerts.saveErrorMessage"),
+      );
     } finally {
       setSaving(false);
     }
@@ -117,17 +141,17 @@ export function Settings() {
 
   const handleReset = () => {
     Alert.alert(
-      "Reset to Default",
-      "Are you sure you want to reset all settings to default?",
+      t("screen.settings.alerts.resetTitle"),
+      t("screen.settings.alerts.resetMessage"),
       [
-        { text: "Cancel", style: "cancel" },
+        { text: t("common.cancel"), style: "cancel" },
         {
-          text: "Reset",
+          text: t("screen.settings.alerts.resetConfirm"),
           style: "destructive",
           onPress: () => {
-            setTempDnsServer("ch.at");
-            setTempPreferHttps(false);
-            setTempMethodPreference("automatic");
+            setTempDnsServer(DEFAULT_DNS_SERVER);
+            setTempEnableMockDNS(false);
+            setTempEnableHaptics(true);
           },
         },
       ],
@@ -136,18 +160,18 @@ export function Settings() {
 
   const handleResetOnboarding = () => {
     Alert.alert(
-      "Reset Onboarding",
-      "This will reset the onboarding process and show it again on next app launch. This is useful for testing or if you want to see the tour again.",
+      t("screen.settings.alerts.onboardingTitle"),
+      t("screen.settings.alerts.onboardingMessage"),
       [
-        { text: "Cancel", style: "cancel" },
+        { text: t("common.cancel"), style: "cancel" },
         {
-          text: "Reset Onboarding",
+          text: t("screen.settings.alerts.onboardingConfirm"),
           style: "destructive",
           onPress: async () => {
             await resetOnboarding();
             Alert.alert(
-              "Onboarding Reset",
-              "The onboarding will be shown again when you restart the app.",
+              t("screen.settings.alerts.onboardingResetTitle"),
+              t("screen.settings.alerts.onboardingResetMessage"),
             );
           },
         },
@@ -164,10 +188,9 @@ export function Settings() {
       setLastTestResult(null);
       setLastTestError(null);
 
-      console.log("🧪 Testing with selected preference:", {
+      console.log("🧪 Testing Native DNS with fallbacks:", {
         dnsServer: tempDnsServer,
-        preferHttps: tempPreferHttps,
-        methodPreference: tempMethodPreference,
+        enableMockDNS: tempEnableMockDNS,
         testMessage,
       });
 
@@ -175,23 +198,23 @@ export function Settings() {
       const response = await DNSService.queryLLM(
         testMessage,
         tempDnsServer,
-        tempPreferHttps,
-        tempMethodPreference,
+        tempEnableMockDNS,
+        true,
       );
 
       setLastTestResult(response);
-      console.log("✅ Test with selected preference successful:", response);
+      console.log("✅ Native DNS test successful:", response);
     } catch (error: any) {
       const errorMessage = error.message || "Unknown error occurred";
       setLastTestError(errorMessage);
-      console.log("❌ Test with selected preference failed:", errorMessage);
+      console.log("❌ Native DNS test failed:", errorMessage);
     } finally {
       setTestRunning(false);
     }
   };
 
   const handleForceTransport = async (
-    transport: "native" | "udp" | "tcp" | "https",
+    transport: "native" | "udp" | "tcp",
   ) => {
     if (testRunning) return;
 
@@ -228,9 +251,36 @@ export function Settings() {
 
   const isDirty =
     tempDnsServer !== dnsServer ||
-    tempPreferHttps !== preferDnsOverHttps ||
-    tempMethodPreference !== dnsMethodPreference;
+    tempEnableMockDNS !== enableMockDNS ||
+    tempEnableHaptics !== enableHaptics;
   const isValidServer = tempDnsServer.trim().length > 0;
+  const activeLocaleSelection = preferredLocale ?? null;
+  const localeOptions = React.useMemo(
+    () => [
+      {
+        key: "system",
+        label: t("screen.settings.sections.language.systemOption"),
+        description: t(
+          "screen.settings.sections.language.systemDescription",
+          { language: t(LOCALE_LABEL_KEYS[systemLocale]) },
+        ),
+        value: null as string | null,
+      },
+      ...availableLocales.map((option) => {
+        const label = t(LOCALE_LABEL_KEYS[option.locale]);
+        return {
+          key: option.locale,
+          label,
+          description: t(
+            "screen.settings.sections.language.optionDescription",
+            { language: label },
+          ),
+          value: option.locale,
+        };
+      }),
+    ],
+    [availableLocales, systemLocale, t],
+  );
 
   return (
     <KeyboardAvoidingView
@@ -245,15 +295,14 @@ export function Settings() {
       >
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>
-            DNS Configuration
+            {t("screen.settings.sections.dnsConfig.title")}
           </Text>
           <Text style={[styles.description, { color: colors.text }]}>
-            Configure the DNS server used for LLM communication. This server
-            will receive your messages via DNS TXT queries.
+            {t("screen.settings.sections.dnsConfig.description")}
           </Text>
 
           <Text style={[styles.label, { color: colors.text }]}>
-            DNS TXT Service
+            {t("screen.settings.sections.dnsConfig.dnsServerLabel")}
           </Text>
           <TextInput
             style={[
@@ -267,7 +316,9 @@ export function Settings() {
             value={tempDnsServer}
             onChangeText={setTempDnsServer}
             onEndEditing={handleDnsServerEndEditing}
-            placeholder="ch.at"
+            placeholder={t(
+              "screen.settings.sections.dnsConfig.dnsServerPlaceholder",
+            )}
             placeholderTextColor={colors.text + "60"}
             autoCapitalize="none"
             autoCorrect={false}
@@ -277,104 +328,20 @@ export function Settings() {
           />
 
           <Text style={[styles.hint, { color: colors.text + "80" }]}>
-            Default: ch.at
+            {t("screen.settings.sections.dnsConfig.dnsServerHint", {
+              server: DEFAULT_DNS_SERVER,
+            })}
           </Text>
         </View>
 
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>
-            DNS Method Preference
+            {t("screen.settings.sections.appBehavior.title")}
           </Text>
           <Text style={[styles.description, { color: colors.text }]}>
-            Choose how DNS queries are performed. Different methods offer
-            various benefits for security, privacy, and network compatibility.
+            {t("screen.settings.sections.appBehavior.description")}
           </Text>
 
-          {/* New method preference picker */}
-          <View style={styles.methodContainer}>
-            {[
-              {
-                key: "automatic",
-                label: "Automatic",
-                description: "Balanced approach with fallback chain",
-              },
-              {
-                key: "prefer-https",
-                label: "Prefer HTTPS",
-                description: "Privacy-focused with DNS-over-HTTPS first",
-              },
-              {
-                key: "udp-only",
-                label: "UDP Only",
-                description: "Fast direct UDP queries only",
-              },
-              {
-                key: "never-https",
-                label: "Never HTTPS",
-                description: "Native and UDP/TCP methods only",
-              },
-            ].map((option) => (
-              <TouchableOpacity
-                key={option.key}
-                style={[
-                  styles.methodOption,
-                  {
-                    backgroundColor:
-                      tempMethodPreference === option.key
-                        ? "#007AFF20"
-                        : colors.card,
-                    borderColor:
-                      tempMethodPreference === option.key
-                        ? "#007AFF"
-                        : colors.border,
-                  },
-                ]}
-                onPress={() =>
-                  handleSelectMethodPreference(
-                    option.key as DNSMethodPreference,
-                  )
-                }
-                disabled={loading || saving}
-              >
-                <View style={styles.methodInfo}>
-                  <View style={styles.methodHeader}>
-                    <Text style={[styles.methodLabel, { color: colors.text }]}>
-                      {option.label}
-                    </Text>
-                    <View
-                      style={[
-                        styles.radioButton,
-                        {
-                          borderColor:
-                            tempMethodPreference === option.key
-                              ? "#007AFF"
-                              : colors.border,
-                          backgroundColor:
-                            tempMethodPreference === option.key
-                              ? "#007AFF"
-                              : "transparent",
-                        },
-                      ]}
-                    >
-                      {tempMethodPreference === option.key && (
-                        <View style={styles.radioButtonInner} />
-                      )}
-                    </View>
-                  </View>
-                  <Text
-                    style={[
-                      styles.methodDescription,
-                      { color: colors.text + "80" },
-                    ]}
-                  >
-                    {option.description}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          {/* Legacy switch for backward compatibility */}
           <View
             style={[
               styles.switchRow,
@@ -383,7 +350,7 @@ export function Settings() {
           >
             <View style={styles.switchInfo}>
               <Text style={[styles.switchLabel, { color: colors.text }]}>
-                Prefer DNS-over-HTTPS (Legacy)
+                {t("screen.settings.sections.appBehavior.enableMockDNS.label")}
               </Text>
               <Text
                 style={[
@@ -391,14 +358,43 @@ export function Settings() {
                   { color: colors.text + "80" },
                 ]}
               >
-                Uses Cloudflare's secure DNS service
+                {t("screen.settings.sections.appBehavior.enableMockDNS.description")}
               </Text>
             </View>
             <Switch
-              value={tempPreferHttps}
-              onValueChange={handleTogglePreferHttps}
+              value={tempEnableMockDNS}
+              onValueChange={handleToggleMockDNS}
               trackColor={{ false: colors.border, true: "#007AFF" }}
-              thumbColor={tempPreferHttps ? "#FFFFFF" : "#F4F3F4"}
+              thumbColor={tempEnableMockDNS ? "#FFFFFF" : "#F4F3F4"}
+              ios_backgroundColor={colors.border}
+              disabled={loading || saving}
+            />
+          </View>
+
+          <View
+            style={[
+              styles.switchRow,
+              { backgroundColor: colors.card, borderColor: colors.border },
+            ]}
+          >
+            <View style={styles.switchInfo}>
+              <Text style={[styles.switchLabel, { color: colors.text }]}>
+                {t("screen.settings.sections.appBehavior.enableHaptics.label")}
+              </Text>
+              <Text
+                style={[
+                  styles.switchDescription,
+                  { color: colors.text + "80" },
+                ]}
+              >
+                {t("screen.settings.sections.appBehavior.enableHaptics.description")}
+              </Text>
+            </View>
+            <Switch
+              value={tempEnableHaptics}
+              onValueChange={handleToggleHaptics}
+              trackColor={{ false: colors.border, true: "#007AFF" }}
+              thumbColor={tempEnableHaptics ? "#FFFFFF" : "#F4F3F4"}
               ios_backgroundColor={colors.border}
               disabled={loading || saving}
             />
@@ -407,15 +403,73 @@ export function Settings() {
 
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>
-            Transport Test
+            {t("screen.settings.sections.language.title")}
           </Text>
           <Text style={[styles.description, { color: colors.text }]}>
-            Send a test message using the selected preference or force a
-            specific transport method. All tests are logged for debugging.
+            {t("screen.settings.sections.language.description")}
+          </Text>
+
+          <View style={styles.methodContainer}>
+            {localeOptions.map((option) => {
+              const isActive = activeLocaleSelection === option.value;
+              return (
+                <TouchableOpacity
+                  key={option.key}
+                  style={[
+                    styles.methodOption,
+                    {
+                      backgroundColor: isActive ? "#007AFF20" : colors.card,
+                      borderColor: isActive ? "#007AFF" : colors.border,
+                    },
+                  ]}
+                  onPress={() => handleSelectLocale(option.value)}
+                  disabled={loading}
+                  testID={`language-option-${option.key}`}
+                >
+                  <View style={styles.methodInfo}>
+                    <View style={styles.methodHeader}>
+                      <Text style={[styles.methodLabel, { color: colors.text }]}>
+                        {option.label}
+                      </Text>
+                      <View
+                        style={[
+                          styles.radioButton,
+                          {
+                            borderColor: isActive ? "#007AFF" : colors.border,
+                            backgroundColor: isActive
+                              ? "#007AFF"
+                              : "transparent",
+                          },
+                        ]}
+                      >
+                        {isActive && <View style={styles.radioButtonInner} />}
+                      </View>
+                    </View>
+                    <Text
+                      style={[
+                        styles.methodDescription,
+                        { color: colors.text + "80" },
+                      ]}
+                    >
+                      {option.description}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+            {t("screen.settings.sections.transportTest.title")}
+          </Text>
+          <Text style={[styles.description, { color: colors.text }]}>
+            {t("screen.settings.sections.transportTest.description")}
           </Text>
 
           <Text style={[styles.label, { color: colors.text }]}>
-            Test Message
+            {t("screen.settings.sections.transportTest.messageLabel")}
           </Text>
           <TextInput
             style={[
@@ -428,7 +482,9 @@ export function Settings() {
             ]}
             value={testMessage}
             onChangeText={setTestMessage}
-            placeholder="ping"
+            placeholder={t(
+              "screen.settings.sections.transportTest.placeholder",
+            )}
             placeholderTextColor={colors.text + "60"}
             autoCapitalize="none"
             autoCorrect={false}
@@ -447,20 +503,38 @@ export function Settings() {
             disabled={testRunning || !testMessage.trim()}
           >
             <Text style={[styles.testButtonText, { color: "#FFFFFF" }]}>
-              {testRunning ? "Testing..." : "Test Selected Preference"}
+              {testRunning
+                ? t("screen.settings.sections.transportTest.testingButton")
+                : t("screen.settings.sections.transportTest.testButton")}
             </Text>
           </TouchableOpacity>
 
           <Text style={[styles.label, { color: colors.text, marginTop: 20 }]}>
-            Force Specific Transport
+            {t("screen.settings.sections.transportTest.forceLabel")}
           </Text>
           <View style={styles.transportButtons}>
-            {[
-              { key: "native", label: "Native" },
-              { key: "udp", label: "UDP" },
-              { key: "tcp", label: "TCP" },
-              { key: "https", label: "HTTPS" },
-            ].map((transport) => (
+            {(
+              [
+                {
+                  key: "native" as const,
+                  label: t(
+                    "screen.settings.sections.transportTest.transports.native",
+                  ),
+                },
+                {
+                  key: "udp" as const,
+                  label: t(
+                    "screen.settings.sections.transportTest.transports.udp",
+                  ),
+                },
+                {
+                  key: "tcp" as const,
+                  label: t(
+                    "screen.settings.sections.transportTest.transports.tcp",
+                  ),
+                },
+              ]
+            ).map((transport) => (
               <TouchableOpacity
                 key={transport.key}
                 style={[
@@ -473,7 +547,7 @@ export function Settings() {
                 ]}
                 onPress={() =>
                   handleForceTransport(
-                    transport.key as "native" | "udp" | "tcp" | "https",
+                    transport.key as "native" | "udp" | "tcp",
                   )
                 }
                 disabled={testRunning}
@@ -501,7 +575,7 @@ export function Settings() {
             disabled={testRunning}
           >
             <Text style={[styles.logsButtonText, { color: colors.text }]}>
-              View Logs
+              {t("screen.settings.sections.transportTest.viewLogs")}
             </Text>
           </TouchableOpacity>
 
@@ -513,7 +587,7 @@ export function Settings() {
               ]}
             >
               <Text style={[styles.resultLabel, { color: "#4CAF50" }]}>
-                Last Test Result:
+                {t("screen.settings.sections.transportTest.resultLabel")}
               </Text>
               <Text style={[styles.resultText, { color: colors.text }]}>
                 {lastTestResult}
@@ -529,7 +603,7 @@ export function Settings() {
               ]}
             >
               <Text style={[styles.resultLabel, { color: "#F44336" }]}>
-                Last Test Error:
+                {t("screen.settings.sections.transportTest.errorLabel")}
               </Text>
               <Text style={[styles.resultText, { color: colors.text }]}>
                 {lastTestError}
@@ -540,7 +614,7 @@ export function Settings() {
 
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>
-            Current Configuration
+            {t("screen.settings.sections.currentConfig.title")}
           </Text>
           <View
             style={[
@@ -548,28 +622,14 @@ export function Settings() {
               { backgroundColor: colors.card, borderColor: colors.border },
             ]}
           >
-            <View style={{ marginBottom: 12 }}>
+            <View>
               <Text style={[styles.infoLabel, { color: colors.text + "80" }]}>
-                Active DNS Server:
+                {t(
+                  "screen.settings.sections.currentConfig.dnsServerLabel",
+                )}
               </Text>
               <Text style={[styles.infoValue, { color: colors.text }]}>
                 {dnsServer}
-              </Text>
-            </View>
-            <View>
-              <Text style={[styles.infoLabel, { color: colors.text + "80" }]}>
-                DNS Method:
-              </Text>
-              <Text style={[styles.infoValue, { color: colors.text }]}>
-                {dnsMethodPreference === "prefer-https"
-                  ? "DNS-over-HTTPS (Preferred)"
-                  : dnsMethodPreference === "udp-only"
-                    ? "UDP Only"
-                    : dnsMethodPreference === "never-https"
-                      ? "Native/UDP/TCP Only"
-                      : preferDnsOverHttps
-                        ? "DNS-over-HTTPS (Legacy)"
-                        : "Automatic Fallback"}
               </Text>
             </View>
           </View>
@@ -577,7 +637,7 @@ export function Settings() {
 
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>
-            Development
+            {t("screen.settings.sections.development.title")}
           </Text>
           <TouchableOpacity
             style={[
@@ -589,7 +649,9 @@ export function Settings() {
           >
             <View>
               <Text style={[styles.devButtonTitle, { color: colors.text }]}>
-                Reset Onboarding
+                {t(
+                  "screen.settings.sections.development.resetOnboardingTitle",
+                )}
               </Text>
               <Text
                 style={[
@@ -597,7 +659,9 @@ export function Settings() {
                   { color: colors.text + "80" },
                 ]}
               >
-                Show the onboarding flow again
+                {t(
+                  "screen.settings.sections.development.resetOnboardingSubtitle",
+                )}
               </Text>
             </View>
           </TouchableOpacity>
@@ -610,7 +674,7 @@ export function Settings() {
             disabled={saving || loading}
           >
             <Text style={[styles.resetButtonText, { color: colors.text }]}>
-              Reset to Default
+              {t("screen.settings.actions.resetButton")}
             </Text>
           </TouchableOpacity>
 
@@ -632,7 +696,9 @@ export function Settings() {
                 { color: isDirty && isValidServer ? "#FFFFFF" : colors.text },
               ]}
             >
-              {saving ? "Saving..." : "Save Changes"}
+              {saving
+                ? t("screen.settings.actions.saving")
+                : t("screen.settings.actions.saveButton")}
             </Text>
           </TouchableOpacity>
         </View>

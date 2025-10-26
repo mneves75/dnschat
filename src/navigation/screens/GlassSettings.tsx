@@ -20,10 +20,14 @@ import {
   Share,
   useColorScheme,
 } from "react-native";
-import {
-  useSettings,
-  DNSMethodPreference,
-} from "../../context/SettingsContext";
+import { useNavigation } from "@react-navigation/native";
+import { HeaderButton } from "@react-navigation/elements";
+import { useSettings } from "../../context/SettingsContext";
+import { useTranslation } from "../../i18n";
+import { LOCALE_LABEL_KEYS } from "../../i18n/localeMeta";
+import { DEFAULT_DNS_SERVER } from "../../context/settingsStorage";
+
+const packageJson = require("../../../package.json");
 import {
   Form,
   GlassBottomSheet,
@@ -32,22 +36,28 @@ import {
   LiquidGlassWrapper,
 } from "../../components/glass";
 import { useTransportTestThrottle } from "../../ui/hooks/useTransportTestThrottle";
+import { persistHapticsPreference } from "../../utils/haptics";
 
 // ==================================================================================
 // GLASS SETTINGS SCREEN COMPONENT
 // ==================================================================================
 
 export function GlassSettings() {
+  const navigation = useNavigation<any>();
   const {
     dnsServer,
     updateDnsServer,
-    preferDnsOverHttps,
-    updatePreferDnsOverHttps,
-    dnsMethodPreference,
-    updateDnsMethodPreference,
     enableMockDNS,
     updateEnableMockDNS,
+    enableHaptics,
+    updateEnableHaptics,
+    systemLocale,
+    preferredLocale,
+    availableLocales,
+    updateLocale,
+    loading,
   } = useSettings();
+  const { t } = useTranslation();
 
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
@@ -58,22 +68,74 @@ export function GlassSettings() {
   const supportSheet = useGlassBottomSheet();
 
   // DNS Service options
-  const dnsServerOptions = [
-    {
-      value: "ch.at",
-      label: "ch.at (Default)",
-      description: "Official ChatDNS server with AI responses",
-    },
-    {
-      value: "llm.pieter.com",
-      label: "llm.pieter.com",
-      description: "Pieter's LLM service via DNS",
-    },
-  ];
+  const dnsServerOptions = React.useMemo(
+    () => [
+      {
+        value: DEFAULT_DNS_SERVER,
+        label: t("screen.glassSettings.dnsOptions.chAt.label"),
+        description: t("screen.glassSettings.dnsOptions.chAt.description"),
+      },
+      {
+        value: "llm.pieter.com",
+        label: t("screen.glassSettings.dnsOptions.llmPieter.label"),
+        description: t(
+          "screen.glassSettings.dnsOptions.llmPieter.description",
+        ),
+      },
+    ],
+    [t],
+  );
 
   const currentDnsOption =
     dnsServerOptions.find((option) => option.value === dnsServer) ||
     dnsServerOptions[0];
+  const activeLocaleSelection = preferredLocale ?? null;
+  const localeOptions = React.useMemo(
+    () => [
+      {
+        key: "system",
+        title: t("screen.settings.sections.language.systemOption"),
+        subtitle: t(
+          "screen.settings.sections.language.systemDescription",
+          { language: t(LOCALE_LABEL_KEYS[systemLocale]) },
+        ),
+        value: null as string | null,
+      },
+      ...availableLocales.map((option) => {
+        const label = t(LOCALE_LABEL_KEYS[option.locale]);
+        return {
+          key: option.locale,
+          title: label,
+          subtitle: t(
+            "screen.settings.sections.language.optionDescription",
+            { language: label },
+          ),
+          value: option.locale,
+        };
+      }),
+    ],
+    [availableLocales, systemLocale, t],
+  );
+  const transportLabelMap = React.useMemo(
+    () => ({
+      native: t("screen.settings.sections.transportTest.transports.native"),
+      udp: t("screen.settings.sections.transportTest.transports.udp"),
+      tcp: t("screen.settings.sections.transportTest.transports.tcp"),
+    }),
+    [t],
+  );
+  const appVersion: string = packageJson.version;
+  const aboutFeatureKeys = ["line1", "line2", "line3", "line4", "line5"] as const;
+  React.useLayoutEffect(() => {
+    navigation.setOptions({
+      title: t("screen.settings.navigationTitle"),
+      headerRight: () => (
+        <HeaderButton onPress={navigation.goBack}>
+          <Text style={{ color: "#007AFF" }}>{t("common.close")}</Text>
+        </HeaderButton>
+      ),
+    });
+  }, [navigation, t]);
 
   // Action handlers
   const handleDnsServerSelect = React.useCallback(
@@ -92,14 +154,13 @@ export function GlassSettings() {
   const handleShareApp = React.useCallback(async () => {
     try {
       await Share.share({
-        message:
-          "Check out DNSChat - Chat over DNS! A unique way to communicate using DNS TXT queries.",
+        message: t("screen.glassSettings.sections.about.shareMessage"),
         url: "https://github.com/mneves75/dnschat",
       });
     } catch (error) {
       console.error("Share failed:", error);
     }
-  }, []);
+  }, [t]);
 
   const handleOpenGitHub = React.useCallback(() => {
     Linking.openURL("https://github.com/mneves75/dnschat");
@@ -107,27 +168,31 @@ export function GlassSettings() {
 
   const handleResetSettings = React.useCallback(() => {
     Alert.alert(
-      "Reset Settings",
-      "Are you sure you want to reset all settings to default values?",
+      t("screen.glassSettings.alerts.resetTitle"),
+      t("screen.glassSettings.alerts.resetMessage"),
       [
-        { text: "Cancel", style: "cancel" },
+        { text: t("common.cancel"), style: "cancel" },
         {
-          text: "Reset",
+          text: t("screen.glassSettings.alerts.resetConfirm"),
           style: "destructive",
           onPress: async () => {
-            await updateDnsServer("ch.at");
-            await updatePreferDnsOverHttps(false);
-            await updateDnsMethodPreference("native-first");
+            await updateDnsServer(DEFAULT_DNS_SERVER);
             await updateEnableMockDNS(false);
+            await updateEnableHaptics(true);
             Alert.alert(
-              "Settings Reset",
-              "All settings have been reset to default values.",
+              t("screen.glassSettings.alerts.resetTitle"),
+              t("screen.glassSettings.alerts.resetMessage"),
             );
           },
         },
       ],
     );
-  }, [updateDnsServer, updatePreferDnsOverHttps]);
+  }, [
+    updateDnsServer,
+    updateEnableMockDNS,
+    updateEnableHaptics,
+    t,
+  ]);
 
   // Transport test state
   const [testMessage, setTestMessage] = React.useState("ping");
@@ -145,22 +210,32 @@ export function GlassSettings() {
     registerForcedRun,
   } = useTransportTestThrottle();
 
-  const handleSelectMethodPreference = async (
-    preference: DNSMethodPreference,
-  ) => {
-    try {
-      await updateDnsMethodPreference(preference);
-    } catch (e) {
-      console.log("Failed to save DNS method preference", e);
-    }
-  };
-
   const handleToggleMockDNS = async (value: boolean) => {
     try {
       await updateEnableMockDNS(value);
     } catch (e) {
       console.log("Failed to save Mock DNS preference", e);
     }
+  };
+
+  const handleSelectLocale = async (nextLocale: string | null) => {
+    try {
+      await updateLocale(nextLocale);
+    } catch (error) {
+      console.log("Failed to update locale", error);
+      Alert.alert(
+        t("screen.settings.alerts.saveErrorTitle"),
+        t("screen.settings.alerts.saveErrorMessage"),
+      );
+    }
+  };
+
+  const handleToggleHaptics = async (value: boolean) => {
+    await persistHapticsPreference(value, {
+      loading,
+      updateEnableHaptics,
+      logLabel: "Glass enable haptics",
+    });
   };
 
   const handleTestSelectedPreference = async () => {
@@ -180,9 +255,8 @@ export function GlassSettings() {
       const response = await DNSService.queryLLM(
         testMessage,
         dnsServer,
-        preferDnsOverHttps,
-        dnsMethodPreference,
         enableMockDNS,
+        true,
       );
       setLastTestResult(response);
     } catch (e: any) {
@@ -193,7 +267,7 @@ export function GlassSettings() {
   };
 
   const handleForceTransport = async (
-    transport: "native" | "udp" | "tcp" | "https",
+    transport: "native" | "udp" | "tcp",
   ) => {
     if (testRunning) return;
     const throttleMessage = checkForcedAvailability(transport);
@@ -223,32 +297,35 @@ export function GlassSettings() {
 
   const handleClearCache = React.useCallback(() => {
     Alert.alert(
-      "Clear Cache",
-      "This will clear all cached DNS responses and conversation history.",
+      t("screen.glassSettings.alerts.clearCacheTitle"),
+      t("screen.glassSettings.alerts.clearCacheMessage"),
       [
-        { text: "Cancel", style: "cancel" },
+        { text: t("common.cancel"), style: "cancel" },
         {
-          text: "Clear",
+          text: t("common.clear"),
           style: "destructive",
           onPress: () => {
             // Cache clearing logic would go here
-            Alert.alert("Cache Cleared", "All cached data has been cleared.");
+            Alert.alert(
+              t("screen.glassSettings.alerts.clearCacheSuccessTitle"),
+              t("screen.glassSettings.alerts.clearCacheSuccessMessage"),
+            );
           },
         },
       ],
     );
-  }, []);
+  }, [t]);
 
   return (
     <>
-      <Form.List navigationTitle="Settings">
+      <Form.List navigationTitle={t("screen.settings.navigationTitle")}>
         {/* DNS Configuration Section */}
         <Form.Section
-          title="DNS Configuration"
-          footer="Configure DNS server and query methods for optimal performance and privacy."
+          title={t("screen.settings.sections.dnsConfig.title")}
+          footer={t("screen.settings.sections.dnsConfig.description")}
         >
           <Form.Item
-            title="DNS Service"
+            title={t("screen.settings.sections.dnsConfig.dnsServerLabel")}
             subtitle={currentDnsOption.label}
             rightContent={<Text style={styles.valueText}>{dnsServer}</Text>}
             onPress={dnsServerSheet.show}
@@ -256,20 +333,8 @@ export function GlassSettings() {
           />
 
           <Form.Item
-            title="Prefer DNS-over-HTTPS"
-            subtitle="Use Cloudflare's secure HTTPS DNS for enhanced privacy"
-            rightContent={
-              <Switch
-                value={preferDnsOverHttps}
-                onValueChange={updatePreferDnsOverHttps}
-                trackColor={{ false: "#767577", true: "#007AFF" }}
-                thumbColor={Platform.OS === "ios" ? undefined : "#f4f3f4"}
-              />
-            }
-          />
-          <Form.Item
-            title="Enable Mock DNS"
-            subtitle="Use local mock responses when real DNS fails"
+            title={t("screen.glassSettings.sections.dnsConfig.mockTitle")}
+            subtitle={t("screen.glassSettings.sections.dnsConfig.mockSubtitle")}
             rightContent={
               <Switch
                 value={enableMockDNS}
@@ -279,68 +344,49 @@ export function GlassSettings() {
               />
             }
           />
+          <Form.Item
+            title={t("screen.settings.sections.appBehavior.enableHaptics.label")}
+            subtitle={t(
+              "screen.settings.sections.appBehavior.enableHaptics.description",
+            )}
+            rightContent={
+              <Switch
+                value={enableHaptics}
+                onValueChange={handleToggleHaptics}
+                trackColor={{ false: "#767577", true: "#007AFF" }}
+                thumbColor={Platform.OS === "ios" ? undefined : "#f4f3f4"}
+              />
+            }
+          />
         </Form.Section>
 
-        {/* DNS Method Preference */}
         <Form.Section
-          title="DNS Method Preference"
-          footer="Choose transport ordering for DNS queries"
+          title={t("screen.settings.sections.language.title")}
+          footer={t("screen.settings.sections.language.description")}
         >
-          {[
-            {
-              key: "automatic",
-              label: "Automatic",
-              desc: "Balanced fallback chain",
-            },
-            {
-              key: "prefer-https",
-              label: "Prefer HTTPS",
-              desc: "Privacy-first",
-            },
-            { key: "udp-only", label: "UDP Only", desc: "Fastest direct" },
-            {
-              key: "never-https",
-              label: "Never HTTPS",
-              desc: "Native/UDP/TCP only",
-            },
-            {
-              key: "native-first",
-              label: "Native First",
-              desc: "Use platform DNS first",
-            },
-          ].map((option) => (
+          {localeOptions.map((option) => (
             <Form.Item
               key={option.key}
-              title={option.label}
-              subtitle={option.desc}
+              title={option.title}
+              subtitle={option.subtitle}
               rightContent={
-                <Text
-                  style={[
-                    styles.selectedIndicator,
-                    { opacity: dnsMethodPreference === option.key ? 1 : 0 },
-                  ]}
-                >
-                  ✓
-                </Text>
+                activeLocaleSelection === option.value && (
+                  <Text style={styles.selectedIndicator}>✓</Text>
+                )
               }
-              onPress={() =>
-                handleSelectMethodPreference(option.key as DNSMethodPreference)
-              }
-              style={[
-                styles.dnsOption,
-                dnsMethodPreference === option.key && styles.selectedDnsOption,
-              ]}
+              onPress={() => handleSelectLocale(option.value)}
+              showChevron
             />
           ))}
         </Form.Section>
 
         {/* Transport Test */}
         <Form.Section
-          title="Transport Test"
-          footer="Run a test message across transports. See Logs for details."
+          title={t("screen.settings.sections.transportTest.title")}
+          footer={t("screen.settings.sections.transportTest.description")}
         >
           <Form.Item
-            title="Test Message"
+            title={t("screen.settings.sections.transportTest.messageLabel")}
             subtitle={testMessage}
             onPress={() => {}}
             rightContent={<Text style={styles.valueText}>{testMessage}</Text>}
@@ -354,21 +400,23 @@ export function GlassSettings() {
               onPress={handleTestSelectedPreference}
               style={{ color: "#007AFF" }}
             >
-              {testRunning ? "Testing…" : "Test Selected Preference"}
+              {testRunning
+                ? t("screen.settings.sections.transportTest.testingButton")
+                : t("screen.settings.sections.transportTest.testButton")}
             </Text>
           </LiquidGlassWrapper>
           <View
             style={{ flexDirection: "row", justifyContent: "space-around" }}
           >
-            {(["native", "udp", "tcp", "https"] as const).map((t) => (
+            {(["native", "udp", "tcp"] as const).map((transportKey) => (
               <LiquidGlassWrapper
-                key={t}
+                key={transportKey}
                 variant="interactive"
                 shape="capsule"
                 style={{ paddingHorizontal: 12, paddingVertical: 6 }}
               >
-                <Text onPress={() => handleForceTransport(t)}>
-                  {t.toUpperCase()}
+                <Text onPress={() => handleForceTransport(transportKey)}>
+                  {transportLabelMap[transportKey]}
                 </Text>
               </LiquidGlassWrapper>
             ))}
@@ -376,42 +424,57 @@ export function GlassSettings() {
 
           {lastTestResult && (
             <View style={styles.aboutCard}>
-              <Text style={styles.aboutText}>Result: {lastTestResult}</Text>
+              <Text style={styles.aboutText}>
+                {t("screen.glassSettings.results.label", {
+                  value: lastTestResult,
+                })}
+              </Text>
             </View>
           )}
           {lastTestError && (
             <View style={styles.aboutCard}>
-              <Text style={styles.aboutText}>Error: {lastTestError}</Text>
+              <Text style={styles.aboutText}>
+                {t("screen.glassSettings.results.error", {
+                  value: lastTestError,
+                })}
+              </Text>
             </View>
           )}
         </Form.Section>
 
         {/* App Information Section */}
-        <Form.Section title="About">
+        <Form.Section title={t("screen.glassSettings.sections.about.title")}>
           <Form.Item
-            title="App Version"
-            subtitle="DNSChat v2.0.0"
+            title={t("screen.glassSettings.sections.about.appVersionTitle")}
+            subtitle={t(
+              "screen.glassSettings.sections.about.appVersionSubtitle",
+              { version: appVersion },
+            )}
             rightContent={
               <LiquidGlassWrapper
                 variant="interactive"
                 shape="capsule"
                 style={styles.versionBadge}
               >
-                <Text style={styles.versionText}>Latest</Text>
+                <Text style={styles.versionText}>
+                  {t("screen.glassSettings.sections.about.latestBadge")}
+                </Text>
               </LiquidGlassWrapper>
             }
             onPress={aboutSheet.show}
           />
 
           <Form.Link
-            title="GitHub Repository"
-            subtitle="View source code and contribute"
+            title={t("screen.glassSettings.sections.about.githubTitle")}
+            subtitle={t(
+              "screen.glassSettings.sections.about.githubSubtitle",
+            )}
             onPress={handleOpenGitHub}
           />
 
           <Form.Item
-            title="Share DNSChat"
-            subtitle="Tell others about this app"
+            title={t("screen.glassSettings.sections.about.shareTitle")}
+            subtitle={t("screen.glassSettings.sections.about.shareSubtitle")}
             onPress={handleShareApp}
             showChevron
           />
@@ -419,36 +482,40 @@ export function GlassSettings() {
 
         {/* Advanced Section */}
         <Form.Section
-          title="Advanced"
-          footer="Advanced settings for power users. Use with caution."
+          title={t("screen.glassSettings.sections.advanced.title")}
+          footer={t("screen.glassSettings.sections.advanced.footer")}
         >
           <Form.Item
-            title="Clear Cache"
-            subtitle="Remove all cached DNS responses"
+            title={t("screen.glassSettings.sections.advanced.clearCacheTitle")}
+            subtitle={t(
+              "screen.glassSettings.sections.advanced.clearCacheSubtitle",
+            )}
             onPress={handleClearCache}
             showChevron
           />
 
           <Form.Item
-            title="Reset Settings"
-            subtitle="Restore all settings to default values"
+            title={t("screen.glassSettings.sections.advanced.resetTitle")}
+            subtitle={t(
+              "screen.glassSettings.sections.advanced.resetSubtitle",
+            )}
             onPress={handleResetSettings}
             showChevron
           />
         </Form.Section>
 
         {/* Support Section */}
-        <Form.Section title="Support">
+        <Form.Section title={t("screen.glassSettings.sections.support.title")}>
           <Form.Item
-            title="Help & Feedback"
-            subtitle="Get help or provide feedback"
+            title={t("screen.glassSettings.sections.support.helpTitle")}
+            subtitle={t("screen.glassSettings.sections.support.helpSubtitle")}
             onPress={supportSheet.show}
             showChevron
           />
 
           <Form.Item
-            title="Report Bug"
-            subtitle="Found an issue? Let us know"
+            title={t("screen.glassSettings.sections.support.bugTitle")}
+            subtitle={t("screen.glassSettings.sections.support.bugSubtitle")}
             onPress={() =>
               Linking.openURL("https://github.com/mneves75/dnschat/issues")
             }
@@ -461,8 +528,8 @@ export function GlassSettings() {
       <GlassBottomSheet
         visible={dnsServerSheet.visible}
         onClose={dnsServerSheet.hide}
-        title="Select DNS Service"
-        subtitle="Choose your preferred DNS resolver"
+        title={t("screen.glassSettings.dnsServerSheet.title")}
+        subtitle={t("screen.glassSettings.dnsServerSheet.subtitle")}
         height={0.7}
       >
         <View style={styles.dnsOptionsContainer}>
@@ -490,8 +557,8 @@ export function GlassSettings() {
       <GlassBottomSheet
         visible={aboutSheet.visible}
         onClose={aboutSheet.hide}
-        title="About DNSChat"
-        subtitle="Chat over DNS TXT queries"
+        title={t("screen.glassSettings.aboutSheet.title")}
+        subtitle={t("screen.glassSettings.aboutSheet.subtitle")}
         height={0.6}
       >
         <View style={styles.aboutContent}>
@@ -507,9 +574,7 @@ export function GlassSettings() {
                 { color: isDark ? "#FFFFFF" : "#000000" },
               ]}
             >
-              DNSChat is a unique communication app that uses DNS TXT queries to
-              chat with an AI. This innovative approach demonstrates how DNS can
-              be used for more than just domain resolution.
+              {t("screen.glassSettings.aboutSheet.overview")}
             </Text>
           </LiquidGlassWrapper>
 
@@ -520,48 +585,21 @@ export function GlassSettings() {
                 { color: isDark ? "#FFFFFF" : "#000000" },
               ]}
             >
-              Key Features:
+              {t("screen.glassSettings.aboutSheet.featuresTitle")}
             </Text>
-            <Text
-              style={[
-                styles.featureItem,
-                { color: isDark ? "#AEAEB2" : "#6D6D70" },
-              ]}
-            >
-              • Native DNS module with iOS 26 support
-            </Text>
-            <Text
-              style={[
-                styles.featureItem,
-                { color: isDark ? "#AEAEB2" : "#6D6D70" },
-              ]}
-            >
-              • Multiple DNS transport methods (UDP, TCP, HTTPS)
-            </Text>
-            <Text
-              style={[
-                styles.featureItem,
-                { color: isDark ? "#AEAEB2" : "#6D6D70" },
-              ]}
-            >
-              • Real-time query logging and debugging
-            </Text>
-            <Text
-              style={[
-                styles.featureItem,
-                { color: isDark ? "#AEAEB2" : "#6D6D70" },
-              ]}
-            >
-              • Beautiful glass UI inspired by Apple's design
-            </Text>
-            <Text
-              style={[
-                styles.featureItem,
-                { color: isDark ? "#AEAEB2" : "#6D6D70" },
-              ]}
-            >
-              • Cross-platform React Native implementation
-            </Text>
+            {aboutFeatureKeys.map((featureKey) => (
+              <Text
+                key={featureKey}
+                style={[
+                  styles.featureItem,
+                  { color: isDark ? "#AEAEB2" : "#6D6D70" },
+                ]}
+              >
+                {`• ${t(
+                  `screen.glassSettings.aboutSheet.features.${featureKey}` as const,
+                )}`}
+              </Text>
+            ))}
           </View>
         </View>
       </GlassBottomSheet>
@@ -570,11 +608,11 @@ export function GlassSettings() {
       <GlassActionSheet
         visible={supportSheet.visible}
         onClose={supportSheet.hide}
-        title="Support Options"
-        message="How can we help you today?"
+        title={t("screen.glassSettings.supportSheet.title")}
+        message={t("screen.glassSettings.supportSheet.message")}
         actions={[
           {
-            title: "View Documentation",
+            title: t("screen.glassSettings.supportSheet.docs"),
             onPress: () =>
               Linking.openURL(
                 "https://github.com/mneves75/dnschat/blob/main/README.md",
@@ -582,7 +620,7 @@ export function GlassSettings() {
             icon: <Text>📚</Text>,
           },
           {
-            title: "Join Community",
+            title: t("screen.glassSettings.supportSheet.community"),
             onPress: () =>
               Linking.openURL(
                 "https://github.com/mneves75/dnschat/discussions",
@@ -590,7 +628,7 @@ export function GlassSettings() {
             icon: <Text>💬</Text>,
           },
           {
-            title: "Send Email",
+            title: t("screen.glassSettings.supportSheet.email"),
             onPress: () =>
               Linking.openURL(
                 "mailto:support@dnschat.app?subject=DNSChat Support",
@@ -598,7 +636,7 @@ export function GlassSettings() {
             icon: <Text>📧</Text>,
           },
           {
-            title: "Cancel",
+            title: t("screen.glassSettings.supportSheet.cancel"),
             onPress: () => {},
             style: "cancel",
           },

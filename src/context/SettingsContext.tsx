@@ -12,16 +12,15 @@ import * as Localization from "expo-localization";
 
 import {
   DEFAULT_SETTINGS,
-  DNSMethodPreference,
   PersistedSettings,
   SETTINGS_STORAGE_KEY,
   SUPPORTED_LOCALE_OPTIONS,
   SupportedLocale,
   SupportedLocaleOption,
-  coerceDnsMethodPreference,
   migrateSettings,
   sanitizeDnsServer,
   resolveLocale,
+  normalizePreferredLocale,
 } from "./settingsStorage";
 import { AccessibilityConfig } from "./AccessibilityContext";
 import { DNSLogService } from "../services/dnsLogService";
@@ -30,16 +29,12 @@ import { validateDNSServer } from "../services/dnsService";
 interface SettingsContextValue {
   dnsServer: string;
   updateDnsServer: (server: string) => Promise<void>;
-  preferDnsOverHttps: boolean;
-  updatePreferDnsOverHttps: (prefer: boolean) => Promise<void>;
-  dnsMethodPreference: DNSMethodPreference;
-  updateDnsMethodPreference: (
-    preference: DNSMethodPreference,
-  ) => Promise<void>;
   enableMockDNS: boolean;
   updateEnableMockDNS: (enable: boolean) => Promise<void>;
   allowExperimentalTransports: boolean;
   updateAllowExperimentalTransports: (enable: boolean) => Promise<void>;
+  enableHaptics: boolean;
+  updateEnableHaptics: (enable: boolean) => Promise<void>;
   locale: SupportedLocale;
   systemLocale: SupportedLocale;
   preferredLocale: string | null;
@@ -145,38 +140,6 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     [persistSettings, settings],
   );
 
-  const updatePreferDnsOverHttps = useCallback(
-    async (prefer: boolean) => {
-      if (settings.preferDnsOverHttps === prefer) {
-        return;
-      }
-      await persistSettings({
-        ...settings,
-        preferDnsOverHttps: prefer,
-      });
-      await DNSLogService.recordSettingsEvent(
-        `Prefer DNS-over-HTTPS set to ${prefer}`,
-      );
-    },
-    [persistSettings, settings],
-  );
-
-  const updateDnsMethodPreference = useCallback(
-    async (preference: DNSMethodPreference) => {
-      if (settings.dnsMethodPreference === preference) {
-        return;
-      }
-      await persistSettings({
-        ...settings,
-        dnsMethodPreference: coerceDnsMethodPreference(preference),
-      });
-      await DNSLogService.recordSettingsEvent(
-        `DNS transport preference set to ${preference}`,
-      );
-    },
-    [persistSettings, settings],
-  );
-
   const updateEnableMockDNS = useCallback(
     async (enable: boolean) => {
       if (settings.enableMockDNS === enable) {
@@ -209,17 +172,34 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     [persistSettings, settings],
   );
 
-  const updateLocale = useCallback(
-    async (locale: string | null) => {
-      if (settings.preferredLocale === locale) {
+  const updateEnableHaptics = useCallback(
+    async (enable: boolean) => {
+      if (settings.enableHaptics === enable) {
         return;
       }
       await persistSettings({
         ...settings,
-        preferredLocale: locale,
+        enableHaptics: enable,
       });
       await DNSLogService.recordSettingsEvent(
-        `Preferred locale set to ${locale ?? 'system default'}`,
+        `Haptics ${enable ? 'enabled' : 'disabled'}`,
+      );
+    },
+    [persistSettings, settings],
+  );
+
+  const updateLocale = useCallback(
+    async (locale: string | null) => {
+      const normalized = normalizePreferredLocale(locale);
+      if (settings.preferredLocale === normalized) {
+        return;
+      }
+      await persistSettings({
+        ...settings,
+        preferredLocale: normalized,
+      });
+      await DNSLogService.recordSettingsEvent(
+        `Preferred locale set to ${normalized ?? 'system default'}`,
       );
     },
     [persistSettings, settings],
@@ -250,14 +230,12 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     () => ({
       dnsServer: settings.dnsServer,
       updateDnsServer,
-      preferDnsOverHttps: settings.preferDnsOverHttps,
-      updatePreferDnsOverHttps,
-      dnsMethodPreference: settings.dnsMethodPreference,
-      updateDnsMethodPreference,
       enableMockDNS: settings.enableMockDNS,
       updateEnableMockDNS,
       allowExperimentalTransports: settings.allowExperimentalTransports,
       updateAllowExperimentalTransports,
+      enableHaptics: settings.enableHaptics,
+      updateEnableHaptics,
       locale: activeLocale,
       systemLocale,
       preferredLocale: settings.preferredLocale,
@@ -272,19 +250,17 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       loading,
       settings.accessibility,
       settings.allowExperimentalTransports,
-      settings.dnsMethodPreference,
       settings.dnsServer,
+      settings.enableHaptics,
       settings.enableMockDNS,
-      settings.preferDnsOverHttps,
       settings.preferredLocale,
       systemLocale,
       updateAccessibility,
       updateAllowExperimentalTransports,
-      updateDnsMethodPreference,
       updateDnsServer,
+      updateEnableHaptics,
       updateEnableMockDNS,
       updateLocale,
-      updatePreferDnsOverHttps,
     ],
   );
 
@@ -305,7 +281,6 @@ export function useSettings() {
 
 export type {
   PersistedSettings as SettingsStorageSnapshot,
-  DNSMethodPreference,
   SupportedLocale,
   SupportedLocaleOption,
 } from "./settingsStorage";
