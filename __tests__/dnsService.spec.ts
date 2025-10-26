@@ -112,12 +112,10 @@ describe("DNS Service helpers", () => {
     );
 
     const getOrder = (
-      preference: any,
-      preferHttps?: boolean,
-      enableMock?: boolean,
+      enableMock: boolean | undefined,
       allowExperimental: boolean = true,
     ) =>
-      rawGetOrder?.(preference, preferHttps, enableMock, allowExperimental);
+      rawGetOrder?.(enableMock, allowExperimental);
 
     if (typeof rawGetOrder !== "function") {
       it("exposes getMethodOrder for test via private access", () => {
@@ -126,45 +124,40 @@ describe("DNS Service helpers", () => {
       return;
     }
 
-    it("native-first preference with Mock", () => {
-      const order = getOrder("native-first", undefined, true);
-      expect(order[0]).toBe("native");
-      expect(order.includes("mock")).toBe(true);
+    it("returns native→udp→tcp when experimental transports enabled", () => {
+      const order = getOrder(false, true);
+      expect(order).toEqual(["native", "udp", "tcp"]);
     });
 
-    it("udp-only without Mock", () => {
-      const order = getOrder("udp-only", undefined, false, true);
-      expect(order).toEqual(["udp"]);
-    });
-
-    it("never-https forbids https", () => {
-      const order = getOrder("never-https", undefined, false, true);
-      expect(order.includes("https")).toBe(false);
-    });
-
-    it("prefer-https starts with https", () => {
-      const order = getOrder("prefer-https", undefined, false, true);
-      expect(order[0]).toBe("https");
-    });
-
-    it("automatic prefers native when experimental transports enabled", () => {
-      const order = getOrder("automatic", false, false, true);
-      expect(order).toEqual(["native", "udp", "tcp", "https"]);
-    });
-
-    it("automatic prefers https when privacy flag set", () => {
-      const order = getOrder("automatic", true, false, true);
-      expect(order).toEqual(["https", "native", "udp", "tcp"]);
-    });
-
-    it("mock appended when enabled", () => {
-      const order = getOrder("native-first", false, true, true);
-      expect(order[order.length - 1]).toBe("mock");
-    });
-
-    it("honors native-only mode when experimental disabled", () => {
-      const order = getOrder("udp-only", undefined, false, false);
+    it("returns native-only when experimental transports disabled", () => {
+      const order = getOrder(false, false);
       expect(order).toEqual(["native"]);
+    });
+
+    it("appends mock when enableMock is true", () => {
+      const order = getOrder(true, true);
+      expect(order).toEqual(["native", "udp", "tcp", "mock"]);
+    });
+
+    it("appends mock to native-only when experimental disabled", () => {
+      const order = getOrder(true, false);
+      expect(order).toEqual(["native", "mock"]);
+    });
+
+    it("never includes https (removed in v3.0.0)", () => {
+      const orderWithExperimental = getOrder(false, true);
+      const orderWithoutExperimental = getOrder(false, false);
+      const orderWithMock = getOrder(true, true);
+
+      expect(orderWithExperimental.includes("https" as any)).toBe(false);
+      expect(orderWithoutExperimental.includes("https" as any)).toBe(false);
+      expect(orderWithMock.includes("https" as any)).toBe(false);
+    });
+
+    it("native is always first when available", () => {
+      expect(getOrder(false, true)[0]).toBe("native");
+      expect(getOrder(false, false)[0]).toBe("native");
+      expect(getOrder(true, true)[0]).toBe("native");
     });
   });
 });

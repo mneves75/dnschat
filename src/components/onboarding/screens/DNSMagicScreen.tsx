@@ -3,13 +3,15 @@ import {
   View,
   Text,
   StyleSheet,
-  useColorScheme,
   Animated,
   TouchableOpacity,
   ScrollView,
 } from "react-native";
 import { OnboardingNavigation } from "../OnboardingNavigation";
 import { DNSService } from "../../../services/dnsService";
+import { useImessagePalette } from "../../../ui/theme/imessagePalette";
+import { useTypography } from "../../../ui/hooks/useTypography";
+import { LiquidGlassSpacing } from "../../../ui/theme/liquidGlassSpacing";
 
 interface DNSStep {
   id: string;
@@ -20,8 +22,8 @@ interface DNSStep {
 }
 
 export function DNSMagicScreen() {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
+  const palette = useImessagePalette();
+  const typography = useTypography();
 
   const [isRunning, setIsRunning] = useState(false);
   const [dnsSteps, setDnsSteps] = useState<DNSStep[]>([
@@ -96,17 +98,14 @@ export function DNSMagicScreen() {
       updateStep("1", "active", "Sending DNS query via native platform...");
       await new Promise((resolve) => setTimeout(resolve, 1500));
 
-      updateStep("1", "success", "Native DNS query successful! ✨", 1200);
+      updateStep("1", "success", "Native DNS query successful", 1200);
       await new Promise((resolve) => setTimeout(resolve, 500));
 
-      // For onboarding, we use real DNS methods only (enableMockDNS = false)
-      // This ensures users see real DNS behavior, not mock responses
       const result = await DNSService.queryLLM(
         testMessage,
         undefined,
-        undefined,
-        undefined,
         false,
+        true,
       );
       setResponse(result);
     } catch (error) {
@@ -116,7 +115,7 @@ export function DNSMagicScreen() {
       updateStep("2", "active", "Attempting UDP DNS query...");
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      updateStep("2", "success", "UDP fallback successful! 🎯", 800);
+      updateStep("2", "success", "UDP fallback successful", 800);
       setResponse(
         "Welcome to DNS Chat! This is a demonstration of how your messages travel through DNS queries. Pretty cool, right?",
       );
@@ -132,13 +131,16 @@ export function DNSMagicScreen() {
           <Animated.View
             style={[styles.dnsIcon, { transform: [{ scale: pulseAnim }] }]}
           >
-            <Text style={styles.iconText}>⚡</Text>
+            <Text style={[typography.displayMedium, { color: palette.accentTint }]}>
+              DNS
+            </Text>
           </Animated.View>
 
           <Text
             style={[
+              typography.title1,
               styles.title,
-              isDark ? styles.darkTitle : styles.lightTitle,
+              { color: palette.textPrimary },
             ]}
           >
             DNS Magic in Action
@@ -146,8 +148,9 @@ export function DNSMagicScreen() {
 
           <Text
             style={[
+              typography.callout,
               styles.subtitle,
-              isDark ? styles.darkSubtitle : styles.lightSubtitle,
+              { color: palette.textSecondary },
             ]}
           >
             Watch as your message travels through multiple DNS fallback methods
@@ -158,16 +161,20 @@ export function DNSMagicScreen() {
           <TouchableOpacity
             style={[
               styles.demoButton,
-              isDark ? styles.darkDemoButton : styles.lightDemoButton,
-              isRunning && styles.demoButtonDisabled,
+              { backgroundColor: isRunning ? palette.surface : palette.accentTint },
             ]}
             onPress={runDNSDemo}
             disabled={isRunning}
+            activeOpacity={0.7}
           >
             <Text
               style={[
+                typography.callout,
                 styles.demoButtonText,
-                isDark ? styles.darkDemoButtonText : styles.lightDemoButtonText,
+                {
+                  color: isRunning ? palette.textSecondary : palette.solid,
+                  fontWeight: "600",
+                },
               ]}
             >
               {isRunning ? "DNS Query in Progress..." : "Start DNS Demo"}
@@ -180,7 +187,8 @@ export function DNSMagicScreen() {
                 key={step.id}
                 step={step}
                 index={index}
-                isDark={isDark}
+                palette={palette}
+                typography={typography}
               />
             ))}
           </View>
@@ -189,23 +197,26 @@ export function DNSMagicScreen() {
             <View
               style={[
                 styles.responseContainer,
-                isDark
-                  ? styles.darkResponseContainer
-                  : styles.lightResponseContainer,
+                {
+                  backgroundColor: palette.surface,
+                  borderColor: palette.border,
+                },
               ]}
             >
               <Text
                 style={[
+                  typography.footnote,
                   styles.responseLabel,
-                  isDark ? styles.darkResponseLabel : styles.lightResponseLabel,
+                  { color: palette.textSecondary },
                 ]}
               >
                 DNS Response:
               </Text>
               <Text
                 style={[
+                  typography.callout,
                   styles.responseText,
-                  isDark ? styles.darkResponseText : styles.lightResponseText,
+                  { color: palette.textPrimary },
                 ]}
               >
                 {response}
@@ -223,59 +234,92 @@ export function DNSMagicScreen() {
 interface DNSStepItemProps {
   step: DNSStep;
   index: number;
-  isDark: boolean;
+  palette: ReturnType<typeof useImessagePalette>;
+  typography: ReturnType<typeof useTypography>;
 }
 
-function DNSStepItem({ step, index, isDark }: DNSStepItemProps) {
-  const getStatusIcon = () => {
+function DNSStepItem({ step, palette, typography }: DNSStepItemProps) {
+  const getStatusLabel = () => {
     switch (step.status) {
       case "pending":
-        return "⏳";
+        return "Pending";
       case "active":
-        return "🔄";
+        return "Active";
       case "success":
-        return "✅";
+        return "Success";
       case "failed":
-        return "❌";
+        return "Failed";
       default:
-        return "⏳";
+        return "Pending";
     }
   };
 
   const getStatusColor = () => {
     switch (step.status) {
       case "pending":
-        return isDark ? "#666666" : "#999999";
+        return palette.textTertiary;
       case "active":
-        return "#007AFF";
+        return palette.accentTint;
       case "success":
-        return "#34C759";
+        return palette.success;
       case "failed":
-        return "#FF3B30";
+        return palette.destructive;
       default:
-        return isDark ? "#666666" : "#999999";
+        return palette.textTertiary;
     }
   };
 
   return (
-    <View style={styles.stepItem}>
+    <View
+      style={[
+        styles.stepItem,
+        { backgroundColor: palette.surface, borderColor: palette.border },
+      ]}
+    >
       <View style={styles.stepHeader}>
-        <Text style={styles.stepIcon}>{getStatusIcon()}</Text>
+        <View
+          style={[
+            styles.statusIndicator,
+            { backgroundColor: getStatusColor() },
+          ]}
+        />
         <Text
           style={[
+            typography.callout,
             styles.stepMethod,
-            isDark ? styles.darkStepMethod : styles.lightStepMethod,
+            { color: palette.textPrimary, fontWeight: "600" },
           ]}
         >
           {step.method}
         </Text>
+        <Text
+          style={[
+            typography.caption1,
+            styles.statusLabel,
+            { color: getStatusColor(), fontWeight: "500" },
+          ]}
+        >
+          {getStatusLabel()}
+        </Text>
         {step.timing && (
-          <Text style={[styles.stepTiming, { color: getStatusColor() }]}>
+          <Text
+            style={[
+              typography.caption1,
+              styles.stepTiming,
+              { color: getStatusColor(), fontWeight: "500" },
+            ]}
+          >
             {step.timing}ms
           </Text>
         )}
       </View>
-      <Text style={[styles.stepMessage, { color: getStatusColor() }]}>
+      <Text
+        style={[
+          typography.footnote,
+          styles.stepMessage,
+          { color: palette.textSecondary },
+        ]}
+      >
         {step.message}
       </Text>
     </View>
@@ -288,138 +332,79 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 20,
+    paddingHorizontal: LiquidGlassSpacing.xl,
+    paddingTop: LiquidGlassSpacing.lg,
   },
   headerSection: {
     alignItems: "center",
-    marginBottom: 40,
+    marginBottom: LiquidGlassSpacing.xxxl,
   },
   dnsIcon: {
-    marginBottom: 16,
-  },
-  iconText: {
-    fontSize: 60,
+    marginBottom: LiquidGlassSpacing.md,
   },
   title: {
-    fontSize: 28,
-    fontWeight: "bold",
     textAlign: "center",
-    marginBottom: 12,
-  },
-  lightTitle: {
-    color: "#000000",
-  },
-  darkTitle: {
-    color: "#FFFFFF",
+    marginBottom: LiquidGlassSpacing.sm,
+    fontWeight: "700",
   },
   subtitle: {
-    fontSize: 16,
     textAlign: "center",
-    lineHeight: 22,
     opacity: 0.8,
   },
-  lightSubtitle: {
-    color: "#666666",
-  },
-  darkSubtitle: {
-    color: "#999999",
-  },
   demoSection: {
-    gap: 24,
+    gap: LiquidGlassSpacing.xl,
   },
   demoButton: {
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    borderRadius: 12,
+    paddingVertical: LiquidGlassSpacing.md,
+    paddingHorizontal: LiquidGlassSpacing.xl,
+    borderRadius: LiquidGlassSpacing.sm,
     alignItems: "center",
   },
-  lightDemoButton: {
-    backgroundColor: "#007AFF",
-  },
-  darkDemoButton: {
-    backgroundColor: "#0A84FF",
-  },
-  demoButtonDisabled: {
-    opacity: 0.6,
-  },
   demoButtonText: {
-    fontSize: 18,
     fontWeight: "600",
-    color: "#FFFFFF",
-  },
-  lightDemoButtonText: {
-    color: "#FFFFFF",
-  },
-  darkDemoButtonText: {
-    color: "#FFFFFF",
   },
   stepsContainer: {
-    gap: 16,
+    gap: LiquidGlassSpacing.md,
   },
   stepItem: {
-    padding: 16,
-    borderRadius: 8,
-    backgroundColor: "rgba(120, 120, 128, 0.1)",
+    padding: LiquidGlassSpacing.md,
+    borderRadius: LiquidGlassSpacing.xs,
+    borderWidth: 1,
   },
   stepHeader: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 8,
+    marginBottom: LiquidGlassSpacing.xs,
   },
-  stepIcon: {
-    fontSize: 16,
-    marginRight: 8,
+  statusIndicator: {
+    width: LiquidGlassSpacing.xs,
+    height: LiquidGlassSpacing.xs,
+    borderRadius: LiquidGlassSpacing.xxs,
+    marginRight: LiquidGlassSpacing.xs,
   },
   stepMethod: {
-    fontSize: 16,
-    fontWeight: "600",
     flex: 1,
   },
-  lightStepMethod: {
-    color: "#000000",
-  },
-  darkStepMethod: {
-    color: "#FFFFFF",
+  statusLabel: {
+    marginRight: LiquidGlassSpacing.xs,
   },
   stepTiming: {
-    fontSize: 14,
-    fontWeight: "500",
+    marginLeft: LiquidGlassSpacing.xxs,
   },
   stepMessage: {
-    fontSize: 14,
-    lineHeight: 18,
+    marginLeft: LiquidGlassSpacing.md,
   },
   responseContainer: {
-    padding: 16,
-    borderRadius: 12,
-    marginTop: 8,
-  },
-  lightResponseContainer: {
-    backgroundColor: "#F2F2F7",
-  },
-  darkResponseContainer: {
-    backgroundColor: "#1C1C1E",
+    padding: LiquidGlassSpacing.md,
+    borderRadius: LiquidGlassSpacing.sm,
+    borderWidth: 1,
+    marginTop: LiquidGlassSpacing.xs,
   },
   responseLabel: {
-    fontSize: 14,
     fontWeight: "600",
-    marginBottom: 8,
-  },
-  lightResponseLabel: {
-    color: "#666666",
-  },
-  darkResponseLabel: {
-    color: "#999999",
+    marginBottom: LiquidGlassSpacing.xs,
   },
   responseText: {
-    fontSize: 16,
     lineHeight: 22,
-  },
-  lightResponseText: {
-    color: "#000000",
-  },
-  darkResponseText: {
-    color: "#FFFFFF",
   },
 });

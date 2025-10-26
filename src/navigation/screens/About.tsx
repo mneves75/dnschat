@@ -1,28 +1,24 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useNavigation } from "@react-navigation/native";
-import {
-  View,
-  Text,
-  StyleSheet,
-  Linking,
-  Image,
-  useColorScheme,
-} from "react-native";
+import { View, Text, StyleSheet, Linking, Image } from "react-native";
 import { Form, LiquidGlassWrapper } from "../../components/glass";
+import { useTranslation } from "../../i18n";
+import {
+  IMessagePalette,
+  useImessagePalette,
+} from "../../ui/theme/imessagePalette";
+import { useTypography } from "../../ui/hooks/useTypography";
+import { LiquidGlassSpacing, getCornerRadius } from "../../ui/theme/liquidGlassSpacing";
 
-// Import package.json to get version
 const packageJson = require("../../../package.json");
-
-// Import app icon from assets (same pattern as newspaper.png)
 const AppIcon = require("../../assets/dnschat_ios26.png");
 
-const createStyles = (isDark: boolean) =>
+const createStyles = (palette: IMessagePalette) =>
   StyleSheet.create({
-    // Header Section
     headerContainer: {
-      backgroundColor: "rgba(255, 255, 255, 0.08)",
-      marginHorizontal: 20,
-      padding: 24,
+      backgroundColor: palette.surface,
+      marginHorizontal: LiquidGlassSpacing.lg,
+      padding: LiquidGlassSpacing.xl,
     },
     header: {
       alignItems: "center",
@@ -31,112 +27,93 @@ const createStyles = (isDark: boolean) =>
       width: 80,
       height: 80,
       borderRadius: 40,
-      backgroundColor: isDark
-        ? "rgba(255, 255, 255, 0.1)"
-        : "rgba(0, 0, 0, 0.05)",
-      marginBottom: 16,
+      backgroundColor: palette.accentSurface,
+      marginBottom: LiquidGlassSpacing.md,
       alignItems: "center",
       justifyContent: "center",
     },
     logoImage: {
       width: 60,
       height: 60,
-      borderRadius: 15,
+      borderRadius: getCornerRadius("input"),
     },
     logoText: {
-      fontSize: 24,
-      fontWeight: "bold",
-      color: "#007AFF", // iOS system blue
+      // Typography applied inline
     },
     title: {
-      fontSize: 28,
-      fontWeight: "bold",
-      marginBottom: 8,
+      marginBottom: LiquidGlassSpacing.xs,
       textAlign: "center",
+      // Typography applied inline
     },
     versionBadge: {
-      paddingHorizontal: 12,
-      paddingVertical: 6,
-      backgroundColor: "rgba(0, 122, 255, 0.15)", // iOS system blue background
-      marginBottom: 16,
+      paddingHorizontal: LiquidGlassSpacing.sm,
+      paddingVertical: LiquidGlassSpacing.xxs + 2, // 6px
+      backgroundColor: palette.accentSurface,
+      marginBottom: LiquidGlassSpacing.md,
     },
     versionText: {
-      fontSize: 14,
-      fontWeight: "600",
-      color: "#007AFF", // iOS system blue
+      // Typography applied inline
     },
     description: {
-      fontSize: 16,
       textAlign: "center",
-      lineHeight: 24,
-      fontWeight: "400",
-    },
-    // Footer Section
-    footerContainer: {
-      backgroundColor: "rgba(255, 255, 255, 0.05)",
-      marginHorizontal: 20,
-      padding: 16,
-    },
-    footerText: {
-      fontSize: 14,
-      textAlign: "center",
-      fontWeight: "400",
+      // Typography applied inline
     },
   });
 
 export function About() {
   const navigation = useNavigation<any>();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
+  const { t } = useTranslation();
+  const palette = useImessagePalette();
+  const typography = useTypography();
+  const styles = useMemo(() => createStyles(palette), [palette]);
   const [iconError, setIconError] = useState(false);
 
-  const openLink = (url: string) => {
+  const openLink = React.useCallback((url: string) => {
     Linking.openURL(url);
-  };
+  }, []);
 
-  const styles = createStyles(isDark);
+  const credits = useMemo(
+    () => [
+      {
+        name: "@arxiv_daily",
+        description: t("screen.about.credits.arxivDaily"),
+        url: "https://x.com/Arxiv_Daily/status/1952452878716805172",
+      },
+      {
+        name: "@levelsio (Pieter Levels)",
+        description: t("screen.about.credits.levels"),
+        url: "https://x.com/levelsio",
+      },
+      {
+        name: "React Native Team",
+        description: t("screen.about.credits.reactNative"),
+        url: "https://reactnative.dev",
+      },
+      {
+        name: "Expo Team",
+        description: t("screen.about.credits.expo"),
+        url: "https://expo.dev",
+      },
+      {
+        name: "React Navigation",
+        description: t("screen.about.credits.reactNavigation"),
+        url: "https://reactnavigation.org",
+      },
+      {
+        name: "AsyncStorage Community",
+        description: t("screen.about.credits.asyncStorage"),
+        url: "https://react-native-async-storage.github.io",
+      },
+    ],
+    [t],
+  );
 
-  const credits = [
-    {
-      name: "@arxiv_daily",
-      description: "Ch.at original concept and LLM over DNS service",
-      url: "https://x.com/Arxiv_Daily/status/1952452878716805172",
-    },
-    {
-      name: "@levelsio (Pieter Levels)",
-      description: "Retweeted @arxiv_daily",
-      url: "https://x.com/levelsio",
-    },
-    {
-      name: "React Native Team",
-      description: "Cross-platform mobile framework",
-      url: "https://reactnative.dev",
-    },
-    {
-      name: "Expo Team",
-      description: "Development build and tooling platform",
-      url: "https://expo.dev",
-    },
-    {
-      name: "React Navigation",
-      description: "Navigation library for React Native",
-      url: "https://reactnavigation.org",
-    },
-    {
-      name: "AsyncStorage Community",
-      description: "Local storage solution",
-      url: "https://react-native-async-storage.github.io",
-    },
-    {
-      name: "Cloudflare",
-      description: "DNS-over-HTTPS infrastructure",
-      url: "https://cloudflare.com",
-    },
-  ];
+  const versionLabel = t("screen.about.versionLabel", {
+    version: packageJson.version,
+  });
 
   return (
-    <Form.List>
-      {/* App Information Header - Prominent display without duplicate rectangles */}
+    <Form.List navigationTitle={t("screen.about.navigationTitle")}>
       <Form.Section>
         <LiquidGlassWrapper
           variant="prominent"
@@ -164,103 +141,152 @@ export function About() {
                   }}
                 />
               ) : (
-                <Text style={styles.logoText}>DNS</Text>
+                <Text
+                  style={[
+                    styles.logoText,
+                    typography.headline,
+                    { color: palette.accentTint, fontWeight: "bold" },
+                  ]}
+                >
+                  {t("screen.about.fallbackInitials")}
+                </Text>
               )}
             </View>
             <Text
-              style={[styles.title, { color: isDark ? "#FFFFFF" : "#000000" }]}
+              style={[
+                styles.title,
+                typography.displaySmall,
+                { color: palette.textPrimary, fontWeight: "bold" },
+              ]}
             >
-              DNS Chat
+              {t("screen.about.appName")}
             </Text>
             <LiquidGlassWrapper
               variant="interactive"
               shape="capsule"
               style={styles.versionBadge}
             >
-              <Text style={styles.versionText}>v{packageJson.version}</Text>
+              <Text
+                style={[
+                  styles.versionText,
+                  typography.callout,
+                  { color: palette.accentTint, fontWeight: "600" },
+                ]}
+              >
+                {versionLabel}
+              </Text>
             </LiquidGlassWrapper>
             <Text
               style={[
                 styles.description,
-                { color: isDark ? "#AEAEB2" : "#6D6D70" },
+                typography.body,
+                { color: palette.textSecondary },
               ]}
             >
-              Chat with AI using DNS TXT queries - a unique approach to LLM
-              communication.
+              {t("screen.about.tagline")}
             </Text>
           </View>
         </LiquidGlassWrapper>
       </Form.Section>
 
-      {/* Inspiration Section */}
+      <Form.Section title={t("screen.about.quickActions.title")}>
+        <Form.Item
+          title={t("screen.about.quickActions.settingsTitle")}
+          subtitle={t("screen.about.quickActions.settingsSubtitle")}
+          onPress={() => navigation.navigate("Settings" as never)}
+          showChevron
+        />
+      </Form.Section>
+
       <Form.Section
-        title="Inspiration"
-        footer="This project was inspired by the incredible work of the open-source community"
+        title={t("screen.about.sections.inspiration.title")}
+        footer={t("screen.about.sections.inspiration.footer")}
       >
         <Form.Link
-          title="@Arxiv_Daily Tweet"
-          subtitle="Original LLM over DNS concept"
+          title={t(
+            "screen.about.sections.inspiration.items.arxivTweet.title",
+          )}
+          subtitle={t(
+            "screen.about.sections.inspiration.items.arxivTweet.subtitle",
+          )}
           onPress={() =>
             openLink("https://x.com/Arxiv_Daily/status/1952452878716805172")
           }
         />
         <Form.Link
-          title="Ch.at Project"
-          subtitle="Universal Basic Intelligence via DNS"
+          title={t("screen.about.sections.inspiration.items.chatProject.title")}
+          subtitle={t(
+            "screen.about.sections.inspiration.items.chatProject.subtitle",
+          )}
           onPress={() => openLink("https://github.com/Deep-ai-inc/ch.at")}
         />
         <Form.Link
-          title="@levelsio"
-          subtitle="Shared the original concept"
+          title={t("screen.about.sections.inspiration.items.levelsio.title")}
+          subtitle={t(
+            "screen.about.sections.inspiration.items.levelsio.subtitle",
+          )}
           onPress={() => openLink("https://x.com/levelsio")}
         />
       </Form.Section>
 
-      {/* Project Links */}
-      <Form.Section title="Project">
+      <Form.Section title={t("screen.about.sections.project.title")}>
         <Form.Link
-          title="GitHub Repository"
-          subtitle="View source code and contribute"
+          title={t("screen.about.sections.project.items.github.title")}
+          subtitle={t(
+            "screen.about.sections.project.items.github.subtitle",
+          )}
           onPress={() => openLink("https://github.com/mneves75/dnschat")}
         />
         <Form.Link
-          title="Report an Issue"
-          subtitle="Found a bug? Let us know"
+          title={t("screen.about.sections.project.items.issues.title")}
+          subtitle={t(
+            "screen.about.sections.project.items.issues.subtitle",
+          )}
           onPress={() => openLink("https://github.com/mneves75/dnschat/issues")}
         />
         <Form.Link
-          title="@dnschat on X"
-          subtitle="Follow for updates"
+          title={t("screen.about.sections.project.items.updates.title")}
+          subtitle={t(
+            "screen.about.sections.project.items.updates.subtitle",
+          )}
           onPress={() => openLink("https://x.com/dnschat")}
+        />
+        <Form.Item
+          title={t("screen.about.sections.project.settings.title")}
+          subtitle={t("screen.about.sections.project.settings.subtitle")}
+          onPress={() => navigation.navigate("Settings" as never)}
+          showChevron
         />
       </Form.Section>
 
-      {/* Developer */}
-      <Form.Section title="Developer">
+      <Form.Section title={t("screen.about.sections.developer.title")}>
         <Form.Item
           title="Marcus Neves"
-          subtitle="Created by @mneves75"
+          subtitle={t("screen.about.sections.developer.creatorSubtitle", {
+            handle: "@mneves75",
+          })}
           onPress={() => openLink("https://x.com/mneves75")}
           showChevron
         />
         {typeof __DEV__ !== "undefined" && __DEV__ && (
           <Form.Item
-            title="Developer Logs (Dev)"
-            subtitle="Open DNS logs viewer screen"
-            onPress={() => navigation.navigate("DevLogs")}
+            title={t("screen.about.sections.developer.devLogsTitle")}
+            subtitle={t(
+              "screen.about.sections.developer.devLogsSubtitle",
+            )}
+            onPress={() => navigation.navigate("DevLogs" as never)}
             showChevron
           />
         )}
       </Form.Section>
 
-      {/* Special Thanks */}
       <Form.Section
-        title="Special Thanks"
-        footer="This project wouldn't be possible without these amazing open-source projects and services"
+        title={t("screen.about.sections.specialThanks.title")}
+        footer={t("screen.about.sections.specialThanks.footer")}
       >
-        {credits.map((credit, index) => (
+        {credits.map((credit) => (
           <Form.Link
-            key={index}
+            key={credit.name}
             title={credit.name}
             subtitle={credit.description}
             onPress={() => openLink(credit.url)}
@@ -268,8 +294,7 @@ export function About() {
         ))}
       </Form.Section>
 
-      {/* Footer */}
-      <Form.Section footer="© 2025 Marcus Neves • MIT Licensed" />
+      <Form.Section footer={t("screen.about.footer")} />
     </Form.List>
   );
 }

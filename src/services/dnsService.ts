@@ -4,7 +4,6 @@ import { nativeDNS, DNSError, DNSErrorType } from '../../modules/dns-native';
 export { DNSError, DNSErrorType } from '../../modules/dns-native';
 import { DNS_CONSTANTS, sanitizeDNSMessageReference } from '../../modules/dns-native/constants';
 import { DNSLogService } from './dnsLogService';
-import { DNSMethodPreference } from '../context/SettingsContext';
 import { ERROR_MESSAGES } from '../constants/appConstants';
 
 const DEFAULT_DNS_ZONE = DNS_CONSTANTS.DEFAULT_DNS_SERVER;
@@ -351,7 +350,6 @@ export class DNSService {
   private static backgroundListenerInitialized = false;
   private static requestHistory: number[] = [];
   private static appStateSubscription: { remove: () => void } | null = null;
-  private static httpsLimitationLogged = false;
 
   private static isVerbose(): boolean {
     try {
@@ -434,10 +432,8 @@ export class DNSService {
   static async queryLLM(
     message: string,
     dnsServer?: string,
-    preferHttps?: boolean,
-    methodPreference?: DNSMethodPreference,
     enableMockDNS?: boolean,
-    allowExperimentalTransports: boolean = false,
+    allowExperimentalTransports: boolean = true,
   ): Promise<string> {
     // Initialize background listener on first use
     this.initializeBackgroundListener();
@@ -473,10 +469,8 @@ export class DNSService {
 
     for (let attempt = 0; attempt < this.MAX_RETRIES; attempt++) {
       try {
-        // Determine method order based on preference
+        // Determine method order based on allowExperimentalTransports
         const methodOrder = this.getMethodOrder(
-          methodPreference,
-          preferHttps,
           enableMockDNS,
           allowExperimentalTransports,
         );
@@ -523,14 +517,11 @@ export class DNSService {
         if (methodOrder.includes('udp') && methodOrder.includes('tcp')) {
           guidance =
             ' • This often indicates network restrictions blocking DNS port 53. Try switching to a different network (e.g., cellular vs WiFi) or contact your network administrator.';
-        } else if (methodOrder.includes('https')) {
-          guidance =
-            " • DNS-over-HTTPS was attempted but cannot access ch.at's custom responses. This is a known architectural limitation.";
         }
 
         if (!allowExperimentalTransports) {
           guidance +=
-            " • Native DNS is enforced. Enable 'Allow Experimental Transports' in Settings to retry with UDP/TCP/HTTPS.";
+            " • Native DNS is enforced. Enable 'Allow Experimental Transports' in Settings to retry with UDP/TCP.";
         }
 
         throw new Error(
@@ -1030,41 +1021,6 @@ export class DNSService {
     });
   }
 
-  private static async performDNSOverHTTPS(queryName: string, dnsServer: string): Promise<string[]> {
-    this.vLog('🔧 HTTPS: Starting DNS-over-HTTPS query');
-    this.vLog('🔧 HTTPS: Query name:', queryName);
-    this.vLog('🔧 HTTPS: DNS Server:', dnsServer);
-
-    // ARCHITECTURE LIMITATION: DNS-over-HTTPS cannot directly query ch.at like UDP/TCP can
-    // DNS-over-HTTPS services like Cloudflare act as DNS resolvers, not proxies to specific DNS servers
-    // They will resolve queries using their own infrastructure, not forward to ch.at
-    //
-    // For ch.at specifically, we need direct DNS queries to their custom TXT service
-    // DNS-over-HTTPS would query Cloudflare's resolvers, which don't have ch.at's custom responses
-
-    this.vLog('❌ HTTPS: DNS-over-HTTPS incompatible with ch.at custom TXT service architecture');
-    this.vLog(
-      '❌ HTTPS: ch.at provides custom TXT responses that DNS-over-HTTPS resolvers cannot access',
-    );
-    this.vLog('❌ HTTPS: Fallback to Mock service will be attempted');
-
-    if (!this.httpsLimitationLogged) {
-      DNSLogService.addLog({
-        id: `https-limit-${Date.now()}`,
-        timestamp: new Date(),
-        message: 'DNS-over-HTTPS is unavailable for ch.at responses; falling back to other transports.',
-        method: 'https',
-        status: 'failure',
-        details: 'Requires experimental transports with alternative resolver support.',
-      });
-      this.httpsLimitationLogged = true;
-    }
-
-    throw new Error(
-      `DNS-over-HTTPS cannot access ${dnsServer}'s custom TXT responses - network restrictions require Mock fallback`,
-    );
-  }
-
   private static parseResponse(txtRecords: string[]): string {
     return parseTXTResponse(txtRecords);
   }
@@ -1094,47 +1050,32 @@ export class DNSService {
   }
 
   private static getMethodOrder(
-    methodPreference: DNSMethodPreference | undefined,
-    preferHttps: boolean | undefined,
     enableMockDNS: boolean | undefined,
     allowExperimentalTransports: boolean,
-  ): ('native' | 'udp' | 'tcp' | 'https' | 'mock')[] {
-    const appendMock = (order: ('native' | 'udp' | 'tcp' | 'https')[]) =>
-      enableMockDNS ? ([...order, 'mock'] as ('native' | 'udp' | 'tcp' | 'https' | 'mock')[]) : order;
+  ): ('native' | 'udp' | 'tcp' | 'mock')[] {
+    const appendMock = (order: ('native' | 'udp' | 'tcp')[]) =>
+      enableMockDNS ? ([...order, 'mock'] as ('native' | 'udp' | 'tcp' | 'mock')[]) : order;
 
-    // Web never supports native/UDP/TCP. honor preferHttps flag for clarity.
+    // Web platform has no working DNS methods (no native, UDP, TCP support)
     if (Platform.OS === 'web') {
-      return appendMock(preferHttps ? ['https'] : ['https']);
+      return appendMock([]);
     }
 
-    if (!allowExperimentalTransports) {
-      return appendMock(['native']);
+    // Production: Native with UDP/TCP fallbacks enabled
+    if (allowExperimentalTransports) {
+      return appendMock(['native', 'udp', 'tcp']);
     }
 
-    switch (methodPreference) {
-      case 'udp-only':
-        return appendMock(['udp']);
-      case 'never-https':
-        return appendMock(['native', 'udp', 'tcp']);
-      case 'prefer-https':
-        return appendMock(['https', 'native', 'udp', 'tcp']);
-      case 'native-first':
-        return appendMock(['native', 'udp', 'tcp', 'https']);
-      case 'automatic':
-      default:
-        if (preferHttps) {
-          return appendMock(['https', 'native', 'udp', 'tcp']);
-        }
-        return appendMock(['native', 'udp', 'tcp', 'https']);
-    }
+    // Restricted: Native only (no fallbacks)
+    return appendMock(['native']);
   }
 
   private static async tryMethod(
-    method: 'native' | 'udp' | 'tcp' | 'https' | 'mock',
+    method: 'native' | 'udp' | 'tcp' | 'mock',
     context: DNSQueryContext,
   ): Promise<{
     response: string;
-    method: 'native' | 'udp' | 'tcp' | 'https' | 'mock';
+    method: 'native' | 'udp' | 'tcp' | 'mock';
   } | null> {
     const startTime = Date.now();
     const { queryName, targetServer, originalMessage, label } = context;
@@ -1306,7 +1247,7 @@ export class DNSService {
         case 'tcp':
           if (Platform.OS === 'web') {
             throw new Error(
-              `TCP DNS transport not supported on web platform - use DNS-over-HTTPS instead`,
+              `TCP DNS transport not supported on web platform`,
             );
           }
           if (!TcpSocket) {
@@ -1320,12 +1261,6 @@ export class DNSService {
           );
           break;
 
-        case 'https':
-          txtRecords = await this.handleBackgroundSuspension(() =>
-            this.performDNSOverHTTPS(queryName, targetServer),
-          );
-          break;
-
         case 'mock':
           const mockResponse = await MockDNSService.queryLLM(originalMessage);
           const mockDuration = Date.now() - startTime;
@@ -1333,7 +1268,7 @@ export class DNSService {
           return { response: mockResponse, method: 'mock' };
 
         default:
-          const validMethods = ['native', 'udp', 'tcp', 'https', 'mock'].join(', ');
+          const validMethods = ['native', 'udp', 'tcp', 'mock'].join(', ');
           throw new Error(
             `Invalid DNS transport method '${method}' - valid methods are: ${validMethods}`,
           );
@@ -1358,7 +1293,7 @@ export class DNSService {
    */
   static async testTransport(
     message: string,
-    transport: 'native' | 'udp' | 'tcp' | 'https',
+    transport: 'native' | 'udp' | 'tcp',
     dnsServer?: string,
   ): Promise<string> {
     this.vLog(`🧪 Starting forced transport test: ${transport.toUpperCase()}`);
@@ -1467,7 +1402,7 @@ export class DNSService {
         case 'tcp':
           if (Platform.OS === 'web') {
             throw new Error(
-              `TCP forced test not supported on web platform - use HTTPS forced test instead`,
+              `TCP forced test not supported on web platform`,
             );
           }
           if (!TcpSocket) {
@@ -1481,14 +1416,8 @@ export class DNSService {
           );
           break;
 
-        case 'https':
-          txtRecords = await this.handleBackgroundSuspension(() =>
-            this.performDNSOverHTTPS(context.queryName, targetServer),
-          );
-          break;
-
         default:
-          const validTransports = ['native', 'udp', 'tcp', 'https'].join(', ');
+          const validTransports = ['native', 'udp', 'tcp'].join(', ');
           throw new Error(
             `Invalid transport method '${transport}' for forced test - valid transports are: ${validTransports}`,
           );
