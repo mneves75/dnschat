@@ -30,6 +30,7 @@ import {
 import { TrashIcon } from "../../components/icons/TrashIcon";
 import { PlusIcon } from "../../components/icons/PlusIcon";
 import { formatDistanceToNow } from "date-fns";
+import { useTranslation } from "../../i18n";
 
 // ==================================================================================
 // TYPES
@@ -58,6 +59,7 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
   onShare,
 }) => {
   const colorScheme = useColorScheme();
+  const { t } = useTranslation();
   const actionSheet = useGlassBottomSheet();
   const [isPressed, setIsPressed] = React.useState(false);
 
@@ -65,6 +67,14 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
   const lastMessage = chat.messages[chat.messages.length - 1];
   const messageCount = chat.messages.length;
   const timeAgo = formatDistanceToNow(chat.createdAt, { addSuffix: true });
+  const messageBadgeLabel =
+    messageCount === 1
+      ? t("screen.glassChatList.badges.messageSingular", {
+          count: messageCount,
+        })
+      : t("screen.glassChatList.badges.messagePlural", {
+          count: messageCount,
+        });
 
   const handleLongPress = React.useCallback(() => {
     // Haptic feedback
@@ -127,8 +137,8 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
                     { backgroundColor: "rgba(0, 122, 255, 0.15)" },
                   ]}
                 >
-                  <Text style={[styles.messageBadgeText, { color: "#007AFF" }]}>
-                    {messageCount} {messageCount === 1 ? "message" : "messages"}
+                  <Text style={[styles.messageBadgeText, { color: "#007AFF" }]}> 
+                    {messageBadgeLabel}
                   </Text>
                 </LiquidGlassWrapper>
               )}
@@ -166,30 +176,30 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
         visible={actionSheet.visible}
         onClose={actionSheet.hide}
         title={chat.title}
-        message="Choose an action for this conversation"
+        message={t("screen.glassChatList.actionSheet.message")}
         actions={[
           {
-            title: "Open Chat",
+            title: t("screen.glassChatList.actionSheet.openChat"),
             onPress: onPress,
             icon: <Text>💬</Text>,
           },
           ...(onShare
             ? [
                 {
-                  title: "Share Chat",
+                  title: t("screen.glassChatList.actionSheet.shareChat"),
                   onPress: onShare,
                   icon: <Text>📤</Text>,
                 },
               ]
             : []),
           {
-            title: "Delete Chat",
+            title: t("screen.glassChatList.actionSheet.deleteChat"),
             onPress: onDelete,
             style: "destructive" as const,
             icon: <TrashIcon size={20} color="#FF453A" />,
           },
           {
-            title: "Cancel",
+            title: t("screen.glassChatList.actionSheet.cancel"),
             onPress: () => {},
             style: "cancel" as const,
           },
@@ -214,6 +224,7 @@ export function GlassChatList() {
     loadChats,
     isLoading,
   } = useChat();
+  const { t } = useTranslation();
 
   // Load chats when screen is focused (CRITICAL FIX)
   useFocusEffect(
@@ -247,12 +258,12 @@ export function GlassChatList() {
   const handleDeleteChat = React.useCallback(
     (chatId: string, chatTitle: string) => {
       Alert.alert(
-        "Delete Chat",
-        `Are you sure you want to delete "${chatTitle}"? This action cannot be undone.`,
+        t("screen.glassChatList.alerts.deleteTitle"),
+        t("screen.glassChatList.alerts.deleteMessage", { title: chatTitle }),
         [
-          { text: "Cancel", style: "cancel" },
+          { text: t("common.cancel"), style: "cancel" },
           {
-            text: "Delete",
+            text: t("screen.glassChatList.actionSheet.deleteChat"),
             style: "destructive",
             onPress: () => {
               deleteChat(chatId);
@@ -265,7 +276,7 @@ export function GlassChatList() {
         ],
       );
     },
-    [deleteChat],
+    [deleteChat, t],
   );
 
   const handleRefresh = React.useCallback(async () => {
@@ -282,20 +293,36 @@ export function GlassChatList() {
     console.log("Sharing chat:", chat.title);
   }, []);
 
+  const recentFooter = chats.length === 1
+    ? t("screen.glassChatList.recent.footerSingle", { count: chats.length })
+    : t("screen.glassChatList.recent.footerMultiple", { count: chats.length });
+
   return (
-    <Form.List navigationTitle="DNS Chat" style={styles.container}>
+    <Form.List
+      navigationTitle={t("screen.glassChatList.navigationTitle")}
+      style={styles.container}
+    >
       {/* New Chat Section */}
-      <Form.Section title="Start New Conversation">
+      <Form.Section
+        title={t("screen.glassChatList.newConversation.title")}
+      >
         <Form.Item
-          title="New Chat"
-          subtitle="Start a new conversation with DNS AI"
+          title={t("screen.glassChatList.newConversation.button")}
+          subtitle={t("screen.glassChatList.newConversation.description")}
           rightContent={
             <LiquidGlassWrapper
               variant="interactive"
               shape="capsule"
               style={styles.newChatBadge}
+              accessibilityLabel={t(
+                "screen.glassChatList.newConversation.button",
+              )}
+              accessibilityRole="button"
+              accessibilityHint={t(
+                "screen.glassChatList.newConversation.description",
+              )}
             >
-              <PlusIcon size={20} color="#FFFFFF" circleColor="#007AFF" />
+              <PlusIcon size={20} />
             </LiquidGlassWrapper>
           }
           onPress={handleNewChat}
@@ -306,8 +333,8 @@ export function GlassChatList() {
       {/* Recent Chats Section */}
       {chats.length > 0 ? (
         <Form.Section
-          title="Recent Conversations"
-          footer={`${chats.length} conversation${chats.length === 1 ? "" : "s"} total`}
+          title={t("screen.glassChatList.recent.title")}
+          footer={recentFooter}
         >
           <View style={styles.chatsList}>
             {chats.map((chat) => (
@@ -337,7 +364,7 @@ export function GlassChatList() {
                   { color: isDark ? "#FFFFFF" : "#000000" },
                 ]}
               >
-                No Conversations Yet
+                {t("screen.glassChatList.empty.title")}
               </Text>
               <Text
                 style={[
@@ -345,8 +372,7 @@ export function GlassChatList() {
                   { color: isDark ? "#AEAEB2" : "#6D6D70" },
                 ]}
               >
-                Start your first conversation by tapping "New Chat" above. Your
-                chats will appear here.
+                {t("screen.glassChatList.empty.subtitle")}
               </Text>
             </View>
           </LiquidGlassWrapper>
@@ -355,10 +381,10 @@ export function GlassChatList() {
 
       {/* Statistics Section */}
       {chats.length > 0 && (
-        <Form.Section title="Statistics">
+        <Form.Section title={t("screen.glassChatList.stats.title")}>
           <Form.Item
-            title="Total Messages"
-            subtitle={`${chats.reduce((total, chat) => total + chat.messages.length, 0)} messages sent`}
+            title={t("screen.glassChatList.stats.totalMessagesTitle")}
+            subtitle={t("screen.glassChatList.stats.totalMessagesSubtitle")}
             rightContent={
               <Text style={styles.statValue}>
                 {chats.reduce((total, chat) => total + chat.messages.length, 0)}
@@ -366,8 +392,8 @@ export function GlassChatList() {
             }
           />
           <Form.Item
-            title="Average per Chat"
-            subtitle="Messages per conversation"
+            title={t("screen.glassChatList.stats.averageTitle")}
+            subtitle={t("screen.glassChatList.stats.averageSubtitle")}
             rightContent={
               <Text style={styles.statValue}>
                 {Math.round(
@@ -394,9 +420,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   newChatBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    backgroundColor: "rgba(255, 193, 7, 0.15)",
+    // iOS 26 HIG: Minimum 44pt touch target
+    // 20px icon + 12px padding all sides = 44×44px total
+    padding: 12,
+    // No backgroundColor - LiquidGlassWrapper provides glass effect
   },
   newChatIcon: {
     fontSize: 16,
@@ -409,7 +436,6 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   chatItemContainer: {
-    backgroundColor: "rgba(255, 255, 255, 0.05)",
     padding: 16,
     marginHorizontal: 20,
   },
@@ -464,7 +490,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   emptyStateContainer: {
-    backgroundColor: "rgba(255, 255, 255, 0.05)",
     marginHorizontal: 20,
     padding: 32,
   },
