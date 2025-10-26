@@ -2,15 +2,43 @@
 
 A React Native mobile app that revolutionizes LLM interaction by using DNS TXT queries for AI communication. Chat with AI models through DNS infrastructure for enhanced privacy and network resilience.
 
+[![Version](https://img.shields.io/badge/version-3.0.1-blue.svg)](https://github.com/mneves75/dnschat/releases/tag/v3.0.1)
 [![React Native](https://img.shields.io/badge/React%20Native-0.81.5-blue.svg)](https://reactnative.dev/)
-[![Expo](https://img.shields.io/badge/Expo-54.0.19-black.svg)](https://expo.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue.svg)](https://www.typescriptlang.org/)
+[![Expo](https://img.shields.io/badge/Expo-54.0.20-black.svg)](https://expo.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9.2-blue.svg)](https://www.typescriptlang.org/)
 [![iOS](https://img.shields.io/badge/iOS-16%2B-lightgrey.svg)](https://developer.apple.com/ios/)
 [![Android](https://img.shields.io/badge/Android-API%2021%2B-green.svg)](https://developer.android.com/)
 
 ## ✨ Key Features
 
-- **🔒 Production-Hardened Security**: DNS injection protection, input validation, and server whitelisting (v2.0.1)
+### **v3.0.1 - iOS HIG Accessibility & Settings Simplification** 🆕
+- **Comprehensive VoiceOver Accessibility**: All onboarding screens and interactive elements fully accessible
+  - Proper `accessibilityRole`, `accessibilityLabel`, and `accessibilityHint` on all buttons and inputs
+  - Dynamic accessibility states for disabled/busy/loading conditions
+  - Settings Reset Onboarding button with full accessibility support
+  - 28 comprehensive accessibility tests ensure compliance
+- **Simplified DNS Configuration**: Automatic fallback chain replaces complex method preferences
+  - Single Native→UDP→TCP fallback instead of user-managed preferences
+  - Experimental transports (UDP/TCP) enabled by default for maximum reliability
+  - Automatic migration from v2 settings to v3
+- **Critical Bug Fixes**: Memory leak in WelcomeScreen, race conditions, hardcoded colors eliminated
+- **Semantic Color System**: Added `palette.transparent` for consistent theming
+
+### **v3.0.0 - iOS 26 Liquid Glass Design System**
+- **iOS 26 HIG Compliance**: All UI components follow Apple Human Interface Guidelines
+  - Semantic color system with automatic light/dark/high-contrast adaptation
+  - 44pt minimum touch targets for all interactive elements (WCAG 2.1 Level AA)
+  - VoiceOver accessibility labels with semantic roles and hints throughout
+  - Proper contrast ratios (4.5:1) for all text and UI elements
+  - Glass effects with reduce transparency accessibility support
+- **Complete Typography System**: SF Pro (iOS) and Material Design 3 (Android) with 15 precise typography styles
+- **Comprehensive Spacing System**: 8px/4dp grid with platform-specific touch targets (44pt iOS, 48dp Android)
+- **Haptic Feedback**: iOS haptic integration with 8 feedback types for enhanced user experience
+- **Fluid Animations**: 60fps spring animations tuned for Liquid Glass feel
+- **New Components**: LiquidGlassButton, SkeletonMessage, LiquidGlassCard, LiquidGlassTextInput, Toast
+
+### Core Features
+- **🔒 Production-Hardened Security**: DNS injection protection, input validation, and server whitelisting
 - **🌟 iOS 26+ Liquid Glass**: Native UIGlassEffect with environmental adaptation and comprehensive fallbacks
 - **🌐 DNS-Based AI Chat**: Revolutionary LLM communication via DNS TXT queries
 - **📱 Cross-Platform**: Native iOS, Android, and Web support with platform-specific optimizations
@@ -18,7 +46,6 @@ A React Native mobile app that revolutionizes LLM interaction by using DNS TXT q
 - **🚀 Native DNS Implementation**: Platform-optimized iOS Network Framework and Android DnsResolver
 - **🔄 Multi-Layer Fallback**: UDP → TCP → DNS-over-HTTPS → Mock service
 - **💾 Local Storage**: Persistent conversation history with AsyncStorage
-- **🎨 Modern Glass UI**: iOS 26 Liquid Glass design system with sensor-aware adaptation
 - **⚙️ Advanced DNS Config**: Multiple DNS service options (ch.at, llm.pieter.com)
 - **📊 Real-Time Logging**: Comprehensive DNS query monitoring and debugging
 - **🔗 Deep Linking**: Direct message sending via custom URL schemes
