@@ -46,7 +46,7 @@ type DNSQueryContext = {
 // These packages are INTENTIONALLY excluded from expo-doctor checks (see EXPO-DOCTOR-CONFIGURATION.md)
 // - react-native-udp: Unmaintained but critical for DNS fallback on restricted networks
 // - react-native-tcp-socket: Untested on New Architecture but works via Interop Layer
-// If libraries fail to load, app gracefully falls back to native DNS → DNS-over-HTTPS → Mock
+// If libraries fail to load, app gracefully falls back to native DNS → Mock
 let dgram: any = null;
 let TcpSocket: any = null;
 let Buffer: any = null;
@@ -80,7 +80,7 @@ try {
   if (typeof __DEV__ !== 'undefined' && __DEV__) {
     console.log('❌ TCP Socket library failed to load:', error);
   }
-  // TCP Socket not available, will use DNS-over-HTTPS/Mock fallback
+  // TCP Socket not available, will use native DNS/Mock fallback
 }
 
 // TRICKY: Buffer polyfill for cross-platform compatibility
@@ -555,7 +555,6 @@ export class DNSService {
       '2. Verify DNS server is accessible: ping ch.at',
       '3. Check DNS logs in app Settings for detailed failure information',
       '4. Network may be blocking DNS port 53 - contact network administrator',
-      '5. Try enabling DNS-over-HTTPS in Settings if using public WiFi',
     ].join('\n');
 
     throw new Error(
@@ -1230,7 +1229,7 @@ export class DNSService {
         case 'udp':
           if (Platform.OS === 'web') {
             throw new Error(
-              `UDP DNS transport not supported on web platform - use DNS-over-HTTPS instead`,
+              `UDP DNS transport not supported on web platform - use native DNS instead`,
             );
           }
           if (!dgram) {
