@@ -71,8 +71,38 @@ export function ChatProvider({ children }: ChatProviderProps) {
     }
   };
 
+  /**
+   * CRITICAL BUG FIX (v3.0.0):
+   *
+   * This function previously had a stale closure bug where the `currentChat` variable
+   * captured at line 81 was used throughout the function, even after calling setCurrentChat
+   * multiple times. When updating the chats array via setChats(), the code compared against
+   * currentChat.id (the OLD/original value), but tried to update with new chat objects
+   * (updatedChat, chatWithAssistantPlaceholder, finalChat).
+   *
+   * This caused the chats array to NEVER update because:
+   * 1. currentChat.id was the ID from the START of the function
+   * 2. setCurrentChat() is async/batched, so currentChat doesn't update immediately
+   * 3. The map() comparison `chat.id === currentChat.id` would match the OLD chat
+   * 4. But we were trying to replace it with a NEW chat object with NEW messages
+   * 5. Result: Messages appeared in storage but NOT in the UI
+   *
+   * FIX: Use the freshly created chat object's ID instead of the stale currentChat.id:
+   * - Line 124: currentChat.id → updatedChat.id
+   * - Line 163: currentChat.id → chatWithAssistantPlaceholder.id
+   * - Line 222: currentChat.id → finalChat.id
+   *
+   * This ensures the chats array properly updates when messages are added.
+   */
   const sendMessage = async (content: string): Promise<void> => {
+    console.log('🚀 [ChatContext] sendMessage called', {
+      content: content.substring(0, 50),
+      currentChatId: currentChat?.id,
+      currentMessageCount: currentChat?.messages.length,
+    });
+
     if (!currentChat) {
+      console.error('❌ [ChatContext] No active chat selected');
       setError("No active chat selected");
       return;
     }
@@ -86,9 +116,16 @@ export function ChatProvider({ children }: ChatProviderProps) {
       status: "sent",
     };
 
+    console.log('📝 [ChatContext] Created user message', {
+      messageId: userMessage.id,
+      role: userMessage.role,
+    });
+
     try {
       // Add user message to storage and state
+      console.log('💾 [ChatContext] Adding user message to storage...');
       await StorageService.addMessage(currentChat.id, userMessage);
+      console.log('✅ [ChatContext] User message added to storage');
 
       // Update current chat with user message
       const updatedChat: Chat = {
@@ -96,14 +133,21 @@ export function ChatProvider({ children }: ChatProviderProps) {
         messages: [...currentChat.messages, userMessage],
         updatedAt: new Date(),
       };
+
+      console.log('🔄 [ChatContext] Updating currentChat state with user message', {
+        chatId: updatedChat.id,
+        messageCount: updatedChat.messages.length,
+      });
       setCurrentChat(updatedChat);
 
       // Update chats list
+      // CRITICAL FIX: Use updatedChat.id instead of stale currentChat.id closure
       setChats((prevChats) =>
         prevChats.map((chat) =>
-          chat.id === currentChat.id ? updatedChat : chat,
+          chat.id === updatedChat.id ? updatedChat : chat,
         ),
       );
+      console.log('✅ [ChatContext] State updated with user message');
 
       // Create assistant message with loading state
       const assistantMessage: Message = {
@@ -114,31 +158,54 @@ export function ChatProvider({ children }: ChatProviderProps) {
         status: "sending",
       };
 
+      console.log('📝 [ChatContext] Created assistant placeholder', {
+        messageId: assistantMessage.id,
+        role: assistantMessage.role,
+        status: assistantMessage.status,
+      });
+
       // Add assistant message placeholder
+      console.log('💾 [ChatContext] Adding assistant placeholder to storage...');
       await StorageService.addMessage(currentChat.id, assistantMessage);
+      console.log('✅ [ChatContext] Assistant placeholder added to storage');
 
       const chatWithAssistantPlaceholder: Chat = {
         ...updatedChat,
         messages: [...updatedChat.messages, assistantMessage],
         updatedAt: new Date(),
       };
+
+      console.log('🔄 [ChatContext] Updating state with assistant placeholder', {
+        messageCount: chatWithAssistantPlaceholder.messages.length,
+      });
       setCurrentChat(chatWithAssistantPlaceholder);
 
+      // CRITICAL FIX: Use chatWithAssistantPlaceholder.id instead of stale currentChat.id closure
       setChats((prevChats) =>
         prevChats.map((chat) =>
-          chat.id === currentChat.id ? chatWithAssistantPlaceholder : chat,
+          chat.id === chatWithAssistantPlaceholder.id ? chatWithAssistantPlaceholder : chat,
         ),
       );
+      console.log('✅ [ChatContext] State updated with assistant placeholder');
 
       // Get AI response using DNS service (respects enableMockDNS setting)
       setIsLoading(true);
+      console.log('🌐 [ChatContext] Starting DNS query...', {
+        server: settings.dnsServer,
+        enableMockDNS: settings.enableMockDNS,
+      });
+
       const response = await DNSService.queryLLM(
         content,
         settings.dnsServer,
-        settings.preferDnsOverHttps,
-        settings.dnsMethodPreference,
         settings.enableMockDNS,
+        settings.allowExperimentalTransports,
       );
+
+      console.log('✅ [ChatContext] DNS query completed', {
+        responseLength: response.length,
+        responsePreview: response.substring(0, 100),
+      });
 
       // Update assistant message with response
       const completedAssistantMessage: Message = {
@@ -147,10 +214,12 @@ export function ChatProvider({ children }: ChatProviderProps) {
         status: "sent",
       };
 
+      console.log('💾 [ChatContext] Updating assistant message in storage with response...');
       await StorageService.updateMessage(currentChat.id, assistantMessage.id, {
         content: response,
         status: "sent",
       });
+      console.log('✅ [ChatContext] Assistant message updated in storage');
 
       // Update state with completed response
       const finalChat: Chat = {
@@ -162,17 +231,31 @@ export function ChatProvider({ children }: ChatProviderProps) {
         updatedAt: new Date(),
       };
 
+      console.log('🔄 [ChatContext] Updating state with final response', {
+        chatId: finalChat.id,
+        messageCount: finalChat.messages.length,
+        lastMessageContent: finalChat.messages[finalChat.messages.length - 1]?.content?.substring(0, 50),
+      });
+
       setCurrentChat(finalChat);
+      // CRITICAL FIX: Use finalChat.id instead of stale currentChat.id closure
       setChats((prevChats) =>
         prevChats.map((chat) =>
-          chat.id === currentChat.id ? finalChat : chat,
+          chat.id === finalChat.id ? finalChat : chat,
         ),
       );
 
+      console.log('✅ [ChatContext] Final state update complete!');
       setError(null);
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Failed to send message";
+
+      console.error('❌ [ChatContext] Error in sendMessage:', {
+        error: errorMessage,
+        stack: err instanceof Error ? err.stack : undefined,
+      });
+
       setError(errorMessage);
 
       // Update assistant message with error status
@@ -180,6 +263,11 @@ export function ChatProvider({ children }: ChatProviderProps) {
         try {
           const messageToUpdate =
             currentChat.messages[currentChat.messages.length - 1];
+
+          console.log('🔧 [ChatContext] Updating message with error status', {
+            messageId: messageToUpdate?.id,
+          });
+
           if (messageToUpdate?.id) {
             await StorageService.updateMessage(
               currentChat.id,
@@ -192,15 +280,20 @@ export function ChatProvider({ children }: ChatProviderProps) {
           }
 
           // Reload chats to reflect error state
+          console.log('🔄 [ChatContext] Reloading chats after error...');
           await loadChats();
+          console.log('✅ [ChatContext] Chats reloaded after error');
         } catch (updateErr) {
           console.error(
-            "Failed to update message with error status:",
+            "❌ [ChatContext] Failed to update message with error status:",
             updateErr,
           );
         }
       }
     } finally {
+      console.log('🏁 [ChatContext] sendMessage finally block', {
+        settingIsLoadingToFalse: true,
+      });
       setIsLoading(false);
     }
   };

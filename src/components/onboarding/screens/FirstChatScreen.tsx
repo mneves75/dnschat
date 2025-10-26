@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  useColorScheme,
   TouchableOpacity,
   TextInput,
   ScrollView,
@@ -12,6 +11,9 @@ import {
 } from "react-native";
 import { OnboardingNavigation } from "../OnboardingNavigation";
 import { DNSService } from "../../../services/dnsService";
+import { useImessagePalette } from "../../../ui/theme/imessagePalette";
+import { useTypography } from "../../../ui/hooks/useTypography";
+import { LiquidGlassSpacing } from "../../../ui/theme/liquidGlassSpacing";
 
 interface Message {
   id: string;
@@ -22,13 +24,13 @@ interface Message {
 }
 
 export function FirstChatScreen() {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
+  const palette = useImessagePalette();
+  const typography = useTypography();
 
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
-      text: "Hi! I'm your AI assistant. Try sending me a message to see how DNS magic works! 🌟",
+      text: "Hi! I'm your AI assistant. Try sending me a message to see how DNS magic works!",
       isUser: false,
       timestamp: new Date(),
     },
@@ -61,14 +63,11 @@ export function FirstChatScreen() {
     setHasTriedChat(true);
 
     try {
-      // For onboarding, we use real DNS methods only (enableMockDNS = false)
-      // This ensures users see real DNS behavior, not mock responses
       const response = await DNSService.queryLLM(
         inputText.trim(),
         undefined,
-        undefined,
-        undefined,
         false,
+        true,
       );
 
       setMessages((prev) =>
@@ -84,7 +83,7 @@ export function FirstChatScreen() {
           msg.id === assistantMessage.id
             ? {
                 ...msg,
-                text: "Great! You've successfully sent your first DNS message. In a real scenario, this would return an AI response via DNS TXT records. The magic is that your message traveled through the DNS infrastructure! 🎉",
+                text: "Great! You've successfully sent your first DNS message. In a real scenario, this would return an AI response via DNS TXT records. The magic is that your message traveled through the DNS infrastructure!",
                 status: "sent",
               }
             : msg,
@@ -98,7 +97,7 @@ export function FirstChatScreen() {
   const suggestedMessages = [
     "What is DNS?",
     "How does this app work?",
-    "Tell me something interesting!",
+    "Tell me something interesting",
     "What can you help me with?",
   ];
 
@@ -109,12 +108,15 @@ export function FirstChatScreen() {
     >
       <View style={styles.content}>
         <View style={styles.headerSection}>
-          <Text style={styles.icon}>💬</Text>
+          <Text style={[typography.displayMedium, { color: palette.accentTint }]}>
+            Chat
+          </Text>
 
           <Text
             style={[
+              typography.title1,
               styles.title,
-              isDark ? styles.darkTitle : styles.lightTitle,
+              { color: palette.textPrimary },
             ]}
           >
             Try Your First Chat
@@ -122,8 +124,9 @@ export function FirstChatScreen() {
 
           <Text
             style={[
+              typography.callout,
               styles.subtitle,
-              isDark ? styles.darkSubtitle : styles.lightSubtitle,
+              { color: palette.textSecondary },
             ]}
           >
             Send a message and watch it travel through DNS
@@ -135,17 +138,21 @@ export function FirstChatScreen() {
           showsVerticalScrollIndicator={false}
         >
           {messages.map((message) => (
-            <MessageBubble key={message.id} message={message} isDark={isDark} />
+            <MessageBubble
+              key={message.id}
+              message={message}
+              palette={palette}
+              typography={typography}
+            />
           ))}
 
           {!hasTriedChat && (
             <View style={styles.suggestionsContainer}>
               <Text
                 style={[
+                  typography.footnote,
                   styles.suggestionsTitle,
-                  isDark
-                    ? styles.darkSuggestionsTitle
-                    : styles.lightSuggestionsTitle,
+                  { color: palette.textSecondary, fontWeight: "600" },
                 ]}
               >
                 Try one of these:
@@ -155,18 +162,19 @@ export function FirstChatScreen() {
                   key={index}
                   style={[
                     styles.suggestionButton,
-                    isDark
-                      ? styles.darkSuggestionButton
-                      : styles.lightSuggestionButton,
+                    {
+                      backgroundColor: palette.surface,
+                      borderColor: palette.border,
+                    },
                   ]}
                   onPress={() => setInputText(suggestion)}
+                  activeOpacity={0.7}
                 >
                   <Text
                     style={[
+                      typography.callout,
                       styles.suggestionText,
-                      isDark
-                        ? styles.darkSuggestionText
-                        : styles.lightSuggestionText,
+                      { color: palette.accentTint },
                     ]}
                   >
                     {suggestion}
@@ -180,31 +188,42 @@ export function FirstChatScreen() {
         <View
           style={[
             styles.inputContainer,
-            isDark ? styles.darkInputContainer : styles.lightInputContainer,
+            {
+              backgroundColor: palette.surface,
+              borderColor: palette.border,
+            },
           ]}
         >
           <TextInput
             style={[
+              typography.callout,
               styles.textInput,
-              isDark ? styles.darkTextInput : styles.lightTextInput,
+              { color: palette.textPrimary },
             ]}
             value={inputText}
             onChangeText={setInputText}
             placeholder="Type your message..."
-            placeholderTextColor={isDark ? "#666666" : "#999999"}
+            placeholderTextColor={palette.textTertiary}
             multiline
             maxLength={200}
           />
           <TouchableOpacity
             style={[
               styles.sendButton,
-              isDark ? styles.darkSendButton : styles.lightSendButton,
-              (!inputText.trim() || isLoading) && styles.sendButtonDisabled,
+              {
+                backgroundColor:
+                  !inputText.trim() || isLoading
+                    ? palette.textTertiary
+                    : palette.accentTint,
+              },
             ]}
             onPress={sendMessage}
             disabled={!inputText.trim() || isLoading}
+            activeOpacity={0.7}
           >
-            <Text style={styles.sendButtonText}>{isLoading ? "⏳" : "🚀"}</Text>
+            <Text style={[typography.headline, { color: palette.solid }]}>
+              {isLoading ? "..." : "Send"}
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -218,10 +237,11 @@ export function FirstChatScreen() {
 
 interface MessageBubbleProps {
   message: Message;
-  isDark: boolean;
+  palette: ReturnType<typeof useImessagePalette>;
+  typography: ReturnType<typeof useTypography>;
 }
 
-function MessageBubble({ message, isDark }: MessageBubbleProps) {
+function MessageBubble({ message, palette, typography }: MessageBubbleProps) {
   return (
     <View
       style={[
@@ -234,30 +254,36 @@ function MessageBubble({ message, isDark }: MessageBubbleProps) {
       <View
         style={[
           styles.messageBubble,
-          message.isUser
-            ? isDark
-              ? styles.darkUserBubble
-              : styles.lightUserBubble
-            : isDark
-              ? styles.darkAssistantBubble
-              : styles.lightAssistantBubble,
+          {
+            backgroundColor: message.isUser
+              ? palette.accentTint
+              : palette.surface,
+            borderColor: message.isUser ? "transparent" : palette.border,
+          },
         ]}
       >
         <Text
           style={[
+            typography.callout,
             styles.messageText,
-            message.isUser
-              ? styles.userMessageText
-              : isDark
-                ? styles.darkAssistantMessageText
-                : styles.lightAssistantMessageText,
+            {
+              color: message.isUser ? palette.solid : palette.textPrimary,
+            },
           ]}
         >
           {message.text}
         </Text>
 
         {message.status === "sending" && (
-          <Text style={styles.statusText}>Sending via DNS...</Text>
+          <Text
+            style={[
+              typography.caption1,
+              styles.statusText,
+              { color: palette.textTertiary },
+            ]}
+          >
+            Sending via DNS...
+          </Text>
         )}
       </View>
     </View>
@@ -270,46 +296,28 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    paddingHorizontal: 16,
+    paddingHorizontal: LiquidGlassSpacing.md,
   },
   headerSection: {
     alignItems: "center",
-    paddingTop: 20,
-    paddingBottom: 20,
-  },
-  icon: {
-    fontSize: 50,
-    marginBottom: 12,
+    paddingTop: LiquidGlassSpacing.lg,
+    paddingBottom: LiquidGlassSpacing.lg,
   },
   title: {
-    fontSize: 24,
-    fontWeight: "bold",
     textAlign: "center",
-    marginBottom: 8,
-  },
-  lightTitle: {
-    color: "#000000",
-  },
-  darkTitle: {
-    color: "#FFFFFF",
+    marginBottom: LiquidGlassSpacing.xs,
+    fontWeight: "700",
   },
   subtitle: {
-    fontSize: 16,
     textAlign: "center",
     opacity: 0.8,
   },
-  lightSubtitle: {
-    color: "#666666",
-  },
-  darkSubtitle: {
-    color: "#999999",
-  },
   messagesContainer: {
     flex: 1,
-    marginBottom: 16,
+    marginBottom: LiquidGlassSpacing.md,
   },
   messageContainer: {
-    marginVertical: 4,
+    marginVertical: LiquidGlassSpacing.xxs,
   },
   userMessageContainer: {
     alignItems: "flex-end",
@@ -319,126 +327,56 @@ const styles = StyleSheet.create({
   },
   messageBubble: {
     maxWidth: "80%",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: LiquidGlassSpacing.md,
+    paddingVertical: LiquidGlassSpacing.sm,
     borderRadius: 18,
-  },
-  lightUserBubble: {
-    backgroundColor: "#007AFF",
-  },
-  darkUserBubble: {
-    backgroundColor: "#0A84FF",
-  },
-  lightAssistantBubble: {
-    backgroundColor: "#F2F2F7",
-  },
-  darkAssistantBubble: {
-    backgroundColor: "#2C2C2E",
+    borderWidth: 1,
   },
   messageText: {
-    fontSize: 16,
     lineHeight: 20,
   },
-  userMessageText: {
-    color: "#FFFFFF",
-  },
-  lightAssistantMessageText: {
-    color: "#000000",
-  },
-  darkAssistantMessageText: {
-    color: "#FFFFFF",
-  },
   statusText: {
-    fontSize: 12,
-    opacity: 0.7,
-    marginTop: 4,
+    marginTop: LiquidGlassSpacing.xxs,
     fontStyle: "italic",
-    color: "#666666",
   },
   suggestionsContainer: {
-    marginTop: 20,
-    gap: 8,
+    marginTop: LiquidGlassSpacing.lg,
+    gap: LiquidGlassSpacing.xs,
   },
   suggestionsTitle: {
-    fontSize: 14,
-    fontWeight: "600",
-    marginBottom: 8,
-  },
-  lightSuggestionsTitle: {
-    color: "#666666",
-  },
-  darkSuggestionsTitle: {
-    color: "#999999",
+    marginBottom: LiquidGlassSpacing.xs,
   },
   suggestionButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 20,
+    paddingHorizontal: LiquidGlassSpacing.md,
+    paddingVertical: LiquidGlassSpacing.sm,
+    borderRadius: LiquidGlassSpacing.lg,
     borderWidth: 1,
     alignSelf: "flex-start",
   },
-  lightSuggestionButton: {
-    backgroundColor: "#F9F9F9",
-    borderColor: "#E5E5EA",
-  },
-  darkSuggestionButton: {
-    backgroundColor: "#2C2C2E",
-    borderColor: "#48484A",
-  },
   suggestionText: {
-    fontSize: 14,
-  },
-  lightSuggestionText: {
-    color: "#007AFF",
-  },
-  darkSuggestionText: {
-    color: "#0A84FF",
+    fontWeight: "500",
   },
   inputContainer: {
     flexDirection: "row",
     alignItems: "flex-end",
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 24,
-    marginBottom: 16,
-  },
-  lightInputContainer: {
-    backgroundColor: "#F2F2F7",
-  },
-  darkInputContainer: {
-    backgroundColor: "#2C2C2E",
+    paddingHorizontal: LiquidGlassSpacing.sm,
+    paddingVertical: LiquidGlassSpacing.xs,
+    borderRadius: LiquidGlassSpacing.xl,
+    marginBottom: LiquidGlassSpacing.md,
+    borderWidth: 1,
   },
   textInput: {
     flex: 1,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 16,
+    paddingHorizontal: LiquidGlassSpacing.md,
+    paddingVertical: LiquidGlassSpacing.sm,
     maxHeight: 100,
-  },
-  lightTextInput: {
-    color: "#000000",
-  },
-  darkTextInput: {
-    color: "#FFFFFF",
   },
   sendButton: {
     width: 40,
     height: 40,
-    borderRadius: 20,
+    borderRadius: LiquidGlassSpacing.lg,
     alignItems: "center",
     justifyContent: "center",
-    marginLeft: 8,
-  },
-  lightSendButton: {
-    backgroundColor: "#007AFF",
-  },
-  darkSendButton: {
-    backgroundColor: "#0A84FF",
-  },
-  sendButtonDisabled: {
-    opacity: 0.5,
-  },
-  sendButtonText: {
-    fontSize: 18,
+    marginLeft: LiquidGlassSpacing.xs,
   },
 });

@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  useColorScheme,
   TouchableOpacity,
   Alert,
   ActivityIndicator,
@@ -11,6 +10,9 @@ import {
 } from "react-native";
 import { OnboardingNavigation } from "../OnboardingNavigation";
 import { useSettings } from "../../../context/SettingsContext";
+import { useImessagePalette } from "../../../ui/theme/imessagePalette";
+import { useTypography } from "../../../ui/hooks/useTypography";
+import { LiquidGlassSpacing } from "../../../ui/theme/liquidGlassSpacing";
 
 interface NetworkTest {
   method: string;
@@ -20,9 +22,8 @@ interface NetworkTest {
 }
 
 export function NetworkSetupScreen() {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
-  const { updatePreferDnsOverHttps } = useSettings();
+  const palette = useImessagePalette();
+  const typography = useTypography();
 
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [optimizationComplete, setOptimizationComplete] = useState(false);
@@ -62,8 +63,6 @@ export function NetworkSetupScreen() {
     };
 
     try {
-      // Generate randomized latencies while preserving desired order:
-      // DNS over HTTPS < Native DNS < DNS over UDP < DNS over TCP
       const getRandomInt = (min: number, max: number) =>
         Math.floor(Math.random() * (max - min + 1)) + min;
 
@@ -100,11 +99,10 @@ export function NetworkSetupScreen() {
 
   const applyRecommendedSettings = async () => {
     if (recommendedSetting !== null) {
-      await updatePreferDnsOverHttps(recommendedSetting);
       Alert.alert(
-        "Settings Applied!",
-        `DNS over HTTPS has been ${recommendedSetting ? "enabled" : "disabled"} for optimal performance.`,
-        [{ text: "Great!", style: "default" }],
+        "Settings Applied",
+        `Network optimization complete. DNS will use automatic fallback chain for best performance.`,
+        [{ text: "Great", style: "default" }],
       );
     }
   };
@@ -125,12 +123,15 @@ export function NetworkSetupScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.headerSection}>
-          <Text style={styles.icon}>🔧</Text>
+          <Text style={[typography.displayMedium, { color: palette.accentTint }]}>
+            Setup
+          </Text>
 
           <Text
             style={[
+              typography.title1,
               styles.title,
-              isDark ? styles.darkTitle : styles.lightTitle,
+              { color: palette.textPrimary },
             ]}
           >
             Network Optimization
@@ -138,12 +139,33 @@ export function NetworkSetupScreen() {
 
           <Text
             style={[
+              typography.callout,
               styles.subtitle,
-              isDark ? styles.darkSubtitle : styles.lightSubtitle,
+              { color: palette.textSecondary },
             ]}
           >
             We're testing your network to find the fastest DNS methods
           </Text>
+
+          <View
+            style={[
+              styles.disclaimerContainer,
+              {
+                backgroundColor: palette.accentSurface,
+                borderColor: palette.accentBorder,
+              },
+            ]}
+          >
+            <Text
+              style={[
+                typography.footnote,
+                styles.disclaimer,
+                { color: palette.textSecondary },
+              ]}
+            >
+              This is a simulated demonstration
+            </Text>
+          </View>
         </View>
 
         <View style={styles.testsSection}>
@@ -151,7 +173,8 @@ export function NetworkSetupScreen() {
             <NetworkTestItem
               key={test.method}
               test={test}
-              isDark={isDark}
+              palette={palette}
+              typography={typography}
               isActive={isOptimizing && test.status === "testing"}
             />
           ))}
@@ -161,28 +184,27 @@ export function NetworkSetupScreen() {
           <View
             style={[
               styles.recommendationContainer,
-              isDark
-                ? styles.darkRecommendationContainer
-                : styles.lightRecommendationContainer,
+              {
+                backgroundColor: palette.accentSurface,
+                borderColor: palette.accentBorder,
+              },
             ]}
           >
             <Text
               style={[
+                typography.headline,
                 styles.recommendationTitle,
-                isDark
-                  ? styles.darkRecommendationTitle
-                  : styles.lightRecommendationTitle,
+                { color: palette.accentTint },
               ]}
             >
-              🎯 Optimization Complete!
+              Optimization Complete
             </Text>
 
             <Text
               style={[
+                typography.callout,
                 styles.recommendationText,
-                isDark
-                  ? styles.darkRecommendationText
-                  : styles.lightRecommendationText,
+                { color: palette.textPrimary },
               ]}
             >
               Based on your network conditions, we recommend{" "}
@@ -193,16 +215,16 @@ export function NetworkSetupScreen() {
             <TouchableOpacity
               style={[
                 styles.applyButton,
-                isDark ? styles.darkApplyButton : styles.lightApplyButton,
+                { backgroundColor: palette.accentTint },
               ]}
               onPress={applyRecommendedSettings}
+              activeOpacity={0.7}
             >
               <Text
                 style={[
+                  typography.callout,
                   styles.applyButtonText,
-                  isDark
-                    ? styles.darkApplyButtonText
-                    : styles.lightApplyButtonText,
+                  { color: palette.solid, fontWeight: "600" },
                 ]}
               >
                 Apply Recommended Settings
@@ -213,14 +235,12 @@ export function NetworkSetupScreen() {
 
         {!optimizationComplete && (
           <View style={styles.loadingSection}>
-            <ActivityIndicator
-              size="large"
-              color={isDark ? "#0A84FF" : "#007AFF"}
-            />
+            <ActivityIndicator size="large" color={palette.accentTint} />
             <Text
               style={[
+                typography.callout,
                 styles.loadingText,
-                isDark ? styles.darkLoadingText : styles.lightLoadingText,
+                { color: palette.textSecondary },
               ]}
             >
               Optimizing your DNS settings...
@@ -239,38 +259,39 @@ export function NetworkSetupScreen() {
 
 interface NetworkTestItemProps {
   test: NetworkTest;
-  isDark: boolean;
+  palette: ReturnType<typeof useImessagePalette>;
+  typography: ReturnType<typeof useTypography>;
   isActive: boolean;
 }
 
-function NetworkTestItem({ test, isDark, isActive }: NetworkTestItemProps) {
-  const getStatusIcon = () => {
+function NetworkTestItem({ test, palette, typography, isActive }: NetworkTestItemProps) {
+  const getStatusLabel = () => {
     switch (test.status) {
       case "testing":
-        return isActive ? "🔄" : "⏳";
+        return isActive ? "Testing" : "Waiting";
       case "success":
-        return "✅";
+        return "Success";
       case "failed":
-        return "❌";
+        return "Failed";
       case "skipped":
-        return "⏭️";
+        return "Skipped";
       default:
-        return "⏳";
+        return "Waiting";
     }
   };
 
   const getStatusColor = () => {
     switch (test.status) {
       case "testing":
-        return "#007AFF";
+        return palette.accentTint;
       case "success":
-        return "#34C759";
+        return palette.success;
       case "failed":
-        return "#FF3B30";
+        return palette.destructive;
       case "skipped":
-        return "#8E8E93";
+        return palette.textTertiary;
       default:
-        return isDark ? "#666666" : "#999999";
+        return palette.textTertiary;
     }
   };
 
@@ -278,35 +299,62 @@ function NetworkTestItem({ test, isDark, isActive }: NetworkTestItemProps) {
     <View
       style={[
         styles.testItem,
-        isDark ? styles.darkTestItem : styles.lightTestItem,
-        isActive && styles.activeTestItem,
+        {
+          backgroundColor: palette.surface,
+          borderColor: isActive ? palette.accentBorder : palette.border,
+          borderWidth: isActive ? 2 : 1,
+        },
       ]}
     >
       <View style={styles.testHeader}>
-        <Text style={styles.testIcon}>{getStatusIcon()}</Text>
+        <View
+          style={[
+            styles.statusIndicator,
+            { backgroundColor: getStatusColor() },
+          ]}
+        />
         <View style={styles.testInfo}>
           <Text
             style={[
+              typography.callout,
               styles.testMethod,
-              isDark ? styles.darkTestMethod : styles.lightTestMethod,
+              { color: palette.textPrimary, fontWeight: "600" },
             ]}
           >
             {test.method}
           </Text>
           <Text
             style={[
+              typography.footnote,
               styles.testDescription,
-              isDark ? styles.darkTestDescription : styles.lightTestDescription,
+              { color: palette.textSecondary },
             ]}
           >
             {test.description}
           </Text>
         </View>
-        {test.latency && (
-          <Text style={[styles.latencyBadge, { color: getStatusColor() }]}>
-            {test.latency}ms
+        <View style={styles.testStatus}>
+          <Text
+            style={[
+              typography.caption1,
+              styles.statusLabel,
+              { color: getStatusColor(), fontWeight: "500" },
+            ]}
+          >
+            {getStatusLabel()}
           </Text>
-        )}
+          {test.latency && (
+            <Text
+              style={[
+                typography.caption1,
+                styles.latencyBadge,
+                { color: getStatusColor(), fontWeight: "500" },
+              ]}
+            >
+              {test.latency}ms
+            </Text>
+          )}
+        </View>
       </View>
     </View>
   );
@@ -321,175 +369,99 @@ const styles = StyleSheet.create({
   },
   content: {
     flexGrow: 1,
-    paddingHorizontal: 24,
-    paddingTop: 20,
-    paddingBottom: 100, // Extra padding for OnboardingNavigation
+    paddingHorizontal: LiquidGlassSpacing.xl,
+    paddingTop: LiquidGlassSpacing.lg,
+    paddingBottom: 100,
   },
   headerSection: {
     alignItems: "center",
-    marginBottom: 40,
-  },
-  icon: {
-    fontSize: 60,
-    marginBottom: 16,
+    marginBottom: LiquidGlassSpacing.xxxl,
   },
   title: {
-    fontSize: 28,
-    fontWeight: "bold",
     textAlign: "center",
-    marginBottom: 12,
-  },
-  lightTitle: {
-    color: "#000000",
-  },
-  darkTitle: {
-    color: "#FFFFFF",
+    marginBottom: LiquidGlassSpacing.sm,
+    fontWeight: "700",
   },
   subtitle: {
-    fontSize: 16,
     textAlign: "center",
-    lineHeight: 22,
     opacity: 0.8,
+    marginBottom: LiquidGlassSpacing.md,
   },
-  lightSubtitle: {
-    color: "#666666",
+  disclaimerContainer: {
+    paddingVertical: LiquidGlassSpacing.xxs,
+    paddingHorizontal: LiquidGlassSpacing.sm,
+    borderRadius: LiquidGlassSpacing.xs,
+    borderWidth: 1,
+    marginTop: LiquidGlassSpacing.xs,
   },
-  darkSubtitle: {
-    color: "#999999",
+  disclaimer: {
+    textAlign: "center",
+    fontStyle: "italic",
   },
   testsSection: {
-    gap: 12,
-    marginBottom: 32,
+    gap: LiquidGlassSpacing.sm,
+    marginBottom: LiquidGlassSpacing.xxl,
   },
   testItem: {
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-  },
-  lightTestItem: {
-    backgroundColor: "#F9F9F9",
-    borderColor: "#E5E5EA",
-  },
-  darkTestItem: {
-    backgroundColor: "#1C1C1E",
-    borderColor: "#2C2C2E",
-  },
-  activeTestItem: {
-    borderColor: "#007AFF",
-    borderWidth: 2,
+    padding: LiquidGlassSpacing.md,
+    borderRadius: LiquidGlassSpacing.sm,
   },
   testHeader: {
     flexDirection: "row",
     alignItems: "center",
   },
-  testIcon: {
-    fontSize: 20,
-    marginRight: 12,
+  statusIndicator: {
+    width: LiquidGlassSpacing.xs,
+    height: LiquidGlassSpacing.xs,
+    borderRadius: LiquidGlassSpacing.xxs,
+    marginRight: LiquidGlassSpacing.sm,
   },
   testInfo: {
     flex: 1,
   },
   testMethod: {
-    fontSize: 16,
-    fontWeight: "600",
     marginBottom: 2,
   },
-  lightTestMethod: {
-    color: "#000000",
-  },
-  darkTestMethod: {
-    color: "#FFFFFF",
-  },
   testDescription: {
-    fontSize: 14,
     opacity: 0.7,
   },
-  lightTestDescription: {
-    color: "#666666",
+  testStatus: {
+    alignItems: "flex-end",
   },
-  darkTestDescription: {
-    color: "#999999",
+  statusLabel: {
+    marginBottom: 2,
   },
   latencyBadge: {
-    fontSize: 14,
-    fontWeight: "600",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-    backgroundColor: "rgba(52, 199, 89, 0.1)",
+    paddingHorizontal: LiquidGlassSpacing.xs,
+    paddingVertical: 2,
   },
   loadingSection: {
     alignItems: "center",
-    gap: 16,
+    gap: LiquidGlassSpacing.md,
   },
   loadingText: {
-    fontSize: 16,
     opacity: 0.8,
   },
-  lightLoadingText: {
-    color: "#666666",
-  },
-  darkLoadingText: {
-    color: "#999999",
-  },
   recommendationContainer: {
-    padding: 20,
-    borderRadius: 16,
-    marginBottom: 20,
-  },
-  lightRecommendationContainer: {
-    backgroundColor: "#F0F9FF",
-    borderColor: "#007AFF",
-    borderWidth: 1,
-  },
-  darkRecommendationContainer: {
-    backgroundColor: "#0D1B26",
-    borderColor: "#0A84FF",
+    padding: LiquidGlassSpacing.lg,
+    borderRadius: LiquidGlassSpacing.md,
+    marginBottom: LiquidGlassSpacing.lg,
     borderWidth: 1,
   },
   recommendationTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 8,
-  },
-  lightRecommendationTitle: {
-    color: "#007AFF",
-  },
-  darkRecommendationTitle: {
-    color: "#0A84FF",
+    fontWeight: "700",
+    marginBottom: LiquidGlassSpacing.xs,
   },
   recommendationText: {
-    fontSize: 16,
-    lineHeight: 22,
-    marginBottom: 16,
-  },
-  lightRecommendationText: {
-    color: "#333333",
-  },
-  darkRecommendationText: {
-    color: "#E5E5E7",
+    marginBottom: LiquidGlassSpacing.md,
   },
   applyButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
+    paddingVertical: LiquidGlassSpacing.sm,
+    paddingHorizontal: LiquidGlassSpacing.lg,
+    borderRadius: LiquidGlassSpacing.xs,
     alignItems: "center",
   },
-  lightApplyButton: {
-    backgroundColor: "#007AFF",
-  },
-  darkApplyButton: {
-    backgroundColor: "#0A84FF",
-  },
   applyButtonText: {
-    fontSize: 16,
     fontWeight: "600",
-    color: "#FFFFFF",
-  },
-  lightApplyButtonText: {
-    color: "#FFFFFF",
-  },
-  darkApplyButtonText: {
-    color: "#FFFFFF",
   },
 });
