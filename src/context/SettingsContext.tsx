@@ -14,6 +14,7 @@ import {
   DEFAULT_SETTINGS,
   PersistedSettings,
   SETTINGS_STORAGE_KEY,
+  SETTINGS_VERSION,
   SUPPORTED_LOCALE_OPTIONS,
   SupportedLocale,
   SupportedLocaleOption,
@@ -76,6 +77,17 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
         const parsed = JSON.parse(settingsJson) as unknown;
         const migrated = migrateSettings(parsed);
+
+        // Clean up legacy fields from AsyncStorage after migration
+        const originalVersion = (parsed as { version?: number })?.version;
+        if (originalVersion !== SETTINGS_VERSION) {
+          // Migration occurred - persist cleaned settings to remove legacy fields
+          await AsyncStorage.setItem(
+            SETTINGS_STORAGE_KEY,
+            JSON.stringify(migrated),
+          );
+        }
+
         if (isMounted) {
           setSettings(migrated);
         }
