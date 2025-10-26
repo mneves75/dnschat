@@ -7,9 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Screenshot Automation**: Fastlane + AXe CLI automation for App Store screenshots
+  - Automated generation of all 52 required App Store screenshots (26 light + 26 dark mode)
+  - Fastlane lanes: `screenshots` (full automation), `screenshots_test` (quick validation), `build_and_install` (dev helper)
+  - AXe CLI navigation scripts for programmatic simulator control (8 scripts covering all screens)
+  - Supports 6 device sizes: iPhone 16 Pro Max, iPhone 16 Pro, iPhone 16, iPhone SE 3rd gen, iPad Pro 13", iPad Pro 11"
+  - Light/dark mode appearance switching with semantic color verification
+  - Organized output structure ready for App Store Connect upload
+  - Comprehensive documentation in `ios/fastlane/README.md` with troubleshooting guide
+  - Transforms ~4 hour manual process into ~45-60 minute automated workflow
+  - CI/CD ready with GitHub Actions example
+  - See `SCREENSHOT_AUTOMATION_SUMMARY.md` for complete implementation details
+
+## [3.0.1] - 2025-10-26
+
 ### BREAKING CHANGES
 
-- **Settings Schema v3.0.0**: Removed DNS-over-HTTPS entirely, simplified to Native→UDP→TCP fallback chain
+- **Settings Schema v3**: Removed DNS-over-HTTPS entirely, simplified to Native→UDP→TCP fallback chain
   - **Removed fields**: `preferDnsOverHttps`, `dnsMethodPreference` no longer exist in settings
   - **Migration**: All existing settings automatically migrated to v3 with `allowExperimentalTransports: true`
   - **DNS Method**: Single automatic fallback chain replaces complex method preferences
@@ -24,18 +40,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Preserves all other settings during migration (DNS server, haptics, locale, accessibility)
   - Comprehensive migration test suite validates v1→v3, v2→v3, and v3 scenarios
 
-- **Screenshot Automation**: Fastlane + AXe CLI automation for App Store screenshots
-  - Automated generation of all 52 required App Store screenshots (26 light + 26 dark mode)
-  - Fastlane lanes: `screenshots` (full automation), `screenshots_test` (quick validation), `build_and_install` (dev helper)
-  - AXe CLI navigation scripts for programmatic simulator control (8 scripts covering all screens)
-  - Supports 6 device sizes: iPhone 16 Pro Max, iPhone 16 Pro, iPhone 16, iPhone SE 3rd gen, iPad Pro 13", iPad Pro 11"
-  - Light/dark mode appearance switching with semantic color verification
-  - Organized output structure ready for App Store Connect upload
-  - Comprehensive documentation in `ios/fastlane/README.md` with troubleshooting guide
-  - Transforms ~4 hour manual process into ~45-60 minute automated workflow
-  - CI/CD ready with GitHub Actions example
-  - See `SCREENSHOT_AUTOMATION_SUMMARY.md` for complete implementation details
-
 ### Changed
 
 - **Settings UI**: Simplified "App Behavior" section replaces complex "DNS Method" preferences
@@ -45,6 +49,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Removed "Prefer DNS-over-HTTPS (Legacy)" toggle
   - Transport test buttons reduced from 4 (Native, UDP, TCP, HTTPS) to 3 (removed HTTPS)
 
+- **Documentation**: Enhanced CLAUDE.md with React best practices and architecture updates
+  - Added React Best Practices section with useEffect guidance from https://react.dev/learn/you-might-not-need-an-effect
+  - When NOT to use useEffect: deriving state, caching calculations, resetting state, event handlers
+  - When TO use useEffect: external systems, data fetching, subscriptions
+  - Updated DNS Query Methods to remove DNS-over-HTTPS entry
+  - React 19.1 & React Compiler auto-memoization guidance
+
 ### Removed
 
 - **DNS-over-HTTPS Support**: Completely removed non-functional HTTPS transport
@@ -52,81 +63,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Removed HTTPS from transport test UI and translation strings
   - Removed Cloudflare infrastructure credit (no longer using Cloudflare)
   - Simplified `DNSService.queryLLM()` signature (removed `preferHttps` and `methodPreference` parameters)
-
-### Fixed
-
-- **Settings Transport Test Buttons**: Fixed color legibility in light/dark mode
-  - "Test selected preference" button: Migrated from hardcoded `#007AFF` to `palette.accentTint`
-  - Button text: Changed from hardcoded `#FFFFFF` to `palette.solid` for proper semantic color
-  - Transport buttons (Nativo, UDP, TCP): Now use `palette.accentSurface` and `palette.accentBorder` for better visibility
-  - Success result box: Migrated from hardcoded `#4CAF50` to `palette.success`
-  - Error result box: Migrated from hardcoded `#F44336` to `palette.destructive`
-  - Save button: Migrated from hardcoded `#007AFF` to `palette.accentTint`
-  - Language selection radio buttons: Migrated from hardcoded `#007AFF` to `palette.accentTint` and `palette.accentSurface`
-  - All colors now adapt properly to light/dark mode and high contrast accessibility settings
-
-- **Reset Onboarding**: Feature already implemented and working
-  - Available in Settings > Development section
-  - Button labeled "Reset Onboarding" / "Redefinir onboarding" (pt-BR)
-  - Allows users to see the onboarding flow again
-  - Confirmation dialog prevents accidental resets
-
-- **iOS DNS Resolver**: Fixed CheckedContinuation double-resume crash in DNSResolver.performUDPQuery
-  - Added resume guards to prevent multiple continuation resumes when connection state changes
-  - Fixed crash on line 112 when timeout cancels task after connection reaches ready state
-  - Applied guards to all three continuation points: stateUpdateHandler, send completion, receiveMessage
-  - Resolves EXC_BREAKPOINT crash in iOS 26.1 simulator during DNS queries with timeout
-
-- **iOS 26 HIG Compliance - PlusIcon**: Fixed hardcoded colors to use semantic theme palette
-  - Migrated from hardcoded `#007AFF` to `palette.accentTint` for proper light/dark mode adaptation
-  - Light mode: rgba(10,132,255,0.55) - matches systemBlue with proper opacity
-  - Dark mode: rgba(10,132,255,0.65) - more vibrant for better visibility
-  - High contrast mode: Automatically increased opacity for accessibility
-  - Deprecated `circleColor` prop in favor of automatic semantic colors
-
-- **iOS 26 HIG Compliance - Touch Targets**: Fixed new chat button touch target size
-  - Increased padding from 8×4px to 12px (uniform) to meet 44pt minimum touch target
-  - Total touch area: 44×44px (20px icon + 12px padding all sides)
-  - Added accessibility labels: `accessibilityLabel="New Chat"`, `accessibilityRole="button"`
-  - Added `accessibilityHint` for VoiceOver guidance
-
-- **iOS 26 HIG Compliance - Chat Screen**: Fixed all hardcoded colors to use semantic theme palette
-  - **SendIcon**: Migrated to semantic colors matching PlusIcon pattern
-    - Active state: `palette.accentTint` (blue) with proper light/dark adaptation
-    - Inactive state: `palette.tint` (gray) for disabled appearance
-    - Deprecated `circleColor` and `arrowColor` props with dev warnings
-    - Removed yellow glow background from plus icon in chat list
-  - **MessageBubble**: Complete color system overhaul
-    - User bubbles: `palette.accentTint` (blue) instead of hardcoded `#007AFF`
-    - Assistant bubbles: `palette.surface` instead of hardcoded `#F0F0F0` / `#2C2C2E`
-    - Error bubbles: `palette.destructive` for consistent error states
-    - Text colors: `palette.textPrimary` and `palette.textTertiary` for all text
-    - Proper white contrast on colored bubbles (4.5:1 ratio)
-  - **ChatInput**: Semantic colors throughout
-    - Placeholder: `palette.textTertiary` instead of hardcoded `#8E8E93`
-    - Input text: `palette.textPrimary` for proper light/dark adaptation
-    - Send button: `palette.accentTint` (active) / `palette.tint` (inactive)
-    - Removed deprecated SendIcon props (`circleColor`, `arrowColor`)
-  - **MessageList**: Complete iOS 26 compliance overhaul
-    - **Transparent background**: Removed hardcoded `#FFFFFF`/`#000000` to show glass effect from LiquidGlassWrapper
-    - **Semantic typography**: Migrated to `typography.title2` and `typography.subheadline` for empty state
-    - **Semantic colors**: Empty state text uses `palette.textPrimary` and `palette.textSecondary`
-    - **Semantic spacing**: All spacing now uses `LiquidGlassSpacing` constants (xs, xl) instead of hardcoded pixels
-    - **RefreshControl**: Tint color uses `palette.accentTint` instead of hardcoded black/white
-    - **Comprehensive code comments**: Added detailed explanations for all iOS 26 HIG patterns, tricky implementations, and performance optimizations
-    - **Documentation labels**: TRICKY, CRITICAL, PERFORMANCE, PATTERN labels explain rationale for complex code sections
-  - All components now adapt automatically to light/dark mode and high contrast accessibility settings
-
-### Added
-
-- **MessageList iOS 26 HIG Compliance Test Suite** (`__tests__/MessageList.hig-compliance.spec.tsx`):
-  - **63 comprehensive tests** covering all iOS 26 HIG requirements
-  - **Source code validation approach**: Tests verify implementation through code analysis (no rendering required)
-  - **Coverage areas**: Semantic colors, typography system, LiquidGlassSpacing, transparent backgrounds, performance optimizations
-  - **Regression prevention**: Tests prevent reintroduction of hardcoded colors (#007AFF, #FFFFFF, #000000)
-  - **Code quality checks**: Verifies no console.log statements, no TODO comments, proper TypeScript types
-  - **Documentation validation**: Ensures comprehensive comments explain iOS 26 HIG patterns
-  - **All tests passing**: 100% pass rate, production-ready for deployment
 
 ## [3.0.0] - 2025-10-24
 
