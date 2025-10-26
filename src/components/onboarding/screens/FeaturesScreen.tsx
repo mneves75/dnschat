@@ -3,15 +3,17 @@ import {
   View,
   Text,
   StyleSheet,
-  useColorScheme,
   ScrollView,
   TouchableOpacity,
   Linking,
 } from "react-native";
 import { OnboardingNavigation } from "../OnboardingNavigation";
+import { useImessagePalette } from "../../../ui/theme/imessagePalette";
+import { useTypography } from "../../../ui/hooks/useTypography";
+import { LiquidGlassSpacing } from "../../../ui/theme/liquidGlassSpacing";
 
 interface Feature {
-  icon: string;
+  label: string;
   title: string;
   description: string;
   action?: {
@@ -21,42 +23,60 @@ interface Feature {
 }
 
 export function FeaturesScreen() {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
+  const palette = useImessagePalette();
+  const typography = useTypography();
 
   const features: Feature[] = [
     {
-      icon: "📊",
+      label: "Logs",
       title: "DNS Query Logs",
       description:
         "Monitor all DNS queries in real-time with detailed timing and fallback information.",
     },
     {
-      icon: "⚙️",
+      label: "Customize",
       title: "Customizable Settings",
       description:
         "Configure DNS servers, enable HTTPS preferences, and optimize for your network.",
     },
     {
-      icon: "🌙",
-      title: "Dark & Light Themes",
+      label: "iOS 26",
+      title: "Liquid Glass Design",
       description:
-        "Beautiful interface that adapts to your system preferences automatically.",
+        "Beautiful iOS 26 interface with native glass effects and Material Design 3 on Android.",
     },
     {
-      icon: "💾",
+      label: "i18n",
+      title: "Multilingual Support",
+      description:
+        "Full internationalization with English and Portuguese languages.",
+    },
+    {
+      label: "Haptics",
+      title: "Haptic Feedback",
+      description:
+        "Customizable haptic feedback for interactive elements and actions.",
+    },
+    {
+      label: "Adapt",
+      title: "Dark and Light Themes",
+      description:
+        "Beautiful interface that adapts to your system preferences with high contrast mode support.",
+    },
+    {
+      label: "Local",
       title: "Local Storage",
       description:
         "All your conversations are stored securely on your device - no cloud dependency.",
     },
     {
-      icon: "🔄",
+      label: "Smart",
       title: "Smart Fallbacks",
       description:
         "Intelligent fallback system ensures connectivity across different network conditions.",
     },
     {
-      icon: "🌐",
+      label: "Open",
       title: "Open Source",
       description:
         "Built transparently - explore the code and contribute to the future of DNS chat.",
@@ -73,12 +93,15 @@ export function FeaturesScreen() {
     <View style={styles.container}>
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.headerSection}>
-          <Text style={styles.icon}>✨</Text>
+          <Text style={[typography.displayMedium, { color: palette.accentTint }]}>
+            Features
+          </Text>
 
           <Text
             style={[
+              typography.title1,
               styles.title,
-              isDark ? styles.darkTitle : styles.lightTitle,
+              { color: palette.textPrimary },
             ]}
           >
             Powerful Features
@@ -86,8 +109,9 @@ export function FeaturesScreen() {
 
           <Text
             style={[
+              typography.callout,
               styles.subtitle,
-              isDark ? styles.darkSubtitle : styles.lightSubtitle,
+              { color: palette.textSecondary },
             ]}
           >
             Discover what makes DNS Chat special
@@ -96,29 +120,39 @@ export function FeaturesScreen() {
 
         <View style={styles.featuresGrid}>
           {features.map((feature, index) => (
-            <FeatureCard key={index} feature={feature} isDark={isDark} />
+            <FeatureCard
+              key={index}
+              feature={feature}
+              palette={palette}
+              typography={typography}
+            />
           ))}
         </View>
 
         <View
           style={[
             styles.readySection,
-            isDark ? styles.darkReadySection : styles.lightReadySection,
+            {
+              backgroundColor: palette.accentSurface,
+              borderColor: palette.accentBorder,
+            },
           ]}
         >
           <Text
             style={[
+              typography.title3,
               styles.readyTitle,
-              isDark ? styles.darkReadyTitle : styles.lightReadyTitle,
+              { color: palette.accentTint, fontWeight: "700" },
             ]}
           >
-            🎉 You're All Set!
+            You're All Set
           </Text>
 
           <Text
             style={[
+              typography.callout,
               styles.readyText,
-              isDark ? styles.darkReadyText : styles.lightReadyText,
+              { color: palette.textPrimary },
             ]}
           >
             You now know how to use DNS Chat and have optimized settings for
@@ -139,23 +173,46 @@ export function FeaturesScreen() {
 
 interface FeatureCardProps {
   feature: Feature;
-  isDark: boolean;
+  palette: ReturnType<typeof useImessagePalette>;
+  typography: ReturnType<typeof useTypography>;
 }
 
-function FeatureCard({ feature, isDark }: FeatureCardProps) {
+function FeatureCard({ feature, palette, typography }: FeatureCardProps) {
   return (
     <View
       style={[
         styles.featureCard,
-        isDark ? styles.darkFeatureCard : styles.lightFeatureCard,
+        {
+          backgroundColor: palette.surface,
+          borderColor: palette.border,
+        },
       ]}
     >
-      <Text style={styles.featureIcon}>{feature.icon}</Text>
+      <View
+        style={[
+          styles.featureLabelContainer,
+          {
+            backgroundColor: palette.accentSurface,
+            borderColor: palette.accentBorder,
+          },
+        ]}
+      >
+        <Text
+          style={[
+            typography.caption1,
+            styles.featureLabel,
+            { color: palette.accentTint, fontWeight: "600" },
+          ]}
+        >
+          {feature.label}
+        </Text>
+      </View>
 
       <Text
         style={[
+          typography.headline,
           styles.featureTitle,
-          isDark ? styles.darkFeatureTitle : styles.lightFeatureTitle,
+          { color: palette.textPrimary },
         ]}
       >
         {feature.title}
@@ -163,29 +220,32 @@ function FeatureCard({ feature, isDark }: FeatureCardProps) {
 
       <Text
         style={[
+          typography.callout,
           styles.featureDescription,
-          isDark
-            ? styles.darkFeatureDescription
-            : styles.lightFeatureDescription,
+          { color: palette.textSecondary },
         ]}
       >
         {feature.description}
       </Text>
 
       {feature.action && (
+        /* iOS HIG: External link button to open GitHub repository in browser */
         <TouchableOpacity
           style={[
             styles.featureAction,
-            isDark ? styles.darkFeatureAction : styles.lightFeatureAction,
+            { backgroundColor: palette.accentTint },
           ]}
           onPress={feature.action.onPress}
+          activeOpacity={0.7}
+          accessibilityRole="link"
+          accessibilityLabel={feature.action.text}
+          accessibilityHint="Opens the DNS Chat GitHub repository in your browser where you can view the source code and contribute"
         >
           <Text
             style={[
+              typography.footnote,
               styles.featureActionText,
-              isDark
-                ? styles.darkFeatureActionText
-                : styles.lightFeatureActionText,
+              { color: palette.solid, fontWeight: "600" },
             ]}
           >
             {feature.action.text}
@@ -202,145 +262,74 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 20,
+    paddingHorizontal: LiquidGlassSpacing.lg,
+    paddingTop: LiquidGlassSpacing.lg,
   },
   headerSection: {
     alignItems: "center",
-    marginBottom: 32,
-  },
-  icon: {
-    fontSize: 60,
-    marginBottom: 16,
+    marginBottom: LiquidGlassSpacing.xxl,
   },
   title: {
-    fontSize: 28,
-    fontWeight: "bold",
     textAlign: "center",
-    marginBottom: 12,
-  },
-  lightTitle: {
-    color: "#000000",
-  },
-  darkTitle: {
-    color: "#FFFFFF",
+    marginBottom: LiquidGlassSpacing.sm,
+    fontWeight: "700",
   },
   subtitle: {
-    fontSize: 16,
     textAlign: "center",
     opacity: 0.8,
   },
-  lightSubtitle: {
-    color: "#666666",
-  },
-  darkSubtitle: {
-    color: "#999999",
-  },
   featuresGrid: {
-    gap: 16,
-    marginBottom: 32,
+    gap: LiquidGlassSpacing.md,
+    marginBottom: LiquidGlassSpacing.xxl,
   },
   featureCard: {
-    padding: 20,
-    borderRadius: 16,
+    padding: LiquidGlassSpacing.lg,
+    borderRadius: LiquidGlassSpacing.md,
     borderWidth: 1,
   },
-  lightFeatureCard: {
-    backgroundColor: "#FAFAFA",
-    borderColor: "#E5E5EA",
+  featureLabelContainer: {
+    paddingHorizontal: LiquidGlassSpacing.xs,
+    paddingVertical: 2,
+    borderRadius: LiquidGlassSpacing.xxs,
+    borderWidth: 1,
+    alignSelf: "flex-start",
+    marginBottom: LiquidGlassSpacing.sm,
   },
-  darkFeatureCard: {
-    backgroundColor: "#1C1C1E",
-    borderColor: "#2C2C2E",
-  },
-  featureIcon: {
-    fontSize: 28,
-    marginBottom: 12,
+  featureLabel: {
+    textTransform: "uppercase",
   },
   featureTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 8,
-  },
-  lightFeatureTitle: {
-    color: "#000000",
-  },
-  darkFeatureTitle: {
-    color: "#FFFFFF",
+    fontWeight: "700",
+    marginBottom: LiquidGlassSpacing.xs,
   },
   featureDescription: {
-    fontSize: 15,
     lineHeight: 21,
     opacity: 0.8,
   },
-  lightFeatureDescription: {
-    color: "#666666",
-  },
-  darkFeatureDescription: {
-    color: "#999999",
-  },
   featureAction: {
-    marginTop: 12,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 8,
+    marginTop: LiquidGlassSpacing.sm,
+    paddingVertical: LiquidGlassSpacing.xs,
+    paddingHorizontal: LiquidGlassSpacing.md,
+    borderRadius: LiquidGlassSpacing.xs,
     alignSelf: "flex-start",
   },
-  lightFeatureAction: {
-    backgroundColor: "#007AFF",
-  },
-  darkFeatureAction: {
-    backgroundColor: "#0A84FF",
-  },
   featureActionText: {
-    fontSize: 14,
     fontWeight: "600",
-    color: "#FFFFFF",
-  },
-  lightFeatureActionText: {
-    color: "#FFFFFF",
-  },
-  darkFeatureActionText: {
-    color: "#FFFFFF",
   },
   readySection: {
-    padding: 24,
-    borderRadius: 16,
-    marginBottom: 20,
+    padding: LiquidGlassSpacing.xl,
+    borderRadius: LiquidGlassSpacing.md,
+    marginBottom: LiquidGlassSpacing.lg,
     alignItems: "center",
-  },
-  lightReadySection: {
-    backgroundColor: "#F0F9FF",
-    borderColor: "#007AFF",
-    borderWidth: 2,
-  },
-  darkReadySection: {
-    backgroundColor: "#0D1B26",
-    borderColor: "#0A84FF",
     borderWidth: 2,
   },
   readyTitle: {
-    fontSize: 22,
-    fontWeight: "bold",
-    marginBottom: 12,
+    marginBottom: LiquidGlassSpacing.sm,
     textAlign: "center",
   },
-  lightReadyTitle: {
-    color: "#007AFF",
-  },
-  darkReadyTitle: {
-    color: "#0A84FF",
-  },
   readyText: {
-    fontSize: 16,
     lineHeight: 24,
     textAlign: "center",
     opacity: 0.9,
-  },
-  lightReadyText: {
-    color: "#333333",
-  },
-  darkReadyText: {
-    color: "#E5E5E7",
   },
 });

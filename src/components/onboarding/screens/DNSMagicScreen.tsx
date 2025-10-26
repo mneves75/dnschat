@@ -109,6 +109,7 @@ export function DNSMagicScreen() {
       );
       setResponse(result);
     } catch (error) {
+      console.error("[DNSMagicScreen] Native DNS query failed:", error);
       updateStep("1", "failed", "Native DNS failed, trying UDP...");
       await new Promise((resolve) => setTimeout(resolve, 500));
 
@@ -158,6 +159,7 @@ export function DNSMagicScreen() {
         </View>
 
         <View style={styles.demoSection}>
+          {/* iOS HIG: Primary action button to trigger DNS demonstration with fallback chain */}
           <TouchableOpacity
             style={[
               styles.demoButton,
@@ -166,6 +168,10 @@ export function DNSMagicScreen() {
             onPress={runDNSDemo}
             disabled={isRunning}
             activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel={isRunning ? "DNS query in progress" : "Start DNS demo"}
+            accessibilityHint="Demonstrates how DNS queries work through the fallback chain. Watch as your message travels through Native DNS, UDP, TCP, and HTTPS methods."
+            accessibilityState={{ disabled: isRunning, busy: isRunning }}
           >
             <Text
               style={[

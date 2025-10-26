@@ -1,8 +1,8 @@
 # DNSChat v3.0.1 Release Notes
 
-## 🔧 Settings Simplification & DNS Architecture Cleanup
+## 🎯 iOS HIG Accessibility & Settings Simplification
 
-DNSChat v3.0.1 removes non-functional DNS-over-HTTPS and simplifies settings to a clean, automatic fallback chain!
+DNSChat v3.0.1 brings comprehensive VoiceOver accessibility, critical bug fixes, and simplified settings!
 
 ### What's New
 
@@ -10,6 +10,21 @@ DNSChat v3.0.1 removes non-functional DNS-over-HTTPS and simplifies settings to 
 - **Automatic Fallback Chain**: Single Native→UDP→TCP fallback replaces complex method preferences
 - **Experimental Transports Enabled**: UDP/TCP fallbacks now enabled by default for maximum reliability
 - **Migration**: All v2 settings automatically upgraded to v3 with comprehensive test coverage
+
+**Comprehensive iOS HIG Accessibility** - VoiceOver-compliant onboarding!
+- **All Interactive Elements**: Proper `accessibilityRole`, `accessibilityLabel`, and `accessibilityHint`
+- **OnboardingNavigation**: Skip, Back, and Next buttons with descriptive labels
+- **FirstChatScreen**: Send button with dynamic labels (disabled/busy states) and 4 suggestion buttons
+- **DNSMagicScreen**: Start Demo button with state-aware labels (running vs idle)
+- **NetworkSetupScreen**: Apply Settings button with optimization hints
+- **FeaturesScreen**: GitHub link using correct `accessibilityRole="link"` (not "button")
+- **Settings Screen**: Reset Onboarding button with full accessibility
+- **28 Tests**: Comprehensive accessibility test suite (22 onboarding + 6 settings)
+
+**Semantic Color System Enhancement** - No more hardcoded colors!
+- **Transparent Color**: Added `palette.transparent` to eliminate hardcoded strings
+- **Consistency**: Available in both IMESSAGE_LIGHT and IMESSAGE_DARK themes
+- **Design System**: Maintains semantic color system integrity
 
 **Documentation Enhancements** - React best practices!
 - **React Best Practices Section**: Complete guide on when NOT to use useEffect
@@ -35,6 +50,15 @@ DNSChat v3.0.1 removes non-functional DNS-over-HTTPS and simplifies settings to 
 - **API Simplification**: `DNSService.queryLLM()` signature reduced from 5 to 4 parameters
 
 ### What Was Fixed
+
+**Critical Bug Fixes**:
+- **Memory Leak in WelcomeScreen**: Fixed animation continuing after component unmount with proper cleanup
+- **Race Condition in FirstChatScreen**: Implemented `isMountedRef` pattern to prevent setState on unmounted component
+- **Hardcoded Transparent Color**: Replaced hardcoded strings with `palette.transparent` for semantic consistency
+- **OnboardingContainer Dark Mode**: Fixed undefined `palette.isDark` by using `useColorScheme` hook
+- **Missing useCallback**: Added React.useCallback to NetworkSetupScreen functions
+- **Missing Error Logging**: Added console.error to all catch blocks for better debugging
+- **Unused Import Cleanup**: Removed dead code from NetworkSetupScreen
 
 **Test Suite Improvements**:
 - **AccessibilityContext Mocks**: Fixed missing mocks in settings test suites

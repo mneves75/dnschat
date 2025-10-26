@@ -647,6 +647,7 @@ export function Settings() {
           <Text style={[styles.sectionTitle, { color: colors.text }]}>
             {t("screen.settings.sections.development.title")}
           </Text>
+          {/* iOS HIG: Button to reset onboarding state and replay the tutorial */}
           <TouchableOpacity
             style={[
               styles.devButton,
@@ -654,6 +655,10 @@ export function Settings() {
             ]}
             onPress={handleResetOnboarding}
             disabled={saving || loading}
+            accessibilityRole="button"
+            accessibilityLabel={t("screen.settings.sections.development.resetOnboardingTitle")}
+            accessibilityHint="Resets the onboarding tutorial so you can view it again on the next app launch"
+            accessibilityState={{ disabled: saving || loading }}
           >
             <View>
               <Text style={[styles.devButtonTitle, { color: colors.text }]}>

@@ -40,6 +40,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Preserves all other settings during migration (DNS server, haptics, locale, accessibility)
   - Comprehensive migration test suite validates v1→v3, v2→v3, and v3 scenarios
 
+- **Comprehensive iOS HIG Accessibility Implementation**: VoiceOver-compliant accessibility across all onboarding screens
+  - **OnboardingNavigation**: Skip, Back, and Next buttons with proper `accessibilityRole`, `accessibilityLabel`, and `accessibilityHint`
+  - **FirstChatScreen**: Send button, 4 suggestion buttons, and message input with dynamic labels and `accessibilityState` (disabled/busy)
+  - **DNSMagicScreen**: Start Demo button with state-aware labels (running vs idle)
+  - **NetworkSetupScreen**: Apply Settings button with descriptive hint about network optimization
+  - **FeaturesScreen**: GitHub link using `accessibilityRole="link"` (not "button") per iOS HIG guidelines
+  - **Settings Screen**: Reset Onboarding button with full accessibility props
+  - All interactive elements include iOS HIG explanatory comments
+  - 28 comprehensive accessibility tests verify implementation (22 onboarding + 6 settings)
+
+- **Semantic Color System Enhancement**: Added `transparent` color to `IMessagePalette` interface
+  - Eliminates hardcoded "transparent" strings throughout codebase
+  - Available via `palette.transparent` in both IMESSAGE_LIGHT and IMESSAGE_DARK themes
+  - Maintains consistency with semantic design system
+
 ### Changed
 
 - **Settings UI**: Simplified "App Behavior" section replaces complex "DNS Method" preferences
@@ -65,6 +80,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Simplified `DNSService.queryLLM()` signature (removed `preferHttps` and `methodPreference` parameters)
 
 ### Fixed
+
+- **Critical Memory Leak in WelcomeScreen**: Fixed animation continuing after component unmount
+  - Added proper cleanup function `() => animation.stop()` in useEffect
+  - Added fadeAnim and slideAnim to dependency array
+  - Prevents memory leak when user navigates away during animation
+
+- **Race Condition in FirstChatScreen**: Fixed setState calls on unmounted component
+  - Implemented `isMountedRef` pattern with cleanup
+  - Guarded all setState calls after async DNS operations
+  - Prevents "Can't perform a React state update on an unmounted component" warnings
+
+- **Hardcoded Transparent Color**: Eliminated hardcoded "transparent" strings
+  - Added `transparent: "transparent"` to IMessagePalette interface
+  - Replaced `borderColor: "transparent"` with `palette.transparent` in FirstChatScreen
+  - Maintains semantic color system consistency
+
+- **OnboardingContainer Dark Mode Bug**: Fixed undefined `palette.isDark` property
+  - Imported `useColorScheme` from React Native
+  - Created local `isDark` variable from color scheme
+  - StatusBar now correctly responds to system theme changes
+
+- **Missing useCallback in NetworkSetupScreen**: Added React.useCallback to prevent unnecessary re-renders
+  - Wrapped `runNetworkOptimization` and `applyRecommendedSettings` functions
+  - Fixed useEffect dependency array with proper memoized functions
+  - Follows React Hook rules and best practices
+
+- **Missing Error Logging**: Added console.error to all catch blocks
+  - DNSMagicScreen now logs native DNS failures
+  - FirstChatScreen logs DNS query errors
+  - NetworkSetupScreen logs optimization failures
+
+- **Unused Import Cleanup**: Removed unused `useSettings` import from NetworkSetupScreen
+  - Eliminated dead code and import clutter
+  - Improves bundle size and code cleanliness
 
 - **Onboarding Screen HTTPS References** (P0 Blocker): Removed stale DNS-over-HTTPS references from NetworkSetupScreen
   - NetworkSetupScreen now correctly shows 3 DNS methods (Native, UDP, TCP) instead of 4
