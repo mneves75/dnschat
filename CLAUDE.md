@@ -350,28 +350,40 @@ const styles = StyleSheet.create({
 
 ### Xcode CLI Usage
 
-When building/testing with Xcode CLI:
+**When invoked:**
 
-1. Identify correct scheme and destination
-2. Workspace location: `./XXX.xcworkspace`
-3. Use: `.claude/scripts/xcodebuild <params>`
+1. Identify the correct Xcode scheme and destination
+2. Project location: `ios/DNSChat.xcodeproj` or `ios/DNSChat.xcworkspace` (if using CocoaPods)
+3. Use Xcode CLI to initiate build/test: `.claude/scripts/xcodebuild <params>` (if available) or direct `xcodebuild` command
 
-**Rules**:
-- Parameters same as system `xcodebuild`
-- NEVER add clean option
-- Build results written to output file
-- Use Read/Search tools to interpret output (file is large)
-- NEVER read output file whole
-- Use specified scheme and destination
+**Follow these rules:**
 
-**Build Commands**:
+- Parameters to `.claude/scripts/xcodebuild` are identical to system `xcodebuild`
+- ❌ **NEVER clean the build** - Do not add clean option under any circumstances
+- ❌ Avoid building unrelated targets
+- `.claude/scripts/xcodebuild` writes build results to an output file
+- **Always use Read and Search tools** to interpret the output file
+- The output file is large - **NEVER read it whole**
+- Use the scheme specified (typically "DNSChat")
+- Use the destination specified
+
+**Build Commands:**
 ```bash
-# Build for iOS
-xcodebuild -project project.xcodeproj -scheme SchemeName -sdk iphoneos build
+# Build for iOS Simulator (React Native development)
+xcodebuild -workspace ios/DNSChat.xcworkspace -scheme DNSChat -sdk iphonesimulator build
 
-# Run tests
-xcodebuild test -project project.xcodeproj -scheme SchemeName -destination 'platform=iOS Simulator,name=iPhone 15 Pro'
+# Build for iOS Device (requires provisioning)
+xcodebuild -workspace ios/DNSChat.xcworkspace -scheme DNSChat -sdk iphoneos build
+
+# Run tests (if implemented)
+xcodebuild test -workspace ios/DNSChat.xcworkspace -scheme DNSChat -destination 'platform=iOS Simulator,name=iPhone 16 Pro'
+
+# Preferred: Use npm scripts instead
+npm run ios              # Builds and runs on iOS Simulator via Expo
+npm run fix-pods         # Fix CocoaPods issues before building
 ```
+
+**IMPORTANT**: For React Native/Expo projects, prefer `npm run ios` over direct Xcodebuild commands. Only use Xcodebuild directly when debugging native module issues or when MCP Xcode tools are invoked.
 
 ### iOS 26 Liquid Glass Requirements
 

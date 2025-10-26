@@ -9,7 +9,8 @@
 - List any unresolved questions at the end, if any.
 - Use tmux when executing commands.
 - **!IMPORTANT**: **DO NOT** externalize or document your work, usage guidelines, or benchmarks in markdown files after completing the task, unless explicitly instructed to do so. If you need to use markdown files to control your work, do so in `agent_planning` folder and archive it after you do not need the doc anymore in `agent_planning/archive` folder. You may include a brief summary of your work. FOLLOW THESE GUIDELINES ALWAYS!
-- Always refer to documentation in `DOCS` or `DOCS/REF_DOCS` folders!
+- Always refer to documentation in `docs/` and `docs/REF_DOC/` folders (1096+ markdown reference files)
+- **Primary Guide**: `CLAUDE.md` is the comprehensive development guide - read it first for detailed guidance
 
 ## ExecPlans
 When writing complex features or significant refactors, use an ExecPlan (as described in `/PLANS.md`) from design to implementation.
