@@ -3,28 +3,29 @@ import {
   View,
   Text,
   StyleSheet,
-  useColorScheme,
   Animated,
   Dimensions,
   Image,
   ScrollView,
 } from "react-native";
 import { OnboardingNavigation } from "../OnboardingNavigation";
+import { useImessagePalette } from "../../../ui/theme/imessagePalette";
+import { useTypography } from "../../../ui/hooks/useTypography";
+import { LiquidGlassSpacing } from "../../../ui/theme/liquidGlassSpacing";
 
-// Import the app icon from assets (same pattern as newspaper.png)
 const AppIcon = require("../../../assets/dnschat_ios26.png");
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 export function WelcomeScreen() {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
+  const palette = useImessagePalette();
+  const typography = useTypography();
 
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
   const slideAnim = React.useRef(new Animated.Value(50)).current;
 
   React.useEffect(() => {
-    Animated.parallel([
+    const animation = Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
         duration: 800,
@@ -35,8 +36,14 @@ export function WelcomeScreen() {
         duration: 800,
         useNativeDriver: true,
       }),
-    ]).start();
-  }, []);
+    ]);
+
+    animation.start();
+
+    return () => {
+      animation.stop();
+    };
+  }, [fadeAnim, slideAnim]);
 
   return (
     <View style={styles.container}>
@@ -64,8 +71,9 @@ export function WelcomeScreen() {
 
           <Text
             style={[
+              typography.displaySmall,
               styles.title,
-              isDark ? styles.darkTitle : styles.lightTitle,
+              { color: palette.textPrimary },
             ]}
           >
             Welcome to DNS Chat
@@ -73,8 +81,9 @@ export function WelcomeScreen() {
 
           <Text
             style={[
+              typography.body,
               styles.subtitle,
-              isDark ? styles.darkSubtitle : styles.lightSubtitle,
+              { color: palette.textSecondary },
             ]}
           >
             The world's first chat app that uses DNS queries to communicate with
@@ -84,24 +93,27 @@ export function WelcomeScreen() {
 
         <View style={styles.featuresSection}>
           <FeatureItem
-            icon="🚀"
+            label="Revolutionary"
             title="Revolutionary Technology"
             description="Chat through DNS TXT records - no traditional APIs needed"
-            isDark={isDark}
+            palette={palette}
+            typography={typography}
           />
 
           <FeatureItem
-            icon="🔒"
+            label="Private"
             title="Privacy-Focused"
             description="Your conversations travel through the global DNS infrastructure"
-            isDark={isDark}
+            palette={palette}
+            typography={typography}
           />
 
           <FeatureItem
-            icon="⚡"
+            label="Fast"
             title="Network Resilient"
             description="Automatically adapts to different network conditions"
-            isDark={isDark}
+            palette={palette}
+            typography={typography}
           />
         </View>
       </ScrollView>
@@ -112,31 +124,50 @@ export function WelcomeScreen() {
 }
 
 interface FeatureItemProps {
-  icon: string;
+  label: string;
   title: string;
   description: string;
-  isDark: boolean;
+  palette: ReturnType<typeof useImessagePalette>;
+  typography: ReturnType<typeof useTypography>;
 }
 
-function FeatureItem({ icon, title, description, isDark }: FeatureItemProps) {
+function FeatureItem({ label, title, description, palette, typography }: FeatureItemProps) {
   return (
     <View style={styles.featureItem}>
-      <Text style={styles.featureIcon}>{icon}</Text>
+      <View
+        style={[
+          styles.featureIconContainer,
+          {
+            backgroundColor: palette.accentSurface,
+            borderColor: palette.accentBorder,
+          },
+        ]}
+      >
+        <Text
+          style={[
+            typography.headline,
+            styles.featureLabel,
+            { color: palette.accentTint },
+          ]}
+        >
+          {label}
+        </Text>
+      </View>
       <View style={styles.featureContent}>
         <Text
           style={[
+            typography.headline,
             styles.featureTitle,
-            isDark ? styles.darkFeatureTitle : styles.lightFeatureTitle,
+            { color: palette.textPrimary },
           ]}
         >
           {title}
         </Text>
         <Text
           style={[
+            typography.callout,
             styles.featureDescription,
-            isDark
-              ? styles.darkFeatureDescription
-              : styles.lightFeatureDescription,
+            { color: palette.textSecondary },
           ]}
         >
           {description}
@@ -154,84 +185,57 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: 24,
-    paddingTop: 40,
-    paddingBottom: 20,
+    paddingHorizontal: LiquidGlassSpacing.xl,
+    paddingTop: LiquidGlassSpacing.xxxl,
+    paddingBottom: LiquidGlassSpacing.lg,
   },
   heroSection: {
     alignItems: "center",
-    marginBottom: 60,
+    marginBottom: LiquidGlassSpacing.huge,
   },
   iconContainer: {
-    marginBottom: 24,
-  },
-  icon: {
-    fontSize: 80,
+    marginBottom: LiquidGlassSpacing.xl,
   },
   appIcon: {
     width: 80,
     height: 80,
-    borderRadius: 16,
+    borderRadius: LiquidGlassSpacing.md,
   },
   title: {
-    fontSize: 32,
-    fontWeight: "bold",
     textAlign: "center",
-    marginBottom: 16,
-  },
-  lightTitle: {
-    color: "#000000",
-  },
-  darkTitle: {
-    color: "#FFFFFF",
+    marginBottom: LiquidGlassSpacing.md,
+    fontWeight: "700",
   },
   subtitle: {
-    fontSize: 18,
     textAlign: "center",
-    lineHeight: 26,
     opacity: 0.8,
   },
-  lightSubtitle: {
-    color: "#666666",
-  },
-  darkSubtitle: {
-    color: "#999999",
-  },
   featuresSection: {
-    gap: 24,
+    gap: LiquidGlassSpacing.xl,
   },
   featureItem: {
     flexDirection: "row",
     alignItems: "flex-start",
-    gap: 16,
+    gap: LiquidGlassSpacing.md,
   },
-  featureIcon: {
-    fontSize: 32,
-    marginTop: 4,
+  featureIconContainer: {
+    paddingHorizontal: LiquidGlassSpacing.sm,
+    paddingVertical: LiquidGlassSpacing.xxs,
+    borderRadius: LiquidGlassSpacing.xs,
+    borderWidth: 1,
+    marginTop: LiquidGlassSpacing.xxs,
+  },
+  featureLabel: {
+    fontWeight: "600",
   },
   featureContent: {
     flex: 1,
   },
   featureTitle: {
-    fontSize: 18,
     fontWeight: "600",
-    marginBottom: 4,
-  },
-  lightFeatureTitle: {
-    color: "#000000",
-  },
-  darkFeatureTitle: {
-    color: "#FFFFFF",
+    marginBottom: LiquidGlassSpacing.xxs,
   },
   featureDescription: {
-    fontSize: 16,
-    lineHeight: 22,
     opacity: 0.8,
-  },
-  lightFeatureDescription: {
-    color: "#666666",
-  },
-  darkFeatureDescription: {
-    color: "#999999",
   },
 });

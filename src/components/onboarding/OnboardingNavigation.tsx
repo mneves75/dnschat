@@ -4,9 +4,11 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  useColorScheme,
 } from "react-native";
 import { useOnboarding } from "../../context/OnboardingContext";
+import { useImessagePalette } from "../../ui/theme/imessagePalette";
+import { useTypography } from "../../ui/hooks/useTypography";
+import { LiquidGlassSpacing } from "../../ui/theme/liquidGlassSpacing";
 
 interface OnboardingNavigationProps {
   showSkip?: boolean;
@@ -21,8 +23,8 @@ export function OnboardingNavigation({
   nextButtonText = "Continue",
   onCustomNext,
 }: OnboardingNavigationProps) {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
+  const palette = useImessagePalette();
+  const typography = useTypography();
   const {
     currentStep,
     steps,
@@ -52,12 +54,20 @@ export function OnboardingNavigation({
   return (
     <View style={styles.container}>
       <View style={styles.leftSection}>
+        {/* iOS HIG: Skip button allows users to bypass onboarding tutorial */}
         {showSkip && !isLastStep && (
-          <TouchableOpacity onPress={handleSkip} style={styles.skipButton}>
+          <TouchableOpacity
+            onPress={handleSkip}
+            style={styles.skipButton}
+            accessibilityRole="button"
+            accessibilityLabel="Skip onboarding"
+            accessibilityHint="Skips the tutorial and goes directly to the app"
+          >
             <Text
               style={[
+                typography.callout,
                 styles.skipButtonText,
-                isDark ? styles.darkSkipButtonText : styles.lightSkipButtonText,
+                { color: palette.textSecondary },
               ]}
             >
               Skip
@@ -65,12 +75,20 @@ export function OnboardingNavigation({
           </TouchableOpacity>
         )}
 
+        {/* iOS HIG: Back button for navigation between onboarding steps */}
         {showBack && !isFirstStep && (
-          <TouchableOpacity onPress={previousStep} style={styles.backButton}>
+          <TouchableOpacity
+            onPress={previousStep}
+            style={styles.backButton}
+            accessibilityRole="button"
+            accessibilityLabel="Back to previous step"
+            accessibilityHint="Returns to the previous onboarding screen"
+          >
             <Text
               style={[
+                typography.callout,
                 styles.backButtonText,
-                isDark ? styles.darkBackButtonText : styles.lightBackButtonText,
+                { color: palette.accentTint },
               ]}
             >
               Back
@@ -79,17 +97,26 @@ export function OnboardingNavigation({
         )}
       </View>
 
+      {/* iOS HIG: Primary action button - changes label and behavior on last step */}
       <TouchableOpacity
         onPress={handleNext}
         style={[
           styles.nextButton,
-          isDark ? styles.darkNextButton : styles.lightNextButton,
+          { backgroundColor: palette.accentTint },
         ]}
+        accessibilityRole="button"
+        accessibilityLabel={isLastStep ? "Get Started" : nextButtonText}
+        accessibilityHint={
+          isLastStep
+            ? "Completes onboarding and opens the app"
+            : "Proceeds to the next onboarding step"
+        }
       >
         <Text
           style={[
+            typography.callout,
             styles.nextButtonText,
-            isDark ? styles.darkNextButtonText : styles.lightNextButtonText,
+            { color: palette.solid },
           ]}
         >
           {isLastStep ? "Get Started" : nextButtonText}
@@ -104,64 +131,36 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 20,
-    paddingBottom: 40,
+    paddingHorizontal: LiquidGlassSpacing.md,
+    paddingVertical: LiquidGlassSpacing.lg,
+    paddingBottom: LiquidGlassSpacing.xxxl,
   },
   leftSection: {
     flexDirection: "row",
-    gap: 16,
+    gap: LiquidGlassSpacing.md,
   },
   skipButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingVertical: LiquidGlassSpacing.sm,
+    paddingHorizontal: LiquidGlassSpacing.md,
   },
   skipButtonText: {
-    fontSize: 16,
     fontWeight: "500",
-  },
-  lightSkipButtonText: {
-    color: "#666666",
-  },
-  darkSkipButtonText: {
-    color: "#999999",
   },
   backButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingVertical: LiquidGlassSpacing.sm,
+    paddingHorizontal: LiquidGlassSpacing.md,
   },
   backButtonText: {
-    fontSize: 16,
     fontWeight: "500",
   },
-  lightBackButtonText: {
-    color: "#007AFF",
-  },
-  darkBackButtonText: {
-    color: "#0A84FF",
-  },
   nextButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 24,
+    paddingVertical: LiquidGlassSpacing.sm,
+    paddingHorizontal: LiquidGlassSpacing.xl,
+    borderRadius: LiquidGlassSpacing.xl,
     minWidth: 120,
     alignItems: "center",
   },
-  lightNextButton: {
-    backgroundColor: "#007AFF",
-  },
-  darkNextButton: {
-    backgroundColor: "#0A84FF",
-  },
   nextButtonText: {
-    fontSize: 16,
     fontWeight: "600",
-    color: "#FFFFFF",
-  },
-  lightNextButtonText: {
-    color: "#FFFFFF",
-  },
-  darkNextButtonText: {
-    color: "#FFFFFF",
   },
 });
