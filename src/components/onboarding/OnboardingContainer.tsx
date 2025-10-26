@@ -2,12 +2,13 @@ import React from "react";
 import {
   View,
   StyleSheet,
-  SafeAreaView,
-  useColorScheme,
   Dimensions,
+  StatusBar,
+  useColorScheme,
 } from "react-native";
-import { StatusBar } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useOnboarding } from "../../context/OnboardingContext";
+import { useImessagePalette } from "../../ui/theme/imessagePalette";
 import { OnboardingProgress } from "./OnboardingProgress";
 import { WelcomeScreen } from "./screens/WelcomeScreen";
 import { DNSMagicScreen } from "./screens/DNSMagicScreen";
@@ -18,6 +19,7 @@ import { FeaturesScreen } from "./screens/FeaturesScreen";
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 export function OnboardingContainer() {
+  const palette = useImessagePalette();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
   const { currentStep, steps } = useOnboarding();
@@ -44,15 +46,9 @@ export function OnboardingContainer() {
 
   return (
     <SafeAreaView
-      style={[
-        styles.container,
-        isDark ? styles.darkContainer : styles.lightContainer,
-      ]}
+      style={[styles.container, { backgroundColor: palette.background }]}
     >
-      <StatusBar
-        barStyle={isDark ? "light-content" : "dark-content"}
-        backgroundColor={isDark ? "#000000" : "#FFFFFF"}
-      />
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
 
       <OnboardingProgress />
 
@@ -64,12 +60,6 @@ export function OnboardingContainer() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  lightContainer: {
-    backgroundColor: "#FFFFFF",
-  },
-  darkContainer: {
-    backgroundColor: "#000000",
   },
   content: {
     flex: 1,

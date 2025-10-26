@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -26,6 +26,7 @@ interface Message {
 export function FirstChatScreen() {
   const palette = useImessagePalette();
   const typography = useTypography();
+  const isMountedRef = useRef(true);
 
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -38,6 +39,12 @@ export function FirstChatScreen() {
   const [inputText, setInputText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [hasTriedChat, setHasTriedChat] = useState(false);
+
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   const sendMessage = async () => {
     if (!inputText.trim() || isLoading) return;
@@ -70,6 +77,8 @@ export function FirstChatScreen() {
         true,
       );
 
+      if (!isMountedRef.current) return;
+
       setMessages((prev) =>
         prev.map((msg) =>
           msg.id === assistantMessage.id
@@ -78,6 +87,10 @@ export function FirstChatScreen() {
         ),
       );
     } catch (error) {
+      console.error("[FirstChatScreen] DNS query failed:", error);
+
+      if (!isMountedRef.current) return;
+
       setMessages((prev) =>
         prev.map((msg) =>
           msg.id === assistantMessage.id
@@ -90,7 +103,9 @@ export function FirstChatScreen() {
         ),
       );
     } finally {
-      setIsLoading(false);
+      if (isMountedRef.current) {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -146,6 +161,7 @@ export function FirstChatScreen() {
             />
           ))}
 
+          {/* iOS HIG: Show message suggestions before first chat attempt */}
           {!hasTriedChat && (
             <View style={styles.suggestionsContainer}>
               <Text
@@ -169,6 +185,9 @@ export function FirstChatScreen() {
                   ]}
                   onPress={() => setInputText(suggestion)}
                   activeOpacity={0.7}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Suggestion: ${suggestion}`}
+                  accessibilityHint="Fills the message input with this suggested question"
                 >
                   <Text
                     style={[
@@ -185,6 +204,7 @@ export function FirstChatScreen() {
           )}
         </ScrollView>
 
+        {/* iOS HIG: Message input with send button */}
         <View
           style={[
             styles.inputContainer,
@@ -206,6 +226,8 @@ export function FirstChatScreen() {
             placeholderTextColor={palette.textTertiary}
             multiline
             maxLength={200}
+            accessibilityLabel="Message input"
+            accessibilityHint="Type your message to send via DNS. Maximum 200 characters."
           />
           <TouchableOpacity
             style={[
@@ -220,6 +242,13 @@ export function FirstChatScreen() {
             onPress={sendMessage}
             disabled={!inputText.trim() || isLoading}
             activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel={isLoading ? "Sending message" : "Send message"}
+            accessibilityHint="Sends your message through DNS TXT query"
+            accessibilityState={{
+              disabled: !inputText.trim() || isLoading,
+              busy: isLoading,
+            }}
           >
             <Text style={[typography.headline, { color: palette.solid }]}>
               {isLoading ? "..." : "Send"}
@@ -258,7 +287,7 @@ function MessageBubble({ message, palette, typography }: MessageBubbleProps) {
             backgroundColor: message.isUser
               ? palette.accentTint
               : palette.surface,
-            borderColor: message.isUser ? "transparent" : palette.border,
+            borderColor: message.isUser ? palette.transparent : palette.border,
           },
         ]}
       >
