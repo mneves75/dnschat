@@ -7,6 +7,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### BREAKING CHANGES
+
+- **Settings Schema v3.0.0**: Removed DNS-over-HTTPS entirely, simplified to Native→UDP→TCP fallback chain
+  - **Removed fields**: `preferDnsOverHttps`, `dnsMethodPreference` no longer exist in settings
+  - **Migration**: All existing settings automatically migrated to v3 with `allowExperimentalTransports: true`
+  - **DNS Method**: Single automatic fallback chain replaces complex method preferences
+  - **UI Simplification**: Removed confusing DNS method selector from settings screens
+  - **Rationale**: DNS-over-HTTPS never worked due to ch.at DNS TXT architectural limitation
+
+### Added
+
+- **Settings v3 Migration**: Automatic upgrade from v2 settings schema
+  - Removes obsolete HTTPS-related fields (`preferDnsOverHttps`, `dnsMethodPreference`)
+  - Enables experimental transports (UDP/TCP) by default for robust fallback chain
+  - Preserves all other settings during migration (DNS server, haptics, locale, accessibility)
+  - Comprehensive migration test suite validates v1→v3, v2→v3, and v3 scenarios
+
+- **Screenshot Automation**: Fastlane + AXe CLI automation for App Store screenshots
+  - Automated generation of all 52 required App Store screenshots (26 light + 26 dark mode)
+  - Fastlane lanes: `screenshots` (full automation), `screenshots_test` (quick validation), `build_and_install` (dev helper)
+  - AXe CLI navigation scripts for programmatic simulator control (8 scripts covering all screens)
+  - Supports 6 device sizes: iPhone 16 Pro Max, iPhone 16 Pro, iPhone 16, iPhone SE 3rd gen, iPad Pro 13", iPad Pro 11"
+  - Light/dark mode appearance switching with semantic color verification
+  - Organized output structure ready for App Store Connect upload
+  - Comprehensive documentation in `ios/fastlane/README.md` with troubleshooting guide
+  - Transforms ~4 hour manual process into ~45-60 minute automated workflow
+  - CI/CD ready with GitHub Actions example
+  - See `SCREENSHOT_AUTOMATION_SUMMARY.md` for complete implementation details
+
+### Changed
+
+- **Settings UI**: Simplified "App Behavior" section replaces complex "DNS Method" preferences
+  - New "Enable Mock DNS" toggle for development/testing (previously hidden)
+  - Haptics toggle moved to "App Behavior" section
+  - Removed all DNS method preference radio buttons (automatic, prefer-https, udp-only, never-https, native-first)
+  - Removed "Prefer DNS-over-HTTPS (Legacy)" toggle
+  - Transport test buttons reduced from 4 (Native, UDP, TCP, HTTPS) to 3 (removed HTTPS)
+
+### Removed
+
+- **DNS-over-HTTPS Support**: Completely removed non-functional HTTPS transport
+  - Removed `performDNSOverHTTPS()` function from DNSService
+  - Removed HTTPS from transport test UI and translation strings
+  - Removed Cloudflare infrastructure credit (no longer using Cloudflare)
+  - Simplified `DNSService.queryLLM()` signature (removed `preferHttps` and `methodPreference` parameters)
+
 ### Fixed
 
 - **iOS DNS Resolver**: Fixed CheckedContinuation double-resume crash in DNSResolver.performUDPQuery

@@ -1,0 +1,309 @@
+# Fastfile for DNSChat Screenshot Automation
+# Uses AXe CLI to navigate iOS simulator and capture App Store screenshots
+
+default_platform(:ios)
+
+platform :ios do
+  # Configuration
+  APP_IDENTIFIER = "com.mvneves.dnschat"
+  SCHEME = "DNSChat"
+  WORKSPACE = "./ios/DNSChat.xcworkspace"
+
+  # Screenshot output directory
+  SCREENSHOTS_DIR = "./screenshots"
+
+  # Device definitions with exact App Store dimensions
+  IPHONE_DEVICES = [
+    {
+      name: "iPhone 16 Pro Max",
+      udid: nil, # Will be found dynamically
+      width: 2868,
+      height: 1320,
+      folder: "iPhone-6.9"
+    },
+    {
+      name: "iPhone 16 Pro",
+      udid: nil,
+      width: 2622,
+      height: 1206,
+      folder: "iPhone-6.3"
+    },
+    {
+      name: "iPhone 16",
+      udid: nil,
+      width: 2556,
+      height: 1179,
+      folder: "iPhone-6.1"
+    },
+    {
+      name: "iPhone SE (3rd generation)",
+      udid: nil,
+      width: 1334,
+      height: 750,
+      folder: "iPhone-4.7"
+    }
+  ]
+
+  IPAD_DEVICES = [
+    {
+      name: "iPad Pro 13-inch (M4)",
+      udid: nil,
+      width: 2064,
+      height: 2752,
+      folder: "iPad-13"
+    },
+    {
+      name: "iPad Pro 11-inch (M4)",
+      udid: nil,
+      width: 1668,
+      height: 2388,
+      folder: "iPad-11"
+    }
+  ]
+
+  desc "Find simulator UDID by device name"
+  private_lane :find_simulator_udid do |options|
+    device_name = options[:device_name]
+
+    # List all simulators and grep for the device name
+    output = sh("xcrun simctl list devices | grep '#{device_name}' | head -1 || true")
+
+    if output.empty?
+      UI.error("Could not find simulator: #{device_name}")
+      UI.message("Available simulators:")
+      sh("xcrun simctl list devices")
+      raise "Simulator not found: #{device_name}"
+    end
+
+    # Extract UDID from output (format: "Device Name (UDID) (State)")
+    udid = output.match(/\(([A-F0-9-]+)\)/)[1]
+
+    UI.success("Found #{device_name}: #{udid}")
+    udid
+  end
+
+  desc "Boot simulator if not already booted"
+  private_lane :boot_simulator do |options|
+    udid = options[:udid]
+
+    # Check if already booted
+    status = sh("xcrun simctl list devices | grep #{udid} || true")
+
+    if status.include?("Booted")
+      UI.message("Simulator already booted: #{udid}")
+    else
+      UI.message("Booting simulator: #{udid}")
+      sh("xcrun simctl boot #{udid}")
+      sleep(5) # Wait for boot
+      sh("open -a Simulator") # Open Simulator.app
+      sleep(3) # Wait for UI to load
+    end
+  end
+
+  desc "Set simulator appearance (light or dark)"
+  private_lane :set_appearance do |options|
+    udid = options[:udid]
+    mode = options[:mode] # "light" or "dark"
+
+    UI.message("Setting appearance to #{mode} mode")
+    sh("xcrun simctl ui #{udid} appearance #{mode}")
+    sleep(2) # Wait for appearance change
+  end
+
+  desc "Install app on simulator"
+  private_lane :install_app do |options|
+    udid = options[:udid]
+
+    UI.message("Building app for simulator...")
+
+    # Build for iOS Simulator
+    gym(
+      workspace: WORKSPACE,
+      scheme: SCHEME,
+      configuration: "Release",
+      sdk: "iphonesimulator",
+      destination: "id=#{udid}",
+      derived_data_path: "./ios/build",
+      skip_package_ipa: true,
+      skip_archive: true
+    )
+
+    # Find the .app bundle
+    app_path = Dir.glob("./ios/build/Build/Products/Release-iphonesimulator/#{SCHEME}.app").first
+
+    if app_path.nil?
+      raise "Could not find .app bundle at expected path"
+    end
+
+    UI.success("Found app bundle: #{app_path}")
+
+    # Install app
+    UI.message("Installing app on simulator...")
+    sh("xcrun simctl install #{udid} '#{app_path}'")
+    sleep(2)
+
+    UI.success("App installed successfully")
+  end
+
+  desc "Launch app using AXe CLI"
+  private_lane :launch_app_axe do |options|
+    udid = options[:udid]
+
+    UI.message("Launching app with AXe...")
+    sh("axe launch --bundle-id #{APP_IDENTIFIER} --udid #{udid}")
+    sleep(3) # Wait for app to load
+  end
+
+  desc "Terminate app"
+  private_lane :terminate_app do |options|
+    udid = options[:udid]
+
+    UI.message("Terminating app...")
+    sh("xcrun simctl terminate #{udid} #{APP_IDENTIFIER} || true")
+    sleep(1)
+  end
+
+  desc "Navigate to screen using AXe and capture screenshot"
+  private_lane :navigate_and_capture do |options|
+    udid = options[:udid]
+    screen = options[:screen]
+    output_path = options[:output_path]
+
+    UI.message("Navigating to: #{screen}")
+
+    # Execute navigation script
+    script_path = "./ios/fastlane/scripts/navigate_#{screen}.sh"
+
+    if File.exist?(script_path)
+      sh("bash #{script_path} #{udid}")
+      sleep(2) # Wait for navigation to complete
+    else
+      UI.user_error!("Navigation script not found: #{script_path}")
+    end
+
+    # Capture screenshot using AXe
+    UI.message("Capturing screenshot...")
+    sh("axe screenshot --udid #{udid} --output '#{output_path}'")
+
+    UI.success("Screenshot saved: #{output_path}")
+  end
+
+  desc "Capture all screenshots for a device in both light and dark modes"
+  private_lane :capture_device_screenshots do |options|
+    device = options[:device]
+    device_type = options[:device_type] # "iphone" or "ipad"
+
+    UI.header("Capturing screenshots for #{device[:name]}")
+
+    # Find and boot simulator
+    udid = find_simulator_udid(device_name: device[:name])
+    boot_simulator(udid: udid)
+
+    # Install app
+    install_app(udid: udid)
+
+    # Define screens to capture
+    screens = if device_type == "iphone"
+      ["chat_empty", "chat_active", "chat_list", "settings", "about"]
+    else
+      ["chat_landscape", "settings_landscape", "about_landscape"]
+    end
+
+    # Capture in light mode
+    UI.message("--- Light Mode Screenshots ---")
+    set_appearance(udid: udid, mode: "light")
+    launch_app_axe(udid: udid)
+
+    screens.each_with_index do |screen, index|
+      output_path = "#{SCREENSHOTS_DIR}/#{device[:folder]}/light/#{index + 1}_#{screen}.png"
+      FileUtils.mkdir_p(File.dirname(output_path))
+      navigate_and_capture(udid: udid, screen: screen, output_path: output_path)
+    end
+
+    terminate_app(udid: udid)
+
+    # Capture in dark mode
+    UI.message("--- Dark Mode Screenshots ---")
+    set_appearance(udid: udid, mode: "dark")
+    launch_app_axe(udid: udid)
+
+    screens.each_with_index do |screen, index|
+      output_path = "#{SCREENSHOTS_DIR}/#{device[:folder]}/dark/#{index + 1}_#{screen}.png"
+      FileUtils.mkdir_p(File.dirname(output_path))
+      navigate_and_capture(udid: udid, screen: screen, output_path: output_path)
+    end
+
+    terminate_app(udid: udid)
+
+    # Shutdown simulator
+    sh("xcrun simctl shutdown #{udid}")
+
+    UI.success("Completed screenshots for #{device[:name]}")
+  end
+
+  desc "Generate all App Store screenshots"
+  lane :screenshots do
+    UI.header("DNSChat App Store Screenshot Generation")
+    UI.message("Using Fastlane + AXe CLI for automated capture")
+
+    # Clean screenshots directory
+    FileUtils.rm_rf(SCREENSHOTS_DIR)
+    FileUtils.mkdir_p(SCREENSHOTS_DIR)
+
+    # Capture iPhone screenshots
+    UI.header("CAPTURING IPHONE SCREENSHOTS")
+    IPHONE_DEVICES.each do |device|
+      capture_device_screenshots(device: device, device_type: "iphone")
+    end
+
+    # Capture iPad screenshots
+    UI.header("CAPTURING IPAD SCREENSHOTS")
+    IPAD_DEVICES.each do |device|
+      capture_device_screenshots(device: device, device_type: "ipad")
+    end
+
+    UI.success("All screenshots captured successfully!")
+    UI.success("Output directory: #{SCREENSHOTS_DIR}")
+
+    # Print summary
+    UI.header("SCREENSHOT SUMMARY")
+    sh("find #{SCREENSHOTS_DIR} -name '*.png' | wc -l").to_i.tap do |count|
+      UI.message("Total screenshots: #{count}")
+    end
+
+    UI.message("\nScreenshots organized by:")
+    UI.message("  - Device size (iPhone-6.9, iPhone-6.3, etc.)")
+    UI.message("  - Appearance mode (light, dark)")
+    UI.message("  - Screen name (chat_empty, chat_active, etc.)")
+    UI.message("\nReady for App Store upload!")
+  end
+
+  desc "Quick test: Capture screenshots for one device only (iPhone 16 Pro Max)"
+  lane :screenshots_test do
+    UI.header("Test: Capturing screenshots for iPhone 16 Pro Max only")
+
+    FileUtils.rm_rf(SCREENSHOTS_DIR)
+    FileUtils.mkdir_p(SCREENSHOTS_DIR)
+
+    device = IPHONE_DEVICES[0] # iPhone 16 Pro Max
+    capture_device_screenshots(device: device, device_type: "iphone")
+
+    UI.success("Test completed! Check #{SCREENSHOTS_DIR}")
+  end
+
+  desc "Build app and install on current simulator"
+  lane :build_and_install do
+    # Get currently booted simulator
+    output = sh("xcrun simctl list devices | grep Booted | head -1")
+
+    if output.empty?
+      UI.user_error!("No simulator is currently booted. Please boot a simulator first.")
+    end
+
+    udid = output.match(/\(([A-F0-9-]+)\)/)[1]
+    UI.message("Found booted simulator: #{udid}")
+
+    install_app(udid: udid)
+    launch_app_axe(udid: udid)
+  end
+end
