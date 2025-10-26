@@ -73,65 +73,63 @@ describe("FeaturesScreen - iOS 26 HIG Compliance", () => {
       expect(sourceCode.match(emojiPattern)).toBeNull();
     });
 
-    it("uses text-based labels instead of emojis", () => {
-      expect(sourceCode).toContain('"Logs"');
-      expect(sourceCode).toContain('"Customize"');
-      expect(sourceCode).toContain('"iOS 26"');
-      expect(sourceCode).toContain('"i18n"');
-      expect(sourceCode).toContain('"Haptics"');
-      expect(sourceCode).toContain('"Adapt"');
-      expect(sourceCode).toContain('"Local"');
-      expect(sourceCode).toContain('"Smart"');
-      expect(sourceCode).toContain('"Open"');
+    it("uses translation keys instead of hardcoded labels", () => {
+      expect(sourceCode).toContain('t("screen.onboarding.features.logs.label")');
+      expect(sourceCode).toContain('t("screen.onboarding.features.customize.label")');
+      expect(sourceCode).toContain('t("screen.onboarding.features.liquidGlass.label")');
+      expect(sourceCode).toContain('t("screen.onboarding.features.i18n.label")');
+      expect(sourceCode).toContain('t("screen.onboarding.features.haptics.label")');
+      expect(sourceCode).toContain('t("screen.onboarding.features.themes.label")');
+      expect(sourceCode).toContain('t("screen.onboarding.features.storage.label")');
+      expect(sourceCode).toContain('t("screen.onboarding.features.fallbacks.label")');
+      expect(sourceCode).toContain('t("screen.onboarding.features.opensource.label")');
     });
   });
 
   describe("Updated Feature List", () => {
     it("includes DNS Query Logs feature", () => {
-      expect(sourceCode).toContain("DNS Query Logs");
-      expect(sourceCode).toContain("Monitor all DNS queries in real-time");
+      expect(sourceCode).toContain('t("screen.onboarding.features.logs.title")');
+      expect(sourceCode).toContain('t("screen.onboarding.features.logs.description")');
     });
 
     it("includes Customizable Settings feature", () => {
-      expect(sourceCode).toContain("Customizable Settings");
-      expect(sourceCode).toContain("Configure DNS servers");
+      expect(sourceCode).toContain('t("screen.onboarding.features.customize.title")');
+      expect(sourceCode).toContain('t("screen.onboarding.features.customize.description")');
     });
 
     it("includes iOS 26 Liquid Glass Design feature", () => {
-      expect(sourceCode).toContain("Liquid Glass Design");
-      expect(sourceCode).toContain("iOS 26 interface");
-      expect(sourceCode).toContain("Material Design 3");
+      expect(sourceCode).toContain('t("screen.onboarding.features.liquidGlass.title")');
+      expect(sourceCode).toContain('t("screen.onboarding.features.liquidGlass.description")');
     });
 
     it("includes Multilingual Support feature", () => {
-      expect(sourceCode).toContain("Multilingual Support");
-      expect(sourceCode).toContain("internationalization");
-      expect(sourceCode).toContain("English and Portuguese");
+      expect(sourceCode).toContain('t("screen.onboarding.features.i18n.title")');
+      expect(sourceCode).toContain('t("screen.onboarding.features.i18n.description")');
     });
 
     it("includes Haptic Feedback feature", () => {
-      expect(sourceCode).toContain("Haptic Feedback");
-      expect(sourceCode).toContain("Customizable haptic feedback");
+      expect(sourceCode).toContain('t("screen.onboarding.features.haptics.title")');
+      expect(sourceCode).toContain('t("screen.onboarding.features.haptics.description")');
     });
 
     it("includes Dark and Light Themes feature", () => {
-      expect(sourceCode).toContain("Dark and Light Themes");
-      expect(sourceCode).toContain("high contrast mode");
+      expect(sourceCode).toContain('t("screen.onboarding.features.themes.title")');
+      expect(sourceCode).toContain('t("screen.onboarding.features.themes.description")');
     });
 
     it("includes Local Storage feature", () => {
-      expect(sourceCode).toContain("Local Storage");
-      expect(sourceCode).toContain("stored securely on your device");
+      expect(sourceCode).toContain('t("screen.onboarding.features.storage.title")');
+      expect(sourceCode).toContain('t("screen.onboarding.features.storage.description")');
     });
 
     it("includes Smart Fallbacks feature", () => {
-      expect(sourceCode).toContain("Smart Fallbacks");
-      expect(sourceCode).toContain("fallback system");
+      expect(sourceCode).toContain('t("screen.onboarding.features.fallbacks.title")');
+      expect(sourceCode).toContain('t("screen.onboarding.features.fallbacks.description")');
     });
 
     it("includes Open Source feature with GitHub link", () => {
-      expect(sourceCode).toContain("Open Source");
-      expect(sourceCode).toContain("View on GitHub");
+      expect(sourceCode).toContain('t("screen.onboarding.features.opensource.title")');
+      expect(sourceCode).toContain('t("screen.onboarding.features.opensource.action")');
       expect(sourceCode).toContain("github.com/mvneves/chat-dns");
     });
   });
@@ -166,13 +164,13 @@ describe("FeaturesScreen - iOS 26 HIG Compliance", () => {
 
   describe("Ready Section", () => {
     it("includes 'You're All Set' section", () => {
-      expect(sourceCode).toContain("You're All Set");
+      expect(sourceCode).toContain('t("screen.onboarding.ready.title")');
       expect(sourceCode).toContain("readySection");
     });
 
     it("includes encouraging completion message", () => {
-      expect(sourceCode).toContain("You now know how to use DNS Chat");
-      expect(sourceCode).toContain("Start chatting");
+      expect(sourceCode).toContain('t("screen.onboarding.ready.description")');
+      expect(sourceCode).toContain('t("screen.onboarding.ready.button")');
     });
 
     it("applies semantic styling to ready section", () => {
@@ -274,8 +272,8 @@ describe("FeaturesScreen - iOS 26 HIG Compliance", () => {
   describe("Component Structure", () => {
     it("includes header section", () => {
       expect(sourceCode).toContain("headerSection");
-      expect(sourceCode).toContain("Powerful Features");
-      expect(sourceCode).toContain("Discover what makes DNS Chat special");
+      expect(sourceCode).toContain('t("screen.onboarding.header.title")');
+      expect(sourceCode).toContain('t("screen.onboarding.header.subtitle")');
     });
 
     it("includes features grid", () => {
@@ -288,9 +286,9 @@ describe("FeaturesScreen - iOS 26 HIG Compliance", () => {
       expect(sourceCode).toContain("showsVerticalScrollIndicator={false}");
     });
 
-    it("includes OnboardingNavigation", () => {
+    it("includes OnboardingNavigation with translation", () => {
       expect(sourceCode).toContain("OnboardingNavigation");
-      expect(sourceCode).toContain('"Start Chatting"');
+      expect(sourceCode).toContain('nextButtonText={t("screen.onboarding.ready.button")}');
       expect(sourceCode).toContain("showSkip={false}");
       expect(sourceCode).toContain("showBack={false}");
     });
