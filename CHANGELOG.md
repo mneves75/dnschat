@@ -64,6 +64,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Removed Cloudflare infrastructure credit (no longer using Cloudflare)
   - Simplified `DNSService.queryLLM()` signature (removed `preferHttps` and `methodPreference` parameters)
 
+### Fixed
+
+- **Onboarding Screen HTTPS References** (P0 Blocker): Removed stale DNS-over-HTTPS references from NetworkSetupScreen
+  - NetworkSetupScreen now correctly shows 3 DNS methods (Native, UDP, TCP) instead of 4
+  - Removed HTTPS latency simulation that tested non-existent transport
+  - Updated recommendation text to reflect actual automatic fallback chain
+  - Fixed test assertions to match updated implementation
+
+- **Test Mocks Stale Fields** (P0 Blocker): Fixed test suites using removed v2 settings fields
+  - `settings.haptics-toggle.spec.tsx`: Removed `preferDnsOverHttps`, `dnsMethodPreference` from mock
+  - `settings.language-toggle.spec.tsx`: Same fixes applied to prevent false positives
+  - Added `allowExperimentalTransports` field with correct v3 defaults
+  - All settings tests now accurately reflect production interface (10/10 passing)
+
+- **DNSService Misleading Comments** (P1): Updated comments referencing removed HTTPS transport
+  - Line 49: Removed "DNS-over-HTTPS" from fallback chain comment
+  - Line 83: Changed to "native DNS/Mock fallback" (removed HTTPS reference)
+  - Line 558: Removed troubleshooting step about enabling HTTPS in Settings
+  - Line 1233: Updated web platform error message to reference native DNS instead of HTTPS
+
+- **AsyncStorage Legacy Fields Cleanup** (P2): Automatic cleanup of v2 fields after migration
+  - SettingsContext now persists migrated settings back to AsyncStorage after version change
+  - Removes stale `preferDnsOverHttps` and `dnsMethodPreference` from persistent storage
+  - Prevents legacy v2 fields from lingering after v2→v3 migration completes
+  - Ensures AsyncStorage only contains v3 schema fields after migration
+
 ## [3.0.0] - 2025-10-24
 
 ### BREAKING CHANGES
