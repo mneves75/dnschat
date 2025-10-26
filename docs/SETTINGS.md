@@ -25,6 +25,14 @@ Notes:
 
 When enabled, the fallback chain includes a local Mock transport that always returns a deterministic, development-friendly response. Useful on networks that block port 53 or when testing UI flows.
 
+## Enable Haptics
+
+- Default: `true` on iOS, ignored on Android/Web.
+- Gates every haptic call behind Core Haptics availability checks to avoid crashes similar to the missing `hapticpatternlibrary.plist` issue.
+- Automatically disables when the Accessibility `Reduce Motion` setting is enabled, per Apple's [Playing Haptics](../REF_DOC/docs_apple/apple_design_human-interface-guidelines/design/human-interface-guidelines/playing-haptics.md) guidance.
+
+Disable this if you want a silent touch experience or if you are exercising hardware without a Taptic Engine (older simulators, tablets). The preference is surfaced in both the classic and Glass settings screens.
+
 ## Transport Test
 
 The Settings screen includes actions to:

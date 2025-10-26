@@ -1,7 +1,6 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useLayoutEffect } from "react";
 import {
   StyleSheet,
-  SafeAreaView,
   useColorScheme,
   Alert,
   StatusBar,
@@ -9,6 +8,8 @@ import {
   KeyboardAvoidingView,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useNavigation } from "@react-navigation/native";
 import { MessageList } from "../../components/MessageList";
 import { ChatInput } from "../../components/ChatInput";
 import { useChat } from "../../context/ChatContext";
@@ -16,20 +17,49 @@ import {
   LiquidGlassWrapper,
   useLiquidGlassCapabilities,
 } from "../../components/LiquidGlassWrapper";
+import { useImessagePalette } from "../../ui/theme/imessagePalette";
+import { LiquidGlassSpacing, getCornerRadius } from "../../ui/theme/liquidGlassSpacing";
+import { useTranslation } from "../../i18n";
 
 export function Chat() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
+  const palette = useImessagePalette();
   const { currentChat, isLoading, error, sendMessage, clearError, createChat } =
     useChat();
+  const { t } = useTranslation();
+  const navigation = useNavigation<any>();
+  useLayoutEffect(() => {
+    navigation.setOptions({ title: t("screen.chat.navigationTitle") });
+  }, [navigation, t]);
 
   // iOS 26 Liquid Glass capabilities
-  const { isSupported: glassSupported, supportsSwiftUIGlass } =
+  const { isSupported: glassSupported, supportsLiquidGlass } =
     useLiquidGlassCapabilities();
+
+  // Log when currentChat changes
+  // IMPORTANT: Use optional chaining on messages to prevent crash when currentChat exists but messages is undefined
+  useEffect(() => {
+    console.log('🔄 [Chat] currentChat changed:', {
+      chatId: currentChat?.id,
+      messageCount: currentChat?.messages?.length ?? 0,
+      lastMessage: currentChat?.messages?.[currentChat?.messages?.length - 1]?.content?.substring(0, 50),
+    });
+  }, [currentChat]);
+
+  // Log messages array being passed to MessageList
+  useEffect(() => {
+    const messages = currentChat?.messages || [];
+    console.log('📊 [Chat] Rendering MessageList with messages:', {
+      messageCount: messages.length,
+      messageIds: messages.map(m => m.id),
+    });
+  }, [currentChat?.messages]);
 
   useEffect(() => {
     // Create a new chat if none exists
     if (!currentChat) {
+      console.log('📝 [Chat] No current chat, creating new chat...');
       createChat();
     }
   }, [currentChat]);
@@ -37,9 +67,10 @@ export function Chat() {
   useEffect(() => {
     // Show error alert when error occurs
     if (error) {
-      Alert.alert("Error", error, [
+      console.error('❌ [Chat] Error occurred:', error);
+      Alert.alert(t("screen.chat.errorAlertTitle"), error, [
         {
-          text: "OK",
+          text: t("screen.chat.errorAlertDismiss"),
           onPress: clearError,
         },
       ]);
@@ -59,12 +90,12 @@ export function Chat() {
     <SafeAreaView
       style={[
         styles.container,
-        isDark ? styles.darkContainer : styles.lightContainer,
+        { backgroundColor: palette.background },
       ]}
     >
       <StatusBar
         barStyle={isDark ? "light-content" : "dark-content"}
-        backgroundColor={isDark ? "#000000" : "#FFFFFF"}
+        backgroundColor={palette.background}
       />
 
       <KeyboardAvoidingView
@@ -78,8 +109,7 @@ export function Chat() {
             <LiquidGlassWrapper
               variant="regular"
               shape="roundedRect"
-              cornerRadius={20}
-              sensorAware={true}
+              cornerRadius={getCornerRadius("card")}
               enableContainer={true}
               style={styles.glassMessageArea}
             >
@@ -94,13 +124,13 @@ export function Chat() {
               variant="prominent"
               shape="capsule"
               isInteractive={true}
-              tintColor={isDark ? "#007AFF" : "#007AFF"} // iOS system blue
+              tintColor={palette.accentTint}
               style={styles.glassInputArea}
             >
               <ChatInput
                 onSendMessage={handleSendMessage}
                 isLoading={isLoading}
-                placeholder="Ask me anything..."
+                placeholder={t("screen.chat.placeholder")}
               />
             </LiquidGlassWrapper>
           </>
@@ -115,7 +145,7 @@ export function Chat() {
             <ChatInput
               onSendMessage={handleSendMessage}
               isLoading={isLoading}
-              placeholder="Ask me anything..."
+              placeholder={t("screen.chat.placeholder")}
             />
           </>
         )}
@@ -128,25 +158,19 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  lightContainer: {
-    backgroundColor: "transparent", // Transparent for glass effects
-  },
-  darkContainer: {
-    backgroundColor: "transparent", // Transparent for glass effects
-  },
   content: {
     flex: 1,
-    gap: 8, // Spacing between glass elements
+    gap: LiquidGlassSpacing.xs, // Spacing between glass elements (8px)
   },
   glassMessageArea: {
     flex: 1,
-    margin: 8,
+    margin: LiquidGlassSpacing.xs,
     backgroundColor: "transparent",
   },
   glassInputArea: {
-    margin: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    margin: LiquidGlassSpacing.sm,
+    paddingHorizontal: LiquidGlassSpacing.xs,
+    paddingVertical: LiquidGlassSpacing.xxs,
     backgroundColor: "transparent",
   },
 });

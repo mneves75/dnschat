@@ -3,7 +3,6 @@ import {
   View,
   FlatList,
   StyleSheet,
-  SafeAreaView,
   useColorScheme,
   Text,
   TouchableOpacity,
@@ -11,10 +10,12 @@ import {
   StatusBar,
   ListRenderItemInfo,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { ChatListItem } from "../../components/ChatListItem";
 import { useChat } from "../../context/ChatContext";
 import { Chat } from "../../types/chat";
+import { useTranslation } from "../../i18n";
 
 export function ChatList() {
   const colorScheme = useColorScheme();
@@ -28,6 +29,7 @@ export function ChatList() {
     deleteChat,
     setCurrentChat,
   } = useChat();
+  const { t } = useTranslation();
 
   useFocusEffect(
     React.useCallback(() => {
@@ -67,42 +69,42 @@ export function ChatList() {
   );
 
   const renderEmptyComponent = () => (
-    <View style={styles.emptyContainer}>
-      <Text
-        style={[
-          styles.emptyText,
-          isDark ? styles.darkEmptyText : styles.lightEmptyText,
-        ]}
-      >
-        No chats yet
-      </Text>
-      <Text
-        style={[
-          styles.emptySubtext,
-          isDark ? styles.darkEmptySubtext : styles.lightEmptySubtext,
-        ]}
-      >
-        Start a new conversation to begin chatting with the AI assistant.
-      </Text>
-      <TouchableOpacity
-        style={[
-          styles.newChatButton,
-          isDark ? styles.darkNewChatButton : styles.lightNewChatButton,
-        ]}
-        onPress={handleNewChat}
-      >
+      <View style={styles.emptyContainer}>
         <Text
           style={[
-            styles.newChatButtonText,
-            isDark
-              ? styles.darkNewChatButtonText
-              : styles.lightNewChatButtonText,
+            styles.emptyText,
+            isDark ? styles.darkEmptyText : styles.lightEmptyText,
           ]}
         >
-          Start New Chat
+          {t("screen.chatList.emptyTitle")}
         </Text>
-      </TouchableOpacity>
-    </View>
+        <Text
+          style={[
+            styles.emptySubtext,
+            isDark ? styles.darkEmptySubtext : styles.lightEmptySubtext,
+          ]}
+        >
+          {t("screen.chatList.emptySubtitle")}
+        </Text>
+        <TouchableOpacity
+          style={[
+            styles.newChatButton,
+            isDark ? styles.darkNewChatButton : styles.lightNewChatButton,
+          ]}
+          onPress={handleNewChat}
+        >
+          <Text
+            style={[
+              styles.newChatButtonText,
+              isDark
+                ? styles.darkNewChatButtonText
+                : styles.lightNewChatButtonText,
+            ]}
+          >
+            {t("screen.chatList.newChatButton")}
+          </Text>
+        </TouchableOpacity>
+      </View>
   );
 
   const keyExtractor = (item: Chat) => item.id;
@@ -126,7 +128,7 @@ export function ChatList() {
             isDark ? styles.darkHeaderTitle : styles.lightHeaderTitle,
           ]}
         >
-          Chats
+          {t("screen.chatList.navigationTitle")}
         </Text>
         <TouchableOpacity
           style={[

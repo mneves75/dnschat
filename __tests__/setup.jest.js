@@ -11,3 +11,11 @@ if (typeof global.crypto === 'undefined') {
   const { webcrypto } = require('crypto');
   global.crypto = webcrypto;
 }
+
+if (typeof global.IS_REACT_ACT_ENVIRONMENT === 'undefined') {
+  global.IS_REACT_ACT_ENVIRONMENT = true;
+}
+
+if (typeof global.__DEV__ === 'undefined') {
+  global.__DEV__ = true;
+}

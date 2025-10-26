@@ -1,0 +1,12 @@
+id: liquid-glass
+rules:
+  - id: no-legacy-liquid-glass-imports
+    severity: error
+    message: "Legacy liquidGlass module was removed. Import from 'components/LiquidGlassWrapper' instead."
+    language: tsx
+    pattern: "import $IDENT from '../components/liquidGlass/$REST'"
+  - id: no-native-liquid-glass-module
+    severity: error
+    message: "Do not reference deleted ios/LiquidGlassNative modules."
+    language: ts
+    pattern: "'LiquidGlassNative'"
