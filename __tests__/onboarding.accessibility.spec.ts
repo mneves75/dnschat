@@ -133,7 +133,7 @@ describe("Onboarding Accessibility Tests", () => {
 
     it("GitHub link has accessibilityRole='link' (not button)", () => {
       expect(source).toContain('accessibilityRole="link"');
-      expect(source).toContain("View on GitHub");
+      expect(source).toContain('t("screen.onboarding.features.opensource.action")');
     });
 
     it("GitHub link has accessibilityLabel and descriptive Hint", () => {

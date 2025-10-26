@@ -1,6 +1,4 @@
-import type { EnUSMessages } from "./en-US";
-
-export const ptBR: EnUSMessages = {
+export const ptBR = {
   common: {
     ok: "OK",
     cancel: "Cancelar",
@@ -34,6 +32,200 @@ export const ptBR: EnUSMessages = {
     },
   },
   screen: {
+    onboarding: {
+      welcome: {
+        title: "Bem-vindo ao DNS Chat",
+        subtitle: "O primeiro aplicativo de chat do mundo que usa consultas DNS para se comunicar com IA",
+        features: {
+          revolutionary: {
+            label: "Revolucionário",
+            title: "Tecnologia Revolucionária",
+            description: "Converse através de registros DNS TXT - sem APIs tradicionais",
+          },
+          private: {
+            label: "Privado",
+            title: "Focado em Privacidade",
+            description: "Suas conversas viajam pela infraestrutura global de DNS",
+          },
+          fast: {
+            label: "Rápido",
+            title: "Resiliente à Rede",
+            description: "Adapta-se automaticamente a diferentes condições de rede",
+          },
+        },
+      },
+      firstChat: {
+        label: "Chat",
+        title: "Experimente Seu Primeiro Chat",
+        subtitle: "Envie uma mensagem e veja ela viajar pelo DNS",
+        welcomeMessage: "Oi! Sou seu assistente de IA. Tente me enviar uma mensagem para ver como a magia do DNS funciona!",
+        successMessage: "Ótimo! Você enviou com sucesso sua primeira mensagem DNS. Em um cenário real, isso retornaria uma resposta de IA via registros DNS TXT. A magia é que sua mensagem viajou pela infraestrutura DNS!",
+        suggestions: {
+          title: "Experimente uma destas:",
+          option1: "O que é DNS?",
+          option2: "Como este aplicativo funciona?",
+          option3: "Me conte algo interessante",
+          option4: "Com o que você pode me ajudar?",
+        },
+        input: {
+          placeholder: "Digite sua mensagem...",
+          send: "Enviar",
+          sending: "...",
+          sendingVia: "Enviando via DNS...",
+        },
+        navigation: {
+          continue: "Incrível! Continuar",
+          skip: "Pular Tutorial",
+        },
+      },
+      dnsMagic: {
+        label: "DNS",
+        title: "Magia DNS em Ação",
+        subtitle: "Veja sua mensagem viajar por múltiplos métodos de fallback DNS",
+        demoButton: "Iniciar Demo DNS",
+        demoButtonRunning: "Consulta DNS em Progresso...",
+        responseLabel: "Resposta DNS:",
+        fallbackMethods: {
+          native: {
+            name: "DNS Nativo",
+            pending: "Preparando consulta DNS nativa...",
+            active: "Enviando consulta DNS via plataforma nativa...",
+            success: "Consulta DNS nativa bem-sucedida",
+            failed: "DNS nativo falhou, tentando UDP...",
+          },
+          udp: {
+            name: "Fallback UDP",
+            pending: "Socket UDP pronto como backup...",
+            active: "Tentando consulta DNS via UDP...",
+            success: "Fallback UDP bem-sucedido",
+            failed: "UDP falhou, tentando TCP...",
+          },
+          tcp: {
+            name: "Fallback TCP",
+            pending: "Conexão TCP em espera...",
+            active: "Tentando consulta DNS via TCP...",
+            success: "Fallback TCP bem-sucedido",
+            failed: "TCP falhou, tentando HTTPS...",
+          },
+          https: {
+            name: "Fallback HTTPS",
+            pending: "API DNS Cloudflare pronta...",
+            active: "Tentando consulta DNS via HTTPS...",
+            success: "Fallback HTTPS bem-sucedido",
+            failed: "Todos os métodos DNS esgotados",
+          },
+        },
+        status: {
+          pending: "Pendente",
+          active: "Ativo",
+          success: "Sucesso",
+          failed: "Falhou",
+        },
+        demoResponse: "Bem-vindo ao DNS Chat! Esta é uma demonstração de como suas mensagens viajam através de consultas DNS. Bem legal, né?",
+      },
+      networkSetup: {
+        label: "Configuração",
+        title: "Otimização de Rede",
+        subtitle: "Estamos testando sua rede para encontrar os métodos DNS mais rápidos",
+        disclaimer: "Esta é uma demonstração simulada",
+        tests: {
+          native: {
+            name: "DNS Nativo",
+            description: "DNS otimizado para a plataforma",
+          },
+          udp: {
+            name: "DNS via UDP",
+            description: "Consultas DNS tradicionais",
+          },
+          tcp: {
+            name: "DNS via TCP",
+            description: "Fallback TCP confiável",
+          },
+        },
+        status: {
+          testing: "Testando",
+          waiting: "Aguardando",
+          success: "Sucesso",
+          failed: "Falhou",
+          skipped: "Pulado",
+        },
+        optimization: {
+          title: "Otimização Completa",
+          description: "Sua rede suporta todos os métodos DNS. O aplicativo usará automaticamente o método mais rápido disponível com fallback inteligente para desempenho ideal.",
+          applyButton: "Aplicar Configurações Recomendadas",
+          loading: "Otimizando suas configurações de DNS...",
+        },
+        navigation: {
+          continue: "Continuar",
+          skip: "Pular Otimização",
+        },
+        alerts: {
+          errorTitle: "Erro",
+          errorMessage: "Otimização de rede falhou. Usando configurações padrão.",
+          successTitle: "Configurações Aplicadas",
+          successMessage: "Otimização de rede completa. O DNS usará cadeia de fallback automática para melhor desempenho.",
+          successButton: "Ótimo",
+        },
+      },
+      features: {
+        logs: {
+          label: "Logs",
+          title: "Logs de Consultas DNS",
+          description: "Monitore todas as consultas DNS em tempo real com informações detalhadas de tempo e fallback.",
+        },
+        customize: {
+          label: "Personalizar",
+          title: "Configurações Personalizáveis",
+          description: "Configure servidores DNS, ative preferências HTTPS e otimize para sua rede.",
+        },
+        liquidGlass: {
+          label: "iOS 26",
+          title: "Design Liquid Glass",
+          description: "Bela interface iOS 26 com efeitos de vidro nativos e Material Design 3 no Android.",
+        },
+        i18n: {
+          label: "i18n",
+          title: "Suporte Multilíngue",
+          description: "Internacionalização completa com idiomas Inglês e Português.",
+        },
+        haptics: {
+          label: "Hápticos",
+          title: "Feedback Háptico",
+          description: "Feedback háptico personalizável para elementos e ações interativas.",
+        },
+        opensource: {
+          label: "Aberto",
+          title: "Código Aberto",
+          description: "Construído de forma transparente - explore o código e contribua para o futuro do chat DNS.",
+          action: "Ver no GitHub",
+        },
+        themes: {
+          label: "Adapta",
+          title: "Temas Claro e Escuro",
+          description: "Interface bonita que se adapta às suas preferências do sistema com suporte a modo de alto contraste.",
+        },
+        storage: {
+          label: "Local",
+          title: "Armazenamento Local",
+          description: "Todas as suas conversas são armazenadas com segurança no seu dispositivo - sem dependência de nuvem.",
+        },
+        fallbacks: {
+          label: "Inteligente",
+          title: "Fallbacks Inteligentes",
+          description: "Sistema de fallback inteligente garante conectividade em diferentes condições de rede.",
+        },
+      },
+      header: {
+        label: "Recursos",
+        title: "Recursos Poderosos",
+        subtitle: "Descubra o que torna o DNS Chat especial",
+      },
+      ready: {
+        title: "Tudo Pronto",
+        description: "Agora você sabe como usar o DNS Chat e tem configurações otimizadas para sua rede. Comece a conversar e experimente a magia das conversas via DNS!",
+        button: "Começar a Conversar",
+      },
+    },
     chat: {
       navigationTitle: "Chat",
       errorAlertTitle: "Erro",
@@ -405,4 +597,4 @@ export const ptBR: EnUSMessages = {
       responseLabel: "Resposta",
     },
   },
-};
+} as const;

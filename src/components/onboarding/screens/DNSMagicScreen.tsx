@@ -12,6 +12,7 @@ import { DNSService } from "../../../services/dnsService";
 import { useImessagePalette } from "../../../ui/theme/imessagePalette";
 import { useTypography } from "../../../ui/hooks/useTypography";
 import { LiquidGlassSpacing } from "../../../ui/theme/liquidGlassSpacing";
+import { useTranslation } from "../../../i18n";
 
 interface DNSStep {
   id: string;
@@ -24,32 +25,33 @@ interface DNSStep {
 export function DNSMagicScreen() {
   const palette = useImessagePalette();
   const typography = useTypography();
+  const { t } = useTranslation();
 
   const [isRunning, setIsRunning] = useState(false);
   const [dnsSteps, setDnsSteps] = useState<DNSStep[]>([
     {
       id: "1",
-      method: "Native DNS",
+      method: t("screen.onboarding.dnsMagic.fallbackMethods.native.name"),
       status: "pending",
-      message: "Preparing native DNS query...",
+      message: t("screen.onboarding.dnsMagic.fallbackMethods.native.pending"),
     },
     {
       id: "2",
-      method: "UDP Fallback",
+      method: t("screen.onboarding.dnsMagic.fallbackMethods.udp.name"),
       status: "pending",
-      message: "UDP socket ready as backup...",
+      message: t("screen.onboarding.dnsMagic.fallbackMethods.udp.pending"),
     },
     {
       id: "3",
-      method: "TCP Fallback",
+      method: t("screen.onboarding.dnsMagic.fallbackMethods.tcp.name"),
       status: "pending",
-      message: "TCP connection standing by...",
+      message: t("screen.onboarding.dnsMagic.fallbackMethods.tcp.pending"),
     },
     {
       id: "4",
-      method: "HTTPS Fallback",
+      method: t("screen.onboarding.dnsMagic.fallbackMethods.https.name"),
       status: "pending",
-      message: "Cloudflare DNS API ready...",
+      message: t("screen.onboarding.dnsMagic.fallbackMethods.https.pending"),
     },
   ]);
   const [response, setResponse] = useState<string>("");
@@ -95,10 +97,10 @@ export function DNSMagicScreen() {
     };
 
     try {
-      updateStep("1", "active", "Sending DNS query via native platform...");
+      updateStep("1", "active", t("screen.onboarding.dnsMagic.fallbackMethods.native.active"));
       await new Promise((resolve) => setTimeout(resolve, 1500));
 
-      updateStep("1", "success", "Native DNS query successful", 1200);
+      updateStep("1", "success", t("screen.onboarding.dnsMagic.fallbackMethods.native.success"), 1200);
       await new Promise((resolve) => setTimeout(resolve, 500));
 
       const result = await DNSService.queryLLM(
@@ -110,16 +112,14 @@ export function DNSMagicScreen() {
       setResponse(result);
     } catch (error) {
       console.error("[DNSMagicScreen] Native DNS query failed:", error);
-      updateStep("1", "failed", "Native DNS failed, trying UDP...");
+      updateStep("1", "failed", t("screen.onboarding.dnsMagic.fallbackMethods.native.failed"));
       await new Promise((resolve) => setTimeout(resolve, 500));
 
-      updateStep("2", "active", "Attempting UDP DNS query...");
+      updateStep("2", "active", t("screen.onboarding.dnsMagic.fallbackMethods.udp.active"));
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      updateStep("2", "success", "UDP fallback successful", 800);
-      setResponse(
-        "Welcome to DNS Chat! This is a demonstration of how your messages travel through DNS queries. Pretty cool, right?",
-      );
+      updateStep("2", "success", t("screen.onboarding.dnsMagic.fallbackMethods.udp.success"), 800);
+      setResponse(t("screen.onboarding.dnsMagic.demoResponse"));
     }
 
     setIsRunning(false);
@@ -133,7 +133,7 @@ export function DNSMagicScreen() {
             style={[styles.dnsIcon, { transform: [{ scale: pulseAnim }] }]}
           >
             <Text style={[typography.displayMedium, { color: palette.accentTint }]}>
-              DNS
+              {t("screen.onboarding.dnsMagic.label")}
             </Text>
           </Animated.View>
 
@@ -144,7 +144,7 @@ export function DNSMagicScreen() {
               { color: palette.textPrimary },
             ]}
           >
-            DNS Magic in Action
+            {t("screen.onboarding.dnsMagic.title")}
           </Text>
 
           <Text
@@ -154,7 +154,7 @@ export function DNSMagicScreen() {
               { color: palette.textSecondary },
             ]}
           >
-            Watch as your message travels through multiple DNS fallback methods
+            {t("screen.onboarding.dnsMagic.subtitle")}
           </Text>
         </View>
 
@@ -183,7 +183,7 @@ export function DNSMagicScreen() {
                 },
               ]}
             >
-              {isRunning ? "DNS Query in Progress..." : "Start DNS Demo"}
+              {isRunning ? t("screen.onboarding.dnsMagic.demoButtonRunning") : t("screen.onboarding.dnsMagic.demoButton")}
             </Text>
           </TouchableOpacity>
 
@@ -216,7 +216,7 @@ export function DNSMagicScreen() {
                   { color: palette.textSecondary },
                 ]}
               >
-                DNS Response:
+                {t("screen.onboarding.dnsMagic.responseLabel")}
               </Text>
               <Text
                 style={[
@@ -245,18 +245,20 @@ interface DNSStepItemProps {
 }
 
 function DNSStepItem({ step, palette, typography }: DNSStepItemProps) {
+  const { t } = useTranslation();
+
   const getStatusLabel = () => {
     switch (step.status) {
       case "pending":
-        return "Pending";
+        return t("screen.onboarding.dnsMagic.status.pending");
       case "active":
-        return "Active";
+        return t("screen.onboarding.dnsMagic.status.active");
       case "success":
-        return "Success";
+        return t("screen.onboarding.dnsMagic.status.success");
       case "failed":
-        return "Failed";
+        return t("screen.onboarding.dnsMagic.status.failed");
       default:
-        return "Pending";
+        return t("screen.onboarding.dnsMagic.status.pending");
     }
   };
 

@@ -207,9 +207,9 @@ describe("WelcomeScreen - iOS 26 HIG Compliance", () => {
     });
 
     it("uses text labels instead of emojis", () => {
-      expect(sourceCode).toContain('"Revolutionary"');
-      expect(sourceCode).toContain('"Private"');
-      expect(sourceCode).toContain('"Fast"');
+      expect(sourceCode).toContain('t("screen.onboarding.welcome.features.revolutionary.label")');
+      expect(sourceCode).toContain('t("screen.onboarding.welcome.features.private.label")');
+      expect(sourceCode).toContain('t("screen.onboarding.welcome.features.fast.label")');
     });
   });
 

@@ -32,6 +32,200 @@ export const enUS = {
     },
   },
   screen: {
+    onboarding: {
+      welcome: {
+        title: "Welcome to DNS Chat",
+        subtitle: "The world's first chat app that uses DNS queries to communicate with AI",
+        features: {
+          revolutionary: {
+            label: "Revolutionary",
+            title: "Revolutionary Technology",
+            description: "Chat through DNS TXT records - no traditional APIs needed",
+          },
+          private: {
+            label: "Private",
+            title: "Privacy-Focused",
+            description: "Your conversations travel through the global DNS infrastructure",
+          },
+          fast: {
+            label: "Fast",
+            title: "Network Resilient",
+            description: "Automatically adapts to different network conditions",
+          },
+        },
+      },
+      firstChat: {
+        label: "Chat",
+        title: "Try Your First Chat",
+        subtitle: "Send a message and watch it travel through DNS",
+        welcomeMessage: "Hi! I'm your AI assistant. Try sending me a message to see how DNS magic works!",
+        successMessage: "Great! You've successfully sent your first DNS message. In a real scenario, this would return an AI response via DNS TXT records. The magic is that your message traveled through the DNS infrastructure!",
+        suggestions: {
+          title: "Try one of these:",
+          option1: "What is DNS?",
+          option2: "How does this app work?",
+          option3: "Tell me something interesting",
+          option4: "What can you help me with?",
+        },
+        input: {
+          placeholder: "Type your message...",
+          send: "Send",
+          sending: "...",
+          sendingVia: "Sending via DNS...",
+        },
+        navigation: {
+          continue: "Amazing! Continue",
+          skip: "Skip Tutorial",
+        },
+      },
+      dnsMagic: {
+        label: "DNS",
+        title: "DNS Magic in Action",
+        subtitle: "Watch as your message travels through multiple DNS fallback methods",
+        demoButton: "Start DNS Demo",
+        demoButtonRunning: "DNS Query in Progress...",
+        responseLabel: "DNS Response:",
+        fallbackMethods: {
+          native: {
+            name: "Native DNS",
+            pending: "Preparing native DNS query...",
+            active: "Sending DNS query via native platform...",
+            success: "Native DNS query successful",
+            failed: "Native DNS failed, trying UDP...",
+          },
+          udp: {
+            name: "UDP Fallback",
+            pending: "UDP socket ready as backup...",
+            active: "Attempting UDP DNS query...",
+            success: "UDP fallback successful",
+            failed: "UDP failed, trying TCP...",
+          },
+          tcp: {
+            name: "TCP Fallback",
+            pending: "TCP connection standing by...",
+            active: "Attempting TCP DNS query...",
+            success: "TCP fallback successful",
+            failed: "TCP failed, trying HTTPS...",
+          },
+          https: {
+            name: "HTTPS Fallback",
+            pending: "Cloudflare DNS API ready...",
+            active: "Attempting HTTPS DNS query...",
+            success: "HTTPS fallback successful",
+            failed: "All DNS methods exhausted",
+          },
+        },
+        status: {
+          pending: "Pending",
+          active: "Active",
+          success: "Success",
+          failed: "Failed",
+        },
+        demoResponse: "Welcome to DNS Chat! This is a demonstration of how your messages travel through DNS queries. Pretty cool, right?",
+      },
+      networkSetup: {
+        label: "Setup",
+        title: "Network Optimization",
+        subtitle: "We're testing your network to find the fastest DNS methods",
+        disclaimer: "This is a simulated demonstration",
+        tests: {
+          native: {
+            name: "Native DNS",
+            description: "Platform-optimized DNS",
+          },
+          udp: {
+            name: "DNS over UDP",
+            description: "Traditional DNS queries",
+          },
+          tcp: {
+            name: "DNS over TCP",
+            description: "Reliable TCP fallback",
+          },
+        },
+        status: {
+          testing: "Testing",
+          waiting: "Waiting",
+          success: "Success",
+          failed: "Failed",
+          skipped: "Skipped",
+        },
+        optimization: {
+          title: "Optimization Complete",
+          description: "Your network supports all DNS methods. The app will automatically use the fastest available method with intelligent fallback for optimal performance.",
+          applyButton: "Apply Recommended Settings",
+          loading: "Optimizing your DNS settings...",
+        },
+        navigation: {
+          continue: "Continue",
+          skip: "Skip Optimization",
+        },
+        alerts: {
+          errorTitle: "Error",
+          errorMessage: "Network optimization failed. Using default settings.",
+          successTitle: "Settings Applied",
+          successMessage: "Network optimization complete. DNS will use automatic fallback chain for best performance.",
+          successButton: "Great",
+        },
+      },
+      features: {
+        logs: {
+          label: "Logs",
+          title: "DNS Query Logs",
+          description: "Monitor all DNS queries in real-time with detailed timing and fallback information.",
+        },
+        customize: {
+          label: "Customize",
+          title: "Customizable Settings",
+          description: "Configure DNS servers, enable HTTPS preferences, and optimize for your network.",
+        },
+        liquidGlass: {
+          label: "iOS 26",
+          title: "Liquid Glass Design",
+          description: "Beautiful iOS 26 interface with native glass effects and Material Design 3 on Android.",
+        },
+        i18n: {
+          label: "i18n",
+          title: "Multilingual Support",
+          description: "Full internationalization with English and Portuguese languages.",
+        },
+        haptics: {
+          label: "Haptics",
+          title: "Haptic Feedback",
+          description: "Customizable haptic feedback for interactive elements and actions.",
+        },
+        opensource: {
+          label: "Open",
+          title: "Open Source",
+          description: "Built transparently - explore the code and contribute to the future of DNS chat.",
+          action: "View on GitHub",
+        },
+        themes: {
+          label: "Adapt",
+          title: "Dark and Light Themes",
+          description: "Beautiful interface that adapts to your system preferences with high contrast mode support.",
+        },
+        storage: {
+          label: "Local",
+          title: "Local Storage",
+          description: "All your conversations are stored securely on your device - no cloud dependency.",
+        },
+        fallbacks: {
+          label: "Smart",
+          title: "Smart Fallbacks",
+          description: "Intelligent fallback system ensures connectivity across different network conditions.",
+        },
+      },
+      header: {
+        label: "Features",
+        title: "Powerful Features",
+        subtitle: "Discover what makes DNS Chat special",
+      },
+      ready: {
+        title: "You're All Set",
+        description: "You now know how to use DNS Chat and have optimized settings for your network. Start chatting and experience the magic of DNS-powered conversations!",
+        button: "Start Chatting",
+      },
+    },
     chat: {
       navigationTitle: "Chat",
       errorAlertTitle: "Error",
