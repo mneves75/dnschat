@@ -23,6 +23,7 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { HeaderButton } from "@react-navigation/elements";
 import { useSettings } from "../../context/SettingsContext";
+import { useOnboarding } from "../../context/OnboardingContext";
 import { useTranslation } from "../../i18n";
 import { LOCALE_LABEL_KEYS } from "../../i18n/localeMeta";
 import { DEFAULT_DNS_SERVER } from "../../context/settingsStorage";
@@ -58,6 +59,7 @@ export function GlassSettings() {
     loading,
   } = useSettings();
   const { t } = useTranslation();
+  const { resetOnboarding } = useOnboarding();
 
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
@@ -193,6 +195,27 @@ export function GlassSettings() {
     updateEnableHaptics,
     t,
   ]);
+
+  const handleResetOnboarding = React.useCallback(() => {
+    Alert.alert(
+      t("screen.settings.alerts.onboardingTitle"),
+      t("screen.settings.alerts.onboardingMessage"),
+      [
+        { text: t("screen.settings.alerts.onboardingCancel"), style: "cancel" },
+        {
+          text: t("screen.settings.alerts.onboardingConfirm"),
+          style: "destructive",
+          onPress: async () => {
+            await resetOnboarding();
+            Alert.alert(
+              t("screen.settings.alerts.onboardingResetTitle"),
+              t("screen.settings.alerts.onboardingResetMessage"),
+            );
+          },
+        },
+      ],
+    );
+  }, [resetOnboarding, t]);
 
   // Transport test state
   const [testMessage, setTestMessage] = React.useState("ping");
@@ -519,6 +542,19 @@ export function GlassSettings() {
             onPress={() =>
               Linking.openURL("https://github.com/mneves75/dnschat/issues")
             }
+            showChevron
+          />
+        </Form.Section>
+
+        {/* Development Section */}
+        <Form.Section
+          title={t("screen.settings.sections.development.title")}
+          footer={t("screen.settings.sections.development.resetOnboardingSubtitle")}
+        >
+          <Form.Item
+            title={t("screen.settings.sections.development.resetOnboardingTitle")}
+            subtitle={t("screen.settings.sections.development.resetOnboardingSubtitle")}
+            onPress={handleResetOnboarding}
             showChevron
           />
         </Form.Section>
