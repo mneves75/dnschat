@@ -70,6 +70,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - When TO use useEffect: external systems, data fetching, subscriptions
   - Updated DNS Query Methods to remove DNS-over-HTTPS entry
   - React 19.1 & React Compiler auto-memoization guidance
+  - Added comprehensive Xcode CLI usage section adapted for React Native/Expo workflow
+  - Fixed AGENTS.md path references (DOCS → docs/, added reference to 1096+ REF_DOC files)
 
 ### Removed
 
