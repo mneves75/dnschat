@@ -66,10 +66,10 @@ describe("DNSMagicScreen - iOS 26 HIG Compliance", () => {
     });
 
     it("uses text-based status labels instead", () => {
-      expect(sourceCode).toContain('"Pending"');
-      expect(sourceCode).toContain('"Active"');
-      expect(sourceCode).toContain('"Success"');
-      expect(sourceCode).toContain('"Failed"');
+      expect(sourceCode).toContain('t("screen.onboarding.dnsMagic.status.pending")');
+      expect(sourceCode).toContain('t("screen.onboarding.dnsMagic.status.active")');
+      expect(sourceCode).toContain('t("screen.onboarding.dnsMagic.status.success")');
+      expect(sourceCode).toContain('t("screen.onboarding.dnsMagic.status.failed")');
     });
   });
 

@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Onboarding Internationalization**: All onboarding screens now properly respect user's system language (pt-BR/en-US)
+  - Fixed WelcomeScreen, FirstChatScreen, DNSMagicScreen, NetworkSetupScreen, and FeaturesScreen to use i18n translation system
+  - Removed all hardcoded English text from onboarding screens
+  - Added comprehensive pt-BR translations for all onboarding content (features, suggestions, DNS steps, network tests, alerts)
+  - Fixed pt-BR translation type safety issue (removed strict literal type enforcement that prevented translations)
+  - Added 56 integration tests to validate translation coverage and locale switching
+  - Users with pt-BR device language now see onboarding in Portuguese instead of English
+
 ### Added
 
 - **Screenshot Automation**: Fastlane + AXe CLI automation for App Store screenshots

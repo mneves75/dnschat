@@ -12,6 +12,7 @@ import { OnboardingNavigation } from "../OnboardingNavigation";
 import { useImessagePalette } from "../../../ui/theme/imessagePalette";
 import { useTypography } from "../../../ui/hooks/useTypography";
 import { LiquidGlassSpacing } from "../../../ui/theme/liquidGlassSpacing";
+import { useTranslation } from "../../../i18n";
 
 const AppIcon = require("../../../assets/dnschat_ios26.png");
 
@@ -20,6 +21,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get("window");
 export function WelcomeScreen() {
   const palette = useImessagePalette();
   const typography = useTypography();
+  const { t } = useTranslation();
 
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
   const slideAnim = React.useRef(new Animated.Value(50)).current;
@@ -76,7 +78,7 @@ export function WelcomeScreen() {
               { color: palette.textPrimary },
             ]}
           >
-            Welcome to DNS Chat
+            {t("screen.onboarding.welcome.title")}
           </Text>
 
           <Text
@@ -86,32 +88,31 @@ export function WelcomeScreen() {
               { color: palette.textSecondary },
             ]}
           >
-            The world's first chat app that uses DNS queries to communicate with
-            AI
+            {t("screen.onboarding.welcome.subtitle")}
           </Text>
         </Animated.View>
 
         <View style={styles.featuresSection}>
           <FeatureItem
-            label="Revolutionary"
-            title="Revolutionary Technology"
-            description="Chat through DNS TXT records - no traditional APIs needed"
+            label={t("screen.onboarding.welcome.features.revolutionary.label")}
+            title={t("screen.onboarding.welcome.features.revolutionary.title")}
+            description={t("screen.onboarding.welcome.features.revolutionary.description")}
             palette={palette}
             typography={typography}
           />
 
           <FeatureItem
-            label="Private"
-            title="Privacy-Focused"
-            description="Your conversations travel through the global DNS infrastructure"
+            label={t("screen.onboarding.welcome.features.private.label")}
+            title={t("screen.onboarding.welcome.features.private.title")}
+            description={t("screen.onboarding.welcome.features.private.description")}
             palette={palette}
             typography={typography}
           />
 
           <FeatureItem
-            label="Fast"
-            title="Network Resilient"
-            description="Automatically adapts to different network conditions"
+            label={t("screen.onboarding.welcome.features.fast.label")}
+            title={t("screen.onboarding.welcome.features.fast.title")}
+            description={t("screen.onboarding.welcome.features.fast.description")}
             palette={palette}
             typography={typography}
           />

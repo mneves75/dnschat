@@ -14,6 +14,7 @@ import { DNSService } from "../../../services/dnsService";
 import { useImessagePalette } from "../../../ui/theme/imessagePalette";
 import { useTypography } from "../../../ui/hooks/useTypography";
 import { LiquidGlassSpacing } from "../../../ui/theme/liquidGlassSpacing";
+import { useTranslation } from "../../../i18n";
 
 interface Message {
   id: string;
@@ -26,12 +27,13 @@ interface Message {
 export function FirstChatScreen() {
   const palette = useImessagePalette();
   const typography = useTypography();
+  const { t } = useTranslation();
   const isMountedRef = useRef(true);
 
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
-      text: "Hi! I'm your AI assistant. Try sending me a message to see how DNS magic works!",
+      text: t("screen.onboarding.firstChat.welcomeMessage"),
       isUser: false,
       timestamp: new Date(),
     },
@@ -96,7 +98,7 @@ export function FirstChatScreen() {
           msg.id === assistantMessage.id
             ? {
                 ...msg,
-                text: "Great! You've successfully sent your first DNS message. In a real scenario, this would return an AI response via DNS TXT records. The magic is that your message traveled through the DNS infrastructure!",
+                text: t("screen.onboarding.firstChat.successMessage"),
                 status: "sent",
               }
             : msg,
@@ -110,10 +112,10 @@ export function FirstChatScreen() {
   };
 
   const suggestedMessages = [
-    "What is DNS?",
-    "How does this app work?",
-    "Tell me something interesting",
-    "What can you help me with?",
+    t("screen.onboarding.firstChat.suggestions.option1"),
+    t("screen.onboarding.firstChat.suggestions.option2"),
+    t("screen.onboarding.firstChat.suggestions.option3"),
+    t("screen.onboarding.firstChat.suggestions.option4"),
   ];
 
   return (
@@ -124,7 +126,7 @@ export function FirstChatScreen() {
       <View style={styles.content}>
         <View style={styles.headerSection}>
           <Text style={[typography.displayMedium, { color: palette.accentTint }]}>
-            Chat
+            {t("screen.onboarding.firstChat.label")}
           </Text>
 
           <Text
@@ -134,7 +136,7 @@ export function FirstChatScreen() {
               { color: palette.textPrimary },
             ]}
           >
-            Try Your First Chat
+            {t("screen.onboarding.firstChat.title")}
           </Text>
 
           <Text
@@ -144,7 +146,7 @@ export function FirstChatScreen() {
               { color: palette.textSecondary },
             ]}
           >
-            Send a message and watch it travel through DNS
+            {t("screen.onboarding.firstChat.subtitle")}
           </Text>
         </View>
 
@@ -171,7 +173,7 @@ export function FirstChatScreen() {
                   { color: palette.textSecondary, fontWeight: "600" },
                 ]}
               >
-                Try one of these:
+                {t("screen.onboarding.firstChat.suggestions.title")}
               </Text>
               {suggestedMessages.map((suggestion, index) => (
                 <TouchableOpacity
@@ -222,7 +224,7 @@ export function FirstChatScreen() {
             ]}
             value={inputText}
             onChangeText={setInputText}
-            placeholder="Type your message..."
+            placeholder={t("screen.onboarding.firstChat.input.placeholder")}
             placeholderTextColor={palette.textTertiary}
             multiline
             maxLength={200}
@@ -251,14 +253,14 @@ export function FirstChatScreen() {
             }}
           >
             <Text style={[typography.headline, { color: palette.solid }]}>
-              {isLoading ? "..." : "Send"}
+              {isLoading ? t("screen.onboarding.firstChat.input.sending") : t("screen.onboarding.firstChat.input.send")}
             </Text>
           </TouchableOpacity>
         </View>
       </View>
 
       <OnboardingNavigation
-        nextButtonText={hasTriedChat ? "Amazing! Continue" : "Skip Tutorial"}
+        nextButtonText={hasTriedChat ? t("screen.onboarding.firstChat.navigation.continue") : t("screen.onboarding.firstChat.navigation.skip")}
       />
     </KeyboardAvoidingView>
   );
@@ -271,6 +273,8 @@ interface MessageBubbleProps {
 }
 
 function MessageBubble({ message, palette, typography }: MessageBubbleProps) {
+  const { t } = useTranslation();
+
   return (
     <View
       style={[
@@ -311,7 +315,7 @@ function MessageBubble({ message, palette, typography }: MessageBubbleProps) {
               { color: palette.textTertiary },
             ]}
           >
-            Sending via DNS...
+            {t("screen.onboarding.firstChat.input.sendingVia")}
           </Text>
         )}
       </View>

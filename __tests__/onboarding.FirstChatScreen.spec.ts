@@ -62,7 +62,7 @@ describe("FirstChatScreen - iOS 26 HIG Compliance", () => {
     });
 
     it("uses text status 'Sending via DNS...' instead of emoji", () => {
-      expect(sourceCode).toContain("Sending via DNS...");
+      expect(sourceCode).toContain('t("screen.onboarding.firstChat.input.sendingVia")');
     });
   });
 
@@ -126,8 +126,8 @@ describe("FirstChatScreen - iOS 26 HIG Compliance", () => {
   describe("Suggested Messages", () => {
     it("includes suggested messages array", () => {
       expect(sourceCode).toContain("suggestedMessages");
-      expect(sourceCode).toContain("What is DNS?");
-      expect(sourceCode).toContain("How does this app work?");
+      expect(sourceCode).toContain('t("screen.onboarding.firstChat.suggestions.option1")');
+      expect(sourceCode).toContain('t("screen.onboarding.firstChat.suggestions.option2")');
     });
 
     it("renders suggestions conditionally", () => {
@@ -208,8 +208,8 @@ describe("FirstChatScreen - iOS 26 HIG Compliance", () => {
 
     it("includes header section with title and subtitle", () => {
       expect(sourceCode).toContain("headerSection");
-      expect(sourceCode).toContain("Try Your First Chat");
-      expect(sourceCode).toContain("Send a message and watch it travel through DNS");
+      expect(sourceCode).toContain('t("screen.onboarding.firstChat.title")');
+      expect(sourceCode).toContain('t("screen.onboarding.firstChat.subtitle")');
     });
 
     it("includes messages container with ScrollView", () => {
@@ -255,7 +255,7 @@ describe("FirstChatScreen - iOS 26 HIG Compliance", () => {
 
   describe("Accessibility", () => {
     it("provides placeholder text for input", () => {
-      expect(sourceCode).toContain('placeholder="Type your message..."');
+      expect(sourceCode).toContain('placeholder={t("screen.onboarding.firstChat.input.placeholder")}');
     });
 
     it("uses appropriate activeOpacity for touch feedback", () => {

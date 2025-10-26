@@ -33,7 +33,7 @@ describe("NetworkSetupScreen - iOS 26 HIG Compliance", () => {
 
   describe("Disclaimer Requirement", () => {
     it("contains the required disclaimer text", () => {
-      expect(sourceCode).toContain("This is a simulated demonstration");
+      expect(sourceCode).toContain('t("screen.onboarding.networkSetup.disclaimer")');
     });
 
     it("renders disclaimer in a styled container", () => {
@@ -85,11 +85,11 @@ describe("NetworkSetupScreen - iOS 26 HIG Compliance", () => {
     });
 
     it("uses text-based status labels instead", () => {
-      expect(sourceCode).toContain('"Testing"');
-      expect(sourceCode).toContain('"Waiting"');
-      expect(sourceCode).toContain('"Success"');
-      expect(sourceCode).toContain('"Failed"');
-      expect(sourceCode).toContain('"Skipped"');
+      expect(sourceCode).toContain('t("screen.onboarding.networkSetup.status.testing")');
+      expect(sourceCode).toContain('t("screen.onboarding.networkSetup.status.waiting")');
+      expect(sourceCode).toContain('t("screen.onboarding.networkSetup.status.success")');
+      expect(sourceCode).toContain('t("screen.onboarding.networkSetup.status.failed")');
+      expect(sourceCode).toContain('t("screen.onboarding.networkSetup.status.skipped")');
     });
   });
 
@@ -116,15 +116,15 @@ describe("NetworkSetupScreen - iOS 26 HIG Compliance", () => {
 
   describe("Network Test Items", () => {
     it("includes Native DNS test", () => {
-      expect(sourceCode).toContain("Native DNS");
+      expect(sourceCode).toContain('t("screen.onboarding.networkSetup.tests.native.name")');
     });
 
     it("includes DNS over UDP test", () => {
-      expect(sourceCode).toContain("DNS over UDP");
+      expect(sourceCode).toContain('t("screen.onboarding.networkSetup.tests.udp.name")');
     });
 
     it("includes DNS over TCP test", () => {
-      expect(sourceCode).toContain("DNS over TCP");
+      expect(sourceCode).toContain('t("screen.onboarding.networkSetup.tests.tcp.name")');
     });
 
     it("displays latency metrics", () => {
@@ -178,12 +178,12 @@ describe("NetworkSetupScreen - iOS 26 HIG Compliance", () => {
 
     it("includes recommendation section", () => {
       expect(sourceCode).toContain("recommendationContainer");
-      expect(sourceCode).toContain("Optimization Complete");
+      expect(sourceCode).toContain('t("screen.onboarding.networkSetup.optimization.title")');
     });
 
     it("includes apply settings button", () => {
       expect(sourceCode).toContain("applyButton");
-      expect(sourceCode).toContain("Apply Recommended Settings");
+      expect(sourceCode).toContain('t("screen.onboarding.networkSetup.optimization.applyButton")');
     });
   });
 

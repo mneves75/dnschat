@@ -12,6 +12,7 @@ import { OnboardingNavigation } from "../OnboardingNavigation";
 import { useImessagePalette } from "../../../ui/theme/imessagePalette";
 import { useTypography } from "../../../ui/hooks/useTypography";
 import { LiquidGlassSpacing } from "../../../ui/theme/liquidGlassSpacing";
+import { useTranslation } from "../../../i18n";
 
 interface NetworkTest {
   method: string;
@@ -23,6 +24,7 @@ interface NetworkTest {
 export function NetworkSetupScreen() {
   const palette = useImessagePalette();
   const typography = useTypography();
+  const { t } = useTranslation();
 
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [optimizationComplete, setOptimizationComplete] = useState(false);
@@ -31,19 +33,19 @@ export function NetworkSetupScreen() {
   );
   const [networkTests, setNetworkTests] = useState<NetworkTest[]>([
     {
-      method: "Native DNS",
+      method: t("screen.onboarding.networkSetup.tests.native.name"),
       status: "testing",
-      description: "Platform-optimized DNS",
+      description: t("screen.onboarding.networkSetup.tests.native.description"),
     },
     {
-      method: "DNS over UDP",
+      method: t("screen.onboarding.networkSetup.tests.udp.name"),
       status: "testing",
-      description: "Traditional DNS queries",
+      description: t("screen.onboarding.networkSetup.tests.udp.description"),
     },
     {
-      method: "DNS over TCP",
+      method: t("screen.onboarding.networkSetup.tests.tcp.name"),
       status: "testing",
-      description: "Reliable TCP fallback",
+      description: t("screen.onboarding.networkSetup.tests.tcp.description"),
     },
   ]);
 
@@ -80,23 +82,23 @@ export function NetworkSetupScreen() {
     } catch (error) {
       console.error("[NetworkSetupScreen] Network optimization failed:", error);
       Alert.alert(
-        "Error",
-        "Network optimization failed. Using default settings.",
+        t("screen.onboarding.networkSetup.alerts.errorTitle"),
+        t("screen.onboarding.networkSetup.alerts.errorMessage"),
       );
     } finally {
       setIsOptimizing(false);
     }
-  }, []);
+  }, [t]);
 
   const applyRecommendedSettings = React.useCallback(async () => {
     if (recommendedSetting !== null) {
       Alert.alert(
-        "Settings Applied",
-        `Network optimization complete. DNS will use automatic fallback chain for best performance.`,
-        [{ text: "Great", style: "default" }],
+        t("screen.onboarding.networkSetup.alerts.successTitle"),
+        t("screen.onboarding.networkSetup.alerts.successMessage"),
+        [{ text: t("screen.onboarding.networkSetup.alerts.successButton"), style: "default" }],
       );
     }
-  }, [recommendedSetting]);
+  }, [recommendedSetting, t]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -115,7 +117,7 @@ export function NetworkSetupScreen() {
       >
         <View style={styles.headerSection}>
           <Text style={[typography.displayMedium, { color: palette.accentTint }]}>
-            Setup
+            {t("screen.onboarding.networkSetup.label")}
           </Text>
 
           <Text
@@ -125,7 +127,7 @@ export function NetworkSetupScreen() {
               { color: palette.textPrimary },
             ]}
           >
-            Network Optimization
+            {t("screen.onboarding.networkSetup.title")}
           </Text>
 
           <Text
@@ -135,7 +137,7 @@ export function NetworkSetupScreen() {
               { color: palette.textSecondary },
             ]}
           >
-            We're testing your network to find the fastest DNS methods
+            {t("screen.onboarding.networkSetup.subtitle")}
           </Text>
 
           <View
@@ -154,7 +156,7 @@ export function NetworkSetupScreen() {
                 { color: palette.textSecondary },
               ]}
             >
-              This is a simulated demonstration
+              {t("screen.onboarding.networkSetup.disclaimer")}
             </Text>
           </View>
         </View>
@@ -188,7 +190,7 @@ export function NetworkSetupScreen() {
                 { color: palette.accentTint },
               ]}
             >
-              Optimization Complete
+              {t("screen.onboarding.networkSetup.optimization.title")}
             </Text>
 
             <Text
@@ -198,9 +200,7 @@ export function NetworkSetupScreen() {
                 { color: palette.textPrimary },
               ]}
             >
-              Your network supports all DNS methods. The app will automatically use
-              the fastest available method with intelligent fallback for optimal
-              performance.
+              {t("screen.onboarding.networkSetup.optimization.description")}
             </Text>
 
             {/* iOS HIG: Primary action button to apply network optimization results */}
@@ -222,7 +222,7 @@ export function NetworkSetupScreen() {
                   { color: palette.solid, fontWeight: "600" },
                 ]}
               >
-                Apply Recommended Settings
+                {t("screen.onboarding.networkSetup.optimization.applyButton")}
               </Text>
             </TouchableOpacity>
           </View>
@@ -238,14 +238,14 @@ export function NetworkSetupScreen() {
                 { color: palette.textSecondary },
               ]}
             >
-              Optimizing your DNS settings...
+              {t("screen.onboarding.networkSetup.optimization.loading")}
             </Text>
           </View>
         )}
       </ScrollView>
 
       <OnboardingNavigation
-        nextButtonText={optimizationComplete ? "Continue" : "Skip Optimization"}
+        nextButtonText={optimizationComplete ? t("screen.onboarding.networkSetup.navigation.continue") : t("screen.onboarding.networkSetup.navigation.skip")}
         showSkip={false}
       />
     </View>
@@ -260,18 +260,20 @@ interface NetworkTestItemProps {
 }
 
 function NetworkTestItem({ test, palette, typography, isActive }: NetworkTestItemProps) {
+  const { t } = useTranslation();
+
   const getStatusLabel = () => {
     switch (test.status) {
       case "testing":
-        return isActive ? "Testing" : "Waiting";
+        return isActive ? t("screen.onboarding.networkSetup.status.testing") : t("screen.onboarding.networkSetup.status.waiting");
       case "success":
-        return "Success";
+        return t("screen.onboarding.networkSetup.status.success");
       case "failed":
-        return "Failed";
+        return t("screen.onboarding.networkSetup.status.failed");
       case "skipped":
-        return "Skipped";
+        return t("screen.onboarding.networkSetup.status.skipped");
       default:
-        return "Waiting";
+        return t("screen.onboarding.networkSetup.status.waiting");
     }
   };
 

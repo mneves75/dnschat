@@ -11,6 +11,7 @@ import { OnboardingNavigation } from "../OnboardingNavigation";
 import { useImessagePalette } from "../../../ui/theme/imessagePalette";
 import { useTypography } from "../../../ui/hooks/useTypography";
 import { LiquidGlassSpacing } from "../../../ui/theme/liquidGlassSpacing";
+import { useTranslation } from "../../../i18n";
 
 interface Feature {
   label: string;
@@ -25,63 +26,55 @@ interface Feature {
 export function FeaturesScreen() {
   const palette = useImessagePalette();
   const typography = useTypography();
+  const { t } = useTranslation();
 
   const features: Feature[] = [
     {
-      label: "Logs",
-      title: "DNS Query Logs",
-      description:
-        "Monitor all DNS queries in real-time with detailed timing and fallback information.",
+      label: t("screen.onboarding.features.logs.label"),
+      title: t("screen.onboarding.features.logs.title"),
+      description: t("screen.onboarding.features.logs.description"),
     },
     {
-      label: "Customize",
-      title: "Customizable Settings",
-      description:
-        "Configure DNS servers, enable HTTPS preferences, and optimize for your network.",
+      label: t("screen.onboarding.features.customize.label"),
+      title: t("screen.onboarding.features.customize.title"),
+      description: t("screen.onboarding.features.customize.description"),
     },
     {
-      label: "iOS 26",
-      title: "Liquid Glass Design",
-      description:
-        "Beautiful iOS 26 interface with native glass effects and Material Design 3 on Android.",
+      label: t("screen.onboarding.features.liquidGlass.label"),
+      title: t("screen.onboarding.features.liquidGlass.title"),
+      description: t("screen.onboarding.features.liquidGlass.description"),
     },
     {
-      label: "i18n",
-      title: "Multilingual Support",
-      description:
-        "Full internationalization with English and Portuguese languages.",
+      label: t("screen.onboarding.features.i18n.label"),
+      title: t("screen.onboarding.features.i18n.title"),
+      description: t("screen.onboarding.features.i18n.description"),
     },
     {
-      label: "Haptics",
-      title: "Haptic Feedback",
-      description:
-        "Customizable haptic feedback for interactive elements and actions.",
+      label: t("screen.onboarding.features.haptics.label"),
+      title: t("screen.onboarding.features.haptics.title"),
+      description: t("screen.onboarding.features.haptics.description"),
     },
     {
-      label: "Adapt",
-      title: "Dark and Light Themes",
-      description:
-        "Beautiful interface that adapts to your system preferences with high contrast mode support.",
+      label: t("screen.onboarding.features.themes.label"),
+      title: t("screen.onboarding.features.themes.title"),
+      description: t("screen.onboarding.features.themes.description"),
     },
     {
-      label: "Local",
-      title: "Local Storage",
-      description:
-        "All your conversations are stored securely on your device - no cloud dependency.",
+      label: t("screen.onboarding.features.storage.label"),
+      title: t("screen.onboarding.features.storage.title"),
+      description: t("screen.onboarding.features.storage.description"),
     },
     {
-      label: "Smart",
-      title: "Smart Fallbacks",
-      description:
-        "Intelligent fallback system ensures connectivity across different network conditions.",
+      label: t("screen.onboarding.features.fallbacks.label"),
+      title: t("screen.onboarding.features.fallbacks.title"),
+      description: t("screen.onboarding.features.fallbacks.description"),
     },
     {
-      label: "Open",
-      title: "Open Source",
-      description:
-        "Built transparently - explore the code and contribute to the future of DNS chat.",
+      label: t("screen.onboarding.features.opensource.label"),
+      title: t("screen.onboarding.features.opensource.title"),
+      description: t("screen.onboarding.features.opensource.description"),
       action: {
-        text: "View on GitHub",
+        text: t("screen.onboarding.features.opensource.action"),
         onPress: () => {
           Linking.openURL("https://github.com/mvneves/chat-dns");
         },
@@ -94,7 +87,7 @@ export function FeaturesScreen() {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.headerSection}>
           <Text style={[typography.displayMedium, { color: palette.accentTint }]}>
-            Features
+            {t("screen.onboarding.header.label")}
           </Text>
 
           <Text
@@ -104,7 +97,7 @@ export function FeaturesScreen() {
               { color: palette.textPrimary },
             ]}
           >
-            Powerful Features
+            {t("screen.onboarding.header.title")}
           </Text>
 
           <Text
@@ -114,7 +107,7 @@ export function FeaturesScreen() {
               { color: palette.textSecondary },
             ]}
           >
-            Discover what makes DNS Chat special
+            {t("screen.onboarding.header.subtitle")}
           </Text>
         </View>
 
@@ -145,7 +138,7 @@ export function FeaturesScreen() {
               { color: palette.accentTint, fontWeight: "700" },
             ]}
           >
-            You're All Set
+            {t("screen.onboarding.ready.title")}
           </Text>
 
           <Text
@@ -155,15 +148,13 @@ export function FeaturesScreen() {
               { color: palette.textPrimary },
             ]}
           >
-            You now know how to use DNS Chat and have optimized settings for
-            your network. Start chatting and experience the magic of DNS-powered
-            conversations!
+            {t("screen.onboarding.ready.description")}
           </Text>
         </View>
       </ScrollView>
 
       <OnboardingNavigation
-        nextButtonText="Start Chatting"
+        nextButtonText={t("screen.onboarding.ready.button")}
         showSkip={false}
         showBack={false}
       />
