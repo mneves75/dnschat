@@ -104,10 +104,8 @@ const toggleSwitchMock = jest
 const createSettingsValue = (overrides: Partial<Record<string, any>> = {}) => ({
   dnsServer: "ch.at",
   updateDnsServer: jest.fn().mockResolvedValue(undefined),
-  preferDnsOverHttps: false,
-  updatePreferDnsOverHttps: jest.fn().mockResolvedValue(undefined),
-  dnsMethodPreference: "automatic",
-  updateDnsMethodPreference: jest.fn().mockResolvedValue(undefined),
+  allowExperimentalTransports: true,
+  updateAllowExperimentalTransports: jest.fn().mockResolvedValue(undefined),
   enableMockDNS: false,
   updateEnableMockDNS: jest.fn().mockResolvedValue(undefined),
   enableHaptics: true,
