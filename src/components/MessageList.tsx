@@ -57,8 +57,8 @@ export function MessageList({
     }
   }, [messages]);
 
-  // iOS 26 HIG: Render individual message bubble with glass effect when available
-  // Each MessageBubble handles its own glass rendering via LiquidGlassWrapper
+  // iOS 26 HIG: Render individual message bubble with solid backgrounds
+  // MessageBubble uses solid colors (content layer) NOT glass (control layer)
   const renderMessage = ({ item: message }: ListRenderItemInfo<Message>) => {
     return <MessageBubble message={message} />;
   };
