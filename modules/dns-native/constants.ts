@@ -3,11 +3,21 @@
  * These values MUST be synchronized across iOS, Android, and TypeScript implementations
  */
 
+/**
+ * Serializable regex descriptor that can be rehydrated on native platforms without
+ * losing the original pattern, flags, or ordering. Keep this limited to JSON-friendly
+ * primitives so it crosses the React Native bridge intact.
+ */
 type RegexDescriptor = {
   pattern: string;
   flags?: string;
 };
 
+/**
+ * Canonical sanitization contract shared with the native bridges. Every field must remain
+ * JSON-serialisable and backwards compatible; add new keys rather than repurposing existing
+ * ones so older native binaries can continue to parse earlier shapes safely.
+ */
 export type NativeSanitizerConfig = {
   unicodeNormalization: 'NFKD';
   spaceReplacement: string;

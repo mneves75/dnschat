@@ -32,6 +32,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.Objects;
 import java.util.regex.Pattern;
@@ -48,7 +49,8 @@ public class DNSResolver {
     private static final int MAX_NATIVE_ATTEMPTS = 3;
     private static final long RETRY_DELAY_MS = 200L;
     private static final AtomicReference<SanitizerConfig> SANITIZER =
-        new AtomicReference<>(SanitizerConfig.defaultConfig());
+        new AtomicReference<>(SanitizerConfig.defaultInstance());
+    private static final AtomicBoolean DEFAULT_SANITIZER_NOTICE_EMITTED = new AtomicBoolean(false);
     
     private final Executor executor = Executors.newCachedThreadPool();
     private final ConnectivityManager connectivityManager;
@@ -60,8 +62,23 @@ public class DNSResolver {
         this.connectivityManager = connectivityManager;
     }
 
-    public void configureSanitizer(SanitizerConfig config) {
-        SANITIZER.set(Objects.requireNonNull(config, "Sanitizer config cannot be null"));
+    /**
+     * Update the in-memory sanitizer rules. Returns true when the runtime configuration changed
+     * and downstream caches should be invalidated. The call is idempotent but avoids rebuilding
+     * regex patterns if the supplied config matches what we already have.
+     */
+    public boolean configureSanitizer(Map<String, Object> configMap) {
+        SanitizerConfig incoming = SanitizerConfig.fromMap(configMap);
+        SanitizerConfig current = SANITIZER.get();
+        if (current.equals(incoming)) {
+            return false;
+        }
+        SANITIZER.set(incoming);
+        if (!incoming.isDefault()) {
+            // Allow us to warn again should we ever fall back to defaults in a future session.
+            DEFAULT_SANITIZER_NOTICE_EMITTED.set(false);
+        }
+        return true;
     }
 
     public String debugNormalizeQueryName(String message) throws DNSError {
@@ -304,14 +321,18 @@ public class DNSResolver {
     private byte[] encodeDomainName(String fqdn) throws DNSError {
         String normalizedFqdn = normalizeQueryName(fqdn);
         String[] labels = normalizedFqdn.split("\\.");
+        SanitizerConfig config = SANITIZER.get();
 
         List<byte[]> labelBytes = new ArrayList<>();
         int totalLength = 1; // null terminator
 
         for (String label : labels) {
             byte[] bytes = label.getBytes(StandardCharsets.US_ASCII);
-            if (bytes.length > MAX_LABEL_LENGTH) {
-                throw new DNSError(DNSError.Type.QUERY_FAILED, "DNS label exceeds 63 bytes: " + label);
+            if (bytes.length > config.maxLabelLength) {
+                throw new DNSError(
+                    DNSError.Type.QUERY_FAILED,
+                    "DNS label exceeds " + config.maxLabelLength + " bytes: " + label
+                );
             }
 
             labelBytes.add(bytes);
@@ -368,16 +389,23 @@ public class DNSResolver {
     // Mirrors sanitizeDNSMessageReference from the TypeScript reference: fold diacritics,
     // enforce lowercase ASCII, and collapse stray punctuation so iOS/Android stay in sync.
     private String sanitizeLabel(String rawLabel) throws DNSError {
+        SanitizerConfig config = SANITIZER.get();
+        if (config.isDefault() && DEFAULT_SANITIZER_NOTICE_EMITTED.compareAndSet(false, true)) {
+            Log.w(
+                TAG,
+                "Using default DNS sanitizer rules; ensure the JS bridge supplies shared constants early in app startup."
+            );
+        }
         String working = rawLabel == null ? "" : rawLabel.trim();
         if (working.isEmpty()) {
             throw new DNSError(DNSError.Type.QUERY_FAILED, "DNS label cannot be empty");
         }
 
-        working = foldUnicode(working).toLowerCase(Locale.US);
-        working = WHITESPACE.matcher(working).replaceAll("-");
-        working = INVALID_CHARS.matcher(working).replaceAll("");
-        working = DASH_COLLAPSE.matcher(working).replaceAll("-");
-        working = EDGE_DASHES.matcher(working).replaceAll("");
+        working = foldUnicode(working, config).toLowerCase(Locale.US);
+        working = config.whitespacePattern.matcher(working).replaceAll(config.spaceReplacement);
+        working = config.invalidCharsPattern.matcher(working).replaceAll("");
+        working = config.dashCollapsePattern.matcher(working).replaceAll(config.spaceReplacement);
+        working = config.edgeDashesPattern.matcher(working).replaceAll("");
 
         if (working.isEmpty()) {
             throw new DNSError(
@@ -386,19 +414,19 @@ public class DNSResolver {
             );
         }
 
-        if (working.length() > MAX_LABEL_LENGTH) {
+        if (working.length() > config.maxLabelLength) {
             throw new DNSError(
                 DNSError.Type.QUERY_FAILED,
-                "DNS label exceeds 63 characters after sanitization"
+                "DNS label exceeds " + config.maxLabelLength + " characters after sanitization"
             );
         }
 
         return working;
     }
 
-    private String foldUnicode(String value) {
-        String normalized = Normalizer.normalize(value, Normalizer.Form.NFKD);
-        return COMBINING_MARKS.matcher(normalized).replaceAll("");
+    private String foldUnicode(String value, SanitizerConfig config) {
+        String normalized = Normalizer.normalize(value, config.normalizationForm);
+        return config.combiningMarksPattern.matcher(normalized).replaceAll("");
     }
 
     private List<String> parseDnsTxtResponse(byte[] data) throws Exception {
@@ -551,6 +579,403 @@ public class DNSResolver {
         return null;
     }
 
+    public static final class SanitizerConfig {
+        private static final String CODE_NULL = "SANITIZER_CONFIG_NULL";
+        private static final String CODE_MISSING_KEY = "SANITIZER_CONFIG_MISSING_KEY";
+        private static final String CODE_INVALID_TYPE = "SANITIZER_CONFIG_INVALID_TYPE";
+        private static final String CODE_INVALID_RANGE = "SANITIZER_CONFIG_RANGE";
+        private static final String CODE_INVALID_REGEX = "SANITIZER_CONFIG_REGEX";
+        private static final String CODE_UNEXPECTED = "SANITIZER_CONFIG_UNEXPECTED";
+
+        private static final SanitizerConfig DEFAULT = build(
+            "\\s+",
+            0,
+            "[^a-z0-9-]",
+            0,
+            "-{2,}",
+            0,
+            "^-+|-+$",
+            0,
+            "\\p{M}+",
+            Pattern.UNICODE_CASE | Pattern.UNICODE_CHARACTER_CLASS,
+            "-",
+            DEFAULT_MAX_LABEL_LENGTH,
+            Normalizer.Form.NFKD,
+            true
+        );
+
+        final String whitespaceSource;
+        final int whitespaceFlags;
+        final Pattern whitespacePattern;
+
+        final String invalidCharsSource;
+        final int invalidCharsFlags;
+        final Pattern invalidCharsPattern;
+
+        final String dashCollapseSource;
+        final int dashCollapseFlags;
+        final Pattern dashCollapsePattern;
+
+        final String edgeDashesSource;
+        final int edgeDashesFlags;
+        final Pattern edgeDashesPattern;
+
+        final String combiningMarksSource;
+        final int combiningMarksFlags;
+        final Pattern combiningMarksPattern;
+
+        final String spaceReplacement;
+        final int maxLabelLength;
+        final Normalizer.Form normalizationForm;
+        final boolean defaultConfig;
+
+        private SanitizerConfig(
+            String whitespaceSource,
+            int whitespaceFlags,
+            Pattern whitespacePattern,
+            String invalidCharsSource,
+            int invalidCharsFlags,
+            Pattern invalidCharsPattern,
+            String dashCollapseSource,
+            int dashCollapseFlags,
+            Pattern dashCollapsePattern,
+            String edgeDashesSource,
+            int edgeDashesFlags,
+            Pattern edgeDashesPattern,
+            String combiningMarksSource,
+            int combiningMarksFlags,
+            Pattern combiningMarksPattern,
+            String spaceReplacement,
+            int maxLabelLength,
+            Normalizer.Form normalizationForm,
+            boolean defaultConfig
+        ) {
+            this.whitespaceSource = whitespaceSource;
+            this.whitespaceFlags = whitespaceFlags;
+            this.whitespacePattern = whitespacePattern;
+            this.invalidCharsSource = invalidCharsSource;
+            this.invalidCharsFlags = invalidCharsFlags;
+            this.invalidCharsPattern = invalidCharsPattern;
+            this.dashCollapseSource = dashCollapseSource;
+            this.dashCollapseFlags = dashCollapseFlags;
+            this.dashCollapsePattern = dashCollapsePattern;
+            this.edgeDashesSource = edgeDashesSource;
+            this.edgeDashesFlags = edgeDashesFlags;
+            this.edgeDashesPattern = edgeDashesPattern;
+            this.combiningMarksSource = combiningMarksSource;
+            this.combiningMarksFlags = combiningMarksFlags;
+            this.combiningMarksPattern = combiningMarksPattern;
+            this.spaceReplacement = spaceReplacement;
+            this.maxLabelLength = maxLabelLength;
+            this.normalizationForm = normalizationForm;
+            this.defaultConfig = defaultConfig;
+        }
+
+        static SanitizerConfig defaultInstance() {
+            return DEFAULT;
+        }
+
+        boolean isDefault() {
+            return defaultConfig;
+        }
+
+        static SanitizerConfig fromMap(Map<String, Object> map) {
+            if (map == null) {
+                throw SanitizerConfigException.of(CODE_NULL, "Sanitizer config map cannot be null");
+            }
+
+            try {
+                String spaceReplacement = readString(map, "spaceReplacement");
+                if (spaceReplacement.isEmpty()) {
+                    throw SanitizerConfigException.of(
+                        CODE_INVALID_RANGE,
+                        "spaceReplacement must be present and non-empty"
+                    );
+                }
+
+                int maxLabelLength = readInt(map, "maxLabelLength");
+                if (maxLabelLength <= 0 || maxLabelLength > MAX_QNAME_LENGTH) {
+                    throw SanitizerConfigException.of(
+                        CODE_INVALID_RANGE,
+                        "maxLabelLength must be between 1 and " + MAX_QNAME_LENGTH
+                    );
+                }
+
+                Normalizer.Form normalizationForm = parseNormalizationForm(readString(map, "unicodeNormalization"));
+
+                CompiledPattern whitespace = compilePattern(readMap(map, "whitespace"), "whitespace");
+                CompiledPattern invalidChars = compilePattern(readMap(map, "invalidChars"), "invalidChars");
+                CompiledPattern dashCollapse = compilePattern(readMap(map, "dashCollapse"), "dashCollapse");
+                CompiledPattern edgeDashes = compilePattern(readMap(map, "edgeDashes"), "edgeDashes");
+                CompiledPattern combiningMarks = compilePattern(readMap(map, "combiningMarks"), "combiningMarks");
+
+                return build(
+                    whitespace.source,
+                    whitespace.flags,
+                    whitespace.pattern,
+                    invalidChars.source,
+                    invalidChars.flags,
+                    invalidChars.pattern,
+                    dashCollapse.source,
+                    dashCollapse.flags,
+                    dashCollapse.pattern,
+                    edgeDashes.source,
+                    edgeDashes.flags,
+                    edgeDashes.pattern,
+                    combiningMarks.source,
+                    combiningMarks.flags,
+                    combiningMarks.pattern,
+                    spaceReplacement,
+                    maxLabelLength,
+                    normalizationForm,
+                    false
+                );
+            } catch (SanitizerConfigException error) {
+                throw error;
+            } catch (Exception error) {
+                throw SanitizerConfigException.of(CODE_UNEXPECTED, "Unexpected sanitizer configuration error", error);
+            }
+        }
+
+        private static SanitizerConfig build(
+            String whitespaceSource,
+            int whitespaceFlags,
+            Pattern whitespacePattern,
+            String invalidCharsSource,
+            int invalidCharsFlags,
+            Pattern invalidCharsPattern,
+            String dashCollapseSource,
+            int dashCollapseFlags,
+            Pattern dashCollapsePattern,
+            String edgeDashesSource,
+            int edgeDashesFlags,
+            Pattern edgeDashesPattern,
+            String combiningMarksSource,
+            int combiningMarksFlags,
+            Pattern combiningMarksPattern,
+            String spaceReplacement,
+            int maxLabelLength,
+            Normalizer.Form normalizationForm,
+            boolean defaultConfig
+        ) {
+            return new SanitizerConfig(
+                whitespaceSource,
+                whitespaceFlags,
+                whitespacePattern,
+                invalidCharsSource,
+                invalidCharsFlags,
+                invalidCharsPattern,
+                dashCollapseSource,
+                dashCollapseFlags,
+                dashCollapsePattern,
+                edgeDashesSource,
+                edgeDashesFlags,
+                edgeDashesPattern,
+                combiningMarksSource,
+                combiningMarksFlags,
+                combiningMarksPattern,
+                spaceReplacement,
+                maxLabelLength,
+                normalizationForm,
+                defaultConfig
+            );
+        }
+
+        private static CompiledPattern compilePattern(Map<String, Object> descriptor, String key) {
+            String pattern = readString(descriptor, "pattern");
+            String flagsValue = readStringOptional(descriptor, "flags");
+            int flags = parseFlags(flagsValue);
+            try {
+                return new CompiledPattern(pattern, flags, Pattern.compile(pattern, flags));
+            } catch (Exception error) {
+                throw SanitizerConfigException.of(CODE_INVALID_REGEX, "Invalid regex for " + key + ": " + pattern, error);
+            }
+        }
+
+        private static int parseFlags(String flagsValue) {
+            if (flagsValue == null || flagsValue.isEmpty()) {
+                return 0;
+            }
+            int flags = 0;
+            for (char flag : flagsValue.toCharArray()) {
+                switch (flag) {
+                    case 'i':
+                        flags |= Pattern.CASE_INSENSITIVE;
+                        break;
+                    case 'm':
+                        flags |= Pattern.MULTILINE;
+                        break;
+                    case 's':
+                        flags |= Pattern.DOTALL;
+                        break;
+                    case 'u':
+                        flags |= Pattern.UNICODE_CASE | Pattern.UNICODE_CHARACTER_CLASS;
+                        break;
+                    case 'g':
+                        // Global flag is implied by Java's matcher iteration; ignore silently.
+                        break;
+                    default:
+                        throw SanitizerConfigException.of(
+                            CODE_INVALID_RANGE,
+                            "Unsupported regex flag '" + flag + "'"
+                        );
+                }
+            }
+            return flags;
+        }
+
+        private static Normalizer.Form parseNormalizationForm(String value) {
+            if (value == null || value.isEmpty()) {
+                return Normalizer.Form.NFKD;
+            }
+            switch (value.toUpperCase(Locale.US)) {
+                case "NFC":
+                    return Normalizer.Form.NFC;
+                case "NFD":
+                    return Normalizer.Form.NFD;
+                case "NFKC":
+                    return Normalizer.Form.NFKC;
+                case "NFKD":
+                    return Normalizer.Form.NFKD;
+                default:
+                    throw SanitizerConfigException.of(
+                        CODE_INVALID_RANGE,
+                        "Unsupported unicodeNormalization: " + value
+                    );
+            }
+        }
+
+        @SuppressWarnings("unchecked")
+        private static Map<String, Object> readMap(Map<String, Object> map, String key) {
+            Object value = map.get(key);
+            if (value instanceof Map) {
+                return (Map<String, Object>) value;
+            }
+            throw SanitizerConfigException.of(
+                value == null ? CODE_MISSING_KEY : CODE_INVALID_TYPE,
+                value == null
+                    ? "Missing key '" + key + "' in sanitizer config"
+                    : "Expected map for key '" + key + "'"
+            );
+        }
+
+        private static String readString(Map<String, Object> map, String key) {
+            Object value = map.get(key);
+            if (value == null) {
+                throw SanitizerConfigException.of(CODE_MISSING_KEY, "Missing key '" + key + "' in sanitizer config");
+            }
+            if (value instanceof String) {
+                return (String) value;
+            }
+            throw SanitizerConfigException.of(CODE_INVALID_TYPE, "Expected string for key '" + key + "'");
+        }
+
+        private static String readStringOptional(Map<String, Object> map, String key) {
+            Object value = map.get(key);
+            if (value == null) {
+                return null;
+            }
+            if (value instanceof String) {
+                return (String) value;
+            }
+            throw SanitizerConfigException.of(CODE_INVALID_TYPE, "Expected string for key '" + key + "'");
+        }
+
+        private static int readInt(Map<String, Object> map, String key) {
+            Object value = map.get(key);
+            if (value instanceof Number) {
+                return ((Number) value).intValue();
+            }
+            throw SanitizerConfigException.of(
+                value == null ? CODE_MISSING_KEY : CODE_INVALID_TYPE,
+                value == null
+                    ? "Missing key '" + key + "' in sanitizer config"
+                    : "Expected numeric value for key '" + key + "'"
+            );
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (!(obj instanceof SanitizerConfig)) {
+                return false;
+            }
+            SanitizerConfig other = (SanitizerConfig) obj;
+            return whitespaceFlags == other.whitespaceFlags
+                && invalidCharsFlags == other.invalidCharsFlags
+                && dashCollapseFlags == other.dashCollapseFlags
+                && edgeDashesFlags == other.edgeDashesFlags
+                && combiningMarksFlags == other.combiningMarksFlags
+                && maxLabelLength == other.maxLabelLength
+                && normalizationForm == other.normalizationForm
+                && whitespaceSource.equals(other.whitespaceSource)
+                && invalidCharsSource.equals(other.invalidCharsSource)
+                && dashCollapseSource.equals(other.dashCollapseSource)
+                && edgeDashesSource.equals(other.edgeDashesSource)
+                && combiningMarksSource.equals(other.combiningMarksSource)
+                && spaceReplacement.equals(other.spaceReplacement);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(
+                whitespaceSource,
+                whitespaceFlags,
+                invalidCharsSource,
+                invalidCharsFlags,
+                dashCollapseSource,
+                dashCollapseFlags,
+                edgeDashesSource,
+                edgeDashesFlags,
+                combiningMarksSource,
+                combiningMarksFlags,
+                spaceReplacement,
+                maxLabelLength,
+                normalizationForm
+            );
+        }
+
+        public static final class SanitizerConfigException extends IllegalArgumentException {
+            private final String code;
+
+            private SanitizerConfigException(String code, String message, Throwable cause) {
+                super(message, cause);
+                this.code = code;
+            }
+
+            private SanitizerConfigException(String code, String message) {
+                super(message);
+                this.code = code;
+            }
+
+            static SanitizerConfigException of(String code, String message) {
+                return new SanitizerConfigException(code, message);
+            }
+
+            static SanitizerConfigException of(String code, String message, Throwable cause) {
+                return new SanitizerConfigException(code, message, cause);
+            }
+
+            public String getCode() {
+                return code;
+            }
+        }
+
+        private static final class CompiledPattern {
+            final String source;
+            final int flags;
+            final Pattern pattern;
+
+            CompiledPattern(String source, int flags, Pattern pattern) {
+                this.source = source;
+                this.flags = flags;
+                this.pattern = pattern;
+            }
+        }
+    }
+
     public static class DNSCapabilities {
         public final boolean available;
         public final String platform;
@@ -565,6 +990,45 @@ public class DNSResolver {
             this.supportsAsyncQuery = true;
             this.apiLevel = Build.VERSION.SDK_INT;
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> readMap(Map<String, Object> map, String key) {
+        Object value = map.get(key);
+        if (value instanceof Map) {
+            return (Map<String, Object>) value;
+        }
+        throw new IllegalArgumentException("Expected map for key '" + key + "'");
+    }
+
+    private static String readString(Map<String, Object> map, String key) {
+        Object value = map.get(key);
+        if (value == null) {
+            throw new IllegalArgumentException("Missing key '" + key + "' in sanitizer config");
+        }
+        if (value instanceof String) {
+            return (String) value;
+        }
+        throw new IllegalArgumentException("Expected string for key '" + key + "'");
+    }
+
+    private static String readStringOptional(Map<String, Object> map, String key) {
+        Object value = map.get(key);
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof String) {
+            return (String) value;
+        }
+        throw new IllegalArgumentException("Expected string for key '" + key + "'");
+    }
+
+    private static int readInt(Map<String, Object> map, String key) {
+        Object value = map.get(key);
+        if (value instanceof Number) {
+            return ((Number) value).intValue();
+        }
+        throw new IllegalArgumentException("Expected numeric value for key '" + key + "'");
     }
     
     /**
