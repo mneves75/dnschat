@@ -35,6 +35,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - LiquidGlassWrapper integration (6): expo-glass-effect imports, glass availability checking, reduce transparency accessibility, fallback styles, glass variants support, glass shapes support
     - Platform consistency (2): MessageBubble glass API consistency, shared wrapper component across MessageList and ChatInput
     - All 31 tests passing, full test suite: 481 tests passing (450 existing + 31 glass tests)
+  - **Glass Availability Detection Enhancement**: Improved glass availability checking with iOS version detection fallback
+    - Added parseIosMajorVersion() to extract iOS major version from Platform.Version
+    - Added computeGlassAvailability() with detailed availability information
+    - Added MIN_IOS_GLASS_VERSION constant (26) for version-based detection
+    - Added GlassAvailabilityReason type: "expo" | "ios-version" | "ios-version-too-low" | "unsupported-platform"
+    - Added GlassAvailability interface with available, reason, iosMajorVersion fields
+    - Updated shouldUseGlassEffect() to use new computeGlassAvailability() logic
+    - Updated useLiquidGlassCapabilities() hook to return detailed debugging info:
+      - capabilitySource: reason why glass is available/unavailable
+      - iosMajorVersion: actual iOS version number (null for non-iOS)
+      - reduceTransparencyEnabled: accessibility setting state
+    - Fallback mechanism: Enable glass on iOS 26+ even if Expo's isLiquidGlassAvailable() returns false
+    - Ensures glass works reliably on iOS 26+ regardless of Expo API detection issues
+    - Added 2 new tests: "enables glass heuristically on iOS 26 when Expo API returns false" and "keeps glass disabled on pre-iOS 26 when Expo API returns false"
+    - All 481 tests passing (8 liquidGlassWrapper.helpers tests)
 
 ### Fixed
 
