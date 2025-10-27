@@ -66,6 +66,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **iOS DNSNative Pod Compilation**: Moved ResumeGateTests.swift out of pod source directory
+  - Was: `modules/dns-native/ios/ResumeGateTests.swift` (included in podspec source_files pattern)
+  - Now: `modules/dns-native/__tests__/ios/ResumeGateTests.swift` (excluded from pod compilation)
+  - Impact: Resolves "Unable to find module dependency: XCTest" error during iOS pod installation
+  - Root cause: Test files import XCTest framework which is only available in test targets, not library targets
+  - Solution: Relocated test file outside source directory so DNSNative.podspec doesn't include it
+  - Files: `modules/dns-native/ios/DNSNative.podspec`, `modules/dns-native/__tests__/ios/ResumeGateTests.swift`
+
+- **Android DNS Sanitizer Code Cleanup**: Removed unused helper methods (readMap, readString, readStringOptional, readInt)
+  - Impact: Cleaner codebase, these methods were dead code after sanitizer refactoring
+  - File: `modules/dns-native/android/DNSResolver.java`
+
 - **Android DNS Sanitizer Promise Handling**: Fixed TypeScript type to match actual Java bridge implementation
   - Was: `configureSanitizer?(config: NativeSanitizerConfig): void`
   - Now: `configureSanitizer?(config: NativeSanitizerConfig): void | Promise<boolean>`
