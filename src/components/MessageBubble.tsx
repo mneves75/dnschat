@@ -63,20 +63,20 @@ export function MessageBubble({ message }: MessageBubbleProps) {
   const textStyles = [
     styles.text,
     {
-      color: isUser || hasError ? "#FFFFFF" : palette.textPrimary,
+      color: isUser || hasError ? palette.solid : palette.textPrimary,
     },
   ];
 
   const markdownStyles = {
     body: {
-      color: isUser ? "#FFFFFF" : palette.textPrimary,
+      color: isUser ? palette.solid : palette.textPrimary,
       fontSize: typography.body.fontSize,
       lineHeight: typography.body.lineHeight,
       letterSpacing: typography.body.letterSpacing,
     },
     code_inline: {
       backgroundColor: isDark ? palette.solid : palette.surface,
-      color: isDark ? "#FF9500" : "#AF52DE",
+      color: palette.warning,
       paddingHorizontal: 4,
       paddingVertical: 2,
       borderRadius: 4,
@@ -126,7 +126,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
               style={[
                 styles.loadingText,
                 typography.body,
-                { color: isUser ? "#FFFFFF" : palette.textPrimary },
+                { color: isUser ? palette.solid : palette.textPrimary },
               ]}
             >
               ●●●
@@ -139,7 +139,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
             style={[
               styles.timestamp,
               typography.caption1,
-              { color: isUser ? "#FFFFFF" : palette.textTertiary },
+              { color: isUser ? palette.solid : palette.textTertiary },
             ]}
           >
             {format(message.timestamp, "HH:mm")}
@@ -147,7 +147,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
 
           {hasError && (
             <Text
-              style={[styles.errorIndicator, { backgroundColor: palette.destructive }]}
+              style={[styles.errorIndicator, { backgroundColor: palette.destructive, color: palette.solid }]}
               accessible={true}
               accessibilityLabel="Message failed to send"
             >
@@ -200,10 +200,9 @@ const styles = StyleSheet.create({
     // Color applied inline from palette
   },
   errorIndicator: {
-    color: "#FFFFFF",
     fontSize: 12,
     fontWeight: "bold",
-    // backgroundColor applied inline from palette.destructive
+    // color and backgroundColor applied inline from palette
     width: 16,
     height: 16,
     borderRadius: 8,
