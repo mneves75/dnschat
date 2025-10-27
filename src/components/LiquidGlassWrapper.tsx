@@ -17,6 +17,20 @@ type GlassVariant = "regular" | "prominent" | "interactive";
 
 type GlassShape = "capsule" | "rect" | "roundedRect";
 
+const MIN_IOS_GLASS_VERSION = 26;
+
+type GlassAvailabilityReason =
+  | "expo"
+  | "ios-version"
+  | "ios-version-too-low"
+  | "unsupported-platform";
+
+interface GlassAvailability {
+  available: boolean;
+  reason: GlassAvailabilityReason;
+  iosMajorVersion: number | null;
+}
+
 export interface LiquidGlassProps extends ViewProps {
   variant?: GlassVariant;
   shape?: GlassShape;
@@ -55,6 +69,67 @@ const ensureOpaqueColor = (color: string) => {
   const [, r, g, b] = match;
 
   return `rgb(${r.trim()}, ${g.trim()}, ${b.trim()})`;
+};
+
+const parseIosMajorVersion = (): number => {
+  if (Platform.OS !== "ios") {
+    return 0;
+  }
+
+  const version = Platform.Version;
+
+  if (typeof version === "string") {
+    const match = version.match(/^(\d+)/);
+    if (match) {
+      const parsed = parseInt(match[1], 10);
+      return Number.isNaN(parsed) ? 0 : parsed;
+    }
+    return 0;
+  }
+
+  if (typeof version === "number") {
+    return Math.floor(version);
+  }
+
+  return 0;
+};
+
+const computeGlassAvailability = (): GlassAvailability => {
+  if (Platform.OS !== "ios") {
+    return {
+      available: false,
+      reason: "unsupported-platform",
+      iosMajorVersion: null,
+    };
+  }
+
+  const iosMajorVersion = parseIosMajorVersion();
+
+  try {
+    if (expoIsLiquidGlassAvailable()) {
+      return {
+        available: true,
+        reason: "expo",
+        iosMajorVersion,
+      };
+    }
+  } catch {
+    // expoIsLiquidGlassAvailable should be safe, but guard just in case.
+  }
+
+  if (iosMajorVersion >= MIN_IOS_GLASS_VERSION) {
+    return {
+      available: true,
+      reason: "ios-version",
+      iosMajorVersion,
+    };
+  }
+
+  return {
+    available: false,
+    reason: "ios-version-too-low",
+    iosMajorVersion,
+  };
 };
 
 export const buildFallbackStyle = (
@@ -128,10 +203,7 @@ const tintForVariant = (
 
 export const shouldUseGlassEffect = (reduceTransparency: boolean) => {
   if (reduceTransparency) return false;
-  if (Platform.OS !== "ios") return false;
-  // Expo API synchronous boolean; safe to call every render.
-  if (!expoIsLiquidGlassAvailable()) return false;
-  return true;
+  return computeGlassAvailability().available;
 };
 
 export const LiquidGlassWrapper: React.FC<LiquidGlassProps> = ({
@@ -275,27 +347,41 @@ export const LiquidGlassNavBar: React.FC<LiquidGlassProps> = ({
 );
 
 export const useLiquidGlassCapabilities = () => {
-  const [available, setAvailable] = useState(false);
+  const [availability, setAvailability] = useState<GlassAvailability>(
+    () => computeGlassAvailability(),
+  );
   const [loading, setLoading] = useState(Platform.OS === "ios");
   const [reduceTransparency, setReduceTransparency] = useState(false);
 
   useEffect(() => {
     if (Platform.OS !== "ios") {
-      setAvailable(false);
+      setAvailability({
+        available: false,
+        reason: "unsupported-platform",
+        iosMajorVersion: null,
+      });
       setLoading(false);
       return;
     }
 
-    setAvailable(expoIsLiquidGlassAvailable());
+    const updateAvailability = () => {
+      setAvailability(computeGlassAvailability());
+    };
+
+    updateAvailability();
     setLoading(false);
+
+    const handleReduceTransparency = (value: boolean) => {
+      setReduceTransparency(Boolean(value));
+    };
 
     const subscription = AccessibilityInfo.addEventListener(
       "reduceTransparencyChanged",
-      setReduceTransparency,
+      handleReduceTransparency,
     );
 
     AccessibilityInfo.isReduceTransparencyEnabled().then((value) => {
-      setReduceTransparency(Boolean(value));
+      handleReduceTransparency(Boolean(value));
     });
 
     return () => {
@@ -303,11 +389,16 @@ export const useLiquidGlassCapabilities = () => {
     };
   }, []);
 
+  const supports = availability.available && !reduceTransparency;
+
   return {
-    available: available && !reduceTransparency,
+    available: supports,
     loading,
-    isSupported: Platform.OS === "ios" && available && !reduceTransparency,
-    supportsLiquidGlass: available && !reduceTransparency,
+    isSupported: Platform.OS === "ios" && supports,
+    supportsLiquidGlass: supports,
+    capabilitySource: availability.reason,
+    iosMajorVersion: availability.iosMajorVersion,
+    reduceTransparencyEnabled: reduceTransparency,
   };
 };
 
