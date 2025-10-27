@@ -78,8 +78,11 @@ export function ChatInput({
   /**
    * Height Calculation (Design System Derived)
    *
-   * Min Height: line height + vertical padding
+   * Min Height: MUST be >= minimumTouchTarget to accommodate send button
    * Max Height: 5 lines + vertical padding
+   *
+   * CRITICAL: Minimum height must be at least minimumTouchTarget (44px iOS, 48px Android)
+   * to prevent button misalignment and negative positioning.
    *
    * Uses actual typography line height, not magic numbers.
    * Calculated early so we can initialize inputHeight.
@@ -87,12 +90,18 @@ export function ChatInput({
   const heightConstraints = useMemo(() => {
     const lineHeight = typography.body.lineHeight || 22;
     const verticalPadding = LiquidGlassSpacing.xs * 2; // top + bottom
+    const naturalMin = lineHeight + verticalPadding;
+
+    // CRITICAL FIX: Ensure min height >= touch target to prevent button overflow
+    // Without this, button positioning goes negative (e.g., (38 - 44) / 2 = -3px)
+    const touchTarget = minimumTouchTarget;
+    const min = Math.max(naturalMin, touchTarget);
 
     return {
-      min: lineHeight + verticalPadding,
+      min,
       max: (lineHeight * 5) + verticalPadding,
     };
-  }, [typography.body.lineHeight]);
+  }, [typography.body.lineHeight, minimumTouchTarget]);
 
   // Reanimated shared values for UI thread performance
   const inputHeight = useSharedValue(heightConstraints.min);
@@ -324,6 +333,9 @@ export function ChatInput({
    *
    * Integrated inside input with absolute positioning.
    * Vertically centered based on current input height.
+   *
+   * CRITICAL: pointerEvents="none" when disabled prevents button from
+   * blocking touches to the TextInput underneath.
    */
   const renderSendButton = useCallback(() => (
     <AnimatedTouchable
@@ -342,6 +354,7 @@ export function ChatInput({
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
       disabled={!canSend}
+      pointerEvents={canSend ? "auto" : "none"}
       accessible={true}
       accessibilityRole="button"
       accessibilityLabel={

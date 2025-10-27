@@ -9,14 +9,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- **CRITICAL: ChatInput Text Entry Unclickable (iOS 26+)**: Fixed LiquidGlassWrapper blocking touch events to TextInput
-  - Was: `isInteractive={false}` on ChatInput's LiquidGlassWrapper (line 408)
-  - Now: `isInteractive={true}` to allow touch events to pass through glass effect
-  - Impact: Users can now click/tap on the text input field to type messages on iOS 26+ devices
-  - Root cause: expo-glass-effect GlassView with `isInteractive={false}` blocks all touch events from reaching children
-  - Symptom: Text input appeared but was completely unresponsive to taps/clicks on iOS 26+ with Liquid Glass enabled
-  - Scope: Only affected iOS 26+ devices with Liquid Glass support; Android and iOS < 26 were unaffected
-  - File: `src/components/ChatInput.tsx:408`
+- **CRITICAL: ChatInput Completely Unclickable - Three Bugs Fixed**: Text input unresponsive and send button misaligned
+
+  **Bug 1: LiquidGlassWrapper Blocking Touches (iOS 26+ only)**
+  - Was: `isInteractive={false}` on ChatInput's LiquidGlassWrapper
+  - Now: `isInteractive={true}` to allow touch events through glass effect
+  - Scope: Only affected iOS 26+ with Liquid Glass enabled
+
+  **Bug 2: Send Button Positioned Above Container (ALL platforms)**
+  - Was: Minimum height (38px) < touch target (44px iOS, 48px Android)
+  - Calculation: `top = (38 - 44) / 2 = -3px` (NEGATIVE!)
+  - Now: `min = Math.max(naturalMin, touchTarget)` ensures min >= 44px
+  - Impact: Button now properly vertically centered, no longer floating above input
+  - Root cause: HeightConstraints.min did not account for button size
+
+  **Bug 3: Disabled Button Blocking Input Touches (ALL platforms)**
+  - Was: No `pointerEvents` prop, button blocked touches even when disabled
+  - Now: `pointerEvents={canSend ? "auto" : "none"}` allows touches through when disabled
+  - Impact: Users can click empty input field to start typing
+  - Root cause: Absolutely positioned button overlays TextInput right edge, blocked touches when disabled
+
+  **Technical Analysis:**
+  - iOS body lineHeight: 22px
+  - Vertical padding: 16px (8px * 2)
+  - Natural min height: 38px (22 + 16)
+  - Touch target: 44px (iOS HIG minimum)
+  - Button vertical position: `(inputHeight - 44) / 2`
+  - With old min (38px): top = -3px (button above container!)
+  - With new min (44px): top = 0px (button properly aligned)
+
+  Files: `src/components/ChatInput.tsx:90-104,357`
 
 ## [3.0.4] - 2025-10-27
 
