@@ -20,7 +20,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Cleaned up unused styles: entriesScroll, emptyIcon, clearBadge, clearIcon
   - Performance improvement: Removed ScrollView overhead for simple list rendering
   - Impact: Users can now see complete DNS query lifecycle without content clipping
-
 - **CRITICAL: DNS Sanitization Parity Across JS & Native Pipelines**
   - Unicode inputs with accents/diacritics now normalize consistently across JS, Swift, and Java implementations using NFKD decomposition plus combining-mark stripping
   - Tightened sanitization guard rails: punctuation- or emoji-only messages now fail fast with “Message must contain at least one letter or number after sanitization”

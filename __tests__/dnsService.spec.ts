@@ -57,6 +57,20 @@ describe("DNS Service helpers", () => {
       expect(sanitized).toBe("hello-dns-world");
     });
 
+    it("folds common diacritics into ASCII-safe output", () => {
+      const sanitized = sanitizeDNSMessage("ÁÉÍÓÚ ç ã");
+      expect(sanitized).toBe("aeiou-c-a");
+    });
+
+    it("rejects inputs that lose all content after sanitization", () => {
+      expect(() => sanitizeDNSMessage("!!!")).toThrow(
+        "Message must contain at least one letter or number after sanitization",
+      );
+      expect(() => sanitizeDNSMessage("🙂🙂")).toThrow(
+        "Message must contain at least one letter or number after sanitization",
+      );
+    });
+
     it("throws when sanitized label exceeds DNS length limit", () => {
       const long = "a".repeat(64);
       expect(() => sanitizeDNSMessage(long)).toThrow(
