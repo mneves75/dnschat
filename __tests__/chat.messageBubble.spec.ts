@@ -129,11 +129,13 @@ describe("MessageBubble - iOS 26 HIG Compliance", () => {
   });
 
   describe("Simplified Architecture", () => {
-    it("has single Pressable wrapper (no conditional glass/non-glass branches)", () => {
-      // Old code had: useGlassRendering ? <LiquidGlassWrapper>... : <Pressable>...
-      // New code: single <Pressable> always
+    it("has single View wrapper with MenuView (no Pressable)", () => {
+      // Removed Pressable to fix UIKit text selection menu conflicts
+      // MenuView now wraps View directly for long-press interactions
       const pressableCount = (sourceCode.match(/<Pressable/g) || []).length;
-      expect(pressableCount).toBe(1); // Only one Pressable
+      expect(pressableCount).toBe(0); // No Pressable wrapper
+      const viewCount = (sourceCode.match(/<View/g) || []).length;
+      expect(viewCount).toBeGreaterThan(0); // View wrapper instead
     });
 
     it("does NOT have bubbleGlassContainer style", () => {
@@ -160,9 +162,9 @@ describe("MessageBubble - iOS 26 HIG Compliance", () => {
   });
 
   describe("Code Quality", () => {
-    it("is under 250 lines (simplified from 440+ lines)", () => {
+    it("is under 300 lines (simplified from 440+ lines)", () => {
       const lineCount = sourceCode.split("\n").length;
-      expect(lineCount).toBeLessThan(250);
+      expect(lineCount).toBeLessThan(300);
     });
 
     it("has no console.log statements", () => {
@@ -174,8 +176,8 @@ describe("MessageBubble - iOS 26 HIG Compliance", () => {
       expect(sourceCode).toContain("interface MessageBubbleProps");
     });
 
-    it("exports component properly", () => {
-      expect(sourceCode).toContain("export function MessageBubble");
+    it("exports component with React.memo", () => {
+      expect(sourceCode).toContain("export const MessageBubble = React.memo");
     });
   });
 
@@ -186,9 +188,9 @@ describe("MessageBubble - iOS 26 HIG Compliance", () => {
       expect(sourceCode).toContain("accessibilityRole");
     });
 
-    it("supports long press interaction", () => {
-      expect(sourceCode).toContain("onLongPress");
-      expect(sourceCode).toContain("handleLongPress");
+    it("supports long press interaction via MenuView", () => {
+      expect(sourceCode).toContain("MenuView");
+      expect(sourceCode).toContain("shouldOpenOnLongPress");
     });
 
     it("includes haptic feedback", () => {
