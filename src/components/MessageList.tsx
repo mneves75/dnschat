@@ -15,6 +15,7 @@ import { useImessagePalette } from "../ui/theme/imessagePalette";
 import { useTypography } from "../ui/hooks/useTypography";
 import { LiquidGlassSpacing } from "../ui/theme/liquidGlassSpacing";
 import { GlassContainer } from "expo-glass-effect";
+import { LiquidGlassWrapper } from "./LiquidGlassWrapper";
 
 interface MessageListProps {
   messages: Message[];
@@ -125,32 +126,65 @@ export function MessageList({
 
   const renderEmptyComponent = () => (
     <View style={styles.emptyContainer}>
-      {/* iOS 26 HIG: Empty state following Apple's design patterns
-          - title2 typography (22pt, 600 weight, -0.26pt letter spacing)
-          - textPrimary color (adapts to light/dark/high-contrast automatically)
-          PATTERN: Style array combines static styles with dynamic theme values
-          [static layout, dynamic typography, dynamic color] ensures proper override order */}
-      <Text
-        style={[
-          styles.emptyText,
-          typography.title2,
-          { color: palette.textPrimary },
-        ]}
-      >
-        Start a conversation!
-      </Text>
-      {/* subheadline typography (15pt, 400 weight, -0.5pt letter spacing)
-          textSecondary provides reduced opacity for visual hierarchy
-          0.8 opacity applied in static styles for additional subtlety */}
-      <Text
-        style={[
-          styles.emptySubtext,
-          typography.subheadline,
-          { color: palette.textSecondary },
-        ]}
-      >
-        Send a message to begin chatting with the AI assistant.
-      </Text>
+      {/* iOS 26 HIG: Empty state in glass card for subtle depth */}
+      {Platform.OS === "ios" ? (
+        <LiquidGlassWrapper
+          variant="regular"
+          shape="roundedRect"
+          cornerRadius={20}
+          isInteractive={false}
+          style={styles.emptyGlassCard}
+        >
+          {/* iOS 26 HIG: Empty state following Apple's design patterns
+              - title2 typography (22pt, 600 weight, -0.26pt letter spacing)
+              - textPrimary color (adapts to light/dark/high-contrast automatically)
+              PATTERN: Style array combines static styles with dynamic theme values
+              [static layout, dynamic typography, dynamic color] ensures proper override order */}
+          <Text
+            style={[
+              styles.emptyText,
+              typography.title2,
+              { color: palette.textPrimary },
+            ]}
+          >
+            Start a conversation!
+          </Text>
+          {/* subheadline typography (15pt, 400 weight, -0.5pt letter spacing)
+              textSecondary provides reduced opacity for visual hierarchy
+              0.8 opacity applied in static styles for additional subtlety */}
+          <Text
+            style={[
+              styles.emptySubtext,
+              typography.subheadline,
+              { color: palette.textSecondary },
+            ]}
+          >
+            Send a message to begin chatting with the AI assistant.
+          </Text>
+        </LiquidGlassWrapper>
+      ) : (
+        // Android/Web: Standard view without glass
+        <View style={styles.emptyNonGlassCard}>
+          <Text
+            style={[
+              styles.emptyText,
+              typography.title2,
+              { color: palette.textPrimary },
+            ]}
+          >
+            Start a conversation!
+          </Text>
+          <Text
+            style={[
+              styles.emptySubtext,
+              typography.subheadline,
+              { color: palette.textSecondary },
+            ]}
+          >
+            Send a message to begin chatting with the AI assistant.
+          </Text>
+        </View>
+      )}
     </View>
   );
 
@@ -225,6 +259,18 @@ const styles = StyleSheet.create({
     // Large horizontal padding for empty state provides comfortable reading width
     // Prevents text from spanning full screen width on larger devices
     paddingHorizontal: LiquidGlassSpacing.xl,
+  },
+  // iOS 26 HIG: Glass card for empty state on iOS
+  emptyGlassCard: {
+    paddingHorizontal: LiquidGlassSpacing.lg,
+    paddingVertical: LiquidGlassSpacing.lg,
+  },
+  // Android/Web: Standard card with subtle background
+  emptyNonGlassCard: {
+    paddingHorizontal: LiquidGlassSpacing.lg,
+    paddingVertical: LiquidGlassSpacing.lg,
+    backgroundColor: "rgba(242, 242, 247, 0.5)", // Subtle background
+    borderRadius: 20,
   },
   emptyText: {
     // PATTERN: Static layout properties in StyleSheet, dynamic theme properties inline
