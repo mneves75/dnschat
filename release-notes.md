@@ -52,6 +52,19 @@ DNSChat v3.0.1 brings comprehensive VoiceOver accessibility, critical bug fixes,
 ### What Was Fixed
 
 **Critical Bug Fixes**:
+- **Logs Tab Query Steps Clipping**: Fixed nested ScrollView preventing full content display in expanded log entries
+  - Query step entries ("Etapas da consulta") no longer clip content
+  - Replaced nested ScrollView with simple View component for proper parent scrolling
+  - Added hairline dividers between query steps for improved visual hierarchy
+  - Removed emoji usage (search icon, trash icon) per project guidelines
+  - All DNS query lifecycle steps now fully visible when log expanded
+  - iOS 26 HIG compliant: Follows "Keep item text succinct" guideline
+- **DNS Sanitization Parity**: Unicode-rich prompts now sanitize identically across React Native, Swift, and Java layers
+  - Added NFKD decomposition and combining-mark stripping to the shared sanitizer plus both native bridges
+  - Hardened ChatContext to validate before persisting so bad input no longer leaves orphaned placeholder messages
+  - CLI smoke tests and the DNS harness reuse the same sanitizer to eliminate tooling drift
+  - Accent-only prompts (e.g., “Olá São Paulo”) now resolve as `ola-sao-paulo` end-to-end
+  - Introduced regression tests in JS and native suites to keep the platforms aligned
 - **Memory Leak in WelcomeScreen**: Fixed animation continuing after component unmount with proper cleanup
 - **Race Condition in FirstChatScreen**: Implemented `isMountedRef` pattern to prevent setState on unmounted component
 - **Hardcoded Transparent Color**: Replaced hardcoded strings with `palette.transparent` for semantic consistency

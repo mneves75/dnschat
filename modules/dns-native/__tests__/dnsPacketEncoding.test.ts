@@ -87,4 +87,12 @@ describe("DNS packet compatibility", () => {
       native.parseMultiPartResponse(["1/2:hello", "1/2:hola", "2/2:world"]),
     ).toThrow(/Conflicting content/);
   });
+
+  it("keeps Unicode input DNS-safe by folding diacritics", () => {
+    const label = sanitizeDNSMessage("Água São Paulo");
+    expect(label).toBe("agua-sao-paulo");
+
+    const fqdn = composeDNSQueryName(label, "ch.at");
+    expect(fqdn).toBe("agua-sao-paulo.ch.at");
+  });
 });

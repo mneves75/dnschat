@@ -49,4 +49,12 @@ describe('DNS pipeline integration', () => {
       'Message too long (maximum 120 characters before sanitization)',
     );
   });
+
+  it('folds accented input into ASCII-safe DNS labels', () => {
+    const label = sanitizeDNSMessage('Olá São Paulo');
+    expect(label).toBe('ola-sao-paulo');
+
+    const fqdn = composeDNSQueryName(label, 'ch.at');
+    expect(fqdn).toBe('ola-sao-paulo.ch.at');
+  });
 });

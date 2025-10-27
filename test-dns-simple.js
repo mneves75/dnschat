@@ -45,14 +45,17 @@ function sanitizeMessage(message) {
     throw new Error('Message contains control characters that cannot be encoded safely');
   }
 
-  let result = trimmed.toLowerCase();
+  let result = trimmed.normalize('NFKD').replace(/[\u0300-\u036f]/g, '');
+  result = result.toLowerCase();
   result = result.replace(/\s+/g, '-');
   result = result.replace(/[^a-z0-9-]/g, '');
   result = result.replace(/-{2,}/g, '-');
   result = result.replace(/^-+|-+$/g, '');
 
   if (!result) {
-    throw new Error('Message cannot be empty after sanitization');
+    throw new Error(
+      'Message must contain at least one letter or number after sanitization',
+    );
   }
 
   if (result.length > 63) {

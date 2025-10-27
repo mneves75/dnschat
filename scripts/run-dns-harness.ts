@@ -153,7 +153,8 @@ function validateMessage(message: string) {
 }
 
 function sanitizeMessageForDns(message: string): string {
-  let result = message.toLowerCase();
+    let result = message.normalize("NFKD").replace(/[\u0300-\u036f]/g, "");
+    result = result.toLowerCase();
   result = result.trim();
   result = result.replace(/\s+/g, '-');
   result = result.replace(/[^a-z0-9-]/g, '');
@@ -161,7 +162,9 @@ function sanitizeMessageForDns(message: string): string {
   result = result.replace(/^-+|-+$/g, '');
 
   if (!result) {
-    throw new Error('Message cannot be empty after sanitization');
+    throw new Error(
+      'Message must contain at least one letter or number after sanitization',
+    );
   }
   if (result.length > HARNESS_DNS_CONSTANTS.MAX_DNS_LABEL_LENGTH) {
     throw new Error(

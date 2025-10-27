@@ -193,12 +193,8 @@ export function sanitizeDNSMessage(message: string): string {
   const sanitized = sanitizeDNSMessageReference(message);
 
   if (!sanitized) {
-    throw new Error('Message cannot be empty after sanitization');
-  }
-
-  if (sanitized.length > DNS_CONSTANTS.MAX_DNS_LABEL_LENGTH) {
     throw new Error(
-      `Message too long for DNS transport (maximum ${DNS_CONSTANTS.MAX_DNS_LABEL_LENGTH} characters after sanitization)`,
+      'Message must contain at least one letter or number after sanitization',
     );
   }
 
