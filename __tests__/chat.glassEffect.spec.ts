@@ -23,14 +23,16 @@ describe("Chat - iOS 26 Liquid Glass Effect Implementation", () => {
       sourceCode = fs.readFileSync(messageBubblePath, "utf8");
     });
 
-    it("imports LiquidGlassWrapper for glass effects", () => {
+    it("imports LiquidGlassWrapper and useLiquidGlassCapabilities for glass effects", () => {
       expect(sourceCode).toContain(
-        'import { LiquidGlassWrapper } from "./LiquidGlassWrapper"'
+        'import { LiquidGlassWrapper, useLiquidGlassCapabilities } from "./LiquidGlassWrapper"'
       );
     });
 
-    it("uses Platform.OS to conditionally render glass on iOS", () => {
-      expect(sourceCode).toContain('Platform.OS === "ios"');
+    it("uses glass availability check to conditionally render glass", () => {
+      expect(sourceCode).toContain("useLiquidGlassCapabilities");
+      expect(sourceCode).toContain("supportsLiquidGlass");
+      expect(sourceCode).toContain("useGlassRendering");
     });
 
     it("wraps bubble content in LiquidGlassWrapper for iOS", () => {
@@ -110,9 +112,9 @@ describe("Chat - iOS 26 Liquid Glass Effect Implementation", () => {
       sourceCode = fs.readFileSync(messageListPath, "utf8");
     });
 
-    it("imports LiquidGlassWrapper for glass effects", () => {
+    it("imports LiquidGlassWrapper and useLiquidGlassCapabilities for glass effects", () => {
       expect(sourceCode).toContain(
-        'import { LiquidGlassWrapper } from "./LiquidGlassWrapper"'
+        'import { LiquidGlassWrapper, useLiquidGlassCapabilities } from "./LiquidGlassWrapper"'
       );
     });
 
@@ -140,20 +142,20 @@ describe("Chat - iOS 26 Liquid Glass Effect Implementation", () => {
       );
     });
 
-    it("conditionally renders glass for iOS with multiple messages", () => {
+    it("conditionally renders glass when available with multiple messages", () => {
       expect(sourceCode).toContain(
-        'if (Platform.OS === "ios" && group.messages.length > 1)'
+        "if (supportsLiquidGlass && group.messages.length > 1)"
       );
     });
 
-    it("wraps empty state in LiquidGlassWrapper for iOS", () => {
+    it("wraps empty state in LiquidGlassWrapper when glass is available", () => {
       const emptyStateStart = sourceCode.indexOf("renderEmptyComponent");
       const emptyStateSection = sourceCode.substring(
         emptyStateStart,
         emptyStateStart + 1500
       );
 
-      expect(emptyStateSection).toContain('Platform.OS === "ios"');
+      expect(emptyStateSection).toContain("supportsLiquidGlass");
       expect(emptyStateSection).toContain("<LiquidGlassWrapper");
       expect(emptyStateSection).toContain('variant="regular"');
       expect(emptyStateSection).toContain("emptyGlassCard");
@@ -181,18 +183,16 @@ describe("Chat - iOS 26 Liquid Glass Effect Implementation", () => {
       sourceCode = fs.readFileSync(chatInputPath, "utf8");
     });
 
-    it("imports LiquidGlassWrapper for glass effects", () => {
+    it("imports LiquidGlassWrapper and useLiquidGlassCapabilities for glass effects", () => {
       expect(sourceCode).toContain(
-        'import { LiquidGlassWrapper } from "./LiquidGlassWrapper"'
+        'import { LiquidGlassWrapper, useLiquidGlassCapabilities } from "./LiquidGlassWrapper"'
       );
     });
 
-    it("uses Platform.OS to conditionally render glass on iOS", () => {
-      const inputSection = sourceCode.substring(
-        sourceCode.indexOf("View style={styles.inputContainer}"),
-        sourceCode.indexOf("View style={styles.inputContainer}") + 2000
-      );
-      expect(inputSection).toContain('Platform.OS === "ios"');
+    it("uses glass availability check to conditionally render glass", () => {
+      expect(sourceCode).toContain("useLiquidGlassCapabilities");
+      expect(sourceCode).toContain("supportsLiquidGlass");
+      expect(sourceCode).toContain("useGlassInput");
     });
 
     it("wraps TextInput in LiquidGlassWrapper for iOS", () => {
@@ -216,16 +216,16 @@ describe("Chat - iOS 26 Liquid Glass Effect Implementation", () => {
 
     it("preserves keyboard interactions with glass wrapper", () => {
       // Glass wrapper is purely visual, TextInput props preserved
-      // Find the iOS conditional rendering section
-      const iosConditionStart = sourceCode.indexOf('Platform.OS === "ios" ? (');
-      const iosConditionEnd = sourceCode.indexOf(') : (', iosConditionStart);
-      const iosSection = sourceCode.substring(iosConditionStart, iosConditionEnd);
+      // Find the glass availability conditional rendering section
+      const glassConditionStart = sourceCode.indexOf('useGlassInput ? (');
+      const glassConditionEnd = sourceCode.indexOf(') : (', glassConditionStart);
+      const glassSection = sourceCode.substring(glassConditionStart, glassConditionEnd);
 
       // Verify TextInput props are preserved inside glass wrapper
-      expect(iosSection).toContain("onChangeText={setMessage}");
-      expect(iosSection).toContain("onSubmitEditing={handleSend}");
-      expect(iosSection).toContain('returnKeyType="send"');
-      expect(iosSection).toContain("ref={textInputRef}");
+      expect(glassSection).toContain("onChangeText={setMessage}");
+      expect(glassSection).toContain("onSubmitEditing={handleSend}");
+      expect(glassSection).toContain('returnKeyType="send"');
+      expect(glassSection).toContain("ref={textInputRef}");
     });
 
     it("preserves haptic feedback with glass wrapper", () => {
@@ -247,8 +247,7 @@ describe("Chat - iOS 26 Liquid Glass Effect Implementation", () => {
     });
 
     it("documents glass wrapper rationale", () => {
-      expect(sourceCode).toContain("iOS 26 HIG: Liquid Glass effect for text input");
-      expect(sourceCode).toContain("Glass wrapper handles background");
+      expect(sourceCode).toContain("iOS 26+ HIG: Liquid Glass effect for text input when available");
     });
   });
 
