@@ -52,21 +52,30 @@ export function MessageBubble({ message }: MessageBubbleProps) {
   const glassVariant = isUser ? "prominent" : "regular";
   const glassTint = hasError ? palette.destructive : (isUser ? palette.accentTint : undefined);
 
-  // iOS 26 HIG: Use semantic colors from palette for all bubble states
+  // BUGFIX: Platform-specific bubble styling to prevent shadow/glass conflicts
+  // iOS: Clean glass rendering without shadows (shadows conflict with native glass)
+  // Non-iOS: Standard styling with shadows and background colors
   const bubbleStyles = [
-    styles.bubble,
-    Platform.OS === "ios" ? styles.bubbleGlass : {
-      backgroundColor: hasError
-        ? palette.destructive
-        : isUser
-          ? palette.accentTint
-          : palette.surface,
-    },
-    {
-      borderBottomRightRadius: isUser ? 6 : getCornerRadius('message'),
-      borderBottomLeftRadius: isUser ? getCornerRadius('message') : 6,
-    },
-  ];
+    styles.bubbleBase,
+    Platform.OS === "ios"
+      ? styles.bubbleGlass
+      : [
+          styles.bubbleShadow,
+          {
+            backgroundColor: hasError
+              ? palette.destructive
+              : isUser
+                ? palette.accentTint
+                : palette.surface,
+          },
+          // BUGFIX: Tail customization only for non-iOS
+          // iOS glass uses uniform corner radius to avoid shape mismatch
+          {
+            borderBottomRightRadius: isUser ? 6 : getCornerRadius('message'),
+            borderBottomLeftRadius: isUser ? getCornerRadius('message') : 6,
+          },
+        ],
+  ].flat().filter(Boolean);
 
   const textStyles = [
     styles.text,
@@ -211,18 +220,25 @@ const styles = StyleSheet.create({
   assistantContainer: {
     alignSelf: "flex-start",
   },
-  bubble: {
+  // BUGFIX: Split bubble styles to prevent shadow/glass conflicts
+  // bubbleBase: Common properties for all platforms
+  // bubbleShadow: Shadow properties ONLY for non-iOS (conflicts with glass on iOS)
+  bubbleBase: {
     paddingHorizontal: LiquidGlassSpacing.md,
     paddingVertical: LiquidGlassSpacing.sm,
     borderRadius: getCornerRadius('message'),
     minWidth: 60,
+    // backgroundColor applied inline from palette (user/assistant/error) for non-iOS
+    // borderBottomLeftRadius/borderBottomRightRadius applied inline based on isUser (non-iOS only)
+  },
+  bubbleShadow: {
+    // CRITICAL: Only applied to non-iOS platforms
+    // On iOS, shadows conflict with native glass rendering causing fuzzy appearance
     shadowColor: "#000000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 3,
     elevation: 2,
-    // backgroundColor applied inline from palette (user/assistant/error) for non-iOS
-    // borderBottomLeftRadius/borderBottomRightRadius applied inline based on isUser
   },
   bubbleGlass: {
     // iOS 26 HIG: Glass wrapper handles background, padding moved to bubblePressable
