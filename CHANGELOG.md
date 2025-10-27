@@ -7,7 +7,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **iOS 26 HIG Liquid Glass Chat Components**: Complete iOS 26 Human Interface Guidelines compliance with native glass effects across all chat UI
+  - **MessageBubble Glass Effects**: Wraps message bubbles in LiquidGlassWrapper for iOS 26+ Liquid Glass rendering
+    - Platform-specific rendering: iOS uses glass with transparent backgrounds, Android/Web use shadows and semantic colors
+    - User messages use "prominent" variant with accentTint, assistant messages use "regular" variant
+    - Error state messages use destructive color tint for visual feedback
+    - Glass variants defined: prominent (user messages), regular (assistant messages), interactive (future use)
+    - Shape support: capsule, rect, roundedRect with customizable corner radius
+  - **Message Grouping Performance Optimization**: Groups consecutive messages by sender to reduce glass element count
+    - Reduces glass element count from 20+ to 5-8 groups (stays within iOS 26 limit of 10 glass elements)
+    - Uses GlassContainer with LiquidGlassSpacing.xxs for morphing animations between messages
+    - Groups only applied on iOS platform, non-iOS renders messages individually for simpler logic
+    - Performance critical: Without grouping, typical 20-message conversation exceeds iOS 26 glass limit
+  - **ChatInput Glass Effect**: TextInput wrapped in LiquidGlassWrapper for iOS 26 native glass rendering
+    - iOS: LiquidGlassWrapper with variant="regular", shape="roundedRect", cornerRadius={18}
+    - Android/Web: Standard TextInput with semi-transparent backgrounds and border styling
+    - Preserves all keyboard interactions: onChangeText, onSubmitEditing, returnKeyType, keyboardAppearance
+    - Preserves haptic feedback: HapticFeedback.medium() on send, HapticFeedback.light() on press
+    - Transparent background and borderWidth: 0 for iOS glass (glass wrapper provides visual structure)
+  - **MessageList Empty State Glass**: Empty state card wrapped in glass effect for visual consistency
+    - iOS: LiquidGlassWrapper with variant="regular", cornerRadius=20, proper padding from LiquidGlassSpacing
+    - Android/Web: Standard View with subtle semi-transparent background (rgba(242, 242, 247, 0.5))
+    - Maintains semantic color usage: palette.textPrimary for title, palette.textSecondary for subtitle
+    - Typography integration: typography.title2 for heading, typography.subheadline for description
+  - **Comprehensive Glass Effect Test Suite**: 34 tests validating glass implementation across all chat components
+    - MessageBubble tests (9): LiquidGlassWrapper import, Platform.OS conditionals, glass wrapper usage, shadow/glass separation, shadow exclusion from iOS, transparent backgrounds, user/assistant variants, error state tinting, documentation comments
+    - MessageList tests (9): LiquidGlassWrapper import, GlassContainer import, message grouping implementation, sender grouping logic, GlassContainer morphing, conditional iOS rendering, empty state glass wrapper, non-glass fallback, performance documentation
+    - ChatInput tests (8): LiquidGlassWrapper import, Platform.OS conditionals, glass wrapper usage, transparent TextInput background, keyboard interaction preservation, haptic feedback preservation, non-glass fallback, documentation comments
+    - LiquidGlassWrapper integration (6): expo-glass-effect imports, glass availability checking, reduce transparency accessibility, fallback styles, glass variants support, glass shapes support
+    - Platform consistency (2): MessageBubble glass API consistency, shared wrapper component across MessageList and ChatInput
+    - All 34 tests passing, full test suite: 483 tests (449 existing + 34 new glass tests)
+
 ### Fixed
+
+- **CRITICAL: Shadow/Glass Conflicts on iOS**: Fixed shadow properties conflicting with native iOS glass rendering causing fuzzy appearance
+  - Split bubble styles into bubbleBase (common properties) and bubbleShadow (non-iOS only)
+  - iOS glass path: NO shadows, transparent background, uniform corner radius via Platform.OS === "ios" conditional
+  - Non-iOS path: shadows (shadowColor, shadowOpacity, shadowRadius, elevation), backgroundColor, tail customization
+  - Pattern: `Platform.OS === "ios" ? styles.bubbleGlass : [styles.bubbleShadow, ...]`
+  - Eliminates visual artifacts from React Native shadow system interfering with UIGlassEffect rendering
+  - Documented in comments: "BUGFIX: Platform-specific bubble styling to prevent shadow/glass conflicts"
+  - Border radius consistency: iOS uses uniform getCornerRadius('message'), non-iOS applies custom tail radii (6px corners for message tails)
 
 - **Onboarding Internationalization**: All onboarding screens now properly respect user's system language (pt-BR/en-US)
   - Fixed WelcomeScreen, FirstChatScreen, DNSMagicScreen, NetworkSetupScreen, and FeaturesScreen to use i18n translation system
@@ -16,8 +58,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Fixed pt-BR translation type safety issue (removed strict literal type enforcement that prevented translations)
   - Added 56 integration tests to validate translation coverage and locale switching
   - Users with pt-BR device language now see onboarding in Portuguese instead of English
-
-### Added
 
 - **Screenshot Automation**: Fastlane + AXe CLI automation for App Store screenshots
   - Automated generation of all 52 required App Store screenshots (26 light + 26 dark mode)
