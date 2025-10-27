@@ -20,6 +20,11 @@ export interface IMessagePalette {
   warning: string;
   separator: string;
   transparent: string;
+  // iMessage-style message bubble colors (iOS 26 HIG content layer)
+  userBubble: string;
+  assistantBubble: string;
+  bubbleTextOnBlue: string;
+  bubbleTextOnGray: string;
 }
 
 export const IMESSAGE_LIGHT: IMessagePalette = {
@@ -41,6 +46,11 @@ export const IMESSAGE_LIGHT: IMessagePalette = {
   warning: "#FF9500",
   separator: "rgba(60,60,67,0.15)",
   transparent: "transparent",
+  // iMessage-style bubble colors (solid backgrounds, no glass)
+  userBubble: "#007AFF", // iOS systemBlue
+  assistantBubble: "#E5E5EA", // iOS systemGray5
+  bubbleTextOnBlue: "#FFFFFF", // White text on blue/red bubbles
+  bubbleTextOnGray: "#000000", // Dark text on light gray bubbles
 };
 
 export const IMESSAGE_DARK: IMessagePalette = {
@@ -62,6 +72,11 @@ export const IMESSAGE_DARK: IMessagePalette = {
   warning: "#FF9F0A",
   separator: "rgba(84,84,88,0.6)",
   transparent: "transparent",
+  // iMessage-style bubble colors (solid backgrounds, no glass)
+  userBubble: "#0A84FF", // iOS systemBlue dark mode
+  assistantBubble: "#2C2C2E", // iOS systemGray6 dark mode
+  bubbleTextOnBlue: "#FFFFFF", // White text on blue/red bubbles
+  bubbleTextOnGray: "#FFFFFF", // White text on dark gray bubbles in dark mode
 };
 
 export interface GetPaletteOptions {
