@@ -597,6 +597,7 @@ export const enUS = {
       sendLabel: "Send message",
       sendHint: "Double tap to send your message",
       sendingLabel: "Sending message",
+      charactersRemaining: "{{count}} characters remaining",
     },
     dnsLogViewer: {
       empty: "No DNS logs yet",
