@@ -231,6 +231,10 @@ export const enUS = {
       errorAlertTitle: "Error",
       errorAlertDismiss: "OK",
       placeholder: "Ask me anything...",
+      messageActions: {
+        copy: "Copy",
+        share: "Share",
+      },
     },
     chatInput: {
       placeholder: "Message...",

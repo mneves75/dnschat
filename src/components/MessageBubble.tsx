@@ -1,49 +1,69 @@
-import React from "react";
+import React, { useMemo } from "react";
 import {
   View,
-  Text,
   StyleSheet,
   useColorScheme,
-  Pressable,
-  Alert,
   Platform,
 } from "react-native";
-import { format } from "date-fns";
-import Markdown from "react-native-markdown-display";
+import { MenuView } from '@react-native-menu/menu';
+import type { NativeActionEvent } from '@react-native-menu/menu';
 import { Message } from "../types/chat";
 import { useTypography } from "../ui/hooks/useTypography";
 import { useImessagePalette } from "../ui/theme/imessagePalette";
 import { LiquidGlassSpacing, getCornerRadius } from "../ui/theme/liquidGlassSpacing";
 import { HapticFeedback } from "../utils/haptics";
+import { ClipboardService } from "../services/ClipboardService";
+import { ShareService } from "../services/ShareService";
+import { MessageContent } from "./MessageContent";
+import { useTranslation } from "../i18n";
 
 interface MessageBubbleProps {
   message: Message;
 }
 
-export function MessageBubble({ message }: MessageBubbleProps) {
+/**
+ * MessageBubble Component (Internal)
+ *
+ * Displays a single message bubble with context menu for Copy/Share actions.
+ * Wrapped with React.memo below for performance optimization.
+ */
+function MessageBubbleComponent({ message }: MessageBubbleProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
   const typography = useTypography();
   const palette = useImessagePalette();
+  const { t } = useTranslation();
 
   const isUser = message.role === "user";
   const isLoading = message.status === "sending";
   const hasError = message.status === "error";
   const messageCornerRadius = getCornerRadius('message');
 
-  const handleLongPress = () => {
-    HapticFeedback.medium();
+  /**
+   * Handle context menu action selection
+   *
+   * TRICKY: MenuView's onPressAction uses NativeActionEvent type from @react-native-menu/menu.
+   * Action ID is in nativeEvent.event (not nativeEvent.actionKey).
+   * We use 'copy' and 'share' as action IDs and handle them in this function.
+   */
+  const handleMenuPress = async (event: NativeActionEvent) => {
+    const actionKey = event.nativeEvent.event;
 
-    Alert.alert("Copy Message", "Do you want to copy this message?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Copy",
-        onPress: () => {
-          // In a real app, you'd use Clipboard from '@react-native-clipboard/clipboard'
-          HapticFeedback.light();
-        },
-      },
-    ]);
+    switch (actionKey) {
+      case 'copy':
+        // Copy message content to clipboard
+        await ClipboardService.copy(message.content);
+        break;
+
+      case 'share':
+        // Share message via native share sheet
+        await ShareService.shareMessage(message.content, message.timestamp);
+        break;
+
+      default:
+        // Unknown action, silently ignore
+        break;
+    }
   };
 
   // iOS 26 HIG: Message bubbles are CONTENT, not controls
@@ -111,6 +131,59 @@ export function MessageBubble({ message }: MessageBubbleProps) {
     },
   };
 
+  /**
+   * Context menu actions
+   *
+   * IMPORTANT: Disable context menu for messages with status="sending"
+   * to prevent user from interacting with incomplete messages.
+   *
+   * iOS: Uses SF Symbols for icons (doc.on.doc, square.and.arrow.up)
+   * Android: Menu items show without icons (MenuView doesn't support Android icons in this version)
+   *
+   * PERFORMANCE: useMemo prevents recreating array on every render.
+   * Depends on t() for translations, re-computed when locale changes.
+   */
+  const menuActions = useMemo(() => [
+    {
+      id: 'copy',
+      title: t('screen.chat.messageActions.copy'),
+      image: Platform.OS === 'ios' ? 'doc.on.doc' : undefined,
+    },
+    {
+      id: 'share',
+      title: t('screen.chat.messageActions.share'),
+      image: Platform.OS === 'ios' ? 'square.and.arrow.up' : undefined,
+    },
+  ], [t]); // Depends on t for locale changes
+
+  /**
+   * Render message content
+   *
+   * CRITICAL: Extracted to MessageContent component to eliminate code duplication.
+   * Previously, message content was duplicated in two branches (loading vs non-loading).
+   * Now, content rendering is in one place, wrapped conditionally by MenuView.
+   */
+  const messageContentProps = {
+    message,
+    textColor,
+    textStyles,
+    markdownStyles,
+    palette,
+    typography,
+  };
+
+  const content = (
+    <View
+      style={bubbleStyles}
+      accessible={true}
+      accessibilityRole="text"
+      accessibilityLabel={`${isUser ? 'Your' : 'Assistant'} message: ${message.content}`}
+      accessibilityHint={isLoading ? "Message is loading" : "Long press to show copy and share options"}
+    >
+      <MessageContent {...messageContentProps} />
+    </View>
+  );
+
   return (
     <View
       style={[
@@ -118,59 +191,68 @@ export function MessageBubble({ message }: MessageBubbleProps) {
         isUser ? styles.userContainer : styles.assistantContainer,
       ]}
     >
-      <Pressable
-        onLongPress={handleLongPress}
-        style={bubbleStyles}
-        accessible={true}
-        accessibilityRole="text"
-        accessibilityLabel={`${isUser ? 'Your' : 'Assistant'} message: ${message.content}`}
-        accessibilityHint="Long press to copy message"
-      >
-        {isUser ? (
-          <Text style={[textStyles, typography.body]}>{message.content}</Text>
-        ) : (
-          <Markdown style={markdownStyles}>{message.content}</Markdown>
-        )}
-
-        {isLoading && (
-          <View style={styles.loadingIndicator}>
-            <Text
-              style={[
-                styles.loadingText,
-                typography.body,
-                { color: textColor },
-              ]}
-            >
-              ●●●
-            </Text>
-          </View>
-        )}
-
-        <View style={styles.messageInfo}>
-          <Text
-            style={[
-              styles.timestamp,
-              typography.caption1,
-              { color: textColor, opacity: 0.6 },
-            ]}
-          >
-            {format(message.timestamp, "HH:mm")}
-          </Text>
-
-          {hasError && (
-            <Text
-              style={[styles.errorIndicator, { backgroundColor: palette.destructive, color: palette.bubbleTextOnBlue }]}
-              accessible={true}
-              accessibilityLabel="Message failed to send"
-            >
-              !
-            </Text>
-          )}
-        </View>
-      </Pressable>
+      {/* Conditionally wrap in MenuView for non-loading messages */}
+      {/* IMPORTANT: MenuView only shown for sent/error messages, not sending */}
+      {!isLoading ? (
+        <MenuView
+          onPressAction={handleMenuPress}
+          actions={menuActions}
+          shouldOpenOnLongPress={true}
+        >
+          {content}
+        </MenuView>
+      ) : (
+        content
+      )}
     </View>
   );
 }
+
+/**
+ * Custom comparison function for React.memo
+ *
+ * PERFORMANCE: Prevents unnecessary re-renders when message hasn't changed.
+ * Returns true if props are equal (skip re-render), false if different (re-render).
+ *
+ * IMPORTANT: With React 19.1 Compiler auto-memoization, this might be redundant
+ * in production. However, explicit memoization with custom comparison provides:
+ * 1. Clear intent for code readers
+ * 2. Guaranteed optimization even if Compiler disabled
+ * 3. Custom logic for deep equality checks on message fields
+ *
+ * TRICKY: We deep-compare message fields instead of reference equality because:
+ * - ChatContext creates new message objects when updating (immutable pattern)
+ * - Reference equality would always fail, causing unnecessary re-renders
+ * - Deep comparison catches actual content changes while skipping cosmetic updates
+ */
+function arePropsEqual(
+  prevProps: MessageBubbleProps,
+  nextProps: MessageBubbleProps
+): boolean {
+  const prev = prevProps.message;
+  const next = nextProps.message;
+
+  // Compare all message fields that affect rendering
+  return (
+    prev.id === next.id &&
+    prev.role === next.role &&
+    prev.content === next.content &&
+    prev.status === next.status &&
+    prev.timestamp.getTime() === next.timestamp.getTime()
+  );
+}
+
+/**
+ * Memoized MessageBubble Component
+ *
+ * PERFORMANCE: React.memo with custom comparison prevents re-renders when:
+ * - Other messages in the list change
+ * - Parent component re-renders
+ * - Unrelated context values change
+ *
+ * Only re-renders when THIS specific message's fields change.
+ */
+export const MessageBubble = React.memo(MessageBubbleComponent, arePropsEqual);
 
 const styles = StyleSheet.create({
   container: {
@@ -212,33 +294,5 @@ const styles = StyleSheet.create({
   },
   text: {
     // Typography and color applied inline from palette
-  },
-  messageInfo: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginTop: LiquidGlassSpacing.xxs,
-  },
-  timestamp: {
-    marginTop: 2,
-    // Color and opacity applied inline from palette
-  },
-  errorIndicator: {
-    fontSize: 12,
-    fontWeight: "bold",
-    // color and backgroundColor applied inline from palette
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    textAlign: "center",
-    lineHeight: 16,
-  },
-  loadingIndicator: {
-    marginTop: LiquidGlassSpacing.xxs,
-  },
-  loadingText: {
-    opacity: 0.6,
-    textAlign: "center",
-    // Color applied inline from palette
   },
 });

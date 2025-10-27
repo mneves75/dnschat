@@ -7,9 +7,58 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **UIKit Text Selection Menu Conflict**: Fixed iOS native text selection menu interfering with custom context menu
+  - Problem: Long-press on message bubbles triggered UIKit's UITextContextMenuInteraction.TextSelectionMenu, preventing custom Copy/Share menu from appearing
+  - Logs showed: "did not have performable commands and/or actions; ignoring present"
+  - Solution: Added `selectable={false}` to all Text components in MessageContent.tsx (message text, loading indicator, timestamp, error indicator)
+  - Architecture cleanup: Removed redundant Pressable wrapper from MessageBubble.tsx, replaced with View component
+  - MenuView now handles touch events directly without conflict from native text selection
+  - Impact: Context menu with Copy/Share actions now works reliably on long-press
+
+- **CRITICAL: Message Bubbles Now Follow iOS 26 HIG (Removed Liquid Glass Content Layer Violation)**: Complete architectural refactor to align with Apple's Human Interface Guidelines
+  - **Root Issue**: Message bubbles were incorrectly using Liquid Glass effects, violating iOS 26 HIG guidance: "Don't use Liquid Glass in the content layer. Liquid Glass works best when it provides a clear distinction between interactive elements and content."
+  - **What Changed**:
+    - Message bubbles are now simple solid-colored backgrounds (iMessage-style), NOT glass effects
+    - Removed LiquidGlassWrapper from MessageBubble.tsx entirely (content layer violation)
+    - Removed complex overlay layers (tint/highlight/stroke) that added unnecessary visual artifacts
+    - Simplified component from 440+ lines to 244 lines (44% reduction)
+    - Removed all glass-related logic: useLiquidGlassCapabilities, useGlassRendering, bubbleTone system
+  - **New iMessage-Style Colors** (added to imessagePalette.ts):
+    - Light Mode: User bubbles #007AFF (iOS systemBlue), Assistant bubbles #E5E5EA (iOS systemGray5)
+    - Dark Mode: User bubbles #0A84FF, Assistant bubbles #2C2C2E (iOS systemGray6)
+    - Text colors: White on blue/red bubbles, dark/light on gray bubbles (mode-adaptive)
+  - **iOS Standard Materials** (shadows for depth, not glass):
+    - User/error bubbles: Prominent shadow (0.15 opacity, 4px radius)
+    - Assistant bubbles: Subtle shadow (0.08 opacity, 2px radius)
+  - **Benefits**:
+    - HIG compliant: Message bubbles correctly use solid backgrounds (content layer)
+    - Matches real iMessage appearance: Simple, clean, no visual artifacts
+    - Better performance: No glass rendering overhead for content
+    - Simpler codebase: 44% fewer lines, easier to maintain
+    - Proper layer hierarchy: Glass reserved for controls/navigation, solid colors for content
+  - **Test Suite Updated**: Replaced 32 glass tests with 31 HIG compliance tests
+    - All tests verify NO glass usage in message bubbles
+    - Tests verify solid backgrounds with proper iMessage colors
+    - Tests verify standard iOS shadows (not glass) for depth
+    - Regression prevention: Tests fail if glass reintroduced
+    - All 481 tests passing (30 test suites)
+
+### Removed
+
+- **Reply Functionality**: Removed reply-to-message feature from context menu
+  - Context menu now shows only Copy and Share actions (reply removed per user request)
+  - Deleted ReplyPreview.tsx component
+  - Removed reply state from ChatContext (replyingTo, setReplyingTo, clearReply)
+  - Removed replyToId field from Message type and ChatContextType
+  - Removed reply translations from i18n files (en-US, pt-BR)
+  - Simplified message interaction model focusing on core copy/share actions
+  - Impact: Cleaner UI with focused context menu actions
+
 ### Added
 
-- **iOS 26 HIG Liquid Glass Chat Components**: Complete iOS 26 Human Interface Guidelines compliance with native glass effects across all chat UI
+- **iOS 26 HIG Liquid Glass Chat Components** (DEPRECATED - See Fixed section above): Previous implementation violating HIG by using glass in content layer
   - **MessageBubble Glass Effects**: Wraps message bubbles in LiquidGlassWrapper for iOS 26+ Liquid Glass rendering
     - Platform-specific rendering: iOS uses glass with transparent backgrounds, Android/Web use shadows and semantic colors
     - User messages use "prominent" variant with accentTint, assistant messages use "regular" variant

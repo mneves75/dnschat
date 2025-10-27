@@ -21,8 +21,7 @@ export function Chat() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
   const palette = useImessagePalette();
-  const { currentChat, isLoading, error, sendMessage, clearError, createChat } =
-    useChat();
+  const { currentChat, isLoading, error, sendMessage, clearError, createChat } = useChat();
   const { t } = useTranslation();
   const navigation = useNavigation<any>();
   useLayoutEffect(() => {

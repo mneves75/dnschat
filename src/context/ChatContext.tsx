@@ -9,7 +9,7 @@ import React, {
 import uuid from "react-native-uuid";
 import { Chat, Message, ChatContextType } from "../types/chat";
 import { StorageService } from "../services/storageService";
-import { DNSService } from "../services/dnsService";
+import { DNSService, sanitizeDNSMessage } from "../services/dnsService";
 import { useSettings } from "./SettingsContext";
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -104,6 +104,21 @@ export function ChatProvider({ children }: ChatProviderProps) {
     if (!currentChat) {
       console.error('❌ [ChatContext] No active chat selected');
       setError("No active chat selected");
+      return;
+    }
+
+    try {
+      sanitizeDNSMessage(content);
+    } catch (validationError) {
+      const errorMessage =
+        validationError instanceof Error
+          ? validationError.message
+          : "Failed to send message";
+      console.error('❌ [ChatContext] Message validation failed:', {
+        error: errorMessage,
+        stack: validationError instanceof Error ? validationError.stack : undefined,
+      });
+      setError(errorMessage);
       return;
     }
 

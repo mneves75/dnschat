@@ -231,6 +231,10 @@ export const ptBR = {
       errorAlertTitle: "Erro",
       errorAlertDismiss: "OK",
       placeholder: "Pergunte qualquer coisa...",
+      messageActions: {
+        copy: "Copiar",
+        share: "Compartilhar",
+      },
     },
     chatInput: {
       placeholder: "Mensagem...",
