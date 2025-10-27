@@ -16,11 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Error state messages use destructive color tint for visual feedback
     - Glass variants defined: prominent (user messages), regular (assistant messages), interactive (future use)
     - Shape support: capsule, rect, roundedRect with customizable corner radius
-  - **Message Grouping Performance Optimization**: Groups consecutive messages by sender to reduce glass element count
-    - Reduces glass element count from 20+ to 5-8 groups (stays within iOS 26 limit of 10 glass elements)
-    - Uses GlassContainer with LiquidGlassSpacing.xxs for morphing animations between messages
-    - Groups only applied on iOS platform, non-iOS renders messages individually for simpler logic
-    - Performance critical: Without grouping, typical 20-message conversation exceeds iOS 26 glass limit
+    - Clean single-layer architecture: Each MessageBubble handles its own glass effect independently
   - **ChatInput Glass Effect**: TextInput wrapped in LiquidGlassWrapper for iOS 26 native glass rendering
     - iOS: LiquidGlassWrapper with variant="regular", shape="roundedRect", cornerRadius={18}
     - Android/Web: Standard TextInput with semi-transparent backgrounds and border styling
@@ -32,15 +28,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Android/Web: Standard View with subtle semi-transparent background (rgba(242, 242, 247, 0.5))
     - Maintains semantic color usage: palette.textPrimary for title, palette.textSecondary for subtitle
     - Typography integration: typography.title2 for heading, typography.subheadline for description
-  - **Comprehensive Glass Effect Test Suite**: 34 tests validating glass implementation across all chat components
-    - MessageBubble tests (9): LiquidGlassWrapper import, Platform.OS conditionals, glass wrapper usage, shadow/glass separation, shadow exclusion from iOS, transparent backgrounds, user/assistant variants, error state tinting, documentation comments
-    - MessageList tests (9): LiquidGlassWrapper import, GlassContainer import, message grouping implementation, sender grouping logic, GlassContainer morphing, conditional iOS rendering, empty state glass wrapper, non-glass fallback, performance documentation
+  - **Comprehensive Glass Effect Test Suite**: 31 tests validating glass implementation across all chat components
+    - MessageBubble tests (9): LiquidGlassWrapper import, Platform.OS conditionals, glass wrapper usage, shadow/glass separation, shadow exclusion from glass platforms, glass container with NO appearance styles, user/assistant variants, error state tinting, documentation comments
+    - MessageList tests (6): LiquidGlassWrapper import, NO GlassContainer import (removed), renders messages individually without grouping, empty state glass wrapper, non-glass fallback, FlatList efficiency
     - ChatInput tests (8): LiquidGlassWrapper import, Platform.OS conditionals, glass wrapper usage, transparent TextInput background, keyboard interaction preservation, haptic feedback preservation, non-glass fallback, documentation comments
     - LiquidGlassWrapper integration (6): expo-glass-effect imports, glass availability checking, reduce transparency accessibility, fallback styles, glass variants support, glass shapes support
     - Platform consistency (2): MessageBubble glass API consistency, shared wrapper component across MessageList and ChatInput
-    - All 34 tests passing, full test suite: 483 tests (449 existing + 34 new glass tests)
+    - All 31 tests passing, full test suite: 481 tests passing (450 existing + 31 glass tests)
 
 ### Fixed
+
+- **CRITICAL: Glass Visual Artifacts (Fuzzy Rectangles, Leaks, Border Issues)**: Fixed multiple glass layer visual artifacts on iOS 26
+  - Problems resolved:
+    1. **Triple glass layer architecture** created outer visible rectangles and visual conflicts
+    2. **GlassContainer** created unwanted "central rectangle" around grouped messages
+    3. **Bottom leak** from glassMessageArea margin extending too far down
+    4. **User message border artifacts** in light mode from style prop conflicts
+    5. **Style conflicts** between bubbleBase padding/borderRadius and GlassView native rendering
+  - Architecture simplification:
+    - Before: Chat.LiquidGlassWrapper -> MessageList -> GlassContainer -> MessageBubble.LiquidGlassWrapper (triple layer)
+    - After: Chat -> MessageList -> MessageBubble.LiquidGlassWrapper (single clean layer)
+  - Changes:
+    - Chat.tsx: Removed outer LiquidGlassWrapper around MessageList, removed outer wrapper around ChatInput
+    - MessageList.tsx: Removed GlassContainer and message grouping logic, each message renders individually
+    - MessageBubble.tsx: Created bubbleGlassContainer with ONLY layout properties (minWidth), NO appearance properties
+    - MessageBubble.tsx: cornerRadius handled by LiquidGlassWrapper prop, padding handled by bubblePressable
+    - Tests: Updated 31 glass tests + 1 MessageList test to reflect simplified architecture
+  - Technical details:
+    - bubbleGlassContainer has NO padding, NO borderRadius, NO backgroundColor (all handled by wrapper/pressable/GlassView)
+    - LiquidGlassWrapper cornerRadius prop handles border radius via native UIGlassEffect
+    - bubblePressable provides content padding inside glass wrapper
+    - Removed all margin from KeyboardAvoidingView, using padding instead to prevent bottom leak
+  - Result: Clean glass rendering with no fuzzy rectangles, no central rectangle, no bottom leak, uniform borders
+  - Resolves Portuguese user feedback about visual artifacts on iOS 26
+  - All 481 tests passing
 
 - **CRITICAL: Glass Availability Fallback Conflicts**: Fixed fuzzy appearance when glass effects unavailable (iOS < 26 or reduced transparency mode)
   - Root cause: LiquidGlassWrapper's fallback shadows conflicted with transparent backgrounds in component style props
