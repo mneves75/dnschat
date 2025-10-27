@@ -31,6 +31,7 @@ import { TrashIcon } from "../../components/icons/TrashIcon";
 import { PlusIcon } from "../../components/icons/PlusIcon";
 import { formatDistanceToNow } from "date-fns";
 import { useTranslation } from "../../i18n";
+import { useImessagePalette } from "../../ui/theme/imessagePalette";
 
 // ==================================================================================
 // TYPES
@@ -60,6 +61,7 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
 }) => {
   const colorScheme = useColorScheme();
   const { t } = useTranslation();
+  const palette = useImessagePalette();
   const actionSheet = useGlassBottomSheet();
   const [isPressed, setIsPressed] = React.useState(false);
 
@@ -84,13 +86,16 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
     actionSheet.show();
   }, [actionSheet]);
 
+  // iOS 26 HIG: Chat list items are CONTENT, not controls
+  // Use solid backgrounds (standard materials), NOT Liquid Glass
+  // Real iMessage uses solid backgrounds for chat list items
   const ChatContent = (
-    <LiquidGlassWrapper
-      variant={isPressed ? "interactive" : "regular"}
-      shape="roundedRect"
-      cornerRadius={12}
-      isInteractive={true}
-      style={[styles.chatItemContainer, isPressed && styles.chatItemPressed]}
+    <View
+      style={[
+        styles.chatItemContainer,
+        { backgroundColor: palette.surface },
+        isPressed && { backgroundColor: palette.highlighted },
+      ]}
     >
       <View style={styles.chatItemContent}>
         {/* Chat Info */}
@@ -98,7 +103,7 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
           <Text
             style={[
               styles.chatTitle,
-              { color: isDark ? "#FFFFFF" : "#000000" },
+              { color: palette.textPrimary },
             ]}
           >
             {chat.title}
@@ -108,7 +113,7 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
             <Text
               style={[
                 styles.chatPreview,
-                { color: isDark ? "#AEAEB2" : "#6D6D70" },
+                { color: palette.textSecondary },
               ]}
             >
               {lastMessage.content.length > 60
@@ -121,7 +126,7 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
             <Text
               style={[
                 styles.chatTime,
-                { color: isDark ? "#8E8E93" : "#8E8E93" },
+                { color: palette.textTertiary },
               ]}
             >
               {timeAgo}
@@ -129,18 +134,16 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
 
             <View style={styles.chatBadges}>
               {messageCount > 0 && (
-                <LiquidGlassWrapper
-                  variant="interactive"
-                  shape="capsule"
+                <View
                   style={[
                     styles.messageBadge,
                     { backgroundColor: "rgba(0, 122, 255, 0.15)" },
                   ]}
                 >
-                  <Text style={[styles.messageBadgeText, { color: "#007AFF" }]}> 
+                  <Text style={[styles.messageBadgeText, { color: "#007AFF" }]}>
                     {messageBadgeLabel}
                   </Text>
-                </LiquidGlassWrapper>
+                </View>
               )}
             </View>
           </View>
@@ -149,13 +152,13 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
         {/* Action Button */}
         <View style={styles.chatActions}>
           <Text
-            style={[styles.chevron, { color: isDark ? "#8E8E93" : "#8E8E93" }]}
+            style={[styles.chevron, { color: palette.textTertiary }]}
           >
             ›
           </Text>
         </View>
       </View>
-    </LiquidGlassWrapper>
+    </View>
   );
 
   return (
@@ -216,6 +219,7 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
 export function GlassChatList() {
   const navigation = useNavigation();
   const colorScheme = useColorScheme();
+  const palette = useImessagePalette();
   const {
     chats,
     createChat,
@@ -350,18 +354,20 @@ export function GlassChatList() {
         </Form.Section>
       ) : (
         <Form.Section>
-          <LiquidGlassWrapper
-            variant="regular"
-            shape="roundedRect"
-            cornerRadius={12}
-            style={styles.emptyStateContainer}
+          {/* iOS 26 HIG: Empty state is CONTENT, not a control
+              Use solid background, NOT Liquid Glass */}
+          <View
+            style={[
+              styles.emptyStateContainer,
+              { backgroundColor: palette.surface },
+            ]}
           >
             <View style={styles.emptyState}>
               <Text style={styles.emptyIcon}>💬</Text>
               <Text
                 style={[
                   styles.emptyTitle,
-                  { color: isDark ? "#FFFFFF" : "#000000" },
+                  { color: palette.textPrimary },
                 ]}
               >
                 {t("screen.glassChatList.empty.title")}
@@ -369,13 +375,13 @@ export function GlassChatList() {
               <Text
                 style={[
                   styles.emptySubtitle,
-                  { color: isDark ? "#AEAEB2" : "#6D6D70" },
+                  { color: palette.textSecondary },
                 ]}
               >
                 {t("screen.glassChatList.empty.subtitle")}
               </Text>
             </View>
-          </LiquidGlassWrapper>
+          </View>
         </Form.Section>
       )}
 
@@ -386,7 +392,7 @@ export function GlassChatList() {
             title={t("screen.glassChatList.stats.totalMessagesTitle")}
             subtitle={t("screen.glassChatList.stats.totalMessagesSubtitle")}
             rightContent={
-              <Text style={styles.statValue}>
+              <Text style={[styles.statValue, { color: palette.accentPrimary }]}>
                 {chats.reduce((total, chat) => total + chat.messages.length, 0)}
               </Text>
             }
@@ -395,7 +401,7 @@ export function GlassChatList() {
             title={t("screen.glassChatList.stats.averageTitle")}
             subtitle={t("screen.glassChatList.stats.averageSubtitle")}
             rightContent={
-              <Text style={styles.statValue}>
+              <Text style={[styles.statValue, { color: palette.accentPrimary }]}>
                 {Math.round(
                   chats.reduce(
                     (total, chat) => total + chat.messages.length,
@@ -438,9 +444,16 @@ const styles = StyleSheet.create({
   chatItemContainer: {
     padding: 16,
     marginHorizontal: 20,
+    borderRadius: 12,
+    // iOS 26 HIG: Use iOS standard materials (shadows) for depth, not glass
+    shadowColor: "#000000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
+    // Android: Material Design elevation
+    elevation: 2,
   },
   chatItemPressed: {
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
     transform: [{ scale: 0.98 }],
   },
   chatItemContent: {
@@ -477,6 +490,7 @@ const styles = StyleSheet.create({
   messageBadge: {
     paddingHorizontal: 8,
     paddingVertical: 2,
+    borderRadius: 999, // Fully rounded capsule
   },
   messageBadgeText: {
     fontSize: 11,
@@ -492,6 +506,14 @@ const styles = StyleSheet.create({
   emptyStateContainer: {
     marginHorizontal: 20,
     padding: 32,
+    borderRadius: 12,
+    // iOS shadows for depth
+    shadowColor: "#000000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
+    // Android elevation
+    elevation: 2,
   },
   emptyState: {
     alignItems: "center",
@@ -515,6 +537,6 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 17,
     fontWeight: "600",
-    color: "#FF6B35", // Notion orange
+    // Color will be applied inline using palette.accentPrimary
   },
 });
