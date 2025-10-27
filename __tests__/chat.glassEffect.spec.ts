@@ -48,7 +48,7 @@ describe("Chat - iOS 26 Liquid Glass Effect Implementation", () => {
       expect(sourceCode).not.toContain("styles.bubble:"); // Old combined style removed
     });
 
-    it("CRITICAL: only applies shadows to non-iOS platforms", () => {
+    it("CRITICAL: only applies shadows to non-glass platforms", () => {
       // Verify bubbleShadow style exists and contains shadow properties
       expect(sourceCode).toContain("bubbleShadow: {");
       expect(sourceCode).toContain("shadowColor:");
@@ -56,33 +56,34 @@ describe("Chat - iOS 26 Liquid Glass Effect Implementation", () => {
       expect(sourceCode).toContain("shadowRadius:");
       expect(sourceCode).toContain("elevation:");
 
-      // Verify shadows are NOT applied to iOS glass path in render logic
-      const renderStart = sourceCode.indexOf("const bubbleStyles = [");
-      const bubbleStylesSection = sourceCode.substring(renderStart, renderStart + 1000);
+      // Verify shadows are NOT applied when useGlassRendering is true
+      const renderStart = sourceCode.indexOf("const bubbleStyles = ");
+      const bubbleStylesSection = sourceCode.substring(renderStart, renderStart + 800);
 
-      // Extract iOS branch of ternary: "? styles.bubbleGlass"
-      // Non-iOS branch will have "styles.bubbleShadow"
-      const iosPathStart = bubbleStylesSection.indexOf('Platform.OS === "ios"');
-      const nonIosPathStart = bubbleStylesSection.indexOf(': [', iosPathStart);
-      const iosBranch = bubbleStylesSection.substring(iosPathStart, nonIosPathStart);
+      // Glass branch should use bubbleGlassContainer but NOT bubbleShadow
+      expect(bubbleStylesSection).toContain("useGlassRendering");
+      expect(bubbleStylesSection).toContain("styles.bubbleGlassContainer");
 
-      // iOS branch should contain bubbleGlass but NOT bubbleShadow
-      expect(iosBranch).toContain("styles.bubbleGlass");
-      expect(iosBranch).not.toContain("styles.bubbleShadow");
-
-      // Non-iOS branch should contain bubbleShadow
-      const nonIosBranch = bubbleStylesSection.substring(nonIosPathStart);
-      expect(nonIosBranch).toContain("styles.bubbleShadow");
+      // Non-glass branch should contain bubbleShadow
+      expect(bubbleStylesSection).toContain("styles.bubbleShadow");
     });
 
-    it("uses transparent background for iOS glass (no background conflicts)", () => {
-      expect(sourceCode).toContain("bubbleGlass:");
-      const glassStyleStart = sourceCode.indexOf("bubbleGlass:");
+    it("glass container has NO appearance styles (handled by wrapper)", () => {
+      // bubbleGlassContainer should only have layout properties, NO appearance properties
+      expect(sourceCode).toContain("bubbleGlassContainer:");
+      const glassStyleStart = sourceCode.indexOf("bubbleGlassContainer:");
       const glassStyleSection = sourceCode.substring(
         glassStyleStart,
-        glassStyleStart + 300
+        glassStyleStart + 400
       );
-      expect(glassStyleSection).toContain('backgroundColor: "transparent"');
+      // Should have minWidth for layout
+      expect(glassStyleSection).toContain("minWidth:");
+      // Should NOT have backgroundColor (handled by LiquidGlassWrapper/GlassView)
+      expect(glassStyleSection).not.toContain("backgroundColor:");
+      // Should NOT have padding (handled by bubblePressable)
+      expect(glassStyleSection).toContain("NO padding");
+      // Should NOT have borderRadius (handled by LiquidGlassWrapper cornerRadius prop)
+      expect(glassStyleSection).toContain("NO borderRadius");
     });
 
     it("applies user vs assistant glass variants", () => {
@@ -118,34 +119,22 @@ describe("Chat - iOS 26 Liquid Glass Effect Implementation", () => {
       );
     });
 
-    it("imports GlassContainer for message grouping", () => {
-      expect(sourceCode).toContain(
-        'import { GlassContainer } from "expo-glass-effect"'
-      );
+    it("does NOT import GlassContainer (removed for cleaner UI)", () => {
+      // GlassContainer was removed because it creates visible background rectangles
+      // Each MessageBubble now handles its own glass effect independently
+      expect(sourceCode).not.toContain('import { GlassContainer }');
+      expect(sourceCode).not.toContain("GlassContainer");
     });
 
-    it("CRITICAL: implements message grouping for iOS performance", () => {
-      // Message grouping reduces glass element count from 20 to 5-8
-      expect(sourceCode).toContain("interface MessageGroup");
-      expect(sourceCode).toContain("groupedMessages");
-      expect(sourceCode).toContain("GlassContainer");
-    });
+    it("renders messages individually without grouping", () => {
+      // Simplified architecture: each message renders independently
+      // No message grouping, no GlassContainer wrappers
+      expect(sourceCode).toContain("renderMessage");
+      expect(sourceCode).toContain("<MessageBubble message={message} />");
 
-    it("groups consecutive messages by sender", () => {
-      expect(sourceCode).toContain("prevMsg.role === msg.role");
-      expect(sourceCode).toContain("groups.push({ id: msg.id, messages: [msg] })");
-    });
-
-    it("wraps message groups in GlassContainer for morphing animations", () => {
-      expect(sourceCode).toContain(
-        "<GlassContainer spacing={LiquidGlassSpacing.xxs}>"
-      );
-    });
-
-    it("conditionally renders glass when available with multiple messages", () => {
-      expect(sourceCode).toContain(
-        "if (supportsLiquidGlass && group.messages.length > 1)"
-      );
+      // Should NOT have grouping logic
+      expect(sourceCode).not.toContain("interface MessageGroup");
+      expect(sourceCode).not.toContain("groupedMessages");
     });
 
     it("wraps empty state in LiquidGlassWrapper when glass is available", () => {
@@ -165,10 +154,11 @@ describe("Chat - iOS 26 Liquid Glass Effect Implementation", () => {
       expect(sourceCode).toContain("emptyNonGlassCard");
     });
 
-    it("documents glass performance optimizations", () => {
-      expect(sourceCode).toContain("CRITICAL: Groups consecutive messages");
-      expect(sourceCode).toContain("reduces glass element count");
-      expect(sourceCode).toContain("iOS 26 limit of 10");
+    it("uses FlatList for efficient message rendering", () => {
+      // Verify FlatList with proper data source
+      expect(sourceCode).toContain("data={messages}");
+      expect(sourceCode).toContain("renderItem={renderMessage}");
+      expect(sourceCode).toContain("keyExtractor");
     });
   });
 
