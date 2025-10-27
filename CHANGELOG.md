@@ -42,6 +42,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **CRITICAL: Glass Availability Fallback Conflicts**: Fixed fuzzy appearance when glass effects unavailable (iOS < 26 or reduced transparency mode)
+  - Root cause: LiquidGlassWrapper's fallback shadows conflicted with transparent backgrounds in component style props
+  - When glass unavailable, fallback applied shadows but components set backgroundColor: "transparent", leaving visible shadows with no background
+  - Solution: Components now check `supportsLiquidGlass` before using LiquidGlassWrapper
+  - When glass unavailable: Components use standard rendering path with proper shadows AND backgroundColor together
+  - MessageBubble: Added `useLiquidGlassCapabilities()` hook and `useGlassRendering` availability check
+  - ChatInput: Added `useLiquidGlassCapabilities()` hook and `useGlassInput` availability check
+  - MessageList: Added `useLiquidGlassCapabilities()` hook, updated all glass conditionals to check `supportsLiquidGlass`
+  - Behavior changes:
+    - iOS 26+ with glass available: Uses native glass effects (no shadows, transparent backgrounds)
+    - iOS < 26 or reduced transparency: Uses standard rendering (shadows + solid backgrounds)
+    - Android/Web: Uses standard rendering (shadows + solid backgrounds)
+  - Updated 10 test expectations to verify glass availability checks instead of simple Platform.OS checks
+  - Prevents fuzzy rectangles on older iOS devices and accessibility modes
+  - All 483 tests passing
+
 - **CRITICAL: Shadow/Glass Conflicts on iOS**: Fixed shadow properties conflicting with native iOS glass rendering causing fuzzy appearance
   - Split bubble styles into bubbleBase (common properties) and bubbleShadow (non-iOS only)
   - iOS glass path: NO shadows, transparent background, uniform corner radius via Platform.OS === "ios" conditional
