@@ -405,7 +405,7 @@ export function ChatInput({
             variant="regular"
             shape="roundedRect"
             cornerRadius={LiquidGlassSpacing.cornerRadiusSmall}
-            isInteractive={false}
+            isInteractive={true}
             style={styles.textInputGlassWrapper}
           >
             <View style={styles.inputWithButtonContainer}>
