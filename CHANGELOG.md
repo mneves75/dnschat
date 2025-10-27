@@ -53,6 +53,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **CRITICAL: User Messages Invisible in Glass Mode**: Fixed white text on semi-transparent blue glass causing invisibility
+  - Problem: User messages used white text (palette.solid) with glass tint (accentTint rgba(10,132,255,0.55))
+  - Glass effects are inherently semi-transparent by design, white text on semi-transparent blue glass had insufficient contrast
+  - Result: User messages completely invisible in light mode on iOS 26+ with glass enabled
+  - Solution: Conditional text color based on glass mode
+    - Glass mode user messages: Use palette.textPrimary (dark text visible on semi-transparent blue glass)
+    - Non-glass mode user messages: Keep palette.solid (white text visible on opaque blue background)
+    - Assistant messages: Always dark text (unchanged)
+    - Error messages: Keep white text on red (unchanged)
+  - Added test verifying conditional text color logic for glass vs non-glass rendering modes
+  - All 482 tests passing (32 glass tests + 450 existing)
+
 - **CRITICAL: Glass Visual Artifacts (Fuzzy Rectangles, Leaks, Border Issues)**: Fixed multiple glass layer visual artifacts on iOS 26
   - Problems resolved:
     1. **Triple glass layer architecture** created outer visible rectangles and visual conflicts
