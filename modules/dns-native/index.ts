@@ -30,7 +30,7 @@ export interface NativeDNSModule {
    * @returns Promise resolving to platform capabilities
    */
   isAvailable(): Promise<DNSCapabilities>;
-  configureSanitizer?(config: NativeSanitizerConfig): void;
+  configureSanitizer?(config: NativeSanitizerConfig): void | Promise<boolean>;
   debugSanitizeLabel?(label: string): Promise<string>;
 }
 
@@ -70,10 +70,27 @@ export class NativeDNS implements NativeDNSModule {
       debugLog("✅ RNDNSModule found:", !!this.nativeModule);
       if (this.nativeModule) {
         debugLog("✅ RNDNSModule methods:", Object.keys(this.nativeModule));
-        if (Platform.OS === "android") {
+        if (Platform?.OS === "android") {
           try {
-            this.nativeModule.configureSanitizer?.(getNativeSanitizerConfig());
-            debugLog("✅ Android sanitizer configured via shared constants");
+            const maybeResult = this.nativeModule.configureSanitizer?.(
+              getNativeSanitizerConfig(),
+            );
+
+            if (maybeResult && typeof (maybeResult as Promise<unknown>).then === "function") {
+              (maybeResult as Promise<boolean>)
+                .then((didUpdate) => {
+                  if (didUpdate) {
+                    debugLog("✅ Android sanitizer configured via shared constants");
+                  } else {
+                    debugLog("ℹ️ Android sanitizer already up to date; skipped reconfiguration");
+                  }
+                })
+                .catch((error: unknown) => {
+                  console.warn("⚠️ Failed to configure Android sanitizer:", error);
+                });
+            } else {
+              debugLog("✅ Android sanitizer configured via shared constants");
+            }
           } catch (error) {
             console.warn("⚠️ Failed to configure Android sanitizer:", error);
           }

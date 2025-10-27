@@ -4,7 +4,9 @@
  * and require a real device/simulator to execute
  */
 
+import { NativeModules, Platform } from "react-native";
 import { nativeDNS, DNSError, DNSErrorType } from "../index";
+import { sanitizeDNSMessageReference } from "../constants";
 
 // Skip these tests in CI/automated environments
 const shouldRunIntegrationTests = process.env.RUN_INTEGRATION_TESTS === "true";
@@ -205,6 +207,45 @@ describeIntegration("Native DNS Integration Tests", () => {
         }
       }
     });
+  });
+
+  describe("Sanitization Parity", () => {
+    const nativeModule: any = (NativeModules as any)?.RNDNSModule;
+    const canValidate =
+      Platform?.OS === "android" && typeof nativeModule?.debugSanitizeLabel === "function";
+
+    (canValidate ? it : it.skip)(
+      "matches JavaScript reference sanitizer for tricky inputs",
+      async () => {
+        const samples = [
+          "  HélLo   Wørld🚀  ",
+          "--Leading__And++Trailing--",
+          "Äccênted   Ñame   With   Extra   Spaces",
+        ];
+
+        for (const sample of samples) {
+          const expected = sanitizeDNSMessageReference(sample);
+          const nativeValue: string = await nativeModule.debugSanitizeLabel(sample);
+          // debugNormalizeQueryName returns the full query; focus on first label for comparison.
+          const nativeLabel = nativeValue.split(".")[0];
+          expect(nativeLabel).toBe(expected);
+        }
+      },
+    );
+
+    (canValidate ? it : it.skip)(
+      "rejects invalid labels the same way JavaScript does",
+      async () => {
+        const invalidSamples = ["   ", "🚀🚀🚀", "***", "--"];
+
+        for (const sample of invalidSamples) {
+          expect(() => sanitizeDNSMessageReference(sample)).toThrow();
+          await expect(nativeModule.debugSanitizeLabel(sample)).rejects.toMatchObject({
+            code: "QUERY_FAILED",
+          });
+        }
+      },
+    );
   });
 
   describe("Performance Benchmarks", () => {

@@ -2,7 +2,7 @@
 
 A React Native mobile app that revolutionizes LLM interaction by using DNS TXT queries for AI communication. Chat with AI models through DNS infrastructure for enhanced privacy and network resilience.
 
-[![Version](https://img.shields.io/badge/version-3.0.1-blue.svg)](https://github.com/mneves75/dnschat/releases/tag/v3.0.1)
+[![Version](https://img.shields.io/badge/version-3.0.4-blue.svg)](https://github.com/mneves75/dnschat/releases/tag/v3.0.4)
 [![React Native](https://img.shields.io/badge/React%20Native-0.81.5-blue.svg)](https://reactnative.dev/)
 [![Expo](https://img.shields.io/badge/Expo-54.0.20-black.svg)](https://expo.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9.2-blue.svg)](https://www.typescriptlang.org/)
@@ -11,7 +11,29 @@ A React Native mobile app that revolutionizes LLM interaction by using DNS TXT q
 
 ## ✨ Key Features
 
-### **v3.0.1 - iOS HIG Accessibility & Settings Simplification** 🆕
+### **v3.0.4 - ChatInput Redesign & Android Sanitizer Improvements** 🆕
+- **ChatInput Complete Rewrite**: Production-ready iOS Messages-style input
+  - Minimal design with integrated send button inside input field
+  - Auto-growing height (1-5 lines) with Reanimated 60fps UI thread performance
+  - Character counter at 90% threshold (100/120 chars) with proper MESSAGE_CONSTANTS
+  - All magic numbers eliminated - 100% design system compliance
+  - VoiceOver announcements at 92% character limit
+  - Comprehensive JSDoc documentation explaining every architectural decision
+- **Android DNS Sanitizer Bridge Enhancements**: Idempotent configuration with Promise<boolean>
+  - Returns true when config changed (regex recompiled), false when unchanged (optimization)
+  - Improved error handling with typed exceptions and error codes
+  - Default sanitizer warning logged once per session
+  - Equality check avoids unnecessary regex pattern recompilation
+- **Critical Bug Fixes**: ChatInput max length (1000→120 chars), character counter threshold, Reanimated button positioning
+
+### **v3.0.3 - ResumeGate Concurrency Safety**
+- **iOS ResumeGate Modernization**: Upgraded from NSLock to OSAllocatedUnfairLock (iOS 16+)
+  - Zero heap allocation, sub-microsecond overhead (<100ns per operation)
+  - Comprehensive Swift unit tests (8 tests, 1000 concurrent threads validated)
+  - TypeScript stress tests (6 tests + 2 benchmarks, 1M+ qps throughput)
+  - Fixed 3 critical availability annotation bugs
+
+### **v3.0.1 - iOS HIG Accessibility & Settings Simplification**
 - **Comprehensive VoiceOver Accessibility**: All onboarding screens and interactive elements fully accessible
   - Proper `accessibilityRole`, `accessibilityLabel`, and `accessibilityHint` on all buttons and inputs
   - Dynamic accessibility states for disabled/busy/loading conditions
