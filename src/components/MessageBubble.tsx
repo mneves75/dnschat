@@ -15,7 +15,6 @@ import { useTypography } from "../ui/hooks/useTypography";
 import { useImessagePalette } from "../ui/theme/imessagePalette";
 import { LiquidGlassSpacing, getCornerRadius } from "../ui/theme/liquidGlassSpacing";
 import { HapticFeedback } from "../utils/haptics";
-import { LiquidGlassWrapper, useLiquidGlassCapabilities } from "./LiquidGlassWrapper";
 
 interface MessageBubbleProps {
   message: Message;
@@ -26,14 +25,13 @@ export function MessageBubble({ message }: MessageBubbleProps) {
   const isDark = colorScheme === "dark";
   const typography = useTypography();
   const palette = useImessagePalette();
-  const { supportsLiquidGlass } = useLiquidGlassCapabilities();
 
   const isUser = message.role === "user";
   const isLoading = message.status === "sending";
   const hasError = message.status === "error";
+  const messageCornerRadius = getCornerRadius('message');
 
   const handleLongPress = () => {
-    // Haptic feedback on long press
     HapticFeedback.medium();
 
     Alert.alert("Copy Message", "Do you want to copy this message?", [
@@ -42,62 +40,48 @@ export function MessageBubble({ message }: MessageBubbleProps) {
         text: "Copy",
         onPress: () => {
           // In a real app, you'd use Clipboard from '@react-native-clipboard/clipboard'
-          // Copy functionality would be implemented here
           HapticFeedback.light();
         },
       },
     ]);
   };
 
-  // iOS 26 HIG: Glass effect for message bubbles
-  const glassVariant = isUser ? "prominent" : "regular";
-  const glassTint = hasError ? palette.destructive : (isUser ? palette.accentTint : undefined);
+  // iOS 26 HIG: Message bubbles are CONTENT, not controls
+  // Use simple solid backgrounds (standard materials), NOT Liquid Glass
+  // Real iMessage uses solid colors: blue for user, gray for assistant
+  const bubbleStyles = [
+    styles.bubbleBase,
+    {
+      backgroundColor: hasError
+        ? palette.destructive
+        : isUser
+          ? palette.userBubble
+          : palette.assistantBubble,
+    },
+    {
+      // iMessage-style tail: small corner radius on message origin side
+      borderBottomRightRadius: isUser ? 6 : messageCornerRadius,
+      borderBottomLeftRadius: isUser ? messageCornerRadius : 6,
+    },
+    // iOS standard material: shadows for depth (not glass)
+    isUser || hasError ? styles.prominentShadow : styles.subtleShadow,
+  ];
 
-  // BUGFIX: Platform-specific bubble styling to prevent shadow/glass conflicts
-  // iOS with glass: Clean glass rendering without shadows (shadows conflict with native glass)
-  // iOS without glass OR non-iOS: Standard styling with shadows and background colors
-  const useGlassRendering = Platform.OS === "ios" && supportsLiquidGlass;
+  // Text color: white on blue/red, dark/light on gray depending on mode
+  const textColor = isUser || hasError
+    ? palette.bubbleTextOnBlue
+    : palette.bubbleTextOnGray;
 
-  // BUGFIX: Separate glass and non-glass styles completely
-  // Glass: Only container layout (minWidth), no padding/borderRadius (handled by wrapper/pressable)
-  // Non-glass: Full styles with padding, borderRadius, shadows, background
-  const bubbleStyles = useGlassRendering
-    ? [styles.bubbleGlassContainer]
-    : [
-        styles.bubbleBase,
-        styles.bubbleShadow,
-        {
-          backgroundColor: hasError
-            ? palette.destructive
-            : isUser
-              ? palette.accentTint
-              : palette.surface,
-        },
-        // Tail customization only for non-glass rendering
-        // Glass uses uniform corner radius to avoid shape mismatch
-        {
-          borderBottomRightRadius: isUser ? 6 : getCornerRadius('message'),
-          borderBottomLeftRadius: isUser ? getCornerRadius('message') : 6,
-        },
-      ];
-
-  // BUGFIX: Text color must work with glass transparency
-  // Glass mode user messages: Use dark text (visible on semi-transparent blue glass)
-  // Non-glass mode user messages: Use white text (visible on opaque blue background)
-  // Assistant messages: Always use dark text (visible on light backgrounds)
-  // Error messages: Use white text (visible on red background/tint)
   const textStyles = [
     styles.text,
     {
-      color: useGlassRendering && isUser && !hasError
-        ? palette.textPrimary // Dark text for user glass bubbles
-        : (isUser || hasError ? palette.solid : palette.textPrimary),
+      color: textColor,
     },
   ];
 
   const markdownStyles = {
     body: {
-      color: isUser ? palette.solid : palette.textPrimary,
+      color: textColor,
       fontSize: typography.body.fontSize,
       lineHeight: typography.body.lineHeight,
       letterSpacing: typography.body.letterSpacing,
@@ -127,53 +111,6 @@ export function MessageBubble({ message }: MessageBubbleProps) {
     },
   };
 
-  // iOS 26 HIG: Render bubble content (shared between glass and fallback)
-  const bubbleContent = (
-    <>
-      {isUser ? (
-        <Text style={[textStyles, typography.body]}>{message.content}</Text>
-      ) : (
-        <Markdown style={markdownStyles}>{message.content}</Markdown>
-      )}
-
-      {isLoading && (
-        <View style={styles.loadingIndicator}>
-          <Text
-            style={[
-              styles.loadingText,
-              typography.body,
-              { color: isUser ? palette.solid : palette.textPrimary },
-            ]}
-          >
-            ●●●
-          </Text>
-        </View>
-      )}
-
-      <View style={styles.messageInfo}>
-        <Text
-          style={[
-            styles.timestamp,
-            typography.caption1,
-            { color: isUser ? palette.solid : palette.textTertiary },
-          ]}
-        >
-          {format(message.timestamp, "HH:mm")}
-        </Text>
-
-        {hasError && (
-          <Text
-            style={[styles.errorIndicator, { backgroundColor: palette.destructive, color: palette.solid }]}
-            accessible={true}
-            accessibilityLabel="Message failed to send"
-          >
-            !
-          </Text>
-        )}
-      </View>
-    </>
-  );
-
   return (
     <View
       style={[
@@ -181,40 +118,56 @@ export function MessageBubble({ message }: MessageBubbleProps) {
         isUser ? styles.userContainer : styles.assistantContainer,
       ]}
     >
-      {useGlassRendering ? (
-        // iOS 26+ with Liquid Glass available: Native glass effect for message bubbles
-        <LiquidGlassWrapper
-          variant={glassVariant}
-          shape="roundedRect"
-          cornerRadius={getCornerRadius('message')}
-          tintColor={glassTint}
-          isInteractive={false}
-          style={bubbleStyles}
-        >
-          <Pressable
-            onLongPress={handleLongPress}
-            style={styles.bubblePressable}
-            accessible={true}
-            accessibilityRole="text"
-            accessibilityLabel={`${isUser ? 'Your' : 'Assistant'} message: ${message.content}`}
-            accessibilityHint="Long press to copy message"
+      <Pressable
+        onLongPress={handleLongPress}
+        style={bubbleStyles}
+        accessible={true}
+        accessibilityRole="text"
+        accessibilityLabel={`${isUser ? 'Your' : 'Assistant'} message: ${message.content}`}
+        accessibilityHint="Long press to copy message"
+      >
+        {isUser ? (
+          <Text style={[textStyles, typography.body]}>{message.content}</Text>
+        ) : (
+          <Markdown style={markdownStyles}>{message.content}</Markdown>
+        )}
+
+        {isLoading && (
+          <View style={styles.loadingIndicator}>
+            <Text
+              style={[
+                styles.loadingText,
+                typography.body,
+                { color: textColor },
+              ]}
+            >
+              ●●●
+            </Text>
+          </View>
+        )}
+
+        <View style={styles.messageInfo}>
+          <Text
+            style={[
+              styles.timestamp,
+              typography.caption1,
+              { color: textColor, opacity: 0.6 },
+            ]}
           >
-            {bubbleContent}
-          </Pressable>
-        </LiquidGlassWrapper>
-      ) : (
-        // iOS < 26, reduced transparency, Android, or Web: Standard bubble with shadows and colors
-        <Pressable
-          onLongPress={handleLongPress}
-          style={bubbleStyles}
-          accessible={true}
-          accessibilityRole="text"
-          accessibilityLabel={`${isUser ? 'Your' : 'Assistant'} message: ${message.content}`}
-          accessibilityHint="Long press to copy message"
-        >
-          {bubbleContent}
-        </Pressable>
-      )}
+            {format(message.timestamp, "HH:mm")}
+          </Text>
+
+          {hasError && (
+            <Text
+              style={[styles.errorIndicator, { backgroundColor: palette.destructive, color: palette.bubbleTextOnBlue }]}
+              accessible={true}
+              accessibilityLabel="Message failed to send"
+            >
+              !
+            </Text>
+          )}
+        </View>
+      </Pressable>
     </View>
   );
 }
@@ -231,38 +184,31 @@ const styles = StyleSheet.create({
   assistantContainer: {
     alignSelf: "flex-start",
   },
-  // BUGFIX: Completely separate glass and non-glass bubble styles
-  // bubbleBase: Non-glass platforms get padding, borderRadius, full styling
+  // iOS 26 HIG: Message bubbles use solid backgrounds (content layer)
+  // NOT Liquid Glass (which is for controls/navigation layer only)
   bubbleBase: {
     paddingHorizontal: LiquidGlassSpacing.md,
     paddingVertical: LiquidGlassSpacing.sm,
     borderRadius: getCornerRadius('message'),
     minWidth: 60,
-    // backgroundColor applied inline from palette (user/assistant/error) for non-glass
-    // borderBottomLeftRadius/borderBottomRightRadius applied inline based on isUser (non-glass only)
+    // backgroundColor applied inline from palette (userBubble, assistantBubble, destructive)
+    // borderBottomLeftRadius/borderBottomRightRadius applied inline for tail customization
   },
-  bubbleShadow: {
-    // CRITICAL: Only applied to non-glass platforms
-    // On iOS with glass, shadows conflict with native glass rendering causing fuzzy appearance
+  // iOS standard material: prominent shadow for user/error bubbles
+  prominentShadow: {
+    shadowColor: "#000000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: Platform.OS === "android" ? 4 : undefined,
+  },
+  // iOS standard material: subtle shadow for assistant bubbles
+  subtleShadow: {
     shadowColor: "#000000",
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 2,
-  },
-  // BUGFIX: Glass container gets ONLY layout properties, NO appearance properties
-  // LiquidGlassWrapper handles: background, borderRadius via cornerRadius prop
-  // bubblePressable handles: padding (content spacing)
-  bubbleGlassContainer: {
-    minWidth: 60,
-    // NO padding - handled by bubblePressable
-    // NO borderRadius - handled by LiquidGlassWrapper cornerRadius prop
-    // NO backgroundColor - handled by LiquidGlassWrapper/GlassView
-  },
-  bubblePressable: {
-    // iOS 26 HIG: Pressable inside glass wrapper provides content padding
-    paddingHorizontal: LiquidGlassSpacing.md,
-    paddingVertical: LiquidGlassSpacing.sm,
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
+    elevation: Platform.OS === "android" ? 2 : undefined,
   },
   text: {
     // Typography and color applied inline from palette
@@ -274,9 +220,8 @@ const styles = StyleSheet.create({
     marginTop: LiquidGlassSpacing.xxs,
   },
   timestamp: {
-    opacity: 0.5,
     marginTop: 2,
-    // Color applied inline from palette
+    // Color and opacity applied inline from palette
   },
   errorIndicator: {
     fontSize: 12,
