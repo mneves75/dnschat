@@ -81,10 +81,17 @@ export function MessageBubble({ message }: MessageBubbleProps) {
         },
       ];
 
+  // BUGFIX: Text color must work with glass transparency
+  // Glass mode user messages: Use dark text (visible on semi-transparent blue glass)
+  // Non-glass mode user messages: Use white text (visible on opaque blue background)
+  // Assistant messages: Always use dark text (visible on light backgrounds)
+  // Error messages: Use white text (visible on red background/tint)
   const textStyles = [
     styles.text,
     {
-      color: isUser || hasError ? palette.solid : palette.textPrimary,
+      color: useGlassRendering && isUser && !hasError
+        ? palette.textPrimary // Dark text for user glass bubbles
+        : (isUser || hasError ? palette.solid : palette.textPrimary),
     },
   ];
 
