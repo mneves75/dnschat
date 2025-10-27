@@ -992,45 +992,6 @@ public class DNSResolver {
         }
     }
 
-    @SuppressWarnings("unchecked")
-    private static Map<String, Object> readMap(Map<String, Object> map, String key) {
-        Object value = map.get(key);
-        if (value instanceof Map) {
-            return (Map<String, Object>) value;
-        }
-        throw new IllegalArgumentException("Expected map for key '" + key + "'");
-    }
-
-    private static String readString(Map<String, Object> map, String key) {
-        Object value = map.get(key);
-        if (value == null) {
-            throw new IllegalArgumentException("Missing key '" + key + "' in sanitizer config");
-        }
-        if (value instanceof String) {
-            return (String) value;
-        }
-        throw new IllegalArgumentException("Expected string for key '" + key + "'");
-    }
-
-    private static String readStringOptional(Map<String, Object> map, String key) {
-        Object value = map.get(key);
-        if (value == null) {
-            return null;
-        }
-        if (value instanceof String) {
-            return (String) value;
-        }
-        throw new IllegalArgumentException("Expected string for key '" + key + "'");
-    }
-
-    private static int readInt(Map<String, Object> map, String key) {
-        Object value = map.get(key);
-        if (value instanceof Number) {
-            return ((Number) value).intValue();
-        }
-        throw new IllegalArgumentException("Expected numeric value for key '" + key + "'");
-    }
-    
     /**
      * Structured DNS error types matching iOS DNSError enum for cross-platform consistency
      */
