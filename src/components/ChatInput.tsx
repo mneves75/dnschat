@@ -20,6 +20,7 @@ import { SpringConfig, buttonPressScale } from "../utils/animations";
 import { HapticFeedback } from "../utils/haptics";
 import { SendIcon } from "./icons/SendIcon";
 import { useTranslation } from "../i18n";
+import { LiquidGlassWrapper } from "./LiquidGlassWrapper";
 
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
@@ -90,40 +91,87 @@ export function ChatInput({
       ]}
     >
       <View style={styles.inputContainer}>
-        <TextInput
-          ref={textInputRef}
-          style={[
-            styles.textInput,
-            {
-              fontSize: typography.body.fontSize,
-              lineHeight: typography.body.lineHeight,
-              letterSpacing: typography.body.letterSpacing,
-              color: palette.textPrimary,
-            },
-            isDark ? styles.darkTextInput : styles.lightTextInput,
-          ]}
-          value={message}
-          onChangeText={setMessage}
-          placeholder={resolvedPlaceholder}
-          placeholderTextColor={palette.textTertiary}
-          multiline={true}
-          maxLength={1000}
-          editable={!isLoading}
-          returnKeyType="send"
-          enablesReturnKeyAutomatically={true}
-          blurOnSubmit={true}
-          textAlignVertical="top"
-          keyboardType="default"
-          autoCorrect={false}
-          spellCheck={false}
-          autoComplete="off"
-          contextMenuHidden={true}
-          keyboardAppearance={isDark ? "dark" : "light"}
-          onSubmitEditing={handleSend}
-          accessible={true}
-          accessibilityLabel={t("components.chatInput.accessibilityLabel")}
-          accessibilityHint={t("components.chatInput.accessibilityHint")}
-        />
+        {/* iOS 26 HIG: Liquid Glass effect for text input */}
+        {Platform.OS === "ios" ? (
+          <LiquidGlassWrapper
+            variant="regular"
+            shape="roundedRect"
+            cornerRadius={18}
+            isInteractive={false}
+            style={styles.textInputGlassWrapper}
+          >
+            <TextInput
+              ref={textInputRef}
+              style={[
+                styles.textInput,
+                styles.textInputGlass,
+                {
+                  fontSize: typography.body.fontSize,
+                  lineHeight: typography.body.lineHeight,
+                  letterSpacing: typography.body.letterSpacing,
+                  color: palette.textPrimary,
+                },
+              ]}
+              value={message}
+              onChangeText={setMessage}
+              placeholder={resolvedPlaceholder}
+              placeholderTextColor={palette.textTertiary}
+              multiline={true}
+              maxLength={1000}
+              editable={!isLoading}
+              returnKeyType="send"
+              enablesReturnKeyAutomatically={true}
+              blurOnSubmit={true}
+              textAlignVertical="top"
+              keyboardType="default"
+              autoCorrect={false}
+              spellCheck={false}
+              autoComplete="off"
+              contextMenuHidden={true}
+              keyboardAppearance={isDark ? "dark" : "light"}
+              onSubmitEditing={handleSend}
+              accessible={true}
+              accessibilityLabel={t("components.chatInput.accessibilityLabel")}
+              accessibilityHint={t("components.chatInput.accessibilityHint")}
+            />
+          </LiquidGlassWrapper>
+        ) : (
+          // Android/Web: Standard TextInput with semantic colors
+          <TextInput
+            ref={textInputRef}
+            style={[
+              styles.textInput,
+              {
+                fontSize: typography.body.fontSize,
+                lineHeight: typography.body.lineHeight,
+                letterSpacing: typography.body.letterSpacing,
+                color: palette.textPrimary,
+              },
+              isDark ? styles.darkTextInput : styles.lightTextInput,
+            ]}
+            value={message}
+            onChangeText={setMessage}
+            placeholder={resolvedPlaceholder}
+            placeholderTextColor={palette.textTertiary}
+            multiline={true}
+            maxLength={1000}
+            editable={!isLoading}
+            returnKeyType="send"
+            enablesReturnKeyAutomatically={true}
+            blurOnSubmit={true}
+            textAlignVertical="top"
+            keyboardType="default"
+            autoCorrect={false}
+            spellCheck={false}
+            autoComplete="off"
+            contextMenuHidden={true}
+            keyboardAppearance={isDark ? "dark" : "light"}
+            onSubmitEditing={handleSend}
+            accessible={true}
+            accessibilityLabel={t("components.chatInput.accessibilityLabel")}
+            accessibilityHint={t("components.chatInput.accessibilityHint")}
+          />
+        )}
 
         <AnimatedTouchable
           style={[
@@ -183,6 +231,10 @@ const styles = StyleSheet.create({
     alignItems: "flex-end",
     gap: LiquidGlassSpacing.sm,
   },
+  // iOS 26 HIG: Glass wrapper for text input (iOS only)
+  textInputGlassWrapper: {
+    flex: 1,
+  },
   textInput: {
     flex: 1,
     maxHeight: 120,
@@ -193,14 +245,21 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     // fontSize, lineHeight, letterSpacing applied inline from typography
   },
+  // iOS 26 HIG: Transparent input for glass effect (iOS only)
+  // CRITICAL: Glass wrapper handles background, input must be transparent
+  textInputGlass: {
+    backgroundColor: "transparent",
+    borderWidth: 0, // Glass wrapper provides border
+  },
+  // Android/Web: Semi-transparent backgrounds with borders
   lightTextInput: {
-    backgroundColor: "rgba(242, 242, 247, 0.8)", // Semi-transparent for glass effect
-    borderColor: "rgba(229, 229, 234, 0.6)", // Keep for glass compatibility
+    backgroundColor: "rgba(242, 242, 247, 0.8)", // Semi-transparent
+    borderColor: "rgba(229, 229, 234, 0.6)",
     // color applied from palette.textPrimary inline
   },
   darkTextInput: {
-    backgroundColor: "rgba(28, 28, 30, 0.8)", // Semi-transparent for glass effect
-    borderColor: "rgba(56, 56, 58, 0.6)", // Keep for glass compatibility
+    backgroundColor: "rgba(28, 28, 30, 0.8)", // Semi-transparent
+    borderColor: "rgba(56, 56, 58, 0.6)",
     // color applied from palette.textPrimary inline
   },
   sendButton: {
