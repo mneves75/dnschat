@@ -15,7 +15,7 @@ import { useTypography } from "../ui/hooks/useTypography";
 import { useImessagePalette } from "../ui/theme/imessagePalette";
 import { LiquidGlassSpacing, getCornerRadius } from "../ui/theme/liquidGlassSpacing";
 import { HapticFeedback } from "../utils/haptics";
-import { LiquidGlassWrapper } from "./LiquidGlassWrapper";
+import { LiquidGlassWrapper, useLiquidGlassCapabilities } from "./LiquidGlassWrapper";
 
 interface MessageBubbleProps {
   message: Message;
@@ -26,6 +26,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
   const isDark = colorScheme === "dark";
   const typography = useTypography();
   const palette = useImessagePalette();
+  const { supportsLiquidGlass } = useLiquidGlassCapabilities();
 
   const isUser = message.role === "user";
   const isLoading = message.status === "sending";
@@ -53,11 +54,13 @@ export function MessageBubble({ message }: MessageBubbleProps) {
   const glassTint = hasError ? palette.destructive : (isUser ? palette.accentTint : undefined);
 
   // BUGFIX: Platform-specific bubble styling to prevent shadow/glass conflicts
-  // iOS: Clean glass rendering without shadows (shadows conflict with native glass)
-  // Non-iOS: Standard styling with shadows and background colors
+  // iOS with glass: Clean glass rendering without shadows (shadows conflict with native glass)
+  // iOS without glass OR non-iOS: Standard styling with shadows and background colors
+  const useGlassRendering = Platform.OS === "ios" && supportsLiquidGlass;
+
   const bubbleStyles = [
     styles.bubbleBase,
-    Platform.OS === "ios"
+    useGlassRendering
       ? styles.bubbleGlass
       : [
           styles.bubbleShadow,
@@ -68,8 +71,8 @@ export function MessageBubble({ message }: MessageBubbleProps) {
                 ? palette.accentTint
                 : palette.surface,
           },
-          // BUGFIX: Tail customization only for non-iOS
-          // iOS glass uses uniform corner radius to avoid shape mismatch
+          // BUGFIX: Tail customization only for non-glass rendering
+          // Glass uses uniform corner radius to avoid shape mismatch
           {
             borderBottomRightRadius: isUser ? 6 : getCornerRadius('message'),
             borderBottomLeftRadius: isUser ? getCornerRadius('message') : 6,
@@ -170,8 +173,8 @@ export function MessageBubble({ message }: MessageBubbleProps) {
         isUser ? styles.userContainer : styles.assistantContainer,
       ]}
     >
-      {Platform.OS === "ios" ? (
-        // iOS 26 HIG: Liquid Glass effect for message bubbles
+      {useGlassRendering ? (
+        // iOS 26+ with Liquid Glass available: Native glass effect for message bubbles
         <LiquidGlassWrapper
           variant={glassVariant}
           shape="roundedRect"
@@ -192,7 +195,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
           </Pressable>
         </LiquidGlassWrapper>
       ) : (
-        // Android/Web: Standard bubble with semantic colors
+        // iOS < 26, reduced transparency, Android, or Web: Standard bubble with shadows and colors
         <Pressable
           onLongPress={handleLongPress}
           style={bubbleStyles}

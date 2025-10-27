@@ -20,7 +20,7 @@ import { SpringConfig, buttonPressScale } from "../utils/animations";
 import { HapticFeedback } from "../utils/haptics";
 import { SendIcon } from "./icons/SendIcon";
 import { useTranslation } from "../i18n";
-import { LiquidGlassWrapper } from "./LiquidGlassWrapper";
+import { LiquidGlassWrapper, useLiquidGlassCapabilities } from "./LiquidGlassWrapper";
 
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
@@ -43,6 +43,7 @@ export function ChatInput({
   const palette = useImessagePalette();
   const scale = useSharedValue(1);
   const { t } = useTranslation();
+  const { supportsLiquidGlass } = useLiquidGlassCapabilities();
 
   const minimumTouchTarget = getMinimumTouchTarget();
   const resolvedPlaceholder = placeholder ?? t("screen.chatInput.placeholder");
@@ -82,6 +83,7 @@ export function ChatInput({
   };
 
   const canSend = message.trim().length > 0 && !isLoading;
+  const useGlassInput = Platform.OS === "ios" && supportsLiquidGlass;
 
   return (
     <View
@@ -91,8 +93,8 @@ export function ChatInput({
       ]}
     >
       <View style={styles.inputContainer}>
-        {/* iOS 26 HIG: Liquid Glass effect for text input */}
-        {Platform.OS === "ios" ? (
+        {/* iOS 26+ HIG: Liquid Glass effect for text input when available */}
+        {useGlassInput ? (
           <LiquidGlassWrapper
             variant="regular"
             shape="roundedRect"

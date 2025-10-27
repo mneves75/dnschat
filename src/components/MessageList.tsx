@@ -15,7 +15,7 @@ import { useImessagePalette } from "../ui/theme/imessagePalette";
 import { useTypography } from "../ui/hooks/useTypography";
 import { LiquidGlassSpacing } from "../ui/theme/liquidGlassSpacing";
 import { GlassContainer } from "expo-glass-effect";
-import { LiquidGlassWrapper } from "./LiquidGlassWrapper";
+import { LiquidGlassWrapper, useLiquidGlassCapabilities } from "./LiquidGlassWrapper";
 
 interface MessageListProps {
   messages: Message[];
@@ -43,6 +43,7 @@ export function MessageList({
   const flatListRef = useRef<FlatList<MessageGroup>>(null);
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
+  const { supportsLiquidGlass } = useLiquidGlassCapabilities();
 
   // iOS 26 HIG: Semantic color palette that adapts to light/dark/high-contrast modes
   // Returns memoized object - only re-renders when colorScheme/accessibility settings change
@@ -55,8 +56,8 @@ export function MessageList({
   const typography = useTypography();
 
   const groupedMessages = useMemo<MessageGroup[]>(() => {
-    if (Platform.OS !== "ios") {
-      // Non-iOS: No glass effects, no grouping needed
+    if (!supportsLiquidGlass) {
+      // Non-iOS or glass unavailable: No glass effects, no grouping needed
       // Each message rendered individually for simpler logic
       return messages.map((msg) => ({ id: msg.id, messages: [msg] }));
     }
@@ -79,7 +80,7 @@ export function MessageList({
     });
 
     return groups;
-  }, [messages]);
+  }, [messages, supportsLiquidGlass]);
 
   useEffect(() => {
     // Auto-scroll to bottom when new messages arrive
@@ -99,7 +100,7 @@ export function MessageList({
   // This reduces glass element count from 20 to 5-8, staying within iOS 26 limit of 10
   // spacing={LiquidGlassSpacing.xxs} enables smooth morphing transitions between messages
   const renderMessageGroup = ({ item: group }: ListRenderItemInfo<MessageGroup>) => {
-    if (Platform.OS === "ios" && group.messages.length > 1) {
+    if (supportsLiquidGlass && group.messages.length > 1) {
       // iOS with multiple messages in group: Wrap in GlassContainer for morphing
       // GlassContainer treats all child GlassViews as single glass effect
       return (
@@ -126,8 +127,8 @@ export function MessageList({
 
   const renderEmptyComponent = () => (
     <View style={styles.emptyContainer}>
-      {/* iOS 26 HIG: Empty state in glass card for subtle depth */}
-      {Platform.OS === "ios" ? (
+      {/* iOS 26+ HIG: Empty state in glass card when glass is available */}
+      {supportsLiquidGlass ? (
         <LiquidGlassWrapper
           variant="regular"
           shape="roundedRect"
