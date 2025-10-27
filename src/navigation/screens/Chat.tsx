@@ -8,7 +8,7 @@ import {
   KeyboardAvoidingView,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, Edge } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { MessageList } from "../../components/MessageList";
 import { ChatInput } from "../../components/ChatInput";
@@ -80,6 +80,7 @@ export function Chat() {
 
   return (
     <SafeAreaView
+      edges={['left', 'right', 'bottom']}  // Exclude 'top' - nav header handles it
       style={[
         styles.container,
         { backgroundColor: palette.background },
