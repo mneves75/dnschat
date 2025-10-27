@@ -32,6 +32,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 import org.xbill.DNS.*;
@@ -41,15 +43,12 @@ public class DNSResolver {
     private static final String DNS_SERVER = "ch.at";
     private static final int DNS_PORT = 53;
     private static final int QUERY_TIMEOUT_MS = 10000;
-    private static final int MAX_LABEL_LENGTH = 63;
+    private static final int DEFAULT_MAX_LABEL_LENGTH = 63;
     private static final int MAX_QNAME_LENGTH = 255;
     private static final int MAX_NATIVE_ATTEMPTS = 3;
     private static final long RETRY_DELAY_MS = 200L;
-    private static final Pattern WHITESPACE = Pattern.compile("\\s+");
-    private static final Pattern INVALID_CHARS = Pattern.compile("[^a-z0-9-]");
-    private static final Pattern DASH_COLLAPSE = Pattern.compile("-{2,}");
-    private static final Pattern EDGE_DASHES = Pattern.compile("^-+|-+$");
-    private static final Pattern COMBINING_MARKS = Pattern.compile("\\p{M}+");
+    private static final AtomicReference<SanitizerConfig> SANITIZER =
+        new AtomicReference<>(SanitizerConfig.defaultConfig());
     
     private final Executor executor = Executors.newCachedThreadPool();
     private final ConnectivityManager connectivityManager;
@@ -59,6 +58,14 @@ public class DNSResolver {
 
     public DNSResolver(ConnectivityManager connectivityManager) {
         this.connectivityManager = connectivityManager;
+    }
+
+    public void configureSanitizer(SanitizerConfig config) {
+        SANITIZER.set(Objects.requireNonNull(config, "Sanitizer config cannot be null"));
+    }
+
+    public String debugNormalizeQueryName(String message) throws DNSError {
+        return normalizeQueryName(message);
     }
 
     public static boolean isAvailable() {

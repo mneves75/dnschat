@@ -10,9 +10,9 @@
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		13F5109CC3D213BDBA557638 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24C8110CF1FA687B1CF20CB6 /* ExpoModulesProvider.swift */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
+		718FFD8FD862B247455607E7 /* libPods-DNSChat.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2C9870F6A7AC023B3C4213C2 /* libPods-DNSChat.a */; };
 		8A61F2173926A13D9FF0B3BF /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 9CFEB8BC393AD507B4194456 /* PrivacyInfo.xcprivacy */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
-		E32DB5A701F1D33EA01BE217 /* libPods-DNSChat.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6FC72F0D2E942A6117CB7A7B /* libPods-DNSChat.a */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
 /* End PBXBuildFile section */
 
@@ -21,12 +21,12 @@
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = DNSChat/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = DNSChat/Info.plist; sourceTree = "<group>"; };
 		24C8110CF1FA687B1CF20CB6 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-DNSChat/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
-		3D4636ADCD161FE0320B8B8A /* Pods-DNSChat.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-DNSChat.release.xcconfig"; path = "Target Support Files/Pods-DNSChat/Pods-DNSChat.release.xcconfig"; sourceTree = "<group>"; };
-		6FC72F0D2E942A6117CB7A7B /* libPods-DNSChat.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-DNSChat.a"; sourceTree = BUILT_PRODUCTS_DIR; };
-		785A7F13AC2E54C205DFCCC1 /* Pods-DNSChat.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-DNSChat.debug.xcconfig"; path = "Target Support Files/Pods-DNSChat/Pods-DNSChat.debug.xcconfig"; sourceTree = "<group>"; };
+		2C9870F6A7AC023B3C4213C2 /* libPods-DNSChat.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-DNSChat.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		6C18E9B7B195236C1D5F7E70 /* Pods-DNSChat.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-DNSChat.debug.xcconfig"; path = "Target Support Files/Pods-DNSChat/Pods-DNSChat.debug.xcconfig"; sourceTree = "<group>"; };
 		9CFEB8BC393AD507B4194456 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = DNSChat/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = DNSChat/SplashScreen.storyboard; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
+		CD8F713576D3F84F2A1DAFCA /* Pods-DNSChat.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-DNSChat.release.xcconfig"; path = "Target Support Files/Pods-DNSChat/Pods-DNSChat.release.xcconfig"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = DNSChat/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* DNSChat-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "DNSChat-Bridging-Header.h"; path = "DNSChat/DNSChat-Bridging-Header.h"; sourceTree = "<group>"; };
@@ -37,7 +37,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				E32DB5A701F1D33EA01BE217 /* libPods-DNSChat.a in Frameworks */,
+				718FFD8FD862B247455607E7 /* libPods-DNSChat.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -70,7 +70,7 @@
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				6FC72F0D2E942A6117CB7A7B /* libPods-DNSChat.a */,
+				2C9870F6A7AC023B3C4213C2 /* libPods-DNSChat.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -116,8 +116,8 @@
 		BAF958B4FCBB47C02877BF50 /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				785A7F13AC2E54C205DFCCC1 /* Pods-DNSChat.debug.xcconfig */,
-				3D4636ADCD161FE0320B8B8A /* Pods-DNSChat.release.xcconfig */,
+				6C18E9B7B195236C1D5F7E70 /* Pods-DNSChat.debug.xcconfig */,
+				CD8F713576D3F84F2A1DAFCA /* Pods-DNSChat.release.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -138,14 +138,14 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "DNSChat" */;
 			buildPhases = (
-				8E791CAE0B99188910839659 /* [CP] Check Pods Manifest.lock */,
+				97E31FA9618D0EA775879ECC /* [CP] Check Pods Manifest.lock */,
 				F5A2AA387DD38C2171C6DF68 /* [Expo] Configure project */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
-				611E2151E6543DB3A4F84204 /* [CP] Embed Pods Frameworks */,
-				8D0DDF9FC83C8577B6550C21 /* [CP] Copy Pods Resources */,
+				16E4C5C67E751773D253B1A3 /* [CP] Embed Pods Frameworks */,
+				7E147FAB10E7E2D0D5DBF39F /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -166,8 +166,8 @@
 				LastUpgradeCheck = 2600;
 				TargetAttributes = {
 					13B07F861A680F5B00A75B9A = {
+						DevelopmentTeam = Q96FUTC5G8;
 						LastSwiftMigration = 1250;
-						DevelopmentTeam = "Q96FUTC5G8";
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -220,7 +220,7 @@
 			shellPath = /bin/sh;
 			shellScript = "if [[ -f \"$PODS_ROOT/../.xcode.env\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env\"\nfi\nif [[ -f \"$PODS_ROOT/../.xcode.env.local\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.local\"\nfi\n\n# The project root by default is one level up from the ios directory\nexport PROJECT_ROOT=\"$PROJECT_DIR\"/..\n\nif [[ \"$CONFIGURATION\" = *Debug* ]]; then\n  export SKIP_BUNDLING=1\nfi\nif [[ -z \"$ENTRY_FILE\" ]]; then\n  # Set the entry JS file using the bundler's entry resolution.\n  export ENTRY_FILE=\"$(\"$NODE_BINARY\" -e \"require('expo/scripts/resolveAppEntry')\" \"$PROJECT_ROOT\" ios absolute | tail -n 1)\"\nfi\n\nif [[ -z \"$CLI_PATH\" ]]; then\n  # Use Expo CLI\n  export CLI_PATH=\"$(\"$NODE_BINARY\" --print \"require.resolve('@expo/cli', { paths: [require.resolve('expo/package.json')] })\")\"\nfi\nif [[ -z \"$BUNDLE_COMMAND\" ]]; then\n  # Default Expo CLI command for bundling\n  export BUNDLE_COMMAND=\"export:embed\"\nfi\n\n# Source .xcode.env.updates if it exists to allow\n# SKIP_BUNDLING to be unset if needed\nif [[ -f \"$PODS_ROOT/../.xcode.env.updates\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.updates\"\nfi\n# Source local changes to allow overrides\n# if needed\nif [[ -f \"$PODS_ROOT/../.xcode.env.local\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.local\"\nfi\n\n`\"$NODE_BINARY\" --print \"require('path').dirname(require.resolve('react-native/package.json')) + '/scripts/react-native-xcode.sh'\"`\n\n";
 		};
-		611E2151E6543DB3A4F84204 /* [CP] Embed Pods Frameworks */ = {
+		16E4C5C67E751773D253B1A3 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -238,7 +238,7 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-DNSChat/Pods-DNSChat-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		8D0DDF9FC83C8577B6550C21 /* [CP] Copy Pods Resources */ = {
+		7E147FAB10E7E2D0D5DBF39F /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -286,7 +286,7 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-DNSChat/Pods-DNSChat-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		8E791CAE0B99188910839659 /* [CP] Check Pods Manifest.lock */ = {
+		97E31FA9618D0EA775879ECC /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -349,14 +349,15 @@
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 785A7F13AC2E54C205DFCCC1 /* Pods-DNSChat.debug.xcconfig */;
+			baseConfigurationReference = 6C18E9B7B195236C1D5F7E70 /* Pods-DNSChat.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = DNSChat/DNSChat.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 10;
+				CURRENT_PROJECT_VERSION = 11;
+				DEVELOPMENT_TEAM = Q96FUTC5G8;
 				ENABLE_BITCODE = NO;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = (
@@ -371,7 +372,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.0.2;
+				MARKETING_VERSION = 3.0.3;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -386,20 +387,20 @@
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VERSIONING_SYSTEM = "apple-generic";
-				DEVELOPMENT_TEAM = "Q96FUTC5G8";
 			};
 			name = Debug;
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 3D4636ADCD161FE0320B8B8A /* Pods-DNSChat.release.xcconfig */;
+			baseConfigurationReference = CD8F713576D3F84F2A1DAFCA /* Pods-DNSChat.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = DNSChat/DNSChat.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 10;
+				CURRENT_PROJECT_VERSION = 11;
+				DEVELOPMENT_TEAM = Q96FUTC5G8;
 				INFOPLIST_FILE = DNSChat/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "DNS Chat";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
@@ -408,7 +409,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.0.2;
+				MARKETING_VERSION = 3.0.3;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -422,7 +423,6 @@
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VERSIONING_SYSTEM = "apple-generic";
-				DEVELOPMENT_TEAM = "Q96FUTC5G8";
 			};
 			name = Release;
 		};
@@ -489,7 +489,10 @@
 				LIBRARY_SEARCH_PATHS = "$(SDKROOT)/usr/lib/swift\"$(inherited)\"";
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
-				OTHER_LDFLAGS = "$(inherited)  ";
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					" ",
+				);
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -553,7 +556,10 @@
 				);
 				LIBRARY_SEARCH_PATHS = "$(SDKROOT)/usr/lib/swift\"$(inherited)\"";
 				MTL_ENABLE_DEBUG_INFO = NO;
-				OTHER_LDFLAGS = "$(inherited)  ";
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					" ",
+				);
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;

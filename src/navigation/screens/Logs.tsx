@@ -2,12 +2,9 @@ import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
-  FlatList,
   StyleSheet,
   TouchableOpacity,
   Alert,
-  RefreshControl,
-  ScrollView,
   ActivityIndicator,
   useColorScheme,
 } from "react-native";
@@ -235,16 +232,24 @@ export function Logs() {
                 </View>
               )}
 
-              <Text style={[styles.sectionTitle, { color: colors.text }]}> 
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>
                 {t("screen.logs.labels.querySteps")}
               </Text>
-              <ScrollView style={styles.entriesScroll} nestedScrollEnabled>
+              <View style={styles.entriesList}>
                 {item.entries.map((entry, index) => (
-                  <View key={`${item.id}-${entry.id || index}`}>
+                  <React.Fragment key={`${item.id}-${entry.id || index}`}>
                     {renderLogEntry(entry, item.id)}
-                  </View>
+                    {index < item.entries.length - 1 && (
+                      <View
+                        style={[
+                          styles.entryDivider,
+                          { backgroundColor: colors.border },
+                        ]}
+                      />
+                    )}
+                  </React.Fragment>
                 ))}
-              </ScrollView>
+              </View>
             </View>
           )}
         </LiquidGlassWrapper>
@@ -263,7 +268,6 @@ export function Logs() {
             style={styles.emptyStateContainer}
           >
             <View style={styles.emptyState}>
-              <Text style={styles.emptyIcon}>🔍</Text>
               <Text
                 style={[
                   styles.emptyTitle,
@@ -301,15 +305,6 @@ export function Logs() {
           <Form.Item
             title={t("screen.logs.actions.clearAll")}
             subtitle={t("screen.logs.actions.clearAllSubtitle")}
-            rightContent={
-              <LiquidGlassWrapper
-                variant="interactive"
-                shape="capsule"
-                style={styles.clearBadge}
-              >
-                <Text style={styles.clearIcon}>🗑️</Text>
-              </LiquidGlassWrapper>
-            }
             onPress={clearLogs}
             showChevron
           />
@@ -325,10 +320,6 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     padding: 32,
   },
-  emptyIcon: {
-    fontSize: 48,
-    marginBottom: 16,
-  },
   emptyTitle: {
     fontSize: 20,
     fontWeight: "600",
@@ -340,14 +331,6 @@ const styles = StyleSheet.create({
     fontWeight: "400",
     textAlign: "center",
     lineHeight: 22,
-  },
-  clearBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    backgroundColor: "rgba(255, 69, 58, 0.15)", // Notion red
-  },
-  clearIcon: {
-    fontSize: 16,
   },
   logsList: {
     gap: 8,
@@ -427,8 +410,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
   },
-  entriesScroll: {
-    maxHeight: 300,
+  entriesList: {
+    gap: 8,
+  },
+  entryDivider: {
+    height: StyleSheet.hairlineWidth,
+    marginVertical: 8,
   },
   logEntry: {
     marginBottom: 12,
