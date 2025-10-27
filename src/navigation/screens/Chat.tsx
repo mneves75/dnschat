@@ -13,12 +13,8 @@ import { useNavigation } from "@react-navigation/native";
 import { MessageList } from "../../components/MessageList";
 import { ChatInput } from "../../components/ChatInput";
 import { useChat } from "../../context/ChatContext";
-import {
-  LiquidGlassWrapper,
-  useLiquidGlassCapabilities,
-} from "../../components/LiquidGlassWrapper";
 import { useImessagePalette } from "../../ui/theme/imessagePalette";
-import { LiquidGlassSpacing, getCornerRadius } from "../../ui/theme/liquidGlassSpacing";
+import { LiquidGlassSpacing } from "../../ui/theme/liquidGlassSpacing";
 import { useTranslation } from "../../i18n";
 
 export function Chat() {
@@ -32,10 +28,6 @@ export function Chat() {
   useLayoutEffect(() => {
     navigation.setOptions({ title: t("screen.chat.navigationTitle") });
   }, [navigation, t]);
-
-  // iOS 26 Liquid Glass capabilities
-  const { isSupported: glassSupported, supportsLiquidGlass } =
-    useLiquidGlassCapabilities();
 
   // Log when currentChat changes
   // IMPORTANT: Use optional chaining on messages to prevent crash when currentChat exists but messages is undefined
@@ -99,56 +91,20 @@ export function Chat() {
       />
 
       <KeyboardAvoidingView
-        style={styles.content}
+        style={[styles.content, { paddingHorizontal: LiquidGlassSpacing.xs }]}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 0}
       >
-        {Platform.OS === "ios" ? ( // Always use glass UI on iOS
-          <>
-            {/* iOS 26 Liquid Glass Message Area */}
-            <LiquidGlassWrapper
-              variant="regular"
-              shape="roundedRect"
-              cornerRadius={getCornerRadius("card")}
-              enableContainer={true}
-              style={styles.glassMessageArea}
-            >
-              <MessageList
-                messages={currentChat?.messages || []}
-                isLoading={isLoading}
-              />
-            </LiquidGlassWrapper>
+        <MessageList
+          messages={currentChat?.messages || []}
+          isLoading={isLoading}
+        />
 
-            {/* iOS 26 Liquid Glass Chat Input */}
-            <LiquidGlassWrapper
-              variant="prominent"
-              shape="capsule"
-              isInteractive={true}
-              tintColor={palette.accentTint}
-              style={styles.glassInputArea}
-            >
-              <ChatInput
-                onSendMessage={handleSendMessage}
-                isLoading={isLoading}
-                placeholder={t("screen.chat.placeholder")}
-              />
-            </LiquidGlassWrapper>
-          </>
-        ) : (
-          // Fallback for non-iOS or older iOS versions
-          <>
-            <MessageList
-              messages={currentChat?.messages || []}
-              isLoading={isLoading}
-            />
-
-            <ChatInput
-              onSendMessage={handleSendMessage}
-              isLoading={isLoading}
-              placeholder={t("screen.chat.placeholder")}
-            />
-          </>
-        )}
+        <ChatInput
+          onSendMessage={handleSendMessage}
+          isLoading={isLoading}
+          placeholder={t("screen.chat.placeholder")}
+        />
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -160,17 +116,6 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    gap: LiquidGlassSpacing.xs, // Spacing between glass elements (8px)
-  },
-  glassMessageArea: {
-    flex: 1,
-    margin: LiquidGlassSpacing.xs,
-    backgroundColor: "transparent",
-  },
-  glassInputArea: {
-    margin: LiquidGlassSpacing.sm,
-    paddingHorizontal: LiquidGlassSpacing.xs,
-    paddingVertical: LiquidGlassSpacing.xxs,
-    backgroundColor: "transparent",
+    paddingVertical: LiquidGlassSpacing.xs, // Spacing between message list and input
   },
 });

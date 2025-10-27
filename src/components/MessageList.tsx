@@ -14,7 +14,6 @@ import { Message } from "../types/chat";
 import { useImessagePalette } from "../ui/theme/imessagePalette";
 import { useTypography } from "../ui/hooks/useTypography";
 import { LiquidGlassSpacing } from "../ui/theme/liquidGlassSpacing";
-import { GlassContainer } from "expo-glass-effect";
 import { LiquidGlassWrapper, useLiquidGlassCapabilities } from "./LiquidGlassWrapper";
 
 interface MessageListProps {
@@ -30,17 +29,7 @@ export function MessageList({
   onRefresh,
   isRefreshing = false,
 }: MessageListProps) {
-  // iOS 26 HIG: Message grouping for glass effect performance optimization
-  // CRITICAL: Groups consecutive messages by sender to reduce glass element count
-  // Without grouping: 20 messages = 20 glass elements (EXCEEDS iOS 26 limit of 10)
-  // With grouping: 20 messages = 5-8 groups (WITHIN limit)
-  // Each GlassContainer group enables morphing animations between related messages
-  interface MessageGroup {
-    id: string; // Group ID (uses first message ID)
-    messages: Message[]; // Array of messages in this group
-  }
-
-  const flatListRef = useRef<FlatList<MessageGroup>>(null);
+  const flatListRef = useRef<FlatList<Message>>(null);
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
   const { supportsLiquidGlass } = useLiquidGlassCapabilities();
@@ -55,33 +44,6 @@ export function MessageList({
   // Each style (title2, subheadline, etc.) includes fontSize, fontWeight, letterSpacing
   const typography = useTypography();
 
-  const groupedMessages = useMemo<MessageGroup[]>(() => {
-    if (!supportsLiquidGlass) {
-      // Non-iOS or glass unavailable: No glass effects, no grouping needed
-      // Each message rendered individually for simpler logic
-      return messages.map((msg) => ({ id: msg.id, messages: [msg] }));
-    }
-
-    // iOS: Group consecutive messages by sender to reduce glass element count
-    const groups: MessageGroup[] = [];
-
-    messages.forEach((msg, idx) => {
-      const prevMsg = messages[idx - 1];
-
-      if (prevMsg && prevMsg.role === msg.role) {
-        // Same sender as previous message, add to current group
-        // This creates visual continuity and reduces glass element count
-        groups[groups.length - 1].messages.push(msg);
-      } else {
-        // Different sender or first message, create new group
-        // Each role change (user -> assistant or assistant -> user) starts new group
-        groups.push({ id: msg.id, messages: [msg] });
-      }
-    });
-
-    return groups;
-  }, [messages, supportsLiquidGlass]);
-
   useEffect(() => {
     // Auto-scroll to bottom when new messages arrive
     // TRICKY: setTimeout(100ms) ensures FlatList layout has completed before scrolling
@@ -95,35 +57,13 @@ export function MessageList({
     }
   }, [messages]);
 
-  // iOS 26 HIG: Render message group with GlassContainer for morphing animations
-  // CRITICAL: GlassContainer wraps multiple glass elements (MessageBubbles) into ONE
-  // This reduces glass element count from 20 to 5-8, staying within iOS 26 limit of 10
-  // spacing={LiquidGlassSpacing.xxs} enables smooth morphing transitions between messages
-  const renderMessageGroup = ({ item: group }: ListRenderItemInfo<MessageGroup>) => {
-    if (supportsLiquidGlass && group.messages.length > 1) {
-      // iOS with multiple messages in group: Wrap in GlassContainer for morphing
-      // GlassContainer treats all child GlassViews as single glass effect
-      return (
-        <GlassContainer spacing={LiquidGlassSpacing.xxs}>
-          {group.messages.map((message) => (
-            <MessageBubble key={message.id} message={message} />
-          ))}
-        </GlassContainer>
-      );
-    }
-
-    // iOS with single message OR non-iOS: Render messages directly
-    // No GlassContainer needed for single message (no morphing to perform)
-    return (
-      <>
-        {group.messages.map((message) => (
-          <MessageBubble key={message.id} message={message} />
-        ))}
-      </>
-    );
+  // iOS 26 HIG: Render individual message bubble with glass effect when available
+  // Each MessageBubble handles its own glass rendering via LiquidGlassWrapper
+  const renderMessage = ({ item: message }: ListRenderItemInfo<Message>) => {
+    return <MessageBubble message={message} />;
   };
 
-  const keyExtractor = (item: MessageGroup) => item.id;
+  const keyExtractor = (item: Message) => item.id;
 
   const renderEmptyComponent = () => (
     <View style={styles.emptyContainer}>
@@ -203,8 +143,8 @@ export function MessageList({
   return (
     <FlatList
       ref={flatListRef}
-      data={groupedMessages}
-      renderItem={renderMessageGroup}
+      data={messages}
+      renderItem={renderMessage}
       keyExtractor={keyExtractor}
       style={styles.container}
       contentContainerStyle={styles.contentContainer}
@@ -213,7 +153,7 @@ export function MessageList({
         // TRICKY: onContentSizeChange handles layout changes (e.g., message bubble height changes)
         // Uses animated: false to avoid jarring animation when text reflows
         // Complements useEffect auto-scroll (which uses animated: true for new messages)
-        if (groupedMessages.length > 0) {
+        if (messages.length > 0) {
           flatListRef.current?.scrollToEnd({ animated: false });
         }
       }}
@@ -229,10 +169,6 @@ export function MessageList({
       updateCellsBatchingPeriod={100}
       initialNumToRender={20}
       windowSize={10}
-      // PERFORMANCE NOTE: getItemLayout removed due to variable group heights
-      // Message groups contain 1-N messages, making height prediction unreliable
-      // FlatList will measure heights dynamically (slight scroll performance trade-off)
-      // This is acceptable because glass grouping provides larger performance win
     />
   );
 }
