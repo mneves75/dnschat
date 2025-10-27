@@ -120,8 +120,10 @@ describe("ChatInput Component - John Carmack Quality Standards", () => {
       expect(source).toContain("const verticalPadding = LiquidGlassSpacing.xs * 2");
     });
 
-    it("defines min height from line height + padding", () => {
-      expect(source).toContain("min: lineHeight + verticalPadding");
+    it("defines min height ensuring it accommodates touch target", () => {
+      // CRITICAL FIX: Min height must be >= touch target to prevent button misalignment
+      expect(source).toContain("const min = Math.max(naturalMin, touchTarget)");
+      expect(source).toContain("const naturalMin = lineHeight + verticalPadding");
     });
 
     it("defines max height as 5 lines + padding", () => {
@@ -239,8 +241,9 @@ describe("ChatInput Component - John Carmack Quality Standards", () => {
 
     it("documents height calculation approach", () => {
       expect(source).toContain("* Height Calculation (Design System Derived)");
-      expect(source).toContain("* Min Height: line height + vertical padding");
+      expect(source).toContain("* Min Height: MUST be >= minimumTouchTarget to accommodate send button");
       expect(source).toContain("* Max Height: 5 lines + vertical padding");
+      expect(source).toContain("* CRITICAL: Minimum height must be at least minimumTouchTarget");
     });
 
     it("documents button position animation", () => {
