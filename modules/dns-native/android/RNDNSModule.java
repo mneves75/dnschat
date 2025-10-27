@@ -69,19 +69,27 @@ public class RNDNSModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void configureSanitizer(ReadableMap config) {
+    public void configureSanitizer(ReadableMap config, Promise promise) {
         if (config == null) {
             Log.w(TAG, "configureSanitizer called with null config; keeping existing sanitizer");
+            promise.reject("SANITIZER_CONFIG_NULL", "Sanitizer config map cannot be null");
             return;
         }
+
         try {
-            dnsResolver.configureSanitizer(
-                DNSResolver.SanitizerConfig.fromMap(config.toHashMap())
-            );
-            Log.d(TAG, "Configured sanitizer from JavaScript constants");
-        } catch (IllegalArgumentException error) {
+            boolean updated = dnsResolver.configureSanitizer(config.toHashMap());
+            if (updated) {
+                Log.d(TAG, "Configured sanitizer from JavaScript constants");
+            } else {
+                Log.d(TAG, "Sanitizer configuration unchanged; skipping recompilation");
+            }
+            promise.resolve(updated);
+        } catch (DNSResolver.SanitizerConfig.SanitizerConfigException error) {
             Log.e(TAG, "Invalid sanitizer config received from JavaScript", error);
-            throw error;
+            promise.reject(error.getCode(), error.getMessage(), error);
+        } catch (IllegalArgumentException error) {
+            Log.e(TAG, "Unexpected sanitizer configuration error", error);
+            promise.reject("SANITIZER_CONFIG_UNEXPECTED", error.getMessage(), error);
         }
     }
 
