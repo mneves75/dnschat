@@ -232,9 +232,10 @@ describe("MessageList - iOS 26 HIG Compliance", () => {
       expect(sourceCode).toContain("windowSize={10}");
     });
 
-    it("provides getItemLayout for instant scrolling", () => {
-      expect(sourceCode).toContain("getItemLayout");
-      expect(sourceCode).toContain("length: 80");
+    it("documents removal of getItemLayout due to variable group heights", () => {
+      expect(sourceCode).toContain("PERFORMANCE NOTE: getItemLayout removed due to variable group heights");
+      expect(sourceCode).toContain("Message groups contain 1-N messages");
+      expect(sourceCode).toContain("FlatList will measure heights dynamically");
     });
 
     it("documents performance optimization rationale", () => {
