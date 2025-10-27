@@ -595,6 +595,7 @@ export const ptBR = {
       sendLabel: "Enviar mensagem",
       sendHint: "Toque duas vezes para enviar",
       sendingLabel: "Enviando mensagem",
+      charactersRemaining: "{{count}} caracteres restantes",
     },
     dnsLogViewer: {
       empty: "Nenhum log DNS ainda",
