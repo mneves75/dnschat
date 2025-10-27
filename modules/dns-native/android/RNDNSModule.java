@@ -2,12 +2,14 @@ package com.dnsnative;
 
 import android.content.Context;
 import android.net.ConnectivityManager;
+import android.util.Log;
 
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
+import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
 
@@ -16,6 +18,7 @@ import java.util.concurrent.CompletableFuture;
 
 public class RNDNSModule extends ReactContextBaseJavaModule {
     private static final String MODULE_NAME = "RNDNSModule";
+    private static final String TAG = "RNDNSModule";
     private final DNSResolver dnsResolver;
 
     public RNDNSModule(ReactApplicationContext reactContext) {
@@ -63,5 +66,32 @@ public class RNDNSModule extends ReactContextBaseJavaModule {
         result.putInt("apiLevel", capabilities.apiLevel);
         
         promise.resolve(result);
+    }
+
+    @ReactMethod
+    public void configureSanitizer(ReadableMap config) {
+        if (config == null) {
+            Log.w(TAG, "configureSanitizer called with null config; keeping existing sanitizer");
+            return;
+        }
+        try {
+            dnsResolver.configureSanitizer(
+                DNSResolver.SanitizerConfig.fromMap(config.toHashMap())
+            );
+            Log.d(TAG, "Configured sanitizer from JavaScript constants");
+        } catch (IllegalArgumentException error) {
+            Log.e(TAG, "Invalid sanitizer config received from JavaScript", error);
+            throw error;
+        }
+    }
+
+    @ReactMethod
+    public void debugSanitizeLabel(String label, Promise promise) {
+        try {
+            String normalized = dnsResolver.debugNormalizeQueryName(label);
+            promise.resolve(normalized);
+        } catch (DNSResolver.DNSError error) {
+            promise.reject(error.getType().name(), error.getDetails(), error);
+        }
     }
 }
