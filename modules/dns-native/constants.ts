@@ -17,13 +17,14 @@ export const DNS_CONSTANTS = {
 
   // Sanitization rules (must be applied in order)
   SANITIZATION_STEPS: [
-    'lowercase',           // Convert to lowercase
+    'normalize_unicode',  // Decompose & remove combining marks
+    'lowercase',          // Convert to lowercase
     'trim',               // Remove leading/trailing whitespace
     'spaces_to_dashes',   // Replace spaces with dashes
     'remove_invalid',     // Remove non-alphanumeric except dash
     'collapse_dashes',    // Replace multiple dashes with single
     'remove_edge_dashes', // Remove leading/trailing dashes
-    'truncate',          // Limit to 63 characters
+    'truncate',           // Limit to 63 characters
   ],
 
   // DNS server whitelist
@@ -65,26 +66,34 @@ export function sanitizeDNSMessageReference(message: string): string {
   }
 
   let result = message;
-  
-  // Step 1: Lowercase
+
+  // Step 1: Normalize and strip combining marks so á/ç map to ASCII
+  try {
+    result = result.normalize('NFKD');
+  } catch {
+    // Some environments (very old JS runtimes) may not support normalize; fall back silently
+  }
+  result = result.replace(/[\u0300-\u036f]/g, '');
+
+  // Step 2: Lowercase
   result = result.toLowerCase();
-  
-  // Step 2: Trim
+
+  // Step 3: Trim
   result = result.trim();
-  
-  // Step 3: Spaces to dashes
+
+  // Step 4: Spaces to dashes
   result = result.replace(/\s+/g, DNS_CONSTANTS.SPACE_REPLACEMENT);
-  
-  // Step 4: Remove invalid characters (keep only alphanumeric and dash)
+
+  // Step 5: Remove invalid characters (keep only alphanumeric and dash)
   result = result.replace(/[^a-z0-9-]/g, '');
-  
-  // Step 5: Collapse multiple dashes
+
+  // Step 6: Collapse multiple dashes
   result = result.replace(/-{2,}/g, '-');
-  
-  // Step 6: Remove edge dashes
+
+  // Step 7: Remove edge dashes
   result = result.replace(/^-+|-+$/g, '');
-  
-  // Step 7: Enforce DNS label limit
+
+  // Step 8: Enforce DNS label limit
   if (result.length > DNS_CONSTANTS.MAX_DNS_LABEL_LENGTH) {
     throw new Error(
       `Message exceeds DNS label limit of ${DNS_CONSTANTS.MAX_DNS_LABEL_LENGTH} characters after sanitization`,

@@ -10,6 +10,8 @@ final class DNSResolver: NSObject {
     private static let queryTimeout: TimeInterval = 10.0
     private static let maxNativeAttempts: Int = 3
     private static let retryDelayNanoseconds: UInt64 = 200_000_000 // 200ms
+    private static let maxLabelLength: Int = 63
+    private static let maxQNameLength: Int = 255
     // MARK: - State
     @MainActor private var activeQueries: [String: Task<[String], Error>] = [:]
     
@@ -28,9 +30,12 @@ final class DNSResolver: NSObject {
         resolver: @escaping RCTPromiseResolveBlock,
         rejecter: @escaping RCTPromiseRejectBlock
     ) {
-        let queryName = message.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !queryName.isEmpty else {
-            rejecter("DNS_QUERY_FAILED", "Query name cannot be empty", nil)
+        let queryName: String
+        do {
+            // Ensure Unicode input matches JS sanitization (fold accents, enforce ASCII)
+            queryName = try normalizeQueryName(message)
+        } catch {
+            rejecter("DNS_QUERY_FAILED", error.localizedDescription, error)
             return
         }
 
@@ -104,26 +109,25 @@ final class DNSResolver: NSObject {
         // Thread Safety: All callbacks execute on .global(qos: .userInitiated) queue (specified in start()),
         // providing serial execution guarantees. No concurrent access to isResumed is possible.
         try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, Error>) in
-            // Guard against double-resume: NWConnection.stateUpdateHandler fires multiple times
-            // (e.g., .ready, then later .cancelled when timeout fires or connection is torn down)
-            var isResumed = false
+            let gate = ResumeGate()
 
             connection.stateUpdateHandler = { state in
-                // CRITICAL: CheckedContinuation can only resume ONCE. If stateUpdateHandler fires
-                // after we've already resumed (e.g., .ready followed by .cancelled), attempting
-                // a second resume triggers EXC_BREAKPOINT crash. This guard prevents that.
-                guard !isResumed else { return }
-
                 switch state {
                 case .ready:
-                    isResumed = true
-                    cont.resume()
+                    gate.tryResume {
+                        connection.stateUpdateHandler = nil
+                        cont.resume()
+                    }
                 case .failed(let error):
-                    isResumed = true
-                    cont.resume(throwing: DNSError.resolverFailed(error.localizedDescription))
+                    gate.tryResume {
+                        connection.stateUpdateHandler = nil
+                        cont.resume(throwing: DNSError.resolverFailed(error.localizedDescription))
+                    }
                 case .cancelled:
-                    isResumed = true
-                    cont.resume(throwing: DNSError.cancelled)
+                    gate.tryResume {
+                        connection.stateUpdateHandler = nil
+                        cont.resume(throwing: DNSError.cancelled)
+                    }
                 default:
                     break
                 }
@@ -133,45 +137,37 @@ final class DNSResolver: NSObject {
 
         // Send DNS query packet
         try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, Error>) in
-            var isResumed = false
+            let gate = ResumeGate()
 
             connection.send(content: queryData, completion: .contentProcessed { error in
-                // Defensive: NWConnection.send completion should only fire once, but guard anyway
-                guard !isResumed else { return }
-                isResumed = true
-
-                if let error = error {
-                    cont.resume(throwing: DNSError.queryFailed(error.localizedDescription))
-                } else {
-                    cont.resume()
+                gate.tryResume {
+                    if let error = error {
+                        cont.resume(throwing: DNSError.queryFailed(error.localizedDescription))
+                    } else {
+                        cont.resume()
+                    }
                 }
             })
         }
 
         // Receive DNS response packet
         let responseData: Data = try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Data, Error>) in
-            var isResumed = false
+            let gate = ResumeGate()
 
             connection.receiveMessage { data, _, _, error in
-                // CRITICAL ORDER: Set isResumed flag BEFORE calling connection.cancel()
-                // Reason: cancel() may synchronously trigger stateUpdateHandler with .cancelled state.
-                // If we cancel first, stateUpdateHandler sees isResumed=false and attempts to resume
-                // the continuation with .cancelled, then we try to resume with data → double-resume crash.
-                guard !isResumed else { return }
-                isResumed = true
+                gate.tryResume {
+                    connection.cancel()
 
-                // Now safe to cancel: flag is set, preventing stateUpdateHandler from resuming
-                connection.cancel()
-
-                if let error = error {
-                    cont.resume(throwing: DNSError.queryFailed(error.localizedDescription))
-                    return
+                    if let error = error {
+                        cont.resume(throwing: DNSError.queryFailed(error.localizedDescription))
+                        return
+                    }
+                    guard let data = data, data.count >= 12 else {
+                        cont.resume(throwing: DNSError.noRecordsFound)
+                        return
+                    }
+                    cont.resume(returning: data)
                 }
-                guard let data = data, data.count >= 12 else {
-                    cont.resume(throwing: DNSError.noRecordsFound)
-                    return
-                }
-                cont.resume(returning: data)
             }
         }
 
@@ -204,9 +200,8 @@ final class DNSResolver: NSObject {
 
     private func encodeDomainName(_ domain: String) throws -> Data {
         var data = Data()
-        let components = domain
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-            .split(separator: ".", omittingEmptySubsequences: true)
+        let normalizedDomain = try normalizeQueryName(domain)
+        let components = normalizedDomain.split(separator: ".", omittingEmptySubsequences: true)
 
         guard !components.isEmpty else {
             throw DNSError.queryFailed("Query name is invalid")
@@ -214,7 +209,7 @@ final class DNSResolver: NSObject {
 
         for component in components {
             let label = String(component)
-            if label.utf8.count > 63 {
+            if label.utf8.count > DNSResolver.maxLabelLength {
                 throw DNSError.queryFailed("DNS label exceeds 63 characters")
             }
             guard let componentData = label.data(using: .utf8) else {
@@ -284,7 +279,66 @@ final class DNSResolver: NSObject {
         }
         return results
     }
-    
+
+    // MARK: - Sanitization helpers
+
+    /// Enforces the exact same DNS label sanitization contract as the JS reference implementation.
+    private func normalizeQueryName(_ rawValue: String) throws -> String {
+        let trimmed = rawValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            throw DNSError.queryFailed("Query name cannot be empty")
+        }
+
+        let labels = trimmed.split(separator: ".", omittingEmptySubsequences: true)
+        guard !labels.isEmpty else {
+            throw DNSError.queryFailed("Query name is invalid")
+        }
+
+        var normalizedLabels: [String] = []
+        normalizedLabels.reserveCapacity(labels.count)
+
+        var totalLength = 1 // account for the root terminator
+
+        for label in labels {
+            let sanitized = try sanitizeLabel(label)
+            normalizedLabels.append(sanitized)
+            totalLength += sanitized.count + 1
+            if totalLength > DNSResolver.maxQNameLength {
+                throw DNSError.queryFailed("DNS query name exceeds 255 characters")
+            }
+        }
+
+        return normalizedLabels.joined(separator: ".")
+    }
+
+    /// Mirrors sanitizeDNSMessageReference from the TypeScript implementation so all platforms agree.
+    /// Steps: Unicode NFKD decomposition → strip combining marks → lowercase ASCII + dash rules.
+    private func sanitizeLabel(_ rawLabel: Substring) throws -> String {
+        let asciiFolded = foldUnicode(String(rawLabel))
+        var label = asciiFolded.lowercased()
+
+        label = label.replacingOccurrences(of: "\\s+", with: "-", options: .regularExpression)
+        label = label.replacingOccurrences(of: "[^a-z0-9-]", with: "", options: .regularExpression)
+        label = label.replacingOccurrences(of: "-{2,}", with: "-", options: .regularExpression)
+        label = label.replacingOccurrences(of: "^-+|-+$", with: "", options: .regularExpression)
+
+        guard !label.isEmpty else {
+            throw DNSError.queryFailed("DNS label must contain at least one alphanumeric character after sanitization")
+        }
+
+        if label.count > DNSResolver.maxLabelLength {
+            throw DNSError.queryFailed("DNS label exceeds 63 characters after sanitization")
+        }
+
+        return label
+    }
+
+    private func foldUnicode(_ value: String) -> String {
+        // Match JS sanitizeDNSMessageReference: canonical decomposition then strip combining marks.
+        let decomposed = value.decomposedStringWithCanonicalMapping
+        let scalars = decomposed.unicodeScalars.filter { !$0.properties.isDiacritic }
+        return String(String.UnicodeScalarView(scalars))
+    }
 }
 
 // MARK: - Extensions
@@ -317,6 +371,25 @@ extension DNSResolver {
 private extension UInt16 {
     var bigEndianBytes: [UInt8] {
         return [UInt8(self >> 8), UInt8(self & 0xFF)]
+    }
+}
+
+private final class ResumeGate: @unchecked Sendable {
+    private let lock = NSLock()
+    private var hasResumed = false
+
+    /// Executes `action` exactly once in a thread-safe manner.
+    func tryResume(_ action: () -> Void) {
+        lock.lock()
+        let shouldRun = !hasResumed
+        if shouldRun {
+            hasResumed = true
+        }
+        lock.unlock()
+
+        if shouldRun {
+            action()
+        }
     }
 }
 

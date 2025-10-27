@@ -23,6 +23,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -31,6 +32,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.regex.Pattern;
 
 import org.xbill.DNS.*;
 
@@ -43,6 +45,11 @@ public class DNSResolver {
     private static final int MAX_QNAME_LENGTH = 255;
     private static final int MAX_NATIVE_ATTEMPTS = 3;
     private static final long RETRY_DELAY_MS = 200L;
+    private static final Pattern WHITESPACE = Pattern.compile("\\s+");
+    private static final Pattern INVALID_CHARS = Pattern.compile("[^a-z0-9-]");
+    private static final Pattern DASH_COLLAPSE = Pattern.compile("-{2,}");
+    private static final Pattern EDGE_DASHES = Pattern.compile("^-+|-+$");
+    private static final Pattern COMBINING_MARKS = Pattern.compile("\\p{M}+");
     
     private final Executor executor = Executors.newCachedThreadPool();
     private final ConnectivityManager connectivityManager;
@@ -288,29 +295,14 @@ public class DNSResolver {
     }
 
     private byte[] encodeDomainName(String fqdn) throws DNSError {
-        String[] rawLabels = fqdn.split("\\.");
-        if (rawLabels.length == 0) {
-            throw new DNSError(DNSError.Type.QUERY_FAILED, "Query name is invalid");
-        }
+        String normalizedFqdn = normalizeQueryName(fqdn);
+        String[] labels = normalizedFqdn.split("\\.");
 
         List<byte[]> labelBytes = new ArrayList<>();
         int totalLength = 1; // null terminator
 
-        for (String rawLabel : rawLabels) {
-            String label = rawLabel.trim();
-            if (label.isEmpty()) {
-                throw new DNSError(DNSError.Type.QUERY_FAILED, "Query name contains empty label");
-            }
-
-            String normalizedLabel = label.toLowerCase(Locale.US);
-            if (!isLabelSafe(normalizedLabel)) {
-                throw new DNSError(
-                    DNSError.Type.QUERY_FAILED,
-                    "Invalid characters in DNS label: " + label
-                );
-            }
-
-            byte[] bytes = normalizedLabel.getBytes(StandardCharsets.US_ASCII);
+        for (String label : labels) {
+            byte[] bytes = label.getBytes(StandardCharsets.US_ASCII);
             if (bytes.length > MAX_LABEL_LENGTH) {
                 throw new DNSError(DNSError.Type.QUERY_FAILED, "DNS label exceeds 63 bytes: " + label);
             }
@@ -342,10 +334,7 @@ public class DNSResolver {
             throw new DNSError(DNSError.Type.QUERY_FAILED, "Query name cannot be empty");
         }
 
-        String normalizedInput = trimmed.toLowerCase(Locale.US);
-
-        // Validate structure and labels (same rules as encodeDomainName)
-        String[] labels = normalizedInput.split("\\.");
+        String[] labels = trimmed.split("\\.");
         if (labels.length == 0) {
             throw new DNSError(DNSError.Type.QUERY_FAILED, "Query name is invalid");
         }
@@ -353,25 +342,14 @@ public class DNSResolver {
         int totalLength = 1; // null terminator
         StringBuilder normalized = new StringBuilder();
         for (int i = 0; i < labels.length; i++) {
-            String label = labels[i].trim();
-            if (label.isEmpty()) {
-                throw new DNSError(DNSError.Type.QUERY_FAILED, "Query name contains empty label");
-            }
-
-            if (!isLabelSafe(label)) {
-                throw new DNSError(DNSError.Type.QUERY_FAILED, "Invalid characters in DNS label: " + label);
-            }
-
-            if (label.length() > MAX_LABEL_LENGTH) {
-                throw new DNSError(DNSError.Type.QUERY_FAILED, "DNS label exceeds 63 bytes: " + label);
-            }
+            String sanitized = sanitizeLabel(labels[i]);
 
             if (normalized.length() > 0) {
                 normalized.append('.');
             }
-            normalized.append(label);
+            normalized.append(sanitized);
 
-            totalLength += 1 + label.length();
+            totalLength += 1 + sanitized.length();
             if (totalLength > MAX_QNAME_LENGTH) {
                 throw new DNSError(DNSError.Type.QUERY_FAILED, "DNS query name exceeds 255 characters");
             }
@@ -380,15 +358,40 @@ public class DNSResolver {
         return normalized.toString();
     }
 
-    private boolean isLabelSafe(String label) {
-        for (int i = 0; i < label.length(); i++) {
-            char ch = label.charAt(i);
-            if ((ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9') || ch == '-') {
-                continue;
-            }
-            return false;
+    // Mirrors sanitizeDNSMessageReference from the TypeScript reference: fold diacritics,
+    // enforce lowercase ASCII, and collapse stray punctuation so iOS/Android stay in sync.
+    private String sanitizeLabel(String rawLabel) throws DNSError {
+        String working = rawLabel == null ? "" : rawLabel.trim();
+        if (working.isEmpty()) {
+            throw new DNSError(DNSError.Type.QUERY_FAILED, "DNS label cannot be empty");
         }
-        return true;
+
+        working = foldUnicode(working).toLowerCase(Locale.US);
+        working = WHITESPACE.matcher(working).replaceAll("-");
+        working = INVALID_CHARS.matcher(working).replaceAll("");
+        working = DASH_COLLAPSE.matcher(working).replaceAll("-");
+        working = EDGE_DASHES.matcher(working).replaceAll("");
+
+        if (working.isEmpty()) {
+            throw new DNSError(
+                DNSError.Type.QUERY_FAILED,
+                "DNS label must contain at least one alphanumeric character after sanitization"
+            );
+        }
+
+        if (working.length() > MAX_LABEL_LENGTH) {
+            throw new DNSError(
+                DNSError.Type.QUERY_FAILED,
+                "DNS label exceeds 63 characters after sanitization"
+            );
+        }
+
+        return working;
+    }
+
+    private String foldUnicode(String value) {
+        String normalized = Normalizer.normalize(value, Normalizer.Form.NFKD);
+        return COMBINING_MARKS.matcher(normalized).replaceAll("");
     }
 
     private List<String> parseDnsTxtResponse(byte[] data) throws Exception {
