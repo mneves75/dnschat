@@ -9,6 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Logs Tab Query Steps Clipping Issue**: Fixed nested ScrollView preventing full content display in expanded log entries
+  - Problem: Query step entries ("Etapas da consulta") were clipping content and not scrolling properly
+  - Root cause: Nested ScrollView inside parent Form.List ScrollView causing iOS to incorrectly calculate scroll regions
+  - Solution: Replaced nested ScrollView with simple View component, allowing parent scroll to handle all scrolling
+  - iOS 26 HIG compliance: Follows "Keep item text succinct so row content is comfortable to read" guideline
+  - All query step entries now fully visible when log expanded, no hidden content
+  - Added hairline dividers between query steps for improved visual hierarchy
+  - Removed emoji usage (search icon, trash icon) per project guidelines
+  - Cleaned up unused styles: entriesScroll, emptyIcon, clearBadge, clearIcon
+  - Performance improvement: Removed ScrollView overhead for simple list rendering
+  - Impact: Users can now see complete DNS query lifecycle without content clipping
+
+- **CRITICAL: DNS Sanitization Parity Across JS & Native Pipelines**
+  - Unicode inputs with accents/diacritics now normalize consistently across JS, Swift, and Java implementations using NFKD decomposition plus combining-mark stripping
+  - Tightened sanitization guard rails: punctuation- or emoji-only messages now fail fast with “Message must contain at least one letter or number after sanitization”
+  - Prevented partial writes in chat state by validating user input before persisting to AsyncStorage
+  - Updated CLI smoke tests and DNS harness tooling to mirror the shared sanitizer and avoid divergence
+  - Added regression coverage for accent folding and punctuation rejection in both app-level and native Jest suites
+
 - **UIKit Text Selection Menu Conflict**: Fixed iOS native text selection menu interfering with custom context menu
   - Problem: Long-press on message bubbles triggered UIKit's UITextContextMenuInteraction.TextSelectionMenu, preventing custom Copy/Share menu from appearing
   - Logs showed: "did not have performable commands and/or actions; ignoring present"
@@ -57,6 +76,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Impact: Cleaner UI with focused context menu actions
 
 ### Added
+
+- **ClipboardService**: Clipboard operations with haptic feedback for message copy actions
+  - Uses @react-native-clipboard/clipboard for cross-platform clipboard access
+  - Provides light haptic feedback on successful copy operations for tactile confirmation
+  - Graceful error handling for clipboard access restrictions (MDM policies, permissions)
+  - Static methods: copy(), getString(), hasString()
+  - Comprehensive JSDoc documentation with implementation notes
+  - Impact: Reliable clipboard functionality with user-friendly haptic feedback
+
+- **ShareService**: Native share sheet integration for message sharing
+  - Uses React Native's Share API (UIActivityViewController on iOS, Intent.ACTION_SEND on Android)
+  - Formats messages with timestamps for context: "Message content\n\n— Shared from DNSChat on [date]"
+  - Medium haptic feedback before opening share sheet for tactile response
+  - Platform-aware behavior: Handles iOS dismissedAction vs Android behavior differences
+  - Static methods: shareMessage(), shareConversation()
+  - Comprehensive error handling with user-facing alerts for actual failures
+  - Future-ready: shareConversation() method for multi-message thread sharing
+  - Impact: Seamless native sharing experience with proper error handling
 
 - **iOS 26 HIG Liquid Glass Chat Components** (DEPRECATED - See Fixed section above): Previous implementation violating HIG by using glass in content layer
   - **MessageBubble Glass Effects**: Wraps message bubbles in LiquidGlassWrapper for iOS 26+ Liquid Glass rendering
