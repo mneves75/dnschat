@@ -1,6 +1,7 @@
 import Foundation
 import Network
 import React
+import os.lock
 
 @objc(DNSResolver)
 final class DNSResolver: NSObject {
@@ -18,7 +19,9 @@ final class DNSResolver: NSObject {
     // MARK: - Public Interface
     
     @objc static func isAvailable() -> Bool {
-        if #available(iOS 12.0, *) {
+        // Network.framework available since iOS 12.0, but ResumeGate (OSAllocatedUnfairLock)
+        // requires iOS 16.0+, so that's our effective minimum.
+        if #available(iOS 16.0, *) {
             return true
         }
         return false
@@ -94,7 +97,7 @@ final class DNSResolver: NSObject {
         }
     }
 
-    @available(iOS 12.0, *)
+    @available(iOS 16.0, *)
     private func performUDPQuery(server: String, queryName: String) async throws -> [String] {
         // Build DNS query
         let queryData = try createDNSQuery(queryName: queryName)
@@ -106,8 +109,18 @@ final class DNSResolver: NSObject {
         let connection = NWConnection(host: host, port: port, using: params)
 
         // CRITICAL: Wait for connection ready state
-        // Thread Safety: All callbacks execute on .global(qos: .userInitiated) queue (specified in start()),
-        // providing serial execution guarantees. No concurrent access to isResumed is possible.
+        //
+        // Race Condition: Network.framework's stateUpdateHandler can fire multiple times:
+        // - ready → waiting → ready (network fluctuation, DNS server temporarily unreachable)
+        // - ready + cancelled (if connection.cancel() called externally)
+        // - failed + cancelled (multiple error paths racing)
+        //
+        // Without ResumeGate, we'd crash with "Continuation already resumed" if state transitions
+        // rapidly or error paths race. Gate ensures cont.resume() called exactly once.
+        //
+        // Serial Queue: connection.start(queue:) specifies execution queue, but does NOT
+        // prevent rapid state changes - a single-threaded queue can still deliver
+        // ready → failed → cancelled in quick succession, each trying to resume.
         try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, Error>) in
             let gate = ResumeGate()
 
@@ -136,6 +149,12 @@ final class DNSResolver: NSObject {
         }
 
         // Send DNS query packet
+        //
+        // Race Condition: NWConnection.send completion can fire multiple times:
+        // - Success callback + connection cancelled externally
+        // - Error callback + connection state change triggering cancellation
+        //
+        // Gate ensures first completion wins, subsequent calls ignored.
         try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, Error>) in
             let gate = ResumeGate()
 
@@ -151,11 +170,20 @@ final class DNSResolver: NSObject {
         }
 
         // Receive DNS response packet
+        //
+        // Race Condition: NWConnection.receiveMessage can deliver multiple callbacks:
+        // - Data received + connection error (partial read then socket error)
+        // - Data received + connection.cancel() triggers cancellation callback
+        // - Timeout from withTimeout wrapper + data arrives simultaneously
+        //
+        // We call connection.cancel() inside the gate to clean up, but cancellation itself
+        // may trigger another callback. Gate ensures we only resume continuation once.
         let responseData: Data = try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Data, Error>) in
             let gate = ResumeGate()
 
             connection.receiveMessage { data, _, _, error in
                 gate.tryResume {
+                    // Cancel connection inside gate to prevent races with cancellation callback
                     connection.cancel()
 
                     if let error = error {
@@ -374,19 +402,54 @@ private extension UInt16 {
     }
 }
 
-private final class ResumeGate: @unchecked Sendable {
-    private let lock = NSLock()
+/// Thread-safe gate ensuring a continuation resumes exactly once.
+///
+/// ## Problem
+/// Network.framework callbacks (`stateUpdateHandler`, `send completion`, `receiveMessage`)
+/// can fire multiple times or race on concurrent queues:
+/// - `stateUpdateHandler` may fire: ready → waiting → ready (network fluctuation)
+/// - Multiple error paths can trigger simultaneously (cancel + timeout)
+/// - Calling `CheckedContinuation.resume()` twice crashes with "already resumed"
+///
+/// ## Solution
+/// This gate ensures exactly-once execution semantics. First thread to call `tryResume`
+/// executes the action; subsequent calls are no-ops.
+///
+/// ## Thread Safety
+/// Uses `OSAllocatedUnfairLock` (iOS 16+) for optimal performance:
+/// - Unfair scheduling (no FIFO guarantee) - acceptable since only one winner needed
+/// - No heap allocation (inline storage) - faster than NSLock
+/// - Modern Swift idiom with `withLock` closure
+///
+/// ## Sendable Conformance
+/// Marked `@unchecked Sendable` because:
+/// - Contains mutable state (`hasResumed`) protected by lock
+/// - Lock guarantees serial access across concurrent callers
+/// - Cannot express "lock-protected mutable state" in Swift type system
+/// - Manual verification: all access to `hasResumed` occurs within `lock.withLock`
+///
+/// Reference: Swift Concurrency - Sendable Types (SE-0302)
+@available(iOS 16.0, *)
+internal final class ResumeGate: @unchecked Sendable {
+    private let lock = OSAllocatedUnfairLock()
     private var hasResumed = false
 
     /// Executes `action` exactly once in a thread-safe manner.
+    ///
+    /// - Parameter action: Closure to execute. Called outside lock to avoid holding
+    ///   lock during potentially long-running continuation resume.
+    /// - Note: Safe to call concurrently from multiple threads. First caller wins.
     func tryResume(_ action: () -> Void) {
-        lock.lock()
-        let shouldRun = !hasResumed
-        if shouldRun {
-            hasResumed = true
+        // Determine winner inside lock, execute outside lock
+        let shouldRun = lock.withLock {
+            let should = !hasResumed
+            if should {
+                hasResumed = true
+            }
+            return should
         }
-        lock.unlock()
 
+        // Execute action outside lock to prevent deadlock if action acquires other locks
         if shouldRun {
             action()
         }

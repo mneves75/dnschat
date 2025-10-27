@@ -3,6 +3,22 @@
  * These values MUST be synchronized across iOS, Android, and TypeScript implementations
  */
 
+type RegexDescriptor = {
+  pattern: string;
+  flags?: string;
+};
+
+export type NativeSanitizerConfig = {
+  unicodeNormalization: 'NFKD';
+  spaceReplacement: string;
+  maxLabelLength: number;
+  whitespace: RegexDescriptor;
+  invalidChars: RegexDescriptor;
+  dashCollapse: RegexDescriptor;
+  edgeDashes: RegexDescriptor;
+  combiningMarks: RegexDescriptor;
+};
+
 export const DNS_CONSTANTS = {
   // Message limits
   MAX_MESSAGE_LENGTH: 120,      // Enforce limit before sanitization to avoid silent truncation
@@ -54,6 +70,40 @@ export const DNS_CONSTANTS = {
   MAX_REQUESTS_PER_WINDOW: 60,  // 60 requests per minute (updated to match app logic)
 };
 
+export const DNS_SANITIZER_CONFIG: NativeSanitizerConfig = {
+  unicodeNormalization: 'NFKD',
+  spaceReplacement: DNS_CONSTANTS.SPACE_REPLACEMENT,
+  maxLabelLength: DNS_CONSTANTS.MAX_DNS_LABEL_LENGTH,
+  whitespace: {
+    pattern: '\\s+',
+    flags: 'g',
+  },
+  invalidChars: {
+    pattern: '[^a-z0-9-]',
+    flags: 'g',
+  },
+  dashCollapse: {
+    pattern: '-{2,}',
+    flags: 'g',
+  },
+  edgeDashes: {
+    pattern: '^-+|-+$',
+    flags: 'g',
+  },
+  combiningMarks: {
+    pattern: '\\p{M}+',
+    flags: 'gu',
+  },
+};
+
+const createRegExp = ({ pattern, flags }: RegexDescriptor): RegExp => new RegExp(pattern, flags);
+
+const WHITESPACE_REGEX = createRegExp(DNS_SANITIZER_CONFIG.whitespace);
+const INVALID_CHARS_REGEX = createRegExp(DNS_SANITIZER_CONFIG.invalidChars);
+const DASH_COLLAPSE_REGEX = createRegExp(DNS_SANITIZER_CONFIG.dashCollapse);
+const EDGE_DASHES_REGEX = createRegExp(DNS_SANITIZER_CONFIG.edgeDashes);
+const COMBINING_MARKS_REGEX = createRegExp(DNS_SANITIZER_CONFIG.combiningMarks);
+
 /**
  * Sanitize a message according to shared rules
  * This TypeScript implementation serves as the reference
@@ -69,11 +119,11 @@ export function sanitizeDNSMessageReference(message: string): string {
 
   // Step 1: Normalize and strip combining marks so á/ç map to ASCII
   try {
-    result = result.normalize('NFKD');
+    result = result.normalize(DNS_SANITIZER_CONFIG.unicodeNormalization);
   } catch {
-    // Some environments (very old JS runtimes) may not support normalize; fall back silently
+    // Some environments (very old JS runtimes) may not support normalize; fallback silently
   }
-  result = result.replace(/[\u0300-\u036f]/g, '');
+  result = result.replace(COMBINING_MARKS_REGEX, '');
 
   // Step 2: Lowercase
   result = result.toLowerCase();
@@ -82,23 +132,34 @@ export function sanitizeDNSMessageReference(message: string): string {
   result = result.trim();
 
   // Step 4: Spaces to dashes
-  result = result.replace(/\s+/g, DNS_CONSTANTS.SPACE_REPLACEMENT);
+  result = result.replace(WHITESPACE_REGEX, DNS_SANITIZER_CONFIG.spaceReplacement);
 
   // Step 5: Remove invalid characters (keep only alphanumeric and dash)
-  result = result.replace(/[^a-z0-9-]/g, '');
+  result = result.replace(INVALID_CHARS_REGEX, '');
 
   // Step 6: Collapse multiple dashes
-  result = result.replace(/-{2,}/g, '-');
+  result = result.replace(DASH_COLLAPSE_REGEX, DNS_SANITIZER_CONFIG.spaceReplacement);
 
   // Step 7: Remove edge dashes
-  result = result.replace(/^-+|-+$/g, '');
+  result = result.replace(EDGE_DASHES_REGEX, '');
 
   // Step 8: Enforce DNS label limit
-  if (result.length > DNS_CONSTANTS.MAX_DNS_LABEL_LENGTH) {
+  if (result.length > DNS_SANITIZER_CONFIG.maxLabelLength) {
     throw new Error(
-      `Message exceeds DNS label limit of ${DNS_CONSTANTS.MAX_DNS_LABEL_LENGTH} characters after sanitization`,
+      `Message exceeds DNS label limit of ${DNS_SANITIZER_CONFIG.maxLabelLength} characters after sanitization`,
     );
   }
-  
+
   return result;
 }
+
+export const getNativeSanitizerConfig = (): NativeSanitizerConfig => ({
+  unicodeNormalization: DNS_SANITIZER_CONFIG.unicodeNormalization,
+  spaceReplacement: DNS_SANITIZER_CONFIG.spaceReplacement,
+  maxLabelLength: DNS_SANITIZER_CONFIG.maxLabelLength,
+  whitespace: { ...DNS_SANITIZER_CONFIG.whitespace },
+  invalidChars: { ...DNS_SANITIZER_CONFIG.invalidChars },
+  dashCollapse: { ...DNS_SANITIZER_CONFIG.dashCollapse },
+  edgeDashes: { ...DNS_SANITIZER_CONFIG.edgeDashes },
+  combiningMarks: { ...DNS_SANITIZER_CONFIG.combiningMarks },
+});

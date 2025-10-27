@@ -29,7 +29,7 @@ Generate all App Store screenshots
 [bundle exec] fastlane ios screenshots_test
 ```
 
-Quick test: Capture screenshots for one device only (iPhone 16 Pro Max)
+Quick test: Capture screenshots for one device only (iPhone 17 Pro)
 
 ### ios build_and_install
 

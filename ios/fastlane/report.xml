@@ -5,139 +5,54 @@
     
     
       
-      <testcase classname="fastlane.lanes" name="00: default_platform" time="0.000222">
+      <testcase classname="fastlane.lanes" name="0: default_platform" time="0.001062">
         
       </testcase>
     
       
-      <testcase classname="fastlane.lanes" name="01: Switch to ios capture_device_screenshots lane" time="0.000105">
+      <testcase classname="fastlane.lanes" name="1: Switch to ios capture_device_screenshots lane" time="0.000142">
         
       </testcase>
     
       
-      <testcase classname="fastlane.lanes" name="02: Switch to ios find_simulator_udid lane" time="6.7e-05">
+      <testcase classname="fastlane.lanes" name="2: Switch to ios find_simulator_udid lane" time="7.1e-05">
         
       </testcase>
     
       
-      <testcase classname="fastlane.lanes" name="03: xcrun simctl list devices | grep 'iPhone 16 Pro Max' | head -1 || true" time="0.228684">
+      <testcase classname="fastlane.lanes" name="3: xcrun simctl list devices | grep 'iPhone 17 Pro Max' | head -1 || true" time="0.52445">
         
       </testcase>
     
       
-      <testcase classname="fastlane.lanes" name="04: Switch to ios boot_simulator lane" time="9.9e-05">
+      <testcase classname="fastlane.lanes" name="4: Switch to ios boot_simulator lane" time="0.000126">
         
       </testcase>
     
       
-      <testcase classname="fastlane.lanes" name="05: xcrun simctl list devices | grep E13841AC-07D8-4647-A485-92D4ABA6DFFE || true" time="0.134407">
+      <testcase classname="fastlane.lanes" name="5: xcrun simctl list devices | grep 8E5A9A6F-6086-4C07-9E8A-FA9408EE8F94 || true" time="0.867266">
         
       </testcase>
     
       
-      <testcase classname="fastlane.lanes" name="06: xcrun simctl boot E13841AC-07D8-4647-A485-92D4ABA6DFFE" time="0.893454">
+      <testcase classname="fastlane.lanes" name="6: xcrun simctl boot 8E5A9A6F-6086-4C07-9E8A-FA9408EE8F94" time="2.436577">
         
       </testcase>
     
       
-      <testcase classname="fastlane.lanes" name="07: open -a Simulator" time="0.095211">
+      <testcase classname="fastlane.lanes" name="7: open -a Simulator" time="0.117995">
         
       </testcase>
     
       
-      <testcase classname="fastlane.lanes" name="08: Switch to ios install_app lane" time="0.000141">
+      <testcase classname="fastlane.lanes" name="8: Switch to ios install_app lane" time="0.000463">
         
       </testcase>
     
       
-      <testcase classname="fastlane.lanes" name="09: gym" time="42.500599">
+      <testcase classname="fastlane.lanes" name="9: gym" time="302.985326">
         
-      </testcase>
-    
-      
-      <testcase classname="fastlane.lanes" name="10: xcrun simctl install E13841AC-07D8-4647-A485-92D4ABA6DFFE '/Users/mvneves/dev/MOBILE/chat-dns/ios/build/Build/Products/Release-iphonesimulator/DNSChat.app'" time="5.870607">
-        
-      </testcase>
-    
-      
-      <testcase classname="fastlane.lanes" name="11: Switch to ios set_appearance lane" time="9.5e-05">
-        
-      </testcase>
-    
-      
-      <testcase classname="fastlane.lanes" name="12: xcrun simctl ui E13841AC-07D8-4647-A485-92D4ABA6DFFE appearance light" time="0.148686">
-        
-      </testcase>
-    
-      
-      <testcase classname="fastlane.lanes" name="13: Switch to ios launch_app_axe lane" time="0.000129">
-        
-      </testcase>
-    
-      
-      <testcase classname="fastlane.lanes" name="14: xcrun simctl launch E13841AC-07D8-4647-A485-92D4ABA6DFFE org.mvneves.dnschat" time="0.277693">
-        
-      </testcase>
-    
-      
-      <testcase classname="fastlane.lanes" name="15: Switch to ios navigate_and_capture lane" time="0.00012">
-        
-      </testcase>
-    
-      
-      <testcase classname="fastlane.lanes" name="16: bash ./scripts/navigate_chat_empty.sh E13841AC-07D8-4647-A485-92D4ABA6DFFE" time="10.242724">
-        
-      </testcase>
-    
-      
-      <testcase classname="fastlane.lanes" name="17: xcrun simctl io E13841AC-07D8-4647-A485-92D4ABA6DFFE screenshot '../screenshots/iPhone-6.9/light/1_chat_empty.png'" time="0.313339">
-        
-      </testcase>
-    
-      
-      <testcase classname="fastlane.lanes" name="18: Switch to ios navigate_and_capture lane" time="9.7e-05">
-        
-      </testcase>
-    
-      
-      <testcase classname="fastlane.lanes" name="19: bash ./scripts/navigate_chat_active.sh E13841AC-07D8-4647-A485-92D4ABA6DFFE" time="16.404451">
-        
-      </testcase>
-    
-      
-      <testcase classname="fastlane.lanes" name="20: xcrun simctl io E13841AC-07D8-4647-A485-92D4ABA6DFFE screenshot '../screenshots/iPhone-6.9/light/2_chat_active.png'" time="0.618158">
-        
-      </testcase>
-    
-      
-      <testcase classname="fastlane.lanes" name="21: Switch to ios navigate_and_capture lane" time="9.2e-05">
-        
-      </testcase>
-    
-      
-      <testcase classname="fastlane.lanes" name="22: bash ./scripts/navigate_chat_list.sh E13841AC-07D8-4647-A485-92D4ABA6DFFE" time="4.902135">
-        
-      </testcase>
-    
-      
-      <testcase classname="fastlane.lanes" name="23: xcrun simctl io E13841AC-07D8-4647-A485-92D4ABA6DFFE screenshot '../screenshots/iPhone-6.9/light/3_chat_list.png'" time="0.272421">
-        
-      </testcase>
-    
-      
-      <testcase classname="fastlane.lanes" name="24: Switch to ios navigate_and_capture lane" time="9.1e-05">
-        
-      </testcase>
-    
-      
-      <testcase classname="fastlane.lanes" name="25: bash ./scripts/navigate_settings.sh E13841AC-07D8-4647-A485-92D4ABA6DFFE" time="4.831454">
-        
-      </testcase>
-    
-      
-      <testcase classname="fastlane.lanes" name="26: xcrun simctl io E13841AC-07D8-4647-A485-92D4ABA6DFFE screenshot '../screenshots/iPhone-6.9/light/4_settings.png'" time="1.633199">
-        
-          <failure message="/Library/Ruby/Gems/2.6.0/gems/fastlane-2.228.0/fastlane/lib/fastlane/actions/actions_helper.rb:67:in `execute_action'&#10;/Library/Ruby/Gems/2.6.0/gems/fastlane-2.228.0/fastlane/lib/fastlane/fast_file.rb:224:in `sh'&#10;/Library/Ruby/Gems/2.6.0/gems/fastlane-2.228.0/fastlane/lib/fastlane/fast_file.rb:216:in `sh'&#10;Fastfile:188:in `block (2 levels) in parsing_binding'&#10;/Library/Ruby/Gems/2.6.0/gems/fastlane-2.228.0/fastlane/lib/fastlane/lane.rb:41:in `call'&#10;/Library/Ruby/Gems/2.6.0/gems/fastlane-2.228.0/fastlane/lib/fastlane/runner.rb:204:in `try_switch_to_lane'&#10;/Library/Ruby/Gems/2.6.0/gems/fastlane-2.228.0/fastlane/lib/fastlane/runner.rb:146:in `trigger_action_by_name'&#10;/Library/Ruby/Gems/2.6.0/gems/fastlane-2.228.0/fastlane/lib/fastlane/fast_file.rb:159:in `method_missing'&#10;Fastfile:222:in `block (3 levels) in parsing_binding'&#10;Fastfile:219:in `each'&#10;Fastfile:219:in `each_with_index'&#10;Fastfile:219:in `block (2 levels) in parsing_binding'&#10;/Library/Ruby/Gems/2.6.0/gems/fastlane-2.228.0/fastlane/lib/fastlane/lane.rb:41:in `call'&#10;/Library/Ruby/Gems/2.6.0/gems/fastlane-2.228.0/fastlane/lib/fastlane/runner.rb:204:in `try_switch_to_lane'&#10;/Library/Ruby/Gems/2.6.0/gems/fastlane-2.228.0/fastlane/lib/fastlane/runner.rb:146:in `trigger_action_by_name'&#10;/Library/Ruby/Gems/2.6.0/gems/fastlane-2.228.0/fastlane/lib/fastlane/fast_file.rb:159:in `method_missing'&#10;Fastfile:291:in `block (2 levels) in parsing_binding'&#10;/Library/Ruby/Gems/2.6.0/gems/fastlane-2.228.0/fastlane/lib/fastlane/lane.rb:41:in `call'&#10;/Library/Ruby/Gems/2.6.0/gems/fastlane-2.228.0/fastlane/lib/fastlane/runner.rb:49:in `block in execute'&#10;/Library/Ruby/Gems/2.6.0/gems/fastlane-2.228.0/fastlane/lib/fastlane/runner.rb:45:in `chdir'&#10;/Library/Ruby/Gems/2.6.0/gems/fastlane-2.228.0/fastlane/lib/fastlane/runner.rb:45:in `execute'&#10;/Library/Ruby/Gems/2.6.0/gems/fastlane-2.228.0/fastlane/lib/fastlane/lane_manager.rb:46:in `cruise_lane'&#10;/Library/Ruby/Gems/2.6.0/gems/fastlane-2.228.0/fastlane/lib/fastlane/command_line_handler.rb:34:in `handle'&#10;/Library/Ruby/Gems/2.6.0/gems/fastlane-2.228.0/fastlane/lib/fastlane/commands_generator.rb:110:in `block (2 levels) in run'&#10;/Library/Ruby/Gems/2.6.0/gems/commander-4.6.0/lib/commander/command.rb:187:in `call'&#10;/Library/Ruby/Gems/2.6.0/gems/commander-4.6.0/lib/commander/command.rb:157:in `run'&#10;/Library/Ruby/Gems/2.6.0/gems/commander-4.6.0/lib/commander/runner.rb:444:in `run_active_command'&#10;/Library/Ruby/Gems/2.6.0/gems/fastlane-2.228.0/fastlane_core/lib/fastlane_core/ui/fastlane_runner.rb:124:in `run!'&#10;/Library/Ruby/Gems/2.6.0/gems/commander-4.6.0/lib/commander/delegates.rb:18:in `run!'&#10;/Library/Ruby/Gems/2.6.0/gems/fastlane-2.228.0/fastlane/lib/fastlane/commands_generator.rb:363:in `run'&#10;/Library/Ruby/Gems/2.6.0/gems/fastlane-2.228.0/fastlane/lib/fastlane/commands_generator.rb:43:in `start'&#10;/Library/Ruby/Gems/2.6.0/gems/fastlane-2.228.0/fastlane/lib/fastlane/cli_tools_distributor.rb:123:in `take_off'&#10;/Library/Ruby/Gems/2.6.0/gems/fastlane-2.228.0/bin/fastlane:23:in `&lt;top (required)&gt;'&#10;/usr/local/bin/fastlane:23:in `load'&#10;/usr/local/bin/fastlane:23:in `&lt;main&gt;'&#10;&#10;Exit status of command 'xcrun simctl io E13841AC-07D8-4647-A485-92D4ABA6DFFE screenshot '../screenshots/iPhone-6.9/light/4_settings.png'' was 2 instead of 0.&#10;Detected file type 'PNG' from extension&#10;An error was encountered processing the command (domain=simctl.SimDisplayScreenshotWriter.ScreenshotError, code=2):&#10;Error creating the image&#10;" />
+          <failure message="/Library/Ruby/Gems/2.6.0/gems/fastlane-2.228.0/fastlane/lib/fastlane/actions/actions_helper.rb:67:in `execute_action'&#10;/Library/Ruby/Gems/2.6.0/gems/fastlane-2.228.0/fastlane/lib/fastlane/runner.rb:255:in `block in execute_action'&#10;/Library/Ruby/Gems/2.6.0/gems/fastlane-2.228.0/fastlane/lib/fastlane/runner.rb:229:in `chdir'&#10;/Library/Ruby/Gems/2.6.0/gems/fastlane-2.228.0/fastlane/lib/fastlane/runner.rb:229:in `execute_action'&#10;/Library/Ruby/Gems/2.6.0/gems/fastlane-2.228.0/fastlane/lib/fastlane/runner.rb:157:in `trigger_action_by_name'&#10;/Library/Ruby/Gems/2.6.0/gems/fastlane-2.228.0/fastlane/lib/fastlane/fast_file.rb:159:in `method_missing'&#10;Fastfile:121:in `block (2 levels) in parsing_binding'&#10;/Library/Ruby/Gems/2.6.0/gems/fastlane-2.228.0/fastlane/lib/fastlane/lane.rb:41:in `call'&#10;/Library/Ruby/Gems/2.6.0/gems/fastlane-2.228.0/fastlane/lib/fastlane/runner.rb:204:in `try_switch_to_lane'&#10;/Library/Ruby/Gems/2.6.0/gems/fastlane-2.228.0/fastlane/lib/fastlane/runner.rb:146:in `trigger_action_by_name'&#10;/Library/Ruby/Gems/2.6.0/gems/fastlane-2.228.0/fastlane/lib/fastlane/fast_file.rb:159:in `method_missing'&#10;Fastfile:206:in `block (2 levels) in parsing_binding'&#10;/Library/Ruby/Gems/2.6.0/gems/fastlane-2.228.0/fastlane/lib/fastlane/lane.rb:41:in `call'&#10;/Library/Ruby/Gems/2.6.0/gems/fastlane-2.228.0/fastlane/lib/fastlane/runner.rb:204:in `try_switch_to_lane'&#10;/Library/Ruby/Gems/2.6.0/gems/fastlane-2.228.0/fastlane/lib/fastlane/runner.rb:146:in `trigger_action_by_name'&#10;/Library/Ruby/Gems/2.6.0/gems/fastlane-2.228.0/fastlane/lib/fastlane/fast_file.rb:159:in `method_missing'&#10;Fastfile:259:in `block (3 levels) in parsing_binding'&#10;Fastfile:258:in `each'&#10;Fastfile:258:in `block (2 levels) in parsing_binding'&#10;/Library/Ruby/Gems/2.6.0/gems/fastlane-2.228.0/fastlane/lib/fastlane/lane.rb:41:in `call'&#10;/Library/Ruby/Gems/2.6.0/gems/fastlane-2.228.0/fastlane/lib/fastlane/runner.rb:49:in `block in execute'&#10;/Library/Ruby/Gems/2.6.0/gems/fastlane-2.228.0/fastlane/lib/fastlane/runner.rb:45:in `chdir'&#10;/Library/Ruby/Gems/2.6.0/gems/fastlane-2.228.0/fastlane/lib/fastlane/runner.rb:45:in `execute'&#10;/Library/Ruby/Gems/2.6.0/gems/fastlane-2.228.0/fastlane/lib/fastlane/lane_manager.rb:46:in `cruise_lane'&#10;/Library/Ruby/Gems/2.6.0/gems/fastlane-2.228.0/fastlane/lib/fastlane/command_line_handler.rb:34:in `handle'&#10;/Library/Ruby/Gems/2.6.0/gems/fastlane-2.228.0/fastlane/lib/fastlane/commands_generator.rb:110:in `block (2 levels) in run'&#10;/Library/Ruby/Gems/2.6.0/gems/commander-4.6.0/lib/commander/command.rb:187:in `call'&#10;/Library/Ruby/Gems/2.6.0/gems/commander-4.6.0/lib/commander/command.rb:157:in `run'&#10;/Library/Ruby/Gems/2.6.0/gems/commander-4.6.0/lib/commander/runner.rb:444:in `run_active_command'&#10;/Library/Ruby/Gems/2.6.0/gems/fastlane-2.228.0/fastlane_core/lib/fastlane_core/ui/fastlane_runner.rb:124:in `run!'&#10;/Library/Ruby/Gems/2.6.0/gems/commander-4.6.0/lib/commander/delegates.rb:18:in `run!'&#10;/Library/Ruby/Gems/2.6.0/gems/fastlane-2.228.0/fastlane/lib/fastlane/commands_generator.rb:363:in `run'&#10;/Library/Ruby/Gems/2.6.0/gems/fastlane-2.228.0/fastlane/lib/fastlane/commands_generator.rb:43:in `start'&#10;/Library/Ruby/Gems/2.6.0/gems/fastlane-2.228.0/fastlane/lib/fastlane/cli_tools_distributor.rb:123:in `take_off'&#10;/Library/Ruby/Gems/2.6.0/gems/fastlane-2.228.0/bin/fastlane:23:in `&lt;top (required)&gt;'&#10;/usr/local/bin/fastlane:23:in `load'&#10;/usr/local/bin/fastlane:23:in `&lt;main&gt;'&#10;&#10;Error building the application - see the log above" />
         
       </testcase>
     

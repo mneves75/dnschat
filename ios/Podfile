@@ -84,6 +84,14 @@ target 'DNSChat' do
         end
       end
       
+      # Fix for fmt consteval compilation errors with Xcode beta
+      if target.name == 'fmt'
+        target.build_configurations.each do |config|
+          config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= ['$(inherited)']
+          config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] << 'FMT_ENFORCE_COMPILE_STRING=0'
+        end
+      end
+      
       # Fix for react-native-bottom-tabs Swift dependencies
       if ['SDWebImage', 'SDWebImageSVGCoder'].include?(target.name)
         target.build_configurations.each do |config|

@@ -1,4 +1,5 @@
-import { NativeModules } from "react-native";
+import { NativeModules, Platform } from "react-native";
+import { getNativeSanitizerConfig, NativeSanitizerConfig } from "./constants";
 
 const DEV_LOGGING = typeof __DEV__ !== "undefined" ? !!__DEV__ : false;
 const debugLog = (...args: unknown[]) => {
@@ -29,6 +30,8 @@ export interface NativeDNSModule {
    * @returns Promise resolving to platform capabilities
    */
   isAvailable(): Promise<DNSCapabilities>;
+  configureSanitizer?(config: NativeSanitizerConfig): void;
+  debugSanitizeLabel?(label: string): Promise<string>;
 }
 
 export enum DNSErrorType {
@@ -67,6 +70,14 @@ export class NativeDNS implements NativeDNSModule {
       debugLog("✅ RNDNSModule found:", !!this.nativeModule);
       if (this.nativeModule) {
         debugLog("✅ RNDNSModule methods:", Object.keys(this.nativeModule));
+        if (Platform.OS === "android") {
+          try {
+            this.nativeModule.configureSanitizer?.(getNativeSanitizerConfig());
+            debugLog("✅ Android sanitizer configured via shared constants");
+          } catch (error) {
+            console.warn("⚠️ Failed to configure Android sanitizer:", error);
+          }
+        }
       }
     } catch (error) {
       console.warn("❌ Native DNS module not available:", error);

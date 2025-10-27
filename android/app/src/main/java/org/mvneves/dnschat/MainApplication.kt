@@ -15,16 +15,23 @@ import com.facebook.soloader.SoLoader
 
 import expo.modules.ApplicationLifecycleDispatcher
 import expo.modules.ReactNativeHostWrapper
+import expo.modules.adapters.react.ModuleRegistryAdapter
+import expo.modules.core.interfaces.Package
+import expo.modules.linking.ExpoLinkingPackage
 
 class MainApplication : Application(), ReactApplication {
+
+  private val manualExpoPackages: List<Package> = listOf(ExpoLinkingPackage())
 
   override val reactNativeHost: ReactNativeHost = ReactNativeHostWrapper(
         this,
         object : DefaultReactNativeHost(this) {
           override fun getPackages(): List<ReactPackage> {
             val packages = PackageList(this).packages
-            // Packages that cannot be autolinked yet can be added manually here, for example:
-            // packages.add(MyReactNativePackage())
+            // Expo's autolinking should register every module, but Hermes was failing to
+            // resolve ExpoLinking's native implementation on dev builds. Explicitly adding the
+            // package ensures deep-link helpers stay available even if autolinking misses it.
+            packages.add(ModuleRegistryAdapter(manualExpoPackages))
             return packages
           }
 

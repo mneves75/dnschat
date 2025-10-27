@@ -7,11 +7,15 @@ import {
   useColorScheme,
   Text,
   Platform,
+  LayoutChangeEvent,
 } from "react-native";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
+  withTiming,
+  interpolate,
+  Extrapolation,
 } from "react-native-reanimated";
 import { useTypography } from "../ui/hooks/useTypography";
 import { useImessagePalette } from "../ui/theme/imessagePalette";
@@ -36,22 +40,40 @@ export function ChatInput({
   placeholder,
 }: ChatInputProps) {
   const [message, setMessage] = useState("");
+  const [inputHeight, setInputHeight] = useState(36);
   const textInputRef = useRef<TextInput>(null);
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
   const typography = useTypography();
   const palette = useImessagePalette();
   const scale = useSharedValue(1);
+  const opacity = useSharedValue(0);
   const { t } = useTranslation();
   const { supportsLiquidGlass } = useLiquidGlassCapabilities();
 
   const minimumTouchTarget = getMinimumTouchTarget();
   const resolvedPlaceholder = placeholder ?? t("screen.chatInput.placeholder");
+  const showCharacterCount = message.length > 900;
 
-  // Animated scale for send button press feedback
-  const animatedStyle = useAnimatedStyle(() => ({
+  // Update send button opacity based on message content
+  React.useEffect(() => {
+    opacity.value = withTiming(canSend ? 1 : 0.4, { duration: 200 });
+  }, [canSend, opacity]);
+
+  // Animated scale and opacity for send button
+  const animatedButtonStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
+    opacity: opacity.value,
   }));
+
+  // Handle content size change for auto-growing input
+  const handleContentSizeChange = (event: any) => {
+    const { height } = event.nativeEvent.contentSize;
+    const minHeight = 36;
+    const maxHeight = 120; // ~5 lines
+    const newHeight = Math.min(Math.max(height, minHeight), maxHeight);
+    setInputHeight(newHeight);
+  };
 
   const handleSend = () => {
     if (message.trim() && !isLoading) {
@@ -98,24 +120,113 @@ export function ChatInput({
           <LiquidGlassWrapper
             variant="regular"
             shape="roundedRect"
-            cornerRadius={18}
+            cornerRadius={12}
             isInteractive={false}
             style={styles.textInputGlassWrapper}
           >
+            <View style={styles.inputWithButtonContainer}>
+              <TextInput
+                ref={textInputRef}
+                style={[
+                  styles.textInput,
+                  styles.textInputGlass,
+                  styles.textInputWithButton,
+                  {
+                    height: inputHeight,
+                    fontSize: typography.body.fontSize,
+                    lineHeight: typography.body.lineHeight,
+                    letterSpacing: typography.body.letterSpacing,
+                    color: palette.textPrimary,
+                  },
+                ]}
+                value={message}
+                onChangeText={setMessage}
+                onContentSizeChange={handleContentSizeChange}
+                placeholder={resolvedPlaceholder}
+                placeholderTextColor={palette.textTertiary}
+                multiline={true}
+                maxLength={1000}
+                editable={!isLoading}
+                returnKeyType="send"
+                enablesReturnKeyAutomatically={true}
+                blurOnSubmit={true}
+                textAlignVertical="top"
+                keyboardType="default"
+                autoCorrect={true}
+                spellCheck={true}
+                autoComplete="off"
+                autoCapitalize="sentences"
+                textContentType="none"
+                contextMenuHidden={false}
+                keyboardAppearance={isDark ? "dark" : "light"}
+                onSubmitEditing={handleSend}
+                accessible={true}
+                accessibilityLabel={t("components.chatInput.accessibilityLabel")}
+                accessibilityHint={t("components.chatInput.accessibilityHint")}
+              />
+
+              {/* Send button integrated inside input */}
+              <AnimatedTouchable
+                style={[
+                  animatedButtonStyle,
+                  styles.integratedSendButton,
+                  {
+                    width: minimumTouchTarget,
+                    height: minimumTouchTarget,
+                    borderRadius: minimumTouchTarget / 2,
+                    backgroundColor: canSend ? palette.accentTint : palette.tint,
+                  },
+                ]}
+                onPress={handleSend}
+                onPressIn={handlePressIn}
+                onPressOut={handlePressOut}
+                disabled={!canSend}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel={
+                  isLoading
+                    ? t("components.chatInput.sendingLabel")
+                    : t("components.chatInput.sendLabel")
+                }
+                accessibilityHint={t("components.chatInput.sendHint")}
+                accessibilityState={{ disabled: !canSend }}
+                activeOpacity={1}
+              >
+                {isLoading ? (
+                  <Text style={[styles.sendButtonText, { color: palette.textPrimary }]}>...</Text>
+                ) : (
+                  <SendIcon size={20} isActive={canSend} />
+                )}
+              </AnimatedTouchable>
+            </View>
+
+            {/* Character counter */}
+            {showCharacterCount && (
+              <Text style={[styles.characterCount, { color: palette.textSecondary }]}>
+                {message.length}/1000
+              </Text>
+            )}
+          </LiquidGlassWrapper>
+        ) : (
+          // Android/Web: Standard TextInput with semantic colors
+          <View style={styles.inputWithButtonContainer}>
             <TextInput
               ref={textInputRef}
               style={[
                 styles.textInput,
-                styles.textInputGlass,
+                styles.textInputWithButton,
                 {
+                  height: inputHeight,
                   fontSize: typography.body.fontSize,
                   lineHeight: typography.body.lineHeight,
                   letterSpacing: typography.body.letterSpacing,
                   color: palette.textPrimary,
                 },
+                isDark ? styles.darkTextInput : styles.lightTextInput,
               ]}
               value={message}
               onChangeText={setMessage}
+              onContentSizeChange={handleContentSizeChange}
               placeholder={resolvedPlaceholder}
               placeholderTextColor={palette.textTertiary}
               multiline={true}
@@ -126,91 +237,61 @@ export function ChatInput({
               blurOnSubmit={true}
               textAlignVertical="top"
               keyboardType="default"
-              autoCorrect={false}
-              spellCheck={false}
+              autoCorrect={true}
+              spellCheck={true}
               autoComplete="off"
-              contextMenuHidden={true}
+              autoCapitalize="sentences"
+              textContentType="none"
+              contextMenuHidden={false}
               keyboardAppearance={isDark ? "dark" : "light"}
               onSubmitEditing={handleSend}
               accessible={true}
               accessibilityLabel={t("components.chatInput.accessibilityLabel")}
               accessibilityHint={t("components.chatInput.accessibilityHint")}
             />
-          </LiquidGlassWrapper>
-        ) : (
-          // Android/Web: Standard TextInput with semantic colors
-          <TextInput
-            ref={textInputRef}
-            style={[
-              styles.textInput,
-              {
-                fontSize: typography.body.fontSize,
-                lineHeight: typography.body.lineHeight,
-                letterSpacing: typography.body.letterSpacing,
-                color: palette.textPrimary,
-              },
-              isDark ? styles.darkTextInput : styles.lightTextInput,
-            ]}
-            value={message}
-            onChangeText={setMessage}
-            placeholder={resolvedPlaceholder}
-            placeholderTextColor={palette.textTertiary}
-            multiline={true}
-            maxLength={1000}
-            editable={!isLoading}
-            returnKeyType="send"
-            enablesReturnKeyAutomatically={true}
-            blurOnSubmit={true}
-            textAlignVertical="top"
-            keyboardType="default"
-            autoCorrect={false}
-            spellCheck={false}
-            autoComplete="off"
-            contextMenuHidden={true}
-            keyboardAppearance={isDark ? "dark" : "light"}
-            onSubmitEditing={handleSend}
-            accessible={true}
-            accessibilityLabel={t("components.chatInput.accessibilityLabel")}
-            accessibilityHint={t("components.chatInput.accessibilityHint")}
-          />
-        )}
 
-        <AnimatedTouchable
-          style={[
-            animatedStyle,
-            styles.sendButton,
-            {
-              width: minimumTouchTarget,
-              height: minimumTouchTarget,
-              borderRadius: minimumTouchTarget / 2, // Perfectly circular on all platforms
-              backgroundColor: canSend ? palette.accentTint : palette.tint,
-            },
-          ]}
-          onPress={handleSend}
-          onPressIn={handlePressIn}
-          onPressOut={handlePressOut}
-          disabled={!canSend}
-          accessible={true}
-          accessibilityRole="button"
-          accessibilityLabel={
-            isLoading
-              ? t("components.chatInput.sendingLabel")
-              : t("components.chatInput.sendLabel")
-          }
-          accessibilityHint={t("components.chatInput.sendHint")}
-          accessibilityState={{ disabled: !canSend }}
-          activeOpacity={1}
-        >
-          {/* iOS 26 HIG-compliant send icon using semantic colors */}
-          {isLoading ? (
-            <Text style={[styles.sendButtonText, { color: palette.textPrimary }]}>...</Text>
-          ) : (
-            <SendIcon
-              size={20}
-              isActive={canSend}
-            />
-          )}
-        </AnimatedTouchable>
+            {/* Send button integrated inside input */}
+            <AnimatedTouchable
+              style={[
+                animatedButtonStyle,
+                styles.integratedSendButton,
+                {
+                  width: minimumTouchTarget,
+                  height: minimumTouchTarget,
+                  borderRadius: minimumTouchTarget / 2,
+                  backgroundColor: canSend ? palette.accentTint : palette.tint,
+                },
+              ]}
+              onPress={handleSend}
+              onPressIn={handlePressIn}
+              onPressOut={handlePressOut}
+              disabled={!canSend}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel={
+                isLoading
+                  ? t("components.chatInput.sendingLabel")
+                  : t("components.chatInput.sendLabel")
+              }
+              accessibilityHint={t("components.chatInput.sendHint")}
+              accessibilityState={{ disabled: !canSend }}
+              activeOpacity={1}
+            >
+              {isLoading ? (
+                <Text style={[styles.sendButtonText, { color: palette.textPrimary }]}>...</Text>
+              ) : (
+                <SendIcon size={20} isActive={canSend} />
+              )}
+            </AnimatedTouchable>
+
+            {/* Character counter */}
+            {showCharacterCount && (
+              <Text style={[styles.characterCount, { color: palette.textSecondary }]}>
+                {message.length}/1000
+              </Text>
+            )}
+          </View>
+        )}
       </View>
     </View>
   );
@@ -220,22 +301,25 @@ const styles = StyleSheet.create({
   container: {
     paddingHorizontal: LiquidGlassSpacing.md,
     paddingVertical: LiquidGlassSpacing.sm,
-    // Remove borders and backgrounds for glass compatibility
   },
   lightContainer: {
-    backgroundColor: "transparent", // Glass wrapper handles background
+    backgroundColor: "transparent",
   },
   darkContainer: {
-    backgroundColor: "transparent", // Glass wrapper handles background
+    backgroundColor: "transparent",
   },
   inputContainer: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-    gap: LiquidGlassSpacing.sm,
+    flex: 1,
   },
   // iOS 26 HIG: Glass wrapper for text input (iOS only)
   textInputGlassWrapper: {
     flex: 1,
+  },
+  // Container for input + integrated button
+  inputWithButtonContainer: {
+    position: "relative",
+    flexDirection: "row",
+    alignItems: "center",
   },
   textInput: {
     flex: 1,
@@ -243,36 +327,42 @@ const styles = StyleSheet.create({
     minHeight: 36,
     paddingHorizontal: LiquidGlassSpacing.md,
     paddingVertical: LiquidGlassSpacing.xs,
-    borderRadius: 18,
+    borderRadius: 12, // Reduced from 18 for minimal look
     borderWidth: 1,
-    // fontSize, lineHeight, letterSpacing applied inline from typography
+  },
+  // Text input with integrated button needs right padding
+  textInputWithButton: {
+    paddingRight: 48, // Make room for send button (44pt touch target + 4pt spacing)
   },
   // iOS 26 HIG: Transparent input for glass effect (iOS only)
-  // CRITICAL: Glass wrapper handles background, input must be transparent
   textInputGlass: {
     backgroundColor: "transparent",
-    borderWidth: 0, // Glass wrapper provides border
+    borderWidth: 0,
   },
   // Android/Web: Semi-transparent backgrounds with borders
   lightTextInput: {
-    backgroundColor: "rgba(242, 242, 247, 0.8)", // Semi-transparent
+    backgroundColor: "rgba(242, 242, 247, 0.8)",
     borderColor: "rgba(229, 229, 234, 0.6)",
-    // color applied from palette.textPrimary inline
   },
   darkTextInput: {
-    backgroundColor: "rgba(28, 28, 30, 0.8)", // Semi-transparent
+    backgroundColor: "rgba(28, 28, 30, 0.8)",
     borderColor: "rgba(56, 56, 58, 0.6)",
-    // color applied from palette.textPrimary inline
   },
-  sendButton: {
-    // width, height, borderRadius, and backgroundColor set inline
-    // backgroundColor from palette: accentTint (active) or tint (inactive)
+  // Send button integrated inside input
+  integratedSendButton: {
+    position: "absolute",
+    right: 4,
     alignItems: "center",
     justifyContent: "center",
   },
   sendButtonText: {
     fontSize: 18,
     fontWeight: "bold",
-    // Color applied inline from palette
+  },
+  // Character counter below input
+  characterCount: {
+    fontSize: 12,
+    marginTop: 4,
+    marginLeft: LiquidGlassSpacing.md,
   },
 });
