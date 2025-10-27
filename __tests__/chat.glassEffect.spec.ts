@@ -96,6 +96,14 @@ describe("Chat - iOS 26 Liquid Glass Effect Implementation", () => {
       );
     });
 
+    it("CRITICAL: uses dark text for user messages in glass mode for visibility", () => {
+      // User messages in glass mode: dark text (visible on semi-transparent blue glass)
+      // User messages in non-glass mode: white text (visible on opaque blue background)
+      expect(sourceCode).toContain("useGlassRendering && isUser && !hasError");
+      expect(sourceCode).toContain("? palette.textPrimary // Dark text for user glass bubbles");
+      expect(sourceCode).toContain("Text color must work with glass transparency");
+    });
+
     it("documents shadow/glass conflict in comments", () => {
       expect(sourceCode).toContain("BUGFIX: Platform-specific bubble styling");
       expect(sourceCode).toContain("shadows conflict with native glass");
