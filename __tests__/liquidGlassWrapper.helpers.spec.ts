@@ -13,63 +13,81 @@ const { isLiquidGlassAvailable } = require("expo-glass-effect") as {
   isLiquidGlassAvailable: jest.Mock<boolean, []>;
 };
 
-const setPlatform = (os: string) => {
-  const descriptor = Object.getOwnPropertyDescriptor(Platform, "OS");
+const setPlatform = (os: string, version?: string | number) => {
+  const osDescriptor = Object.getOwnPropertyDescriptor(Platform, "OS");
+  const versionDescriptor = Object.getOwnPropertyDescriptor(Platform, "Version");
+
   Object.defineProperty(Platform, "OS", {
     configurable: true,
     get: () => os,
   });
+
+  if (typeof version !== "undefined") {
+    Object.defineProperty(Platform, "Version", {
+      configurable: true,
+      get: () => version,
+    });
+  }
+
   return () => {
-    if (descriptor) {
-      Object.defineProperty(Platform, "OS", descriptor);
+    if (osDescriptor) {
+      Object.defineProperty(Platform, "OS", osDescriptor);
+    }
+
+    if (typeof version !== "undefined") {
+      if (versionDescriptor) {
+        Object.defineProperty(Platform, "Version", versionDescriptor);
+      } else {
+        delete (Platform as unknown as Record<string, unknown>).Version;
+      }
     }
   };
 };
 
-  describe("LiquidGlassWrapper helpers", () => {
-    afterEach(() => {
-      jest.clearAllMocks();
-    });
+describe("LiquidGlassWrapper helpers", () => {
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
 
-    it("computes iMessage-inspired fallback styling for dark interactive elements", () => {
-      const style = buildFallbackStyle("interactive", true, "capsule");
+  it("computes iMessage-inspired fallback styling for dark interactive elements", () => {
+    const style = buildFallbackStyle("interactive", true, "capsule");
 
-      expect(style.backgroundColor.replace(/\s/g, "")).toBe("rgba(10,132,255,0.40)");
-      expect(style.borderColor.replace(/\s/g, "")).toBe("rgba(10,132,255,0.55)");
-      expect(style.borderRadius).toBe(24);
-    });
+    expect(style.backgroundColor.replace(/\s/g, "")).toBe("rgba(10,132,255,0.40)");
+    expect(style.borderColor.replace(/\s/g, "")).toBe("rgba(10,132,255,0.55)");
+    expect(style.borderRadius).toBe(24);
+  });
 
-    it("forces a solid fallback when reduce transparency is enabled", () => {
-      const style = buildFallbackStyle(
-        "regular",
-        true,
-        "roundedRect",
-        undefined,
-        false,
-        { forceOpaque: true },
-      );
+  it("forces a solid fallback when reduce transparency is enabled", () => {
+    const style = buildFallbackStyle(
+      "regular",
+      true,
+      "roundedRect",
+      undefined,
+      false,
+      { forceOpaque: true },
+    );
 
-      expect(style.backgroundColor.replace(/\s/g, "")).toBe("rgb(44,44,46)");
-      expect(style.borderColor.replace(/\s/g, "")).toBe("rgb(235,235,245)");
-    });
+    expect(style.backgroundColor.replace(/\s/g, "")).toBe("rgb(44,44,46)");
+    expect(style.borderColor.replace(/\s/g, "")).toBe("rgb(235,235,245)");
+  });
 
-    it("forces an opaque accent fallback for interactive variants", () => {
-      const style = buildFallbackStyle(
-        "interactive",
-        false,
-        "capsule",
-        undefined,
-        true,
-        { forceOpaque: true },
-      );
+  it("forces an opaque accent fallback for interactive variants", () => {
+    const style = buildFallbackStyle(
+      "interactive",
+      false,
+      "capsule",
+      undefined,
+      true,
+      { forceOpaque: true },
+    );
 
-      expect(style.backgroundColor.replace(/\s/g, "")).toBe("rgb(10,132,255)");
-      expect(style.borderColor.replace(/\s/g, "")).toBe("rgb(10,132,255)");
-    });
+    expect(style.backgroundColor.replace(/\s/g, "")).toBe("rgb(10,132,255)");
+    expect(style.borderColor.replace(/\s/g, "")).toBe("rgb(10,132,255)");
+  });
 
-    it("returns true when Liquid Glass is available on iOS", () => {
-      const restore = setPlatform("ios");
-      isLiquidGlassAvailable.mockReturnValue(true);
+  it("returns true when Liquid Glass is available on iOS", () => {
+    const restore = setPlatform("ios");
+    isLiquidGlassAvailable.mockReturnValue(true);
 
     expect(shouldUseGlassEffect(false)).toBe(true);
 
@@ -88,6 +106,24 @@ const setPlatform = (os: string) => {
   it("falls back on non-iOS platforms", () => {
     const restore = setPlatform("android");
     isLiquidGlassAvailable.mockReturnValue(true);
+
+    expect(shouldUseGlassEffect(false)).toBe(false);
+
+    restore();
+  });
+
+  it("enables glass heuristically on iOS 26 when Expo API returns false", () => {
+    const restore = setPlatform("ios", "26.1");
+    isLiquidGlassAvailable.mockReturnValue(false);
+
+    expect(shouldUseGlassEffect(false)).toBe(true);
+
+    restore();
+  });
+
+  it("keeps glass disabled on pre-iOS 26 when Expo API returns false", () => {
+    const restore = setPlatform("ios", "25.4");
+    isLiquidGlassAvailable.mockReturnValue(false);
 
     expect(shouldUseGlassEffect(false)).toBe(false);
 
