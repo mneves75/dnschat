@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **CRITICAL: ChatInput Text Entry Unclickable (iOS 26+)**: Fixed LiquidGlassWrapper blocking touch events to TextInput
+  - Was: `isInteractive={false}` on ChatInput's LiquidGlassWrapper (line 408)
+  - Now: `isInteractive={true}` to allow touch events to pass through glass effect
+  - Impact: Users can now click/tap on the text input field to type messages on iOS 26+ devices
+  - Root cause: expo-glass-effect GlassView with `isInteractive={false}` blocks all touch events from reaching children
+  - Symptom: Text input appeared but was completely unresponsive to taps/clicks on iOS 26+ with Liquid Glass enabled
+  - Scope: Only affected iOS 26+ devices with Liquid Glass support; Android and iOS < 26 were unaffected
+  - File: `src/components/ChatInput.tsx:408`
+
 ## [3.0.4] - 2025-10-27
 
 ### Changed
