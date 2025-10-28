@@ -5,9 +5,9 @@ import {
   Alert,
   StatusBar,
   Platform,
-  KeyboardAvoidingView,
   View,
 } from "react-native";
+import Animated from "react-native-reanimated";
 import { SafeAreaView, Edge } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { MessageList } from "../../components/MessageList";
@@ -16,6 +16,7 @@ import { useChat } from "../../context/ChatContext";
 import { useImessagePalette } from "../../ui/theme/imessagePalette";
 import { LiquidGlassSpacing } from "../../ui/theme/liquidGlassSpacing";
 import { useTranslation } from "../../i18n";
+import { useKeyboardAvoidance } from "../../ui/hooks/useKeyboardAvoidance";
 
 export function Chat() {
   const colorScheme = useColorScheme();
@@ -24,6 +25,7 @@ export function Chat() {
   const { currentChat, isLoading, error, sendMessage, clearError, createChat } = useChat();
   const { t } = useTranslation();
   const navigation = useNavigation<any>();
+  const animatedKeyboardStyle = useKeyboardAvoidance();
   useLayoutEffect(() => {
     navigation.setOptions({ title: t("screen.chat.navigationTitle") });
   }, [navigation, t]);
@@ -79,7 +81,7 @@ export function Chat() {
 
   return (
     <SafeAreaView
-      edges={['left', 'right', 'bottom']}  // Exclude 'top' - nav header handles it
+      edges={['left', 'right']}  // Exclude 'top' (nav header) and 'bottom' (keyboard hook handles it)
       style={[
         styles.container,
         { backgroundColor: palette.background },
@@ -90,10 +92,12 @@ export function Chat() {
         backgroundColor={palette.background}
       />
 
-      <KeyboardAvoidingView
-        style={[styles.content, { paddingHorizontal: LiquidGlassSpacing.xs }]}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 0}
+      <Animated.View
+        style={[
+          styles.content,
+          { paddingHorizontal: LiquidGlassSpacing.xs },
+          animatedKeyboardStyle,
+        ]}
       >
         <MessageList
           messages={currentChat?.messages || []}
@@ -105,7 +109,7 @@ export function Chat() {
           isLoading={isLoading}
           placeholder={t("screen.chat.placeholder")}
         />
-      </KeyboardAvoidingView>
+      </Animated.View>
     </SafeAreaView>
   );
 }

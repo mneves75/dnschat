@@ -107,12 +107,18 @@ export function ChatInput({
    * CRITICAL: Minimum height must be at least minimumTouchTarget (44px iOS, 48px Android)
    * to prevent button misalignment and negative positioning.
    *
+   * **Padding Decision:**
+   * Reference image shows 13px vertical padding. We use LiquidGlassSpacing.sm (12px)
+   * for design system consistency. The 1px difference is negligible and maintains
+   * alignment with the 8px grid system used throughout the app.
+   *
    * Uses actual typography line height, not magic numbers.
    * Calculated early so we can initialize inputHeight.
    */
   const heightConstraints = useMemo(() => {
     const lineHeight = typography.body.lineHeight || 22;
-    const verticalPadding = LiquidGlassSpacing.xs * 2; // top + bottom
+    // LiquidGlassSpacing.sm = 12px (vs reference 13px - prioritize design system consistency)
+    const verticalPadding = LiquidGlassSpacing.sm * 2; // top + bottom (12px * 2 = 24px)
     const naturalMin = lineHeight + verticalPadding;
 
     // CRITICAL FIX: Ensure min height >= touch target to prevent button overflow
@@ -141,8 +147,19 @@ export function ChatInput({
    * Vertically centers button within input using current height.
    * Uses useAnimatedStyle to react to inputHeight changes.
    *
+   * **Math Verification:**
+   * - Minimum input height: 46px (lineHeight 22 + padding 24)
+   * - Button touch target: 44px (iOS HIG minimum)
+   * - Position calculation: top = (46 - 44) / 2 = 1px
+   * - Result: 1px spacing at top and bottom (perfect vertical centering)
+   *
+   * As input grows (e.g., 2 lines = 68px):
+   * - top = (68 - 44) / 2 = 12px
+   * - Button stays centered regardless of input height
+   *
    * CRITICAL: Cannot use useMemo with shared values!
    * Reanimated shared values don't trigger React re-renders.
+   * Must use useAnimatedStyle to track inputHeight.value changes on UI thread.
    */
   const animatedButtonPosition = useAnimatedStyle(() => ({
     top: (inputHeight.value - minimumTouchTarget) / 2,
@@ -440,8 +457,7 @@ export function ChatInput({
         {useGlassInput ? (
           <LiquidGlassWrapper
             variant="regular"
-            shape="roundedRect"
-            cornerRadius={LiquidGlassSpacing.cornerRadiusSmall}
+            shape="capsule"
             isInteractive={true}
             style={styles.textInputGlassWrapper}
           >
@@ -528,9 +544,9 @@ const styles = StyleSheet.create({
     flex: 1,
     maxHeight: 120, // Fallback for non-Reanimated scenarios
     minHeight: 36,  // Fallback for non-Reanimated scenarios
-    paddingHorizontal: LiquidGlassSpacing.md,
-    paddingVertical: LiquidGlassSpacing.xs,
-    borderRadius: LiquidGlassSpacing.cornerRadiusSmall, // 12px - minimal design
+    paddingHorizontal: LiquidGlassSpacing.md, // 16px - matches reference
+    paddingVertical: LiquidGlassSpacing.sm,   // 12px - closer to reference (13px)
+    borderRadius: 24, // Capsule shape radius for consistency
     borderWidth: 1,
   },
   /**
