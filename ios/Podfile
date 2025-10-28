@@ -4,17 +4,25 @@ require File.join(File.dirname(`node --print "require.resolve('react-native/pack
 require 'json'
 podfile_properties = JSON.parse(File.read(File.join(__dir__, 'Podfile.properties.json'))) rescue {}
 
-ENV['RCT_NEW_ARCH_ENABLED'] = '0' if podfile_properties['newArchEnabled'] == 'false'
-ENV['EX_DEV_CLIENT_NETWORK_INSPECTOR'] = podfile_properties['EX_DEV_CLIENT_NETWORK_INSPECTOR']
+def ccache_enabled?(podfile_properties)
+  # Environment variable takes precedence
+  return ENV['USE_CCACHE'] == '1' if ENV['USE_CCACHE']
+  
+  # Fall back to Podfile properties
+  podfile_properties['apple.ccacheEnabled'] == 'true'
+end
 
-platform :ios, podfile_properties['ios.deploymentTarget'] || '16.0'
-install! 'cocoapods',
-  :deterministic_uuids => false
+ENV['RCT_NEW_ARCH_ENABLED'] ||= '0' if podfile_properties['newArchEnabled'] == 'false'
+ENV['EX_DEV_CLIENT_NETWORK_INSPECTOR'] ||= podfile_properties['EX_DEV_CLIENT_NETWORK_INSPECTOR']
+ENV['RCT_USE_RN_DEP'] ||= '1' if podfile_properties['ios.buildReactNativeFromSource'] != 'true' && podfile_properties['newArchEnabled'] != 'false'
+ENV['RCT_USE_PREBUILT_RNCORE'] ||= '1' if podfile_properties['ios.buildReactNativeFromSource'] != 'true' && podfile_properties['newArchEnabled'] != 'false'
+platform :ios, podfile_properties['ios.deploymentTarget'] || '15.1'
 
 prepare_react_native_project!
 
 target 'DNSChat' do
   use_expo_modules!
+  use_modular_headers!
 
   if ENV['EXPO_USE_COMMUNITY_AUTOLINKING'] == '1'
     config_command = ['node', '-e', "process.argv=['', '', 'config'];require('@react-native-community/cli').run()"];
@@ -42,62 +50,12 @@ target 'DNSChat' do
     :privacy_file_aggregation_enabled => podfile_properties['apple.privacyManifestAggregationEnabled'] != 'false',
   )
 
-  # Note: DNSNative is autolinked from modules/dns-native via Expo autolinking
-  # Do not add manual pod entry as it causes duplicate dependency errors
-
-  # Note: expo-glass-effect is autolinked via Expo; no custom LiquidGlassNative pod remains
-  # Manual pod entries removed to prevent duplicate dependency errors
-
-  # Fix for react-native-bottom-tabs Swift dependencies
-  pod 'SDWebImage', :modular_headers => true
-  pod 'SDWebImageSVGCoder', :modular_headers => true
-
   post_install do |installer|
     react_native_post_install(
       installer,
       config[:reactNativePath],
       :mac_catalyst_enabled => false,
-      :ccache_enabled => podfile_properties['apple.ccacheEnabled'] == 'true',
+      :ccache_enabled => ccache_enabled?(podfile_properties),
     )
-
-    # This is necessary for Xcode 14, because it signs resource bundles by default
-    # when building for devices.
-    installer.target_installation_results.pod_target_installation_results
-      .each do |pod_name, target_installation_result|
-      target_installation_result.resource_bundle_targets.each do |resource_bundle_target|
-        resource_bundle_target.build_configurations.each do |config|
-          config.build_settings['CODE_SIGNING_ALLOWED'] = 'NO'
-        end
-      end
-    end
-
-    # Fix for React Native 0.79.x folly/dynamic.h missing header issue
-    # Add header search paths for folly to React-jsinspector
-    installer.pods_project.targets.each do |target|
-      if target.name == 'React-jsinspector'
-        target.build_configurations.each do |config|
-          # Add RCT-Folly to header search paths
-          config.build_settings['HEADER_SEARCH_PATHS'] ||= ['$(inherited)']
-          config.build_settings['HEADER_SEARCH_PATHS'] << '"$(PODS_ROOT)/RCT-Folly"'
-          config.build_settings['HEADER_SEARCH_PATHS'] << '"$(PODS_ROOT)/Headers/Public/RCT-Folly"'
-          config.build_settings['HEADER_SEARCH_PATHS'] << '"$(PODS_ROOT)/Headers/Private/RCT-Folly"'
-        end
-      end
-      
-      # Fix for fmt consteval compilation errors with Xcode beta
-      if target.name == 'fmt'
-        target.build_configurations.each do |config|
-          config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= ['$(inherited)']
-          config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] << 'FMT_ENFORCE_COMPILE_STRING=0'
-        end
-      end
-      
-      # Fix for react-native-bottom-tabs Swift dependencies
-      if ['SDWebImage', 'SDWebImageSVGCoder'].include?(target.name)
-        target.build_configurations.each do |config|
-          config.build_settings['DEFINES_MODULE'] = 'YES'
-        end
-      end
-    end
   end
 end

@@ -7,6 +7,77 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.5] - 2025-10-28
+
+### Changed
+
+- **Advanced Keyboard Handling with Native Tracking** (Production-ready implementation with comprehensive fixes)
+  - **Was**: KeyboardAvoidingView with fixed `keyboardVerticalOffset={100}` - hardcoded offset caused misalignment across devices
+  - **Now**: react-native-keyboard-controller with Reanimated integration - tracks actual keyboard height on UI thread with native timing curves
+  - **Pattern**: Uses `useReanimatedKeyboardAnimation()` hook for smooth 60fps animations matching iOS keyboard transitions
+  - **Impact**: Keyboard appears/dismisses smoothly with proper padding, no jank or layout drift across all device sizes
+
+  **Critical Fixes Applied:**
+  1. **Double Padding Bug**: Removed 'bottom' from SafeAreaView edges array in Chat.tsx
+     - Issue: SafeAreaView added 34px bottom padding + hook added 34px = 68px double padding when keyboard hidden
+     - Fix: SafeAreaView edges={['left', 'right']} only, let hook handle all bottom spacing
+     - Math: Without keyboard = 34px (safe area), With keyboard = 334px (300px keyboard + 34px safe area)
+
+  2. **KeyboardProvider Required**: Added KeyboardProvider wrapper in App.tsx
+     - Required for useReanimatedKeyboardAnimation() to access keyboard context
+     - Wrapped entire app after SafeAreaProvider, before other context providers
+
+  3. **Type Safety**: Added explicit AnimatedStyleProp<ViewStyle> return type to useKeyboardAvoidance
+     - Ensures type correctness for Reanimated animated styles
+     - Prevents type inference issues in consuming components
+
+  4. **Comprehensive Documentation**: 60+ lines of JSDoc explaining architecture, behavior, platform differences
+     - Includes critical warning about SafeAreaView 'bottom' edge incompatibility
+     - Math verification showing exact padding calculations
+     - Platform-specific behavior (iOS UIKeyboard vs Android WindowInsets)
+     - Added 'worklet' directive for Reanimated worklet optimization
+
+  **Technical Details:**
+  - useKeyboardAvoidance hook provides animated paddingBottom: basePadding + keyboardPadding
+  - BasePadding: always present safe area inset (e.g., 34px iPhone X+ home indicator)
+  - KeyboardPadding: keyboard height from native (0 when hidden, ~300px when visible on iPhone)
+  - Hook uses useAnimatedStyle with 'worklet' directive for UI thread performance
+  - Added use_modular_headers! to Podfile for Swift pod compatibility (keyboard-controller uses Swift)
+
+  **Files Modified:**
+  - `src/ui/hooks/useKeyboardAvoidance.ts` - Hook implementation with comprehensive documentation
+  - `src/navigation/screens/Chat.tsx` - Fixed SafeAreaView edges, removed KeyboardAvoidingView
+  - `src/App.tsx` - Added KeyboardProvider wrapper
+  - `ios/Podfile` - Added use_modular_headers! for Swift compatibility
+
+- **Liquid Glass Capsule Input Design with Verified Button Positioning**
+  - **Was**: `shape="roundedRect"` with `cornerRadius={12}` - standard rounded rectangle, xs padding (8px)
+  - **Now**: `shape="capsule"` with borderRadius={24} - pill-shaped input matching Apple design language, sm padding (12px)
+  - **Pattern**: Matches iOS keyboard input accessories and search fields (fully rounded ends, not just corners)
+  - **Impact**: More modern, fluid appearance consistent with iOS 26 Liquid Glass design system
+
+  **Padding Decision (Design System vs Reference):**
+  - Reference image shows: horizontal 16px, vertical 13px
+  - Implemented: horizontal 16px (LiquidGlassSpacing.md), vertical 12px (LiquidGlassSpacing.sm)
+  - Rationale: 1px difference negligible, maintains design system consistency and 8px grid alignment
+  - Documented decision in code with clear justification for future maintainers
+
+  **Button Positioning Math Verification:**
+  - Old padding: xs * 2 = 16px total → naturalMin = 22 + 16 = 38px → min = max(38, 44) = 44px
+  - New padding: sm * 2 = 24px total → naturalMin = 22 + 24 = 46px → min = max(46, 44) = 46px
+  - Button position at min height: top = (46 - 44) / 2 = 1px (perfect vertical centering with 1px spacing)
+  - As input grows (2 lines = 68px): top = (68 - 44) / 2 = 12px (stays centered)
+  - Added comprehensive inline comments explaining calculation for code reviewers
+
+  **Technical Details:**
+  - LiquidGlassWrapper capsule shape with isInteractive={true} for touch-through glass effects
+  - Button positioning uses Reanimated useAnimatedStyle to track inputHeight.value changes on UI thread
+  - Cannot use useMemo with shared values (would not react to changes)
+  - All values derived from design system constants, zero magic numbers
+
+  **Files Modified:**
+  - `src/components/ChatInput.tsx:110-127,144-166,530-533` - Padding update, button position math verification
+
 ### Fixed
 
 - **Send Button Transparent Blue Background**: Changed from semi-transparent accentTint to solid userBubble (systemBlue)

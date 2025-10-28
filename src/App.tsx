@@ -6,6 +6,7 @@ import * as React from "react";
 import { useColorScheme, Platform, View, StyleSheet } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { KeyboardProvider } from "react-native-keyboard-controller";
 import { Navigation } from "./navigation";
 import { ChatProvider } from "./context/ChatContext";
 import { SettingsProvider } from "./context/SettingsContext";
@@ -87,20 +88,22 @@ export function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <ErrorBoundary>
-          <SettingsProvider>
-            <AccessibilityProvider>
-              <I18nProvider>
-                <OnboardingProvider>
-                  <ChatProvider>
-                    <HapticsConfigurator />
-                    <AppContent />
-                  </ChatProvider>
-                </OnboardingProvider>
-              </I18nProvider>
-            </AccessibilityProvider>
-          </SettingsProvider>
-        </ErrorBoundary>
+        <KeyboardProvider>
+          <ErrorBoundary>
+            <SettingsProvider>
+              <AccessibilityProvider>
+                <I18nProvider>
+                  <OnboardingProvider>
+                    <ChatProvider>
+                      <HapticsConfigurator />
+                      <AppContent />
+                    </ChatProvider>
+                  </OnboardingProvider>
+                </I18nProvider>
+              </AccessibilityProvider>
+            </SettingsProvider>
+          </ErrorBoundary>
+        </KeyboardProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

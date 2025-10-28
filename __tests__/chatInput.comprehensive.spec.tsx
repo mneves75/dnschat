@@ -117,7 +117,7 @@ describe("ChatInput Component - John Carmack Quality Standards", () => {
     it("calculates heightConstraints from typography", () => {
       expect(source).toContain("const heightConstraints = useMemo");
       expect(source).toContain("const lineHeight = typography.body.lineHeight || 22");
-      expect(source).toContain("const verticalPadding = LiquidGlassSpacing.xs * 2");
+      expect(source).toContain("const verticalPadding = LiquidGlassSpacing.sm * 2");
     });
 
     it("defines min height ensuring it accommodates touch target", () => {
