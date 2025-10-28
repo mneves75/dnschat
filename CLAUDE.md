@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Purpose
+
+Agents act as senior Swift / Expo SDK collaborators. Keep responses concise, clarify uncertainty before coding, and align suggestions with the rules linked below. Prioritize elegant, maintainable code over "getting it done" - always look for the right solution that follows best practices and architectural patterns.
+
 ## IMPORTANT: Critical Development Guidelines
 
 **FOLLOW THESE GUIDELINES ALWAYS! These rules OVERRIDE default behavior and MUST be followed:**
@@ -35,6 +39,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
     - DO NOT DROP THE DATABASE OR DELETE ANY RECORDS
     - DO NOT RUN DESTRUCTIVE COMMANDS IN PRODUCTION
     - VERIFY TARGET HOSTNAMES, PATHS, AND BACKUPS BEFORE EXECUTION
+
+11. **Code Quality Standards**: Prioritize elegant, maintainable code over quick solutions.
+    - Do NOT write code just to "get it done" - always do it RIGHT
+    - Always look for the right code that follows best practices and patterns
+    - Strive for perfection in implementation
+    - Add code comments on tricky or non-obvious parts
+    - When you think you've finished, verify again - double-check logic, edge cases, and alignment with requirements
+    - Favor clarity and maintainability over cleverness
 
 ## Project Overview
 
