@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- **CRITICAL: ChatInput Completely Unclickable - Three Bugs Fixed**: Text input unresponsive and send button misaligned
+- **CRITICAL: ChatInput Completely Unclickable - Four Bugs Fixed**: Text input unresponsive and send button misaligned
 
   **Bug 1: LiquidGlassWrapper Blocking Touches (iOS 26+ only)**
   - Was: `isInteractive={false}` on ChatInput's LiquidGlassWrapper
@@ -29,6 +29,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Impact: Users can click empty input field to start typing
   - Root cause: Absolutely positioned button overlays TextInput right edge, blocked touches when disabled
 
+  **Bug 4: Parent Container Layout Collapse (ALL platforms) - ROOT CAUSE**
+  - Was: `inputContainer` and `textInputGlassWrapper` both had `flex: 1`
+  - Problem: Multiple nested flex: 1 containers without height constraints caused layout collapse/expansion
+  - Symptom: Touch targets positioned incorrectly or had zero height despite Bugs 1-3 being fixed
+  - Now: Removed flex: 1 from both parent containers - they wrap content height from children
+  - Impact: TextInput touch target now correctly positioned, clickable across entire input area
+  - Technical: Only `inputWrapper` (around TextInput) should have flex: 1 for horizontal expansion in row layout
+  - Root cause: Parent containers expanding into undefined space, causing child touch targets to misalign
+  - **THIS WAS THE FUNDAMENTAL ISSUE**: Without fixing this, Bugs 1-3 fixes were ineffective
+
   **Technical Analysis:**
   - iOS body lineHeight: 22px
   - Vertical padding: 16px (8px * 2)
@@ -37,8 +47,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Button vertical position: `(inputHeight - 44) / 2`
   - With old min (38px): top = -3px (button above container!)
   - With new min (44px): top = 0px (button properly aligned)
+  - **Layout hierarchy**: container → inputContainer (NO flex) → textInputGlassWrapper (NO flex) → inputWithButtonContainer → inputWrapper (flex: 1 for width only)
 
-  Files: `src/components/ChatInput.tsx:90-104,357`
+  Files: `src/components/ChatInput.tsx:13-23,90-104,357,470-477`
 
 ## [3.0.4] - 2025-10-27
 

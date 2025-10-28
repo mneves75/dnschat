@@ -15,6 +15,12 @@
  * - Absolute positioning for send button (integrated look)
  * - Character counter outside flex container (avoid layout bugs)
  * - Design system constants (no magic numbers)
+ * - NO flex: 1 on parent containers (prevents layout collapse/expansion)
+ *
+ * CRITICAL: Parent containers (inputContainer, textInputGlassWrapper) must NOT
+ * have flex: 1. They should wrap content height from children to prevent touch
+ * target misalignment. Only inputWrapper (around TextInput) uses flex: 1 for
+ * horizontal expansion in row layout.
  *
  * @reviewed-by John Carmack
  */
@@ -24,11 +30,13 @@ import {
   View,
   TextInput,
   TouchableOpacity,
+  TouchableOpacityProps,
   StyleSheet,
   useColorScheme,
   Text,
   Platform,
   AccessibilityInfo,
+  ViewProps,
 } from "react-native";
 import Animated, {
   useSharedValue,
@@ -47,7 +55,20 @@ import { useTranslation } from "../i18n";
 import { LiquidGlassWrapper, useLiquidGlassCapabilities } from "./LiquidGlassWrapper";
 import { MESSAGE_CONSTANTS } from "../constants/appConstants";
 
-const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
+type TouchableWithPointerEventsProps = TouchableOpacityProps & {
+  pointerEvents?: ViewProps["pointerEvents"];
+};
+
+const TouchableWithPointerEvents = React.forwardRef<
+  React.ElementRef<typeof TouchableOpacity>,
+  TouchableWithPointerEventsProps
+>(
+  (props, ref) => <TouchableOpacity ref={ref} {...props} />,
+);
+TouchableWithPointerEvents.displayName = "TouchableWithPointerEvents";
+
+// Reanimated's default TouchableOpacity typing omits pointerEvents, so we wrap it to expose the prop.
+const AnimatedTouchable = Animated.createAnimatedComponent(TouchableWithPointerEvents);
 
 // Constants derived from design system (no magic numbers!)
 const CHARACTER_COUNTER_THRESHOLD = MESSAGE_CONSTANTS.MAX_MESSAGE_LENGTH - 20; // Show at 90%
@@ -74,6 +95,8 @@ export function ChatInput({
   const palette = useImessagePalette();
   const { t } = useTranslation();
   const { supportsLiquidGlass } = useLiquidGlassCapabilities();
+  // Resolve touch target up front so every memo below can safely reference it without tripping TDZ.
+  const minimumTouchTarget = getMinimumTouchTarget();
 
   /**
    * Height Calculation (Design System Derived)
@@ -107,8 +130,6 @@ export function ChatInput({
   const inputHeight = useSharedValue(heightConstraints.min);
   const scale = useSharedValue(1);
   const opacity = useSharedValue(0.4);
-
-  const minimumTouchTarget = getMinimumTouchTarget();
   const resolvedPlaceholder = placeholder ?? t("screen.chatInput.placeholder");
   const canSend = message.trim().length > 0 && !isLoading;
   const showCharacterCount = message.length > CHARACTER_COUNTER_THRESHOLD;
@@ -467,11 +488,13 @@ const styles = StyleSheet.create({
     backgroundColor: "transparent",
   },
   inputContainer: {
-    flex: 1,
+    // Removed flex: 1 - container should wrap content, not expand into undefined space
+    // This was causing layout collapse and touch target misalignment
   },
   // iOS 26 HIG: Glass wrapper for text input (iOS only)
   textInputGlassWrapper: {
-    flex: 1,
+    // Removed flex: 1 - wrapper should wrap content height from children
+    // Prevents layout expansion issues that block touch events
   },
   /**
    * Container for input + integrated button
