@@ -1,6 +1,6 @@
 {
   "name": "chat-dns",
-  "version": "3.0.4",
+  "version": "3.0.5",
   "description": "DNSChat - A React Native chat app using DNS TXT queries",
   "main": "index.tsx",
   "author": "mvneves",
@@ -18,6 +18,7 @@
     "clean-ios": "cd ios && rm -rf Pods/ Podfile.lock build/ && pod install",
     "test": "jest --runInBand",
     "lint:ast-grep": "ast-grep scan --config project-rules/astgrep-liquid-glass.yml",
+    "lint": "npm run lint:ast-grep",
     "dns:harness:build": "tsc -p scripts/tsconfig.harness.json",
     "dns:harness": "npm run dns:harness:build && node scripts/dist/run-dns-harness.js",
     "prepare": "node scripts/install-git-hooks.js"
@@ -52,6 +53,7 @@
     "react-native-device-info": "^14.0.4",
     "react-native-edge-to-edge": "1.6.0",
     "react-native-gesture-handler": "~2.28.0",
+    "react-native-keyboard-controller": "^1.19.3",
     "react-native-markdown-display": "^7.0.2",
     "react-native-reanimated": "~4.1.1",
     "react-native-safe-area-context": "~5.6.0",
