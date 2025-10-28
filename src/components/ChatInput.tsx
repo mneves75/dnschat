@@ -41,6 +41,7 @@ import {
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
+  useAnimatedReaction,
   withSpring,
   withTiming,
   runOnJS,
@@ -80,12 +81,18 @@ interface ChatInputProps {
   onSendMessage: (message: string) => void;
   isLoading?: boolean;
   placeholder?: string;
+  /**
+   * Emits the rendered height so parents (MessageList) can reserve bottom padding.
+   * Height includes liquid glass padding + text input lines.
+   */
+  onHeightChange?: (height: number) => void;
 }
 
 export function ChatInput({
   onSendMessage,
   isLoading = false,
   placeholder,
+  onHeightChange,
 }: ChatInputProps) {
   const [message, setMessage] = useState("");
   const textInputRef = useRef<TextInput>(null);
@@ -97,6 +104,14 @@ export function ChatInput({
   const { supportsLiquidGlass } = useLiquidGlassCapabilities();
   // Resolve touch target up front so every memo below can safely reference it without tripping TDZ.
   const minimumTouchTarget = getMinimumTouchTarget();
+  const reportHeight = useCallback(
+    (height: number) => {
+      if (onHeightChange) {
+        onHeightChange(height);
+      }
+    },
+    [onHeightChange],
+  );
 
   /**
    * Height Calculation (Design System Derived)
@@ -131,6 +146,11 @@ export function ChatInput({
       max: (lineHeight * 5) + verticalPadding,
     };
   }, [typography.body.lineHeight, minimumTouchTarget]);
+
+  React.useEffect(() => {
+    // Initialize parent padding immediately so content never jumps on first layout.
+    reportHeight(Math.round(heightConstraints.min));
+  }, [heightConstraints.min, reportHeight]);
 
   // Reanimated shared values for UI thread performance
   const inputHeight = useSharedValue(heightConstraints.min);
@@ -211,6 +231,20 @@ export function ChatInput({
       inputHeight.value = withSpring(heightConstraints.min, SpringConfig.bouncy);
     }
   }, [message, inputHeight, heightConstraints.min]);
+
+  useAnimatedReaction(
+    () => inputHeight.value,
+    (value, previousValue) => {
+      const rounded = Math.round(value);
+      const previousRounded =
+        previousValue === undefined ? undefined : Math.round(previousValue);
+
+      if (previousRounded === undefined || rounded !== previousRounded) {
+        runOnJS(reportHeight)(rounded);
+      }
+    },
+    [reportHeight],
+  );
 
   /**
    * Animated Button Style

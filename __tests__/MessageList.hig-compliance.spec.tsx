@@ -151,8 +151,12 @@ describe("MessageList - iOS 26 HIG Compliance", () => {
   });
 
   describe("iOS 26 HIG: LiquidGlassSpacing System", () => {
-    it("uses LiquidGlassSpacing.xs for vertical padding", () => {
-      expect(sourceCode).toContain("paddingVertical: LiquidGlassSpacing.xs");
+    it("uses LiquidGlassSpacing.xs for top padding", () => {
+      expect(sourceCode).toContain("paddingTop: LiquidGlassSpacing.xs");
+    });
+
+    it("uses LiquidGlassSpacing.xs for bottom padding baseline before inset math", () => {
+      expect(sourceCode).toContain("paddingBottom: LiquidGlassSpacing.xs + bottomInset");
     });
 
     it("uses LiquidGlassSpacing.xl for horizontal padding", () => {
