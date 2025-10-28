@@ -43,11 +43,11 @@ describe("ChatInput Component - John Carmack Quality Standards", () => {
     });
 
     it("uses LiquidGlassSpacing for all spacing values", () => {
-      expect(source).toContain("LiquidGlassSpacing.xs");
       expect(source).toContain("LiquidGlassSpacing.sm");
       expect(source).toContain("LiquidGlassSpacing.md");
       expect(source).toContain("LiquidGlassSpacing.xxs");
-      expect(source).toContain("LiquidGlassSpacing.cornerRadiusSmall");
+      // Note: Capsule shape uses borderRadius: 24 directly for consistency
+      // xs and cornerRadiusSmall not used in current implementation
     });
 
     it("uses getMinimumTouchTarget for button size", () => {

@@ -26,6 +26,7 @@ export const LiquidGlassSpacing = {
   xxl: 32,  // Major sections
   xxxl: 40, // Screen spacing
   huge: 48, // Special cases
+  cornerRadiusSmall: 12, // Small-radius surfaces (e.g., integrated inputs)
 } as const;
 
 /**
