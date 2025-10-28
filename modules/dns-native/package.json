@@ -53,16 +53,5 @@
   "bugs": {
     "url": "https://github.com/mneves75/dnschat/issues"
   },
-  "react-native": "index.ts",
-  "codegenConfig": {
-    "name": "RNDNSModuleSpec",
-    "type": "modules",
-    "jsSrcsDir": ".",
-    "ios": {
-      "sourceDir": "ios"
-    },
-    "android": {
-      "javaPackageName": "com.dnsnative"
-    }
-  }
+  "react-native": "index.ts"
 }
