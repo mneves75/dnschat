@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **SendIcon Double Circle Visual Artifact**: Removed redundant SVG Circle causing "double circle" effect
+  - Was: SendIcon rendered `<Circle>` element + button had circular `backgroundColor` = overlapping circles
+  - Now: SendIcon renders arrow-only, button provides single circular background
+  - Pattern: Matches iOS Messages design - white arrow on colored circular button (NOT arrow.up.circle.fill)
+  - Impact: Clean single-circle button appearance, no visual artifacts
+  - Technical: SendIcon now renders `arrow.up` (arrow-only), ChatInput button provides background
+  - **CRITICAL**: Icon must NOT have Circle element - button already provides circular container
+  - File: `src/components/icons/SendIcon.tsx:70-80`
+
 - **CRITICAL: ChatInput Completely Unclickable - Four Bugs Fixed**: Text input unresponsive and send button misaligned
 
   **Bug 1: LiquidGlassWrapper Blocking Touches (iOS 26+ only)**
