@@ -110,6 +110,20 @@ npm run dns:harness -- --message "x"  # Comprehensive DNS harness test
 - Performance optimizations with `@shopify/flash-list` for list rendering
 - React Compiler enabled by default (auto-memoization)
 
+**Native Module Architecture Decisions**:
+
+1. **DNS Native Module - Legacy API Choice**:
+   - Uses legacy `NativeModules` API, NOT TurboModule
+   - No `codegenConfig` in package.json (removed as it was incorrect)
+   - **Rationale**: Performance analysis showed TurboModule overhead savings (0.1-0.5ms) negligible vs DNS latency (100-500ms). DNS queries are low-frequency (~1/sec max). Legacy API is officially supported with no deprecation timeline, simpler to maintain, and perfectly suitable for this use case. Follows Carmack principle: "Optimize what matters" - DNS network latency matters, bridge overhead doesn't.
+   - If migrating to TurboModule in future, add NativeRNDNSModule.ts spec file FIRST, then restore codegenConfig
+
+2. **react-native-screens constexpr Fix**:
+   - Uses patch-package to fix C++20 compilation errors in react-native-screens v4.16.0
+   - Changed `constexpr` to `const` for Objective-C NSNumber literals in RNSScreenStackHeaderConfig.mm
+   - **Rationale**: Xcode 15+ enforces C++20 rules where constexpr requires compile-time constants. Objective-C `@17` creates runtime NSNumber objects. Upstream bug affects v4.16-4.19. patch-package ensures fix auto-applies on npm install and is version-controlled.
+   - Patch location: `patches/react-native-screens+4.16.0.patch`
+
 ### Liquid Glass UI (iOS 26+)
 Uses official `expo-glass-effect` with graceful fallbacks for iOS < 26, Android, and web platforms:
 
