@@ -21,6 +21,11 @@ interface MessageListProps {
   isLoading?: boolean;
   onRefresh?: () => void;
   isRefreshing?: boolean;
+  /**
+   * Additional bottom inset reserved for UI chrome (e.g., ChatInput accessory).
+   * Ensures the final message never hides beneath overlays or home indicator.
+   */
+  bottomInset?: number;
 }
 
 export function MessageList({
@@ -28,6 +33,7 @@ export function MessageList({
   isLoading = false,
   onRefresh,
   isRefreshing = false,
+  bottomInset = 0,
 }: MessageListProps) {
   const flatListRef = useRef<FlatList<Message>>(null);
   const colorScheme = useColorScheme();
@@ -64,6 +70,14 @@ export function MessageList({
   };
 
   const keyExtractor = (item: Message) => item.id;
+
+  const contentContainerStyle = useMemo(
+    () => [
+      styles.contentContainer,
+      { paddingBottom: LiquidGlassSpacing.xs + bottomInset },
+    ],
+    [bottomInset],
+  );
 
   const renderEmptyComponent = () => (
     <View style={styles.emptyContainer}>
@@ -147,7 +161,7 @@ export function MessageList({
       renderItem={renderMessage}
       keyExtractor={keyExtractor}
       style={styles.container}
-      contentContainerStyle={styles.contentContainer}
+      contentContainerStyle={contentContainerStyle}
       showsVerticalScrollIndicator={false}
       onContentSizeChange={() => {
         // TRICKY: onContentSizeChange handles layout changes (e.g., message bubble height changes)
@@ -186,7 +200,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     // iOS 26 HIG: LiquidGlassSpacing.xs = 8px (8px grid system)
     // Consistent vertical padding throughout app for visual rhythm
-    paddingVertical: LiquidGlassSpacing.xs,
+    paddingTop: LiquidGlassSpacing.xs,
   },
   emptyContainer: {
     flex: 1,

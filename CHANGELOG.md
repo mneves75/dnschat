@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Chat Input Keyboard Accessory Alignment**: Replaced the custom `useKeyboardAvoidance` padding hook with `KeyboardStickyView` from `react-native-keyboard-controller`. ChatInput now emits its rendered height via `onHeightChange`, MessageList reserves matching bottom inset, and SafeAreaView defers bottom inset handling to the accessory so the composer stays visible on every device/keyboard mode.
+
+### Fixed
+
+- **iOS Build Recovery Playbook**: Documented clang exit code 138 remediation (purge DerivedData, Expo caches, and `~/.ccache`, then rerun with `CCACHE_DISABLE=1`) so maintainers can quickly recover from corrupted cache crashes during Pod builds.
+
 ## [3.0.5] - 2025-10-28
 
 ### Changed

@@ -1,31 +1,56 @@
-import React, { useEffect, useLayoutEffect } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useState,
+} from "react";
 import {
   StyleSheet,
   useColorScheme,
   Alert,
   StatusBar,
-  Platform,
   View,
 } from "react-native";
-import Animated from "react-native-reanimated";
-import { SafeAreaView, Edge } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
+import { KeyboardStickyView } from "react-native-keyboard-controller";
 import { MessageList } from "../../components/MessageList";
 import { ChatInput } from "../../components/ChatInput";
 import { useChat } from "../../context/ChatContext";
 import { useImessagePalette } from "../../ui/theme/imessagePalette";
-import { LiquidGlassSpacing } from "../../ui/theme/liquidGlassSpacing";
+import {
+  LiquidGlassSpacing,
+  getMinimumTouchTarget,
+} from "../../ui/theme/liquidGlassSpacing";
 import { useTranslation } from "../../i18n";
-import { useKeyboardAvoidance } from "../../ui/hooks/useKeyboardAvoidance";
+import { useTypography } from "../../ui/hooks/useTypography";
 
 export function Chat() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
   const palette = useImessagePalette();
+  const typography = useTypography();
   const { currentChat, isLoading, error, sendMessage, clearError, createChat } = useChat();
   const { t } = useTranslation();
   const navigation = useNavigation<any>();
-  const animatedKeyboardStyle = useKeyboardAvoidance();
+  const insets = useSafeAreaInsets();
+  const minimumTouchTarget = useMemo(() => getMinimumTouchTarget(), []);
+  const bodyLineHeight = typography.body.lineHeight ?? 22;
+  const minimumInputHeight = useMemo(
+    () => Math.max(bodyLineHeight + LiquidGlassSpacing.sm * 2, minimumTouchTarget),
+    [bodyLineHeight, minimumTouchTarget],
+  );
+  const [inputHeight, setInputHeight] = useState(minimumInputHeight);
+  const handleInputHeightChange = useCallback((height: number) => {
+    setInputHeight((previous) =>
+      Math.abs(previous - height) < 1 ? previous : height,
+    );
+  }, []);
+  const messageListBottomInset = useMemo(
+    () => inputHeight + insets.bottom + LiquidGlassSpacing.xs,
+    [inputHeight, insets.bottom],
+  );
   useLayoutEffect(() => {
     navigation.setOptions({ title: t("screen.chat.navigationTitle") });
   }, [navigation, t]);
@@ -81,7 +106,7 @@ export function Chat() {
 
   return (
     <SafeAreaView
-      edges={['left', 'right']}  // Exclude 'top' (nav header) and 'bottom' (keyboard hook handles it)
+      edges={['left', 'right', 'top']}  // bottom handled by KeyboardStickyView to avoid double insets
       style={[
         styles.container,
         { backgroundColor: palette.background },
@@ -92,24 +117,35 @@ export function Chat() {
         backgroundColor={palette.background}
       />
 
-      <Animated.View
+      <View
         style={[
           styles.content,
           { paddingHorizontal: LiquidGlassSpacing.xs },
-          animatedKeyboardStyle,
         ]}
       >
         <MessageList
           messages={currentChat?.messages || []}
           isLoading={isLoading}
+          bottomInset={messageListBottomInset}
         />
+      </View>
 
+      <KeyboardStickyView
+        style={[
+          styles.keyboardAccessory,
+          {
+            paddingBottom: insets.bottom + LiquidGlassSpacing.xs,
+            backgroundColor: palette.background,
+          },
+        ]}
+      >
         <ChatInput
           onSendMessage={handleSendMessage}
           isLoading={isLoading}
           placeholder={t("screen.chat.placeholder")}
+          onHeightChange={handleInputHeightChange}
         />
-      </Animated.View>
+      </KeyboardStickyView>
     </SafeAreaView>
   );
 }
@@ -120,6 +156,10 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    paddingVertical: LiquidGlassSpacing.xs, // Spacing between message list and input
+    paddingTop: LiquidGlassSpacing.xs, // aligns with LiquidGlassSpacing grid for top gap
+  },
+  keyboardAccessory: {
+    paddingHorizontal: LiquidGlassSpacing.xs,
+    paddingTop: LiquidGlassSpacing.xs,
   },
 });

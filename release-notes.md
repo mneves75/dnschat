@@ -39,6 +39,7 @@ DNSChat v3.0.1 brings comprehensive VoiceOver accessibility, critical bug fixes,
 - **Mock DNS Toggle**: Development feature now visible for testing
 - **Haptics Toggle**: Moved to App Behavior section for better organization
 - **Transport Tests**: Reduced from 4 buttons (Native, UDP, TCP, HTTPS) to 3 (removed HTTPS)
+- **Keyboard Accessory Alignment**: Chat detail screen now uses `KeyboardStickyView` to pin the composer to the keyboard. `ChatInput` reports its animated height so `MessageList` reserves matching bottom inset, guaranteeing the text field is never hidden behind the keyboard or home indicator.
 
 ### What Was Removed
 
@@ -72,6 +73,7 @@ DNSChat v3.0.1 brings comprehensive VoiceOver accessibility, critical bug fixes,
 - **Missing useCallback**: Added React.useCallback to NetworkSetupScreen functions
 - **Missing Error Logging**: Added console.error to all catch blocks for better debugging
 - **Unused Import Cleanup**: Removed dead code from NetworkSetupScreen
+- **clang Exit 138 Build Crash**: Added cache-purge + `CCACHE_DISABLE=1` recovery steps so iOS Pod builds stop failing when clang hits a corrupted DerivedData/ccache entry
 
 **Test Suite Improvements**:
 - **AccessibilityContext Mocks**: Fixed missing mocks in settings test suites
