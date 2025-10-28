@@ -368,7 +368,10 @@ export function ChatInput({
           width: minimumTouchTarget,
           height: minimumTouchTarget,
           borderRadius: minimumTouchTarget / 2,
-          backgroundColor: canSend ? palette.accentTint : palette.tint,
+          // CRITICAL: Use solid userBubble (systemBlue) instead of semi-transparent accentTint
+          // iOS Messages pattern: SOLID blue button when active, gray tint when disabled
+          // accentTint was 55%/65% opacity - too transparent for button background
+          backgroundColor: canSend ? palette.userBubble : palette.tint,
         },
       ]}
       onPress={handleSend}

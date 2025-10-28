@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Send Button Transparent Blue Background**: Changed from semi-transparent accentTint to solid userBubble (systemBlue)
+  - Was: `palette.accentTint` at 55%/65% opacity - too transparent, dimmed appearance
+  - Now: `palette.userBubble` solid systemBlue (#007AFF light, #0A84FF dark) - matches iOS Messages
+  - Pattern: iOS Messages send button uses SOLID blue, not transparent tint
+  - Impact: Button now has vibrant, solid blue background matching iOS design language
+  - Technical: accentTint is for surface tinting, userBubble is for solid UI elements
+  - File: `src/components/ChatInput.tsx:371-374`
+
 - **SendIcon Double Circle Visual Artifact**: Removed redundant SVG Circle causing "double circle" effect
   - Was: SendIcon rendered `<Circle>` element + button had circular `backgroundColor` = overlapping circles
   - Now: SendIcon renders arrow-only, button provides single circular background
