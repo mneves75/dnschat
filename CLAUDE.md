@@ -13,16 +13,28 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 3. **Critical Thinking**: You think I am absolutely right. But push your reasoning to 100% of your capacity. I'm trying to stay a critical and sharp analytical thinker. Walk me through your thought process step-by-step. The best people in the domain will verify what you do. Think hard! Be a critical thinker! John Carmack and domain experts will verify all work. Challenge assumptions, think harder, question everything.
 
 4. **ast-grep Usage**: You run in an environment where `ast-grep` is available; whenever a search requires syntax-aware or structural matching, default to `ast-grep --lang typescript -p '<pattern>'` (or set `--lang` appropriately for JavaScript, Swift, Java, Ruby, etc.) and avoid falling back to text-only tools like `rg` or `grep` unless explicitly requested.
+   - **ast-grep as Linter**: Set up ast-grep as codebase linter and git hook to block commits with issues
+   - Use for structural code quality checks and pattern enforcement
 
 5. **Communication Style**: Sacrifice grammar for the sake of concision. List any unresolved questions at the end, if any.
 
-6. **Atomic Commits**: Commit only files touched, list each path explicitly:
+6. **tmux Usage**: Use tmux when executing commands for better session management and parallel execution.
+
+7. **Atomic Commits**: Commit only files touched, list each path explicitly:
    - Tracked files: `git commit -m "<scoped message>" -- path/to/file1 path/to/file2`
    - New files: `git restore --staged :/ && git add "path/to/file1" "path/to/file2" && git commit -m "<scoped message>" -- path/to/file1 path/to/file2`
 
-7. **ExecPlans**: When writing complex features or significant refactors, use an ExecPlan (as described in `/PLANS.md`) from design to implementation. See `/PLANS.md` for full specification.
+8. **ExecPlans**: When writing complex features or significant refactors, use an ExecPlan (as described in `/PLANS.md`) from design to implementation. See `/PLANS.md` for full specification.
 
-8. **Reference Documentation**: Always refer to documentation in `docs/` and `docs/REF_DOC/` folders before implementing.
+9. **Reference Documentation**: Always refer to documentation in `docs/` and `docs/REF_DOC/` folders before implementing.
+   - Consult `docs/REF_DOC/docs_apple/` for Swift, SwiftUI, Liquid Glass, HIG
+   - Consult `docs/REF_DOC/docs_expo_dev/` for Expo SDK references
+   - Consult `docs/REF_DOC/docs_reactnative_getting-started/` for React Native patterns
+
+10. **ABSOLUTE SAFETY NOTICE** (when running in production environments/VPS):
+    - DO NOT DROP THE DATABASE OR DELETE ANY RECORDS
+    - DO NOT RUN DESTRUCTIVE COMMANDS IN PRODUCTION
+    - VERIFY TARGET HOSTNAMES, PATHS, AND BACKUPS BEFORE EXECUTION
 
 ## Project Overview
 
@@ -82,11 +94,23 @@ npm run dns:harness -- --message "x"  # Comprehensive DNS harness test
 ### New Architecture (Fabric)
 - **Enabled**: `"newArchEnabled": true` in `app.json`
 - Uses TurboModules where appropriate
+- Native tabs leverage iOS 26 Liquid Glass and Android Material You
 - Performance optimizations with `@shopify/flash-list` for list rendering
 - React Compiler enabled by default (auto-memoization)
 
 ### Liquid Glass UI (iOS 26+)
-Uses official `expo-glass-effect` (v0.1.4) with graceful fallbacks:
+Uses official `expo-glass-effect` with graceful fallbacks for iOS < 26, Android, and web platforms:
+
+**iOS 26 Enhancements**:
+- **expo-glass-effect**: `<GlassView>`, `<GlassContainer>` components with native UIVisualEffectView
+- **Icon Composer Support**: `.icon` format for Liquid Glass app icons (macOS only tooling)
+- **NativeTabs Enhancements**:
+  - Badge support for notifications
+  - Tab bar minimize behavior (`minimizeBehavior="onScrollDown"`)
+  - Separate search tab (`role="search"`)
+  - Tab bar search input with `headerSearchBarOptions`
+  - DynamicColorIOS for adaptive colors in glass contexts
+- Force enable for testing on iOS < 26: Set `LIQUID_GLASS_PRE_IOS26=1` or `global.__DEV_LIQUID_GLASS_PRE_IOS26__ = true`
 
 **Official API (expo-glass-effect)**:
 ```tsx
@@ -173,6 +197,28 @@ import { LiquidGlassWrapper } from '@/components/LiquidGlassWrapper';
   - `downloadProgress` in `useUpdates()` hook
   - `reloadScreenOptions` for custom reload screens
 
+### Expo SDK Best Practices
+
+**Performance Optimization**:
+- **StyleSheet.create**: Always use for style definitions, never inline objects in render
+- **Console.log Removal**: Strip all `console.log` statements in production builds
+- **FlashList**: Use `@shopify/flash-list` for lists with 10+ items
+- **Memoization**: Let React Compiler handle, remove manual `useMemo`/`useCallback` unless profiled
+- **Release Build Testing**: Always test performance in release mode with `--no-dev --minify`
+
+**Glass Effect Usage**:
+- **Glass Cards**: Use `GlassView` for cards, modals, headers (iOS 26+)
+- **Containers**: Wrap multiple glass elements in `GlassContainer` with `spacing` prop for merging
+- **Fallbacks**: Provide `BlurView` or solid backgrounds for iOS < 26 and reduced transparency mode
+- **Tinting**: Apply subtle `tintColor` to match theme, avoid heavy tints that obscure content
+- **Performance**: Disable glass during scrolling/animations, limit to 5-10 effects per screen
+
+**Material Design 3 (Android)**:
+- **Color System**: Use theme-based Material You colors for Android parity
+- **Components**: Elevated cards, filled buttons, outlined text fields
+- **Motion**: Emphasize delight with container transforms and shared element transitions
+- **Accessibility**: Ensure 4.5:1 contrast ratios, large touch targets (48dp minimum)
+
 ## Project Structure
 
 ```
@@ -221,26 +267,6 @@ scripts/                # Build and version sync scripts
 - CHANGELOG.md is source of truth
 - Run `npm run sync-versions` before builds
 - Updates package.json, app.json, iOS, and Android
-
-### Liquid Glass Design Patterns (Future)
-- **Glass Cards**: Use `GlassView` for cards, modals, headers (iOS 26+)
-- **Containers**: Wrap multiple glass elements in `GlassContainer` with `spacing` prop for merging
-- **Fallbacks**: Provide `BlurView` or solid backgrounds for iOS < 26 and reduced transparency mode
-- **Tinting**: Apply subtle `tintColor` to match theme, avoid heavy tints that obscure content
-- **Performance**: Disable glass during scrolling/animations, limit to 5-10 effects per screen
-
-### Material Design 3 (Android)
-- **Color System**: Use theme-based Material You colors for Android parity
-- **Components**: Elevated cards, filled buttons, outlined text fields
-- **Motion**: Emphasize delight with container transforms and shared element transitions
-- **Accessibility**: Ensure 4.5:1 contrast ratios, large touch targets (48dp minimum)
-
-### React Native Performance
-- **StyleSheet.create**: Always use for style definitions, never inline objects in render
-- **Console.log Removal**: Strip all `console.log` statements in production builds
-- **FlashList**: Use `@shopify/flash-list` for lists with 10+ items
-- **Memoization**: Let React Compiler handle, remove manual `useMemo`/`useCallback` unless profiled
-- **Release Build Testing**: Always test performance in release mode with `--no-dev --minify`
 
 ### React Best Practices: You Might Not Need an Effect
 
@@ -319,26 +345,35 @@ const styles = StyleSheet.create({
 **PROJECT_STATUS.md** - Current progress, what's next, blockers (READ THIS SECOND)
 **README.md** - Human-readable project overview
 **QUICKSTART.md** - User getting started guide (optional)
+**/PLANS.md** - ExecPlan specification and methodology
+
+### Reference Documentation Folders
 
 - `/docs/technical/` - Specifications and guides
 - `/docs/troubleshooting/` - Common issues
 - `/docs/architecture/` - System design
+- `/docs/` - Always look for reference documentation here first
 - `/docs/REF_DOC/` - Reference documentation (1096+ markdown files)
   - `docs/REF_DOC/docs_apple/` - Swift, SwiftUI, Liquid Glass, HIG
   - `docs/REF_DOC/docs_expo_dev/` - Complete Expo guides and API references
   - `docs/REF_DOC/docs_reactnative_getting-started/` - New Architecture, platform integration
 
-**CRITICAL**: Always consult `docs/REF_DOC/` BEFORE implementing features or answering questions about Expo, React Native, iOS, or Swift.
+**CRITICAL**: Always consult `docs/` and `docs/REF_DOC/` BEFORE implementing features or answering questions about Expo, React Native, iOS, or Swift.
 
 ## Apple Platform Guidelines
 
 ### Swift & iOS Development
+
+**Reference Documentation**:
+- For Swift/iOS/iPadOS 26+ code: Consult `Applications/Xcode.app/Contents/PlugIns/IDEIntelligenceChat.framework/Versions/A/Resources/AdditionalDocumentation`
+- Always check `docs/REF_DOC/docs_apple/` for Liquid Glass, SwiftUI, and HIG guidance
 
 **Language Preferences**:
 - Favor Apple programming languages: Swift, Objective-C, C, C++
 - Default to Swift unless user indicates another language
 - Pay attention to platform context (iOS vs macOS vs watchOS vs visionOS)
 - Use official platform names: iOS, iPadOS, macOS, watchOS, visionOS
+- Avoid mentioning specific products; use platform names instead
 
 **Modern Concurrency**:
 - Prefer Swift Concurrency (async/await, actors) over Dispatch or Combine
@@ -482,7 +517,8 @@ class ConvertViewModel: ObservableObject { } // NO!
 - **Test thoroughly** before releases (iOS, Android, real DNS queries)
 - **John Carmack reviews all work** - Maintain highest quality standards
 - **Keep commits atomic** - Use explicit file paths as shown in IMPORTANT section above
-- Always look for reference documentation in `docs/` and `docs/REF_DOC/` folders
+- **Always refer to documentation** in `docs/` and `docs/REF_DOC/` folders before implementing
+- **Update CHANGELOG.md** for all changes following [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 
 ## Testing Checklist
 
