@@ -1,8 +1,8 @@
-#!/usr/bin/env sh
+#!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
 
-echo "husky: running ast-grep structural checks"
-ast-grep scan --config project-rules/astgrep-liquid-glass.yml || exit 1
+echo "husky: running lint"
+npm run lint || exit 1
 
 echo "husky: running unit tests"
 npm test -- --bail --passWithNoTests --runInBand || exit 1

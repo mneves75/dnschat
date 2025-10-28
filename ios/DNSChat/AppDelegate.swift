@@ -50,14 +50,6 @@ public class AppDelegate: ExpoAppDelegate {
     let result = RCTLinkingManager.application(application, continue: userActivity, restorationHandler: restorationHandler)
     return super.application(application, continue: userActivity, restorationHandler: restorationHandler) || result
   }
-
-  // Debug hint for common development termination (e.g., Xcode stop/reinstall)
-  public override func applicationWillTerminate(_ application: UIApplication) {
-#if DEBUG
-    NSLog("🛑 DNSChat: applicationWillTerminate called — SIGTERM during dev is normal when rebuilding or stopping from Xcode.")
-#endif
-    super.applicationWillTerminate(application)
-  }
 }
 
 class ReactNativeDelegate: ExpoReactNativeFactoryDelegate {
