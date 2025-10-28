@@ -21,7 +21,8 @@
     "lint": "npm run lint:ast-grep",
     "dns:harness:build": "tsc -p scripts/tsconfig.harness.json",
     "dns:harness": "npm run dns:harness:build && node scripts/dist/run-dns-harness.js",
-    "prepare": "node scripts/install-git-hooks.js"
+    "prepare": "node scripts/install-git-hooks.js",
+    "postinstall": "patch-package"
   },
   "dependencies": {
     "@expo/metro-runtime": "~6.1.2",
@@ -57,7 +58,7 @@
     "react-native-markdown-display": "^7.0.2",
     "react-native-reanimated": "~4.1.1",
     "react-native-safe-area-context": "~5.6.0",
-    "react-native-screens": "~4.16.0",
+    "react-native-screens": "^4.16.0",
     "react-native-svg": "15.12.1",
     "react-native-tcp-socket": "^6.3.0",
     "react-native-udp": "^4.1.7",
@@ -71,6 +72,7 @@
     "@types/react": "~19.1.10",
     "@types/react-test-renderer": "^18.3.0",
     "jest": "^29.7.0",
+    "patch-package": "^8.0.1",
     "react-test-renderer": "^19.1.0",
     "ts-jest": "^29.2.4",
     "ts-node": "^10.9.2",
