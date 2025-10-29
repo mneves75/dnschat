@@ -283,6 +283,43 @@ scripts/                # Build and version sync scripts
 - Uses Network.framework (iOS 14.0+)
 - Deployment target: iOS 16.0+
 
+**CRITICAL: Podfile Configuration Requirements**
+
+The Podfile **MUST** contain a post_install hook that disables User Script Sandboxing for all targets. This is **required** for Expo SDK 54 + React Native 0.81 New Architecture compatibility.
+
+```ruby
+post_install do |installer|
+  # ... other configurations ...
+
+  # REQUIRED: Disable sandboxing for all Pod targets
+  installer.pods_project.targets.each do |target|
+    target.build_configurations.each do |config|
+      config.build_settings['ENABLE_USER_SCRIPT_SANDBOXING'] = 'NO'
+    end
+  end
+
+  # REQUIRED: Disable sandboxing for DNSChat app target
+  installer.aggregate_targets.each do |aggregate_target|
+    aggregate_target.user_project.native_targets.each do |native_target|
+      next unless native_target.name == 'DNSChat'
+
+      native_target.build_configurations.each do |config|
+        config.build_settings['ENABLE_USER_SCRIPT_SANDBOXING'] = 'NO'
+      end
+    end
+  end
+end
+```
+
+**Why**: Xcode 15+ enables sandboxing by default, preventing CocoaPods scripts (Hermes, XCFrameworks, resource bundles) from executing. Without this fix, builds fail with "sandbox permission denied" errors.
+
+**Never remove** this configuration. Always run `npm run fix-pods` after:
+- Upgrading Expo SDK or React Native
+- Adding native dependencies
+- Xcode major version upgrades
+
+See: [docs/troubleshooting/COMMON-ISSUES.md#2025-10-29-user-script-sandboxing-new-architecture-fixed](docs/troubleshooting/COMMON-ISSUES.md#2025-10-29-user-script-sandboxing-new-architecture-fixed)
+
 ### Android Development
 - **Requires Java 17**: Automatically set via `npm run android` script
 - Native DNS module in `modules/dns-native/` with Android bridge in `android/app/src/main/java/com/dnsnative/`
