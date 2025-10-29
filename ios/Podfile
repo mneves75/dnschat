@@ -2,6 +2,7 @@ require File.join(File.dirname(`node --print "require.resolve('expo/package.json
 require File.join(File.dirname(`node --print "require.resolve('react-native/package.json')"`), "scripts/react_native_pods")
 
 require 'json'
+require 'set'
 podfile_properties = JSON.parse(File.read(File.join(__dir__, 'Podfile.properties.json'))) rescue {}
 
 def ccache_enabled?(podfile_properties)
@@ -22,7 +23,6 @@ prepare_react_native_project!
 
 target 'DNSChat' do
   use_expo_modules!
-  use_modular_headers!
 
   if ENV['EXPO_USE_COMMUNITY_AUTOLINKING'] == '1'
     config_command = ['node', '-e', "process.argv=['', '', 'config'];require('@react-native-community/cli').run()"];
@@ -42,6 +42,9 @@ target 'DNSChat' do
   use_frameworks! :linkage => podfile_properties['ios.useFrameworks'].to_sym if podfile_properties['ios.useFrameworks']
   use_frameworks! :linkage => ENV['USE_FRAMEWORKS'].to_sym if ENV['USE_FRAMEWORKS']
 
+  pod 'SDWebImage', :modular_headers => true
+  pod 'SDWebImageSVGCoder', :modular_headers => true
+
   use_react_native!(
     :path => config[:reactNativePath],
     :hermes_enabled => podfile_properties['expo.jsEngine'] == nil || podfile_properties['expo.jsEngine'] == 'hermes',
@@ -57,5 +60,66 @@ target 'DNSChat' do
       :mac_catalyst_enabled => false,
       :ccache_enabled => ccache_enabled?(podfile_properties),
     )
+
+    swift_allowlist = %w[
+      react-native-keyboard-controller
+      SwiftUIIntrospect
+    ]
+
+    pod_targets_by_name = installer.pod_targets.each_with_object({}) do |pod_target, memo|
+      memo[pod_target.name] = pod_target
+    end
+
+    modular_targets = Set.new
+    scan_queue = []
+
+    installer.pod_targets.each do |pod_target|
+      uses_swift = pod_target.respond_to?(:uses_swift?) && pod_target.uses_swift?
+      if uses_swift || swift_allowlist.include?(pod_target.name) || pod_target.name.start_with?('Expo', 'expo-')
+        modular_targets << pod_target.name
+        scan_queue << pod_target.name
+      end
+    end
+
+    until scan_queue.empty?
+      current = scan_queue.pop
+      pod_target = pod_targets_by_name[current]
+      next unless pod_target
+
+      pod_target.dependencies.each do |dependency|
+        dep_name = dependency.respond_to?(:name) ? dependency.name : dependency.to_s
+        next if modular_targets.include?(dep_name)
+        modular_targets << dep_name
+        scan_queue << dep_name
+      end
+    end
+
+    installer.pods_project.targets.each do |target|
+      should_define_module = modular_targets.include?(target.name)
+
+      target.build_configurations.each do |config|
+        config.build_settings['DEFINES_MODULE'] = should_define_module ? 'YES' : 'NO'
+        config.build_settings['ENABLE_USER_SCRIPT_SANDBOXING'] = 'NO'
+      end
+    end
+
+    installer.aggregate_targets.each do |aggregate_target|
+      aggregate_target.user_project.native_targets.each do |native_target|
+        next unless native_target.name == 'DNSChat'
+
+        native_target.build_configurations.each do |config|
+          config.build_settings['ENABLE_USER_SCRIPT_SANDBOXING'] = 'NO'
+        end
+      end
+    end
+
+    swift_modules_missing = installer.pod_targets.select do |pod_target|
+      next false unless pod_target.respond_to?(:uses_swift?) && pod_target.uses_swift?
+      !modular_targets.include?(pod_target.name)
+    end.map(&:name)
+
+    unless swift_modules_missing.empty?
+      Pod::UI.warn "Swift pods without modular headers: #{swift_modules_missing.sort.join(', ')}"
+    end
   end
 end
