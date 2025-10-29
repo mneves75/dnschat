@@ -4,20 +4,21 @@
 
 ## Quick Issue Lookup
 
-| Issue                                | Category     | Solution Link                                                                                |
-| ------------------------------------ | ------------ | -------------------------------------------------------------------------------------------- |
-| "expo: command not found"            | Setup        | [Environment Setup](#environment-setup-issues)                                               |
-| Hermes "Replace Configuration" error | iOS Build    | [XcodeBuildMCP Solution](#️-v174-critical---hermes-replace-configuration-script-error-fixed) |
-| Swift module incompatibility         | iOS Build    | [XcodeBuildMCP Guide](/docs/troubleshooting/XCODEBUILDMCP-GUIDE.md)                          |
-| "Screen not handled by navigator"    | Navigation   | [Navigation Issues](#️-v174-screen-not-handled-by-any-navigator-error-fixed)                 |
-| Java version errors                  | Build        | [Java/Android Issues](#javaandroid-build-issues)                                             |
-| "Native DNS not available"           | DNS          | [Native Module Issues](#native-module-issues)                                                |
-| VirtualizedList warnings             | React Native | [React Native Issues](#react-native-issues)                                                  |
-| DNS queries failing                  | Network      | [DNS Communication](#dns-communication-issues)                                               |
-| Build failures                       | Build        | [Build Problems](#build-issues)                                                              |
-| App crashes on iOS                   | Security     | [v2.0.1 Security Fixes](#v201-critical-security-fixes-resolved)                              |
-| DNS injection attempts               | Security     | [v2.0.1 Security Fixes](#v201-critical-security-fixes-resolved)                              |
-| Thread exhaustion on Android         | Performance  | [v2.0.1 Security Fixes](#v201-critical-security-fixes-resolved)                              |
+| Issue                                  | Category     | Solution Link                                                                                |
+| -------------------------------------- | ------------ | -------------------------------------------------------------------------------------------- |
+| "expo: command not found"              | Setup        | [Environment Setup](#environment-setup-issues)                                               |
+| Hermes "Replace Configuration" error   | iOS Build    | [XcodeBuildMCP Solution](#️-v174-critical---hermes-replace-configuration-script-error-fixed) |
+| Swift module incompatibility           | iOS Build    | [XcodeBuildMCP Guide](/docs/troubleshooting/XCODEBUILDMCP-GUIDE.md)                          |
+| "sandbox permission denied" Pod errors | iOS Build    | [User Script Sandboxing](#2025-10-29-user-script-sandboxing-new-architecture-fixed)         |
+| "Screen not handled by navigator"      | Navigation   | [Navigation Issues](#️-v174-screen-not-handled-by-any-navigator-error-fixed)                 |
+| Java version errors                    | Build        | [Java/Android Issues](#javaandroid-build-issues)                                             |
+| "Native DNS not available"             | DNS          | [Native Module Issues](#native-module-issues)                                                |
+| VirtualizedList warnings               | React Native | [React Native Issues](#react-native-issues)                                                  |
+| DNS queries failing                    | Network      | [DNS Communication](#dns-communication-issues)                                               |
+| Build failures                         | Build        | [Build Problems](#build-issues)                                                              |
+| App crashes on iOS                     | Security     | [v2.0.1 Security Fixes](#v201-critical-security-fixes-resolved)                              |
+| DNS injection attempts                 | Security     | [v2.0.1 Security Fixes](#v201-critical-security-fixes-resolved)                              |
+| Thread exhaustion on Android           | Performance  | [v2.0.1 Security Fixes](#v201-critical-security-fixes-resolved)                              |
 
 ---
 
@@ -652,6 +653,108 @@ CCACHE_DISABLE=1 EXPO_NO_CACHE=1 npx expo run:ios --device <DEVICE_UUID>
   ```
 
 **Status:** Reproduced and resolved on 2025-10-28. Subsequent `expo run:ios` builds complete without clang crashes.
+
+#### 2025-10-29: User Script Sandboxing (New Architecture) (FIXED)
+
+**Symptoms:**
+
+```
+PhaseScriptExecution [CP-User] [Hermes] Replace Hermes for the right configuration
+Sandbox: bash(12345) deny(1) file-read-data /path/to/Pods/hermes-engine/...
+error: Sandbox permission denied
+
+PhaseScriptExecution [CP] Copy XCFrameworks
+Sandbox: cp(67890) deny(1) file-write-create /path/to/build/...
+CommandError: Failed to build iOS project. "xcodebuild" exited with error code 65.
+```
+
+**Root Cause:** Xcode 15+ enables User Script Sandboxing (`ENABLE_USER_SCRIPT_SANDBOXING = YES`) by default for all targets. This security feature prevents build phase scripts from accessing the file system, breaking CocoaPods scripts that need to:
+- Replace Hermes engine configurations
+- Copy XCFrameworks
+- Generate resource bundles
+- Process privacy manifests
+
+When combined with Expo SDK 54 + React Native 0.81 New Architecture, Pod scripts fail with "sandbox permission denied" errors because they cannot read/write files outside their sandbox container.
+
+**Permanent Fix (Already Applied in Podfile):**
+
+The Podfile contains a post_install hook that automatically disables sandboxing for all targets:
+
+```ruby
+# ios/Podfile (lines 97-114)
+post_install do |installer|
+  # ... other configurations ...
+
+  # Disable sandboxing for all Pod targets
+  installer.pods_project.targets.each do |target|
+    target.build_configurations.each do |config|
+      config.build_settings['ENABLE_USER_SCRIPT_SANDBOXING'] = 'NO'
+    end
+  end
+
+  # Disable sandboxing for DNSChat app target
+  installer.aggregate_targets.each do |aggregate_target|
+    aggregate_target.user_project.native_targets.each do |native_target|
+      next unless native_target.name == 'DNSChat'
+
+      native_target.build_configurations.each do |config|
+        config.build_settings['ENABLE_USER_SCRIPT_SANDBOXING'] = 'NO'
+      end
+    end
+  end
+end
+```
+
+**Recovery Steps (If Issue Occurs):**
+
+```bash
+# 1. Verify Podfile has sandboxing fix (should already be present)
+grep -A5 "ENABLE_USER_SCRIPT_SANDBOXING" ios/Podfile
+
+# 2. Clean and reinstall pods to apply configuration
+npm run fix-pods
+
+# 3. Verify project settings updated
+grep "ENABLE_USER_SCRIPT_SANDBOXING" ios/DNSChat.xcodeproj/project.pbxproj
+# Should show: ENABLE_USER_SCRIPT_SANDBOXING = NO;
+
+# 4. Clean build and retry
+rm -rf ios/build ~/Library/Developer/Xcode/DerivedData/DNSChat-*
+npm run ios
+```
+
+**Verification:**
+
+After running `pod install`, verify the settings were applied:
+
+```bash
+# Target-specific settings (DNSChat app)
+# Should show ENABLE_USER_SCRIPT_SANDBOXING = NO in both Debug and Release configs
+grep -B5 -A5 "ENABLE_USER_SCRIPT_SANDBOXING = NO" ios/DNSChat.xcodeproj/project.pbxproj | grep -E "(Debug|Release|ENABLE_USER)"
+```
+
+**Why This Fix is Safe:**
+
+- **Scope**: Only disables sandboxing for **build-time scripts**, not the app runtime
+- **Security**: App still runs in full iOS sandbox with all security protections
+- **Standard Practice**: Required for CocoaPods + React Native New Architecture
+- **References**:
+  - [Expo Issue #25782](https://github.com/expo/expo/issues/25782)
+  - [React Native Core Issue #35812](https://github.com/facebook/react-native/issues/35812)
+  - [Stack Overflow: Sandbox Permission Error Solution](https://stackoverflow.com/questions/77294898/)
+  - [Root Cause Analysis Article](https://blog.stackademic.com/how-i-solved-the-sandbox-permission-error-in-expo-for-ios-a316849e119f)
+
+**Prevention:**
+
+1. **Never remove** the post_install hook from Podfile
+2. **Always run** `npm run fix-pods` after:
+   - Upgrading Expo SDK
+   - Upgrading React Native
+   - Adding new native dependencies
+   - Xcode major version upgrades
+3. **Verify settings** after pod install if you encounter sandboxing errors
+
+**Status:** RESOLVED PERMANENTLY - Podfile post_install hook ensures correct configuration on every `pod install`.
 
 #### Traditional Xcode Errors
 
