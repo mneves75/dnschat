@@ -14,7 +14,7 @@ import {
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
-import { KeyboardStickyView } from "react-native-keyboard-controller";
+import { KeyboardStickyView, useKeyboardState } from "react-native-keyboard-controller";
 import { MessageList } from "../../components/MessageList";
 import { ChatInput } from "../../components/ChatInput";
 import { useChat } from "../../context/ChatContext";
@@ -47,9 +47,21 @@ export function Chat() {
       Math.abs(previous - height) < 1 ? previous : height,
     );
   }, []);
+
+  // Track keyboard height for proper message list layout
+  // CRITICAL: KeyboardStickyView uses transform (not layout positioning), so keyboard
+  // height MUST be included in bottomInset to prevent messages hiding behind keyboard
+  // BUG FIX: Use primitive selector, not object (prevents infinite re-renders)
+  const keyboardHeight = useKeyboardState((state) => state.height);
+
+  // Calculate bottom inset for MessageList to reserve space for:
+  // 1. ChatInput component height (inputHeight)
+  // 2. Safe area bottom inset (home indicator on iOS)
+  // 3. Spacing between input and last message (LiquidGlassSpacing.xs = 8px)
+  // 4. Keyboard height when visible (KeyboardStickyView uses transform, keyboard covers screen)
   const messageListBottomInset = useMemo(
-    () => inputHeight + insets.bottom + LiquidGlassSpacing.xs,
-    [inputHeight, insets.bottom],
+    () => inputHeight + insets.bottom + LiquidGlassSpacing.xs + keyboardHeight,
+    [inputHeight, insets.bottom, keyboardHeight],
   );
   useLayoutEffect(() => {
     navigation.setOptions({ title: t("screen.chat.navigationTitle") });
@@ -106,7 +118,7 @@ export function Chat() {
 
   return (
     <SafeAreaView
-      edges={['left', 'right', 'top']}  // bottom handled by KeyboardStickyView to avoid double insets
+      edges={['left', 'right']}  // top handled by navigation header, bottom by KeyboardStickyView
       style={[
         styles.container,
         { backgroundColor: palette.background },
@@ -156,7 +168,8 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    paddingTop: LiquidGlassSpacing.xs, // aligns with LiquidGlassSpacing grid for top gap
+    // paddingTop removed: MessageList.contentContainerStyle already provides 8px top padding
+    // Eliminates double padding (16px gap) between navigation header and first message
   },
   keyboardAccessory: {
     paddingHorizontal: LiquidGlassSpacing.xs,

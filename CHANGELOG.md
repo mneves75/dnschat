@@ -7,11 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.6] - 2025-10-29
+
+### Fixed
+
+- **Message List Keyboard Scrolling**: Fixed critical bug where messages were hidden behind keyboard when typing. Root cause: `FlatList.scrollToEnd()` ignores `contentContainerStyle.paddingBottom`, causing scroll position to stop at content boundary without accounting for bottom spacing. Solution: Replaced `paddingBottom` with `ListFooterComponent` (footer treated as content, scroll position includes it). Implementation uses double RAF (requestAnimationFrame) to ensure FlatList layout completion before scrolling, consolidated all scroll logic into single useEffect, and added comprehensive documentation explaining React Native API limitations. Messages now scroll smoothly to show latest message fully visible above keyboard with iOS HIG-compliant 8px spacing.
+  - **Was**: `contentContainerStyle` with dynamic `paddingBottom` for bottom spacing - scrollToEnd() stopped at last message boundary, leaving content hidden behind keyboard
+  - **Now**: `ListFooterComponent` with height matching bottomInset - scrollToEnd() includes footer in calculation, ensuring full message visibility
+  - **Pattern**: React Native best practice for FlatList bottom spacing (footer = content, padding = ignored by scroll APIs)
+  - **Impact**: Keyboard show/hide, new messages, and input growth all trigger proper scroll behavior with guaranteed layout timing
+  - **Technical Details**:
+    - Fixed infinite re-render bug: Changed keyboard selector from object `(state) => ({ height, isVisible })` to primitive `(state) => state.height`
+    - Removed conflicting scroll handlers: Eliminated onContentSizeChange scroll (conflicts with useEffect), consolidated to single source of truth
+    - Double RAF timing: First RAF schedules paint, second RAF ensures layout calculated/committed before scroll
+    - Added testID="message-list-footer" for E2E testing, accessibilityElementsHidden={true} for screen readers (invisible spacer)
+    - Height calculation: `LiquidGlassSpacing.xs (8px) + bottomInset (inputHeight + safeArea + spacing + keyboardHeight)`
+  - **Files Modified**:
+    - `src/components/MessageList.tsx:1,92-109,191,223-229` - Added useCallback import, implemented renderFooter with ListFooterComponent, updated contentContainer comments
+    - `src/navigation/screens/Chat.tsx:55,62-65` - Fixed keyboard selector to primitive value, updated bottomInset calculation comments
+
 ### Changed
 
 - **Chat Input Keyboard Accessory Alignment**: Replaced the custom `useKeyboardAvoidance` padding hook with `KeyboardStickyView` from `react-native-keyboard-controller`. ChatInput now emits its rendered height via `onHeightChange`, MessageList reserves matching bottom inset, and SafeAreaView defers bottom inset handling to the accessory so the composer stays visible on every device/keyboard mode.
 
-### Fixed
+### Documentation
 
 - **iOS Build Recovery Playbook**: Documented clang exit code 138 remediation (purge DerivedData, Expo caches, and `~/.ccache`, then rerun with `CCACHE_DISABLE=1`) so maintainers can quickly recover from corrupted cache crashes during Pod builds.
 

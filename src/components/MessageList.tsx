@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useMemo } from "react";
+import React, { useRef, useEffect, useMemo, useCallback } from "react";
 import {
   FlatList,
   View,
@@ -24,6 +24,7 @@ interface MessageListProps {
   /**
    * Additional bottom inset reserved for UI chrome (e.g., ChatInput accessory).
    * Ensures the final message never hides beneath overlays or home indicator.
+   * INCLUDES keyboard height when visible (KeyboardStickyView uses transform).
    */
   bottomInset?: number;
 }
@@ -50,18 +51,35 @@ export function MessageList({
   // Each style (title2, subheadline, etc.) includes fontSize, fontWeight, letterSpacing
   const typography = useTypography();
 
-  useEffect(() => {
-    // Auto-scroll to bottom when new messages arrive
-    // TRICKY: setTimeout(100ms) ensures FlatList layout has completed before scrolling
-    // Without delay, scrollToEnd() can execute before new items are rendered,
-    // causing scroll position to be incorrect (off by one message)
-    // This is a known FlatList behavior when data changes trigger immediate scroll
-    if (messages.length > 0 && flatListRef.current) {
-      setTimeout(() => {
-        flatListRef.current?.scrollToEnd({ animated: true });
-      }, 100);
+  // CLEAN SOLUTION: Single scroll function with guaranteed layout completion
+  // Double RAF ensures FlatList has completed layout before scrolling
+  // This is more reliable than setTimeout with arbitrary delays
+  const scrollToBottom = useCallback(() => {
+    if (flatListRef.current && messages.length > 0) {
+      // Double requestAnimationFrame guarantees FlatList layout is complete
+      // First RAF: Browser schedules next paint
+      // Second RAF: Layout has been calculated and committed
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          flatListRef.current?.scrollToEnd({ animated: true });
+          // Optional: Add logging for debugging
+          if (__DEV__) {
+            console.log('[MessageList] Scrolled to bottom', {
+              messageCount: messages.length,
+              bottomInset,
+            });
+          }
+        });
+      });
     }
-  }, [messages]);
+  }, [messages.length, bottomInset]);
+
+  // SINGLE SOURCE OF TRUTH: Scroll on any relevant change
+  // Triggers when: new messages arrive, keyboard shows/hides, input grows
+  // No complex logic, no timing assumptions, no conflicts
+  useEffect(() => {
+    scrollToBottom();
+  }, [scrollToBottom]);
 
   // iOS 26 HIG: Render individual message bubble with solid backgrounds
   // MessageBubble uses solid colors (content layer) NOT glass (control layer)
@@ -72,12 +90,23 @@ export function MessageList({
   const keyExtractor = (item: Message) => item.id;
 
   const contentContainerStyle = useMemo(
-    () => [
-      styles.contentContainer,
-      { paddingBottom: LiquidGlassSpacing.xs + bottomInset },
-    ],
-    [bottomInset],
+    () => styles.contentContainer,
+    [],
   );
+
+  // CRITICAL FIX: FlatList.scrollToEnd() ignores contentContainerStyle.paddingBottom
+  // Root cause: scrollToEnd() API scrolls to content boundary, excludes padding from calculation
+  // Solution: ListFooterComponent is treated as CONTENT, so scrollToEnd naturally includes it
+  // Height = LiquidGlassSpacing.xs (8px) + bottomInset (inputHeight + safeArea + spacing + keyboardHeight)
+  // This ensures last message is fully visible above keyboard with iOS HIG-compliant 8px spacing
+  // testID enables integration testing, accessibilityElementsHidden prevents screen reader focus on invisible spacer
+  const renderFooter = useCallback(() => (
+    <View
+      style={{ height: LiquidGlassSpacing.xs + bottomInset }}
+      testID="message-list-footer"
+      accessibilityElementsHidden={true}
+    />
+  ), [bottomInset]);
 
   const renderEmptyComponent = () => (
     <View style={styles.emptyContainer}>
@@ -163,15 +192,10 @@ export function MessageList({
       style={styles.container}
       contentContainerStyle={contentContainerStyle}
       showsVerticalScrollIndicator={false}
-      onContentSizeChange={() => {
-        // TRICKY: onContentSizeChange handles layout changes (e.g., message bubble height changes)
-        // Uses animated: false to avoid jarring animation when text reflows
-        // Complements useEffect auto-scroll (which uses animated: true for new messages)
-        if (messages.length > 0) {
-          flatListRef.current?.scrollToEnd({ animated: false });
-        }
-      }}
+      // REMOVED: onContentSizeChange scroll handler - conflicts with useEffect scroll
+      // Our scrollToBottom with double RAF handles all scenarios reliably
       ListEmptyComponent={renderEmptyComponent}
+      ListFooterComponent={renderFooter}
       refreshControl={refreshControl}
       keyboardShouldPersistTaps="handled"
       // PERFORMANCE: FlatList optimizations for smooth 60fps scrolling
@@ -200,6 +224,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     // iOS 26 HIG: LiquidGlassSpacing.xs = 8px (8px grid system)
     // Consistent vertical padding throughout app for visual rhythm
+    // NOTE: paddingTop only - paddingBottom moved to ListFooterComponent for scrollToEnd compatibility
     paddingTop: LiquidGlassSpacing.xs,
   },
   emptyContainer: {
