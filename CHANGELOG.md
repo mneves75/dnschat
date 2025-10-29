@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **iOS Build Recovery Playbook**: Documented clang exit code 138 remediation (purge DerivedData, Expo caches, and `~/.ccache`, then rerun with `CCACHE_DISABLE=1`) so maintainers can quickly recover from corrupted cache crashes during Pod builds.
 
+- **iOS User Script Sandboxing for New Architecture Compatibility**: Enforced `ENABLE_USER_SCRIPT_SANDBOXING = NO` via Podfile post_install hook for all Pod targets and DNSChat app target. Prevents "sandbox permission denied" errors when CocoaPods scripts execute during builds (Hermes replacement, XCFramework copying, resource bundle generation) with Expo SDK 54 + React Native 0.81 New Architecture. Xcode 15+ enables sandboxing by default, blocking Pod scripts from file system access. Solution permanently disables sandboxing for build scripts while maintaining security for app runtime. All Pod scripts now execute cleanly without manual Xcode Build Settings intervention.
+
 ## [3.0.5] - 2025-10-28
 
 ### Changed
