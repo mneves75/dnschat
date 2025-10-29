@@ -66,6 +66,9 @@ npm run sync-versions   # Sync versions across platforms
 # Testing
 node test-dns-simple.js "message"     # Quick DNS smoke test
 npm run dns:harness -- --message "x"  # Comprehensive DNS harness test
+
+# App Store Screenshots
+cd ios && fastlane screenshots         # Generate all App Store screenshots
 ```
 
 ## Architecture
