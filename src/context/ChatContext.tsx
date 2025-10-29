@@ -11,6 +11,7 @@ import { Chat, Message, ChatContextType } from "../types/chat";
 import { StorageService } from "../services/storageService";
 import { DNSService, sanitizeDNSMessage } from "../services/dnsService";
 import { useSettings } from "./SettingsContext";
+import { isScreenshotMode, getMockConversations } from "../utils/screenshotMode";
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
@@ -28,6 +29,22 @@ export function ChatProvider({ children }: ChatProviderProps) {
   const loadChats = useCallback(async () => {
     try {
       setIsLoading(true);
+
+      // SCREENSHOT MODE: Load mock conversations for App Store screenshots
+      if (isScreenshotMode()) {
+        console.log("📸 [ChatContext] Screenshot mode detected, loading mock conversations");
+        const mockConversations = getMockConversations(settings.preferredLocale || "en-US");
+        setChats(mockConversations as Chat[]);
+        // Set first conversation as current chat
+        if (mockConversations.length > 0) {
+          setCurrentChat(mockConversations[0] as Chat);
+        }
+        setError(null);
+        setIsLoading(false);
+        return;
+      }
+
+      // NORMAL MODE: Load chats from storage
       const loadedChats = await StorageService.loadChats();
       setChats(loadedChats);
       setError(null);
@@ -36,7 +53,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [settings.preferredLocale]);
 
   useEffect(() => {
     loadChats();

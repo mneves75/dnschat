@@ -286,6 +286,7 @@ export function Settings() {
 
   return (
     <KeyboardAvoidingView
+      testID="settings-screen"
       style={[styles.container, { backgroundColor: colors.background }]}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >

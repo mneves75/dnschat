@@ -118,6 +118,7 @@ export function Chat() {
 
   return (
     <SafeAreaView
+      testID="chat-screen"
       edges={['left', 'right']}  // top handled by navigation header, bottom by KeyboardStickyView
       style={[
         styles.container,
@@ -136,6 +137,7 @@ export function Chat() {
         ]}
       >
         <MessageList
+          testID="message-list"
           messages={currentChat?.messages || []}
           isLoading={isLoading}
           bottomInset={messageListBottomInset}
@@ -152,6 +154,7 @@ export function Chat() {
         ]}
       >
         <ChatInput
+          testID="chat-input"
           onSendMessage={handleSendMessage}
           isLoading={isLoading}
           placeholder={t("screen.chat.placeholder")}

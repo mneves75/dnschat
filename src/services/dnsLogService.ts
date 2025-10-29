@@ -1,5 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LOGGING_CONSTANTS } from '../constants/appConstants';
+import { isScreenshotMode, getMockDNSLogs } from '../utils/screenshotMode';
 
 export interface DNSLogEntry {
   id: string;
@@ -60,6 +61,15 @@ export class DNSLogService {
 
   static async initialize() {
     try {
+      // SCREENSHOT MODE: Load mock DNS logs for App Store screenshots
+      if (isScreenshotMode()) {
+        console.log("📸 [DNSLogService] Screenshot mode detected, loading mock DNS logs");
+        this.queryLogs = getMockDNSLogs("en-US"); // Default to English, will be overridden by locale
+        this.notifyListeners();
+        return;
+      }
+
+      // NORMAL MODE: Load logs from storage
       const stored = await AsyncStorage.getItem(STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
@@ -78,8 +88,10 @@ export class DNSLogService {
       this.queryLogs = [];
     }
 
-    // Initialize cleanup scheduler after loading logs
-    await this.initializeCleanupScheduler();
+    // Initialize cleanup scheduler after loading logs (skip in screenshot mode)
+    if (!isScreenshotMode()) {
+      await this.initializeCleanupScheduler();
+    }
   }
 
   /**

@@ -113,7 +113,7 @@ export function About() {
   });
 
   return (
-    <Form.List navigationTitle={t("screen.about.navigationTitle")}>
+    <Form.List testID="about-screen" navigationTitle={t("screen.about.navigationTitle")}>
       <Form.Section>
         <LiquidGlassWrapper
           variant="prominent"

@@ -303,6 +303,7 @@ export function GlassChatList() {
 
   return (
     <Form.List
+      testID="chat-list"
       navigationTitle={t("screen.glassChatList.navigationTitle")}
       style={styles.container}
     >
