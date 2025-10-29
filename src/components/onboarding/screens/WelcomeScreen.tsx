@@ -48,7 +48,7 @@ export function WelcomeScreen() {
   }, [fadeAnim, slideAnim]);
 
   return (
-    <View style={styles.container}>
+    <View testID="onboarding-welcome" style={styles.container}>
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}

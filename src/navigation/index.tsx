@@ -79,6 +79,7 @@ function HomeTabs() {
 
   return (
     <TabView
+      testID="tab-bar"
       navigationState={{ index, routes }}
       renderScene={renderScene}
       onIndexChange={setIndex}

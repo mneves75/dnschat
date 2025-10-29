@@ -258,7 +258,7 @@ export function Logs() {
   };
 
   return (
-    <Form.List navigationTitle={t("screen.logs.navigationTitle")} nestedScrollEnabled>
+    <Form.List testID="logs-screen" navigationTitle={t("screen.logs.navigationTitle")} nestedScrollEnabled>
       {logs.length === 0 ? (
         <Form.Section>
           <LiquidGlassWrapper
