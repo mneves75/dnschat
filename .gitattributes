@@ -1,0 +1,79 @@
+# Auto-detect text files and normalize line endings to LF
+* text=auto eol=lf
+
+# Source code
+*.js text eol=lf
+*.jsx text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+
+# iOS specific
+*.swift text eol=lf
+*.h text eol=lf
+*.m text eol=lf
+*.mm text eol=lf
+*.pbxproj text eol=lf merge=union
+*.xcconfig text eol=lf
+*.plist text eol=lf
+
+# Android specific
+*.java text eol=lf
+*.kt text eol=lf
+*.gradle text eol=lf
+*.xml text eol=lf
+*.pro text eol=lf
+
+# Shell scripts
+*.sh text eol=lf
+*.bash text eol=lf
+
+# Config files
+.editorconfig text eol=lf
+.gitignore text eol=lf
+.gitattributes text eol=lf
+
+# Documentation
+*.txt text eol=lf
+LICENSE text eol=lf
+README* text eol=lf
+
+# Binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.mov binary
+*.mp4 binary
+*.mp3 binary
+*.zip binary
+*.gz binary
+*.jar binary
+*.ttf binary
+*.otf binary
+*.eot binary
+*.woff binary
+*.woff2 binary
+
+# iOS binary files
+*.pbxproj binary merge=union
+*.car binary
+
+# Android binary files
+*.apk binary
+*.aab binary
+*.dex binary
+*.class binary
+
+# Generate diffs for package-lock.json using lockfile format
+package-lock.json text eol=lf diff=json merge=union
+yarn.lock text eol=lf merge=union
+
+# Linguist vendored paths (don't count in language stats)
+docs/REF_DOC/** linguist-vendored
+.claude/skills/** linguist-documentation
+agent_planning/** linguist-documentation
