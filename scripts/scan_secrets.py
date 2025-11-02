@@ -1,236 +1,470 @@
 #!/usr/bin/env python3
 """
 Secret Scanner for Repository
-Scans for common secret patterns in code and configuration files
+
+Production-grade secret detection with:
+- Pattern matching for known secret formats
+- Shannon entropy analysis for high-entropy strings
+- Confidence scoring to reduce false positives
+- Comprehensive exclusion rules
+
+Security Note: This scanner is designed to catch common secrets. It is not
+a substitute for proper secret management practices. Never commit secrets.
 """
 
 import os
 import re
+import sys
 import json
+import math
 from pathlib import Path
 from datetime import datetime
+from typing import List, Dict, Tuple, Optional
+from collections import defaultdict
 
-# Common secret patterns
-SECRET_PATTERNS = {
+
+# High-confidence secret patterns (well-defined formats)
+HIGH_CONFIDENCE_PATTERNS = {
     'aws_access_key': {
-        'pattern': r'(?:A3T[A-Z0-9]|AKIA|AGPA|AIDA|AROA|AIPA|ANPA|ANVA|ASIA)[A-Z0-9]{16}',
-        'description': 'AWS Access Key ID'
+        'pattern': r'\b((?:AKIA|AIDA|AROA|AIPA|ANPA|ANVA|ASIA)[A-Z0-9]{16})\b',
+        'description': 'AWS Access Key ID',
+        'entropy_min': 3.5
     },
-    'aws_secret_key': {
-        'pattern': r'aws.{0,20}?[\'"\s][0-9a-zA-Z/+]{40}[\'"\s]',
-        'description': 'AWS Secret Access Key'
-    },
-    'github_token': {
-        'pattern': r'gh[pousr]_[A-Za-z0-9_]{36,251}',
-        'description': 'GitHub Token'
-    },
-    'github_classic': {
-        'pattern': r'[gG][iI][tT][hH][uU][bB].*[\'"\s][0-9a-zA-Z]{35,40}[\'"\s]',
-        'description': 'GitHub Classic Token'
-    },
-    'api_key_generic': {
-        'pattern': r'[aA][pP][iI][-_]?[kK][eE][yY].*[\'"\s][0-9a-zA-Z]{20,}[\'"\s]',
-        'description': 'Generic API Key'
-    },
-    'private_key': {
-        'pattern': r'-----BEGIN [A-Z]+ PRIVATE KEY-----',
-        'description': 'Private Key'
+    'github_token_new': {
+        'pattern': r'\b(gh[pousr]_[A-Za-z0-9_]{36,251})\b',
+        'description': 'GitHub Token (Fine-grained)',
+        'entropy_min': 4.0
     },
     'slack_token': {
-        'pattern': r'xox[baprs]-[0-9]{10,13}-[0-9]{10,13}-[a-zA-Z0-9]{24,}',
-        'description': 'Slack Token'
+        'pattern': r'\b(xox[baprs]-[0-9]{10,13}-[0-9]{10,13}-[a-zA-Z0-9]{24,})\b',
+        'description': 'Slack Token',
+        'entropy_min': 3.8
     },
-    'stripe_key': {
-        'pattern': r'(?:r|s)k_live_[0-9a-zA-Z]{24,}',
-        'description': 'Stripe Live Key'
+    'stripe_live_key': {
+        'pattern': r'\b([rs]k_live_[0-9a-zA-Z]{24,})\b',
+        'description': 'Stripe Live Key',
+        'entropy_min': 3.5
     },
-    'google_api': {
-        'pattern': r'AIza[0-9A-Za-z-_]{35}',
-        'description': 'Google API Key'
+    'google_api_key': {
+        'pattern': r'\b(AIza[0-9A-Za-z\-_]{35})\b',
+        'description': 'Google API Key',
+        'entropy_min': 3.5
     },
-    'password_in_url': {
-        'pattern': r'[a-zA-Z]{3,10}://[^:@/\s]*:[^:@/\s]+@[^\s]+',
-        'description': 'Password in URL'
+    'private_key_header': {
+        'pattern': r'-----BEGIN[A-Z ]+PRIVATE KEY-----',
+        'description': 'Private Key (PEM format)',
+        'entropy_min': 0.0  # Header doesn't need entropy check
     },
-    'jwt': {
-        'pattern': r'eyJ[A-Za-z0-9-_=]+\.eyJ[A-Za-z0-9-_=]+\.[A-Za-z0-9-_.+/=]+',
-        'description': 'JSON Web Token'
-    }
 }
 
-# Files to skip
-SKIP_PATTERNS = [
+# Medium-confidence patterns (require context analysis)
+MEDIUM_CONFIDENCE_PATTERNS = {
+    'generic_api_key': {
+        'pattern': r'(?i)(?:api[_-]?key|apikey)[\s]*[=:]+[\s]*[\'"]?([a-zA-Z0-9\-_]{20,})[\'"]?',
+        'description': 'Generic API Key',
+        'entropy_min': 4.0  # Higher entropy required for generic pattern
+    },
+    'password_assignment': {
+        'pattern': r'(?i)(?:password|passwd|pwd)[\s]*[=:]+[\s]*[\'"]([^\'"\s]{8,})[\'"]',
+        'description': 'Password Assignment',
+        'entropy_min': 3.5
+    },
+    'jwt_token': {
+        'pattern': r'\b(eyJ[A-Za-z0-9_-]*\.eyJ[A-Za-z0-9_-]*\.[A-Za-z0-9_-]+)\b',
+        'description': 'JSON Web Token',
+        'entropy_min': 4.5  # JWTs should have high entropy
+    },
+}
+
+# File extensions to scan (text files only)
+SCANNABLE_EXTENSIONS = {
+    '.js', '.ts', '.jsx', '.tsx', '.json', '.env', '.yml', '.yaml',
+    '.xml', '.txt', '.md', '.sh', '.bash', '.py', '.rb', '.go',
+    '.java', '.kt', '.swift', '.m', '.h', '.c', '.cpp', '.cs',
+    '.php', '.pl', '.r', '.scala', '.sql', '.toml', '.ini', '.cfg',
+    '.conf', '.config'
+}
+
+# Paths to skip (performance and noise reduction)
+SKIP_PATH_PATTERNS = [
     'node_modules',
     '.git',
     'vendor',
     'dist',
     'build',
-    '*.min.js',
-    '*.bundle.js',
     'docs/REF_DOC',
     '.claude/skills',
-    'test-fixtures',
-    'test_data',
-    '__tests__',
+    '__pycache__',
+    '*.min.js',
+    '*.min.css',
+    '*.bundle.js',
+]
+
+# Files to skip entirely
+SKIP_FILE_PATTERNS = [
+    'package-lock.json',  # Contains integrity hashes that trigger patterns
+    'yarn.lock',
+    'Gemfile.lock',
+    'Cargo.lock',
+    'poetry.lock',
     '*.test.js',
-    '*.spec.js'
+    '*.spec.js',
+    '*.test.ts',
+    '*.spec.ts',
 ]
 
-# Known false positives
-FALSE_POSITIVES = [
-    'example',
-    'sample',
-    'test',
-    'demo',
-    'placeholder',
-    'AKIA00000000000000000',  # Example AWS key
-    'AKIAIOSFODNN7EXAMPLE',    # AWS docs example
+# Max file size to scan (bytes) - skip huge files
+MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
+
+# Known false positive strings
+FALSE_POSITIVE_INDICATORS = [
+    'example', 'sample', 'test', 'demo', 'placeholder',
+    'YOUR_API_KEY', 'INSERT_KEY_HERE', 'REPLACE_ME',
+    'xxxxxxxx', '00000000',
+    'AKIAIOSFODNN7EXAMPLE',  # AWS documentation example
+    'wJalrXUtnFEMI/K7MDENG',  # AWS documentation example
 ]
 
-def should_skip_file(filepath):
-    """Check if file should be skipped"""
+# Known safe patterns (entropy can be high but not secrets)
+SAFE_PATTERNS = [
+    r'sha\d+[-:]?[a-f0-9]+',  # SHA hashes (e.g., sha256:abc123...)
+    r'md5[-:]?[a-f0-9]{32}',  # MD5 hashes
+    r'[a-f0-9]{40}',  # Git commit SHAs
+    r'[a-f0-9]{64}',  # SHA256 hashes
+    r'integrity[\s]*[=:][\s]*[\'"]?sha\d+',  # package.json integrity
+]
+
+
+def calculate_entropy(string: str) -> float:
+    """
+    Calculate Shannon entropy of a string.
+
+    Returns entropy value (0-8 for typical strings, higher = more random).
+    Typical values:
+    - Low entropy (< 3.0): "aaaaa", "12345", "password"
+    - Medium entropy (3.0-4.5): "P@ssw0rd", "MyAPIKey"
+    - High entropy (> 4.5): "hK9x2Lp8Q7mW3vN5", random tokens
+    """
+    if not string:
+        return 0.0
+
+    # Count character frequencies
+    freq = defaultdict(int)
+    for char in string:
+        freq[char] += 1
+
+    # Calculate Shannon entropy
+    entropy = 0.0
+    length = len(string)
+
+    for count in freq.values():
+        probability = count / length
+        if probability > 0:
+            entropy -= probability * math.log2(probability)
+
+    return entropy
+
+
+def is_safe_pattern(string: str) -> bool:
+    """Check if string matches a known safe pattern (hash, etc.)."""
+    for pattern in SAFE_PATTERNS:
+        if re.search(pattern, string, re.IGNORECASE):
+            return True
+    return False
+
+
+def is_false_positive(secret: str, context: str, filepath: str) -> Tuple[bool, Optional[str]]:
+    """
+    Determine if a match is likely a false positive.
+
+    Returns: (is_false_positive, reason)
+    """
+    secret_lower = secret.lower()
+    context_lower = context.lower()
+    path_lower = str(filepath).lower()
+
+    # Check for false positive indicators in content
+    for indicator in FALSE_POSITIVE_INDICATORS:
+        if indicator in secret_lower or indicator in context_lower:
+            return True, f'contains "{indicator}"'
+
+    # Check if in test/example file
+    test_indicators = ['test', 'example', 'sample', 'demo', 'fixture', 'mock']
+    for indicator in test_indicators:
+        if indicator in path_lower:
+            return True, f'in {indicator} file'
+
+    # Check for comment indicators
+    comment_patterns = [r'//.*example', r'#.*test', r'/\*.*sample', r'<!--.*demo']
+    for pattern in comment_patterns:
+        if re.search(pattern, context, re.IGNORECASE):
+            return True, 'in example/test comment'
+
+    # Check safe patterns (hashes, etc.)
+    if is_safe_pattern(secret):
+        return True, 'matches safe pattern (hash/checksum)'
+
+    return False, None
+
+
+def should_skip_file(filepath: Path) -> Tuple[bool, str]:
+    """
+    Determine if file should be skipped.
+
+    Returns: (should_skip, reason)
+    """
     path_str = str(filepath)
 
-    for pattern in SKIP_PATTERNS:
+    # Check path patterns
+    for pattern in SKIP_PATH_PATTERNS:
         if pattern in path_str:
-            return True
+            return True, f'path matches {pattern}'
 
-    # Skip binary files by extension
-    binary_exts = {'.png', '.jpg', '.jpeg', '.gif', '.pdf', '.zip', '.tar', '.gz', '.exe', '.dll', '.so', '.dylib'}
-    if filepath.suffix.lower() in binary_exts:
-        return True
+    # Check file patterns
+    filename = filepath.name
+    for pattern in SKIP_FILE_PATTERNS:
+        if pattern.startswith('*.'):
+            if filename.endswith(pattern[1:]):
+                return True, f'matches {pattern}'
+        elif pattern == filename:
+            return True, f'matches {pattern}'
 
-    return False
+    # Check extension
+    ext = filepath.suffix.lower()
+    if ext and ext not in SCANNABLE_EXTENSIONS:
+        return True, f'unscannable extension {ext}'
 
-def mask_secret(secret, reveal=4):
-    """Mask secret showing only first/last few chars"""
-    if len(secret) <= reveal * 2:
-        return '*' * len(secret)
-    return secret[:reveal] + '*' * (len(secret) - reveal * 2) + secret[-reveal:]
+    # Check file size
+    try:
+        if filepath.stat().st_size > MAX_FILE_SIZE:
+            return True, f'file too large (>{MAX_FILE_SIZE/1024/1024:.1f}MB)'
+    except OSError:
+        return True, 'cannot stat file'
 
-def is_false_positive(match, context):
-    """Check if match is likely a false positive"""
-    match_lower = match.lower()
-    context_lower = context.lower()
+    return False, ''
 
-    for fp in FALSE_POSITIVES:
-        if fp in match_lower or fp in context_lower:
-            return True
 
-    return False
+def scan_file(filepath: Path, root_dir: Path) -> List[Dict]:
+    """
+    Scan a single file for secrets.
 
-def scan_file(filepath, root_dir):
-    """Scan a single file for secrets"""
+    Returns list of findings with metadata.
+    """
     findings = []
 
+    # Read file content
     try:
         with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
             content = f.read()
-    except Exception as e:
+    except Exception:
         return findings
 
     lines = content.split('\n')
 
-    for pattern_name, pattern_info in SECRET_PATTERNS.items():
-        pattern = pattern_info['pattern']
-        matches = re.finditer(pattern, content, re.MULTILINE | re.IGNORECASE)
+    # Combine pattern dictionaries with confidence levels
+    patterns_with_confidence = [
+        (HIGH_CONFIDENCE_PATTERNS, 'high'),
+        (MEDIUM_CONFIDENCE_PATTERNS, 'medium'),
+    ]
 
-        for match in matches:
-            secret = match.group(0)
+    for pattern_dict, confidence in patterns_with_confidence:
+        for pattern_name, pattern_info in pattern_dict.items():
+            regex = pattern_info['pattern']
+            min_entropy = pattern_info['entropy_min']
 
-            # Find line number
-            line_num = content[:match.start()].count('\n') + 1
+            for match in re.finditer(regex, content):
+                # Extract the secret (group 1 if exists, else group 0)
+                secret = match.group(1) if match.lastindex and match.lastindex >= 1 else match.group(0)
 
-            # Get context (surrounding lines)
-            context_start = max(0, line_num - 2)
-            context_end = min(len(lines), line_num + 2)
-            context = '\n'.join(lines[context_start:context_end])
+                # Check entropy requirement
+                entropy = calculate_entropy(secret)
+                if entropy < min_entropy:
+                    continue
 
-            # Check false positives
-            if is_false_positive(secret, context):
-                continue
+                # Find line number
+                line_num = content[:match.start()].count('\n') + 1
 
-            findings.append({
-                'type': pattern_name,
-                'description': pattern_info['description'],
-                'file': str(filepath.relative_to(root_dir)),
-                'line': line_num,
-                'secret': mask_secret(secret),
-                'secret_length': len(secret),
-                'context': mask_secret(context, reveal=8)
-            })
+                # Get context (5 lines around match)
+                context_start = max(0, line_num - 3)
+                context_end = min(len(lines), line_num + 2)
+                context = '\n'.join(lines[context_start:context_end])
+
+                # Check false positives
+                is_fp, fp_reason = is_false_positive(secret, context, filepath)
+                if is_fp:
+                    # Still record but mark as likely false positive
+                    findings.append({
+                        'type': pattern_name,
+                        'description': pattern_info['description'],
+                        'file': str(filepath.relative_to(root_dir)),
+                        'line': line_num,
+                        'secret': mask_secret(secret),
+                        'secret_length': len(secret),
+                        'entropy': round(entropy, 2),
+                        'confidence': 'false_positive',
+                        'fp_reason': fp_reason,
+                        'context_preview': context[:100] + '...' if len(context) > 100 else context
+                    })
+                    continue
+
+                # Real finding
+                findings.append({
+                    'type': pattern_name,
+                    'description': pattern_info['description'],
+                    'file': str(filepath.relative_to(root_dir)),
+                    'line': line_num,
+                    'secret': mask_secret(secret),
+                    'secret_length': len(secret),
+                    'entropy': round(entropy, 2),
+                    'confidence': confidence,
+                    'context_preview': context[:100] + '...' if len(context) > 100 else context
+                })
 
     return findings
 
-def scan_repository(root_dir):
-    """Scan entire repository for secrets"""
-    root_path = Path(root_dir)
-    all_findings = []
 
-    # Scan all files
+def mask_secret(secret: str, reveal: int = 4) -> str:
+    """
+    Mask secret showing only first/last few characters.
+
+    For security, even masked secrets should not be overly revealing.
+    """
+    if len(secret) <= reveal * 2:
+        # Very short strings - mask completely
+        return '*' * min(len(secret), 16)
+
+    return secret[:reveal] + '*' * min(len(secret) - reveal * 2, 32) + secret[-reveal:]
+
+
+def scan_repository(root_dir: str) -> Dict:
+    """
+    Scan entire repository for secrets.
+
+    Returns dict with findings and statistics.
+    """
+    root_path = Path(root_dir).resolve()
+    all_findings = []
+    stats = {
+        'files_scanned': 0,
+        'files_skipped': 0,
+        'skip_reasons': defaultdict(int)
+    }
+
     for filepath in root_path.rglob('*'):
         if not filepath.is_file():
             continue
 
-        if should_skip_file(filepath):
+        # Check if should skip
+        should_skip, reason = should_skip_file(filepath)
+        if should_skip:
+            stats['files_skipped'] += 1
+            stats['skip_reasons'][reason] += 1
             continue
 
+        # Scan file
+        stats['files_scanned'] += 1
         findings = scan_file(filepath, root_path)
         all_findings.extend(findings)
 
-    return all_findings
-
-def main():
-    root_dir = '/home/user/dnschat'
-    print("Starting secret scan...")
-
-    findings = scan_repository(root_dir)
-
-    # Save results
-    output_dir = f'{root_dir}/reports/secrets'
-    os.makedirs(output_dir, exist_ok=True)
-
-    # Save full report (masked)
-    report = {
-        'scan_date': datetime.now().isoformat(),
-        'total_findings': len(findings),
-        'findings': findings
+    return {
+        'findings': all_findings,
+        'stats': stats
     }
 
-    with open(f'{output_dir}/scan_results.json', 'w', encoding='utf-8') as f:
-        json.dump(report, f, indent=2)
 
-    # Group by type
-    by_type = {}
-    for finding in findings:
-        ftype = finding['type']
-        if ftype not in by_type:
-            by_type[ftype] = []
-        by_type[ftype].append(finding)
+def main():
+    """Main entry point."""
+    # Accept root directory as argument or use default
+    root_dir = sys.argv[1] if len(sys.argv) > 1 else '/home/user/dnschat'
+
+    if not os.path.isdir(root_dir):
+        print(f"Error: {root_dir} is not a valid directory", file=sys.stderr)
+        sys.exit(1)
+
+    print(f"Starting secret scan of: {root_dir}")
+    print("This may take a moment...\n")
+
+    result = scan_repository(root_dir)
+    findings = result['findings']
+    stats = result['stats']
+
+    # Separate real findings from false positives
+    real_findings = [f for f in findings if f.get('confidence') != 'false_positive']
+    false_positives = [f for f in findings if f.get('confidence') == 'false_positive']
+
+    # Save results
+    output_dir = os.path.join(root_dir, 'reports', 'secrets')
+    os.makedirs(output_dir, exist_ok=True)
+
+    # Full report
+    report = {
+        'scan_date': datetime.now().isoformat(),
+        'scan_directory': str(root_dir),
+        'statistics': {
+            'files_scanned': stats['files_scanned'],
+            'files_skipped': stats['files_skipped'],
+            'total_findings': len(findings),
+            'real_findings': len(real_findings),
+            'false_positives': len(false_positives),
+        },
+        'findings': real_findings,
+        'false_positives': false_positives,
+    }
+
+    report_path = os.path.join(output_dir, 'scan_results.json')
+    with open(report_path, 'w', encoding='utf-8') as f:
+        json.dump(report, f, indent=2, ensure_ascii=False)
 
     # Print summary
-    print(f"\nSecret Scan Complete")
-    print(f"Total findings: {len(findings)}")
+    print(f"{'='*60}")
+    print(f"Secret Scan Complete")
+    print(f"{'='*60}")
+    print(f"Files scanned: {stats['files_scanned']}")
+    print(f"Files skipped: {stats['files_skipped']}")
 
-    if findings:
-        print(f"\nFindings by Type:")
-        for ftype, items in sorted(by_type.items()):
-            print(f"  {ftype}: {len(items)}")
+    print(f"\nFindings:")
+    print(f"  Real secrets (high/medium confidence): {len(real_findings)}")
+    print(f"  Likely false positives: {len(false_positives)}")
 
-        print(f"\nFirst 5 findings:")
-        for finding in findings[:5]:
-            print(f"  - {finding['file']}:{finding['line']} - {finding['description']}")
-            print(f"    Secret (masked): {finding['secret']}")
+    if real_findings:
+        print(f"\n{'!'*60}")
+        print(f"WARNING: {len(real_findings)} POTENTIAL SECRETS FOUND!")
+        print(f"{'!'*60}")
 
-        if len(findings) > 5:
-            print(f"  ... and {len(findings) - 5} more")
+        # Group by confidence
+        by_confidence = defaultdict(list)
+        for finding in real_findings:
+            by_confidence[finding['confidence']].append(finding)
 
-        print(f"\nWARNING: {len(findings)} potential secrets found!")
-        print(f"Review report at: {output_dir}/scan_results.json")
+        for conf in ['high', 'medium']:
+            items = by_confidence[conf]
+            if items:
+                print(f"\n{conf.upper()} Confidence ({len(items)} findings):")
+                for finding in items[:5]:
+                    print(f"  - {finding['file']}:{finding['line']}")
+                    print(f"    Type: {finding['description']}")
+                    print(f"    Secret: {finding['secret']} (entropy: {finding['entropy']})")
+                if len(items) > 5:
+                    print(f"  ... and {len(items) - 5} more")
+
+        print(f"\nACTION REQUIRED:")
+        print(f"1. Review findings in: {report_path}")
+        print(f"2. Revoke/rotate any real secrets immediately")
+        print(f"3. Remove secrets from repository")
+        print(f"4. Consider using environment variables or secret management")
+
     else:
-        print(f"\nNo secrets detected in HEAD.")
+        print(f"\nNo high/medium confidence secrets detected.")
 
-    print(f"\nReport saved to: {output_dir}/scan_results.json")
+    if false_positives:
+        print(f"\n{len(false_positives)} likely false positives filtered out.")
+
+    print(f"\nFull report: {report_path}")
+    print(f"{'='*60}\n")
+
+    # Exit with error code if secrets found
+    sys.exit(1 if real_findings else 0)
+
 
 if __name__ == '__main__':
     main()
