@@ -1,1010 +1,1362 @@
 [
   {
-    "text": "",
     "url": "http://localhost:8080/health",
+    "text": "",
     "type": "bare",
+    "line": 43,
     "file": "PLANS.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
-    "text": "Keep a Changelog",
     "url": "https://keepachangelog.com/en/1.0.0/",
+    "text": "Keep a Changelog",
     "type": "markdown",
+    "line": 5,
     "file": "CHANGELOG.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
-    "text": "Semantic Versioning",
     "url": "https://semver.org/spec/v2.0.0.html",
+    "text": "Semantic Versioning",
     "type": "markdown",
+    "line": 6,
     "file": "CHANGELOG.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
-    "text": "Claude Code",
+    "url": "https://react.dev/learn/you-might-not-need-an-effect",
+    "text": "",
+    "type": "bare",
+    "line": 620,
+    "file": "CHANGELOG.md",
+    "category": "external",
+    "status": "unchecked",
+    "reason": "external link"
+  },
+  {
     "url": "https://claude.ai/code",
+    "text": "Claude Code",
     "type": "markdown",
+    "line": 1711,
     "file": "CHANGELOG.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
-    "text": "",
     "url": "https://react.dev/learn/you-might-not-need-an-effect",
-    "type": "bare",
-    "file": "CHANGELOG.md",
-    "category": "external",
-    "status": "unchecked"
-  },
-  {
-    "text": "Keep a Changelog",
-    "url": "https://keepachangelog.com/en/1.1.0/",
-    "type": "markdown",
-    "file": "CLAUDE.md",
-    "category": "external",
-    "status": "unchecked"
-  },
-  {
-    "text": "Keep a Changelog",
-    "url": "https://keepachangelog.com/en/1.1.0/",
-    "type": "markdown",
-    "file": "CLAUDE.md",
-    "category": "external",
-    "status": "unchecked"
-  },
-  {
-    "text": "Keep a Changelog",
-    "url": "https://keepachangelog.com/en/1.1.0/",
-    "type": "markdown",
-    "file": "CLAUDE.md",
-    "category": "external",
-    "status": "unchecked"
-  },
-  {
     "text": "",
-    "url": "https://react.dev/learn/you-might-not-need-an-effect",
     "type": "bare",
+    "line": 339,
     "file": "CLAUDE.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
-    "text": "![Version",
+    "url": "https://keepachangelog.com/en/1.1.0/",
+    "text": "Keep a Changelog",
+    "type": "markdown",
+    "line": 587,
+    "file": "CLAUDE.md",
+    "category": "external",
+    "status": "unchecked",
+    "reason": "external link"
+  },
+  {
+    "url": "https://keepachangelog.com/en/1.1.0/",
+    "text": "Keep a Changelog",
+    "type": "markdown",
+    "line": 598,
+    "file": "CLAUDE.md",
+    "category": "external",
+    "status": "unchecked",
+    "reason": "external link"
+  },
+  {
+    "url": "https://keepachangelog.com/en/1.1.0/",
+    "text": "Keep a Changelog",
+    "type": "markdown",
+    "line": 618,
+    "file": "CLAUDE.md",
+    "category": "external",
+    "status": "unchecked",
+    "reason": "external link"
+  },
+  {
     "url": "https://img.shields.io/badge/version-3.0.4-blue.svg",
+    "text": "![Version",
     "type": "markdown",
+    "line": 5,
     "file": "README.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
-    "text": "![React Native",
+    "url": "https://github.com/mneves75/dnschat/releases/tag/v3.0.4",
+    "text": "",
+    "type": "bare",
+    "line": 5,
+    "file": "README.md",
+    "category": "external",
+    "status": "unchecked",
+    "reason": "external link"
+  },
+  {
     "url": "https://img.shields.io/badge/React%20Native-0.81.5-blue.svg",
+    "text": "![React Native",
     "type": "markdown",
+    "line": 6,
     "file": "README.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
-    "text": "![Expo",
+    "url": "https://reactnative.dev/",
+    "text": "",
+    "type": "bare",
+    "line": 6,
+    "file": "README.md",
+    "category": "external",
+    "status": "unchecked",
+    "reason": "external link"
+  },
+  {
     "url": "https://img.shields.io/badge/Expo-54.0.20-black.svg",
+    "text": "![Expo",
     "type": "markdown",
+    "line": 7,
     "file": "README.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
-    "text": "![TypeScript",
+    "url": "https://expo.dev/",
+    "text": "",
+    "type": "bare",
+    "line": 7,
+    "file": "README.md",
+    "category": "external",
+    "status": "unchecked",
+    "reason": "external link"
+  },
+  {
     "url": "https://img.shields.io/badge/TypeScript-5.9.2-blue.svg",
+    "text": "![TypeScript",
     "type": "markdown",
+    "line": 8,
     "file": "README.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
-    "text": "![iOS",
+    "url": "https://www.typescriptlang.org/",
+    "text": "",
+    "type": "bare",
+    "line": 8,
+    "file": "README.md",
+    "category": "external",
+    "status": "unchecked",
+    "reason": "external link"
+  },
+  {
     "url": "https://img.shields.io/badge/iOS-16%2B-lightgrey.svg",
+    "text": "![iOS",
     "type": "markdown",
+    "line": 9,
     "file": "README.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
-    "text": "![Android",
+    "url": "https://developer.apple.com/ios/",
+    "text": "",
+    "type": "bare",
+    "line": 9,
+    "file": "README.md",
+    "category": "external",
+    "status": "unchecked",
+    "reason": "external link"
+  },
+  {
     "url": "https://img.shields.io/badge/Android-API%2021%2B-green.svg",
+    "text": "![Android",
     "type": "markdown",
+    "line": 10,
     "file": "README.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
+    "url": "https://developer.android.com/",
+    "text": "",
+    "type": "bare",
+    "line": 10,
+    "file": "README.md",
+    "category": "external",
+    "status": "unchecked",
+    "reason": "external link"
+  },
+  {
+    "url": "https://github.com/mneves75/dnschat.git",
+    "text": "",
+    "type": "bare",
+    "line": 114,
+    "file": "README.md",
+    "category": "external",
+    "status": "unchecked",
+    "reason": "external link"
+  },
+  {
+    "url": "https://x.com/Arxiv_Daily/status/1952452878716805172",
     "text": "@arxiv_daily",
-    "url": "https://x.com/Arxiv_Daily/status/1952452878716805172",
     "type": "markdown",
+    "line": 352,
     "file": "README.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
-    "text": "@levelsio",
     "url": "https://x.com/levelsio",
-    "type": "markdown",
-    "file": "README.md",
-    "category": "external",
-    "status": "unchecked"
-  },
-  {
-    "text": "ch.at",
-    "url": "https://github.com/Deep-ai-inc/ch.at",
-    "type": "markdown",
-    "file": "README.md",
-    "category": "external",
-    "status": "unchecked"
-  },
-  {
-    "text": "@mneves75",
-    "url": "https://x.com/mneves75",
-    "type": "markdown",
-    "file": "README.md",
-    "category": "external",
-    "status": "unchecked"
-  },
-  {
-    "text": "open an issue",
-    "url": "https://github.com/mneves75/dnschat/issues",
-    "type": "markdown",
-    "file": "README.md",
-    "category": "external",
-    "status": "unchecked"
-  },
-  {
-    "text": "",
-    "url": "https://github.com/mneves75/dnschat.git",
-    "type": "bare",
-    "file": "README.md",
-    "category": "external",
-    "status": "unchecked"
-  },
-  {
-    "text": "dnschat/issues",
-    "url": "https://github.com/mneves75/dnschat/issues",
-    "type": "markdown",
-    "file": "CONTRIBUTING.md",
-    "category": "external",
-    "status": "unchecked"
-  },
-  {
-    "text": "dnschat/discussions",
-    "url": "https://github.com/mneves75/dnschat/discussions",
-    "type": "markdown",
-    "file": "CONTRIBUTING.md",
-    "category": "external",
-    "status": "unchecked"
-  },
-  {
-    "text": "@mneves75",
-    "url": "https://x.com/mneves75",
-    "type": "markdown",
-    "file": "CONTRIBUTING.md",
-    "category": "external",
-    "status": "unchecked"
-  },
-  {
-    "text": "",
-    "url": "https://github.com/YOUR_USERNAME/dnschat.git",
-    "type": "bare",
-    "file": "CONTRIBUTING.md",
-    "category": "external",
-    "status": "unchecked"
-  },
-  {
-    "text": "Arxiv Daily's tweet",
-    "url": "https://x.com/Arxiv_Daily/status/1952452878716805172",
-    "type": "markdown",
-    "file": "INSTALL.md",
-    "category": "external",
-    "status": "unchecked"
-  },
-  {
-    "text": "ch.at \u2013 Universal Basic Intelligence",
-    "url": "https://github.com/Deep-ai-inc/ch.at",
-    "type": "markdown",
-    "file": "INSTALL.md",
-    "category": "external",
-    "status": "unchecked"
-  },
-  {
-    "text": "Adoptium",
-    "url": "https://adoptium.net/",
-    "type": "markdown",
-    "file": "INSTALL.md",
-    "category": "external",
-    "status": "unchecked"
-  },
-  {
-    "text": "Android Studio",
-    "url": "https://developer.android.com/studio",
-    "type": "markdown",
-    "file": "INSTALL.md",
-    "category": "external",
-    "status": "unchecked"
-  },
-  {
-    "text": "GitHub Repository",
-    "url": "https://github.com/mneves75/dnschat/issues",
-    "type": "markdown",
-    "file": "INSTALL.md",
-    "category": "external",
-    "status": "unchecked"
-  },
-  {
     "text": "@levelsio",
-    "url": "https://twitter.com/levelsio",
     "type": "markdown",
-    "file": "INSTALL.md",
+    "line": 353,
+    "file": "README.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
+    "url": "https://github.com/Deep-ai-inc/ch.at",
+    "text": "ch.at",
+    "type": "markdown",
+    "line": 354,
+    "file": "README.md",
+    "category": "external",
+    "status": "unchecked",
+    "reason": "external link"
+  },
+  {
+    "url": "https://x.com/mneves75",
+    "text": "@mneves75",
+    "type": "markdown",
+    "line": 364,
+    "file": "README.md",
+    "category": "external",
+    "status": "unchecked",
+    "reason": "external link"
+  },
+  {
+    "url": "https://github.com/mneves75/dnschat/issues",
+    "text": "open an issue",
+    "type": "markdown",
+    "line": 366,
+    "file": "README.md",
+    "category": "external",
+    "status": "unchecked",
+    "reason": "external link"
+  },
+  {
+    "url": "https://github.com/YOUR_USERNAME/dnschat.git",
     "text": "",
-    "url": "https://github.com/mneves75/dnschat.git",
     "type": "bare",
-    "file": "INSTALL.md",
+    "line": 30,
+    "file": "CONTRIBUTING.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
-    "text": "",
+    "url": "https://github.com/mneves75/dnschat/issues",
+    "text": "dnschat/issues",
+    "type": "markdown",
+    "line": 445,
+    "file": "CONTRIBUTING.md",
+    "category": "external",
+    "status": "unchecked",
+    "reason": "external link"
+  },
+  {
+    "url": "https://github.com/mneves75/dnschat/discussions",
+    "text": "dnschat/discussions",
+    "type": "markdown",
+    "line": 446,
+    "file": "CONTRIBUTING.md",
+    "category": "external",
+    "status": "unchecked",
+    "reason": "external link"
+  },
+  {
+    "url": "https://x.com/mneves75",
+    "text": "@mneves75",
+    "type": "markdown",
+    "line": 447,
+    "file": "CONTRIBUTING.md",
+    "category": "external",
+    "status": "unchecked",
+    "reason": "external link"
+  },
+  {
     "url": "https://github.com/mneves75/dnschat.git",
+    "text": "",
     "type": "bare",
+    "line": 21,
     "file": "INSTALL.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
+    "url": "https://x.com/Arxiv_Daily/status/1952452878716805172",
+    "text": "Arxiv Daily's tweet",
+    "type": "markdown",
+    "line": 37,
+    "file": "INSTALL.md",
+    "category": "external",
+    "status": "unchecked",
+    "reason": "external link"
+  },
+  {
+    "url": "https://github.com/Deep-ai-inc/ch.at",
+    "text": "ch.at – Universal Basic Intelligence",
+    "type": "markdown",
+    "line": 38,
+    "file": "INSTALL.md",
+    "category": "external",
+    "status": "unchecked",
+    "reason": "external link"
+  },
+  {
+    "url": "https://github.com/mneves75/dnschat.git",
     "text": "",
+    "type": "bare",
+    "line": 78,
+    "file": "INSTALL.md",
+    "category": "external",
+    "status": "unchecked",
+    "reason": "external link"
+  },
+  {
+    "url": "https://adoptium.net/",
+    "text": "Adoptium",
+    "type": "markdown",
+    "line": 231,
+    "file": "INSTALL.md",
+    "category": "external",
+    "status": "unchecked",
+    "reason": "external link"
+  },
+  {
+    "url": "https://developer.android.com/studio",
+    "text": "Android Studio",
+    "type": "markdown",
+    "line": 237,
+    "file": "INSTALL.md",
+    "category": "external",
+    "status": "unchecked",
+    "reason": "external link"
+  },
+  {
     "url": "http://localhost:19006",
+    "text": "",
     "type": "bare",
+    "line": 290,
     "file": "INSTALL.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
+    "url": "https://github.com/mneves75/dnschat/issues",
+    "text": "GitHub Repository",
+    "type": "markdown",
+    "line": 442,
+    "file": "INSTALL.md",
+    "category": "external",
+    "status": "unchecked",
+    "reason": "external link"
+  },
+  {
+    "url": "https://twitter.com/levelsio",
+    "text": "@levelsio",
+    "type": "markdown",
+    "line": 476,
+    "file": "INSTALL.md",
+    "category": "external",
+    "status": "unchecked",
+    "reason": "external link"
+  },
+  {
+    "url": "https://www.contributor-covenant.org",
+    "text": "Contributor Covenant",
+    "type": "markdown",
+    "line": 45,
+    "file": "CODE_OF_CONDUCT.md",
+    "category": "external",
+    "status": "unchecked",
+    "reason": "external link"
+  },
+  {
+    "url": "https://www.contributor-covenant.org/version/2/0/code_of_conduct.html",
     "text": "",
-    "url": "https://github.com/mneves75/dnschat.git",
     "type": "bare",
+    "line": 45,
+    "file": "CODE_OF_CONDUCT.md",
+    "category": "external",
+    "status": "unchecked",
+    "reason": "external link"
+  },
+  {
+    "url": "https://github.com/mneves75/dnschat.git",
+    "text": "",
+    "type": "bare",
+    "line": 21,
     "file": "GEMINI.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
-    "text": "`dns.go`",
     "url": "https://github.com/Deep-ai-inc/ch.at/blob/main/dns.go",
+    "text": "`dns.go`",
     "type": "markdown",
+    "line": 17,
     "file": "modules/dns-native/README.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
-    "text": "",
     "url": "https://cli.github.com/",
+    "text": "",
     "type": "bare",
+    "line": 165,
     "file": ".claude/skills/sharing-skills/SKILL.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
-    "text": "",
     "url": "https://docs.github.com/en/authentication",
+    "text": "",
     "type": "bare",
+    "line": 170,
     "file": ".claude/skills/sharing-skills/SKILL.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
+    "url": "https://mintcdn.com/anthropic-claude-docs/4Bny2bjzuGBK7o00/images/agent-skills-simple-file.png?fit=max&auto=format&n=4Bny2bjzuGBK7o00&q=85&s=87782ff239b297d9a9e8e1b72ed72db9",
     "text": "",
-    "url": "https://mintcdn.com/anthropic-claude-docs/4Bny2bjzuGBK7o00/images/agent-skills-simple-file.png?fit=max&auto=format&n=4Bny2bjzuGBK7o00&q=85&s=87782ff239b297d9a9e8e1b72ed72db9\"",
     "type": "bare",
+    "line": 249,
     "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
-    "text": "",
     "url": "https://mintcdn.com/anthropic-claude-docs/4Bny2bjzuGBK7o00/images/agent-skills-simple-file.png?w=280&fit=max&auto=format&n=4Bny2bjzuGBK7o00&q=85&s=c61cc33b6f5855809907f7fda94cd80e",
+    "text": "",
     "type": "bare",
+    "line": 249,
     "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
-    "text": "",
     "url": "https://mintcdn.com/anthropic-claude-docs/4Bny2bjzuGBK7o00/images/agent-skills-simple-file.png?w=560&fit=max&auto=format&n=4Bny2bjzuGBK7o00&q=85&s=90d2c0c1c76b36e8d485f49e0810dbfd",
+    "text": "",
     "type": "bare",
+    "line": 249,
     "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
-    "text": "",
     "url": "https://mintcdn.com/anthropic-claude-docs/4Bny2bjzuGBK7o00/images/agent-skills-simple-file.png?w=840&fit=max&auto=format&n=4Bny2bjzuGBK7o00&q=85&s=ad17d231ac7b0bea7e5b4d58fb4aeabb",
+    "text": "",
     "type": "bare",
+    "line": 249,
     "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
-    "text": "",
     "url": "https://mintcdn.com/anthropic-claude-docs/4Bny2bjzuGBK7o00/images/agent-skills-simple-file.png?w=1100&fit=max&auto=format&n=4Bny2bjzuGBK7o00&q=85&s=f5d0a7a3c668435bb0aee9a3a8f8c329",
+    "text": "",
     "type": "bare",
+    "line": 249,
     "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
-    "text": "",
     "url": "https://mintcdn.com/anthropic-claude-docs/4Bny2bjzuGBK7o00/images/agent-skills-simple-file.png?w=1650&fit=max&auto=format&n=4Bny2bjzuGBK7o00&q=85&s=0e927c1af9de5799cfe557d12249f6e6",
+    "text": "",
     "type": "bare",
+    "line": 249,
     "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
-    "text": "",
     "url": "https://mintcdn.com/anthropic-claude-docs/4Bny2bjzuGBK7o00/images/agent-skills-simple-file.png?w=2500&fit=max&auto=format&n=4Bny2bjzuGBK7o00&q=85&s=46bbb1a51dd4c8202a470ac8c80a893d",
+    "text": "",
     "type": "bare",
+    "line": 249,
     "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
+    "url": "https://mintcdn.com/anthropic-claude-docs/4Bny2bjzuGBK7o00/images/agent-skills-bundling-content.png?fit=max&auto=format&n=4Bny2bjzuGBK7o00&q=85&s=a5e0aa41e3d53985a7e3e43668a33ea3",
     "text": "",
-    "url": "https://mintcdn.com/anthropic-claude-docs/4Bny2bjzuGBK7o00/images/agent-skills-bundling-content.png?fit=max&auto=format&n=4Bny2bjzuGBK7o00&q=85&s=a5e0aa41e3d53985a7e3e43668a33ea3\"",
     "type": "bare",
+    "line": 253,
     "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
-    "text": "",
     "url": "https://mintcdn.com/anthropic-claude-docs/4Bny2bjzuGBK7o00/images/agent-skills-bundling-content.png?w=280&fit=max&auto=format&n=4Bny2bjzuGBK7o00&q=85&s=f8a0e73783e99b4a643d79eac86b70a2",
+    "text": "",
     "type": "bare",
+    "line": 253,
     "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
-    "text": "",
     "url": "https://mintcdn.com/anthropic-claude-docs/4Bny2bjzuGBK7o00/images/agent-skills-bundling-content.png?w=560&fit=max&auto=format&n=4Bny2bjzuGBK7o00&q=85&s=dc510a2a9d3f14359416b706f067904a",
+    "text": "",
     "type": "bare",
+    "line": 253,
     "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
-    "text": "",
     "url": "https://mintcdn.com/anthropic-claude-docs/4Bny2bjzuGBK7o00/images/agent-skills-bundling-content.png?w=840&fit=max&auto=format&n=4Bny2bjzuGBK7o00&q=85&s=82cd6286c966303f7dd914c28170e385",
+    "text": "",
     "type": "bare",
+    "line": 253,
     "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
-    "text": "",
     "url": "https://mintcdn.com/anthropic-claude-docs/4Bny2bjzuGBK7o00/images/agent-skills-bundling-content.png?w=1100&fit=max&auto=format&n=4Bny2bjzuGBK7o00&q=85&s=56f3be36c77e4fe4b523df209a6824c6",
+    "text": "",
     "type": "bare",
+    "line": 253,
     "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
-    "text": "",
     "url": "https://mintcdn.com/anthropic-claude-docs/4Bny2bjzuGBK7o00/images/agent-skills-bundling-content.png?w=1650&fit=max&auto=format&n=4Bny2bjzuGBK7o00&q=85&s=d22b5161b2075656417d56f41a74f3dd",
+    "text": "",
     "type": "bare",
+    "line": 253,
     "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
-    "text": "",
     "url": "https://mintcdn.com/anthropic-claude-docs/4Bny2bjzuGBK7o00/images/agent-skills-bundling-content.png?w=2500&fit=max&auto=format&n=4Bny2bjzuGBK7o00&q=85&s=3dd4bdd6850ffcc96c6c45fcb0acd6eb",
+    "text": "",
     "type": "bare",
+    "line": 253,
     "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
+    "url": "https://mintcdn.com/anthropic-claude-docs/4Bny2bjzuGBK7o00/images/agent-skills-executable-scripts.png?fit=max&auto=format&n=4Bny2bjzuGBK7o00&q=85&s=4bbc45f2c2e0bee9f2f0d5da669bad00",
     "text": "",
-    "url": "https://mintcdn.com/anthropic-claude-docs/4Bny2bjzuGBK7o00/images/agent-skills-executable-scripts.png?fit=max&auto=format&n=4Bny2bjzuGBK7o00&q=85&s=4bbc45f2c2e0bee9f2f0d5da669bad00\"",
     "type": "bare",
+    "line": 919,
     "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
-    "text": "",
     "url": "https://mintcdn.com/anthropic-claude-docs/4Bny2bjzuGBK7o00/images/agent-skills-executable-scripts.png?w=280&fit=max&auto=format&n=4Bny2bjzuGBK7o00&q=85&s=9a04e6535a8467bfeea492e517de389f",
+    "text": "",
     "type": "bare",
+    "line": 919,
     "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
-    "text": "",
     "url": "https://mintcdn.com/anthropic-claude-docs/4Bny2bjzuGBK7o00/images/agent-skills-executable-scripts.png?w=560&fit=max&auto=format&n=4Bny2bjzuGBK7o00&q=85&s=e49333ad90141af17c0d7651cca7216b",
+    "text": "",
     "type": "bare",
+    "line": 919,
     "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
-    "text": "",
     "url": "https://mintcdn.com/anthropic-claude-docs/4Bny2bjzuGBK7o00/images/agent-skills-executable-scripts.png?w=840&fit=max&auto=format&n=4Bny2bjzuGBK7o00&q=85&s=954265a5df52223d6572b6214168c428",
+    "text": "",
     "type": "bare",
+    "line": 919,
     "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
-    "text": "",
     "url": "https://mintcdn.com/anthropic-claude-docs/4Bny2bjzuGBK7o00/images/agent-skills-executable-scripts.png?w=1100&fit=max&auto=format&n=4Bny2bjzuGBK7o00&q=85&s=2ff7a2d8f2a83ee8af132b29f10150fd",
+    "text": "",
     "type": "bare",
+    "line": 919,
     "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
-    "text": "",
     "url": "https://mintcdn.com/anthropic-claude-docs/4Bny2bjzuGBK7o00/images/agent-skills-executable-scripts.png?w=1650&fit=max&auto=format&n=4Bny2bjzuGBK7o00&q=85&s=48ab96245e04077f4d15e9170e081cfb",
+    "text": "",
     "type": "bare",
+    "line": 919,
     "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
-    "text": "",
     "url": "https://mintcdn.com/anthropic-claude-docs/4Bny2bjzuGBK7o00/images/agent-skills-executable-scripts.png?w=2500&fit=max&auto=format&n=4Bny2bjzuGBK7o00&q=85&s=0301a6c8b3ee879497cc5b5483177c90",
+    "text": "",
     "type": "bare",
+    "line": 919,
     "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
-    "text": "@username",
     "url": "https://github.com/username",
+    "text": "@username",
     "type": "markdown",
+    "line": 90,
     "file": ".claude/commands/changelog.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
-    "text": "@username",
     "url": "https://github.com/username",
+    "text": "@username",
     "type": "markdown",
+    "line": 120,
     "file": ".claude/commands/changelog.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
-    "text": "@username",
     "url": "https://github.com/username",
+    "text": "@username",
     "type": "markdown",
+    "line": 124,
     "file": ".claude/commands/changelog.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
-    "text": "@username",
     "url": "https://github.com/username",
+    "text": "@username",
     "type": "markdown",
+    "line": 128,
     "file": ".claude/commands/changelog.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
-    "text": "@username",
     "url": "https://github.com/username",
+    "text": "@username",
     "type": "markdown",
+    "line": 132,
     "file": ".claude/commands/changelog.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
-    "text": "@username",
     "url": "https://github.com/username",
+    "text": "@username",
     "type": "markdown",
+    "line": 136,
     "file": ".claude/commands/changelog.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
-    "text": "@username",
     "url": "https://github.com/username",
+    "text": "@username",
     "type": "markdown",
+    "line": 140,
     "file": ".claude/commands/changelog.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
-    "text": "@username",
     "url": "https://github.com/username",
+    "text": "@username",
     "type": "markdown",
+    "line": 144,
     "file": ".claude/commands/changelog.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
-    "text": "@username",
     "url": "https://github.com/username",
+    "text": "@username",
     "type": "markdown",
+    "line": 148,
     "file": ".claude/commands/changelog.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
-    "text": "installation instructions",
     "url": "https://github.com/mneves75/dnschat#installation",
+    "text": "installation instructions",
     "type": "markdown",
+    "line": 172,
     "file": ".claude/commands/changelog.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
+    "url": "https://keepachangelog.com/",
+    "text": "Keep a Changelog",
+    "type": "markdown",
+    "line": 28,
+    "file": "docs/MAINTAINERS.md",
+    "category": "external",
+    "status": "unchecked",
+    "reason": "external link"
+  },
+  {
+    "url": "https://reactnative.dev/docs/getting-started",
     "text": "Official React Native Docs",
-    "url": "https://reactnative.dev/docs/getting-started",
     "type": "markdown",
+    "line": 121,
     "file": "docs/README.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
-    "text": "React Navigation",
     "url": "https://reactnavigation.org/",
+    "text": "React Navigation",
     "type": "markdown",
+    "line": 122,
     "file": "docs/README.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
-    "text": "Expo Documentation",
     "url": "https://docs.expo.dev/",
+    "text": "Expo Documentation",
     "type": "markdown",
+    "line": 123,
     "file": "docs/README.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
+    "url": "https://tools.ietf.org/html/rfc1035",
     "text": "RFC 1035 - DNS Specification",
-    "url": "https://tools.ietf.org/html/rfc1035",
     "type": "markdown",
+    "line": 127,
     "file": "docs/README.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
-    "text": "DNS over HTTPS (RFC 8484)",
     "url": "https://tools.ietf.org/html/rfc8484",
+    "text": "DNS over HTTPS (RFC 8484)",
     "type": "markdown",
+    "line": 128,
     "file": "docs/README.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
-    "text": "iOS Network Framework",
     "url": "https://developer.apple.com/documentation/network",
+    "text": "iOS Network Framework",
     "type": "markdown",
+    "line": 132,
     "file": "docs/README.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
-    "text": "Android DnsResolver",
     "url": "https://developer.android.com/reference/android/net/DnsResolver",
+    "text": "Android DnsResolver",
     "type": "markdown",
+    "line": 133,
     "file": "docs/README.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
-    "text": "@hewigovens",
     "url": "https://github.com/hewigovens",
+    "text": "@hewigovens",
     "type": "markdown",
+    "line": 51,
     "file": "docs/CHANGELOG-GUIDE.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
-    "text": "@username",
     "url": "https://github.com/username",
+    "text": "@username",
     "type": "markdown",
+    "line": 54,
     "file": "docs/CHANGELOG-GUIDE.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
-    "text": "@hewigovens",
     "url": "https://github.com/hewigovens",
+    "text": "@hewigovens",
     "type": "markdown",
+    "line": 63,
     "file": "docs/CHANGELOG-GUIDE.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
-    "text": "@user1",
     "url": "https://github.com/user1",
+    "text": "@user1",
     "type": "markdown",
+    "line": 117,
     "file": "docs/CHANGELOG-GUIDE.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
-    "text": "@user2",
     "url": "https://github.com/user2",
+    "text": "@user2",
     "type": "markdown",
+    "line": 117,
     "file": "docs/CHANGELOG-GUIDE.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
-    "text": "installation instructions",
     "url": "https://github.com/vibetunnel/vibetunnel#installation",
-    "type": "markdown",
-    "file": "docs/CHANGELOG-GUIDE.md",
-    "category": "external",
-    "status": "unchecked"
-  },
-  {
     "text": "installation instructions",
-    "url": "https://github.com/vibetunnel/vibetunnel#installation",
     "type": "markdown",
+    "line": 163,
     "file": "docs/CHANGELOG-GUIDE.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
-    "text": "Download",
+    "url": "https://github.com/vibetunnel/vibetunnel#installation",
+    "text": "installation instructions",
+    "type": "markdown",
+    "line": 215,
+    "file": "docs/CHANGELOG-GUIDE.md",
+    "category": "external",
+    "status": "unchecked",
+    "reason": "external link"
+  },
+  {
     "url": "https://nodejs.org/",
+    "text": "Download",
     "type": "markdown",
+    "line": 9,
     "file": "docs/INSTALL.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
-    "text": "Download",
     "url": "https://git-scm.com/",
-    "type": "markdown",
-    "file": "docs/INSTALL.md",
-    "category": "external",
-    "status": "unchecked"
-  },
-  {
-    "text": "Download from App Store",
-    "url": "https://apps.apple.com/us/app/xcode/id497799835",
-    "type": "markdown",
-    "file": "docs/INSTALL.md",
-    "category": "external",
-    "status": "unchecked"
-  },
-  {
     "text": "Download",
+    "type": "markdown",
+    "line": 10,
+    "file": "docs/INSTALL.md",
+    "category": "external",
+    "status": "unchecked",
+    "reason": "external link"
+  },
+  {
+    "url": "https://apps.apple.com/us/app/xcode/id497799835",
+    "text": "Download from App Store",
+    "type": "markdown",
+    "line": 17,
+    "file": "docs/INSTALL.md",
+    "category": "external",
+    "status": "unchecked",
+    "reason": "external link"
+  },
+  {
     "url": "https://developer.android.com/studio",
+    "text": "Download",
     "type": "markdown",
+    "line": 24,
     "file": "docs/INSTALL.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
-    "text": "GitHub Issues",
+    "url": "https://github.com/mneves75/dnschat.git",
+    "text": "",
+    "type": "bare",
+    "line": 34,
+    "file": "docs/INSTALL.md",
+    "category": "external",
+    "status": "unchecked",
+    "reason": "external link"
+  },
+  {
     "url": "https://github.com/mneves75/dnschat/issues",
+    "text": "GitHub Issues",
     "type": "markdown",
+    "line": 238,
     "file": "docs/INSTALL.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
-    "text": "@mneves75",
     "url": "https://x.com/mneves75",
+    "text": "@mneves75",
     "type": "markdown",
+    "line": 240,
     "file": "docs/INSTALL.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
-    "text": "",
-    "url": "https://github.com/mneves75/dnschat.git",
-    "type": "bare",
-    "file": "docs/INSTALL.md",
-    "category": "external",
-    "status": "unchecked"
-  },
-  {
-    "text": "Expo Issue #25782",
-    "url": "https://github.com/expo/expo/issues/25782",
-    "type": "markdown",
-    "file": "docs/architecture/ADR-001-ios-user-script-sandboxing.md",
-    "category": "external",
-    "status": "unchecked"
-  },
-  {
-    "text": "React Native Core Issue #35812",
-    "url": "https://github.com/facebook/react-native/issues/35812",
-    "type": "markdown",
-    "file": "docs/architecture/ADR-001-ios-user-script-sandboxing.md",
-    "category": "external",
-    "status": "unchecked"
-  },
-  {
-    "text": "Stack Overflow Solution",
-    "url": "https://stackoverflow.com/questions/77294898/",
-    "type": "markdown",
-    "file": "docs/architecture/ADR-001-ios-user-script-sandboxing.md",
-    "category": "external",
-    "status": "unchecked"
-  },
-  {
-    "text": "Root Cause Analysis",
-    "url": "https://blog.stackademic.com/how-i-solved-the-sandbox-permission-error-in-expo-for-ios-a316849e119f",
-    "type": "markdown",
-    "file": "docs/architecture/ADR-001-ios-user-script-sandboxing.md",
-    "category": "external",
-    "status": "unchecked"
-  },
-  {
-    "text": "Apple Documentation: User Script Sandboxing",
-    "url": "https://developer.apple.com/documentation/xcode/configuring-the-build-phase-script-sandbox",
-    "type": "markdown",
-    "file": "docs/architecture/ADR-001-ios-user-script-sandboxing.md",
-    "category": "external",
-    "status": "unchecked"
-  },
-  {
-    "text": "",
-    "url": "https://docs.expo.dev/more/expo-cli/#doctor",
-    "type": "bare",
-    "file": "docs/technical/EXPO-DOCTOR-CONFIGURATION.md",
-    "category": "external",
-    "status": "unchecked"
-  },
-  {
-    "text": "",
-    "url": "https://reactnative.directory/",
-    "type": "bare",
-    "file": "docs/technical/EXPO-DOCTOR-CONFIGURATION.md",
-    "category": "external",
-    "status": "unchecked"
-  },
-  {
-    "text": "",
-    "url": "https://reactnative.dev/docs/new-architecture-intro",
-    "type": "bare",
-    "file": "docs/technical/EXPO-DOCTOR-CONFIGURATION.md",
-    "category": "external",
-    "status": "unchecked"
-  },
-  {
-    "text": "",
-    "url": "https://dns-proxy.dnschat.app/query",
-    "type": "bare",
-    "file": "docs/technical/NATIVE-SPEC-CLAUDE.md",
-    "category": "external",
-    "status": "unchecked"
-  },
-  {
-    "text": "",
-    "url": "https://cloudflare-dns.com/dns-query?dns=${base64Query}`,",
-    "type": "bare",
-    "file": "docs/technical/NATIVE-SPEC-CLAUDE.md",
-    "category": "external",
-    "status": "unchecked"
-  },
-  {
-    "text": "React Native Documentation",
-    "url": "https://reactnative.dev/docs/getting-started",
-    "type": "markdown",
-    "file": "docs/technical/JUNIOR-DEV-GUIDE.md",
-    "category": "external",
-    "status": "unchecked"
-  },
-  {
-    "text": "TypeScript Handbook",
-    "url": "https://www.typescriptlang.org/docs/",
-    "type": "markdown",
-    "file": "docs/technical/JUNIOR-DEV-GUIDE.md",
-    "category": "external",
-    "status": "unchecked"
-  },
-  {
-    "text": "React Navigation",
-    "url": "https://reactnavigation.org/",
-    "type": "markdown",
-    "file": "docs/technical/JUNIOR-DEV-GUIDE.md",
-    "category": "external",
-    "status": "unchecked"
-  },
-  {
-    "text": "DNS Protocol Basics",
-    "url": "https://tools.ietf.org/html/rfc1035",
-    "type": "markdown",
-    "file": "docs/technical/JUNIOR-DEV-GUIDE.md",
-    "category": "external",
-    "status": "unchecked"
-  },
-  {
-    "text": "",
-    "url": "https://github.com/mneves75/dnschat.git",
-    "type": "bare",
-    "file": "docs/technical/JUNIOR-DEV-GUIDE.md",
-    "category": "external",
-    "status": "unchecked"
-  },
-  {
-    "text": "Fastlane snapshot documentation",
-    "url": "https://docs.fastlane.tools/actions/snapshot/",
-    "type": "markdown",
-    "file": "docs/technical/SCREENSHOTS.md",
-    "category": "external",
-    "status": "unchecked"
-  },
-  {
-    "text": "App Store screenshot requirements",
-    "url": "https://developer.apple.com/help/app-store-connect/reference/screenshot-specifications/",
-    "type": "markdown",
-    "file": "docs/technical/SCREENSHOTS.md",
-    "category": "external",
-    "status": "unchecked"
-  },
-  {
-    "text": "XCUITest documentation",
-    "url": "https://developer.apple.com/documentation/xctest/user_interface_tests",
-    "type": "markdown",
-    "file": "docs/technical/SCREENSHOTS.md",
-    "category": "external",
-    "status": "unchecked"
-  },
-  {
-    "text": "Arxiv Daily tweet",
-    "url": "https://x.com/Arxiv_Daily/status/1952452878716805172",
-    "type": "markdown",
-    "file": "docs/technical/SPECIFICATION.md",
-    "category": "external",
-    "status": "unchecked"
-  },
-  {
-    "text": "ch.at \u2013 Universal Basic Intelligence",
-    "url": "https://github.com/Deep-ai-inc/ch.at",
-    "type": "markdown",
-    "file": "docs/technical/SPECIFICATION.md",
-    "category": "external",
-    "status": "unchecked"
-  },
-  {
-    "text": "Claude Code",
-    "url": "https://claude.ai/code",
-    "type": "markdown",
-    "file": "docs/guides/WORKTREE_COMPLETION.md",
-    "category": "external",
-    "status": "unchecked"
-  },
-  {
-    "text": "Claude Code",
-    "url": "https://claude.ai/code",
-    "type": "markdown",
-    "file": "docs/guides/WORKTREE_COMPLETION.md",
-    "category": "external",
-    "status": "unchecked"
-  },
-  {
-    "text": "Arxiv Daily's tweet",
-    "url": "https://x.com/Arxiv_Daily/status/1952452878716805172",
-    "type": "markdown",
-    "file": "docs/guides/QUICKSTART.md",
-    "category": "external",
-    "status": "unchecked"
-  },
-  {
-    "text": "ch.at \u2013 Universal Basic Intelligence",
-    "url": "https://github.com/Deep-ai-inc/ch.at",
-    "type": "markdown",
-    "file": "docs/guides/QUICKSTART.md",
-    "category": "external",
-    "status": "unchecked"
-  },
-  {
-    "text": "GitHub Issues",
     "url": "https://github.com/mneves75/dnschat/issues",
+    "text": "existing issues",
     "type": "markdown",
-    "file": "docs/guides/QUICKSTART.md",
+    "line": 163,
+    "file": "docs/TROUBLESHOOTING.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
+    "url": "https://github.com/expo/expo/issues/25782",
+    "text": "Expo Issue #25782",
+    "type": "markdown",
+    "line": 127,
+    "file": "docs/architecture/ADR-001-ios-user-script-sandboxing.md",
+    "category": "external",
+    "status": "unchecked",
+    "reason": "external link"
+  },
+  {
+    "url": "https://github.com/facebook/react-native/issues/35812",
+    "text": "React Native Core Issue #35812",
+    "type": "markdown",
+    "line": 128,
+    "file": "docs/architecture/ADR-001-ios-user-script-sandboxing.md",
+    "category": "external",
+    "status": "unchecked",
+    "reason": "external link"
+  },
+  {
+    "url": "https://stackoverflow.com/questions/77294898/",
+    "text": "Stack Overflow Solution",
+    "type": "markdown",
+    "line": 129,
+    "file": "docs/architecture/ADR-001-ios-user-script-sandboxing.md",
+    "category": "external",
+    "status": "unchecked",
+    "reason": "external link"
+  },
+  {
+    "url": "https://blog.stackademic.com/how-i-solved-the-sandbox-permission-error-in-expo-for-ios-a316849e119f",
+    "text": "Root Cause Analysis",
+    "type": "markdown",
+    "line": 130,
+    "file": "docs/architecture/ADR-001-ios-user-script-sandboxing.md",
+    "category": "external",
+    "status": "unchecked",
+    "reason": "external link"
+  },
+  {
+    "url": "https://developer.apple.com/documentation/xcode/configuring-the-build-phase-script-sandbox",
+    "text": "Apple Documentation: User Script Sandboxing",
+    "type": "markdown",
+    "line": 131,
+    "file": "docs/architecture/ADR-001-ios-user-script-sandboxing.md",
+    "category": "external",
+    "status": "unchecked",
+    "reason": "external link"
+  },
+  {
+    "url": "https://docs.expo.dev/more/expo-cli/#doctor",
     "text": "",
-    "url": "https://github.com/mneves75/dnschat.git",
     "type": "bare",
-    "file": "docs/guides/QUICKSTART.md",
+    "line": 249,
+    "file": "docs/technical/EXPO-DOCTOR-CONFIGURATION.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
-    "text": "Semantic Versioning",
-    "url": "https://semver.org/",
+    "url": "https://reactnative.directory/",
+    "text": "",
+    "type": "bare",
+    "line": 250,
+    "file": "docs/technical/EXPO-DOCTOR-CONFIGURATION.md",
+    "category": "external",
+    "status": "unchecked",
+    "reason": "external link"
+  },
+  {
+    "url": "https://reactnative.dev/docs/new-architecture-intro",
+    "text": "",
+    "type": "bare",
+    "line": 251,
+    "file": "docs/technical/EXPO-DOCTOR-CONFIGURATION.md",
+    "category": "external",
+    "status": "unchecked",
+    "reason": "external link"
+  },
+  {
+    "url": "https://dns-proxy.dnschat.app/query",
+    "text": "",
+    "type": "bare",
+    "line": 247,
+    "file": "docs/technical/NATIVE-SPEC-CLAUDE.md",
+    "category": "external",
+    "status": "unchecked",
+    "reason": "external link"
+  },
+  {
+    "url": "https://cloudflare-dns.com/dns-query?dns=${base64Query}`",
+    "text": "",
+    "type": "bare",
+    "line": 284,
+    "file": "docs/technical/NATIVE-SPEC-CLAUDE.md",
+    "category": "external",
+    "status": "unchecked",
+    "reason": "external link"
+  },
+  {
+    "url": "https://github.com/mneves75/dnschat.git",
+    "text": "",
+    "type": "bare",
+    "line": 261,
+    "file": "docs/technical/JUNIOR-DEV-GUIDE.md",
+    "category": "external",
+    "status": "unchecked",
+    "reason": "external link"
+  },
+  {
+    "url": "https://reactnative.dev/docs/getting-started",
+    "text": "React Native Documentation",
     "type": "markdown",
+    "line": 767,
+    "file": "docs/technical/JUNIOR-DEV-GUIDE.md",
+    "category": "external",
+    "status": "unchecked",
+    "reason": "external link"
+  },
+  {
+    "url": "https://www.typescriptlang.org/docs/",
+    "text": "TypeScript Handbook",
+    "type": "markdown",
+    "line": 768,
+    "file": "docs/technical/JUNIOR-DEV-GUIDE.md",
+    "category": "external",
+    "status": "unchecked",
+    "reason": "external link"
+  },
+  {
+    "url": "https://reactnavigation.org/",
+    "text": "React Navigation",
+    "type": "markdown",
+    "line": 769,
+    "file": "docs/technical/JUNIOR-DEV-GUIDE.md",
+    "category": "external",
+    "status": "unchecked",
+    "reason": "external link"
+  },
+  {
+    "url": "https://tools.ietf.org/html/rfc1035",
+    "text": "DNS Protocol Basics",
+    "type": "markdown",
+    "line": 770,
+    "file": "docs/technical/JUNIOR-DEV-GUIDE.md",
+    "category": "external",
+    "status": "unchecked",
+    "reason": "external link"
+  },
+  {
+    "url": "https://docs.fastlane.tools/actions/snapshot/",
+    "text": "Fastlane snapshot documentation",
+    "type": "markdown",
+    "line": 203,
+    "file": "docs/technical/SCREENSHOTS.md",
+    "category": "external",
+    "status": "unchecked",
+    "reason": "external link"
+  },
+  {
+    "url": "https://developer.apple.com/help/app-store-connect/reference/screenshot-specifications/",
+    "text": "App Store screenshot requirements",
+    "type": "markdown",
+    "line": 204,
+    "file": "docs/technical/SCREENSHOTS.md",
+    "category": "external",
+    "status": "unchecked",
+    "reason": "external link"
+  },
+  {
+    "url": "https://developer.apple.com/documentation/xctest/user_interface_tests",
+    "text": "XCUITest documentation",
+    "type": "markdown",
+    "line": 205,
+    "file": "docs/technical/SCREENSHOTS.md",
+    "category": "external",
+    "status": "unchecked",
+    "reason": "external link"
+  },
+  {
+    "url": "https://x.com/Arxiv_Daily/status/1952452878716805172",
+    "text": "Arxiv Daily tweet",
+    "type": "markdown",
+    "line": 9,
+    "file": "docs/technical/SPECIFICATION.md",
+    "category": "external",
+    "status": "unchecked",
+    "reason": "external link"
+  },
+  {
+    "url": "https://github.com/Deep-ai-inc/ch.at",
+    "text": "ch.at – Universal Basic Intelligence",
+    "type": "markdown",
+    "line": 10,
+    "file": "docs/technical/SPECIFICATION.md",
+    "category": "external",
+    "status": "unchecked",
+    "reason": "external link"
+  },
+  {
+    "url": "https://claude.ai/code",
+    "text": "Claude Code",
+    "type": "markdown",
+    "line": 71,
+    "file": "docs/guides/WORKTREE_COMPLETION.md",
+    "category": "external",
+    "status": "unchecked",
+    "reason": "external link"
+  },
+  {
+    "url": "https://claude.ai/code",
+    "text": "Claude Code",
+    "type": "markdown",
+    "line": 110,
+    "file": "docs/guides/WORKTREE_COMPLETION.md",
+    "category": "external",
+    "status": "unchecked",
+    "reason": "external link"
+  },
+  {
+    "url": "https://x.com/Arxiv_Daily/status/1952452878716805172",
+    "text": "Arxiv Daily's tweet",
+    "type": "markdown",
+    "line": 7,
+    "file": "docs/guides/QUICKSTART.md",
+    "category": "external",
+    "status": "unchecked",
+    "reason": "external link"
+  },
+  {
+    "url": "https://github.com/Deep-ai-inc/ch.at",
+    "text": "ch.at – Universal Basic Intelligence",
+    "type": "markdown",
+    "line": 8,
+    "file": "docs/guides/QUICKSTART.md",
+    "category": "external",
+    "status": "unchecked",
+    "reason": "external link"
+  },
+  {
+    "url": "https://github.com/mneves75/dnschat.git",
+    "text": "",
+    "type": "bare",
+    "line": 26,
+    "file": "docs/guides/QUICKSTART.md",
+    "category": "external",
+    "status": "unchecked",
+    "reason": "external link"
+  },
+  {
+    "url": "https://github.com/mneves75/dnschat/issues",
+    "text": "GitHub Issues",
+    "type": "markdown",
+    "line": 105,
+    "file": "docs/guides/QUICKSTART.md",
+    "category": "external",
+    "status": "unchecked",
+    "reason": "external link"
+  },
+  {
+    "url": "https://semver.org/",
+    "text": "Semantic Versioning",
+    "type": "markdown",
+    "line": 35,
     "file": "docs/guides/VERSION_MANAGEMENT.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
-    "text": "Expo Build Properties",
     "url": "https://docs.expo.dev/versions/latest/sdk/build-properties/",
+    "text": "Expo Build Properties",
     "type": "markdown",
+    "line": 262,
     "file": "docs/troubleshooting/HERMES_DSYM_FIX.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
-    "text": "EAS Build Configuration",
     "url": "https://docs.expo.dev/build/eas-json/",
+    "text": "EAS Build Configuration",
     "type": "markdown",
+    "line": 263,
     "file": "docs/troubleshooting/HERMES_DSYM_FIX.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
-    "text": "React Native Hermes",
     "url": "https://reactnative.dev/docs/hermes",
+    "text": "React Native Hermes",
     "type": "markdown",
+    "line": 264,
     "file": "docs/troubleshooting/HERMES_DSYM_FIX.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
-    "text": "Apple dSYM Documentation",
     "url": "https://developer.apple.com/documentation/xcode/building-your-app-to-include-debugging-information",
+    "text": "Apple dSYM Documentation",
     "type": "markdown",
+    "line": 265,
     "file": "docs/troubleshooting/HERMES_DSYM_FIX.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
   },
   {
-    "text": "Expo Issue #25782",
-    "url": "https://github.com/expo/expo/issues/25782",
-    "type": "markdown",
-    "file": "docs/troubleshooting/COMMON-ISSUES.md",
-    "category": "external",
-    "status": "unchecked"
-  },
-  {
-    "text": "React Native Core Issue #35812",
-    "url": "https://github.com/facebook/react-native/issues/35812",
-    "type": "markdown",
-    "file": "docs/troubleshooting/COMMON-ISSUES.md",
-    "category": "external",
-    "status": "unchecked"
-  },
-  {
-    "text": "Stack Overflow: Sandbox Permission Error Solution",
-    "url": "https://stackoverflow.com/questions/77294898/",
-    "type": "markdown",
-    "file": "docs/troubleshooting/COMMON-ISSUES.md",
-    "category": "external",
-    "status": "unchecked"
-  },
-  {
-    "text": "Root Cause Analysis Article",
-    "url": "https://blog.stackademic.com/how-i-solved-the-sandbox-permission-error-in-expo-for-ios-a316849e119f",
-    "type": "markdown",
-    "file": "docs/troubleshooting/COMMON-ISSUES.md",
-    "category": "external",
-    "status": "unchecked"
-  },
-  {
-    "text": "",
     "url": "https://nodejs.org/",
+    "text": "",
     "type": "bare",
+    "line": 77,
     "file": "docs/troubleshooting/COMMON-ISSUES.md",
     "category": "external",
-    "status": "unchecked"
+    "status": "unchecked",
+    "reason": "external link"
+  },
+  {
+    "url": "https://github.com/expo/expo/issues/25782",
+    "text": "Expo Issue #25782",
+    "type": "markdown",
+    "line": 742,
+    "file": "docs/troubleshooting/COMMON-ISSUES.md",
+    "category": "external",
+    "status": "unchecked",
+    "reason": "external link"
+  },
+  {
+    "url": "https://github.com/facebook/react-native/issues/35812",
+    "text": "React Native Core Issue #35812",
+    "type": "markdown",
+    "line": 743,
+    "file": "docs/troubleshooting/COMMON-ISSUES.md",
+    "category": "external",
+    "status": "unchecked",
+    "reason": "external link"
+  },
+  {
+    "url": "https://stackoverflow.com/questions/77294898/",
+    "text": "Stack Overflow: Sandbox Permission Error Solution",
+    "type": "markdown",
+    "line": 744,
+    "file": "docs/troubleshooting/COMMON-ISSUES.md",
+    "category": "external",
+    "status": "unchecked",
+    "reason": "external link"
+  },
+  {
+    "url": "https://blog.stackademic.com/how-i-solved-the-sandbox-permission-error-in-expo-for-ios-a316849e119f",
+    "text": "Root Cause Analysis Article",
+    "type": "markdown",
+    "line": 745,
+    "file": "docs/troubleshooting/COMMON-ISSUES.md",
+    "category": "external",
+    "status": "unchecked",
+    "reason": "external link"
   }
 ]

@@ -1,394 +1,422 @@
 [
   {
-    "text": "Troubleshooting",
-    "url": "./docs/TROUBLESHOOTING.md",
-    "type": "markdown",
-    "file": "README.md",
-    "category": "internal",
-    "status": "broken"
-  },
-  {
-    "text": "API Documentation",
-    "url": "./docs/API.md",
-    "type": "markdown",
-    "file": "README.md",
-    "category": "internal",
-    "status": "broken"
-  },
-  {
-    "text": "TROUBLESHOOTING.md",
-    "url": "./docs/TROUBLESHOOTING.md",
-    "type": "markdown",
-    "file": "README.md",
-    "category": "internal",
-    "status": "broken"
-  },
-  {
-    "text": "docs/TROUBLESHOOTING.md",
-    "url": "./docs/TROUBLESHOOTING.md",
-    "type": "markdown",
-    "file": "CONTRIBUTING.md",
-    "category": "internal",
-    "status": "broken"
-  },
-  {
-    "text": "docs/API.md",
-    "url": "./docs/API.md",
-    "type": "markdown",
-    "file": "CONTRIBUTING.md",
-    "category": "internal",
-    "status": "broken"
-  },
-  {
-    "text": "Troubleshooting",
-    "url": "./docs/TROUBLESHOOTING.md",
-    "type": "markdown",
-    "file": "INSTALL.md",
-    "category": "internal",
-    "status": "broken"
-  },
-  {
-    "text": "API Reference",
-    "url": "./docs/API.md",
-    "type": "markdown",
-    "file": "INSTALL.md",
-    "category": "internal",
-    "status": "broken"
-  },
-  {
-    "text": "filename",
     "url": "mdc:filename",
+    "text": "filename",
     "type": "markdown",
+    "line": 92,
     "file": ".cursor/rules/README.md",
     "category": "internal",
-    "status": "broken"
+    "status": "broken",
+    "reason": "file not found"
   },
   {
-    "text": "Skills overview",
     "url": "/en/docs/agents-and-tools/agent-skills/overview",
+    "text": "Skills overview",
     "type": "markdown",
+    "line": 7,
     "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
     "category": "internal",
-    "status": "broken"
+    "status": "broken",
+    "reason": "file not found"
   },
   {
-    "text": "context window",
     "url": "/en/docs/build-with-claude/context-windows",
+    "text": "context window",
     "type": "markdown",
+    "line": 13,
     "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
     "category": "internal",
-    "status": "broken"
+    "status": "broken",
+    "reason": "file not found"
   },
   {
-    "text": "Skills overview",
     "url": "/en/docs/agents-and-tools/agent-skills/overview#skill-structure",
+    "text": "Skills overview",
     "type": "markdown",
+    "line": 152,
     "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
     "category": "internal",
-    "status": "broken"
+    "status": "broken",
+    "reason": "file not found"
   },
   {
-    "text": "How Skills work",
     "url": "/en/docs/agents-and-tools/agent-skills/overview#how-skills-work",
+    "text": "How Skills work",
     "type": "markdown",
+    "line": 237,
     "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
     "category": "internal",
-    "status": "broken"
+    "status": "broken",
+    "reason": "file not found"
   },
   {
-    "text": "FORMS.md",
     "url": "FORMS.md",
+    "text": "FORMS.md",
     "type": "markdown",
+    "line": 290,
     "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
     "category": "internal",
-    "status": "broken"
+    "status": "broken",
+    "reason": "file not found"
   },
   {
-    "text": "REFERENCE.md",
     "url": "REFERENCE.md",
+    "text": "REFERENCE.md",
     "type": "markdown",
+    "line": 291,
     "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
     "category": "internal",
-    "status": "broken"
+    "status": "broken",
+    "reason": "file not found"
   },
   {
-    "text": "EXAMPLES.md",
     "url": "EXAMPLES.md",
+    "text": "EXAMPLES.md",
     "type": "markdown",
+    "line": 292,
     "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
     "category": "internal",
-    "status": "broken"
+    "status": "broken",
+    "reason": "file not found"
   },
   {
-    "text": "reference/finance.md",
     "url": "reference/finance.md",
+    "text": "reference/finance.md",
     "type": "markdown",
+    "line": 316,
     "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
     "category": "internal",
-    "status": "broken"
+    "status": "broken",
+    "reason": "file not found"
   },
   {
-    "text": "reference/sales.md",
     "url": "reference/sales.md",
+    "text": "reference/sales.md",
     "type": "markdown",
+    "line": 317,
     "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
     "category": "internal",
-    "status": "broken"
+    "status": "broken",
+    "reason": "file not found"
   },
   {
-    "text": "reference/product.md",
     "url": "reference/product.md",
+    "text": "reference/product.md",
     "type": "markdown",
+    "line": 318,
     "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
     "category": "internal",
-    "status": "broken"
+    "status": "broken",
+    "reason": "file not found"
   },
   {
-    "text": "reference/marketing.md",
     "url": "reference/marketing.md",
+    "text": "reference/marketing.md",
     "type": "markdown",
+    "line": 319,
     "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
     "category": "internal",
-    "status": "broken"
+    "status": "broken",
+    "reason": "file not found"
   },
   {
-    "text": "DOCX-JS.md",
     "url": "DOCX-JS.md",
+    "text": "DOCX-JS.md",
     "type": "markdown",
+    "line": 341,
     "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
     "category": "internal",
-    "status": "broken"
+    "status": "broken",
+    "reason": "file not found"
   },
   {
-    "text": "REDLINING.md",
     "url": "REDLINING.md",
+    "text": "REDLINING.md",
     "type": "markdown",
+    "line": 347,
     "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
     "category": "internal",
-    "status": "broken"
+    "status": "broken",
+    "reason": "file not found"
   },
   {
-    "text": "OOXML.md",
     "url": "OOXML.md",
+    "text": "OOXML.md",
     "type": "markdown",
+    "line": 348,
     "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
     "category": "internal",
-    "status": "broken"
+    "status": "broken",
+    "reason": "file not found"
   },
   {
-    "text": "advanced.md",
     "url": "advanced.md",
+    "text": "advanced.md",
     "type": "markdown",
+    "line": 363,
     "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
     "category": "internal",
-    "status": "broken"
+    "status": "broken",
+    "reason": "file not found"
   },
   {
-    "text": "details.md",
     "url": "details.md",
+    "text": "details.md",
     "type": "markdown",
+    "line": 366,
     "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
     "category": "internal",
-    "status": "broken"
+    "status": "broken",
+    "reason": "file not found"
   },
   {
-    "text": "advanced.md",
     "url": "advanced.md",
+    "text": "advanced.md",
     "type": "markdown",
+    "line": 378,
     "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
     "category": "internal",
-    "status": "broken"
+    "status": "broken",
+    "reason": "file not found"
   },
   {
-    "text": "reference.md",
     "url": "reference.md",
+    "text": "reference.md",
     "type": "markdown",
+    "line": 379,
     "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
     "category": "internal",
-    "status": "broken"
+    "status": "broken",
+    "reason": "file not found"
   },
   {
-    "text": "examples.md",
     "url": "examples.md",
+    "text": "examples.md",
     "type": "markdown",
+    "line": 380,
     "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
     "category": "internal",
-    "status": "broken"
+    "status": "broken",
+    "reason": "file not found"
   },
   {
-    "text": "code execution tool documentation",
     "url": "/en/docs/agents-and-tools/tool-use/code-execution-tool",
+    "text": "code execution tool documentation",
     "type": "markdown",
+    "line": 1011,
     "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
     "category": "internal",
-    "status": "broken"
+    "status": "broken",
+    "reason": "file not found"
   },
   {
-    "text": "The Skills architecture",
     "url": "/en/docs/agents-and-tools/agent-skills/overview#the-skills-architecture",
+    "text": "The Skills architecture",
     "type": "markdown",
+    "line": 1015,
     "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
     "category": "internal",
-    "status": "broken"
+    "status": "broken",
+    "reason": "file not found"
   },
   {
+    "url": "/en/docs/agents-and-tools/agent-skills/overview#how-skills-work",
     "text": "How Skills work",
-    "url": "/en/docs/agents-and-tools/agent-skills/overview#how-skills-work",
     "type": "markdown",
+    "line": 1051,
     "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
     "category": "internal",
-    "status": "broken"
+    "status": "broken",
+    "reason": "file not found"
   },
   {
-    "text": "Skills overview",
     "url": "/en/docs/agents-and-tools/agent-skills/overview#skill-structure",
-    "type": "markdown",
-    "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
-    "category": "internal",
-    "status": "broken"
-  },
-  {
     "text": "Skills overview",
-    "url": "/en/docs/agents-and-tools/agent-skills/overview#how-skills-work",
     "type": "markdown",
+    "line": 1095,
     "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
     "category": "internal",
-    "status": "broken"
+    "status": "broken",
+    "reason": "file not found"
   },
   {
-    "text": "Tech FAQ",
-    "url": "TECH-FAQ.md",
+    "url": "/en/docs/agents-and-tools/agent-skills/overview#how-skills-work",
+    "text": "Skills overview",
     "type": "markdown",
+    "line": 1099,
+    "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
+    "category": "internal",
+    "status": "broken",
+    "reason": "file not found"
+  },
+  {
+    "url": "TECH-FAQ.md",
+    "text": "Tech FAQ",
+    "type": "markdown",
+    "line": 11,
     "file": "docs/README.md",
     "category": "internal",
-    "status": "broken"
+    "status": "broken",
+    "reason": "file not found"
   },
   {
-    "text": "Gemini Context",
     "url": "guides/GEMINI-CONTEXT.md",
+    "text": "Gemini Context",
     "type": "markdown",
+    "line": 29,
     "file": "docs/README.md",
     "category": "internal",
-    "status": "broken"
+    "status": "broken",
+    "reason": "file not found"
   },
   {
-    "text": "Tech FAQ",
     "url": "TECH-FAQ.md",
-    "type": "markdown",
-    "file": "docs/README.md",
-    "category": "internal",
-    "status": "broken"
-  },
-  {
     "text": "Tech FAQ",
-    "url": "TECH-FAQ.md",
     "type": "markdown",
+    "line": 37,
     "file": "docs/README.md",
     "category": "internal",
-    "status": "broken"
+    "status": "broken",
+    "reason": "file not found"
   },
   {
+    "url": "TECH-FAQ.md",
     "text": "Tech FAQ",
-    "url": "TECH-FAQ.md",
     "type": "markdown",
+    "line": 55,
     "file": "docs/README.md",
     "category": "internal",
-    "status": "broken"
+    "status": "broken",
+    "reason": "file not found"
   },
   {
-    "text": "Build Problems Section",
+    "url": "TECH-FAQ.md",
+    "text": "Tech FAQ",
+    "type": "markdown",
+    "line": 102,
+    "file": "docs/README.md",
+    "category": "internal",
+    "status": "broken",
+    "reason": "file not found"
+  },
+  {
     "url": "TECH-FAQ.md#build--compilation-problems",
+    "text": "Build Problems Section",
     "type": "markdown",
+    "line": 102,
     "file": "docs/README.md",
     "category": "internal",
-    "status": "broken"
+    "status": "broken",
+    "reason": "file not found"
   },
   {
-    "text": "Tech FAQ",
     "url": "TECH-FAQ.md",
+    "text": "Tech FAQ",
     "type": "markdown",
+    "line": 109,
     "file": "docs/README.md",
     "category": "internal",
-    "status": "broken"
+    "status": "broken",
+    "reason": "file not found"
   },
   {
-    "text": "DNS Communication Issues",
     "url": "TECH-FAQ.md#dns-communication-issues",
+    "text": "DNS Communication Issues",
     "type": "markdown",
+    "line": 109,
     "file": "docs/README.md",
     "category": "internal",
-    "status": "broken"
+    "status": "broken",
+    "reason": "file not found"
   },
   {
-    "text": "Tech FAQ",
     "url": "TECH-FAQ.md",
+    "text": "Tech FAQ",
     "type": "markdown",
+    "line": 114,
     "file": "docs/README.md",
     "category": "internal",
-    "status": "broken"
+    "status": "broken",
+    "reason": "file not found"
   },
   {
-    "text": "React Native Specific Issues",
     "url": "TECH-FAQ.md#react-native-specific-issues",
+    "text": "React Native Specific Issues",
     "type": "markdown",
+    "line": 114,
     "file": "docs/README.md",
     "category": "internal",
-    "status": "broken"
+    "status": "broken",
+    "reason": "file not found"
   },
   {
-    "text": "Tech FAQ",
     "url": "TECH-FAQ.md",
+    "text": "Tech FAQ",
     "type": "markdown",
+    "line": 192,
     "file": "docs/README.md",
     "category": "internal",
-    "status": "broken"
+    "status": "broken",
+    "reason": "file not found"
   },
   {
-    "text": "docs/API.md",
-    "url": "./API.md",
+    "url": ".github/ISSUE_TEMPLATE/bug_report.yml",
+    "text": "Bug Report",
     "type": "markdown",
-    "file": "docs/INSTALL.md",
+    "line": 176,
+    "file": "docs/TROUBLESHOOTING.md",
     "category": "internal",
-    "status": "broken"
+    "status": "broken",
+    "reason": "file not found"
   },
   {
-    "text": "docs/TROUBLESHOOTING.md",
-    "url": "./TROUBLESHOOTING.md",
+    "url": ".github/ISSUE_TEMPLATE/feature_request.yml",
+    "text": "Feature Request",
     "type": "markdown",
-    "file": "docs/INSTALL.md",
+    "line": 177,
+    "file": "docs/TROUBLESHOOTING.md",
     "category": "internal",
-    "status": "broken"
+    "status": "broken",
+    "reason": "file not found"
   },
   {
-    "text": "Tech FAQ",
     "url": "../TECH-FAQ.md",
+    "text": "Tech FAQ",
     "type": "markdown",
+    "line": 776,
     "file": "docs/technical/JUNIOR-DEV-GUIDE.md",
     "category": "internal",
-    "status": "broken"
+    "status": "broken",
+    "reason": "file not found"
   },
   {
-    "text": "INSTALL.md",
     "url": "./INSTALL.md",
+    "text": "INSTALL.md",
     "type": "markdown",
+    "line": 103,
     "file": "docs/guides/QUICKSTART.md",
     "category": "internal",
-    "status": "broken"
+    "status": "broken",
+    "reason": "file not found"
   },
   {
-    "text": "CLAUDE.md",
     "url": "./CLAUDE.md",
+    "text": "CLAUDE.md",
     "type": "markdown",
+    "line": 104,
     "file": "docs/guides/QUICKSTART.md",
     "category": "internal",
-    "status": "broken"
+    "status": "broken",
+    "reason": "file not found"
   },
   {
-    "text": "TECH-FAQ.md",
     "url": "../TECH-FAQ.md",
+    "text": "TECH-FAQ.md",
     "type": "markdown",
+    "line": 313,
     "file": "docs/guides/DOCUMENTATION-GUIDE.md",
     "category": "internal",
-    "status": "broken"
+    "status": "broken",
+    "reason": "file not found"
   }
 ]
