@@ -1,0 +1,80 @@
+path,diataxis_type,last_modified,age_months,external_links,links,status,size_kb
+.claude/commands/GEMINI.md,explanation,2025-11-02,0.0,0,,duplicate,1.67
+.claude/commands/changelog.md,how-to,2025-11-02,0.0,2,https://github.com/mneves75/dnschat#installation; https://github.com/username,current,5.87
+.claude/commands/review-pr.md,explanation,2025-11-02,0.0,0,,current,11.68
+.claude/skills/brainstorming/SKILL.md,explanation,2025-11-02,0.0,0,,duplicate,9.11
+.claude/skills/condition-based-waiting/SKILL.md,explanation,2025-11-02,0.0,0,,duplicate,3.66
+.claude/skills/defense-in-depth/SKILL.md,explanation,2025-11-02,0.0,0,,duplicate,3.79
+.claude/skills/dispatching-parallel-agents/SKILL.md,reference,2025-11-02,0.0,0,,duplicate,6.05
+.claude/skills/executing-plans/SKILL.md,reference,2025-11-02,0.0,0,,duplicate,2.22
+.claude/skills/finishing-a-development-branch/SKILL.md,how-to,2025-11-02,0.0,0,,duplicate,4.15
+.claude/skills/receiving-code-review/SKILL.md,reference,2025-11-02,0.0,0,,duplicate,5.97
+.claude/skills/requesting-code-review/SKILL.md,how-to,2025-11-02,0.0,0,,duplicate,2.75
+.claude/skills/requesting-code-review/code-reviewer.md,explanation,2025-11-02,0.0,0,,current,3.31
+.claude/skills/root-cause-tracing/SKILL.md,unknown,2025-11-02,0.0,0,,duplicate,5.47
+.claude/skills/sharing-skills/SKILL.md,how-to,2025-11-02,0.0,2,https://docs.github.com/en/authentication; https://cli.github.com/,duplicate,4.51
+.claude/skills/subagent-driven-development/SKILL.md,reference,2025-11-02,0.0,0,,duplicate,4.96
+.claude/skills/systematic-debugging/CREATION-LOG.md,reference,2025-11-02,0.0,0,,current,4.17
+.claude/skills/systematic-debugging/SKILL.md,explanation,2025-11-02,0.0,0,,duplicate,9.75
+.claude/skills/systematic-debugging/test-academic.md,unknown,2025-11-02,0.0,0,,current,0.64
+.claude/skills/systematic-debugging/test-pressure-1.md,reference,2025-11-02,0.0,0,,current,1.86
+.claude/skills/systematic-debugging/test-pressure-2.md,explanation,2025-11-02,0.0,0,,current,2.23
+.claude/skills/systematic-debugging/test-pressure-3.md,explanation,2025-11-02,0.0,0,,current,2.63
+.claude/skills/test-driven-development/SKILL.md,explanation,2025-11-02,0.0,0,,duplicate,9.51
+.claude/skills/testing-anti-patterns/SKILL.md,explanation,2025-11-02,0.0,0,,duplicate,8.21
+.claude/skills/testing-skills-with-subagents/SKILL.md,reference,2025-11-02,0.0,0,,duplicate,12.45
+.claude/skills/testing-skills-with-subagents/examples/CLAUDE_MD_TESTING.md,reference,2025-11-02,0.0,0,,current,5.3
+.claude/skills/using-git-worktrees/SKILL.md,reference,2025-11-02,0.0,0,,duplicate,5.38
+.claude/skills/using-superpowers/SKILL.md,reference,2025-11-02,0.0,0,,duplicate,4.19
+.claude/skills/verification-before-completion/SKILL.md,explanation,2025-11-02,0.0,0,,duplicate,4.1
+.claude/skills/writing-plans/SKILL.md,explanation,2025-11-02,0.0,0,,duplicate,3.37
+.claude/skills/writing-skills/SKILL.md,reference,2025-11-02,0.0,0,,duplicate,20.33
+.claude/skills/writing-skills/anthropic-best-practices.md,reference,2025-11-02,0.0,21,https://mintcdn.com/anthropic-claude-docs/4Bny2bjzuGBK7o00/images/agent-skills-simple-file.png?w=560&fit=max&auto=format&n=4Bny2bjzuGBK7o00&q=85&s=90d2c0c1c76b36e8d485f49e0810dbfd; https://mintcdn.com/anthropic-claude-docs/4Bny2bjzuGBK7o00/images/agent-skills-simple-file.png?w=1650&fit=max&auto=format&n=4Bny2bjzuGBK7o00&q=85&s=0e927c1af9de5799cfe557d12249f6e6; https://mintcdn.com/anthropic-claude-docs/4Bny2bjzuGBK7o00/images/agent-skills-executable-scripts.png?w=280&fit=max&auto=format&n=4Bny2bjzuGBK7o00&q=85&s=9a04e6535a8467bfeea492e517de389f; https://mintcdn.com/anthropic-claude-docs/4Bny2bjzuGBK7o00/images/agent-skills-executable-scripts.png?w=1650&fit=max&auto=format&n=4Bny2bjzuGBK7o00&q=85&s=48ab96245e04077f4d15e9170e081cfb; https://mintcdn.com/anthropic-claude-docs/4Bny2bjzuGBK7o00/images/agent-skills-bundling-content.png?w=1100&fit=max&auto=format&n=4Bny2bjzuGBK7o00&q=85&s=56f3be36c77e4fe4b523df209a6824c6,current,44.72
+.claude/skills/writing-skills/persuasion-principles.md,explanation,2025-11-02,0.0,0,,current,5.77
+.cursor/rules/README.md,explanation,2025-11-02,0.0,0,,duplicate,2.83
+AGENTS.md,explanation,2025-11-02,0.0,0,,current,18.14
+CHANGELOG.md,reference,2025-11-02,0.0,4,https://claude.ai/code; https://semver.org/spec/v2.0.0.html; https://react.dev/learn/you-might-not-need-an-effect; https://keepachangelog.com/en/1.0.0/,obsolete,108.62
+CLAUDE.md,explanation,2025-11-02,0.0,2,https://react.dev/learn/you-might-not-need-an-effect; https://keepachangelog.com/en/1.1.0/,obsolete,26.89
+CONTRIBUTING.md,how-to,2025-11-02,0.0,4,https://github.com/mneves75/dnschat/discussions; https://github.com/mneves75/dnschat/issues; https://x.com/mneves75; https://github.com/YOUR_USERNAME/dnschat.git,current,12.22
+GEMINI.md,explanation,2025-11-02,0.0,1,https://github.com/mneves75/dnschat.git,duplicate,2.07
+IMPLEMENTATION_SUMMARY.md,reference,2025-11-02,0.0,0,,current,18.47
+INSTALL.md,how-to,2025-11-02,0.0,8,https://x.com/Arxiv_Daily/status/1952452878716805172; http://localhost:19006; https://developer.android.com/studio; https://github.com/mneves75/dnschat.git; https://github.com/mneves75/dnschat/issues,duplicate,10.73
+MODERNIZATION_SUMMARY.md,reference,2025-11-02,0.0,0,,current,16.74
+PLANS.md,explanation,2025-11-02,0.0,1,http://localhost:8080/health,current,14.08
+README.md,explanation,2025-11-02,0.0,12,https://x.com/Arxiv_Daily/status/1952452878716805172; https://img.shields.io/badge/TypeScript-5.9.2-blue.svg; https://github.com/mneves75/dnschat.git; https://github.com/mneves75/dnschat/issues; https://img.shields.io/badge/version-3.0.4-blue.svg,duplicate,13.07
+SCREENSHOT_AUTOMATION_SUMMARY.md,how-to,2025-11-02,0.0,0,,current,14.88
+agent_planning/FINAL-VERIFICATION.md,explanation,2025-11-02,0.0,0,,current,5.48
+agent_planning/android-sanitizer-bridge-execplan.md,reference,2025-11-02,0.0,0,,current,7.62
+agent_planning/archive/dns-client-server-alignment.md,reference,2025-11-02,0.0,0,,current,10.0
+agent_planning/archive/imessage-bubbles-hig-compliant.md,reference,2025-11-02,0.0,0,,current,11.34
+agent_planning/archive/liquid-glass-bubble-overhaul-execplan.md,reference,2025-11-02,0.0,0,,current,6.45
+agent_planning/dns-continuation-fix-critique.md,explanation,2025-11-02,0.0,0,,current,5.8
+agent_planning/dns-sanitization-empty-execplan.md,reference,2025-11-02,0.0,0,,current,7.04
+agent_planning/haptics-stability-execplan.md,reference,2025-11-02,0.0,0,,current,1.59
+agent_planning/i18n-language-toggle-execplan.md,reference,2025-11-02,0.0,0,,current,8.03
+agent_planning/plus-icon-fix-FINAL.md,explanation,2025-11-02,0.0,0,,current,7.37
+agent_planning/plus-icon-hig-analysis.md,how-to,2025-11-02,0.0,0,,current,7.19
+agent_planning/ui-safe-areas-execplan.md,reference,2025-11-02,0.0,0,,current,1.59
+blog/posts/DRAFT_FIRST.md,how-to,2025-11-02,0.0,0,,current,4.56
+docs/CHANGELOG-GUIDE.md,reference,2025-11-02,0.0,5,https://github.com/vibetunnel/vibetunnel#installation; https://github.com/username; https://github.com/user1; https://github.com/user2; https://github.com/hewigovens,current,5.57
+docs/INSTALL.md,how-to,2025-11-02,0.0,7,https://git-scm.com/; https://developer.android.com/studio; https://nodejs.org/; https://github.com/mneves75/dnschat.git; https://github.com/mneves75/dnschat/issues,duplicate,4.42
+docs/README.md,explanation,2025-11-02,0.0,7,https://docs.expo.dev/; https://developer.android.com/reference/android/net/DnsResolver; https://reactnative.dev/docs/getting-started; https://developer.apple.com/documentation/network; https://reactnavigation.org/,duplicate,7.42
+docs/architecture/ADR-001-ios-user-script-sandboxing.md,reference,2025-11-02,0.0,5,https://stackoverflow.com/questions/77294898/; https://developer.apple.com/documentation/xcode/configuring-the-build-phase-script-sandbox; https://github.com/expo/expo/issues/25782; https://blog.stackademic.com/how-i-solved-the-sandbox-permission-error-in-expo-for-ios-a316849e119f; https://github.com/facebook/react-native/issues/35812,current,5.41
+docs/architecture/SYSTEM-ARCHITECTURE.md,explanation,2025-11-02,0.0,0,,obsolete,15.76
+docs/guides/DOCUMENTATION-GUIDE.md,how-to,2025-11-02,0.0,0,,current,9.49
+docs/guides/QUICKSTART.md,how-to,2025-11-02,0.0,4,https://x.com/Arxiv_Daily/status/1952452878716805172; https://github.com/mneves75/dnschat.git; https://github.com/Deep-ai-inc/ch.at; https://github.com/mneves75/dnschat/issues,current,2.64
+docs/guides/VERSION_MANAGEMENT.md,how-to,2025-11-02,0.0,1,https://semver.org/,current,1.59
+docs/guides/WORKTREE_COMPLETION.md,how-to,2025-11-02,0.0,1,https://claude.ai/code,current,4.57
+docs/technical/DNS-PROTOCOL-SPEC.md,reference,2025-11-02,0.0,0,,current,3.67
+docs/technical/EXPO-DOCTOR-CONFIGURATION.md,explanation,2025-11-02,0.0,3,https://reactnative.dev/docs/new-architecture-intro; https://reactnative.directory/; https://docs.expo.dev/more/expo-cli/#doctor,obsolete,8.67
+docs/technical/JUNIOR-DEV-GUIDE.md,explanation,2025-11-02,0.0,5,https://github.com/mneves75/dnschat.git; https://www.typescriptlang.org/docs/; https://reactnative.dev/docs/getting-started; https://reactnavigation.org/; https://tools.ietf.org/html/rfc1035,current,21.09
+docs/technical/NATIVE-SPEC-CLAUDE.md,reference,2025-11-02,0.0,2,"https://cloudflare-dns.com/dns-query?dns=${base64Query}`,; https://dns-proxy.dnschat.app/query",current,13.54
+docs/technical/NATIVE-SPEC.md,reference,2025-11-02,0.0,0,,current,10.42
+docs/technical/SCREENSHOTS.md,how-to,2025-11-02,0.0,3,https://docs.fastlane.tools/actions/snapshot/; https://developer.apple.com/documentation/xctest/user_interface_tests; https://developer.apple.com/help/app-store-connect/reference/screenshot-specifications/,current,6.37
+docs/technical/SPECIFICATION.md,reference,2025-11-02,0.0,2,https://x.com/Arxiv_Daily/status/1952452878716805172; https://github.com/Deep-ai-inc/ch.at,current,6.69
+docs/troubleshooting/COMMON-ISSUES.md,reference,2025-11-02,0.0,5,https://stackoverflow.com/questions/77294898/; https://github.com/expo/expo/issues/25782; https://nodejs.org/; https://blog.stackademic.com/how-i-solved-the-sandbox-permission-error-in-expo-for-ios-a316849e119f; https://github.com/facebook/react-native/issues/35812,current,28.96
+docs/troubleshooting/HERMES_DSYM_FIX.md,how-to,2025-11-02,0.0,4,https://reactnative.dev/docs/hermes; https://docs.expo.dev/build/eas-json/; https://docs.expo.dev/versions/latest/sdk/build-properties/; https://developer.apple.com/documentation/xcode/building-your-app-to-include-debugging-information,current,7.4
+docs/troubleshooting/SECURITY-AUDIT.md,reference,2025-11-02,0.0,0,,current,9.08
+docs/troubleshooting/XCODEBUILDMCP-GUIDE.md,how-to,2025-11-02,0.0,0,,obsolete,9.72
+modules/dns-native/README.md,explanation,2025-11-02,0.0,1,https://github.com/Deep-ai-inc/ch.at/blob/main/dns.go,duplicate,9.75
+release-notes.md,how-to,2025-11-02,0.0,0,,current,11.81

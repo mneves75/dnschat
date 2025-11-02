@@ -1,0 +1,394 @@
+[
+  {
+    "text": "Troubleshooting",
+    "url": "./docs/TROUBLESHOOTING.md",
+    "type": "markdown",
+    "file": "README.md",
+    "category": "internal",
+    "status": "broken"
+  },
+  {
+    "text": "API Documentation",
+    "url": "./docs/API.md",
+    "type": "markdown",
+    "file": "README.md",
+    "category": "internal",
+    "status": "broken"
+  },
+  {
+    "text": "TROUBLESHOOTING.md",
+    "url": "./docs/TROUBLESHOOTING.md",
+    "type": "markdown",
+    "file": "README.md",
+    "category": "internal",
+    "status": "broken"
+  },
+  {
+    "text": "docs/TROUBLESHOOTING.md",
+    "url": "./docs/TROUBLESHOOTING.md",
+    "type": "markdown",
+    "file": "CONTRIBUTING.md",
+    "category": "internal",
+    "status": "broken"
+  },
+  {
+    "text": "docs/API.md",
+    "url": "./docs/API.md",
+    "type": "markdown",
+    "file": "CONTRIBUTING.md",
+    "category": "internal",
+    "status": "broken"
+  },
+  {
+    "text": "Troubleshooting",
+    "url": "./docs/TROUBLESHOOTING.md",
+    "type": "markdown",
+    "file": "INSTALL.md",
+    "category": "internal",
+    "status": "broken"
+  },
+  {
+    "text": "API Reference",
+    "url": "./docs/API.md",
+    "type": "markdown",
+    "file": "INSTALL.md",
+    "category": "internal",
+    "status": "broken"
+  },
+  {
+    "text": "filename",
+    "url": "mdc:filename",
+    "type": "markdown",
+    "file": ".cursor/rules/README.md",
+    "category": "internal",
+    "status": "broken"
+  },
+  {
+    "text": "Skills overview",
+    "url": "/en/docs/agents-and-tools/agent-skills/overview",
+    "type": "markdown",
+    "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
+    "category": "internal",
+    "status": "broken"
+  },
+  {
+    "text": "context window",
+    "url": "/en/docs/build-with-claude/context-windows",
+    "type": "markdown",
+    "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
+    "category": "internal",
+    "status": "broken"
+  },
+  {
+    "text": "Skills overview",
+    "url": "/en/docs/agents-and-tools/agent-skills/overview#skill-structure",
+    "type": "markdown",
+    "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
+    "category": "internal",
+    "status": "broken"
+  },
+  {
+    "text": "How Skills work",
+    "url": "/en/docs/agents-and-tools/agent-skills/overview#how-skills-work",
+    "type": "markdown",
+    "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
+    "category": "internal",
+    "status": "broken"
+  },
+  {
+    "text": "FORMS.md",
+    "url": "FORMS.md",
+    "type": "markdown",
+    "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
+    "category": "internal",
+    "status": "broken"
+  },
+  {
+    "text": "REFERENCE.md",
+    "url": "REFERENCE.md",
+    "type": "markdown",
+    "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
+    "category": "internal",
+    "status": "broken"
+  },
+  {
+    "text": "EXAMPLES.md",
+    "url": "EXAMPLES.md",
+    "type": "markdown",
+    "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
+    "category": "internal",
+    "status": "broken"
+  },
+  {
+    "text": "reference/finance.md",
+    "url": "reference/finance.md",
+    "type": "markdown",
+    "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
+    "category": "internal",
+    "status": "broken"
+  },
+  {
+    "text": "reference/sales.md",
+    "url": "reference/sales.md",
+    "type": "markdown",
+    "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
+    "category": "internal",
+    "status": "broken"
+  },
+  {
+    "text": "reference/product.md",
+    "url": "reference/product.md",
+    "type": "markdown",
+    "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
+    "category": "internal",
+    "status": "broken"
+  },
+  {
+    "text": "reference/marketing.md",
+    "url": "reference/marketing.md",
+    "type": "markdown",
+    "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
+    "category": "internal",
+    "status": "broken"
+  },
+  {
+    "text": "DOCX-JS.md",
+    "url": "DOCX-JS.md",
+    "type": "markdown",
+    "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
+    "category": "internal",
+    "status": "broken"
+  },
+  {
+    "text": "REDLINING.md",
+    "url": "REDLINING.md",
+    "type": "markdown",
+    "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
+    "category": "internal",
+    "status": "broken"
+  },
+  {
+    "text": "OOXML.md",
+    "url": "OOXML.md",
+    "type": "markdown",
+    "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
+    "category": "internal",
+    "status": "broken"
+  },
+  {
+    "text": "advanced.md",
+    "url": "advanced.md",
+    "type": "markdown",
+    "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
+    "category": "internal",
+    "status": "broken"
+  },
+  {
+    "text": "details.md",
+    "url": "details.md",
+    "type": "markdown",
+    "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
+    "category": "internal",
+    "status": "broken"
+  },
+  {
+    "text": "advanced.md",
+    "url": "advanced.md",
+    "type": "markdown",
+    "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
+    "category": "internal",
+    "status": "broken"
+  },
+  {
+    "text": "reference.md",
+    "url": "reference.md",
+    "type": "markdown",
+    "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
+    "category": "internal",
+    "status": "broken"
+  },
+  {
+    "text": "examples.md",
+    "url": "examples.md",
+    "type": "markdown",
+    "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
+    "category": "internal",
+    "status": "broken"
+  },
+  {
+    "text": "code execution tool documentation",
+    "url": "/en/docs/agents-and-tools/tool-use/code-execution-tool",
+    "type": "markdown",
+    "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
+    "category": "internal",
+    "status": "broken"
+  },
+  {
+    "text": "The Skills architecture",
+    "url": "/en/docs/agents-and-tools/agent-skills/overview#the-skills-architecture",
+    "type": "markdown",
+    "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
+    "category": "internal",
+    "status": "broken"
+  },
+  {
+    "text": "How Skills work",
+    "url": "/en/docs/agents-and-tools/agent-skills/overview#how-skills-work",
+    "type": "markdown",
+    "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
+    "category": "internal",
+    "status": "broken"
+  },
+  {
+    "text": "Skills overview",
+    "url": "/en/docs/agents-and-tools/agent-skills/overview#skill-structure",
+    "type": "markdown",
+    "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
+    "category": "internal",
+    "status": "broken"
+  },
+  {
+    "text": "Skills overview",
+    "url": "/en/docs/agents-and-tools/agent-skills/overview#how-skills-work",
+    "type": "markdown",
+    "file": ".claude/skills/writing-skills/anthropic-best-practices.md",
+    "category": "internal",
+    "status": "broken"
+  },
+  {
+    "text": "Tech FAQ",
+    "url": "TECH-FAQ.md",
+    "type": "markdown",
+    "file": "docs/README.md",
+    "category": "internal",
+    "status": "broken"
+  },
+  {
+    "text": "Gemini Context",
+    "url": "guides/GEMINI-CONTEXT.md",
+    "type": "markdown",
+    "file": "docs/README.md",
+    "category": "internal",
+    "status": "broken"
+  },
+  {
+    "text": "Tech FAQ",
+    "url": "TECH-FAQ.md",
+    "type": "markdown",
+    "file": "docs/README.md",
+    "category": "internal",
+    "status": "broken"
+  },
+  {
+    "text": "Tech FAQ",
+    "url": "TECH-FAQ.md",
+    "type": "markdown",
+    "file": "docs/README.md",
+    "category": "internal",
+    "status": "broken"
+  },
+  {
+    "text": "Tech FAQ",
+    "url": "TECH-FAQ.md",
+    "type": "markdown",
+    "file": "docs/README.md",
+    "category": "internal",
+    "status": "broken"
+  },
+  {
+    "text": "Build Problems Section",
+    "url": "TECH-FAQ.md#build--compilation-problems",
+    "type": "markdown",
+    "file": "docs/README.md",
+    "category": "internal",
+    "status": "broken"
+  },
+  {
+    "text": "Tech FAQ",
+    "url": "TECH-FAQ.md",
+    "type": "markdown",
+    "file": "docs/README.md",
+    "category": "internal",
+    "status": "broken"
+  },
+  {
+    "text": "DNS Communication Issues",
+    "url": "TECH-FAQ.md#dns-communication-issues",
+    "type": "markdown",
+    "file": "docs/README.md",
+    "category": "internal",
+    "status": "broken"
+  },
+  {
+    "text": "Tech FAQ",
+    "url": "TECH-FAQ.md",
+    "type": "markdown",
+    "file": "docs/README.md",
+    "category": "internal",
+    "status": "broken"
+  },
+  {
+    "text": "React Native Specific Issues",
+    "url": "TECH-FAQ.md#react-native-specific-issues",
+    "type": "markdown",
+    "file": "docs/README.md",
+    "category": "internal",
+    "status": "broken"
+  },
+  {
+    "text": "Tech FAQ",
+    "url": "TECH-FAQ.md",
+    "type": "markdown",
+    "file": "docs/README.md",
+    "category": "internal",
+    "status": "broken"
+  },
+  {
+    "text": "docs/API.md",
+    "url": "./API.md",
+    "type": "markdown",
+    "file": "docs/INSTALL.md",
+    "category": "internal",
+    "status": "broken"
+  },
+  {
+    "text": "docs/TROUBLESHOOTING.md",
+    "url": "./TROUBLESHOOTING.md",
+    "type": "markdown",
+    "file": "docs/INSTALL.md",
+    "category": "internal",
+    "status": "broken"
+  },
+  {
+    "text": "Tech FAQ",
+    "url": "../TECH-FAQ.md",
+    "type": "markdown",
+    "file": "docs/technical/JUNIOR-DEV-GUIDE.md",
+    "category": "internal",
+    "status": "broken"
+  },
+  {
+    "text": "INSTALL.md",
+    "url": "./INSTALL.md",
+    "type": "markdown",
+    "file": "docs/guides/QUICKSTART.md",
+    "category": "internal",
+    "status": "broken"
+  },
+  {
+    "text": "CLAUDE.md",
+    "url": "./CLAUDE.md",
+    "type": "markdown",
+    "file": "docs/guides/QUICKSTART.md",
+    "category": "internal",
+    "status": "broken"
+  },
+  {
+    "text": "TECH-FAQ.md",
+    "url": "../TECH-FAQ.md",
+    "type": "markdown",
+    "file": "docs/guides/DOCUMENTATION-GUIDE.md",
+    "category": "internal",
+    "status": "broken"
+  }
+]
