@@ -1,32 +1,77 @@
 version: 2
+
 updates:
-  # Enable version updates for npm
+  # NPM dependencies
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
       interval: "weekly"
       day: "monday"
       time: "09:00"
+      timezone: "UTC"
+    # Limit concurrent PRs to avoid overwhelming review queue
     open-pull-requests-limit: 10
+    # Group related updates to reduce PR noise
     groups:
+      # Expo ecosystem
       expo:
         patterns:
-          - "expo*"
+          - "expo"
+          - "expo-*"
           - "@expo/*"
+        update-types:
+          - "minor"
+          - "patch"
+      # React ecosystem
       react:
         patterns:
           - "react"
           - "react-dom"
           - "react-native"
           - "@react-native/*"
+        update-types:
+          - "minor"
+          - "patch"
+      # Testing libraries
+      testing:
+        patterns:
+          - "jest"
+          - "@jest/*"
+          - "@testing-library/*"
+          - "jest-*"
+        update-types:
+          - "minor"
+          - "patch"
+      # Development tools
       development:
         dependency-type: "development"
         update-types:
           - "minor"
           - "patch"
+    # Security updates are always separate (high priority)
+    # Allow major version updates for security
+    allow:
+      - dependency-type: "all"
+    # Ignore known problematic packages (document reasons)
+    ignore:
+      # Expo SDK 54 is current, ignore 55+ until project upgrade
+      - dependency-name: "expo"
+        update-types: ["version-update:semver-major"]
 
-  # GitHub Actions
+  # GitHub Actions dependencies
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
+      day: "monday"
+      time: "10:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 5
+    # Group all GitHub Actions updates
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"

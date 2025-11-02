@@ -1,4 +1,4 @@
-name: SBOM Generation
+name: "SBOM Generation"
 
 on:
   push:
@@ -8,12 +8,14 @@ on:
     types: [ published ]
   workflow_dispatch:
 
+permissions:
+  contents: write  # Required to attach files to releases
+
 jobs:
   sbom:
     name: Generate SBOM
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
+    timeout-minutes: 15
 
     steps:
       - name: Checkout code
@@ -28,27 +30,49 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Generate SBOM (CycloneDX)
+      - name: Generate CycloneDX SBOM
         run: |
-          npx @cyclonedx/cyclonedx-npm --output-file sbom.json --spec-version 1.5
+          npx @cyclonedx/cyclonedx-npm \
+            --output-file sbom-cyclonedx.json \
+            --spec-version 1.5 \
+            --output-reproducible
 
-      - name: Generate SBOM (SPDX)
+      - name: Generate SPDX SBOM
         run: |
-          npx @spdx/tools generate --outputFile sbom.spdx.json
+          npx @spdx/tools generate \
+            --outputFile sbom-spdx.json \
+            --format json
+
+      - name: Validate CycloneDX SBOM
+        run: |
+          # Basic validation - check file exists and is valid JSON
+          if [ ! -f sbom-cyclonedx.json ]; then
+            echo "Error: CycloneDX SBOM not generated"
+            exit 1
+          fi
+
+          # Validate JSON structure
+          if ! jq empty sbom-cyclonedx.json 2>/dev/null; then
+            echo "Error: Invalid JSON in CycloneDX SBOM"
+            exit 1
+          fi
+
+          echo "CycloneDX SBOM validated successfully"
 
       - name: Upload SBOM artifacts
         uses: actions/upload-artifact@v4
         with:
           name: sbom
           path: |
-            sbom.json
-            sbom.spdx.json
+            sbom-cyclonedx.json
+            sbom-spdx.json
           retention-days: 90
+          compression-level: 9
 
       - name: Attach SBOM to release
         if: github.event_name == 'release'
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            sbom.json
-            sbom.spdx.json
+            sbom-cyclonedx.json
+            sbom-spdx.json
