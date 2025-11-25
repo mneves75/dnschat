@@ -15,6 +15,7 @@ import { useImessagePalette } from "../../../ui/theme/imessagePalette";
 import { useTypography } from "../../../ui/hooks/useTypography";
 import { LiquidGlassSpacing } from "../../../ui/theme/liquidGlassSpacing";
 import { useTranslation } from "../../../i18n";
+import { SendIcon } from "../../icons/SendIcon";
 
 interface Message {
   id: string;
@@ -252,9 +253,11 @@ export function FirstChatScreen() {
               busy: isLoading,
             }}
           >
-            <Text style={[typography.headline, { color: palette.solid }]}>
-              {isLoading ? t("screen.onboarding.firstChat.input.sending") : t("screen.onboarding.firstChat.input.send")}
-            </Text>
+            {isLoading ? (
+              <Text style={[typography.headline, { color: palette.solid }]}>...</Text>
+            ) : (
+              <SendIcon size={20} isActive={!!inputText.trim()} />
+            )}
           </TouchableOpacity>
         </View>
       </View>
@@ -405,9 +408,9 @@ const styles = StyleSheet.create({
     maxHeight: 100,
   },
   sendButton: {
-    width: 40,
-    height: 40,
-    borderRadius: LiquidGlassSpacing.lg,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: "center",
     justifyContent: "center",
     marginLeft: LiquidGlassSpacing.xs,

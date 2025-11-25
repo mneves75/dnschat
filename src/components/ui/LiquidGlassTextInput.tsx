@@ -94,14 +94,25 @@ export function LiquidGlassTextInput({
     borderWidth: borderWidth.value,
   }));
 
+  const syncBorderState = React.useCallback(
+    (nextFocused: boolean, nextHasError: boolean) => {
+      const targetColor = nextHasError
+        ? palette.destructive
+        : nextFocused
+          ? palette.accentTint
+          : palette.border;
+      const targetWidth = nextFocused ? 2 : 1;
+
+      borderColor.value = withTiming(targetColor, TimingConfig.quick);
+      borderWidth.value = withSpring(targetWidth, SpringConfig.bouncy);
+    },
+    [borderColor, borderWidth, palette.accentTint, palette.border, palette.destructive],
+  );
+
   // Handle focus
   const handleFocus = (e: any) => {
     setIsFocused(true);
-    borderColor.value = withTiming(
-      hasError ? palette.destructive : palette.accentTint,
-      TimingConfig.quick
-    );
-    borderWidth.value = withSpring(2, SpringConfig.bouncy);
+    syncBorderState(true, hasError);
     HapticFeedback.selection();
     textInputProps.onFocus?.(e);
   };
@@ -109,25 +120,19 @@ export function LiquidGlassTextInput({
   // Handle blur
   const handleBlur = (e: any) => {
     setIsFocused(false);
-    borderColor.value = withTiming(
-      hasError ? palette.destructive : palette.border,
-      TimingConfig.quick
-    );
-    borderWidth.value = withSpring(1, SpringConfig.bouncy);
+    syncBorderState(false, hasError);
     textInputProps.onBlur?.(e);
   };
+
+  // Keep border visuals in sync when palette or error state changes while blurred
+  React.useEffect(() => {
+    syncBorderState(isFocused, hasError);
+  }, [hasError, isFocused, syncBorderState]);
 
   // Handle clear button
   const handleClear = () => {
     onChangeText?.("");
     HapticFeedback.light();
-  };
-
-  // Determine border color
-  const getBorderColor = () => {
-    if (hasError) return palette.destructive;
-    if (isFocused) return palette.accentTint;
-    return palette.border;
   };
 
   return (
@@ -158,6 +163,7 @@ export function LiquidGlassTextInput({
           },
           !editable && styles.disabled,
         ]}
+        testID={testID ? `${testID}-container` : "liquid-glass-input-container"}
       >
         {/* Left Icon */}
         {leftIcon && <View style={styles.leftIcon}>{leftIcon}</View>}
@@ -200,7 +206,7 @@ export function LiquidGlassTextInput({
             hitSlop={8}
           >
             <View style={styles.clearButtonIcon}>
-              <Text style={styles.clearButtonText}>×</Text>
+              <Text style={[styles.clearButtonText, { color: palette.solid }]}>×</Text>
             </View>
           </Pressable>
         ) : (
@@ -236,7 +242,7 @@ export function LiquidGlassTextInput({
               {
                 color:
                   characterCount > maxLength * 0.9
-                    ? "#FF9500" // Warning color when approaching limit
+                    ? palette.warning
                     : palette.textSecondary,
               },
             ]}
@@ -290,7 +296,6 @@ const styles = StyleSheet.create({
   },
   clearButtonText: {
     fontSize: 16,
-    color: "#FFFFFF",
     fontWeight: "600",
     lineHeight: 20,
   },

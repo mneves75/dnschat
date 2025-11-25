@@ -367,8 +367,8 @@ export function Settings() {
             <Switch
               value={tempEnableMockDNS}
               onValueChange={handleToggleMockDNS}
-              trackColor={{ false: colors.border, true: "#007AFF" }}
-              thumbColor={tempEnableMockDNS ? "#FFFFFF" : "#F4F3F4"}
+              trackColor={{ false: colors.border, true: palette.accentTint }}
+              thumbColor={tempEnableMockDNS ? palette.solid : palette.textTertiary}
               ios_backgroundColor={colors.border}
               disabled={loading || saving}
             />
@@ -396,8 +396,8 @@ export function Settings() {
             <Switch
               value={tempEnableHaptics}
               onValueChange={handleToggleHaptics}
-              trackColor={{ false: colors.border, true: "#007AFF" }}
-              thumbColor={tempEnableHaptics ? "#FFFFFF" : "#F4F3F4"}
+              trackColor={{ false: colors.border, true: palette.accentTint }}
+              thumbColor={tempEnableHaptics ? palette.solid : palette.textTertiary}
               ios_backgroundColor={colors.border}
               disabled={loading || saving}
             />
@@ -445,7 +445,7 @@ export function Settings() {
                           },
                         ]}
                       >
-                        {isActive && <View style={styles.radioButtonInner} />}
+                        {isActive && <View style={[styles.radioButtonInner, { backgroundColor: palette.solid }]} />}
                       </View>
                     </View>
                     <Text
@@ -834,7 +834,6 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: "#FFFFFF",
   },
   buttonContainer: {
     flexDirection: "row",

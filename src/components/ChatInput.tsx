@@ -37,6 +37,8 @@ import {
   Platform,
   AccessibilityInfo,
   ViewProps,
+  NativeSyntheticEvent,
+  TextInputContentSizeChangeEventData,
 } from "react-native";
 import Animated, {
   useSharedValue,
@@ -275,7 +277,7 @@ export function ChatInput({
    *
    * Performance: Runs on UI thread via Reanimated.
    */
-  const handleContentSizeChange = useCallback((event: any) => {
+  const handleContentSizeChange = useCallback((event: NativeSyntheticEvent<TextInputContentSizeChangeEventData>) => {
     const { height } = event.nativeEvent.contentSize;
     const constrainedHeight = Math.min(
       Math.max(height, heightConstraints.min),
