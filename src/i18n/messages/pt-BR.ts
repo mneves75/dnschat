@@ -409,6 +409,7 @@ export const ptBR = {
         onboardingMessage:
           "Isso reiniciará o processo de onboarding e o mostrará novamente no próximo lançamento.",
         onboardingConfirm: "Redefinir onboarding",
+        onboardingCancel: "Cancelar",
         onboardingResetTitle: "Onboarding redefinido",
         onboardingResetMessage:
           "O onboarding será exibido novamente quando você reabrir o app.",

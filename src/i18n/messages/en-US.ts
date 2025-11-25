@@ -409,6 +409,7 @@ export const enUS = {
         onboardingMessage:
           "This will reset the onboarding process and show it again on next app launch. This is useful for testing or if you want to see the tour again.",
         onboardingConfirm: "Reset Onboarding",
+        onboardingCancel: "Cancel",
         onboardingResetTitle: "Onboarding Reset",
         onboardingResetMessage:
           "The onboarding will be shown again when you restart the app.",
