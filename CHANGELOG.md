@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.0] - 2025-11-25
+
 ### Fixed
 
 - **LiquidGlassTextInput State Sync Regression Test**: Added Jest coverage that drives palette/error changes and asserts animated border color updates via a custom Reanimated mock, preventing silent desyncs between state and visuals.
