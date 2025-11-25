@@ -2,24 +2,31 @@ import React, { useEffect, useState } from "react";
 import { View, Text, ScrollView, StyleSheet } from "react-native";
 import { DNSLogService, DNSQueryLog } from "../services/dnsLogService";
 import { useTranslation } from "../i18n";
+import { useImessagePalette } from "../ui/theme/imessagePalette";
+import { useTypography } from "../ui/hooks/useTypography";
+import { LiquidGlassSpacing } from "../ui/theme/liquidGlassSpacing";
 
 interface DNSLogViewerProps {
   maxEntries?: number;
 }
 
 /**
- * Simple developer log viewer for DNS query attempts and outcomes.
- * Not wired into navigation by default; import where useful in dev.
+ * iOS 26 HIG-compliant DNS query log viewer.
+ * Uses semantic colors and typography for proper light/dark mode support.
  */
 export const DNSLogViewer: React.FC<DNSLogViewerProps> = ({
   maxEntries = 20,
 }) => {
   const [logs, setLogs] = useState<DNSQueryLog[]>(DNSLogService.getLogs());
   const { t } = useTranslation();
+  const palette = useImessagePalette();
+  const typography = useTypography();
 
   useEffect(() => {
     const unsub = DNSLogService.subscribe(setLogs);
-    return () => unsub();
+    return () => {
+      unsub();
+    };
   }, []);
 
   const display = logs.slice(0, maxEntries);
@@ -27,17 +34,24 @@ export const DNSLogViewer: React.FC<DNSLogViewerProps> = ({
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       {display.length === 0 ? (
-        <Text style={styles.empty}>{t("components.dnsLogViewer.empty")}</Text>
+        <Text style={[styles.empty, typography.body, { color: palette.textSecondary }]}>
+          {t("components.dnsLogViewer.empty")}
+        </Text>
       ) : (
         display.map((log) => (
-          <View key={log.id} style={styles.card}>
+          <View
+            key={log.id}
+            style={[styles.card, { backgroundColor: palette.surface, borderColor: palette.border }]}
+          >
             <View style={styles.headerRow}>
-              <Text style={styles.title}>{log.query}</Text>
-              <Text style={styles.duration}>
+              <Text style={[styles.title, typography.headline, { color: palette.textPrimary }]}>
+                {log.query}
+              </Text>
+              <Text style={[styles.duration, typography.caption1, { color: palette.textSecondary }]}>
                 {DNSLogService.formatDuration(log.totalDuration)}
               </Text>
             </View>
-            <Text style={styles.meta}>
+            <Text style={[styles.meta, typography.caption2, { color: palette.textSecondary }]}>
               {log.startTime.toLocaleTimeString()} •{" "}
               {log.finalStatus.toUpperCase()}
               {log.finalMethod ? ` via ${log.finalMethod.toUpperCase()}` : ""}
@@ -48,9 +62,8 @@ export const DNSLogViewer: React.FC<DNSLogViewerProps> = ({
                   <Text
                     style={[
                       styles.badge,
-                      {
-                        backgroundColor: DNSLogService.getMethodColor(e.method),
-                      },
+                      typography.caption2,
+                      { backgroundColor: DNSLogService.getMethodColor(e.method) },
                     ]}
                   >
                     {e.method.toUpperCase()}
@@ -58,9 +71,11 @@ export const DNSLogViewer: React.FC<DNSLogViewerProps> = ({
                   <Text style={styles.icon}>
                     {DNSLogService.getStatusIcon(e.status)}
                   </Text>
-                  <Text style={styles.entryText}>{e.message}</Text>
+                  <Text style={[styles.entryText, typography.footnote, { color: palette.textPrimary }]}>
+                    {e.message}
+                  </Text>
                   {typeof e.duration === "number" && (
-                    <Text style={styles.entryDuration}>
+                    <Text style={[styles.entryDuration, typography.caption2, { color: palette.textTertiary }]}>
                       {DNSLogService.formatDuration(e.duration)}
                     </Text>
                   )}
@@ -68,11 +83,13 @@ export const DNSLogViewer: React.FC<DNSLogViewerProps> = ({
               ))}
             </View>
             {log.response ? (
-              <View style={styles.responseBox}>
-                <Text style={styles.responseLabel}>
+              <View style={[styles.responseBox, { backgroundColor: palette.solid }]}>
+                <Text style={[styles.responseLabel, typography.caption1, { color: palette.accentTint }]}>
                   {t("components.dnsLogViewer.responseLabel")}
                 </Text>
-                <Text style={styles.response}>{log.response}</Text>
+                <Text style={[typography.footnote, { color: palette.textPrimary }]}>
+                  {log.response}
+                </Text>
               </View>
             ) : null}
           </View>
@@ -84,14 +101,12 @@ export const DNSLogViewer: React.FC<DNSLogViewerProps> = ({
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { padding: 12 },
-  empty: { color: "#777", textAlign: "center", marginTop: 40 },
+  content: { padding: LiquidGlassSpacing.sm },
+  empty: { textAlign: "center", marginTop: LiquidGlassSpacing.huge },
   card: {
-    backgroundColor: "#111",
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 12,
-    borderColor: "#222",
+    borderRadius: LiquidGlassSpacing.sm,
+    padding: LiquidGlassSpacing.sm,
+    marginBottom: LiquidGlassSpacing.sm,
     borderWidth: 1,
   },
   headerRow: {
@@ -99,36 +114,31 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
   },
-  title: { color: "#fff", fontWeight: "600", flex: 1, marginRight: 8 },
-  duration: { color: "#aaa", fontVariant: ["tabular-nums"] },
-  meta: { color: "#aaa", fontSize: 12, marginTop: 2 },
-  entries: { marginTop: 8 },
-  entryRow: { flexDirection: "row", alignItems: "center", marginBottom: 4 },
+  title: { flex: 1, marginRight: LiquidGlassSpacing.xs },
+  duration: { fontVariant: ["tabular-nums"] },
+  meta: { marginTop: LiquidGlassSpacing.xxs },
+  entries: { marginTop: LiquidGlassSpacing.xs },
+  entryRow: { flexDirection: "row", alignItems: "center", marginBottom: LiquidGlassSpacing.xxs },
   badge: {
     color: "#fff",
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
+    paddingHorizontal: LiquidGlassSpacing.xxs,
+    paddingVertical: LiquidGlassSpacing.xxs / 2,
+    borderRadius: LiquidGlassSpacing.xxs,
     overflow: "hidden",
-    fontSize: 11,
-    marginRight: 6,
+    marginRight: LiquidGlassSpacing.xxs,
   },
   icon: { width: 18, textAlign: "center" },
-  entryText: { color: "#ddd", flex: 1 },
+  entryText: { flex: 1 },
   entryDuration: {
-    color: "#888",
-    marginLeft: 6,
+    marginLeft: LiquidGlassSpacing.xxs,
     fontVariant: ["tabular-nums"],
-    fontSize: 12,
   },
   responseBox: {
-    marginTop: 8,
-    backgroundColor: "#0b0b0b",
-    borderRadius: 6,
-    padding: 8,
+    marginTop: LiquidGlassSpacing.xs,
+    borderRadius: LiquidGlassSpacing.xxs,
+    padding: LiquidGlassSpacing.xs,
   },
-  responseLabel: { color: "#8ab4f8", fontSize: 12, marginBottom: 4 },
-  response: { color: "#dcdcdc" },
+  responseLabel: { marginBottom: LiquidGlassSpacing.xxs },
 });
 
 export default DNSLogViewer;
