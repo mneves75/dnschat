@@ -15,6 +15,7 @@ import { useImessagePalette } from "../ui/theme/imessagePalette";
 import { useTypography } from "../ui/hooks/useTypography";
 import { LiquidGlassSpacing } from "../ui/theme/liquidGlassSpacing";
 import { LiquidGlassWrapper, useLiquidGlassCapabilities } from "./LiquidGlassWrapper";
+import { useTranslation } from "../i18n";
 
 interface MessageListProps {
   messages: Message[];
@@ -50,6 +51,8 @@ export function MessageList({
   // Platform-adaptive: SF Pro on iOS, Roboto on Android
   // Each style (title2, subheadline, etc.) includes fontSize, fontWeight, letterSpacing
   const typography = useTypography();
+
+  const { t } = useTranslation();
 
   // CLEAN SOLUTION: Single scroll function with guaranteed layout completion
   // Double RAF ensures FlatList has completed layout before scrolling
@@ -131,7 +134,7 @@ export function MessageList({
               { color: palette.textPrimary },
             ]}
           >
-            Start a conversation!
+            {t("screen.chat.emptyState.title")}
           </Text>
           {/* subheadline typography (15pt, 400 weight, -0.5pt letter spacing)
               textSecondary provides reduced opacity for visual hierarchy
@@ -143,7 +146,7 @@ export function MessageList({
               { color: palette.textSecondary },
             ]}
           >
-            Send a message to begin chatting with the AI assistant.
+            {t("screen.chat.emptyState.description")}
           </Text>
         </LiquidGlassWrapper>
       ) : (
@@ -156,7 +159,7 @@ export function MessageList({
               { color: palette.textPrimary },
             ]}
           >
-            Start a conversation!
+            {t("screen.chat.emptyState.title")}
           </Text>
           <Text
             style={[
@@ -165,7 +168,7 @@ export function MessageList({
               { color: palette.textSecondary },
             ]}
           >
-            Send a message to begin chatting with the AI assistant.
+            {t("screen.chat.emptyState.description")}
           </Text>
         </View>
       )}

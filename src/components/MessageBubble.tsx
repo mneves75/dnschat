@@ -17,16 +17,17 @@ import { ShareService } from "../services/ShareService";
 import { MessageContent } from "./MessageContent";
 import { useTranslation } from "../i18n";
 
+// Platform-specific monospace font for code rendering
+const MONOSPACE_FONT = Platform.select({
+  ios: 'Menlo',
+  android: 'monospace',
+  default: 'Courier',
+});
+
 interface MessageBubbleProps {
   message: Message;
 }
 
-/**
- * MessageBubble Component (Internal)
- *
- * Displays a single message bubble with context menu for Copy/Share actions.
- * Wrapped with React.memo below for performance optimization.
- */
 function MessageBubbleComponent({ message }: MessageBubbleProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
@@ -39,13 +40,6 @@ function MessageBubbleComponent({ message }: MessageBubbleProps) {
   const hasError = message.status === "error";
   const messageCornerRadius = getCornerRadius('message');
 
-  /**
-   * Handle context menu action selection
-   *
-   * TRICKY: MenuView's onPressAction uses NativeActionEvent type from @react-native-menu/menu.
-   * Action ID is in nativeEvent.event (not nativeEvent.actionKey).
-   * We use 'copy' and 'share' as action IDs and handle them in this function.
-   */
   const handleMenuPress = async (event: NativeActionEvent) => {
     const actionKey = event.nativeEvent.event;
 
@@ -113,36 +107,24 @@ function MessageBubbleComponent({ message }: MessageBubbleProps) {
       paddingVertical: 2,
       borderRadius: 4,
       fontSize: typography.footnote.fontSize,
-      fontFamily: 'Courier',
+      fontFamily: MONOSPACE_FONT,
     },
     code_block: {
       backgroundColor: isDark ? palette.solid : palette.surface,
       padding: LiquidGlassSpacing.sm,
       borderRadius: getCornerRadius('input'),
       marginVertical: LiquidGlassSpacing.xs,
-      fontFamily: 'Courier',
+      fontFamily: MONOSPACE_FONT,
     },
     fence: {
       backgroundColor: isDark ? palette.solid : palette.surface,
       padding: LiquidGlassSpacing.sm,
       borderRadius: getCornerRadius('input'),
       marginVertical: LiquidGlassSpacing.xs,
-      fontFamily: 'Courier',
+      fontFamily: MONOSPACE_FONT,
     },
   };
 
-  /**
-   * Context menu actions
-   *
-   * IMPORTANT: Disable context menu for messages with status="sending"
-   * to prevent user from interacting with incomplete messages.
-   *
-   * iOS: Uses SF Symbols for icons (doc.on.doc, square.and.arrow.up)
-   * Android: Menu items show without icons (MenuView doesn't support Android icons in this version)
-   *
-   * PERFORMANCE: useMemo prevents recreating array on every render.
-   * Depends on t() for translations, re-computed when locale changes.
-   */
   const menuActions = useMemo(() => [
     {
       id: 'copy',
@@ -156,13 +138,6 @@ function MessageBubbleComponent({ message }: MessageBubbleProps) {
     },
   ], [t]); // Depends on t for locale changes
 
-  /**
-   * Render message content
-   *
-   * CRITICAL: Extracted to MessageContent component to eliminate code duplication.
-   * Previously, message content was duplicated in two branches (loading vs non-loading).
-   * Now, content rendering is in one place, wrapped conditionally by MenuView.
-   */
   const messageContentProps = {
     message,
     textColor,
@@ -191,8 +166,6 @@ function MessageBubbleComponent({ message }: MessageBubbleProps) {
         isUser ? styles.userContainer : styles.assistantContainer,
       ]}
     >
-      {/* Conditionally wrap in MenuView for non-loading messages */}
-      {/* IMPORTANT: MenuView only shown for sent/error messages, not sending */}
       {!isLoading ? (
         <MenuView
           onPressAction={handleMenuPress}
@@ -208,23 +181,6 @@ function MessageBubbleComponent({ message }: MessageBubbleProps) {
   );
 }
 
-/**
- * Custom comparison function for React.memo
- *
- * PERFORMANCE: Prevents unnecessary re-renders when message hasn't changed.
- * Returns true if props are equal (skip re-render), false if different (re-render).
- *
- * IMPORTANT: With React 19.1 Compiler auto-memoization, this might be redundant
- * in production. However, explicit memoization with custom comparison provides:
- * 1. Clear intent for code readers
- * 2. Guaranteed optimization even if Compiler disabled
- * 3. Custom logic for deep equality checks on message fields
- *
- * TRICKY: We deep-compare message fields instead of reference equality because:
- * - ChatContext creates new message objects when updating (immutable pattern)
- * - Reference equality would always fail, causing unnecessary re-renders
- * - Deep comparison catches actual content changes while skipping cosmetic updates
- */
 function arePropsEqual(
   prevProps: MessageBubbleProps,
   nextProps: MessageBubbleProps
@@ -242,16 +198,6 @@ function arePropsEqual(
   );
 }
 
-/**
- * Memoized MessageBubble Component
- *
- * PERFORMANCE: React.memo with custom comparison prevents re-renders when:
- * - Other messages in the list change
- * - Parent component re-renders
- * - Unrelated context values change
- *
- * Only re-renders when THIS specific message's fields change.
- */
 export const MessageBubble = React.memo(MessageBubbleComponent, arePropsEqual);
 
 const styles = StyleSheet.create({
@@ -266,16 +212,12 @@ const styles = StyleSheet.create({
   assistantContainer: {
     alignSelf: "flex-start",
   },
-  // iOS 26 HIG: Message bubbles use solid backgrounds (content layer)
-  // NOT Liquid Glass (which is for controls/navigation layer only)
-  bubbleBase: {
-    paddingHorizontal: LiquidGlassSpacing.md,
-    paddingVertical: LiquidGlassSpacing.sm,
-    borderRadius: getCornerRadius('message'),
-    minWidth: 60,
-    // backgroundColor applied inline from palette (userBubble, assistantBubble, destructive)
-    // borderBottomLeftRadius/borderBottomRightRadius applied inline for tail customization
-  },
+    bubbleBase: {
+      paddingHorizontal: LiquidGlassSpacing.md,
+      paddingVertical: LiquidGlassSpacing.sm,
+      borderRadius: getCornerRadius('message'),
+      minWidth: 60,
+    },
   // iOS standard material: prominent shadow for user/error bubbles
   prominentShadow: {
     shadowColor: "#000000",

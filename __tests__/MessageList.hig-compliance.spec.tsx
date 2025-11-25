@@ -396,14 +396,14 @@ describe("MessageList - iOS 26 HIG Compliance", () => {
   });
 
   describe("Empty State Content", () => {
-    it("has user-friendly empty state title", () => {
-      expect(sourceCode).toContain("Start a conversation!");
+    it("uses i18n for empty state title", () => {
+      // Empty state text should use i18n for localization support
+      expect(sourceCode).toContain('t("screen.chat.emptyState.title")');
     });
 
-    it("has helpful empty state subtitle", () => {
-      expect(sourceCode).toContain(
-        "Send a message to begin chatting with the AI assistant"
-      );
+    it("uses i18n for empty state subtitle", () => {
+      // Empty state subtitle should use i18n for localization support
+      expect(sourceCode).toContain('t("screen.chat.emptyState.description")');
     });
   });
 });

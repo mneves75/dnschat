@@ -231,6 +231,10 @@ export const ptBR = {
       errorAlertTitle: "Erro",
       errorAlertDismiss: "OK",
       placeholder: "Pergunte qualquer coisa...",
+      emptyState: {
+        title: "Comece uma conversa!",
+        description: "Envie uma mensagem para iniciar o chat com o assistente de IA.",
+      },
       messageActions: {
         copy: "Copiar",
         share: "Compartilhar",

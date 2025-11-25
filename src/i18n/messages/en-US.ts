@@ -231,6 +231,10 @@ export const enUS = {
       errorAlertTitle: "Error",
       errorAlertDismiss: "OK",
       placeholder: "Ask me anything...",
+      emptyState: {
+        title: "Start a conversation!",
+        description: "Send a message to begin chatting with the AI assistant.",
+      },
       messageActions: {
         copy: "Copy",
         share: "Share",
