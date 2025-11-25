@@ -129,7 +129,7 @@ export function Settings() {
       Alert.alert(
         t("screen.settings.alerts.saveSuccessTitle"),
         t("screen.settings.alerts.saveSuccessMessage"),
-        [{ text: t("common.ok"), onPress: () => (navigation as any)?.goBack?.() }],
+        [{ text: t("common.ok"), onPress: () => navigation.goBack() }],
       );
     } catch (error) {
       Alert.alert(

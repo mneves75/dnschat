@@ -245,6 +245,12 @@ export const ptBR = {
       emptySubtitle:
         "Crie uma nova conversa para começar a falar com o assistente de IA.",
       newChatButton: "Iniciar nova conversa",
+      accessibility: {
+        deleteButton: "Apagar conversa",
+        deleteButtonHint: "Toque duas vezes para apagar esta conversa",
+        chatItem: "Conversa: {{title}}",
+        chatItemHint: "Toque duas vezes para abrir a conversa",
+      },
     },
     glassChatList: {
       navigationTitle: "DNS Chat",

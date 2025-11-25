@@ -3,7 +3,13 @@ import { DarkTheme, DefaultTheme } from "@react-navigation/native";
 import { Asset } from "expo-asset";
 import * as SplashScreen from "expo-splash-screen";
 import * as React from "react";
-import { useColorScheme, Platform, View, StyleSheet } from "react-native";
+import {
+  useColorScheme,
+  Platform,
+  View,
+  StyleSheet,
+  ActivityIndicator,
+} from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { KeyboardProvider } from "react-native-keyboard-controller";
@@ -21,6 +27,7 @@ import {
 import { HapticsConfigurator } from "./components/HapticsConfigurator";
 import { DNSLogService } from "./services/dnsLogService";
 import { I18nProvider } from "./i18n";
+import { AndroidStartupDiagnostics } from "./utils/androidStartupDiagnostics";
 
 Asset.loadAsync([...NavigationAssets, require("./assets/newspaper.png")]);
 
@@ -46,8 +53,41 @@ function AppContent() {
     });
   }, []);
 
+  // Run Android startup diagnostics (dev mode only)
+  React.useEffect(() => {
+    if (__DEV__ && Platform.OS === "android") {
+      AndroidStartupDiagnostics.runDiagnostics()
+        .then(() => {
+          AndroidStartupDiagnostics.printSummary();
+        })
+        .catch((error) => {
+          AndroidStartupDiagnostics.error(
+            "Failed to run diagnostics",
+            String(error),
+          );
+        });
+    }
+  }, []);
+
   if (loading) {
-    return null; // Keep splash screen visible while loading
+    // Return a proper loading view instead of null to prevent white screen
+    // The splash screen will still be visible, but this ensures React has something to render
+    // This prevents the white screen issue on Android when onboarding state is loading
+    return (
+      <View
+        style={[
+          styles.loadingContainer,
+          colorScheme === "dark"
+            ? styles.loadingContainerDark
+            : styles.loadingContainerLight,
+        ]}
+      >
+        <ActivityIndicator
+          size="large"
+          color={colorScheme === "dark" ? "#FFFFFF" : "#007AFF"}
+        />
+      </View>
+    );
   }
 
   if (!hasCompletedOnboarding) {
@@ -86,7 +126,7 @@ function AppContent() {
 
 export function App() {
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
+    <GestureHandlerRootView style={styles.root}>
       <SafeAreaProvider>
         <KeyboardProvider>
           <ErrorBoundary>
@@ -110,8 +150,22 @@ export function App() {
 }
 
 const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
   appContainer: {
     flex: 1,
     backgroundColor: "transparent",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingContainerLight: {
+    backgroundColor: "#FFFFFF",
+  },
+  loadingContainerDark: {
+    backgroundColor: "#000000",
   },
 });

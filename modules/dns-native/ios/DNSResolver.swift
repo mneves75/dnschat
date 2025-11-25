@@ -254,7 +254,11 @@ final class DNSResolver: NSObject {
     private func parseDnsTxtResponse(_ data: Data) throws -> [String] {
         var results: [String] = []
         let bytes = [UInt8](data)
-        if bytes.count < 12 { return results }
+
+        // DNS header is 12 bytes - reject malformed responses explicitly
+        guard bytes.count >= 12 else {
+            throw DNSError.queryFailed("Response too short: \(bytes.count) bytes, minimum 12 required")
+        }
         
         let anCount = Int(bytes[6]) << 8 | Int(bytes[7])
         var offset = 12

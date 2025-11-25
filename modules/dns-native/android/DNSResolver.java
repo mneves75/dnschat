@@ -30,8 +30,9 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.Objects;
@@ -52,7 +53,7 @@ public class DNSResolver {
         new AtomicReference<>(SanitizerConfig.defaultInstance());
     private static final AtomicBoolean DEFAULT_SANITIZER_NOTICE_EMITTED = new AtomicBoolean(false);
     
-    private final Executor executor = Executors.newCachedThreadPool();
+    private final ExecutorService executor = Executors.newCachedThreadPool();
     private final ConnectivityManager connectivityManager;
     
     // Query deduplication - prevents multiple identical requests (matches iOS implementation)
@@ -60,6 +61,25 @@ public class DNSResolver {
 
     public DNSResolver(ConnectivityManager connectivityManager) {
         this.connectivityManager = connectivityManager;
+    }
+
+    /**
+     * Cleans up the thread pool. Should be called when the module is invalidated
+     * to prevent thread leaks on app lifecycle events.
+     */
+    public void cleanup() {
+        if (!executor.isShutdown()) {
+            executor.shutdown();
+            try {
+                // Wait up to 5 seconds for active tasks to complete
+                if (!executor.awaitTermination(5, TimeUnit.SECONDS)) {
+                    executor.shutdownNow();
+                }
+            } catch (InterruptedException e) {
+                executor.shutdownNow();
+                Thread.currentThread().interrupt();
+            }
+        }
     }
 
     /**

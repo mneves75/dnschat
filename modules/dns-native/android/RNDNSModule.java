@@ -33,6 +33,13 @@ public class RNDNSModule extends ReactContextBaseJavaModule {
         return MODULE_NAME;
     }
 
+    @Override
+    public void invalidate() {
+        super.invalidate();
+        // Clean up thread pool to prevent leaks on app lifecycle events
+        dnsResolver.cleanup();
+    }
+
     @ReactMethod
     public void queryTXT(String domain, String message, Promise promise) {
         CompletableFuture<List<String>> future = dnsResolver.queryTXT(domain, message);

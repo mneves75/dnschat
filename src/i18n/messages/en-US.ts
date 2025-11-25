@@ -245,6 +245,12 @@ export const enUS = {
       emptySubtitle:
         "Start a new conversation to begin chatting with the AI assistant.",
       newChatButton: "Start New Chat",
+      accessibility: {
+        deleteButton: "Delete chat",
+        deleteButtonHint: "Double tap to delete this conversation",
+        chatItem: "Chat: {{title}}",
+        chatItemHint: "Double tap to open conversation",
+      },
     },
     glassChatList: {
       navigationTitle: "DNS Chat",
