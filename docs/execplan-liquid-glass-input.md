@@ -11,8 +11,8 @@ Users must see accurate visual states on text inputs: error borders should appea
 - [x] (2025-11-25T18:20Z) Baseline review, identified border sync risk and hook verification need.
 - [x] (2025-11-25T18:45Z) Verified LiquidGlassTextInput sync path matches spec; ensured container testID present.
 - [x] (2025-11-25T18:50Z) Added state-sync jest spec with custom reanimated mock.
-- [x] (2025-11-25T18:55Z) Ran `npm run lint:ast-grep` and `npm test` (37 passed, 1 skipped).
-- [ ] Prepare scoped commit.
+- [x] (2025-11-25T18:55Z) Ran `npm run lint:ast-grep` and `npm test` (38 suites, 1 skipped).
+- [x] (2025-11-25T19:05Z) Committed docs + test (`test(ui): guard liquid glass input sync`).
 
 ## Surprises & Discoveries
 
