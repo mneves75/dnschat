@@ -10,7 +10,7 @@ web-build/
 expo-env.d.ts
 
 # Case-insensitive filesystem duplicates
-/DOCS/
+# /DOCS/ - removed to allow docs/GUIDELINES-REF submodule
 
 # Native
 *.orig.*
