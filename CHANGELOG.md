@@ -7,6 +7,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **StorageService Race Condition (CRITICAL)**: Added operation queue to serialize all AsyncStorage read-modify-write operations, preventing message loss from concurrent `addMessage`, `updateMessage`, `createChat`, `updateChat`, and `deleteChat` calls.
+  - **Root Cause**: Without queue, concurrent calls each loaded stale data, modified it, then overwrote each other's changes
+  - **Solution**: Promise-based queue where each operation waits for previous to complete; errors propagate to caller but don't break queue chain
+  - **Impact**: Eliminates data loss when rapidly sending messages or performing concurrent chat operations
+  - **Tests**: 12 new unit tests covering serialization, error recovery, and individual operation correctness
+
+- **ChatListItem Accessibility Compliance**: Added accessibility props and increased touch target to meet iOS HIG 44pt minimum
+  - Added `accessibilityRole="button"`, `accessibilityLabel`, `accessibilityHint` to delete button and chat item
+  - Increased delete button padding from 8px to 13px (18px icon + 13px*2 = 44px touch target)
+  - Added hitSlop for additional touch area
+  - Added i18n keys for accessibility labels (en-US, pt-BR)
+
+- **Swift DNS Buffer Bounds Check**: Changed silent return to explicit error throw when DNS response is malformed
+  - **Was**: `if bytes.count < 12 { return results }` - silently returned empty array
+  - **Now**: `guard bytes.count >= 12 else { throw DNSError.queryFailed(...) }` - surfaces error to caller
+
+- **Settings.tsx Type Safety**: Removed unnecessary `as any` cast on navigation.goBack()
+  - Navigation was already typed as `NavigationProp<ParamListBase>` which includes goBack()
+
+- **LiquidGlassTextInput Touch Target & Colors**: Fixed clear button touch target and replaced hardcoded error colors
+  - Increased clear button padding from 4px to 12px (20px icon + 12px*2 = 44px touch target)
+  - Replaced all `#FF3B30` hardcoded colors with `palette.destructive` (5 occurrences)
+
+- **Android Thread Pool Cleanup**: Added ExecutorService.shutdown() to prevent thread leaks
+  - Changed executor type from `Executor` to `ExecutorService`
+  - Added `cleanup()` method to DNSResolver with graceful 5-second shutdown
+  - Called from `RNDNSModule.invalidate()` on app lifecycle events
+
+- **ChatListItem Hardcoded Colors**: Replaced all hardcoded hex colors with useImessagePalette() values
+  - Removed dark/light specific styles (lightContainer, darkContainer, lightTitle, etc.)
+  - Dynamic styles computed from palette: background, separator, textPrimary, textSecondary, textTertiary
+
+### Changed
+
+- **App.tsx Inline Style**: Extracted `{{ flex: 1 }}` inline style to StyleSheet for consistency
+  - Added `styles.root` and applied to GestureHandlerRootView
+
+- **Android Dev Client: Automatic `adb reverse` to prevent white screen**: Added `scripts/ensure-adb-reverse.js` and wired it into `npm run android` so connected devices/emulators automatically map Metro's TCP port (default 8081). This resolves dev builds stalling on a blank screen when the emulator cannot reach the host packager. The helper polls for devices, respects `RCT_METRO_PORT`/`EXPO_DEV_SERVER_PORT`, and surfaces friendly logs.
+
 ## [3.0.6] - 2025-10-29
 
 ### Fixed

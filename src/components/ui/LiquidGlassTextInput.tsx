@@ -98,7 +98,7 @@ export function LiquidGlassTextInput({
   const handleFocus = (e: any) => {
     setIsFocused(true);
     borderColor.value = withTiming(
-      hasError ? "#FF3B30" : palette.accentTint,
+      hasError ? palette.destructive : palette.accentTint,
       TimingConfig.quick
     );
     borderWidth.value = withSpring(2, SpringConfig.bouncy);
@@ -110,7 +110,7 @@ export function LiquidGlassTextInput({
   const handleBlur = (e: any) => {
     setIsFocused(false);
     borderColor.value = withTiming(
-      hasError ? "#FF3B30" : palette.border,
+      hasError ? palette.destructive : palette.border,
       TimingConfig.quick
     );
     borderWidth.value = withSpring(1, SpringConfig.bouncy);
@@ -125,7 +125,7 @@ export function LiquidGlassTextInput({
 
   // Determine border color
   const getBorderColor = () => {
-    if (hasError) return "#FF3B30";
+    if (hasError) return palette.destructive;
     if (isFocused) return palette.accentTint;
     return palette.border;
   };
@@ -138,7 +138,7 @@ export function LiquidGlassTextInput({
           style={[
             styles.label,
             typography.callout,
-            { color: hasError ? "#FF3B30" : palette.textPrimary },
+            { color: hasError ? palette.destructive : palette.textPrimary },
             labelStyle,
           ]}
         >
@@ -217,7 +217,7 @@ export function LiquidGlassTextInput({
               styles.helperText,
               typography.caption1,
               {
-                color: hasError ? "#FF3B30" : palette.textSecondary,
+                color: hasError ? palette.destructive : palette.textSecondary,
               },
             ]}
             accessible={true}
@@ -276,7 +276,9 @@ const styles = StyleSheet.create({
   },
   clearButton: {
     marginLeft: LiquidGlassSpacing.xs,
-    padding: LiquidGlassSpacing.xxs,
+    // iOS HIG requires 44pt minimum touch target
+    // 20px icon + 12px padding * 2 = 44px
+    padding: 12,
   },
   clearButtonIcon: {
     width: 20,
