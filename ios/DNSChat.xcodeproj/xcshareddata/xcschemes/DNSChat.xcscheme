@@ -38,6 +38,16 @@
                ReferencedContainer = "container:DNSChat.xcodeproj">
             </BuildableReference>
          </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "BAC975DC4FC1ED5249538649"
+               BuildableName = "DNSChatUITests.xctest"
+               BlueprintName = "DNSChatUITests"
+               ReferencedContainer = "container:DNSChat.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction
