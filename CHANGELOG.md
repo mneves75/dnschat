@@ -11,6 +11,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Settings i18n Missing Key**: Added missing `onboardingCancel` translation key to both en-US.ts and pt-BR.ts, fixing raw key display in reset onboarding alert dialog
+
+- **DNSLogViewer iOS HIG Compliance**: Complete redesign following iOS 26 Liquid Glass principles
+  - Replaced all hardcoded colors (#777, #111, #fff, etc.) with semantic palette values (palette.surface, palette.border, palette.textPrimary, palette.textSecondary, palette.textTertiary, palette.solid, palette.accentTint)
+  - Added useTypography hook for consistent SF Pro typography system
+  - Converted spacing from arbitrary values to LiquidGlassSpacing (8px grid system)
+  - Fixed useEffect cleanup function TypeScript error (wrapped void return)
+  - Screen now properly adapts to light/dark mode
+
+- **MessageList Auto-Scroll on Response**: Fixed scroll not triggering when assistant response arrives
+  - **Root Cause**: `scrollToBottom` dependency was `messages.length` only, but assistant responses UPDATE the last message (content changes from "" to response) without changing array length
+  - **Solution**: Added `lastMessageKey` computed from `${id}-${status}-${contentLength}` to detect any change in the last message
+  - Added `testID` prop to MessageListProps interface for e2e testing
+
 - **LiquidGlassTextInput State Sync Regression Test**: Added Jest coverage that drives palette/error changes and asserts animated border color updates via a custom Reanimated mock, preventing silent desyncs between state and visuals.
 - **WelcomeScreen Animation Parity**: Restored React Native `Animated.timing` with `useNativeDriver` to match existing UX and unblock animation unit tests after a Reanimated refactor.
 - **MessageBubble Line Count Stability**: Snapshot helper now strips comments before counting lines, keeping fixture size deterministic (file trimmed to 240 LOC).
