@@ -57,35 +57,62 @@ const withDNSNativeModule = (config) => {
             await copyDirectory(androidSourcePath, androidDestPath);
           }
 
-          // Add to MainApplication.java
-          const mainAppPath = path.join(
+          // Add to MainApplication (.java or .kt)
+          const packageName = config.android?.package || "org.mvneves.dnschat";
+          const packagePath = packageName.split(".").join("/");
+          const mainAppDir = path.join(
             config.modRequest.platformProjectRoot,
             "app",
             "src",
             "main",
             "java",
-            "com",
-            config.android?.package?.split(".").pop() || "dnschat",
-            "MainApplication.java",
+            packagePath,
           );
 
-          if (fs.existsSync(mainAppPath)) {
-            let content = fs.readFileSync(mainAppPath, "utf8");
+          // Try Kotlin first (modern Expo projects), then fallback to Java
+          const mainAppKtPath = path.join(mainAppDir, "MainApplication.kt");
+          const mainAppJavaPath = path.join(mainAppDir, "MainApplication.java");
 
-            // Add import
-            if (!content.includes("import com.dnsnative.DNSNativePackage;")) {
-              content = content.replace(
-                /(import com\.facebook\.react\.ReactPackage;)/,
-                "$1\nimport com.dnsnative.DNSNativePackage;",
-              );
+          let mainAppPath = null;
+          if (fs.existsSync(mainAppKtPath)) {
+            mainAppPath = mainAppKtPath;
+          } else if (fs.existsSync(mainAppJavaPath)) {
+            mainAppPath = mainAppJavaPath;
+          }
+
+          if (mainAppPath) {
+            let content = fs.readFileSync(mainAppPath, "utf8");
+            const isKotlin = mainAppPath.endsWith(".kt");
+
+            // Add import (Kotlin uses same import syntax as Java)
+            const importPattern = isKotlin
+              ? /(import com\.facebook\.react\.ReactPackage)/
+              : /(import com\.facebook\.react\.ReactPackage;)/;
+            const importStatement = isKotlin
+              ? "$1\nimport com.dnsnative.DNSNativePackage"
+              : "$1\nimport com.dnsnative.DNSNativePackage;";
+
+            if (!content.includes("import com.dnsnative.DNSNativePackage")) {
+              content = content.replace(importPattern, importStatement);
             }
 
             // Add package to list
-            if (!content.includes("new DNSNativePackage()")) {
-              content = content.replace(
-                /(new MainReactPackage\(\)[,\s]*)/,
-                "$1\nnew DNSNativePackage(),",
-              );
+            if (isKotlin) {
+              // Kotlin: packages.add(DNSNativePackage())
+              if (!content.includes("DNSNativePackage()")) {
+                content = content.replace(
+                  /(packages\.add\(ModuleRegistryAdapter\(manualExpoPackages\)\))/,
+                  "$1\n            // Register DNS native module (not auto-linked, requires explicit registration)\n            packages.add(DNSNativePackage())",
+                );
+              }
+            } else {
+              // Java: packages.add(new DNSNativePackage())
+              if (!content.includes("new DNSNativePackage()")) {
+                content = content.replace(
+                  /(new MainReactPackage\(\)[,\s]*)/,
+                  "$1\nnew DNSNativePackage(),",
+                );
+              }
             }
 
             fs.writeFileSync(mainAppPath, content);
