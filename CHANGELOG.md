@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **LiquidGlassTextInput State Sync Regression Test**: Added Jest coverage that drives palette/error changes and asserts animated border color updates via a custom Reanimated mock, preventing silent desyncs between state and visuals.
+- **WelcomeScreen Animation Parity**: Restored React Native `Animated.timing` with `useNativeDriver` to match existing UX and unblock animation unit tests after a Reanimated refactor.
+- **MessageBubble Line Count Stability**: Snapshot helper now strips comments before counting lines, keeping fixture size deterministic (file trimmed to 240 LOC).
 - **Comprehensive UI/HIG Compliance Audit**: Fixed hardcoded colors, touch targets, TypeScript types, and i18n across 8 components
   - **Settings.tsx**: Replaced hardcoded Switch colors (#007AFF, #FFFFFF, #F4F3F4) with palette.accentTint, palette.solid, palette.textTertiary
   - **FirstChatScreen.tsx**: Increased send button touch target from 40x40 to 44x44 (iOS HIG minimum)
@@ -57,6 +60,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added `styles.root` and applied to GestureHandlerRootView
 
 - **Android Dev Client: Automatic `adb reverse` to prevent white screen**: Added `scripts/ensure-adb-reverse.js` and wired it into `npm run android` so connected devices/emulators automatically map Metro's TCP port (default 8081). This resolves dev builds stalling on a blank screen when the emulator cannot reach the host packager. The helper polls for devices, respects `RCT_METRO_PORT`/`EXPO_DEV_SERVER_PORT`, and surfaces friendly logs.
+
+### Documentation
+
+- Captured liquid glass input exec plan and engineering spec in `docs/` to track risk analysis, test coverage, and follow-up checklist.
 
 ## [3.0.6] - 2025-10-29
 
