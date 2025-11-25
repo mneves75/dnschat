@@ -7,9 +7,9 @@ PODS:
   - EXConstants (18.0.10):
     - ExpoModulesCore
   - EXJSONUtils (0.15.0)
-  - EXManifests (1.0.8):
+  - EXManifests (1.0.9):
     - ExpoModulesCore
-  - Expo (54.0.21):
+  - Expo (54.0.25):
     - boost
     - DoubleConversion
     - ExpoModulesCore
@@ -40,17 +40,17 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
-  - expo-dev-client (6.0.16):
+  - expo-dev-client (6.0.18):
     - EXManifests
     - expo-dev-launcher
     - expo-dev-menu
     - expo-dev-menu-interface
     - EXUpdatesInterface
-  - expo-dev-launcher (6.0.16):
+  - expo-dev-launcher (6.0.18):
     - boost
     - DoubleConversion
     - EXManifests
-    - expo-dev-launcher/Main (= 6.0.16)
+    - expo-dev-launcher/Main (= 6.0.18)
     - expo-dev-menu
     - expo-dev-menu-interface
     - ExpoModulesCore
@@ -83,7 +83,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
-  - expo-dev-launcher/Main (6.0.16):
+  - expo-dev-launcher/Main (6.0.18):
     - boost
     - DoubleConversion
     - EXManifests
@@ -120,7 +120,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
-  - expo-dev-launcher/Unsafe (6.0.16):
+  - expo-dev-launcher/Unsafe (6.0.18):
     - boost
     - DoubleConversion
     - EXManifests
@@ -156,11 +156,11 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
-  - expo-dev-menu (7.0.15):
+  - expo-dev-menu (7.0.17):
     - boost
     - DoubleConversion
-    - expo-dev-menu/Main (= 7.0.15)
-    - expo-dev-menu/ReactNativeCompatibles (= 7.0.15)
+    - expo-dev-menu/Main (= 7.0.17)
+    - expo-dev-menu/ReactNativeCompatibles (= 7.0.17)
     - fast_float
     - fmt
     - glog
@@ -187,7 +187,7 @@ PODS:
     - SocketRocket
     - Yoga
   - expo-dev-menu-interface (2.0.0)
-  - expo-dev-menu/Main (7.0.15):
+  - expo-dev-menu/Main (7.0.17):
     - boost
     - DoubleConversion
     - EXManifests
@@ -219,7 +219,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
-  - expo-dev-menu/ReactNativeCompatibles (7.0.15):
+  - expo-dev-menu/ReactNativeCompatibles (7.0.17):
     - boost
     - DoubleConversion
     - fast_float
@@ -247,23 +247,23 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
-  - ExpoAsset (12.0.9):
+  - ExpoAsset (12.0.10):
     - ExpoModulesCore
-  - ExpoFileSystem (19.0.17):
+  - ExpoFileSystem (19.0.19):
     - ExpoModulesCore
   - ExpoFont (14.0.9):
     - ExpoModulesCore
-  - ExpoGlassEffect (0.1.5):
+  - ExpoGlassEffect (0.1.7):
     - ExpoModulesCore
   - ExpoHaptics (15.0.7):
     - ExpoModulesCore
   - ExpoKeepAwake (15.0.7):
     - ExpoModulesCore
-  - ExpoLinking (8.0.8):
+  - ExpoLinking (8.0.9):
     - ExpoModulesCore
   - ExpoLocalization (17.0.7):
     - ExpoModulesCore
-  - ExpoModulesCore (3.0.23):
+  - ExpoModulesCore (3.0.26):
     - boost
     - DoubleConversion
     - fast_float
@@ -292,7 +292,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
-  - ExpoSplashScreen (31.0.10):
+  - ExpoSplashScreen (31.0.11):
     - ExpoModulesCore
   - ExpoSystemUI (6.0.8):
     - ExpoModulesCore
@@ -3493,22 +3493,22 @@ SPEC CHECKSUMS:
   DoubleConversion: cb417026b2400c8f53ae97020b2be961b59470cb
   EXConstants: fd688cef4e401dcf798a021cfb5d87c890c30ba3
   EXJSONUtils: 1d3e4590438c3ee593684186007028a14b3686cd
-  EXManifests: 224345a575fca389073c416297b6348163f28d1a
-  Expo: 780dc89251c4dc390eb643edba90dff6f1db9d19
-  expo-dev-client: 974463bca58c100a32f099450e9413893bee3de8
-  expo-dev-launcher: 95f3469129bea989178e35dd3ba877daed87c837
-  expo-dev-menu: 2b07bff6534770f36edc284948fd4a98e28cf2cb
+  EXManifests: 26e15640538c3d5ef028077ebcaf004b744d4932
+  Expo: 22c06b7185706d92688f6e943576198540836bc1
+  expo-dev-client: cc9491ad3e25a7a89f367c30f72884584c682b77
+  expo-dev-launcher: 31fb59ba7e3c367fb84bc3517e7e74929065feb2
+  expo-dev-menu: 01712407c2fabb8290fd23f63d99a91ffbe577af
   expo-dev-menu-interface: 600df12ea01efecdd822daaf13cc0ac091775533
-  ExpoAsset: 9ba6fbd677fb8e241a3899ac00fa735bc911eadf
-  ExpoFileSystem: b79eadbda7b7f285f378f95f959cc9313a1c9c61
+  ExpoAsset: d839c8eae8124470332408427327e8f88beb2dfd
+  ExpoFileSystem: 77157a101e03150a4ea4f854b4dd44883c93ae0a
   ExpoFont: cf9d90ec1d3b97c4f513211905724c8171f82961
-  ExpoGlassEffect: 779c46bd04ea47ba4726efb73267b5bcc6abd664
+  ExpoGlassEffect: 265fa3d75b46bc58262e4dfa513135fa9dfe4aac
   ExpoHaptics: 807476b0c39e9d82b7270349d6487928ce32df84
   ExpoKeepAwake: 1a2e820692e933c94a565ec3fbbe38ac31658ffe
-  ExpoLinking: f051f28e50ea9269ff539317c166adec81d9342d
+  ExpoLinking: 77455aa013e9b6a3601de03ecfab09858ee1b031
   ExpoLocalization: b852a5d8ec14c5349c1593eca87896b5b3ebfcca
-  ExpoModulesCore: 9682b308833cb39dca99e99557b2cab18f7f377c
-  ExpoSplashScreen: cbb839de72110dea1851dd3e85080b7923af2540
+  ExpoModulesCore: b94afa7f5899dee038f3c4d049bac115bdc9654e
+  ExpoSplashScreen: 268b2f128dc04284c21010540a6c4dd9f95003e3
   ExpoSystemUI: 2761aa6875849af83286364811d46e8ed8ea64c7
   EXUpdatesInterface: 5adf50cb41e079c861da6d9b4b954c3db9a50734
   fast_float: b32c788ed9c6a8c584d114d0047beda9664e7cc6
