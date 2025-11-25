@@ -218,3 +218,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Fastlane generated files
+ios/fastlane/report.xml
+
+# pnpm lock file (using npm)
+pnpm-lock.yaml
