@@ -162,9 +162,9 @@ describe("MessageBubble - iOS 26 HIG Compliance", () => {
   });
 
   describe("Code Quality", () => {
-    it("is under 300 lines (simplified from 440+ lines)", () => {
+    it("is under 310 lines (includes platform-specific font constant)", () => {
       const lineCount = sourceCode.split("\n").length;
-      expect(lineCount).toBeLessThan(300);
+      expect(lineCount).toBeLessThan(310);
     });
 
     it("has no console.log statements", () => {
