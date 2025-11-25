@@ -28,6 +28,8 @@ interface MessageListProps {
    * INCLUDES keyboard height when visible (KeyboardStickyView uses transform).
    */
   bottomInset?: number;
+  /** Test ID for e2e testing */
+  testID?: string;
 }
 
 export function MessageList({
@@ -36,6 +38,7 @@ export function MessageList({
   onRefresh,
   isRefreshing = false,
   bottomInset = 0,
+  testID,
 }: MessageListProps) {
   const flatListRef = useRef<FlatList<Message>>(null);
   const colorScheme = useColorScheme();
@@ -54,6 +57,14 @@ export function MessageList({
 
   const { t } = useTranslation();
 
+  // Track last message's content length and status to detect updates (not just additions)
+  // CRITICAL: When assistant response arrives, message is UPDATED (content changes from "" to response)
+  // but messages.length stays the same. We need to scroll when content updates too.
+  const lastMessage = messages[messages.length - 1];
+  const lastMessageKey = lastMessage
+    ? `${lastMessage.id}-${lastMessage.status}-${lastMessage.content.length}`
+    : "";
+
   // CLEAN SOLUTION: Single scroll function with guaranteed layout completion
   // Double RAF ensures FlatList has completed layout before scrolling
   // This is more reliable than setTimeout with arbitrary delays
@@ -69,13 +80,14 @@ export function MessageList({
           if (__DEV__) {
             console.log('[MessageList] Scrolled to bottom', {
               messageCount: messages.length,
+              lastMessageKey,
               bottomInset,
             });
           }
         });
       });
     }
-  }, [messages.length, bottomInset]);
+  }, [messages.length, lastMessageKey, bottomInset]);
 
   // SINGLE SOURCE OF TRUTH: Scroll on any relevant change
   // Triggers when: new messages arrive, keyboard shows/hides, input grows
@@ -189,6 +201,7 @@ export function MessageList({
   return (
     <FlatList
       ref={flatListRef}
+      testID={testID}
       data={messages}
       renderItem={renderMessage}
       keyExtractor={keyExtractor}
