@@ -3,11 +3,11 @@
 # List of devices to generate screenshots for
 # iPhone 16 Pro Max: 6.9" display (1320 x 2868 px) - Required for App Store
 # iPhone 16 Plus: 6.7" display (1290 x 2796 px) - Required for App Store
-# iPad Pro 13": 2048 x 2732 px - Optional but requested
+# iPad Pro 13": 2048 x 2732 px - Using M5 (currently open simulator)
 devices([
   "iPhone 16 Pro Max",
   "iPhone 16 Plus",
-  "iPad Pro 13-inch (M4)"
+  "iPad Pro 13-inch (M5)"
 ])
 
 # List of languages to generate screenshots for
@@ -18,6 +18,9 @@ languages([
 
 # The name of the scheme to use for building the app
 scheme("DNSChat")
+
+# Test target name
+test_target_name("DNSChatUITests")
 
 # Output directory for generated screenshots
 output_directory("./fastlane/screenshots")
