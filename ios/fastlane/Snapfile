@@ -1,12 +1,12 @@
 # Snapfile configuration for DNSChat screenshot generation
 
 # List of devices to generate screenshots for
-# iPhone 16 Pro Max: 6.9" display (1320 x 2868 px) - Required for App Store
-# iPhone 16 Plus: 6.7" display (1290 x 2796 px) - Required for App Store
-# iPad Pro 13": 2048 x 2732 px - Using M5 (currently open simulator)
+# iPhone 17 Pro Max: 6.9" display (1320 x 2868 px) - Required for App Store
+# iPhone 17: 6.3" display - Required for App Store
+# iPad Pro 13": 2048 x 2732 px - Using M5
 devices([
-  "iPhone 16 Pro Max",
-  "iPhone 16 Plus",
+  "iPhone 17 Pro Max",
+  "iPhone 17",
   "iPad Pro 13-inch (M5)"
 ])
 
