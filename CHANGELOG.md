@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Comprehensive UI/HIG Compliance Audit**: Fixed hardcoded colors, touch targets, TypeScript types, and i18n across 8 components
+  - **Settings.tsx**: Replaced hardcoded Switch colors (#007AFF, #FFFFFF, #F4F3F4) with palette.accentTint, palette.solid, palette.textTertiary
+  - **FirstChatScreen.tsx**: Increased send button touch target from 40x40 to 44x44 (iOS HIG minimum)
+  - **LiquidGlassTextInput.tsx**: Replaced hardcoded #FF9500 warning with palette.warning, #FFFFFF with palette.solid
+  - **MessageList.tsx**: Replaced hardcoded empty state strings with i18n keys (screen.chat.emptyState.title/description)
+  - **MessageBubble.tsx**: Added platform-specific monospace font (Menlo on iOS, monospace on Android) instead of hardcoded 'Courier'
+  - **ChatInput.tsx**: Fixed TypeScript `any` cast with proper `NativeSyntheticEvent<TextInputContentSizeChangeEventData>` type
+  - **i18n**: Added emptyState translations for en-US and pt-BR
+  - **Tests**: Updated MessageList.hig-compliance.spec.tsx and chat.messageBubble.spec.ts
+
 - **StorageService Race Condition (CRITICAL)**: Added operation queue to serialize all AsyncStorage read-modify-write operations, preventing message loss from concurrent `addMessage`, `updateMessage`, `createChat`, `updateChat`, and `deleteChat` calls.
   - **Root Cause**: Without queue, concurrent calls each loaded stale data, modified it, then overwrote each other's changes
   - **Solution**: Promise-based queue where each operation waits for previous to complete; errors propagate to caller but don't break queue chain
