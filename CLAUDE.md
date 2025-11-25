@@ -30,7 +30,8 @@ Agents act as senior Swift / Expo SDK collaborators. Keep responses concise, cla
 
 8. **ExecPlans**: When writing complex features or significant refactors, use an ExecPlan (as described in `/PLANS.md`) from design to implementation. See `/PLANS.md` for full specification.
 
-9. **Reference Documentation**: Always refer to documentation in `docs/` and `docs/REF_DOC/` folders before implementing.
+9. **Reference Documentation**: Always refer to documentation before implementing.
+   - **FIRST**: Consult `docs/GUIDELINES-REF/` for development standards (MOBILE, REACT, TYPESCRIPT, DEV guidelines)
    - Consult `docs/REF_DOC/docs_apple/` for Swift, SwiftUI, Liquid Glass, HIG
    - Consult `docs/REF_DOC/docs_expo_dev/` for Expo SDK references
    - Consult `docs/REF_DOC/docs_reactnative_getting-started/` for React Native patterns
@@ -56,30 +57,36 @@ React Native mobile app providing ChatGPT-like interface via DNS TXT queries. Fe
 
 ```bash
 # Development
-npm start                # Start dev server
-npm run ios             # Build iOS
-npm run android         # Build Android (requires Java 17)
-npm run fix-pods        # Fix iOS CocoaPods issues
-npm run sync-versions   # Sync versions across platforms
-/changelog              # Generate changelog (in Claude Code)
+pnpm start               # Start dev server
+pnpm ios                 # Build iOS
+pnpm android             # Build Android (requires Java 17)
+pnpm fix-pods            # Fix iOS CocoaPods issues
+pnpm sync-versions       # Sync versions across platforms
+/changelog               # Generate changelog (in Claude Code)
 
-# Testing
-node test-dns-simple.js "message"     # Quick DNS smoke test
-npm run dns:harness -- --message "x"  # Comprehensive DNS harness test
+# Unit Tests
+pnpm test                                        # Run all tests
+pnpm test -- --testPathPattern="dnsService"      # Run single test file
+pnpm test -- --testNamePattern="sanitize"        # Run tests matching name
 
-# App Store Screenshots
+# DNS Integration Tests
+node test-dns-simple.js "message"      # Quick DNS smoke test
+pnpm dns:harness -- --message "x"      # Comprehensive DNS harness test
+
+# App Store Screenshots (iOS UITests + Fastlane)
 cd ios && fastlane screenshots         # Generate all App Store screenshots
+# Requires: SCREENSHOT_MODE=1 env var, DNSChatUITests target
 ```
 
 ## Architecture
 
 ### Tech Stack
 - **Framework**: React Native 0.81 with Expo SDK 54
-- **React**: React 19.1 with React Compiler enabled
-- **Language**: TypeScript (strict mode)
+- **React**: React 19.1 with React Compiler enabled (auto-memoization)
+- **Language**: TypeScript 5.9+ (strict mode, see `docs/GUIDELINES-REF/TYPESCRIPT-GUIDELINES.md`)
 - **Navigation**: React Navigation v7 with react-native-bottom-tabs (native UITabBarController/BottomNavigationView)
 - **Native Modules**: Custom DNS implementations (iOS Swift, Android Java)
-- **Architecture**: New Architecture (Fabric) enabled with TurboModules
+- **Architecture**: New Architecture (Fabric) enabled
 - **Internationalization**: expo-localization with structured messages (en-US, pt-BR)
 
 ### Key Services
@@ -100,7 +107,7 @@ cd ios && fastlane screenshots         # Generate all App Store screenshots
   - Self-contained with own package.json and tests
   - iOS Swift implementation using Network.framework
   - Android Java implementation using DnsResolver API
-  - Integration test harness: `npm run dns:harness`
+  - Integration test harness: `pnpm dns:harness`
   - Smoke tests: `node test-dns-simple.js "message"`
 - **plugins/dns-native-plugin.js**: Expo config plugin for native module registration
 - **iOS bridge**: ios/DNSChat/ contains AppDelegate and native setup
@@ -124,8 +131,18 @@ cd ios && fastlane screenshots         # Generate all App Store screenshots
 2. **react-native-screens constexpr Fix**:
    - Uses patch-package to fix C++20 compilation errors in react-native-screens v4.16.0
    - Changed `constexpr` to `const` for Objective-C NSNumber literals in RNSScreenStackHeaderConfig.mm
-   - **Rationale**: Xcode 15+ enforces C++20 rules where constexpr requires compile-time constants. Objective-C `@17` creates runtime NSNumber objects. Upstream bug affects v4.16-4.19. patch-package ensures fix auto-applies on npm install and is version-controlled.
+   - **Rationale**: Xcode 15+ enforces C++20 rules where constexpr requires compile-time constants. Objective-C `@17` creates runtime NSNumber objects. Upstream bug affects v4.16-4.19. patch-package ensures fix auto-applies on pnpm install and is version-controlled.
    - Patch location: `patches/react-native-screens+4.16.0.patch`
+
+3. **@react-native-menu/menu React Native 0.81 Compatibility Fix**:
+   - Uses patch-package to fix React Native 0.81 API incompatibility in @react-native-menu/menu v1.2.4
+   - React Native 0.81 changed ReactViewGroup APIs from methods to properties: `setHitSlopRect()` → `hitSlopRect`, `setOverflow()` → `overflow`
+   - **Implementation**:
+     - `MenuView.kt`: Overrode `hitSlopRect` property with custom getter/setter to maintain `updateTouchDelegate()` behavior
+     - `MenuViewManagerBase.kt`: Changed `view.setHitSlopRect()` and `view.setOverflow()` calls to property assignments
+   - **Rationale**: React Native 0.81 broke API compatibility without migration path. Upstream fix exists in v2.0.0 but introduces "val cannot be reassigned" regressions (Issues #1167, #1179). Patching v1.2.4 is safer than upgrading to broken v2.0.0. Follows project pattern from react-native-screens patch.
+   - Patch location: `patches/@react-native-menu+menu+1.2.4.patch`
+   - Based on upstream PR #1156 with Kotlin signature conflict fix
 
 ### Liquid Glass UI (iOS 26+)
 Uses official `expo-glass-effect` with graceful fallbacks for iOS < 26, Android, and web platforms:
@@ -248,6 +265,28 @@ import { LiquidGlassWrapper } from '@/components/LiquidGlassWrapper';
 - **Motion**: Emphasize delight with container transforms and shared element transitions
 - **Accessibility**: Ensure 4.5:1 contrast ratios, large touch targets (48dp minimum)
 
+### Performance Patterns (from MOBILE-GUIDELINES.md)
+
+**List Rendering**:
+- Use `@shopify/flash-list` for lists with 10+ items (2-10x faster than FlatList)
+- Always provide `estimatedItemSize` for FlashList
+- Current usage: Message lists use FlashList
+
+**Concurrent Rendering (React 19)**:
+```typescript
+// Wrap non-urgent updates in transitions
+const [isPending, startTransition] = useTransition();
+startTransition(() => setResults(expensiveSearch(query)));
+
+// Defer non-critical computed values
+const deferredFilter = useDeferredValue(filter);
+```
+
+**Startup Optimization**:
+- Use `InteractionManager.runAfterInteractions()` for non-critical initialization
+- Lazy load screens with `React.lazy()`
+- Performance budget: < 2.5s cold start, < 1s warm start
+
 ## Project Structure
 
 ```
@@ -281,7 +320,7 @@ scripts/                # Build and version sync scripts
 ## Development Guidelines
 
 ### iOS Development
-- Requires CocoaPods: Run `npm run fix-pods` for issues
+- Requires CocoaPods: Run `pnpm fix-pods` for issues
 - Native DNS module in `modules/dns-native/` with iOS bridge in `ios/DNSChat/`
 - Uses Network.framework (iOS 14.0+)
 - Deployment target: iOS 16.0+
@@ -316,7 +355,7 @@ end
 
 **Why**: Xcode 15+ enables sandboxing by default, preventing CocoaPods scripts (Hermes, XCFrameworks, resource bundles) from executing. Without this fix, builds fail with "sandbox permission denied" errors.
 
-**Never remove** this configuration. Always run `npm run fix-pods` after:
+**Never remove** this configuration. Always run `pnpm fix-pods` after:
 - Upgrading Expo SDK or React Native
 - Adding native dependencies
 - Xcode major version upgrades
@@ -324,14 +363,14 @@ end
 See: [docs/troubleshooting/COMMON-ISSUES.md#2025-10-29-user-script-sandboxing-new-architecture-fixed](docs/troubleshooting/COMMON-ISSUES.md#2025-10-29-user-script-sandboxing-new-architecture-fixed)
 
 ### Android Development
-- **Requires Java 17**: Automatically set via `npm run android` script
+- **Requires Java 17**: Automatically set via `pnpm android` script
 - Native DNS module in `modules/dns-native/` with Android bridge in `android/app/src/main/java/com/dnsnative/`
 - Uses DnsResolver API (API 29+) with dnsjava fallback
 - Minimum SDK: API 21+
 
 ### Version Management
 - CHANGELOG.md is source of truth
-- Run `npm run sync-versions` before builds
+- Run `pnpm sync-versions` before builds
 - Updates package.json, app.json, iOS, and Android
 
 ### React Best Practices: You Might Not Need an Effect
@@ -407,24 +446,29 @@ const styles = StyleSheet.create({
 
 ## Documentation Structure
 
-**AGENTS.md / CLAUDE.md** - How to work on this codebase (READ THIS FIRST)
-**PROJECT_STATUS.md** - Current progress, what's next, blockers (READ THIS SECOND)
+**CLAUDE.md** - How to work on this codebase (READ THIS FIRST)
 **README.md** - Human-readable project overview
-**QUICKSTART.md** - User getting started guide (optional)
+**CHANGELOG.md** - Version history, source of truth for versions
 **/PLANS.md** - ExecPlan specification and methodology
 
 ### Reference Documentation Folders
 
+- `/docs/GUIDELINES-REF/` (symlink) - Development guidelines for all platforms:
+  - `MOBILE-GUIDELINES.md` - React Native/Expo development (2025/2026)
+  - `REACT-GUIDELINES.md` - React 19+ patterns, React Compiler, Server Components
+  - `TYPESCRIPT-GUIDELINES.md` - TypeScript 5.6+ strict configuration
+  - `DEV-GUIDELINES.md` - Universal development principles
+  - `IOS-GUIDELINES.md` - iOS/iPadOS development specifics
+  - `SWIFT-GUIDELINES.md` - Swift 6, SwiftUI, SwiftData patterns
 - `/docs/technical/` - Specifications and guides
-- `/docs/troubleshooting/` - Common issues
-- `/docs/architecture/` - System design
-- `/docs/` - Always look for reference documentation here first
+- `/docs/troubleshooting/` - Common issues and fixes
+- `/docs/architecture/` - System design decisions (ADRs)
 - `/docs/REF_DOC/` - Reference documentation (1096+ markdown files)
   - `docs/REF_DOC/docs_apple/` - Swift, SwiftUI, Liquid Glass, HIG
   - `docs/REF_DOC/docs_expo_dev/` - Complete Expo guides and API references
   - `docs/REF_DOC/docs_reactnative_getting-started/` - New Architecture, platform integration
 
-**CRITICAL**: Always consult `docs/` and `docs/REF_DOC/` BEFORE implementing features or answering questions about Expo, React Native, iOS, or Swift.
+**CRITICAL**: Always consult `docs/GUIDELINES-REF/` and `docs/REF_DOC/` BEFORE implementing features or answering questions about Expo, React Native, iOS, or Swift.
 
 ## Apple Platform Guidelines
 
@@ -479,12 +523,12 @@ xcodebuild -workspace ios/DNSChat.xcworkspace -scheme DNSChat -sdk iphoneos buil
 # Run tests (if implemented)
 xcodebuild test -workspace ios/DNSChat.xcworkspace -scheme DNSChat -destination 'platform=iOS Simulator,name=iPhone 16 Pro'
 
-# Preferred: Use npm scripts instead
-npm run ios              # Builds and runs on iOS Simulator via Expo
-npm run fix-pods         # Fix CocoaPods issues before building
+# Preferred: Use pnpm scripts instead
+pnpm ios                 # Builds and runs on iOS Simulator via Expo
+pnpm fix-pods            # Fix CocoaPods issues before building
 ```
 
-**IMPORTANT**: For React Native/Expo projects, prefer `npm run ios` over direct Xcodebuild commands. Only use Xcodebuild directly when debugging native module issues or when MCP Xcode tools are invoked.
+**IMPORTANT**: For React Native/Expo projects, prefer `pnpm ios` over direct Xcodebuild commands. Only use Xcodebuild directly when debugging native module issues or when MCP Xcode tools are invoked.
 
 ### iOS 26 Liquid Glass Requirements
 
@@ -589,31 +633,30 @@ class ConvertViewModel: ObservableObject { } // NO!
 ## Testing Checklist
 
 Before committing:
-1. Test on iOS simulator (`npm run ios`)
-2. Test on Android emulator (`npm run android`)
-3. Verify DNS queries work: `node test-dns-simple.js "test message"`
-4. Run DNS harness: `npm run dns:harness -- --message "harness test"`
-5. Check native module registration (console logs)
-6. Run version sync if needed: `npm run sync-versions`
-7. Update CHANGELOG.md for significant changes (following [Keep a Changelog](https://keepachangelog.com/en/1.1.0/))
+1. Run unit tests: `pnpm test`
+2. Test on iOS simulator: `pnpm ios`
+3. Test on Android emulator: `pnpm android`
+4. Verify DNS queries: `node test-dns-simple.js "test message"`
+5. Run DNS harness: `pnpm dns:harness -- --message "harness test"`
+6. Run version sync if needed: `pnpm sync-versions`
+7. Update CHANGELOG.md following [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 
 ## Common Issues & Fixes
 
 ### iOS Build Failures
 ```bash
-npm run fix-pods  # Cleans and reinstalls pods
+pnpm fix-pods  # Cleans and reinstalls pods
 ```
 
 ### Native Module Not Found
 - Ensure `modules/dns-native/` package is properly linked
 - Check expo config plugin in app.json: `"./plugins/dns-native-plugin"`
-- Run `npm run fix-pods` to reinstall CocoaPods dependencies
+- Run `pnpm fix-pods` to reinstall CocoaPods dependencies
 
 ### Java Version Issues
-Use Java 17 for Android builds (automated in npm scripts)
+Use Java 17 for Android builds (automated in pnpm scripts)
 
 ## Important Notes
 
-- **Expo Go Limitation**: Expo Go does not support custom native modules. Use Development Builds (`npm run ios/android`) to test DNS functionality and other native features.
-- Update CHANGELOG.md for all changes following [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
+- **Expo Go Limitation**: Expo Go does not support custom native modules. Use Development Builds (`pnpm ios/android`) to test DNS functionality and other native features.
 - Native DNS is prioritized over network methods for best performance

@@ -40,6 +40,8 @@ interface GlassFormProps {
   style?: StyleProp<ViewStyle>;
   /** Enable nested scrolling on Android */
   nestedScrollEnabled?: boolean;
+  /** Test ID for UI testing */
+  testID?: string;
 }
 
 interface GlassFormSectionProps {
@@ -137,6 +139,7 @@ export const GlassForm: React.FC<GlassFormProps> = ({
   children,
   style,
   nestedScrollEnabled = false,
+  testID,
 }) => {
   const colors = useGlassColors();
   const insets = useSafeAreaInsets();
@@ -151,6 +154,7 @@ export const GlassForm: React.FC<GlassFormProps> = ({
 
   return (
     <SafeAreaView
+      testID={testID}
       edges={["top", "right", "bottom", "left"]}
       style={[styles.safeAreaContainer, { backgroundColor: colors.background }]}
     >
