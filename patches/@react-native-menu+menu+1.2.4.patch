@@ -1,0 +1,80 @@
+diff --git a/node_modules/@react-native-menu/menu/android/src/main/java/com/reactnativemenu/MenuView.kt b/node_modules/@react-native-menu/menu/android/src/main/java/com/reactnativemenu/MenuView.kt
+index 17ed7c6..c70d575 100644
+--- a/node_modules/@react-native-menu/menu/android/src/main/java/com/reactnativemenu/MenuView.kt
++++ b/node_modules/@react-native-menu/menu/android/src/main/java/com/reactnativemenu/MenuView.kt
+@@ -47,11 +47,15 @@ class MenuView(private val mContext: ReactContext) : ReactViewGroup(mContext) {
+     prepareMenu()
+   }
+ 
+-  override fun setHitSlopRect(rect: Rect?) {
+-    super.setHitSlopRect(rect)
+-    mHitSlopRect = rect
+-    updateTouchDelegate()
+-  }
++  // React Native 0.81+ changed setHitSlopRect() from method to property
++  // Override property setter to maintain updateTouchDelegate behavior
++  override var hitSlopRect: Rect?
++    get() = super.hitSlopRect
++    set(value) {
++      super.hitSlopRect = value
++      mHitSlopRect = value
++      updateTouchDelegate()
++    }
+ 
+   override fun onInterceptTouchEvent(ev: MotionEvent): Boolean {
+     return true
+diff --git a/node_modules/@react-native-menu/menu/android/src/main/java/com/reactnativemenu/MenuViewManagerBase.kt b/node_modules/@react-native-menu/menu/android/src/main/java/com/reactnativemenu/MenuViewManagerBase.kt
+index 4731e1a..e4f3cf6 100644
+--- a/node_modules/@react-native-menu/menu/android/src/main/java/com/reactnativemenu/MenuViewManagerBase.kt
++++ b/node_modules/@react-native-menu/menu/android/src/main/java/com/reactnativemenu/MenuViewManagerBase.kt
+@@ -121,25 +121,23 @@ abstract class MenuViewManagerBase : ReactClippingViewManager<MenuView>() {
+ 
+   @ReactProp(name = "hitSlop")
+   fun setHitSlop(view: ReactViewGroup, @Nullable hitSlop: ReadableMap?) {
++    // React Native 0.81+ changed setHitSlopRect() method to hitSlopRect property
+     if (hitSlop == null) {
+-      // We should keep using setters as `Val cannot be reassigned`
+-      view.setHitSlopRect(null)
++      view.hitSlopRect = null
+     } else {
+-      view.setHitSlopRect(
+-              Rect(
+-                      if (hitSlop.hasKey("left"))
+-                              PixelUtil.toPixelFromDIP(hitSlop.getDouble("left")).toInt()
+-                      else 0,
+-                      if (hitSlop.hasKey("top"))
+-                              PixelUtil.toPixelFromDIP(hitSlop.getDouble("top")).toInt()
+-                      else 0,
+-                      if (hitSlop.hasKey("right"))
+-                              PixelUtil.toPixelFromDIP(hitSlop.getDouble("right")).toInt()
+-                      else 0,
+-                      if (hitSlop.hasKey("bottom"))
+-                              PixelUtil.toPixelFromDIP(hitSlop.getDouble("bottom")).toInt()
+-                      else 0
+-              )
++      view.hitSlopRect = Rect(
++              if (hitSlop.hasKey("left"))
++                      PixelUtil.toPixelFromDIP(hitSlop.getDouble("left")).toInt()
++              else 0,
++              if (hitSlop.hasKey("top"))
++                      PixelUtil.toPixelFromDIP(hitSlop.getDouble("top")).toInt()
++              else 0,
++              if (hitSlop.hasKey("right"))
++                      PixelUtil.toPixelFromDIP(hitSlop.getDouble("right")).toInt()
++              else 0,
++              if (hitSlop.hasKey("bottom"))
++                      PixelUtil.toPixelFromDIP(hitSlop.getDouble("bottom")).toInt()
++              else 0
+       )
+     }
+   }
+@@ -206,7 +204,8 @@ abstract class MenuViewManagerBase : ReactClippingViewManager<MenuView>() {
+ 
+   @ReactProp(name = ViewProps.OVERFLOW)
+   fun setOverflow(view: ReactViewGroup, overflow: String?) {
+-    view.setOverflow(overflow)
++    // React Native 0.81+ changed setOverflow() method to overflow property
++    view.overflow = overflow
+   }
+ 
+   @ReactProp(name = "backfaceVisibility")
