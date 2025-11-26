@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { isScreenshotMode } from "../utils/screenshotMode";
 
 export interface OnboardingStep {
   id: string;
@@ -83,6 +84,13 @@ export function OnboardingProvider({
 
   const loadOnboardingState = async () => {
     try {
+      // Skip onboarding in screenshot mode to allow fastlane to capture main app screens
+      if (isScreenshotMode()) {
+        setHasCompletedOnboarding(true);
+        setLoading(false);
+        return;
+      }
+
       const onboardingData = await AsyncStorage.getItem(ONBOARDING_STORAGE_KEY);
       if (onboardingData) {
         const { completed, stepIndex, completedSteps } =
