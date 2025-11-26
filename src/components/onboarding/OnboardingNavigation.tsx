@@ -59,6 +59,7 @@ export function OnboardingNavigation({
           <TouchableOpacity
             onPress={handleSkip}
             style={styles.skipButton}
+            testID="skip-onboarding"
             accessibilityRole="button"
             accessibilityLabel="Skip onboarding"
             accessibilityHint="Skips the tutorial and goes directly to the app"
@@ -104,6 +105,7 @@ export function OnboardingNavigation({
           styles.nextButton,
           { backgroundColor: palette.accentTint },
         ]}
+        testID={isLastStep ? "onboarding-complete" : "onboarding-continue"}
         accessibilityRole="button"
         accessibilityLabel={isLastStep ? "Get Started" : nextButtonText}
         accessibilityHint={

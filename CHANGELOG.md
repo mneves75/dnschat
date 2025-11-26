@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Fastlane Screenshot Automation**: Complete App Store screenshot generation system
+  - Created `ScreenshotModeModule` native Swift module to detect `-SCREENSHOT_MODE 1` launch argument
+  - Added XCUITest suite (`DNSChatUITests.swift`) with 5 test cases capturing 4 screens per device/language
+  - Configured Snapfile for iPhone 17 Pro Max (6.9") and iPhone 17 (6.3") in en-US and pt-BR
+  - Screenshots: Chat-List, Chat-List-Dark, DNS-Logs, About
+  - Fixed language detection: UITest now reads from fastlane cache file (`$SIMULATOR_HOST_HOME/Library/Caches/tools.fastlane/language.txt`) instead of environment variable
+  - Added testIDs to onboarding components for XCUITest navigation
+  - Uses Release configuration (embeds JS bundle, no Metro required)
+
 ## [3.1.0] - 2025-11-25
 
 ### Fixed
