@@ -3,10 +3,10 @@
 # List of devices to generate screenshots for
 # iPhone 17 Pro Max: 6.9" display (1320 x 2868 px) - Required for App Store
 # iPhone 17: 6.3" display - Required for App Store
-# iPad Pro 13": 2048 x 2732 px - Using M5 (disabled - uses sidebar navigation)
+# iPad Pro 13": 2048 x 2732 px - Required for App Store
+# Temporarily running iPad only for 13" screenshots
 devices([
-  "iPhone 17 Pro Max",
-  "iPhone 17"
+  "iPad Pro 13-inch (M5)"
 ])
 
 # List of languages to generate screenshots for
@@ -30,7 +30,8 @@ test_target_name("DNSChatUITests")
 output_directory("./fastlane/screenshots")
 
 # Clear all previously generated screenshots before generating new ones
-clear_previous_screenshots(true)
+# Disabled to preserve iPhone screenshots while generating iPad
+clear_previous_screenshots(false)
 
 # Arguments to pass to the app on launch
 # Enable screenshot mode with mock data
