@@ -12,6 +12,11 @@ class DNSChatUITests: XCTestCase {
     // Current language
     var currentLanguage: String = "en-US"
 
+    // Device type detection
+    var isIPad: Bool {
+        return UIDevice.current.userInterfaceIdiom == .pad
+    }
+
     override func setUpWithError() throws {
         continueAfterFailure = false
 
@@ -39,19 +44,22 @@ class DNSChatUITests: XCTestCase {
             }
         }
 
+        NSLog("Device type: \(isIPad ? "iPad" : "iPhone")")
+
         // Setup Fastlane snapshot before launching (this also sets language args)
         setupSnapshot(app)
 
         app.launch()
 
-        // Wait for React Native to initialize - either tab bar or onboarding will appear
+        // Wait for React Native to initialize
+        // iPad uses sidebar navigation, iPhone uses tab bar
         let tabBar = app.tabBars.firstMatch
         let skipButton = app.buttons["skip-onboarding"]
 
-        // Wait for either tab bar (onboarding bypassed) or skip button (onboarding showing)
-        let tabBarExists = tabBar.waitForExistence(timeout: 5)
+        // Wait for navigation to appear (tab bar on iPhone, or other indicators on iPad)
+        let navExists = waitForNavigation(timeout: 5)
 
-        if !tabBarExists {
+        if !navExists {
             // Onboarding is showing - need to skip it
             // First, wait a bit for React Native to fully initialize
             sleep(2)
@@ -67,9 +75,17 @@ class DNSChatUITests: XCTestCase {
 
                 // Complete each onboarding step (max 6 steps)
                 for _ in 0..<6 {
-                    // First check if we've reached the tab bar
-                    if tabBar.exists {
-                        break
+                    // First check if we've reached the navigation
+                    if isIPad {
+                        // iPad: Check for sidebar or content area
+                        if app.otherElements["chat-list"].exists || app.otherElements["about-screen"].exists {
+                            break
+                        }
+                    } else {
+                        // iPhone: Check for tab bar
+                        if tabBar.exists {
+                            break
+                        }
                     }
 
                     // Try continue button (regular steps)
@@ -95,12 +111,66 @@ class DNSChatUITests: XCTestCase {
                 }
             }
 
-            // After completing onboarding, verify tab bar now exists
-            XCTAssertTrue(tabBar.waitForExistence(timeout: 10), "Tab bar not found after completing onboarding")
+            // After completing onboarding, verify navigation now exists
+            let finalNavExists = waitForNavigation(timeout: 10)
+            XCTAssertTrue(finalNavExists, "Navigation not found after completing onboarding (iPad: \(isIPad))")
         }
 
         // Additional wait for animations and rendering
         sleep(2)
+    }
+
+    // Helper to wait for navigation elements (handles iPad vs iPhone)
+    private func waitForNavigation(timeout: TimeInterval) -> Bool {
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            if isIPad {
+                // iPad: Check for sidebar elements or main content
+                // react-native-bottom-tabs shows sidebar on iPad
+                if app.otherElements["chat-list"].exists ||
+                   app.otherElements["about-screen"].exists ||
+                   app.otherElements["logs-screen"].exists ||
+                   app.buttons[tabTitleChat].exists ||
+                   app.buttons[tabTitleLogs].exists ||
+                   app.buttons[tabTitleAbout].exists {
+                    return true
+                }
+            } else {
+                // iPhone: Check for tab bar
+                if app.tabBars.firstMatch.exists {
+                    return true
+                }
+            }
+            usleep(100_000) // 100ms
+        }
+        return false
+    }
+
+    // Helper to tap navigation item (handles iPad sidebar vs iPhone tab bar)
+    private func tapNavigationItem(_ title: String) -> Bool {
+        if isIPad {
+            // iPad: Use firstMatch to handle multiple elements with same title
+            // react-native-bottom-tabs sidebar may have duplicate labels
+            let sidebarButton = app.buttons[title].firstMatch
+            if sidebarButton.waitForExistence(timeout: 5) {
+                sidebarButton.tap()
+                return true
+            }
+            // Fallback: Try static text in sidebar
+            let sidebarText = app.staticTexts[title].firstMatch
+            if sidebarText.waitForExistence(timeout: 3) {
+                sidebarText.tap()
+                return true
+            }
+        } else {
+            // iPhone: Use tab bar
+            let tabButton = app.tabBars.buttons[title]
+            if tabButton.waitForExistence(timeout: 5) {
+                tabButton.tap()
+                return true
+            }
+        }
+        return false
     }
 
     override func tearDownWithError() throws {
@@ -122,10 +192,8 @@ class DNSChatUITests: XCTestCase {
     // Removed - duplicate of testChatList
 
     func testChatList() throws {
-        // Navigate to Chat List tab using localized title
-        let chatTab = app.tabBars.buttons[tabTitleChat]
-        if chatTab.waitForExistence(timeout: 5) {
-            chatTab.tap()
+        // Navigate to Chat List using localized title (handles iPad sidebar vs iPhone tab bar)
+        if tapNavigationItem(tabTitleChat) {
             sleep(2)
 
             // Look for chat list elements
@@ -143,15 +211,12 @@ class DNSChatUITests: XCTestCase {
         app.launchArguments.append("dark")
         app.launch()
 
-        // Wait for React Native
-        let tabBar = app.tabBars.firstMatch
-        XCTAssertTrue(tabBar.waitForExistence(timeout: 15))
+        // Wait for navigation to appear
+        XCTAssertTrue(waitForNavigation(timeout: 15), "Navigation not found in dark mode")
         sleep(2)
 
         // Navigate to Chat List using localized title
-        let chatTab = app.tabBars.buttons[tabTitleChat]
-        if chatTab.waitForExistence(timeout: 5) {
-            chatTab.tap()
+        if tapNavigationItem(tabTitleChat) {
             sleep(2)
 
             let chatList = app.otherElements["chat-list"]
@@ -162,10 +227,8 @@ class DNSChatUITests: XCTestCase {
     }
 
     func testDNSLogs() throws {
-        // Navigate to Logs tab using localized title
-        let logsTab = app.tabBars.buttons[tabTitleLogs]
-        if logsTab.waitForExistence(timeout: 5) {
-            logsTab.tap()
+        // Navigate to Logs using localized title
+        if tapNavigationItem(tabTitleLogs) {
             sleep(2)
 
             // Wait for logs screen to load
@@ -177,11 +240,8 @@ class DNSChatUITests: XCTestCase {
     }
 
     func testAbout() throws {
-        // Navigate to About tab using localized title
-        let aboutTab = app.tabBars.buttons[tabTitleAbout]
-        if aboutTab.waitForExistence(timeout: 5) {
-            aboutTab.tap()
-
+        // Navigate to About using localized title
+        if tapNavigationItem(tabTitleAbout) {
             // Wait for about screen to load
             let aboutScreen = app.otherElements["about-screen"]
             XCTAssertTrue(aboutScreen.waitForExistence(timeout: 5))
