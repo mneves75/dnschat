@@ -9,10 +9,22 @@ import { NativeModules, Platform } from "react-native";
 import type { Message } from "../types/chat";
 import type { DNSQueryLog } from "../services/dnsLogService";
 
+// Get reference to ScreenshotModeModule for iOS
+const ScreenshotModeModule = NativeModules.ScreenshotModeModule;
+
 // Check if running in screenshot mode
 export function isScreenshotMode(): boolean {
   if (Platform.OS === "ios") {
-    // iOS: Check for launch argument via UserDefaults
+    // Method 1: Check custom ScreenshotModeModule (reads UserDefaults and ProcessInfo)
+    try {
+      if (ScreenshotModeModule?.isScreenshotMode !== undefined) {
+        return ScreenshotModeModule.isScreenshotMode === true;
+      }
+    } catch (error) {
+      // Module not available, try fallback
+    }
+
+    // Method 2: Fallback to deprecated Settings module
     try {
       const Settings = NativeModules.Settings;
       if (Settings && Settings.get) {
@@ -20,7 +32,7 @@ export function isScreenshotMode(): boolean {
         return screenshotMode === "1" || screenshotMode === true;
       }
     } catch (error) {
-      console.log("Screenshot mode check failed:", error);
+      // Settings module not available
     }
   }
 

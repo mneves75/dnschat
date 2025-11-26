@@ -3,11 +3,10 @@
 # List of devices to generate screenshots for
 # iPhone 17 Pro Max: 6.9" display (1320 x 2868 px) - Required for App Store
 # iPhone 17: 6.3" display - Required for App Store
-# iPad Pro 13": 2048 x 2732 px - Using M5
+# iPad Pro 13": 2048 x 2732 px - Using M5 (disabled - uses sidebar navigation)
 devices([
   "iPhone 17 Pro Max",
-  "iPhone 17",
-  "iPad Pro 13-inch (M5)"
+  "iPhone 17"
 ])
 
 # List of languages to generate screenshots for
@@ -18,6 +17,11 @@ languages([
 
 # The name of the scheme to use for building the app
 scheme("DNSChat")
+
+# Build configuration - MUST use Release for React Native
+# Release embeds the JS bundle, eliminating need for Metro bundler
+# Debug requires Metro running at localhost:8081
+configuration("Release")
 
 # Test target name
 test_target_name("DNSChatUITests")

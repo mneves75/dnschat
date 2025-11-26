@@ -7,7 +7,9 @@ platform :ios do
       clean: true,
       erase_simulator: true,
       concurrent_simulators: false,
-      stop_after_first_error: false
+      stop_after_first_error: false,
+      # Disable xcpretty to avoid Ruby 2.6/3.4 version conflict
+      xcodebuild_formatter: ''
     )
   end
 
