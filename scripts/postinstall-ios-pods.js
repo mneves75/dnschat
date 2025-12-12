@@ -42,19 +42,23 @@ function main() {
 
   if (!fs.existsSync(iosDir) || !fs.existsSync(podfilePath)) return;
 
-  if (!hasCommand("pod")) {
-    // Fail hard: on macOS with an iOS project present, missing CocoaPods means
-    // iOS builds are not viable, and leaving Pods/lock stale is worse.
-    process.stderr.write(
-      "postinstall-ios-pods: CocoaPods not found (`pod`). Install it, or set SKIP_IOS_POD_INSTALL=1.\n"
-    );
-    process.exit(1);
-  }
-
   const lockfileText = fs.existsSync(lockPath) ? fs.readFileSync(lockPath, "utf8") : "";
   const outOfSync = getOutOfSyncPods({ projectRoot, lockfileText });
 
+  // If everything is already consistent, do not require CocoaPods.
+  // This keeps non-iOS workflows on macOS unblocked while still enforcing the
+  // invariant when drift is present.
   if (outOfSync.length === 0) return;
+
+  if (!hasCommand("pod")) {
+    process.stderr.write(
+      "postinstall-ios-pods: CocoaPods not found (`pod`), but iOS pods are out of sync.\n"
+    );
+    process.stderr.write(
+      "Fix: install CocoaPods and rerun `npm install`, or set SKIP_IOS_POD_INSTALL=1 and run `npm run verify:ios-pods` before committing.\n"
+    );
+    process.exit(1);
+  }
 
   process.stdout.write("postinstall-ios-pods: detected out-of-sync pods\n");
   for (const entry of outOfSync) {
