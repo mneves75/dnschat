@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Dev Tooling (pre-commit)**: Removed duplicate Jest flags in `.husky/pre-commit` to keep hook output deterministic and avoid confusion.
 
 - **DNS smoke test**: `node test-dns-simple.js` now supports `--resolver`/`--zone`, avoids emoji output, and uses less flaky UDP timeouts with optional TCP/DoH fallbacks for clearer diagnosis.
+  - Added pure helper module + Jest coverage for message sanitization and target parsing to keep smoke behavior deterministic and reviewable.
 
 ### Documentation
 
