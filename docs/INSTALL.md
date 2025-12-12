@@ -81,7 +81,19 @@ npm run web
    cd ..
    ```
 
-4. **Open in Xcode (optional)**
+4. **Verify iOS CocoaPods lockfile sync (recommended)**
+
+   This repo includes a guardrail that detects when Expo iOS pods drift from installed `node_modules` versions (a common source of Swift “Cannot find `<Type>` in scope” errors).
+
+   ```bash
+   npm run verify:ios-pods
+   ```
+
+   Notes:
+   - On macOS, `npm install` may auto-run `pod install` when drift is detected (can be disabled with `SKIP_IOS_POD_INSTALL=1`).
+   - Before committing after dependency changes, run `npm run verify:ios-pods` and commit any resulting `ios/Podfile.lock` update.
+
+5. **Open in Xcode (optional)**
    ```bash
    open ios/DNSChat.xcworkspace
    ```
