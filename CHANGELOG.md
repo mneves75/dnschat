@@ -30,6 +30,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Dev Tooling (pre-commit)**: Removed duplicate Jest flags in `.husky/pre-commit` to keep hook output deterministic and avoid confusion.
 
+- **DNS smoke test**: `node test-dns-simple.js` now supports `--resolver`/`--zone`, avoids emoji output, and uses less flaky UDP timeouts with optional TCP/DoH fallbacks for clearer diagnosis.
+
 ### Documentation
 
 - Documented the CocoaPods drift guard (`npm run verify:ios-pods`, `SKIP_IOS_POD_INSTALL=1`) and added a dedicated troubleshooting entry for Swift “Cannot find `<Type>` in scope” errors caused by stale `ios/Podfile.lock`.
