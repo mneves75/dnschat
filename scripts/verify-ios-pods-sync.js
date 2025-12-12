@@ -5,6 +5,10 @@ const path = require("path");
 
 const { getIosPodfileLockPath, getOutOfSyncPods } = require("./iosPodsSync");
 
+function formatVersion(version) {
+  return version == null ? "missing" : String(version);
+}
+
 function main() {
   const projectRoot = path.resolve(__dirname, "..");
   const iosDir = path.join(projectRoot, "ios");
@@ -34,7 +38,9 @@ function main() {
   process.stderr.write("verify-ios-pods-sync: iOS pods out of sync\n");
   for (const entry of outOfSync) {
     process.stderr.write(
-      `- ${entry.podName}: lock=${entry.lockfileVersion} installed=${entry.installedVersion}\n`
+      `- ${entry.podName}: lock=${formatVersion(entry.lockfileVersion)} installed=${formatVersion(
+        entry.installedVersion
+      )}${entry.reason ? ` (${entry.reason})` : ""}\n`
     );
   }
   process.stderr.write(
