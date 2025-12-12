@@ -146,37 +146,49 @@ describe('DNS Native Module - Concurrency Stress Tests', () => {
    * Verifies ResumeGate prevents double-resume when timeout and success race.
    */
   it('should handle timeout races gracefully', async () => {
+    // Important: Promise.race does not cancel the "losing" promise.
+    // This test intentionally simulates responses that arrive after the timeout.
+    // To keep Jest deterministic and avoid leaving real timers pending (open-handle),
+    // we track and clear the long-running timers in a finally block.
+    const pendingResponseTimers: Array<ReturnType<typeof setTimeout>> = [];
+
     mockNativeModule.queryTXT.mockImplementation(() => {
       return new Promise((resolve) => {
-        // Some queries take longer than typical timeout (10s)
-        const delay = Math.random() * 15000;
-        setTimeout(() => {
+        // Some queries take longer than typical timeout (10s).
+        // Keep this deterministic so the test is stable.
+        const delayMs = 15000;
+        const timer = setTimeout(() => {
           resolve(['late-response']);
-        }, delay);
+        }, delayMs);
+        pendingResponseTimers.push(timer);
       });
     });
 
-    const promises = Array.from({ length: 50 }, () =>
-      // Race each query against 100ms timeout
-      Promise.race([
-        NativeModules.RNDNSModule.queryTXT('1.1.1.1', 'slow-query'),
-        new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('timeout')), 100)
-        ),
-      ])
-    );
+    try {
+      const promises = Array.from({ length: 50 }, () =>
+        // Race each query against 100ms timeout
+        Promise.race([
+          NativeModules.RNDNSModule.queryTXT('1.1.1.1', 'slow-query'),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('timeout')), 100)
+          ),
+        ])
+      );
 
-    const results = await Promise.allSettled(promises);
+      const results = await Promise.allSettled(promises);
 
-    // All should settle (no hangs from timeout/success race)
-    expect(results.length).toBe(50);
+      // All should settle (no hangs from timeout/success race)
+      expect(results.length).toBe(50);
 
-    // Most should timeout given 100ms limit vs 0-15s responses
-    const timedOut = results.filter(
-      (r) => r.status === 'rejected' && r.reason.message === 'timeout'
-    ).length;
+      // Most should timeout given 100ms limit vs 15s responses
+      const timedOut = results.filter(
+        (r) => r.status === 'rejected' && r.reason.message === 'timeout'
+      ).length;
 
-    expect(timedOut).toBeGreaterThan(40); // Most should timeout
+      expect(timedOut).toBeGreaterThan(40); // Most should timeout
+    } finally {
+      for (const timer of pendingResponseTimers) clearTimeout(timer);
+    }
   }, 20000);
 
   /**
