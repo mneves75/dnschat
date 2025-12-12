@@ -654,6 +654,34 @@ CCACHE_DISABLE=1 EXPO_NO_CACHE=1 npx expo run:ios --device <DEVICE_UUID>
 
 **Status:** Reproduced and resolved on 2025-10-28. Subsequent `expo run:ios` builds complete without clang crashes.
 
+#### 2025-12-12: Swift “Cannot find `<Type>` in scope” After JS Dependency Updates (CocoaPods Drift)
+
+**Symptoms:**
+
+```
+Cannot find 'NetworkUtilities' in scope
+```
+
+**Root Cause:** `ios/Podfile.lock` can drift behind installed `node_modules` versions (especially after patch updates to Expo dev-client related packages). When iOS pods are not regenerated, the Pods project may compile against stale Swift file lists and fail with missing-type errors.
+
+**Fix Steps (Run in repo root):**
+
+```bash
+# 1. Check for drift (fast, does not run CocoaPods)
+npm run verify:ios-pods
+
+# 2. If out of sync, regenerate iOS pods (macOS only)
+cd ios && pod install && cd ..
+
+# 3. Rebuild
+npm run ios
+```
+
+**Prevention:**
+
+- On macOS, `npm install` may auto-run `pod install` when drift is detected (can be disabled with `SKIP_IOS_POD_INSTALL=1`).
+- Before committing after dependency changes, run `npm run verify:ios-pods` and commit any `ios/Podfile.lock` update.
+
 #### 2025-10-29: User Script Sandboxing (New Architecture) (FIXED)
 
 **Symptoms:**

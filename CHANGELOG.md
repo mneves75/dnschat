@@ -26,6 +26,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Root Cause**: `ios/Podfile.lock` can drift behind installed `node_modules` versions (e.g., `expo-dev-launcher` 6.0.18 locked vs 6.0.20 installed). When a new Swift source file is introduced between patch versions, stale Pods project file lists can manifest as “Cannot find `<Type>` in scope”.
   - **Solution**: Added `verify:ios-pods` and a macOS-only `postinstall` auto-fix that runs `pod install` when drift is detected, keeping `Podfile.lock` synced with installed Expo pods.
   - **Tests**: Added a focused Jest regression test for Podfile.lock parsing.
+  - **Hardening**: Drift detection now also treats “installed package missing from Podfile.lock” as drift (actionable reasons emitted in output).
+
+- **Dev Tooling (pre-commit)**: Removed duplicate Jest flags in `.husky/pre-commit` to keep hook output deterministic and avoid confusion.
 
 ## [3.1.0] - 2025-11-25
 
