@@ -30,8 +30,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Dev Tooling (pre-commit)**: Removed duplicate Jest flags in `.husky/pre-commit` to keep hook output deterministic and avoid confusion.
 
-- **DNS smoke test**: `node test-dns-simple.js` now supports `--resolver`/`--zone`, avoids emoji output, and uses less flaky UDP timeouts with optional TCP/DoH fallbacks for clearer diagnosis.
-  - Added pure helper module + Jest coverage for message sanitization and target parsing to keep smoke behavior deterministic and reviewable.
+- **DNS smoke test**: `node test-dns-simple.js` now supports `--message`, `--resolver`/`--zone`/`--port`, avoids emoji output, and uses less flaky UDP timeouts with TCP fallback for clearer diagnosis on restricted networks.
+  - **DoH fallback**: Skipped by default for `ch.at` (public DoH resolvers typically won’t have private-zone TXT records); can be forced via `--force-doh` or used for non-`ch.at` zones.
+  - **Tests**: Added a pure helper module + Jest coverage for message sanitization and resolver/zone parsing to keep behavior deterministic and reviewable.
 
 ### Documentation
 
