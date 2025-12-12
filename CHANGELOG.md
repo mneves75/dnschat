@@ -20,6 +20,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **iPad Support**: Added iPad Pro 13-inch (M5) screenshots at 2048x2732 for App Store submission
   - Fixed XCUITest iPad sidebar navigation: react-native-bottom-tabs creates duplicate button labels in sidebar, resolved with `.firstMatch` query pattern
 
+### Fixed
+
+- **iOS CocoaPods Drift Guard (expo-dev-launcher)**: Prevents confusing Swift build failures when `node_modules` Expo packages update (patch bumps) but `ios/Podfile.lock` is not regenerated.
+  - **Root Cause**: `ios/Podfile.lock` can drift behind installed `node_modules` versions (e.g., `expo-dev-launcher` 6.0.18 locked vs 6.0.20 installed). When a new Swift source file is introduced between patch versions, stale Pods project file lists can manifest as “Cannot find `<Type>` in scope”.
+  - **Solution**: Added `verify:ios-pods` and a macOS-only `postinstall` auto-fix that runs `pod install` when drift is detected, keeping `Podfile.lock` synced with installed Expo pods.
+  - **Tests**: Added a focused Jest regression test for Podfile.lock parsing.
+
 ## [3.1.0] - 2025-11-25
 
 ### Fixed

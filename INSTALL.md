@@ -93,6 +93,9 @@ npm install
 # Install iOS native dependencies
 cd ios && pod install && cd ..
 
+# Verify CocoaPods lockfile matches installed Expo packages (recommended)
+npm run verify:ios-pods
+
 # Verify native DNS module (RN env)
 node test-dns-simple.js "Hello world"
 ```

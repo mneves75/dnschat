@@ -23,8 +23,9 @@
     "lint": "npm run lint:ast-grep",
     "dns:harness:build": "tsc -p scripts/tsconfig.harness.json",
     "dns:harness": "npm run dns:harness:build && node scripts/dist/run-dns-harness.js",
+    "verify:ios-pods": "node scripts/verify-ios-pods-sync.js",
     "prepare": "node scripts/install-git-hooks.js",
-    "postinstall": "patch-package"
+    "postinstall": "patch-package && node scripts/postinstall-ios-pods.js"
   },
   "dependencies": {
     "@expo/metro-runtime": "~6.1.2",
