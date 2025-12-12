@@ -5,6 +5,7 @@ const fs = require("fs");
 const path = require("path");
 
 const { getIosPodfileLockPath, getOutOfSyncPods } = require("./iosPodsSync");
+const { decideIosPodsPostinstallAction } = require("./iosPodsPostinstallPolicy");
 
 function hasCommand(command) {
   const result = spawnSync(command, ["--version"], { stdio: "ignore" });
@@ -40,17 +41,24 @@ function main() {
   const podfilePath = path.join(iosDir, "Podfile");
   const lockPath = getIosPodfileLockPath(projectRoot);
 
-  if (!fs.existsSync(iosDir) || !fs.existsSync(podfilePath)) return;
+  const hasIosDir = fs.existsSync(iosDir);
+  const hasPodfile = fs.existsSync(podfilePath);
+  if (!hasIosDir || !hasPodfile) return;
 
   const lockfileText = fs.existsSync(lockPath) ? fs.readFileSync(lockPath, "utf8") : "";
   const outOfSync = getOutOfSyncPods({ projectRoot, lockfileText });
 
-  // If everything is already consistent, do not require CocoaPods.
-  // This keeps non-iOS workflows on macOS unblocked while still enforcing the
-  // invariant when drift is present.
-  if (outOfSync.length === 0) return;
+  const policy = decideIosPodsPostinstallAction({
+    platform: process.platform,
+    skipPodInstallEnv: process.env.SKIP_IOS_POD_INSTALL === "1",
+    hasIosDir,
+    hasPodfile,
+    outOfSyncCount: outOfSync.length,
+    hasPodCommand: hasCommand("pod"),
+  });
 
-  if (!hasCommand("pod")) {
+  if (policy.action === "skip") return;
+  if (policy.action === "error") {
     process.stderr.write(
       "postinstall-ios-pods: CocoaPods not found (`pod`), but iOS pods are out of sync.\n"
     );
