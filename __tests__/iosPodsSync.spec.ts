@@ -60,6 +60,35 @@ PODS:
           podName: "expo-dev-launcher",
           installedVersion: "6.0.20",
           lockfileVersion: "6.0.18",
+          reason: "VERSION_MISMATCH",
+        },
+      ]);
+    });
+
+    it("treats installed packages missing from Podfile.lock as drift", () => {
+      const lockText = `
+PODS:
+  - ExpoModulesCore (3.0.26):
+    - React-Core
+`;
+
+      const installedVersions = {
+        "expo-dev-launcher": "6.0.20",
+      };
+
+      const outOfSync = getOutOfSyncPodsFromVersions({
+        lockfileText: lockText,
+        installedVersions,
+        targets: [{ packageName: "expo-dev-launcher", podName: "expo-dev-launcher" }],
+      });
+
+      expect(outOfSync).toEqual([
+        {
+          packageName: "expo-dev-launcher",
+          podName: "expo-dev-launcher",
+          installedVersion: "6.0.20",
+          lockfileVersion: null,
+          reason: "MISSING_LOCK_ENTRY",
         },
       ]);
     });

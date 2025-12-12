@@ -12,6 +12,10 @@ function hasCommand(command) {
   return result.status === 0;
 }
 
+function formatVersion(version) {
+  return version == null ? "missing" : String(version);
+}
+
 function runOrThrow(command, args, options) {
   const result = spawnSync(command, args, {
     ...options,
@@ -71,7 +75,9 @@ function main() {
   process.stdout.write("postinstall-ios-pods: detected out-of-sync pods\n");
   for (const entry of outOfSync) {
     process.stdout.write(
-      `- ${entry.podName}: lock=${entry.lockfileVersion} installed=${entry.installedVersion}\n`
+      `- ${entry.podName}: lock=${formatVersion(entry.lockfileVersion)} installed=${formatVersion(
+        entry.installedVersion
+      )}${entry.reason ? ` (${entry.reason})` : ""}\n`
     );
   }
 
