@@ -52,6 +52,12 @@ function defaultPodSyncTargets() {
   ];
 }
 
+function getDriftReason({ installedVersion, lockfileVersion }) {
+  if (!lockfileVersion) return "MISSING_LOCK_ENTRY";
+  if (installedVersion !== lockfileVersion) return "VERSION_MISMATCH";
+  return null;
+}
+
 /**
  * Compute pods that are out-of-sync between known installed versions and ios/Podfile.lock.
  *
@@ -75,14 +81,20 @@ function getOutOfSyncPodsFromVersions({ lockfileText, installedVersions, targets
           : null;
       const lockfileVersion = getPodVersionFromLockfileText(lockfileText, podName);
 
-      if (!installedVersion || !lockfileVersion) return null;
+      // If the npm package isn't installed, we can't establish drift.
+      if (!installedVersion) return null;
+
+      // Key behavior: treat "installed but missing in Podfile.lock" as drift.
+      // This catches cases where a dependency got added/updated but CocoaPods
+      // wasn't rerun to refresh the Pods project sources.
       if (installedVersion === lockfileVersion) return null;
 
       return {
         packageName,
         podName,
         installedVersion,
-        lockfileVersion,
+        lockfileVersion: lockfileVersion || null,
+        reason: getDriftReason({ installedVersion, lockfileVersion }),
       };
     })
     .filter(Boolean);
