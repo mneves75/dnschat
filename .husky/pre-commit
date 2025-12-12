@@ -6,4 +6,4 @@ echo "husky: running lint"
 npm run lint || exit 1
 
 echo "husky: running unit tests"
-npm test -- --bail --passWithNoTests --runInBand || exit 1
+npm test -- --bail --passWithNoTests || exit 1
