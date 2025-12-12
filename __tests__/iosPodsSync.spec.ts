@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 
-const { getPodVersionFromLockfileText } = require("../scripts/iosPodsSync");
+const { getOutOfSyncPodsFromVersions, getPodVersionFromLockfileText } = require("../scripts/iosPodsSync");
 
 describe("iosPodsSync", () => {
   describe("getPodVersionFromLockfileText", () => {
@@ -29,5 +29,39 @@ PODS:
       expect(getPodVersionFromLockfileText(lockText, "expo-dev-launcher")).toBeNull();
     });
   });
-});
 
+  describe("getOutOfSyncPodsFromVersions", () => {
+    it("detects drift when installed versions do not match Podfile.lock", () => {
+      const lockText = `
+PODS:
+  - expo-dev-launcher (6.0.18):
+    - ExpoModulesCore
+  - ExpoModulesCore (3.0.26):
+    - React-Core
+`;
+
+      const installedVersions = {
+        "expo-dev-launcher": "6.0.20",
+        "expo-modules-core": "3.0.26",
+      };
+
+      const outOfSync = getOutOfSyncPodsFromVersions({
+        lockfileText: lockText,
+        installedVersions,
+        targets: [
+          { packageName: "expo-dev-launcher", podName: "expo-dev-launcher" },
+          { packageName: "expo-modules-core", podName: "ExpoModulesCore" },
+        ],
+      });
+
+      expect(outOfSync).toEqual([
+        {
+          packageName: "expo-dev-launcher",
+          podName: "expo-dev-launcher",
+          installedVersion: "6.0.20",
+          lockfileVersion: "6.0.18",
+        },
+      ]);
+    });
+  });
+});

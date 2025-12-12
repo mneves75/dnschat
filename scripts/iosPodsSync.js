@@ -53,23 +53,26 @@ function defaultPodSyncTargets() {
 }
 
 /**
- * Compute pods that are out-of-sync between node_modules and ios/Podfile.lock.
+ * Compute pods that are out-of-sync between known installed versions and ios/Podfile.lock.
+ *
+ * This is deliberately pure so it can be tested without any filesystem or Node
+ * module resolution behavior.
  *
  * This is a *guardrail*, not a perfect model of CocoaPods resolution:
  * - Many Expo pods are path-based, but Podfile.lock still records their version.
  * - The invariant we want: when JS deps change (patch updates), Podfile.lock must
  *   be regenerated so the Pods project sources are refreshed.
  */
-function getOutOfSyncPods({ projectRoot, lockfileText, targets }) {
-  const resolvedProjectRoot = projectRoot || process.cwd();
+function getOutOfSyncPodsFromVersions({ lockfileText, installedVersions, targets }) {
   const resolvedTargets = targets?.length ? targets : defaultPodSyncTargets();
+  const resolvedInstalledVersions = installedVersions || {};
 
   return resolvedTargets
     .map(({ packageName, podName }) => {
-      const installedVersion = getInstalledPackageVersion(
-        packageName,
-        resolvedProjectRoot
-      );
+      const installedVersion =
+        typeof resolvedInstalledVersions[packageName] === "string"
+          ? resolvedInstalledVersions[packageName]
+          : null;
       const lockfileVersion = getPodVersionFromLockfileText(lockfileText, podName);
 
       if (!installedVersion || !lockfileVersion) return null;
@@ -85,6 +88,25 @@ function getOutOfSyncPods({ projectRoot, lockfileText, targets }) {
     .filter(Boolean);
 }
 
+/**
+ * Compute pods that are out-of-sync between node_modules and ios/Podfile.lock.
+ *
+ * This wrapper exists to keep call sites tiny; the core comparison is handled by
+ * `getOutOfSyncPodsFromVersions` for testability.
+ */
+function getOutOfSyncPods({ projectRoot, lockfileText, targets }) {
+  const resolvedProjectRoot = projectRoot || process.cwd();
+  const resolvedTargets = targets?.length ? targets : defaultPodSyncTargets();
+
+  const installedVersions = resolvedTargets.reduce((acc, { packageName }) => {
+    const installedVersion = getInstalledPackageVersion(packageName, resolvedProjectRoot);
+    if (installedVersion) acc[packageName] = installedVersion;
+    return acc;
+  }, {});
+
+  return getOutOfSyncPodsFromVersions({ lockfileText, installedVersions, targets });
+}
+
 function getIosPodfileLockPath(projectRoot) {
   return path.join(projectRoot, "ios", "Podfile.lock");
 }
@@ -93,6 +115,6 @@ module.exports = {
   getPodVersionFromLockfileText,
   getInstalledPackageVersion,
   getOutOfSyncPods,
+  getOutOfSyncPodsFromVersions,
   getIosPodfileLockPath,
 };
-

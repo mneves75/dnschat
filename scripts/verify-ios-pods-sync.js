@@ -38,10 +38,14 @@ function main() {
     );
   }
   process.stderr.write(
-    "Fix: run `pnpm ios` (recommended) or `cd ios && pod install`, then commit the updated `ios/Podfile.lock`.\n"
+    `Fix: run \`npm run ios\` (recommended) or \`cd ios && pod install\`, then commit the updated \`ios/Podfile.lock\`.\n`
   );
+  if (process.platform !== "darwin") {
+    process.stderr.write(
+      "Note: CocoaPods runs on macOS. If you are on another OS, ask a macOS teammate to run pod install and commit the lockfile.\n"
+    );
+  }
   process.exit(1);
 }
 
 main();
-
