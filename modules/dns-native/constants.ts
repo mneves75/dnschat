@@ -50,7 +50,7 @@ export const DNS_CONSTANTS = {
     'remove_invalid',     // Remove non-alphanumeric except dash
     'collapse_dashes',    // Replace multiple dashes with single
     'remove_edge_dashes', // Remove leading/trailing dashes
-    'truncate',           // Limit to 63 characters
+    'enforce_label_limit', // Reject if it exceeds 63 characters (no silent truncation)
   ],
 
   // DNS server whitelist

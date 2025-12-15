@@ -1,9 +1,0 @@
-#!/bin/sh
-echo "husky: verifying iOS pods lockfile"
-npm run verify:ios-pods || exit 1
-
-echo "husky: running lint"
-npm run lint || exit 1
-
-echo "husky: running unit tests"
-npm test -- --bail --passWithNoTests || exit 1

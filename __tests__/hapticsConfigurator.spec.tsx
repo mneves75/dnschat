@@ -1,5 +1,6 @@
 import React from "react";
 import TestRenderer, { act } from "react-test-renderer";
+import { createWithSuppressedWarnings } from "./utils/reactTestRenderer";
 
 (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -44,7 +45,7 @@ describe("HapticsConfigurator", () => {
     mockUseAccessibility.mockReturnValue({ config: { reduceMotion: false } });
 
     await act(async () => {
-      TestRenderer.create(<HapticsConfigurator />);
+      createWithSuppressedWarnings(<HapticsConfigurator />);
     });
 
     expect(configureHaptics).toHaveBeenCalledWith({
@@ -62,7 +63,7 @@ describe("HapticsConfigurator", () => {
 
     let renderer: TestRenderer.ReactTestRenderer;
     await act(async () => {
-      renderer = TestRenderer.create(<HapticsConfigurator />);
+      renderer = createWithSuppressedWarnings(<HapticsConfigurator />);
     });
 
     await act(async () => {

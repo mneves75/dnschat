@@ -22,7 +22,7 @@ function main() {
 
   if (!fs.existsSync(lockPath)) {
     process.stderr.write(
-      "verify-ios-pods-sync: missing ios/Podfile.lock (run `pnpm ios` or `cd ios && pod install`)\n"
+      "verify-ios-pods-sync: missing ios/Podfile.lock (run `npm run ios` or `cd ios && pod install`)\n"
     );
     process.exit(1);
   }

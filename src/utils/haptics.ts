@@ -1,5 +1,6 @@
 import { Platform } from 'react-native';
 import * as Haptics from 'expo-haptics';
+import { devLog, devWarn } from './devLog';
 
 type HapticConfiguration = {
   userEnabled?: boolean;
@@ -42,9 +43,7 @@ const ensureHardwareSupport = async (): Promise<boolean> => {
       })
       .catch((error: unknown) => {
         hardwareSupported = false;
-        if (__DEV__) {
-          console.warn('Haptics availability check failed:', error);
-        }
+        devWarn('Haptics availability check failed:', error);
         return false;
       })
       .finally(() => {
@@ -71,9 +70,7 @@ const runWithGuard = async (
   try {
     await action();
   } catch (error) {
-    if (__DEV__) {
-      console.warn(`Haptics ${label} feedback failed:`, error);
-    }
+    devWarn(`Haptics ${label} feedback failed:`, error);
   }
 };
 
@@ -342,13 +339,9 @@ export const persistHapticsPreference = async (
     setSaving?.(true);
     await updateEnableHaptics(value);
     toggleSwitch();
-    if (__DEV__) {
-      console.log(`✅ ${logLabel}:`, value);
-    }
+    devLog(`[Haptics] ${logLabel}:`, value);
   } catch (error) {
-    if (__DEV__) {
-      console.log("❌ Failed to save haptics preference:", error);
-    }
+    devLog("[Haptics] Failed to save haptics preference:", error);
   } finally {
     setSaving?.(false);
   }

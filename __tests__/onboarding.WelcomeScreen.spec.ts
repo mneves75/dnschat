@@ -7,7 +7,7 @@
  * - LiquidGlassSpacing 8px grid system
  * - Zero hardcoded colors
  * - Zero hardcoded fontSize values
- * - Zero emoji in code (CLAUDE.md requirement)
+ * - No emoji characters in code
  * - Proper accessibility integration
  *
  * APPROACH: Source code validation (no component rendering required)
@@ -187,17 +187,17 @@ describe("WelcomeScreen - iOS 26 HIG Compliance", () => {
     });
   });
 
-  describe("CLAUDE.md: Zero Emoji Requirement", () => {
+  describe("No Emoji Requirement", () => {
     it("does not contain rocket emoji", () => {
-      expect(sourceCode).not.toContain("🚀");
+      expect(sourceCode).not.toContain(String.fromCodePoint(0x1F680));
     });
 
     it("does not contain lock emoji", () => {
-      expect(sourceCode).not.toContain("🔒");
+      expect(sourceCode).not.toContain(String.fromCodePoint(0x1F512));
     });
 
     it("does not contain lightning emoji", () => {
-      expect(sourceCode).not.toContain("⚡");
+      expect(sourceCode).not.toContain(String.fromCodePoint(0x26A1));
     });
 
     it("contains zero emoji characters in code", () => {

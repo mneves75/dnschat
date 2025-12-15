@@ -115,28 +115,28 @@ const SFSymbolFallback: React.FC<{
   color?: string;
   isActive?: boolean;
 }> = ({ symbol, size = 22, color = "#8E8E93", isActive = false }) => {
-  // Map common SF Symbols to Unicode equivalents
+  // Non-emoji fallback glyphs for platforms without SF Symbols
   const symbolMap: { [key: string]: string } = {
-    house: "🏠",
-    "house.fill": "🏠",
-    magnifyingglass: "🔍",
-    person: "👤",
-    "person.fill": "👤",
-    gear: "⚙️",
-    message: "💬",
-    "message.fill": "💬",
-    "list.bullet": "📋",
-    "info.circle": "ℹ️",
-    "info.circle.fill": "ℹ️",
-    bell: "🔔",
-    "bell.fill": "🔔",
-    bookmark: "📖",
-    "bookmark.fill": "📖",
-    star: "⭐",
-    "star.fill": "⭐",
+    house: "H",
+    "house.fill": "H",
+    magnifyingglass: "S",
+    person: "P",
+    "person.fill": "P",
+    gear: "G",
+    message: "C",
+    "message.fill": "C",
+    "list.bullet": "L",
+    "info.circle": "i",
+    "info.circle.fill": "i",
+    bell: "N",
+    "bell.fill": "N",
+    bookmark: "B",
+    "bookmark.fill": "B",
+    star: "*",
+    "star.fill": "*",
   };
 
-  const fallbackIcon = symbolMap[symbol] || "●";
+  const fallbackIcon = symbolMap[symbol] || "•";
 
   return (
     <Text
@@ -179,10 +179,6 @@ const GlassTabItem: React.FC<GlassTabItemProps> = ({
 
   const handlePress = React.useCallback(() => {
     if (!tab.disabled) {
-      // Haptic feedback
-      if (Platform.OS === "ios") {
-        console.log("🔸 Haptic: Tab selection feedback");
-      }
       onPress();
     }
   }, [tab.disabled, onPress]);

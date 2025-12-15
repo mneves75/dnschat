@@ -40,13 +40,5 @@
       }
     }
   },
-  "submit": {
-    "production": {
-      "ios": {
-        "appleId": "mvneves75@gmail.com",
-        "ascAppId": "6740045336",
-        "appleTeamId": "N4BTRJM68S"
-      }
-    }
-  }
+  "submit": {}
 }

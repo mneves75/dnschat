@@ -12,6 +12,7 @@ import { StorageService } from "../services/storageService";
 import { DNSService, sanitizeDNSMessage } from "../services/dnsService";
 import { useSettings } from "./SettingsContext";
 import { isScreenshotMode, getMockConversations } from "../utils/screenshotMode";
+import { devLog, devWarn } from "../utils/devLog";
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
@@ -30,9 +31,9 @@ export function ChatProvider({ children }: ChatProviderProps) {
     try {
       setIsLoading(true);
 
-      // SCREENSHOT MODE: Load mock conversations for App Store screenshots
+      // SCREENSHOT MODE: Load mock conversations for deterministic UI captures
       if (isScreenshotMode()) {
-        console.log("📸 [ChatContext] Screenshot mode detected, loading mock conversations");
+        devLog("[ChatContext] Screenshot mode detected, loading mock conversations");
         const mockConversations = getMockConversations(settings.preferredLocale || "en-US");
         setChats(mockConversations as Chat[]);
         // Set first conversation as current chat
@@ -112,14 +113,14 @@ export function ChatProvider({ children }: ChatProviderProps) {
    * This ensures the chats array properly updates when messages are added.
    */
   const sendMessage = async (content: string): Promise<void> => {
-    console.log('🚀 [ChatContext] sendMessage called', {
-      content: content.substring(0, 50),
+    devLog("[ChatContext] sendMessage called", {
+      contentLength: content.length,
       currentChatId: currentChat?.id,
       currentMessageCount: currentChat?.messages.length,
     });
 
     if (!currentChat) {
-      console.error('❌ [ChatContext] No active chat selected');
+      devWarn("[ChatContext] No active chat selected");
       setError("No active chat selected");
       return;
     }
@@ -131,7 +132,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
         validationError instanceof Error
           ? validationError.message
           : "Failed to send message";
-      console.error('❌ [ChatContext] Message validation failed:', {
+      devWarn("[ChatContext] Message validation failed", {
         error: errorMessage,
         stack: validationError instanceof Error ? validationError.stack : undefined,
       });
@@ -148,16 +149,16 @@ export function ChatProvider({ children }: ChatProviderProps) {
       status: "sent",
     };
 
-    console.log('📝 [ChatContext] Created user message', {
+    devLog("[ChatContext] Created user message", {
       messageId: userMessage.id,
       role: userMessage.role,
     });
 
     try {
       // Add user message to storage and state
-      console.log('💾 [ChatContext] Adding user message to storage...');
+      devLog("[ChatContext] Adding user message to storage...");
       await StorageService.addMessage(currentChat.id, userMessage);
-      console.log('✅ [ChatContext] User message added to storage');
+      devLog("[ChatContext] User message added to storage");
 
       // Update current chat with user message
       const updatedChat: Chat = {
@@ -166,7 +167,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
         updatedAt: new Date(),
       };
 
-      console.log('🔄 [ChatContext] Updating currentChat state with user message', {
+      devLog("[ChatContext] Updating currentChat state with user message", {
         chatId: updatedChat.id,
         messageCount: updatedChat.messages.length,
       });
@@ -179,7 +180,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
           chat.id === updatedChat.id ? updatedChat : chat,
         ),
       );
-      console.log('✅ [ChatContext] State updated with user message');
+      devLog("[ChatContext] State updated with user message");
 
       // Create assistant message with loading state
       const assistantMessage: Message = {
@@ -190,16 +191,16 @@ export function ChatProvider({ children }: ChatProviderProps) {
         status: "sending",
       };
 
-      console.log('📝 [ChatContext] Created assistant placeholder', {
+      devLog("[ChatContext] Created assistant placeholder", {
         messageId: assistantMessage.id,
         role: assistantMessage.role,
         status: assistantMessage.status,
       });
 
       // Add assistant message placeholder
-      console.log('💾 [ChatContext] Adding assistant placeholder to storage...');
+      devLog("[ChatContext] Adding assistant placeholder to storage...");
       await StorageService.addMessage(currentChat.id, assistantMessage);
-      console.log('✅ [ChatContext] Assistant placeholder added to storage');
+      devLog("[ChatContext] Assistant placeholder added to storage");
 
       const chatWithAssistantPlaceholder: Chat = {
         ...updatedChat,
@@ -207,7 +208,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
         updatedAt: new Date(),
       };
 
-      console.log('🔄 [ChatContext] Updating state with assistant placeholder', {
+      devLog("[ChatContext] Updating state with assistant placeholder", {
         messageCount: chatWithAssistantPlaceholder.messages.length,
       });
       setCurrentChat(chatWithAssistantPlaceholder);
@@ -218,11 +219,11 @@ export function ChatProvider({ children }: ChatProviderProps) {
           chat.id === chatWithAssistantPlaceholder.id ? chatWithAssistantPlaceholder : chat,
         ),
       );
-      console.log('✅ [ChatContext] State updated with assistant placeholder');
+      devLog("[ChatContext] State updated with assistant placeholder");
 
       // Get AI response using DNS service (respects enableMockDNS setting)
       setIsLoading(true);
-      console.log('🌐 [ChatContext] Starting DNS query...', {
+      devLog("[ChatContext] Starting DNS query...", {
         server: settings.dnsServer,
         enableMockDNS: settings.enableMockDNS,
       });
@@ -234,9 +235,8 @@ export function ChatProvider({ children }: ChatProviderProps) {
         settings.allowExperimentalTransports,
       );
 
-      console.log('✅ [ChatContext] DNS query completed', {
+      devLog("[ChatContext] DNS query completed", {
         responseLength: response.length,
-        responsePreview: response.substring(0, 100),
       });
 
       // Update assistant message with response
@@ -246,12 +246,12 @@ export function ChatProvider({ children }: ChatProviderProps) {
         status: "sent",
       };
 
-      console.log('💾 [ChatContext] Updating assistant message in storage with response...');
+      devLog("[ChatContext] Updating assistant message in storage with response...");
       await StorageService.updateMessage(currentChat.id, assistantMessage.id, {
         content: response,
         status: "sent",
       });
-      console.log('✅ [ChatContext] Assistant message updated in storage');
+      devLog("[ChatContext] Assistant message updated in storage");
 
       // Update state with completed response
       const finalChat: Chat = {
@@ -263,10 +263,9 @@ export function ChatProvider({ children }: ChatProviderProps) {
         updatedAt: new Date(),
       };
 
-      console.log('🔄 [ChatContext] Updating state with final response', {
+      devLog("[ChatContext] Updating state with final response", {
         chatId: finalChat.id,
         messageCount: finalChat.messages.length,
-        lastMessageContent: finalChat.messages[finalChat.messages.length - 1]?.content?.substring(0, 50),
       });
 
       setCurrentChat(finalChat);
@@ -277,13 +276,13 @@ export function ChatProvider({ children }: ChatProviderProps) {
         ),
       );
 
-      console.log('✅ [ChatContext] Final state update complete!');
+      devLog("[ChatContext] Final state update complete");
       setError(null);
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Failed to send message";
 
-      console.error('❌ [ChatContext] Error in sendMessage:', {
+      devWarn("[ChatContext] Error in sendMessage", {
         error: errorMessage,
         stack: err instanceof Error ? err.stack : undefined,
       });
@@ -296,7 +295,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
           const messageToUpdate =
             currentChat.messages[currentChat.messages.length - 1];
 
-          console.log('🔧 [ChatContext] Updating message with error status', {
+          devLog("[ChatContext] Updating message with error status", {
             messageId: messageToUpdate?.id,
           });
 
@@ -312,20 +311,17 @@ export function ChatProvider({ children }: ChatProviderProps) {
           }
 
           // Reload chats to reflect error state
-          console.log('🔄 [ChatContext] Reloading chats after error...');
+          devLog("[ChatContext] Reloading chats after error...");
           await loadChats();
-          console.log('✅ [ChatContext] Chats reloaded after error');
+          devLog("[ChatContext] Chats reloaded after error");
         } catch (updateErr) {
-          console.error(
-            "❌ [ChatContext] Failed to update message with error status:",
+          devWarn(
+            "[ChatContext] Failed to update message with error status",
             updateErr,
           );
         }
       }
     } finally {
-      console.log('🏁 [ChatContext] sendMessage finally block', {
-        settingIsLoadingToFalse: true,
-      });
       setIsLoading(false);
     }
   };

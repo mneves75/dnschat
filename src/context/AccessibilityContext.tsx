@@ -15,6 +15,7 @@ import React, {
 } from "react";
 import { AccessibilityInfo, Platform } from "react-native";
 import { useSettings } from "./SettingsContext";
+import { devWarn } from "../utils/devLog";
 
 export interface AccessibilityConfig {
   fontSize: 'small' | 'medium' | 'large' | 'extra-large';
@@ -64,7 +65,7 @@ export function AccessibilityProvider({ children }: AccessibilityProviderProps) 
           setScreenReaderEnabled(isEnabled);
         }
       } catch (error) {
-        console.warn("Failed to check screen reader status:", error);
+        devWarn("[AccessibilityContext] Failed to check screen reader status", error);
       }
     };
 

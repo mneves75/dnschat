@@ -1,0 +1,56 @@
+import fs from "node:fs";
+
+function read(path: string): string {
+  return fs.readFileSync(path, "utf8");
+}
+
+describe("repo policy: CI configuration exists and matches spec", () => {
+  it("has CI workflow that runs lint + unit tests on PRs and main", () => {
+    const workflow = ".github/workflows/ci.yml";
+    expect(fs.existsSync(workflow)).toBe(true);
+    const content = read(workflow);
+
+    expect(content).toContain("on:");
+    expect(content).toContain("pull_request");
+    expect(content).toContain("push:");
+    expect(content).toContain("branches:");
+    expect(content).toContain("- main");
+
+    expect(content).toContain("npm ci");
+    expect(content).toContain("npm run verify:ios-pods");
+    expect(content).toContain("npm run lint");
+    expect(content).toContain("npm test");
+  });
+
+  it("runs dns-native module tests in CI (release verification invariant)", () => {
+    const workflow = ".github/workflows/ci.yml";
+    expect(fs.existsSync(workflow)).toBe(true);
+    const content = read(workflow);
+
+    // The public release hardening spec requires the `modules/dns-native` package
+    // to stay tested and independently installable.
+    expect(content).toContain("dns-native:");
+    expect(content).toContain("working-directory: modules/dns-native");
+    expect(content).toContain("cache-dependency-path: modules/dns-native/package-lock.json");
+    expect(content).toContain("Install (modules/dns-native)");
+    expect(content).toContain("Test (modules/dns-native)");
+  });
+
+  it("has gitleaks workflow that uses repo config", () => {
+    const workflow = ".github/workflows/gitleaks.yml";
+    expect(fs.existsSync(workflow)).toBe(true);
+    const content = read(workflow);
+
+    expect(content).toContain("gitleaks/gitleaks-action@");
+    expect(content).toContain("GITLEAKS_CONFIG: .gitleaks.toml");
+    expect(fs.existsSync(".gitleaks.toml")).toBe(true);
+  });
+
+  it("has CodeQL workflow (optional hardening) checked in", () => {
+    const workflow = ".github/workflows/codeql.yml";
+    expect(fs.existsSync(workflow)).toBe(true);
+    const content = read(workflow);
+
+    expect(content).toContain("github/codeql-action/");
+  });
+});

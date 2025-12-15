@@ -13,6 +13,7 @@ import { useImessagePalette } from "../../../ui/theme/imessagePalette";
 import { useTypography } from "../../../ui/hooks/useTypography";
 import { LiquidGlassSpacing } from "../../../ui/theme/liquidGlassSpacing";
 import { useTranslation } from "../../../i18n";
+import { devWarn } from "../../../utils/devLog";
 
 interface DNSStep {
   id: string;
@@ -111,7 +112,7 @@ export function DNSMagicScreen() {
       );
       setResponse(result);
     } catch (error) {
-      console.error("[DNSMagicScreen] Native DNS query failed:", error);
+      devWarn("[DNSMagicScreen] Native DNS query failed", error);
       updateStep("1", "failed", t("screen.onboarding.dnsMagic.fallbackMethods.native.failed"));
       await new Promise((resolve) => setTimeout(resolve, 500));
 

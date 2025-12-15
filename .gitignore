@@ -9,8 +9,13 @@ dist/
 web-build/
 expo-env.d.ts
 
+# Repo-local planning / editor assistants
+.claude/
+.cursor/
+agent_planning/
+.logs/
+
 # Case-insensitive filesystem duplicates
-# /DOCS/ - removed to allow docs/GUIDELINES-REF submodule
 
 # Native
 *.orig.*
@@ -32,10 +37,17 @@ yarn-error.*
 .DS_Store
 *.pem
 
+# iOS release automation outputs
+ios/fastlane/screenshots/
+
 # local env files
 .env*.local
 .env
 .env.*
+ios/.xcode.env.local
+# Allow explicit example env files to be tracked.
+!.env*.example
+!.env*.example.local
 
 # typescript
 *.tsbuildinfo

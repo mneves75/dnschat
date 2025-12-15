@@ -1,8 +1,9 @@
 import React from "react";
-import renderer, { act } from "react-test-renderer";
+import { act } from "react-test-renderer";
 import type { ReactTestRenderer } from "react-test-renderer";
 import { StyleSheet } from "react-native";
 import { LiquidGlassTextInput } from "../src/components/ui/LiquidGlassTextInput";
+import { createWithSuppressedWarnings } from "./utils/reactTestRenderer";
 
 jest.mock("react-native-reanimated", () => {
   const { View } = require("react-native");
@@ -83,8 +84,12 @@ describe("LiquidGlassTextInput - border synchronization", () => {
   it("renders destructive border when errorText is provided on mount", () => {
     let tree: ReactTestRenderer | null = null;
     act(() => {
-      tree = renderer.create(
-        <LiquidGlassTextInput value="hi" onChangeText={() => {}} errorText="Required" />
+      tree = createWithSuppressedWarnings(
+        <LiquidGlassTextInput
+          value="hi"
+          onChangeText={() => {}}
+          errorText="Required"
+        />,
       );
     });
 
@@ -95,8 +100,8 @@ describe("LiquidGlassTextInput - border synchronization", () => {
   it("switches border to destructive when errorText appears while blurred", () => {
     let tree: ReactTestRenderer | null = null;
     act(() => {
-      tree = renderer.create(
-        <LiquidGlassTextInput value="hi" onChangeText={() => {}} />
+      tree = createWithSuppressedWarnings(
+        <LiquidGlassTextInput value="hi" onChangeText={() => {}} />,
       );
     });
 
@@ -105,7 +110,11 @@ describe("LiquidGlassTextInput - border synchronization", () => {
 
     act(() => {
       tree!.update(
-        <LiquidGlassTextInput value="hi" onChangeText={() => {}} errorText="Required" />
+        <LiquidGlassTextInput
+          value="hi"
+          onChangeText={() => {}}
+          errorText="Required"
+        />,
       );
     });
 
@@ -115,8 +124,8 @@ describe("LiquidGlassTextInput - border synchronization", () => {
   it("updates border when palette changes without focus", () => {
     let tree: ReactTestRenderer | null = null;
     act(() => {
-      tree = renderer.create(
-        <LiquidGlassTextInput value="hi" onChangeText={() => {}} />
+      tree = createWithSuppressedWarnings(
+        <LiquidGlassTextInput value="hi" onChangeText={() => {}} />,
       );
     });
 
@@ -126,9 +135,7 @@ describe("LiquidGlassTextInput - border synchronization", () => {
     paletteMock.mockReturnValue(palettes.dark);
 
     act(() => {
-      tree!.update(
-        <LiquidGlassTextInput value="hi" onChangeText={() => {}} />
-      );
+      tree!.update(<LiquidGlassTextInput value="hi" onChangeText={() => {}} />);
     });
 
     expect(borderColor(tree)).toBe(palettes.dark.border);

@@ -16,6 +16,7 @@ import { ChatListItem } from "../../components/ChatListItem";
 import { useChat } from "../../context/ChatContext";
 import { Chat } from "../../types/chat";
 import { useTranslation } from "../../i18n";
+import { devWarn } from "../../utils/devLog";
 
 export function ChatList() {
   const colorScheme = useColorScheme();
@@ -47,7 +48,7 @@ export function ChatList() {
     try {
       await deleteChat(chatId);
     } catch (error) {
-      console.error("Failed to delete chat:", error);
+      devWarn("[ChatList] Failed to delete chat", error);
     }
   };
 
@@ -56,7 +57,7 @@ export function ChatList() {
       await createChat();
       navigation.navigate("Chat" as never);
     } catch (error) {
-      console.error("Failed to create new chat:", error);
+      devWarn("[ChatList] Failed to create new chat", error);
     }
   };
 

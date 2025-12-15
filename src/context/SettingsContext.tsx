@@ -26,6 +26,7 @@ import {
 import { AccessibilityConfig } from "./AccessibilityContext";
 import { DNSLogService } from "../services/dnsLogService";
 import { validateDNSServer } from "../services/dnsService";
+import { devWarn } from "../utils/devLog";
 
 interface SettingsContextValue {
   dnsServer: string;
@@ -92,7 +93,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
           setSettings(migrated);
         }
       } catch (error) {
-        console.error("❌ Error loading settings:", error);
+        devWarn("[SettingsContext] Error loading settings", error);
         if (isMounted) {
           setSettings({ ...DEFAULT_SETTINGS });
         }
@@ -118,7 +119,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         JSON.stringify(next),
       );
     } catch (error) {
-      console.error("❌ Error saving settings:", error);
+      devWarn("[SettingsContext] Error saving settings", error);
       throw error;
     }
   }, []);
@@ -126,8 +127,9 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const updateDnsServer = useCallback(
     async (server: string) => {
       const cleaned = sanitizeDnsServer(server);
+      let validatedServer: string;
       try {
-        validateDNSServer(cleaned);
+        validatedServer = validateDNSServer(cleaned);
       } catch (error) {
         const message =
           error instanceof Error ? error.message : String(error ?? "Validation failed");
@@ -137,15 +139,15 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         );
         throw error;
       }
-      if (settings.dnsServer === cleaned) {
+      if (settings.dnsServer === validatedServer) {
         return;
       }
       await persistSettings({
         ...settings,
-        dnsServer: cleaned,
+        dnsServer: validatedServer,
       });
       await DNSLogService.recordSettingsEvent(
-        `DNS server set to ${cleaned}`,
+        `DNS server set to ${validatedServer}`,
         settings.dnsServer ? `previous: ${settings.dnsServer}` : undefined,
       );
     },

@@ -1,4 +1,5 @@
 import { SUPPORTED_LOCALE_OPTIONS, SupportedLocale, resolveLocale } from "../i18n/translations";
+import { validateDNSServer } from "../services/dnsService";
 
 export { SUPPORTED_LOCALE_OPTIONS, resolveLocale } from "../i18n/translations";
 export type { SupportedLocaleOption } from "../i18n/translations";
@@ -44,6 +45,15 @@ export const DEFAULT_SETTINGS: PersistedSettings = {
   },
 };
 
+function normalizePersistedDnsServer(candidate: unknown): string {
+  const cleaned = sanitizeDnsServer(typeof candidate === "string" ? candidate : undefined);
+  try {
+    return validateDNSServer(cleaned);
+  } catch {
+    return DEFAULT_DNS_SERVER;
+  }
+}
+
 export function sanitizeDnsServer(server: string | undefined): string {
   const cleaned = (server ?? DEFAULT_DNS_SERVER).trim();
   return cleaned.length === 0 ? DEFAULT_DNS_SERVER : cleaned;
@@ -85,7 +95,7 @@ export function migrateSettings(raw: unknown): PersistedSettings {
   if (typeof candidate.version === "number" && candidate.version < 3) {
     return {
       version: SETTINGS_VERSION,
-      dnsServer: sanitizeDnsServer(candidate.dnsServer),
+      dnsServer: normalizePersistedDnsServer(candidate.dnsServer),
       enableMockDNS: Boolean(candidate.enableMockDNS),
       allowExperimentalTransports: true, // Always enable for v3 (UDP/TCP fallbacks)
       enableHaptics:
@@ -104,7 +114,7 @@ export function migrateSettings(raw: unknown): PersistedSettings {
   if (typeof candidate.version === "number") {
     return {
       version: SETTINGS_VERSION,
-      dnsServer: sanitizeDnsServer(candidate.dnsServer),
+      dnsServer: normalizePersistedDnsServer(candidate.dnsServer),
       enableMockDNS: Boolean(candidate.enableMockDNS),
       allowExperimentalTransports: Boolean(
         candidate.allowExperimentalTransports ?? true,
@@ -125,7 +135,7 @@ export function migrateSettings(raw: unknown): PersistedSettings {
   const legacy = candidate as LegacySettingsV1;
   return {
     version: SETTINGS_VERSION,
-    dnsServer: sanitizeDnsServer(legacy.dnsServer),
+    dnsServer: normalizePersistedDnsServer(legacy.dnsServer),
     enableMockDNS: Boolean(legacy.enableMockDNS),
     allowExperimentalTransports: true,
     enableHaptics: true,

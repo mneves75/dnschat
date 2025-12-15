@@ -13,6 +13,7 @@ import { useImessagePalette } from "../../../ui/theme/imessagePalette";
 import { useTypography } from "../../../ui/hooks/useTypography";
 import { LiquidGlassSpacing } from "../../../ui/theme/liquidGlassSpacing";
 import { useTranslation } from "../../../i18n";
+import { devWarn } from "../../../utils/devLog";
 
 interface NetworkTest {
   method: string;
@@ -80,7 +81,7 @@ export function NetworkSetupScreen() {
 
       setOptimizationComplete(true);
     } catch (error) {
-      console.error("[NetworkSetupScreen] Network optimization failed:", error);
+      devWarn("[NetworkSetupScreen] Network optimization failed", error);
       Alert.alert(
         t("screen.onboarding.networkSetup.alerts.errorTitle"),
         t("screen.onboarding.networkSetup.alerts.errorMessage"),
