@@ -37,19 +37,19 @@ describe("FirstChatScreen - iOS 26 HIG Compliance", () => {
 
   describe("Zero Emoji Requirement", () => {
     it("does not contain chat bubble emoji", () => {
-      expect(sourceCode).not.toContain("💬");
+      expect(sourceCode).not.toContain(String.fromCodePoint(0x1F4AC));
     });
 
     it("does not contain sparkles emoji", () => {
-      expect(sourceCode).not.toContain("🌟");
+      expect(sourceCode).not.toContain(String.fromCodePoint(0x1F31F));
     });
 
     it("does not contain rocket emoji", () => {
-      expect(sourceCode).not.toContain("🚀");
+      expect(sourceCode).not.toContain(String.fromCodePoint(0x1F680));
     });
 
     it("does not contain hourglass emoji", () => {
-      expect(sourceCode).not.toContain("⏳");
+      expect(sourceCode).not.toContain(String.fromCodePoint(0x23F3));
     });
 
     it("contains zero emoji characters", () => {

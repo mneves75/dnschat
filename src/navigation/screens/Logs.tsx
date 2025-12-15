@@ -203,9 +203,9 @@ export function Logs() {
               {!isActive && (
                 <Text style={styles.statusText}>
                   {item.finalStatus === "success"
-                    ? "✓"
+                    ? "OK"
                     : item.finalStatus === "failure"
-                      ? "✗"
+                      ? "X"
                       : "?"}
                 </Text>
               )}

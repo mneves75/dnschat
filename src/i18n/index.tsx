@@ -3,6 +3,7 @@ import { useSettings } from "../context/SettingsContext";
 import { enUS } from "./messages/en-US";
 import { ptBR } from "./messages/pt-BR";
 import type { SupportedLocale } from "./translations";
+import { devWarn } from "../utils/devLog";
 
 type Messages = typeof enUS;
 
@@ -63,7 +64,7 @@ export const I18nProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const translate = (key: MessageKey, params?: TranslationParams) => {
       const message = getMessage(dictionary, key) ?? getMessage(fallback, key);
       if (typeof message !== "string") {
-        console.warn(`[i18n] Missing translation for key: ${key}`);
+        devWarn(`[i18n] Missing translation for key: ${key}`);
         return key;
       }
       return formatMessage(message, params);

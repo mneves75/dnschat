@@ -40,8 +40,13 @@ class ScreenshotModeModule: NSObject {
       }
     }
 
-    // Method 3: Check environment variable (set by fastlane)
-    if ProcessInfo.processInfo.environment["FASTLANE_SNAPSHOT"] == "YES" {
+    // Method 3: Check environment variables (snapshot tooling)
+    let env = ProcessInfo.processInfo.environment
+    if env["DNSCHAT_SCREENSHOT_MODE"] == "1" {
+      return true
+    }
+    // Compatibility with common snapshot runners.
+    if env["FASTLANE_SNAPSHOT"] == "YES" {
       return true
     }
 

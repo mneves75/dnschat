@@ -3,20 +3,22 @@
  * Version Sync Script for DNSChat
  *
  * Automatically syncs version numbers across all project files:
- * - Uses CHANGELOG.md as the source of truth
- * - Updates package.json, app.json, iOS project, and Android project
+ * - Uses package.json version as the source of truth
+ * - Updates app.json, iOS project, and Android project
  *
- * Usage: node scripts/sync-versions.js [--dry-run]
+ * Usage: node scripts/sync-versions.js [--dry-run] [--bump-build] [--build-number <n>]
  */
 
 const fs = require("fs");
-const path = require("path");
 
 const isDryRun = process.argv.includes("--dry-run");
+const shouldBumpBuild = process.argv.includes("--bump-build");
+const buildNumberFlagIndex = process.argv.indexOf("--build-number");
+const explicitBuildNumberRaw =
+  buildNumberFlagIndex >= 0 ? process.argv[buildNumberFlagIndex + 1] : null;
 
 // File paths
 const FILES = {
-  changelog: "CHANGELOG.md",
   packageJson: "package.json",
   appJson: "app.json",
   iosProject: "ios/DNSChat.xcodeproj/project.pbxproj",
@@ -24,82 +26,60 @@ const FILES = {
 };
 
 /**
- * Extract the latest version from CHANGELOG.md
+ * Read source-of-truth version from package.json
  */
-function getLatestVersionFromChangelog() {
+function getSourceVersionFromPackageJson() {
   try {
-    const changelogContent = fs.readFileSync(FILES.changelog, "utf8");
-    const versionMatch = changelogContent.match(
-      /## \[(\d+\.\d+\.\d+)\] - \d{4}-\d{2}-\d{2}/,
-    );
+    const packageJson = JSON.parse(fs.readFileSync(FILES.packageJson, "utf8"));
+    const version = packageJson?.version;
 
-    if (!versionMatch) {
-      throw new Error(
-        "Could not find version in CHANGELOG.md format: ## [X.Y.Z] - YYYY-MM-DD",
-      );
+    if (typeof version !== "string" || !/^\d+\.\d+\.\d+$/.test(version)) {
+      throw new Error(`Invalid package.json version: ${JSON.stringify(version)}`);
     }
 
-    return versionMatch[1];
+    return version;
   } catch (error) {
-    console.error("❌ Error reading CHANGELOG.md:", error.message);
+    console.error("[sync-versions] Error reading package.json version:", error.message);
     process.exit(1);
   }
 }
 
 /**
- * Get current build number and increment it
+ * Parse iOS MARKETING_VERSION and CURRENT_PROJECT_VERSION from pbxproj text.
  */
-function getNextBuildNumber() {
-  try {
-    const iosContent = fs.readFileSync(FILES.iosProject, "utf8");
-    const buildMatch = iosContent.match(/CURRENT_PROJECT_VERSION = (\d+);/);
+function readIosVersions() {
+  const iosContent = fs.readFileSync(FILES.iosProject, "utf8");
+  const marketingMatch = iosContent.match(/MARKETING_VERSION = ([^;]+);/);
+  const buildMatch = iosContent.match(/CURRENT_PROJECT_VERSION = (\d+);/);
 
-    if (!buildMatch) {
-      console.warn(
-        "⚠️  Could not find CURRENT_PROJECT_VERSION, defaulting to 1",
-      );
-      return 1;
-    }
+  const marketingVersion = marketingMatch ? String(marketingMatch[1]).trim() : null;
+  const buildNumber = buildMatch ? parseInt(buildMatch[1], 10) : null;
 
-    return parseInt(buildMatch[1]) + 1;
-  } catch (error) {
-    console.warn(
-      "⚠️  Could not read iOS project file, defaulting to build number 1",
-    );
-    return 1;
-  }
+  return { iosContent, marketingVersion, buildNumber };
 }
 
 /**
- * Update package.json version
+ * Parse Android versionName and versionCode from build.gradle text.
  */
-function updatePackageJson(version) {
-  try {
-    const packageJson = JSON.parse(fs.readFileSync(FILES.packageJson, "utf8"));
-    const oldVersion = packageJson.version;
+function readAndroidVersions() {
+  const androidContent = fs.readFileSync(FILES.androidBuild, "utf8");
+  const versionNameMatch = androidContent.match(/versionName "([^"]+)"/);
+  const versionCodeMatch = androidContent.match(/versionCode (\d+)/);
 
-    if (oldVersion === version) {
-      console.log(`✅ package.json already at version ${version}`);
-      return false;
-    }
+  const versionName = versionNameMatch ? String(versionNameMatch[1]).trim() : null;
+  const versionCode = versionCodeMatch ? parseInt(versionCodeMatch[1], 10) : null;
 
-    packageJson.version = version;
+  return { androidContent, versionName, versionCode };
+}
 
-    if (!isDryRun) {
-      fs.writeFileSync(
-        FILES.packageJson,
-        JSON.stringify(packageJson, null, 2) + "\n",
-      );
-    }
-
-    console.log(
-      `📦 package.json: ${oldVersion} → ${version} ${isDryRun ? "(dry run)" : ""}`,
-    );
-    return true;
-  } catch (error) {
-    console.error("❌ Error updating package.json:", error.message);
-    return false;
+function parseExplicitBuildNumber(rawValue) {
+  if (rawValue == null) return null;
+  const parsed = Number.parseInt(String(rawValue), 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    console.error(`[sync-versions] Invalid --build-number: ${JSON.stringify(rawValue)}`);
+    process.exit(1);
   }
+  return parsed;
 }
 
 /**
@@ -111,7 +91,7 @@ function updateAppJson(version) {
     const oldVersion = appJson.expo.version;
 
     if (oldVersion === version) {
-      console.log(`✅ app.json already at version ${version}`);
+      console.log(`[sync-versions] app.json already at version ${version}`);
       return false;
     }
 
@@ -121,12 +101,10 @@ function updateAppJson(version) {
       fs.writeFileSync(FILES.appJson, JSON.stringify(appJson, null, 2) + "\n");
     }
 
-    console.log(
-      `🎯 app.json: ${oldVersion} → ${version} ${isDryRun ? "(dry run)" : ""}`,
-    );
+    console.log(`[sync-versions] app.json: ${oldVersion} -> ${version} ${isDryRun ? "(dry run)" : ""}`);
     return true;
   } catch (error) {
-    console.error("❌ Error updating app.json:", error.message);
+    console.error("[sync-versions] Error updating app.json:", error.message);
     return false;
   }
 }
@@ -148,7 +126,7 @@ function updateIosProject(version, buildNumber) {
 
     if (oldMarketingVersion === version && oldBuildNumber >= buildNumber) {
       console.log(
-        `✅ iOS project already at version ${version} (${buildNumber})`,
+        `[sync-versions] iOS project already at version ${version} (${buildNumber})`,
       );
       return false;
     }
@@ -167,12 +145,10 @@ function updateIosProject(version, buildNumber) {
       fs.writeFileSync(FILES.iosProject, iosContent);
     }
 
-    console.log(
-      `🍎 iOS: ${oldMarketingVersion} (${oldBuildNumber}) → ${version} (${buildNumber}) ${isDryRun ? "(dry run)" : ""}`,
-    );
+    console.log(`[sync-versions] iOS: ${oldMarketingVersion} (${oldBuildNumber}) -> ${version} (${buildNumber}) ${isDryRun ? "(dry run)" : ""}`);
     return true;
   } catch (error) {
-    console.error("❌ Error updating iOS project:", error.message);
+    console.error("[sync-versions] Error updating iOS project:", error.message);
     return false;
   }
 }
@@ -192,7 +168,7 @@ function updateAndroidBuild(version, buildNumber) {
     const oldVersionCode = versionCodeMatch ? parseInt(versionCodeMatch[1]) : 0;
 
     if (oldVersionName === version && oldVersionCode >= buildNumber) {
-      console.log(`✅ Android already at version ${version} (${buildNumber})`);
+      console.log(`[sync-versions] Android already at version ${version} (${buildNumber})`);
       return false;
     }
 
@@ -210,38 +186,104 @@ function updateAndroidBuild(version, buildNumber) {
       fs.writeFileSync(FILES.androidBuild, androidContent);
     }
 
-    console.log(
-      `🤖 Android: ${oldVersionName} (${oldVersionCode}) → ${version} (${buildNumber}) ${isDryRun ? "(dry run)" : ""}`,
-    );
+    console.log(`[sync-versions] Android: ${oldVersionName} (${oldVersionCode}) -> ${version} (${buildNumber}) ${isDryRun ? "(dry run)" : ""}`);
     return true;
   } catch (error) {
-    console.error("❌ Error updating Android build.gradle:", error.message);
+    console.error("[sync-versions] Error updating Android build.gradle:", error.message);
     return false;
   }
+}
+
+function getTargetBuildNumber({
+  targetVersion,
+  iosMarketingVersion,
+  iosBuildNumber,
+  androidVersionName,
+  androidVersionCode,
+  explicitBuildNumber,
+  bumpBuild,
+}) {
+  // Tricky policy: build numbers must be monotonic, but should not change when
+  // nothing else changes. Default behavior:
+  // - If any version field is out-of-sync, bump build by 1 (release-style).
+  // - If everything is already in sync, do not bump build unless explicitly asked.
+  const maxCurrentBuild = Math.max(
+    iosBuildNumber ?? 0,
+    androidVersionCode ?? 0,
+    0,
+  );
+
+  const versionsNeedUpdate =
+    iosMarketingVersion !== targetVersion || androidVersionName !== targetVersion;
+
+  if (explicitBuildNumber != null) {
+    if (explicitBuildNumber <= maxCurrentBuild) {
+      console.error(
+        `[sync-versions] Refusing --build-number ${explicitBuildNumber}; must be > current max build ${maxCurrentBuild}`,
+      );
+      process.exit(1);
+    }
+    return { buildNumber: explicitBuildNumber, versionsNeedUpdate };
+  }
+
+  if (bumpBuild || versionsNeedUpdate) {
+    return { buildNumber: maxCurrentBuild + 1, versionsNeedUpdate };
+  }
+
+  return { buildNumber: maxCurrentBuild, versionsNeedUpdate };
 }
 
 /**
  * Main execution
  */
 function main() {
-  console.log("🚀 DNSChat Version Sync Script");
+  console.log("DNSChat Version Sync Script");
   console.log("================================\n");
 
   if (isDryRun) {
-    console.log("🔍 Running in DRY RUN mode - no files will be modified\n");
+    console.log("Running in DRY RUN mode - no files will be modified\n");
   }
 
-  // Get source of truth version from CHANGELOG.md
-  const latestVersion = getLatestVersionFromChangelog();
-  console.log(`📋 Latest version from CHANGELOG.md: ${latestVersion}\n`);
+  // Get source of truth version from package.json
+  const latestVersion = getSourceVersionFromPackageJson();
+  console.log(`Source version (package.json): ${latestVersion}\n`);
 
-  // Get next build number
-  const buildNumber = getNextBuildNumber();
-  console.log(`🔢 Next build number: ${buildNumber}\n`);
+  const { marketingVersion: iosMarketingVersion, buildNumber: iosBuildNumber } =
+    readIosVersions();
+  const { versionName: androidVersionName, versionCode: androidVersionCode } =
+    readAndroidVersions();
+
+  const explicitBuildNumber = parseExplicitBuildNumber(explicitBuildNumberRaw);
+  const { buildNumber, versionsNeedUpdate } = getTargetBuildNumber({
+    targetVersion: latestVersion,
+    iosMarketingVersion,
+    iosBuildNumber,
+    androidVersionName,
+    androidVersionCode,
+    explicitBuildNumber,
+    bumpBuild: shouldBumpBuild,
+  });
+
+  const buildPolicy =
+    explicitBuildNumber != null
+      ? "explicit"
+      : shouldBumpBuild
+        ? "bump-build flag"
+        : versionsNeedUpdate
+          ? "bump on version change"
+          : "no bump";
+
+  console.log(
+    `[sync-versions] iOS current: version=${iosMarketingVersion ?? "missing"} build=${iosBuildNumber ?? "missing"}`,
+  );
+  console.log(
+    `[sync-versions] Android current: version=${androidVersionName ?? "missing"} build=${androidVersionCode ?? "missing"}`,
+  );
+  console.log(`[sync-versions] Build policy: ${buildPolicy}`);
+  console.log(`Target build number: ${buildNumber}\n`);
 
   // Update all files
   const updates = [
-    updatePackageJson(latestVersion),
     updateAppJson(latestVersion),
     updateIosProject(latestVersion, buildNumber),
     updateAndroidBuild(latestVersion, buildNumber),
@@ -252,14 +294,14 @@ function main() {
   console.log("\n" + "=".repeat(50));
 
   if (updatedCount === 0) {
-    console.log("✅ All versions are already synchronized!");
+    console.log("All versions are already synchronized.");
   } else {
     console.log(
-      `🎉 Successfully ${isDryRun ? "would update" : "updated"} ${updatedCount} file(s) to version ${latestVersion}`,
+      `Successfully ${isDryRun ? "would update" : "updated"} ${updatedCount} file(s) to version ${latestVersion}`,
     );
 
     if (!isDryRun) {
-      console.log("\n📝 Next steps:");
+      console.log("\nNext steps:");
       console.log("   1. Test the updated versions");
       console.log("   2. Commit the changes");
       console.log("   3. Build and deploy");
@@ -267,7 +309,7 @@ function main() {
   }
 
   if (isDryRun) {
-    console.log("\n💡 Run without --dry-run to apply changes");
+    console.log("\nRun without --dry-run to apply changes");
   }
 }
 
@@ -276,4 +318,4 @@ if (require.main === module) {
   main();
 }
 
-module.exports = { main, getLatestVersionFromChangelog };
+module.exports = { main, getSourceVersionFromPackageJson };

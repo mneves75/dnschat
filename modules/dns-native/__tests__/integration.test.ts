@@ -217,8 +217,9 @@ describeIntegration("Native DNS Integration Tests", () => {
     (canValidate ? it : it.skip)(
       "matches JavaScript reference sanitizer for tricky inputs",
       async () => {
+        const rocket = String.fromCodePoint(0x1F680);
         const samples = [
-          "  HélLo   Wørld🚀  ",
+          `  HélLo   Wørld${rocket}  `,
           "--Leading__And++Trailing--",
           "Äccênted   Ñame   With   Extra   Spaces",
         ];
@@ -236,7 +237,8 @@ describeIntegration("Native DNS Integration Tests", () => {
     (canValidate ? it : it.skip)(
       "rejects invalid labels the same way JavaScript does",
       async () => {
-        const invalidSamples = ["   ", "🚀🚀🚀", "***", "--"];
+        const rocket = String.fromCodePoint(0x1F680);
+        const invalidSamples = ["   ", rocket.repeat(3), "***", "--"];
 
         for (const sample of invalidSamples) {
           expect(() => sanitizeDNSMessageReference(sample)).toThrow();
@@ -365,31 +367,31 @@ describeIntegration("Native DNS Integration Tests", () => {
 
 // Export helper for manual testing
 export const runManualTests = async () => {
-  console.log("🧪 Running manual DNS tests...\n");
+  console.log("Running manual DNS tests...\n");
 
   try {
     const capabilities = await nativeDNS.isAvailable();
     console.log(
-      "📱 Platform Capabilities:",
+      "Platform Capabilities:",
       JSON.stringify(capabilities, null, 2),
     );
 
     if (!capabilities.available) {
-      console.log("❌ Native DNS not available on this platform");
+      console.log("Native DNS not available on this platform");
       return;
     }
 
-    console.log("\n🔍 Testing basic DNS query...");
+    console.log("\nTesting basic DNS query...");
     const result = await nativeDNS.queryTXT("google.com", "test");
-    console.log("✅ Basic query result:", result);
+    console.log("Basic query result:", result);
 
-    console.log("\n🤖 Testing LLM DNS query...");
+    console.log("\nTesting LLM DNS query...");
     const llmResult = await nativeDNS.queryTXT("ch.at", "Hello AI");
-    console.log("✅ LLM query result:", llmResult);
+    console.log("LLM query result:", llmResult);
 
     const parsedResponse = nativeDNS.parseMultiPartResponse(llmResult);
-    console.log("📝 Parsed response:", parsedResponse);
+    console.log("Parsed response:", parsedResponse);
   } catch (error) {
-    console.log("❌ Test failed:", error);
+    console.log("Test failed:", error);
   }
 };

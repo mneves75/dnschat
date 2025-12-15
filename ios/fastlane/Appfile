@@ -1,6 +1,0 @@
-app_identifier("org.mvneves.dnschat")
-apple_id("")  # Your Apple ID email
-
-# Uncomment these lines if you need app store connect integration
-# itc_team_id("123456789")  # App Store Connect Team ID
-# team_id("XXXXXXXXXX")     # Developer Portal Team ID

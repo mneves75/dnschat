@@ -270,6 +270,13 @@ describe('DNS Native Module - Performance Benchmarks', () => {
     jest.clearAllMocks();
   });
 
+  function shouldLogBenchmarks(): boolean {
+    // Benchmarks are useful locally, but console output in CI makes test logs noisy.
+    // Opt-in explicitly when you want to inspect timings:
+    // `SHOW_BENCHMARKS=1 npm test`
+    return process.env.SHOW_BENCHMARKS === '1';
+  }
+
   /**
    * Baseline: Sequential query performance
    */
@@ -288,7 +295,10 @@ describe('DNS Native Module - Performance Benchmarks', () => {
     const endTime = performance.now();
     const avgTime = (endTime - startTime) / iterations;
 
-    console.log(`Sequential: ${avgTime.toFixed(2)}ms per query`);
+    if (shouldLogBenchmarks()) {
+      // eslint-disable-next-line no-console
+      console.log(`Sequential: ${avgTime.toFixed(2)}ms per query`);
+    }
 
     // Sanity check: mocked queries should be fast (<1ms each)
     expect(avgTime).toBeLessThan(1);
@@ -314,9 +324,12 @@ describe('DNS Native Module - Performance Benchmarks', () => {
     const endTime = performance.now();
     const totalTime = endTime - startTime;
 
-    console.log(
-      `Concurrent: ${iterations} queries in ${totalTime.toFixed(2)}ms (${(iterations / (totalTime / 1000)).toFixed(0)} qps)`
-    );
+    if (shouldLogBenchmarks()) {
+      // eslint-disable-next-line no-console
+      console.log(
+        `Concurrent: ${iterations} queries in ${totalTime.toFixed(2)}ms (${(iterations / (totalTime / 1000)).toFixed(0)} qps)`
+      );
+    }
 
     // Concurrent should handle 1000 queries quickly
     expect(totalTime).toBeLessThan(1000); // <1s for 1000 concurrent mocked queries

@@ -1,256 +1,110 @@
-# Installation Guide
+# Installation
 
-Complete setup instructions for DNSChat v1.7.7 - React Native app with native DNS implementation.
+This repo builds DNSChat `3.2.0` (React Native `0.81.5`, Expo SDK `54.0.25`).
 
-## 🎯 Prerequisites
+Prereqs:
 
-### System Requirements
+- Node.js 18+
+- Git
+- iOS: macOS + Xcode 15+ (iOS 16+ simulator/device)
+- Android: Java 17 + Android Studio/SDK (API 21+)
 
-- **Node.js 18+** - [Download](https://nodejs.org/)
-- **Git** - [Download](https://git-scm.com/)
-
-### Platform-Specific Requirements
-
-#### iOS Development
-
-- **macOS** (required for iOS development)
-- **Xcode 15+** - [Download from App Store](https://apps.apple.com/us/app/xcode/id497799835)
-- **iOS 16+** device or simulator
-- **CocoaPods** - `sudo gem install cocoapods`
-
-#### Android Development
-
-- **Java 17** (required) - `brew install openjdk@17`
-- **Android Studio** - [Download](https://developer.android.com/studio)
-- **Android SDK API 21+**
-- **Android device or emulator**
-
-## 🚀 Quick Installation
-
-### 1. Clone and Setup
+## Clone + install
 
 ```bash
-# Clone repository
 git clone https://github.com/mneves75/dnschat.git
 cd dnschat
-
-# Install dependencies
 npm install
-
-# iOS setup (macOS only)
-cd ios && pod install && cd ..
 ```
 
-### 2. Run the App
+Notes:
+
+- `npm install` runs `npm run prepare` which installs a `.git/hooks/pre-commit`
+  hook (verify pods + lint + tests).
+- iOS pods drift guardrail exists. Run `npm run verify:ios-pods` if you touch
+  native deps and expect `ios/Podfile.lock` changes.
+
+## Run
 
 ```bash
-# Development server
+# Dev server (Expo dev-client)
 npm start
 
-# iOS (requires Xcode)
+# iOS (Expo run:ios)
 npm run ios
 
-# Android (requires Java 17)
+# Android (Expo run:android). Script sets JAVA_HOME to OpenJDK 17 (Homebrew path).
 npm run android
 
-# Web
+# Web preview (Mock DNS only)
 npm run web
 ```
 
-## 🔧 Platform-Specific Setup
+## Platform notes
 
-### iOS Setup
+### iOS
 
-1. **Install Xcode Command Line Tools**
-
-   ```bash
-   xcode-select --install
-   ```
-
-2. **Install CocoaPods**
-
-   ```bash
-   sudo gem install cocoapods
-   ```
-
-3. **Setup iOS Dependencies**
-
-   ```bash
-   cd ios
-   pod install
-   cd ..
-   ```
-
-4. **Verify iOS CocoaPods lockfile sync (recommended)**
-
-   This repo includes a guardrail that detects when Expo iOS pods drift from installed `node_modules` versions (a common source of Swift “Cannot find `<Type>` in scope” errors).
-
-   ```bash
-   npm run verify:ios-pods
-   ```
-
-   Notes:
-   - On macOS, `npm install` may auto-run `pod install` when drift is detected (can be disabled with `SKIP_IOS_POD_INSTALL=1`).
-   - Before committing after dependency changes, run `npm run verify:ios-pods` and commit any resulting `ios/Podfile.lock` update.
-
-5. **Open in Xcode (optional)**
-   ```bash
-   open ios/DNSChat.xcworkspace
-   ```
-
-### Android Setup
-
-1. **Install Java 17** (Critical - other versions cause build failures)
-
-   ```bash
-   # macOS
-   brew install openjdk@17
-
-   # Verify installation
-   /opt/homebrew/opt/openjdk@17/bin/java -version
-   ```
-
-2. **Setup Android Studio**
-   - Download and install Android Studio
-   - Install Android SDK API 21-34
-   - Create AVD (Android Virtual Device) or connect physical device
-
-3. **Environment Variables** (if needed)
-   ```bash
-   export ANDROID_HOME=$HOME/Library/Android/sdk
-   export PATH=$PATH:$ANDROID_HOME/emulator
-   export PATH=$PATH:$ANDROID_HOME/tools
-   export PATH=$PATH:$ANDROID_HOME/tools/bin
-   export PATH=$PATH:$ANDROID_HOME/platform-tools
-   ```
-
-## 🧪 Testing Your Installation
-
-### Basic Functionality Test
+- Default path: `npm run ios` (Expo prebuild + Xcode build).
+- CocoaPods is still needed because this repo has native modules.
+- Simulator builds do not require code signing.
+- Device builds require you to pick your own signing team in Xcode (this repo keeps `DEVELOPMENT_TEAM` empty for public distribution).
+  If pods are broken:
 
 ```bash
-# Test DNS connectivity
+npm run fix-pods
+npm run clean-ios
+```
+
+If you need a deeper CocoaPods cleanup (slower, more destructive):
+
+```bash
+npm run fix-pods -- --deep
+```
+
+If your `ios/Podfile.lock` is corrupted and you must regenerate it:
+
+```bash
+npm run fix-pods -- --reset-lock
+```
+
+Verify pods lockfile sync:
+
+```bash
+npm run verify:ios-pods
+```
+
+### Android
+
+You need Java 17. If you do not have it:
+
+```bash
+brew install openjdk@17
+```
+
+`npm run android` sets:
+
+- `JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home`
+- `PATH=/opt/homebrew/opt/openjdk@17/bin:$PATH`
+
+If you are not on macOS or your Java is installed elsewhere, set `JAVA_HOME`
+appropriately and run `expo run:android` manually.
+
+Basic diagnostics:
+
+```bash
+npm run verify:android
+```
+
+## DNS smoke tests
+
+Quick check (no React Native runtime required):
+
+```bash
 node test-dns-simple.js "Hello world"
 ```
 
-### Platform Tests
+Full harness (UDP/TCP transports):
 
 ```bash
-# Test iOS build
-npm run ios
-
-# Test Android build (Java 17 required)
-npm run android
-
-# Test web version
-npm run web
+npm run dns:harness -- --message "Hello world"
 ```
-
-## 🐛 Common Installation Issues
-
-### iOS Issues
-
-**CocoaPods Sandbox Sync Error**
-
-```bash
-# Quick fix
-npm run fix-pods
-
-# Manual fix
-cd ios && rm -rf Pods/ Podfile.lock && pod install
-```
-
-**Swift Compilation Errors**
-
-```bash
-# Clean build
-rm -rf ios/build/
-npm run ios
-```
-
-### Android Issues
-
-**Java Version Errors**
-
-```bash
-# Ensure Java 17 is being used
-npm run android  # Uses Java 17 automatically
-```
-
-**Gradle Build Failures**
-
-```bash
-# Clean Gradle cache
-rm -rf ~/.gradle/caches
-rm -rf android/.gradle
-npm run android
-```
-
-### DNS Connection Issues
-
-**Test DNS Connectivity**
-
-```bash
-# Terminal test
-dig @ch.at "test message" TXT +short
-
-# In-app test
-# Open app → Settings → Test DNS connection
-```
-
-## 🔄 Development Workflow
-
-### Version Management
-
-```bash
-# Sync all platform versions
-npm run sync-versions
-
-# Preview version changes
-npm run sync-versions:dry
-```
-
-### Clean Builds
-
-```bash
-# Clear Metro cache
-npx expo start --clear
-
-# Clean iOS
-npm run clean-ios
-
-# Clean Android
-./gradlew clean  # From android directory
-```
-
-## 📱 Device Setup
-
-### iOS Device
-
-1. Connect iPhone/iPad via USB
-2. Trust the computer when prompted
-3. Enable Developer Mode in Settings → Privacy & Security
-4. Run `npm run ios` and select your device
-
-### Android Device
-
-1. Enable Developer Options (tap Build Number 7 times)
-2. Enable USB Debugging
-3. Connect via USB and accept debugging permissions
-4. Run `npm run android`
-
-## 🚀 Next Steps
-
-- **Development**: See [docs/API.md](./API.md) for DNS service documentation
-- **Troubleshooting**: See [docs/TROUBLESHOOTING.md](./TROUBLESHOOTING.md) for detailed issue resolution
-- **Contributing**: See [CONTRIBUTING.md](../CONTRIBUTING.md) for development guidelines
-
-## 🆘 Getting Help
-
-- **Issues**: [GitHub Issues](https://github.com/mneves75/dnschat/issues)
-- **Documentation**: [docs/](./README.md)
-- **Contact**: [@mneves75](https://x.com/mneves75)
-
----
-
-_This guide is for DNSChat v1.7.7. For older versions, check the git history._

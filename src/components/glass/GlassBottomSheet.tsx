@@ -223,7 +223,6 @@ export const GlassBottomSheet: React.FC<GlassBottomSheetProps> = ({
   const handleClosePress = React.useCallback(() => {
     // Haptic feedback
     if (Platform.OS === "ios") {
-      console.log("🔸 Haptic: Sheet close feedback");
     }
     onClose();
   }, [onClose]);
@@ -345,7 +344,7 @@ export const GlassBottomSheet: React.FC<GlassBottomSheetProps> = ({
                           { color: colors.actionDefault },
                         ]}
                       >
-                        ✕
+                        X
                       </Text>
                     </TouchableOpacity>
                   )}

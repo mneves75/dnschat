@@ -68,7 +68,8 @@ export const STORAGE_CONSTANTS = {
 
 // Error Messages
 export const ERROR_MESSAGES = {
-  DNS_SERVER_INVALID: 'DNS server must be a non-empty string',
+  DNS_SERVER_INVALID: 'DNS server must be a valid allowlisted hostname or IP address',
+  DNS_SERVER_NOT_ALLOWED: 'DNS server not allowed',
   MESSAGE_EMPTY: 'Message cannot be empty',
   MESSAGE_TOO_LONG: 'Message too long',
   NETWORK_ERROR: 'Network error occurred',

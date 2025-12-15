@@ -16,6 +16,7 @@ import { useTypography } from "../../../ui/hooks/useTypography";
 import { LiquidGlassSpacing } from "../../../ui/theme/liquidGlassSpacing";
 import { useTranslation } from "../../../i18n";
 import { SendIcon } from "../../icons/SendIcon";
+import { devWarn } from "../../../utils/devLog";
 
 interface Message {
   id: string;
@@ -90,7 +91,7 @@ export function FirstChatScreen() {
         ),
       );
     } catch (error) {
-      console.error("[FirstChatScreen] DNS query failed:", error);
+      devWarn("[FirstChatScreen] DNS query failed", error);
 
       if (!isMountedRef.current) return;
 

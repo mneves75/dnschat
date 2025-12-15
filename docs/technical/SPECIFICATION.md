@@ -1,185 +1,208 @@
-# Chat DNS - Mobile Chat Interface Specification
+# DNSChat specification (current behavior)
 
-## Overview
+DNSChat is a mobile chat UI where each user message is encoded into a DNS TXT
+query and the TXT response is shown as the assistant message.
 
-A modern, ChatGPT-like mobile chat interface that communicates with an LLM via DNS TXT queries. The app provides a seamless chat experience with local storage for conversation history.
+This is a behavior spec, not a release log.
 
-## Inspiration and Acknowledgements
+## Core UX
 
-- See [Arxiv Daily tweet](https://x.com/Arxiv_Daily/status/1952452878716805172) for background on DNS-based chat via `dig`.
-- See [ch.at – Universal Basic Intelligence](https://github.com/Deep-ai-inc/ch.at) for an OSS reference (supports `dig @ch.at "..." TXT`).
+- Chat list: multiple threads persisted locally.
+- Thread view: user and assistant bubbles, streaming-like UX (send user message,
+  show assistant response when DNS returns).
+- Settings: DNS server selection, transport toggles, onboarding reset.
+- Logs: in-app DNS logs showing transport attempts and fallbacks.
 
-## Core Features
+## Prompt rules (must match native + JS)
 
-### 1. Chat Interface
+Source of truth: `modules/dns-native/constants.ts`.
 
-- **Message Display**: Clean, modern chat bubbles with clear distinction between user and AI messages
-- **Input Area**: Bottom-mounted input field with send button, similar to ChatGPT
-- **Auto-scroll**: Automatic scrolling to latest messages
-- **Loading States**: Typing indicators while waiting for DNS response
-- **Markdown Support**: Render formatted text, code blocks, and lists in AI responses
-- **Timestamps**: Display message timestamps
-- **Copy Messages**: Long-press to copy message content
+- Max prompt length before sanitization: `120`.
+- Prompt must not contain control characters.
+- Sanitizer outputs a single RFC 1035 DNS label:
+  - lowercase alphanumeric + dash only
+  - max length `63`
+  - empty after sanitization is rejected
 
-### 2. DNS Communication
+Rationale: avoid silent truncation and avoid DNS injection/encoding ambiguity.
 
-#### Core DNS System
+## DNS query behavior
 
-- **Query Format**: `dig @ch.at "<USER_MESSAGE>" TXT +short`
-- **Response Handling**: Parse DNS TXT records and combine multi-part responses
-- **Retry Logic**: Automatic retry with exponential backoff for failed queries (3 retries, 10-second timeout)
+Source of truth: `src/services/dnsService.ts`.
 
-#### 🔧 Enhanced Transport Layer (v1.7.2)
+End-to-end steps:
 
-**Multi-Layer Fallback Strategy:**
+1. Validate prompt.
+2. Sanitize prompt into `label`.
+3. Compose query name `${label}.${zone}`.
+4. Send query via transport chain.
+5. Parse TXT answer set into a single response string.
 
-1. **Native DNS** (iOS Network Framework, Android DnsResolver) - Platform-optimized, fastest
-2. **UDP DNS** - Direct UDP queries via react-native-udp
-3. **DNS-over-TCP** - TCP fallback for UDP-blocked networks
-4. **DNS-over-HTTPS** - Cloudflare API fallback (architectural limitations with ch.at)
-5. **Mock Service** - Development/testing fallback
+TXT parsing rules are defined in `docs/technical/DNS-PROTOCOL-SPEC.md` and
+implemented in `parseTXTResponse`.
 
-**🛡️ Enterprise-Grade Error Handling:**
+## Transport chain
 
-- **UDP Port Blocking Detection**: Smart ERR_SOCKET_BAD_PORT detection with TCP fallback
-- **TCP Connection Issues**: Comprehensive ECONNREFUSED/ETIMEDOUT handling
-- **Network Restriction Guidance**: User-friendly error messages with actionable troubleshooting:
-  - Network switching recommendations (WiFi ↔ Cellular)
-  - Port blocking detection with administrator contact advice
-  - 5-step troubleshooting guide for connectivity failures
-  - Platform-specific guidance for iOS/Android restrictions
-- **Diagnostic Logging**: Comprehensive error logging for debugging and support
+Order:
 
-### 2.1 Security Enhancements (v2.0.1)
+1. Native DNS module
+2. UDP DNS (JS)
+3. TCP DNS (JS)
+4. Mock (optional dev fallback)
 
-#### **DNS Injection Prevention**
+Web builds use Mock because browsers cannot do custom DNS to `ch.at` on port 53.
 
-- **Input Validation**: Strict validation rejecting control characters ([\x00-\x1F\x7F-\x9F])
-- **Special Character Blocking**: Prevents DNS special chars (@, :, etc.) from corrupting queries
-- **Domain/IP Detection**: Rejects inputs that look like domains or IP addresses
-- **Server Whitelisting**: Only allows ch.at, Google DNS (8.8.8.8/8.8.4.4), and Cloudflare (1.1.1.1/1.0.0.1)
+## Local persistence
 
-#### **Message Sanitization**
+Storage backend:
 
-Consistent cross-platform sanitization process:
-1. Convert to lowercase
-2. Trim whitespace
-3. Replace spaces with dashes
-4. Remove non-alphanumeric characters (except dash)
-5. Collapse multiple dashes
-6. Remove leading/trailing dashes
-7. Truncate to 63 characters (DNS label limit)
+- AsyncStorage
+- Threads + messages are serialized to JSON
 
-#### **Thread Safety**
+Expected properties:
 
-- **iOS**: NSLock-protected CheckedContinuation to prevent double resume
-- **Android**: Bounded ThreadPoolExecutor (2-4 threads) with queue limits
-- **Timeouts**: Proper Task cancellation instead of race conditions
+- Thread list survives app restarts.
+- Thread title derives from first user message (trimmed/shortened).
+- Message status supports success/error states so failures are visible.
 
-### 3. Local Storage
+Implementation: `src/services/storageService.ts`.
 
-- **Conversation History**: Persist all chats using AsyncStorage
-- **Chat Sessions**: Support multiple chat conversations
-- **Session Management**: Create, delete, and rename chat sessions
-- **Auto-save**: Real-time saving of messages as they're sent/received
-- **Data Structure**:
+## Non-goals / constraints
 
-  ```typescript
-  interface Chat {
-    id: string;
-    title: string;
-    createdAt: Date;
-    updatedAt: Date;
-    messages: Message[];
-  }
+- DNS is not private. Do not send secrets or personal data.
+- Some networks block UDP/TCP port 53; fallbacks and logs exist to make this
+  visible, not silent.
 
-  interface Message {
-    id: string;
-    role: "user" | "assistant";
-    content: string;
-    timestamp: Date;
-    status: "sending" | "sent" | "error";
-  }
-  ```
+## Engineering execution spec (public release hardening)
 
-### 4. Navigation Structure
+This section is an engineering spec for making the repo shippable as a public
+production codebase. It is intentionally explicit about invariants and
+verification.
 
-- **Chat List Screen**: Overview of all chat sessions with preview
-- **Chat Screen**: Active conversation interface
-- **Settings Screen**: DNS server configuration, theme preferences
-- **New Chat**: Floating action button or header button to start new conversation
+### Goals
 
-### 5. UI/UX Requirements
+1. Repo is safe to publish: no credentials, no internal-only docs, no private URLs.
+2. Docs reflect actual behavior (not aspirational transports/features).
+3. Tooling is reproducible on clean machines and in CI.
+4. "No emoji" policy is enforced by tests to prevent regressions.
+5. Version sync tooling is deterministic (no accidental build bumps).
 
-- **Theme**: Support light/dark mode based on system preference
-- **Responsive**: Adapt to different screen sizes and orientations
-- **Keyboard Handling**: Smart keyboard avoidance for input field
-- **Pull to Refresh**: Reload chat history
-- **Swipe Actions**: Swipe to delete chats from list
-- **Empty States**: Helpful prompts when no chats exist
-- **Accessibility**: Full VoiceOver/TalkBack support
+### Non-goals
 
-## Technical Architecture
+- Re-architecting the app or changing the product UX.
+- Adding new network transports in the TypeScript layer (e.g. DNS-over-HTTPS).
+- "Perfect" logging UX; only enforce safety + determinism.
 
-### Dependencies
+### Invariants (must always hold)
 
-- `@react-native-async-storage/async-storage`: Local storage
-- `react-native-markdown-display`: Markdown rendering
-- `react-native-reanimated`: Smooth animations
-- `react-native-svg`: Icons and graphics
-- `react-native-uuid`: UUID generation
-- `react-native-keyboard-aware-scroll-view`: Keyboard handling
-- Custom DNS resolver implementation using native modules or external service
+Transport + DNS:
 
-### Services
+- Input validation + sanitization rules are identical across TS and native.
+- TypeScript transport chain is: native -> udp -> tcp -> mock.
+- TCP transport means DNS-over-TCP on port 53 (not DNS-over-HTTPS).
+- DNS query name is fully composed by TypeScript and passed to native as-is.
 
-1. **StorageService**: CRUD operations for chats and messages
-2. **DNSService**: Handle DNS queries and response parsing
-3. **ChatService**: Business logic for chat operations
-4. **ThemeService**: Theme management and persistence
+Security:
 
-### State Management
+- No secrets in git history or working tree (enforced via gitleaks).
+- No hardcoded credentials or private endpoints.
+- DNS server is validated/whitelisted (do not accept arbitrary user input).
+  - Enforced by `validateDNSServer` (`src/services/dnsService.ts`) using the shared allowlist in `modules/dns-native/constants.ts`.
+  - Persisted settings are coerced back to `ch.at` during migration when an unallowlisted value is found (`src/context/settingsStorage.ts`).
 
-- React Context for global chat state
-- Local state for UI components
-- Optimistic updates for better UX
+Repo quality:
 
-### Performance Optimizations
+- Lint and tests can run on CI without relying on global tools.
+- Pre-commit hook blocks commits when lint/tests fail.
+- No emoji/pictographic glyphs in tracked source/docs files.
+- No noisy `console.log` debug spam in app runtime code (keep logs behind a gated helper).
 
-- **FlatList**: Virtualized list for message rendering
-- **Memoization**: Prevent unnecessary re-renders
-- **Lazy Loading**: Load chats on demand
-- **Image Caching**: Cache user avatars and images
-- **Background Processing**: DNS queries in background thread
+### Implementation checklist (completed in code)
 
-## Security Considerations
+1. Secrets scanning
+   - `.gitleaks.toml` configured for known false positives (Podfile.lock)
+   - CI runs gitleaks on PRs and main (`.github/workflows/gitleaks.yml`)
+	   - Local verification command: `gitleaks detect --source . --redact --no-banner --config .gitleaks.toml`
+	   - Repo policy tests ensure release credentials are not committed:
+	     - `__tests__/repo.noCredentials.spec.ts` (EAS submit config + iOS signing team IDs)
 
-- **Input Sanitization**: Clean user input before DNS queries
-- **Content Security**: Sanitize AI responses before rendering
-- **Data Encryption**: Consider encrypting stored chats
-- **Rate Limiting**: Implement client-side rate limiting
+2. Lint portability
+   - `@ast-grep/cli` is a devDependency so `npm run lint` works in CI
+   - Lint config is `project-rules/astgrep-liquid-glass.yml`
+   - Local verification command: `npm run lint`
 
-## Error Handling
+3. No-emoji enforcement
+   - Jest test scans tracked files using `git ls-files`: `__tests__/repo.noEmoji.spec.ts`
+   - Any emoji regression fails CI and local tests
 
-- **Network Errors**: Clear messaging for offline state
-- **DNS Failures**: Fallback messages and retry options
-- **Storage Errors**: Handle storage quota exceeded
-- **Validation**: Input length limits and character validation
+4. Version sync determinism
+   - `scripts/sync-versions.js` uses `package.json` as source-of-truth
+   - Build numbers do not change when everything is already synchronized
+   - Optional flags:
+     - `--bump-build` to bump build explicitly
+     - `--build-number <n>` to set an explicit build number (must be monotonic)
+   - Jest test: `__tests__/syncVersions.spec.ts`
 
-## Accessibility
+5. Documentation correctness
+   - Architecture doc explicitly states TS chain has no DNS-over-HTTPS
+   - Android native internal fallback chain may use DNS-over-HTTPS for non-`ch.at`
+     (`docs/architecture/SYSTEM-ARCHITECTURE.md`)
 
-- **Screen Reader Support**: Proper labels and hints
-- **Keyboard Navigation**: Full keyboard support
-- **Font Scaling**: Respect system font size preferences
-- **Color Contrast**: WCAG AA compliance
+6. CI hardening (public repo baseline)
+   - CI runs on PRs + main:
+     - Lint + unit tests (`.github/workflows/ci.yml`)
+     - Secrets scan (`.github/workflows/gitleaks.yml`)
+   - Optional but recommended for public release:
+     - Dependency update automation (`.github/dependabot.yml`)
+     - Static analysis (`.github/workflows/codeql.yml`)
 
-## Future Enhancements
+7. Repo hygiene
+   - No tracked macOS artifacts:
+     - `.DS_Store` removed and ignored
+     - Guard test prevents it from coming back
+   - No store-release doc dumps committed under `docs/`:
+     - `docs/App_store/` removed
+     - Guard test prevents it from coming back
+   - Screenshot/media artifacts are optional; if not explicitly needed for the
+     public repo, keep them out of git and generate in release tooling.
+     - This repo does not keep `ios/fastlane/` in git for the public baseline.
+   - Local-only tooling folders are ignored and must not be tracked:
+     - `.claude/`, `.cursor/`, `agent_planning/`, `.logs/` are gitignored
+     - Guard test prevents tracking them (`__tests__/repo.hygiene.spec.ts`)
+   - Keep dependencies minimal and justifiable:
+     - Remove unused heavyweight tooling deps from `package.json` to reduce
+       attack surface and install time (e.g. Playwright, when not used).
+	   - Block common secret-bearing files at the repo boundary:
+     - Do not track `.env` or `.env.*` files unless they are explicit examples
+       (`.env.*.example`)
+     - Do not track private key material (`.p8`, `.p12`, `.pem`, `.key`, etc)
+     - Do not track common cloud service secret configs (Firebase plist/json)
+	     - Guard test enforces this (`__tests__/repo.hygiene.spec.ts`)
 
-- Export chat history (JSON, PDF)
-- Search within chats
-- Voice input/output
-- Share conversations
-- Chat templates/prompts
-- Multiple DNS server support
-- Streaming responses
-- File attachments
+8. Deterministic iOS pods maintenance
+   - Default cleanup workflows keep `ios/Podfile.lock` intact (determinism).
+   - `npm run clean-ios` removes `Pods/` and reinstalls without touching the lockfile.
+   - `scripts/fix-cocoapods.sh` preserves `Podfile.lock` by default; `--reset-lock` is explicit.
+   - Jest policy test: `__tests__/iosPodsCleanupPolicy.spec.ts`
+
+9. Logging hygiene (production + tests)
+   - `src/` does not use `console.*` directly except:
+     - `src/utils/devLog.ts` (gated helper)
+     - `src/utils/androidStartupDiagnostics.ts` (explicit diagnostic utility)
+     - `src/components/ErrorBoundary.tsx` (explicit last-resort crash boundary)
+   - Jest policy test: `__tests__/repo.noConsoleLog.spec.ts`
+
+### Verification (required before release)
+
+Run locally:
+
+- `npm install`
+- `npm run lint`
+- `npm test -- --bail --passWithNoTests`
+- `cd modules/dns-native && npm ci && npm test`
+- `gitleaks detect --source . --redact --no-banner --config .gitleaks.toml`
+
+CI enforces:
+
+- Lint + Jest (`.github/workflows/ci.yml`)
+- Gitleaks (`.github/workflows/gitleaks.yml`)

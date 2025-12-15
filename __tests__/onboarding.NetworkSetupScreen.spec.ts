@@ -52,31 +52,31 @@ describe("NetworkSetupScreen - iOS 26 HIG Compliance", () => {
 
   describe("Zero Emoji Requirement", () => {
     it("does not contain checkmark emoji", () => {
-      expect(sourceCode).not.toContain("✅");
+      expect(sourceCode).not.toContain(String.fromCodePoint(0x2705));
     });
 
     it("does not contain cross mark emoji", () => {
-      expect(sourceCode).not.toContain("❌");
+      expect(sourceCode).not.toContain(String.fromCodePoint(0x274C));
     });
 
     it("does not contain hourglass emoji", () => {
-      expect(sourceCode).not.toContain("⏳");
+      expect(sourceCode).not.toContain(String.fromCodePoint(0x23F3));
     });
 
     it("does not contain rocket emoji", () => {
-      expect(sourceCode).not.toContain("🚀");
+      expect(sourceCode).not.toContain(String.fromCodePoint(0x1F680));
     });
 
     it("does not contain sparkles emoji", () => {
-      expect(sourceCode).not.toContain("✨");
+      expect(sourceCode).not.toContain(String.fromCodePoint(0x2728));
     });
 
     it("does not contain lightning emoji", () => {
-      expect(sourceCode).not.toContain("⚡");
+      expect(sourceCode).not.toContain(String.fromCodePoint(0x26A1));
     });
 
     it("does not contain gear emoji", () => {
-      expect(sourceCode).not.toContain("⚙️");
+      expect(sourceCode).not.toContain("\u2699\uFE0F");
     });
 
     it("contains zero emoji characters", () => {

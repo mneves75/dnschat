@@ -4,6 +4,7 @@ import { Platform } from "react-native";
 import { useSettings } from "../context/SettingsContext";
 import { useAccessibility } from "../context/AccessibilityContext";
 import { configureHaptics, preloadHaptics } from "../utils/haptics";
+import { devWarn } from "../utils/devLog";
 
 /**
  * Keeps native haptics wiring aligned with settings + accessibility state.
@@ -26,13 +27,10 @@ export function HapticsConfigurator() {
     if (!hasPreloadedRef.current) {
       hasPreloadedRef.current = true;
       preloadHaptics().catch((error) => {
-        if (__DEV__) {
-          console.warn("Haptics preload failed:", error);
-        }
+        devWarn("[HapticsConfigurator] Haptics preload failed", error);
       });
     }
   }, [enableHaptics, config.reduceMotion, settingsLoading]);
 
   return null;
 }
-

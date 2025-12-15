@@ -9,6 +9,7 @@ import {
 } from "../../ui/theme/imessagePalette";
 import { useTypography } from "../../ui/hooks/useTypography";
 import { LiquidGlassSpacing, getCornerRadius } from "../../ui/theme/liquidGlassSpacing";
+import { devLog } from "../../utils/devLog";
 
 const packageJson = require("../../../package.json");
 const AppIcon = require("../../assets/dnschat_ios26.png");
@@ -128,15 +129,12 @@ export function About() {
                   source={AppIcon}
                   style={styles.logoImage}
                   resizeMode="contain"
-                  onLoad={() =>
-                    console.log("✅ About icon loaded successfully")
-                  }
+                  onLoad={() => devLog("[About] icon loaded")}
                   onError={(error) => {
-                    console.log(
-                      "🚨 About icon load error:",
+                    devLog(
+                      "[About] Icon load error:",
                       error.nativeEvent?.error || "Unknown error",
                     );
-                    console.log("🚨 AppIcon source:", AppIcon);
                     setIconError(true);
                   }}
                 />

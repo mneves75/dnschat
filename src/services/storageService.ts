@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Chat, Message } from "../types/chat";
 import uuid from "react-native-uuid";
+import { devLog, devWarn } from "../utils/devLog";
 
 const CHATS_KEY = "@chat_dns_chats";
 
@@ -38,9 +39,9 @@ export class StorageService {
   }
   static async saveChats(chats: Chat[]): Promise<void> {
     const startTime = Date.now();
-    console.log('💾 [StorageService] saveChats called', {
+    devLog("[StorageService] saveChats called", {
       chatCount: chats.length,
-      chatIds: chats.map(c => c.id),
+      chatIds: chats.map((c) => c.id),
     });
 
     try {
@@ -51,35 +52,37 @@ export class StorageService {
         return value;
       });
 
-      console.log('💾 [StorageService] Serialized chats', {
+      devLog("[StorageService] Serialized chats", {
         dataSize: serializedChats.length,
       });
 
       await AsyncStorage.setItem(CHATS_KEY, serializedChats);
 
       const duration = Date.now() - startTime;
-      console.log('✅ [StorageService] saveChats completed', {
+      devLog("[StorageService] saveChats completed", {
         duration: `${duration}ms`,
       });
     } catch (error) {
-      console.error("❌ [StorageService] Error saving chats:", error);
+      // Persisting chat state failures are important during development, but
+      // noisy (and sometimes privacy-sensitive) in production logs.
+      devWarn("[StorageService] Error saving chats", error);
       throw error;
     }
   }
 
   static async loadChats(): Promise<Chat[]> {
     const startTime = Date.now();
-    console.log('📂 [StorageService] loadChats called');
+    devLog("[StorageService] loadChats called");
 
     try {
       const serializedChats = await AsyncStorage.getItem(CHATS_KEY);
 
       if (!serializedChats) {
-        console.log('📂 [StorageService] No chats found in storage');
+        devLog("[StorageService] No chats found in storage");
         return [];
       }
 
-      console.log('📂 [StorageService] Retrieved chats from storage', {
+      devLog("[StorageService] Retrieved chats from storage", {
         dataSize: serializedChats.length,
       });
 
@@ -91,14 +94,14 @@ export class StorageService {
       });
 
       const duration = Date.now() - startTime;
-      console.log('✅ [StorageService] loadChats completed', {
+      devLog("[StorageService] loadChats completed", {
         chatCount: chats.length,
         duration: `${duration}ms`,
       });
 
       return chats as Chat[];
     } catch (error) {
-      console.error("❌ [StorageService] Error loading chats:", error);
+      devWarn("[StorageService] Error loading chats", error);
       return [];
     }
   }
@@ -119,7 +122,7 @@ export class StorageService {
         await this.saveChats(chats);
         return newChat;
       } catch (error) {
-        console.error("Error creating chat:", error);
+        devWarn("[StorageService] Error creating chat", error);
         throw error;
       }
     });
@@ -146,7 +149,7 @@ export class StorageService {
 
         await this.saveChats(chats);
       } catch (error) {
-        console.error("Error updating chat:", error);
+        devWarn("[StorageService] Error updating chat", error);
         throw error;
       }
     });
@@ -159,7 +162,7 @@ export class StorageService {
         const filteredChats = chats.filter((chat) => chat.id !== chatId);
         await this.saveChats(filteredChats);
       } catch (error) {
-        console.error("Error deleting chat:", error);
+        devWarn("[StorageService] Error deleting chat", error);
         throw error;
       }
     });
@@ -168,7 +171,7 @@ export class StorageService {
   static async addMessage(chatId: string, message: Message): Promise<void> {
     return this.queueOperation(async () => {
       const startTime = Date.now();
-      console.log('📝 [StorageService] addMessage called', {
+      devLog("[StorageService] addMessage called", {
         chatId,
         messageId: message.id,
         messageRole: message.role,
@@ -177,17 +180,17 @@ export class StorageService {
       });
 
       try {
-        console.log('📂 [StorageService] Loading chats for addMessage...');
+        devLog("[StorageService] Loading chats for addMessage...");
         const chats = await this.loadChats();
 
         const chatIndex = chats.findIndex((chat) => chat.id === chatId);
 
         if (chatIndex === -1) {
-          console.error('❌ [StorageService] Chat not found', { chatId });
+          devWarn("[StorageService] Chat not found", { chatId });
           throw new Error("Chat not found");
         }
 
-        console.log('📝 [StorageService] Found chat', {
+        devLog("[StorageService] Found chat", {
           chatIndex,
           existingMessageCount: chats[chatIndex].messages.length,
         });
@@ -195,7 +198,7 @@ export class StorageService {
         chats[chatIndex].messages.push(message);
         chats[chatIndex].updatedAt = new Date();
 
-        console.log('📝 [StorageService] Message added to chat array', {
+        devLog("[StorageService] Message added to chat array", {
           newMessageCount: chats[chatIndex].messages.length,
         });
 
@@ -209,21 +212,21 @@ export class StorageService {
             chats[chatIndex].title =
               firstMessage.content.slice(0, 50) +
               (firstMessage.content.length > 50 ? "..." : "");
-            console.log('📝 [StorageService] Updated chat title', {
+            devLog("[StorageService] Updated chat title", {
               newTitle: chats[chatIndex].title,
             });
           }
         }
 
-        console.log('💾 [StorageService] Saving chats with new message...');
+        devLog("[StorageService] Saving chats with new message...");
         await this.saveChats(chats);
 
         const duration = Date.now() - startTime;
-        console.log('✅ [StorageService] addMessage completed', {
+        devLog("[StorageService] addMessage completed", {
           duration: `${duration}ms`,
         });
       } catch (error) {
-        console.error("❌ [StorageService] Error adding message:", error);
+        devWarn("[StorageService] Error adding message", error);
         throw error;
       }
     });
@@ -236,7 +239,7 @@ export class StorageService {
   ): Promise<void> {
     return this.queueOperation(async () => {
       const startTime = Date.now();
-      console.log('🔄 [StorageService] updateMessage called', {
+      devLog("[StorageService] updateMessage called", {
         chatId,
         messageId,
         updates: {
@@ -247,13 +250,13 @@ export class StorageService {
       });
 
       try {
-        console.log('📂 [StorageService] Loading chats for updateMessage...');
+        devLog("[StorageService] Loading chats for updateMessage...");
         const chats = await this.loadChats();
 
         const chatIndex = chats.findIndex((chat) => chat.id === chatId);
 
         if (chatIndex === -1) {
-          console.error('❌ [StorageService] Chat not found', { chatId });
+          devWarn("[StorageService] Chat not found", { chatId });
           throw new Error("Chat not found");
         }
 
@@ -262,18 +265,17 @@ export class StorageService {
         );
 
         if (messageIndex === -1) {
-          console.error('❌ [StorageService] Message not found', {
+          devWarn("[StorageService] Message not found", {
             chatId,
             messageId,
-            availableMessageIds: chats[chatIndex].messages.map(m => m.id),
+            availableMessageIds: chats[chatIndex].messages.map((m) => m.id),
           });
           throw new Error("Message not found");
         }
 
-        console.log('🔄 [StorageService] Found message to update', {
+        devLog("[StorageService] Found message to update", {
           chatIndex,
           messageIndex,
-          currentContent: chats[chatIndex].messages[messageIndex].content.substring(0, 50),
           currentStatus: chats[chatIndex].messages[messageIndex].status,
         });
 
@@ -284,20 +286,20 @@ export class StorageService {
 
         chats[chatIndex].updatedAt = new Date();
 
-        console.log('🔄 [StorageService] Message updated in array', {
-          newContent: chats[chatIndex].messages[messageIndex].content.substring(0, 50),
+        devLog("[StorageService] Message updated in array", {
+          contentLength: chats[chatIndex].messages[messageIndex].content.length,
           newStatus: chats[chatIndex].messages[messageIndex].status,
         });
 
-        console.log('💾 [StorageService] Saving chats with updated message...');
+        devLog("[StorageService] Saving chats with updated message...");
         await this.saveChats(chats);
 
         const duration = Date.now() - startTime;
-        console.log('✅ [StorageService] updateMessage completed', {
+        devLog("[StorageService] updateMessage completed", {
           duration: `${duration}ms`,
         });
       } catch (error) {
-        console.error("❌ [StorageService] Error updating message:", error);
+        devWarn("[StorageService] Error updating message", error);
         throw error;
       }
     });
@@ -310,7 +312,7 @@ export class StorageService {
       try {
         await AsyncStorage.removeItem(CHATS_KEY);
       } catch (error) {
-        console.error("Error clearing chats:", error);
+        devWarn("[StorageService] Error clearing chats", error);
         throw error;
       }
     });

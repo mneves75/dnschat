@@ -81,26 +81,26 @@ export function Toast({
       case "success":
         return {
           backgroundColor: "#34C759",
-          icon: "✓",
+          icon: "OK",
           textColor: "#FFFFFF",
         };
       case "warning":
         return {
           backgroundColor: "#FF9500",
-          icon: "⚠",
+          icon: "!",
           textColor: "#FFFFFF",
         };
       case "error":
         return {
           backgroundColor: "#FF3B30",
-          icon: "✕",
+          icon: "X",
           textColor: "#FFFFFF",
         };
       case "info":
       default:
         return {
           backgroundColor: palette.accentTint,
-          icon: "ℹ",
+          icon: "i",
           textColor: "#FFFFFF",
         };
     }

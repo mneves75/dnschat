@@ -17,19 +17,19 @@ function log(message, color = colors.reset) {
 }
 
 function error(message) {
-  log(`❌ ${message}`, colors.red);
+  log(`[ERROR] ${message}`, colors.red);
 }
 
 function success(message) {
-  log(`✅ ${message}`, colors.green);
+  log(`[OK] ${message}`, colors.green);
 }
 
 function warn(message) {
-  log(`⚠️  ${message}`, colors.yellow);
+  log(`[WARN] ${message}`, colors.yellow);
 }
 
 function info(message) {
-  log(`ℹ️  ${message}`, colors.blue);
+  log(`[INFO] ${message}`, colors.blue);
 }
 
 function checkAdbAvailable() {
@@ -233,4 +233,3 @@ function main() {
 }
 
 main();
-

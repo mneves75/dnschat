@@ -15,11 +15,11 @@ export class AndroidStartupDiagnostics {
   }
 
   static error(message: string, details?: string) {
-    console.error(`[AndroidStartupDiagnostics] ❌ ${message}`, details || "");
+    console.error(`[AndroidStartupDiagnostics] ERROR ${message}`, details || "");
   }
 
   static warn(message: string, details?: string) {
-    console.warn(`[AndroidStartupDiagnostics] ⚠️ ${message}`, details || "");
+    console.warn(`[AndroidStartupDiagnostics] WARN ${message}`, details || "");
   }
 
   static async runDiagnostics(): Promise<DiagnosticResult[]> {
@@ -55,7 +55,7 @@ export class AndroidStartupDiagnostics {
           message: "RNDNSModule is registered and available",
           details: `Methods: ${Object.keys(dnsModule).join(", ")}`,
         });
-        this.log("✅ DNS Native Module registered");
+        this.log("DNS Native Module registered");
       } else {
         this.results.push({
           name: "DNS Native Module",
@@ -118,7 +118,7 @@ export class AndroidStartupDiagnostics {
           message: "All critical native modules registered",
           details: `Found ${modules.length} native modules`,
         });
-        this.log("✅ All critical native modules registered");
+        this.log("All critical native modules registered");
       } else {
         this.results.push({
           name: "Native Modules",
@@ -159,9 +159,9 @@ export class AndroidStartupDiagnostics {
     const warnings = this.results.filter((r) => r.status === "warning").length;
 
     console.log("\n=== Android Startup Diagnostics ===");
-    console.log(`✅ Passed: ${passed}`);
-    console.log(`❌ Failed: ${failed}`);
-    console.log(`⚠️  Warnings: ${warnings}`);
+    console.log(`Passed: ${passed}`);
+    console.log(`Failed: ${failed}`);
+    console.log(`Warnings: ${warnings}`);
     console.log("===================================\n");
 
     if (failed > 0) {
@@ -169,10 +169,9 @@ export class AndroidStartupDiagnostics {
       this.results
         .filter((r) => r.status === "fail")
         .forEach((r) => {
-          console.error(`\n❌ ${r.name}: ${r.message}`);
+          console.error(`\nERROR ${r.name}: ${r.message}`);
           if (r.details) console.error(`   Details: ${r.details}`);
         });
     }
   }
 }
-

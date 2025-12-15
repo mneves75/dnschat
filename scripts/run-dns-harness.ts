@@ -2,7 +2,7 @@
 /**
  * Cross-layer DNS harness for verification bundles.
  * Sanitizes the message, composes the query name, and executes the
- * configured transport order (native ➜ UDP ➜ TCP by default).
+ * configured transport order (native -> UDP -> TCP by default).
  *
  * Usage examples:
  *   npx ts-node scripts/run-dns-harness.ts --message "Hello" --server ch.at \
@@ -600,16 +600,16 @@ async function runHarness() {
     resolvedText: finalResponse,
   };
 
-  console.log('🧪 DNS Harness');
+  console.log('DNS Harness');
   console.log(`  Message:        ${options.message}`);
   console.log(`  Sanitized:      ${sanitizedLabel}`);
   console.log(`  Query name:     ${queryName}`);
   console.log(`  Server:         ${normalizedServer}:${options.port}`);
-  console.log(`  Method order:   ${options.methodOrder.join(' → ')}`);
+  console.log(`  Method order:   ${options.methodOrder.join(' -> ')}`);
 
   for (const attempt of attempts) {
     if (attempt.status === 'success') {
-      console.log(`  ✅ ${attempt.method.toUpperCase()} succeeded in ${attempt.durationMs}ms`);
+      console.log(`  ${attempt.method.toUpperCase()} succeeded in ${attempt.durationMs}ms`);
       if (attempt.txtRecords?.length) {
         console.log(`    TXT records: ${JSON.stringify(attempt.txtRecords)}`);
       }
@@ -617,17 +617,17 @@ async function runHarness() {
         console.log(`    Combined: ${finalResponse}`);
       }
     } else {
-      console.log(`  ❌ ${attempt.method.toUpperCase()} failed (${attempt.error ?? 'unknown error'})`);
+      console.log(`  ${attempt.method.toUpperCase()} failed (${attempt.error ?? 'unknown error'})`);
     }
   }
 
   if (options.jsonOut) {
     await writeJsonArtifact(options.jsonOut, harnessResult);
-    console.log(`  📄 JSON artifact written to ${options.jsonOut}`);
+    console.log(`  JSON artifact written to ${options.jsonOut}`);
   }
 
   if (options.rawOutDir) {
-    console.log(`  💾 Raw buffers saved to ${options.rawOutDir}`);
+    console.log(`  Raw buffers saved to ${options.rawOutDir}`);
   }
 
   if (finalStatus === 'failure') {

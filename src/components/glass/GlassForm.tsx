@@ -109,7 +109,6 @@ const useHapticFeedback = () => {
   const triggerSelectionFeedback = React.useCallback(() => {
     if (Platform.OS === "ios") {
       // iOS haptic feedback (would need expo-haptics)
-      console.log("🔸 Haptic: Selection feedback");
       // HapticFeedback.selectionAsync();
     }
   }, []);
@@ -117,7 +116,6 @@ const useHapticFeedback = () => {
   const triggerImpactFeedback = React.useCallback(
     (style: "light" | "medium" | "heavy" = "light") => {
       if (Platform.OS === "ios") {
-        console.log(`🔸 Haptic: Impact feedback (${style})`);
         // HapticFeedback.impactAsync(HapticFeedback.ImpactFeedbackStyle[style]);
       }
     },
@@ -310,10 +308,8 @@ export const GlassFormLink: React.FC<GlassFormLinkProps> = ({
 }) => {
   const handlePress = React.useCallback(() => {
     if (href) {
-      console.log(`🔗 Navigate to: ${href}`);
       // Navigation logic would go here
     } else if (url) {
-      console.log(`🌐 Open URL: ${url}`);
       // URL opening logic would go here
     }
     props.onPress?.();

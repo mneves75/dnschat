@@ -2,8 +2,10 @@ import {
   parseTXTResponse,
   sanitizeDNSMessage,
   validateDNSMessage,
+  validateDNSServer,
   composeDNSQueryName,
 } from "../src/services/dnsService";
+import { sanitizeDNSMessageReference } from "../modules/dns-native/constants";
 
 // Access private methods for test via any-cast
 import * as DNSServiceModule from "../src/services/dnsService";
@@ -63,10 +65,11 @@ describe("DNS Service helpers", () => {
     });
 
     it("rejects inputs that lose all content after sanitization", () => {
+      const smiley = String.fromCodePoint(0x1F642);
       expect(() => sanitizeDNSMessage("!!!")).toThrow(
         "Message must contain at least one letter or number after sanitization",
       );
-      expect(() => sanitizeDNSMessage("🙂🙂")).toThrow(
+      expect(() => sanitizeDNSMessage(smiley.repeat(2))).toThrow(
         "Message must contain at least one letter or number after sanitization",
       );
     });
@@ -106,6 +109,44 @@ describe("DNS Service helpers", () => {
         "Message too long (maximum 120 characters before sanitization)",
       );
     });
+
+    it("matches native reference sanitizer for representative inputs", () => {
+      const cases = [
+        "Hello DNS World",
+        "   Hello!!   DNS   World  ",
+        "ÁÉÍÓÚ ç ã",
+        "Olá São Paulo",
+        "numbers 123 456",
+        "dashes---and   spaces",
+        "MixedCASE and Punctuation!!!",
+        "tabs\tand\nnewlines",
+        "emoji are rejected",
+      ];
+
+      for (const input of cases) {
+        // For valid inputs, the TS sanitizer must be identical to the native reference
+        // implementation (shared contract).
+        try {
+          validateDNSMessage(input);
+        } catch {
+          continue;
+        }
+
+        let tsValue: string | null = null;
+        let nativeValue: string | null = null;
+
+        try {
+          tsValue = sanitizeDNSMessage(input);
+        } catch (error) {
+          // If TS rejects, native must reject with the same contract.
+          expect(() => sanitizeDNSMessageReference(input)).toThrow();
+          continue;
+        }
+
+        nativeValue = sanitizeDNSMessageReference(input);
+        expect(tsValue).toBe(nativeValue);
+      }
+    });
   });
 
   describe("composeDNSQueryName", () => {
@@ -117,6 +158,34 @@ describe("DNS Service helpers", () => {
     it("falls back to default zone when server is IPv4", () => {
       const fqdn = composeDNSQueryName("test", "8.8.8.8");
       expect(fqdn).toBe("test.ch.at");
+    });
+  });
+
+  describe("validateDNSServer (allowlist + normalization)", () => {
+    it("accepts allowlisted endpoints and returns canonical lowercase form", () => {
+      expect(validateDNSServer("CH.AT")).toBe("ch.at");
+      expect(validateDNSServer("  llm.pieter.com  ")).toBe("llm.pieter.com");
+      expect(validateDNSServer("1.1.1.1")).toBe("1.1.1.1");
+      expect(validateDNSServer("8.8.8.8")).toBe("8.8.8.8");
+    });
+
+    it("treats a trailing dot as equivalent for hostnames", () => {
+      expect(validateDNSServer("ch.at.")).toBe("ch.at");
+      expect(validateDNSServer("LLM.PIETER.COM.")).toBe("llm.pieter.com");
+    });
+
+    it("rejects non-allowlisted DNS servers", () => {
+      expect(() => validateDNSServer("example.com")).toThrow("DNS server not allowed");
+      expect(() => validateDNSServer("dns.google")).toThrow("DNS server not allowed");
+    });
+
+    it("rejects host:port style input (ports are not supported)", () => {
+      expect(() => validateDNSServer("ch.at:53")).toThrow(
+        "DNS server must be a valid allowlisted hostname or IP address",
+      );
+      expect(() => validateDNSServer("1.1.1.1:53")).toThrow(
+        "DNS server must be a valid allowlisted hostname or IP address",
+      );
     });
   });
 

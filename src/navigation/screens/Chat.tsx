@@ -25,6 +25,7 @@ import {
 } from "../../ui/theme/liquidGlassSpacing";
 import { useTranslation } from "../../i18n";
 import { useTypography } from "../../ui/hooks/useTypography";
+import { devLog, devWarn } from "../../utils/devLog";
 
 export function Chat() {
   const colorScheme = useColorScheme();
@@ -70,26 +71,24 @@ export function Chat() {
   // Log when currentChat changes
   // IMPORTANT: Use optional chaining on messages to prevent crash when currentChat exists but messages is undefined
   useEffect(() => {
-    console.log('🔄 [Chat] currentChat changed:', {
+    devLog("[Chat] currentChat changed", {
       chatId: currentChat?.id,
       messageCount: currentChat?.messages?.length ?? 0,
-      lastMessage: currentChat?.messages?.[currentChat?.messages?.length - 1]?.content?.substring(0, 50),
     });
   }, [currentChat]);
 
   // Log messages array being passed to MessageList
   useEffect(() => {
     const messages = currentChat?.messages || [];
-    console.log('📊 [Chat] Rendering MessageList with messages:', {
+    devLog("[Chat] Rendering MessageList", {
       messageCount: messages.length,
-      messageIds: messages.map(m => m.id),
     });
   }, [currentChat?.messages]);
 
   useEffect(() => {
     // Create a new chat if none exists
     if (!currentChat) {
-      console.log('📝 [Chat] No current chat, creating new chat...');
+      devLog("[Chat] No current chat, creating new chat");
       createChat();
     }
   }, [currentChat]);
@@ -97,7 +96,7 @@ export function Chat() {
   useEffect(() => {
     // Show error alert when error occurs
     if (error) {
-      console.error('❌ [Chat] Error occurred:', error);
+      devWarn("[Chat] Error occurred", error);
       Alert.alert(t("screen.chat.errorAlertTitle"), error, [
         {
           text: t("screen.chat.errorAlertDismiss"),
@@ -112,7 +111,7 @@ export function Chat() {
       await sendMessage(message);
     } catch (err) {
       // Error handling is done in the context
-      console.error("Failed to send message:", err);
+      devWarn("[Chat] Failed to send message", err);
     }
   };
 

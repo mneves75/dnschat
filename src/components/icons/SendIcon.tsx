@@ -1,6 +1,7 @@
 import React from "react";
 import Svg, { Circle, Path } from "react-native-svg";
 import { useImessagePalette } from "../../ui/theme/imessagePalette";
+import { devWarn } from "../../utils/devLog";
 
 interface SendIconProps {
   /**
@@ -61,9 +62,9 @@ export function SendIcon({
   // This matches iOS Messages pattern: white icon on colored button
   const finalArrowColor = "#FFFFFF";
 
-  if ((deprecatedCircleColor || deprecatedArrowColor) && __DEV__) {
-    console.warn(
-      "SendIcon: circleColor and arrowColor props are deprecated. Icon now uses white arrow on button background."
+  if (deprecatedCircleColor || deprecatedArrowColor) {
+    devWarn(
+      "[SendIcon] circleColor and arrowColor props are deprecated; icon now uses a white arrow on the button background.",
     );
   }
 

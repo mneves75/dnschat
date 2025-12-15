@@ -1,88 +1,73 @@
-Sending a DNS message like "dig @ch.at \"what is the meaning of life?\" TXT +short" in React Native is more complex than in a server-side environment or a native platform with dedicated DNS libraries. There isn't a single, high-level library in React Native that allows for specifying a custom DNS server and performing a TXT record lookup in one go.
+# DNS protocol spec (app behavior)
 
-However, you can achieve this by combining two types of libraries:
+This doc describes what DNSChat actually does today (code is the source of
+truth). For implementation, see `src/services/dnsService.ts` and
+`modules/dns-native/constants.ts`.
 
-1.  A DNS packet library to create the raw DNS query.
-2.  A UDP (User Datagram Protocol) socket library to send the raw query to the DNS server.
+## Inputs and limits
 
-For this, we can use `react-native-dns-packet` to construct the DNS query and `react-native-udp` to handle the network communication.
+- User prompt is a string.
+- Prompt max length before sanitization: `120` chars.
+- Prompt must not contain control characters (`0x00-0x1F`, `0x7F-0x9F`).
 
-### Technical Details:
+Sanitized label constraints:
 
-1.  **Dependency Installation:** You'll need to add `react-native-dns-packet` and `react-native-udp` to your project.
-2.  **DNS Packet Creation:** The `react-native-dns-packet` library allows you to create a DNS query packet. You'll specify the query type as 'TXT' and provide the domain name you want to query ("what is the meaning of life?").
-3.  **UDP Socket Communication:** Since DNS queries are typically sent over UDP, you'll use `react-native-udp` to create a UDP socket. This socket will be used to send the DNS query packet to the custom DNS server (`ch.at`) on port 53 (the standard DNS port).
-4.  **Sending and Receiving Data:** You'll send the created DNS packet as a Buffer over the UDP socket. The socket will then listen for an incoming message, which will be the DNS response from the server.
-5.  **Response Decoding:** Once you receive the response, you'll use `react-native-dns-packet` again to decode the raw buffer into a readable JavaScript object. This object will contain the TXT record information.
+- Output is a single DNS label (lowercase `a-z`, `0-9`, `-` only).
+- Label max length: `63` chars (RFC 1035 label limit).
+- Empty label after sanitization is rejected.
 
-### React Native Code Example:
+## Query name construction
 
-Here's a code snippet that demonstrates how to perform the DNS query.
+Terminology:
 
-First, install the required packages:
+- `targetServer`: DNS server/resolver we send packets to (e.g. `ch.at`, `8.8.8.8`).
+- `zone`: suffix used to build the query name (e.g. `ch.at`, `llm.pieter.com`).
+- `label`: sanitized message label.
 
-```bash
-npm install react-native-dns-packet react-native-udp
-```
+Algorithm (implemented by `composeDNSQueryName(label, dnsServer)`):
 
-Then, link the native modules for `react-native-udp`:
+1. Strip trailing dots and whitespace from `label`.
+2. Validate `dnsServer` (hostname or IP) to prevent injection.
+3. Determine `zone`:
+   - If `dnsServer` is empty OR looks like an IPv4 address, use default zone `ch.at`.
+   - Else use `dnsServer` (lowercased, trailing dot removed) as the zone.
+4. Query name is `${label}.${zone}`.
 
-```bash
-react-native link react-native-udp
-```
+Important consequence:
 
-Now, you can use the following code in your React Native component:
+- If the user selects an IP resolver like `8.8.8.8`, we still query a name under
+  `ch.at` (e.g. `hello-world.ch.at`) but we send it to resolver `8.8.8.8`.
 
-````javascript
-import React, { useEffect } from 'react';
-import { View, Text, Button } from 'react-native';
-import dgram from 'react-native-udp';
-import { encode, decode } from 'react-native-dns-packet';
+## TXT response parsing
 
-const DnsQueryComponent = () => {
+Input is a list of TXT strings as returned by the transport.
 
-  const queryDns = () => {
-    const socket = dgram.createSocket('udp4');
+Parsing rules (implemented by `parseTXTResponse(txtRecords)`):
 
-    const dnsQuery = {
-      type: 'query',
-      id: 1,
-      flags: 256, // Standard query
-      questions: [{
-        type: 'TXT',
-        name: 'what is the meaning of life?'
-      }]
-    };
+1. Ignore empty/whitespace-only records.
+2. If any record does NOT match multipart prefix `n/N:...`, treat the response
+   as plain and return the concatenation of all plain records (in received order).
+3. Otherwise treat as multipart:
+   - Each record must be `partNumber/totalParts:content`.
+   - `totalParts` is taken from the first parsed part.
+   - Parts are keyed by `partNumber`; duplicates are allowed only if content is identical.
+   - The response must contain exactly `totalParts` unique parts `1..totalParts`.
+   - Join `content` in order `1..N`.
+4. Empty final response is rejected.
 
-    const queryBuffer = encode(dnsQuery);
+## Transport chain
 
-    socket.on('message', (msg, rinfo) => {
-      const decodedResponse = decode(msg);
-      console.log('Received from server:', decodedResponse);
-      // You can now access the TXT record from the decodedResponse.answers array
-      if (decodedResponse.answers && decodedResponse.answers.length > 0) {
-        const txtRecord = decodedResponse.answers[0].data;
-        console.log('TXT Record:', txtRecord.toString());
-      }
-      socket.close();
-    });
+Order used for iOS/Android builds:
 
-    socket.send(queryBuffer, 0, queryBuffer.length, 53, 'ch.at', (err) => {
-      if (err) {
-        console.error('Error sending packet:', err);
-        socket.close();
-      }
-    });
-  };
+1. Native DNS module (`modules/dns-native/`)
+2. UDP DNS (JavaScript, `react-native-udp`)
+3. TCP DNS (JavaScript, `react-native-tcp-socket`)
+4. Mock (optional dev fallback)
 
-  return (
-    <View>
-      <Button title="Query DNS for Meaning of Life" onPress={queryDns} />
-    </View>
-  );
-};
+Web builds use Mock because browsers cannot do custom DNS on port 53.
 
-export default DnsQueryComponent;```
+## Security model (non-negotiable)
 
-This React Native component provides a button that, when pressed, will send the DNS query and print the response to the console. This method gives you low-level control over the DNS query process, allowing you to replicate the `dig` command's functionality.
-````
+- Do not send secrets or personal data; DNS is observable infrastructure.
+- DNS server input is validated and constrained; see whitelist and sanitizer
+  rules in `modules/dns-native/constants.ts`.

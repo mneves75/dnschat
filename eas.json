@@ -40,13 +40,5 @@
       }
     }
   },
-  "submit": {
-    "production": {
-      "ios": {
-        "appleId": "contato@mvneves.dev",
-        "ascAppId": "REDACTED",
-        "appleTeamId": "REDACTED"
-      }
-    }
-  }
+  "submit": {}
 }

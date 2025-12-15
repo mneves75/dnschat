@@ -1,0 +1,5 @@
+title = "DNSChat gitleaks config"
+
+[allowlist]
+description = "CocoaPods lockfile contains many hashes that trigger generic rules."
+paths = ['''ios/Podfile.lock''']

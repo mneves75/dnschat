@@ -1,6 +1,7 @@
 import React from "react";
 import Svg, { Circle, Path } from "react-native-svg";
 import { useImessagePalette } from "../../ui/theme/imessagePalette";
+import { devWarn } from "../../utils/devLog";
 
 interface PlusIconProps {
   size?: number;
@@ -45,9 +46,9 @@ export function PlusIcon({
   // This ensures proper light/dark mode and high contrast support
   const circleColor = palette.accentTint;
 
-  if (deprecatedCircleColor && __DEV__) {
-    console.warn(
-      "PlusIcon: circleColor prop is deprecated. Icon now uses semantic colors from theme palette."
+  if (deprecatedCircleColor) {
+    devWarn(
+      "[PlusIcon] circleColor prop is deprecated; icon now uses semantic colors from the theme palette.",
     );
   }
 

@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LOGGING_CONSTANTS } from '../constants/appConstants';
 import { isScreenshotMode, getMockDNSLogs } from '../utils/screenshotMode';
+import { devLog, devWarn } from "../utils/devLog";
 
 export interface DNSLogEntry {
   id: string;
@@ -61,9 +62,9 @@ export class DNSLogService {
 
   static async initialize() {
     try {
-      // SCREENSHOT MODE: Load mock DNS logs for App Store screenshots
+      // SCREENSHOT MODE: Load mock DNS logs for deterministic UI captures
       if (isScreenshotMode()) {
-        console.log("📸 [DNSLogService] Screenshot mode detected, loading mock DNS logs");
+        devLog("[DNSLogService] Screenshot mode detected, loading mock DNS logs");
         this.queryLogs = getMockDNSLogs("en-US"); // Default to English, will be overridden by locale
         this.notifyListeners();
         return;
@@ -84,7 +85,7 @@ export class DNSLogService {
         }));
       }
     } catch (error) {
-      console.error("Failed to load DNS logs:", error);
+      devWarn("[DNSLogService] Failed to load DNS logs", error);
       this.queryLogs = [];
     }
 
@@ -282,7 +283,7 @@ export class DNSLogService {
     try {
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(this.queryLogs));
     } catch (error) {
-      console.error("Failed to save DNS logs:", error);
+      devWarn("[DNSLogService] Failed to save DNS logs", error);
     }
   }
 
@@ -346,7 +347,9 @@ export class DNSLogService {
     }
 
     if (removedCount > 0) {
-      console.log(`🧹 Cleaned up ${removedCount} old DNS logs (older than ${LOG_RETENTION_DAYS} days)`);
+      devLog(
+        `Cleaned up ${removedCount} old DNS logs (older than ${LOG_RETENTION_DAYS} days)`,
+      );
       await this.saveLogs();
       this.notifyListeners();
     }
@@ -362,12 +365,14 @@ export class DNSLogService {
       const sizeInMB = sizeInBytes / (1024 * 1024);
 
       if (sizeInMB > STORAGE_SIZE_WARNING_MB) {
-        console.warn(`⚠️ DNS logs storage size (${sizeInMB.toFixed(2)}MB) exceeds warning threshold (${STORAGE_SIZE_WARNING_MB}MB)`);
+        devWarn(
+          `[DNSLogService] DNS logs storage size (${sizeInMB.toFixed(2)}MB) exceeds warning threshold (${STORAGE_SIZE_WARNING_MB}MB)`,
+        );
       }
 
       return sizeInMB;
     } catch (error) {
-      console.error("Failed to check storage size:", error);
+      devWarn("[DNSLogService] Failed to check storage size", error);
       return 0;
     }
   }
@@ -417,10 +422,10 @@ export class DNSLogService {
     if (!status) return "•";
 
     const icons = {
-      attempt: "🔄",
-      success: "✅",
-      failure: "❌",
-      fallback: "↩️",
+      attempt: "...",
+      success: "OK",
+      failure: "X",
+      fallback: "<-",
     };
     return icons[status] || "•";
   }

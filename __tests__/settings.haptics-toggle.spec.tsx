@@ -1,8 +1,8 @@
 import React from "react";
-import TestRenderer, { act, ReactTestRenderer, ReactTestInstance } from "react-test-renderer";
+import { act, ReactTestRenderer, ReactTestInstance } from "react-test-renderer";
 import { Switch } from "react-native";
 import * as HapticsUtils from "../src/utils/haptics";
-
+import { createWithSuppressedWarnings } from "./utils/reactTestRenderer";
 
 const mockUseSettings = jest.fn();
 
@@ -19,18 +19,6 @@ jest.mock("../src/context/AccessibilityContext", () => ({
     isReduceMotionEnabled: false,
     isReduceTransparencyEnabled: false,
     highContrastEnabled: false,
-  }),
-}));
-
-jest.mock("@react-navigation/native", () => ({
-  useNavigation: () => ({ goBack: jest.fn() }),
-  useTheme: () => ({
-    colors: {
-      text: "#000",
-      border: "#444",
-      background: "#fff",
-      card: "#fafafa",
-    },
   }),
 }));
 
@@ -130,7 +118,7 @@ describe("Enable Haptics toggle", () => {
 
     let tree: ReactTestRenderer | null = null;
     await act(async () => {
-      tree = TestRenderer.create(<Settings />);
+      tree = createWithSuppressedWarnings(<Settings />);
     });
     if (!tree) {
       throw new Error("Failed to render Settings");
