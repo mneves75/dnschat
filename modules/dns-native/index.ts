@@ -1,7 +1,36 @@
 import { NativeModules, Platform } from "react-native";
 import { getNativeSanitizerConfig, NativeSanitizerConfig } from "./constants";
 
-const DEV_LOGGING = typeof __DEV__ !== "undefined" ? !!__DEV__ : false;
+const isJestRuntime = (): boolean => {
+  try {
+    return (
+      typeof process !== "undefined" &&
+      typeof process.env === "object" &&
+      process.env !== null &&
+      typeof process.env.JEST_WORKER_ID === "string"
+    );
+  } catch {
+    return false;
+  }
+};
+
+const isNativeDebugEnabled = (): boolean => {
+  const dev = typeof __DEV__ !== "undefined" ? Boolean(__DEV__) : false;
+  if (!dev) return false;
+  if (isJestRuntime()) return false;
+
+  try {
+    if ((globalThis as any).__DNSCHAT_NATIVE_DEBUG__ === true) return true;
+  } catch {}
+  try {
+    if (typeof process !== "undefined" && process.env?.DNSCHAT_NATIVE_DEBUG === "1") {
+      return true;
+    }
+  } catch {}
+  return false;
+};
+
+const DEV_LOGGING = isNativeDebugEnabled();
 const debugLog = (...args: unknown[]) => {
   if (DEV_LOGGING) {
     console.log(...args);
@@ -61,15 +90,15 @@ export class NativeDNS implements NativeDNSModule {
 
   constructor() {
     // Try to get the native module, but don't crash if it's not available
-    debugLog("🔧 NativeDNS constructor called");
-    debugLog("🔧 Available NativeModules keys:", Object.keys(NativeModules));
-    debugLog("🔧 Looking for RNDNSModule...");
+    debugLog("[NativeDNS] constructor called");
+    debugLog("[NativeDNS] Available NativeModules keys:", Object.keys(NativeModules));
+    debugLog("[NativeDNS] Looking for RNDNSModule...");
 
     try {
       this.nativeModule = NativeModules.RNDNSModule as NativeDNSModule;
-      debugLog("✅ RNDNSModule found:", !!this.nativeModule);
+      debugLog("[NativeDNS] RNDNSModule found:", !!this.nativeModule);
       if (this.nativeModule) {
-        debugLog("✅ RNDNSModule methods:", Object.keys(this.nativeModule));
+        debugLog("[NativeDNS] RNDNSModule methods:", Object.keys(this.nativeModule));
         if (Platform?.OS === "android") {
           try {
             const maybeResult = this.nativeModule.configureSanitizer?.(
@@ -80,24 +109,24 @@ export class NativeDNS implements NativeDNSModule {
               (maybeResult as Promise<boolean>)
                 .then((didUpdate) => {
                   if (didUpdate) {
-                    debugLog("✅ Android sanitizer configured via shared constants");
+                    debugLog("[NativeDNS] Android sanitizer configured via shared constants");
                   } else {
-                    debugLog("ℹ️ Android sanitizer already up to date; skipped reconfiguration");
+                    debugLog("[NativeDNS] Android sanitizer already up to date; skipped reconfiguration");
                   }
                 })
                 .catch((error: unknown) => {
-                  console.warn("⚠️ Failed to configure Android sanitizer:", error);
+                  console.warn("[NativeDNS] Failed to configure Android sanitizer:", error);
                 });
             } else {
-              debugLog("✅ Android sanitizer configured via shared constants");
+              debugLog("[NativeDNS] Android sanitizer configured via shared constants");
             }
           } catch (error) {
-            console.warn("⚠️ Failed to configure Android sanitizer:", error);
+            console.warn("[NativeDNS] Failed to configure Android sanitizer:", error);
           }
         }
       }
     } catch (error) {
-      console.warn("❌ Native DNS module not available:", error);
+      console.warn("[NativeDNS] Native DNS module not available:", error);
       this.nativeModule = null;
     }
   }

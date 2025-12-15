@@ -1,6 +1,6 @@
 {
   "name": "chat-dns",
-  "version": "3.1.0",
+  "version": "3.2.0",
   "description": "DNSChat - A React Native chat app using DNS TXT queries",
   "main": "index.tsx",
   "author": "mvneves",
@@ -15,7 +15,7 @@
     "sync-versions": "node scripts/sync-versions.js",
     "sync-versions:dry": "node scripts/sync-versions.js --dry-run",
     "fix-pods": "scripts/fix-cocoapods.sh",
-    "clean-ios": "cd ios && rm -rf Pods/ Podfile.lock build/ && pod install",
+    "clean-ios": "cd ios && rm -rf Pods/ build/ && pod install",
     "test": "jest --runInBand",
     "test:android": "jest --runInBand --testPathPattern=androidStartupDiagnostics",
     "verify:android": "node scripts/verify-android-setup.js",
@@ -49,7 +49,6 @@
     "expo-localization": "~17.0.7",
     "expo-splash-screen": "~31.0.11",
     "expo-system-ui": "~6.0.8",
-    "playwright": "^1.55.0",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-native": "0.81.5",
@@ -70,6 +69,7 @@
     "react-native-worklets": "0.5.1"
   },
   "devDependencies": {
+    "@ast-grep/cli": "^0.40.3",
     "@babel/core": "^7.20.0",
     "@types/jest": "^29.5.12",
     "@types/react": "~19.1.10",

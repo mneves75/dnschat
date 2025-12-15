@@ -16,6 +16,7 @@ import { useTypography } from "../ui/hooks/useTypography";
 import { LiquidGlassSpacing } from "../ui/theme/liquidGlassSpacing";
 import { LiquidGlassWrapper, useLiquidGlassCapabilities } from "./LiquidGlassWrapper";
 import { useTranslation } from "../i18n";
+import { devLog } from "../utils/devLog";
 
 interface MessageListProps {
   messages: Message[];
@@ -77,13 +78,11 @@ export function MessageList({
         requestAnimationFrame(() => {
           flatListRef.current?.scrollToEnd({ animated: true });
           // Optional: Add logging for debugging
-          if (__DEV__) {
-            console.log('[MessageList] Scrolled to bottom', {
-              messageCount: messages.length,
-              lastMessageKey,
-              bottomInset,
-            });
-          }
+          devLog("[MessageList] Scrolled to bottom", {
+            messageCount: messages.length,
+            lastMessageKey,
+            bottomInset,
+          });
         });
       });
     }

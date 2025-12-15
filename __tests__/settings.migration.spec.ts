@@ -95,6 +95,22 @@ describe('SettingsContext migrateSettings', () => {
     });
   });
 
+  it('falls back to default dnsServer when payload is not allowlisted', () => {
+    const payload = {
+      version: 3,
+      dnsServer: 'example.com',
+      enableMockDNS: false,
+      allowExperimentalTransports: true,
+      enableHaptics: true,
+      preferredLocale: 'en-US',
+      accessibility: DEFAULT_SETTINGS.accessibility,
+    };
+
+    const result = migrateSettings(payload);
+
+    expect(result.dnsServer).toBe(DEFAULT_SETTINGS.dnsServer);
+  });
+
   it('falls back to defaults for invalid payload', () => {
     expect(migrateSettings(undefined)).toEqual(DEFAULT_SETTINGS);
     expect(migrateSettings('bad')).toEqual(DEFAULT_SETTINGS);

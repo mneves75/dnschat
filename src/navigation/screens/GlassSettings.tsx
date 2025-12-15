@@ -38,6 +38,7 @@ import {
 } from "../../components/glass";
 import { useTransportTestThrottle } from "../../ui/hooks/useTransportTestThrottle";
 import { persistHapticsPreference } from "../../utils/haptics";
+import { devLog, devWarn } from "../../utils/devLog";
 
 // ==================================================================================
 // GLASS SETTINGS SCREEN COMPONENT
@@ -147,7 +148,6 @@ export function GlassSettings() {
 
       // Haptic feedback
       if (Platform.OS === "ios") {
-        console.log("🔸 Haptic: DNS server changed");
       }
     },
     [updateDnsServer, dnsServerSheet],
@@ -160,7 +160,7 @@ export function GlassSettings() {
         url: "https://github.com/mneves75/dnschat",
       });
     } catch (error) {
-      console.error("Share failed:", error);
+      devWarn("[GlassSettings] Share failed", error);
     }
   }, [t]);
 
@@ -237,7 +237,7 @@ export function GlassSettings() {
     try {
       await updateEnableMockDNS(value);
     } catch (e) {
-      console.log("Failed to save Mock DNS preference", e);
+      devLog("Failed to save Mock DNS preference", e);
     }
   };
 
@@ -245,7 +245,7 @@ export function GlassSettings() {
     try {
       await updateLocale(nextLocale);
     } catch (error) {
-      console.log("Failed to update locale", error);
+      devLog("Failed to update locale", error);
       Alert.alert(
         t("screen.settings.alerts.saveErrorTitle"),
         t("screen.settings.alerts.saveErrorMessage"),
@@ -394,7 +394,7 @@ export function GlassSettings() {
               subtitle={option.subtitle}
               rightContent={
                 activeLocaleSelection === option.value && (
-                  <Text style={styles.selectedIndicator}>✓</Text>
+                  <Text style={styles.selectedIndicator}>•</Text>
                 )
               }
               onPress={() => handleSelectLocale(option.value)}
@@ -576,7 +576,7 @@ export function GlassSettings() {
               subtitle={option.description}
               rightContent={
                 dnsServer === option.value && (
-                  <Text style={styles.selectedIndicator}>✓</Text>
+                  <Text style={styles.selectedIndicator}>•</Text>
                 )
               }
               onPress={() => handleDnsServerSelect(option.value)}
@@ -653,7 +653,6 @@ export function GlassSettings() {
               Linking.openURL(
                 "https://github.com/mneves75/dnschat/blob/main/README.md",
               ),
-            icon: <Text>📚</Text>,
           },
           {
             title: t("screen.glassSettings.supportSheet.community"),
@@ -661,7 +660,6 @@ export function GlassSettings() {
               Linking.openURL(
                 "https://github.com/mneves75/dnschat/discussions",
               ),
-            icon: <Text>💬</Text>,
           },
           {
             title: t("screen.glassSettings.supportSheet.email"),
@@ -669,7 +667,6 @@ export function GlassSettings() {
               Linking.openURL(
                 "mailto:support@dnschat.app?subject=DNSChat Support",
               ),
-            icon: <Text>📧</Text>,
           },
           {
             title: t("screen.glassSettings.supportSheet.cancel"),

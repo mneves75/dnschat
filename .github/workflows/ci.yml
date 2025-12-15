@@ -1,0 +1,56 @@
+name: ci
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Verify iOS pods lockfile sync
+        run: npm run verify:ios-pods
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm test -- --bail --passWithNoTests
+
+  dns-native:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: npm
+          cache-dependency-path: modules/dns-native/package-lock.json
+
+      - name: Install (modules/dns-native)
+        working-directory: modules/dns-native
+        run: npm ci
+
+      - name: Test (modules/dns-native)
+        working-directory: modules/dns-native
+        run: npm test

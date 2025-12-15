@@ -1,6 +1,7 @@
 import React from "react";
-import TestRenderer, { act, ReactTestRenderer } from "react-test-renderer";
+import { act, ReactTestRenderer } from "react-test-renderer";
 import { TouchableOpacity } from "react-native";
+import { createWithSuppressedWarnings } from "./utils/reactTestRenderer";
 
 const mockUseSettings = jest.fn();
 
@@ -122,7 +123,7 @@ describe("Settings language picker", () => {
 
     let tree: ReactTestRenderer | null = null;
     await act(async () => {
-      tree = TestRenderer.create(<Settings />);
+      tree = createWithSuppressedWarnings(<Settings />);
     });
     if (!tree) {
       throw new Error("Failed to render Settings");
@@ -145,7 +146,7 @@ describe("Settings language picker", () => {
 
     let tree: ReactTestRenderer | null = null;
     await act(async () => {
-      tree = TestRenderer.create(<Settings />);
+      tree = createWithSuppressedWarnings(<Settings />);
     });
     if (!tree) {
       throw new Error("Failed to render Settings");

@@ -32,6 +32,7 @@ import { PlusIcon } from "../../components/icons/PlusIcon";
 import { formatDistanceToNow } from "date-fns";
 import { useTranslation } from "../../i18n";
 import { useImessagePalette } from "../../ui/theme/imessagePalette";
+import { devLog } from "../../utils/devLog";
 
 // ==================================================================================
 // TYPES
@@ -81,7 +82,6 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
   const handleLongPress = React.useCallback(() => {
     // Haptic feedback
     if (Platform.OS === "ios") {
-      console.log("🔸 Haptic: Chat long press feedback");
     }
     actionSheet.show();
   }, [actionSheet]);
@@ -184,14 +184,12 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
           {
             title: t("screen.glassChatList.actionSheet.openChat"),
             onPress: onPress,
-            icon: <Text>💬</Text>,
           },
           ...(onShare
             ? [
                 {
                   title: t("screen.glassChatList.actionSheet.shareChat"),
                   onPress: onShare,
-                  icon: <Text>📤</Text>,
                 },
               ]
             : []),
@@ -247,7 +245,6 @@ export function GlassChatList() {
 
     // Haptic feedback
     if (Platform.OS === "ios") {
-      console.log("🔸 Haptic: New chat created");
     }
   }, [createChat, setCurrentChat, navigation]);
 
@@ -272,9 +269,7 @@ export function GlassChatList() {
             onPress: () => {
               deleteChat(chatId);
               // Haptic feedback
-              if (Platform.OS === "ios") {
-                console.log("🔸 Haptic: Chat deleted");
-              }
+              // Intentionally no-op here: haptics are handled at the component level.
             },
           },
         ],
@@ -294,7 +289,7 @@ export function GlassChatList() {
 
   const handleShareChat = React.useCallback((chat: any) => {
     // Share functionality would go here
-    console.log("Sharing chat:", chat.title);
+    devLog("Sharing chat", { chatId: chat?.id });
   }, []);
 
   const recentFooter = chats.length === 1
@@ -364,7 +359,7 @@ export function GlassChatList() {
             ]}
           >
             <View style={styles.emptyState}>
-              <Text style={styles.emptyIcon}>💬</Text>
+              <Text style={styles.emptyIcon}>C</Text>
               <Text
                 style={[
                   styles.emptyTitle,

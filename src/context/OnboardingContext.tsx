@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { isScreenshotMode } from "../utils/screenshotMode";
+import { devWarn } from "../utils/devLog";
 
 export interface OnboardingStep {
   id: string;
@@ -84,7 +85,7 @@ export function OnboardingProvider({
 
   const loadOnboardingState = async () => {
     try {
-      // Skip onboarding in screenshot mode to allow fastlane to capture main app screens
+      // Skip onboarding in screenshot mode so snapshot tooling can capture main app screens.
       if (isScreenshotMode()) {
         setHasCompletedOnboarding(true);
         setLoading(false);
@@ -108,7 +109,7 @@ export function OnboardingProvider({
         }
       }
     } catch (error) {
-      console.error("Error loading onboarding state:", error);
+      devWarn("[OnboardingContext] Error loading onboarding state", error);
     } finally {
       setLoading(false);
     }
@@ -129,7 +130,7 @@ export function OnboardingProvider({
         }),
       );
     } catch (error) {
-      console.error("Error saving onboarding state:", error);
+      devWarn("[OnboardingContext] Error saving onboarding state", error);
     }
   };
 

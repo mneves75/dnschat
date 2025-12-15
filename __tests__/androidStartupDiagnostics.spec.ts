@@ -72,7 +72,7 @@ describe("AndroidStartupDiagnostics", () => {
     it("should error log with prefix", () => {
       AndroidStartupDiagnostics.error("Test error");
       expect(console.error).toHaveBeenCalledWith(
-        "[AndroidStartupDiagnostics] ❌ Test error",
+        "[AndroidStartupDiagnostics] ERROR Test error",
         "",
       );
     });
@@ -80,7 +80,7 @@ describe("AndroidStartupDiagnostics", () => {
     it("should warn log with prefix", () => {
       AndroidStartupDiagnostics.warn("Test warning");
       expect(console.warn).toHaveBeenCalledWith(
-        "[AndroidStartupDiagnostics] ⚠️ Test warning",
+        "[AndroidStartupDiagnostics] WARN Test warning",
         "",
       );
     });
@@ -95,4 +95,3 @@ describe("AndroidStartupDiagnostics", () => {
     });
   });
 });
-

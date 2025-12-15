@@ -37,35 +37,35 @@ describe("FeaturesScreen - iOS 26 HIG Compliance", () => {
 
   describe("Zero Emoji Requirement", () => {
     it("does not contain sparkles emoji", () => {
-      expect(sourceCode).not.toContain("✨");
+      expect(sourceCode).not.toContain(String.fromCodePoint(0x2728));
     });
 
     it("does not contain chart emoji", () => {
-      expect(sourceCode).not.toContain("📊");
+      expect(sourceCode).not.toContain(String.fromCodePoint(0x1F4CA));
     });
 
     it("does not contain gear emoji", () => {
-      expect(sourceCode).not.toContain("⚙️");
+      expect(sourceCode).not.toContain("\u2699\uFE0F");
     });
 
     it("does not contain moon emoji", () => {
-      expect(sourceCode).not.toContain("🌙");
+      expect(sourceCode).not.toContain(String.fromCodePoint(0x1F319));
     });
 
     it("does not contain floppy disk emoji", () => {
-      expect(sourceCode).not.toContain("💾");
+      expect(sourceCode).not.toContain(String.fromCodePoint(0x1F4BE));
     });
 
     it("does not contain recycling emoji", () => {
-      expect(sourceCode).not.toContain("🔄");
+      expect(sourceCode).not.toContain(String.fromCodePoint(0x1F504));
     });
 
     it("does not contain globe emoji", () => {
-      expect(sourceCode).not.toContain("🌐");
+      expect(sourceCode).not.toContain(String.fromCodePoint(0x1F310));
     });
 
     it("does not contain party emoji", () => {
-      expect(sourceCode).not.toContain("🎉");
+      expect(sourceCode).not.toContain(String.fromCodePoint(0x1F389));
     });
 
     it("contains zero emoji characters", () => {

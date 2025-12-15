@@ -83,61 +83,61 @@ public class DNSResolver {
         // Check for existing query (deduplication) - matches iOS behavior
         CompletableFuture<List<String>> existingQuery = activeQueries.get(queryId);
         if (existingQuery != null) {
-            Log.d(TAG, "🔄 DNS: Reusing existing query for: " + queryId);
+            Log.d(TAG, "[sync] DNS: Reusing existing query for: " + queryId);
             return existingQuery;
         }
         
-        Log.d(TAG, "🆕 DNS: Creating new query for: " + queryId);
+        Log.d(TAG, "[new] DNS: Creating new query for: " + queryId);
         
         // Create new query with automatic cleanup
         CompletableFuture<List<String>> result = new CompletableFuture<>();
         activeQueries.put(queryId, result);
-        Log.d(TAG, "📊 DNS: Active queries count: " + activeQueries.size());
+        Log.d(TAG, "[stats] DNS: Active queries count: " + activeQueries.size());
         
         // 3-tier fallback strategy (matches iOS): Raw UDP → DNS-over-HTTPS → Legacy
         queryTXTRawUDP(queryName, domain)
             .thenAccept(txtRecords -> {
                 activeQueries.remove(queryId);
-                Log.d(TAG, "🧹 DNS: Query completed, active queries: " + activeQueries.size());
+                Log.d(TAG, "[done] DNS: Query completed, active queries: " + activeQueries.size());
                 result.complete(txtRecords);
             })
             .exceptionally(err -> {
                 // Gate DoH: disable for ch.at, otherwise try DoH then legacy
                 if (domain != null && !domain.equalsIgnoreCase("ch.at")) {
-                    Log.d(TAG, "🥈 DNS: Trying DNS-over-HTTPS (fallback 1)");
+                    Log.d(TAG, "[doh] DNS: Trying DNS-over-HTTPS (fallback 1)");
                     queryTXTDNSOverHTTPS(queryName)
                         .thenAccept(txtRecords -> {
                             activeQueries.remove(queryId);
-                            Log.d(TAG, "🧹 DNS: Query completed (HTTPS), active queries: " + activeQueries.size());
+                            Log.d(TAG, "[done] DNS: Query completed (HTTPS), active queries: " + activeQueries.size());
                             result.complete(txtRecords);
                         })
                         .exceptionally(err2 -> {
-                            Log.d(TAG, "🥉 DNS: Trying legacy DNS (fallback 2)");
+                            Log.d(TAG, "[legacy] DNS: Trying legacy DNS (fallback 2)");
                             queryTXTLegacy(domain, queryName)
                                 .thenAccept(txtRecords -> {
                                     activeQueries.remove(queryId);
-                                    Log.d(TAG, "🧹 DNS: Query completed (legacy), active queries: " + activeQueries.size());
+                                    Log.d(TAG, "[done] DNS: Query completed (legacy), active queries: " + activeQueries.size());
                                     result.complete(txtRecords);
                                 })
                                 .exceptionally(err3 -> {
                                     activeQueries.remove(queryId);
-                                    Log.d(TAG, "❌ DNS: All fallback methods failed, active queries: " + activeQueries.size());
+                                    Log.d(TAG, "[error] DNS: All fallback methods failed, active queries: " + activeQueries.size());
                                     result.completeExceptionally(err3);
                                     return null;
                                 });
                             return null;
                         });
                 } else {
-                    Log.d(TAG, "🥈 DNS: Skipping DoH for ch.at, trying legacy DNS");
+                    Log.d(TAG, "[doh] DNS: Skipping DoH for ch.at, trying legacy DNS");
                     queryTXTLegacy(domain, queryName)
                         .thenAccept(txtRecords -> {
                             activeQueries.remove(queryId);
-                            Log.d(TAG, "🧹 DNS: Query completed (legacy), active queries: " + activeQueries.size());
+                            Log.d(TAG, "[done] DNS: Query completed (legacy), active queries: " + activeQueries.size());
                             result.complete(txtRecords);
                         })
                         .exceptionally(err3 -> {
                             activeQueries.remove(queryId);
-                            Log.d(TAG, "❌ DNS: All fallback methods failed, active queries: " + activeQueries.size());
+                            Log.d(TAG, "[error] DNS: All fallback methods failed, active queries: " + activeQueries.size());
                             result.completeExceptionally(err3);
                             return null;
                         });
@@ -460,7 +460,7 @@ public class DNSResolver {
     private CompletableFuture<List<String>> queryTXTDNSOverHTTPS(String message) {
         return CompletableFuture.supplyAsync(() -> {
             try {
-                Log.d(TAG, "🌐 DNS-over-HTTPS: Querying Cloudflare for: " + message);
+                Log.d(TAG, "[doh] DNS-over-HTTPS: Querying Cloudflare for: " + message);
                 
                 // Use Cloudflare DNS-over-HTTPS API (matches iOS implementation)
                 String baseURL = "https://cloudflare-dns.com/dns-query";
@@ -525,7 +525,7 @@ public class DNSResolver {
                 throw new DNSError(DNSError.Type.NO_RECORDS_FOUND, "No TXT records found in DNS-over-HTTPS response");
             }
             
-            Log.d(TAG, "📦 DNS-over-HTTPS: Found " + txtRecords.size() + " TXT records");
+            Log.d(TAG, "[pkg] DNS-over-HTTPS: Found " + txtRecords.size() + " TXT records");
             return txtRecords;
             
         } catch (Exception e) {

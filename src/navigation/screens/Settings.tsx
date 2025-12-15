@@ -26,6 +26,7 @@ import { useTranslation } from "../../i18n";
 import { LOCALE_LABEL_KEYS } from "../../i18n/localeMeta";
 import { DEFAULT_DNS_SERVER } from "../../context/settingsStorage";
 import { useImessagePalette } from "../../ui/theme/imessagePalette";
+import { devLog } from "../../utils/devLog";
 
 export function Settings() {
   const { colors } = useTheme();
@@ -64,9 +65,9 @@ export function Settings() {
       setTempEnableMockDNS(value);
       setSaving(true);
       await updateEnableMockDNS(value);
-      console.log("✅ Mock DNS saved:", value);
+      devLog("Mock DNS saved:", value);
     } catch (e: any) {
-      console.log("❌ Failed to save Mock DNS:", e?.message || e);
+      devLog("Failed to save Mock DNS:", e?.message || e);
     } finally {
       setSaving(false);
     }
@@ -77,9 +78,9 @@ export function Settings() {
     try {
       setSaving(true);
       await updateDnsServer(tempDnsServer);
-      console.log("✅ DNS server saved on blur:", tempDnsServer);
+      devLog("DNS server saved on blur:", tempDnsServer);
     } catch (e: any) {
-      console.log("❌ Failed to save DNS server:", e?.message || e);
+      devLog("Failed to save DNS server:", e?.message || e);
       Alert.alert(
         t("screen.settings.alerts.dnsSaveErrorTitle"),
         t("screen.settings.alerts.dnsSaveErrorMessage"),
@@ -103,7 +104,7 @@ export function Settings() {
     try {
       await updateLocale(nextLocale);
     } catch (error) {
-      console.log("❌ Failed to update locale:", error);
+      devLog("Failed to update locale:", error);
       Alert.alert(
         t("screen.settings.alerts.saveErrorTitle"),
         t("screen.settings.alerts.saveErrorMessage"),
@@ -190,10 +191,10 @@ export function Settings() {
       setLastTestResult(null);
       setLastTestError(null);
 
-      console.log("🧪 Testing Native DNS with fallbacks:", {
+      devLog("Testing Native DNS with fallbacks:", {
         dnsServer: tempDnsServer,
         enableMockDNS: tempEnableMockDNS,
-        testMessage,
+        testMessageLength: testMessage.length,
       });
 
       const { DNSService } = await import("../../services/dnsService");
@@ -205,11 +206,11 @@ export function Settings() {
       );
 
       setLastTestResult(response);
-      console.log("✅ Native DNS test successful:", response);
+      devLog("Native DNS test successful:", { responseLength: response.length });
     } catch (error: any) {
       const errorMessage = error.message || "Unknown error occurred";
       setLastTestError(errorMessage);
-      console.log("❌ Native DNS test failed:", errorMessage);
+      devLog("Native DNS test failed:", errorMessage);
     } finally {
       setTestRunning(false);
     }
@@ -225,7 +226,7 @@ export function Settings() {
       setLastTestResult(null);
       setLastTestError(null);
 
-      console.log(`🧪 Forcing ${transport.toUpperCase()} transport test`);
+      devLog(`Forcing ${transport.toUpperCase()} transport test`);
 
       const { DNSService } = await import("../../services/dnsService");
       const response = await DNSService.testTransport(
@@ -235,17 +236,13 @@ export function Settings() {
       );
 
       setLastTestResult(response);
-      console.log(
-        `✅ ${transport.toUpperCase()} transport test successful:`,
-        response,
-      );
+      devLog(`${transport.toUpperCase()} transport test successful:`, {
+        responseLength: response.length,
+      });
     } catch (error: any) {
       const errorMessage = error.message || "Unknown error occurred";
       setLastTestError(errorMessage);
-      console.log(
-        `❌ ${transport.toUpperCase()} transport test failed:`,
-        errorMessage,
-      );
+      devLog(`${transport.toUpperCase()} transport test failed:`, errorMessage);
     } finally {
       setTestRunning(false);
     }
