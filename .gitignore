@@ -38,7 +38,7 @@ yarn-error.*
 *.pem
 
 # iOS release automation outputs
-ios/fastlane/screenshots/
+# Note: `ios/fastlane/screenshots/` is tracked (store listing assets), so do not ignore it.
 
 # local env files
 .env*.local

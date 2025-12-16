@@ -19,9 +19,11 @@ describe("repo hygiene", () => {
     expect(offenders).toEqual([]);
   });
 
-  it("does not track store-release doc dumps under docs/", () => {
+  it("tracks store metadata under docs/App_store as markdown only", () => {
     const tracked = listTrackedFiles();
-    const offenders = tracked.filter((p) => p.startsWith("docs/App_store/"));
+    const storeFiles = tracked.filter((p) => p.startsWith("docs/App_store/"));
+
+    const offenders = storeFiles.filter((p) => !p.endsWith(".md"));
     expect(offenders).toEqual([]);
   });
 
@@ -33,13 +35,28 @@ describe("repo hygiene", () => {
     expect(offenders).toEqual([]);
   });
 
-  it("does not track store automation outputs", () => {
+  it("tracks fastlane config/screenshots but not generated reports", () => {
     const tracked = listTrackedFiles();
-    const offenders = tracked.filter(
-      (p) =>
-        p.startsWith("ios/fastlane/")
+    const fastlaneFiles = tracked.filter((p) => p.startsWith("ios/fastlane/"));
+
+    // Generated artifacts we do not want in git.
+    const forbidden = fastlaneFiles.filter(
+      (p) => p === "ios/fastlane/report.xml" || p.endsWith(".log"),
     );
-    expect(offenders).toEqual([]);
+    expect(forbidden).toEqual([]);
+
+    const allowed = fastlaneFiles.filter((p) => {
+      if (p === "ios/fastlane/Appfile") return true;
+      if (p === "ios/fastlane/Fastfile") return true;
+      if (p === "ios/fastlane/Snapfile") return true;
+      if (p === "ios/fastlane/README.md") return true;
+      if (p === "ios/fastlane/screenshots/screenshots.html") return true;
+      if (p.startsWith("ios/fastlane/screenshots/") && p.endsWith(".png")) return true;
+      return false;
+    });
+
+    const unknown = fastlaneFiles.filter((p) => !allowed.includes(p));
+    expect(unknown).toEqual([]);
   });
 
   it("does not track credential material or local env files", () => {

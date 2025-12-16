@@ -160,12 +160,11 @@ Repo quality:
    - No tracked macOS artifacts:
      - `.DS_Store` removed and ignored
      - Guard test prevents it from coming back
-   - No store-release doc dumps committed under `docs/`:
-     - `docs/App_store/` removed
-     - Guard test prevents it from coming back
-   - Screenshot/media artifacts are optional; if not explicitly needed for the
-     public repo, keep them out of git and generate in release tooling.
-     - This repo does not keep `ios/fastlane/` in git for the public baseline.
+   - Store listing assets and automation can be tracked when needed:
+     - Store metadata docs live under `docs/App_store/` (markdown only).
+     - fastlane configuration + screenshots live under `ios/fastlane/`.
+     - Generated outputs (e.g. `ios/fastlane/report.xml`) stay out of git.
+     - Guard tests enforce these constraints (`__tests__/repo.hygiene.spec.ts`).
    - Local-only tooling folders are ignored and must not be tracked:
      - `.claude/`, `.cursor/`, `agent_planning/`, `.logs/` are gitignored
      - Guard test prevents tracking them (`__tests__/repo.hygiene.spec.ts`)
