@@ -125,6 +125,17 @@ export function ChatProvider({ children }: ChatProviderProps) {
       return;
     }
 
+    // SECURITY: Capture chat ID at function entry to prevent race conditions.
+    // If user switches chats during async operations, error handling should
+    // still update the correct chat, not the newly selected one.
+    const chatIdAtSend = currentChat.id;
+
+    // SECURITY: Track assistant message ID for error handling.
+    // Must be declared outside try block so it's accessible in catch block.
+    // Avoids stale closure bug where 'chats' array would be captured at function
+    // definition time, not at error time.
+    let assistantMessageId: string | null = null;
+
     try {
       sanitizeDNSMessage(content);
     } catch (validationError) {
@@ -190,6 +201,9 @@ export function ChatProvider({ children }: ChatProviderProps) {
         timestamp: new Date(),
         status: "sending",
       };
+
+      // SECURITY: Capture message ID for error handling (see declaration above try block)
+      assistantMessageId = assistantMessage.id;
 
       devLog("[ChatContext] Created assistant placeholder", {
         messageId: assistantMessage.id,
@@ -290,25 +304,25 @@ export function ChatProvider({ children }: ChatProviderProps) {
       setError(errorMessage);
 
       // Update assistant message with error status
-      if (currentChat) {
+      // CRITICAL: Use captured chatIdAtSend and assistantMessageId to prevent race conditions.
+      // Both values were captured at creation time, eliminating stale closure bugs where:
+      // - currentChat could change if user switches chats during async operation
+      // - chats array could be stale (captured at function definition, not error time)
+      if (chatIdAtSend && assistantMessageId) {
         try {
-          const messageToUpdate =
-            currentChat.messages[currentChat.messages.length - 1];
-
           devLog("[ChatContext] Updating message with error status", {
-            messageId: messageToUpdate?.id,
+            messageId: assistantMessageId,
+            chatId: chatIdAtSend,
           });
 
-          if (messageToUpdate?.id) {
-            await StorageService.updateMessage(
-              currentChat.id,
-              messageToUpdate.id,
-              {
-                status: "error",
-                content: `Error: ${errorMessage}`,
-              },
-            );
-          }
+          await StorageService.updateMessage(
+            chatIdAtSend,
+            assistantMessageId,
+            {
+              status: "error",
+              content: `Error: ${errorMessage}`,
+            },
+          );
 
           // Reload chats to reflect error state
           devLog("[ChatContext] Reloading chats after error...");

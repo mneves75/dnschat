@@ -14,6 +14,7 @@ import { mkdirSync } from 'node:fs';
 import path from 'node:path';
 import dgram from 'node:dgram';
 import net from 'node:net';
+import crypto from 'node:crypto';
 import dnsPacket from 'dns-packet';
 
 const DEFAULT_SERVER = 'ch.at';
@@ -194,9 +195,10 @@ function ensureDirectory(dir: string) {
 }
 
 function buildDnsQueryBuffer(queryName: string): Buffer {
+  // SECURITY: Use cryptographically secure random for DNS transaction ID (RFC 5452)
   return dnsPacket.encode({
     type: 'query',
-    id: Math.floor(Math.random() * 65536),
+    id: crypto.randomInt(0, 65536),
     flags: dnsPacket.RECURSION_DESIRED,
     questions: [
       {

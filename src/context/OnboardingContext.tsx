@@ -16,8 +16,8 @@ interface OnboardingContextType {
   currentStep: number;
   steps: OnboardingStep[];
   completeOnboarding: () => Promise<void>;
-  nextStep: () => void;
-  previousStep: () => void;
+  nextStep: () => Promise<void>;
+  previousStep: () => Promise<void>;
   skipOnboarding: () => Promise<void>;
   resetOnboarding: () => Promise<void>;
   markStepCompleted: (stepId: string) => void;
@@ -140,21 +140,33 @@ export function OnboardingProvider({
     await saveOnboardingState(true, steps.length - 1, completedSteps);
   };
 
-  const nextStep = () => {
+  // CRITICAL: These functions are async to properly await storage operations.
+  // Fire-and-forget async was causing silent loss of onboarding progress on save failures.
+  const nextStep = async () => {
     if (currentStep < steps.length - 1) {
       const newStep = currentStep + 1;
       setCurrentStep(newStep);
       const completedSteps = steps.slice(0, newStep).map((step) => step.id);
-      saveOnboardingState(false, newStep, completedSteps);
+      try {
+        await saveOnboardingState(false, newStep, completedSteps);
+      } catch (error) {
+        // Log error but don't block UI - user can retry navigation
+        devWarn("[OnboardingContext] Failed to save onboarding progress", error);
+      }
     }
   };
 
-  const previousStep = () => {
+  const previousStep = async () => {
     if (currentStep > 0) {
       const newStep = currentStep - 1;
       setCurrentStep(newStep);
       const completedSteps = steps.slice(0, newStep).map((step) => step.id);
-      saveOnboardingState(false, newStep, completedSteps);
+      try {
+        await saveOnboardingState(false, newStep, completedSteps);
+      } catch (error) {
+        // Log error but don't block UI - user can retry navigation
+        devWarn("[OnboardingContext] Failed to save onboarding progress", error);
+      }
     }
   };
 

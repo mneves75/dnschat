@@ -4,6 +4,7 @@ import {
   validateDNSMessage,
   validateDNSServer,
   composeDNSQueryName,
+  generateSecureDNSId,
 } from "../src/services/dnsService";
 import { sanitizeDNSMessageReference } from "../modules/dns-native/constants";
 
@@ -241,6 +242,47 @@ describe("DNS Service helpers", () => {
       expect(getOrder(false, true)[0]).toBe("native");
       expect(getOrder(false, false)[0]).toBe("native");
       expect(getOrder(true, true)[0]).toBe("native");
+    });
+  });
+
+  describe("generateSecureDNSId", () => {
+    it("returns a valid 16-bit unsigned integer (0-65535)", () => {
+      for (let i = 0; i < 100; i++) {
+        const id = generateSecureDNSId();
+        expect(Number.isInteger(id)).toBe(true);
+        expect(id).toBeGreaterThanOrEqual(0);
+        expect(id).toBeLessThan(65536);
+      }
+    });
+
+    it("generates IDs with high entropy (most unique in sample)", () => {
+      // RFC 5452 requires unpredictable DNS transaction IDs.
+      // Cryptographically secure random should produce highly unique values.
+      const ids = new Set<number>();
+      const sampleSize = 1000;
+      for (let i = 0; i < sampleSize; i++) {
+        ids.add(generateSecureDNSId());
+      }
+      // With 65536 possible values and 1000 samples, collision probability
+      // per ID is ~1.5%. Expected unique ~985+. We accept >950 as threshold.
+      expect(ids.size).toBeGreaterThan(950);
+    });
+
+    it("does not produce sequential patterns", () => {
+      // Sequential output would indicate broken randomness
+      const ids: number[] = [];
+      for (let i = 0; i < 10; i++) {
+        ids.push(generateSecureDNSId());
+      }
+      // Check no sequential ascending or descending pairs (very unlikely with true random)
+      let sequentialCount = 0;
+      for (let i = 1; i < ids.length; i++) {
+        if (ids[i] === ids[i - 1] + 1 || ids[i] === ids[i - 1] - 1) {
+          sequentialCount++;
+        }
+      }
+      // Allow at most 2 sequential pairs by chance in 10 samples
+      expect(sequentialCount).toBeLessThanOrEqual(2);
     });
   });
 });
