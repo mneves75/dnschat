@@ -384,9 +384,15 @@ export class DNSService {
   // RFC 1035 specifies 512 bytes for UDP; TCP can be larger but 65535 is reasonable max.
   // A malicious server could send unlimited data without this guard.
   private static readonly MAX_DNS_RESPONSE_SIZE = 65535;
+  // MEMORY LEAK FIX: Maximum request history entries to prevent unbounded growth.
+  // Previous implementation only cleaned old entries when new requests arrived,
+  // causing memory accumulation in long-running apps with intermittent queries.
+  private static readonly MAX_REQUEST_HISTORY_SIZE = 100;
+  private static readonly CLEANUP_INTERVAL_MS = 60000; // 1 minute
   private static isAppInBackground = false;
   private static backgroundListenerInitialized = false;
   private static requestHistory: number[] = [];
+  private static cleanupIntervalId: ReturnType<typeof setInterval> | null = null;
   private static appStateSubscription: { remove: () => void } | null = null;
 
   private static isVerbose(): boolean {
@@ -414,7 +420,30 @@ export class DNSService {
       }
     });
 
+    // MEMORY LEAK FIX: Start periodic cleanup of requestHistory to prevent
+    // unbounded growth in long-running apps with intermittent queries.
+    if (!this.cleanupIntervalId) {
+      this.cleanupIntervalId = setInterval(() => {
+        this.cleanupRequestHistory();
+      }, this.CLEANUP_INTERVAL_MS);
+    }
+
     this.backgroundListenerInitialized = true;
+  }
+
+  /**
+   * Periodic cleanup of stale request history entries.
+   * Called automatically via interval and also on each rate limit check.
+   */
+  private static cleanupRequestHistory(): void {
+    const now = Date.now();
+    this.requestHistory = this.requestHistory.filter(
+      (timestamp) => now - timestamp <= this.RATE_LIMIT_WINDOW
+    );
+    // Enforce max size as additional safety (circular buffer behavior)
+    if (this.requestHistory.length > this.MAX_REQUEST_HISTORY_SIZE) {
+      this.requestHistory = this.requestHistory.slice(-this.MAX_REQUEST_HISTORY_SIZE);
+    }
   }
 
   /**
@@ -435,15 +464,18 @@ export class DNSService {
       this.appStateSubscription = null;
       this.backgroundListenerInitialized = false;
     }
+    // MEMORY LEAK FIX: Clean up interval on teardown
+    if (this.cleanupIntervalId) {
+      clearInterval(this.cleanupIntervalId);
+      this.cleanupIntervalId = null;
+    }
+    // Clear request history on teardown
+    this.requestHistory = [];
   }
 
   private static checkRateLimit(): boolean {
-    const now = Date.now();
-
-    // Remove requests outside the current window
-    this.requestHistory = this.requestHistory.filter(
-      (timestamp) => now - timestamp <= this.RATE_LIMIT_WINDOW,
-    );
+    // MEMORY LEAK FIX: Use centralized cleanup method that also enforces max size
+    this.cleanupRequestHistory();
 
     // Check if we've exceeded the rate limit
     if (this.requestHistory.length >= this.MAX_REQUESTS_PER_WINDOW) {
@@ -451,7 +483,7 @@ export class DNSService {
     }
 
     // Add current request to history
-    this.requestHistory.push(now);
+    this.requestHistory.push(Date.now());
     return true;
   }
 
@@ -680,9 +712,11 @@ export class DNSService {
         }
       };
 
+      // SECURITY: Store query ID for response validation (RFC 5452 - DNS cache poisoning prevention)
+      const queryId = generateSecureDNSId();
       const dnsQuery = {
         type: 'query' as const,
-        id: generateSecureDNSId(),
+        id: queryId,
         flags: 0x0100, // Standard query with recursion desired
         questions: [
           {
@@ -705,6 +739,15 @@ export class DNSService {
         socket.once('message', (response: Buffer, rinfo: any) => {
           try {
             const decoded = dns.decode(response);
+
+            // SECURITY: Validate response ID matches query ID to prevent DNS spoofing attacks.
+            // An attacker could send forged responses with guessed IDs; rejecting mismatches
+            // ensures we only accept legitimate responses from the queried server.
+            if (decoded.id !== queryId) {
+              throw new Error(
+                `DNS response ID mismatch (expected ${queryId}, got ${decoded.id}) - possible spoofing attempt`
+              );
+            }
 
             if ((decoded as any).rcode !== 'NOERROR') {
               throw new Error(`DNS query failed with rcode: ${(decoded as any).rcode}`);
@@ -892,9 +935,11 @@ export class DNSService {
         }
       };
 
+      // SECURITY: Store query ID for response validation (RFC 5452 - DNS cache poisoning prevention)
+      const queryId = generateSecureDNSId();
       const dnsQuery = {
         type: 'query' as const,
-        id: generateSecureDNSId(),
+        id: queryId,
         flags: 0x0100, // Standard query with recursion desired
         questions: [
           {
@@ -1005,6 +1050,15 @@ export class DNSService {
           if (expectedLength > 0 && responseBuffer.length >= expectedLength) {
             try {
               const decoded = dns.decode(responseBuffer.slice(0, expectedLength));
+
+              // SECURITY: Validate response ID matches query ID to prevent DNS spoofing attacks.
+              // An attacker could send forged responses with guessed IDs; rejecting mismatches
+              // ensures we only accept legitimate responses from the queried server.
+              if (decoded.id !== queryId) {
+                throw new Error(
+                  `DNS response ID mismatch (expected ${queryId}, got ${decoded.id}) - possible spoofing attempt`
+                );
+              }
 
               if ((decoded as any).rcode !== 'NOERROR') {
                 throw new Error(`DNS query failed with rcode: ${(decoded as any).rcode}`);

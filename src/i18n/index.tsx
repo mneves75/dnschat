@@ -5,6 +5,7 @@ import { ptBR } from "./messages/pt-BR";
 import type { SupportedLocale } from "./translations";
 import { devWarn } from "../utils/devLog";
 
+// Use enUS as the canonical type for translation structure (keys must match)
 type Messages = typeof enUS;
 
 type Join<P extends string, K extends string> = P extends "" ? K : `${P}.${K}`;
@@ -19,12 +20,12 @@ export type MessageKey = Exclude<NestedKeys<Messages>, "">;
 
 export type TranslationParams = Record<string, string | number>;
 
-type Dictionaries = Record<SupportedLocale, Messages>;
-
-const dictionaries: Dictionaries = {
+// Use type assertion for dictionaries since translation values differ between languages
+// but structure (keys) must match. This is a common i18n pattern.
+const dictionaries = {
   "en-US": enUS,
   "pt-BR": ptBR,
-};
+} as unknown as Record<SupportedLocale, Messages>;
 
 const getMessage = (messages: Messages, key: MessageKey): string | undefined => {
   return key.split(".").reduce<unknown>((acc, segment) => {

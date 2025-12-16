@@ -8,7 +8,6 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { Image, Platform, useColorScheme } from "react-native";
 import { useTheme } from "@react-navigation/native";
 import TabView, { SceneMap } from "react-native-bottom-tabs";
-import type { BaseRoute } from "react-native-bottom-tabs";
 // Import newspaper icon properly for Metro bundler
 const newspaper = require("../assets/newspaper.png");
 import { InfoIcon } from "../components/InfoIcon";
@@ -34,12 +33,12 @@ function SettingsHeaderButton({ onPress }: { onPress: () => void }) {
   );
 }
 
-type TabRoute = BaseRoute & {
+interface TabRoute {
   key: "ChatList" | "Logs" | "About";
   title: string;
   focusedIcon: any;
   unfocusedIcon: any;
-};
+}
 
 function HomeTabs() {
   const [index, setIndex] = useState(0);
@@ -79,7 +78,6 @@ function HomeTabs() {
 
   return (
     <TabView
-      testID="tab-bar"
       navigationState={{ index, routes }}
       renderScene={renderScene}
       onIndexChange={setIndex}

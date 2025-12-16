@@ -48,55 +48,64 @@ export function isScreenshotMode(): boolean {
 export function getMockConversations(locale: string = "en-US") {
   const isPortuguese = locale.startsWith("pt");
 
+  const now = Date.now();
   const conversations = isPortuguese
     ? [
         {
           id: "mock-chat-1",
           title: "Conversa via DNS",
-          createdAt: new Date(Date.now() - 3600000), // 1 hour ago
+          createdAt: new Date(now - 3600000), // 1 hour ago
+          updatedAt: new Date(now - 3200000),
           messages: [
             {
               id: "msg-1",
               content: "Como funciona a criptografia DNS?",
-              sender: "user",
-              timestamp: new Date(Date.now() - 3500000),
+              role: "user" as const,
+              timestamp: new Date(now - 3500000),
+              status: "sent" as const,
             },
             {
               id: "msg-2",
               content: "DNS Chat usa criptografia de ponta a ponta através de queries TXT. Cada mensagem é cifrada antes de ser enviada como query DNS.",
-              sender: "assistant",
-              timestamp: new Date(Date.now() - 3400000),
+              role: "assistant" as const,
+              timestamp: new Date(now - 3400000),
+              status: "sent" as const,
             },
             {
               id: "msg-3",
               content: "Isso é completamente privado?",
-              sender: "user",
-              timestamp: new Date(Date.now() - 3300000),
+              role: "user" as const,
+              timestamp: new Date(now - 3300000),
+              status: "sent" as const,
             },
             {
               id: "msg-4",
               content: "Sim! As mensagens são armazenadas apenas no seu dispositivo e transmitidas via DNS, tornando impossível a interceptação tradicional.",
-              sender: "assistant",
-              timestamp: new Date(Date.now() - 3200000),
+              role: "assistant" as const,
+              timestamp: new Date(now - 3200000),
+              status: "sent" as const,
             },
           ],
         },
         {
           id: "mock-chat-2",
           title: "Tecnologia DNS",
-          createdAt: new Date(Date.now() - 7200000), // 2 hours ago
+          createdAt: new Date(now - 7200000), // 2 hours ago
+          updatedAt: new Date(now - 7000000),
           messages: [
             {
               id: "msg-5",
               content: "Qual a velocidade do DNS Chat?",
-              sender: "user",
-              timestamp: new Date(Date.now() - 7100000),
+              role: "user" as const,
+              timestamp: new Date(now - 7100000),
+              status: "sent" as const,
             },
             {
               id: "msg-6",
               content: "Queries DNS são extremamente rápidas, geralmente respondendo em 100-500ms. O DNS Chat usa métodos nativos otimizados para iOS e Android.",
-              sender: "assistant",
-              timestamp: new Date(Date.now() - 7000000),
+              role: "assistant" as const,
+              timestamp: new Date(now - 7000000),
+              status: "sent" as const,
             },
           ],
         },
@@ -105,50 +114,58 @@ export function getMockConversations(locale: string = "en-US") {
         {
           id: "mock-chat-1",
           title: "DNS Chat Demo",
-          createdAt: new Date(Date.now() - 3600000), // 1 hour ago
+          createdAt: new Date(now - 3600000), // 1 hour ago
+          updatedAt: new Date(now - 3200000),
           messages: [
             {
               id: "msg-1",
               content: "How does DNS encryption work?",
-              sender: "user",
-              timestamp: new Date(Date.now() - 3500000),
+              role: "user" as const,
+              timestamp: new Date(now - 3500000),
+              status: "sent" as const,
             },
             {
               id: "msg-2",
               content: "DNS Chat uses end-to-end encryption through TXT queries. Each message is encrypted before being sent as a DNS query.",
-              sender: "assistant",
-              timestamp: new Date(Date.now() - 3400000),
+              role: "assistant" as const,
+              timestamp: new Date(now - 3400000),
+              status: "sent" as const,
             },
             {
               id: "msg-3",
               content: "Is this completely private?",
-              sender: "user",
-              timestamp: new Date(Date.now() - 3300000),
+              role: "user" as const,
+              timestamp: new Date(now - 3300000),
+              status: "sent" as const,
             },
             {
               id: "msg-4",
               content: "Yes! Messages are stored only on your device and transmitted via DNS, making traditional interception impossible.",
-              sender: "assistant",
-              timestamp: new Date(Date.now() - 3200000),
+              role: "assistant" as const,
+              timestamp: new Date(now - 3200000),
+              status: "sent" as const,
             },
           ],
         },
         {
           id: "mock-chat-2",
           title: "DNS Technology",
-          createdAt: new Date(Date.now() - 7200000), // 2 hours ago
+          createdAt: new Date(now - 7200000), // 2 hours ago
+          updatedAt: new Date(now - 7000000),
           messages: [
             {
               id: "msg-5",
               content: "How fast is DNS Chat?",
-              sender: "user",
-              timestamp: new Date(Date.now() - 7100000),
+              role: "user" as const,
+              timestamp: new Date(now - 7100000),
+              status: "sent" as const,
             },
             {
               id: "msg-6",
               content: "DNS queries are extremely fast, typically responding in 100-500ms. DNS Chat uses optimized native methods for iOS and Android.",
-              sender: "assistant",
-              timestamp: new Date(Date.now() - 7000000),
+              role: "assistant" as const,
+              timestamp: new Date(now - 7000000),
+              status: "sent" as const,
             },
           ],
         },
