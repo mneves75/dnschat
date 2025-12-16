@@ -98,6 +98,35 @@ try {
   };
 }
 
+// SECURITY: Cryptographically secure DNS ID generation
+// RFC 5452 requires unpredictable DNS transaction IDs to prevent cache poisoning attacks.
+// Math.random() is NOT cryptographically secure - its output can be predicted.
+// crypto.getRandomValues() uses OS-level entropy for secure randomness.
+const hasSecureCrypto =
+  typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function';
+
+// Log once at module load if we're falling back to insecure random
+if (!hasSecureCrypto) {
+  devLog(
+    '[DNSService] WARNING: crypto.getRandomValues unavailable, using Math.random for DNS IDs (less secure)',
+  );
+}
+
+/**
+ * Generate a cryptographically secure 16-bit DNS transaction ID.
+ * Uses crypto.getRandomValues() when available (preferred), falls back to Math.random().
+ * @returns A random integer in range [0, 65535]
+ */
+export function generateSecureDNSId(): number {
+  if (hasSecureCrypto) {
+    const arr = new Uint16Array(1);
+    crypto.getRandomValues(arr);
+    return arr[0];
+  }
+  // Fallback for environments without crypto API (should not happen in React Native)
+  return Math.floor(Math.random() * 65536);
+}
+
 // Safe helpers for logging/decoding
 function safeStringify(value: any): string {
   try {
@@ -351,6 +380,10 @@ export class DNSService {
   private static readonly RETRY_DELAY = DNS_CONSTANTS.RETRY_DELAY_MS;
   private static readonly RATE_LIMIT_WINDOW = DNS_CONSTANTS.RATE_LIMIT_WINDOW_MS;
   private static readonly MAX_REQUESTS_PER_WINDOW = DNS_CONSTANTS.MAX_REQUESTS_PER_WINDOW;
+  // SECURITY: Maximum DNS response size to prevent memory exhaustion attacks.
+  // RFC 1035 specifies 512 bytes for UDP; TCP can be larger but 65535 is reasonable max.
+  // A malicious server could send unlimited data without this guard.
+  private static readonly MAX_DNS_RESPONSE_SIZE = 65535;
   private static isAppInBackground = false;
   private static backgroundListenerInitialized = false;
   private static requestHistory: number[] = [];
@@ -382,6 +415,15 @@ export class DNSService {
     });
 
     this.backgroundListenerInitialized = true;
+  }
+
+  /**
+   * Initialize DNSService (call once at app startup).
+   * Sets up the AppState listener for background/foreground tracking.
+   * Safe to call multiple times - uses singleton pattern internally.
+   */
+  static initialize(): void {
+    this.initializeBackgroundListener();
   }
 
   // Optional teardown (for tests or future lifecycle control)
@@ -575,10 +617,20 @@ export class DNSService {
 
       const socket = dgram.createSocket('udp4');
       let timeoutId: ReturnType<typeof setTimeout> | null = null;
+      let settled = false;
 
+      // SECURITY: Robust cleanup ensures socket is always closed.
+      // Uses settled flag to prevent double cleanup which could cause errors.
       const cleanup = () => {
+        if (settled) return;
+        settled = true;
         if (timeoutId) clearTimeout(timeoutId);
-        socket.close();
+        try {
+          socket.removeAllListeners();
+          socket.close();
+        } catch {
+          // Socket may already be closed - ignore
+        }
       };
 
       const onError = (e: any) => {
@@ -630,7 +682,7 @@ export class DNSService {
 
       const dnsQuery = {
         type: 'query' as const,
-        id: Math.floor(Math.random() * 65536),
+        id: generateSecureDNSId(),
         flags: 0x0100, // Standard query with recursion desired
         questions: [
           {
@@ -727,12 +779,18 @@ export class DNSService {
       let timeoutId: ReturnType<typeof setTimeout> | null = null;
       let responseBuffer = Buffer.alloc(0);
       let expectedLength = 0;
+      let settled = false;
 
+      // SECURITY: Robust cleanup ensures socket is always destroyed.
+      // Uses settled flag to prevent double cleanup which could cause errors.
       const cleanup = () => {
+        if (settled) return;
+        settled = true;
         this.vLog('TCP: Cleaning up...');
         if (timeoutId) clearTimeout(timeoutId);
         if (socket) {
           try {
+            socket.removeAllListeners();
             socket.destroy();
           } catch (destroyError) {
             this.vLog('TCP: Error during socket destroy:', destroyError);
@@ -836,7 +894,7 @@ export class DNSService {
 
       const dnsQuery = {
         type: 'query' as const,
-        id: Math.floor(Math.random() * 65536),
+        id: generateSecureDNSId(),
         flags: 0x0100, // Standard query with recursion desired
         questions: [
           {
@@ -917,6 +975,18 @@ export class DNSService {
         this.vLog('TCP: Setting up data handler...');
         socket.on('data', (data: Buffer) => {
           this.vLog('TCP: Received data, length:', data.length);
+
+          // SECURITY: Prevent memory exhaustion from malicious oversized responses
+          if (responseBuffer.length + data.length > this.MAX_DNS_RESPONSE_SIZE) {
+            cleanup();
+            reject(
+              new Error(
+                `DNS response exceeds maximum size (${this.MAX_DNS_RESPONSE_SIZE} bytes)`,
+              ),
+            );
+            return;
+          }
+
           responseBuffer = Buffer.concat([responseBuffer, data]);
 
           // Read the length prefix if we haven't yet
