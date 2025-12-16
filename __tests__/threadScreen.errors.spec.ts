@@ -1,4 +1,4 @@
-import { DNSError, DNSErrorType } from "@/services/dnsService";
+import { DNSError, DNSErrorType } from "../modules/dns-native";
 import { resolveDnsErrorMessage } from "../app/(dashboard)/[threadId]";
 
 describe("resolveDnsErrorMessage", () => {

@@ -42,7 +42,8 @@ export function Logs() {
       setLogs(updatedLogs);
     });
 
-    return unsubscribe;
+    // Wrap cleanup to ensure void return type (unsubscribe may return boolean)
+    return () => { unsubscribe(); };
   }, []);
 
   const loadLogs = async () => {

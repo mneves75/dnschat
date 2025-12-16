@@ -19,6 +19,7 @@ import {
   ViewStyle,
   TextStyle,
   Dimensions,
+  StyleProp,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LiquidGlassWrapper } from "../LiquidGlassWrapper";
@@ -50,7 +51,7 @@ interface GlassTabBarProps {
   /** Tab selection handler */
   onTabPress: (tabId: string) => void;
   /** Custom tab bar style */
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
   /** Hide tab bar */
   hidden?: boolean;
   /** Safe area handling */

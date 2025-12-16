@@ -37,18 +37,18 @@ export class StorageService {
    * Queues an operation to run after all previous operations complete.
    * The queue continues even if individual operations fail - errors
    * are propagated to the caller but don't break the chain.
+   *
+   * SECURITY FIX: Uses Promise.resolve().then() pattern to catch synchronous
+   * throws from operation(). Previous async/try-catch pattern could miss sync
+   * throws that occurred before any await, breaking the queue chain permanently.
    */
   private static queueOperation<T>(operation: () => Promise<T>): Promise<T> {
     return new Promise<T>((resolve, reject) => {
-      this.operationQueue = this.operationQueue.then(async () => {
-        try {
-          const result = await operation();
-          resolve(result);
-        } catch (error) {
-          reject(error);
-          // Don't rethrow - queue continues for next operation
-        }
-      });
+      this.operationQueue = this.operationQueue.then(() =>
+        Promise.resolve()
+          .then(() => operation())
+          .then(resolve, reject)
+      );
     });
   }
   static async saveChats(chats: Chat[]): Promise<void> {
@@ -105,7 +105,16 @@ export class StorageService {
       try {
         parsed = JSON.parse(serializedChats, (key, value) => {
           if (key === "createdAt" || key === "updatedAt" || key === "timestamp") {
-            return new Date(value);
+            // SECURITY FIX: Validate date parsing to prevent Invalid Date propagation.
+            // new Date('garbage') returns an Invalid Date object (not null),
+            // which causes silent failures downstream.
+            const date = new Date(value);
+            if (isNaN(date.getTime())) {
+              throw new StorageCorruptionError(
+                `Invalid date value for ${key}: ${String(value).slice(0, 50)}`
+              );
+            }
+            return date;
           }
           return value;
         });
@@ -122,6 +131,52 @@ export class StorageService {
         throw new StorageCorruptionError(
           `Chats data is not an array (got ${typeof parsed})`,
         );
+      }
+
+      // SECURITY FIX: Validate each chat object structure to prevent runtime crashes
+      // from corrupted or malicious data. Unsafe type casts like `parsed as Chat[]`
+      // skip runtime validation and can cause crashes when accessing expected properties.
+      for (let i = 0; i < parsed.length; i++) {
+        const chat = parsed[i] as Record<string, unknown>;
+        if (!chat || typeof chat !== 'object') {
+          throw new StorageCorruptionError(
+            `Chat at index ${i} is not an object`
+          );
+        }
+        if (typeof chat.id !== 'string' || !chat.id) {
+          throw new StorageCorruptionError(
+            `Chat at index ${i} has invalid id: ${String(chat.id).slice(0, 50)}`
+          );
+        }
+        if (!Array.isArray(chat.messages)) {
+          throw new StorageCorruptionError(
+            `Chat "${chat.id}" has invalid messages array`
+          );
+        }
+        // Validate messages structure
+        for (let j = 0; j < chat.messages.length; j++) {
+          const msg = chat.messages[j] as Record<string, unknown>;
+          if (!msg || typeof msg !== 'object') {
+            throw new StorageCorruptionError(
+              `Message at index ${j} in chat "${chat.id}" is not an object`
+            );
+          }
+          if (typeof msg.id !== 'string' || !msg.id) {
+            throw new StorageCorruptionError(
+              `Message at index ${j} in chat "${chat.id}" has invalid id`
+            );
+          }
+          if (typeof msg.role !== 'string' || !['user', 'assistant'].includes(msg.role)) {
+            throw new StorageCorruptionError(
+              `Message "${msg.id}" has invalid role: ${String(msg.role)}`
+            );
+          }
+          if (typeof msg.content !== 'string') {
+            throw new StorageCorruptionError(
+              `Message "${msg.id}" has invalid content type: ${typeof msg.content}`
+            );
+          }
+        }
       }
 
       const chats = parsed as Chat[];

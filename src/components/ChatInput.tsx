@@ -83,6 +83,8 @@ interface ChatInputProps {
   onSendMessage: (message: string) => void;
   isLoading?: boolean;
   placeholder?: string;
+  /** Test ID for automation testing */
+  testID?: string;
   /**
    * Emits the rendered height so parents (MessageList) can reserve bottom padding.
    * Height includes liquid glass padding + text input lines.
@@ -94,6 +96,7 @@ export function ChatInput({
   onSendMessage,
   isLoading = false,
   placeholder,
+  testID,
   onHeightChange,
 }: ChatInputProps) {
   const [message, setMessage] = useState("");
@@ -239,7 +242,7 @@ export function ChatInput({
     (value, previousValue) => {
       const rounded = Math.round(value);
       const previousRounded =
-        previousValue === undefined ? undefined : Math.round(previousValue);
+        previousValue == null ? undefined : Math.round(previousValue);
 
       if (previousRounded === undefined || rounded !== previousRounded) {
         runOnJS(reportHeight)(rounded);

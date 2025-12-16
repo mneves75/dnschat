@@ -88,6 +88,9 @@ export class NativeDNS implements NativeDNSModule {
   private readonly nativeModule: NativeDNSModule | null;
   private capabilities: DNSCapabilities | null = null;
   private capabilitiesTimestamp = 0;
+  // RACE CONDITION FIX: Promise lock to prevent concurrent isAvailable() calls
+  // from all bypassing the cache and making redundant native module calls.
+  private capabilitiesPromise: Promise<DNSCapabilities> | null = null;
   // SECURITY: TTL prevents stale network configuration from persisting forever.
   // 30 seconds is long enough to avoid repeated native calls but short enough
   // to detect network changes (e.g., WiFi to cellular, VPN connection).
@@ -226,6 +229,13 @@ export class NativeDNS implements NativeDNSModule {
       return this.capabilities;
     }
 
+    // RACE CONDITION FIX: If there's already a pending request, wait for it
+    // instead of making a redundant native call. Multiple concurrent calls
+    // would all bypass the cache check above simultaneously without this lock.
+    if (this.capabilitiesPromise) {
+      return this.capabilitiesPromise;
+    }
+
     if (!this.nativeModule) {
       this.capabilities = {
         available: false,
@@ -237,21 +247,29 @@ export class NativeDNS implements NativeDNSModule {
       return this.capabilities;
     }
 
-    try {
-      this.capabilities = await this.nativeModule.isAvailable();
-      this.capabilitiesTimestamp = now;
-      return this.capabilities;
-    } catch (error) {
-      console.warn("Failed to check DNS availability:", error);
-      this.capabilities = {
-        available: false,
-        platform: "web",
-        supportsCustomServer: false,
-        supportsAsyncQuery: false,
-      };
-      this.capabilitiesTimestamp = now;
-      return this.capabilities;
-    }
+    // RACE CONDITION FIX: Create promise lock before async operation
+    this.capabilitiesPromise = (async () => {
+      try {
+        this.capabilities = await this.nativeModule!.isAvailable();
+        this.capabilitiesTimestamp = Date.now();
+        return this.capabilities;
+      } catch (error) {
+        console.warn("Failed to check DNS availability:", error);
+        this.capabilities = {
+          available: false,
+          platform: "web",
+          supportsCustomServer: false,
+          supportsAsyncQuery: false,
+        };
+        this.capabilitiesTimestamp = Date.now();
+        return this.capabilities;
+      } finally {
+        // Clear the promise lock after completion
+        this.capabilitiesPromise = null;
+      }
+    })();
+
+    return this.capabilitiesPromise;
   }
 
   /**

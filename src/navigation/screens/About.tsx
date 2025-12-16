@@ -292,7 +292,7 @@ export function About() {
         ))}
       </Form.Section>
 
-      <Form.Section footer={t("screen.about.footer")} />
+      <Form.Section footer={t("screen.about.footer")}>{null}</Form.Section>
     </Form.List>
   );
 }
