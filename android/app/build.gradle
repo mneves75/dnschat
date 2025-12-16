@@ -87,8 +87,16 @@ def enableProguardInReleaseBuilds = (findProperty('android.enableProguardInRelea
 def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
 
 def keystoreProperties = new Properties()
-def keystorePropertiesFile = rootProject.file("keystore.properties")
-if (keystorePropertiesFile.exists()) {
+// Support both common placements:
+// - android/keystore.properties (Gradle-local, conventional)
+// - <repo-root>/keystore.properties (repo-wide, still ignored by git)
+def keystorePropertiesFileCandidates = [
+    rootProject.file("keystore.properties"),
+    new File(projectRoot, "keystore.properties"),
+]
+
+def keystorePropertiesFile = keystorePropertiesFileCandidates.find { it.exists() }
+if (keystorePropertiesFile != null) {
     keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 }
 
