@@ -6,6 +6,27 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## Unreleased
 
+## 3.3.0 - 2025-12-16
+
+### Added
+- Android Gradle build job in CI to prevent configuration regressions
+- Policy tests for Android release signing (`android.releaseSigningPolicy.spec.ts`)
+- Policy tests for Android setup verification (`verifyAndroidSetup.spec.ts`)
+- Policy tests for Java 17 detection (`runAndroidJavaHome.spec.ts`)
+- `npm run android` script with portable Java 17 auto-detection
+- `npm run verify:android` for local environment diagnostics
+- `docs/ANDROID_RELEASE.md` with release signing and checklist documentation
+
+### Changed
+- Android release builds are never debug-signed; signing requires explicit credentials
+- `keystore.properties` lookup supports both `android/` and repo root locations
+- Java 17 detection prefers valid `JAVA_HOME`, then macOS `java_home -v 17`, then Homebrew paths
+- Android SDK resolution prioritizes `local.properties`, then env vars, then default location
+
+### Fixed
+- Release signing policy prevents accidental debug-signed APKs reaching Play Store
+- SDK path warnings when `android/local.properties` points to missing directory
+
 ## 3.2.1 - 2025-12-16
 
 ### Changed
