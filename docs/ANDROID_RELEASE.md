@@ -50,4 +50,4 @@ accidentally producing a debug-signed “release”.
 
 ## Notes
 
-- Latest release tag: `v3.2.1`
+- Latest release tag: `v3.3.0`

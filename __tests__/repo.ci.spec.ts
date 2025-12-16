@@ -53,4 +53,18 @@ describe("repo policy: CI configuration exists and matches spec", () => {
 
     expect(content).toContain("github/codeql-action/");
   });
+
+  it("runs Android Gradle builds in CI (prevents build.gradle regressions)", () => {
+    const workflow = ".github/workflows/ci.yml";
+    expect(fs.existsSync(workflow)).toBe(true);
+    const content = read(workflow);
+
+    // Android job must exist with Java 17 setup and Gradle builds
+    expect(content).toContain("android:");
+    expect(content).toContain("setup-java@v4");
+    expect(content).toContain("java-version: 17");
+    expect(content).toContain("gradle/actions/setup-gradle@");
+    expect(content).toContain("assembleDebug");
+    expect(content).toContain("assembleRelease");
+  });
 });
