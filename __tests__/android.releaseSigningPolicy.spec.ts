@@ -17,4 +17,10 @@ describe("android release policy: signing config", () => {
       /buildTypes\s*\{[\s\S]*?release\s*\{[\s\S]*?\bhasReleaseSigning\b[\s\S]*?\bsigningConfig\s+signingConfigs\.release\b/,
     );
   });
+
+  it("supports keystore.properties in android/ and repo root", () => {
+    const gradle = fs.readFileSync("android/app/build.gradle", "utf8");
+    expect(gradle).toContain('rootProject.file("keystore.properties")');
+    expect(gradle).toContain('new File(projectRoot, "keystore.properties")');
+  });
 });
