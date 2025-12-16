@@ -78,6 +78,25 @@ Diagnostics:
 npm run verify:android
 ```
 
+### local.properties points to a missing Android SDK
+
+Symptom:
+
+- Gradle warns: `sdk.dir property in local.properties file. Problem: Directory does not exist`
+- `npm run verify:android` reports `android/local.properties sdk.dir points to a missing directory`
+
+Fix:
+
+- Update `android/local.properties` to point at your SDK, or delete it and let Android Studio regenerate it.
+- Prefer environment variables for portability (especially in CI):
+  - `ANDROID_SDK_ROOT` or `ANDROID_HOME`
+
+Example (macOS default):
+
+```bash
+export ANDROID_HOME="$HOME/Library/Android/sdk"
+```
+
 ## DNS / networking
 
 ### "All DNS transport methods failed"
