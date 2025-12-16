@@ -54,10 +54,14 @@ export function AccessibilityProvider({ children }: AccessibilityProviderProps) 
     }
   );
 
-  // Monitor screen reader status
+  // Monitor screen reader status using event listeners (not polling)
+  // PERFORMANCE FIX: Previous implementation polled every 5 seconds via setInterval,
+  // wasting CPU cycles and battery. Event listeners are the correct approach for
+  // accessibility state changes.
   useEffect(() => {
     let mounted = true;
 
+    // Initial check for screen reader status
     const checkScreenReader = async () => {
       try {
         const isEnabled = await AccessibilityInfo.isScreenReaderEnabled();
@@ -71,16 +75,19 @@ export function AccessibilityProvider({ children }: AccessibilityProviderProps) 
 
     checkScreenReader();
 
-    // Check periodically for screen reader status changes
-    const interval = setInterval(() => {
-      if (mounted) {
-        checkScreenReader();
+    // Use event listener instead of polling for screen reader changes
+    const subscription = AccessibilityInfo.addEventListener(
+      "screenReaderChanged",
+      (isEnabled) => {
+        if (mounted) {
+          setScreenReaderEnabled(isEnabled);
+        }
       }
-    }, 5000);
+    );
 
     return () => {
       mounted = false;
-      clearInterval(interval);
+      subscription.remove();
     };
   }, []);
 

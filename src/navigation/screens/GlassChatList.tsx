@@ -94,7 +94,7 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
       style={[
         styles.chatItemContainer,
         { backgroundColor: palette.surface },
-        isPressed && { backgroundColor: palette.highlighted },
+        isPressed && { backgroundColor: palette.highlight },
       ]}
     >
       <View style={styles.chatItemContent}>
@@ -238,8 +238,8 @@ export function GlassChatList() {
   const isDark = colorScheme === "dark";
   const [refreshing, setRefreshing] = React.useState(false);
 
-  const handleNewChat = React.useCallback(() => {
-    const newChat = createChat();
+  const handleNewChat = React.useCallback(async () => {
+    const newChat = await createChat();
     setCurrentChat(newChat);
     navigation.navigate("Chat" as never);
 
@@ -388,7 +388,7 @@ export function GlassChatList() {
             title={t("screen.glassChatList.stats.totalMessagesTitle")}
             subtitle={t("screen.glassChatList.stats.totalMessagesSubtitle")}
             rightContent={
-              <Text style={[styles.statValue, { color: palette.accentPrimary }]}>
+              <Text style={[styles.statValue, { color: palette.userBubble }]}>
                 {chats.reduce((total, chat) => total + chat.messages.length, 0)}
               </Text>
             }
@@ -397,7 +397,7 @@ export function GlassChatList() {
             title={t("screen.glassChatList.stats.averageTitle")}
             subtitle={t("screen.glassChatList.stats.averageSubtitle")}
             rightContent={
-              <Text style={[styles.statValue, { color: palette.accentPrimary }]}>
+              <Text style={[styles.statValue, { color: palette.userBubble }]}>
                 {Math.round(
                   chats.reduce(
                     (total, chat) => total + chat.messages.length,
