@@ -6,6 +6,19 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## Unreleased
 
+## 3.2.1 - 2025-12-16
+
+### Changed
+- Updated Expo SDK 54 compatible native module versions via `expo install --fix`:
+  - `expo-build-properties` `~1.0.10`
+  - `expo-dev-client` `~6.0.20`
+  - `expo-glass-effect` `~0.1.8`
+  - `expo-haptics` `~15.0.8`
+  - `expo-linking` `~8.0.10`
+  - `expo-localization` `~17.0.8`
+  - `expo-splash-screen` `~31.0.12`
+  - `expo-system-ui` `~6.0.9`
+
 ### Fixed
 - Keep `ios/DNSChat.xcodeproj/project.pbxproj` portable by ensuring `DEVELOPMENT_TEAM` stays empty (developers should configure signing locally, not in the repo).
 
