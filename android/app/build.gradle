@@ -2,6 +2,11 @@ apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
 
+// Release signing notes:
+// - Never sign "release" builds with the debug keystore (Play rejects it; it also hides misconfiguration).
+// - For local release builds, it's OK to produce an unsigned artifact unless you provide signing creds.
+// - For CI/EAS, signing is typically injected via Gradle properties (android.injected.signing.*) or a keystore.properties file.
+
 def projectRoot = rootDir.getAbsoluteFile().getParentFile().getAbsolutePath()
 
 /**
@@ -81,6 +86,30 @@ def enableProguardInReleaseBuilds = (findProperty('android.enableProguardInRelea
  */
 def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
 
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file("keystore.properties")
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
+// Determine whether we have enough data to sign a release build.
+// If not, we intentionally leave Release unsigned (Gradle will still produce an artifact).
+def injectedStoreFile = project.findProperty("android.injected.signing.store.file")
+def injectedStorePassword = project.findProperty("android.injected.signing.store.password")
+def injectedKeyAlias = project.findProperty("android.injected.signing.key.alias")
+def injectedKeyPassword = project.findProperty("android.injected.signing.key.password")
+def hasInjectedSigning =
+    injectedStoreFile && injectedStorePassword && injectedKeyAlias && injectedKeyPassword
+
+def storeFileProp = keystoreProperties["storeFile"] ?: (project.findProperty("MYAPP_UPLOAD_STORE_FILE") ?: null)
+def storePasswordProp = keystoreProperties["storePassword"] ?: (project.findProperty("MYAPP_UPLOAD_STORE_PASSWORD") ?: null)
+def keyAliasProp = keystoreProperties["keyAlias"] ?: (project.findProperty("MYAPP_UPLOAD_KEY_ALIAS") ?: null)
+def keyPasswordProp = keystoreProperties["keyPassword"] ?: (project.findProperty("MYAPP_UPLOAD_KEY_PASSWORD") ?: null)
+def hasExplicitSigning =
+    storeFileProp && storePasswordProp && keyAliasProp && keyPasswordProp
+
+def hasReleaseSigning = hasInjectedSigning || hasExplicitSigning
+
 android {
     ndkVersion rootProject.ext.ndkVersion
 
@@ -102,15 +131,32 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
+        release {
+            // Prefer injected signing (used by CI tooling) when present.
+            if (hasInjectedSigning) {
+                storeFile file(injectedStoreFile)
+                storePassword injectedStorePassword
+                keyAlias injectedKeyAlias
+                keyPassword injectedKeyPassword
+            } else if (hasExplicitSigning) {
+                storeFile file(storeFileProp)
+                storePassword storePasswordProp
+                keyAlias keyAliasProp
+                keyPassword keyPasswordProp
+            } else {
+                // Intentionally leave unset. See `hasReleaseSigning` above.
+            }
+        }
     }
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
         }
         release {
-            // Caution! In production, you need to generate your own keystore file.
-            // see https://reactnative.dev/docs/signed-apk-android.
-            signingConfig signingConfigs.debug
+            // Do not sign release with debug keys; sign only when credentials are provided.
+            if (hasReleaseSigning) {
+                signingConfig signingConfigs.release
+            }
             shrinkResources (findProperty('android.enableShrinkResourcesInReleaseBuilds')?.toBoolean() ?: false)
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
