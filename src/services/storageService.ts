@@ -5,6 +5,20 @@ import { devLog, devWarn } from "../utils/devLog";
 
 const CHATS_KEY = "@chat_dns_chats";
 
+/**
+ * Error thrown when storage data is corrupted and cannot be recovered.
+ * This distinguishes recoverable "no data" from unrecoverable "bad data".
+ */
+export class StorageCorruptionError extends Error {
+  constructor(
+    message: string,
+    public readonly cause?: Error,
+  ) {
+    super(message);
+    this.name = "StorageCorruptionError";
+  }
+}
+
 export class StorageService {
   /**
    * Operation queue ensures serialized access to AsyncStorage.
@@ -77,6 +91,7 @@ export class StorageService {
     try {
       const serializedChats = await AsyncStorage.getItem(CHATS_KEY);
 
+      // No data is valid (new user or cleared storage)
       if (!serializedChats) {
         devLog("[StorageService] No chats found in storage");
         return [];
@@ -86,12 +101,30 @@ export class StorageService {
         dataSize: serializedChats.length,
       });
 
-      const chats = JSON.parse(serializedChats, (key, value) => {
-        if (key === "createdAt" || key === "updatedAt" || key === "timestamp") {
-          return new Date(value);
-        }
-        return value;
-      });
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(serializedChats, (key, value) => {
+          if (key === "createdAt" || key === "updatedAt" || key === "timestamp") {
+            return new Date(value);
+          }
+          return value;
+        });
+      } catch (parseError) {
+        // JSON parse failure = data corruption
+        throw new StorageCorruptionError(
+          "Failed to parse chats JSON - storage may be corrupted",
+          parseError instanceof Error ? parseError : new Error(String(parseError)),
+        );
+      }
+
+      // Validate structure
+      if (!Array.isArray(parsed)) {
+        throw new StorageCorruptionError(
+          `Chats data is not an array (got ${typeof parsed})`,
+        );
+      }
+
+      const chats = parsed as Chat[];
 
       const duration = Date.now() - startTime;
       devLog("[StorageService] loadChats completed", {
@@ -99,10 +132,16 @@ export class StorageService {
         duration: `${duration}ms`,
       });
 
-      return chats as Chat[];
+      return chats;
     } catch (error) {
+      // Re-throw StorageCorruptionError - caller needs to handle it
+      if (error instanceof StorageCorruptionError) {
+        devWarn("[StorageService] Storage corruption detected", error);
+        throw error;
+      }
+      // Other errors (network, permission) are also thrown - not swallowed
       devWarn("[StorageService] Error loading chats", error);
-      return [];
+      throw error;
     }
   }
 

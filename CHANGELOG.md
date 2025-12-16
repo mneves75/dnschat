@@ -6,6 +6,36 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## Unreleased
 
+## 3.4.0 - 2025-12-16
+
+### Security
+
+- **DNS ID Generation (RFC 5452)**: Replaced `Math.random()` with cryptographically secure `crypto.getRandomValues()` to prevent DNS cache poisoning attacks via predictable transaction IDs
+- **TCP Buffer Size Limit**: Added 65535-byte maximum response size to prevent memory exhaustion denial-of-service attacks via malicious DNS responses
+- **Storage Corruption Detection**: Distinguish between "no data" (empty array) and "corrupted data" (throw `StorageCorruptionError`) to prevent silent data loss
+- **AppState Listener Singleton**: Prevent memory leaks from multiple listener registrations when `DNSService.initialize()` is called repeatedly
+- **ChatContext Race Condition**: Capture both `chatIdAtSend` and `assistantMessageId` at creation time to prevent stale closure bugs where error handler would update wrong chat or search through stale `chats` array
+- **Socket Cleanup Guarantees**: Added `settled` flag pattern and try-finally blocks to ensure sockets are always cleaned up, preventing resource leaks
+- **Async Error Handling**: Fixed fire-and-forget async in `OnboardingContext` (`nextStep`/`previousStep`) to properly await and log storage errors
+- **Capabilities TTL**: Added 30-second TTL cache for native DNS capabilities to detect network configuration changes (WiFi/cellular/VPN)
+
+### Added
+
+- `generateSecureDNSId()` function for cryptographically random DNS transaction IDs
+- `StorageCorruptionError` class for distinguishing storage corruption from empty data
+- `DNSService.initialize()` public method for explicit AppState listener setup
+- `NativeDNS.invalidateCapabilities()` method for forcing capabilities refresh
+- Comprehensive test suites:
+  - `chatContext.raceCondition.spec.ts` - ChatContext stale closure prevention tests (11 tests)
+  - `dnsService.appState.spec.ts` - AppState listener singleton tests (6 tests)
+  - `storageService.corruption.spec.ts` - Storage corruption detection tests (13 tests)
+  - `nativeDNS.capabilitiesTTL.test.ts` - Capabilities TTL tests (7 tests)
+
+### Changed
+
+- `OnboardingContext.nextStep()` and `previousStep()` are now async functions that properly await storage operations
+- Socket cleanup in DNS UDP/TCP transports uses `settled` flag pattern to prevent double cleanup
+
 ## 3.3.0 - 2025-12-16
 
 ### Added

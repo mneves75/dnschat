@@ -87,6 +87,11 @@ export class DNSError extends Error {
 export class NativeDNS implements NativeDNSModule {
   private readonly nativeModule: NativeDNSModule | null;
   private capabilities: DNSCapabilities | null = null;
+  private capabilitiesTimestamp = 0;
+  // SECURITY: TTL prevents stale network configuration from persisting forever.
+  // 30 seconds is long enough to avoid repeated native calls but short enough
+  // to detect network changes (e.g., WiFi to cellular, VPN connection).
+  private static readonly CAPABILITIES_TTL_MS = 30000;
 
   constructor() {
     // Try to get the native module, but don't crash if it's not available
@@ -211,7 +216,13 @@ export class NativeDNS implements NativeDNSModule {
   }
 
   async isAvailable(): Promise<DNSCapabilities> {
-    if (this.capabilities) {
+    const now = Date.now();
+
+    // Return cached capabilities if still valid
+    if (
+      this.capabilities &&
+      now - this.capabilitiesTimestamp < NativeDNS.CAPABILITIES_TTL_MS
+    ) {
       return this.capabilities;
     }
 
@@ -222,11 +233,13 @@ export class NativeDNS implements NativeDNSModule {
         supportsCustomServer: false,
         supportsAsyncQuery: false,
       };
+      this.capabilitiesTimestamp = now;
       return this.capabilities;
     }
 
     try {
       this.capabilities = await this.nativeModule.isAvailable();
+      this.capabilitiesTimestamp = now;
       return this.capabilities;
     } catch (error) {
       console.warn("Failed to check DNS availability:", error);
@@ -236,8 +249,18 @@ export class NativeDNS implements NativeDNSModule {
         supportsCustomServer: false,
         supportsAsyncQuery: false,
       };
+      this.capabilitiesTimestamp = now;
       return this.capabilities;
     }
+  }
+
+  /**
+   * Force refresh of capabilities on next isAvailable() call.
+   * Call this when network conditions change (e.g., WiFi <-> cellular).
+   */
+  invalidateCapabilities(): void {
+    this.capabilities = null;
+    this.capabilitiesTimestamp = 0;
   }
 
   /**
