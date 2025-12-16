@@ -65,6 +65,10 @@ describe("repo hygiene", () => {
     const offenders = tracked.filter((p) => {
       const lower = p.toLowerCase();
 
+      // Android local machine configuration (must never be committed).
+      if (lower === "android/local.properties") return true;
+      if (lower === "keystore.properties" || lower === "android/keystore.properties") return true;
+
       // Environment files: allow only explicit examples.
       if (lower === ".env" || lower.startsWith(".env.")) {
         return !isEnvExample(lower);
