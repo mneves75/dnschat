@@ -65,7 +65,7 @@ npm start
 # iOS
 npm run ios
 
-# Android (script sets Java 17 for the build)
+# Android (auto-selects Java 17 when available)
 npm run android
 
 # Web preview (uses Mock DNS)

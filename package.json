@@ -9,7 +9,7 @@
   "scripts": {
     "start": "expo start --dev-client",
     "web": "expo start --web",
-    "android": "node scripts/ensure-adb-reverse.js && JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home PATH=/opt/homebrew/opt/openjdk@17/bin:$PATH expo run:android",
+    "android": "node scripts/run-android.js",
     "android:java24": "expo run:android",
     "ios": "expo run:ios",
     "sync-versions": "node scripts/sync-versions.js",

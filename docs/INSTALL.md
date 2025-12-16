@@ -33,7 +33,7 @@ npm start
 # iOS (Expo run:ios)
 npm run ios
 
-# Android (Expo run:android). Script sets JAVA_HOME to OpenJDK 17 (Homebrew path).
+# Android (Expo run:android). Script selects Java 17 when available.
 npm run android
 
 # Web preview (Mock DNS only)
@@ -81,13 +81,15 @@ You need Java 17. If you do not have it:
 brew install openjdk@17
 ```
 
-`npm run android` sets:
+`npm run android` behavior:
 
-- `JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home`
-- `PATH=/opt/homebrew/opt/openjdk@17/bin:$PATH`
+- Runs `scripts/ensure-adb-reverse.js` (so Metro can be reached from device/emulator).
+- If `JAVA_HOME` is already set and valid, it uses it.
+- On macOS, it tries `/usr/libexec/java_home -v 17`.
+- Then it falls back to common Homebrew OpenJDK 17 locations (Apple Silicon + Intel).
 
-If you are not on macOS or your Java is installed elsewhere, set `JAVA_HOME`
-appropriately and run `expo run:android` manually.
+If your Java is installed elsewhere, set `JAVA_HOME` appropriately and re-run
+`npm run android`.
 
 Basic diagnostics:
 
