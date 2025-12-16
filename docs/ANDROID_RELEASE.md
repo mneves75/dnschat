@@ -33,7 +33,7 @@ Supported signing inputs (in order):
    - `android.injected.signing.key.password`
 
 2) Local developer signing (never commit):
-   - `keystore.properties` at repo root (ignored by git)
+   - `android/keystore.properties` or `keystore.properties` at repo root (ignored by git)
    - Or `MYAPP_UPLOAD_*` Gradle properties (`gradle.properties` / CI secrets)
 
 If no signing is provided, `./gradlew :app:assembleRelease` will generate an **unsigned**
