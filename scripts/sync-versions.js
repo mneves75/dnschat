@@ -58,6 +58,23 @@ function readIosVersions() {
   return { iosContent, marketingVersion, buildNumber };
 }
 
+function assertIosDevelopmentTeamIsEmpty(iosContent) {
+  // This repo is intentionally portable: don't commit a real signing team.
+  const matches = iosContent.matchAll(/DEVELOPMENT_TEAM\s*=\s*([^;]+);/g);
+  for (const match of matches) {
+    const configured = (match[1] ?? "").trim();
+    if (configured !== '""') {
+      console.error(
+        "[sync-versions] Refusing to proceed: iOS DEVELOPMENT_TEAM must be empty (\"\") for a portable public repo.",
+      );
+      console.error(
+        "[sync-versions] Fix: in Xcode set Signing Team to \"None\" (or clear it), then ensure the pbxproj contains: DEVELOPMENT_TEAM = \"\";",
+      );
+      process.exit(1);
+    }
+  }
+}
+
 /**
  * Parse Android versionName and versionCode from build.gradle text.
  */
@@ -248,8 +265,12 @@ function main() {
   const latestVersion = getSourceVersionFromPackageJson();
   console.log(`Source version (package.json): ${latestVersion}\n`);
 
-  const { marketingVersion: iosMarketingVersion, buildNumber: iosBuildNumber } =
-    readIosVersions();
+  const {
+    iosContent,
+    marketingVersion: iosMarketingVersion,
+    buildNumber: iosBuildNumber,
+  } = readIosVersions();
+  assertIosDevelopmentTeamIsEmpty(iosContent);
   const { versionName: androidVersionName, versionCode: androidVersionCode } =
     readAndroidVersions();
 

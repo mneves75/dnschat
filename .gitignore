@@ -35,6 +35,7 @@ yarn-error.*
 
 # macOS
 .DS_Store
+
 *.pem
 
 # iOS release automation outputs
