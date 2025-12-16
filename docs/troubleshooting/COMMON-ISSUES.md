@@ -69,8 +69,10 @@ Fix:
 npm run android
 ```
 
-This script sets Java 17 on macOS Homebrew installs. If your Java is elsewhere,
-set `JAVA_HOME` and run `expo run:android`.
+`npm run android` will try to select Java 17 (prefers an existing valid
+`JAVA_HOME`, then macOS `/usr/libexec/java_home -v 17`, then common Homebrew
+locations). If your Java is elsewhere, set `JAVA_HOME` to a Java 17 install and
+re-run `npm run android`.
 
 Diagnostics:
 
