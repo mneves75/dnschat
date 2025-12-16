@@ -6,6 +6,47 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## Unreleased
 
+## 3.5.0 - 2025-12-16
+
+### Security
+
+- **DNS Response ID Validation (RFC 5452)**: Validate that DNS response transaction IDs match the request ID to prevent cache poisoning and response spoofing attacks
+- **Storage Queue Sync Fix**: Refactored Promise chain in `queueOperation` to use `.then()` pattern instead of async/await to prevent exceptions from being swallowed silently
+- **Storage Data Validation**: Added comprehensive validation of chat data structure loaded from AsyncStorage to detect and reject corrupted data early
+
+### Performance
+
+- **Memory Leak Fix**: Added periodic cleanup interval and maximum size limit for `requestHistory` array to prevent unbounded memory growth during long sessions
+- **Capabilities Cache Race Condition**: Implemented promise lock pattern in `NativeDNS.isAvailable()` to prevent duplicate concurrent requests to native module
+- **Accessibility Event Listeners**: Replaced polling interval with `AccessibilityInfo.addEventListener` for more efficient screen reader detection
+
+### Added
+
+- React Compiler enabled via `experiments.reactCompiler: true` in app.json
+- `EXECPLAN-V3.5.0-SECURITY-PERFORMANCE.md` release documentation
+
+### Changed
+
+- `DNSService.cleanupRequestHistory()` now runs automatically every 60 seconds
+- Maximum request history size capped at 100 entries
+
+### Fixed
+
+- 21 TypeScript errors across multiple files:
+  - `ChatInput.tsx`: Null check and testID prop typing
+  - `GlassTabBar.tsx`: StyleProp import for proper style typing
+  - `GlassChatList.tsx`: Palette property names (`highlight`, `userBubble`)
+  - `Logs.tsx`: useEffect cleanup return type (void wrapper)
+  - `screenshotMode.ts`: Mock data matches Chat type (`role`, `status`, `updatedAt`)
+  - `i18n/index.tsx`: Type assertion via `unknown` for translation dictionaries
+  - `navigation/index.tsx`: Local TabRoute interface definition
+  - `About.tsx`: Null children for empty Form.Section
+  - `threadScreen.errors.spec.ts`: Correct import path for dns-native module
+
+### Removed
+
+- Deleted dead code `RouterProvider.tsx` (expo-router remnant)
+
 ## 3.4.0 - 2025-12-16
 
 ### Security
