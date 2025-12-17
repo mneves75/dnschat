@@ -6,6 +6,23 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## Unreleased
 
+## 3.6.0 - 2025-12-16
+
+### Added
+
+- **Google Play Store Launch Guide**: Comprehensive documentation for publishing to Google Play Store (`docs/ANDROID_GOOGLE_PLAY_STORE.md`):
+  - Google Play Console setup and app creation workflow
+  - Store listing configuration with full description template
+  - Screenshot specifications and capture instructions
+  - Content rating questionnaire guidance (IARC)
+  - Data safety section documentation
+  - Release management workflow (internal → closed → production)
+  - Pre-submission review checklist
+
+### Changed
+
+- Updated `ANDROID_RELEASE.md` to reference new Play Store guide
+
 ## 3.5.0 - 2025-12-16
 
 ### Security
