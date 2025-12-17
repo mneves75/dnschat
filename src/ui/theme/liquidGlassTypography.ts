@@ -248,6 +248,51 @@ export const Material3Type: Record<string, TypographyStyle> = {
     letterSpacing: 0.5,
     fontWeight: '500',
   },
+
+  // iOS-compatible aliases for cross-platform code
+  // Maps iOS semantic names to Material Design 3 equivalents
+  headline: {
+    fontSize: 16,
+    lineHeight: 24,
+    letterSpacing: 0.15,
+    fontWeight: '500',
+  },
+  body: {
+    fontSize: 16,
+    lineHeight: 24,
+    letterSpacing: 0.5,
+    fontWeight: '400',
+  },
+  callout: {
+    fontSize: 14,
+    lineHeight: 20,
+    letterSpacing: 0.25,
+    fontWeight: '400',
+  },
+  subheadline: {
+    fontSize: 14,
+    lineHeight: 20,
+    letterSpacing: 0.1,
+    fontWeight: '500',
+  },
+  footnote: {
+    fontSize: 12,
+    lineHeight: 16,
+    letterSpacing: 0.4,
+    fontWeight: '400',
+  },
+  caption1: {
+    fontSize: 12,
+    lineHeight: 16,
+    letterSpacing: 0.5,
+    fontWeight: '500',
+  },
+  caption2: {
+    fontSize: 11,
+    lineHeight: 16,
+    letterSpacing: 0.5,
+    fontWeight: '500',
+  },
 };
 
 /**

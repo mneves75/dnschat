@@ -5,11 +5,13 @@ import {
   StaticParamList,
 } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { Image, Platform, useColorScheme } from "react-native";
+import { Platform, useColorScheme } from "react-native";
 import { useTheme } from "@react-navigation/native";
 import TabView, { SceneMap } from "react-native-bottom-tabs";
-// Import newspaper icon properly for Metro bundler
-const newspaper = require("../assets/newspaper.png");
+// Import icons properly for Metro bundler
+const newspaperIcon = require("../assets/newspaper.png");
+const logsIcon = require("../assets/logs-icon.png");
+const infoIcon = require("../assets/info-icon.png");
 import { InfoIcon } from "../components/InfoIcon";
 import { SettingsIcon } from "../components/icons/SettingsIcon";
 import { LogsIcon } from "../components/icons/LogsIcon";
@@ -51,20 +53,32 @@ function HomeTabs() {
       {
         key: "ChatList",
         title: t("navigation.tabs.chat"),
-        focusedIcon: newspaper,
-        unfocusedIcon: newspaper,
+        focusedIcon: Platform.OS === "ios"
+          ? { sfSymbol: "bubble.left.and.bubble.right.fill" }
+          : newspaperIcon,
+        unfocusedIcon: Platform.OS === "ios"
+          ? { sfSymbol: "bubble.left.and.bubble.right" }
+          : newspaperIcon,
       },
       {
         key: "Logs",
         title: t("navigation.tabs.logs"),
-        focusedIcon: { sfSymbol: "list.bullet.rectangle" },
-        unfocusedIcon: { sfSymbol: "list.bullet.rectangle" },
+        focusedIcon: Platform.OS === "ios"
+          ? { sfSymbol: "list.bullet.rectangle.fill" }
+          : logsIcon,
+        unfocusedIcon: Platform.OS === "ios"
+          ? { sfSymbol: "list.bullet.rectangle" }
+          : logsIcon,
       },
       {
         key: "About",
         title: t("navigation.tabs.about"),
-        focusedIcon: { sfSymbol: "info.circle" },
-        unfocusedIcon: { sfSymbol: "info.circle" },
+        focusedIcon: Platform.OS === "ios"
+          ? { sfSymbol: "info.circle.fill" }
+          : infoIcon,
+        unfocusedIcon: Platform.OS === "ios"
+          ? { sfSymbol: "info.circle" }
+          : infoIcon,
       },
     ],
     [t],
