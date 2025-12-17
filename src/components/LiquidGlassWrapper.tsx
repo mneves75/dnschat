@@ -141,19 +141,56 @@ export const buildFallbackStyle = (
   options: { forceOpaque?: boolean } = {},
 ) => {
   const palette = getImessagePalette(isDark);
-  const forceOpaque = options.forceOpaque ?? false;
-  const backgroundColor =
-    variant === "interactive" || variant === "prominent"
+  // On Android, always use opaque colors since there's no glass blur effect
+  // Semi-transparent colors without blur just look like gray boxes
+  const forceOpaque = options.forceOpaque ?? Platform.OS === "android";
+
+  // Use solid colors on Android for better appearance without glass effects
+  const getBackgroundColor = () => {
+    if (Platform.OS === "android") {
+      // Android: use solid background colors
+      if (variant === "interactive" || variant === "prominent") {
+        return isDark ? "#1A3A5C" : "#E3F0FF"; // Solid accent surface
+      }
+      return palette.solid; // Solid surface (white or dark gray)
+    }
+    // iOS: use semi-transparent for potential glass effect fallback
+    return variant === "interactive" || variant === "prominent"
       ? palette.accentSurface
       : palette.surface;
-  const borderColor =
-    variant === "interactive" || variant === "prominent"
+  };
+
+  const getBorderColor = () => {
+    if (Platform.OS === "android") {
+      if (variant === "interactive" || variant === "prominent") {
+        return isDark ? "#3A8FFF" : "#007AFF"; // Solid accent border
+      }
+      return isDark ? "#3A3A3C" : "#C6C6C8"; // Solid border
+    }
+    return variant === "interactive" || variant === "prominent"
       ? palette.accentBorder
       : palette.border;
+  };
+
+  const backgroundColor = getBackgroundColor();
+  const borderColor = getBorderColor();
 
   const normalizeColor = (value: string) =>
     forceOpaque ? ensureOpaqueColor(value) : value;
 
+  // Android-specific: use elevation instead of shadows
+  if (Platform.OS === "android") {
+    return {
+      backgroundColor: normalizeColor(backgroundColor),
+      borderRadius: shapeRadius(shape, cornerRadius),
+      borderWidth: 1,
+      borderColor: normalizeColor(borderColor),
+      overflow: "hidden" as const,
+      elevation: isInteractive ? 4 : 2,
+    };
+  }
+
+  // iOS: use shadow properties
   return {
     backgroundColor: normalizeColor(backgroundColor),
     borderRadius: shapeRadius(shape, cornerRadius),
