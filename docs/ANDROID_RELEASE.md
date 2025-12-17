@@ -48,6 +48,9 @@ accidentally producing a debug-signed “release”.
   - Network/DNS flows work as expected
   - No unexpected runtime logs in production mode
 
+For detailed Google Play Store publishing instructions, see:
+**[ANDROID_GOOGLE_PLAY_STORE.md](./ANDROID_GOOGLE_PLAY_STORE.md)**
+
 ## Notes
 
-- Latest release tag: `v3.3.0`
+- Latest release tag: `v3.5.0`
