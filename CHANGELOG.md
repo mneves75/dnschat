@@ -6,6 +6,24 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## Unreleased
 
+## 3.7.0 - 2025-12-16
+
+### Fixed
+
+- **Android Tab Bar Icons**: Fixed 2 of 3 tab bar icons not showing on Android
+  - SF Symbols only work on iOS; added platform-specific PNG images for Android
+  - Added `logs-icon.png` and `info-icon.png` assets for Android
+
+- **Android Typography Crash**: Fixed "Cannot read property 'lineHeight' of undefined" error when opening Chat screen
+  - Root cause: `Material3Type` lacked iOS-compatible `body` key
+  - Added iOS-compatible aliases (`body`, `headline`, `callout`, `subheadline`, `footnote`, `caption1`, `caption2`) to `Material3Type` for cross-platform compatibility
+
+- **Android Gray Rectangle Issue**: Fixed gray rectangles appearing in chat list on Android
+  - Root cause: Semi-transparent `rgba` colors appear as gray boxes without glass blur effects
+  - Updated `LiquidGlassWrapper` fallback to use solid colors on Android (#FFFFFF, #E3F0FF)
+  - Added proper `elevation` property for Android shadows instead of iOS shadow properties
+  - Changed `GlassChatItem` to use `palette.solid` instead of `palette.surface` on Android
+
 ## 3.6.0 - 2025-12-16
 
 ### Added
