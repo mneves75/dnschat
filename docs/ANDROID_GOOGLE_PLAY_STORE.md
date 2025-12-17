@@ -4,7 +4,7 @@ Complete step-by-step guide for publishing DNSChat to the Google Play Store.
 
 **App**: DNSChat
 **Package**: `com.dnschat.app`
-**Current Version**: 3.6.0
+**Current Version**: 3.7.0
 
 ---
 
