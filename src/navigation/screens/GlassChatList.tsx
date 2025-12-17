@@ -89,11 +89,13 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
   // iOS 26 HIG: Chat list items are CONTENT, not controls
   // Use solid backgrounds (standard materials), NOT Liquid Glass
   // Real iMessage uses solid backgrounds for chat list items
+  // Android: Use solid color (palette.solid) since rgba appears gray without blur
+  const itemBackgroundColor = Platform.OS === "android" ? palette.solid : palette.surface;
   const ChatContent = (
     <View
       style={[
         styles.chatItemContainer,
-        { backgroundColor: palette.surface },
+        { backgroundColor: itemBackgroundColor },
         isPressed && { backgroundColor: palette.highlight },
       ]}
     >
@@ -352,10 +354,11 @@ export function GlassChatList() {
         <Form.Section>
           {/* iOS 26 HIG: Empty state is CONTENT, not a control
               Use solid background, NOT Liquid Glass */}
+          {/* Android: Use solid color since rgba appears gray without blur */}
           <View
             style={[
               styles.emptyStateContainer,
-              { backgroundColor: palette.surface },
+              { backgroundColor: Platform.OS === "android" ? palette.solid : palette.surface },
             ]}
           >
             <View style={styles.emptyState}>
