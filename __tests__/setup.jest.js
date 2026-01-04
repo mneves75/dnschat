@@ -19,10 +19,16 @@ jest.mock('expo-secure-store', () => {
   };
 });
 
-jest.mock('expo-random', () => ({
+jest.mock('expo-crypto', () => ({
   getRandomBytesAsync: jest.fn((size) =>
     Promise.resolve(Uint8Array.from({ length: size }, (_, i) => (i + 1) % 256)),
   ),
+  getRandomValues: jest.fn((array) => {
+    for (let i = 0; i < array.length; i++) {
+      array[i] = (i + 1) % 256;
+    }
+    return array;
+  }),
 }));
 
 const bytesToHex = (bytes) =>

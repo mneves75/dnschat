@@ -64,6 +64,7 @@ describe("repo policy: no private URLs", () => {
     const offenders: { file: string; url: string; hostname: string }[] = [];
     for (const file of relevant) {
       if (!fs.existsSync(file)) continue;
+      if (fs.statSync(file).isDirectory()) continue;
       const content = fs.readFileSync(file, "utf8");
       for (const url of extractUrls(content)) {
         let hostname = "";

@@ -7,6 +7,7 @@ Start here:
 - `docs/INSTALL.md` (setup + build commands)
 - `docs/architecture/SYSTEM-ARCHITECTURE.md` (what talks to what)
 - `docs/architecture/EXPO-ROUTER-INTEGRATION.md` (engineering exec spec + phased migration plan)
+- `docs/architecture/ENGINEERING-EXEC-SPEC-BEST-PRACTICES-ALIGNMENT.md` (security + best-practices hardening plan)
 - `docs/technical/SPECIFICATION.md` (product + behavior spec)
 - `docs/technical/DNS-PROTOCOL-SPEC.md` (DNS query/response rules)
 - `docs/troubleshooting/COMMON-ISSUES.md` (known issues + fixes)

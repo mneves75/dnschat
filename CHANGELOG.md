@@ -8,7 +8,20 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ### Changed
 
+- None.
+
+## 3.8.2 - 2026-01-04
+
+### Security
+
+- Ensure DNS transaction IDs use secure RNG sources with a dev/test-only fallback.
+
+### Changed
+
 - Strip `console.*` calls in production builds (excluding `console.error` and `console.warn`) for performance.
+- Replace deprecated `expo-random` usage with `expo-crypto` and add a crypto bootstrap to ensure secure RNG availability.
+- DNS log cleanup scheduler is now idempotent to avoid multiple intervals.
+- DNS protocol docs and TXT parsing comments aligned with runtime behavior.
 
 ## 3.8.1 - 2026-01-04
 
