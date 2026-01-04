@@ -227,6 +227,8 @@ export function GlassChatList() {
     setCurrentChat,
     loadChats,
     isLoading,
+    error,
+    clearError,
   } = useChat();
   const { t } = useTranslation();
 
@@ -236,6 +238,16 @@ export function GlassChatList() {
       loadChats();
     }, [loadChats]),
   );
+
+  React.useEffect(() => {
+    if (!error) return;
+    Alert.alert(t("screen.chat.errorAlertTitle"), error, [
+      {
+        text: t("screen.chat.errorAlertDismiss"),
+        onPress: clearError,
+      },
+    ]);
+  }, [error, clearError, t]);
 
   const isDark = colorScheme === "dark";
   const [refreshing, setRefreshing] = React.useState(false);

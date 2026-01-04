@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { sha256 } from '@noble/hashes/sha2.js';
 import { bytesToHex, utf8ToBytes } from '@noble/hashes/utils.js';
-import { LOGGING_CONSTANTS } from '../constants/appConstants';
+import { LOGGING_CONSTANTS, STORAGE_CONSTANTS } from '../constants/appConstants';
 import { decryptIfEncrypted, encryptString } from './encryptionService';
 import { isScreenshotMode, getMockDNSLogs } from '../utils/screenshotMode';
 import { devLog, devWarn } from "../utils/devLog";
@@ -29,7 +29,8 @@ export interface DNSQueryLog {
   entries: DNSLogEntry[];
 }
 
-const STORAGE_KEY = "@dns_query_logs";
+const STORAGE_KEY = STORAGE_CONSTANTS.LOGS_KEY;
+const LOGS_BACKUP_KEY = STORAGE_CONSTANTS.LOGS_BACKUP_KEY;
 const MAX_LOGS = LOGGING_CONSTANTS.MAX_LOGS;
 const LOG_RETENTION_DAYS = LOGGING_CONSTANTS.LOG_RETENTION_DAYS;
 const STORAGE_SIZE_WARNING_MB = LOGGING_CONSTANTS.STORAGE_SIZE_WARNING_MB;
@@ -69,6 +70,7 @@ export class DNSLogService {
   }
 
   static async initialize() {
+    let stored: string | null = null;
     try {
       // SCREENSHOT MODE: Load mock DNS logs for deterministic UI captures
       if (isScreenshotMode()) {
@@ -79,7 +81,7 @@ export class DNSLogService {
       }
 
       // NORMAL MODE: Load logs from storage
-      const stored = await AsyncStorage.getItem(STORAGE_KEY);
+      stored = await AsyncStorage.getItem(STORAGE_KEY);
       if (stored) {
         const decrypted = await decryptIfEncrypted(stored);
         const parsed = JSON.parse(decrypted);
@@ -101,6 +103,22 @@ export class DNSLogService {
       }
     } catch (error) {
       devWarn("[DNSLogService] Failed to load DNS logs", error);
+      if (stored) {
+        try {
+          const backupPayload = JSON.stringify({
+            timestamp: new Date().toISOString(),
+            error: error instanceof Error ? error.message : String(error),
+            payload: stored,
+          });
+          await AsyncStorage.setItem(LOGS_BACKUP_KEY, backupPayload);
+          await AsyncStorage.removeItem(STORAGE_KEY);
+          devWarn("[DNSLogService] Corrupted DNS logs backed up and cleared", {
+            key: LOGS_BACKUP_KEY,
+          });
+        } catch (backupError) {
+          devWarn("[DNSLogService] Failed to backup corrupted DNS logs", backupError);
+        }
+      }
       this.queryLogs = [];
     }
 
