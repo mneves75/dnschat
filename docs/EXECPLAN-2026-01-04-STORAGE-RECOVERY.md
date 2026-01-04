@@ -122,6 +122,4 @@ Recent runtime logs show:
 - Device/simulator smoke test to confirm no runtime warnings on startup.
 
 ## Evidence
-- `bun run test -- __tests__/storageService.corruption.spec.ts` (PASS)
-- `bun run test -- __tests__/dnsLogService.recovery.spec.ts` (PASS)
-- `bun run test -- __tests__/encryptionService.key.spec.ts` (PASS; console.warn emitted for invalid key length test)
+- `npm test -- __tests__/storageService.corruption.spec.ts __tests__/dnsLogService.recovery.spec.ts __tests__/encryptionService.key.spec.ts` (PASS; console.warn emitted for invalid key length test)
