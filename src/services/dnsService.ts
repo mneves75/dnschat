@@ -3,6 +3,7 @@ import * as dns from 'dns-packet';
 import { nativeDNS, DNSError, DNSErrorType } from '../../modules/dns-native';
 export { DNSError, DNSErrorType } from '../../modules/dns-native';
 import { DNS_CONSTANTS, sanitizeDNSMessageReference } from '../../modules/dns-native/constants';
+import { getRandomValues as expoGetRandomValues } from 'expo-crypto';
 import { DNSLogService } from './dnsLogService';
 import { ERROR_MESSAGES } from '../constants/appConstants';
 import { devLog, devLogArgs } from '../utils/devLog';
@@ -98,34 +99,56 @@ try {
   };
 }
 
-// SECURITY: Cryptographically secure DNS ID generation
-// RFC 5452 requires unpredictable DNS transaction IDs to prevent cache poisoning attacks.
-// Math.random() is NOT cryptographically secure - its output can be predicted.
-// crypto.getRandomValues() uses OS-level entropy for secure randomness.
-const hasSecureCrypto =
-  typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function';
+const isTestRuntime = () =>
+  typeof process !== 'undefined' &&
+  typeof process.env === 'object' &&
+  process.env !== null &&
+  typeof process.env['JEST_WORKER_ID'] === 'string';
 
-// Log once at module load if we're falling back to insecure random
-if (!hasSecureCrypto) {
+let warnedInsecureRandom = false;
+const warnInsecureRandom = () => {
+  if (warnedInsecureRandom) return;
+  warnedInsecureRandom = true;
   devLog(
-    '[DNSService] WARNING: crypto.getRandomValues unavailable, using Math.random for DNS IDs (less secure)',
+    '[DNSService] WARNING: secure RNG unavailable, using Math.random for DNS IDs (dev/test only)',
   );
-}
+};
+
+const fillSecureRandom = (target: Uint16Array): boolean => {
+  try {
+    if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+      crypto.getRandomValues(target);
+      return true;
+    }
+  } catch {}
+
+  try {
+    expoGetRandomValues(target);
+    return true;
+  } catch {}
+
+  return false;
+};
 
 /**
  * Generate a cryptographically secure 16-bit DNS transaction ID.
- * Uses crypto.getRandomValues() when available (preferred), falls back to Math.random().
+ * Uses secure RNG sources; Math.random is allowed only in dev/test fallback.
  * @returns A random integer in range [0, 65535]
  */
 export function generateSecureDNSId(): number {
-  if (hasSecureCrypto) {
-    const arr = new Uint16Array(1);
-    crypto.getRandomValues(arr);
+  const arr = new Uint16Array(1);
+  if (fillSecureRandom(arr)) {
     const value = arr[0];
     return value ?? Math.floor(Math.random() * 65536);
   }
-  // Fallback for environments without crypto API (should not happen in React Native)
-  return Math.floor(Math.random() * 65536);
+
+  const isDev = typeof __DEV__ !== 'undefined' && !!__DEV__;
+  if (isDev || isTestRuntime()) {
+    warnInsecureRandom();
+    return Math.floor(Math.random() * 65536);
+  }
+
+  throw new Error('Secure RNG unavailable for DNS transaction ID generation');
 }
 
 // Safe helpers for logging/decoding
@@ -285,7 +308,7 @@ export function validateDNSServer(server: string): string {
 /**
  * Parse TXT records returned by DNS into a single response string.
  * Behavior mirrors native module semantics:
- * - If any record is plain (no n/n: prefix), return that record (first one encountered)
+ * - If any record is plain (no n/n: prefix), concatenate plain records in order and return
  * - If multipart records are present, require a complete set [1..N] and join in order
  * - Throw on empty input or incomplete multipart sequences
  */

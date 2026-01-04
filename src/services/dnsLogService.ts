@@ -39,6 +39,7 @@ export class DNSLogService {
   private static queryLogs: DNSQueryLog[] = [];
   private static listeners: Set<(logs: DNSQueryLog[]) => void> = new Set();
   private static idCounter = 0;
+  private static cleanupIntervalId: ReturnType<typeof setInterval> | null = null;
   private static redactText(value: string): string {
     const hash = bytesToHex(sha256(utf8ToBytes(value)));
     return `sha256:${hash} len:${value.length}`;
@@ -412,10 +413,22 @@ export class DNSLogService {
     // Clean up old logs on startup
     await this.cleanupOldLogs();
 
+    if (this.cleanupIntervalId) {
+      return;
+    }
+
     // Schedule periodic cleanup (daily)
-    setInterval(async () => {
+    this.cleanupIntervalId = setInterval(async () => {
       await this.cleanupOldLogs();
     }, LOGGING_CONSTANTS.CLEANUP_INTERVAL_MS);
+  }
+
+  static stopCleanupScheduler(): void {
+    if (!this.cleanupIntervalId) {
+      return;
+    }
+    clearInterval(this.cleanupIntervalId);
+    this.cleanupIntervalId = null;
   }
 
   private static notifyListeners() {

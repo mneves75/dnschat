@@ -1,5 +1,5 @@
 import * as SecureStore from 'expo-secure-store';
-import { getRandomBytesAsync } from 'expo-random';
+import { getRandomBytesAsync, getRandomValues } from 'expo-crypto';
 import { gcm } from '@noble/ciphers/aes.js';
 import { bytesToHex, hexToBytes, utf8ToBytes } from '@noble/hashes/utils.js';
 import { ENCRYPTION_CONSTANTS } from '../constants/appConstants';
@@ -26,6 +26,13 @@ const getRandomBytes = async (size: number): Promise<Uint8Array> => {
       return bytes;
     }
   } catch {}
+
+  try {
+    const bytes = new Uint8Array(size);
+    getRandomValues(bytes);
+    return bytes;
+  } catch {}
+
   return getRandomBytesAsync(size);
 };
 

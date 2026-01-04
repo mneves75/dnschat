@@ -287,5 +287,40 @@ describe("DNS Service helpers", () => {
       // Allow at most 2 sequential pairs by chance in 10 samples
       expect(sequentialCount).toBeLessThanOrEqual(2);
     });
+
+    it("uses global crypto.getRandomValues when available", () => {
+      const originalCrypto = global.crypto;
+      const mockGetRandomValues = jest.fn((array: Uint16Array) => {
+        array[0] = 4242;
+        return array;
+      });
+      (global as any).crypto = {
+        ...(originalCrypto ?? {}),
+        getRandomValues: mockGetRandomValues,
+      };
+
+      try {
+        const id = generateSecureDNSId();
+        expect(mockGetRandomValues).toHaveBeenCalled();
+        expect(id).toBe(4242);
+      } finally {
+        (global as any).crypto = originalCrypto;
+      }
+    });
+
+    it("uses expo-crypto fallback when global crypto is unavailable", () => {
+      const originalCrypto = global.crypto;
+      (global as any).crypto = undefined;
+
+      const expoCrypto = require('expo-crypto');
+
+      try {
+        const id = generateSecureDNSId();
+        expect(expoCrypto.getRandomValues).toHaveBeenCalled();
+        expect(id).toBe(1);
+      } finally {
+        (global as any).crypto = originalCrypto;
+      }
+    });
   });
 });
