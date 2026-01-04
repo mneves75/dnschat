@@ -30,12 +30,14 @@ import {
   View,
   TextInput,
   TouchableOpacity,
-  TouchableOpacityProps,
   StyleSheet,
   useColorScheme,
   Text,
   Platform,
   AccessibilityInfo,
+} from "react-native";
+import type {
+  TouchableOpacityProps,
   ViewProps,
   NativeSyntheticEvent,
   TextInputContentSizeChangeEventData,

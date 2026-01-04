@@ -277,7 +277,10 @@ describe("DNS Service helpers", () => {
       // Check no sequential ascending or descending pairs (very unlikely with true random)
       let sequentialCount = 0;
       for (let i = 1; i < ids.length; i++) {
-        if (ids[i] === ids[i - 1] + 1 || ids[i] === ids[i - 1] - 1) {
+        const current = ids[i];
+        const previous = ids[i - 1];
+        if (current == null || previous == null) continue;
+        if (current === previous + 1 || current === previous - 1) {
           sequentialCount++;
         }
       }

@@ -25,6 +25,9 @@ describe("DNS packet compatibility", () => {
     let offset = headerLength;
 
     const firstLabelLength = encoded[offset];
+    if (firstLabelLength === undefined) {
+      throw new Error("Missing first label length");
+    }
     const firstLabel = Buffer.from(
       encoded.slice(offset + 1, offset + 1 + firstLabelLength),
     ).toString("ascii");
@@ -33,6 +36,9 @@ describe("DNS packet compatibility", () => {
     offset += 1 + firstLabelLength;
 
     const secondLabelLength = encoded[offset];
+    if (secondLabelLength === undefined) {
+      throw new Error("Missing second label length");
+    }
     const secondLabel = Buffer.from(
       encoded.slice(offset + 1, offset + 1 + secondLabelLength),
     ).toString("ascii");
@@ -41,6 +47,9 @@ describe("DNS packet compatibility", () => {
     offset += 1 + secondLabelLength;
 
     const thirdLabelLength = encoded[offset];
+    if (thirdLabelLength === undefined) {
+      throw new Error("Missing third label length");
+    }
     const thirdLabel = Buffer.from(
       encoded.slice(offset + 1, offset + 1 + thirdLabelLength),
     ).toString("ascii");

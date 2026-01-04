@@ -6,6 +6,49 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## Unreleased
 
+## 3.8.1 - 2026-01-04
+
+### Added
+
+- Local DNS responder mode for smoke tests and harness scripts (`--local-server`) to validate UDP/TCP paths without external network access.
+
+### Changed
+
+- Root app is wrapped in `React.StrictMode` to align with React Compiler healthcheck guidance.
+
+### Fixed
+
+- Jest open-handle warning resolved by tearing down DNSService background listener in tests.
+
+## 3.8.0 - 2026-01-04
+
+### Security
+
+- **Encrypted Local Storage**: Chat and DNS log payloads are now encrypted at rest using AES-GCM with a device-stored key.
+- **Log Redaction**: DNS query and response content is hashed before persistence to avoid storing raw free-form text.
+
+### Added
+
+- `babel-plugin-react-compiler` dependency to support React Compiler activation in Expo SDK 54.
+- `babel.config.js` to wire React Compiler and React Native Reanimated plugins.
+- `expo-secure-store` and `expo-random` for key storage and secure randomness.
+- `@noble/ciphers` and `@noble/hashes` for AES-GCM encryption and SHA-256 hashing.
+
+### Changed
+
+- Expo SDK patched to `54.0.30`.
+- Default package manager workflow updated to Bun (`bun install`, `bun run`).
+- TypeScript strictness options expanded in `tsconfig.json`.
+- DNS retry delay constant aligned across JS and native sources (200ms).
+- Typography scale now exposes explicit cross-platform keys to satisfy strict typing and avoid undefined style access.
+- Jest TypeScript configuration loosens `verbatimModuleSyntax` for CommonJS test runs.
+
+### Fixed
+
+- iOS signing team identifiers removed from `project.pbxproj` to satisfy public repo policy tests.
+- Encrypted payload parsing now accepts the versioned `enc:v1:` prefix format.
+- Jest runs now mock noble ESM cryptography modules to avoid ESM loader failures.
+
 ## 3.7.0 - 2025-12-16
 
 ### Fixed

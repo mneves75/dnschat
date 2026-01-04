@@ -4,10 +4,10 @@ import React, {
   useState,
   useEffect,
   useCallback,
-  ReactNode,
 } from "react";
+import type { ReactNode } from "react";
 import uuid from "react-native-uuid";
-import { Chat, Message, ChatContextType } from "../types/chat";
+import type { Chat, Message, ChatContextType } from "../types/chat";
 import { StorageService } from "../services/storageService";
 import { DNSService, sanitizeDNSMessage } from "../services/dnsService";
 import { useSettings } from "./SettingsContext";

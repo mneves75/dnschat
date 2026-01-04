@@ -15,8 +15,8 @@ describe("iOS Podspec deployment target", () => {
     );
 
     const versions: number[] = [];
-    if (platformsMatch) versions.push(parseFloat(platformsMatch[1]));
-    if (deploymentMatch) versions.push(parseFloat(deploymentMatch[1]));
+    if (platformsMatch?.[1]) versions.push(parseFloat(platformsMatch[1]));
+    if (deploymentMatch?.[1]) versions.push(parseFloat(deploymentMatch[1]));
 
     expect(versions.length).toBeGreaterThanOrEqual(1);
     versions.forEach((v) => expect(v).toBeGreaterThanOrEqual(16.0));

@@ -9,11 +9,8 @@ import {
   useColorScheme,
 } from "react-native";
 import { useTheme, useNavigation } from "@react-navigation/native";
-import {
-  DNSLogService,
-  DNSQueryLog,
-  DNSLogEntry,
-} from "../../services/dnsLogService";
+import { DNSLogService } from "../../services/dnsLogService";
+import type { DNSQueryLog, DNSLogEntry } from "../../services/dnsLogService";
 import { Form, LiquidGlassWrapper } from "../../components/glass";
 import { useTranslation } from "../../i18n";
 

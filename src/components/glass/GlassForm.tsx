@@ -16,10 +16,8 @@ import {
   ScrollView,
   TouchableOpacity,
   Platform,
-  ViewStyle,
-  TextStyle,
-  StyleProp,
 } from "react-native";
+import type { ViewStyle, TextStyle, StyleProp } from "react-native";
 import {
   SafeAreaView,
   useSafeAreaInsets,

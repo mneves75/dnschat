@@ -16,7 +16,7 @@ describe("Native DNS Module", () => {
   let testDNS: NativeDNS;
 
   beforeEach(() => {
-    mockNativeModule = NativeModules.RNDNSModule;
+    mockNativeModule = NativeModules['RNDNSModule'];
     testDNS = new NativeDNS();
 
     // Reset all mocks

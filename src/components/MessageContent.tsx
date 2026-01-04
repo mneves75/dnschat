@@ -2,7 +2,7 @@ import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { format } from "date-fns";
 import Markdown from "react-native-markdown-display";
-import { Message } from "../types/chat";
+import type { Message } from "../types/chat";
 import { useTypography } from "../ui/hooks/useTypography";
 import { LiquidGlassSpacing } from "../ui/theme/liquidGlassSpacing";
 

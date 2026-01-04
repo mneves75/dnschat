@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, ScrollView, StyleSheet } from "react-native";
-import { DNSLogService, DNSQueryLog } from "../services/dnsLogService";
+import { DNSLogService } from "../services/dnsLogService";
+import type { DNSQueryLog } from "../services/dnsLogService";
 import { useTranslation } from "../i18n";
 import { useImessagePalette } from "../ui/theme/imessagePalette";
 import { useTypography } from "../ui/hooks/useTypography";

@@ -7,7 +7,7 @@ import {
 } from "react-native";
 import { MenuView } from '@react-native-menu/menu';
 import type { NativeActionEvent } from '@react-native-menu/menu';
-import { Message } from "../types/chat";
+import type { Message } from "../types/chat";
 import { useTypography } from "../ui/hooks/useTypography";
 import { useImessagePalette } from "../ui/theme/imessagePalette";
 import { LiquidGlassSpacing, getCornerRadius } from "../ui/theme/liquidGlassSpacing";
@@ -125,18 +125,22 @@ function MessageBubbleComponent({ message }: MessageBubbleProps) {
     },
   };
 
-  const menuActions = useMemo(() => [
-    {
-      id: 'copy',
-      title: t('screen.chat.messageActions.copy'),
-      image: Platform.OS === 'ios' ? 'doc.on.doc' : undefined,
-    },
-    {
-      id: 'share',
-      title: t('screen.chat.messageActions.share'),
-      image: Platform.OS === 'ios' ? 'square.and.arrow.up' : undefined,
-    },
-  ], [t]); // Depends on t for locale changes
+  const menuActions = useMemo(() => {
+    const copyImage = Platform.OS === 'ios' ? 'doc.on.doc' : undefined;
+    const shareImage = Platform.OS === 'ios' ? 'square.and.arrow.up' : undefined;
+    return [
+      {
+        id: 'copy',
+        title: t('screen.chat.messageActions.copy'),
+        ...(copyImage ? { image: copyImage } : {}),
+      },
+      {
+        id: 'share',
+        title: t('screen.chat.messageActions.share'),
+        ...(shareImage ? { image: shareImage } : {}),
+      },
+    ];
+  }, [t]); // Depends on t for locale changes
 
   const messageContentProps = {
     message,

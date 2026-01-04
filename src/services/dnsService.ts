@@ -121,7 +121,8 @@ export function generateSecureDNSId(): number {
   if (hasSecureCrypto) {
     const arr = new Uint16Array(1);
     crypto.getRandomValues(arr);
-    return arr[0];
+    const value = arr[0];
+    return value ?? Math.floor(Math.random() * 65536);
   }
   // Fallback for environments without crypto API (should not happen in React Native)
   return Math.floor(Math.random() * 65536);
@@ -158,7 +159,11 @@ function safeDecodeBytes(bytes: any): string {
   try {
     const arr = bytes as Uint8Array;
     let out = '';
-    for (let i = 0; i < arr.length; i++) out += String.fromCharCode(arr[i]);
+    for (let i = 0; i < arr.length; i++) {
+      const byte = arr[i];
+      if (byte === undefined) continue;
+      out += String.fromCharCode(byte);
+    }
     return out;
   } catch {
     return '';
@@ -324,7 +329,11 @@ export function parseTXTResponse(txtRecords: string[]): string {
     throw new Error('No TXT records to parse');
   }
 
-  const expectedTotal = parts[0].totalParts;
+  const firstPart = parts[0];
+  if (!firstPart) {
+    throw new Error('No TXT records to parse');
+  }
+  const expectedTotal = firstPart.totalParts;
   const byPart = new Map<number, string>();
 
   // TRICKY: Handle duplicate parts from UDP retransmission
@@ -575,8 +584,9 @@ export class DNSService {
 
             // Log fallback to next method if available
             const nextMethodIndex = methodOrder.indexOf(method) + 1;
-            if (nextMethodIndex < methodOrder.length) {
-              DNSLogService.logFallback(method, methodOrder[nextMethodIndex]);
+            const nextMethod = methodOrder[nextMethodIndex];
+            if (nextMethod) {
+              DNSLogService.logFallback(method, nextMethod);
             }
 
             // Continue to next method

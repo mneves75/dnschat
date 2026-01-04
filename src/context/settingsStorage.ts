@@ -1,4 +1,5 @@
-import { SUPPORTED_LOCALE_OPTIONS, SupportedLocale, resolveLocale } from "../i18n/translations";
+import { SUPPORTED_LOCALE_OPTIONS, resolveLocale } from "../i18n/translations";
+import type { SupportedLocale } from "../i18n/translations";
 import { validateDNSServer } from "../services/dnsService";
 
 export { SUPPORTED_LOCALE_OPTIONS, resolveLocale } from "../i18n/translations";

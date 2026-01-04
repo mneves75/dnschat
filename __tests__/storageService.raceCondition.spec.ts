@@ -11,6 +11,7 @@
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { decryptIfEncrypted } from '../src/services/encryptionService';
 import { StorageService } from '../src/services/storageService';
 import type { Message } from '../src/types/chat';
 
@@ -27,6 +28,8 @@ jest.mock('react-native-uuid', () => ({
 }));
 
 const mockAsyncStorage = AsyncStorage as jest.Mocked<typeof AsyncStorage>;
+const parseStoredChats = async (payload: string) =>
+  JSON.parse(await decryptIfEncrypted(payload));
 
 describe('StorageService Race Condition Prevention', () => {
   beforeEach(() => {
@@ -61,7 +64,7 @@ describe('StorageService Race Condition Prevention', () => {
 
       mockAsyncStorage.setItem.mockImplementation(async (_key, value) => {
         // Record the message IDs in this save call
-        const chats = JSON.parse(value);
+        const chats = await parseStoredChats(value);
         const msgIds = chats[0]?.messages?.map((m: Message) => m.id) || [];
         saveCallOrder.push(msgIds.join(','));
         currentStorage = value;
@@ -93,7 +96,7 @@ describe('StorageService Race Condition Prevention', () => {
       expect(saveCallOrder).toHaveLength(3);
 
       // Parse final storage state
-      const finalChats = JSON.parse(currentStorage);
+      const finalChats = await parseStoredChats(currentStorage);
       expect(finalChats[0].messages).toHaveLength(3);
 
       // All three messages should be present
@@ -113,7 +116,7 @@ describe('StorageService Race Condition Prevention', () => {
       });
 
       mockAsyncStorage.setItem.mockImplementation(async (_key, value) => {
-        const chats = JSON.parse(value);
+        const chats = await parseStoredChats(value);
         operationOrder.push(`save:${chats.length}chats`);
         currentStorage = value;
         return undefined;
@@ -146,7 +149,7 @@ describe('StorageService Race Condition Prevention', () => {
       ]);
 
       // Final state should be empty (cleared)
-      const finalChats = JSON.parse(currentStorage);
+      const finalChats = await parseStoredChats(currentStorage);
       expect(finalChats).toEqual([]);
 
       // But we should have gotten valid chat objects back from create
@@ -170,7 +173,7 @@ describe('StorageService Race Condition Prevention', () => {
       mockAsyncStorage.getItem.mockImplementation(async () => currentStorage);
 
       mockAsyncStorage.setItem.mockImplementation(async (_key, value) => {
-        const chats = JSON.parse(value);
+        const chats = await parseStoredChats(value);
         successfulOps.push(`save:${chats[0]?.messages?.length || 0}msgs`);
         currentStorage = value;
         return undefined;
@@ -210,7 +213,7 @@ describe('StorageService Race Condition Prevention', () => {
       expect(successfulOps).toEqual(['save:1msgs', 'save:2msgs']);
 
       // Final state should have 2 messages
-      const finalChats = JSON.parse(currentStorage);
+      const finalChats = await parseStoredChats(currentStorage);
       expect(finalChats[0].messages).toHaveLength(2);
     });
   });
@@ -238,7 +241,7 @@ describe('StorageService Race Condition Prevention', () => {
       expect(newChat.title).toBe('New Chat');
       expect(newChat.messages).toEqual([]);
 
-      const chats = JSON.parse(savedData!);
+      const chats = await parseStoredChats(savedData!);
       expect(chats).toHaveLength(2);
       expect(chats[0].id).toBe(newChat.id); // New chat at beginning
       expect(chats[1].id).toBe('existing');
@@ -267,7 +270,7 @@ describe('StorageService Race Condition Prevention', () => {
 
       await StorageService.updateMessage(chatId, 'msg-1', { content: 'Updated First' });
 
-      const chats = JSON.parse(savedData!);
+      const chats = await parseStoredChats(savedData!);
       expect(chats[0].messages[0].content).toBe('Updated First');
       expect(chats[0].messages[1].content).toBe('Second'); // Unchanged
     });
@@ -289,7 +292,7 @@ describe('StorageService Race Condition Prevention', () => {
 
       await StorageService.deleteChat('chat-2');
 
-      const savedChats = JSON.parse(savedData!);
+      const savedChats = await parseStoredChats(savedData!);
       expect(savedChats).toHaveLength(2);
       expect(savedChats.map((c: { id: string }) => c.id)).toEqual(['chat-1', 'chat-3']);
     });
@@ -365,7 +368,7 @@ describe('StorageService Race Condition Prevention', () => {
 
       await StorageService.addMessage('chat-1', msg);
 
-      const chats = JSON.parse(savedData!);
+      const chats = await parseStoredChats(savedData!);
       expect(chats[0].title).toBe('Hello, how can you help me with DNS queries?');
     });
 
@@ -398,7 +401,7 @@ describe('StorageService Race Condition Prevention', () => {
 
       await StorageService.addMessage('chat-1', msg);
 
-      const chats = JSON.parse(savedData!);
+      const chats = await parseStoredChats(savedData!);
       // slice(0, 50) = 50 chars, + '...' = 53 total
       expect(chats[0].title).toBe('This is a very long message that exceeds fifty cha...');
       expect(chats[0].title.length).toBe(53);
@@ -431,7 +434,7 @@ describe('StorageService Race Condition Prevention', () => {
 
       await StorageService.addMessage('chat-1', msg);
 
-      const chats = JSON.parse(savedData!);
+      const chats = await parseStoredChats(savedData!);
       expect(chats[0].title).toBe('New Chat'); // Unchanged
     });
   });

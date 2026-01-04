@@ -37,7 +37,7 @@ export function Chat() {
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
   const minimumTouchTarget = useMemo(() => getMinimumTouchTarget(), []);
-  const bodyLineHeight = typography.body.lineHeight ?? 22;
+  const bodyLineHeight = typography["body"]?.lineHeight ?? 22;
   const minimumInputHeight = useMemo(
     () => Math.max(bodyLineHeight + LiquidGlassSpacing.sm * 2, minimumTouchTarget),
     [bodyLineHeight, minimumTouchTarget],

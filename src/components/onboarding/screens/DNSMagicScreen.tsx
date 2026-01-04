@@ -92,7 +92,14 @@ export function DNSMagicScreen() {
     ) => {
       setDnsSteps((prev) =>
         prev.map((step) =>
-          step.id === id ? { ...step, status, message, timing } : step,
+          step.id === id
+            ? {
+                ...step,
+                status,
+                message,
+                ...(timing !== undefined ? { timing } : {}),
+              }
+            : step,
         ),
       );
     };

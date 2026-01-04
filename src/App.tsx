@@ -126,26 +126,28 @@ function AppContent() {
 
 export function App() {
   return (
-    <GestureHandlerRootView style={styles.root}>
-      <SafeAreaProvider>
-        <KeyboardProvider>
-          <ErrorBoundary>
-            <SettingsProvider>
-              <AccessibilityProvider>
-                <I18nProvider>
-                  <OnboardingProvider>
-                    <ChatProvider>
-                      <HapticsConfigurator />
-                      <AppContent />
-                    </ChatProvider>
-                  </OnboardingProvider>
-                </I18nProvider>
-              </AccessibilityProvider>
-            </SettingsProvider>
-          </ErrorBoundary>
-        </KeyboardProvider>
-      </SafeAreaProvider>
-    </GestureHandlerRootView>
+    <React.StrictMode>
+      <GestureHandlerRootView style={styles.root}>
+        <SafeAreaProvider>
+          <KeyboardProvider>
+            <ErrorBoundary>
+              <SettingsProvider>
+                <AccessibilityProvider>
+                  <I18nProvider>
+                    <OnboardingProvider>
+                      <ChatProvider>
+                        <HapticsConfigurator />
+                        <AppContent />
+                      </ChatProvider>
+                    </OnboardingProvider>
+                  </I18nProvider>
+                </AccessibilityProvider>
+              </SettingsProvider>
+            </ErrorBoundary>
+          </KeyboardProvider>
+        </SafeAreaProvider>
+      </GestureHandlerRootView>
+    </React.StrictMode>
   );
 }
 

@@ -146,6 +146,7 @@ export function Toast({
       );
       opacity.value = withTiming(0, TimingConfig.quick);
     }
+    return undefined;
   }, [visible, variant, duration, position]);
 
   // Handle dismiss

@@ -3,10 +3,8 @@ import { useNavigation } from "@react-navigation/native";
 import { View, Text, StyleSheet, Linking, Image } from "react-native";
 import { Form, LiquidGlassWrapper } from "../../components/glass";
 import { useTranslation } from "../../i18n";
-import {
-  IMessagePalette,
-  useImessagePalette,
-} from "../../ui/theme/imessagePalette";
+import { useImessagePalette } from "../../ui/theme/imessagePalette";
+import type { IMessagePalette } from "../../ui/theme/imessagePalette";
 import { useTypography } from "../../ui/hooks/useTypography";
 import { LiquidGlassSpacing, getCornerRadius } from "../../ui/theme/liquidGlassSpacing";
 import { devLog } from "../../utils/devLog";
@@ -142,7 +140,7 @@ export function About() {
                 <Text
                   style={[
                     styles.logoText,
-                    typography.headline,
+                    typography["headline"],
                     { color: palette.accentTint, fontWeight: "bold" },
                   ]}
                 >
@@ -153,7 +151,7 @@ export function About() {
             <Text
               style={[
                 styles.title,
-                typography.displaySmall,
+                typography["displaySmall"],
                 { color: palette.textPrimary, fontWeight: "bold" },
               ]}
             >
@@ -167,7 +165,7 @@ export function About() {
               <Text
                 style={[
                   styles.versionText,
-                  typography.callout,
+                  typography["callout"],
                   { color: palette.accentTint, fontWeight: "600" },
                 ]}
               >
@@ -177,7 +175,7 @@ export function About() {
             <Text
               style={[
                 styles.description,
-                typography.body,
+                typography["body"],
                 { color: palette.textSecondary },
               ]}
             >

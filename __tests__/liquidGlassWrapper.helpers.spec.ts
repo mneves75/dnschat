@@ -38,7 +38,7 @@ const setPlatform = (os: string, version?: string | number) => {
       if (versionDescriptor) {
         Object.defineProperty(Platform, "Version", versionDescriptor);
       } else {
-        delete (Platform as unknown as Record<string, unknown>).Version;
+        delete (Platform as unknown as Record<string, unknown>)["Version"];
       }
     }
   };

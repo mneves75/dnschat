@@ -16,11 +16,9 @@ import {
   StyleSheet,
   useColorScheme,
   Platform,
-  ViewStyle,
-  TextStyle,
   Dimensions,
-  StyleProp,
 } from "react-native";
+import type { ViewStyle, TextStyle, StyleProp } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LiquidGlassWrapper } from "../LiquidGlassWrapper";
 
@@ -347,7 +345,7 @@ export const SegmentedGlassTabBar: React.FC<
 // COMPONENT EXPORTS
 // ==================================================================================
 
-export { GlassTab, GlassTabBarProps };
+export type { GlassTab, GlassTabBarProps };
 
 // ==================================================================================
 // STYLES

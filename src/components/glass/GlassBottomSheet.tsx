@@ -18,10 +18,10 @@ import {
   StyleSheet,
   useColorScheme,
   Platform,
-  ViewStyle,
   Dimensions,
   Animated,
 } from "react-native";
+import type { ViewStyle } from "react-native";
 import { PanGestureHandler, State } from "react-native-gesture-handler";
 import { LiquidGlassWrapper } from "../LiquidGlassWrapper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -378,8 +378,8 @@ export const GlassActionSheet: React.FC<GlassActionSheetProps> = ({
   return (
     <GlassBottomSheet
       {...props}
-      title={title}
-      subtitle={message}
+      {...(title ? { title } : {})}
+      {...(message ? { subtitle: message } : {})}
       height={Math.min(0.8, 0.2 + actions.length * 0.06)}
       showCloseButton={false}
     >
@@ -459,7 +459,7 @@ export const useGlassBottomSheet = () => {
 // COMPONENT EXPORTS
 // ==================================================================================
 
-export { GlassBottomSheetProps, GlassSheetAction, GlassActionSheetProps };
+export type { GlassBottomSheetProps, GlassSheetAction, GlassActionSheetProps };
 
 // ==================================================================================
 // STYLES

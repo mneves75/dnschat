@@ -3,9 +3,9 @@ import {
   AccessibilityInfo,
   Platform,
   View,
-  ViewProps,
   useColorScheme,
 } from "react-native";
+import type { ViewProps } from "react-native";
 import {
   GlassView,
   GlassContainer,
@@ -66,7 +66,12 @@ const ensureOpaqueColor = (color: string) => {
     return color;
   }
 
-  const [, r, g, b] = match;
+  const r = match[1];
+  const g = match[2];
+  const b = match[3];
+  if (!r || !g || !b) {
+    return color;
+  }
 
   return `rgb(${r.trim()}, ${g.trim()}, ${b.trim()})`;
 };
@@ -80,8 +85,9 @@ const parseIosMajorVersion = (): number => {
 
   if (typeof version === "string") {
     const match = version.match(/^(\d+)/);
-    if (match) {
-      const parsed = parseInt(match[1], 10);
+    const raw = match?.[1];
+    if (raw) {
+      const parsed = parseInt(raw, 10);
       return Number.isNaN(parsed) ? 0 : parsed;
     }
     return 0;

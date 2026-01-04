@@ -9,7 +9,7 @@ import { nativeDNS, DNSError, DNSErrorType } from "../index";
 import { sanitizeDNSMessageReference } from "../constants";
 
 // Skip these tests in CI/automated environments
-const shouldRunIntegrationTests = process.env.RUN_INTEGRATION_TESTS === "true";
+const shouldRunIntegrationTests = process.env["RUN_INTEGRATION_TESTS"] === "true";
 
 const describeIntegration = shouldRunIntegrationTests
   ? describe
@@ -210,7 +210,7 @@ describeIntegration("Native DNS Integration Tests", () => {
   });
 
   describe("Sanitization Parity", () => {
-    const nativeModule: any = (NativeModules as any)?.RNDNSModule;
+    const nativeModule: any = (NativeModules as any)?.["RNDNSModule"];
     const canValidate =
       Platform?.OS === "android" && typeof nativeModule?.debugSanitizeLabel === "function";
 

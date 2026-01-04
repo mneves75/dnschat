@@ -1,9 +1,7 @@
 import React, { useState } from "react";
 import { HeaderButton, Text } from "@react-navigation/elements";
-import {
-  createStaticNavigation,
-  StaticParamList,
-} from "@react-navigation/native";
+import { createStaticNavigation } from "@react-navigation/native";
+import type { StaticParamList } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { Platform, useColorScheme } from "react-native";
 import { useTheme } from "@react-navigation/native";
