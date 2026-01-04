@@ -4,42 +4,44 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What is DNSChat
 
-A React Native (Expo dev-client) chat app that sends short prompts as DNS TXT queries to `ch.at` and renders responses. Uses React Native 0.81.5, Expo SDK 54, React 19.1.0, TypeScript 5.9.2.
+A React Native (Expo dev-client) chat app that sends short prompts as DNS TXT queries to `ch.at` and renders responses. Uses React Native 0.81.5, Expo SDK 54.0.30, React 19.1.0, TypeScript 5.9.2.
 
 ## Commands
 
 ```bash
 # Development
-npm start           # Expo dev-client server
-npm run ios         # Build and run iOS
-npm run android     # Build and run Android (auto-selects Java 17)
-npm run web         # Web preview (uses Mock DNS)
+bun run start       # Expo dev-client server
+bun run ios         # Build and run iOS
+bun run android     # Build and run Android (auto-selects Java 17)
+bun run web         # Web preview (uses Mock DNS)
 
 # Testing
-npm test            # Run all unit tests (jest --runInBand)
-npm test -- --testPathPattern=<pattern>  # Run specific test file
+bun run test        # Run all unit tests (jest --runInBand)
+bun run test -- --testPathPattern=<pattern>  # Run specific test file
 
 # Linting
-npm run lint        # ast-grep rules (blocks legacy liquid glass imports)
+bun run lint        # ast-grep rules (blocks legacy liquid glass imports)
 
 # DNS module tests (separate workspace)
-cd modules/dns-native && npm test
+cd modules/dns-native && bun run test
 
 # DNS smoke tests (no RN runtime)
 node test-dns-simple.js "test message"
-npm run dns:harness -- --message "test message"
+bun run dns:harness -- --message "test message"
+node test-dns-simple.js "test message" --local-server
+bun run dns:harness -- --message "test message" --local-server
 
 # iOS pod helpers
-npm run verify:ios-pods   # Check lockfile sync
-npm run fix-pods          # Basic CocoaPods cleanup
-npm run clean-ios         # Deep pods reset
+bun run verify:ios-pods   # Check lockfile sync
+bun run fix-pods          # Basic CocoaPods cleanup
+bun run clean-ios         # Deep pods reset
 
 # Android diagnostics
-npm run verify:android    # Sanity check tooling/device
+bun run verify:android    # Sanity check tooling/device
 
 # Version sync
-npm run sync-versions     # Sync version across package.json, app.json, native configs
-npm run sync-versions:dry # Preview changes
+bun run sync-versions     # Sync version across package.json, app.json, native configs
+bun run sync-versions:dry # Preview changes
 ```
 
 ## Architecture

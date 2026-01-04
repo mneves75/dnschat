@@ -88,8 +88,10 @@ describe("StorageService Corruption Handling", () => {
       const result = await StorageService.loadChats();
 
       expect(result).toHaveLength(1);
-      expect(result[0].id).toBe("chat-1");
-      expect(result[0].title).toBe("Test Chat");
+      const first = result[0];
+      if (!first) throw new Error("Expected chat to exist");
+      expect(first.id).toBe("chat-1");
+      expect(first.title).toBe("Test Chat");
     });
 
     it("converts date strings to Date objects", async () => {
@@ -113,9 +115,13 @@ describe("StorageService Corruption Handling", () => {
 
       const result = await StorageService.loadChats();
 
-      expect(result[0].createdAt).toBeInstanceOf(Date);
-      expect(result[0].updatedAt).toBeInstanceOf(Date);
-      expect(result[0].messages[0].timestamp).toBeInstanceOf(Date);
+      const first = result[0];
+      if (!first) throw new Error("Expected chat to exist");
+      const firstMessage = first.messages[0];
+      if (!firstMessage) throw new Error("Expected message to exist");
+      expect(first.createdAt).toBeInstanceOf(Date);
+      expect(first.updatedAt).toBeInstanceOf(Date);
+      expect(firstMessage.timestamp).toBeInstanceOf(Date);
     });
 
     it("preserves error cause in StorageCorruptionError", async () => {

@@ -47,7 +47,7 @@ export class AndroidStartupDiagnostics {
 
   private static checkNativeDNSModule() {
     try {
-      const dnsModule = NativeModules.RNDNSModule;
+      const dnsModule = NativeModules["RNDNSModule"];
       if (dnsModule) {
         this.results.push({
           name: "DNS Native Module",
@@ -86,7 +86,7 @@ export class AndroidStartupDiagnostics {
         name: "Metro Bundler",
         status: "warning",
         message: "Dev mode - verify Metro is running on port 8081",
-        details: "Run: npm start or check adb reverse tcp:8081 tcp:8081",
+        details: "Run: bun run start or check adb reverse tcp:8081 tcp:8081",
       });
       this.warn("Dev mode - verify Metro connection");
     } else {

@@ -6,7 +6,7 @@ import { getNativeSanitizerConfig } from "../constants";
 describe("NativeDNS sanitizer configuration", () => {
   const originalConsoleWarn = console.warn;
   const originalConsoleLog = console.log;
-  const originalModule = NativeModules.RNDNSModule;
+  const originalModule = NativeModules['RNDNSModule'];
 
   beforeEach(() => {
     console.warn = jest.fn();
@@ -17,7 +17,7 @@ describe("NativeDNS sanitizer configuration", () => {
   afterEach(() => {
     console.warn = originalConsoleWarn;
     console.log = originalConsoleLog;
-    NativeModules.RNDNSModule = originalModule;
+    NativeModules['RNDNSModule'] = originalModule;
   });
 
   it("propagates sanitizer configuration and ignores duplicate payloads", async () => {
@@ -26,7 +26,7 @@ describe("NativeDNS sanitizer configuration", () => {
       .mockResolvedValueOnce(true)
       .mockResolvedValueOnce(false);
 
-    (NativeModules as any).RNDNSModule = {
+    (NativeModules as any)["RNDNSModule"] = {
       configureSanitizer: configureSanitizerMock,
       queryTXT: jest.fn(),
       isAvailable: jest.fn().mockResolvedValue({ available: true, platform: "android", supportsCustomServer: true, supportsAsyncQuery: true, apiLevel: 34 }),
@@ -51,7 +51,7 @@ describe("NativeDNS sanitizer configuration", () => {
 
   it("logs a warning when sanitizer configuration fails", async () => {
     const error = Object.assign(new Error("Invalid regex"), { code: "SANITIZER_CONFIG_REGEX" });
-    (NativeModules as any).RNDNSModule = {
+    (NativeModules as any)["RNDNSModule"] = {
       configureSanitizer: jest.fn().mockRejectedValue(error),
       queryTXT: jest.fn(),
       isAvailable: jest.fn().mockResolvedValue({ available: true, platform: "android", supportsCustomServer: true, supportsAsyncQuery: true, apiLevel: 34 }),

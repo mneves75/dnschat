@@ -4,12 +4,10 @@ import {
   TextInput,
   Text,
   StyleSheet,
-  TextInputProps,
-  ViewStyle,
-  TextStyle,
   useColorScheme,
   Pressable,
 } from "react-native";
+import type { TextInputProps, ViewStyle, TextStyle } from "react-native";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,

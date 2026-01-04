@@ -14,7 +14,9 @@ function isPrivateIPv4(hostname: string): boolean {
   const octets = parts.map((p) => Number(p));
   if (octets.some((n) => !Number.isInteger(n) || n < 0 || n > 255)) return false;
 
-  const [a, b] = octets;
+  const a = octets[0];
+  const b = octets[1];
+  if (a == null || b == null) return false;
   if (a === 10) return true;
   if (a === 127) return true;
   if (a === 192 && b === 168) return true;
@@ -80,4 +82,3 @@ describe("repo policy: no private URLs", () => {
     expect(offenders).toEqual([]);
   });
 });
-

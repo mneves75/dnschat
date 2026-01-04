@@ -1,5 +1,6 @@
 import React from "react";
-import { act, ReactTestRenderer, ReactTestInstance } from "react-test-renderer";
+import type { ReactTestInstance, ReactTestRenderer } from "react-test-renderer";
+import { act } from "react-test-renderer";
 import { Switch } from "react-native";
 import * as HapticsUtils from "../src/utils/haptics";
 import { createWithSuppressedWarnings } from "./utils/reactTestRenderer";
@@ -73,11 +74,11 @@ jest.mock("@react-navigation/native", () => ({
 jest.mock("../src/i18n", () => ({
   useTranslation: () => ({
     t: (key: string, params?: Record<string, any>) => {
-      if (params?.language) {
-        return `${key}:${params.language}`;
+      if (params?.["language"]) {
+        return `${key}:${params["language"]}`;
       }
-      if (typeof params?.count !== "undefined") {
-        return `${key}:${params.count}`;
+      if (typeof params?.["count"] !== "undefined") {
+        return `${key}:${params["count"]}`;
       }
       return key;
     },
@@ -125,11 +126,11 @@ describe("Enable Haptics toggle", () => {
     }
     const renderedTree = tree as ReactTestRenderer;
     const switches = renderedTree.root.findAllByType(Switch) as ReactTestInstance[];
-    const hapticsSwitch = switches.find((node) => node.props.value === true);
+    const hapticsSwitch = switches.find((node) => node.props["value"] === true);
     expect(hapticsSwitch).toBeDefined();
 
     await act(async () => {
-      await hapticsSwitch!.props.onValueChange(false);
+      await hapticsSwitch!.props["onValueChange"](false);
     });
 
     expect(value.updateEnableHaptics).toHaveBeenCalledWith(false);

@@ -4,11 +4,10 @@ import {
   Text,
   ActivityIndicator,
   StyleSheet,
-  ViewStyle,
-  TextStyle,
   Platform,
   View,
 } from 'react-native';
+import type { ViewStyle, TextStyle } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,

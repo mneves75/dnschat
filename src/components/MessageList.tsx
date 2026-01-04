@@ -6,11 +6,11 @@ import {
   useColorScheme,
   Text,
   RefreshControl,
-  ListRenderItemInfo,
   Platform,
 } from "react-native";
+import type { ListRenderItemInfo } from "react-native";
 import { MessageBubble } from "./MessageBubble";
-import { Message } from "../types/chat";
+import type { Message } from "../types/chat";
 import { useImessagePalette } from "../ui/theme/imessagePalette";
 import { useTypography } from "../ui/hooks/useTypography";
 import { LiquidGlassSpacing } from "../ui/theme/liquidGlassSpacing";

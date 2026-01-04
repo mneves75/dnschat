@@ -6,7 +6,7 @@ DNS TXT query and renders the TXT response as chat output.
 Current stack (from `package.json`):
 
 - React Native `0.81.5` + React `19.1.0`
-- Expo SDK `54.0.25`
+- Expo SDK `54.0.30`
 - TypeScript `5.9.2`
 - Navigation: React Navigation + `react-native-bottom-tabs`
 
@@ -34,8 +34,8 @@ App:
 
 - `src/navigation/index.tsx` navigation + tabs
 - `src/services/dnsService.ts` query pipeline + fallback order + parsing
-- `src/services/dnsLogService.ts` logging model used by the Logs screen
-- `src/services/storageService.ts` AsyncStorage persistence
+- `src/services/dnsLogService.ts` logging model used by the Logs screen (redacted + encrypted at rest)
+- `src/services/storageService.ts` AsyncStorage persistence (encrypted at rest)
 
 Native DNS module:
 

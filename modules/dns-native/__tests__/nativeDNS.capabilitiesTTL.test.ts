@@ -8,10 +8,10 @@
  */
 
 import { NativeModules, Platform } from "react-native";
-import { NativeDNS, DNSCapabilities } from "../index";
+import { NativeDNS } from "../index";
 
 describe("NativeDNS capabilities TTL", () => {
-  const originalModule = NativeModules.RNDNSModule;
+  const originalModule = NativeModules["RNDNSModule"];
   const originalConsoleWarn = console.warn;
   const originalConsoleLog = console.log;
   const originalDateNow = Date.now;
@@ -33,7 +33,7 @@ describe("NativeDNS capabilities TTL", () => {
       supportsAsyncQuery: true,
     });
 
-    (NativeModules as any).RNDNSModule = {
+    (NativeModules as any)["RNDNSModule"] = {
       queryTXT: jest.fn(),
       isAvailable: mockIsAvailable,
     };
@@ -43,7 +43,7 @@ describe("NativeDNS capabilities TTL", () => {
     console.warn = originalConsoleWarn;
     console.log = originalConsoleLog;
     Date.now = originalDateNow;
-    NativeModules.RNDNSModule = originalModule;
+    NativeModules["RNDNSModule"] = originalModule;
   });
 
   it("caches capabilities within TTL window", async () => {
@@ -138,7 +138,7 @@ describe("NativeDNS capabilities TTL", () => {
   });
 
   it("returns web fallback when native module is unavailable", async () => {
-    (NativeModules as any).RNDNSModule = null;
+    (NativeModules as any)["RNDNSModule"] = null;
 
     const dns = new NativeDNS();
     const result = await dns.isAvailable();

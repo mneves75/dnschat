@@ -89,9 +89,15 @@ export function GlassSettings() {
     [t],
   );
 
+  const fallbackDnsOption =
+    dnsServerOptions[0] ?? {
+      value: DEFAULT_DNS_SERVER,
+      label: t("screen.glassSettings.dnsOptions.chAt.label"),
+      description: t("screen.glassSettings.dnsOptions.chAt.description"),
+    };
   const currentDnsOption =
-    dnsServerOptions.find((option) => option.value === dnsServer) ||
-    dnsServerOptions[0];
+    dnsServerOptions.find((option) => option.value === dnsServer) ??
+    fallbackDnsOption;
   const activeLocaleSelection = preferredLocale ?? null;
   const localeOptions = React.useMemo(
     () => [

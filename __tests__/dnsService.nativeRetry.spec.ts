@@ -45,6 +45,9 @@ describe('DNSService native retry integration', () => {
     (DNSLogService as any).logFallback = jest.fn();
     (DNSLogService as any).endQuery = jest.fn();
   });
+  afterEach(() => {
+    DNSService.destroyBackgroundListener();
+  });
 
   it('falls back to UDP when native DNS reports missing TXT records', async () => {
     mockedNativeDNS.queryTXT

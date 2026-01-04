@@ -129,8 +129,8 @@ android {
         applicationId 'org.mvneves.dnschat'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 19
-        versionName "3.3.0"
+        versionCode 21
+        versionName "3.8.1"
     }
     signingConfigs {
         debug {

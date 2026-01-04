@@ -14,9 +14,8 @@ import {
 import {
   useTheme,
   useNavigation,
-  NavigationProp,
-  ParamListBase,
 } from "@react-navigation/native";
+import type { NavigationProp, ParamListBase } from "@react-navigation/native";
 import {
   useSettings,
 } from "../../context/SettingsContext";

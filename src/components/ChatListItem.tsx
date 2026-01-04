@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from "react-native";
 import { format, isToday, isYesterday } from "date-fns";
-import { Chat } from "../types/chat";
+import type { Chat } from "../types/chat";
 import { TrashIcon } from "./icons/TrashIcon";
 import { useImessagePalette } from "../ui/theme/imessagePalette";
 import { useI18n } from "../i18n";

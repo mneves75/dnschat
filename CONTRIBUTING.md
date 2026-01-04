@@ -36,6 +36,8 @@ DNS smoke checks:
 ```bash
 node test-dns-simple.js "test message"
 npm run dns:harness -- --message "test message"
+node test-dns-simple.js "test message" --local-server
+npm run dns:harness -- --message "test message" --local-server
 ```
 
 ## Code guidelines

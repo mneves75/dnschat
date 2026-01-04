@@ -21,7 +21,9 @@ function collectNonEmptyStringValues(
 
   if (Array.isArray(value)) {
     for (let i = 0; i < value.length; i++) {
-      collectNonEmptyStringValues(value[i], keyNames, `${prefix}[${i}]`, hits);
+      const child = value[i];
+      if (child === undefined) continue;
+      collectNonEmptyStringValues(child, keyNames, `${prefix}[${i}]`, hits);
     }
     return;
   }
@@ -49,7 +51,7 @@ describe("repo policy: no release credentials", () => {
       throw new Error("eas.json must be an object");
     }
 
-    const submit = (parsed as { [key: string]: Json }).submit;
+    const submit = (parsed as { [key: string]: Json })["submit"];
     if (submit === undefined || submit === null) return;
 
     const sensitiveKeys = new Set(["appleId", "ascAppId", "appleTeamId"]);

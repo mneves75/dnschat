@@ -1,5 +1,8 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { sha256 } from '@noble/hashes/sha2.js';
+import { bytesToHex, utf8ToBytes } from '@noble/hashes/utils.js';
 import { LOGGING_CONSTANTS } from '../constants/appConstants';
+import { decryptIfEncrypted, encryptString } from './encryptionService';
 import { isScreenshotMode, getMockDNSLogs } from '../utils/screenshotMode';
 import { devLog, devWarn } from "../utils/devLog";
 
@@ -36,6 +39,10 @@ export class DNSLogService {
   private static queryLogs: DNSQueryLog[] = [];
   private static listeners: Set<(logs: DNSQueryLog[]) => void> = new Set();
   private static idCounter = 0;
+  private static redactText(value: string): string {
+    const hash = bytesToHex(sha256(utf8ToBytes(value)));
+    return `sha256:${hash} len:${value.length}`;
+  }
 
   /**
    * Generate a truly unique ID using multiple sources of entropy
@@ -73,16 +80,23 @@ export class DNSLogService {
       // NORMAL MODE: Load logs from storage
       const stored = await AsyncStorage.getItem(STORAGE_KEY);
       if (stored) {
-        const parsed = JSON.parse(stored);
-        this.queryLogs = parsed.map((log: any) => ({
-          ...log,
-          startTime: new Date(log.startTime),
-          endTime: log.endTime ? new Date(log.endTime) : undefined,
-          entries: log.entries.map((entry: any) => ({
-            ...entry,
-            timestamp: new Date(entry.timestamp),
-          })),
-        }));
+        const decrypted = await decryptIfEncrypted(stored);
+        const parsed = JSON.parse(decrypted);
+        this.queryLogs = parsed.map((log: any) => {
+          const endTime = log.endTime ? new Date(log.endTime) : undefined;
+          const normalizedEntries = Array.isArray(log.entries)
+            ? log.entries.map((entry: any) => ({
+                ...entry,
+                timestamp: new Date(entry.timestamp),
+              }))
+            : [];
+          return {
+            ...log,
+            startTime: new Date(log.startTime),
+            ...(endTime ? { endTime } : {}),
+            entries: normalizedEntries,
+          };
+        });
       }
     } catch (error) {
       devWarn("[DNSLogService] Failed to load DNS logs", error);
@@ -104,21 +118,22 @@ export class DNSLogService {
 
   static startQuery(query: string): string {
     const queryId = `query-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const redacted = this.redactText(query);
 
     this.currentQueryLog = {
       id: queryId,
-      query,
+      query: redacted,
       startTime: new Date(),
       finalStatus: "pending",
       entries: [],
     };
-
     this.addLog({
       id: this.generateUniqueId(`${queryId}-start`),
       timestamp: new Date(),
-      message: `Starting DNS query: "${query}"`,
+      message: `Starting DNS query`,
       method: "native",
       status: "attempt",
+      details: `query=${redacted}`,
     });
 
     return queryId;
@@ -140,7 +155,7 @@ export class DNSLogService {
       message: `Attempting ${method.toUpperCase()} DNS query`,
       method,
       status: "attempt",
-      details,
+      ...(details !== undefined ? { details } : {}),
     };
 
     this.addLog(entry);
@@ -159,8 +174,8 @@ export class DNSLogService {
       message: `${method.toUpperCase()} query successful`,
       method,
       status: "success",
-      details,
       duration,
+      ...(details !== undefined ? { details } : {}),
     };
 
     this.addLog(entry);
@@ -180,7 +195,7 @@ export class DNSLogService {
       method,
       status: "failure",
       error,
-      duration,
+      ...(duration !== undefined ? { duration } : {}),
     };
 
     this.addLog(entry);
@@ -216,14 +231,22 @@ export class DNSLogService {
       this.currentQueryLog.endTime.getTime() -
       this.currentQueryLog.startTime.getTime();
     this.currentQueryLog.finalStatus = success ? "success" : "failure";
-    this.currentQueryLog.finalMethod = finalMethod;
-    this.currentQueryLog.response = response;
+    if (finalMethod) {
+      this.currentQueryLog.finalMethod = finalMethod;
+    } else {
+      delete this.currentQueryLog.finalMethod;
+    }
+    if (response) {
+      this.currentQueryLog.response = this.redactText(response);
+    } else {
+      delete this.currentQueryLog.response;
+    }
 
     const finalEntry: DNSLogEntry = {
       id: this.generateUniqueId(`${this.currentQueryLog.id}-end`),
       timestamp: new Date(),
       message: success
-        ? `Query completed successfully via ${finalMethod?.toUpperCase()}`
+        ? `Query completed successfully via ${finalMethod ? finalMethod.toUpperCase() : "UNKNOWN"}`
         : "Query failed after all attempts",
       method: finalMethod || "mock",
       status: success ? "success" : "failure",
@@ -255,7 +278,7 @@ export class DNSLogService {
       message,
       method: "native",
       status: "success",
-      details,
+      ...(details !== undefined ? { details } : {}),
     };
 
     const log: DNSQueryLog = {
@@ -266,7 +289,7 @@ export class DNSLogService {
       totalDuration: 0,
       finalStatus: "success",
       finalMethod: "native",
-      response: details,
+      ...(details !== undefined ? { response: details } : {}),
       entries: [entry],
     };
 
@@ -281,7 +304,8 @@ export class DNSLogService {
 
   static async saveLogs() {
     try {
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(this.queryLogs));
+      const payload = await encryptString(JSON.stringify(this.queryLogs));
+      await AsyncStorage.setItem(STORAGE_KEY, payload);
     } catch (error) {
       devWarn("[DNSLogService] Failed to save DNS logs", error);
     }
@@ -339,7 +363,11 @@ export class DNSLogService {
     // This is more efficient for large arrays
     let removedCount = 0;
     for (let i = this.queryLogs.length - 1; i >= 0; i--) {
-      const logDate = new Date(this.queryLogs[i].startTime);
+      const log = this.queryLogs[i];
+      if (!log) {
+        continue;
+      }
+      const logDate = new Date(log.startTime);
       if (logDate <= thirtyDaysAgo) {
         this.queryLogs.splice(i, 1);
         removedCount++;

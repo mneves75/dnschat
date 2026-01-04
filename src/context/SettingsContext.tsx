@@ -5,25 +5,27 @@ import React, {
   useEffect,
   useMemo,
   useState,
-  ReactNode,
 } from "react";
+import type { ReactNode } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Localization from "expo-localization";
 
 import {
   DEFAULT_SETTINGS,
-  PersistedSettings,
   SETTINGS_STORAGE_KEY,
   SETTINGS_VERSION,
   SUPPORTED_LOCALE_OPTIONS,
-  SupportedLocale,
-  SupportedLocaleOption,
   migrateSettings,
   sanitizeDnsServer,
   resolveLocale,
   normalizePreferredLocale,
 } from "./settingsStorage";
-import { AccessibilityConfig } from "./AccessibilityContext";
+import type {
+  PersistedSettings,
+  SupportedLocale,
+  SupportedLocaleOption,
+} from "./settingsStorage";
+import type { AccessibilityConfig } from "./AccessibilityContext";
 import { DNSLogService } from "../services/dnsLogService";
 import { validateDNSServer } from "../services/dnsService";
 import { devWarn } from "../utils/devLog";
