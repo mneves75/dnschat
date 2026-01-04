@@ -5,6 +5,11 @@ function read(path: string): string {
 }
 
 describe("repo policy: CI configuration exists and matches spec", () => {
+  const expectOneOf = (content: string, candidates: string[]) => {
+    const found = candidates.some((candidate) => content.includes(candidate));
+    expect(found).toBe(true);
+  };
+
   it("has CI workflow that runs lint + unit tests on PRs and main", () => {
     const workflow = ".github/workflows/ci.yml";
     expect(fs.existsSync(workflow)).toBe(true);
@@ -16,10 +21,10 @@ describe("repo policy: CI configuration exists and matches spec", () => {
     expect(content).toContain("branches:");
     expect(content).toContain("- main");
 
-    expect(content).toContain("npm ci");
-    expect(content).toContain("npm run verify:ios-pods");
-    expect(content).toContain("npm run lint");
-    expect(content).toContain("npm test");
+    expectOneOf(content, ["npm ci", "bun ci"]);
+    expectOneOf(content, ["npm run verify:ios-pods", "bun run verify:ios-pods"]);
+    expectOneOf(content, ["npm run lint", "bun run lint"]);
+    expectOneOf(content, ["npm test", "bun run test"]);
   });
 
   it("runs dns-native module tests in CI (release verification invariant)", () => {
@@ -31,7 +36,6 @@ describe("repo policy: CI configuration exists and matches spec", () => {
     // to stay tested and independently installable.
     expect(content).toContain("dns-native:");
     expect(content).toContain("working-directory: modules/dns-native");
-    expect(content).toContain("cache-dependency-path: modules/dns-native/package-lock.json");
     expect(content).toContain("Install (modules/dns-native)");
     expect(content).toContain("Test (modules/dns-native)");
   });
@@ -61,7 +65,7 @@ describe("repo policy: CI configuration exists and matches spec", () => {
 
     // Android job must exist with Java 17 setup and Gradle builds
     expect(content).toContain("android:");
-    expect(content).toContain("setup-java@v4");
+    expect(content).toContain("actions/setup-java@");
     expect(content).toContain("java-version: 17");
     expect(content).toContain("gradle/actions/setup-gradle@");
     expect(content).toContain("assembleDebug");

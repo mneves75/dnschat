@@ -7,7 +7,7 @@ DNS TXT queries (default DNS server: `ch.at`). The app includes:
 - JavaScript fallback transports (UDP/TCP) for constrained networks
 - An in-app Logs screen to inspect attempts, failures, and fallbacks
 
-[![Version](https://img.shields.io/badge/version-3.8.0-blue.svg)](https://github.com/mneves75/dnschat)
+[![Version](https://img.shields.io/badge/version-3.8.2-blue.svg)](https://github.com/mneves75/dnschat)
 [![React Native](https://img.shields.io/badge/React%20Native-0.81.5-blue.svg)](https://reactnative.dev/)
 [![Expo](https://img.shields.io/badge/Expo-54.0.30-black.svg)](https://expo.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9.2-blue.svg)](https://www.typescriptlang.org/)
@@ -122,7 +122,7 @@ fails.
 
 Mechanism:
 
-- `npm install` runs `npm run prepare`
+- `bun install` runs `bun run prepare`
 - `prepare` runs `scripts/install-git-hooks.js`
 - that script writes `.git/hooks/pre-commit` that runs `verify:ios-pods`, `lint`
   (ast-grep), and unit tests

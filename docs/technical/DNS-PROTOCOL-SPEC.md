@@ -27,9 +27,9 @@ Terminology:
 Algorithm (implemented by `composeDNSQueryName(label, dnsServer)`):
 
 1. Strip trailing dots and whitespace from `label`.
-2. Validate `dnsServer` (hostname or IP) to prevent injection.
+2. Validate `dnsServer` (non-empty allowlisted hostname or IP; ports disallowed).
 3. Determine `zone`:
-   - If `dnsServer` is empty OR looks like an IPv4 address, use default zone `ch.at`.
+   - If `dnsServer` is an IPv4 address, use default zone `ch.at`.
    - Else use `dnsServer` (lowercased, trailing dot removed) as the zone.
 4. Query name is `${label}.${zone}`.
 
