@@ -145,6 +145,20 @@ export function migrateSettings(raw: unknown): PersistedSettings {
   };
 }
 
+export function areAccessibilityConfigsEqual(
+  left: AccessibilityConfig | null | undefined,
+  right: AccessibilityConfig | null | undefined,
+): boolean {
+  if (left === right) return true;
+  if (!left || !right) return false;
+  return (
+    left.fontSize === right.fontSize &&
+    left.highContrast === right.highContrast &&
+    left.reduceMotion === right.reduceMotion &&
+    left.screenReader === right.screenReader
+  );
+}
+
 export const SettingsStorageHelpers = {
   DEFAULT_SETTINGS,
   DEFAULT_DNS_SERVER,
