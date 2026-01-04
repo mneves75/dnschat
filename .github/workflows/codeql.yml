@@ -10,9 +10,14 @@ permissions:
   contents: read
   security-events: write
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   analyze:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -20,16 +25,15 @@ jobs:
           - javascript-typescript
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@c37a8b7cd97e31de3fcbd9d84c401870edeb8d34 # v3
         with:
           languages: ${{ matrix.language }}
 
       - name: Autobuild
-        uses: github/codeql-action/autobuild@v3
+        uses: github/codeql-action/autobuild@c37a8b7cd97e31de3fcbd9d84c401870edeb8d34 # v3
 
       - name: Analyze
-        uses: github/codeql-action/analyze@v3
-
+        uses: github/codeql-action/analyze@c37a8b7cd97e31de3fcbd9d84c401870edeb8d34 # v3

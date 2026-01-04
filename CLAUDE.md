@@ -77,17 +77,17 @@ Query flow:
 
 ### Native Module
 
-`modules/dns-native/` is a separate npm workspace. Its constants in `constants.ts` must stay synchronized with iOS/Android implementations. Key constraints:
+`modules/dns-native/` is a separate workspace (npm lockfile used for module-only CI). Its constants in `constants.ts` must stay synchronized with iOS/Android implementations. Key constraints:
 - `MAX_MESSAGE_LENGTH: 120` (before sanitization)
 - `MAX_DNS_LABEL_LENGTH: 63` (RFC 1035)
 - `ALLOWED_DNS_SERVERS` whitelist
 
 ### Pre-commit Hook
 
-Installed via `npm install` → `scripts/install-git-hooks.js`. Runs:
-1. `npm run verify:ios-pods`
-2. `npm run lint`
-3. `npm test -- --bail --passWithNoTests`
+Installed via `bun install` → `scripts/install-git-hooks.js`. Runs:
+1. `bun run verify:ios-pods`
+2. `bun run lint`
+3. `bun run test -- --bail --passWithNoTests`
 
 ### AST-Grep Rules
 
@@ -107,6 +107,6 @@ GitHub Actions (`.github/workflows/ci.yml`) runs on push to main and PRs:
 
 **iOS**: Requires Xcode 15+, iOS 16+ target. Device builds need signing team in Xcode (repo keeps `DEVELOPMENT_TEAM` empty).
 
-**Android**: Requires Java 17. `npm run android` auto-detects via `/usr/libexec/java_home -v 17` or Homebrew paths. Release signing credentials are never committed (uses `keystore.properties` or CI injection).
+**Android**: Requires Java 17. `bun run android` auto-detects via `/usr/libexec/java_home -v 17` or Homebrew paths. Release signing credentials are never committed (uses `keystore.properties` or CI injection).
 
 **Web**: Uses Mock DNS (browsers cannot do raw DNS on port 53).

@@ -28,6 +28,9 @@ Non-goals include new product features, UI redesigns, or large dependency upgrad
 - [x] Phase 4 complete: changelog + docs updated, verification artifacts captured, rollback notes confirmed.
 - [x] (2026-01-04) React Compiler healthcheck executed and StrictMode added to satisfy compiler diagnostics.
 - [x] (2026-01-04) Added local DNS responder mode for smoke tests/harness to validate UDP/TCP paths in restricted networks.
+- [x] Phase 5 complete: CI workflow hardening (Bun installs, pinned actions, SBOM artifacts, concurrency/timeouts) + docs updates.
+- [x] (2026-01-04) Reviewed GitHub Actions workflows and identified lockfile cache failures plus missing CI hardening.
+- [x] (2026-01-04) Hardened CI workflows (Bun installs, concurrency/timeouts, pinned actions, SBOM generation) and updated contributor docs.
 
 ## Surprises & Discoveries
 
@@ -43,6 +46,8 @@ Non-goals include new product features, UI redesigns, or large dependency upgrad
   Evidence: npx react-compiler-healthcheck@latest reported "StrictMode usage not found" before StrictMode was added to src/App.tsx.
 - Observation: External DNS smoke/harness runs failed due to network limitations.
   Evidence: UDP/TCP 53 timed out and DoH returned no TXT answers in this environment; added local DNS responder mode for verification.
+- Observation: CI jobs failed because actions/setup-node cache expects a root lockfile that no longer exists.
+  Evidence: GitHub Actions run 20687873837 reported "Dependencies lock file is not found" for test/android/dns-native jobs.
 
 ## Decision Log
 
@@ -61,10 +66,16 @@ Non-goals include new product features, UI redesigns, or large dependency upgrad
 - Decision: Mock noble ESM crypto modules in Jest setup.
   Rationale: Prevent ESM loader failures in Jest; preserves deterministic hashing/encryption behavior for tests.
   Date/Author: 2026-01-04 / Codex
+- Decision: Standardize CI installs on Bun and add workflow-level concurrency/timeouts.
+  Rationale: Aligns CI with repo tooling and prevents lockfile cache failures and runaway jobs.
+  Date/Author: 2026-01-04 / Codex
+- Decision: Pin GitHub Actions to commit SHAs and generate SBOM artifacts in CI.
+  Rationale: Supply-chain hardening and security guideline alignment (SBOM requirement).
+  Date/Author: 2026-01-04 / Codex
 
 ## Outcomes & Retrospective
 
-Phases 0–4 completed with evidence captured. Codebase now meets strict TypeScript and privacy/logging requirements, and local storage is encrypted at rest. Jest and lint pass locally; DNS harness and smoke tests pass in offline mode via `--local-server`, while external UDP/TCP 53 requests still fail in this environment. React Compiler remains enabled in app.json with compiler dependency installed; full build-level compiler validation should be re-confirmed in CI or on-device builds.
+Phases 0–4 completed with evidence captured. Codebase now meets strict TypeScript and privacy/logging requirements, and local storage is encrypted at rest. Jest and lint pass locally; DNS harness and smoke tests pass in offline mode via `--local-server`, while external UDP/TCP 53 requests still fail in this environment. React Compiler remains enabled in app.json with compiler dependency installed; full build-level compiler validation should be re-confirmed in CI or on-device builds. CI workflows were hardened with Bun installs, pinned actions, concurrency/timeouts, and SBOM artifact generation to align with security and supply-chain guidance.
 
 ## Context and Orientation
 
@@ -81,6 +92,9 @@ All guideline documents listed in docs/GUIDELINES-REF were reviewed for applicab
 - React Compiler: use the official React Compiler Babel plugin and ensure it is wired in the Babel config for builds where the compiler is enabled.
 - Expo SDK 54: enable `experiments.reactCompiler` in app.json to activate the compiler path for Expo-managed builds.
 - React Native Reanimated: keep `react-native-reanimated/plugin` last in `babel.config.js` to preserve correct compilation.
+- GitHub Actions: pin third-party actions to commit SHAs and use least-privilege permissions.
+- GitHub Actions: use workflow concurrency to avoid redundant runs on the same ref.
+- Security: generate CycloneDX or SPDX SBOM artifacts in CI for release traceability.
 
 ## Guidelines Verification Coverage
 
@@ -165,6 +179,8 @@ Phase 3 validates performance and compiler behavior. Ensure the React Compiler i
 
 Phase 4 prepares release readiness. Update docs, run full verification, document rollback steps, and update CHANGELOG.md if behavior or configuration changes are user-visible.
 
+Phase 5 hardens CI workflows. Align installs to Bun, remove npm cache requirements that assume package-lock.json, add concurrency/timeouts, pin actions to commit SHAs, and generate SBOM artifacts for supply-chain traceability.
+
 ## Milestones (Multi-Phase Todo)
 
 Phase 0 (Discovery and Evidence) establishes baseline evidence and identifies failures. Run the verification commands in the Concrete Steps section and capture outputs in Artifacts. Confirm the compiler path by verifying the presence or absence of the compiler plugin and any compiler diagnostics in the build logs. Acceptance is a complete evidence set or a documented list of failures with reproduction steps.
@@ -176,6 +192,17 @@ Phase 2 (Security and Data Protection) decides and implements a storage encrypti
 Phase 3 (Performance and Compiler Validation) validates React Compiler activation and resolves diagnostics. Install and configure any missing compiler tooling per Expo expectations, address compiler warnings, and re-run smoke tests to ensure no regressions. Acceptance is a clean compiler run with no new runtime issues and stable UI behavior.
 
 Phase 4 (Release Readiness) finalizes evidence, updates docs and changelog as needed, and defines a rollback strategy. Acceptance is a complete verification report, updated documentation, and a rollback path that preserves data integrity.
+
+Phase 5 (CI Workflow Hardening) aligns CI with Bun-based installs, removes dependency on npm lockfiles, adds concurrency/timeouts, pins actions to commit SHAs, and generates CycloneDX SBOM artifacts. Acceptance is green CI with Bun installs, no lockfile cache failures, and an uploaded SBOM artifact in `artifacts/sbom/<version>.json`.
+
+Phase 5 checklist (detailed):
+1. Replace npm cache usage in root/Android CI with Bun installs (`bun ci`) using `bun.lock`.
+2. Keep dns-native CI on npm with module-local package-lock, but remove root cache assumptions.
+3. Add workflow-level concurrency with cancel-in-progress to avoid redundant runs on the same ref.
+4. Add explicit job timeouts to prevent runaway CI.
+5. Pin all third-party actions to full commit SHAs, with version comments.
+6. Generate CycloneDX SBOM via SBOM action and upload artifact at `artifacts/sbom/<version>.json`.
+7. Update contributor docs to reflect Bun-first CI and install workflow.
 
 ## Concrete Steps
 
@@ -196,7 +223,7 @@ Expected outcomes are clean lint, passing tests, a valid DNS response in the har
 
 ## Validation and Acceptance
 
-Acceptance requires that the app can send a DNS query from the chat UI, logs capture the attempt without exposing raw prompt content, and the DNS response renders correctly. Automated verification must show lint and tests passing, and the DNS harness should return a successful TXT response for a sample message (use `--local-server` when outbound UDP/TCP 53 is blocked). Any TypeScript changes must pass npx tsc --noEmit.
+Acceptance requires that the app can send a DNS query from the chat UI, logs capture the attempt without exposing raw prompt content, and the DNS response renders correctly. Automated verification must show lint and tests passing, and the DNS harness should return a successful TXT response for a sample message (use `--local-server` when outbound UDP/TCP 53 is blocked). Any TypeScript changes must pass npx tsc --noEmit. CI must run with Bun installs and produce a CycloneDX SBOM artifact at `artifacts/sbom/<version>.json`.
 
 ## Testing Strategy
 
@@ -216,7 +243,7 @@ Revert the relevant commit(s), rebuild the dev client, and restore previous conf
 
 ## Risks and Mitigations
 
-React Compiler activation could change rendering behavior, so mitigate with targeted UI tests and manual smoke on primary flows. Tightening TypeScript strictness can surface new errors, so mitigate with incremental tsconfig adoption and scoped fixes. Encrypting local data can break legacy stored data, so mitigate with a migration layer and explicit error reporting in storageService. Migrating to Bun could impact CI or scripts, so mitigate by documenting the migration and keeping npm-compatible scripts during transition. External DNS verification depends on network access; use `--local-server` for offline proof and re-run against real resolvers on a network with UDP/TCP 53 access.
+React Compiler activation could change rendering behavior, so mitigate with targeted UI tests and manual smoke on primary flows. Tightening TypeScript strictness can surface new errors, so mitigate with incremental tsconfig adoption and scoped fixes. Encrypting local data can break legacy stored data, so mitigate with a migration layer and explicit error reporting in storageService. Migrating to Bun could impact CI or scripts, so mitigate by documenting the migration and keeping npm-compatible scripts during transition. External DNS verification depends on network access; use `--local-server` for offline proof and re-run against real resolvers on a network with UDP/TCP 53 access. Pinning GitHub Actions requires periodic refresh; mitigate by tracking action releases and updating SHAs on a regular cadence. SBOM generation adds CI time; mitigate by scoping SBOM to the repo root and keeping timeouts explicit.
 
 ## Open Questions
 
@@ -280,9 +307,54 @@ Evidence captured on 2026-01-04:
     npx react-compiler-healthcheck@latest
     Result: PASS (StrictMode usage found; 60/60 components compiled; no incompatible libraries)
 
+Evidence captured on 2026-01-04 (CI hardening + crypto bootstrap):
+
+    bun run lint
+    Result: PASS (ast-grep scan completed with exit code 0)
+
+    bun run test
+    Result: PASS (62 suites, 1 skipped, 697 tests)
+
+    bun run verify:ios-pods
+    Result: PASS (verify-ios-pods-sync: OK)
+
+    bun run verify:android
+    Result: PASS with warnings
+      android/local.properties sdk.dir points to a missing directory
+      Metro bundler not running on port 8081
+      No Android devices or emulators connected
+
+    npx tsc --noEmit
+    Result: PASS (exit code 0)
+
+    npx react-compiler-healthcheck@latest
+    Result: PASS (StrictMode usage found; 60/60 components compiled; no incompatible libraries)
+
+    node test-dns-simple.js "test message"
+    Result: FAIL
+      UDP TXT query failed: UDP query timed out (3000ms)
+      TCP TXT query failed: TCP query timed out (4000ms)
+      Skipping DoH fallback: zone=ch.at not expected via public DoH (use --force-doh to try anyway).
+
+    node test-dns-simple.js "test message" --local-server
+    Result: PASS
+      OK transport=udp
+      Response: local:test message
+
+    bun run dns:harness -- --message "test message"
+    Result: FAIL
+      NATIVE failed (Native module unavailable in this environment)
+      UDP failed (UDP query timed out after 5000ms)
+      TCP failed (TCP query timed out after 5000ms)
+
+    bun run dns:harness -- --message "test message" --local-server
+    Result: PASS
+      UDP succeeded (local server)
+      TXT records: ["local:test message"]
+
 ## Interfaces and Dependencies
 
-Implementation touched src/services/dnsLogService.ts (redaction + encrypted persistence), src/services/storageService.ts (encryption + migration-safe reads), src/services/encryptionService.ts (AES-GCM wrapper), src/constants/appConstants.ts and modules/dns-native/constants.ts (constant alignment), app.json + babel.config.js (compiler configuration), tsconfig.json and tsconfig.test.json (strictness + Jest compatibility), __tests__/setup.jest.js (noble mocks), src/ui/theme/liquidGlassTypography.ts (cross-platform typography keys), scripts/run-dns-harness.ts and test-dns-simple.js (local DNS responder mode), and __tests__/dnsService.nativeRetry.spec.ts (test teardown).
+Implementation touched src/services/dnsLogService.ts (redaction + encrypted persistence + scheduler guard), src/services/storageService.ts (encryption + migration-safe reads), src/services/encryptionService.ts (AES-GCM wrapper + expo-crypto RNG), src/bootstrap/crypto.ts + index.tsx (secure RNG bootstrap), src/constants/appConstants.ts and modules/dns-native/constants.ts (constant alignment), app.json + babel.config.js (compiler configuration), tsconfig.json and tsconfig.test.json (strictness + Jest compatibility), __tests__/setup.jest.js (crypto mocks), __tests__/dnsLogService.spec.ts + __tests__/dnsService.spec.ts (RNG/scheduler coverage), src/ui/theme/liquidGlassTypography.ts (cross-platform typography keys), scripts/run-dns-harness.ts and test-dns-simple.js (local DNS responder mode), and .github/workflows/* (CI hardening + SBOM).
 
 ## Change Note
 
@@ -291,3 +363,5 @@ Created initial ExecPlan to satisfy the guidelines verification and best-practic
 Revised on 2026-01-04 to add full guideline coverage, a prose-first milestone breakdown, and explicit best-practice deltas for package manager alignment and compiler validation.
 
 Revised on 2026-01-04 to reflect Option C implementation, strict TypeScript enforcement, encryption and redaction rollout, Jest compatibility updates, React Compiler healthcheck validation, StrictMode enablement, local DNS smoke/harness mode, and new verification evidence.
+
+Revised on 2026-01-04 to include CI workflow hardening (Bun installs, pinned actions, SBOM artifacts, concurrency/timeouts), crypto RNG bootstrap, and updated verification evidence.
