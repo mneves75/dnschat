@@ -22,6 +22,7 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 - Replace deprecated `expo-random` usage with `expo-crypto` and add a crypto bootstrap to ensure secure RNG availability.
 - DNS log cleanup scheduler is now idempotent to avoid multiple intervals.
 - DNS protocol docs and TXT parsing comments aligned with runtime behavior.
+- CI workflows now use Bun installs, pinned actions, concurrency limits, and publish SBOM artifacts.
 
 ## 3.8.1 - 2026-01-04
 
