@@ -10,6 +10,10 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 - dns-native tests now reuse the app-level Jest setup to avoid ESM module parsing failures.
 - Added a module-local package-lock for dns-native to support deterministic npm ci in CI.
+- Hardened storage recovery to back up and clear corrupted chats by default, with an opt-out for strict corruption detection.
+- Added DNS log recovery to back up and clear corrupted log payloads on decrypt/parse failure.
+- Updated SecureStore encryption key identifier and length validation to prevent invalid key persistence.
+- Surfaced storage reset errors in chat list screens and handled auto-create chat failures safely.
 
 ## 3.8.2 - 2026-01-04
 

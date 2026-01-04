@@ -8,7 +8,7 @@ import React, {
 import type { ReactNode } from "react";
 import uuid from "react-native-uuid";
 import type { Chat, Message, ChatContextType } from "../types/chat";
-import { StorageService } from "../services/storageService";
+import { StorageService, StorageCorruptionError } from "../services/storageService";
 import { DNSService, sanitizeDNSMessage } from "../services/dnsService";
 import { useSettings } from "./SettingsContext";
 import { isScreenshotMode, getMockConversations } from "../utils/screenshotMode";
@@ -48,9 +48,20 @@ export function ChatProvider({ children }: ChatProviderProps) {
       // NORMAL MODE: Load chats from storage
       const loadedChats = await StorageService.loadChats();
       setChats(loadedChats);
+      if (loadedChats.length > 0) {
+        setCurrentChat(loadedChats[0] as Chat);
+      } else {
+        setCurrentChat(null);
+      }
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load chats");
+      if (err instanceof StorageCorruptionError) {
+        setChats([]);
+        setCurrentChat(null);
+        setError("Chat storage was corrupted and has been reset.");
+      } else {
+        setError(err instanceof Error ? err.message : "Failed to load chats");
+      }
     } finally {
       setIsLoading(false);
     }

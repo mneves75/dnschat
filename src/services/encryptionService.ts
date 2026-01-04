@@ -5,7 +5,8 @@ import { bytesToHex, hexToBytes, utf8ToBytes } from '@noble/hashes/utils.js';
 import { ENCRYPTION_CONSTANTS } from '../constants/appConstants';
 import { devWarn } from '../utils/devLog';
 
-const KEY_STORAGE_KEY = '@dnschat/encryption-key';
+// SecureStore keys must be alphanumeric plus ., -, _ (no @ or /)
+const KEY_STORAGE_KEY = 'dnschat.encryption_key';
 const ENCRYPTION_PREFIX = 'enc:v1:';
 
 let cachedKey: Uint8Array | null = null;
@@ -65,11 +66,17 @@ const loadEncryptionKey = async (): Promise<Uint8Array> => {
       const stored = await SecureStore.getItemAsync(KEY_STORAGE_KEY);
       if (stored) {
         const decoded = hexToBytes(stored);
+        if (decoded.length !== ENCRYPTION_CONSTANTS.KEY_LENGTH) {
+          throw new Error(`Stored key has invalid length: ${decoded.length}`);
+        }
         cachedKey = decoded;
         return decoded;
       }
     } catch (error) {
-      devWarn('[EncryptionService] Failed to read key from SecureStore, falling back to new key', error);
+      devWarn(
+        '[EncryptionService] Failed to read key from SecureStore, falling back to new key',
+        error,
+      );
     }
 
     const generated = await getRandomBytes(ENCRYPTION_CONSTANTS.KEY_LENGTH);

@@ -3,8 +3,10 @@ import type { Chat, Message } from "../types/chat";
 import uuid from "react-native-uuid";
 import { devLog, devWarn } from "../utils/devLog";
 import { decryptIfEncrypted, encryptString } from "./encryptionService";
+import { STORAGE_CONSTANTS } from "../constants/appConstants";
 
-const CHATS_KEY = "@chat_dns_chats";
+const CHATS_KEY = STORAGE_CONSTANTS.CHATS_KEY;
+const CHAT_BACKUP_KEY = STORAGE_CONSTANTS.CHAT_BACKUP_KEY;
 
 /**
  * Error thrown when storage data is corrupted and cannot be recovered.
@@ -86,12 +88,14 @@ export class StorageService {
     }
   }
 
-  static async loadChats(): Promise<Chat[]> {
+  static async loadChats(options?: { recoverOnCorruption?: boolean }): Promise<Chat[]> {
     const startTime = Date.now();
     devLog("[StorageService] loadChats called");
+    const recoverOnCorruption = options?.recoverOnCorruption !== false;
+    let serializedChats: string | null = null;
 
     try {
-      const serializedChats = await AsyncStorage.getItem(CHATS_KEY);
+      serializedChats = await AsyncStorage.getItem(CHATS_KEY);
 
       // No data is valid (new user or cleared storage)
       if (!serializedChats) {
@@ -104,8 +108,9 @@ export class StorageService {
       });
 
       let parsed: unknown;
+      let decrypted = '';
       try {
-        const decrypted = await decryptIfEncrypted(serializedChats);
+        decrypted = await decryptIfEncrypted(serializedChats);
         parsed = JSON.parse(decrypted, (key, value) => {
           if (key === "createdAt" || key === "updatedAt" || key === "timestamp") {
             // SECURITY FIX: Validate date parsing to prevent Invalid Date propagation.
@@ -123,9 +128,24 @@ export class StorageService {
         });
       } catch (parseError) {
         // JSON parse failure = data corruption
+        const cause = parseError instanceof Error ? parseError : new Error(String(parseError));
+        if (parseError instanceof StorageCorruptionError) {
+          throw parseError;
+        }
+        let hint = '';
+        const causeMessage = cause.message.toLowerCase();
+        if (
+          causeMessage.includes('ghash') ||
+          causeMessage.includes('auth tag') ||
+          causeMessage.includes('invalid tag') ||
+          causeMessage.includes('decrypt')
+        ) {
+          hint = ' (likely encryption key mismatch)';
+        }
+        const payloadInfo = decrypted ? ` (decrypted length ${decrypted.length})` : '';
         throw new StorageCorruptionError(
-          "Failed to parse chats JSON - storage may be corrupted",
-          parseError instanceof Error ? parseError : new Error(String(parseError)),
+          `Failed to parse chats JSON - storage may be corrupted${hint}${payloadInfo}`,
+          cause,
         );
       }
 
@@ -200,6 +220,33 @@ export class StorageService {
       // Re-throw StorageCorruptionError - caller needs to handle it
       if (error instanceof StorageCorruptionError) {
         devWarn("[StorageService] Storage corruption detected", error);
+        if (recoverOnCorruption) {
+          try {
+            if (serializedChats) {
+              const backupPayload = JSON.stringify({
+                timestamp: new Date().toISOString(),
+                error: error.message,
+                payload: serializedChats,
+              });
+              await AsyncStorage.setItem(CHAT_BACKUP_KEY, backupPayload);
+              devWarn("[StorageService] Corrupted storage backed up", {
+                key: CHAT_BACKUP_KEY,
+              });
+            }
+          } catch (backupError) {
+            devWarn("[StorageService] Failed to backup corrupted storage", backupError);
+          }
+
+          try {
+            await AsyncStorage.removeItem(CHATS_KEY);
+            devWarn("[StorageService] Corrupted storage cleared", {
+              key: CHATS_KEY,
+            });
+          } catch (clearError) {
+            devWarn("[StorageService] Failed to clear corrupted storage", clearError);
+          }
+          return [];
+        }
         throw error;
       }
       // Other errors (network, permission) are also thrown - not swallowed

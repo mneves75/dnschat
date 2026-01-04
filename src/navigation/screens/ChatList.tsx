@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   RefreshControl,
   StatusBar,
+  Alert,
 } from "react-native";
 import type { ListRenderItemInfo } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -29,6 +30,8 @@ export function ChatList() {
     createChat,
     deleteChat,
     setCurrentChat,
+    error,
+    clearError,
   } = useChat();
   const { t } = useTranslation();
 
@@ -37,6 +40,16 @@ export function ChatList() {
       loadChats();
     }, [loadChats]),
   );
+
+  useEffect(() => {
+    if (!error) return;
+    Alert.alert(t("screen.chat.errorAlertTitle"), error, [
+      {
+        text: t("screen.chat.errorAlertDismiss"),
+        onPress: clearError,
+      },
+    ]);
+  }, [error, clearError, t]);
 
   const handleChatPress = (chat: Chat) => {
     setCurrentChat(chat);
