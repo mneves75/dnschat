@@ -8,6 +8,11 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ### Changed
 
+
+## 3.8.3 - 2026-01-04
+
+### Changed
+
 - dns-native tests now reuse the app-level Jest setup to avoid ESM module parsing failures.
 - Added a module-local package-lock for dns-native to support deterministic npm ci in CI.
 - Hardened storage recovery to back up and clear corrupted chats by default, with an opt-out for strict corruption detection.
