@@ -7,9 +7,9 @@ DNS TXT queries (default DNS server: `ch.at`). The app includes:
 - JavaScript fallback transports (UDP/TCP) for constrained networks
 - An in-app Logs screen to inspect attempts, failures, and fallbacks
 
-[![Version](https://img.shields.io/badge/version-3.3.0-blue.svg)](https://github.com/mneves75/dnschat)
+[![Version](https://img.shields.io/badge/version-3.8.0-blue.svg)](https://github.com/mneves75/dnschat)
 [![React Native](https://img.shields.io/badge/React%20Native-0.81.5-blue.svg)](https://reactnative.dev/)
-[![Expo](https://img.shields.io/badge/Expo-54.0.29-black.svg)](https://expo.dev/)
+[![Expo](https://img.shields.io/badge/Expo-54.0.30-black.svg)](https://expo.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9.2-blue.svg)](https://www.typescriptlang.org/)
 [![iOS](https://img.shields.io/badge/iOS-16%2B-lightgrey.svg)](https://developer.apple.com/ios/)
 [![Android](https://img.shields.io/badge/Android-API%2021%2B-green.svg)](https://developer.android.com/)
@@ -53,23 +53,23 @@ Install:
 ```bash
 git clone https://github.com/mneves75/dnschat.git
 cd dnschat
-npm install
+bun install
 ```
 
 Run:
 
 ```bash
 # Dev server (Expo dev-client)
-npm start
+bun run start
 
 # iOS
-npm run ios
+bun run ios
 
 # Android (auto-selects Java 17 when available)
-npm run android
+bun run android
 
 # Web preview (uses Mock DNS)
-npm run web
+bun run web
 ```
 
 Notes:
@@ -81,36 +81,38 @@ Notes:
 ```bash
 # Quick DNS check (no React Native runtime required)
 node test-dns-simple.js "test message"
+node test-dns-simple.js "test message" --local-server
 
 # Full harness (builds scripts/ ts -> js, then runs UDP/TCP transports)
-npm run dns:harness -- --message "test message"
+bun run dns:harness -- --message "test message"
+bun run dns:harness -- --message "test message" --local-server
 
 # Debug output artifacts
-npm run dns:harness -- --message "test" --json-out harness-output.json --raw-out raw-dns.bin
+bun run dns:harness -- --message "test" --json-out harness-output.json --raw-out raw-dns.bin
 ```
 
 ## Development commands
 
 ```bash
 # Lint (ast-grep rules)
-npm run lint
+bun run lint
 
 # Unit tests
-npm test
+bun run test
 
 # Keep Expo iOS pods aligned with installed node_modules (iOS)
-npm run verify:ios-pods
+bun run verify:ios-pods
 
 # Sanity checks for Android tooling/device expectations
-npm run verify:android
+bun run verify:android
 
 # Sync app + native module versions (use :dry to preview)
-npm run sync-versions
-npm run sync-versions:dry
+bun run sync-versions
+bun run sync-versions:dry
 
 # CocoaPods cleanup helpers
-npm run fix-pods
-npm run clean-ios
+bun run fix-pods
+bun run clean-ios
 ```
 
 ## Git hook (ast-grep)

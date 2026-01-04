@@ -29,7 +29,7 @@ jest.mock('react-native', () => ({
 
 import { NativeModules } from 'react-native';
 
-const mockNativeModule = NativeModules.RNDNSModule;
+const mockNativeModule = NativeModules['RNDNSModule'];
 
 describe('DNS Native Module - Concurrency Stress Tests', () => {
   beforeEach(() => {
@@ -51,7 +51,7 @@ describe('DNS Native Module - Concurrency Stress Tests', () => {
     });
 
     const promises = Array.from({ length: 100 }, (_, i) =>
-      NativeModules.RNDNSModule.queryTXT('1.1.1.1', `query-${i}`)
+      NativeModules['RNDNSModule'].queryTXT('1.1.1.1', `query-${i}`)
     );
 
     const results = await Promise.allSettled(promises);
@@ -90,7 +90,7 @@ describe('DNS Native Module - Concurrency Stress Tests', () => {
 
     // Start 50 queries rapidly
     const promises = Array.from({ length: 50 }, (_, i) =>
-      NativeModules.RNDNSModule.queryTXT('1.1.1.1', `query-${i}`)
+      NativeModules['RNDNSModule'].queryTXT('1.1.1.1', `query-${i}`)
     );
 
     // Let some start, then await all
@@ -122,7 +122,7 @@ describe('DNS Native Module - Concurrency Stress Tests', () => {
     });
 
     const promises = Array.from({ length: 200 }, (_, i) =>
-      NativeModules.RNDNSModule.queryTXT('1.1.1.1', `query-${i}`)
+      NativeModules['RNDNSModule'].queryTXT('1.1.1.1', `query-${i}`)
     );
 
     const results = await Promise.allSettled(promises);
@@ -168,7 +168,7 @@ describe('DNS Native Module - Concurrency Stress Tests', () => {
       const promises = Array.from({ length: 50 }, () =>
         // Race each query against 100ms timeout
         Promise.race([
-          NativeModules.RNDNSModule.queryTXT('1.1.1.1', 'slow-query'),
+          NativeModules['RNDNSModule'].queryTXT('1.1.1.1', 'slow-query'),
           new Promise((_, reject) =>
             setTimeout(() => reject(new Error('timeout')), 100)
           ),
@@ -208,7 +208,7 @@ describe('DNS Native Module - Concurrency Stress Tests', () => {
     // Run queries in waves
     for (let wave = 0; wave < 10; wave++) {
       const promises = Array.from({ length: 20 }, (_, i) =>
-        NativeModules.RNDNSModule.queryTXT('1.1.1.1', `wave-${wave}-query-${i}`)
+        NativeModules['RNDNSModule'].queryTXT('1.1.1.1', `wave-${wave}-query-${i}`)
       );
 
       const results = await Promise.allSettled(promises);
@@ -244,7 +244,7 @@ describe('DNS Native Module - Concurrency Stress Tests', () => {
 
     // Fire 50 identical queries simultaneously
     const promises = Array.from({ length: 50 }, () =>
-      NativeModules.RNDNSModule.queryTXT('1.1.1.1', 'same-query')
+      NativeModules['RNDNSModule'].queryTXT('1.1.1.1', 'same-query')
     );
 
     const results = await Promise.allSettled(promises);
@@ -274,7 +274,7 @@ describe('DNS Native Module - Performance Benchmarks', () => {
     // Benchmarks are useful locally, but console output in CI makes test logs noisy.
     // Opt-in explicitly when you want to inspect timings:
     // `SHOW_BENCHMARKS=1 npm test`
-    return process.env.SHOW_BENCHMARKS === '1';
+    return process.env['SHOW_BENCHMARKS'] === '1';
   }
 
   /**
@@ -289,7 +289,7 @@ describe('DNS Native Module - Performance Benchmarks', () => {
     const startTime = performance.now();
 
     for (let i = 0; i < iterations; i++) {
-      await NativeModules.RNDNSModule.queryTXT('1.1.1.1', `query-${i}`);
+      await NativeModules['RNDNSModule'].queryTXT('1.1.1.1', `query-${i}`);
     }
 
     const endTime = performance.now();
@@ -316,7 +316,7 @@ describe('DNS Native Module - Performance Benchmarks', () => {
     const startTime = performance.now();
 
     const promises = Array.from({ length: iterations }, (_, i) =>
-      NativeModules.RNDNSModule.queryTXT('1.1.1.1', `query-${i}`)
+      NativeModules['RNDNSModule'].queryTXT('1.1.1.1', `query-${i}`)
     );
 
     await Promise.all(promises);

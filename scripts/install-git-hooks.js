@@ -13,13 +13,13 @@ const hookScript = `#!/bin/sh
 set -e
 
 echo "pre-commit: verifying iOS pods lockfile"
-npm run verify:ios-pods
+bun run verify:ios-pods
 
 echo "pre-commit: running lint"
-npm run lint
+bun run lint
 
 echo "pre-commit: running unit tests"
-npm test -- --bail --passWithNoTests
+bun run test -- --bail --passWithNoTests
 `;
 
 if (!fs.existsSync(path.join(repoRoot, ".git"))) {

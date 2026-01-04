@@ -1,5 +1,5 @@
 import { Text } from "@react-navigation/elements";
-import { StaticScreenProps } from "@react-navigation/native";
+import type { StaticScreenProps } from "@react-navigation/native";
 import { StyleSheet, View } from "react-native";
 import { useTranslation } from "../../i18n";
 

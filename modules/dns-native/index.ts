@@ -1,5 +1,6 @@
 import { NativeModules, Platform } from "react-native";
-import { getNativeSanitizerConfig, NativeSanitizerConfig } from "./constants";
+import { getNativeSanitizerConfig } from "./constants";
+import type { NativeSanitizerConfig } from "./constants";
 
 const isJestRuntime = (): boolean => {
   try {
@@ -7,7 +8,7 @@ const isJestRuntime = (): boolean => {
       typeof process !== "undefined" &&
       typeof process.env === "object" &&
       process.env !== null &&
-      typeof process.env.JEST_WORKER_ID === "string"
+      typeof process.env["JEST_WORKER_ID"] === "string"
     );
   } catch {
     return false;
@@ -23,7 +24,7 @@ const isNativeDebugEnabled = (): boolean => {
     if ((globalThis as any).__DNSCHAT_NATIVE_DEBUG__ === true) return true;
   } catch {}
   try {
-    if (typeof process !== "undefined" && process.env?.DNSCHAT_NATIVE_DEBUG === "1") {
+    if (typeof process !== "undefined" && process.env?.["DNSCHAT_NATIVE_DEBUG"] === "1") {
       return true;
     }
   } catch {}
@@ -77,7 +78,7 @@ export class DNSError extends Error {
   constructor(
     public readonly type: DNSErrorType,
     message: string,
-    public readonly cause?: Error,
+    public override readonly cause?: Error,
   ) {
     super(message);
     this.name = "DNSError";
@@ -103,7 +104,7 @@ export class NativeDNS implements NativeDNSModule {
     debugLog("[NativeDNS] Looking for RNDNSModule...");
 
     try {
-      this.nativeModule = NativeModules.RNDNSModule as NativeDNSModule;
+      this.nativeModule = NativeModules["RNDNSModule"] as NativeDNSModule;
       debugLog("[NativeDNS] RNDNSModule found:", !!this.nativeModule);
       if (this.nativeModule) {
         debugLog("[NativeDNS] RNDNSModule methods:", Object.keys(this.nativeModule));

@@ -1,5 +1,6 @@
 import React from "react";
-import { act, ReactTestRenderer } from "react-test-renderer";
+import type { ReactTestRenderer } from "react-test-renderer";
+import { act } from "react-test-renderer";
 import { TouchableOpacity } from "react-native";
 import { createWithSuppressedWarnings } from "./utils/reactTestRenderer";
 
@@ -64,11 +65,11 @@ jest.mock("../src/utils/haptics", () => ({
 jest.mock("../src/i18n", () => ({
   useTranslation: () => ({
     t: (key: string, params?: Record<string, any>) => {
-      if (params?.language) {
-        return `${key}:${params.language}`;
+      if (params?.["language"]) {
+        return `${key}:${params["language"]}`;
       }
-      if (typeof params?.count !== "undefined") {
-        return `${key}:${params.count}`;
+      if (typeof params?.["count"] !== "undefined") {
+        return `${key}:${params["count"]}`;
       }
       return key;
     },
@@ -130,11 +131,11 @@ describe("Settings language picker", () => {
     }
     const renderedTree = tree as ReactTestRenderer;
     const option = renderedTree.root.find(
-      (node) => node.props?.testID === "language-option-en-US" && node.type === TouchableOpacity,
+      (node) => node.props?.["testID"] === "language-option-en-US" && node.type === TouchableOpacity,
     );
 
     await act(async () => {
-      await option.props.onPress();
+      await option.props["onPress"]();
     });
 
     expect(value.updateLocale).toHaveBeenCalledWith("en-US");
@@ -153,11 +154,11 @@ describe("Settings language picker", () => {
     }
     const renderedTree = tree as ReactTestRenderer;
     const option = renderedTree.root.find(
-      (node) => node.props?.testID === "language-option-system" && node.type === TouchableOpacity,
+      (node) => node.props?.["testID"] === "language-option-system" && node.type === TouchableOpacity,
     );
 
     await act(async () => {
-      await option.props.onPress();
+      await option.props["onPress"]();
     });
 
     expect(value.updateLocale).toHaveBeenCalledWith(null);

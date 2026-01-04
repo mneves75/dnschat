@@ -11,8 +11,8 @@ import React, {
   useState,
   useEffect,
   useCallback,
-  ReactNode,
 } from "react";
+import type { ReactNode } from "react";
 import { AccessibilityInfo, Platform } from "react-native";
 import { useSettings } from "./SettingsContext";
 import { devWarn } from "../utils/devLog";

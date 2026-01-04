@@ -1,11 +1,10 @@
-import { Platform } from 'react-native';
 import {
   LiquidGlassType,
   Material3Type,
   Typography,
-  TypographyStyle,
   getTypographyForPlatform,
 } from '../theme/liquidGlassTypography';
+import type { TypographyKey, TypographyScale, TypographyStyle } from '../theme/liquidGlassTypography';
 
 /**
  * useTypography Hook
@@ -21,7 +20,7 @@ import {
  * - iOS: LiquidGlassType (SF Pro scales)
  * - Android: Material3Type (Roboto scales)
  */
-export const useTypography = () => {
+export const useTypography = (): TypographyScale => {
   return getTypographyForPlatform();
 };
 
@@ -52,10 +51,10 @@ export const useSemanticTypography = () => {
  * ```
  */
 export const useTypographyStyle = (
-  key: keyof typeof LiquidGlassType | keyof typeof Material3Type
+  key: TypographyKey
 ): TypographyStyle => {
   const typography = useTypography();
-  return typography[key] as TypographyStyle;
+  return typography[key];
 };
 
 export default useTypography;

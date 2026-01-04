@@ -76,7 +76,7 @@ function borderColor(tree: ReactTestRenderer) {
   const container = tree.root.findByProps({
     testID: "liquid-glass-input-container",
   });
-  const flat = StyleSheet.flatten(container.props.style);
+  const flat = StyleSheet.flatten(container.props["style"]);
   return flat?.borderColor;
 }
 

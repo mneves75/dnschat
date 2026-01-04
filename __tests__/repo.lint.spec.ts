@@ -9,7 +9,7 @@ describe("repo policy: lint is portable (no global installs)", () => {
 
     expect(pkg.devDependencies?.["@ast-grep/cli"]).toBeDefined();
 
-    const lintScript = pkg.scripts?.lint ?? "";
+    const lintScript = pkg.scripts?.["lint"] ?? "";
     expect(lintScript).toContain("lint:ast-grep");
 
     const lintAstGrep = pkg.scripts?.["lint:ast-grep"] ?? "";
@@ -19,4 +19,3 @@ describe("repo policy: lint is portable (no global installs)", () => {
     expect(fs.existsSync("project-rules/astgrep-liquid-glass.yml")).toBe(true);
   });
 });
-

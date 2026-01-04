@@ -5,16 +5,16 @@ Canonical install/build instructions live at `docs/INSTALL.md`.
 Quick start:
 
 ```bash
-npm install
-npm start
+bun install
+bun run start
 ```
 
 Build:
 
 ```bash
-npm run ios
-npm run android
-npm run web
+bun run ios
+bun run android
+bun run web
 ```
 
 DNS smoke test:

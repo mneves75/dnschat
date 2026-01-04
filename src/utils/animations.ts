@@ -1,10 +1,5 @@
-import {
-  withSpring,
-  withTiming,
-  WithSpringConfig,
-  WithTimingConfig,
-  Easing,
-} from 'react-native-reanimated';
+import { withSpring, withTiming, Easing } from 'react-native-reanimated';
+import type { WithSpringConfig, WithTimingConfig } from 'react-native-reanimated';
 
 /**
  * Liquid Glass Animation Configuration

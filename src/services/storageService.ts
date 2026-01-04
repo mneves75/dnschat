@@ -1,7 +1,8 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Chat, Message } from "../types/chat";
+import type { Chat, Message } from "../types/chat";
 import uuid from "react-native-uuid";
 import { devLog, devWarn } from "../utils/devLog";
+import { decryptIfEncrypted, encryptString } from "./encryptionService";
 
 const CHATS_KEY = "@chat_dns_chats";
 
@@ -12,7 +13,7 @@ const CHATS_KEY = "@chat_dns_chats";
 export class StorageCorruptionError extends Error {
   constructor(
     message: string,
-    public readonly cause?: Error,
+    public override readonly cause?: Error,
   ) {
     super(message);
     this.name = "StorageCorruptionError";
@@ -70,7 +71,8 @@ export class StorageService {
         dataSize: serializedChats.length,
       });
 
-      await AsyncStorage.setItem(CHATS_KEY, serializedChats);
+      const encryptedPayload = await encryptString(serializedChats);
+      await AsyncStorage.setItem(CHATS_KEY, encryptedPayload);
 
       const duration = Date.now() - startTime;
       devLog("[StorageService] saveChats completed", {
@@ -103,7 +105,8 @@ export class StorageService {
 
       let parsed: unknown;
       try {
-        parsed = JSON.parse(serializedChats, (key, value) => {
+        const decrypted = await decryptIfEncrypted(serializedChats);
+        parsed = JSON.parse(decrypted, (key, value) => {
           if (key === "createdAt" || key === "updatedAt" || key === "timestamp") {
             // SECURITY FIX: Validate date parsing to prevent Invalid Date propagation.
             // new Date('garbage') returns an Invalid Date object (not null),
@@ -143,37 +146,42 @@ export class StorageService {
             `Chat at index ${i} is not an object`
           );
         }
-        if (typeof chat.id !== 'string' || !chat.id) {
+        const chatId = chat['id'];
+        if (typeof chatId !== 'string' || !chatId) {
           throw new StorageCorruptionError(
-            `Chat at index ${i} has invalid id: ${String(chat.id).slice(0, 50)}`
+            `Chat at index ${i} has invalid id: ${String(chatId).slice(0, 50)}`
           );
         }
-        if (!Array.isArray(chat.messages)) {
+        const messages = chat['messages'];
+        if (!Array.isArray(messages)) {
           throw new StorageCorruptionError(
-            `Chat "${chat.id}" has invalid messages array`
+            `Chat "${chatId}" has invalid messages array`
           );
         }
         // Validate messages structure
-        for (let j = 0; j < chat.messages.length; j++) {
-          const msg = chat.messages[j] as Record<string, unknown>;
+        for (let j = 0; j < messages.length; j++) {
+          const msg = messages[j] as Record<string, unknown>;
           if (!msg || typeof msg !== 'object') {
             throw new StorageCorruptionError(
-              `Message at index ${j} in chat "${chat.id}" is not an object`
+              `Message at index ${j} in chat "${chatId}" is not an object`
             );
           }
-          if (typeof msg.id !== 'string' || !msg.id) {
+          const messageId = msg['id'];
+          if (typeof messageId !== 'string' || !messageId) {
             throw new StorageCorruptionError(
-              `Message at index ${j} in chat "${chat.id}" has invalid id`
+              `Message at index ${j} in chat "${chatId}" has invalid id`
             );
           }
-          if (typeof msg.role !== 'string' || !['user', 'assistant'].includes(msg.role)) {
+          const role = msg['role'];
+          if (typeof role !== 'string' || !['user', 'assistant'].includes(role)) {
             throw new StorageCorruptionError(
-              `Message "${msg.id}" has invalid role: ${String(msg.role)}`
+              `Message "${messageId}" has invalid role: ${String(role)}`
             );
           }
-          if (typeof msg.content !== 'string') {
+          const content = msg['content'];
+          if (typeof content !== 'string') {
             throw new StorageCorruptionError(
-              `Message "${msg.id}" has invalid content type: ${typeof msg.content}`
+              `Message "${messageId}" has invalid content type: ${typeof content}`
             );
           }
         }
@@ -235,11 +243,22 @@ export class StorageService {
           throw new Error("Chat not found");
         }
 
-        chats[chatIndex] = {
-          ...chats[chatIndex],
+        const existingChat = chats[chatIndex];
+        if (!existingChat) {
+          throw new Error("Chat not found");
+        }
+
+        const updatedChat: Chat = {
+          ...existingChat,
           ...updates,
+          id: existingChat.id,
+          createdAt: existingChat.createdAt,
+          messages: updates.messages ?? existingChat.messages,
+          title: updates.title ?? existingChat.title,
           updatedAt: new Date(),
         };
+
+        chats[chatIndex] = updatedChat;
 
         await this.saveChats(chats);
       } catch (error) {
@@ -284,30 +303,33 @@ export class StorageService {
           throw new Error("Chat not found");
         }
 
+        const chat = chats[chatIndex];
+        if (!chat) {
+          devWarn("[StorageService] Chat missing after lookup", { chatId });
+          throw new Error("Chat not found");
+        }
+
         devLog("[StorageService] Found chat", {
           chatIndex,
-          existingMessageCount: chats[chatIndex].messages.length,
+          existingMessageCount: chat.messages.length,
         });
 
-        chats[chatIndex].messages.push(message);
-        chats[chatIndex].updatedAt = new Date();
+        chat.messages.push(message);
+        chat.updatedAt = new Date();
 
         devLog("[StorageService] Message added to chat array", {
-          newMessageCount: chats[chatIndex].messages.length,
+          newMessageCount: chat.messages.length,
         });
 
         // Generate title from first message if it's still "New Chat"
-        if (
-          chats[chatIndex].title === "New Chat" &&
-          chats[chatIndex].messages.length === 1
-        ) {
-          const firstMessage = chats[chatIndex].messages[0];
-          if (firstMessage.role === "user") {
-            chats[chatIndex].title =
+        if (chat.title === "New Chat" && chat.messages.length === 1) {
+          const firstMessage = chat.messages[0];
+          if (firstMessage && firstMessage.role === "user") {
+            chat.title =
               firstMessage.content.slice(0, 50) +
               (firstMessage.content.length > 50 ? "..." : "");
             devLog("[StorageService] Updated chat title", {
-              newTitle: chats[chatIndex].title,
+              newTitle: chat.title,
             });
           }
         }
@@ -354,15 +376,19 @@ export class StorageService {
           throw new Error("Chat not found");
         }
 
-        const messageIndex = chats[chatIndex].messages.findIndex(
-          (msg) => msg.id === messageId,
-        );
+        const chat = chats[chatIndex];
+        if (!chat) {
+          devWarn("[StorageService] Chat missing after lookup", { chatId });
+          throw new Error("Chat not found");
+        }
+
+        const messageIndex = chat.messages.findIndex((msg) => msg.id === messageId);
 
         if (messageIndex === -1) {
           devWarn("[StorageService] Message not found", {
             chatId,
             messageId,
-            availableMessageIds: chats[chatIndex].messages.map((m) => m.id),
+            availableMessageIds: chat.messages.map((m) => m.id),
           });
           throw new Error("Message not found");
         }
@@ -370,19 +396,32 @@ export class StorageService {
         devLog("[StorageService] Found message to update", {
           chatIndex,
           messageIndex,
-          currentStatus: chats[chatIndex].messages[messageIndex].status,
+          currentStatus: chat.messages[messageIndex]?.status,
         });
 
-        chats[chatIndex].messages[messageIndex] = {
-          ...chats[chatIndex].messages[messageIndex],
+        const existingMessage = chat.messages[messageIndex];
+        if (!existingMessage) {
+          devWarn("[StorageService] Message missing after lookup", { chatId, messageId });
+          throw new Error("Message not found");
+        }
+
+        const updatedMessage: Message = {
+          ...existingMessage,
           ...updates,
+          id: existingMessage.id,
+          role: existingMessage.role,
+          content: updates.content ?? existingMessage.content,
+          timestamp: existingMessage.timestamp,
+          status: updates.status ?? existingMessage.status,
         };
 
-        chats[chatIndex].updatedAt = new Date();
+        chat.messages[messageIndex] = updatedMessage;
+
+        chat.updatedAt = new Date();
 
         devLog("[StorageService] Message updated in array", {
-          contentLength: chats[chatIndex].messages[messageIndex].content.length,
-          newStatus: chats[chatIndex].messages[messageIndex].status,
+          contentLength: updatedMessage.content.length,
+          newStatus: updatedMessage.status,
         });
 
         devLog("[StorageService] Saving chats with updated message...");

@@ -2,10 +2,10 @@ import React from "react";
 import {
   View,
   StyleSheet,
-  ViewStyle,
   Pressable,
   useColorScheme,
 } from "react-native";
+import type { ViewStyle } from "react-native";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,

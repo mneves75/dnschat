@@ -8,13 +8,13 @@ import {
   TouchableOpacity,
   RefreshControl,
   StatusBar,
-  ListRenderItemInfo,
 } from "react-native";
+import type { ListRenderItemInfo } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { ChatListItem } from "../../components/ChatListItem";
 import { useChat } from "../../context/ChatContext";
-import { Chat } from "../../types/chat";
+import type { Chat } from "../../types/chat";
 import { useTranslation } from "../../i18n";
 import { devWarn } from "../../utils/devLog";
 

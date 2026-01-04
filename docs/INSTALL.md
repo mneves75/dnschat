@@ -1,6 +1,6 @@
 # Installation
 
-This repo builds DNSChat `3.3.0` (React Native `0.81.5`, Expo SDK `54.0.29`).
+This repo builds DNSChat `3.8.0` (React Native `0.81.5`, Expo SDK `54.0.30`).
 
 Prereqs:
 
@@ -14,63 +14,63 @@ Prereqs:
 ```bash
 git clone https://github.com/mneves75/dnschat.git
 cd dnschat
-npm install
+bun install
 ```
 
 Notes:
 
-- `npm install` runs `npm run prepare` which installs a `.git/hooks/pre-commit`
+- `bun install` runs `bun run prepare` which installs a `.git/hooks/pre-commit`
   hook (verify pods + lint + tests).
-- iOS pods drift guardrail exists. Run `npm run verify:ios-pods` if you touch
+- iOS pods drift guardrail exists. Run `bun run verify:ios-pods` if you touch
   native deps and expect `ios/Podfile.lock` changes.
 
 ## Run
 
 ```bash
 # Dev server (Expo dev-client)
-npm start
+bun run start
 
 # iOS (Expo run:ios)
-npm run ios
+bun run ios
 
 # Android (Expo run:android). Script selects Java 17 when available.
-npm run android
+bun run android
 
 # Web preview (Mock DNS only)
-npm run web
+bun run web
 ```
 
 ## Platform notes
 
 ### iOS
 
-- Default path: `npm run ios` (Expo prebuild + Xcode build).
+- Default path: `bun run ios` (Expo prebuild + Xcode build).
 - CocoaPods is still needed because this repo has native modules.
 - Simulator builds do not require code signing.
 - Device builds require you to pick your own signing team in Xcode (this repo keeps `DEVELOPMENT_TEAM` empty for public distribution).
   If pods are broken:
 
 ```bash
-npm run fix-pods
-npm run clean-ios
+bun run fix-pods
+bun run clean-ios
 ```
 
 If you need a deeper CocoaPods cleanup (slower, more destructive):
 
 ```bash
-npm run fix-pods -- --deep
+bun run fix-pods -- --deep
 ```
 
 If your `ios/Podfile.lock` is corrupted and you must regenerate it:
 
 ```bash
-npm run fix-pods -- --reset-lock
+bun run fix-pods -- --reset-lock
 ```
 
 Verify pods lockfile sync:
 
 ```bash
-npm run verify:ios-pods
+bun run verify:ios-pods
 ```
 
 ### Android
@@ -81,7 +81,7 @@ You need Java 17. If you do not have it:
 brew install openjdk@17
 ```
 
-`npm run android` behavior:
+`bun run android` behavior:
 
 - Runs `scripts/ensure-adb-reverse.js` (so Metro can be reached from device/emulator).
 - If `JAVA_HOME` is already set and valid, it uses it.
@@ -89,12 +89,12 @@ brew install openjdk@17
 - Then it falls back to common Homebrew OpenJDK 17 locations (Apple Silicon + Intel).
 
 If your Java is installed elsewhere, set `JAVA_HOME` appropriately and re-run
-`npm run android`.
+`bun run android`.
 
 Basic diagnostics:
 
 ```bash
-npm run verify:android
+bun run verify:android
 ```
 
 ## DNS smoke tests
@@ -103,10 +103,12 @@ Quick check (no React Native runtime required):
 
 ```bash
 node test-dns-simple.js "Hello world"
+node test-dns-simple.js "Hello world" --local-server
 ```
 
 Full harness (UDP/TCP transports):
 
 ```bash
-npm run dns:harness -- --message "Hello world"
+bun run dns:harness -- --message "Hello world"
+bun run dns:harness -- --message "Hello world" --local-server
 ```

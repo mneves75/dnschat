@@ -8,7 +8,7 @@ function isJestRuntime(): boolean {
       typeof process !== "undefined" &&
       typeof process.env === "object" &&
       process.env !== null &&
-      typeof process.env.JEST_WORKER_ID === "string"
+      typeof process.env["JEST_WORKER_ID"] === "string"
     );
   } catch {
     return false;

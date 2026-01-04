@@ -10,7 +10,7 @@ import type { Message } from "../types/chat";
 import type { DNSQueryLog } from "../services/dnsLogService";
 
 // Get reference to ScreenshotModeModule for iOS
-const ScreenshotModeModule = NativeModules.ScreenshotModeModule;
+const ScreenshotModeModule = NativeModules["ScreenshotModeModule"];
 
 // Check if running in screenshot mode
 export function isScreenshotMode(): boolean {
@@ -26,9 +26,9 @@ export function isScreenshotMode(): boolean {
 
     // Method 2: Fallback to deprecated Settings module
     try {
-      const Settings = NativeModules.Settings;
-      if (Settings && Settings.get) {
-        const screenshotMode = Settings.get("SCREENSHOT_MODE");
+      const Settings = NativeModules["Settings"];
+      if (Settings && Settings["get"]) {
+        const screenshotMode = Settings["get"]("SCREENSHOT_MODE");
         return screenshotMode === "1" || screenshotMode === true;
       }
     } catch (error) {

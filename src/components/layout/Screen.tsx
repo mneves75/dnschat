@@ -1,10 +1,10 @@
 import React from "react";
-import { StyleSheet, View, ViewStyle } from "react-native";
+import { StyleSheet, View } from "react-native";
+import type { ViewStyle } from "react-native";
 import {
-  Edge,
   SafeAreaView,
-  SafeAreaViewProps,
 } from "react-native-safe-area-context";
+import type { Edge, SafeAreaViewProps } from "react-native-safe-area-context";
 import { useImessagePalette } from "../../ui/theme/imessagePalette";
 
 const DEFAULT_EDGES: readonly Edge[] = ["top", "right", "bottom", "left"];

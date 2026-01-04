@@ -18,6 +18,7 @@ function parseArgs() {
   const noTcp = args.includes("--no-tcp");
   const noDoh = args.includes("--no-doh");
   const forceDoh = args.includes("--force-doh");
+  const localServer = args.includes("--local-server");
 
   const resolverIndex = args.findIndex((arg) => arg === "--resolver" || arg === "--server");
   const zoneIndex = args.findIndex((arg) => arg === "--zone");
@@ -31,6 +32,7 @@ function parseArgs() {
     noTcp,
     noDoh,
     forceDoh,
+    localServer,
     resolver: resolverIndex >= 0 ? args[resolverIndex + 1] : null,
     zone: zoneIndex >= 0 ? args[zoneIndex + 1] : null,
     port: portIndex >= 0 ? Number(args[portIndex + 1]) : null,
@@ -54,6 +56,87 @@ function buildQuery(queryName) {
       },
     ],
   });
+}
+
+function buildTxtResponseFromQuery(queryBuffer, responseText) {
+  const decoded = dnsPacket.decode(queryBuffer);
+  const question = decoded.questions && decoded.questions[0];
+  if (!question || !question.name) {
+    throw new Error("DNS query missing question");
+  }
+
+  return dnsPacket.encode({
+    type: "response",
+    id: decoded.id,
+    flags: dnsPacket.RECURSION_DESIRED | dnsPacket.AUTHORITATIVE_ANSWER,
+    questions: decoded.questions,
+    answers: [
+      {
+        type: "TXT",
+        name: question.name,
+        ttl: 60,
+        data: [responseText],
+      },
+    ],
+  });
+}
+
+async function startLocalDnsServer(responseText) {
+  const tcpServer = net.createServer((socket) => {
+    let buffer = Buffer.alloc(0);
+    socket.on("data", (chunk) => {
+      buffer = Buffer.concat([buffer, chunk]);
+      if (buffer.length < 2) {
+        return;
+      }
+      const expectedLength = buffer.readUInt16BE(0);
+      if (buffer.length < expectedLength + 2) {
+        return;
+      }
+      const queryBuffer = buffer.subarray(2, expectedLength + 2);
+      try {
+        const response = buildTxtResponseFromQuery(queryBuffer, responseText);
+        const prefix = Buffer.alloc(2);
+        prefix.writeUInt16BE(response.length, 0);
+        socket.write(Buffer.concat([prefix, response]));
+      } catch {
+        // Ignore malformed queries.
+      } finally {
+        socket.end();
+      }
+    });
+  });
+
+  await new Promise((resolve) => tcpServer.listen(0, "127.0.0.1", resolve));
+
+  const address = tcpServer.address();
+  if (!address || typeof address === "string") {
+    tcpServer.close();
+    throw new Error("Failed to bind local TCP server");
+  }
+
+  const udpSocket = dgram.createSocket("udp4");
+  await new Promise((resolve) => udpSocket.bind(address.port, "127.0.0.1", resolve));
+
+  udpSocket.on("message", (message, rinfo) => {
+    try {
+      const response = buildTxtResponseFromQuery(message, responseText);
+      udpSocket.send(response, rinfo.port, rinfo.address);
+    } catch {
+      // Ignore malformed queries.
+    }
+  });
+
+  return {
+    host: "127.0.0.1",
+    port: address.port,
+    close: () =>
+      new Promise((resolve) => {
+        udpSocket.close(() => {
+          tcpServer.close(() => resolve());
+        });
+      }),
+  };
 }
 
 function decodeTxtResponse(decoded) {
@@ -194,8 +277,24 @@ async function queryDohJson({ providerName, url, queryName, timeoutMs }) {
 }
 
 (async () => {
-  const { allowExperimental, message, noTcp, noDoh, forceDoh, resolver, zone, port } = parseArgs();
+  const {
+    allowExperimental,
+    message,
+    noTcp,
+    noDoh,
+    forceDoh,
+    resolver,
+    zone,
+    port,
+    localServer,
+  } = parseArgs();
   const target = resolveTargetFromArgs({ resolverArg: resolver, zoneArg: zone, portArg: port });
+  let localDnsServer = null;
+  if (localServer) {
+    localDnsServer = await startLocalDnsServer(`local:${message}`);
+    target.resolverHost = localDnsServer.host;
+    target.resolverPort = localDnsServer.port;
+  }
 
   console.log("DNS smoke test");
   console.log(`Raw message: "${message}"`);
@@ -223,6 +322,9 @@ async function queryDohJson({ providerName, url, queryName, timeoutMs }) {
     console.log("OK transport=udp");
     console.log(`Duration: ${formatDuration(durationMs)}`);
     console.log(`Response: ${txtData}`);
+    if (localDnsServer) {
+      await localDnsServer.close();
+    }
     process.exit(0);
   } catch (error) {
     console.error(`UDP TXT query failed: ${error.message}`);
@@ -241,6 +343,9 @@ async function queryDohJson({ providerName, url, queryName, timeoutMs }) {
       console.log("OK transport=tcp");
       console.log(`Duration: ${formatDuration(durationMs)}`);
       console.log(`Response: ${txtData}`);
+      if (localDnsServer) {
+        await localDnsServer.close();
+      }
       process.exit(0);
     } catch (error) {
       console.error(`TCP TXT query failed: ${error.message}`);
@@ -252,7 +357,7 @@ async function queryDohJson({ providerName, url, queryName, timeoutMs }) {
   // may not return TXT records for that zone. We default to skipping DoH for ch.at
   // unless explicitly forced.
   const dohAllowed =
-    forceDoh || (target.zone !== DEFAULT_ZONE && (!noDoh || allowExperimental));
+    !localServer && (forceDoh || (target.zone !== DEFAULT_ZONE && (!noDoh || allowExperimental)));
 
   if (dohAllowed) {
     try {
@@ -270,6 +375,9 @@ async function queryDohJson({ providerName, url, queryName, timeoutMs }) {
       console.log("OK transport=doh provider=cloudflare");
       console.log(`Duration: ${formatDuration(durationMs)}`);
       console.log(`Response: ${txtData}`);
+      if (localDnsServer) {
+        await localDnsServer.close();
+      }
       process.exit(0);
     } catch (error) {
       console.error(`DoH TXT query failed: ${error.message}`);
@@ -291,6 +399,9 @@ async function queryDohJson({ providerName, url, queryName, timeoutMs }) {
         console.log("OK transport=doh provider=google");
         console.log(`Duration: ${formatDuration(durationMs)}`);
         console.log(`Response: ${txtData}`);
+        if (localDnsServer) {
+          await localDnsServer.close();
+        }
         process.exit(0);
       } catch (error) {
         console.error(`DoH (experimental Google) TXT query failed: ${error.message}`);
@@ -302,6 +413,9 @@ async function queryDohJson({ providerName, url, queryName, timeoutMs }) {
     );
   }
 
+  if (localDnsServer) {
+    await localDnsServer.close();
+  }
   console.error("DNS smoke test failed: no transport succeeded.");
   process.exit(1);
 })();

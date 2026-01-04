@@ -3,6 +3,7 @@
   "compilerOptions": {
     "types": ["jest", "node", "react-test-renderer"],
     "noEmit": true,
+    "verbatimModuleSyntax": false,
     "baseUrl": ".",
     "jsx": "react-jsx",
     "paths": {
