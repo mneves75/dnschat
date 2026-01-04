@@ -6,6 +6,10 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## Unreleased
 
+### Changed
+
+- Strip `console.*` calls in production builds (excluding `console.error` and `console.warn`) for performance.
+
 ## 3.8.1 - 2026-01-04
 
 ### Added
