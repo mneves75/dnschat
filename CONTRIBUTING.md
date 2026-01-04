@@ -11,33 +11,33 @@ Keep changes small, testable, cross-platform, security-first.
 ## Dev loop
 
 ```bash
-npm install
-npm start
+bun install
+bun run start
 ```
 
 Common checks:
 
 ```bash
 # Lint (ast-grep rules)
-npm run lint
+bun run lint
 
 # Unit tests
-npm test
+bun run test
 
 # Ensure iOS pods lockfile matches installed deps
-npm run verify:ios-pods
+bun run verify:ios-pods
 
 # Android tooling sanity check
-npm run verify:android
+bun run verify:android
 ```
 
 DNS smoke checks:
 
 ```bash
 node test-dns-simple.js "test message"
-npm run dns:harness -- --message "test message"
+bun run dns:harness -- --message "test message"
 node test-dns-simple.js "test message" --local-server
-npm run dns:harness -- --message "test message" --local-server
+bun run dns:harness -- --message "test message" --local-server
 ```
 
 ## Code guidelines
@@ -55,17 +55,17 @@ npm run dns:harness -- --message "test message" --local-server
 
 ## Git hooks
 
-`npm install` runs `npm run prepare` which installs a pre-commit hook that runs:
+`bun install` runs `bun run prepare` which installs a pre-commit hook that runs:
 
-- `npm run verify:ios-pods`
-- `npm run lint`
-- `npm test -- --bail --passWithNoTests`
+- `bun run verify:ios-pods`
+- `bun run lint`
+- `bun run test -- --bail --passWithNoTests`
 
 Remove `.git/hooks/pre-commit` locally if you do not want repo-managed hooks.
 
 ## PR checklist
 
-- `npm run lint`
-- `npm test`
+- `bun run lint`
+- `bun run test`
 - `node test-dns-simple.js "hello"`
-- `npm run dns:harness -- --message "hello"`
+- `bun run dns:harness -- --message "hello"`

@@ -58,6 +58,16 @@ describe("repo policy: CI configuration exists and matches spec", () => {
     expect(content).toContain("github/codeql-action/");
   });
 
+  it("generates SBOM artifacts in CI (supply-chain requirement)", () => {
+    const workflow = ".github/workflows/ci.yml";
+    expect(fs.existsSync(workflow)).toBe(true);
+    const content = read(workflow);
+
+    expect(content).toContain("sbom:");
+    expect(content).toContain("anchore/sbom-action@");
+    expect(content).toContain("artifacts/sbom/");
+  });
+
   it("runs Android Gradle builds in CI (prevents build.gradle regressions)", () => {
     const workflow = ".github/workflows/ci.yml";
     expect(fs.existsSync(workflow)).toBe(true);
