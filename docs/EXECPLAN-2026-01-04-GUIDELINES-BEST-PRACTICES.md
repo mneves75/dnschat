@@ -31,6 +31,7 @@ Non-goals include new product features, UI redesigns, or large dependency upgrad
 - [x] Phase 5 complete: CI workflow hardening (Bun installs, pinned actions, SBOM artifacts, concurrency/timeouts) + docs updates.
 - [x] (2026-01-04) Reviewed GitHub Actions workflows and identified lockfile cache failures plus missing CI hardening.
 - [x] (2026-01-04) Hardened CI workflows (Bun installs, concurrency/timeouts, pinned actions, SBOM generation) and updated contributor docs.
+- [x] (2026-01-04) Made dns-native CI self-contained with module tsconfig, shared Jest mocks, and module package-lock for npm ci.
 
 ## Surprises & Discoveries
 
@@ -48,6 +49,10 @@ Non-goals include new product features, UI redesigns, or large dependency upgrad
   Evidence: UDP/TCP 53 timed out and DoH returned no TXT answers in this environment; added local DNS responder mode for verification.
 - Observation: CI jobs failed because actions/setup-node cache expects a root lockfile that no longer exists.
   Evidence: GitHub Actions run 20687873837 reported "Dependencies lock file is not found" for test/android/dns-native jobs.
+- Observation: dns-native CI tests failed because module tsconfig extended Expo base config unavailable in module-only installs.
+  Evidence: GitHub Actions run 20687873837 dns-native job failed with TS6053: File 'expo/tsconfig.base' not found.
+- Observation: dns-native Jest tests failed when importing app services due to ESM-only noble hash modules.
+  Evidence: Local `npm test` in modules/dns-native raised `SyntaxError: Cannot use import statement outside a module` in @noble/hashes.
 
 ## Decision Log
 
@@ -72,10 +77,19 @@ Non-goals include new product features, UI redesigns, or large dependency upgrad
 - Decision: Pin GitHub Actions to commit SHAs and generate SBOM artifacts in CI.
   Rationale: Supply-chain hardening and security guideline alignment (SBOM requirement).
   Date/Author: 2026-01-04 / Codex
+- Decision: Make dns-native test tsconfig self-contained within the module.
+  Rationale: Module CI installs do not include Expo dependencies from the app root.
+  Date/Author: 2026-01-04 / Codex
+- Decision: Reuse the root Jest setup/mocks from the dns-native module test environment.
+  Rationale: Avoids re-implementing ESM mocks for noble/expo dependencies and keeps module tests aligned with app mocks.
+  Date/Author: 2026-01-04 / Codex
+- Decision: Add a module package-lock for dns-native npm ci.
+  Rationale: npm ci requires a lockfile; module CI jobs should remain deterministic.
+  Date/Author: 2026-01-04 / Codex
 
 ## Outcomes & Retrospective
 
-Phases 0–4 completed with evidence captured. Codebase now meets strict TypeScript and privacy/logging requirements, and local storage is encrypted at rest. Jest and lint pass locally; DNS harness and smoke tests pass in offline mode via `--local-server`, while external UDP/TCP 53 requests still fail in this environment. React Compiler remains enabled in app.json with compiler dependency installed; full build-level compiler validation should be re-confirmed in CI or on-device builds. CI workflows were hardened with Bun installs, pinned actions, concurrency/timeouts, and SBOM artifact generation to align with security and supply-chain guidance.
+Phases 0–4 completed with evidence captured. Codebase now meets strict TypeScript and privacy/logging requirements, and local storage is encrypted at rest. Jest and lint pass locally; DNS harness and smoke tests pass in offline mode via `--local-server`, while external UDP/TCP 53 requests still fail in this environment. React Compiler remains enabled in app.json with compiler dependency installed; full build-level compiler validation should be re-confirmed in CI or on-device builds. CI workflows were hardened with Bun installs, pinned actions, concurrency/timeouts, and SBOM artifact generation to align with security and supply-chain guidance. dns-native CI now uses a module-local tsconfig, shared Jest mocks, and a package-lock to keep npm ci deterministic.
 
 ## Context and Orientation
 
@@ -92,6 +106,7 @@ All guideline documents listed in docs/GUIDELINES-REF were reviewed for applicab
 - React Compiler: use the official React Compiler Babel plugin and ensure it is wired in the Babel config for builds where the compiler is enabled.
 - Expo SDK 54: enable `experiments.reactCompiler` in app.json to activate the compiler path for Expo-managed builds.
 - React Native Reanimated: keep `react-native-reanimated/plugin` last in `babel.config.js` to preserve correct compilation.
+- React Native Performance: strip `console.*` in production builds (keep `console.warn`/`console.error`) to reduce overhead.
 - GitHub Actions: pin third-party actions to commit SHAs and use least-privilege permissions.
 - GitHub Actions: use workflow concurrency to avoid redundant runs on the same ref.
 - Security: generate CycloneDX or SPDX SBOM artifacts in CI for release traceability.
@@ -202,7 +217,8 @@ Phase 5 checklist (detailed):
 4. Add explicit job timeouts to prevent runaway CI.
 5. Pin all third-party actions to full commit SHAs, with version comments.
 6. Generate CycloneDX SBOM via SBOM action and upload artifact at `artifacts/sbom/<version>.json`.
-7. Update contributor docs to reflect Bun-first CI and install workflow.
+7. Make dns-native test tsconfig self-contained (avoid Expo base dependency).
+8. Update contributor docs to reflect Bun-first CI and install workflow.
 
 ## Concrete Steps
 
@@ -218,6 +234,7 @@ All commands are run from the repository root unless noted otherwise.
     bun run verify:android
     npx tsc --noEmit
     npx react-compiler-healthcheck@latest
+    cd modules/dns-native && npm test
 
 Expected outcomes are clean lint, passing tests, a valid DNS response in the harness output, and no TypeScript errors.
 
@@ -352,15 +369,36 @@ Evidence captured on 2026-01-04 (CI hardening + crypto bootstrap):
       UDP succeeded (local server)
       TXT records: ["local:test message"]
 
+Evidence captured on 2026-01-04 (dns-native module tests):
+
+    cd modules/dns-native && npm test
+    Result: PASS (7 passed, 1 skipped; 50 tests passed, 13 skipped)
+
+Evidence captured on 2026-01-04 (follow-up verification):
+
+    bun run lint
+    Result: PASS (ast-grep scan completed with exit code 0)
+
+    bun run test
+    Result: PASS (62 suites, 1 skipped, 697 tests)
+
+    bun run verify:ios-pods
+    Result: PASS (verify-ios-pods-sync: OK)
+
+    npx tsc --noEmit
+    Result: PASS (exit code 0)
+
 ## Interfaces and Dependencies
 
-Implementation touched src/services/dnsLogService.ts (redaction + encrypted persistence + scheduler guard), src/services/storageService.ts (encryption + migration-safe reads), src/services/encryptionService.ts (AES-GCM wrapper + expo-crypto RNG), src/bootstrap/crypto.ts + index.tsx (secure RNG bootstrap), src/constants/appConstants.ts and modules/dns-native/constants.ts (constant alignment), app.json + babel.config.js (compiler configuration), tsconfig.json and tsconfig.test.json (strictness + Jest compatibility), __tests__/setup.jest.js (crypto mocks), __tests__/dnsLogService.spec.ts + __tests__/dnsService.spec.ts (RNG/scheduler coverage), src/ui/theme/liquidGlassTypography.ts (cross-platform typography keys), scripts/run-dns-harness.ts and test-dns-simple.js (local DNS responder mode), and .github/workflows/* (CI hardening + SBOM).
+Implementation touched src/services/dnsLogService.ts (redaction + encrypted persistence + scheduler guard), src/services/storageService.ts (encryption + migration-safe reads), src/services/encryptionService.ts (AES-GCM wrapper + expo-crypto RNG), src/bootstrap/crypto.ts + index.tsx (secure RNG bootstrap), src/constants/appConstants.ts and modules/dns-native/constants.ts (constant alignment), app.json + babel.config.js (compiler configuration), tsconfig.json and tsconfig.test.json (strictness + Jest compatibility), __tests__/setup.jest.js (crypto mocks), __tests__/dnsLogService.spec.ts + __tests__/dnsService.spec.ts (RNG/scheduler coverage), src/ui/theme/liquidGlassTypography.ts (cross-platform typography keys), scripts/run-dns-harness.ts and test-dns-simple.js (local DNS responder mode), modules/dns-native/jest.config.js + modules/dns-native/jest.setup.js + modules/dns-native/tsconfig.json + modules/dns-native/tsconfig.test.json (module test isolation), and .github/workflows/* (CI hardening + SBOM).
 
 ## Change Note
 
 Created initial ExecPlan to satisfy the guidelines verification and best-practices alignment request, with phased work items and verification steps.
 
 Revised on 2026-01-04 to add full guideline coverage, a prose-first milestone breakdown, and explicit best-practice deltas for package manager alignment and compiler validation.
+
+Revised on 2026-01-04 to document dns-native module test isolation (module tsconfig + shared Jest setup) and npm ci lockfile expectations.
 
 Revised on 2026-01-04 to reflect Option C implementation, strict TypeScript enforcement, encryption and redaction rollout, Jest compatibility updates, React Compiler healthcheck validation, StrictMode enablement, local DNS smoke/harness mode, and new verification evidence.
 

@@ -1207,6 +1207,25 @@ export class DNSService {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
+  private static async withTimeout<T>(
+    promise: Promise<T>,
+    timeoutMs: number,
+    timeoutMessage: string,
+  ): Promise<T> {
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    const timeoutPromise = new Promise<T>((_, reject) => {
+      timeoutId = setTimeout(() => {
+        reject(new Error(timeoutMessage));
+      }, timeoutMs);
+    });
+
+    try {
+      return await Promise.race([promise, timeoutPromise]);
+    } finally {
+      if (timeoutId) clearTimeout(timeoutId);
+    }
+  }
+
   private static getMethodOrder(
     enableMockDNS: boolean | undefined,
     allowExperimentalTransports: boolean,
@@ -1292,7 +1311,11 @@ export class DNSService {
                 });
 
                 const queryStartTime = Date.now();
-                const records = await nativeDNS.queryTXT(targetServer, queryName);
+                const records = await this.withTimeout(
+                  nativeDNS.queryTXT(targetServer, queryName),
+                  this.TIMEOUT,
+                  `Native DNS query timed out after ${this.TIMEOUT}ms`,
+                );
                 const queryDuration = Date.now() - queryStartTime;
 
                 this.vLog('NATIVE: Raw TXT records received:', records);
@@ -1507,7 +1530,11 @@ export class DNSService {
               this.vLog('NATIVE TEST: Executing queryTXT...');
 
               const testStartTime = Date.now();
-              const records = await nativeDNS.queryTXT(targetServer, context.queryName);
+              const records = await this.withTimeout(
+                nativeDNS.queryTXT(targetServer, context.queryName),
+                this.TIMEOUT,
+                `Native DNS query timed out after ${this.TIMEOUT}ms`,
+              );
               const testQueryDuration = Date.now() - testStartTime;
 
               this.vLog('NATIVE TEST: Records received:', records);
