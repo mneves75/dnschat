@@ -8,7 +8,8 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ### Changed
 
-- None.
+- dns-native tests now reuse the app-level Jest setup to avoid ESM module parsing failures.
+- Added a module-local package-lock for dns-native to support deterministic npm ci in CI.
 
 ## 3.8.2 - 2026-01-04
 
@@ -23,6 +24,7 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 - DNS log cleanup scheduler is now idempotent to avoid multiple intervals.
 - DNS protocol docs and TXT parsing comments aligned with runtime behavior.
 - CI workflows now use Bun installs, pinned actions, concurrency limits, and publish SBOM artifacts.
+- dns-native test config no longer depends on Expo tsconfig to keep module CI self-contained.
 
 ## 3.8.1 - 2026-01-04
 
