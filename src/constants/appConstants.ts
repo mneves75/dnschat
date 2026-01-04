@@ -64,6 +64,7 @@ export const STORAGE_CONSTANTS = {
   LOGS_KEY: '@dns_query_logs',
   ENCRYPTION_VERSION_KEY: '@chat_dns_encryption_version',
   CHAT_BACKUP_KEY: '@chat_dns_chats_backup',
+  LOGS_BACKUP_KEY: '@dns_query_logs_backup',
 } as const;
 
 // Error Messages

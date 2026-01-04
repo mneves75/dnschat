@@ -8,6 +8,7 @@ Start here:
 - `docs/architecture/SYSTEM-ARCHITECTURE.md` (what talks to what)
 - `docs/architecture/EXPO-ROUTER-INTEGRATION.md` (engineering exec spec + phased migration plan)
 - `docs/architecture/ENGINEERING-EXEC-SPEC-BEST-PRACTICES-ALIGNMENT.md` (security + best-practices hardening plan)
+- `docs/EXECPLAN-2026-01-04-STORAGE-RECOVERY.md` (storage corruption recovery + SecureStore key fix)
 - `docs/technical/SPECIFICATION.md` (product + behavior spec)
 - `docs/technical/DNS-PROTOCOL-SPEC.md` (DNS query/response rules)
 - `docs/troubleshooting/COMMON-ISSUES.md` (known issues + fixes)

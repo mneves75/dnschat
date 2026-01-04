@@ -42,35 +42,53 @@ describe("StorageService Corruption Handling", () => {
       expect(result).toEqual([]);
     });
 
-    it("throws StorageCorruptionError on invalid JSON", async () => {
+    it("recovers and returns empty array on invalid JSON by default", async () => {
       mockAsyncStorage.getItem.mockResolvedValue("not valid json {{{");
 
-      await expect(StorageService.loadChats()).rejects.toThrow(StorageCorruptionError);
-      await expect(StorageService.loadChats()).rejects.toThrow(
-        /Failed to parse chats JSON/,
+      const result = await StorageService.loadChats();
+
+      expect(result).toEqual([]);
+      expect(mockAsyncStorage.setItem).toHaveBeenCalledWith(
+        "@chat_dns_chats_backup",
+        expect.stringContaining("not valid json"),
       );
+      expect(mockAsyncStorage.removeItem).toHaveBeenCalledWith("@chat_dns_chats");
     });
 
-    it("throws StorageCorruptionError when data is not an array", async () => {
+    it("throws StorageCorruptionError on invalid JSON when recovery disabled", async () => {
+      mockAsyncStorage.getItem.mockResolvedValue("not valid json {{{");
+
+      await expect(
+        StorageService.loadChats({ recoverOnCorruption: false }),
+      ).rejects.toThrow(StorageCorruptionError);
+      await expect(
+        StorageService.loadChats({ recoverOnCorruption: false }),
+      ).rejects.toThrow(/Failed to parse chats JSON/);
+    });
+
+    it("recovers when data is not an array", async () => {
       // Object instead of array
       mockAsyncStorage.getItem.mockResolvedValue('{"id": "123"}');
 
-      await expect(StorageService.loadChats()).rejects.toThrow(StorageCorruptionError);
-      await expect(StorageService.loadChats()).rejects.toThrow(/not an array/);
+      const result = await StorageService.loadChats();
+      expect(result).toEqual([]);
+      expect(mockAsyncStorage.removeItem).toHaveBeenCalledWith("@chat_dns_chats");
     });
 
-    it("throws StorageCorruptionError when data is a string", async () => {
+    it("recovers when data is a string", async () => {
       mockAsyncStorage.getItem.mockResolvedValue('"just a string"');
 
-      await expect(StorageService.loadChats()).rejects.toThrow(StorageCorruptionError);
-      await expect(StorageService.loadChats()).rejects.toThrow(/not an array/);
+      const result = await StorageService.loadChats();
+      expect(result).toEqual([]);
+      expect(mockAsyncStorage.removeItem).toHaveBeenCalledWith("@chat_dns_chats");
     });
 
-    it("throws StorageCorruptionError when data is a number", async () => {
+    it("recovers when data is a number", async () => {
       mockAsyncStorage.getItem.mockResolvedValue("42");
 
-      await expect(StorageService.loadChats()).rejects.toThrow(StorageCorruptionError);
-      await expect(StorageService.loadChats()).rejects.toThrow(/not an array/);
+      const result = await StorageService.loadChats();
+      expect(result).toEqual([]);
+      expect(mockAsyncStorage.removeItem).toHaveBeenCalledWith("@chat_dns_chats");
     });
 
     it("returns parsed chats when data is valid", async () => {
@@ -124,11 +142,11 @@ describe("StorageService Corruption Handling", () => {
       expect(firstMessage.timestamp).toBeInstanceOf(Date);
     });
 
-    it("preserves error cause in StorageCorruptionError", async () => {
+    it("preserves error cause when recovery disabled", async () => {
       mockAsyncStorage.getItem.mockResolvedValue("{truncated json");
 
       try {
-        await StorageService.loadChats();
+        await StorageService.loadChats({ recoverOnCorruption: false });
         fail("Should have thrown");
       } catch (error) {
         expect(error).toBeInstanceOf(StorageCorruptionError);
@@ -141,7 +159,9 @@ describe("StorageService Corruption Handling", () => {
       const asyncStorageError = new Error("AsyncStorage quota exceeded");
       mockAsyncStorage.getItem.mockRejectedValue(asyncStorageError);
 
-      await expect(StorageService.loadChats()).rejects.toThrow(
+      await expect(
+        StorageService.loadChats({ recoverOnCorruption: false }),
+      ).rejects.toThrow(
         "AsyncStorage quota exceeded",
       );
     });

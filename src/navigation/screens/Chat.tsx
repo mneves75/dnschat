@@ -89,7 +89,9 @@ export function Chat() {
     // Create a new chat if none exists
     if (!currentChat) {
       devLog("[Chat] No current chat, creating new chat");
-      createChat();
+      createChat().catch((err) => {
+        devWarn("[Chat] Failed to auto-create chat", err);
+      });
     }
   }, [currentChat]);
 
