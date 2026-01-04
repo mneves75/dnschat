@@ -2,6 +2,7 @@ import {
   DEFAULT_SETTINGS,
   SETTINGS_VERSION,
   migrateSettings,
+  areAccessibilityConfigsEqual,
 } from '../src/context/settingsStorage';
 
 describe('SettingsContext migrateSettings', () => {
@@ -125,5 +126,16 @@ describe('SettingsContext migrateSettings', () => {
     const result = migrateSettings(payload);
 
     expect(result.preferredLocale).toBe('pt-BR');
+  });
+
+  it('compares accessibility configs by field', () => {
+    const baseline = DEFAULT_SETTINGS.accessibility;
+    expect(areAccessibilityConfigsEqual(baseline, baseline)).toBe(true);
+    expect(
+      areAccessibilityConfigsEqual(baseline, {
+        ...baseline,
+        highContrast: true,
+      }),
+    ).toBe(false);
   });
 });
