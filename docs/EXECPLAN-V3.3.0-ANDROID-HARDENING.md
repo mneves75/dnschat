@@ -93,33 +93,33 @@ Ship v3.3.0 without CI improvements.
 - [x] Confirm v3.2.1 is already released
 
 ### Phase 1: Version Bump
-- [ ] Update `package.json` version to 3.3.0
-- [ ] Run `npm run sync-versions` to propagate
-- [ ] Verify all files updated correctly
+- [x] Update `package.json` version to 3.3.0
+- [x] Run `npm run sync-versions` to propagate
+- [x] Verify all files updated correctly
 
 **Acceptance**: `npm run sync-versions:dry` shows all files at 3.3.0
 
 ### Phase 2: CHANGELOG Update
-- [ ] Add v3.3.0 section to CHANGELOG.md
-- [ ] Document Android hardening changes
-- [ ] Document CI improvements
+- [x] Add v3.3.0 section to CHANGELOG.md
+- [x] Document Android hardening changes
+- [x] Document CI improvements
 
 **Acceptance**: CHANGELOG has accurate v3.3.0 entry
 
 ### Phase 3: CI Enhancement
-- [ ] Add android job to `.github/workflows/ci.yml`
-- [ ] Configure Java 17 + Gradle for ubuntu-latest
-- [ ] Run assembleDebug + assembleRelease
-- [ ] Add test for CI configuration
+- [x] Add android job to `.github/workflows/ci.yml`
+- [x] Configure Java 17 + Gradle for ubuntu-latest
+- [x] Run assembleDebug + assembleRelease
+- [x] Add test for CI configuration
 
 **Acceptance**: `npm test` passes with CI test, local Gradle builds work
 
 ### Phase 4: Verification
-- [ ] Run `npm run lint`
-- [ ] Run `npm test`
-- [ ] Run `npm run sync-versions:dry` (should show no changes)
-- [ ] Run `./gradlew :app:assembleDebug` (local)
-- [ ] Run `./gradlew :app:assembleRelease` (local)
+- [x] Run `npm run lint`
+- [x] Run `npm test`
+- [x] Run `npm run sync-versions:dry` (should show no changes)
+- [x] Run `./gradlew :app:assembleDebug` (local)
+- [x] Run `./gradlew :app:assembleRelease` (local)
 
 **Acceptance**: All checks pass, versions in sync
 
@@ -177,10 +177,25 @@ None - all blocking questions resolved. Proceeding with v3.3.0 bump.
 
 ## Success Metrics
 
-- [ ] All tests pass (652+)
-- [ ] Lint passes
-- [ ] Gradle debug build succeeds
-- [ ] Gradle release build succeeds (unsigned)
-- [ ] Versions synchronized across all configs
-- [ ] CI includes android job
-- [ ] CHANGELOG documents all changes
+- [x] All tests pass (652+)
+- [x] Lint passes
+- [x] Gradle debug build succeeds
+- [x] Gradle release build succeeds (unsigned)
+- [x] Versions synchronized across all configs
+- [x] CI includes android job
+- [x] CHANGELOG documents all changes
+
+## Verification Notes (2026-01-04)
+
+This plan was completed during the 3.3.0 release. The checklist reflects shipped work; this pass confirms the current repo state still includes the Android CI job and version sync behavior. Local Gradle builds were not re-run in this verification pass.
+
+Evidence (2026-01-04):
+
+    bun run lint
+    Result: PASS
+
+    bun run test
+    Result: PASS (64 suites, 1 skipped, 702 tests)
+
+    bun run sync-versions:dry
+    Result: PASS (versions synchronized at 3.8.4 build 24)

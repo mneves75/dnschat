@@ -9,6 +9,14 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 ### Changed
 
 
+## 3.8.4 - 2026-01-04
+
+### Changed
+
+- Accessibility settings updates now skip redundant writes using explicit field equality checks.
+- Added a guidelines re-verification ExecPlan and reconciled legacy exec plans to reflect completion status.
+- Bumped app version metadata to 3.8.4 (build 24) across iOS and Android configs.
+
 ## 3.8.3 - 2026-01-04
 
 ### Changed

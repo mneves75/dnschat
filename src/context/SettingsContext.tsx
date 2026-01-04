@@ -19,6 +19,7 @@ import {
   sanitizeDnsServer,
   resolveLocale,
   normalizePreferredLocale,
+  areAccessibilityConfigsEqual,
 } from "./settingsStorage";
 import type {
   PersistedSettings,
@@ -223,7 +224,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
   const updateAccessibility = useCallback(
     async (accessibilityConfig: import("./AccessibilityContext").AccessibilityConfig) => {
-      if (JSON.stringify(settings.accessibility) === JSON.stringify(accessibilityConfig)) {
+      if (areAccessibilityConfigsEqual(settings.accessibility, accessibilityConfig)) {
         return;
       }
       await persistSettings({
