@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -74,6 +74,18 @@ export function Toast({
 
   const translateY = useSharedValue(position === "top" ? -200 : 200);
   const opacity = useSharedValue(0);
+  const [isMounted, setIsMounted] = useState(visible);
+  const visibleRef = useRef(visible);
+
+  useEffect(() => {
+    visibleRef.current = visible;
+  }, [visible]);
+
+  const finishHide = useCallback(() => {
+    if (!visibleRef.current) {
+      setIsMounted(false);
+    }
+  }, []);
 
   // Get variant-specific colors and icon
   const getVariantStyles = () => {
@@ -111,6 +123,8 @@ export function Toast({
   // Show animation
   useEffect(() => {
     if (visible) {
+      visibleRef.current = true;
+      setIsMounted(true);
       // Trigger haptic feedback
       switch (variant) {
         case "success":
@@ -139,24 +153,32 @@ export function Toast({
         return () => clearTimeout(timer);
       }
     } else {
+      visibleRef.current = false;
       // Slide out
       translateY.value = withSpring(
         position === "top" ? -200 : 200,
-        SpringConfig.stiff
+        SpringConfig.stiff,
+        (finished) => {
+          if (finished) {
+            runOnJS(finishHide)();
+          }
+        }
       );
       opacity.value = withTiming(0, TimingConfig.quick);
     }
     return undefined;
-  }, [visible, variant, duration, position]);
+  }, [visible, variant, duration, position, finishHide, opacity, translateY]);
 
   // Handle dismiss
   const handleDismiss = () => {
+    visibleRef.current = false;
     translateY.value = withSpring(
       position === "top" ? -200 : 200,
       SpringConfig.stiff,
       (finished) => {
         if (finished) {
           runOnJS(onDismiss)();
+          runOnJS(finishHide)();
         }
       }
     );
@@ -177,7 +199,7 @@ export function Toast({
     opacity: opacity.value,
   }));
 
-  if (!visible && translateY.value === (position === "top" ? -200 : 200)) {
+  if (!isMounted) {
     return null;
   }
 

@@ -105,6 +105,7 @@ describe("Native DNS Module", () => {
       expect(mockNativeModule.queryTXT).toHaveBeenCalledWith(
         "ch.at",
         "test message",
+        53, // ch.at uses standard DNS port
       );
       expect(result).toEqual(mockResponse);
     });
@@ -116,6 +117,18 @@ describe("Native DNS Module", () => {
       expect(mockNativeModule.queryTXT).toHaveBeenCalledWith(
         "example.com",
         "foo",
+        53, // Default DNS port for unknown servers
+      );
+    });
+
+    it("uses port 53 for llm.pieter.com", async () => {
+      const mockResponse = ["hello world"];
+      mockNativeModule.queryTXT.mockResolvedValue(mockResponse);
+      await testDNS.queryTXT("llm.pieter.com", "test");
+      expect(mockNativeModule.queryTXT).toHaveBeenCalledWith(
+        "llm.pieter.com",
+        "test",
+        53, // LLM server now uses standard port 53 (as of 2026-01-05)
       );
     });
 
@@ -203,6 +216,47 @@ describe("Native DNS Module", () => {
     });
   });
 
+  describe("Port Validation", () => {
+    it("should reject port 0", async () => {
+      await expect(testDNS.queryTXT("ch.at", "test", 0)).rejects.toThrow(
+        new DNSError(
+          DNSErrorType.INVALID_RESPONSE,
+          "Invalid DNS port: 0. Must be between 1 and 65535.",
+        ),
+      );
+    });
+
+    it("should reject negative port", async () => {
+      await expect(testDNS.queryTXT("ch.at", "test", -1)).rejects.toThrow(
+        new DNSError(
+          DNSErrorType.INVALID_RESPONSE,
+          "Invalid DNS port: -1. Must be between 1 and 65535.",
+        ),
+      );
+    });
+
+    it("should reject port greater than 65535", async () => {
+      await expect(testDNS.queryTXT("ch.at", "test", 70000)).rejects.toThrow(
+        new DNSError(
+          DNSErrorType.INVALID_RESPONSE,
+          "Invalid DNS port: 70000. Must be between 1 and 65535.",
+        ),
+      );
+    });
+
+    it("should accept valid port 1", async () => {
+      mockNativeModule.queryTXT.mockResolvedValue(["response"]);
+      await testDNS.queryTXT("ch.at", "test", 1);
+      expect(mockNativeModule.queryTXT).toHaveBeenCalledWith("ch.at", "test", 1);
+    });
+
+    it("should accept valid port 65535", async () => {
+      mockNativeModule.queryTXT.mockResolvedValue(["response"]);
+      await testDNS.queryTXT("ch.at", "test", 65535);
+      expect(mockNativeModule.queryTXT).toHaveBeenCalledWith("ch.at", "test", 65535);
+    });
+  });
+
   describe("Multi-part Response Parsing", () => {
     it("should parse single response correctly", () => {
       const txtRecords = ["Hello world from AI"];
@@ -282,7 +336,7 @@ describe("Native DNS Module", () => {
   describe("Performance and Memory", () => {
     it("should handle concurrent queries efficiently", async () => {
       mockNativeModule.queryTXT.mockImplementation(
-        (domain: string, message: string) =>
+        (domain: string, message: string, port: number) =>
           Promise.resolve([`Response to: ${message}`]),
       );
 
@@ -346,6 +400,7 @@ describe("Native DNS Module", () => {
       expect(mockNativeModule.queryTXT).toHaveBeenCalledWith(
         "ch.at",
         longMessage,
+        53, // ch.at uses standard DNS port
       );
     });
   });

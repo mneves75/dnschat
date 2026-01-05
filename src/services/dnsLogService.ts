@@ -238,6 +238,25 @@ export class DNSLogService {
     this.addLog(entry);
   }
 
+  /**
+   * Log server-level fallback (e.g., llm.pieter.com:53 → ch.at:53)
+   * Distinct from transport-level fallback (native → udp → tcp)
+   */
+  static logServerFallback(fromServer: string, toServer: string) {
+    if (!this.currentQueryLog) return;
+
+    const entry: DNSLogEntry = {
+      id: this.generateUniqueId(`${this.currentQueryLog.id}-server-fallback`),
+      timestamp: new Date(),
+      message: `Server fallback: ${fromServer} → ${toServer}`,
+      method: "native",
+      status: "fallback",
+      details: `Trying next server: ${toServer}`,
+    };
+
+    this.addLog(entry);
+  }
+
   static async endQuery(
     success: boolean,
     response?: string,

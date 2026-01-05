@@ -27,9 +27,21 @@ export interface LegacySettingsV1 {
   enableMockDNS?: boolean;
 }
 
-export const DEFAULT_DNS_SERVER = "ch.at";
+export const DEFAULT_DNS_SERVER = "llm.pieter.com";
 export const SETTINGS_STORAGE_KEY = "@chat_dns_settings";
-export const SETTINGS_VERSION = 3;
+export const SETTINGS_VERSION = 4;
+
+/**
+ * Migrate DNS server from ch.at (offline) to llm.pieter.com
+ * This handles users who had ch.at saved before the server went offline.
+ */
+function migrateOfflineServer(server: string): string {
+  // ch.at is offline - migrate to llm.pieter.com
+  if (server.toLowerCase().trim() === 'ch.at') {
+    return DEFAULT_DNS_SERVER;
+  }
+  return server;
+}
 
 export const DEFAULT_SETTINGS: PersistedSettings = {
   version: SETTINGS_VERSION,
@@ -46,10 +58,12 @@ export const DEFAULT_SETTINGS: PersistedSettings = {
   },
 };
 
-function normalizePersistedDnsServer(candidate: unknown): string {
+function normalizePersistedDnsServer(candidate: unknown, applyOfflineMigration: boolean = false): string {
   const cleaned = sanitizeDnsServer(typeof candidate === "string" ? candidate : undefined);
   try {
-    return validateDNSServer(cleaned);
+    const validated = validateDNSServer(cleaned);
+    // Apply offline server migration if requested (v3 → v4)
+    return applyOfflineMigration ? migrateOfflineServer(validated) : validated;
   } catch {
     return DEFAULT_DNS_SERVER;
   }
@@ -92,13 +106,13 @@ export function migrateSettings(raw: unknown): PersistedSettings {
     screenReader: Boolean(accessibilitySource?.screenReader),
   };
 
-  // Version 2 or earlier → Version 3: Remove HTTPS options, enable fallbacks
+  // Version 2 or earlier → Version 4: Remove HTTPS options, enable fallbacks, migrate offline servers
   if (typeof candidate.version === "number" && candidate.version < 3) {
     return {
       version: SETTINGS_VERSION,
-      dnsServer: normalizePersistedDnsServer(candidate.dnsServer),
+      dnsServer: normalizePersistedDnsServer(candidate.dnsServer, true), // Apply offline migration
       enableMockDNS: Boolean(candidate.enableMockDNS),
-      allowExperimentalTransports: true, // Always enable for v3 (UDP/TCP fallbacks)
+      allowExperimentalTransports: true, // Always enable for v3+ (UDP/TCP fallbacks)
       enableHaptics:
         typeof candidate.enableHaptics === "boolean"
           ? candidate.enableHaptics
@@ -111,11 +125,11 @@ export function migrateSettings(raw: unknown): PersistedSettings {
     };
   }
 
-  // Version 3+
-  if (typeof candidate.version === "number") {
+  // Version 3 → Version 4: Migrate ch.at (offline) to llm.pieter.com
+  if (typeof candidate.version === "number" && candidate.version === 3) {
     return {
       version: SETTINGS_VERSION,
-      dnsServer: normalizePersistedDnsServer(candidate.dnsServer),
+      dnsServer: normalizePersistedDnsServer(candidate.dnsServer, true), // Apply offline migration
       enableMockDNS: Boolean(candidate.enableMockDNS),
       allowExperimentalTransports: Boolean(
         candidate.allowExperimentalTransports ?? true,
@@ -132,11 +146,32 @@ export function migrateSettings(raw: unknown): PersistedSettings {
     };
   }
 
-  // Legacy v1 (no version field)
+  // Version 4+: No migration needed, preserve settings
+  if (typeof candidate.version === "number") {
+    return {
+      version: SETTINGS_VERSION,
+      dnsServer: normalizePersistedDnsServer(candidate.dnsServer, false), // No migration for v4+
+      enableMockDNS: Boolean(candidate.enableMockDNS),
+      allowExperimentalTransports: Boolean(
+        candidate.allowExperimentalTransports ?? true,
+      ),
+      enableHaptics:
+        typeof candidate.enableHaptics === "boolean"
+          ? candidate.enableHaptics
+          : true,
+      preferredLocale:
+        candidate.preferredLocale === undefined
+          ? null
+          : normalizePreferredLocale(candidate.preferredLocale),
+      accessibility: resolvedAccessibility,
+    };
+  }
+
+  // Legacy v1 (no version field) → Version 4
   const legacy = candidate as LegacySettingsV1;
   return {
     version: SETTINGS_VERSION,
-    dnsServer: normalizePersistedDnsServer(legacy.dnsServer),
+    dnsServer: normalizePersistedDnsServer(legacy.dnsServer, true), // Apply offline migration
     enableMockDNS: Boolean(legacy.enableMockDNS),
     allowExperimentalTransports: true,
     enableHaptics: true,

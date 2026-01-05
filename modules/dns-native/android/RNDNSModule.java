@@ -41,8 +41,8 @@ public class RNDNSModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void queryTXT(String domain, String message, Promise promise) {
-        CompletableFuture<List<String>> future = dnsResolver.queryTXT(domain, message);
+    public void queryTXT(String domain, String message, int port, Promise promise) {
+        CompletableFuture<List<String>> future = dnsResolver.queryTXT(domain, message, port);
         
         future
             .thenAccept(txtRecords -> {

@@ -78,20 +78,20 @@ export function GlassSettings() {
   const aboutSheet = useGlassBottomSheet();
   const supportSheet = useGlassBottomSheet();
 
-  // DNS Service options
+  // DNS Service options - llm.pieter.com is now the default (ch.at is offline)
   const dnsServerOptions = React.useMemo(
     () => [
-      {
-        value: DEFAULT_DNS_SERVER,
-        label: t("screen.glassSettings.dnsOptions.chAt.label"),
-        description: t("screen.glassSettings.dnsOptions.chAt.description"),
-      },
       {
         value: "llm.pieter.com",
         label: t("screen.glassSettings.dnsOptions.llmPieter.label"),
         description: t(
           "screen.glassSettings.dnsOptions.llmPieter.description",
         ),
+      },
+      {
+        value: "ch.at",
+        label: t("screen.glassSettings.dnsOptions.chAt.label"),
+        description: t("screen.glassSettings.dnsOptions.chAt.description"),
       },
     ],
     [t],
@@ -100,8 +100,8 @@ export function GlassSettings() {
   const fallbackDnsOption =
     dnsServerOptions[0] ?? {
       value: DEFAULT_DNS_SERVER,
-      label: t("screen.glassSettings.dnsOptions.chAt.label"),
-      description: t("screen.glassSettings.dnsOptions.chAt.description"),
+      label: t("screen.glassSettings.dnsOptions.llmPieter.label"),
+      description: t("screen.glassSettings.dnsOptions.llmPieter.description"),
     };
   const currentDnsOption =
     dnsServerOptions.find((option) => option.value === dnsServer) ??

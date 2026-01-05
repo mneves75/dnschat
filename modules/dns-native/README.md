@@ -34,14 +34,14 @@ if (!capabilities.available) {
 // queryName must be the fully-qualified name you want to look up (already
 // sanitized/validated by the caller).
 const queryName = "hello-world.ch.at";
-const txtRecords = await nativeDNS.queryTXT("ch.at", queryName);
+const txtRecords = await nativeDNS.queryTXT("ch.at", queryName, 53);
 const response = nativeDNS.parseMultiPartResponse(txtRecords);
 ```
 
 ## API
 
 - `nativeDNS.isAvailable(): Promise<DNSCapabilities>`
-- `nativeDNS.queryTXT(dnsServer: string, queryName: string): Promise<string[]>`
+- `nativeDNS.queryTXT(dnsServer: string, queryName: string, port?: number): Promise<string[]>`
 - `nativeDNS.parseMultiPartResponse(records: string[]): string`
 
 ## Development

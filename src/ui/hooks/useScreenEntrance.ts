@@ -21,7 +21,7 @@
  * @see DESIGN-UI-UX-GUIDELINES.md - Screen entrance patterns
  */
 
-import { useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   useSharedValue,
   useAnimatedStyle,
@@ -91,7 +91,14 @@ export function useScreenEntrance(
   // Shared values for animation
   const opacity = useSharedValue(shouldReduceMotion ? 1 : 0);
   const translateY = useSharedValue(shouldReduceMotion ? 0 : initialOffset);
-  const isReady = useSharedValue(shouldReduceMotion);
+  const [isReady, setIsReady] = useState(shouldReduceMotion);
+
+  const markReady = useCallback(() => {
+    setIsReady(true);
+    if (onComplete) {
+      onComplete();
+    }
+  }, [onComplete]);
 
   const animate = () => {
     'worklet';
@@ -100,20 +107,14 @@ export function useScreenEntrance(
       // Instant transition for reduced motion
       opacity.value = 1;
       translateY.value = 0;
-      isReady.value = true;
-      if (onComplete) {
-        runOnJS(onComplete)();
-      }
+      runOnJS(markReady)();
       return;
     }
 
     // Opacity: timing animation (0.3s)
     opacity.value = withTiming(1, TimingConfig.normal, (finished) => {
       if (finished) {
-        isReady.value = true;
-        if (onComplete) {
-          runOnJS(onComplete)();
-        }
+        runOnJS(markReady)();
       }
     });
 
@@ -144,7 +145,7 @@ export function useScreenEntrance(
 
   return {
     animatedStyle,
-    isReady: isReady.value,
+    isReady,
     animate,
   };
 }

@@ -5,14 +5,19 @@
  */
 
 // DNS Configuration
+// NOTE: Primary config is in modules/dns-native/constants.ts
+// This re-exports for backward compatibility
+import { DNS_CONSTANTS as NATIVE_DNS_CONSTANTS, getDefaultServer } from '../../modules/dns-native/constants';
+
 export const DNS_CONSTANTS = {
-  DEFAULT_DNS_SERVER: 'ch.at',
-  DNS_PORT: 53,
-  QUERY_TIMEOUT_MS: 10000,
-  MAX_RETRIES: 3,
-  RETRY_DELAY_MS: 200,
-  RATE_LIMIT_WINDOW_MS: 60000,
-  MAX_REQUESTS_PER_WINDOW: 60,
+  DEFAULT_DNS_SERVER: getDefaultServer().host,  // llm.pieter.com
+  DEFAULT_DNS_PORT: getDefaultServer().port,    // 9000
+  DNS_PORT: NATIVE_DNS_CONSTANTS.DNS_PORT,      // 53 (standard)
+  QUERY_TIMEOUT_MS: NATIVE_DNS_CONSTANTS.QUERY_TIMEOUT_MS,
+  MAX_RETRIES: NATIVE_DNS_CONSTANTS.MAX_RETRIES,
+  RETRY_DELAY_MS: NATIVE_DNS_CONSTANTS.RETRY_DELAY_MS,
+  RATE_LIMIT_WINDOW_MS: NATIVE_DNS_CONSTANTS.RATE_LIMIT_WINDOW_MS,
+  MAX_REQUESTS_PER_WINDOW: NATIVE_DNS_CONSTANTS.MAX_REQUESTS_PER_WINDOW,
 } as const;
 
 // Encryption Configuration

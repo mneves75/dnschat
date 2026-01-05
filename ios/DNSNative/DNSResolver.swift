@@ -7,7 +7,8 @@ import os.lock
 final class DNSResolver: NSObject {
     
     // MARK: - Configuration
-    private static let dnsPort: UInt16 = 53
+    // NOTE: Port is now dynamic - passed as parameter to support non-standard ports.
+    private static let defaultDnsPort: UInt16 = 53
     private static let queryTimeout: TimeInterval = 10.0
     private static let maxNativeAttempts: Int = 3
     private static let retryDelayNanoseconds: UInt64 = 200_000_000 // 200ms
@@ -30,9 +31,11 @@ final class DNSResolver: NSObject {
     @objc func queryTXT(
         domain: String,
         message: String,
+        port: NSNumber,
         resolver: @escaping RCTPromiseResolveBlock,
         rejecter: @escaping RCTPromiseRejectBlock
     ) {
+        let dnsPort = port.uint16Value > 0 ? port.uint16Value : Self.defaultDnsPort
         let queryName: String
         do {
             // Ensure Unicode input matches JS sanitization (fold accents, enforce ASCII)
@@ -42,7 +45,7 @@ final class DNSResolver: NSObject {
             return
         }
 
-        let queryId = "\(domain)-\(queryName)"
+        let queryId = "\(domain):\(dnsPort)-\(queryName)"
         
         Task {
             do {
@@ -54,8 +57,8 @@ final class DNSResolver: NSObject {
                     return
                 }
                 
-                // Create new query
-                let queryTask = createQueryTask(server: domain, queryName: queryName)
+                // Create new query with dynamic port
+                let queryTask = createQueryTask(server: domain, queryName: queryName, port: dnsPort)
                 _ = await MainActor.run { self.activeQueries[queryId] = queryTask }
 
                 let result = try await queryTask.value
@@ -76,12 +79,12 @@ final class DNSResolver: NSObject {
     
     // MARK: - Private Implementation
     
-    private func createQueryTask(server: String, queryName: String) -> Task<[String], Error> {
+    private func createQueryTask(server: String, queryName: String, port: UInt16) -> Task<[String], Error> {
         Task {
             try await withTimeout(seconds: Self.queryTimeout) {
                 for attempt in 0..<Self.maxNativeAttempts {
                     do {
-                        return try await self.performUDPQuery(server: server, queryName: queryName)
+                        return try await self.performUDPQuery(server: server, queryName: queryName, port: port)
                     } catch let error as DNSError {
                         if case .noRecordsFound = error, attempt < Self.maxNativeAttempts - 1 {
                             try await Task.sleep(nanoseconds: Self.retryDelayNanoseconds)
@@ -98,15 +101,15 @@ final class DNSResolver: NSObject {
     }
 
     @available(iOS 16.0, *)
-    private func performUDPQuery(server: String, queryName: String) async throws -> [String] {
+    private func performUDPQuery(server: String, queryName: String, port: UInt16) async throws -> [String] {
         // Build DNS query
         let queryData = try createDNSQuery(queryName: queryName)
 
-        // Prepare UDP connection
+        // Prepare UDP connection with dynamic port
         let host = NWEndpoint.Host(server)
-        let port = NWEndpoint.Port(integerLiteral: Self.dnsPort)
+        let dnsPort = NWEndpoint.Port(integerLiteral: port)
         let params = NWParameters.udp
-        let connection = NWConnection(host: host, port: port, using: params)
+        let connection = NWConnection(host: host, port: dnsPort, using: params)
 
         // CRITICAL: Wait for connection ready state
         //
@@ -254,7 +257,11 @@ final class DNSResolver: NSObject {
     private func parseDnsTxtResponse(_ data: Data) throws -> [String] {
         var results: [String] = []
         let bytes = [UInt8](data)
-        if bytes.count < 12 { return results }
+
+        // DNS header is 12 bytes - reject malformed responses explicitly
+        guard bytes.count >= 12 else {
+            throw DNSError.queryFailed("Response too short: \(bytes.count) bytes, minimum 12 required")
+        }
         
         let anCount = Int(bytes[6]) << 8 | Int(bytes[7])
         var offset = 12
@@ -492,12 +499,14 @@ final class RNDNSModule: NSObject {
     @objc func queryTXT(
         _ domain: String,
         message: String,
+        port: NSNumber,
         resolver: @escaping RCTPromiseResolveBlock,
         rejecter: @escaping RCTPromiseRejectBlock
     ) {
         self.resolver.queryTXT(
             domain: domain,
             message: message,
+            port: port,
             resolver: resolver,
             rejecter: rejecter
         )

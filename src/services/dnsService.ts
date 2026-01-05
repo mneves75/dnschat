@@ -2,7 +2,15 @@ import { Platform, AppState } from 'react-native';
 import * as dns from 'dns-packet';
 import { nativeDNS, DNSError, DNSErrorType } from '../../modules/dns-native';
 export { DNSError, DNSErrorType } from '../../modules/dns-native';
-import { DNS_CONSTANTS, sanitizeDNSMessageReference } from '../../modules/dns-native/constants';
+import {
+  DNS_CONSTANTS,
+  sanitizeDNSMessageReference,
+  getServerPort,
+  getServersByPriority,
+  getDefaultServer,
+  getLLMServers,
+  type DNSServerConfig,
+} from '../../modules/dns-native/constants';
 import { getRandomValues as expoGetRandomValues } from 'expo-crypto';
 import { DNSLogService } from './dnsLogService';
 import { ERROR_MESSAGES } from '../constants/appConstants';
@@ -38,6 +46,7 @@ type DNSQueryContext = {
   label: string;
   queryName: string;
   targetServer: string;
+  targetPort: number;
 };
 
 // CRITICAL: Dynamic library loading with graceful fallback
@@ -558,22 +567,92 @@ export class DNSService {
       throw new Error('Rate limit exceeded. Please wait before making another request.');
     }
 
-    // Normalize + validate once; use the canonical value everywhere (query name + sockets + logs).
-    const targetServer = validateDNSServer(dnsServer || this.DEFAULT_DNS_SERVER);
+    // Build server fallback chain:
+    // - If user specified a server, use only that server (no fallback)
+    // - Otherwise, use LLM servers in priority order (llm.pieter.com:53 → ch.at:53)
+    const serversToTry: DNSServerConfig[] = dnsServer
+      ? [{ host: validateDNSServer(dnsServer), port: getServerPort(dnsServer), priority: 1 }]
+      : getLLMServers();  // Returns [llm.pieter.com:53, ch.at:53]
 
-    // Prepare DNS query context (label + fully-qualified query name)
-    const queryContext = this.createQueryContext(message, targetServer);
+    this.vLog(`Server fallback chain: ${serversToTry.map(s => `${s.host}:${s.port}`).join(' → ')}`);
 
     // Start logging the query
     const queryId = DNSLogService.startQuery(message);
-    DNSLogService.addLog({
-      id: `${queryId}-query-name`,
-      timestamp: new Date(),
-      message: `Resolved DNS query name: ${queryContext.queryName}`,
-      method: 'native',
-      status: 'attempt',
-      details: `Label: ${queryContext.label}`,
-    });
+
+    let lastError: Error | null = null;
+
+    // Try each server in the fallback chain
+    for (const serverConfig of serversToTry) {
+      const targetServer = serverConfig.host;
+
+      // Prepare DNS query context for this server
+      const queryContext = this.createQueryContext(message, targetServer);
+
+      DNSLogService.addLog({
+        id: `${queryId}-server-${targetServer}`,
+        timestamp: new Date(),
+        message: `Trying server: ${targetServer}:${queryContext.targetPort}`,
+        method: 'native',
+        status: 'attempt',
+        details: `Query: ${queryContext.queryName}`,
+      });
+
+      try {
+        const result = await this.queryWithServer(
+          queryContext,
+          queryId,
+          enableMockDNS,
+          allowExperimentalTransports,
+        );
+
+        await DNSLogService.endQuery(true, result.response, result.method);
+        return result.response;
+      } catch (error: any) {
+        lastError = error;
+        this.vLog(`Server ${targetServer}:${queryContext.targetPort} failed: ${error.message}`);
+
+        // Log server fallback if there's another server to try
+        const serverIndex = serversToTry.indexOf(serverConfig);
+        const nextServer = serversToTry[serverIndex + 1];
+        if (nextServer) {
+          DNSLogService.logServerFallback(
+            `${targetServer}:${queryContext.targetPort}`,
+            `${nextServer.host}:${nextServer.port}`,
+          );
+        }
+
+        // Continue to next server
+        continue;
+      }
+    }
+
+    // All servers failed
+    await DNSLogService.endQuery(false, undefined, undefined);
+
+    // Provide comprehensive error guidance
+    const serverList = serversToTry.map(s => `${s.host}:${s.port}`).join(', ');
+    const troubleshootingSteps = [
+      '1. Check network connectivity and try a different network (WiFi <-> Cellular)',
+      `2. All LLM servers are unreachable: ${serverList}`,
+      '3. Check DNS logs in app Settings for detailed failure information',
+      '4. Network may be blocking DNS ports - contact network administrator',
+    ].join('\n');
+
+    throw new Error(
+      `DNS query failed after trying all servers (${serverList}).\n\nTroubleshooting steps:\n${troubleshootingSteps}`,
+    );
+  }
+
+  /**
+   * Execute DNS query against a specific server with transport fallback
+   */
+  private static async queryWithServer(
+    queryContext: DNSQueryContext,
+    queryId: string,
+    enableMockDNS?: boolean,
+    allowExperimentalTransports: boolean = true,
+  ): Promise<{ response: string; method: 'native' | 'udp' | 'tcp' | 'mock' }> {
+    const { targetServer, targetPort } = queryContext;
 
     for (let attempt = 0; attempt < this.MAX_RETRIES; attempt++) {
       try {
@@ -586,7 +665,7 @@ export class DNSService {
         DNSLogService.addLog({
           id: `${queryId}-order-${attempt}`,
           timestamp: new Date(),
-          message: `Transport order: ${methodOrder.join(' → ')}`,
+          message: `Transport order: ${methodOrder.join(' → ')} for ${targetServer}:${targetPort}`,
           method: 'native',
           status: 'attempt',
           details: allowExperimentalTransports
@@ -598,8 +677,7 @@ export class DNSService {
           try {
             const result = await this.tryMethod(method, queryContext);
             if (result) {
-              await DNSLogService.endQuery(true, result.response, result.method);
-              return result.response;
+              return result;
             }
           } catch (methodError: any) {
             // Log the failure and continue to next method
@@ -625,7 +703,7 @@ export class DNSService {
         let guidance = '';
         if (methodOrder.includes('udp') && methodOrder.includes('tcp')) {
           guidance =
-            ' • This often indicates network restrictions blocking DNS port 53. Try switching to a different network (e.g., cellular vs WiFi) or contact your network administrator.';
+            ` • Port ${targetPort} may be blocked. Try switching networks (WiFi <-> Cellular).`;
         }
 
         if (!allowExperimentalTransports) {
@@ -634,18 +712,17 @@ export class DNSService {
         }
 
         throw new Error(
-          `All ${methodCount} DNS transport methods failed (attempted: ${availableMethods}) for target server: ${targetServer}.${guidance}`,
+          `All ${methodCount} DNS transports failed for ${targetServer}:${targetPort} (attempted: ${availableMethods}).${guidance}`,
         );
       } catch (error: any) {
         if (attempt === this.MAX_RETRIES - 1) {
-          await DNSLogService.endQuery(false, undefined, undefined);
           throw error;
         }
 
         DNSLogService.addLog({
           id: `retry-${Date.now()}`,
           timestamp: new Date(),
-          message: `Retrying query (attempt ${attempt + 2}/${this.MAX_RETRIES})`,
+          message: `Retrying ${targetServer}:${targetPort} (attempt ${attempt + 2}/${this.MAX_RETRIES})`,
           method: 'udp',
           status: 'attempt',
           details: `Waiting ${this.RETRY_DELAY * Math.pow(2, attempt)}ms`,
@@ -656,24 +733,15 @@ export class DNSService {
       }
     }
 
-    await DNSLogService.endQuery(false, undefined, undefined);
-
-    // Provide comprehensive error guidance
-    const troubleshootingSteps = [
-      '1. Check network connectivity and try a different network (WiFi <-> Cellular)',
-      '2. Verify DNS server is accessible: ping ch.at',
-      '3. Check DNS logs in app Settings for detailed failure information',
-      '4. Network may be blocking DNS port 53 - contact network administrator',
-    ].join('\n');
-
     throw new Error(
-      `DNS query failed after ${this.MAX_RETRIES} attempts to '${targetServer}' with label '${queryContext.label}' (query name: ${queryContext.queryName}).\n\nTroubleshooting steps:\n${troubleshootingSteps}`,
+      `DNS query failed after ${this.MAX_RETRIES} attempts to ${targetServer}:${targetPort}`,
     );
   }
 
   private static async performNativeUDPQuery(
     queryName: string,
     dnsServer: string,
+    port: number = DNS_CONSTANTS.DNS_PORT,
   ): Promise<string[]> {
     return new Promise((resolve, reject) => {
       if (!dgram) {
@@ -723,7 +791,7 @@ export class DNSService {
           ) {
             reject(
               new Error(
-                `UDP port 53 blocked by network/iOS - automatic fallback to TCP: ${e.message}`,
+                `UDP port ${port} blocked by network/iOS - automatic fallback to TCP: ${e.message}`,
               ),
             );
           } else if (errorMsg.includes('permission') || errorMsg.includes('denied')) {
@@ -817,11 +885,11 @@ export class DNSService {
           queryBuffer,
           0,
           queryBuffer.length,
-          this.DNS_PORT,
+          port,  // Use dynamic port (9000 for llm.pieter.com, 53 for others)
           dnsServer,
           (error?: Error) => {
             if (error) {
-              onError(new Error(`Failed to send UDP packet: ${error.message}`));
+              onError(new Error(`Failed to send UDP packet to ${dnsServer}:${port}: ${error.message}`));
             }
           },
         );
@@ -831,7 +899,11 @@ export class DNSService {
     });
   }
 
-  private static async performDNSOverTCP(queryName: string, dnsServer: string): Promise<string[]> {
+  private static async performDNSOverTCP(
+    queryName: string,
+    dnsServer: string,
+    port: number = DNS_CONSTANTS.DNS_PORT,
+  ): Promise<string[]> {
     return new Promise((resolve, reject) => {
       this.vLog('TCP: Starting DNS-over-TCP query');
       this.vLog('TCP: TcpSocket available:', !!TcpSocket);
@@ -898,7 +970,7 @@ export class DNSService {
           const errorStr = e.toLowerCase();
           if (errorStr.includes('connection refused') || errorStr.includes('econnrefused')) {
             reject(
-              new Error(`TCP connection refused - DNS server may be blocking TCP port 53: ${e}`),
+              new Error(`TCP connection refused - DNS server may be blocking TCP port ${port}: ${e}`),
             );
           } else if (errorStr.includes('timeout') || errorStr.includes('etimedout')) {
             reject(new Error(`TCP connection timeout - network may be blocking TCP DNS: ${e}`));
@@ -916,7 +988,7 @@ export class DNSService {
           ) {
             reject(
               new Error(
-                `TCP connection refused - DNS server may be blocking TCP port 53: ${e.message}`,
+                `TCP connection refused - DNS server may be blocking TCP port ${port}: ${e.message}`,
               ),
             );
           } else if (
@@ -948,7 +1020,7 @@ export class DNSService {
           ) {
             reject(
               new Error(
-                `TCP connection refused [${errorCode}] - DNS server may be blocking TCP port 53: ${errorMsg}`,
+                `TCP connection refused [${errorCode}] - DNS server may be blocking TCP port ${port}: ${errorMsg}`,
               ),
             );
           } else if (
@@ -1135,11 +1207,11 @@ export class DNSService {
         });
 
         // Connect and send the query
-        this.vLog('TCP: Attempting to connect to', dnsServer, 'port', this.DNS_PORT);
+        this.vLog('TCP: Attempting to connect to', dnsServer, 'port', port);
         try {
           socket.connect(
             {
-              port: this.DNS_PORT,
+              port: port,  // Use dynamic port (9000 for llm.pieter.com, 53 for others)
               host: dnsServer,
             },
             (connectResult: any) => {
@@ -1191,15 +1263,30 @@ export class DNSService {
     return sanitizeDNSMessage(message);
   }
 
+  private static normalizePort(port: number, server: string): number {
+    if (!Number.isFinite(port)) {
+      throw new Error(`Invalid DNS port for ${server}: ${String(port)}`);
+    }
+    const normalized = Math.trunc(port);
+    if (normalized < 1 || normalized > 65535) {
+      throw new Error(
+        `Invalid DNS port ${normalized} for ${server}. Must be between 1 and 65535.`,
+      );
+    }
+    return normalized;
+  }
+
   private static createQueryContext(originalMessage: string, targetServer: string): DNSQueryContext {
     const label = this.sanitizeMessage(originalMessage);
     const queryName = composeDNSQueryName(label, targetServer);
+    const targetPort = this.normalizePort(getServerPort(targetServer), targetServer);
 
     return {
       originalMessage,
       label,
       queryName,
       targetServer,
+      targetPort,
     };
   }
 
@@ -1255,10 +1342,10 @@ export class DNSService {
     method: 'native' | 'udp' | 'tcp' | 'mock';
   } | null> {
     const startTime = Date.now();
-    const { queryName, targetServer, originalMessage, label } = context;
+    const { queryName, targetServer, targetPort, originalMessage, label } = context;
 
     try {
-      DNSLogService.logMethodAttempt(method, `Server: ${targetServer}`);
+      DNSLogService.logMethodAttempt(method, `Server: ${targetServer}:${targetPort}`);
 
       let txtRecords: string[];
 
@@ -1307,14 +1394,15 @@ export class DNSService {
               try {
                 this.vLog('NATIVE: Calling nativeDNS.queryTXT with:', {
                   server: targetServer,
+                  port: targetPort,
                   queryName,
                 });
 
                 const queryStartTime = Date.now();
                 const records = await this.withTimeout(
-                  nativeDNS.queryTXT(targetServer, queryName),
+                  nativeDNS.queryTXT(targetServer, queryName, targetPort),
                   this.TIMEOUT,
-                  `Native DNS query timed out after ${this.TIMEOUT}ms`,
+                  `Native DNS query to ${targetServer}:${targetPort} timed out after ${this.TIMEOUT}ms`,
                 );
                 const queryDuration = Date.now() - queryStartTime;
 
@@ -1421,7 +1509,7 @@ export class DNSService {
           }
 
           txtRecords = await this.handleBackgroundSuspension(() =>
-            this.performNativeUDPQuery(queryName, targetServer),
+            this.performNativeUDPQuery(queryName, targetServer, targetPort),
           );
           break;
 
@@ -1438,7 +1526,7 @@ export class DNSService {
           }
 
           txtRecords = await this.handleBackgroundSuspension(() =>
-            this.performDNSOverTCP(queryName, targetServer),
+            this.performDNSOverTCP(queryName, targetServer, targetPort),
           );
           break;
 
@@ -1507,11 +1595,11 @@ export class DNSService {
     const startTime = Date.now();
 
     try {
-      this.vLog(`Testing ${transport.toUpperCase()} transport to ${targetServer}`);
+      this.vLog(`Testing ${transport.toUpperCase()} transport to ${targetServer}:${context.targetPort}`);
       this.vLog('Forced query name:', context.queryName);
       DNSLogService.logMethodAttempt(
         transport,
-        `FORCED test (no fallback) - Server: ${targetServer}`,
+        `FORCED test (no fallback) - Server: ${targetServer}:${context.targetPort}`,
       );
 
       let txtRecords: string[];
@@ -1527,13 +1615,13 @@ export class DNSService {
 
             if (capabilities.available && capabilities.supportsCustomServer) {
               this.vLog('NATIVE TEST: Native DNS available for forced test');
-              this.vLog('NATIVE TEST: Executing queryTXT...');
+              this.vLog(`NATIVE TEST: Executing queryTXT to ${targetServer}:${context.targetPort}...`);
 
               const testStartTime = Date.now();
               const records = await this.withTimeout(
-                nativeDNS.queryTXT(targetServer, context.queryName),
+                nativeDNS.queryTXT(targetServer, context.queryName, context.targetPort),
                 this.TIMEOUT,
-                `Native DNS query timed out after ${this.TIMEOUT}ms`,
+                `Native DNS query to ${targetServer}:${context.targetPort} timed out after ${this.TIMEOUT}ms`,
               );
               const testQueryDuration = Date.now() - testStartTime;
 
@@ -1577,7 +1665,7 @@ export class DNSService {
           }
 
           txtRecords = await this.handleBackgroundSuspension(() =>
-            this.performNativeUDPQuery(context.queryName, targetServer),
+            this.performNativeUDPQuery(context.queryName, targetServer, context.targetPort),
           );
           break;
 
@@ -1594,7 +1682,7 @@ export class DNSService {
           }
 
           txtRecords = await this.handleBackgroundSuspension(() =>
-            this.performDNSOverTCP(context.queryName, targetServer),
+            this.performDNSOverTCP(context.queryName, targetServer, context.targetPort),
           );
           break;
 

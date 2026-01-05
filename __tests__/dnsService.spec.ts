@@ -158,7 +158,8 @@ describe("DNS Service helpers", () => {
 
     it("falls back to default zone when server is IPv4", () => {
       const fqdn = composeDNSQueryName("test", "8.8.8.8");
-      expect(fqdn).toBe("test.ch.at");
+      // Default zone is now llm.pieter.com (primary LLM server)
+      expect(fqdn).toBe("test.llm.pieter.com");
     });
   });
 
