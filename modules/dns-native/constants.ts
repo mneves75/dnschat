@@ -4,6 +4,18 @@
  */
 
 /**
+ * DNS Server Configuration
+ * Defines server-specific settings including non-standard ports
+ */
+export interface DNSServerConfig {
+  host: string;
+  port: number;
+  priority: number;  // Lower = higher priority (1 = primary)
+  isDefault?: boolean;
+  description?: string;
+}
+
+/**
  * Serializable regex descriptor that can be rehydrated on native platforms without
  * losing the original pattern, flags, or ordering. Keep this limited to JSON-friendly
  * primitives so it crosses the React Native bridge intact.
@@ -29,6 +41,67 @@ export type NativeSanitizerConfig = {
   combiningMarks: RegexDescriptor;
 };
 
+/**
+ * DNS Server Registry
+ * Ordered by priority (lower number = higher priority)
+ * Primary: llm.pieter.com (port 53) - @levelsio's LLM-over-DNS service
+ * Fallback: ch.at (port 53) - Original ChatDNS server (currently offline, may return)
+ *
+ * NOTE: llm.pieter.com also supports port 9000, but port 53 is more firewall-friendly
+ */
+export const DNS_SERVERS: DNSServerConfig[] = [
+  // Port 53 confirmed working via dig test (2026-01-05) - more firewall-friendly than port 9000
+  // See: https://x.com/levelsio/status/1953063231347458220
+  { host: 'llm.pieter.com', port: 53, priority: 1, isDefault: true, description: 'LLM-over-DNS by @levelsio' },
+  { host: 'ch.at', port: 53, priority: 2, description: 'Original ChatDNS server' },
+  { host: '8.8.8.8', port: 53, priority: 10, description: 'Google DNS' },
+  { host: '8.8.4.4', port: 53, priority: 10, description: 'Google DNS secondary' },
+  { host: '1.1.1.1', port: 53, priority: 10, description: 'Cloudflare DNS' },
+  { host: '1.0.0.1', port: 53, priority: 10, description: 'Cloudflare DNS secondary' },
+];
+
+/**
+ * Get server configuration by hostname
+ */
+export function getServerConfig(host: string): DNSServerConfig | undefined {
+  const normalized = host.toLowerCase().trim().replace(/\.+$/, '');
+  return DNS_SERVERS.find(s => s.host.toLowerCase() === normalized);
+}
+
+/**
+ * Get port for a specific server (defaults to 53 if not found)
+ */
+export function getServerPort(host: string): number {
+  const config = getServerConfig(host);
+  return config?.port ?? 53;
+}
+
+/**
+ * Get the default DNS server configuration
+ */
+export function getDefaultServer(): DNSServerConfig {
+  const defaultServer = DNS_SERVERS.find(s => s.isDefault);
+  if (!defaultServer) {
+    throw new Error('No default DNS server configured');
+  }
+  return defaultServer;
+}
+
+/**
+ * Get servers sorted by priority (for fallback chain)
+ */
+export function getServersByPriority(): DNSServerConfig[] {
+  return [...DNS_SERVERS].sort((a, b) => a.priority - b.priority);
+}
+
+/**
+ * Get LLM-capable servers (servers that understand natural language queries)
+ * These are the only servers that can process chat messages
+ */
+export function getLLMServers(): DNSServerConfig[] {
+  return DNS_SERVERS.filter(s => s.priority <= 2);  // Priority 1-2 are LLM servers
+}
+
 export const DNS_CONSTANTS = {
   // Message limits
   MAX_MESSAGE_LENGTH: 120,      // Enforce limit before sanitization to avoid silent truncation
@@ -53,19 +126,15 @@ export const DNS_CONSTANTS = {
     'enforce_label_limit', // Reject if it exceeds 63 characters (no silent truncation)
   ],
 
-  // DNS server whitelist
-  ALLOWED_DNS_SERVERS: [
-    'ch.at',      // Primary chat DNS server
-    'llm.pieter.com', // Secondary ChatDNS endpoint
-    '8.8.8.8',    // Google DNS
-    '8.8.4.4',    // Google DNS secondary
-    '1.1.1.1',    // Cloudflare DNS
-    '1.0.0.1',    // Cloudflare DNS secondary
-  ],
+  // DNS server whitelist (derived from DNS_SERVERS for backward compatibility)
+  ALLOWED_DNS_SERVERS: DNS_SERVERS.map(s => s.host),
 
-  // Network configuration (merged from appConstants.ts)
-  DEFAULT_DNS_SERVER: 'ch.at',  // Default DNS server for queries
-  DNS_PORT: 53,                 // Standard DNS port
+  // Network configuration
+  // IMPORTANT: DEFAULT_DNS_SERVER is now llm.pieter.com (port 9000)
+  // ch.at is offline, llm.pieter.com is the new primary server
+  DEFAULT_DNS_SERVER: getDefaultServer().host,
+  DEFAULT_DNS_PORT: getDefaultServer().port,  // 9000 for llm.pieter.com
+  DNS_PORT: 53,                 // Standard DNS port (for fallback servers)
   QUERY_TIMEOUT_MS: 10000,      // 10 seconds
   MAX_RETRIES: 3,               // Maximum retry attempts
   RETRY_DELAY_MS: 200,          // 200ms between retries (exponential backoff applied natively)

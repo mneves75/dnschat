@@ -341,7 +341,7 @@ export const enUS = {
           description:
             "Configure the DNS server used for LLM communication. This server will receive your messages via DNS TXT queries.",
           dnsServerLabel: "DNS TXT Service",
-          dnsServerPlaceholder: "ch.at",
+          dnsServerPlaceholder: "llm.pieter.com",
           dnsServerHint: "Default: {{server}}",
         },
         appBehavior: {
@@ -445,12 +445,12 @@ export const enUS = {
       },
       dnsOptions: {
         chAt: {
-          label: "ch.at (Default)",
-          description: "Official ChatDNS server with AI responses",
+          label: "ch.at",
+          description: "Original ChatDNS server (offline)",
         },
         llmPieter: {
-          label: "llm.pieter.com",
-          description: "Pieter's LLM service via DNS",
+          label: "llm.pieter.com (Default)",
+          description: "Pieter's LLM service via DNS - recommended",
         },
       },
       aboutSheet: {

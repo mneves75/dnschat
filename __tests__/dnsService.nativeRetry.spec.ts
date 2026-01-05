@@ -93,6 +93,7 @@ describe('DNSService native retry integration', () => {
     expect(mockedNativeDNS.queryTXT).toHaveBeenCalledWith(
       targetServer,
       expectedQueryName,
+      53, // ch.at uses standard DNS port
     );
   });
 });

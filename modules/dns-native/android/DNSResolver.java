@@ -118,7 +118,7 @@ public class DNSResolver {
         }
     }
 
-    public CompletableFuture<List<String>> queryTXT(String domain, String message) {
+    public CompletableFuture<List<String>> queryTXT(String domain, String message, int port) {
         // Normalize the fully-qualified query name provided by the JS bridge
         final String queryName;
         try {
@@ -129,7 +129,17 @@ public class DNSResolver {
             return failed;
         }
 
-        final String queryId = domain + "-" + queryName;
+        final int dnsPort = port > 0 ? port : DNS_PORT;
+        if (dnsPort < 1 || dnsPort > 65535) {
+            CompletableFuture<List<String>> failed = new CompletableFuture<>();
+            failed.completeExceptionally(
+                new DNSError(DNSError.Type.QUERY_FAILED,
+                    "Invalid DNS port: " + dnsPort + ". Must be between 1 and 65535.")
+            );
+            return failed;
+        }
+
+        final String queryId = domain + ":" + dnsPort + "-" + queryName;
 
         // Check for existing query (deduplication) - matches iOS behavior
         CompletableFuture<List<String>> existingQuery = activeQueries.get(queryId);
@@ -147,7 +157,7 @@ public class DNSResolver {
         
         // Android internal fallback strategy:
         // Raw UDP -> DNS-over-HTTPS (unless ch.at) -> legacy (dnsjava)
-        queryTXTRawUDP(queryName, domain)
+        queryTXTRawUDP(queryName, domain, dnsPort)
             .thenAccept(txtRecords -> {
                 activeQueries.remove(queryId);
                 Log.d(TAG, "DNS: Query completed, active queries: " + activeQueries.size());
@@ -165,7 +175,7 @@ public class DNSResolver {
                         })
                         .exceptionally(err2 -> {
                             Log.d(TAG, "DNS: Trying legacy DNS (fallback 2)");
-                            queryTXTLegacy(domain, queryName)
+                            queryTXTLegacy(domain, queryName, dnsPort)
                                 .thenAccept(txtRecords -> {
                                     activeQueries.remove(queryId);
                                     Log.d(TAG, "DNS: Query completed (legacy), active queries: " + activeQueries.size());
@@ -181,7 +191,7 @@ public class DNSResolver {
                         });
                 } else {
                     Log.d(TAG, "DNS: Skipping DoH for ch.at, trying legacy DNS");
-                    queryTXTLegacy(domain, queryName)
+                    queryTXTLegacy(domain, queryName, dnsPort)
                         .thenAccept(txtRecords -> {
                             activeQueries.remove(queryId);
                             Log.d(TAG, "DNS: Query completed (legacy), active queries: " + activeQueries.size());
@@ -200,7 +210,7 @@ public class DNSResolver {
     }
 
 
-    private CompletableFuture<List<String>> queryTXTLegacy(String domain, String queryName) {
+    private CompletableFuture<List<String>> queryTXTLegacy(String domain, String queryName, int port) {
         return CompletableFuture.supplyAsync(() -> {
             DNSError lastError = null;
             for (int attempt = 0; attempt < MAX_NATIVE_ATTEMPTS; attempt++) {
@@ -208,7 +218,7 @@ public class DNSResolver {
                     Lookup lookup = new Lookup(queryName, Type.TXT);
 
                     SimpleResolver resolver = new SimpleResolver(domain);
-                    resolver.setPort(DNS_PORT);
+                    resolver.setPort(port);
                     resolver.setTimeout(QUERY_TIMEOUT_MS / 1000);
                     lookup.setResolver(resolver);
 
@@ -262,7 +272,7 @@ public class DNSResolver {
     /**
      * Send a raw UDP DNS TXT query for the fully-qualified domain name provided by the JS bridge.
      */
-    private CompletableFuture<List<String>> queryTXTRawUDP(String queryName, String server) {
+    private CompletableFuture<List<String>> queryTXTRawUDP(String queryName, String server, int port) {
         return CompletableFuture.supplyAsync(() -> {
             DNSError lastError = null;
             for (int attempt = 0; attempt < MAX_NATIVE_ATTEMPTS; attempt++) {
@@ -274,7 +284,7 @@ public class DNSResolver {
                     socket.setSoTimeout(QUERY_TIMEOUT_MS);
                     InetAddress serverAddr = InetAddress.getByName(server);
 
-                    DatagramPacket packet = new DatagramPacket(query, query.length, serverAddr, DNS_PORT);
+                    DatagramPacket packet = new DatagramPacket(query, query.length, serverAddr, port);
                     socket.send(packet);
 
                     byte[] buffer = new byte[2048];

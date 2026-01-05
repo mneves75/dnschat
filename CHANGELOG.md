@@ -6,6 +6,8 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## Unreleased
 
+## 3.8.9 - 2026-01-05
+
 ### Added
 
 - Added `useScreenEntrance` hook for screen entrance animations (fade + translateY).
@@ -15,6 +17,7 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 - Added `testID` prop support to `Form.Item` component for testing.
 - Implemented Profile screen with user statistics and data management actions.
 - Implemented Home screen with quick actions and recent chats preview.
+- Added exec plan for native DNS port parity and Reanimated render-safety (`docs/plans/EXECPLAN-2026-01-05-NATIVE-DNS-PARITY-REANIMATED.md`).
 
 ### Changed
 
@@ -28,16 +31,24 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 - Fixed tab bar to use palette colors instead of hardcoded values.
 - Replaced hardcoded colors across all screens with `useImessagePalette` tokens.
 - Docs: refreshed the 2026-01-05 guidelines re-verification ExecPlan and documentation index.
+- Bumped app version metadata to 3.8.9 (build 29) across iOS and Android configs.
+- Updated native DNS module README to document the `port` parameter.
+- Refreshed docs index to reference the current exec plan location.
 
 ### Fixed
 
 - Fixed settings tests to work with GlassSettings after deleting duplicate Settings.tsx.
 - Fixed `Form.Item` mock in tests to properly pass through `testID` and `onPress` props.
+- Fixed native DNS bridge mismatch by adding the `port` parameter across iOS/Android bridges.
+- Fixed Android native DNS transport to honor per-server ports for UDP and legacy resolver calls.
+- Fixed Reanimated warnings by removing shared-value reads during render in `useScreenEntrance` and `Toast`.
+- Added DNS port validation before socket usage to prevent invalid port errors.
 
 ### Removed
 
 - Deleted duplicate `ChatList.tsx` screen (GlassChatList is the canonical implementation).
 - Deleted duplicate `Settings.tsx` screen (GlassSettings is the canonical implementation).
+- Removed outdated exec plan documents from `docs/` (now tracked in `docs/plans/`).
 
 ## 3.8.8 - 2026-01-05
 

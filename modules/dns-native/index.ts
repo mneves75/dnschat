@@ -1,5 +1,5 @@
 import { NativeModules, Platform } from "react-native";
-import { getNativeSanitizerConfig } from "./constants";
+import { getNativeSanitizerConfig, getServerPort, DNS_CONSTANTS } from "./constants";
 import type { NativeSanitizerConfig } from "./constants";
 
 const isJestRuntime = (): boolean => {
@@ -49,11 +49,12 @@ export interface DNSCapabilities {
 export interface NativeDNSModule {
   /**
    * Query TXT records from a DNS server
-   * @param domain - DNS server hostname (e.g., 'ch.at')
+   * @param domain - DNS server hostname (e.g., 'llm.pieter.com', 'ch.at')
    * @param message - Fully qualified domain name to query (already sanitized)
+   * @param port - DNS port (9000 for llm.pieter.com, 53 for standard DNS)
    * @returns Promise resolving to array of TXT record strings
    */
-  queryTXT(domain: string, message: string): Promise<string[]>;
+  queryTXT(domain: string, message: string, port: number): Promise<string[]>;
 
   /**
    * Check if native DNS functionality is available on this platform
@@ -140,7 +141,7 @@ export class NativeDNS implements NativeDNSModule {
     }
   }
 
-  async queryTXT(domain: string, message: string): Promise<string[]> {
+  async queryTXT(domain: string, message: string, port?: number): Promise<string[]> {
     if (!this.nativeModule) {
       throw new DNSError(
         DNSErrorType.PLATFORM_UNSUPPORTED,
@@ -155,8 +156,22 @@ export class NativeDNS implements NativeDNSModule {
       );
     }
 
+    // Use provided port, or look up from server config, or default to 53
+    const dnsPort = port ?? getServerPort(domain) ?? DNS_CONSTANTS.DNS_PORT;
+
+    // SECURITY: Validate port is in valid range (1-65535)
+    // Ports 0 and negative values are invalid; ports > 65535 don't exist
+    if (dnsPort < 1 || dnsPort > 65535) {
+      throw new DNSError(
+        DNSErrorType.INVALID_RESPONSE,
+        `Invalid DNS port: ${dnsPort}. Must be between 1 and 65535.`,
+      );
+    }
+
+    debugLog(`[NativeDNS] queryTXT: ${domain}:${dnsPort} - ${message.trim()}`);
+
     try {
-      const result = await this.nativeModule.queryTXT(domain, message.trim());
+      const result = await this.nativeModule.queryTXT(domain, message.trim(), dnsPort);
 
       if (!Array.isArray(result) || result.length === 0) {
         throw new DNSError(

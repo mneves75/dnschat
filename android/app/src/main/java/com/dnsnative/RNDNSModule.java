@@ -2,12 +2,14 @@ package com.dnsnative;
 
 import android.content.Context;
 import android.net.ConnectivityManager;
+import android.util.Log;
 
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
+import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
 
@@ -16,6 +18,7 @@ import java.util.concurrent.CompletableFuture;
 
 public class RNDNSModule extends ReactContextBaseJavaModule {
     private static final String MODULE_NAME = "RNDNSModule";
+    private static final String TAG = "RNDNSModule";
     private final DNSResolver dnsResolver;
 
     public RNDNSModule(ReactApplicationContext reactContext) {
@@ -30,9 +33,16 @@ public class RNDNSModule extends ReactContextBaseJavaModule {
         return MODULE_NAME;
     }
 
+    @Override
+    public void invalidate() {
+        super.invalidate();
+        // Clean up thread pool to prevent leaks on app lifecycle events
+        dnsResolver.cleanup();
+    }
+
     @ReactMethod
-    public void queryTXT(String domain, String message, Promise promise) {
-        CompletableFuture<List<String>> future = dnsResolver.queryTXT(domain, message);
+    public void queryTXT(String domain, String message, int port, Promise promise) {
+        CompletableFuture<List<String>> future = dnsResolver.queryTXT(domain, message, port);
         
         future
             .thenAccept(txtRecords -> {
@@ -63,5 +73,40 @@ public class RNDNSModule extends ReactContextBaseJavaModule {
         result.putInt("apiLevel", capabilities.apiLevel);
         
         promise.resolve(result);
+    }
+
+    @ReactMethod
+    public void configureSanitizer(ReadableMap config, Promise promise) {
+        if (config == null) {
+            Log.w(TAG, "configureSanitizer called with null config; keeping existing sanitizer");
+            promise.reject("SANITIZER_CONFIG_NULL", "Sanitizer config map cannot be null");
+            return;
+        }
+
+        try {
+            boolean updated = dnsResolver.configureSanitizer(config.toHashMap());
+            if (updated) {
+                Log.d(TAG, "Configured sanitizer from JavaScript constants");
+            } else {
+                Log.d(TAG, "Sanitizer configuration unchanged; skipping recompilation");
+            }
+            promise.resolve(updated);
+        } catch (DNSResolver.SanitizerConfig.SanitizerConfigException error) {
+            Log.e(TAG, "Invalid sanitizer config received from JavaScript", error);
+            promise.reject(error.getCode(), error.getMessage(), error);
+        } catch (IllegalArgumentException error) {
+            Log.e(TAG, "Unexpected sanitizer configuration error", error);
+            promise.reject("SANITIZER_CONFIG_UNEXPECTED", error.getMessage(), error);
+        }
+    }
+
+    @ReactMethod
+    public void debugSanitizeLabel(String label, Promise promise) {
+        try {
+            String normalized = dnsResolver.debugNormalizeQueryName(label);
+            promise.resolve(normalized);
+        } catch (DNSResolver.DNSError error) {
+            promise.reject(error.getType().name(), error.getDetails(), error);
+        }
     }
 }

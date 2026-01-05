@@ -25,7 +25,7 @@ describe('SettingsContext migrateSettings', () => {
     });
   });
 
-  it('migrates v2 payload to v3 (removes HTTPS fields, enables experimental transports)', () => {
+  it('migrates v2 payload to v4 (removes HTTPS fields, enables experimental transports, migrates ch.at)', () => {
     const v2Payload = {
       version: 2,
       dnsServer: 'ch.at',
@@ -39,15 +39,34 @@ describe('SettingsContext migrateSettings', () => {
 
     const result = migrateSettings(v2Payload);
 
+    // ch.at is offline, so it gets migrated to llm.pieter.com
     expect(result).toEqual({
       version: SETTINGS_VERSION,
-      dnsServer: 'ch.at',
+      dnsServer: 'llm.pieter.com',
       enableMockDNS: false,
       allowExperimentalTransports: true,
       enableHaptics: true,
       preferredLocale: 'en-US',
       accessibility: DEFAULT_SETTINGS.accessibility,
     });
+  });
+
+  it('migrates v3 payload with ch.at to llm.pieter.com', () => {
+    const v3Payload = {
+      version: 3,
+      dnsServer: 'ch.at',
+      enableMockDNS: false,
+      allowExperimentalTransports: true,
+      enableHaptics: true,
+      preferredLocale: 'en-US',
+      accessibility: DEFAULT_SETTINGS.accessibility,
+    };
+
+    const result = migrateSettings(v3Payload);
+
+    // ch.at is offline, so it gets migrated to llm.pieter.com
+    expect(result.dnsServer).toBe('llm.pieter.com');
+    expect(result.version).toBe(SETTINGS_VERSION);
   });
 
   it('preserves v3 payload with correct fields', () => {

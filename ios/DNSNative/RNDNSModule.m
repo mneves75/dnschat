@@ -4,6 +4,7 @@
 
 RCT_EXTERN_METHOD(queryTXT:(NSString *)domain
                   message:(NSString *)message
+                  port:(nonnull NSNumber *)port
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 

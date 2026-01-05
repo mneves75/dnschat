@@ -341,7 +341,7 @@ export const ptBR = {
           description:
             "Defina o servidor DNS usado na comunicação com o LLM. Ele receberá suas mensagens via consultas TXT.",
           dnsServerLabel: "Serviço DNS TXT",
-          dnsServerPlaceholder: "ch.at",
+          dnsServerPlaceholder: "llm.pieter.com",
           dnsServerHint: "Padrão: {{server}}",
         },
         appBehavior: {
@@ -445,12 +445,12 @@ export const ptBR = {
       },
       dnsOptions: {
         chAt: {
-          label: "ch.at (padrão)",
-          description: "Servidor oficial do DNSChat com respostas de IA",
+          label: "ch.at",
+          description: "Servidor original do DNSChat (offline)",
         },
         llmPieter: {
-          label: "llm.pieter.com",
-          description: "Serviço de LLM do Pieter via DNS",
+          label: "llm.pieter.com (padrão)",
+          description: "Serviço de LLM do Pieter via DNS - recomendado",
         },
       },
       aboutSheet: {
