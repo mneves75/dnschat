@@ -26,7 +26,8 @@
  */
 
 import { useEffect, useCallback, useRef } from 'react';
-import {
+import type { ReactNode } from 'react';
+import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
@@ -34,6 +35,8 @@ import {
   withDelay,
   runOnJS,
 } from 'react-native-reanimated';
+import type { SharedValue } from 'react-native-reanimated';
+import type { ViewStyle } from 'react-native';
 import { useMotionReduction } from '../../context/AccessibilityContext';
 import { SpringConfig, TimingConfig } from '../../utils/animations';
 
@@ -233,13 +236,8 @@ export function useStaggeredList(
  * ));
  * ```
  */
-import React from 'react';
-import Animated from 'react-native-reanimated';
-import type { SharedValue } from 'react-native-reanimated';
-import type { ViewStyle } from 'react-native';
-
 interface AnimatedListItemProps {
-  children: React.ReactNode;
+  children: ReactNode;
   opacity: SharedValue<number>;
   translateX: SharedValue<number>;
   style?: ViewStyle;

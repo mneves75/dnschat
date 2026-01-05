@@ -151,7 +151,7 @@ bun run ios -- --verbose
 - **App Store Connect** app record created
 - **Code signing** configured correctly
 - **Bundle ID** matches (`org.mvneves.dnschat`)
-- **Version numbers** consistent (v3.8.7)
+- **Version numbers** consistent (v3.8.8)
 - **Native DNS module** compiles successfully
 - **Universal landscape support** enabled
 - **App Store screenshots** (current requirements):

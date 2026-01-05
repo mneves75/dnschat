@@ -68,6 +68,7 @@ None blocking.
 - [x] (2026-01-05 01:30Z) Inspected core source/config files for alignment (entry.tsx, app/_layout.tsx, app.json, babel.config.js, tsconfig.json, dnsService/dnsLogService/storageService).
 - [x] (2026-01-05 01:30Z) Validated current best-practice guidance for Expo SDK 54, Expo Router entry/typed routes, and React Native performance logging.
 - [x] (2026-01-05 02:31Z) Bumped version metadata to 3.8.7 (build 27) and refreshed release/store documentation.
+- [x] (2026-01-05 02:51Z) Bumped version metadata to 3.8.8 (build 28) for the staggered list bundling fix and documentation refresh.
 - [x] (2026-01-05 01:30Z) Ran lint/tests and captured verification output in Artifacts.
 - [x] (2026-01-05 01:30Z) Updated Outcomes & Retrospective with verification evidence.
 
@@ -79,10 +80,11 @@ None blocking.
 
 - Decision: Choose Option B (verification + metadata/documentation alignment). Rationale: Delivers a clean, auditable release record without introducing high-risk dependency upgrades. Date/Author: 2026-01-05 / Codex.
 - Decision: Bump patch version to 3.8.7 (build 27) to capture the hook import fix and documentation updates. Rationale: Release metadata should reflect the fix and agent navigation doc addition. Date/Author: 2026-01-05 / Codex.
+- Decision: Bump patch version to 3.8.8 (build 28) to capture the staggered list bundling fix and release doc refresh. Rationale: The JSX parse error blocks iOS bundling and needs a recorded patch release. Date/Author: 2026-01-05 / Codex.
 
 ## Outcomes & Retrospective
 
-All guideline and best-practice checks for this cycle are complete. Version metadata and release/store documentation are synchronized at 3.8.7 (build 27). Lint and Jest test suites pass with one skipped suite, matching prior behavior.
+All guideline and best-practice checks for this cycle are complete. Version metadata and release/store documentation are synchronized at 3.8.8 (build 28). Lint and Jest test suites pass with one skipped suite, matching prior behavior.
 
 ## Context and Orientation
 
@@ -123,3 +125,5 @@ Verification outputs (2026-01-05):
 ## Interfaces and Dependencies
 
 No new dependencies. The only touched interfaces are release metadata and documentation files plus the ExecPlan itself.
+
+Revision note (2026-01-05): Added the 3.8.8 patch release metadata update to record the staggered list bundling fix and documentation refresh.
