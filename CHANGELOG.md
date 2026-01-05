@@ -39,6 +39,17 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 - Deleted duplicate `ChatList.tsx` screen (GlassChatList is the canonical implementation).
 - Deleted duplicate `Settings.tsx` screen (GlassSettings is the canonical implementation).
 
+## 3.8.8 - 2026-01-05
+
+### Changed
+
+- Bumped app version metadata to 3.8.8 (build 28) across iOS and Android configs.
+- Updated release metadata and store documentation for the 3.8.8 build.
+
+### Fixed
+
+- Fixed iOS bundling by restoring the `useStaggeredList` hook module to TSX so JSX parses correctly.
+
 ## 3.8.7 - 2026-01-05
 
 ### Added

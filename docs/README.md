@@ -13,6 +13,7 @@ Start here:
 - `docs/EXECPLAN-2026-01-04-GUIDELINES-REVERIFY.md` (guidelines re-verification + CI/best-practice alignment)
 - `docs/EXECPLAN-2026-01-04-GUIDELINES-CODE-REVIEW.md` (guidelines verification + data deletion + docs alignment)
 - `docs/EXECPLAN-2026-01-05-GUIDELINES-REVERIFY.md` (guidelines re-verification + best-practice alignment refresh)
+- `docs/EXECPLAN-2026-01-05-STAGGERED-LIST-BUNDLE-FIX.md` (bundling regression fix + 3.8.8 patch release)
 - `docs/EXECPLAN-2026-01-04-UI-UX-REVIEW.md` (UI/UX review + iOS 26 Liquid Glass alignment, latest)
 - `docs/technical/SPECIFICATION.md` (product + behavior spec)
 - `docs/technical/DNS-PROTOCOL-SPEC.md` (DNS query/response rules)
