@@ -1,3 +1,14 @@
+/**
+ * Chat - Main chat screen with message list and input
+ *
+ * Features:
+ * - Subtle screen entrance animation (fade only for keyboard compat)
+ * - Palette-based theming
+ * - Keyboard-aware layout
+ *
+ * @see IOS-GUIDELINES.md - iOS 26 Liquid Glass patterns
+ */
+
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   StyleSheet,
@@ -6,6 +17,11 @@ import {
   StatusBar,
   View,
 } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { KeyboardStickyView, useKeyboardState } from "react-native-keyboard-controller";
 import { MessageList } from "../../components/MessageList";
@@ -18,6 +34,7 @@ import {
 } from "../../ui/theme/liquidGlassSpacing";
 import { useTranslation } from "../../i18n";
 import { useTypography } from "../../ui/hooks/useTypography";
+import { useMotionReduction } from "../../context/AccessibilityContext";
 import { devLog, devWarn } from "../../utils/devLog";
 
 export function Chat() {
@@ -28,6 +45,7 @@ export function Chat() {
   const { currentChat, isLoading, error, sendMessage, clearError } = useChat();
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const { shouldReduceMotion } = useMotionReduction();
   const minimumTouchTarget = useMemo(() => getMinimumTouchTarget(), []);
   const bodyLineHeight = typography["body"]?.lineHeight ?? 22;
   const minimumInputHeight = useMemo(
@@ -40,6 +58,18 @@ export function Chat() {
       Math.abs(previous - height) < 1 ? previous : height,
     );
   }, []);
+
+  // Subtle entrance animation (fade only - no translateY to avoid keyboard conflicts)
+  const opacity = useSharedValue(shouldReduceMotion ? 1 : 0);
+  useEffect(() => {
+    if (!shouldReduceMotion) {
+      opacity.value = withTiming(1, { duration: 200 });
+    }
+  }, [shouldReduceMotion]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+  }));
 
   // Track keyboard height for proper message list layout
   // CRITICAL: KeyboardStickyView uses transform (not layout positioning), so keyboard
@@ -110,10 +140,11 @@ export function Chat() {
         backgroundColor={palette.background}
       />
 
-      <View
+      <Animated.View
         style={[
           styles.content,
           { paddingHorizontal: LiquidGlassSpacing.xs },
+          animatedStyle,
         ]}
       >
         <MessageList
@@ -122,7 +153,7 @@ export function Chat() {
           isLoading={isLoading}
           bottomInset={messageListBottomInset}
         />
-      </View>
+      </Animated.View>
 
       <KeyboardStickyView
         style={[
