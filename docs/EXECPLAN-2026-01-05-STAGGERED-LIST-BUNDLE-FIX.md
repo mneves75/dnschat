@@ -15,7 +15,7 @@ Restore a clean iOS bundling pipeline by fixing the syntax error in the staggere
 - [x] (2026-01-05 02:51Z) Bumped release metadata to 3.8.8 (build 28) using `scripts/sync-versions.js`.
 - [x] (2026-01-05 02:51Z) Updated changelog and release/store documentation to reflect the 3.8.8 build.
 - [x] (2026-01-05 02:53Z) Ran lint and Jest tests and captured evidence in Artifacts and Notes.
-- [ ] Commit the patch release and push the branch.
+- [x] (2026-01-05 02:54Z) Committed the patch release and pushed the branch.
 
 ## Surprises & Discoveries
 
@@ -34,7 +34,7 @@ Restore a clean iOS bundling pipeline by fixing the syntax error in the staggere
 
 ## Outcomes & Retrospective
 
-The bundling regression is resolved by restoring `.tsx` parsing for the staggered list hook and the release documentation is synchronized to 3.8.8. Lint and Jest tests pass; remaining work is publishing the patch commit.
+The bundling regression is resolved by restoring `.tsx` parsing for the staggered list hook and the release documentation is synchronized to 3.8.8. Lint and Jest tests pass and the patch release commit is pushed.
 
 ## Context and Orientation
 
