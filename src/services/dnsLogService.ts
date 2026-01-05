@@ -19,6 +19,8 @@ export interface DNSLogEntry {
 
 export interface DNSQueryLog {
   id: string;
+  chatId?: string;
+  chatTitle?: string;
   query: string;
   startTime: Date;
   endTime?: Date;
@@ -135,12 +137,19 @@ export class DNSLogService {
     this.listeners.clear();
   }
 
-  static startQuery(query: string): string {
+  static startQuery(
+    query: string,
+    context?: { chatId?: string; chatTitle?: string },
+  ): string {
     const queryId = `query-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     const redacted = this.redactText(query);
+    const chatTitle = context?.chatTitle?.trim() || undefined;
+    const chatId = context?.chatId || undefined;
 
     this.currentQueryLog = {
       id: queryId,
+      ...(chatId ? { chatId } : {}),
+      ...(chatTitle ? { chatTitle } : {}),
       query: redacted,
       startTime: new Date(),
       finalStatus: "pending",

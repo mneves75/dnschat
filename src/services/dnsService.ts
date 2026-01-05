@@ -554,6 +554,7 @@ export class DNSService {
     dnsServer?: string,
     enableMockDNS?: boolean,
     allowExperimentalTransports: boolean = true,
+    logContext?: { chatId?: string; chatTitle?: string },
   ): Promise<string> {
     // Initialize background listener on first use
     this.initializeBackgroundListener();
@@ -577,7 +578,7 @@ export class DNSService {
     this.vLog(`Server fallback chain: ${serversToTry.map(s => `${s.host}:${s.port}`).join(' → ')}`);
 
     // Start logging the query
-    const queryId = DNSLogService.startQuery(message);
+    const queryId = DNSLogService.startQuery(message, logContext);
 
     let lastError: Error | null = null;
 
