@@ -48,8 +48,8 @@ Self-critique of the DNS server migration implementation revealed several issues
 **Verification**:
 ```bash
 # Both work:
-dig @llm.pieter.com "hello" TXT +short           # Port 53 ✅
-dig @llm.pieter.com -p 9000 "hello" TXT +short   # Port 9000 ✅
+dig @llm.pieter.com "hello" TXT +short           # Port 53 OK
+dig @llm.pieter.com -p 9000 "hello" TXT +short   # Port 9000 OK
 ```
 
 **Recommendation**: Change default to port 53 for better firewall compatibility. Keep port 9000 as documented fallback option.
