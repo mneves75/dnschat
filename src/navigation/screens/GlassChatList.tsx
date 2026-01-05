@@ -4,8 +4,16 @@
  * Reimplemented chat list using Evan Bacon's glass UI components,
  * providing a more sophisticated and visually appealing interface.
  *
+ * Features:
+ * - Skeleton loading states
+ * - Screen entrance animations
+ * - Staggered list item animations
+ * - Proper empty state with EmptyState component
+ *
  * @author DNSChat Team
  * @since 1.8.0 (iOS 26 Liquid Glass Support + Evan Bacon Glass UI)
+ * @see IOS-GUIDELINES.md - iOS 26 Liquid Glass patterns
+ * @see DESIGN-UI-UX-GUIDELINES.md - Loading and empty states
  */
 
 import React from "react";
@@ -14,11 +22,11 @@ import {
   Text,
   View,
   Alert,
-  RefreshControl,
   useColorScheme,
   Platform,
   TouchableOpacity,
 } from "react-native";
+import Animated from "react-native-reanimated";
 import { useFocusEffect } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import { useChat } from "../../context/ChatContext";
@@ -34,6 +42,10 @@ import { formatDistanceToNow } from "date-fns";
 import { useTranslation } from "../../i18n";
 import { useImessagePalette } from "../../ui/theme/imessagePalette";
 import { devLog } from "../../utils/devLog";
+import { useScreenEntrance } from "../../ui/hooks/useScreenEntrance";
+import { useStaggeredListValues, AnimatedListItem } from "../../ui/hooks/useStaggeredList";
+import { ChatListSkeleton } from "../../components/skeletons";
+import { EmptyState } from "../../components/EmptyState";
 
 // ==================================================================================
 // TYPES
@@ -140,10 +152,10 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
                 <View
                   style={[
                     styles.messageBadge,
-                    { backgroundColor: "rgba(0, 122, 255, 0.15)" },
+                    { backgroundColor: `${palette.userBubble}26` }, // 15% opacity
                   ]}
                 >
-                  <Text style={[styles.messageBadgeText, { color: "#007AFF" }]}>
+                  <Text style={[styles.messageBadgeText, { color: palette.userBubble }]}>
                     {messageBadgeLabel}
                   </Text>
                 </View>
@@ -232,12 +244,21 @@ export function GlassChatList() {
     clearError,
   } = useChat();
   const { t } = useTranslation();
+  const { animatedStyle } = useScreenEntrance();
+  const { opacities, translates } = useStaggeredListValues(chats.length);
+
+  // Track initial load for skeleton display
+  const [hasLoadedOnce, setHasLoadedOnce] = React.useState(false);
 
   // Load chats when screen is focused (CRITICAL FIX)
   useFocusEffect(
     React.useCallback(() => {
-      loadChats();
-    }, [loadChats]),
+      loadChats().then(() => {
+        if (!hasLoadedOnce) {
+          setHasLoadedOnce(true);
+        }
+      });
+    }, [loadChats, hasLoadedOnce]),
   );
 
   React.useEffect(() => {
@@ -252,6 +273,7 @@ export function GlassChatList() {
 
   const isDark = colorScheme === "dark";
   const [refreshing, setRefreshing] = React.useState(false);
+  const showSkeleton = isLoading && !hasLoadedOnce && chats.length === 0;
 
   const handleNewChat = React.useCallback(async () => {
     const newChat = await createChat();
@@ -323,114 +345,109 @@ export function GlassChatList() {
       navigationTitle={t("screen.glassChatList.navigationTitle")}
       style={styles.container}
     >
-      {/* New Chat Section */}
-      <Form.Section
-        title={t("screen.glassChatList.newConversation.title")}
-      >
-        <Form.Item
-          title={t("screen.glassChatList.newConversation.button")}
-          subtitle={t("screen.glassChatList.newConversation.description")}
-          rightContent={
-            <LiquidGlassWrapper
-              variant="interactive"
-              shape="capsule"
-              style={styles.newChatBadge}
-              accessibilityLabel={t(
-                "screen.glassChatList.newConversation.button",
-              )}
-              accessibilityRole="button"
-              accessibilityHint={t(
-                "screen.glassChatList.newConversation.description",
-              )}
-            >
-              <PlusIcon size={20} />
-            </LiquidGlassWrapper>
-          }
-          onPress={handleNewChat}
-          showChevron
-        />
-      </Form.Section>
-
-      {/* Recent Chats Section */}
-      {chats.length > 0 ? (
+      <Animated.View style={animatedStyle}>
+        {/* New Chat Section */}
         <Form.Section
-          title={t("screen.glassChatList.recent.title")}
-          footer={recentFooter}
+          title={t("screen.glassChatList.newConversation.title")}
         >
-          <View style={styles.chatsList}>
-            {chats.map((chat) => (
-              <GlassChatItem
-                key={chat.id}
-                chat={chat}
-                onPress={() => handleChatPress(chat)}
-                onDelete={() => handleDeleteChat(chat.id, chat.title)}
-                onShare={() => handleShareChat(chat)}
-              />
-            ))}
-          </View>
-        </Form.Section>
-      ) : (
-        <Form.Section>
-          {/* iOS 26 HIG: Empty state is CONTENT, not a control
-              Use solid background, NOT Liquid Glass */}
-          {/* Android: Use solid color since rgba appears gray without blur */}
-          <View
-            style={[
-              styles.emptyStateContainer,
-              { backgroundColor: Platform.OS === "android" ? palette.solid : palette.surface },
-            ]}
-          >
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyIcon}>C</Text>
-              <Text
-                style={[
-                  styles.emptyTitle,
-                  { color: palette.textPrimary },
-                ]}
-              >
-                {t("screen.glassChatList.empty.title")}
-              </Text>
-              <Text
-                style={[
-                  styles.emptySubtitle,
-                  { color: palette.textSecondary },
-                ]}
-              >
-                {t("screen.glassChatList.empty.subtitle")}
-              </Text>
-            </View>
-          </View>
-        </Form.Section>
-      )}
-
-      {/* Statistics Section */}
-      {chats.length > 0 && (
-        <Form.Section title={t("screen.glassChatList.stats.title")}>
           <Form.Item
-            title={t("screen.glassChatList.stats.totalMessagesTitle")}
-            subtitle={t("screen.glassChatList.stats.totalMessagesSubtitle")}
+            title={t("screen.glassChatList.newConversation.button")}
+            subtitle={t("screen.glassChatList.newConversation.description")}
             rightContent={
-              <Text style={[styles.statValue, { color: palette.userBubble }]}>
-                {chats.reduce((total, chat) => total + chat.messages.length, 0)}
-              </Text>
-            }
-          />
-          <Form.Item
-            title={t("screen.glassChatList.stats.averageTitle")}
-            subtitle={t("screen.glassChatList.stats.averageSubtitle")}
-            rightContent={
-              <Text style={[styles.statValue, { color: palette.userBubble }]}>
-                {Math.round(
-                  chats.reduce(
-                    (total, chat) => total + chat.messages.length,
-                    0,
-                  ) / chats.length,
+              <LiquidGlassWrapper
+                variant="interactive"
+                shape="capsule"
+                style={styles.newChatBadge}
+                accessibilityLabel={t(
+                  "screen.glassChatList.newConversation.button",
                 )}
-              </Text>
+                accessibilityRole="button"
+                accessibilityHint={t(
+                  "screen.glassChatList.newConversation.description",
+                )}
+              >
+                <PlusIcon size={20} />
+              </LiquidGlassWrapper>
             }
+            onPress={handleNewChat}
+            showChevron
           />
         </Form.Section>
-      )}
+
+        {/* Loading Skeleton */}
+        {showSkeleton && (
+          <Form.Section
+            title={t("screen.glassChatList.recent.title")}
+          >
+            <ChatListSkeleton count={5} />
+          </Form.Section>
+        )}
+
+        {/* Recent Chats Section */}
+        {!showSkeleton && chats.length > 0 ? (
+          <Form.Section
+            title={t("screen.glassChatList.recent.title")}
+            footer={recentFooter}
+          >
+            <View style={styles.chatsList}>
+              {chats.map((chat, index) => (
+                <AnimatedListItem
+                  key={chat.id}
+                  opacity={opacities[index] ?? { value: 1 }}
+                  translateX={translates[index] ?? { value: 0 }}
+                >
+                  <GlassChatItem
+                    chat={chat}
+                    onPress={() => handleChatPress(chat)}
+                    onDelete={() => handleDeleteChat(chat.id, chat.title)}
+                    onShare={() => handleShareChat(chat)}
+                  />
+                </AnimatedListItem>
+              ))}
+            </View>
+          </Form.Section>
+        ) : !showSkeleton && chats.length === 0 ? (
+          <Form.Section>
+            <EmptyState
+              title={t("screen.glassChatList.empty.title")}
+              description={t("screen.glassChatList.empty.subtitle")}
+              iconType="chat"
+              actionLabel={t("screen.glassChatList.newConversation.button")}
+              onAction={handleNewChat}
+              testID="chat-list-empty-state"
+            />
+          </Form.Section>
+        ) : null}
+
+        {/* Statistics Section */}
+        {chats.length > 0 && (
+          <Form.Section title={t("screen.glassChatList.stats.title")}>
+            <Form.Item
+              title={t("screen.glassChatList.stats.totalMessagesTitle")}
+              subtitle={t("screen.glassChatList.stats.totalMessagesSubtitle")}
+              rightContent={
+                <Text style={[styles.statValue, { color: palette.userBubble }]}>
+                  {chats.reduce((total, chat) => total + chat.messages.length, 0)}
+                </Text>
+              }
+            />
+            <Form.Item
+              title={t("screen.glassChatList.stats.averageTitle")}
+              subtitle={t("screen.glassChatList.stats.averageSubtitle")}
+              rightContent={
+                <Text style={[styles.statValue, { color: palette.userBubble }]}>
+                  {Math.round(
+                    chats.reduce(
+                      (total, chat) => total + chat.messages.length,
+                      0,
+                    ) / chats.length,
+                  )}
+                </Text>
+              }
+            />
+          </Form.Section>
+        )}
+      </Animated.View>
     </Form.List>
   );
 }
@@ -520,37 +537,6 @@ const styles = StyleSheet.create({
   chevron: {
     fontSize: 18,
     fontWeight: "600",
-  },
-  emptyStateContainer: {
-    marginHorizontal: 20,
-    padding: 32,
-    borderRadius: 12,
-    // iOS shadows for depth
-    shadowColor: "#000000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 2,
-    // Android elevation
-    elevation: 2,
-  },
-  emptyState: {
-    alignItems: "center",
-  },
-  emptyIcon: {
-    fontSize: 48,
-    marginBottom: 16,
-  },
-  emptyTitle: {
-    fontSize: 20,
-    fontWeight: "600",
-    marginBottom: 8,
-    textAlign: "center",
-  },
-  emptySubtitle: {
-    fontSize: 16,
-    fontWeight: "400",
-    textAlign: "center",
-    lineHeight: 22,
   },
   statValue: {
     fontSize: 17,

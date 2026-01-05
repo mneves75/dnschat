@@ -8,11 +8,36 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ### Added
 
+- Added `useScreenEntrance` hook for screen entrance animations (fade + translateY).
+- Added `useStaggeredList` hook for staggered list item animations.
+- Added `EmptyState` component with SVG icons for chat, logs, search, and error states.
+- Added skeleton loading components: `ChatListSkeleton`, `SettingsSkeleton`, `LogsSkeleton`.
+- Added `testID` prop support to `Form.Item` component for testing.
+- Implemented Profile screen with user statistics and data management actions.
+- Implemented Home screen with quick actions and recent chats preview.
+
 ### Changed
 
+- Enhanced all screens with entrance animations following iOS 26 Liquid Glass guidelines.
+- Enhanced GlassChatList with skeleton loading, empty state, and staggered item animations.
+- Enhanced Logs screen with skeleton loading, empty state, and staggered animations.
+- Enhanced GlassSettings with entrance animations and palette-based colors.
+- Enhanced About screen with entrance animations.
+- Enhanced Chat screen with subtle fade-in animation (keyboard-compatible).
+- Redesigned NotFound screen with glass UI components.
+- Fixed tab bar to use palette colors instead of hardcoded values.
+- Replaced hardcoded colors across all screens with `useImessagePalette` tokens.
 - Docs: refreshed the 2026-01-05 guidelines re-verification ExecPlan and documentation index.
 
 ### Fixed
+
+- Fixed settings tests to work with GlassSettings after deleting duplicate Settings.tsx.
+- Fixed `Form.Item` mock in tests to properly pass through `testID` and `onPress` props.
+
+### Removed
+
+- Deleted duplicate `ChatList.tsx` screen (GlassChatList is the canonical implementation).
+- Deleted duplicate `Settings.tsx` screen (GlassSettings is the canonical implementation).
 
 ## 3.8.7 - 2026-01-05
 

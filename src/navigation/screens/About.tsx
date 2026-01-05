@@ -1,12 +1,25 @@
+/**
+ * About - App information and credits screen
+ *
+ * Features:
+ * - Screen entrance animations
+ * - Palette-based theming
+ * - Glass UI components
+ *
+ * @see IOS-GUIDELINES.md - iOS 26 Liquid Glass patterns
+ */
+
 import React, { useMemo, useState } from "react";
 import { useRouter } from "expo-router";
 import { View, Text, StyleSheet, Linking, Image } from "react-native";
+import Animated from "react-native-reanimated";
 import { Form, LiquidGlassWrapper } from "../../components/glass";
 import { useTranslation } from "../../i18n";
 import { useImessagePalette } from "../../ui/theme/imessagePalette";
 import type { IMessagePalette } from "../../ui/theme/imessagePalette";
 import { useTypography } from "../../ui/hooks/useTypography";
 import { LiquidGlassSpacing, getCornerRadius } from "../../ui/theme/liquidGlassSpacing";
+import { useScreenEntrance } from "../../ui/hooks/useScreenEntrance";
 import { devLog } from "../../utils/devLog";
 
 const packageJson = require("../../../package.json");
@@ -65,6 +78,7 @@ export function About() {
   const palette = useImessagePalette();
   const typography = useTypography();
   const styles = useMemo(() => createStyles(palette), [palette]);
+  const { animatedStyle } = useScreenEntrance();
   const [iconError, setIconError] = useState(false);
 
   const openLink = React.useCallback((url: string) => {
@@ -113,7 +127,8 @@ export function About() {
 
   return (
     <Form.List testID="about-screen" navigationTitle={t("screen.about.navigationTitle")}>
-      <Form.Section>
+      <Animated.View style={animatedStyle}>
+        <Form.Section>
         <LiquidGlassWrapper
           variant="prominent"
           shape="roundedRect"
@@ -290,7 +305,8 @@ export function About() {
         ))}
       </Form.Section>
 
-      <Form.Section footer={t("screen.about.footer")}>{null}</Form.Section>
+        <Form.Section footer={t("screen.about.footer")}>{null}</Form.Section>
+      </Animated.View>
     </Form.List>
   );
 }

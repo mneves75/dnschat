@@ -1,7 +1,8 @@
 import { Tabs } from "expo-router";
 import React from "react";
-import { Image, useColorScheme } from "react-native";
+import { Image } from "react-native";
 import { useTranslation } from "../../src/i18n";
+import { useImessagePalette } from "../../src/ui/theme/imessagePalette";
 
 const chatIcon = require("../../src/assets/newspaper.png");
 const logsIcon = require("../../src/assets/logs-icon.png");
@@ -19,17 +20,16 @@ function TabIcon({ source, color }: { source: number; color: string }) {
 
 export default function TabsLayout() {
   const { t } = useTranslation();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
+  const palette = useImessagePalette();
 
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: "#007AFF",
-        tabBarInactiveTintColor: "#8E8E93",
+        tabBarActiveTintColor: palette.userBubble,
+        tabBarInactiveTintColor: palette.textTertiary,
         tabBarStyle: {
-          backgroundColor: isDark ? "#1C1C1E" : "#FFFFFF",
+          backgroundColor: palette.backgroundSecondary,
         },
       }}
     >

@@ -28,23 +28,26 @@ jest.mock("../src/context/AccessibilityContext", () => ({
 
 jest.mock("../src/components/glass", () => {
   const React = require("react");
+  const { TouchableOpacity } = require("react-native");
   const Placeholder = ({ children }: { children?: React.ReactNode }) => (
     <>{children}</>
   );
-  const FormItem = ({ children, rightContent }: any) => (
-    <>
+  const FormItem = ({ children, rightContent, testID, onPress }: any) => (
+    <TouchableOpacity testID={testID} onPress={onPress}>
       {children}
       {rightContent}
-    </>
+    </TouchableOpacity>
   );
   const FormSection = ({ children }: any) => <>{children}</>;
   const FormList = ({ children }: any) => <>{children}</>;
+  const FormLink = ({ children }: any) => <>{children}</>;
 
   return {
     Form: {
       List: FormList,
       Section: FormSection,
       Item: FormItem,
+      Link: FormLink,
     },
     GlassBottomSheet: Placeholder,
     GlassActionSheet: Placeholder,
@@ -65,6 +68,19 @@ jest.mock("../src/ui/hooks/useTransportTestThrottle", () => ({
 jest.mock("../src/utils/haptics", () => ({
   persistHapticsPreference: jest.fn().mockResolvedValue(undefined),
 }));
+
+jest.mock("../src/ui/hooks/useScreenEntrance", () => ({
+  useScreenEntrance: () => ({ animatedStyle: {} }),
+}));
+
+jest.mock("react-native-reanimated", () => {
+  const { View } = require("react-native");
+  return {
+    __esModule: true,
+    default: { View },
+    View,
+  };
+});
 
 jest.mock("../src/i18n", () => ({
   useTranslation: () => ({
@@ -92,7 +108,7 @@ jest.mock("@react-navigation/native", () => ({
   }),
 }));
 
-const { Settings } = require("../src/navigation/screens/Settings");
+const { GlassSettings: Settings } = require("../src/navigation/screens/GlassSettings");
 
 const createSettingsValue = (overrides: Partial<Record<string, any>> = {}) => ({
   dnsServer: "ch.at",

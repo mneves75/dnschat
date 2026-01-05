@@ -4,8 +4,14 @@
  * Complete reimplementation of the settings screen using Evan Bacon's
  * glass UI components, showcasing all glass effects and interactions.
  *
+ * Features:
+ * - Screen entrance animations
+ * - Palette-based theming
+ * - Glass UI components
+ *
  * @author DNSChat Team
  * @since 1.8.0 (iOS 26 Liquid Glass Support + Evan Bacon Glass UI)
+ * @see IOS-GUIDELINES.md - iOS 26 Liquid Glass patterns
  */
 
 import React from "react";
@@ -18,8 +24,8 @@ import {
   Platform,
   Linking,
   Share,
-  useColorScheme,
 } from "react-native";
+import Animated from "react-native-reanimated";
 import { useChat } from "../../context/ChatContext";
 import { useSettings } from "../../context/SettingsContext";
 import { useOnboarding } from "../../context/OnboardingContext";
@@ -28,6 +34,8 @@ import { LOCALE_LABEL_KEYS } from "../../i18n/localeMeta";
 import { DEFAULT_DNS_SERVER } from "../../context/settingsStorage";
 import { DNSLogService } from "../../services/dnsLogService";
 import { StorageService } from "../../services/storageService";
+import { useImessagePalette } from "../../ui/theme/imessagePalette";
+import { useScreenEntrance } from "../../ui/hooks/useScreenEntrance";
 
 const packageJson = require("../../../package.json");
 import {
@@ -62,9 +70,8 @@ export function GlassSettings() {
   const { loadChats } = useChat();
   const { t } = useTranslation();
   const { resetOnboarding } = useOnboarding();
-
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
+  const palette = useImessagePalette();
+  const { animatedStyle } = useScreenEntrance();
 
   // Bottom sheet states
   const dnsServerSheet = useGlassBottomSheet();
@@ -354,8 +361,9 @@ export function GlassSettings() {
   return (
     <>
       <Form.List navigationTitle={t("screen.settings.navigationTitle")}>
-        {/* DNS Configuration Section */}
-        <Form.Section
+        <Animated.View style={animatedStyle}>
+          {/* DNS Configuration Section */}
+          <Form.Section
           title={t("screen.settings.sections.dnsConfig.title")}
           footer={t("screen.settings.sections.dnsConfig.description")}
         >
@@ -374,8 +382,8 @@ export function GlassSettings() {
               <Switch
                 value={enableMockDNS}
                 onValueChange={handleToggleMockDNS}
-                trackColor={{ false: "#767577", true: "#007AFF" }}
-                thumbColor={Platform.OS === "ios" ? undefined : "#f4f3f4"}
+                trackColor={{ false: palette.textTertiary, true: palette.userBubble }}
+                thumbColor={Platform.OS === "ios" ? undefined : "#FFFFFF"}
               />
             }
           />
@@ -388,8 +396,8 @@ export function GlassSettings() {
               <Switch
                 value={enableHaptics}
                 onValueChange={handleToggleHaptics}
-                trackColor={{ false: "#767577", true: "#007AFF" }}
-                thumbColor={Platform.OS === "ios" ? undefined : "#f4f3f4"}
+                trackColor={{ false: palette.textTertiary, true: palette.userBubble }}
+                thumbColor={Platform.OS === "ios" ? undefined : "#FFFFFF"}
               />
             }
           />
@@ -402,6 +410,7 @@ export function GlassSettings() {
           {localeOptions.map((option) => (
             <Form.Item
               key={option.key}
+              testID={`language-option-${option.key}`}
               title={option.title}
               subtitle={option.subtitle}
               rightContent={
@@ -433,7 +442,7 @@ export function GlassSettings() {
           >
             <Text
               onPress={handleTestSelectedPreference}
-              style={{ color: "#007AFF" }}
+              style={{ color: palette.userBubble }}
             >
               {testRunning
                 ? t("screen.settings.sections.transportTest.testingButton")
@@ -559,17 +568,18 @@ export function GlassSettings() {
         </Form.Section>
 
         {/* Development Section */}
-        <Form.Section
-          title={t("screen.settings.sections.development.title")}
-          footer={t("screen.settings.sections.development.resetOnboardingSubtitle")}
-        >
-          <Form.Item
-            title={t("screen.settings.sections.development.resetOnboardingTitle")}
-            subtitle={t("screen.settings.sections.development.resetOnboardingSubtitle")}
-            onPress={handleResetOnboarding}
-            showChevron
-          />
-        </Form.Section>
+          <Form.Section
+            title={t("screen.settings.sections.development.title")}
+            footer={t("screen.settings.sections.development.resetOnboardingSubtitle")}
+          >
+            <Form.Item
+              title={t("screen.settings.sections.development.resetOnboardingTitle")}
+              subtitle={t("screen.settings.sections.development.resetOnboardingSubtitle")}
+              onPress={handleResetOnboarding}
+              showChevron
+            />
+          </Form.Section>
+        </Animated.View>
       </Form.List>
 
       {/* DNS Service Selection Bottom Sheet */}
@@ -617,10 +627,7 @@ export function GlassSettings() {
             style={styles.aboutCard}
           >
             <Text
-              style={[
-                styles.aboutText,
-                { color: isDark ? "#FFFFFF" : "#000000" },
-              ]}
+              style={[styles.aboutText, { color: palette.textPrimary }]}
             >
               {t("screen.glassSettings.aboutSheet.overview")}
             </Text>
@@ -628,20 +635,14 @@ export function GlassSettings() {
 
           <View style={styles.aboutFeatures}>
             <Text
-              style={[
-                styles.featureTitle,
-                { color: isDark ? "#FFFFFF" : "#000000" },
-              ]}
+              style={[styles.featureTitle, { color: palette.textPrimary }]}
             >
               {t("screen.glassSettings.aboutSheet.featuresTitle")}
             </Text>
             {aboutFeatureKeys.map((featureKey) => (
               <Text
                 key={featureKey}
-                style={[
-                  styles.featureItem,
-                  { color: isDark ? "#AEAEB2" : "#6D6D70" },
-                ]}
+                style={[styles.featureItem, { color: palette.textSecondary }]}
               >
                 {`• ${t(
                   `screen.glassSettings.aboutSheet.features.${featureKey}` as const,
