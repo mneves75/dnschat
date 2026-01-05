@@ -1,5 +1,5 @@
 import { DNSError, DNSErrorType } from "../modules/dns-native";
-import { resolveDnsErrorMessage } from "../app/(dashboard)/[threadId]";
+import { resolveDnsErrorMessage } from "../src/utils/dnsErrors";
 
 describe("resolveDnsErrorMessage", () => {
   it("covers DNSErrorType mappings", () => {

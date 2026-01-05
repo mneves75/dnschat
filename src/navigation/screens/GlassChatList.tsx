@@ -19,7 +19,8 @@ import {
   Platform,
   TouchableOpacity,
 } from "react-native";
-import { useNavigation, useFocusEffect } from "@react-navigation/native";
+import { useFocusEffect } from "@react-navigation/native";
+import { useRouter } from "expo-router";
 import { useChat } from "../../context/ChatContext";
 import {
   Form,
@@ -217,7 +218,7 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
 // ==================================================================================
 
 export function GlassChatList() {
-  const navigation = useNavigation();
+  const router = useRouter();
   const colorScheme = useColorScheme();
   const palette = useImessagePalette();
   const {
@@ -255,19 +256,25 @@ export function GlassChatList() {
   const handleNewChat = React.useCallback(async () => {
     const newChat = await createChat();
     setCurrentChat(newChat);
-    navigation.navigate("Chat" as never);
+    router.push({
+      pathname: "/chat/[threadId]",
+      params: { threadId: newChat.id },
+    });
 
     // Haptic feedback
     if (Platform.OS === "ios") {
     }
-  }, [createChat, setCurrentChat, navigation]);
+  }, [createChat, router, setCurrentChat]);
 
   const handleChatPress = React.useCallback(
     (chat: any) => {
       setCurrentChat(chat);
-      navigation.navigate("Chat" as never);
+      router.push({
+        pathname: "/chat/[threadId]",
+        params: { threadId: chat.id },
+      });
     },
-    [setCurrentChat, navigation],
+    [setCurrentChat, router],
   );
 
   const handleDeleteChat = React.useCallback(

@@ -83,8 +83,8 @@ If you prefer command line or need automation:
 
 ```bash
 # Install Expo CLI tools
-npm install -g @expo/cli
-npm install -g eas-cli
+bun add -g @expo/cli
+bun add -g eas-cli
 
 # Configure EAS (Expo Application Services)
 eas login
@@ -137,7 +137,7 @@ rm -rf ~/Library/Developer/Xcode/DerivedData
 cd ios && pod install && cd ..
 
 # Check native module compilation
-npm run ios -- --verbose
+bun run ios -- --verbose
 ```
 
 #### Bundle Identifier Conflicts:
@@ -151,13 +151,12 @@ npm run ios -- --verbose
 - **App Store Connect** app record created
 - **Code signing** configured correctly
 - **Bundle ID** matches (`org.mvneves.dnschat`)
-- **Version numbers** consistent (v3.2.1)
+- **Version numbers** consistent (v3.8.6)
 - **Native DNS module** compiles successfully
 - **Universal landscape support** enabled
 - **App Store screenshots** (current requirements):
-  - iPhone 6.9" (1320×2868px): 8 screenshots
-  - iPad 13" (2752×2064px): 8 screenshots
-  - macOS (2560×1600px): 8 screenshots
+  - iPhone screenshots (current set stored in `docs/chatdns_ios_images/`)
+  - iPad screenshots captured before submission (not yet available)
 - **App icons** and metadata ready
 - **Privacy Policy** URL (required for App Store)
 
@@ -199,7 +198,7 @@ If you encounter issues during the upload process:
 
 1. Check the [Apple Developer Forums](https://developer.apple.com/forums/)
 2. Review Expo documentation for native builds
-3. Verify all native modules compile correctly with `npm run ios`
+3. Verify all native modules compile correctly with `bun run ios`
 4. Ensure code signing certificates are valid and not expired
 
 ---

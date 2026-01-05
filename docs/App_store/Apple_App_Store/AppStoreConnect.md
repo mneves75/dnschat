@@ -4,7 +4,7 @@
 
 ### App Title
 
-**DNS Chat: AI Assistant**
+**DNS Chat**
 
 ### Subtitle (30 characters max)
 
@@ -55,8 +55,7 @@ PRIVACY & SECURITY
 CROSS-PLATFORM READY
 
 - Optimized for iPhone and iPad
-- React Native architecture for consistent performance
-- Deep linking support for quick message sending
+- React Native architecture for consistent performance across iOS and Android
 - Professional DNS-themed app icon and branding
 
 CUSTOMIZABLE
@@ -79,40 +78,13 @@ AI,chat,DNS,assistant,privacy,native,tech,innovation,queries,networking
 
 ---
 
-## What's New (Release Notes v1.7.2)
+## What's New (Release Notes v3.8.6)
 
-Major Update: Universal Landscape Support + Enhanced App Store Assets
+RELEASE HARDENING
 
-UNIVERSAL LANDSCAPE SUPPORT
-
-- Complete landscape orientation support across all platforms
-- Enhanced UI adaptation for both portrait and landscape modes
-- Optimized chat interface for improved tablet and desktop experiences
-- Seamless orientation transitions with responsive design
-
-NATIVE DNS PRIORITY ENHANCEMENT
-
-- Native DNS modules now prioritized by default (v1.7.3)
-- Improved fallback chain performance and reliability
-- Enhanced error handling and network resilience
-- Better support for complex network configurations
-
-APP STORE READY ASSETS
-
-- Complete 2024 App Store screenshot suite:
-  - iPhone 6.9" (1320×2868px): 8 professional screenshots
-  - iPad 13" (2752×2064px): 8 optimized screenshots
-  - macOS (2560×1600px): 8 desktop-ready screenshots
-- Professional marketing materials and device mockups
-- Enhanced app presentation for multi-platform submission
-
-HERMES DSYM OPTIMIZATION
-
-- Complete Hermes dSYM handling for improved crash reporting
-- Enhanced debug symbol management for production builds
-- Streamlined build process for better App Store compliance
-
-Ready for comprehensive App Store submission across all Apple platforms!
+- Re-verified guidelines and best-practice alignment
+- Refreshed release documentation and store checklist steps
+- Navigation stability cleanup
 
 ---
 
@@ -137,43 +109,12 @@ Revolutionary AI chat using DNS queries. Native iOS performance, complete privac
 - **iOS**: `/icons/dnschat_ios26.png` (1024x1024)
 - **Android**: `/icons/dnschat_ios26.png` (512x512)
 
-### Screenshots Location (2024 App Store Compliant)
+### Screenshots Location (Current)
 
-**iPhone 6.9" Screenshots** (1320×2868px) - PRIMARY SUBMISSION
-`/_APP_STORE/screenshots/iphone_2024_appstore/`
+**iPhone screenshots** (current set, 4 images):
+`docs/chatdns_ios_images/`
 
-1. Revolutionary DNS Chat - DNS-Powered AI
-2. Real-Time DNS Monitoring - Live Network Tracking
-3. Smart Network Optimization - Auto-Optimization
-4. Seamless Experience - Zero Configuration
-5. Advanced Logging - Professional Tools
-6. Privacy First - Secure by Design
-7. Cross-Platform Sync - Universal Access
-8. Innovation Leader - Cutting Edge
-
-**iPad 13" Screenshots** (2752×2064px) - PRIMARY SUBMISSION
-`/_APP_STORE/screenshots/ipad_2024_appstore/`
-
-1. DNS Chat for iPad - Professional iPad Experience
-2. Real-Time DNS Dashboard - Advanced Monitoring
-3. Intelligent Network Optimization - Enterprise-Grade
-4. Seamless Multitasking - iPad Optimized
-5. Professional Logging - Developer Tools
-6. Privacy & Security - Enterprise Security
-7. Universal Compatibility - Cross-Platform
-8. Innovation Leadership - Cutting Edge
-
-**macOS Screenshots** (2560×1600px) - DESKTOP SUBMISSION
-`/_APP_STORE/screenshots/macos_appstore/`
-
-1. DNS Chat for macOS - Native macOS App
-2. Real-Time DNS Monitoring - Live Network Tracking
-3. Intelligent Fallback System - Smart Network Handling
-4. Seamless Chat Experience - Native Mac Experience
-5. Developer Friendly - Professional Tools
-6. Privacy First - Secure by Design
-7. Multi-Platform Compatibility - Universal Access
-8. Revolutionary Technology - Innovation Leader
+**iPad screenshots**: not captured yet. Capture required sizes before submission.
 
 ---
 
@@ -182,11 +123,11 @@ Revolutionary AI chat using DNS queries. Native iOS performance, complete privac
 ### Bundle Information
 
 - **Bundle ID**: `org.mvneves.dnschat`
-- **Version**: `1.7.2`
-- **Build Number**: Auto-increment based on CI/CD
-- **Minimum iOS Version**: 12.0
-- **Device Support**: iPhone, iPad, macOS
-- **Orientation**: Universal (Portrait + Landscape)
+- **Version**: `3.8.6`
+- **Build Number**: 25 (sync-versions)
+- **Minimum iOS Version**: 16.0
+- **Device Support**: iPhone, iPad
+- **Orientation**: Portrait + Landscape (default)
 
 ### App Store Connect Settings
 

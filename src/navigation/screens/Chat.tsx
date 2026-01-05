@@ -1,10 +1,4 @@
-import React, {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useState,
-} from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   StyleSheet,
   useColorScheme,
@@ -13,7 +7,6 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { useNavigation } from "@react-navigation/native";
 import { KeyboardStickyView, useKeyboardState } from "react-native-keyboard-controller";
 import { MessageList } from "../../components/MessageList";
 import { ChatInput } from "../../components/ChatInput";
@@ -32,9 +25,8 @@ export function Chat() {
   const isDark = colorScheme === "dark";
   const palette = useImessagePalette();
   const typography = useTypography();
-  const { currentChat, isLoading, error, sendMessage, clearError, createChat } = useChat();
+  const { currentChat, isLoading, error, sendMessage, clearError } = useChat();
   const { t } = useTranslation();
-  const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
   const minimumTouchTarget = useMemo(() => getMinimumTouchTarget(), []);
   const bodyLineHeight = typography["body"]?.lineHeight ?? 22;
@@ -64,9 +56,6 @@ export function Chat() {
     () => inputHeight + insets.bottom + LiquidGlassSpacing.xs + keyboardHeight,
     [inputHeight, insets.bottom, keyboardHeight],
   );
-  useLayoutEffect(() => {
-    navigation.setOptions({ title: t("screen.chat.navigationTitle") });
-  }, [navigation, t]);
 
   // Log when currentChat changes
   // IMPORTANT: Use optional chaining on messages to prevent crash when currentChat exists but messages is undefined
@@ -84,16 +73,6 @@ export function Chat() {
       messageCount: messages.length,
     });
   }, [currentChat?.messages]);
-
-  useEffect(() => {
-    // Create a new chat if none exists
-    if (!currentChat) {
-      devLog("[Chat] No current chat, creating new chat");
-      createChat().catch((err) => {
-        devWarn("[Chat] Failed to auto-create chat", err);
-      });
-    }
-  }, [currentChat]);
 
   useEffect(() => {
     // Show error alert when error occurs

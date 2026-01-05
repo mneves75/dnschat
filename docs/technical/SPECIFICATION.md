@@ -127,9 +127,9 @@ Repo quality:
 	     - `__tests__/repo.noCredentials.spec.ts` (EAS submit config + iOS signing team IDs)
 
 2. Lint portability
-   - `@ast-grep/cli` is a devDependency so `npm run lint` works in CI
+   - `@ast-grep/cli` is a devDependency so `bun run lint` works in CI
    - Lint config is `project-rules/astgrep-liquid-glass.yml`
-   - Local verification command: `npm run lint`
+   - Local verification command: `bun run lint`
 
 3. No-emoji enforcement
    - Jest test scans tracked files using `git ls-files`: `__tests__/repo.noEmoji.spec.ts`
@@ -180,7 +180,7 @@ Repo quality:
 
 8. Deterministic iOS pods maintenance
    - Default cleanup workflows keep `ios/Podfile.lock` intact (determinism).
-   - `npm run clean-ios` removes `Pods/` and reinstalls without touching the lockfile.
+   - `bun run clean-ios` removes `Pods/` and reinstalls without touching the lockfile.
    - `scripts/fix-cocoapods.sh` preserves `Podfile.lock` by default; `--reset-lock` is explicit.
    - Jest policy test: `__tests__/iosPodsCleanupPolicy.spec.ts`
 
@@ -195,9 +195,9 @@ Repo quality:
 
 Run locally:
 
-- `npm install`
-- `npm run lint`
-- `npm test -- --bail --passWithNoTests`
+- `bun install`
+- `bun run lint`
+- `bun run test -- --bail --passWithNoTests`
 - `cd modules/dns-native && npm ci && npm test`
 - `gitleaks detect --source . --redact --no-banner --config .gitleaks.toml`
 

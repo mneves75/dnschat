@@ -32,6 +32,10 @@ Non-goals include new product features, UI redesigns, or large dependency upgrad
 - [x] (2026-01-04) Reviewed GitHub Actions workflows and identified lockfile cache failures plus missing CI hardening.
 - [x] (2026-01-04) Hardened CI workflows (Bun installs, concurrency/timeouts, pinned actions, SBOM generation) and updated contributor docs.
 - [x] (2026-01-04) Made dns-native CI self-contained with module tsconfig, shared Jest mocks, and module package-lock for npm ci.
+- [x] (2026-01-04) Reviewed full GUIDELINES-REF inventory (including subfolders) and captured applicability notes in this plan.
+- [x] (2026-01-04) Confirmed GitHub Actions run 20687873837 failed in setup-node cache due to missing root lockfile; current ci.yml uses Bun installs and avoids Node cache.
+- [x] (2026-01-04) Fixed GlassChatList new-chat handler dependency to use router (removed undefined navigation reference) and re-ran lint/tests.
+- [x] (2026-01-04) Re-validated React Native performance guidance for production console stripping and documented sources.
 
 ## Surprises & Discoveries
 
@@ -44,7 +48,7 @@ Non-goals include new product features, UI redesigns, or large dependency upgrad
 - Observation: Encrypted payload prefix parsing failed because enc:v1 was split into multiple segments.
   Evidence: StorageService tests failed until decryptString parsed the prefix using ENCRYPTION_PREFIX length.
 - Observation: React Compiler healthcheck reported missing StrictMode usage.
-  Evidence: npx react-compiler-healthcheck@latest reported "StrictMode usage not found" before StrictMode was added to src/App.tsx.
+  Evidence: npx react-compiler-healthcheck@latest reported "StrictMode usage not found" before StrictMode was added to the root layout (now `app/_layout.tsx`).
 - Observation: External DNS smoke/harness runs failed due to network limitations.
   Evidence: UDP/TCP 53 timed out and DoH returned no TXT answers in this environment; added local DNS responder mode for verification.
 - Observation: CI jobs failed because actions/setup-node cache expects a root lockfile that no longer exists.
@@ -53,6 +57,8 @@ Non-goals include new product features, UI redesigns, or large dependency upgrad
   Evidence: GitHub Actions run 20687873837 dns-native job failed with TS6053: File 'expo/tsconfig.base' not found.
 - Observation: dns-native Jest tests failed when importing app services due to ESM-only noble hash modules.
   Evidence: Local `npm test` in modules/dns-native raised `SyntaxError: Cannot use import statement outside a module` in @noble/hashes.
+- Observation: GlassChatList retained an undefined `navigation` dependency after the Expo Router migration.
+  Evidence: `src/navigation/screens/GlassChatList.tsx` referenced `navigation` in the `handleNewChat` dependency array after `useRouter` replaced `useNavigation`.
 
 ## Decision Log
 
@@ -89,7 +95,7 @@ Non-goals include new product features, UI redesigns, or large dependency upgrad
 
 ## Outcomes & Retrospective
 
-Phases 0–4 completed with evidence captured. Codebase now meets strict TypeScript and privacy/logging requirements, and local storage is encrypted at rest. Jest and lint pass locally; DNS harness and smoke tests pass in offline mode via `--local-server`, while external UDP/TCP 53 requests still fail in this environment. React Compiler remains enabled in app.json with compiler dependency installed; full build-level compiler validation should be re-confirmed in CI or on-device builds. CI workflows were hardened with Bun installs, pinned actions, concurrency/timeouts, and SBOM artifact generation to align with security and supply-chain guidance. dns-native CI now uses a module-local tsconfig, shared Jest mocks, and a package-lock to keep npm ci deterministic.
+Phases 0–4 completed with evidence captured. Codebase now meets strict TypeScript and privacy/logging requirements, and local storage is encrypted at rest. Jest and lint pass locally; DNS harness and smoke tests pass in offline mode via `--local-server`, while external UDP/TCP 53 requests still fail in this environment. React Compiler remains enabled in app.json with compiler dependency installed; full build-level compiler validation should be re-confirmed in CI or on-device builds. CI workflows were hardened with Bun installs, pinned actions, concurrency/timeouts, and SBOM artifact generation to align with security and supply-chain guidance. dns-native CI now uses a module-local tsconfig, shared Jest mocks, and a package-lock to keep npm ci deterministic. Follow-up review fixed an Expo Router migration regression in GlassChatList (stale `navigation` dependency) and re-verified lint/tests.
 
 ## Context and Orientation
 
@@ -99,10 +105,12 @@ DNSChat is an Expo dev-client React Native app that converts user prompts into D
 
 The project targets Expo SDK 54.0.30, React Native 0.81.5, and React 19.1.0. New Architecture and `experiments.reactCompiler` are enabled in app.json; `babel.config.js` now wires the React Compiler plugin (and keeps Reanimated plugin last). TypeScript strictness is fully enabled, and code has been aligned to meet the stricter flags (verbatimModuleSyntax, noUncheckedIndexedAccess, noImplicitOverride, etc). Local DNS logs now redact query/response content, and both chat and log storage are encrypted at rest with migration-safe reads. Shared DNS constants are aligned across JS and native layers. The repo now uses Bun by default (bun.lock, bun-based scripts), with test infrastructure updated to run in a CommonJS Jest environment while honoring strict TS in app code.
 
-All guideline documents listed in docs/GUIDELINES-REF were reviewed for applicability. Core, security, logging, audit, mobile, Expo, React, TypeScript, iOS, and design guidance are applicable. Backend, web, infrastructure, database, and integration-specific guidelines are currently out of scope but must be re-evaluated if the product expands into those domains.
+All documents under docs/GUIDELINES-REF (including subfolders) were reviewed for applicability. Core, security, logging, audit, mobile, Expo, React, TypeScript, iOS, and design guidance are applicable. Backend, web, infrastructure, database, and integration-specific guidelines are currently out of scope but must be re-evaluated if the product expands into those domains.
 
 ## Best-Practice References (2026-01-04)
 
+- Expo Router: entry point should delegate to `expo-router/entry` and keep bootstrap side effects ahead of it.
+- Expo Router: enable typed routes via `experiments.typedRoutes` and keep Router on the Metro web bundler for parity.
 - React Compiler: use the official React Compiler Babel plugin and ensure it is wired in the Babel config for builds where the compiler is enabled.
 - Expo SDK 54: enable `experiments.reactCompiler` in app.json to activate the compiler path for Expo-managed builds.
 - React Native Reanimated: keep `react-native-reanimated/plugin` last in `babel.config.js` to preserve correct compilation.
@@ -169,6 +177,30 @@ All documents listed in docs/GUIDELINES-REF/GUIDELINES_INDEX.json (updated 2026-
 | PETER-ORACLE-GUIDELINES.md | Conditional | Only if Oracle debugging workflow needed. |
 | CLAUDE.md | Conditional | Applies if authoring CLAUDE.md. |
 | CHANGELOG.md | Yes | Changelog updated. |
+
+### Additional GUIDELINES-REF references reviewed (meta/supporting)
+
+| Document | Applicable | Notes |
+| --- | --- | --- |
+| AGENTS-MARCUS.MD | Yes | Operator-specific execution rules. |
+| OWNERS.md | Conditional | Ownership metadata; no code changes required. |
+| QUICKSTART.md | Yes | Quick-start reference. |
+| README.md | Yes | GUIDELINES-REF overview. |
+| .github/pull_request_template.md | No | Template only. |
+| templates/github/pull_request_template.md | No | Template only. |
+| agent_planning/guidelines-ref-vnext-execplan-2025-12-12.md | No | Historical planning doc. |
+| docs/ENGINEERING-EXEC-SPEC.md | Yes | Exec spec reference. |
+| docs/EXEC-SPEC-REF-STRUCTURE-POSTGRESQL.md | No | PostgreSQL-focused reference. |
+| docs/EXPO-SDK-BEST-PRACTICES-EXEC-SPEC.md | Yes | Expo best-practice reference. |
+| docs/GUIDELINES-STRUCTURAL-ALIGNMENT-EXEC-SPEC.md | No | Meta alignment doc. |
+| docs/data-inventory.md | No | Not in app scope. |
+| docs/model-registry.md | No | Not in app scope. |
+| docs/spec.md | No | mcporter spec; not used. |
+| suggested_configs_files/spark_config_analysis_20251126.md | No | Spark config analysis; not used. |
+| VPS_HOSTINGER/GUIA_RAPIDO_VPS.md | No | VPS operations out of scope. |
+| VPS_HOSTINGER/VPS_BACKUP_AND_DR.md | No | VPS operations out of scope. |
+| VPS_HOSTINGER/VPS_CONTAINER_SECURITY.md | No | VPS operations out of scope. |
+| VPS_HOSTINGER/VPS_DEPLOYMENT_GUIDELINES.md | No | VPS operations out of scope. |
 
 ## Source Review Snapshot
 
@@ -316,6 +348,22 @@ Evidence captured on 2026-01-04:
     Result: PASS with warnings
       android/local.properties sdk.dir points to a missing directory
       Metro bundler not running on port 8081
+      No Android devices or emulators connected
+
+Evidence captured on 2026-01-04 (follow-up):
+
+    bun run lint
+    Result: PASS (ast-grep scan completed with exit code 0)
+
+    bun run test -- --bail --passWithNoTests
+    Result: PASS (65 suites, 1 skipped, 706 tests; 13 skipped)
+
+    bun run verify:ios-pods
+    Result: PASS (verify-ios-pods-sync: OK)
+
+    bun run verify:android
+    Result: PASS with warnings
+      android/local.properties sdk.dir points to a missing directory
       No Android devices or emulators connected
 
     npx tsc --noEmit

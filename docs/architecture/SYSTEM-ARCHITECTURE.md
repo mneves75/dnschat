@@ -8,7 +8,7 @@ Current stack (from `package.json`):
 - React Native `0.81.5` + React `19.1.0`
 - Expo SDK `54.0.30`
 - TypeScript `5.9.2`
-- Navigation: React Navigation + `react-native-bottom-tabs`
+- Navigation: Expo Router (file-based routing) with React Navigation stacks/tabs
 
 ## High-level data flow
 
@@ -32,7 +32,9 @@ Transport order is implemented in `src/services/dnsService.ts`.
 
 App:
 
-- `src/navigation/index.tsx` navigation + tabs
+- `app/_layout.tsx` root providers + router stack
+- `app/(tabs)/_layout.tsx` tab navigation
+- `app/chat/[threadId].tsx` chat route wrapper
 - `src/services/dnsService.ts` query pipeline + fallback order + parsing
 - `src/services/dnsLogService.ts` logging model used by the Logs screen (redacted + encrypted at rest)
 - `src/services/storageService.ts` AsyncStorage persistence (encrypted at rest)

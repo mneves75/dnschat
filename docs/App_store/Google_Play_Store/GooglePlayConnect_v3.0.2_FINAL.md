@@ -103,7 +103,7 @@ Your data never leaves your device:
 **TECHNICAL HIGHLIGHTS**
 - React Native 0.81 with New Architecture (Fabric) enabled
 - React 19.1 with React Compiler for automatic memoization
-- Native bottom tabs (react-native-bottom-tabs)
+- Expo Router tabs (React Navigation)
 - Android DnsResolver API (native Java implementation)
 - 17-style typography system for consistent text rendering
 - TypeScript strict mode throughout
@@ -118,4 +118,3 @@ DNS Chat combines cutting-edge Material Design 3 principles with production-test
 
 ---
 **Character Count:** ~3200/4000
-

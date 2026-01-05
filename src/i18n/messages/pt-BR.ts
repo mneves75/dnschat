@@ -381,6 +381,15 @@ export const ptBR = {
           title: "Configuração atual",
           dnsServerLabel: "Servidor DNS ativo:",
         },
+        data: {
+          title: "Gerenciamento de dados",
+          description:
+            "Gerencie chats e logs DNS armazenados localmente neste dispositivo.",
+          clearDataTitle: "Limpar dados locais",
+          clearDataSubtitle: "Excluir histórico de chats e logs DNS deste dispositivo",
+          clearDataHint:
+            "Exclui todos os chats e logs DNS armazenados localmente neste dispositivo",
+        },
         development: {
           title: "Desenvolvimento",
           resetOnboardingTitle: "Redefinir onboarding",
@@ -419,6 +428,14 @@ export const ptBR = {
         saveErrorMessage: "Falha ao salvar. Tente novamente.",
         dnsSaveErrorTitle: "Falha ao salvar",
         dnsSaveErrorMessage: "Não foi possível salvar o servidor DNS.",
+        clearDataTitle: "Limpar dados locais",
+        clearDataMessage:
+          "Isso excluirá permanentemente seu histórico de chats e logs DNS deste dispositivo.",
+        clearDataSuccessTitle: "Dados locais limpos",
+        clearDataSuccessMessage:
+          "Seu histórico de chats e logs DNS foi apagado.",
+        clearDataErrorMessage:
+          "Não foi possível limpar os dados locais. Tente novamente.",
       },
     },
     glassSettings: {
@@ -478,8 +495,8 @@ export const ptBR = {
         advanced: {
           title: "Avançado",
           footer: "Configurações para usuários avançados. Use com cautela.",
-          clearCacheTitle: "Limpar cache",
-          clearCacheSubtitle: "Remover respostas DNS armazenadas",
+          clearCacheTitle: "Limpar dados locais",
+          clearCacheSubtitle: "Excluir histórico de chats e logs DNS deste dispositivo",
           resetTitle: "Redefinir configurações",
           resetSubtitle: "Restaurar valores padrão",
         },
@@ -499,11 +516,14 @@ export const ptBR = {
         resetMessage:
           "Tem certeza de que deseja restaurar todos os valores padrão?",
         resetConfirm: "Redefinir",
-        clearCacheTitle: "Limpar cache",
+        clearCacheTitle: "Limpar dados locais",
         clearCacheMessage:
-          "Isso limpará todas as respostas DNS e histórico local.",
-        clearCacheSuccessTitle: "Cache limpo",
-        clearCacheSuccessMessage: "Todos os dados em cache foram removidos.",
+          "Isso excluirá permanentemente seu histórico de chats e logs DNS deste dispositivo.",
+        clearCacheSuccessTitle: "Dados locais limpos",
+        clearCacheSuccessMessage:
+          "Seu histórico de chats e logs DNS foi apagado.",
+        clearCacheErrorMessage:
+          "Não foi possível limpar os dados locais. Tente novamente.",
       },
       results: {
         label: "Resultado: {{value}}",
@@ -587,7 +607,7 @@ export const ptBR = {
     },
     home: {
       title: "Tela inicial",
-      subtitle: "Abra 'src/App.tsx' para começar a trabalhar no app!",
+      subtitle: "Abra 'app/(tabs)/index.tsx' para começar a trabalhar no app!",
       goToProfile: "Ir para o perfil",
       goToSettings: "Ir para configurações",
     },

@@ -1,19 +1,21 @@
-import { Text, Button } from "@react-navigation/elements";
-import { StyleSheet, View } from "react-native";
-import { useTranslation } from "../../i18n";
-import { useNavigation } from "@react-navigation/native";
 import React from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useRouter } from "expo-router";
+import { useTranslation } from "../../i18n";
 
 export function NotFound() {
   const { t } = useTranslation();
-  const navigation = useNavigation<any>();
-  React.useLayoutEffect(() => {
-    navigation.setOptions({ title: t("screen.notFound.title") });
-  }, [navigation, t]);
+  const router = useRouter();
   return (
     <View style={styles.container}>
       <Text>{t("screen.notFound.title")}</Text>
-      <Button screen="HomeTabs">{t("screen.notFound.goHome")}</Button>
+      <Pressable
+        onPress={() => router.replace("/")}
+        accessibilityRole="button"
+        style={styles.homeButton}
+      >
+        <Text style={styles.homeButtonText}>{t("screen.notFound.goHome")}</Text>
+      </Pressable>
     </View>
   );
 }
@@ -24,5 +26,15 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     gap: 10,
+  },
+  homeButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 10,
+    backgroundColor: "#007AFF",
+  },
+  homeButtonText: {
+    color: "#FFFFFF",
+    fontWeight: "600",
   },
 });

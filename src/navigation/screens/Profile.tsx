@@ -1,18 +1,16 @@
-import { Text } from "@react-navigation/elements";
-import type { StaticScreenProps } from "@react-navigation/native";
-import { StyleSheet, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "../../i18n";
 
-type Props = StaticScreenProps<{
+interface ProfileProps {
   user: string;
-}>;
+}
 
-export function Profile({ route }: Props) {
+export function Profile({ user }: ProfileProps) {
   const { t } = useTranslation();
   return (
     <View style={styles.container}>
       <Text>
-        {t("screen.profile.title", { user: route.params.user })}
+        {t("screen.profile.title", { user })}
       </Text>
     </View>
   );

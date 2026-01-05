@@ -12,7 +12,8 @@ import {
 } from "react-native";
 import type { ListRenderItemInfo } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import { useFocusEffect } from "@react-navigation/native";
+import { useRouter } from "expo-router";
 import { ChatListItem } from "../../components/ChatListItem";
 import { useChat } from "../../context/ChatContext";
 import type { Chat } from "../../types/chat";
@@ -22,7 +23,7 @@ import { devWarn } from "../../utils/devLog";
 export function ChatList() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
-  const navigation = useNavigation();
+  const router = useRouter();
   const {
     chats,
     isLoading,
@@ -53,8 +54,10 @@ export function ChatList() {
 
   const handleChatPress = (chat: Chat) => {
     setCurrentChat(chat);
-    // Navigate to chat screen - we'll implement this in navigation setup
-    navigation.navigate("Chat" as never);
+    router.push({
+      pathname: "/chat/[threadId]",
+      params: { threadId: chat.id },
+    });
   };
 
   const handleDeleteChat = async (chatId: string) => {
@@ -67,8 +70,11 @@ export function ChatList() {
 
   const handleNewChat = async () => {
     try {
-      await createChat();
-      navigation.navigate("Chat" as never);
+      const newChat = await createChat();
+      router.push({
+        pathname: "/chat/[threadId]",
+        params: { threadId: newChat.id },
+      });
     } catch (error) {
       devWarn("[ChatList] Failed to create new chat", error);
     }

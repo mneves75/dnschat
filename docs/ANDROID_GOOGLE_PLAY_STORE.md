@@ -3,8 +3,8 @@
 Complete step-by-step guide for publishing DNSChat to the Google Play Store.
 
 **App**: DNSChat
-**Package**: `com.dnschat.app`
-**Current Version**: 3.7.0
+**Package**: `org.mvneves.dnschat`
+**Current Version**: 3.8.6
 
 ---
 
@@ -31,7 +31,7 @@ Before starting, ensure you have:
 - [ ] App icon (512x512 PNG)
 - [ ] Feature graphic (1024x500 PNG)
 - [ ] Screenshots for each device type
-- [ ] Privacy policy URL (required)
+- [ ] Privacy policy URL (required; see `PRIVACY.md`)
 - [ ] Short description (80 chars max)
 - [ ] Full description (4000 chars max)
 
@@ -140,6 +140,7 @@ NOTE: This app is for educational and demonstration purposes, showcasing DNS pro
 | Email | your-support-email@example.com |
 | Phone | (Optional) |
 | Website | https://github.com/mneves75/dnschat |
+| Privacy policy | https://github.com/mneves75/dnschat/blob/main/PRIVACY.md |
 
 ---
 
@@ -150,7 +151,7 @@ NOTE: This app is for educational and demonstration purposes, showcasing DNS pro
 #### 1. App Icon
 - **Size**: 512 x 512 px
 - **Format**: PNG (32-bit with alpha)
-- **Location**: `src/assets/dnschat_ios26.png` (scale up or recreate)
+- **Location**: `icons/dnschat_ios26.png` (scale up or recreate)
 
 #### 2. Feature Graphic
 - **Size**: 1024 x 500 px
@@ -171,6 +172,8 @@ NOTE: This app is for educational and demonstration purposes, showcasing DNS pro
 
 ### Screenshot Recommendations
 
+Existing Android screenshots live in `docs/chatdns_android_images/`. Review and resize/crop as needed before submission.
+
 Capture these screens for best store presentation:
 
 1. **Chat List Screen** - Show the glass UI chat list with sample conversations
@@ -186,7 +189,7 @@ Capture these screens for best store presentation:
 
 ```bash
 # Start emulator
-npm run android
+bun run android
 
 # Take screenshot (saves to desktop)
 adb exec-out screencap -p > ~/Desktop/screenshot_$(date +%s).png
@@ -320,11 +323,10 @@ See [ANDROID_RELEASE.md](./ANDROID_RELEASE.md) for signing configuration.
    - **Upload** new AAB
 4. Add release notes:
    ```
-   What's new in v3.5.0:
-   • Enhanced security with DNS response validation
-   • Improved performance and memory management
-   • React Compiler optimizations enabled
-   • Various bug fixes and stability improvements
+   What's new in v3.8.6:
+   • Guidelines re-verification with updated exec spec
+   • Release and store documentation refreshed for the new build
+   • Navigation cleanup and stability fixes
    ```
 5. Click **"Review release"**
 6. Set rollout percentage (start with 10-20% recommended)
@@ -359,9 +361,10 @@ Navigate to: **Policy → App content → Data safety**
 
 ### Security Practices
 
-- [ ] Data encrypted in transit (DNS over standard port 53)
+- [ ] Data encrypted in transit (DNS over standard port 53 is not encrypted)
+- [x] Data encrypted at rest (local AES-GCM)
 - [x] Data stored locally on device only
-- [ ] Users can request data deletion (clear from Settings)
+- [x] Users can request data deletion (clear from Settings)
 
 ---
 

@@ -19,12 +19,9 @@ const ERROR_MESSAGES: Record<DNSErrorType, string> = {
 
 /**
  * Normalize arbitrary error-like values into the localized strings
- * consumed by the thread screen and related tests. We keep this logic
- * colocated with the Expo Router pseudo-route so any future migration
- * has a single source of truth for DNS error UX.
+ * consumed by the thread screen and related tests.
  */
 export function resolveDnsErrorMessage(candidate?: unknown): string {
-  // DNSError carries a typed classification from the native modules.
   if (candidate instanceof DNSError) {
     const classified = ERROR_MESSAGES[candidate.type];
     if (classified) {
@@ -48,9 +45,7 @@ export function resolveDnsErrorMessage(candidate?: unknown): string {
 }
 
 /**
- * Helper to guarantee we always hand back an Error instance. This is
- * useful when plumbing errors into Promise chains that expect proper
- * Error objects while still respecting the localized messaging above.
+ * Helper to guarantee we always hand back an Error instance.
  */
 export function normalizeDnsError(candidate?: unknown): Error {
   if (candidate instanceof Error) {

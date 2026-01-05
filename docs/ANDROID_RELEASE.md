@@ -11,13 +11,13 @@ This document tracks the manual steps for preparing and shipping an Android buil
   - `app.json` (`expo.version`)
 - Ensure dependencies are Expo-SDK compatible:
   - Run `expo install --fix`
-  - Run `npm test` and `npm run lint`
+  - Run `bun run test` and `bun run lint`
 
 ## Build
 
 Typical options:
 
-- Local Android build: `npm run android`
+- Local Android build: `bun run android`
 - EAS build (recommended for store builds): `eas build --platform android --profile production`
 
 ### Release signing (required for Play Store)
@@ -53,4 +53,4 @@ For detailed Google Play Store publishing instructions, see:
 
 ## Notes
 
-- Latest release tag: `v3.6.0`
+- Latest release tag: `v3.8.6`

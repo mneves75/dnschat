@@ -1,8 +1,9 @@
 # Engineering Exec Spec: Expo Router Integration (DNSChat)
 
-Status: Draft
+Status: Implemented
 Owner: Mobile
-Last updated: 2025-12-18
+Last updated: 2026-01-04
+Execution record: `docs/EXECPLAN-2026-01-04-EXPO-ROUTER-MIGRATION.md`.
 
 ## Goal
 
@@ -26,32 +27,30 @@ These are current, enforced constraints that must remain true after the migratio
 - Keep changes small and testable where possible (see `CONTRIBUTING.md` and `CLAUDE.md`).
 - Web must continue to use Mock DNS by default (browsers cannot do raw DNS on port 53).
 
-## Current state (as of 2025-12-18)
+## Current state (post-implementation, 2026-01-04)
 
 ### Runtime navigation
 
-- App entry point: `index.tsx` registers `src/App.tsx` via `registerRootComponent(App)`.
-- Navigation implementation: React Navigation + `react-native-bottom-tabs` in `src/navigation/index.tsx`.
+- App entry point: `entry.tsx` imports `expo-router/entry` after bootstrap side-effects.
+- Navigation implementation: Expo Router file-based routes in `app/`.
   - Tabs: Chat list, Logs, About.
   - Stack: Chat, Profile, Settings (modal), NotFound, plus DevLogs (dev-only deep link).
 
 ### Deep linking
 
 - App scheme: `dnschat` (configured in `app.json`).
-- React Navigation linking prefixes: `dnschat://` (configured in `src/App.tsx`).
+- Router linking prefixes: `dnschat://` (configured in `app.json`).
 - Special deep links:
-  - Profile route is matched as a single path segment starting with `@` (configured via `linking.path` on the Profile screen in `src/navigation/index.tsx`).
+- Profile route is matched as a single path segment starting with `@` (implemented via the `/[user]` redirect shim in `app/[user].tsx`).
   - Dev logs route: `dnschat://dev/logs` (dev-only).
 
-### Existing `app/` directory hazard
+### Existing `app/` directory hazard (resolved)
 
-The repo currently contains `app/(dashboard)/[threadId].ts`, which is not a route component and does not export a React component. Once Expo Router is enabled, this file will be treated as a route and will break the app at runtime.
-
-This file is also imported by unit tests (`__tests__/threadScreen.errors.spec.ts`), so relocation requires updating tests.
+The previous `app/(dashboard)/[threadId].ts` non-route module was relocated to `src/utils/dnsErrors.ts` and unit tests now import the new location. The `app/` directory now contains only valid route components.
 
 ### Provider + side-effect structure
 
-`src/App.tsx` currently owns:
+`app/_layout.tsx` currently owns:
 
 - Provider tree (GestureHandlerRootView, SafeAreaProvider, KeyboardProvider, ErrorBoundary, and app contexts).
 - Onboarding gating (renders `OnboardingContainer` when not completed).
@@ -136,9 +135,9 @@ Notes:
 
 ### Root providers + layout responsibilities
 
-`app/_layout.tsx` becomes the single place where the app composes:
+`app/_layout.tsx` is now the single place where the app composes:
 
-- Providers currently created in `src/App.tsx`.
+- Providers previously created in `src/App.tsx`.
 - Splash screen gating (including `hideAsync()` once onboarding state is resolved).
 - Onboarding gate:
   - If onboarding is not completed and the user is not already on `/onboarding`, redirect to `/onboarding`.
@@ -164,16 +163,16 @@ Acceptance criteria:
 - All `app/` directory "pseudo-route" files are removed or relocated out of `app/`.
 - Tests still pass.
 
-TODO:
+Completed:
 
-- Move `resolveDnsErrorMessage` and related helpers out of `app/(dashboard)/[threadId].ts` into a non-route module (for example `src/utils/dnsErrors.ts`).
-- Update `__tests__/threadScreen.errors.spec.ts` imports accordingly.
-- Ensure `app/` contains no non-route modules before Router is enabled.
+- Moved `resolveDnsErrorMessage` and related helpers into `src/utils/dnsErrors.ts`.
+- Updated `__tests__/threadScreen.errors.spec.ts` imports accordingly.
+- Confirmed `app/` contains only route components before Router enablement.
 
 Verification:
 
-- `npm test`
-- `npm run lint`
+- `bun run test`
+- `bun run lint`
 
 Rollback:
 
@@ -186,22 +185,22 @@ Goal: Prepare dependency graph and native projects before switching the entry po
 Acceptance criteria:
 
 - `expo-router` and required peer deps are installed via `npx expo install`.
-- iOS pods and Android builds remain consistent with `npm run verify:ios-pods` and `npm run verify:android`.
+- iOS pods and Android builds remain consistent with `bun run verify:ios-pods` and `bun run verify:android`.
 
-TODO:
+Completed:
 
-- Install dependencies:
+- Installed dependencies:
   - `expo-router`
   - `expo-constants`
   - `expo-status-bar`
-  - Confirm `expo-linking`, `react-native-safe-area-context`, `react-native-screens` are present and SDK-compatible.
-- Update documentation noting that Router dependencies are present but not enabled yet.
+  - Verified `expo-linking`, `react-native-safe-area-context`, `react-native-screens` remain SDK-compatible.
+- Updated documentation to reflect Router dependency presence.
 
 Verification:
 
-- `npm run verify:ios-pods`
-- `npm run verify:android`
-- `npm test`
+- `bun run verify:ios-pods`
+- `bun run verify:android`
+- `bun run test`
 
 Rollback:
 
@@ -217,9 +216,9 @@ Acceptance criteria:
 - Route tree compiles (typecheck and Metro parse).
 - Not-found route exists.
 
-TODO:
+Completed:
 
-- Add minimal route tree:
+- Added the full route tree:
   - `app/_layout.tsx`
   - `app/+not-found.tsx`
   - `app/(tabs)/_layout.tsx`, `index.tsx`, `logs.tsx`, `about.tsx`
@@ -228,13 +227,13 @@ TODO:
   - `app/(modals)/settings.tsx`
   - `app/dev/logs.tsx`
   - `app/[user].tsx` redirect shim for `@username`
-- Port provider tree from `src/App.tsx` into `app/_layout.tsx` and replace the current `Navigation` component with `<Slot />` / Router stacks as needed.
-- Keep the existing screen implementations by re-exporting or wrapping existing components from `src/navigation/screens/*` initially to minimize churn.
+- Ported the provider tree into `app/_layout.tsx` and replaced navigation with Router stack routes.
+- Reused the existing screen implementations via lightweight route wrappers.
 
 Verification:
 
-- `npm test`
-- `npm run lint`
+- `bun run test`
+- `bun run lint`
 
 Rollback:
 
@@ -249,17 +248,16 @@ Acceptance criteria:
 - The app boots into the tabs route on iOS/Android and renders the main list.
 - Web build boots and navigates between routes.
 
-TODO:
+Completed:
 
-- Implement a Router-compatible entry point:
-  - Prefer a custom entry file (for side-effects like `react-native-gesture-handler`) that imports `expo-router/entry` last.
-- Update `package.json` `"main"` accordingly (either `expo-router/entry` directly or the custom entry file).
-- Remove or repurpose the previous `registerRootComponent(App)` flow.
+- Implemented a Router-compatible entry point in `entry.tsx` with `expo-router/entry` imported last.
+- Updated `package.json` `"main"` to `entry.tsx`.
+- Repurposed the previous `registerRootComponent(App)` flow to delegate to `entry.tsx`.
 
 Verification:
 
-- `npm start` and open iOS/Android dev-client builds
-- `npm run web` and navigate between `/`, `/logs`, `/about`
+- `bun run start` and open iOS/Android dev-client builds
+- `bun run web` and navigate between `/`, `/logs`, `/about`
 
 Rollback:
 
@@ -277,15 +275,13 @@ Acceptance criteria:
 - Deep links open the correct screens on iOS/Android.
 - Invalid deep links land on `+not-found`.
 
-TODO:
+Completed:
 
-- Verify app config scheme remains `dnschat` in `app.json`.
-- Implement:
-  - `/dev/logs` route guarded by dev-only logic (in prod, redirect to `+not-found`).
-  - `/[user]` redirect shim:
-    - If segment matches `@<allowed>`: redirect to `/profile/<allowed>`.
-    - Otherwise: render not-found.
-- Add a small unit test suite for the redirect shim to avoid regressions.
+- Verified app config scheme remains `dnschat` in `app.json`.
+- Implemented:
+  - `/dev/logs` guarded by dev-only logic (prod renders not-found).
+  - `/[user]` redirect shim with `@<allowed>` validation to `/profile/<allowed>`.
+- Added unit coverage for route param parsing and redirect validation.
 
 Verification (manual):
 
@@ -309,12 +305,10 @@ Acceptance criteria:
 - Returning user path:
   - App goes directly to main tabs.
 
-TODO:
+Completed:
 
-- Add `app/onboarding.tsx` that renders the existing `OnboardingContainer`.
-- In `app/_layout.tsx`:
-  - Use a redirect strategy based on onboarding state (completed vs not completed).
-  - Ensure splash screen remains visible until onboarding state is known.
+- Added `app/onboarding.tsx` to render the existing `OnboardingContainer`.
+- Added redirect gating in `app/_layout.tsx` based on onboarding state and kept the splash screen visible until state resolution.
 
 Verification:
 
@@ -334,19 +328,19 @@ Acceptance criteria:
 - `src/navigation/*` is either removed or reduced to screen-only modules.
 - Unused dependencies are removed if no longer needed.
 
-TODO:
+Completed:
 
-- Delete or archive old navigation scaffolding:
+- Removed legacy navigation scaffolding:
   - `src/navigation/index.tsx`
   - `createStaticNavigation` usage
-  - `react-native-bottom-tabs` if replaced by Expo Router Tabs.
-- Replace `useNavigation` calls with `router` / `useRouter` where it improves clarity.
+  - `react-native-bottom-tabs` dependency
+- Replaced `useNavigation` calls with `router` / `useRouter` where it clarified intent.
 
 Verification:
 
-- `npm test`
-- `npm run lint`
-- `npm run verify:ios-pods`
+- `bun run test`
+- `bun run lint`
+- `bun run verify:ios-pods`
 
 Rollback:
 
@@ -361,16 +355,16 @@ Acceptance criteria:
 - `experiments.typedRoutes` is enabled in `app.json`.
 - Route types generate locally and are not committed.
 
-TODO:
+Completed:
 
-- Set `expo.experiments.typedRoutes` to `true` in `app.json`.
-- Confirm generated `expo-env.d.ts` remains gitignored (it already is in this repo's `.gitignore`).
-- Update route navigation call sites to use typed href objects for dynamic routes.
+- Enabled `expo.experiments.typedRoutes` in `app.json`.
+- Confirmed `expo-env.d.ts` remains gitignored.
+- Updated route navigation call sites to use typed href objects for dynamic routes.
 
 Verification:
 
 - `npx expo start` generates route types.
-- `npm test` still passes.
+- `bun run test` still passes.
 
 Rollback:
 
@@ -402,7 +396,7 @@ Required after Phase 3+:
 - Android:
   - Same set, plus verify no regressions with `AndroidStartupDiagnostics`.
 - Web:
-  - `npm run web` loads `/`, `/logs`, `/about`
+  - `bun run web` loads `/`, `/logs`, `/about`
   - Reload on deep path works (Router handles it)
 
 ## Observability and troubleshooting
@@ -426,10 +420,9 @@ The critical rollback is always:
 
 ## Appendix: Key files to touch during implementation
 
-- Entry: `package.json`, `index.tsx` (or new `index.js`)
+- Entry: `package.json`, `entry.tsx` (legacy `index.tsx` delegates to it)
 - Expo config: `app.json`
 - Router routes: `app/*`
-- Providers and gating: migrate from `src/App.tsx` into `app/_layout.tsx`
+- Providers and gating: `app/_layout.tsx` is the single source of truth
 - Screens: `src/navigation/screens/*` (initially reused, later migrated)
 - Tests: `__tests__/*` (especially `__tests__/threadScreen.errors.spec.ts`)
-

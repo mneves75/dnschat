@@ -18,6 +18,7 @@ module.exports = {
     "^expo-localization$":
       "<rootDir>/__tests__/mocks/expo-localization.js",
     "^expo-haptics$": "<rootDir>/__tests__/mocks/expo-haptics.js",
+    "^expo-router$": "<rootDir>/__tests__/mocks/expo-router.js",
     "^@/(.*)$": "<rootDir>/src/$1",
   },
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
