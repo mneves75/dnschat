@@ -10,6 +10,8 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ### Changed
 
+- Docs: refreshed the 2026-01-05 guidelines re-verification ExecPlan and documentation index.
+
 ### Fixed
 
 ## 3.8.6 - 2026-01-05
