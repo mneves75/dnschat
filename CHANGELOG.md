@@ -6,6 +6,13 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## Unreleased
 
+## 4.0.0 - 2026-01-05
+
+### Changed
+
+- Bumped app version metadata to 4.0.0 (build 30) across iOS and Android configs.
+- Updated release and store documentation for the 4.0.0 major release.
+
 ## 3.8.9 - 2026-01-05
 
 ### Added

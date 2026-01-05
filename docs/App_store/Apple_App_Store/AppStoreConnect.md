@@ -78,12 +78,13 @@ AI,chat,DNS,assistant,privacy,native,tech,innovation,queries,networking
 
 ---
 
-## What's New (Release Notes v3.8.8)
+## What's New (Release Notes v4.0.0)
 
 RELEASE FIXES
 
-- Fixed iOS bundling by restoring the useStaggeredList TSX module
-- Updated release metadata and documentation for the 3.8.8 build
+- Native DNS bridge parity fixes (port parameter supported on iOS/Android)
+- Reanimated render warnings eliminated in core UI flows
+- Version and release documentation refreshed for 4.0.0
 
 ---
 
@@ -122,7 +123,7 @@ Revolutionary AI chat using DNS queries. Native iOS performance, complete privac
 ### Bundle Information
 
 - **Bundle ID**: `org.mvneves.dnschat`
-- **Version**: `3.8.8`
+- **Version**: `4.0.0`
 - **Build Number**: 28 (sync-versions)
 - **Minimum iOS Version**: 16.0
 - **Device Support**: iPhone, iPad
