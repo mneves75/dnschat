@@ -89,7 +89,12 @@ function RootLayoutContent() {
   }
 
   const stack = (
-    <Stack>
+    <Stack
+      screenOptions={{
+        headerBackTitleVisible: false,
+        headerBackTitle: "",
+      }}
+    >
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="chat/[threadId]" />
       <Stack.Screen name="profile/[user]" />

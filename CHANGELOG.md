@@ -6,6 +6,10 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## Unreleased
 
+### Fixed
+
+- Hid route group names from iOS back button titles (no more “(tabs)” in header).
+
 ## 4.0.0 - 2026-01-05
 
 ### Changed
