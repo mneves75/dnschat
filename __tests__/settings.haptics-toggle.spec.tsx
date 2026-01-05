@@ -15,6 +15,10 @@ jest.mock("../src/context/OnboardingContext", () => ({
   useOnboarding: () => ({ resetOnboarding: jest.fn() }),
 }));
 
+jest.mock("../src/context/ChatContext", () => ({
+  useChat: () => ({ loadChats: jest.fn() }),
+}));
+
 jest.mock("../src/context/AccessibilityContext", () => ({
   useAccessibility: () => ({
     isReduceMotionEnabled: false,

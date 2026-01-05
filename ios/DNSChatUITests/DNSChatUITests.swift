@@ -126,7 +126,7 @@ class DNSChatUITests: XCTestCase {
         while Date() < deadline {
             if isIPad {
                 // iPad: Check for sidebar elements or main content
-                // react-native-bottom-tabs shows sidebar on iPad
+                // Expo Router tabs show sidebar-style navigation on iPad
                 if app.otherElements["chat-list"].exists ||
                    app.otherElements["about-screen"].exists ||
                    app.otherElements["logs-screen"].exists ||
@@ -150,7 +150,7 @@ class DNSChatUITests: XCTestCase {
     private func tapNavigationItem(_ title: String) -> Bool {
         if isIPad {
             // iPad: Use firstMatch to handle multiple elements with same title
-            // react-native-bottom-tabs sidebar may have duplicate labels
+            // Expo Router tabs sidebar may have duplicate labels
             let sidebarButton = app.buttons[title].firstMatch
             if sidebarButton.waitForExistence(timeout: 5) {
                 sidebarButton.tap()

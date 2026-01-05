@@ -16,13 +16,13 @@ Symptoms:
 Fix:
 
 ```bash
-npm start
+bun run start
 ```
 
 If you insist on calling Expo directly:
 
 ```bash
-npx expo --version
+bunx expo --version
 ```
 
 ### Node version
@@ -44,15 +44,15 @@ Symptom:
 Fix:
 
 ```bash
-npm run verify:ios-pods
-npm run ios
+bun run verify:ios-pods
+bun run ios
 ```
 
 If pods are corrupted:
 
 ```bash
-npm run fix-pods
-npm run clean-ios
+bun run fix-pods
+bun run clean-ios
 ```
 
 ## Android
@@ -66,18 +66,18 @@ Symptom:
 Fix:
 
 ```bash
-npm run android
+bun run android
 ```
 
-`npm run android` will try to select Java 17 (prefers an existing valid
+`bun run android` will try to select Java 17 (prefers an existing valid
 `JAVA_HOME`, then macOS `/usr/libexec/java_home -v 17`, then common Homebrew
 locations). If your Java is elsewhere, set `JAVA_HOME` to a Java 17 install and
-re-run `npm run android`.
+re-run `bun run android`.
 
 Diagnostics:
 
 ```bash
-npm run verify:android
+bun run verify:android
 ```
 
 ### local.properties points to a missing Android SDK
@@ -85,7 +85,7 @@ npm run verify:android
 Symptom:
 
 - Gradle warns: `sdk.dir property in local.properties file. Problem: Directory does not exist`
-- `npm run verify:android` reports `android/local.properties sdk.dir points to a missing directory`
+- `bun run verify:android` reports `android/local.properties sdk.dir points to a missing directory`
 
 Fix:
 

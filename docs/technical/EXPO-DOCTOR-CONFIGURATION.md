@@ -42,10 +42,10 @@ metadata is not applicable.
 
 ```bash
 # Lint (includes ast-grep rules)
-npm run lint
+bun run lint
 
 # Unit tests
-npm test
+bun run test
 
 # DNS smoke test
 node test-dns-simple.js "Hello world"

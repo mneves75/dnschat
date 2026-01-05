@@ -103,7 +103,7 @@ Your data never leaves your device:
 **TECHNICAL HIGHLIGHTS**
 - React Native 0.81 with New Architecture (Fabric) enabled
 - React 19.1 with React Compiler for automatic memoization
-- Native bottom tabs (react-native-bottom-tabs)
+- Expo Router tabs (React Navigation)
 - iOS Network.framework DNS resolver (Swift)
 - TypeScript strict mode throughout
 - Jest test suite with 23 test files
@@ -118,4 +118,3 @@ DNS Chat combines cutting-edge iOS 26 design principles with production-tested D
 
 ---
 **Character Count:** ~3100/4000
-

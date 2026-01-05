@@ -8,7 +8,7 @@ import {
   ActivityIndicator,
   useColorScheme,
 } from "react-native";
-import { useTheme, useNavigation } from "@react-navigation/native";
+import { useTheme } from "@react-navigation/native";
 import { DNSLogService } from "../../services/dnsLogService";
 import type { DNSQueryLog, DNSLogEntry } from "../../services/dnsLogService";
 import { Form, LiquidGlassWrapper } from "../../components/glass";
@@ -16,16 +16,12 @@ import { useTranslation } from "../../i18n";
 
 export function Logs() {
   const { colors } = useTheme();
-  const navigation = useNavigation<any>();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
   const [logs, setLogs] = useState<DNSQueryLog[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [expandedLogs, setExpandedLogs] = useState<Set<string>>(new Set());
   const { t } = useTranslation();
-  useEffect(() => {
-    navigation.setOptions({ title: t("screen.logs.navigationTitle") });
-  }, [navigation, t]);
   const historyFooter =
     logs.length === 1
       ? t("screen.logs.history.footerSingle", { count: logs.length })

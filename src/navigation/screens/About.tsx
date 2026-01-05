@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { useNavigation } from "@react-navigation/native";
+import { useRouter } from "expo-router";
 import { View, Text, StyleSheet, Linking, Image } from "react-native";
 import { Form, LiquidGlassWrapper } from "../../components/glass";
 import { useTranslation } from "../../i18n";
@@ -60,7 +60,7 @@ const createStyles = (palette: IMessagePalette) =>
   });
 
 export function About() {
-  const navigation = useNavigation<any>();
+  const router = useRouter();
   const { t } = useTranslation();
   const palette = useImessagePalette();
   const typography = useTypography();
@@ -189,7 +189,7 @@ export function About() {
         <Form.Item
           title={t("screen.about.quickActions.settingsTitle")}
           subtitle={t("screen.about.quickActions.settingsSubtitle")}
-          onPress={() => navigation.navigate("Settings" as never)}
+          onPress={() => router.push("/settings")}
           showChevron
         />
       </Form.Section>
@@ -250,7 +250,7 @@ export function About() {
         <Form.Item
           title={t("screen.about.sections.project.settings.title")}
           subtitle={t("screen.about.sections.project.settings.subtitle")}
-          onPress={() => navigation.navigate("Settings" as never)}
+          onPress={() => router.push("/settings")}
           showChevron
         />
       </Form.Section>
@@ -270,7 +270,7 @@ export function About() {
             subtitle={t(
               "screen.about.sections.developer.devLogsSubtitle",
             )}
-            onPress={() => navigation.navigate("DevLogs" as never)}
+            onPress={() => router.push("/dev/logs")}
             showChevron
           />
         )}

@@ -11,27 +11,27 @@ import {
   Switch,
   ScrollView,
 } from "react-native";
-import {
-  useTheme,
-  useNavigation,
-} from "@react-navigation/native";
-import type { NavigationProp, ParamListBase } from "@react-navigation/native";
+import { useTheme } from "@react-navigation/native";
+import { useRouter } from "expo-router";
 import {
   useSettings,
 } from "../../context/SettingsContext";
 import { useOnboarding } from "../../context/OnboardingContext";
+import { useChat } from "../../context/ChatContext";
+import { DNSLogService } from "../../services/dnsLogService";
+import { StorageService } from "../../services/storageService";
 import { persistHapticsPreference } from "../../utils/haptics";
 import { useTranslation } from "../../i18n";
 import { LOCALE_LABEL_KEYS } from "../../i18n/localeMeta";
 import { DEFAULT_DNS_SERVER } from "../../context/settingsStorage";
 import { useImessagePalette } from "../../ui/theme/imessagePalette";
-import { devLog } from "../../utils/devLog";
+import { devLog, devWarn } from "../../utils/devLog";
 
 export function Settings() {
   const { colors } = useTheme();
   const palette = useImessagePalette();
   const { t } = useTranslation();
-  const navigation = useNavigation<NavigationProp<ParamListBase>>();
+  const router = useRouter();
   const {
     dnsServer,
     updateDnsServer,
@@ -46,10 +46,12 @@ export function Settings() {
     loading,
   } = useSettings();
   const { resetOnboarding } = useOnboarding();
+  const { loadChats } = useChat();
   const [tempDnsServer, setTempDnsServer] = useState(dnsServer);
   const [tempEnableMockDNS, setTempEnableMockDNS] = useState(enableMockDNS);
   const [tempEnableHaptics, setTempEnableHaptics] = useState(enableHaptics);
   const [saving, setSaving] = useState(false);
+  const [clearingData, setClearingData] = useState(false);
 
   // Transport test state
   const [testMessage, setTestMessage] = useState("ping");
@@ -129,7 +131,7 @@ export function Settings() {
       Alert.alert(
         t("screen.settings.alerts.saveSuccessTitle"),
         t("screen.settings.alerts.saveSuccessMessage"),
-        [{ text: t("common.ok"), onPress: () => navigation.goBack() }],
+        [{ text: t("common.ok"), onPress: () => router.back() }],
       );
     } catch (error) {
       Alert.alert(
@@ -175,6 +177,41 @@ export function Settings() {
               t("screen.settings.alerts.onboardingResetTitle"),
               t("screen.settings.alerts.onboardingResetMessage"),
             );
+          },
+        },
+      ],
+    );
+  };
+
+  const handleClearData = () => {
+    Alert.alert(
+      t("screen.settings.alerts.clearDataTitle"),
+      t("screen.settings.alerts.clearDataMessage"),
+      [
+        { text: t("common.cancel"), style: "cancel" },
+        {
+          text: t("common.clear"),
+          style: "destructive",
+          onPress: async () => {
+            if (clearingData) return;
+            try {
+              setClearingData(true);
+              await StorageService.clearAllChats();
+              await DNSLogService.clearLogs();
+              await loadChats();
+              Alert.alert(
+                t("screen.settings.alerts.clearDataSuccessTitle"),
+                t("screen.settings.alerts.clearDataSuccessMessage"),
+              );
+            } catch (error) {
+              devWarn("[Settings] Failed to clear local data", error);
+              Alert.alert(
+                t("common.errorTitle"),
+                t("screen.settings.alerts.clearDataErrorMessage"),
+              );
+            } finally {
+              setClearingData(false);
+            }
           },
         },
       ],
@@ -569,7 +606,7 @@ export function Settings() {
               },
             ]}
             onPress={() => {
-              navigation.navigate("HomeTabs", { screen: "Logs" });
+              router.push("/logs");
             }}
             disabled={testRunning}
           >
@@ -638,6 +675,43 @@ export function Settings() {
               </Text>
             </View>
           </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+            {t("screen.settings.sections.data.title")}
+          </Text>
+          <Text style={[styles.description, { color: colors.text }]}>
+            {t("screen.settings.sections.data.description")}
+          </Text>
+          <TouchableOpacity
+            style={[
+              styles.devButton,
+              { borderColor: colors.text + "40", backgroundColor: colors.card },
+            ]}
+            onPress={handleClearData}
+            disabled={clearingData || loading}
+            accessibilityRole="button"
+            accessibilityLabel={t("screen.settings.sections.data.clearDataTitle")}
+            accessibilityHint={t(
+              "screen.settings.sections.data.clearDataHint",
+            )}
+            accessibilityState={{ disabled: clearingData || loading }}
+          >
+            <View>
+              <Text style={[styles.devButtonTitle, { color: colors.text }]}>
+                {t("screen.settings.sections.data.clearDataTitle")}
+              </Text>
+              <Text
+                style={[
+                  styles.devButtonDescription,
+                  { color: colors.text + "80" },
+                ]}
+              >
+                {t("screen.settings.sections.data.clearDataSubtitle")}
+              </Text>
+            </View>
+          </TouchableOpacity>
         </View>
 
         <View style={styles.section}>

@@ -2,13 +2,14 @@
   "expo": {
     "name": "DNS Chat",
     "slug": "chat-dns",
-    "version": "3.8.4",
+    "version": "3.8.6",
     "orientation": "default",
     "icon": "./icons/dnschat_ios26.png",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "experiments": {
-      "reactCompiler": true
+      "reactCompiler": true,
+      "typedRoutes": true
     },
     "scheme": "dnschat",
     "ios": {
@@ -23,7 +24,8 @@
       "package": "org.mvneves.dnschat"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
     },
     "plugins": [
       "expo-asset",
@@ -60,7 +62,8 @@
           }
         }
       ],
-      "expo-localization"
+      "expo-localization",
+      "expo-router"
     ]
   }
 }

@@ -259,9 +259,12 @@ PODS:
     - ExpoModulesCore
   - ExpoHaptics (15.0.8):
     - ExpoModulesCore
+  - ExpoHead (6.0.21):
+    - ExpoModulesCore
+    - RNScreens
   - ExpoKeepAwake (15.0.8):
     - ExpoModulesCore
-  - ExpoLinking (8.0.10):
+  - ExpoLinking (8.0.11):
     - ExpoModulesCore
   - ExpoLocalization (17.0.8):
     - ExpoModulesCore
@@ -2049,37 +2052,6 @@ PODS:
     - React-RCTFBReactNativeSpec
     - ReactCommon/turbomodule/core
     - SocketRocket
-  - react-native-bottom-tabs (0.10.0):
-    - boost
-    - DoubleConversion
-    - fast_float
-    - fmt
-    - glog
-    - hermes-engine
-    - RCT-Folly
-    - RCT-Folly/Fabric
-    - RCTRequired
-    - RCTTypeSafety
-    - React-Core
-    - React-debug
-    - React-Fabric
-    - React-featureflags
-    - React-graphics
-    - React-ImageManager
-    - React-jsi
-    - React-NativeModulesApple
-    - React-RCTFabric
-    - React-renderercss
-    - React-rendererdebug
-    - React-utils
-    - ReactCodegen
-    - ReactCommon/turbomodule/bridging
-    - ReactCommon/turbomodule/core
-    - SDWebImage (>= 5.19.1)
-    - SDWebImageSVGCoder (>= 1.7.0)
-    - SocketRocket
-    - SwiftUIIntrospect (~> 1.0)
-    - Yoga
   - react-native-keyboard-controller (1.18.5):
     - boost
     - DoubleConversion
@@ -3152,7 +3124,6 @@ PODS:
   - SDWebImageSVGCoder (1.8.0):
     - SDWebImage/Core (~> 5.6)
   - SocketRocket (0.7.1)
-  - SwiftUIIntrospect (1.3.0)
   - Yoga (0.0.0)
 
 DEPENDENCIES:
@@ -3173,6 +3144,7 @@ DEPENDENCIES:
   - ExpoFont (from `../node_modules/expo-font/ios`)
   - ExpoGlassEffect (from `../node_modules/expo-glass-effect/ios`)
   - ExpoHaptics (from `../node_modules/expo-haptics/ios`)
+  - ExpoHead (from `../node_modules/expo-router/ios`)
   - ExpoKeepAwake (from `../node_modules/expo-keep-awake/ios`)
   - ExpoLinking (from `../node_modules/expo-linking/ios`)
   - ExpoLocalization (from `../node_modules/expo-localization/ios`)
@@ -3220,7 +3192,6 @@ DEPENDENCIES:
   - React-logger (from `../node_modules/react-native/ReactCommon/logger`)
   - React-Mapbuffer (from `../node_modules/react-native/ReactCommon`)
   - React-microtasksnativemodule (from `../node_modules/react-native/ReactCommon/react/nativemodule/microtasks`)
-  - react-native-bottom-tabs (from `../node_modules/react-native-bottom-tabs`)
   - react-native-keyboard-controller (from `../node_modules/react-native-keyboard-controller`)
   - "react-native-menu (from `../node_modules/@react-native-menu/menu`)"
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
@@ -3275,7 +3246,6 @@ SPEC REPOS:
     - SDWebImage
     - SDWebImageSVGCoder
     - SocketRocket
-    - SwiftUIIntrospect
 
 EXTERNAL SOURCES:
   boost:
@@ -3312,6 +3282,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/expo-glass-effect/ios"
   ExpoHaptics:
     :path: "../node_modules/expo-haptics/ios"
+  ExpoHead:
+    :path: "../node_modules/expo-router/ios"
   ExpoKeepAwake:
     :path: "../node_modules/expo-keep-awake/ios"
   ExpoLinking:
@@ -3405,8 +3377,6 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon"
   React-microtasksnativemodule:
     :path: "../node_modules/react-native/ReactCommon/react/nativemodule/microtasks"
-  react-native-bottom-tabs:
-    :path: "../node_modules/react-native-bottom-tabs"
   react-native-keyboard-controller:
     :path: "../node_modules/react-native-keyboard-controller"
   react-native-menu:
@@ -3515,8 +3485,9 @@ SPEC CHECKSUMS:
   ExpoFont: 35ac6191ed86bbf56b3ebd2d9154eda9fad5b509
   ExpoGlassEffect: 8ce45eca31f12e949e23a4ee13e2bfb59e9b0785
   ExpoHaptics: d3a6375d8dcc3a1083d003bc2298ff654fafb536
+  ExpoHead: 9719a74953454fac328e90f34eea55ebbb3bbbf9
   ExpoKeepAwake: 55f75eca6499bb9e4231ebad6f3e9cb8f99c0296
-  ExpoLinking: f4c4a351523da72a6bfa7e1f4ca92aee1043a3ca
+  ExpoLinking: 8f0aaf69aa56f832913030503b6263dc6f647f37
   ExpoLocalization: d9168d5300a5b03e5e78b986124d11fb6ec3ebbd
   ExpoModulesCore: d86dab8a6c8f1184f9b0b0503ace93919882aa15
   ExpoSecureStore: d32f751874a2ceb5aaeebeb3578e165c1ba2b24a
@@ -3561,7 +3532,6 @@ SPEC CHECKSUMS:
   React-logger: a913317214a26565cd4c045347edf1bcacb80a3f
   React-Mapbuffer: 94f4264de2cb156960cd82b338a403f4653f2fd9
   React-microtasksnativemodule: 6c4ee39a36958c39c97b074d28f360246a335e84
-  react-native-bottom-tabs: a7a8b973e4b6cb215b29fc508278c4957b4be998
   react-native-keyboard-controller: 8bd5f5572b6d5d402a2f77987a17492f869e5d62
   react-native-menu: d3cbac7d7bd6ae1c283f4f3c9993f69d209a61b4
   react-native-safe-area-context: c6e2edd1c1da07bdce287fa9d9e60c5f7b514616
@@ -3608,7 +3578,6 @@ SPEC CHECKSUMS:
   SDWebImage: 16309af6d214ba3f77a7c6f6fdda888cb313a50a
   SDWebImageSVGCoder: 8e10c8f6cc879c7dfb317b284e13dd589379f01c
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748
-  SwiftUIIntrospect: fee9aa07293ee280373a591e1824e8ddc869ba5d
   Yoga: 728df40394d49f3f471688747cf558158b3a3bd1
 
 PODFILE CHECKSUM: 02e88d570cac808cc66724e546194b7f335365be

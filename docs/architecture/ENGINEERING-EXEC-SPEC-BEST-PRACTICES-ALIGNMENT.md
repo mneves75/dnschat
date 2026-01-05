@@ -90,7 +90,7 @@ Acceptance criteria:
 - Confirm all runtime entry points (native + web) and where to inject bootstrap.
 
 TODO:
-- Audit `index.tsx`, `src/App.tsx`, and any other entry points for initialization order.
+- Audit `entry.tsx`, `app/_layout.tsx`, and any other entry points for initialization order.
 - Confirm whether web builds already expose `crypto`.
 
 Verification:
@@ -199,7 +199,7 @@ All phases completed on 2026-01-04.
 ### Phase 1: Crypto modernization
 
 - [x] Add secure RNG bootstrap (`src/bootstrap/crypto.ts`).
-- [x] Import bootstrap early (`index.tsx`).
+- [x] Import bootstrap early (`entry.tsx`).
 - [x] Replace deprecated RNG usage in encryption (`src/services/encryptionService.ts`).
 - [x] Update dependencies + lockfile (`package.json`, `bun.lock`).
 

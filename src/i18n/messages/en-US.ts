@@ -381,6 +381,15 @@ export const enUS = {
           title: "Current Configuration",
           dnsServerLabel: "Active DNS Server:",
         },
+        data: {
+          title: "Data Management",
+          description:
+            "Manage locally stored chats and DNS logs on this device.",
+          clearDataTitle: "Clear Local Data",
+          clearDataSubtitle: "Delete chat history and DNS logs from this device",
+          clearDataHint:
+            "Deletes all local chats and DNS logs stored on this device",
+        },
         development: {
           title: "Development",
           resetOnboardingTitle: "Reset Onboarding",
@@ -419,6 +428,14 @@ export const enUS = {
         saveErrorMessage: "Failed to save settings. Please try again.",
         dnsSaveErrorTitle: "Save Failed",
         dnsSaveErrorMessage: "Could not save DNS server.",
+        clearDataTitle: "Clear Local Data",
+        clearDataMessage:
+          "This will permanently delete your chat history and DNS logs from this device.",
+        clearDataSuccessTitle: "Local Data Cleared",
+        clearDataSuccessMessage:
+          "Your chat history and DNS logs have been cleared.",
+        clearDataErrorMessage:
+          "Unable to clear local data. Please try again.",
       },
     },
     glassSettings: {
@@ -479,8 +496,8 @@ export const enUS = {
           title: "Advanced",
           footer:
             "Advanced settings for power users. Use with caution.",
-          clearCacheTitle: "Clear Cache",
-          clearCacheSubtitle: "Remove all cached DNS responses",
+          clearCacheTitle: "Clear Local Data",
+          clearCacheSubtitle: "Delete chat history and DNS logs from this device",
           resetTitle: "Reset Settings",
           resetSubtitle: "Restore all settings to default values",
         },
@@ -500,12 +517,14 @@ export const enUS = {
         resetMessage:
           "Are you sure you want to reset all settings to default values?",
         resetConfirm: "Reset",
-        clearCacheTitle: "Clear Cache",
+        clearCacheTitle: "Clear Local Data",
         clearCacheMessage:
-          "This will clear all cached DNS responses and conversation history.",
-        clearCacheSuccessTitle: "Cache Cleared",
+          "This will permanently delete your chat history and DNS logs from this device.",
+        clearCacheSuccessTitle: "Local Data Cleared",
         clearCacheSuccessMessage:
-          "All cached data has been cleared.",
+          "Your chat history and DNS logs have been cleared.",
+        clearCacheErrorMessage:
+          "Unable to clear local data. Please try again.",
       },
       results: {
         label: "Result: {{value}}",
@@ -589,7 +608,7 @@ export const enUS = {
     },
     home: {
       title: "Home Screen",
-      subtitle: "Open up 'src/App.tsx' to start working on your app!",
+      subtitle: "Open up 'app/(tabs)/index.tsx' to start working on your app!",
       goToProfile: "Go to Profile",
       goToSettings: "Go to Settings",
     },

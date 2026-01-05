@@ -20,13 +20,14 @@ import {
   Share,
   useColorScheme,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
-import { HeaderButton } from "@react-navigation/elements";
+import { useChat } from "../../context/ChatContext";
 import { useSettings } from "../../context/SettingsContext";
 import { useOnboarding } from "../../context/OnboardingContext";
 import { useTranslation } from "../../i18n";
 import { LOCALE_LABEL_KEYS } from "../../i18n/localeMeta";
 import { DEFAULT_DNS_SERVER } from "../../context/settingsStorage";
+import { DNSLogService } from "../../services/dnsLogService";
+import { StorageService } from "../../services/storageService";
 
 const packageJson = require("../../../package.json");
 import {
@@ -45,7 +46,6 @@ import { devLog, devWarn } from "../../utils/devLog";
 // ==================================================================================
 
 export function GlassSettings() {
-  const navigation = useNavigation<any>();
   const {
     dnsServer,
     updateDnsServer,
@@ -59,6 +59,7 @@ export function GlassSettings() {
     updateLocale,
     loading,
   } = useSettings();
+  const { loadChats } = useChat();
   const { t } = useTranslation();
   const { resetOnboarding } = useOnboarding();
 
@@ -135,16 +136,6 @@ export function GlassSettings() {
   );
   const appVersion: string = packageJson.version;
   const aboutFeatureKeys = ["line1", "line2", "line3", "line4", "line5"] as const;
-  React.useLayoutEffect(() => {
-    navigation.setOptions({
-      title: t("screen.settings.navigationTitle"),
-      headerRight: () => (
-        <HeaderButton onPress={navigation.goBack}>
-          <Text style={{ color: "#007AFF" }}>{t("common.close")}</Text>
-        </HeaderButton>
-      ),
-    });
-  }, [navigation, t]);
 
   // Action handlers
   const handleDnsServerSelect = React.useCallback(
@@ -230,6 +221,7 @@ export function GlassSettings() {
     null,
   );
   const [lastTestError, setLastTestError] = React.useState<string | null>(null);
+  const [clearingData, setClearingData] = React.useState(false);
 
   // Shared throttle keeps diagnostics aligned with docs/SETTINGS.md guidance.
   const {
@@ -324,7 +316,7 @@ export function GlassSettings() {
     }
   };
 
-  const handleClearCache = React.useCallback(() => {
+  const handleClearData = React.useCallback(() => {
     Alert.alert(
       t("screen.glassSettings.alerts.clearCacheTitle"),
       t("screen.glassSettings.alerts.clearCacheMessage"),
@@ -333,17 +325,31 @@ export function GlassSettings() {
         {
           text: t("common.clear"),
           style: "destructive",
-          onPress: () => {
-            // Cache clearing logic would go here
-            Alert.alert(
-              t("screen.glassSettings.alerts.clearCacheSuccessTitle"),
-              t("screen.glassSettings.alerts.clearCacheSuccessMessage"),
-            );
+          onPress: async () => {
+            if (clearingData) return;
+            try {
+              setClearingData(true);
+              await StorageService.clearAllChats();
+              await DNSLogService.clearLogs();
+              await loadChats();
+              Alert.alert(
+                t("screen.glassSettings.alerts.clearCacheSuccessTitle"),
+                t("screen.glassSettings.alerts.clearCacheSuccessMessage"),
+              );
+            } catch (error) {
+              devWarn("[GlassSettings] Failed to clear local data", error);
+              Alert.alert(
+                t("common.errorTitle"),
+                t("screen.glassSettings.alerts.clearCacheErrorMessage"),
+              );
+            } finally {
+              setClearingData(false);
+            }
           },
         },
       ],
     );
-  }, [t]);
+  }, [clearingData, loadChats, t]);
 
   return (
     <>
@@ -519,7 +525,7 @@ export function GlassSettings() {
             subtitle={t(
               "screen.glassSettings.sections.advanced.clearCacheSubtitle",
             )}
-            onPress={handleClearCache}
+            onPress={handleClearData}
             showChevron
           />
 

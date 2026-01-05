@@ -6,8 +6,45 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## Unreleased
 
+### Added
+
 ### Changed
 
+### Fixed
+
+## 3.8.6 - 2026-01-05
+
+### Added
+
+- Added a new guidelines re-verification and best-practices ExecPlan for the 2026-01-05 review cycle.
+
+### Changed
+
+- Refreshed release/store documentation and install notes to reflect the 3.8.6 build.
+- Bumped app version metadata to 3.8.6 (build 26) across iOS and Android configs.
+
+### Fixed
+
+- Removed a stale navigation dependency in GlassChatList's new chat handler after the Expo Router migration.
+
+## 3.8.5 - 2026-01-04
+
+### Added
+
+- Added a "Clear Local Data" action in Settings to delete chat history and DNS logs.
+- Added a privacy policy document (`PRIVACY.md`).
+- Added Expo Router file-based routing with tab, stack, modal, and deep-link parity.
+- Added a router entry point (`entry.tsx`) and route param helpers with tests.
+
+### Changed
+
+- Migrated navigation from the legacy React Navigation scaffold to Expo Router.
+- Removed `react-native-bottom-tabs` in favor of Expo Router tabs.
+- Enabled typed routes in `app.json` and set web bundler to Metro.
+- Updated translations to reference the new route entry location.
+- Updated store/release documentation and operational guides to use Bun-first commands and current app identifiers.
+- Refreshed Settings copy for data deletion messaging.
+- Bumped app version metadata to 3.8.5 (build 25) across iOS and Android configs.
 
 ## 3.8.4 - 2026-01-04
 
