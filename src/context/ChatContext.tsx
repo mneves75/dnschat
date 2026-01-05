@@ -12,6 +12,7 @@ import { StorageService, StorageCorruptionError } from "../services/storageServi
 import { DNSService, sanitizeDNSMessage } from "../services/dnsService";
 import { useSettings } from "./SettingsContext";
 import { isScreenshotMode, getMockConversations } from "../utils/screenshotMode";
+import { MESSAGE_CONSTANTS } from "../constants/appConstants";
 import { devLog, devWarn } from "../utils/devLog";
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -140,6 +141,12 @@ export function ChatProvider({ children }: ChatProviderProps) {
     // If user switches chats during async operations, error handling should
     // still update the correct chat, not the newly selected one.
     const chatIdAtSend = currentChat.id;
+    const chatTitleForLog =
+      currentChat.title === "New Chat" && currentChat.messages.length === 0
+        ? `${content.slice(0, MESSAGE_CONSTANTS.TITLE_MAX_LENGTH)}${
+            content.length > MESSAGE_CONSTANTS.TITLE_MAX_LENGTH ? "..." : ""
+          }`
+        : currentChat.title;
 
     // SECURITY: Track assistant message ID for error handling.
     // Must be declared outside try block so it's accessible in catch block.
@@ -258,6 +265,10 @@ export function ChatProvider({ children }: ChatProviderProps) {
         settings.dnsServer,
         settings.enableMockDNS,
         settings.allowExperimentalTransports,
+        {
+          chatId: chatIdAtSend,
+          chatTitle: chatTitleForLog,
+        },
       );
 
       devLog("[ChatContext] DNS query completed", {

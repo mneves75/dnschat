@@ -186,7 +186,7 @@ export function Logs() {
                   style={[styles.queryText, { color: palette.textPrimary }]}
                   numberOfLines={1}
                 >
-                  {item.query || t("screen.logs.labels.noQuery")}
+                  {item.chatTitle || item.query || t("screen.logs.labels.noQuery")}
                 </Text>
                 <View style={styles.logMeta}>
                   <Text style={[styles.timestamp, { color: palette.textTertiary }]}>

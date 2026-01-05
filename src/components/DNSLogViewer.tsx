@@ -46,7 +46,7 @@ export const DNSLogViewer: React.FC<DNSLogViewerProps> = ({
           >
             <View style={styles.headerRow}>
               <Text style={[styles.title, typography.headline, { color: palette.textPrimary }]}>
-                {log.query}
+                {log.chatTitle || log.query}
               </Text>
               <Text style={[styles.duration, typography.caption1, { color: palette.textSecondary }]}>
                 {DNSLogService.formatDuration(log.totalDuration)}
