@@ -40,12 +40,14 @@ jest.mock("../src/components/glass", () => {
   );
   const FormSection = ({ children }: any) => <>{children}</>;
   const FormList = ({ children }: any) => <>{children}</>;
+  const FormLink = ({ children }: any) => <>{children}</>;
 
   return {
     Form: {
       List: FormList,
       Section: FormSection,
       Item: FormItem,
+      Link: FormLink,
     },
     GlassBottomSheet: Placeholder,
     GlassActionSheet: Placeholder,
@@ -75,6 +77,19 @@ jest.mock("@react-navigation/native", () => ({
   }),
 }));
 
+jest.mock("../src/ui/hooks/useScreenEntrance", () => ({
+  useScreenEntrance: () => ({ animatedStyle: {} }),
+}));
+
+jest.mock("react-native-reanimated", () => {
+  const { View } = require("react-native");
+  return {
+    __esModule: true,
+    default: { View },
+    View,
+  };
+});
+
 jest.mock("../src/i18n", () => ({
   useTranslation: () => ({
     t: (key: string, params?: Record<string, any>) => {
@@ -89,7 +104,7 @@ jest.mock("../src/i18n", () => ({
   }),
 }));
 
-const { Settings } = require("../src/navigation/screens/Settings");
+const { GlassSettings: Settings } = require("../src/navigation/screens/GlassSettings");
 const toggleSwitchMock = jest
   .spyOn(HapticsUtils, "toggleSwitch")
   .mockImplementation(jest.fn());

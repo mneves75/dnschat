@@ -68,6 +68,8 @@ interface GlassFormItemProps {
   showChevron?: boolean;
   /** Disable haptic feedback */
   disableHaptics?: boolean;
+  /** Test ID for testing */
+  testID?: string;
 }
 
 interface GlassFormLinkProps extends GlassFormItemProps {
@@ -240,6 +242,7 @@ export const GlassFormItem: React.FC<GlassFormItemProps> = ({
   style,
   showChevron = false,
   disableHaptics = false,
+  testID,
 }) => {
   const colors = useGlassColors();
   const { triggerSelectionFeedback } = useHapticFeedback();
@@ -283,6 +286,7 @@ export const GlassFormItem: React.FC<GlassFormItemProps> = ({
   if (onPress) {
     return (
       <TouchableOpacity
+        testID={testID}
         onPress={handlePress}
         onPressIn={() => setIsPressed(true)}
         onPressOut={() => setIsPressed(false)}

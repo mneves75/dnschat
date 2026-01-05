@@ -1,3 +1,16 @@
+/**
+ * Logs - DNS Query Log screen with glass UI
+ *
+ * Displays DNS query history with:
+ * - Skeleton loading states
+ * - Screen entrance animations
+ * - Staggered list item animations
+ * - Proper empty state with EmptyState component
+ *
+ * @see IOS-GUIDELINES.md - iOS 26 Liquid Glass patterns
+ * @see DESIGN-UI-UX-GUIDELINES.md - Loading and empty states
+ */
+
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -6,26 +19,37 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
-  useColorScheme,
+  Platform,
 } from "react-native";
-import { useTheme } from "@react-navigation/native";
+import Animated from "react-native-reanimated";
 import { DNSLogService } from "../../services/dnsLogService";
 import type { DNSQueryLog, DNSLogEntry } from "../../services/dnsLogService";
 import { Form, LiquidGlassWrapper } from "../../components/glass";
 import { useTranslation } from "../../i18n";
+import { useImessagePalette } from "../../ui/theme/imessagePalette";
+import { useScreenEntrance } from "../../ui/hooks/useScreenEntrance";
+import { useStaggeredListValues, AnimatedListItem } from "../../ui/hooks/useStaggeredList";
+import { LogsSkeleton } from "../../components/skeletons";
+import { EmptyState } from "../../components/EmptyState";
 
 export function Logs() {
-  const { colors } = useTheme();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
+  const palette = useImessagePalette();
   const [logs, setLogs] = useState<DNSQueryLog[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [expandedLogs, setExpandedLogs] = useState<Set<string>>(new Set());
   const { t } = useTranslation();
+  const { animatedStyle } = useScreenEntrance();
+  const { opacities, translates } = useStaggeredListValues(logs.length);
+
   const historyFooter =
     logs.length === 1
       ? t("screen.logs.history.footerSingle", { count: logs.length })
       : t("screen.logs.history.footerMultiple", { count: logs.length });
+
+  // Track skeleton display
+  const showSkeleton = isLoading && !hasLoadedOnce && logs.length === 0;
 
   useEffect(() => {
     loadLogs();
@@ -40,8 +64,16 @@ export function Logs() {
   }, []);
 
   const loadLogs = async () => {
-    await DNSLogService.initialize();
-    setLogs(DNSLogService.getLogs());
+    setIsLoading(true);
+    try {
+      await DNSLogService.initialize();
+      setLogs(DNSLogService.getLogs());
+    } finally {
+      setIsLoading(false);
+      if (!hasLoadedOnce) {
+        setHasLoadedOnce(true);
+      }
+    }
   };
 
   const handleRefresh = async () => {
@@ -94,26 +126,26 @@ export function Logs() {
               { backgroundColor: methodColor + "20" },
             ]}
           >
-            <Text style={[styles.methodText, { color: methodColor }]}> 
+            <Text style={[styles.methodText, { color: methodColor }]}>
               {entry.method?.toUpperCase() || t("screen.logs.labels.unknownMethod")}
             </Text>
           </View>
           {entry.duration !== undefined && (
-            <Text style={[styles.duration, { color: colors.text + "80" }]}> 
+            <Text style={[styles.duration, { color: palette.textSecondary }]}>
               {DNSLogService.formatDuration(entry.duration)}
             </Text>
           )}
         </View>
-        <Text style={[styles.entryMessage, { color: colors.text }]}> 
+        <Text style={[styles.entryMessage, { color: palette.textPrimary }]}>
           {entry.message || t("screen.logs.labels.noMessage")}
         </Text>
         {entry.details && (
-          <Text style={[styles.entryDetails, { color: colors.text + "80" }]}> 
+          <Text style={[styles.entryDetails, { color: palette.textSecondary }]}>
             {entry.details}
           </Text>
         )}
         {entry.error && (
-          <Text style={[styles.entryError, { color: "#FF5252" }]}> 
+          <Text style={[styles.entryError, { color: palette.destructive }]}>
             {t("screen.logs.labels.errorPrefix", { message: entry.error })}
           </Text>
         )}
@@ -121,211 +153,186 @@ export function Logs() {
     );
   };
 
-  const renderQueryLog = ({ item }: { item: DNSQueryLog }) => {
+  const renderQueryLog = ({ item, index }: { item: DNSQueryLog; index: number }) => {
     const isExpanded = expandedLogs.has(item.id);
     const isActive = item.finalStatus === "pending";
     const statusColor =
       item.finalStatus === "success"
-        ? "#4CAF50"
+        ? "#34C759" // iOS success green
         : item.finalStatus === "failure"
-          ? "#FF453A"
-          : "#34C759"; // Success green
+          ? palette.destructive
+          : palette.userBubble; // Pending
 
     return (
-      <TouchableOpacity
-        onPress={() => toggleExpanded(item.id)}
-        style={styles.logItemWrapper}
-        activeOpacity={0.95}
+      <AnimatedListItem
+        opacity={opacities[index] ?? { value: 1 }}
+        translateX={translates[index] ?? { value: 0 }}
       >
-        <LiquidGlassWrapper
-          variant={isActive ? "interactive" : "regular"}
-          shape="roundedRect"
-          cornerRadius={12}
-          isInteractive={true}
-          style={[styles.logCard, isActive && styles.activeLogCard]}
+        <TouchableOpacity
+          onPress={() => toggleExpanded(item.id)}
+          style={styles.logItemWrapper}
+          activeOpacity={0.95}
         >
-          <View style={styles.logHeader}>
-            <View style={styles.logHeaderLeft}>
-              <Text
-                style={[
-                  styles.queryText,
-                  { color: isDark ? "#FFFFFF" : "#000000" },
-                ]}
-                numberOfLines={1}
-              >
-                {item.query || t("screen.logs.labels.noQuery")}
-              </Text>
-              <View style={styles.logMeta}>
+          <LiquidGlassWrapper
+            variant={isActive ? "interactive" : "regular"}
+            shape="roundedRect"
+            cornerRadius={12}
+            isInteractive={true}
+            style={[styles.logCard, isActive && styles.activeLogCard]}
+          >
+            <View style={styles.logHeader}>
+              <View style={styles.logHeaderLeft}>
                 <Text
-                  style={[
-                    styles.timestamp,
-                    { color: isDark ? "#AEAEB2" : "#6D6D70" },
-                  ]}
+                  style={[styles.queryText, { color: palette.textPrimary }]}
+                  numberOfLines={1}
                 >
-                  {new Date(item.startTime).toLocaleTimeString()}
+                  {item.query || t("screen.logs.labels.noQuery")}
                 </Text>
-                {item.finalMethod && (
-                  <LiquidGlassWrapper
-                    variant="interactive"
-                    shape="capsule"
-                    style={[
-                      styles.methodBadge,
-                      { backgroundColor: "rgba(0, 122, 255, 0.15)" },
-                    ]}
-                  >
-                    <Text style={[styles.methodText, { color: "#007AFF" }]}>
-                      {item.finalMethod?.toUpperCase() || "UNKNOWN"}
+                <View style={styles.logMeta}>
+                  <Text style={[styles.timestamp, { color: palette.textTertiary }]}>
+                    {new Date(item.startTime).toLocaleTimeString()}
+                  </Text>
+                  {item.finalMethod && (
+                    <LiquidGlassWrapper
+                      variant="interactive"
+                      shape="capsule"
+                      style={[
+                        styles.methodBadge,
+                        { backgroundColor: `${palette.userBubble}26` },
+                      ]}
+                    >
+                      <Text style={[styles.methodText, { color: palette.userBubble }]}>
+                        {item.finalMethod?.toUpperCase() || "UNKNOWN"}
+                      </Text>
+                    </LiquidGlassWrapper>
+                  )}
+                  {item.totalDuration !== undefined && (
+                    <Text style={[styles.duration, { color: palette.textTertiary }]}>
+                      {DNSLogService.formatDuration(item.totalDuration)}
                     </Text>
-                  </LiquidGlassWrapper>
-                )}
-                {item.totalDuration !== undefined && (
-                  <Text
-                    style={[
-                      styles.duration,
-                      { color: isDark ? "#8E8E93" : "#8E8E93" },
-                    ]}
-                  >
-                    {DNSLogService.formatDuration(item.totalDuration)}
-                  </Text>
-                )}
-              </View>
-            </View>
-            <View
-              style={[styles.statusIndicator, { backgroundColor: statusColor }]}
-            >
-              {isActive && <ActivityIndicator size="small" color="white" />}
-              {!isActive && (
-                <Text style={styles.statusText}>
-                  {item.finalStatus === "success"
-                    ? "OK"
-                    : item.finalStatus === "failure"
-                      ? "X"
-                      : "?"}
-                </Text>
-              )}
-            </View>
-          </View>
-
-          {isExpanded && (
-            <View style={styles.logDetails}>
-              <View
-                style={[styles.divider, { backgroundColor: colors.border }]}
-              />
-
-              {item.response && (
-                <View style={styles.responseSection}>
-                  <Text style={[styles.sectionTitle, { color: colors.text }]}> 
-                    {t("screen.logs.labels.response")}
-                  </Text>
-                  <Text
-                    style={[styles.responseText, { color: colors.text + "CC" }]}
-                    numberOfLines={3}
-                  >
-                    {item.response || t("screen.logs.labels.noResponse")}
-                  </Text>
+                  )}
                 </View>
-              )}
-
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                {t("screen.logs.labels.querySteps")}
-              </Text>
-              <View style={styles.entriesList}>
-                {item.entries.map((entry, index) => (
-                  <React.Fragment key={`${item.id}-${entry.id || index}`}>
-                    {renderLogEntry(entry, item.id)}
-                    {index < item.entries.length - 1 && (
-                      <View
-                        style={[
-                          styles.entryDivider,
-                          { backgroundColor: colors.border },
-                        ]}
-                      />
-                    )}
-                  </React.Fragment>
-                ))}
+              </View>
+              <View
+                style={[styles.statusIndicator, { backgroundColor: statusColor }]}
+              >
+                {isActive && <ActivityIndicator size="small" color="white" />}
+                {!isActive && (
+                  <Text style={styles.statusText}>
+                    {item.finalStatus === "success"
+                      ? "OK"
+                      : item.finalStatus === "failure"
+                        ? "X"
+                        : "?"}
+                  </Text>
+                )}
               </View>
             </View>
-          )}
-        </LiquidGlassWrapper>
-      </TouchableOpacity>
+
+            {isExpanded && (
+              <View style={styles.logDetails}>
+                <View
+                  style={[styles.divider, { backgroundColor: palette.separator }]}
+                />
+
+                {item.response && (
+                  <View style={styles.responseSection}>
+                    <Text style={[styles.sectionTitle, { color: palette.textPrimary }]}>
+                      {t("screen.logs.labels.response")}
+                    </Text>
+                    <Text
+                      style={[styles.responseText, { color: palette.textSecondary }]}
+                      numberOfLines={3}
+                    >
+                      {item.response || t("screen.logs.labels.noResponse")}
+                    </Text>
+                  </View>
+                )}
+
+                <Text style={[styles.sectionTitle, { color: palette.textPrimary }]}>
+                  {t("screen.logs.labels.querySteps")}
+                </Text>
+                <View style={styles.entriesList}>
+                  {item.entries.map((entry, entryIndex) => (
+                    <React.Fragment key={`${item.id}-${entry.id || entryIndex}`}>
+                      {renderLogEntry(entry, item.id)}
+                      {entryIndex < item.entries.length - 1 && (
+                        <View
+                          style={[
+                            styles.entryDivider,
+                            { backgroundColor: palette.separator },
+                          ]}
+                        />
+                      )}
+                    </React.Fragment>
+                  ))}
+                </View>
+              </View>
+            )}
+          </LiquidGlassWrapper>
+        </TouchableOpacity>
+      </AnimatedListItem>
     );
   };
 
   return (
-    <Form.List testID="logs-screen" navigationTitle={t("screen.logs.navigationTitle")} nestedScrollEnabled>
-      {logs.length === 0 ? (
-        <Form.Section>
-          <LiquidGlassWrapper
-            variant="regular"
-            shape="roundedRect"
-            cornerRadius={12}
-            style={styles.emptyStateContainer}
-          >
-            <View style={styles.emptyState}>
-              <Text
-                style={[
-                  styles.emptyTitle,
-                  { color: isDark ? "#FFFFFF" : "#000000" },
-                ]}
-              >
-                {t("screen.logs.empty.title")}
-              </Text>
-              <Text
-                style={[
-                  styles.emptySubtitle,
-                  { color: isDark ? "#AEAEB2" : "#6D6D70" },
-                ]}
-              >
-                {t("screen.logs.empty.subtitle")}
-              </Text>
-            </View>
-          </LiquidGlassWrapper>
-        </Form.Section>
-      ) : (
-        <Form.Section
-          title={t("screen.logs.history.title")}
-          footer={historyFooter}
-        >
-          <View style={styles.logsList}>
-            {logs.map((item) => (
-              <View key={item.id}>{renderQueryLog({ item })}</View>
-            ))}
-          </View>
-        </Form.Section>
-      )}
+    <Form.List
+      testID="logs-screen"
+      navigationTitle={t("screen.logs.navigationTitle")}
+      nestedScrollEnabled
+    >
+      <Animated.View style={animatedStyle}>
+        {/* Loading Skeleton */}
+        {showSkeleton && (
+          <Form.Section title={t("screen.logs.history.title")}>
+            <LogsSkeleton count={5} />
+          </Form.Section>
+        )}
 
-      {logs.length > 0 && (
-        <Form.Section title={t("screen.logs.actions.title")}>
-          <Form.Item
-            title={t("screen.logs.actions.clearAll")}
-            subtitle={t("screen.logs.actions.clearAllSubtitle")}
-            onPress={clearLogs}
-            showChevron
-          />
-        </Form.Section>
-      )}
+        {/* Empty State */}
+        {!showSkeleton && logs.length === 0 && (
+          <Form.Section>
+            <EmptyState
+              title={t("screen.logs.empty.title")}
+              description={t("screen.logs.empty.subtitle")}
+              iconType="logs"
+              testID="logs-empty-state"
+            />
+          </Form.Section>
+        )}
+
+        {/* Logs List */}
+        {!showSkeleton && logs.length > 0 && (
+          <Form.Section
+            title={t("screen.logs.history.title")}
+            footer={historyFooter}
+          >
+            <View style={styles.logsList}>
+              {logs.map((item, index) => (
+                <View key={item.id}>{renderQueryLog({ item, index })}</View>
+              ))}
+            </View>
+          </Form.Section>
+        )}
+
+        {/* Actions Section */}
+        {logs.length > 0 && (
+          <Form.Section title={t("screen.logs.actions.title")}>
+            <Form.Item
+              title={t("screen.logs.actions.clearAll")}
+              subtitle={t("screen.logs.actions.clearAllSubtitle")}
+              onPress={clearLogs}
+              showChevron
+              destructive
+            />
+          </Form.Section>
+        )}
+      </Animated.View>
     </Form.List>
   );
 }
 
 const styles = StyleSheet.create({
-  // New glass-based styles
-  emptyStateContainer: {
-    marginHorizontal: 20,
-    padding: 32,
-  },
-  emptyTitle: {
-    fontSize: 20,
-    fontWeight: "600",
-    marginBottom: 8,
-    textAlign: "center",
-  },
-  emptySubtitle: {
-    fontSize: 16,
-    fontWeight: "400",
-    textAlign: "center",
-    lineHeight: 22,
-  },
   logsList: {
     gap: 8,
   },
@@ -437,32 +444,5 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginLeft: 24,
     marginTop: 2,
-  },
-  emptyState: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 32,
-  },
-  emptyText: {
-    fontSize: 18,
-    marginBottom: 8,
-  },
-  emptySubtext: {
-    fontSize: 14,
-    textAlign: "center",
-  },
-  clearButton: {
-    position: "absolute",
-    bottom: 20,
-    alignSelf: "center",
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 20,
-    borderWidth: 1,
-  },
-  clearButtonText: {
-    fontSize: 14,
-    fontWeight: "600",
   },
 });
