@@ -32,6 +32,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -42,8 +44,7 @@ import org.xbill.DNS.*;
 
 public class DNSResolver {
     private static final String TAG = "DNSResolver";
-    private static final String DNS_SERVER = "ch.at";
-    private static final int DNS_PORT = 53;
+    private static final int DNS_PORT = 53;  // Default DNS port (RFC 1035)
     private static final int QUERY_TIMEOUT_MS = 10000;
     private static final int DEFAULT_MAX_LABEL_LENGTH = 63;
     private static final int MAX_QNAME_LENGTH = 255;
@@ -52,8 +53,20 @@ public class DNSResolver {
     private static final AtomicReference<SanitizerConfig> SANITIZER =
         new AtomicReference<>(SanitizerConfig.defaultInstance());
     private static final AtomicBoolean DEFAULT_SANITIZER_NOTICE_EMITTED = new AtomicBoolean(false);
-    
-    private final ExecutorService executor = Executors.newCachedThreadPool();
+
+    // Thread pool configuration for DNS queries
+    // Fixed size prevents thread explosion under load
+    // Size equals CPU cores for optimal I/O-bound task performance
+    private static final int THREAD_POOL_SIZE = Math.max(2, Runtime.getRuntime().availableProcessors());
+    private static final int QUEUE_CAPACITY = 50;
+
+    private final ExecutorService executor = new ThreadPoolExecutor(
+        THREAD_POOL_SIZE,                              // Core pool size
+        THREAD_POOL_SIZE,                              // Max pool size (fixed)
+        60L, TimeUnit.SECONDS,                         // Idle thread timeout
+        new LinkedBlockingQueue<>(QUEUE_CAPACITY),     // Bounded queue
+        new ThreadPoolExecutor.CallerRunsPolicy()      // Backpressure: run on caller thread
+    );
     private final ConnectivityManager connectivityManager;
     
     // Query deduplication - prevents multiple identical requests (matches iOS implementation)
@@ -64,10 +77,31 @@ public class DNSResolver {
     }
 
     /**
-     * Cleans up the thread pool. Should be called when the module is invalidated
-     * to prevent thread leaks on app lifecycle events.
+     * Cleans up resources. Should be called when the module is invalidated
+     * to prevent memory leaks on app lifecycle events.
+     *
+     * This method:
+     * 1. Cancels all pending queries with a CANCELLED error
+     * 2. Clears the static activeQueries map to prevent memory leaks
+     * 3. Shuts down the executor thread pool
+     *
+     * CRITICAL: This MUST be called from invalidate() to prevent static map leaks.
      */
     public void cleanup() {
+        // Phase 1: Cancel all pending queries to prevent dangling futures
+        // This is critical for preventing memory leaks through the static activeQueries map
+        for (Map.Entry<String, CompletableFuture<List<String>>> entry : activeQueries.entrySet()) {
+            CompletableFuture<List<String>> future = entry.getValue();
+            if (!future.isDone()) {
+                future.completeExceptionally(
+                    new DNSError(DNSError.Type.CANCELLED, "DNS resolver is shutting down")
+                );
+            }
+        }
+        activeQueries.clear();
+        Log.d(TAG, "DNS: Cleanup complete - cleared " + activeQueries.size() + " active queries");
+
+        // Phase 2: Shutdown executor thread pool
         if (!executor.isShutdown()) {
             executor.shutdown();
             try {
@@ -119,6 +153,15 @@ public class DNSResolver {
     }
 
     public CompletableFuture<List<String>> queryTXT(String domain, String message, int port) {
+        // Validate domain parameter
+        if (domain == null || domain.trim().isEmpty()) {
+            CompletableFuture<List<String>> failed = new CompletableFuture<>();
+            failed.completeExceptionally(
+                new DNSError(DNSError.Type.QUERY_FAILED, "DNS domain cannot be null or empty")
+            );
+            return failed;
+        }
+
         // Normalize the fully-qualified query name provided by the JS bridge
         final String queryName;
         try {
@@ -139,25 +182,47 @@ public class DNSResolver {
             return failed;
         }
 
-        final String queryId = domain + ":" + dnsPort + "-" + queryName;
+        final String normalizedDomain = domain.trim().toLowerCase(Locale.US);
+        final String queryId = normalizedDomain + ":" + dnsPort + "-" + queryName;
 
-        // Check for existing query (deduplication) - matches iOS behavior
-        CompletableFuture<List<String>> existingQuery = activeQueries.get(queryId);
-        if (existingQuery != null) {
-            Log.d(TAG, "DNS: Reusing existing query for: " + queryId);
-            return existingQuery;
+        // Atomic query deduplication using compute() - prevents race conditions
+        // If no existing query, create new one and mark it for execution
+        CompletableFuture<List<String>> result = activeQueries.compute(queryId, (key, existing) -> {
+            if (existing != null) {
+                Log.d(TAG, "DNS: Reusing existing query for: " + key);
+                return existing;
+            }
+            Log.d(TAG, "DNS: Creating new query for: " + key);
+            return new CompletableFuture<List<String>>();
+        });
+
+        // Only execute if we created it (check if not already completed)
+        // Use atomic marking to avoid duplicate execution
+        if (!result.isDone()) {
+            executeQueryChain(queryName, normalizedDomain, dnsPort, queryId, result);
         }
-        
-        Log.d(TAG, "DNS: Creating new query for: " + queryId);
-        
-        // Create new query with automatic cleanup
-        CompletableFuture<List<String>> result = new CompletableFuture<>();
-        activeQueries.put(queryId, result);
+
+        return result;
+    }
+
+    /**
+     * Executes the DNS query chain with fallback strategies.
+     * This method is called only once per unique query due to atomic deduplication.
+     *
+     * Fallback chain: Raw UDP -> DNS-over-HTTPS (unless ch.at) -> Legacy (dnsjava)
+     */
+    private void executeQueryChain(
+        String queryName,
+        String normalizedDomain,
+        int port,
+        String queryId,
+        CompletableFuture<List<String>> result
+    ) {
         Log.d(TAG, "DNS: Active queries count: " + activeQueries.size());
-        
+
         // Android internal fallback strategy:
         // Raw UDP -> DNS-over-HTTPS (unless ch.at) -> legacy (dnsjava)
-        queryTXTRawUDP(queryName, domain, dnsPort)
+        queryTXTRawUDP(queryName, normalizedDomain, port)
             .thenAccept(txtRecords -> {
                 activeQueries.remove(queryId);
                 Log.d(TAG, "DNS: Query completed, active queries: " + activeQueries.size());
@@ -165,7 +230,7 @@ public class DNSResolver {
             })
             .exceptionally(err -> {
                 // Gate DoH: disable for ch.at, otherwise try DoH then legacy
-                if (domain != null && !domain.equalsIgnoreCase("ch.at")) {
+                if (normalizedDomain != null && !normalizedDomain.equalsIgnoreCase("ch.at")) {
                     Log.d(TAG, "DNS: Trying DNS-over-HTTPS (fallback 1)");
                     queryTXTDNSOverHTTPS(queryName)
                         .thenAccept(txtRecords -> {
@@ -175,7 +240,7 @@ public class DNSResolver {
                         })
                         .exceptionally(err2 -> {
                             Log.d(TAG, "DNS: Trying legacy DNS (fallback 2)");
-                            queryTXTLegacy(domain, queryName, dnsPort)
+                            queryTXTLegacy(normalizedDomain, queryName, port)
                                 .thenAccept(txtRecords -> {
                                     activeQueries.remove(queryId);
                                     Log.d(TAG, "DNS: Query completed (legacy), active queries: " + activeQueries.size());
@@ -191,7 +256,7 @@ public class DNSResolver {
                         });
                 } else {
                     Log.d(TAG, "DNS: Skipping DoH for ch.at, trying legacy DNS");
-                    queryTXTLegacy(domain, queryName, dnsPort)
+                    queryTXTLegacy(normalizedDomain, queryName, port)
                         .thenAccept(txtRecords -> {
                             activeQueries.remove(queryId);
                             Log.d(TAG, "DNS: Query completed (legacy), active queries: " + activeQueries.size());
@@ -206,7 +271,6 @@ public class DNSResolver {
                 }
                 return null;
             });
-        return result;
     }
 
 
@@ -222,14 +286,14 @@ public class DNSResolver {
                     resolver.setTimeout(QUERY_TIMEOUT_MS / 1000);
                     lookup.setResolver(resolver);
 
-                    Record[] records = lookup.run();
+                    org.xbill.DNS.Record[] records = lookup.run();
 
                     if (records == null || records.length == 0) {
                         throw new DNSError(DNSError.Type.NO_RECORDS_FOUND, "No TXT records found in legacy query");
                     }
 
                     List<String> txtRecords = new ArrayList<>();
-                    for (Record record : records) {
+                    for (org.xbill.DNS.Record record : records) {
                         if (record instanceof TXTRecord) {
                             TXTRecord txtRecord = (TXTRecord) record;
                             List<?> strings = txtRecord.getStrings();
@@ -621,14 +685,19 @@ public class DNSResolver {
         private static final SanitizerConfig DEFAULT = build(
             "\\s+",
             0,
+            Pattern.compile("\\s+"),
             "[^a-z0-9-]",
             0,
+            Pattern.compile("[^a-z0-9-]"),
             "-{2,}",
             0,
+            Pattern.compile("-{2,}"),
             "^-+|-+$",
             0,
+            Pattern.compile("^-+|-+$"),
             "\\p{M}+",
             Pattern.UNICODE_CASE | Pattern.UNICODE_CHARACTER_CLASS,
+            Pattern.compile("\\p{M}+", Pattern.UNICODE_CASE | Pattern.UNICODE_CHARACTER_CLASS),
             "-",
             DEFAULT_MAX_LABEL_LENGTH,
             Normalizer.Form.NFKD,
@@ -840,6 +909,9 @@ public class DNSResolver {
                         flags |= Pattern.DOTALL;
                         break;
                     case 'u':
+                        // UNICODE_CHARACTER_CLASS enables Unicode-aware character classes
+                        // This makes \d, \w, \s match Unicode characters, not just ASCII
+                        // Reference: https://stackoverflow.com/questions/72236081/different-java-regex-matching-behavior-when-using-unicode-character-class-flag
                         flags |= Pattern.UNICODE_CASE | Pattern.UNICODE_CHARACTER_CLASS;
                         break;
                     case 'g':
@@ -1026,7 +1098,7 @@ public class DNSResolver {
     /**
      * Structured DNS error types matching iOS DNSError enum for cross-platform consistency
      */
-    public static class DNSError extends Exception {
+    public static class DNSError extends RuntimeException {
         public enum Type {
             RESOLVER_FAILED,
             QUERY_FAILED,

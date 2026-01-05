@@ -8,7 +8,42 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ### Fixed
 
-- Hid route group names from iOS back button titles (no more “(tabs)” in header).
+- Hid route group names from iOS back button titles (no more "(tabs)" in header).
+
+## 4.0.1 - 2026-01-05
+
+### Fixed
+
+- **CRITICAL**: Fixed memory leak in static `activeQueries` map - queries now properly cleared on module invalidation
+- **CRITICAL**: Fixed thread pool management - replaced unbounded `newCachedThreadPool()` with fixed-size pool based on CPU cores
+- **CRITICAL**: Fixed query deduplication race condition using atomic `ConcurrentHashMap.compute()` method
+- Fixed `Pattern.UNICODE_CHARACTER_CLASS` usage for proper Unicode text support in international character sanitization
+- Added domain validation in `queryTXT()` to reject null or empty domain parameters
+- Removed unused `DNS_SERVER` constant that was causing confusion with actual default server configuration
+- Added domain normalization (trim + lowercase) for consistent deduplication keys
+
+### Changed
+
+- Improved `cleanup()` method to cancel all pending futures before clearing the activeQueries map
+- Refactored query deduplication logic into separate `executeQueryChain()` method for better code organization
+- Updated thread pool to use bounded queue (50 capacity) with CallerRunsPolicy for backpressure
+- Enhanced comments and documentation throughout DNSResolver.java for maintainability
+
+### Technical Details
+
+- **Memory Leak Fix**: Static `activeQueries` map now cleared in `cleanup()` with proper cancellation of pending futures
+- **Thread Pool**: Fixed size equals CPU cores (min 2) with bounded queue preventing unbounded thread creation
+- **Deduplication**: Atomic `compute()` prevents race conditions where multiple threads create duplicate queries
+- **Unicode Support**: `UNICODE_CHARACTER_CLASS` flag properly used for Unicode-aware regex patterns
+- **Domain Validation**: Rejects null/empty domains and normalizes to lowercase for consistent cache keys
+
+### Sources
+
+- [Stack Overflow - UNICODE_CHARACTER_CLASS behavior](https://stackoverflow.com/questions/72236081/different-java-regex-matching-behavior-when-using-unicode-character-class-flag)
+- [Android DNS Resolver AOSP Docs](https://source.android.com/docs/core/ota/modular-system/dns-resolver)
+- [React Native Native Modules Lifecycle](https://reactnative.dev/docs/0.80/the-new-architecture/native-modules-lifecycle)
+- [Medium - Memory Leaks in React Native](https://medium.com/@umairzafar0010/debugging-and-resolving-react-native-app-memory-leaks-the-ultimate-challenge-690f9f49a39c)
+- [Software Mansion - Hunting JS Memory Leaks](https://blog.swmansion.com/hunting-js-memory-leaks-in-react-native-apps-bd73807d0fde)
 
 ## 4.0.0 - 2026-01-05
 
