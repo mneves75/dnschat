@@ -67,7 +67,7 @@ None blocking.
 - [x] (2026-01-05 01:30Z) Reviewed docs/GUIDELINES-REF/GUIDELINES_INDEX.json and applicable guideline documents for this Expo + React Native repository.
 - [x] (2026-01-05 01:30Z) Inspected core source/config files for alignment (entry.tsx, app/_layout.tsx, app.json, babel.config.js, tsconfig.json, dnsService/dnsLogService/storageService).
 - [x] (2026-01-05 01:30Z) Validated current best-practice guidance for Expo SDK 54, Expo Router entry/typed routes, and React Native performance logging.
-- [x] (2026-01-05 01:30Z) Verified version metadata and release/store documentation already align with the latest patch release (3.8.6, build 26).
+- [x] (2026-01-05 02:31Z) Bumped version metadata to 3.8.7 (build 27) and refreshed release/store documentation.
 - [x] (2026-01-05 01:30Z) Ran lint/tests and captured verification output in Artifacts.
 - [x] (2026-01-05 01:30Z) Updated Outcomes & Retrospective with verification evidence.
 
@@ -78,11 +78,11 @@ None blocking.
 ## Decision Log
 
 - Decision: Choose Option B (verification + metadata/documentation alignment). Rationale: Delivers a clean, auditable release record without introducing high-risk dependency upgrades. Date/Author: 2026-01-05 / Codex.
-- Decision: No version/metadata edits required in this pass because the repo is already aligned at 3.8.6 (build 26). Rationale: Avoids unnecessary diffs while keeping the ExecPlan accurate. Date/Author: 2026-01-05 / Codex.
+- Decision: Bump patch version to 3.8.7 (build 27) to capture the hook import fix and documentation updates. Rationale: Release metadata should reflect the fix and agent navigation doc addition. Date/Author: 2026-01-05 / Codex.
 
 ## Outcomes & Retrospective
 
-All guideline and best-practice checks for this cycle are complete. Version metadata and release/store documentation are already synchronized at 3.8.6 (build 26), so no additional release edits were required. Lint and Jest test suites pass with one skipped suite, matching prior behavior.
+All guideline and best-practice checks for this cycle are complete. Version metadata and release/store documentation are synchronized at 3.8.7 (build 27). Lint and Jest test suites pass with one skipped suite, matching prior behavior.
 
 ## Context and Orientation
 
@@ -118,7 +118,7 @@ Verification outputs (2026-01-05):
     Result: PASS (ast-grep scan completed with exit code 0)
 
     bun run test
-    Result: PASS (65 suites, 1 skipped, 706 tests)
+    Result: PASS (65 suites, 1 skipped, 718 tests)
 
 ## Interfaces and Dependencies
 

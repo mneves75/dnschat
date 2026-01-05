@@ -14,6 +14,21 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ### Fixed
 
+## 3.8.7 - 2026-01-05
+
+### Added
+
+- Added agent navigation documentation in `AGENTS.md`.
+
+### Changed
+
+- Updated release metadata and store documentation for the 3.8.7 build.
+- Bumped app version metadata to 3.8.7 (build 27) across iOS and Android configs.
+
+### Fixed
+
+- Fixed Chat screen motion-reduction hook import path to restore a successful build.
+
 ## 3.8.6 - 2026-01-05
 
 ### Added

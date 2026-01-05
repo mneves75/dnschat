@@ -4,7 +4,7 @@ Complete step-by-step guide for publishing DNSChat to the Google Play Store.
 
 **App**: DNSChat
 **Package**: `org.mvneves.dnschat`
-**Current Version**: 3.8.6
+**Current Version**: 3.8.7
 
 ---
 
@@ -323,10 +323,10 @@ See [ANDROID_RELEASE.md](./ANDROID_RELEASE.md) for signing configuration.
    - **Upload** new AAB
 4. Add release notes:
    ```
-   What's new in v3.8.6:
-   • Guidelines re-verification with updated exec spec
-   • Release and store documentation refreshed for the new build
-   • Navigation cleanup and stability fixes
+   What's new in v3.8.7:
+   • Fixed Chat motion-reduction hook import to avoid build failures
+   • Updated agent navigation docs (AGENTS.md)
+   • Release metadata and documentation refresh
    ```
 5. Click **"Review release"**
 6. Set rollout percentage (start with 10-20% recommended)
