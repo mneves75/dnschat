@@ -17,7 +17,8 @@ const isJestRuntime = (): boolean => {
 
 const isExplicitDebugEnabled = (): boolean => {
   try {
-    if ((globalThis as any).__DNSCHAT_NATIVE_DEBUG__ === true) return true;
+    const globalRecord = globalThis as Record<string, unknown>;
+    if (globalRecord["__DNSCHAT_NATIVE_DEBUG__"] === true) return true;
   } catch {}
   try {
     if (typeof process !== "undefined" && process.env?.["DNSCHAT_NATIVE_DEBUG"] === "1") {
@@ -47,6 +48,28 @@ const debugWarn = (...args: unknown[]) => {
   if (isNativeDebugEnabled()) {
     console.warn(...args);
   }
+};
+
+const getErrorMessage = (error: unknown): string => {
+  if (error instanceof Error) return error.message;
+  if (typeof error === "string") return error;
+  if (error && typeof error === "object") {
+    const record = error as Record<string, unknown>;
+    if (typeof record["message"] === "string") return record["message"];
+  }
+  return "Unknown DNS error occurred";
+};
+
+const getErrorCode = (error: unknown): string | undefined => {
+  if (!error || typeof error !== "object") return undefined;
+  const record = error as Record<string, unknown>;
+  return typeof record["code"] === "string" ? record["code"] : undefined;
+};
+
+const getErrorDetails = (error: unknown): { message: string; code?: string } => {
+  const message = getErrorMessage(error);
+  const code = getErrorCode(error);
+  return code ? { message, code } : { message };
 };
 
 export interface DNSCapabilities {
@@ -199,55 +222,59 @@ export class NativeDNS implements NativeDNSModule {
       }
 
       return result;
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Preserve already-classified DNSError types
       if (error instanceof DNSError) {
         throw error;
       }
 
+      const details = getErrorDetails(error);
+      const messageLower = details.message.toLowerCase();
+      const cause = error instanceof Error ? error : undefined;
+
       // Map native errors to our error types
-      if (error?.code === "DNS_QUERY_FAILED") {
+      if (details.code === "DNS_QUERY_FAILED") {
         throw new DNSError(
           DNSErrorType.DNS_QUERY_FAILED,
-          error.message || "DNS query failed",
-          error,
+          details.message || "DNS query failed",
+          cause,
         );
       }
 
       if (
-        error?.message?.includes("timeout") ||
-        error?.message?.includes("timed out")
+        messageLower.includes("timeout") ||
+        messageLower.includes("timed out")
       ) {
-        throw new DNSError(DNSErrorType.TIMEOUT, "DNS query timed out", error);
+        throw new DNSError(DNSErrorType.TIMEOUT, "DNS query timed out", cause);
       }
 
       if (
-        error?.message?.includes("network") ||
-        error?.message?.includes("connectivity")
+        messageLower.includes("network") ||
+        messageLower.includes("connectivity")
       ) {
         throw new DNSError(
           DNSErrorType.NETWORK_UNAVAILABLE,
           "Network unavailable for DNS query",
-          error,
+          cause,
         );
       }
 
       if (
-        error?.message?.includes("permission") ||
-        error?.message?.includes("denied")
+        messageLower.includes("permission") ||
+        messageLower.includes("denied")
       ) {
         throw new DNSError(
           DNSErrorType.PERMISSION_DENIED,
           "DNS query permission denied",
-          error,
+          cause,
         );
       }
 
       // Default to DNS query failed
       throw new DNSError(
         DNSErrorType.DNS_QUERY_FAILED,
-        error?.message || "Unknown DNS error occurred",
-        error,
+        details.message || "Unknown DNS error occurred",
+        cause,
       );
     }
   }
