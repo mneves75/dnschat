@@ -40,6 +40,7 @@ Bring the DNSChat repository into compliance with all documents listed in `docs/
 - [x] (2026-01-06 15:55Z) Typed pan gesture handler state change events in `src/components/glass/GlassBottomSheet.tsx` and re-ran unit tests.
 - [x] (2026-01-06 15:56Z) Normalized error handling in `src/navigation/screens/GlassSettings.tsx` and re-ran unit tests.
 - [x] (2026-01-06 15:57Z) Typed chat list items/handlers in `src/navigation/screens/GlassChatList.tsx` and re-ran unit tests.
+- [x] (2026-01-06 15:59Z) Removed `any` from DNS harness decoding in `scripts/run-dns-harness.ts` and re-ran unit tests.
 - [ ] Execute remediation tasks one-by-one with tests, update docs, and commit per item.
 - [ ] Run full verification suite and assemble the review packet mapping each guideline to evidence.
 
