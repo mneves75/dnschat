@@ -22,6 +22,8 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 - Patched dependency Gradle scripts to replace deprecated Groovy space-assignment syntax.
 - Added iOS native DNS module cleanup on invalidation to cancel pending tasks.
 - Aligned iOS Unicode normalization with JS/Android (NFKD compatibility decomposition).
+- Enforced DNS server allowlist inside native resolvers using shared constants.
+- Migrated Android DNS-over-HTTPS fallback to RFC 8484 wireformat (application/dns-message).
 - Hardened native UDP DNS response validation on Android/iOS (transaction ID, header flags, QDCOUNT, and question name/type/class matching).
 
 ## 4.0.1 - 2026-01-05

@@ -34,6 +34,7 @@ export type NativeSanitizerConfig = {
   unicodeNormalization: 'NFKD';
   spaceReplacement: string;
   maxLabelLength: number;
+  allowedServers: string[];
   whitespace: RegexDescriptor;
   invalidChars: RegexDescriptor;
   dashCollapse: RegexDescriptor;
@@ -153,6 +154,7 @@ export const DNS_SANITIZER_CONFIG: NativeSanitizerConfig = {
   unicodeNormalization: 'NFKD',
   spaceReplacement: DNS_CONSTANTS.SPACE_REPLACEMENT,
   maxLabelLength: DNS_CONSTANTS.MAX_DNS_LABEL_LENGTH,
+  allowedServers: DNS_CONSTANTS.ALLOWED_DNS_SERVERS,
   whitespace: {
     pattern: '\\s+',
     flags: 'g',
@@ -236,6 +238,7 @@ export const getNativeSanitizerConfig = (): NativeSanitizerConfig => ({
   unicodeNormalization: DNS_SANITIZER_CONFIG.unicodeNormalization,
   spaceReplacement: DNS_SANITIZER_CONFIG.spaceReplacement,
   maxLabelLength: DNS_SANITIZER_CONFIG.maxLabelLength,
+  allowedServers: [...DNS_SANITIZER_CONFIG.allowedServers],
   whitespace: { ...DNS_SANITIZER_CONFIG.whitespace },
   invalidChars: { ...DNS_SANITIZER_CONFIG.invalidChars },
   dashCollapse: { ...DNS_SANITIZER_CONFIG.dashCollapse },

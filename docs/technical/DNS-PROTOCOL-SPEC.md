@@ -76,10 +76,16 @@ Order used for iOS/Android builds:
 3. TCP DNS (JavaScript, `react-native-tcp-socket`)
 4. Mock (optional dev fallback)
 
+Android native module internal fallback chain:
+
+1. Raw UDP (native)
+2. DNS-over-HTTPS (wireformat, RFC 8484)
+3. Legacy resolver (dnsjava)
+
 Web builds use Mock because browsers cannot do custom DNS on port 53.
 
 ## Security model (non-negotiable)
 
 - Do not send secrets or personal data; DNS is observable infrastructure.
-- DNS server input is validated and constrained; see whitelist and sanitizer
-  rules in `modules/dns-native/constants.ts`.
+- DNS server input is validated and constrained in both JS and native; see whitelist and
+  sanitizer rules in `modules/dns-native/constants.ts`.

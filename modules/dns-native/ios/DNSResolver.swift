@@ -19,6 +19,15 @@ final class DNSResolver: NSObject {
     private static let dnsOpcodeMask: UInt16 = 0x7800
     private static let dnsRcodeMask: UInt16 = 0x000F
     private static let expectedQDCount: Int = 1
+    private static let defaultAllowedServers: Set<String> = [
+        "llm.pieter.com",
+        "ch.at",
+        "8.8.8.8",
+        "8.8.4.4",
+        "1.1.1.1",
+        "1.0.0.1",
+    ]
+    private static var allowedServers: Set<String> = defaultAllowedServers
     // MARK: - State
     @MainActor private var activeQueries: [String: Task<[String], Error>] = [:]
 
@@ -56,6 +65,13 @@ final class DNSResolver: NSObject {
         rejecter: @escaping RCTPromiseRejectBlock
     ) {
         let dnsPort = port.uint16Value > 0 ? port.uint16Value : Self.defaultDnsPort
+        let normalizedDomain: String
+        do {
+            normalizedDomain = try Self.normalizeServerHost(domain)
+        } catch {
+            rejecter("DNS_QUERY_FAILED", error.localizedDescription, error)
+            return
+        }
         let queryName: String
         do {
             // Ensure Unicode input matches JS sanitization (fold accents, enforce ASCII)
@@ -65,7 +81,7 @@ final class DNSResolver: NSObject {
             return
         }
 
-        let queryId = "\(domain):\(dnsPort)-\(queryName)"
+        let queryId = "\(normalizedDomain):\(dnsPort)-\(queryName)"
         
         Task {
             do {
@@ -78,7 +94,7 @@ final class DNSResolver: NSObject {
                 }
                 
                 // Create new query with dynamic port
-                let queryTask = createQueryTask(server: domain, queryName: queryName, port: dnsPort)
+                let queryTask = createQueryTask(server: normalizedDomain, queryName: queryName, port: dnsPort)
                 _ = await MainActor.run { self.activeQueries[queryId] = queryTask }
 
                 let result = try await queryTask.value
@@ -493,6 +509,42 @@ final class DNSResolver: NSObject {
         let scalars = decomposed.unicodeScalars.filter { !$0.properties.isDiacritic }
         return String(String.UnicodeScalarView(scalars))
     }
+
+    private static func normalizeServerHostInput(_ value: String) -> String {
+        var trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        while trimmed.hasSuffix(".") {
+            trimmed.removeLast()
+        }
+        return trimmed
+    }
+
+    private static func normalizeServerHost(_ value: String) throws -> String {
+        let trimmed = normalizeServerHostInput(value)
+        guard !trimmed.isEmpty else {
+            throw DNSError.queryFailed("DNS domain cannot be empty")
+        }
+        if !allowedServers.contains(trimmed) {
+            throw DNSError.queryFailed("DNS server not allowed")
+        }
+        return trimmed
+    }
+
+    static func updateAllowedServers(_ config: [String: Any]) throws -> Bool {
+        guard let servers = config["allowedServers"] as? [String] else {
+            return false
+        }
+        let normalized = servers.map { normalizeServerHostInput($0) }
+        let filtered = normalized.filter { !$0.isEmpty }
+        guard !filtered.isEmpty else {
+            throw DNSError.queryFailed("Allowed DNS server list cannot be empty")
+        }
+        let updated = Set(filtered)
+        if updated == allowedServers {
+            return false
+        }
+        allowedServers = updated
+        return true
+    }
 }
 
 // MARK: - Extensions
@@ -642,6 +694,19 @@ final class RNDNSModule: NSObject, RCTInvalidating {
             "supportsAsyncQuery": true
         ]
         resolver(capabilities)
+    }
+
+    @objc func configureSanitizer(
+        _ config: NSDictionary,
+        resolver: @escaping RCTPromiseResolveBlock,
+        rejecter: @escaping RCTPromiseRejectBlock
+    ) {
+        do {
+            let updated = try DNSResolver.updateAllowedServers(config as? [String: Any] ?? [:])
+            resolver(updated)
+        } catch {
+            rejecter("SANITIZER_CONFIG_INVALID", error.localizedDescription, error)
+        }
     }
 
     @objc func invalidate() {

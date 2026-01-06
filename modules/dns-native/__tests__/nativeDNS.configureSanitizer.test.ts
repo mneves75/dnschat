@@ -61,6 +61,6 @@ describe("NativeDNS sanitizer configuration", () => {
     await Promise.resolve();
     await Promise.resolve();
 
-    expect(console.warn).toHaveBeenCalledWith("[NativeDNS] Failed to configure Android sanitizer:", error);
+    expect(console.warn).toHaveBeenCalledWith("[NativeDNS] Failed to configure sanitizer:", error);
   });
 });

@@ -1,4 +1,4 @@
-import { NativeModules, Platform } from "react-native";
+import { NativeModules } from "react-native";
 import { getNativeSanitizerConfig, getServerPort, DNS_CONSTANTS } from "./constants";
 import type { NativeSanitizerConfig } from "./constants";
 
@@ -109,30 +109,28 @@ export class NativeDNS implements NativeDNSModule {
       debugLog("[NativeDNS] RNDNSModule found:", !!this.nativeModule);
       if (this.nativeModule) {
         debugLog("[NativeDNS] RNDNSModule methods:", Object.keys(this.nativeModule));
-        if (Platform?.OS === "android") {
-          try {
-            const maybeResult = this.nativeModule.configureSanitizer?.(
-              getNativeSanitizerConfig(),
-            );
+        try {
+          const maybeResult = this.nativeModule.configureSanitizer?.(
+            getNativeSanitizerConfig(),
+          );
 
-            if (maybeResult && typeof (maybeResult as Promise<unknown>).then === "function") {
-              (maybeResult as Promise<boolean>)
-                .then((didUpdate) => {
-                  if (didUpdate) {
-                    debugLog("[NativeDNS] Android sanitizer configured via shared constants");
-                  } else {
-                    debugLog("[NativeDNS] Android sanitizer already up to date; skipped reconfiguration");
-                  }
-                })
-                .catch((error: unknown) => {
-                  console.warn("[NativeDNS] Failed to configure Android sanitizer:", error);
-                });
-            } else {
-              debugLog("[NativeDNS] Android sanitizer configured via shared constants");
-            }
-          } catch (error) {
-            console.warn("[NativeDNS] Failed to configure Android sanitizer:", error);
+          if (maybeResult && typeof (maybeResult as Promise<unknown>).then === "function") {
+            (maybeResult as Promise<boolean>)
+              .then((didUpdate) => {
+                if (didUpdate) {
+                  debugLog("[NativeDNS] Sanitizer configured via shared constants");
+                } else {
+                  debugLog("[NativeDNS] Sanitizer already up to date; skipped reconfiguration");
+                }
+              })
+              .catch((error: unknown) => {
+                console.warn("[NativeDNS] Failed to configure sanitizer:", error);
+              });
+          } else if (maybeResult !== undefined) {
+            debugLog("[NativeDNS] Sanitizer configured via shared constants");
           }
+        } catch (error) {
+          console.warn("[NativeDNS] Failed to configure sanitizer:", error);
         }
       }
     } catch (error) {
