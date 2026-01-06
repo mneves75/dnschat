@@ -38,7 +38,9 @@ export function isScreenshotMode(): boolean {
 
   // Fallback: Check for __DEV__ and global flag
   if (typeof __DEV__ !== "undefined" && __DEV__) {
-    return (global as any).__SCREENSHOT_MODE__ === true;
+    if (typeof globalThis === "undefined") return false;
+    const record = globalThis as Record<string, unknown>;
+    return record["__SCREENSHOT_MODE__"] === true;
   }
 
   return false;
