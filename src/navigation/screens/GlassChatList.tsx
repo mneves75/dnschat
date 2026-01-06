@@ -46,18 +46,14 @@ import { useScreenEntrance } from "../../ui/hooks/useScreenEntrance";
 import { useStaggeredListValues, AnimatedListItem } from "../../ui/hooks/useStaggeredList";
 import { ChatListSkeleton } from "../../components/skeletons";
 import { EmptyState } from "../../components/EmptyState";
+import type { Chat } from "../../types/chat";
 
 // ==================================================================================
 // TYPES
 // ==================================================================================
 
 interface ChatItemProps {
-  chat: {
-    id: string;
-    title: string;
-    createdAt: Date;
-    messages: any[];
-  };
+  chat: Chat;
   onPress: () => void;
   onDelete: () => void;
   onShare?: () => void;
@@ -288,7 +284,7 @@ export function GlassChatList() {
     }
   };
 
-  const handleChatPress = (chat: any) => {
+  const handleChatPress = (chat: Chat) => {
     setCurrentChat(chat);
     router.push({
       pathname: "/chat/[threadId]",
@@ -324,7 +320,7 @@ export function GlassChatList() {
     }
   };
 
-  const handleShareChat = (chat: any) => {
+  const handleShareChat = (chat: Chat) => {
     // Share functionality would go here
     devLog("Sharing chat", { chatId: chat?.id });
   };
