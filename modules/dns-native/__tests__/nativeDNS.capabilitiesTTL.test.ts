@@ -15,6 +15,10 @@ describe("NativeDNS capabilities TTL", () => {
   const originalConsoleWarn = console.warn;
   const originalConsoleLog = console.log;
   const originalDateNow = Date.now;
+  const originalPlatformOS = Platform.OS;
+  const nativeModulesRecord = NativeModules as Record<string, unknown>;
+  const platformRecord = Platform as unknown as Record<string, unknown>;
+  const globalRecord = globalThis as Record<string, unknown>;
 
   let mockIsAvailable: jest.Mock;
   let currentTime: number;
@@ -24,8 +28,8 @@ describe("NativeDNS capabilities TTL", () => {
     console.log = jest.fn();
     currentTime = 1000000;
     Date.now = jest.fn(() => currentTime);
-    (Platform as any).OS = "ios";
-    (globalThis as any).__DNSCHAT_NATIVE_DEBUG__ = true;
+    platformRecord["OS"] = "ios";
+    globalRecord["__DNSCHAT_NATIVE_DEBUG__"] = true;
 
     mockIsAvailable = jest.fn().mockResolvedValue({
       available: true,
@@ -34,7 +38,7 @@ describe("NativeDNS capabilities TTL", () => {
       supportsAsyncQuery: true,
     });
 
-    (NativeModules as any)["RNDNSModule"] = {
+    nativeModulesRecord["RNDNSModule"] = {
       queryTXT: jest.fn(),
       isAvailable: mockIsAvailable,
     };
@@ -44,8 +48,9 @@ describe("NativeDNS capabilities TTL", () => {
     console.warn = originalConsoleWarn;
     console.log = originalConsoleLog;
     Date.now = originalDateNow;
-    NativeModules["RNDNSModule"] = originalModule;
-    delete (globalThis as any).__DNSCHAT_NATIVE_DEBUG__;
+    nativeModulesRecord["RNDNSModule"] = originalModule;
+    platformRecord["OS"] = originalPlatformOS;
+    delete globalRecord["__DNSCHAT_NATIVE_DEBUG__"];
   });
 
   it("caches capabilities within TTL window", async () => {
@@ -140,7 +145,7 @@ describe("NativeDNS capabilities TTL", () => {
   });
 
   it("returns web fallback when native module is unavailable", async () => {
-    (NativeModules as any)["RNDNSModule"] = null;
+    nativeModulesRecord["RNDNSModule"] = null;
 
     const dns = new NativeDNS();
     const result = await dns.isAvailable();

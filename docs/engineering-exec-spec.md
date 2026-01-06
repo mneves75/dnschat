@@ -42,6 +42,7 @@ Bring the DNSChat repository into compliance with all documents listed in `docs/
 - [x] (2026-01-06 15:57Z) Typed chat list items/handlers in `src/navigation/screens/GlassChatList.tsx` and re-ran unit tests.
 - [x] (2026-01-06 15:59Z) Removed `any` from DNS harness decoding in `scripts/run-dns-harness.ts` and re-ran unit tests.
 - [x] (2026-01-06 16:00Z) Removed `as any` from crypto bootstrap and screenshot mode helpers (`src/bootstrap/crypto.ts`, `src/utils/screenshotMode.ts`) and re-ran unit tests.
+- [x] (2026-01-06 16:05Z) Removed `any` casts in native DNS tests (`modules/dns-native/__tests__/DNSResolver.test.ts`, `integration.test.ts`, `nativeDNS.configureSanitizer.test.ts`, `nativeDNS.capabilitiesTTL.test.ts`) and re-ran unit tests.
 - [ ] Execute remediation tasks one-by-one with tests, update docs, and commit per item.
 - [ ] Run full verification suite and assemble the review packet mapping each guideline to evidence.
 

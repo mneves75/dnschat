@@ -1,4 +1,5 @@
 import { nativeDNS, DNSError, DNSErrorType, NativeDNS } from "../index";
+import type { NativeDNSModule } from "../index";
 import { NativeModules } from "react-native";
 
 // Mock React Native NativeModules
@@ -12,11 +13,11 @@ jest.mock("react-native", () => ({
 }));
 
 describe("Native DNS Module", () => {
-  let mockNativeModule: any;
+  let mockNativeModule: jest.Mocked<NativeDNSModule>;
   let testDNS: NativeDNS;
 
   beforeEach(() => {
-    mockNativeModule = NativeModules['RNDNSModule'];
+    mockNativeModule = NativeModules['RNDNSModule'] as jest.Mocked<NativeDNSModule>;
     testDNS = new NativeDNS();
 
     // Reset all mocks
