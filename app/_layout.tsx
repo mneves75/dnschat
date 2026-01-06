@@ -99,7 +99,10 @@ function RootLayoutContent() {
         headerBackTitle: "",
       }}
     >
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen
+        name="(tabs)"
+        options={{ headerShown: false, title: "" }}
+      />
       <Stack.Screen name="chat/[threadId]" />
       <Stack.Screen name="profile/[user]" />
       <Stack.Screen name="(modals)/settings" />
