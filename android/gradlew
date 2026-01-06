@@ -114,81 +114,7 @@ case "$( uname )" in                #(
   NONSTOP* )        nonstop=true ;;
 esac
 
-CLASSPATH=$APP_HOME/gradle/wrapper/gradle-wrapper.jar
-
-# --- chat-dns customization: force Gradle to run on Java 17 -----------------
-
-find_java17_home() {
-    if [ -n "$JAVA_17_HOME" ] && [ -x "$JAVA_17_HOME/bin/java" ]; then
-        printf '%s\n' "$JAVA_17_HOME"
-        return 0
-    fi
-
-    if [ -x /usr/libexec/java_home ]; then
-        candidate=$(/usr/libexec/java_home -v 17 2>/dev/null)
-        if [ -n "$candidate" ] && [ -x "$candidate/bin/java" ]; then
-            printf '%s\n' "$candidate"
-            return 0
-        fi
-    fi
-
-    for candidate in \
-        /opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home \
-        /usr/local/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home \
-        /Library/Java/JavaVirtualMachines/temurin-17.jdk/Contents/Home \
-        /Library/Java/JavaVirtualMachines/zulu-17.jdk/Contents/Home \
-        /Library/Java/JavaVirtualMachines/openjdk-17.jdk/Contents/Home \
-        /usr/lib/jvm/java-17-openjdk \
-        /usr/lib/jvm/java-17-openjdk-amd64 \
-        /usr/lib/jvm/java-17-openjdk-arm64 \
-        /usr/lib/jvm/temurin-17-jdk \
-        /usr/lib/jvm/msopenjdk-17-amd64
-    do
-        if [ -x "$candidate/bin/java" ]; then
-            printf '%s\n' "$candidate"
-            return 0
-        fi
-    done
-
-    return 1
-}
-
-ensure_java17() {
-    java_cmd=""
-    if [ -n "$JAVA_HOME" ] && [ -x "$JAVA_HOME/bin/java" ]; then
-        java_cmd="$JAVA_HOME/bin/java"
-    elif command -v java >/dev/null 2>&1; then
-        java_cmd=$(command -v java)
-    fi
-
-    java_major=""
-    if [ -n "$java_cmd" ]; then
-        java_version=$("$java_cmd" -version 2>&1 | awk -F '"' '/version/ {print $2; exit}')
-        case "$java_version" in
-            1.*) java_major=$(printf '%s\n' "$java_version" | cut -d'.' -f2) ;;
-            *) java_major=$(printf '%s\n' "$java_version" | cut -d'.' -f1) ;;
-        esac
-    fi
-
-    if [ "$java_major" != "17" ]; then
-        candidate=$(find_java17_home 2>/dev/null)
-        if [ -n "$candidate" ]; then
-            if [ "$JAVA_HOME" != "$candidate" ]; then
-                echo "Gradle wrapper: switching to Java 17 runtime at $candidate" >&2
-            fi
-            JAVA_HOME="$candidate"
-            export JAVA_HOME
-            PATH="$JAVA_HOME/bin:$PATH"
-            export PATH
-        else
-            echo "Gradle wrapper warning: could not locate Java 17. Current java major=${java_major:-unknown}. Install OpenJDK 17 or set JAVA_HOME before invoking Gradle." >&2
-        fi
-    fi
-}
-
-ensure_java17
-
-# --- end customization -------------------------------------------------------
+CLASSPATH="\\\"\\\""
 
 
 # Determine the Java command to use to start the JVM.
@@ -287,7 +213,7 @@ DEFAULT_JVM_OPTS='"-Xmx64m" "-Xms64m"'
 set -- \
         "-Dorg.gradle.appname=$APP_BASE_NAME" \
         -classpath "$CLASSPATH" \
-        org.gradle.wrapper.GradleWrapperMain \
+        -jar "$APP_HOME/gradle/wrapper/gradle-wrapper.jar" \
         "$@"
 
 # Stop when "xargs" is not available.

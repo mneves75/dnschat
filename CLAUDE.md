@@ -169,3 +169,7 @@ GitHub Actions (`.github/workflows/ci.yml`) runs on push to main and PRs:
 | Settings not updating | Check `src/context/SettingsContext.tsx` |
 | Server picker wrong order | Check `src/navigation/screens/GlassSettings.tsx:dnsServerOptions` |
 | Translation mismatch | Update both `en-US.ts` and `pt-BR.ts` |
+| Android "Failed to locate application identifier" | Run `npx expo prebuild --platform android --clean` |
+| Android minSdkVersion mismatch | Ensure `app.json` has `minSdkVersion: 24` (required by dependencies) |
+| Android signature mismatch on install | Uninstall existing app: `adb uninstall org.mvneves.dnschat` |
+| DNS Native Module not registered | The `dns-native-plugin.js` handles this - regenerate with prebuild |

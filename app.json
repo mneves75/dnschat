@@ -65,7 +65,7 @@
           "android": {
             "compileSdkVersion": 36,
             "targetSdkVersion": 36,
-            "minSdkVersion": 21,
+            "minSdkVersion": 24,
             "ndkVersion": "28.0.13004108"
           }
         }

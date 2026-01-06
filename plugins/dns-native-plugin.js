@@ -57,6 +57,26 @@ const withDNSNativeModule = (config) => {
             await copyDirectory(androidSourcePath, androidDestPath);
           }
 
+          // Add dnsjava dependency to app/build.gradle
+          const appBuildGradlePath = path.join(
+            config.modRequest.platformProjectRoot,
+            "app",
+            "build.gradle",
+          );
+
+          if (fs.existsSync(appBuildGradlePath)) {
+            let buildGradleContent = fs.readFileSync(appBuildGradlePath, "utf8");
+
+            // Add dnsjava dependency if not already present
+            if (!buildGradleContent.includes("dnsjava:dnsjava")) {
+              buildGradleContent = buildGradleContent.replace(
+                /(dependencies\s*\{)/,
+                `$1\n    // DNS Java library for legacy DNS support (API < 29)\n    implementation("dnsjava:dnsjava:3.5.2")\n`,
+              );
+              fs.writeFileSync(appBuildGradlePath, buildGradleContent);
+            }
+          }
+
           // Add to MainApplication (.java or .kt)
           const packageName = config.android?.package || "org.mvneves.dnschat";
           const packagePath = packageName.split(".").join("/");
@@ -98,12 +118,21 @@ const withDNSNativeModule = (config) => {
 
             // Add package to list
             if (isKotlin) {
-              // Kotlin: packages.add(DNSNativePackage())
-              if (!content.includes("DNSNativePackage()")) {
-                content = content.replace(
-                  /(packages\.add\(ModuleRegistryAdapter\(manualExpoPackages\)\))/,
-                  "$1\n            // Register DNS native module (not auto-linked, requires explicit registration)\n            packages.add(DNSNativePackage())",
-                );
+              // Kotlin with modern Expo SDK 54+: PackageList(this).packages.apply { add(DNSNativePackage()) }
+              if (!content.includes("add(DNSNativePackage())")) {
+                // Try modern Expo SDK 54+ pattern first
+                if (content.includes("PackageList(this).packages.apply")) {
+                  content = content.replace(
+                    /(PackageList\(this\)\.packages\.apply\s*\{[^}]*)(\/\/[^\n]*\n\s*\/\/[^\n]*\n\s*\})/,
+                    "$1// DNS native module (not auto-linked)\n              add(DNSNativePackage())\n            }",
+                  );
+                } else {
+                  // Fallback: older Expo pattern
+                  content = content.replace(
+                    /(packages\.add\(ModuleRegistryAdapter\(manualExpoPackages\)\))/,
+                    "$1\n            packages.add(DNSNativePackage())",
+                  );
+                }
               }
             } else {
               // Java: packages.add(new DNSNativePackage())
