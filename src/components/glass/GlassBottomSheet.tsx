@@ -23,6 +23,7 @@ import {
 } from "react-native";
 import type { ViewStyle } from "react-native";
 import { PanGestureHandler, State } from "react-native-gesture-handler";
+import type { PanGestureHandlerStateChangeEvent } from "react-native-gesture-handler";
 import { LiquidGlassWrapper } from "../LiquidGlassWrapper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -233,7 +234,7 @@ export const GlassBottomSheet: React.FC<GlassBottomSheetProps> = ({
     { useNativeDriver: false },
   );
 
-  const onHandlerStateChange = (event: any) => {
+  const onHandlerStateChange = (event: PanGestureHandlerStateChangeEvent) => {
     if (event.nativeEvent.state === State.END) {
       const { translationY, velocityY } = event.nativeEvent;
 
