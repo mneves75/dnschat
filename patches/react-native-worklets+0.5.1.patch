@@ -1,0 +1,78 @@
+diff --git a/node_modules/react-native-worklets/android/build.gradle b/node_modules/react-native-worklets/android/build.gradle
+--- a/node_modules/react-native-worklets/android/build.gradle
++++ b/node_modules/react-native-worklets/android/build.gradle
+@@ -104,7 +104,7 @@
+ def WORKLETS_FEATURE_FLAGS = getStaticFeatureFlags()
+ 
+ // Set version for prefab
+-version WORKLETS_VERSION
++version = WORKLETS_VERSION
+ 
+ def workletsPrefabHeadersDir = project.file("$buildDir/prefab-headers/worklets")
+ 
+@@ -151,34 +151,34 @@
+ 
+ 
+ android {
+-    compileSdkVersion safeExtGet("compileSdkVersion", 34)
+-
+-    namespace "com.swmansion.worklets"
++    compileSdkVersion = safeExtGet("compileSdkVersion", 34)
++
++    namespace = "com.swmansion.worklets"
+ 
+     if (rootProject.hasProperty("ndkPath")) {
+-        ndkPath rootProject.ext.ndkPath
++        ndkPath = rootProject.ext.ndkPath
+     }
+     if (rootProject.hasProperty("ndkVersion")) {
+-        ndkVersion rootProject.ext.ndkVersion
++        ndkVersion = rootProject.ext.ndkVersion
+     }
+ 
+     buildFeatures {
+-        prefab true
+-        prefabPublishing true
+-        buildConfig true
++        prefab = true
++        prefabPublishing = true
++        buildConfig = true
+     }
+ 
+     prefab {
+         worklets {
+-            headers workletsPrefabHeadersDir.absolutePath
++            headers = workletsPrefabHeadersDir.absolutePath
+         }
+     }
+ 
+     defaultConfig {
+-        minSdkVersion safeExtGet("minSdkVersion", 23)
+-        targetSdkVersion safeExtGet("targetSdkVersion", 34)
+-        versionCode 1
+-        versionName WORKLETS_VERSION
++        minSdkVersion = safeExtGet("minSdkVersion", 23)
++        targetSdkVersion = safeExtGet("targetSdkVersion", 34)
++        versionCode = 1
++        versionName = WORKLETS_VERSION
+ 
+         buildConfigField("boolean", "IS_INTERNAL_BUILD", "false")
+         buildConfigField("int", "EXOPACKAGE_FLAGS", "0")
+@@ -207,7 +207,7 @@
+     externalNativeBuild {
+         cmake {
+             version = System.getenv("CMAKE_VERSION") ?: "3.22.1"
+-            path "CMakeLists.txt"
++            path = "CMakeLists.txt"
+         }
+     }
+     buildTypes {
+@@ -231,7 +231,7 @@
+         }
+     }
+     lintOptions {
+-        abortOnError false
++        abortOnError = false
+     }
+     packagingOptions {
+         // For some reason gradle only complains about the duplicated version of librrc_root and libreact_render libraries

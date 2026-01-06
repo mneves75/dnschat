@@ -99,6 +99,7 @@ ios/build/
 ios/DerivedData/
 android/app/release/
 android/app/debug/
+android/.gradle-cache/
 
 # IDE and editor files
 .vscode/settings.json

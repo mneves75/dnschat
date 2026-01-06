@@ -130,10 +130,10 @@ export const DNS_CONSTANTS = {
   ALLOWED_DNS_SERVERS: DNS_SERVERS.map(s => s.host),
 
   // Network configuration
-  // IMPORTANT: DEFAULT_DNS_SERVER is now llm.pieter.com (port 9000)
+  // IMPORTANT: DEFAULT_DNS_SERVER is now llm.pieter.com (port 53)
   // ch.at is offline, llm.pieter.com is the new primary server
   DEFAULT_DNS_SERVER: getDefaultServer().host,
-  DEFAULT_DNS_PORT: getDefaultServer().port,  // 9000 for llm.pieter.com
+  DEFAULT_DNS_PORT: getDefaultServer().port,  // Matches the current default DNS server port
   DNS_PORT: 53,                 // Standard DNS port (for fallback servers)
   QUERY_TIMEOUT_MS: 10000,      // 10 seconds
   MAX_RETRIES: 3,               // Maximum retry attempts

@@ -9,6 +9,19 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 ### Fixed
 
 - Hid route group names from iOS back button titles (no more "(tabs)" in header).
+- Synced Android `DNSResolver.java` sources between `modules/dns-native` and the Expo prebuild output to prevent drift.
+- Fixed Android DNS query deduplication so only one execution runs per unique query.
+- Normalized DNS server hostnames (trim/lowercase/strip trailing dots) to stabilize cache keys and socket targets.
+- Hardened Android sanitizer config validation to enforce the 63-byte DNS label limit.
+- Cleanup logging now reports the correct number of cleared queries.
+- Added Android JVM unit tests for resolver cleanup, sanitizer bounds, and host normalization.
+- Added `verify:dnsresolver-sync` script to guard against resolver source drift.
+- Replaced deprecated dnsjava resolver timeout API and URL construction in Android DNS resolver.
+- Ensured DNS-over-HTTPS connections always close and Expo `createExpoConfig` gets a default `NODE_ENV` during Gradle builds.
+- Updated project Gradle scripts to use assignment syntax to avoid upcoming Gradle 10 Groovy DSL deprecations.
+- Patched dependency Gradle scripts to replace deprecated Groovy space-assignment syntax.
+- Added iOS native DNS module cleanup on invalidation to cancel pending tasks.
+- Aligned iOS Unicode normalization with JS/Android (NFKD compatibility decomposition).
 
 ## 4.0.1 - 2026-01-05
 

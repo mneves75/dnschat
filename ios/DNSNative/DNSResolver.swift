@@ -14,8 +14,28 @@ final class DNSResolver: NSObject {
     private static let retryDelayNanoseconds: UInt64 = 200_000_000 // 200ms
     private static let maxLabelLength: Int = 63
     private static let maxQNameLength: Int = 255
+    private static let dnsFlagQR: UInt16 = 0x8000
+    private static let dnsFlagTC: UInt16 = 0x0200
+    private static let dnsOpcodeMask: UInt16 = 0x7800
+    private static let dnsRcodeMask: UInt16 = 0x000F
+    private static let expectedQDCount: Int = 1
     // MARK: - State
     @MainActor private var activeQueries: [String: Task<[String], Error>] = [:]
+
+    func cleanup() {
+        Task { @MainActor in
+            for (_, task) in activeQueries {
+                task.cancel()
+            }
+            activeQueries.removeAll()
+        }
+    }
+
+    private struct DnsQuery {
+        let payload: Data
+        let transactionId: UInt16
+        let normalizedName: String
+    }
     
     // MARK: - Public Interface
     
@@ -103,7 +123,7 @@ final class DNSResolver: NSObject {
     @available(iOS 16.0, *)
     private func performUDPQuery(server: String, queryName: String, port: UInt16) async throws -> [String] {
         // Build DNS query
-        let queryData = try createDNSQuery(queryName: queryName)
+        let query = try createDNSQuery(queryName: queryName)
 
         // Prepare UDP connection with dynamic port
         let host = NWEndpoint.Host(server)
@@ -161,7 +181,7 @@ final class DNSResolver: NSObject {
         try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, Error>) in
             let gate = ResumeGate()
 
-            connection.send(content: queryData, completion: .contentProcessed { error in
+            connection.send(content: query.payload, completion: .contentProcessed { error in
                 gate.tryResume {
                     if let error = error {
                         cont.resume(throwing: DNSError.queryFailed(error.localizedDescription))
@@ -202,12 +222,16 @@ final class DNSResolver: NSObject {
             }
         }
 
-        let txt = try parseDnsTxtResponse(responseData)
+        let txt = try parseDnsTxtResponse(
+            responseData,
+            expectedTransactionId: query.transactionId,
+            expectedQueryName: query.normalizedName
+        )
         if txt.isEmpty { throw DNSError.noRecordsFound }
         return txt
     }
 
-    private func createDNSQuery(queryName: String) throws -> Data {
+    private func createDNSQuery(queryName: String) throws -> DnsQuery {
         // Create a basic DNS query packet for TXT record
         var query = Data()
 
@@ -226,7 +250,7 @@ final class DNSResolver: NSObject {
         query.append(contentsOf: [0x00, 0x10])                 // Type: TXT (16)
         query.append(contentsOf: [0x00, 0x01])                 // Class: IN (1)
 
-        return query
+        return DnsQuery(payload: query, transactionId: transactionId, normalizedName: queryName)
     }
 
     private func encodeDomainName(_ domain: String) throws -> Data {
@@ -254,7 +278,11 @@ final class DNSResolver: NSObject {
         return data
     }
     
-    private func parseDnsTxtResponse(_ data: Data) throws -> [String] {
+    private func parseDnsTxtResponse(
+        _ data: Data,
+        expectedTransactionId: UInt16,
+        expectedQueryName: String
+    ) throws -> [String] {
         var results: [String] = []
         let bytes = [UInt8](data)
 
@@ -262,18 +290,53 @@ final class DNSResolver: NSObject {
         guard bytes.count >= 12 else {
             throw DNSError.queryFailed("Response too short: \(bytes.count) bytes, minimum 12 required")
         }
-        
+
+        let responseId = (UInt16(bytes[0]) << 8) | UInt16(bytes[1])
+        if responseId != expectedTransactionId {
+            throw DNSError.queryFailed("DNS response ID mismatch - possible spoofing attempt")
+        }
+
+        let flags = (UInt16(bytes[2]) << 8) | UInt16(bytes[3])
+        if (flags & Self.dnsFlagQR) == 0 {
+            throw DNSError.queryFailed("DNS response missing QR flag")
+        }
+        let opcode = (flags & Self.dnsOpcodeMask) >> 11
+        if opcode != 0 {
+            throw DNSError.queryFailed("DNS response opcode not standard query")
+        }
+        if (flags & Self.dnsFlagTC) != 0 {
+            throw DNSError.queryFailed("DNS response truncated (TC=1)")
+        }
+        let rcode = flags & Self.dnsRcodeMask
+        if rcode != 0 {
+            throw DNSError.queryFailed("DNS response rcode=\(rcode)")
+        }
+
+        let qdCount = Int(bytes[4]) << 8 | Int(bytes[5])
         let anCount = Int(bytes[6]) << 8 | Int(bytes[7])
+        if qdCount != Self.expectedQDCount {
+            throw DNSError.queryFailed("DNS response QDCOUNT=\(qdCount)")
+        }
+
         var offset = 12
         // Skip QNAME
-        while offset < bytes.count {
-            let len = Int(bytes[offset])
-            offset += 1
-            if len == 0 { break }
-            offset += len
+        for _ in 0..<qdCount {
+            let (questionName, nextOffset) = try readName(bytes: bytes, offset: offset)
+            offset = nextOffset
+            if questionName != expectedQueryName {
+                throw DNSError.queryFailed("DNS response question name mismatch")
+            }
+            guard offset + 4 <= bytes.count else {
+                throw DNSError.queryFailed("DNS response question truncated")
+            }
+            let qtype = (UInt16(bytes[offset]) << 8) | UInt16(bytes[offset + 1])
+            offset += 2
+            let qclass = (UInt16(bytes[offset]) << 8) | UInt16(bytes[offset + 1])
+            offset += 2
+            if qtype != 16 || qclass != 1 {
+                throw DNSError.queryFailed("DNS response question type/class mismatch")
+            }
         }
-        // Skip QTYPE + QCLASS
-        offset += 4
         
         for _ in 0..<anCount {
             if offset + 10 > bytes.count { break }
@@ -313,6 +376,62 @@ final class DNSResolver: NSObject {
             offset += rdLength
         }
         return results
+    }
+
+    private func readName(bytes: [UInt8], offset: Int) throws -> (String, Int) {
+        var labels: [String] = []
+        var currentOffset = offset
+        var nextOffset = offset
+        var jumped = false
+        var jumps = 0
+
+        while currentOffset < bytes.count {
+            let len = Int(bytes[currentOffset])
+            if len == 0 {
+                currentOffset += 1
+                if !jumped {
+                    nextOffset = currentOffset
+                }
+                break
+            }
+
+            if (len & 0xC0) == 0xC0 {
+                guard currentOffset + 1 < bytes.count else {
+                    throw DNSError.queryFailed("DNS response name pointer truncated")
+                }
+                let pointer = ((len & 0x3F) << 8) | Int(bytes[currentOffset + 1])
+                guard pointer < bytes.count else {
+                    throw DNSError.queryFailed("DNS response name pointer out of range")
+                }
+                if !jumped {
+                    nextOffset = currentOffset + 2
+                }
+                currentOffset = pointer
+                jumped = true
+                jumps += 1
+                if jumps > 10 {
+                    throw DNSError.queryFailed("DNS response name pointer loop")
+                }
+                continue
+            }
+
+            currentOffset += 1
+            guard currentOffset + len <= bytes.count else {
+                throw DNSError.queryFailed("DNS response name truncated")
+            }
+            let labelBytes = bytes[currentOffset..<(currentOffset + len)]
+            guard let label = String(bytes: labelBytes, encoding: .utf8) else {
+                throw DNSError.queryFailed("DNS response name decode failed")
+            }
+            labels.append(label)
+            currentOffset += len
+            if !jumped {
+                nextOffset = currentOffset
+            }
+        }
+
+        let name = labels.joined(separator: ".").lowercased()
+        return (name, nextOffset)
     }
 
     // MARK: - Sanitization helpers
@@ -369,8 +488,8 @@ final class DNSResolver: NSObject {
     }
 
     private func foldUnicode(_ value: String) -> String {
-        // Match JS sanitizeDNSMessageReference: canonical decomposition then strip combining marks.
-        let decomposed = value.decomposedStringWithCanonicalMapping
+        // Match JS sanitizeDNSMessageReference: compatibility decomposition (NFKD) then strip combining marks.
+        let decomposed = value.decomposedStringWithCompatibilityMapping
         let scalars = decomposed.unicodeScalars.filter { !$0.properties.isDiacritic }
         return String(String.UnicodeScalarView(scalars))
     }
@@ -489,7 +608,7 @@ private func withTimeout<T>(
 // MARK: - React Native Bridge Support
 
 @objc(RNDNSModule)
-final class RNDNSModule: NSObject {
+final class RNDNSModule: NSObject, RCTInvalidating {
     @objc static func requiresMainQueueSetup() -> Bool {
         return false
     }
@@ -523,5 +642,9 @@ final class RNDNSModule: NSObject {
             "supportsAsyncQuery": true
         ]
         resolver(capabilities)
+    }
+
+    @objc func invalidate() {
+        resolver.cleanup()
     }
 }

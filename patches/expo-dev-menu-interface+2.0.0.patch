@@ -1,0 +1,22 @@
+diff --git a/node_modules/expo-dev-menu-interface/android/build.gradle b/node_modules/expo-dev-menu-interface/android/build.gradle
+--- a/node_modules/expo-dev-menu-interface/android/build.gradle
++++ b/node_modules/expo-dev-menu-interface/android/build.gradle
+@@ -7,14 +7,14 @@
+ version = '2.0.0'
+ 
+ expoModule {
+-  canBePublished false
++  canBePublished = false
+ }
+ 
+ android {
+-  namespace "expo.interfaces.devmenu"
++  namespace = "expo.interfaces.devmenu"
+   defaultConfig {
+-    versionCode 6
+-    versionName '2.0.0'
++    versionCode = 6
++    versionName = '2.0.0'
+   }
+ }
+ 

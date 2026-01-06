@@ -78,3 +78,47 @@ index 4731e1a..e4f3cf6 100644
    }
  
    @ReactProp(name = "backfaceVisibility")
+
+diff --git a/node_modules/@react-native-menu/menu/android/build.gradle b/node_modules/@react-native-menu/menu/android/build.gradle
+--- a/node_modules/@react-native-menu/menu/android/build.gradle
++++ b/node_modules/@react-native-menu/menu/android/build.gradle
+@@ -77,7 +77,7 @@
+ 
+ android {
+   if (supportsNamespace()) {
+-    namespace "com.reactnativemenu"
++    namespace = "com.reactnativemenu"
+ 
+     sourceSets {
+       main {
+@@ -86,23 +86,23 @@
+     }
+   }
+ 
+-  compileSdkVersion getExtOrIntegerDefault("compileSdkVersion")
++  compileSdkVersion = getExtOrIntegerDefault("compileSdkVersion")
+ 
+   defaultConfig {
+-    minSdkVersion 24
+-    targetSdkVersion getExtOrIntegerDefault("targetSdkVersion")
++    minSdkVersion = 24
++    targetSdkVersion = getExtOrIntegerDefault("targetSdkVersion")
+     buildConfigField "boolean", "IS_NEW_ARCHITECTURE_ENABLED", isNewArchitectureEnabled().toString()
+-    versionCode 1
+-    versionName "1.0"
++    versionCode = 1
++    versionName = "1.0"
+   }
+ 
+   buildFeatures {
+-    buildConfig true
++    buildConfig = true
+   }
+ 
+   buildTypes {
+     release {
+-      minifyEnabled false
++      minifyEnabled = false
+     }
+   }
+ 

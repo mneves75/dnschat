@@ -1,0 +1,36 @@
+diff --git a/node_modules/expo-dev-client/android/build.gradle b/node_modules/expo-dev-client/android/build.gradle
+--- a/node_modules/expo-dev-client/android/build.gradle
++++ b/node_modules/expo-dev-client/android/build.gradle
+@@ -4,17 +4,17 @@
+ }
+ 
+ expoModule {
+-  canBePublished false
++  canBePublished = false
+ }
+ 
+ group = "host.exp.exponent"
+ version = "6.0.20"
+ 
+ android {
+-  namespace "expo.modules.devclient"
++  namespace = "expo.modules.devclient"
+   defaultConfig {
+-    versionCode 1
+-    versionName "6.0.20"
++    versionCode = 1
++    versionName = "6.0.20"
+     testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+   }
+ 
+@@ -25,8 +25,8 @@
+   }
+ 
+   buildFeatures {
+-    buildConfig true
+-    viewBinding true
++    buildConfig = true
++    viewBinding = true
+   }
+ 
+   packaging {

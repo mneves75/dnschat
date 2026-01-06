@@ -19,6 +19,7 @@
     "test": "jest --runInBand",
     "test:android": "jest --runInBand --testPathPattern=androidStartupDiagnostics",
     "verify:android": "node scripts/verify-android-setup.js",
+    "verify:dnsresolver-sync": "node scripts/verify-dnsresolver-sync.js",
     "lint:ast-grep": "ast-grep scan --config project-rules/astgrep-liquid-glass.yml",
     "lint": "bun run lint:ast-grep",
     "dns:harness:build": "tsc -p scripts/tsconfig.harness.json",

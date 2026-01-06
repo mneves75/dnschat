@@ -24,14 +24,24 @@ allprojects {
   repositories {
     maven {
       // All of React Native (JS, Obj-C sources, Android binaries) is installed from npm
-      url(reactNativeAndroidDir)
+      url = reactNativeAndroidDir
     }
 
     google()
     mavenCentral()
-    maven { url 'https://www.jitpack.io' }
+    maven { url = 'https://www.jitpack.io' }
   }
 }
 
 apply plugin: "expo-root-project"
 apply plugin: "com.facebook.react.rootproject"
+
+subprojects { project ->
+  project.tasks.matching { it.name == "createExpoConfig" }.configureEach {
+    def nodeEnv = System.getenv("NODE_ENV")
+    if (nodeEnv == null || nodeEnv.trim().isEmpty()) {
+      nodeEnv = "development"
+    }
+    environment "NODE_ENV", nodeEnv
+  }
+}

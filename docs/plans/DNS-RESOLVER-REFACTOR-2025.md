@@ -1,9 +1,70 @@
 # DNS Resolver Engineering Refactor Specification
 
-**Date**: 2025-01-05
-**Status**: Implementation in Progress
-**Priority**: CRITICAL (Memory Leak)
+**Last Updated**: 2026-01-05
+**Status**: Complete (Parity + Correctness Follow-up)
+**Priority**: HIGH (Correctness + Drift Prevention)
 **Reviewer**: John Carmack Standards
+
+## 2026 Follow-up Exec Plan (Completed)
+
+This follow-up closes remaining correctness gaps and prevents drift between the
+`modules/dns-native` Android source and the Expo prebuild output. All phases below
+have been implemented.
+
+### Phase 0 — Scope + Parity Audit
+
+- [x] Diff Android `DNSResolver.java` sources to confirm drift exists.
+- [x] Define single source of truth (keep both copies in sync for now).
+
+### Phase 1 — Deduplication Correctness
+
+- [x] Ensure only the *creator* of a query executes the network chain.
+- [x] Prevent duplicate execution when existing futures are still in-flight.
+- [x] Add safety removal if execution fails synchronously.
+
+### Phase 2 — Domain Normalization
+
+- [x] Normalize DNS server hostnames (trim, lowercase, strip trailing dots).
+- [x] Fail fast on empty/invalid normalized hosts.
+- [x] Keep queryId generation stable across formatting variants.
+
+### Phase 3 — Sanitizer Safety Hardening
+
+- [x] Enforce `maxLabelLength <= 63` in native config parsing.
+- [x] Preserve lower bounds and clear error messages for invalid configs.
+
+### Phase 4 — Hygiene + Diagnostics
+
+- [x] Fix cleanup logging to report the *actual* number of cleared queries.
+- [x] Remove unused Android imports for lint cleanliness.
+- [x] Add duplication note in the Android resolver source to avoid future drift.
+- [x] Align DNS constants comments with actual defaults.
+
+### Phase 5 — Documentation + Changelog
+
+- [x] Update `CHANGELOG.md` with follow-up fixes.
+- [x] Record this completed plan and verification evidence here.
+
+### Phase 6 — Tests + Sync Guard
+
+- [x] Add JVM unit tests for Android resolver cleanup, sanitizer bounds, and host normalization.
+- [x] Add a repo script to verify `DNSResolver.java` copies stay in sync.
+
+### Phase 7 — Deprecation + Build Hygiene
+
+- [x] Replace dnsjava `Resolver.setTimeout(int)` with `Duration`-based API.
+- [x] Replace deprecated `new URL(String)` with `URI.create(...).toURL()`.
+- [x] Ensure DNS-over-HTTPS connections close via try-with-resources + `disconnect()` in finally.
+- [x] Provide a default `NODE_ENV` for the Expo `createExpoConfig` Gradle task to avoid build-time warnings.
+- [x] Migrate Gradle Groovy DSL property assignments in repo build scripts to `prop = value` syntax.
+
+### Verification Evidence
+
+- [x] `diff -u modules/dns-native/android/DNSResolver.java android/app/src/main/java/com/dnsnative/DNSResolver.java` → no diff.
+- [x] `bun run test` → Jest suites passed (65/66, 1 skipped).
+- [x] `cd android && GRADLE_USER_HOME=$PWD/.gradle-cache ./gradlew --no-daemon -Dorg.gradle.java.installations.auto-download=false -Dorg.gradle.java.installations.auto-detect=false -Dorg.gradle.java.installations.paths=/Library/Java/JavaVirtualMachines/jdk-21.jdk/Contents/Home :app:testDebugUnitTest` → BUILD SUCCESSFUL (5 tests). NODE_ENV warning resolved; Gradle still reports general deprecation warnings.
+- [x] `javac -Xlint:deprecation ... android/app/src/main/java/com/dnsnative/DNSResolver.java` → no deprecated API warnings reported.
+- [x] `cd android && ./gradlew --warning-mode all :app:testDebugUnitTest` → repo Gradle scripts no longer emit Groovy assignment deprecations; remaining warnings originate in node_modules dependencies.
 
 ## Executive Summary
 

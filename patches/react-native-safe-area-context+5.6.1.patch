@@ -1,0 +1,59 @@
+diff --git a/node_modules/react-native-safe-area-context/android/build.gradle b/node_modules/react-native-safe-area-context/android/build.gradle
+--- a/node_modules/react-native-safe-area-context/android/build.gradle
++++ b/node_modules/react-native-safe-area-context/android/build.gradle
+@@ -41,28 +41,28 @@
+ android {
+     def agpVersion = com.android.Version.ANDROID_GRADLE_PLUGIN_VERSION
+     if (agpVersion.tokenize('.')[0].toInteger() >= 7) {
+-        namespace "com.th3rdwave.safeareacontext"
++        namespace = "com.th3rdwave.safeareacontext"
+         buildFeatures {
+-            buildConfig true
++            buildConfig = true
+         }
+     }
+ 
+-    compileSdkVersion getExtOrDefault('compileSdkVersion', 30)
++    compileSdkVersion = getExtOrDefault('compileSdkVersion', 30)
+ 
+     // Used to override the NDK path/version on internal CI or by allowing
+     // users to customize the NDK path/version from their root project (e.g. for M1 support)
+     if (rootProject.hasProperty("ndkPath")) {
+-        ndkPath rootProject.ext.ndkPath
++        ndkPath = rootProject.ext.ndkPath
+     }
+     if (rootProject.hasProperty("ndkVersion")) {
+-        ndkVersion rootProject.ext.ndkVersion
++        ndkVersion = rootProject.ext.ndkVersion
+     }
+ 
+     defaultConfig {
+-        minSdkVersion getExtOrDefault('minSdkVersion', 16)
+-        targetSdkVersion getExtOrDefault('targetSdkVersion', 28)
+-        versionCode 1
+-        versionName "1.0"
++        minSdkVersion = getExtOrDefault('minSdkVersion', 16)
++        targetSdkVersion = getExtOrDefault('targetSdkVersion', 28)
++        versionCode = 1
++        versionName = "1.0"
+         buildConfigField "boolean", "IS_NEW_ARCHITECTURE_ENABLED", isNewArchitectureEnabled().toString()
+ 
+         ndk {
+@@ -71,7 +71,7 @@
+     }
+ 
+     lintOptions{
+-        abortOnError false
++        abortOnError = false
+     }
+ 
+     packagingOptions {
+@@ -111,7 +111,7 @@
+     google()
+     maven {
+         // All of React Native (JS, Obj-C sources, Android binaries) is installed from npm
+-        url "$rootDir/../node_modules/react-native/android"
++        url = "$rootDir/../node_modules/react-native/android"
+     }
+     mavenCentral()
+ }

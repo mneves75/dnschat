@@ -1,23 +1,23 @@
 package com.dnsnative;
 
+// NOTE: This file is duplicated in the Expo prebuild output. Keep the copies in sync.
+
 import android.net.ConnectivityManager;
-import android.net.DnsResolver;
 import android.net.Network;
 import android.os.Build;
-import android.os.CancellationSignal;
 import android.util.Log;
 
 import java.net.InetAddress;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.net.UnknownHostException;
 import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.time.Duration;
+import java.security.SecureRandom;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -31,7 +31,6 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -50,6 +49,15 @@ public class DNSResolver {
     private static final int MAX_QNAME_LENGTH = 255;
     private static final int MAX_NATIVE_ATTEMPTS = 3;
     private static final long RETRY_DELAY_MS = 200L;
+    private static final int DNS_FLAG_QR = 0x8000;
+    private static final int DNS_FLAG_TC = 0x0200;
+    private static final int DNS_OPCODE_MASK = 0x7800;
+    private static final int DNS_RCODE_MASK = 0x000F;
+    private static final int DNS_POINTER_MASK = 0xC0;
+    private static final int DNS_POINTER_OFFSET_MASK = 0x3F;
+    private static final int EXPECTED_QDCOUNT = 1;
+    private static final int MAX_POINTER_JUMPS = 10;
+    private static final SecureRandom DNS_SECURE_RANDOM = new SecureRandom();
     private static final AtomicReference<SanitizerConfig> SANITIZER =
         new AtomicReference<>(SanitizerConfig.defaultInstance());
     private static final AtomicBoolean DEFAULT_SANITIZER_NOTICE_EMITTED = new AtomicBoolean(false);
@@ -72,6 +80,18 @@ public class DNSResolver {
     // Query deduplication - prevents multiple identical requests (matches iOS implementation)
     private static final Map<String, CompletableFuture<List<String>>> activeQueries = new ConcurrentHashMap<>();
 
+    private static final class DnsQuery {
+        final byte[] payload;
+        final int transactionId;
+        final String queryName;
+
+        DnsQuery(byte[] payload, int transactionId, String queryName) {
+            this.payload = payload;
+            this.transactionId = transactionId;
+            this.queryName = queryName;
+        }
+    }
+
     public DNSResolver(ConnectivityManager connectivityManager) {
         this.connectivityManager = connectivityManager;
     }
@@ -88,6 +108,7 @@ public class DNSResolver {
      * CRITICAL: This MUST be called from invalidate() to prevent static map leaks.
      */
     public void cleanup() {
+        int pendingQueries = activeQueries.size();
         // Phase 1: Cancel all pending queries to prevent dangling futures
         // This is critical for preventing memory leaks through the static activeQueries map
         for (Map.Entry<String, CompletableFuture<List<String>>> entry : activeQueries.entrySet()) {
@@ -99,7 +120,11 @@ public class DNSResolver {
             }
         }
         activeQueries.clear();
-        Log.d(TAG, "DNS: Cleanup complete - cleared " + activeQueries.size() + " active queries");
+        try {
+            Log.d(TAG, "DNS: Cleanup complete - cleared " + pendingQueries + " active queries");
+        } catch (RuntimeException ignored) {
+            // Avoid crashing local JVM unit tests that use android.jar stubs.
+        }
 
         // Phase 2: Shutdown executor thread pool
         if (!executor.isShutdown()) {
@@ -153,8 +178,17 @@ public class DNSResolver {
     }
 
     public CompletableFuture<List<String>> queryTXT(String domain, String message, int port) {
-        // Validate domain parameter
-        if (domain == null || domain.trim().isEmpty()) {
+        // Validate and normalize domain parameter
+        if (domain == null) {
+            CompletableFuture<List<String>> failed = new CompletableFuture<>();
+            failed.completeExceptionally(
+                new DNSError(DNSError.Type.QUERY_FAILED, "DNS domain cannot be null or empty")
+            );
+            return failed;
+        }
+
+        String trimmedDomain = domain.trim();
+        if (trimmedDomain.isEmpty()) {
             CompletableFuture<List<String>> failed = new CompletableFuture<>();
             failed.completeExceptionally(
                 new DNSError(DNSError.Type.QUERY_FAILED, "DNS domain cannot be null or empty")
@@ -182,27 +216,52 @@ public class DNSResolver {
             return failed;
         }
 
-        final String normalizedDomain = domain.trim().toLowerCase(Locale.US);
+        final String normalizedDomain;
+        try {
+            normalizedDomain = normalizeServerHost(trimmedDomain);
+        } catch (DNSError error) {
+            CompletableFuture<List<String>> failed = new CompletableFuture<>();
+            failed.completeExceptionally(error);
+            return failed;
+        }
         final String queryId = normalizedDomain + ":" + dnsPort + "-" + queryName;
 
         // Atomic query deduplication using compute() - prevents race conditions
         // If no existing query, create new one and mark it for execution
+        AtomicBoolean shouldStartQuery = new AtomicBoolean(false);
         CompletableFuture<List<String>> result = activeQueries.compute(queryId, (key, existing) -> {
             if (existing != null) {
                 Log.d(TAG, "DNS: Reusing existing query for: " + key);
                 return existing;
             }
             Log.d(TAG, "DNS: Creating new query for: " + key);
+            shouldStartQuery.set(true);
             return new CompletableFuture<List<String>>();
         });
 
-        // Only execute if we created it (check if not already completed)
-        // Use atomic marking to avoid duplicate execution
-        if (!result.isDone()) {
-            executeQueryChain(queryName, normalizedDomain, dnsPort, queryId, result);
+        // Only execute if we created it (avoids duplicate execution when reused)
+        if (shouldStartQuery.get()) {
+            try {
+                executeQueryChain(queryName, normalizedDomain, dnsPort, queryId, result);
+            } catch (RuntimeException error) {
+                activeQueries.remove(queryId);
+                result.completeExceptionally(error);
+            }
         }
 
         return result;
+    }
+
+    private static String normalizeServerHost(String domain) throws DNSError {
+        String trimmed = domain.trim().toLowerCase(Locale.US);
+        int end = trimmed.length();
+        while (end > 0 && trimmed.charAt(end - 1) == '.') {
+            end--;
+        }
+        if (end == 0) {
+            throw new DNSError(DNSError.Type.QUERY_FAILED, "DNS domain cannot be empty");
+        }
+        return trimmed.substring(0, end);
     }
 
     /**
@@ -283,7 +342,7 @@ public class DNSResolver {
 
                     SimpleResolver resolver = new SimpleResolver(domain);
                     resolver.setPort(port);
-                    resolver.setTimeout(QUERY_TIMEOUT_MS / 1000);
+                    resolver.setTimeout(Duration.ofMillis(QUERY_TIMEOUT_MS));
                     lookup.setResolver(resolver);
 
                     org.xbill.DNS.Record[] records = lookup.run();
@@ -342,24 +401,32 @@ public class DNSResolver {
             for (int attempt = 0; attempt < MAX_NATIVE_ATTEMPTS; attempt++) {
                 DatagramSocket socket = null;
                 try {
-                    byte[] query = buildDnsQuery(queryName);
+                    DnsQuery query = buildDnsQuery(queryName);
 
                     socket = new DatagramSocket();
                     socket.setSoTimeout(QUERY_TIMEOUT_MS);
                     InetAddress serverAddr = InetAddress.getByName(server);
 
-                    DatagramPacket packet = new DatagramPacket(query, query.length, serverAddr, port);
+                    DatagramPacket packet = new DatagramPacket(query.payload, query.payload.length, serverAddr, port);
                     socket.send(packet);
 
                     byte[] buffer = new byte[2048];
                     DatagramPacket responsePacket = new DatagramPacket(buffer, buffer.length);
                     socket.receive(responsePacket);
 
+                    if (!serverAddr.equals(responsePacket.getAddress()) || responsePacket.getPort() != port) {
+                        throw new DNSError(
+                            DNSError.Type.QUERY_FAILED,
+                            "DNS response from unexpected source: " +
+                                responsePacket.getAddress().getHostAddress() + ":" + responsePacket.getPort()
+                        );
+                    }
+
                     int length = responsePacket.getLength();
                     byte[] response = new byte[length];
                     System.arraycopy(buffer, 0, response, 0, length);
 
-                    List<String> txtRecords = parseDnsTxtResponse(response);
+                    List<String> txtRecords = parseDnsTxtResponse(response, query.transactionId, query.queryName);
                     if (txtRecords.isEmpty()) {
                         throw new DNSError(DNSError.Type.NO_RECORDS_FOUND, "No TXT records found in UDP response");
                     }
@@ -390,13 +457,13 @@ public class DNSResolver {
         }, executor);
     }
 
-    private byte[] buildDnsQuery(String queryName) throws DNSError {
+    private DnsQuery buildDnsQuery(String queryName) throws DNSError {
         byte[] qname = encodeDomainName(queryName);
 
         // DNS Header (12 bytes) + QNAME + QTYPE + QCLASS
         ByteBuffer buffer = ByteBuffer.allocate(12 + qname.length + 2 + 2);
 
-        int transactionId = (int) (Math.random() * 0xFFFF) & 0xFFFF;
+        int transactionId = DNS_SECURE_RANDOM.nextInt(0x10000);
         buffer.putShort((short) transactionId);      // ID
         buffer.putShort((short) 0x0100);             // Flags: standard query, recursion desired
         buffer.putShort((short) 1);                  // QDCOUNT
@@ -410,7 +477,7 @@ public class DNSResolver {
         buffer.putShort((short) 16);
         buffer.putShort((short) 1);
 
-        return buffer.array();
+        return new DnsQuery(buffer.array(), transactionId, queryName);
     }
 
     private byte[] encodeDomainName(String fqdn) throws DNSError {
@@ -524,25 +591,64 @@ public class DNSResolver {
         return config.combiningMarksPattern.matcher(normalized).replaceAll("");
     }
 
-    private List<String> parseDnsTxtResponse(byte[] data) throws Exception {
+    private List<String> parseDnsTxtResponse(
+        byte[] data,
+        int expectedTransactionId,
+        String expectedQueryName
+    ) throws Exception {
         List<String> results = new ArrayList<>();
         if (data == null || data.length < 12) {
             return results;
         }
 
         // Header
+        int responseId = ((data[0] & 0xFF) << 8) | (data[1] & 0xFF);
+        if (responseId != expectedTransactionId) {
+            throw new DNSError(
+                DNSError.Type.QUERY_FAILED,
+                "DNS response ID mismatch - possible spoofing attempt"
+            );
+        }
+        int flags = ((data[2] & 0xFF) << 8) | (data[3] & 0xFF);
+        if ((flags & DNS_FLAG_QR) == 0) {
+            throw new DNSError(DNSError.Type.QUERY_FAILED, "DNS response missing QR flag");
+        }
+        int opcode = (flags & DNS_OPCODE_MASK) >>> 11;
+        if (opcode != 0) {
+            throw new DNSError(DNSError.Type.QUERY_FAILED, "DNS response opcode not standard query");
+        }
+        if ((flags & DNS_FLAG_TC) != 0) {
+            throw new DNSError(DNSError.Type.QUERY_FAILED, "DNS response truncated (TC=1)");
+        }
+        int rcode = flags & DNS_RCODE_MASK;
+        if (rcode != 0) {
+            throw new DNSError(DNSError.Type.QUERY_FAILED, "DNS response rcode=" + rcode);
+        }
+        int qdCount = ((data[4] & 0xFF) << 8) | (data[5] & 0xFF);
         int anCount = ((data[6] & 0xFF) << 8) | (data[7] & 0xFF);
+        if (qdCount != EXPECTED_QDCOUNT) {
+            throw new DNSError(DNSError.Type.QUERY_FAILED, "DNS response QDCOUNT=" + qdCount);
+        }
 
         int offset = 12;
         // Skip QNAME
-        while (offset < data.length) {
-            int len = data[offset] & 0xFF;
-            offset += 1;
-            if (len == 0) break;
-            offset += len;
+        for (int q = 0; q < qdCount; q++) {
+            NameParseResult questionName = readName(data, offset);
+            offset = questionName.nextOffset;
+            if (!questionName.name.equals(expectedQueryName)) {
+                throw new DNSError(DNSError.Type.QUERY_FAILED, "DNS response question name mismatch");
+            }
+            if (offset + 4 > data.length) {
+                throw new DNSError(DNSError.Type.QUERY_FAILED, "DNS response question truncated");
+            }
+            int qtype = ((data[offset] & 0xFF) << 8) | (data[offset + 1] & 0xFF);
+            offset += 2;
+            int qclass = ((data[offset] & 0xFF) << 8) | (data[offset + 1] & 0xFF);
+            offset += 2;
+            if (qtype != 16 || qclass != 1) {
+                throw new DNSError(DNSError.Type.QUERY_FAILED, "DNS response question type/class mismatch");
+            }
         }
-        // Skip QTYPE + QCLASS
-        offset += 4;
 
         for (int i = 0; i < anCount && offset + 10 <= data.length; i++) {
             // Skip NAME (could be pointer or full name)
@@ -587,6 +693,72 @@ public class DNSResolver {
         return results;
     }
 
+    private static final class NameParseResult {
+        final String name;
+        final int nextOffset;
+
+        NameParseResult(String name, int nextOffset) {
+            this.name = name;
+            this.nextOffset = nextOffset;
+        }
+    }
+
+    private NameParseResult readName(byte[] data, int offset) throws DNSError {
+        StringBuilder name = new StringBuilder();
+        int currentOffset = offset;
+        int nextOffset = offset;
+        boolean jumped = false;
+        int jumps = 0;
+
+        while (currentOffset < data.length) {
+            int len = data[currentOffset] & 0xFF;
+            if (len == 0) {
+                currentOffset += 1;
+                if (!jumped) {
+                    nextOffset = currentOffset;
+                }
+                break;
+            }
+
+            if ((len & DNS_POINTER_MASK) == DNS_POINTER_MASK) {
+                if (currentOffset + 1 >= data.length) {
+                    throw new DNSError(DNSError.Type.QUERY_FAILED, "DNS response name pointer truncated");
+                }
+                int pointer =
+                    ((len & DNS_POINTER_OFFSET_MASK) << 8) | (data[currentOffset + 1] & 0xFF);
+                if (pointer >= data.length) {
+                    throw new DNSError(DNSError.Type.QUERY_FAILED, "DNS response name pointer out of range");
+                }
+                if (!jumped) {
+                    nextOffset = currentOffset + 2;
+                }
+                currentOffset = pointer;
+                jumped = true;
+                jumps++;
+                if (jumps > MAX_POINTER_JUMPS) {
+                    throw new DNSError(DNSError.Type.QUERY_FAILED, "DNS response name pointer loop");
+                }
+                continue;
+            }
+
+            currentOffset += 1;
+            if (currentOffset + len > data.length) {
+                throw new DNSError(DNSError.Type.QUERY_FAILED, "DNS response name truncated");
+            }
+            if (name.length() > 0) {
+                name.append('.');
+            }
+            String label = new String(data, currentOffset, len, StandardCharsets.US_ASCII);
+            name.append(label);
+            currentOffset += len;
+            if (!jumped) {
+                nextOffset = currentOffset;
+            }
+        }
+
+        return new NameParseResult(name.toString().toLowerCase(Locale.US), nextOffset);
+    }
+
     /**
      * DNS-over-HTTPS query using Cloudflare API (matches iOS implementation)
      */
@@ -597,34 +769,43 @@ public class DNSResolver {
                 
                 // Use Cloudflare DNS-over-HTTPS API (matches iOS implementation)
                 String baseURL = "https://cloudflare-dns.com/dns-query";
-                String encodedMessage = URLEncoder.encode(message, "UTF-8");
+                String encodedMessage = URLEncoder.encode(message, StandardCharsets.UTF_8);
                 String urlString = baseURL + "?name=" + encodedMessage + "&type=TXT";
-                
-                URL url = new URL(urlString);
-                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                connection.setRequestMethod("GET");
-                connection.setRequestProperty("Accept", "application/dns-json");
-                connection.setConnectTimeout(QUERY_TIMEOUT_MS);
-                connection.setReadTimeout(QUERY_TIMEOUT_MS);
-                
-                int responseCode = connection.getResponseCode();
-                if (responseCode != 200) {
-                    throw new DNSError(DNSError.Type.QUERY_FAILED, "DNS-over-HTTPS request failed with code: " + responseCode);
+                HttpURLConnection connection = null;
+                try {
+                    URL url = URI.create(urlString).toURL();
+                    connection = (HttpURLConnection) url.openConnection();
+                    connection.setRequestMethod("GET");
+                    connection.setRequestProperty("Accept", "application/dns-json");
+                    connection.setConnectTimeout(QUERY_TIMEOUT_MS);
+                    connection.setReadTimeout(QUERY_TIMEOUT_MS);
+
+                    int responseCode = connection.getResponseCode();
+                    if (responseCode != 200) {
+                        throw new DNSError(
+                            DNSError.Type.QUERY_FAILED,
+                            "DNS-over-HTTPS request failed with code: " + responseCode
+                        );
+                    }
+
+                    // Read response
+                    StringBuilder response = new StringBuilder();
+                    try (BufferedReader reader = new BufferedReader(
+                        new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8)
+                    )) {
+                        String line;
+                        while ((line = reader.readLine()) != null) {
+                            response.append(line);
+                        }
+                    }
+
+                    // Parse Cloudflare DNS JSON response (matches iOS parsing logic)
+                    return parseDNSOverHTTPSResponse(response.toString());
+                } finally {
+                    if (connection != null) {
+                        connection.disconnect();
+                    }
                 }
-                
-                // Read response
-                BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-                StringBuilder response = new StringBuilder();
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    response.append(line);
-                }
-                reader.close();
-                connection.disconnect();
-                
-                // Parse Cloudflare DNS JSON response (matches iOS parsing logic)
-                return parseDNSOverHTTPSResponse(response.toString());
-                
             } catch (DNSError e) {
                 throw e; // Re-throw structured errors
             } catch (Exception e) {
@@ -794,10 +975,10 @@ public class DNSResolver {
                 }
 
                 int maxLabelLength = readInt(map, "maxLabelLength");
-                if (maxLabelLength <= 0 || maxLabelLength > MAX_QNAME_LENGTH) {
+                if (maxLabelLength <= 0 || maxLabelLength > DEFAULT_MAX_LABEL_LENGTH) {
                     throw SanitizerConfigException.of(
                         CODE_INVALID_RANGE,
-                        "maxLabelLength must be between 1 and " + MAX_QNAME_LENGTH
+                        "maxLabelLength must be between 1 and " + DEFAULT_MAX_LABEL_LENGTH
                     );
                 }
 
