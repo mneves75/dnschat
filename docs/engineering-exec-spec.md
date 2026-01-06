@@ -36,6 +36,7 @@ Bring the DNSChat repository into compliance with all documents listed in `docs/
 - [x] (2026-01-06 15:50Z) Removed `any` from `src/services/dnsLogService.ts` parsing logic and hardened stored-log normalization; re-ran unit tests.
 - [x] (2026-01-06 15:51Z) Typed focus/blur handlers in `src/components/ui/LiquidGlassTextInput.tsx` and re-ran unit tests.
 - [x] (2026-01-06 15:53Z) Typed `MessageContent` style/palette props in `src/components/MessageContent.tsx` and re-ran unit tests.
+- [x] (2026-01-06 15:54Z) Typed additional style arrays in `src/components/ChatInput.tsx` and re-ran unit tests.
 - [ ] Execute remediation tasks one-by-one with tests, update docs, and commit per item.
 - [ ] Run full verification suite and assemble the review packet mapping each guideline to evidence.
 

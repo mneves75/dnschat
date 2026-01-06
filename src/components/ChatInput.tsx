@@ -41,6 +41,8 @@ import type {
   ViewProps,
   NativeSyntheticEvent,
   TextInputContentSizeChangeEventData,
+  StyleProp,
+  TextStyle,
 } from "react-native";
 import Animated, {
   useSharedValue,
@@ -349,7 +351,8 @@ export function ChatInput({
    * Common props shared between glass and fallback variants.
    * Extracted to reduce duplication.
    */
-  const renderTextInput = useCallback((additionalStyles: any[] = []) => (
+  const renderTextInput = useCallback(
+    (additionalStyles: StyleProp<TextStyle>[] = []) => (
     <Animated.View style={[styles.inputWrapper, animatedInputStyle]}>
       <TextInput
         ref={textInputRef}
@@ -392,22 +395,24 @@ export function ChatInput({
         accessibilityHint={t("components.chatInput.accessibilityHint")}
       />
     </Animated.View>
-  ), [
-    animatedInputStyle,
-    handleContentSizeChange,
-    handleSend,
-    inputPadding,
-    isDark,
-    isLoading,
-    message,
-    palette.textPrimary,
-    palette.textTertiary,
-    resolvedPlaceholder,
-    t,
-    typography.body.fontSize,
-    typography.body.letterSpacing,
-    typography.body.lineHeight,
-  ]);
+    ),
+    [
+      animatedInputStyle,
+      handleContentSizeChange,
+      handleSend,
+      inputPadding,
+      isDark,
+      isLoading,
+      message,
+      palette.textPrimary,
+      palette.textTertiary,
+      resolvedPlaceholder,
+      t,
+      typography.body.fontSize,
+      typography.body.letterSpacing,
+      typography.body.lineHeight,
+    ],
+  );
 
   /**
    * Render Send Button
