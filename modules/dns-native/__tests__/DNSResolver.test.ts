@@ -60,14 +60,7 @@ describe("Native DNS Module", () => {
     });
 
     it("should handle unavailable native module", async () => {
-      // Create DNS instance without native module
-      const dnsWithoutNative = new (class extends NativeDNS {
-        constructor() {
-          super();
-          // @ts-ignore - access private property for testing
-          this.nativeModule = null;
-        }
-      })();
+      const dnsWithoutNative = new NativeDNS(null);
 
       const capabilities = await dnsWithoutNative.isAvailable();
 
@@ -161,14 +154,7 @@ describe("Native DNS Module", () => {
     });
 
     it("should handle native module unavailable", async () => {
-      // Create DNS instance without native module
-      const dnsWithoutNative = new (class extends NativeDNS {
-        constructor() {
-          super();
-          // @ts-ignore - access private property for testing
-          this.nativeModule = null;
-        }
-      })();
+      const dnsWithoutNative = new NativeDNS(null);
 
       await expect(dnsWithoutNative.queryTXT("ch.at", "test")).rejects.toThrow(
         new DNSError(

@@ -30,12 +30,14 @@ Bring the DNSChat repository into compliance with all documents listed in `docs/
 - [x] (2026-01-06 15:25Z) Added `docs/data-inventory.md` and re-ran unit tests.
 - [x] (2026-01-06 15:26Z) Added `docs/model-registry.md` and re-ran unit tests.
 - [x] (2026-01-06 15:27Z) Updated `docs/README.md` to index the data inventory and model registry docs.
+- [x] (2026-01-06 15:29Z) Removed `@ts-ignore` from native DNS tests via constructor injection and re-ran unit tests.
 - [ ] Execute remediation tasks one-by-one with tests, update docs, and commit per item.
 - [ ] Run full verification suite and assemble the review packet mapping each guideline to evidence.
 
 ## Surprises & Discoveries
 
 - Jest reported 1 skipped suite / 13 skipped tests during baseline; this is expected but needs to be tracked as non-failing coverage.
+- Adding a private helper named `configureSanitizer` conflicted with the `NativeDNSModule` interface (TS2420) and caused test failures; resolved by renaming the helper.
 
 ## Decision Log
 
@@ -44,6 +46,9 @@ Bring the DNSChat repository into compliance with all documents listed in `docs/
   Date/Author: 2026-01-06 / Codex
 - Decision: Interpret “baseline build” as `bun run dns:harness:build` (TypeScript compile) because there is no deterministic CI build script for native platforms in this environment.
   Rationale: Provides a verifiable compile step without invoking platform toolchains.
+  Date/Author: 2026-01-06 / Codex
+- Decision: Add an optional `nativeModuleOverride` to `NativeDNS` to simulate missing native modules in tests without `@ts-ignore`.
+  Rationale: Removes forbidden `@ts-ignore` while keeping production behavior unchanged.
   Date/Author: 2026-01-06 / Codex
 
 ## Outcomes & Retrospective

@@ -109,41 +109,50 @@ export class NativeDNS implements NativeDNSModule {
   // to detect network changes (e.g., WiFi to cellular, VPN connection).
   private static readonly CAPABILITIES_TTL_MS = 30000;
 
-  constructor() {
+  private configureSanitizerIfNeeded(): void {
+    if (!this.nativeModule) return;
+    debugLog("[NativeDNS] RNDNSModule methods:", Object.keys(this.nativeModule));
+    try {
+      const maybeResult = this.nativeModule.configureSanitizer?.(
+        getNativeSanitizerConfig(),
+      );
+
+      if (maybeResult && typeof (maybeResult as Promise<unknown>).then === "function") {
+        (maybeResult as Promise<boolean>)
+          .then((didUpdate) => {
+            if (didUpdate) {
+              debugLog("[NativeDNS] Sanitizer configured via shared constants");
+            } else {
+              debugLog("[NativeDNS] Sanitizer already up to date; skipped reconfiguration");
+            }
+          })
+          .catch((error: unknown) => {
+            debugWarn("[NativeDNS] Failed to configure sanitizer:", error);
+          });
+      } else if (maybeResult !== undefined) {
+        debugLog("[NativeDNS] Sanitizer configured via shared constants");
+      }
+    } catch (error) {
+      debugWarn("[NativeDNS] Failed to configure sanitizer:", error);
+    }
+  }
+
+  constructor(nativeModuleOverride?: NativeDNSModule | null) {
     // Try to get the native module, but don't crash if it's not available
     debugLog("[NativeDNS] constructor called");
     debugLog("[NativeDNS] Available NativeModules keys:", Object.keys(NativeModules));
     debugLog("[NativeDNS] Looking for RNDNSModule...");
 
+    if (nativeModuleOverride !== undefined) {
+      this.nativeModule = nativeModuleOverride;
+      this.configureSanitizerIfNeeded();
+      return;
+    }
+
     try {
       this.nativeModule = NativeModules["RNDNSModule"] as NativeDNSModule;
       debugLog("[NativeDNS] RNDNSModule found:", !!this.nativeModule);
-      if (this.nativeModule) {
-        debugLog("[NativeDNS] RNDNSModule methods:", Object.keys(this.nativeModule));
-        try {
-          const maybeResult = this.nativeModule.configureSanitizer?.(
-            getNativeSanitizerConfig(),
-          );
-
-          if (maybeResult && typeof (maybeResult as Promise<unknown>).then === "function") {
-            (maybeResult as Promise<boolean>)
-              .then((didUpdate) => {
-                if (didUpdate) {
-                  debugLog("[NativeDNS] Sanitizer configured via shared constants");
-                } else {
-                  debugLog("[NativeDNS] Sanitizer already up to date; skipped reconfiguration");
-                }
-              })
-              .catch((error: unknown) => {
-                debugWarn("[NativeDNS] Failed to configure sanitizer:", error);
-              });
-          } else if (maybeResult !== undefined) {
-            debugLog("[NativeDNS] Sanitizer configured via shared constants");
-          }
-        } catch (error) {
-          debugWarn("[NativeDNS] Failed to configure sanitizer:", error);
-        }
-      }
+      this.configureSanitizerIfNeeded();
     } catch (error) {
       debugWarn("[NativeDNS] Native DNS module not available:", error);
       this.nativeModule = null;
