@@ -52,9 +52,9 @@ const withDNSNativeModule = (config) => {
             "dnsnative",
           );
 
-          // Copy Android native module files
+          // Copy Android native module files (Java only, skip build.gradle etc)
           if (fs.existsSync(androidSourcePath)) {
-            await copyDirectory(androidSourcePath, androidDestPath);
+            await copyDirectory(androidSourcePath, androidDestPath, { javaOnly: true });
           }
 
           // Add dnsjava dependency to app/build.gradle
@@ -153,7 +153,9 @@ const withDNSNativeModule = (config) => {
   ]);
 };
 
-async function copyDirectory(src, dest) {
+async function copyDirectory(src, dest, options = {}) {
+  const { javaOnly = false } = options;
+
   if (!fs.existsSync(dest)) {
     fs.mkdirSync(dest, { recursive: true });
   }
@@ -164,8 +166,22 @@ async function copyDirectory(src, dest) {
     const srcPath = path.join(src, entry.name);
     const destPath = path.join(dest, entry.name);
 
+    // Skip build artifacts and gradle files when copying Java sources
+    if (javaOnly) {
+      if (entry.name === 'build.gradle' ||
+          entry.name === '.gradle' ||
+          entry.name === 'build' ||
+          entry.name.endsWith('.kt')) {
+        continue;
+      }
+    }
+
     if (entry.isDirectory()) {
-      await copyDirectory(srcPath, destPath);
+      // Skip .gradle and build directories
+      if (entry.name === '.gradle' || entry.name === 'build') {
+        continue;
+      }
+      await copyDirectory(srcPath, destPath, options);
     } else {
       fs.copyFileSync(srcPath, destPath);
     }
