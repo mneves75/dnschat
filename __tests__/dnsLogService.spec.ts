@@ -14,9 +14,9 @@ describe("DNSLogService cleanup scheduler", () => {
   it("initializes cleanup scheduler only once", async () => {
     const setIntervalSpy = jest
       .spyOn(global, "setInterval")
-      .mockImplementation(((fn: () => void, _delay?: number) => {
+      .mockImplementation((..._args: Parameters<typeof setInterval>) => {
         return 123 as unknown as NodeJS.Timeout;
-      }) as any);
+      });
 
     await DNSLogService.initializeCleanupScheduler();
     await DNSLogService.initializeCleanupScheduler();

@@ -12,6 +12,7 @@ import {
   isLiquidGlassAvailable as expoIsLiquidGlassAvailable,
 } from "expo-glass-effect";
 import { getImessagePalette } from "../ui/theme/imessagePalette";
+import { splitGlassStyles } from "./glass/glassStyleUtils";
 
 type GlassVariant = "regular" | "prominent" | "interactive";
 
@@ -315,13 +316,17 @@ export const LiquidGlassWrapper: React.FC<LiquidGlassProps> = ({
     );
   }
 
+  const { containerStyle, glassStyle } = splitGlassStyles(style);
+  const containerStyles = [baseContainerStyle, containerStyle];
+  const glassStyles = [baseContainerStyle, glassStyle];
+
   const glassContent = (
     <GlassView
       key={glassKey}
       glassEffectStyle={glassEffect}
       isInteractive={isInteractive}
       tintColor={tint}
-      style={[baseContainerStyle, style]}
+      style={glassStyles}
       {...rest}
     >
       {children}
@@ -330,16 +335,18 @@ export const LiquidGlassWrapper: React.FC<LiquidGlassProps> = ({
 
   if (enableContainer) {
     return (
-      <GlassContainer
-        spacing={containerSpacing}
-        style={[baseContainerStyle, style]}
-      >
-        {glassContent}
-      </GlassContainer>
+      <View style={containerStyles}>
+        <GlassContainer
+          spacing={containerSpacing}
+          style={glassStyles}
+        >
+          {glassContent}
+        </GlassContainer>
+      </View>
     );
   }
 
-  return glassContent;
+  return <View style={containerStyles}>{glassContent}</View>;
 };
 
 export const LiquidGlassButton: React.FC<LiquidGlassProps> = ({

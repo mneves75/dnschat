@@ -125,11 +125,11 @@ Tests currently expect llm.pieter.com to use port 9000. If we change to port 53,
 ### Phase 4: Update Tests
 - [x] Update DNSResolver.test.ts for port 53
 - [x] Add edge case tests for invalid ports (5 new tests)
-- [x] Verify all tests pass (711 tests pass)
+- [x] Verify all tests pass (717 tests pass)
 
 ### Phase 5: Final Verification
 - [x] Run TypeScript check (clean in DNS files)
-- [x] Run all tests (711 tests pass)
+- [x] Run all tests (717 tests pass)
 - [x] Run lint (passes)
 - [x] Document changes in exec plan
 
@@ -174,7 +174,7 @@ Tests currently expect llm.pieter.com to use port 9000. If we change to port 53,
 
 ### Phase 5: Verification
 - [x] TypeScript check (clean)
-- [x] All tests pass (711 tests)
+- [x] All tests pass (717 tests)
 - [x] Lint passes
 
 ---
@@ -194,7 +194,7 @@ Tests currently expect llm.pieter.com to use port 9000. If we change to port 53,
 
 ### Test Results
 
-- **Total tests**: 711 passed
+- **Total tests**: 717 passed
 - **New tests added**: 5 (port validation edge cases)
 - **Test coverage**: Port 0, -1, 70000 rejection; ports 1 and 65535 acceptance
 

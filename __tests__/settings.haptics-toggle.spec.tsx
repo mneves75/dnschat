@@ -32,15 +32,20 @@ jest.mock("../src/components/glass", () => {
   const Placeholder = ({ children }: { children?: React.ReactNode }) => (
     <>{children}</>
   );
-  const FormItem = ({ children, rightContent }: any) => (
+  type FormItemProps = {
+    children?: React.ReactNode;
+    rightContent?: React.ReactNode;
+  };
+  type ChildrenOnlyProps = { children?: React.ReactNode };
+  const FormItem = ({ children, rightContent }: FormItemProps) => (
     <>
       {children}
       {rightContent}
     </>
   );
-  const FormSection = ({ children }: any) => <>{children}</>;
-  const FormList = ({ children }: any) => <>{children}</>;
-  const FormLink = ({ children }: any) => <>{children}</>;
+  const FormSection = ({ children }: ChildrenOnlyProps) => <>{children}</>;
+  const FormList = ({ children }: ChildrenOnlyProps) => <>{children}</>;
+  const FormLink = ({ children }: ChildrenOnlyProps) => <>{children}</>;
 
   return {
     Form: {
@@ -92,12 +97,14 @@ jest.mock("react-native-reanimated", () => {
 
 jest.mock("../src/i18n", () => ({
   useTranslation: () => ({
-    t: (key: string, params?: Record<string, any>) => {
-      if (params?.["language"]) {
-        return `${key}:${params["language"]}`;
+    t: (key: string, params?: Record<string, unknown>) => {
+      const language = params?.["language"];
+      if (typeof language === "string") {
+        return `${key}:${language}`;
       }
-      if (typeof params?.["count"] !== "undefined") {
-        return `${key}:${params["count"]}`;
+      const count = params?.["count"];
+      if (typeof count !== "undefined") {
+        return `${key}:${String(count)}`;
       }
       return key;
     },
@@ -109,7 +116,7 @@ const toggleSwitchMock = jest
   .spyOn(HapticsUtils, "toggleSwitch")
   .mockImplementation(jest.fn());
 
-const createSettingsValue = (overrides: Partial<Record<string, any>> = {}) => ({
+const baseSettingsValue = {
   dnsServer: "ch.at",
   updateDnsServer: jest.fn().mockResolvedValue(undefined),
   allowExperimentalTransports: true,
@@ -124,6 +131,11 @@ const createSettingsValue = (overrides: Partial<Record<string, any>> = {}) => ({
   availableLocales: [{ locale: "en-US", label: "English" }],
   updateLocale: jest.fn().mockResolvedValue(undefined),
   loading: false,
+};
+const createSettingsValue = (
+  overrides: Partial<typeof baseSettingsValue> = {},
+) => ({
+  ...baseSettingsValue,
   ...overrides,
 });
 

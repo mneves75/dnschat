@@ -20,7 +20,7 @@ import path from "path";
 import { enUS as enUSMessages } from "../src/i18n/messages/en-US";
 import { ptBR as ptBRMessages } from "../src/i18n/messages/pt-BR";
 
-type NestedMessages = Record<string, any>;
+type NestedMessages = Record<string, unknown>;
 
 describe("Onboarding i18n Integration", () => {
   const screensDir = path.resolve(__dirname, "../src/components/onboarding/screens");
@@ -444,13 +444,16 @@ describe("Onboarding i18n Integration", () => {
 
 // Helper Functions
 
-function getNestedValue(obj: NestedMessages, path: string): any {
-  return path.split(".").reduce((current, key) => {
-    if (current && typeof current === "object") {
-      return current[key];
+function getNestedValue(obj: NestedMessages, path: string): string | undefined {
+  const value = path.split(".").reduce<unknown>((current, key) => {
+    if (current && typeof current === "object" && !Array.isArray(current)) {
+      const record = current as Record<string, unknown>;
+      return record[key];
     }
     return undefined;
   }, obj);
+
+  return typeof value === "string" ? value : undefined;
 }
 
 function getAllKeys(obj: NestedMessages, prefix: string = ""): string[] {
@@ -459,7 +462,7 @@ function getAllKeys(obj: NestedMessages, prefix: string = ""): string[] {
   Object.entries(obj).forEach(([key, value]) => {
     const fullKey = prefix ? `${prefix}.${key}` : key;
 
-    if (typeof value === "object" && value !== null && !Array.isArray(value)) {
+    if (isNestedMessages(value)) {
       // Recurse into nested objects
       keys.push(...getAllKeys(value, fullKey));
     } else if (typeof value === "string") {
@@ -469,4 +472,8 @@ function getAllKeys(obj: NestedMessages, prefix: string = ""): string[] {
   });
 
   return keys;
+}
+
+function isNestedMessages(value: unknown): value is NestedMessages {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }

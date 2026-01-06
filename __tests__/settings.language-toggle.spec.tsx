@@ -32,15 +32,22 @@ jest.mock("../src/components/glass", () => {
   const Placeholder = ({ children }: { children?: React.ReactNode }) => (
     <>{children}</>
   );
-  const FormItem = ({ children, rightContent, testID, onPress }: any) => (
+  type FormItemProps = {
+    children?: React.ReactNode;
+    rightContent?: React.ReactNode;
+    testID?: string;
+    onPress?: () => void;
+  };
+  type ChildrenOnlyProps = { children?: React.ReactNode };
+  const FormItem = ({ children, rightContent, testID, onPress }: FormItemProps) => (
     <TouchableOpacity testID={testID} onPress={onPress}>
       {children}
       {rightContent}
     </TouchableOpacity>
   );
-  const FormSection = ({ children }: any) => <>{children}</>;
-  const FormList = ({ children }: any) => <>{children}</>;
-  const FormLink = ({ children }: any) => <>{children}</>;
+  const FormSection = ({ children }: ChildrenOnlyProps) => <>{children}</>;
+  const FormList = ({ children }: ChildrenOnlyProps) => <>{children}</>;
+  const FormLink = ({ children }: ChildrenOnlyProps) => <>{children}</>;
 
   return {
     Form: {
@@ -84,12 +91,14 @@ jest.mock("react-native-reanimated", () => {
 
 jest.mock("../src/i18n", () => ({
   useTranslation: () => ({
-    t: (key: string, params?: Record<string, any>) => {
-      if (params?.["language"]) {
-        return `${key}:${params["language"]}`;
+    t: (key: string, params?: Record<string, unknown>) => {
+      const language = params?.["language"];
+      if (typeof language === "string") {
+        return `${key}:${language}`;
       }
-      if (typeof params?.["count"] !== "undefined") {
-        return `${key}:${params["count"]}`;
+      const count = params?.["count"];
+      if (typeof count !== "undefined") {
+        return `${key}:${String(count)}`;
       }
       return key;
     },
@@ -110,7 +119,31 @@ jest.mock("@react-navigation/native", () => ({
 
 const { GlassSettings: Settings } = require("../src/navigation/screens/GlassSettings");
 
-const createSettingsValue = (overrides: Partial<Record<string, any>> = {}) => ({
+type SettingsValue = {
+  dnsServer: string;
+  updateDnsServer: jest.Mock;
+  enableMockDNS: boolean;
+  updateEnableMockDNS: jest.Mock;
+  allowExperimentalTransports: boolean;
+  updateAllowExperimentalTransports: jest.Mock;
+  enableHaptics: boolean;
+  updateEnableHaptics: jest.Mock;
+  locale: string;
+  systemLocale: string;
+  preferredLocale: string | null;
+  availableLocales: Array<{ locale: string; label: string }>;
+  updateLocale: jest.Mock;
+  accessibility: {
+    fontSize: string;
+    highContrast: boolean;
+    reduceMotion: boolean;
+    screenReader: boolean;
+  };
+  updateAccessibility: jest.Mock;
+  loading: boolean;
+};
+
+const baseSettingsValue: SettingsValue = {
   dnsServer: "ch.at",
   updateDnsServer: jest.fn().mockResolvedValue(undefined),
   enableMockDNS: false,
@@ -130,6 +163,11 @@ const createSettingsValue = (overrides: Partial<Record<string, any>> = {}) => ({
   accessibility: { fontSize: "medium", highContrast: false, reduceMotion: false, screenReader: false },
   updateAccessibility: jest.fn(),
   loading: false,
+};
+const createSettingsValue = (
+  overrides: Partial<typeof baseSettingsValue> = {},
+) => ({
+  ...baseSettingsValue,
   ...overrides,
 });
 

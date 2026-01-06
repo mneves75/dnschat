@@ -2,7 +2,10 @@ import React from "react";
 import TestRenderer, { act } from "react-test-renderer";
 import { createWithSuppressedWarnings } from "./utils/reactTestRenderer";
 
-(globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
+const globalWithAct = globalThis as typeof globalThis & {
+  IS_REACT_ACT_ENVIRONMENT?: boolean;
+};
+globalWithAct.IS_REACT_ACT_ENVIRONMENT = true;
 
 jest.mock("react-native", () => {
   const actual = jest.requireActual("react-native");

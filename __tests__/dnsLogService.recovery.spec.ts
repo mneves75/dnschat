@@ -15,12 +15,16 @@ jest.mock("../src/services/encryptionService", () => ({
 
 const mockAsyncStorage = AsyncStorage as jest.Mocked<typeof AsyncStorage>;
 const { decryptIfEncrypted } = jest.requireMock("../src/services/encryptionService");
+const dnsLogServiceInternals = DNSLogService as unknown as {
+  currentQueryLog: unknown;
+  queryLogs: unknown[];
+};
 
 describe("DNSLogService recovery", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    (DNSLogService as any).currentQueryLog = null;
-    (DNSLogService as any).queryLogs = [];
+    dnsLogServiceInternals.currentQueryLog = null;
+    dnsLogServiceInternals.queryLogs = [];
   });
 
   afterEach(() => {

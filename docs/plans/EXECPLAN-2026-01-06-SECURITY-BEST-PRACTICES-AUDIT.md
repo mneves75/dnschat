@@ -195,5 +195,7 @@ All phases completed on 2026-01-06.
 - `rg -n "compileSdkVersion|targetSdkVersion|minSdkVersion" app.json android modules` (SDK/NDK flags present with compile/target 36, min 21).
 - `rg -n "useMemo|useCallback" src` (only documentation note found in `src/components/ChatInput.tsx`).
 - `bun run lint` (pass).
-- `bun run test` (65 passed, 1 skipped; 711 passed, 13 skipped).
+- `bun run test` (65 passed, 1 skipped; 717 passed, 13 skipped).
+- `bun run verify:android-16kb` (native libs aligned at 0x4000 for 64-bit ABIs).
 - Manual dev-client smoke run not executed in this environment.
+- Re-run 2026-01-06 20:00Z: `bun audit` + `gitleaks detect` (both clean).

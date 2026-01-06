@@ -20,6 +20,14 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 - Simplified Android native sanitizer config to store compiled patterns with equality based on pattern + flags.
 - Added DNS server health tracking in `DNSService` to record successes/failures per host:port.
 - Docs: refreshed exec plan verification logs and aligned DNS server migration notes to port 53 default.
+- Relaxed Android startup diagnostics to warn (not fail) when the native module registry is incomplete in dev runtimes.
+- Aligned Android versionCode with iOS build number (31) to keep version sync no-op.
+- Added a 16KB page-size alignment verification script for Android native libraries.
+- Added glass style sanitization to keep shadow/border props off native glass views.
+- Aligned Android NDK configuration to r29 and added checks for installed NDK versions.
+- Added typed routes verification/generation for Expo Router.
+- Added React Compiler healthcheck command for verification.
+- Docs: recorded final verification run (lint/tests + Android/typed routes/React Compiler checks) in engineering exec spec.
 
 ### Fixed
 
@@ -41,6 +49,8 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 - Ensured DNS-over-HTTPS connections always close and Expo `createExpoConfig` gets a default `NODE_ENV` during Gradle builds.
 - Updated project Gradle scripts to use assignment syntax to avoid upcoming Gradle 10 Groovy DSL deprecations.
 - Patched dependency Gradle scripts to replace deprecated Groovy space-assignment syntax.
+- Removed debug signing from Android release builds and wired release signing config to keystore.properties (android/ or repo root).
+- Registered ExpoLinkingPackage via ModuleRegistryAdapter for stable deep-link lifecycle in Expo dev-client builds.
 - Added iOS native DNS module cleanup on invalidation to cancel pending tasks.
 - Aligned iOS Unicode normalization with JS/Android (NFKD compatibility decomposition).
 - Enforced DNS server allowlist inside native resolvers using shared constants.
@@ -49,6 +59,7 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 - Added Android JVM test stub for `android.util.Log` to unblock unit tests.
 - Added JVM tests for resolver dedup reuse, bounded thread pool, and Unicode flag handling.
 - Added DNSService fallback and server health coverage in Jest tests.
+- Added default-export handling for UDP/TCP socket module loading to reduce false negatives in dev clients.
 
 ## 4.0.1 - 2026-01-05
 

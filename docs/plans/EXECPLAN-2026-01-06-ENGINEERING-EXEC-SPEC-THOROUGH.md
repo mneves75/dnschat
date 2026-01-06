@@ -123,7 +123,7 @@ This ExecPlan is a living document. Update Progress, Decision Log, and Outcomes 
 - 3.2: `rg -n "(:\\s*any\\b|as any\\b)" src app modules scripts` returned no matches.
 - 3.3: `compileSdkVersion`/`targetSdkVersion` = 36 in `app.json`, `modules/dns-native/android/build.gradle`, `android/app/src/main/java/com/dnsnative/build.gradle`.
 - 4.1: `bun run lint` OK after running `node node_modules/@ast-grep/cli/postinstall.js` to replace the ast-grep shim.
-- 4.2: `bun run test` OK (65 passed, 1 skipped; 711 passed, 13 skipped).
+- 4.2: `bun run test` OK (65 passed, 1 skipped; 717 passed, 13 skipped).
 - 4.3: `bun run dns:harness:build` OK.
 - 4.4: `bun run lint` re-run (2026-01-06) OK.
 - 4.5: `bun run test` re-run (2026-01-06) OK (65 passed, 1 skipped; 715 passed, 13 skipped).

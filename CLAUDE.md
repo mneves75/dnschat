@@ -53,6 +53,9 @@ bun run clean-ios         # Deep pods reset
 
 # Android diagnostics
 bun run verify:android    # Sanity check tooling/device
+bun run verify:android-16kb # Validate 16KB page size alignment for native libs
+bun run verify:typed-routes # Generate and validate Expo Router typed routes
+bun run verify:react-compiler # Run React Compiler healthcheck
 
 # Version sync
 bun run sync-versions     # Sync version across package.json, app.json, native configs

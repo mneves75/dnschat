@@ -52,6 +52,20 @@ Bring the DNSChat repository into compliance with all documents listed in `docs/
 - [x] (2026-01-06 16:28Z) Marked all items complete in `docs/engineering-todo.md` and prepared the final guideline-to-evidence review packet.
 - [x] (2026-01-06 16:30Z) Executed remediation tasks one-by-one with tests, updated docs, and committed per item.
 - [x] (2026-01-06 16:31Z) Ran full verification suite and assembled the review packet mapping each guideline to evidence.
+- [x] (2026-01-06) Aligned Android release signing to keystore.properties and removed debug signing for release builds; re-ran unit tests.
+- [x] (2026-01-06) Registered ExpoLinkingPackage via ModuleRegistryAdapter for dev-client deep link lifecycle parity; re-ran unit tests.
+- [x] (2026-01-06) Added default-export handling for UDP/TCP module loading and relaxed Android startup diagnostics in incomplete registries; re-ran unit tests.
+- [x] (2026-01-06) Aligned Android versionCode with iOS build number (31) to keep sync-versions a no-op; re-ran unit tests.
+- [x] (2026-01-06) Removed remaining `any`/`as any` usage in test mocks and helpers; re-ran unit tests.
+- [x] (2026-01-06 19:10Z) Re-ran `bun run lint` and `bun run test` after verification review; lint passed and tests passed with 1 skipped suite / 13 skipped tests.
+- [x] (2026-01-06 19:40Z) Added glass style sanitizer + tests to keep shadow/border props off native glass views; updated LiquidGlassWrapper to use a safe wrapper.
+- [x] (2026-01-06 19:42Z) Added Android 16KB page-size verification script and CLI entry; verified native libs align at 0x4000.
+- [x] (2026-01-06 19:58Z) Re-ran `bun run lint`, `bun run test`, and `bun run verify:android-16kb`; lint passed and tests passed with 1 skipped suite / 13 skipped tests (717 passed).
+- [x] (2026-01-06 20:00Z) Re-ran `bun audit` and `gitleaks detect`; no vulnerabilities or leaks found.
+- [x] (2026-01-06 20:25Z) Aligned Android NDK to r29 in app config + Gradle properties and added NDK verification to android setup checks.
+- [x] (2026-01-06 20:27Z) Added Expo Router typed-routes generator/verification script and React Compiler healthcheck command.
+- [x] (2026-01-06 20:30Z) Extended 16KB checker to validate AABs when provided; verified debug libs (AAB optional).
+- [x] (2026-01-06 22:00Z) Re-ran `bun run lint`, `bun run test`, `bun run verify:android`, `bun run verify:android-16kb`, `bun run verify:typed-routes`, and `bun run verify:react-compiler` to confirm post-review verification remains green (warnings only for Metro/ADB reverse).
 
 ## Surprises & Discoveries
 
@@ -73,9 +87,9 @@ Bring the DNSChat repository into compliance with all documents listed in `docs/
 
 ## Outcomes & Retrospective
 
-- Compliance: removed disallowed `any`/`@ts-ignore` usage, documented data inventory/model registry, justified `useEffect` usage, and aligned Android SDK defaults to 36.
+- Compliance: removed disallowed `any`/`@ts-ignore` usage, documented data inventory/model registry, justified `useEffect` usage, aligned Android SDK defaults to 36 + NDK r29, added glass-style sanitization guards, enabled typed-routes generation checks, and verified 16KB page-size alignment for native libs.
 - React Compiler: removed manual memoization from `ChatInput` and updated static tests accordingly.
-- Verification: `bun run lint`, `bun run test`, and `bun run dns:harness:build` passed; unit tests still report 1 skipped suite / 13 skipped tests (integration only).
+- Verification: `bun run lint`, `bun run test`, and `bun run dns:harness:build` passed; unit tests still report 1 skipped suite / 13 skipped tests (integration only). Subsequent Android signing, ExpoLinking, UDP/TCP module loading, and diagnostics adjustments also re-ran unit tests with passing results. Final verification run on 2026-01-06 22:00Z confirms lint/tests + Android setup + 16KB alignment + typed routes + React Compiler healthcheck remain green (Metro/ADB reverse warnings only).
 - Residual risk: native platform builds and device-only integration tests were not executed in this environment.
 
 ## Context and Orientation
@@ -100,7 +114,7 @@ Commands executed from repo root:
 Results:
 
 - Lint: passed.
-- Tests: 65 suites passed, 1 skipped; 711 tests passed, 13 skipped.
+- Tests: 65 suites passed, 1 skipped; 717 tests passed, 13 skipped.
 - Build: TypeScript harness compile succeeded.
 
 ## Guidelines Inventory (from `docs/GUIDELINES-REF/GUIDELINES_INDEX.json`)
@@ -189,7 +203,7 @@ Verify: Update root `CHANGELOG.md` if compliance work changes behavior or docs.
 REACT-GUIDELINES.md
 Applicability: Yes (React Native).
 Rules: React Compiler enabled; minimize manual memoization; keep `'use client'` boundaries correct where applicable; audit/logging awareness.
-Verify: `babel.config.js` includes React Compiler; `app.json` enables `reactCompiler`; scan for unnecessary `useMemo/useCallback`.
+Verify: `babel.config.js` includes React Compiler; `app.json` enables `reactCompiler`; `bun run verify:react-compiler`; scan for unnecessary `useMemo/useCallback`.
 
 REACT_USE_EFEECT-GUIDELINES.md
 Applicability: Partial (not using RSC; useEffect guidance still relevant).
@@ -209,12 +223,12 @@ Verify: UI components follow `src/components` and `src/navigation/screens` patte
 MOBILE-GUIDELINES.md
 Applicability: Yes.
 Rules: New Architecture on; Android 16 / 16KB page size readiness; avoid shadow/border props on native views; performance budgets.
-Verify: `app.json` `newArchEnabled` true; Android config uses SDK 36; tests for native view prop guards; ensure wrappers for blur/native views.
+Verify: `app.json` `newArchEnabled` true; Android config uses SDK 36 + NDK r29; `bun run verify:android-16kb`; `__tests__/liquidGlassWrapper.helpers.spec.ts` asserts shadow/border props are filtered from glass views.
 
 EXPO-GUIDELINES.md
 Applicability: Yes.
 Rules: Expo SDK 54, typed routes, React Compiler, new arch; avoid deprecated expo-av; safe-area-context usage.
-Verify: `app.json` `experiments.typedRoutes` and `reactCompiler`; dependencies match SDK 54; no `expo-av` usage; use `react-native-safe-area-context`.
+Verify: `app.json` `experiments.typedRoutes` and `reactCompiler`; `bun run verify:typed-routes`; dependencies match SDK 54; no `expo-av` usage; use `react-native-safe-area-context`.
 
 IOS-GUIDELINES.md
 Applicability: Partial (only for native iOS modules/configs).

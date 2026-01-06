@@ -120,6 +120,22 @@ const isTcpSocketModule = (value: unknown): value is TcpSocketModule =>
   'Socket' in value &&
   typeof (value as TcpSocketModule).Socket === 'function';
 
+const resolveModuleCandidate = <T>(
+  candidate: unknown,
+  guard: (value: unknown) => value is T,
+): T | null => {
+  if (guard(candidate)) return candidate;
+  if (
+    candidate !== null &&
+    typeof candidate === 'object' &&
+    'default' in candidate
+  ) {
+    const defaultExport = (candidate as { default?: unknown }).default;
+    if (guard(defaultExport)) return defaultExport;
+  }
+  return null;
+};
+
 const isBufferFactory = (value: unknown): value is BufferFactory => {
   if (typeof value !== 'function' && (typeof value !== 'object' || value === null)) {
     return false;
@@ -208,8 +224,9 @@ try {
   // UDP DNS transport (fallback #2 after native DNS)
   // Used when native DNS unavailable or fails
   const udpCandidate: unknown = require('react-native-udp');
-  if (isUDPModule(udpCandidate)) {
-    dgram = udpCandidate;
+  const udpModule = resolveModuleCandidate(udpCandidate, isUDPModule);
+  if (udpModule) {
+    dgram = udpModule;
     devLog('[DNSService] UDP library loaded successfully:', !!dgram);
   } else {
     devLog('[DNSService] UDP library did not expose createSocket as expected');
@@ -223,9 +240,10 @@ try {
   // TCP DNS transport (fallback #3 after UDP)
   // Critical for corporate networks that block UDP port 53
   const tcpCandidate: unknown = require('react-native-tcp-socket');
-  if (isTcpSocketModule(tcpCandidate)) {
-    TcpSocket = tcpCandidate;
-    devLog('[DNSService] TCP Socket library structure:', Object.keys(tcpCandidate));
+  const tcpModule = resolveModuleCandidate(tcpCandidate, isTcpSocketModule);
+  if (tcpModule) {
+    TcpSocket = tcpModule;
+    devLog('[DNSService] TCP Socket library structure:', Object.keys(tcpModule));
     devLog('[DNSService] TCP Socket library loaded successfully:', !!TcpSocket?.Socket);
   } else {
     devLog('[DNSService] TCP Socket library missing Socket constructor');

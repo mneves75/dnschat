@@ -17,11 +17,32 @@ import {
   composeDNSQueryName,
   generateSecureDNSId,
 } from "../src/services/dnsService";
-import * as DNSLogService from "../src/services/dnsLogService";
+import { DNSLogService } from "../src/services/dnsLogService";
 import { sanitizeDNSMessageReference } from "../modules/dns-native/constants";
 
-// Access private methods for test via any-cast
+// Access private methods for test via internal access
 import * as DNSServiceModule from "../src/services/dnsService";
+
+type DNSServiceModuleShape = {
+  DNSService?: {
+    getMethodOrder?: (
+      enableMock?: boolean,
+      allowExperimental?: boolean,
+    ) => Array<"native" | "udp" | "tcp" | "mock">;
+  };
+};
+
+type DNSServiceInternals = {
+  queryWithServer: (...args: unknown[]) => Promise<{ response: string; method: string }>;
+  getServerHealthSnapshot: () => Record<
+    string,
+    { successes: number; failures: number; lastError?: string | null }
+  >;
+  resetServerHealthForTests?: () => void;
+};
+
+const dnsServiceInternals = DNSService as unknown as DNSServiceInternals;
+const moduleWithService = DNSServiceModule as unknown as DNSServiceModuleShape;
 
 describe("DNS Service helpers", () => {
   describe("parseTXTResponse", () => {
@@ -204,15 +225,20 @@ describe("DNS Service helpers", () => {
   });
 
   describe("getMethodOrder", () => {
-    const rawGetOrder = (DNSServiceModule as any).DNSService?.getMethodOrder?.bind(
-      (DNSServiceModule as any).DNSService,
+    const rawGetOrder = moduleWithService.DNSService?.getMethodOrder?.bind(
+      moduleWithService.DNSService,
     );
 
     const getOrder = (
       enableMock: boolean | undefined,
       allowExperimental: boolean = true,
-    ) =>
-      rawGetOrder?.(enableMock, allowExperimental);
+    ) => {
+      const order = rawGetOrder?.(enableMock, allowExperimental);
+      if (!order) {
+        throw new Error("Expected getMethodOrder to return a value");
+      }
+      return order;
+    };
 
     if (typeof rawGetOrder !== "function") {
       it("exposes getMethodOrder for test via private access", () => {
@@ -246,9 +272,9 @@ describe("DNS Service helpers", () => {
       const orderWithoutExperimental = getOrder(false, false);
       const orderWithMock = getOrder(true, true);
 
-      expect(orderWithExperimental.includes("https" as any)).toBe(false);
-      expect(orderWithoutExperimental.includes("https" as any)).toBe(false);
-      expect(orderWithMock.includes("https" as any)).toBe(false);
+      expect((orderWithExperimental as string[]).includes("https")).toBe(false);
+      expect((orderWithoutExperimental as string[]).includes("https")).toBe(false);
+      expect((orderWithMock as string[]).includes("https")).toBe(false);
     });
 
     it("native is always first when available", () => {
@@ -302,28 +328,34 @@ describe("DNS Service helpers", () => {
     });
 
     it("uses global crypto.getRandomValues when available", () => {
-      const originalCrypto = global.crypto;
-      const mockGetRandomValues = jest.fn((array: Uint16Array) => {
-        array[0] = 4242;
+      const globalWithCrypto = global as unknown as { crypto?: Crypto | undefined };
+      const originalCrypto = globalWithCrypto.crypto;
+      let getRandomValuesCalled = false;
+      const trackedGetRandomValues = <T extends ArrayBufferView>(array: T): T => {
+        getRandomValuesCalled = true;
+        if (array instanceof Uint16Array) {
+          array[0] = 4242;
+        }
         return array;
-      });
-      (global as any).crypto = {
-        ...(originalCrypto ?? {}),
-        getRandomValues: mockGetRandomValues,
       };
+      globalWithCrypto.crypto = {
+        ...(originalCrypto ?? {}),
+        getRandomValues: trackedGetRandomValues,
+      } as unknown as Crypto;
 
       try {
         const id = generateSecureDNSId();
-        expect(mockGetRandomValues).toHaveBeenCalled();
+        expect(getRandomValuesCalled).toBe(true);
         expect(id).toBe(4242);
       } finally {
-        (global as any).crypto = originalCrypto;
+        globalWithCrypto.crypto = originalCrypto;
       }
     });
 
     it("uses expo-crypto fallback when global crypto is unavailable", () => {
-      const originalCrypto = global.crypto;
-      (global as any).crypto = undefined;
+      const globalWithCrypto = global as unknown as { crypto?: Crypto | undefined };
+      const originalCrypto = globalWithCrypto.crypto;
+      globalWithCrypto.crypto = undefined;
 
       const expoCrypto = require('expo-crypto');
 
@@ -332,23 +364,21 @@ describe("DNS Service helpers", () => {
         expect(expoCrypto.getRandomValues).toHaveBeenCalled();
         expect(id).toBe(1);
       } finally {
-        (global as any).crypto = originalCrypto;
+        globalWithCrypto.crypto = originalCrypto;
       }
     });
   });
 
   describe("server fallback + health tracking", () => {
-    const dnsServiceAny = DNSService as any;
-
     beforeEach(() => {
       jest.clearAllMocks();
-      (DNSLogService as any).startQuery = jest.fn(() => "query-1");
-      (DNSLogService as any).addLog = jest.fn();
-      (DNSLogService as any).logMethodFailure = jest.fn();
-      (DNSLogService as any).logFallback = jest.fn();
-      (DNSLogService as any).logServerFallback = jest.fn();
-      (DNSLogService as any).endQuery = jest.fn();
-      dnsServiceAny.resetServerHealthForTests?.();
+      jest.spyOn(DNSLogService, "startQuery").mockReturnValue("query-1");
+      jest.spyOn(DNSLogService, "addLog").mockImplementation(() => undefined);
+      jest.spyOn(DNSLogService, "logMethodFailure").mockImplementation(() => undefined);
+      jest.spyOn(DNSLogService, "logFallback").mockImplementation(() => undefined);
+      jest.spyOn(DNSLogService, "logServerFallback").mockImplementation(() => undefined);
+      jest.spyOn(DNSLogService, "endQuery").mockResolvedValue(undefined);
+      dnsServiceInternals.resetServerHealthForTests?.();
     });
 
     afterEach(() => {
@@ -358,7 +388,7 @@ describe("DNS Service helpers", () => {
 
     it("falls back to secondary server when primary fails", async () => {
       const querySpy = jest
-        .spyOn(dnsServiceAny, "queryWithServer")
+        .spyOn(dnsServiceInternals, "queryWithServer")
         .mockRejectedValueOnce(new Error("Primary server down"))
         .mockResolvedValueOnce({ response: "ok", method: "udp" });
 
@@ -371,7 +401,7 @@ describe("DNS Service helpers", () => {
 
       expect(result).toBe("ok");
       expect(querySpy).toHaveBeenCalledTimes(2);
-      const calls = querySpy.mock.calls as Array<[any, ...unknown[]]>;
+      const calls = querySpy.mock.calls as Array<[{ targetServer: string }, ...unknown[]]>;
       const firstContext = calls[0]?.[0] as { targetServer: string };
       const secondContext = calls[1]?.[0] as { targetServer: string };
       expect(firstContext.targetServer).toBe("llm.pieter.com");
@@ -380,7 +410,7 @@ describe("DNS Service helpers", () => {
 
     it("tracks server health across failures and successes", async () => {
       jest
-        .spyOn(dnsServiceAny, "queryWithServer")
+        .spyOn(dnsServiceInternals, "queryWithServer")
         .mockRejectedValueOnce(new Error("Primary server down"))
         .mockResolvedValueOnce({ response: "ok", method: "udp" });
 
@@ -391,10 +421,15 @@ describe("DNS Service helpers", () => {
         true,
       );
 
-      const snapshot = dnsServiceAny.getServerHealthSnapshot();
-      expect(snapshot["llm.pieter.com:53"].failures).toBe(1);
-      expect(snapshot["llm.pieter.com:53"].lastError).toContain("Primary server down");
-      expect(snapshot["ch.at:53"].successes).toBe(1);
+      const snapshot = dnsServiceInternals.getServerHealthSnapshot();
+      const primary = snapshot["llm.pieter.com:53"];
+      const secondary = snapshot["ch.at:53"];
+      if (!primary || !secondary) {
+        throw new Error("Expected server health entries to be present");
+      }
+      expect(primary.failures).toBe(1);
+      expect(primary.lastError).toContain("Primary server down");
+      expect(secondary.successes).toBe(1);
     });
   });
 });

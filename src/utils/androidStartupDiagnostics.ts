@@ -48,6 +48,10 @@ export class AndroidStartupDiagnostics {
   private static checkNativeDNSModule() {
     try {
       const dnsModule = NativeModules["RNDNSModule"];
+      const moduleKeys = Object.keys(NativeModules);
+      const coreModulesPresent =
+        moduleKeys.includes("RNGestureHandlerModule") &&
+        moduleKeys.includes("RNCSafeAreaProvider");
       if (dnsModule) {
         this.results.push({
           name: "DNS Native Module",
@@ -57,14 +61,21 @@ export class AndroidStartupDiagnostics {
         });
         this.log("DNS Native Module registered");
       } else {
+        const status = coreModulesPresent ? "fail" : "warning";
+        const missingDetail = coreModulesPresent
+          ? "Check MainApplication.kt - DNSNativePackage must be added to packages list"
+          : "Native modules registry incomplete (likely Expo Go or dev client not built)";
         this.results.push({
           name: "DNS Native Module",
-          status: "fail",
+          status,
           message: "RNDNSModule is not registered",
-          details:
-            "Check MainApplication.kt - DNSNativePackage must be added to packages list",
+          details: missingDetail,
         });
-        this.error("DNS Native Module not registered");
+        if (status === "fail") {
+          this.error("DNS Native Module not registered");
+        } else {
+          this.warn("DNS Native Module not registered");
+        }
       }
     } catch (error) {
       this.results.push({
@@ -120,11 +131,17 @@ export class AndroidStartupDiagnostics {
         });
         this.log("All critical native modules registered");
       } else {
+        const registryIncomplete =
+          modules.length === 0 ||
+          !modules.includes("RNGestureHandlerModule") ||
+          !modules.includes("RNCSafeAreaProvider");
         this.results.push({
           name: "Native Modules",
           status: "warning",
           message: `Missing modules: ${missing.join(", ")}`,
-          details: `Found ${modules.length} native modules total`,
+          details: registryIncomplete
+            ? "Native modules registry incomplete (likely Expo Go or dev client not built)"
+            : `Found ${modules.length} native modules total`,
         });
         this.warn(`Missing modules: ${missing.join(", ")}`);
       }

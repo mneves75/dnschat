@@ -4,13 +4,16 @@ describe("HapticFeedback capability gating", () => {
   const loadModule = () =>
     require("../src/utils/haptics") as typeof import("../src/utils/haptics");
 
-  let ExpoHaptics: typeof ExpoHapticsType;
+  type ResettableExpoHaptics = typeof ExpoHapticsType & {
+    __reset?: () => void;
+    isAvailableAsync?: () => Promise<boolean>;
+  };
+  let ExpoHaptics: ResettableExpoHaptics;
 
   beforeEach(() => {
     jest.resetModules();
     ExpoHaptics = require("expo-haptics");
-    const mock = ExpoHaptics as any;
-    mock.__reset?.();
+    ExpoHaptics.__reset?.();
   });
 
   it("skips when the user disables haptics", async () => {
@@ -28,7 +31,9 @@ describe("HapticFeedback capability gating", () => {
   });
 
   it("skips when hardware support is missing", async () => {
-    (ExpoHaptics as any).isAvailableAsync.mockResolvedValue(false);
+    ExpoHaptics.isAvailableAsync = jest
+      .fn<Promise<boolean>, []>()
+      .mockResolvedValue(false);
     const { configureHaptics, __hapticsTestHooks } = loadModule();
     configureHaptics({ userEnabled: true, reduceMotion: false });
 
@@ -36,7 +41,12 @@ describe("HapticFeedback capability gating", () => {
   });
 
   it("invokes Expo haptics when enabled and supported", async () => {
-    (ExpoHaptics as any).isAvailableAsync.mockResolvedValue(true);
+    ExpoHaptics.isAvailableAsync = jest
+      .fn<Promise<boolean>, []>()
+      .mockResolvedValue(true);
+    const notificationSpy = jest
+      .spyOn(ExpoHaptics, "notificationAsync")
+      .mockResolvedValue(undefined);
     const { HapticFeedback, configureHaptics, __hapticsTestHooks } = loadModule();
     configureHaptics({ userEnabled: true, reduceMotion: false });
 
@@ -44,10 +54,8 @@ describe("HapticFeedback capability gating", () => {
 
     await HapticFeedback.success();
 
-    expect(
-      (ExpoHaptics.notificationAsync as jest.Mock).mock.calls.length,
-    ).toBe(1);
-    expect(ExpoHaptics.notificationAsync).toHaveBeenCalledWith(
+    expect(notificationSpy).toHaveBeenCalledTimes(1);
+    expect(notificationSpy).toHaveBeenCalledWith(
       ExpoHaptics.NotificationFeedbackType.Success,
     );
   });

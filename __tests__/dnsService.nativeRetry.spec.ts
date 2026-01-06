@@ -9,7 +9,7 @@ jest.mock('react-native', () => {
 });
 
 import { DNSService } from '../src/services/dnsService';
-import * as DNSLogService from '../src/services/dnsLogService';
+import { DNSLogService } from "../src/services/dnsLogService";
 import {
   nativeDNS,
   DNSError,
@@ -35,15 +35,24 @@ jest.mock('../modules/dns-native', () => {
 });
 
 const mockedNativeDNS = nativeDNS as jest.Mocked<typeof nativeDNS>;
+type DNSServiceInternals = {
+  performNativeUDPQuery: (
+    queryName: string,
+    server: string,
+    port: number,
+    allowExperimental: boolean,
+  ) => Promise<string[]>;
+};
+const dnsServiceInternals = DNSService as unknown as DNSServiceInternals;
 
 describe('DNSService native retry integration', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    (DNSLogService as any).startQuery = jest.fn(() => 'query-1');
-    (DNSLogService as any).addLog = jest.fn();
-    (DNSLogService as any).logMethodFailure = jest.fn();
-    (DNSLogService as any).logFallback = jest.fn();
-    (DNSLogService as any).endQuery = jest.fn();
+    jest.spyOn(DNSLogService, "startQuery").mockReturnValue("query-1");
+    jest.spyOn(DNSLogService, "addLog").mockImplementation(() => undefined);
+    jest.spyOn(DNSLogService, "logMethodFailure").mockImplementation(() => undefined);
+    jest.spyOn(DNSLogService, "logFallback").mockImplementation(() => undefined);
+    jest.spyOn(DNSLogService, "endQuery").mockResolvedValue(undefined);
   });
   afterEach(() => {
     DNSService.destroyBackgroundListener();
@@ -55,7 +64,7 @@ describe('DNSService native retry integration', () => {
       .mockResolvedValueOnce(['Ignored']);
 
     const udpSpy = jest
-      .spyOn(DNSService as any, 'performNativeUDPQuery')
+      .spyOn(dnsServiceInternals, "performNativeUDPQuery")
       .mockResolvedValue(['Hello from UDP']);
 
     const result = await DNSService.queryLLM(

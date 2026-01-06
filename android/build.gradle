@@ -12,6 +12,11 @@ buildscript {
   }
 }
 
+def configuredNdkVersion = findProperty("ndkVersion") ?: findProperty("android.ndkVersion")
+if (configuredNdkVersion) {
+  ext.ndkVersion = configuredNdkVersion
+}
+
 allprojects {
   repositories {
     google()

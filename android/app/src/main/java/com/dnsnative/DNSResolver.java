@@ -861,12 +861,21 @@ public class DNSResolver {
         private static final String CODE_INVALID_REGEX = "SANITIZER_CONFIG_REGEX";
         private static final String CODE_UNEXPECTED = "SANITIZER_CONFIG_UNEXPECTED";
 
+        // Combining marks Unicode ranges (portable alternative to \p{M} which requires UNICODE_CHARACTER_CLASS):
+        // \u0300-\u036f = Combining Diacritical Marks
+        // \u1ab0-\u1aff = Combining Diacritical Marks Extended
+        // \u1dc0-\u1dff = Combining Diacritical Marks Supplement
+        // \u20d0-\u20ff = Combining Diacritical Marks for Symbols
+        // \ufe20-\ufe2f = Combining Half Marks
+        private static final String COMBINING_MARKS_PATTERN =
+            "[\u0300-\u036f\u1ab0-\u1aff\u1dc0-\u1dff\u20d0-\u20ff\ufe20-\ufe2f]+";
+
         private static final SanitizerConfig DEFAULT = build(
             Pattern.compile("\\s+"),
             Pattern.compile("[^a-z0-9-]"),
             Pattern.compile("-{2,}"),
             Pattern.compile("^-+|-+$"),
-            Pattern.compile("\\p{M}+", Pattern.UNICODE_CASE | Pattern.UNICODE_CHARACTER_CLASS),
+            Pattern.compile(COMBINING_MARKS_PATTERN),
             "-",
             DEFAULT_MAX_LABEL_LENGTH,
             Normalizer.Form.NFKD,

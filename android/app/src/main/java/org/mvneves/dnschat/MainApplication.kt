@@ -16,8 +16,12 @@ import com.facebook.react.defaults.DefaultReactNativeHost
 
 import expo.modules.ApplicationLifecycleDispatcher
 import expo.modules.ReactNativeHostWrapper
+import expo.modules.adapters.react.ModuleRegistryAdapter
+import expo.modules.core.interfaces.Package
+import expo.modules.linking.ExpoLinkingPackage
 
 class MainApplication : Application(), ReactApplication {
+  private val manualExpoPackages: List<Package> = listOf(ExpoLinkingPackage())
 
   override val reactNativeHost: ReactNativeHost = ReactNativeHostWrapper(
       this,
@@ -26,6 +30,8 @@ class MainApplication : Application(), ReactApplication {
             PackageList(this).packages.apply {
               // DNS native module (not auto-linked)
               add(DNSNativePackage())
+              // Manual Expo module registration (not auto-linked in some dev-client flows)
+              add(ModuleRegistryAdapter(manualExpoPackages))
             }
 
           override fun getJSMainModuleName(): String = ".expo/.virtual-metro-entry"
