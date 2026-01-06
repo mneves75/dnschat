@@ -10,7 +10,7 @@ diff --git a/node_modules/react-native-reanimated/android/build.gradle b/node_mo
  
  def reanimatedPrefabHeadersDir = project.file("$buildDir/prefab-headers/reanimated")
  
-@@ -157,21 +157,21 @@
+@@ -157,34 +157,34 @@
  apply plugin: "de.undercouch.download"
  
  android {
@@ -40,7 +40,10 @@ diff --git a/node_modules/react-native-reanimated/android/build.gradle b/node_mo
      }
  
      prefab {
-@@ -181,10 +181,10 @@
+         reanimated {
+-            headers reanimatedPrefabHeadersDir.absolutePath
++            headers = reanimatedPrefabHeadersDir.absolutePath
+         }
      }
  
      defaultConfig {

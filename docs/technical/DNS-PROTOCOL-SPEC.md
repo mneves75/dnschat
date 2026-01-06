@@ -55,6 +55,18 @@ Parsing rules (implemented by `parseTXTResponse(txtRecords)`):
    - Join `content` in order `1..N`.
 4. Empty final response is rejected.
 
+## UDP response validation (native)
+
+Native UDP resolvers (iOS/Android) validate DNS responses before TXT parsing:
+
+- Transaction ID must match the query.
+- Header flags must indicate a standard response (QR=1, opcode=0, TC=0, RCODE=0).
+- QDCOUNT must be `1` (single-question query).
+- The response question section must match the original query:
+  - QNAME equals the normalized query name (lowercased, sanitized).
+  - QTYPE is TXT (16) and QCLASS is IN (1).
+- DNS name parsing handles compression pointers with strict bounds checks and a small max-jump guard.
+
 ## Transport chain
 
 Order used for iOS/Android builds:

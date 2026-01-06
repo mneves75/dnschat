@@ -64,6 +64,10 @@ Tasks:
 Verification:
 - [x] `cd android && ./gradlew --warning-mode all :app:testDebugUnitTest`
 
+Residual warnings (expected):
+- `sdk.dir` in `android/local.properties` not set in this environment.
+- Gradle toolchain auto-provisioning warning (requires toolchain repo config to silence).
+
 ### Phase 2: iOS native module lifecycle cleanup
 
 Acceptance criteria:

@@ -51,7 +51,10 @@ Native DNS module:
 3. Sanitize into a single DNS label (lowercase, replace whitespace with `-`,
    remove invalid, enforce 63-char DNS label limit).
 4. Compose query name `label.<zone>` and send it via the transport chain.
-5. Parse TXT response:
+5. Validate DNS response headers (native UDP) before parsing:
+   - Transaction ID match, QR/opcode/TC/RCODE checks, QDCOUNT=1.
+   - Question section matches QNAME/QTYPE/QCLASS.
+6. Parse TXT response:
    - Plain TXT records: concatenate non-empty records and return.
    - Multipart `n/N:` records: require a complete set `1..N` and join in order.
 

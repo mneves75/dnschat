@@ -21,6 +21,9 @@ Note: In the DNSChat app, the TypeScript layer controls the overall transport
 order (native -> UDP -> TCP -> mock). The Android native module also has its own
 internal fallback chain inside the native "native" step.
 
+Native UDP responses are validated before TXT parsing (transaction ID, header
+flags, QDCOUNT, and question name/type/class matching) to reduce spoofing risk.
+
 ## Usage
 
 ```ts
