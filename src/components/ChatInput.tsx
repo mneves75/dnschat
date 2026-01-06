@@ -25,7 +25,7 @@
  * @reviewed-by John Carmack
  */
 
-import React, { useState, useRef, useCallback, useMemo } from "react";
+import React, { useState, useRef } from "react";
 import {
   View,
   TextInput,
@@ -111,13 +111,13 @@ export function ChatInput({
   const palette = useImessagePalette();
   const { t } = useTranslation();
   const { supportsLiquidGlass } = useLiquidGlassCapabilities();
-  // Resolve touch target up front so every memo below can safely reference it without tripping TDZ.
+  // Resolve touch target up front for layout calculations.
   const minimumTouchTarget = getMinimumTouchTarget();
-  const reportHeight = useCallback((height: number) => {
+  const reportHeight = (height: number) => {
     if (onHeightChange) {
       onHeightChange(height);
     }
-  }, [onHeightChange]);
+  };
 
   /**
    * Height Calculation (Design System Derived)
@@ -144,18 +144,15 @@ export function ChatInput({
   // CRITICAL FIX: Ensure min height >= touch target to prevent button overflow
   // Without this, button positioning goes negative (e.g., (38 - 44) / 2 = -3px)
   const touchTarget = minimumTouchTarget;
-  const heightConstraints = useMemo(() => {
-    const min = Math.max(naturalMin, touchTarget);
-    return {
-      min,
-      max: (lineHeight * 5) + verticalPadding,
-    };
-  }, [lineHeight, naturalMin, touchTarget, verticalPadding]);
+  const heightConstraints = {
+    min: Math.max(naturalMin, touchTarget),
+    max: (lineHeight * 5) + verticalPadding,
+  };
 
   React.useEffect(() => {
     // Initialize parent padding immediately so content never jumps on first layout.
-    reportHeight(Math.round(heightConstraints.min));
-  }, [heightConstraints.min, reportHeight]);
+    onHeightChange?.(Math.round(heightConstraints.min));
+  }, [heightConstraints.min, onHeightChange]);
 
   // Reanimated shared values for UI thread performance
   const inputHeight = useSharedValue(heightConstraints.min);
@@ -196,9 +193,9 @@ export function ChatInput({
    * Right padding accommodates integrated send button.
    * Calculated from actual touch target size, not hardcoded.
    */
-  const inputPadding = useMemo(() => ({
+  const inputPadding = {
     paddingRight: minimumTouchTarget + BUTTON_SPACING,
-  }), [minimumTouchTarget]);
+  };
 
   /**
    * Update Send Button Opacity
@@ -280,18 +277,17 @@ export function ChatInput({
    *
    * Performance: Runs on UI thread via Reanimated.
    */
-  const handleContentSizeChange = useCallback(
-    (event: NativeSyntheticEvent<TextInputContentSizeChangeEventData>) => {
-      const { height } = event.nativeEvent.contentSize;
-      const constrainedHeight = Math.min(
-        Math.max(height, heightConstraints.min),
-        heightConstraints.max
-      );
+  const handleContentSizeChange = (
+    event: NativeSyntheticEvent<TextInputContentSizeChangeEventData>,
+  ) => {
+    const { height } = event.nativeEvent.contentSize;
+    const constrainedHeight = Math.min(
+      Math.max(height, heightConstraints.min),
+      heightConstraints.max
+    );
 
-      inputHeight.value = withSpring(constrainedHeight, SpringConfig.bouncy);
-    },
-    [heightConstraints.max, heightConstraints.min, inputHeight],
-  );
+    inputHeight.value = withSpring(constrainedHeight, SpringConfig.bouncy);
+  };
 
   /**
    * Handle Send
@@ -302,7 +298,7 @@ export function ChatInput({
    * 4. Clears input
    * 5. Refocuses input (iOS only)
    */
-  const handleSend = useCallback(() => {
+  const handleSend = () => {
     if (message.trim() && !isLoading) {
       // Haptic feedback on send
       HapticFeedback.medium();
@@ -317,7 +313,7 @@ export function ChatInput({
         }, 100);
       }
     }
-  }, [message, isLoading, onSendMessage]);
+  };
 
   /**
    * Handle Press In
@@ -328,12 +324,12 @@ export function ChatInput({
    *
    * Only triggers when send is enabled (canSend).
    */
-  const handlePressIn = useCallback(() => {
+  const handlePressIn = () => {
     if (canSend) {
       scale.value = withSpring(buttonPressScale, SpringConfig.bouncy);
       HapticFeedback.light();
     }
-  }, [canSend, scale]);
+  };
 
   /**
    * Handle Press Out
@@ -341,9 +337,9 @@ export function ChatInput({
    * Returns button to normal scale (1.0x).
    * Spring animation provides natural feel.
    */
-  const handlePressOut = useCallback(() => {
+  const handlePressOut = () => {
     scale.value = withSpring(1, SpringConfig.bouncy);
-  }, [scale]);
+  };
 
   /**
    * Render Text Input
@@ -351,8 +347,7 @@ export function ChatInput({
    * Common props shared between glass and fallback variants.
    * Extracted to reduce duplication.
    */
-  const renderTextInput = useCallback(
-    (additionalStyles: StyleProp<TextStyle>[] = []) => (
+  const renderTextInput = (additionalStyles: StyleProp<TextStyle>[] = []) => (
     <Animated.View style={[styles.inputWrapper, animatedInputStyle]}>
       <TextInput
         ref={textInputRef}
@@ -395,23 +390,6 @@ export function ChatInput({
         accessibilityHint={t("components.chatInput.accessibilityHint")}
       />
     </Animated.View>
-    ),
-    [
-      animatedInputStyle,
-      handleContentSizeChange,
-      handleSend,
-      inputPadding,
-      isDark,
-      isLoading,
-      message,
-      palette.textPrimary,
-      palette.textTertiary,
-      resolvedPlaceholder,
-      t,
-      typography.body.fontSize,
-      typography.body.letterSpacing,
-      typography.body.lineHeight,
-    ],
   );
 
   /**
@@ -423,7 +401,7 @@ export function ChatInput({
    * CRITICAL: pointerEvents="none" when disabled prevents button from
    * blocking touches to the TextInput underneath.
    */
-  const renderSendButton = useCallback(() => (
+  const renderSendButton = () => (
     <AnimatedTouchable
       style={[
         animatedButtonStyle,
@@ -461,20 +439,7 @@ export function ChatInput({
         <SendIcon size={20} isActive={canSend} />
       )}
     </AnimatedTouchable>
-  ), [
-    animatedButtonPosition,
-    animatedButtonStyle,
-    canSend,
-    handlePressIn,
-    handlePressOut,
-    handleSend,
-    isLoading,
-    minimumTouchTarget,
-    palette.textPrimary,
-    palette.tint,
-    palette.userBubble,
-    t,
-  ]);
+  );
 
   /**
    * Render Character Counter
@@ -485,7 +450,7 @@ export function ChatInput({
    * Note: Positioned outside inputWithButtonContainer to avoid
    * flex layout issues on Android (would appear beside input).
    */
-  const renderCharacterCounter = useCallback(() => {
+  const renderCharacterCounter = () => {
     if (!showCharacterCount) return null;
 
     return (
@@ -493,7 +458,7 @@ export function ChatInput({
         {message.length}/{MESSAGE_CONSTANTS.MAX_MESSAGE_LENGTH}
       </Text>
     );
-  }, [message.length, palette.textSecondary, showCharacterCount]);
+  };
 
   return (
     <View

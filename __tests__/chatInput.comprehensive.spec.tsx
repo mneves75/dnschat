@@ -115,14 +115,14 @@ describe("ChatInput Component - John Carmack Quality Standards", () => {
 
   describe("Height Constraints Calculation", () => {
     it("calculates heightConstraints from typography", () => {
-      expect(source).toContain("const heightConstraints = useMemo");
+      expect(source).toContain("const heightConstraints = {");
       expect(source).toContain("const lineHeight = typography.body.lineHeight || 22");
       expect(source).toContain("const verticalPadding = LiquidGlassSpacing.sm * 2");
     });
 
     it("defines min height ensuring it accommodates touch target", () => {
       // CRITICAL FIX: Min height must be >= touch target to prevent button misalignment
-      expect(source).toContain("const min = Math.max(naturalMin, touchTarget)");
+      expect(source).toContain("min: Math.max(naturalMin, touchTarget)");
       expect(source).toContain("const naturalMin = lineHeight + verticalPadding");
     });
 
@@ -131,7 +131,7 @@ describe("ChatInput Component - John Carmack Quality Standards", () => {
     });
 
     it("calculates heightConstraints before using in useSharedValue", () => {
-      const heightConstraintsIndex = source.indexOf("const heightConstraints = useMemo");
+      const heightConstraintsIndex = source.indexOf("const heightConstraints = {");
       const inputHeightIndex = source.indexOf("const inputHeight = useSharedValue");
       expect(heightConstraintsIndex).toBeLessThan(inputHeightIndex);
     });
@@ -276,33 +276,22 @@ describe("ChatInput Component - John Carmack Quality Standards", () => {
   });
 
   describe("Performance Best Practices", () => {
-    it("uses useCallback for event handlers", () => {
-      expect(source).toContain("const handleSend = useCallback");
-      expect(source).toContain("const handlePressIn = useCallback");
-      expect(source).toContain("const handlePressOut = useCallback");
-      expect(source).toContain("const handleContentSizeChange = useCallback");
+    it("avoids manual memoization with React Compiler enabled", () => {
+      expect(source).not.toContain("useCallback(");
+      expect(source).not.toContain("useMemo(");
     });
 
-    it("uses useMemo for derived values", () => {
-      expect(source).toContain("const heightConstraints = useMemo");
-      expect(source).toContain("const inputPadding = useMemo");
+    it("defines event handlers without manual memoization", () => {
+      expect(source).toContain("const handleSend = () =>");
+      expect(source).toContain("const handlePressIn = () =>");
+      expect(source).toContain("const handlePressOut = () =>");
+      expect(source).toContain("const handleContentSizeChange = (");
     });
 
-    it("uses useCallback for render functions", () => {
-      expect(source).toContain("const renderTextInput = useCallback");
-      expect(source).toContain("const renderSendButton = useCallback");
-      expect(source).toContain("const renderCharacterCounter = useCallback");
-    });
-
-    it("includes proper dependency arrays", () => {
-      // Verify callbacks have dependency arrays by checking specific ones
-      expect(source).toContain("}, [message, isLoading, onSendMessage]);");
-      expect(source).toContain("}, [canSend, scale]);");
-      expect(source).toContain("}, [scale]);");
-      // Count total useCallback usage - should have multiple
-      const matches = source.match(/useCallback\(/g);
-      expect(matches).toBeTruthy();
-      expect(matches!.length).toBeGreaterThanOrEqual(7); // At least 7 useCallback calls
+    it("defines render helpers without manual memoization", () => {
+      expect(source).toContain("const renderTextInput = (");
+      expect(source).toContain("const renderSendButton = () =>");
+      expect(source).toContain("const renderCharacterCounter = () =>");
     });
   });
 
@@ -330,16 +319,16 @@ describe("ChatInput Component - John Carmack Quality Standards", () => {
   describe("Haptic Feedback", () => {
     it("provides light haptic on button press", () => {
       const handlePressIn = source.substring(
-        source.indexOf("const handlePressIn = useCallback"),
-        source.indexOf("const handlePressIn = useCallback") + 300
+        source.indexOf("const handlePressIn ="),
+        source.indexOf("const handlePressIn =") + 300
       );
       expect(handlePressIn).toContain("HapticFeedback.light()");
     });
 
     it("provides medium haptic on send", () => {
       const handleSend = source.substring(
-        source.indexOf("const handleSend = useCallback"),
-        source.indexOf("const handleSend = useCallback") + 500
+        source.indexOf("const handleSend ="),
+        source.indexOf("const handleSend =") + 500
       );
       expect(handleSend).toContain("HapticFeedback.medium()");
     });
