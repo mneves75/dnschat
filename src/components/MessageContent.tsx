@@ -1,18 +1,21 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
+import type { StyleProp, TextStyle } from "react-native";
 import { format } from "date-fns";
 import Markdown from "react-native-markdown-display";
+import type { MarkdownProps } from "react-native-markdown-display";
 import type { Message } from "../types/chat";
-import { useTypography } from "../ui/hooks/useTypography";
+import type { IMessagePalette } from "../ui/theme/imessagePalette";
+import type { TypographyScale } from "../ui/theme/liquidGlassTypography";
 import { LiquidGlassSpacing } from "../ui/theme/liquidGlassSpacing";
 
 interface MessageContentProps {
   message: Message;
   textColor: string;
-  textStyles: any;
-  markdownStyles: any;
-  palette: any;
-  typography: any;
+  textStyles: StyleProp<TextStyle>;
+  markdownStyles: MarkdownProps["style"];
+  palette: IMessagePalette;
+  typography: TypographyScale;
 }
 
 /**
