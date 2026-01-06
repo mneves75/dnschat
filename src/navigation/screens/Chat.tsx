@@ -61,6 +61,7 @@ export function Chat() {
 
   // Subtle entrance animation (fade only - no translateY to avoid keyboard conflicts)
   const opacity = useSharedValue(shouldReduceMotion ? 1 : 0);
+  // Effect: animate screen opacity on mount unless reduced motion is enabled.
   useEffect(() => {
     if (!shouldReduceMotion) {
       opacity.value = withTiming(1, { duration: 200 });
@@ -102,6 +103,7 @@ export function Chat() {
     });
   }, [currentChat?.messages]);
 
+  // Effect: present an alert when the chat error state changes.
   useEffect(() => {
     // Show error alert when error occurs
     if (error) {

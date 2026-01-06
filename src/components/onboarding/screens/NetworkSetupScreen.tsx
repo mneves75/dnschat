@@ -101,6 +101,7 @@ export function NetworkSetupScreen() {
     }
   };
 
+  // Effect: defer network optimization to allow initial UI paint.
   useEffect(() => {
     const timer = setTimeout(() => {
       runNetworkOptimization();

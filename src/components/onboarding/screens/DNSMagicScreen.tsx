@@ -59,6 +59,7 @@ export function DNSMagicScreen() {
 
   const pulseAnim = React.useRef(new Animated.Value(1)).current;
 
+  // Effect: start the pulse animation on mount and stop on unmount.
   useEffect(() => {
     const pulse = Animated.loop(
       Animated.sequence([

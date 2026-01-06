@@ -67,6 +67,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
     }
   };
 
+  // Effect: load chats on mount and when the locale changes.
   useEffect(() => {
     loadChats();
   }, [settings.preferredLocale]);

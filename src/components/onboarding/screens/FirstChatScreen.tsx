@@ -44,6 +44,7 @@ export function FirstChatScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [hasTriedChat, setHasTriedChat] = useState(false);
 
+  // Effect: mark unmounted state to prevent async updates after unmount.
   useEffect(() => {
     return () => {
       isMountedRef.current = false;

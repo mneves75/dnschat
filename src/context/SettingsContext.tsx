@@ -64,6 +64,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   );
   const [loading, setLoading] = useState(true);
 
+  // Effect: load persisted settings on mount and migrate if needed.
   useEffect(() => {
     let isMounted = true;
 

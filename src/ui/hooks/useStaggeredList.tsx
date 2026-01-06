@@ -176,6 +176,7 @@ export function useStaggeredList(
   };
 
   // Trigger animation on mount if enabled
+  // Effect: trigger stagger animation on mount when enabled.
   useEffect(() => {
     if (animateOnMount && itemCount > 0) {
       triggerAnimation();

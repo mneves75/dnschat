@@ -26,6 +26,7 @@ export function WelcomeScreen() {
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
   const slideAnim = React.useRef(new Animated.Value(50)).current;
 
+  // Effect: run welcome screen entrance animation on mount.
   React.useEffect(() => {
     const animation = Animated.parallel([
       Animated.timing(fadeAnim, {

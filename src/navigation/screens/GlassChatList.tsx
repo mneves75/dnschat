@@ -248,6 +248,7 @@ export function GlassChatList() {
   const [hasLoadedOnce, setHasLoadedOnce] = React.useState(false);
 
   // Load chats when screen is focused (CRITICAL FIX)
+  // Effect: refresh chat list on focus and mark first load.
   React.useEffect(() => {
     if (!isFocused) return;
     loadChats().then(() => {
@@ -257,6 +258,7 @@ export function GlassChatList() {
     });
   }, [hasLoadedOnce, isFocused]);
 
+  // Effect: surface chat load errors via alert.
   React.useEffect(() => {
     if (!error) return;
     Alert.alert(t("screen.chat.errorAlertTitle"), error, [

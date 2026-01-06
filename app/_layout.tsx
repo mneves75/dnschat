@@ -40,12 +40,14 @@ function RootLayoutContent() {
   const segments = useSegments();
   const rootNavigationState = useRootNavigationState();
 
+  // Effect: hide the splash screen once onboarding state + navigation are ready.
   React.useEffect(() => {
     if (!loading && rootNavigationState?.key) {
       SplashScreen.hideAsync().catch(() => {});
     }
   }, [loading, rootNavigationState?.key]);
 
+  // Effect: enforce onboarding flow based on completion state.
   React.useEffect(() => {
     if (!rootNavigationState?.key || loading) {
       return;
@@ -63,12 +65,14 @@ function RootLayoutContent() {
     }
   }, [hasCompletedOnboarding, loading, rootNavigationState?.key, router, segments]);
 
+  // Effect: initialize DNS log storage once on mount.
   React.useEffect(() => {
     DNSLogService.initialize().catch(() => {
       // Non-fatal: logs viewer will still function in-memory
     });
   }, []);
 
+  // Effect: run Android startup diagnostics in dev mode on mount.
   React.useEffect(() => {
     if (__DEV__ && Platform.OS === "android") {
       AndroidStartupDiagnostics.runDiagnostics()

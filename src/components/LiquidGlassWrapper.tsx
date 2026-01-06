@@ -265,6 +265,7 @@ export const LiquidGlassWrapper: React.FC<LiquidGlassProps> = ({
   const isDark = colorScheme === "dark";
   const [reduceTransparency, setReduceTransparency] = useState(false);
 
+  // Effect: sync reduce-transparency accessibility setting on iOS.
   useEffect(() => {
     if (Platform.OS !== "ios") return;
 
@@ -392,6 +393,7 @@ export const useLiquidGlassCapabilities = () => {
   const [loading, setLoading] = useState(Platform.OS === "ios");
   const [reduceTransparency, setReduceTransparency] = useState(false);
 
+  // Effect: compute glass capability and watch reduce-transparency changes on iOS.
   useEffect(() => {
     if (Platform.OS !== "ios") {
       setAvailability({

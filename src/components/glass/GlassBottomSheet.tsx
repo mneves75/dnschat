@@ -136,6 +136,7 @@ const useSheetAnimation = (
   const backdropOpacity = React.useRef(new Animated.Value(0)).current;
   const scale = React.useRef(new Animated.Value(0.95)).current;
 
+  // Effect: run show/hide animations when sheet visibility changes.
   React.useEffect(() => {
     if (visible) {
       // Show animation

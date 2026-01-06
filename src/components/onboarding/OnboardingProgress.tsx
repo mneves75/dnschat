@@ -22,6 +22,7 @@ export function OnboardingProgress() {
   const progress = (currentStep + 1) / steps.length;
   const animatedWidth = React.useRef(new Animated.Value(0)).current;
 
+  // Effect: animate progress bar when onboarding step changes.
   React.useEffect(() => {
     Animated.timing(animatedWidth, {
       toValue: progress,

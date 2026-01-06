@@ -24,6 +24,7 @@ export default function ChatRoute() {
   const [isResolving, setIsResolving] = React.useState(false);
   const lastAttemptedRef = React.useRef<string | null>(null);
 
+  // Effect: load chats lazily when a thread route is hit without cached data.
   React.useEffect(() => {
     if (!normalizedThreadId || isLoading || chats.length > 0) {
       return;
@@ -34,6 +35,7 @@ export default function ChatRoute() {
     });
   }, [chats.length, isLoading, loadChats, normalizedThreadId]);
 
+  // Effect: resolve the route thread id into a chat or create one and redirect.
   React.useEffect(() => {
     if (isLoading || isResolving) {
       return;

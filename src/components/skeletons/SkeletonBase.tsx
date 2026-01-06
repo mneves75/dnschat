@@ -62,6 +62,7 @@ export function SkeletonBox({
   const { shouldReduceMotion } = useMotionReduction();
   const shimmer = useSharedValue(0);
 
+  // Effect: start or freeze shimmer animation based on reduced-motion setting.
   useEffect(() => {
     if (shouldReduceMotion) {
       shimmer.value = 0.5; // Static mid-opacity for reduced motion
@@ -201,6 +202,7 @@ export function SkeletonCard({ children, delay = 0, style }: SkeletonCardProps) 
   const { shouldReduceMotion } = useMotionReduction();
   const opacity = useSharedValue(shouldReduceMotion ? 1 : 0);
 
+  // Effect: fade in skeleton card unless reduced motion is enabled.
   useEffect(() => {
     if (shouldReduceMotion) return;
 

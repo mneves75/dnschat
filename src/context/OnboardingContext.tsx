@@ -79,6 +79,7 @@ export function OnboardingProvider({
   const [steps, setSteps] = useState<OnboardingStep[]>(ONBOARDING_STEPS);
   const [loading, setLoading] = useState(true);
 
+  // Effect: load persisted onboarding state once on mount.
   useEffect(() => {
     loadOnboardingState();
   }, []);

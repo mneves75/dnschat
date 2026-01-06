@@ -51,6 +51,7 @@ export function Logs() {
   // Track skeleton display
   const showSkeleton = isLoading && !hasLoadedOnce && logs.length === 0;
 
+  // Effect: load logs on mount and subscribe to updates.
   useEffect(() => {
     loadLogs();
 

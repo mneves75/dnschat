@@ -23,6 +23,7 @@ export const DNSLogViewer: React.FC<DNSLogViewerProps> = ({
   const palette = useImessagePalette();
   const typography = useTypography();
 
+  // Effect: subscribe to DNS log updates and clean up on unmount.
   useEffect(() => {
     const unsub = DNSLogService.subscribe(setLogs);
     return () => {

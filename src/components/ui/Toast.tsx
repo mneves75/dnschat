@@ -77,6 +77,7 @@ export function Toast({
   const [isMounted, setIsMounted] = useState(visible);
   const visibleRef = useRef(visible);
 
+  // Effect: keep the visibility ref in sync with the visible prop.
   useEffect(() => {
     visibleRef.current = visible;
   }, [visible]);
@@ -120,7 +121,7 @@ export function Toast({
 
   const variantStyle = getVariantStyles();
 
-  // Show animation
+  // Effect: animate toast visibility and manage the auto-dismiss timer.
   useEffect(() => {
     if (visible) {
       visibleRef.current = true;
