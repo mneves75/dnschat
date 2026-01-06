@@ -15,6 +15,8 @@ Start here:
 - `docs/technical/SPECIFICATION.md` (product + behavior spec)
 - `docs/technical/DNS-PROTOCOL-SPEC.md` (DNS query/response rules)
 - `docs/troubleshooting/COMMON-ISSUES.md` (known issues + fixes)
+- `docs/data-inventory.md` (data storage + retention inventory)
+- `docs/model-registry.md` (model usage registry)
 
 Folders:
 
