@@ -31,6 +31,16 @@ export interface DNSQueryLog {
   entries: DNSLogEntry[];
 }
 
+type StoredDNSLogEntry = Omit<DNSLogEntry, 'timestamp'> & {
+  timestamp: string | number | Date;
+};
+
+type StoredDNSQueryLog = Omit<DNSQueryLog, 'startTime' | 'endTime' | 'entries'> & {
+  startTime: string | number | Date;
+  endTime?: string | number | Date;
+  entries?: StoredDNSLogEntry[];
+};
+
 const STORAGE_KEY = STORAGE_CONSTANTS.LOGS_KEY;
 const LOGS_BACKUP_KEY = STORAGE_CONSTANTS.LOGS_BACKUP_KEY;
 const MAX_LOGS = LOGGING_CONSTANTS.MAX_LOGS;
@@ -86,22 +96,27 @@ export class DNSLogService {
       stored = await AsyncStorage.getItem(STORAGE_KEY);
       if (stored) {
         const decrypted = await decryptIfEncrypted(stored);
-        const parsed = JSON.parse(decrypted);
-        this.queryLogs = parsed.map((log: any) => {
-          const endTime = log.endTime ? new Date(log.endTime) : undefined;
-          const normalizedEntries = Array.isArray(log.entries)
-            ? log.entries.map((entry: any) => ({
-                ...entry,
-                timestamp: new Date(entry.timestamp),
-              }))
-            : [];
-          return {
-            ...log,
-            startTime: new Date(log.startTime),
-            ...(endTime ? { endTime } : {}),
-            entries: normalizedEntries,
-          };
-        });
+        const parsed = JSON.parse(decrypted) as unknown;
+        if (Array.isArray(parsed)) {
+          this.queryLogs = (parsed as StoredDNSQueryLog[]).map((log) => {
+            const { startTime, endTime: storedEndTime, entries: storedEntries, ...rest } = log;
+            const endTime = storedEndTime ? new Date(storedEndTime) : undefined;
+            const normalizedEntries = Array.isArray(storedEntries)
+              ? storedEntries.map((entry) => ({
+                  ...entry,
+                  timestamp: new Date(entry.timestamp),
+                }))
+              : [];
+            return {
+              ...rest,
+              startTime: new Date(startTime),
+              ...(endTime ? { endTime } : {}),
+              entries: normalizedEntries,
+            };
+          });
+        } else {
+          this.queryLogs = [];
+        }
       }
     } catch (error) {
       devWarn("[DNSLogService] Failed to load DNS logs", error);
