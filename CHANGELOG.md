@@ -12,9 +12,12 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 - Set explicit Android build properties (compile/target SDK 35, NDK r28) and aligned native module fallbacks.
 - Standardized Android dnsjava dependency version across app and native module.
 - Updated `sync-versions` script parsing to handle Gradle assignment syntax.
+- Docs: added guidelines compliance + code review exec spec.
 
 ### Fixed
 
+- Fixed patch-package parsing for @react-native-menu/menu and react-native-screens patches.
+- Added AsyncStorage dev dependency to `modules/dns-native` to unblock Jest mocks in module tests.
 - Stabilized chat loading and error alert behavior to avoid repeated alerts.
 - Gated native DNS debug logging behind explicit debug flags in runtime and tests.
 - Hid route group names from iOS back button titles (no more "(tabs)" in header).

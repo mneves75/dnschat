@@ -1,12 +1,12 @@
 diff --git a/node_modules/@react-native-menu/menu/android/src/main/java/com/reactnativemenu/MenuView.kt b/node_modules/@react-native-menu/menu/android/src/main/java/com/reactnativemenu/MenuView.kt
-index 17ed7c6..c70d575 100644
+index 059a48b..c70d575 100644
 --- a/node_modules/@react-native-menu/menu/android/src/main/java/com/reactnativemenu/MenuView.kt
 +++ b/node_modules/@react-native-menu/menu/android/src/main/java/com/reactnativemenu/MenuView.kt
-@@ -47,11 +47,15 @@ class MenuView(private val mContext: ReactContext) : ReactViewGroup(mContext) {
+@@ -47,13 +47,17 @@ class MenuView(private val mContext: ReactContext) : ReactViewGroup(mContext) {
      prepareMenu()
    }
  
--  override fun setHitSlopRect(rect: Rect?) {
+-    override fun setHitSlopRect(rect: Rect?) {
 -    super.setHitSlopRect(rect)
 -    mHitSlopRect = rect
 -    updateTouchDelegate()
@@ -21,13 +21,16 @@ index 17ed7c6..c70d575 100644
 +      updateTouchDelegate()
 +    }
  
-   override fun onInterceptTouchEvent(ev: MotionEvent): Boolean {
+-override fun onInterceptTouchEvent(ev: MotionEvent): Boolean {
++  override fun onInterceptTouchEvent(ev: MotionEvent): Boolean {
      return true
+   }
+ 
 diff --git a/node_modules/@react-native-menu/menu/android/src/main/java/com/reactnativemenu/MenuViewManagerBase.kt b/node_modules/@react-native-menu/menu/android/src/main/java/com/reactnativemenu/MenuViewManagerBase.kt
-index 4731e1a..e4f3cf6 100644
+index 31081e7..e4f3cf6 100644
 --- a/node_modules/@react-native-menu/menu/android/src/main/java/com/reactnativemenu/MenuViewManagerBase.kt
 +++ b/node_modules/@react-native-menu/menu/android/src/main/java/com/reactnativemenu/MenuViewManagerBase.kt
-@@ -121,25 +121,23 @@ abstract class MenuViewManagerBase : ReactClippingViewManager<MenuView>() {
+@@ -121,30 +121,88 @@ abstract class MenuViewManagerBase : ReactClippingViewManager<MenuView>() {
  
    @ReactProp(name = "hitSlop")
    fun setHitSlop(view: ReactViewGroup, @Nullable hitSlop: ReadableMap?) {
@@ -68,21 +71,77 @@ index 4731e1a..e4f3cf6 100644
        )
      }
    }
-@@ -206,7 +204,8 @@ abstract class MenuViewManagerBase : ReactClippingViewManager<MenuView>() {
  
-   @ReactProp(name = ViewProps.OVERFLOW)
+-@ReactProp(name = ViewProps.OVERFLOW)
++  @ReactProp(name = "nativeBackgroundAndroid")
++  fun setNativeBackground(view: ReactViewGroup, @Nullable bg: ReadableMap?) {
++    view.setTranslucentBackgroundDrawable(
++            if (bg == null) null
++            else ReactDrawableHelper.createDrawableFromJSDescription(view.context, bg)
++    )
++  }
++
++  @TargetApi(Build.VERSION_CODES.M)
++  @ReactProp(name = "nativeForegroundAndroid")
++  fun setNativeForeground(view: ReactViewGroup, @Nullable fg: ReadableMap?) {
++    view.foreground =
++            if (fg == null) null
++            else ReactDrawableHelper.createDrawableFromJSDescription(view.context, fg)
++  }
++
++  @ReactProp(name = ViewProps.NEEDS_OFFSCREEN_ALPHA_COMPOSITING)
++  fun setNeedsOffscreenAlphaCompositing(
++          view: ReactViewGroup,
++          needsOffscreenAlphaCompositing: Boolean
++  ) {
++    view.setNeedsOffscreenAlphaCompositing(needsOffscreenAlphaCompositing)
++  }
++
++  @ReactPropGroup(
++          names =
++                  [
++                          ViewProps.BORDER_WIDTH,
++                          ViewProps.BORDER_LEFT_WIDTH,
++                          ViewProps.BORDER_RIGHT_WIDTH,
++                          ViewProps.BORDER_TOP_WIDTH,
++                          ViewProps.BORDER_BOTTOM_WIDTH,
++                          ViewProps.BORDER_START_WIDTH,
++                          ViewProps.BORDER_END_WIDTH]
++  )
++  fun setBorderWidth(view: ReactViewGroup, index: Int, width: Float) {
++    var width = width
++    if (!YogaConstants.isUndefined(width) && width < 0) {
++      width = YogaConstants.UNDEFINED
++    }
++    if (!YogaConstants.isUndefined(width)) {
++      width = PixelUtil.toPixelFromDIP(width)
++    }
++    view.setBorderWidth(SPACING_TYPES[index], width)
++  }
++
++  @ReactPropGroup(
++          names =
++                  [
++                          ViewProps.BORDER_COLOR,
++                          ViewProps.BORDER_LEFT_COLOR,
++                          ViewProps.BORDER_RIGHT_COLOR,
++                          ViewProps.BORDER_TOP_COLOR,
++                          ViewProps.BORDER_BOTTOM_COLOR,
++                          ViewProps.BORDER_START_COLOR,
++                          ViewProps.BORDER_END_COLOR],
++          customType = "Color"
++  )
++  abstract fun setBorderColor(view: ReactViewGroup, index: Int, color: Int?)
++
++  @ReactProp(name = ViewProps.OVERFLOW)
    fun setOverflow(view: ReactViewGroup, overflow: String?) {
--    view.setOverflow(overflow)
-+    // React Native 0.81+ changed setOverflow() method to overflow property
-+    view.overflow = overflow
-   }
- 
-   @ReactProp(name = "backfaceVisibility")
-
+     // React Native 0.81+ changed setOverflow() method to overflow property
+     view.overflow = overflow
 diff --git a/node_modules/@react-native-menu/menu/android/build.gradle b/node_modules/@react-native-menu/menu/android/build.gradle
+index f1d2631..073bee4 100644
 --- a/node_modules/@react-native-menu/menu/android/build.gradle
 +++ b/node_modules/@react-native-menu/menu/android/build.gradle
-@@ -77,7 +77,7 @@
+@@ -77,7 +77,7 @@ def getReactNativeMinorVersion() {
  
  android {
    if (supportsNamespace()) {
@@ -91,7 +150,7 @@ diff --git a/node_modules/@react-native-menu/menu/android/build.gradle b/node_mo
  
      sourceSets {
        main {
-@@ -86,23 +86,23 @@
+@@ -86,23 +86,23 @@ android {
      }
    }
  
