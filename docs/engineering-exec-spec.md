@@ -34,6 +34,7 @@ Bring the DNSChat repository into compliance with all documents listed in `docs/
 - [x] (2026-01-06 15:45Z) Tightened `src/services/dnsService.ts` typing (removed `any`, added decode helpers, and clarified socket/buffer types) and re-ran unit tests.
 - [x] (2026-01-06 15:47Z) Removed `any` usage from `modules/dns-native/index.ts` and normalized native error handling; re-ran unit tests.
 - [x] (2026-01-06 15:50Z) Removed `any` from `src/services/dnsLogService.ts` parsing logic and hardened stored-log normalization; re-ran unit tests.
+- [x] (2026-01-06 15:51Z) Typed focus/blur handlers in `src/components/ui/LiquidGlassTextInput.tsx` and re-ran unit tests.
 - [ ] Execute remediation tasks one-by-one with tests, update docs, and commit per item.
 - [ ] Run full verification suite and assemble the review packet mapping each guideline to evidence.
 

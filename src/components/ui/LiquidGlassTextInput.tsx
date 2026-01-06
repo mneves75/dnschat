@@ -7,7 +7,13 @@ import {
   useColorScheme,
   Pressable,
 } from "react-native";
-import type { TextInputProps, ViewStyle, TextStyle } from "react-native";
+import type {
+  TextInputProps,
+  ViewStyle,
+  TextStyle,
+  FocusEvent,
+  BlurEvent,
+} from "react-native";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -105,7 +111,7 @@ export function LiquidGlassTextInput({
   };
 
   // Handle focus
-  const handleFocus = (e: any) => {
+  const handleFocus = (e: FocusEvent) => {
     setIsFocused(true);
     syncBorderState(true, hasError);
     HapticFeedback.selection();
@@ -113,7 +119,7 @@ export function LiquidGlassTextInput({
   };
 
   // Handle blur
-  const handleBlur = (e: any) => {
+  const handleBlur = (e: BlurEvent) => {
     setIsFocused(false);
     syncBorderState(false, hasError);
     textInputProps.onBlur?.(e);
