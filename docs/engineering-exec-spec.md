@@ -28,6 +28,7 @@ Bring the DNSChat repository into compliance with all documents listed in `docs/
 - [x] (2026-01-06 15:19Z) Ran baseline lint/test/build and captured results.
 - [x] (2026-01-06 15:19Z) Drafted this exec spec and `docs/engineering-todo.md`.
 - [x] (2026-01-06 15:25Z) Added `docs/data-inventory.md` and re-ran unit tests.
+- [x] (2026-01-06 15:26Z) Added `docs/model-registry.md` and re-ran unit tests.
 - [ ] Execute remediation tasks one-by-one with tests, update docs, and commit per item.
 - [ ] Run full verification suite and assemble the review packet mapping each guideline to evidence.
 
