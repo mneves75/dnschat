@@ -45,6 +45,7 @@ Bring the DNSChat repository into compliance with all documents listed in `docs/
 - [x] (2026-01-06 16:05Z) Removed `any` casts in native DNS tests (`modules/dns-native/__tests__/DNSResolver.test.ts`, `integration.test.ts`, `nativeDNS.configureSanitizer.test.ts`, `nativeDNS.capabilitiesTTL.test.ts`) and re-ran unit tests.
 - [x] (2026-01-06 16:10Z) Removed manual memoization from `src/components/ChatInput.tsx`, updated ChatInput comprehensive tests, and re-ran unit tests.
 - [x] (2026-01-06 16:16Z) Audited `useEffect` usage across `app/` and `src/`, added explicit justification comments where missing, and re-ran unit tests.
+- [x] (2026-01-06 16:18Z) Updated Expo build properties to target Android SDK 36 in `app.json` and re-ran unit tests.
 - [ ] Execute remediation tasks one-by-one with tests, update docs, and commit per item.
 - [ ] Run full verification suite and assemble the review packet mapping each guideline to evidence.
 
