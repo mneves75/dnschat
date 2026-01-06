@@ -27,7 +27,7 @@ import {
   TouchableOpacity,
 } from "react-native";
 import Animated from "react-native-reanimated";
-import { useFocusEffect } from "@react-navigation/native";
+import { useIsFocused } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import { useChat } from "../../context/ChatContext";
 import {
@@ -92,12 +92,12 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
           count: messageCount,
         });
 
-  const handleLongPress = React.useCallback(() => {
+  const handleLongPress = () => {
     // Haptic feedback
     if (Platform.OS === "ios") {
     }
     actionSheet.show();
-  }, [actionSheet]);
+  };
 
   // iOS 26 HIG: Chat list items are CONTENT, not controls
   // Use solid backgrounds (standard materials), NOT Liquid Glass
@@ -246,20 +246,20 @@ export function GlassChatList() {
   const { t } = useTranslation();
   const { animatedStyle } = useScreenEntrance();
   const { opacities, translates } = useStaggeredListValues(chats.length);
+  const isFocused = useIsFocused();
 
   // Track initial load for skeleton display
   const [hasLoadedOnce, setHasLoadedOnce] = React.useState(false);
 
   // Load chats when screen is focused (CRITICAL FIX)
-  useFocusEffect(
-    React.useCallback(() => {
-      loadChats().then(() => {
-        if (!hasLoadedOnce) {
-          setHasLoadedOnce(true);
-        }
-      });
-    }, [loadChats, hasLoadedOnce]),
-  );
+  React.useEffect(() => {
+    if (!isFocused) return;
+    loadChats().then(() => {
+      if (!hasLoadedOnce) {
+        setHasLoadedOnce(true);
+      }
+    });
+  }, [hasLoadedOnce, isFocused]);
 
   React.useEffect(() => {
     if (!error) return;
@@ -269,13 +269,13 @@ export function GlassChatList() {
         onPress: clearError,
       },
     ]);
-  }, [error, clearError, t]);
+  }, [error, t]);
 
   const isDark = colorScheme === "dark";
   const [refreshing, setRefreshing] = React.useState(false);
   const showSkeleton = isLoading && !hasLoadedOnce && chats.length === 0;
 
-  const handleNewChat = React.useCallback(async () => {
+  const handleNewChat = async () => {
     const newChat = await createChat();
     setCurrentChat(newChat);
     router.push({
@@ -286,54 +286,48 @@ export function GlassChatList() {
     // Haptic feedback
     if (Platform.OS === "ios") {
     }
-  }, [createChat, router, setCurrentChat]);
+  };
 
-  const handleChatPress = React.useCallback(
-    (chat: any) => {
-      setCurrentChat(chat);
-      router.push({
-        pathname: "/chat/[threadId]",
-        params: { threadId: chat.id },
-      });
-    },
-    [setCurrentChat, router],
-  );
+  const handleChatPress = (chat: any) => {
+    setCurrentChat(chat);
+    router.push({
+      pathname: "/chat/[threadId]",
+      params: { threadId: chat.id },
+    });
+  };
 
-  const handleDeleteChat = React.useCallback(
-    (chatId: string, chatTitle: string) => {
-      Alert.alert(
-        t("screen.glassChatList.alerts.deleteTitle"),
-        t("screen.glassChatList.alerts.deleteMessage", { title: chatTitle }),
-        [
-          { text: t("common.cancel"), style: "cancel" },
-          {
-            text: t("screen.glassChatList.actionSheet.deleteChat"),
-            style: "destructive",
-            onPress: () => {
-              deleteChat(chatId);
-              // Haptic feedback
-              // Intentionally no-op here: haptics are handled at the component level.
-            },
+  const handleDeleteChat = (chatId: string, chatTitle: string) => {
+    Alert.alert(
+      t("screen.glassChatList.alerts.deleteTitle"),
+      t("screen.glassChatList.alerts.deleteMessage", { title: chatTitle }),
+      [
+        { text: t("common.cancel"), style: "cancel" },
+        {
+          text: t("screen.glassChatList.actionSheet.deleteChat"),
+          style: "destructive",
+          onPress: () => {
+            deleteChat(chatId);
+            // Haptic feedback
+            // Intentionally no-op here: haptics are handled at the component level.
           },
-        ],
-      );
-    },
-    [deleteChat, t],
-  );
+        },
+      ],
+    );
+  };
 
-  const handleRefresh = React.useCallback(async () => {
+  const handleRefresh = async () => {
     setRefreshing(true);
     try {
       await loadChats();
     } finally {
       setRefreshing(false);
     }
-  }, [loadChats]);
+  };
 
-  const handleShareChat = React.useCallback((chat: any) => {
+  const handleShareChat = (chat: any) => {
     // Share functionality would go here
     devLog("Sharing chat", { chatId: chat?.id });
-  }, []);
+  };
 
   const recentFooter = chats.length === 1
     ? t("screen.glassChatList.recent.footerSingle", { count: chats.length })

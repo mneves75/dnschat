@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   AccessibilityInfo,
   Platform,
@@ -290,19 +290,15 @@ export const LiquidGlassWrapper: React.FC<LiquidGlassProps> = ({
   const glassKey = isInteractive ? "interactive" : "static";
   const radius = shapeRadius(shape, cornerRadius);
 
-  const baseContainerStyle = useMemo(
-    () => ({
-      borderRadius: radius,
-    }),
-    [radius],
-  );
+  const baseContainerStyle = { borderRadius: radius };
 
-  const fallbackStyle = useMemo(
-    () =>
-      buildFallbackStyle(variant, isDark, shape, cornerRadius, isInteractive, {
-        forceOpaque: reduceTransparency,
-      }),
-    [variant, isDark, shape, cornerRadius, isInteractive, reduceTransparency],
+  const fallbackStyle = buildFallbackStyle(
+    variant,
+    isDark,
+    shape,
+    cornerRadius,
+    isInteractive,
+    { forceOpaque: reduceTransparency },
   );
 
   const tint = tintForVariant(variant, isDark, tintColor);

@@ -176,11 +176,11 @@ const GlassTabItem: React.FC<GlassTabItemProps> = ({
         : "transparent",
   };
 
-  const handlePress = React.useCallback(() => {
+  const handlePress = () => {
     if (!tab.disabled) {
       onPress();
     }
-  }, [tab.disabled, onPress]);
+  };
 
   return (
     <TouchableOpacity

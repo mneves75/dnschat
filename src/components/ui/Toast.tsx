@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -81,11 +81,11 @@ export function Toast({
     visibleRef.current = visible;
   }, [visible]);
 
-  const finishHide = useCallback(() => {
+  const finishHide = () => {
     if (!visibleRef.current) {
       setIsMounted(false);
     }
-  }, []);
+  };
 
   // Get variant-specific colors and icon
   const getVariantStyles = () => {

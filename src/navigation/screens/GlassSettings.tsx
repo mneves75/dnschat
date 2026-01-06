@@ -79,23 +79,20 @@ export function GlassSettings() {
   const supportSheet = useGlassBottomSheet();
 
   // DNS Service options - llm.pieter.com is now the default (ch.at is offline)
-  const dnsServerOptions = React.useMemo(
-    () => [
-      {
-        value: "llm.pieter.com",
-        label: t("screen.glassSettings.dnsOptions.llmPieter.label"),
-        description: t(
-          "screen.glassSettings.dnsOptions.llmPieter.description",
-        ),
-      },
-      {
-        value: "ch.at",
-        label: t("screen.glassSettings.dnsOptions.chAt.label"),
-        description: t("screen.glassSettings.dnsOptions.chAt.description"),
-      },
-    ],
-    [t],
-  );
+  const dnsServerOptions = [
+    {
+      value: "llm.pieter.com",
+      label: t("screen.glassSettings.dnsOptions.llmPieter.label"),
+      description: t(
+        "screen.glassSettings.dnsOptions.llmPieter.description",
+      ),
+    },
+    {
+      value: "ch.at",
+      label: t("screen.glassSettings.dnsOptions.chAt.label"),
+      description: t("screen.glassSettings.dnsOptions.chAt.description"),
+    },
+  ];
 
   const fallbackDnsOption =
     dnsServerOptions[0] ?? {
@@ -107,57 +104,48 @@ export function GlassSettings() {
     dnsServerOptions.find((option) => option.value === dnsServer) ??
     fallbackDnsOption;
   const activeLocaleSelection = preferredLocale ?? null;
-  const localeOptions = React.useMemo(
-    () => [
-      {
-        key: "system",
-        title: t("screen.settings.sections.language.systemOption"),
+  const localeOptions = [
+    {
+      key: "system",
+      title: t("screen.settings.sections.language.systemOption"),
+      subtitle: t(
+        "screen.settings.sections.language.systemDescription",
+        { language: t(LOCALE_LABEL_KEYS[systemLocale]) },
+      ),
+      value: null as string | null,
+    },
+    ...availableLocales.map((option) => {
+      const label = t(LOCALE_LABEL_KEYS[option.locale]);
+      return {
+        key: option.locale,
+        title: label,
         subtitle: t(
-          "screen.settings.sections.language.systemDescription",
-          { language: t(LOCALE_LABEL_KEYS[systemLocale]) },
+          "screen.settings.sections.language.optionDescription",
+          { language: label },
         ),
-        value: null as string | null,
-      },
-      ...availableLocales.map((option) => {
-        const label = t(LOCALE_LABEL_KEYS[option.locale]);
-        return {
-          key: option.locale,
-          title: label,
-          subtitle: t(
-            "screen.settings.sections.language.optionDescription",
-            { language: label },
-          ),
-          value: option.locale,
-        };
-      }),
-    ],
-    [availableLocales, systemLocale, t],
-  );
-  const transportLabelMap = React.useMemo(
-    () => ({
-      native: t("screen.settings.sections.transportTest.transports.native"),
-      udp: t("screen.settings.sections.transportTest.transports.udp"),
-      tcp: t("screen.settings.sections.transportTest.transports.tcp"),
+        value: option.locale,
+      };
     }),
-    [t],
-  );
+  ];
+  const transportLabelMap = {
+    native: t("screen.settings.sections.transportTest.transports.native"),
+    udp: t("screen.settings.sections.transportTest.transports.udp"),
+    tcp: t("screen.settings.sections.transportTest.transports.tcp"),
+  };
   const appVersion: string = packageJson.version;
   const aboutFeatureKeys = ["line1", "line2", "line3", "line4", "line5"] as const;
 
   // Action handlers
-  const handleDnsServerSelect = React.useCallback(
-    async (server: string) => {
-      await updateDnsServer(server);
-      dnsServerSheet.hide();
+  const handleDnsServerSelect = async (server: string) => {
+    await updateDnsServer(server);
+    dnsServerSheet.hide();
 
-      // Haptic feedback
-      if (Platform.OS === "ios") {
-      }
-    },
-    [updateDnsServer, dnsServerSheet],
-  );
+    // Haptic feedback
+    if (Platform.OS === "ios") {
+    }
+  };
 
-  const handleShareApp = React.useCallback(async () => {
+  const handleShareApp = async () => {
     try {
       await Share.share({
         message: t("screen.glassSettings.sections.about.shareMessage"),
@@ -166,13 +154,13 @@ export function GlassSettings() {
     } catch (error) {
       devWarn("[GlassSettings] Share failed", error);
     }
-  }, [t]);
+  };
 
-  const handleOpenGitHub = React.useCallback(() => {
+  const handleOpenGitHub = () => {
     Linking.openURL("https://github.com/mneves75/dnschat");
-  }, []);
+  };
 
-  const handleResetSettings = React.useCallback(() => {
+  const handleResetSettings = () => {
     Alert.alert(
       t("screen.glassSettings.alerts.resetTitle"),
       t("screen.glassSettings.alerts.resetMessage"),
@@ -193,14 +181,9 @@ export function GlassSettings() {
         },
       ],
     );
-  }, [
-    updateDnsServer,
-    updateEnableMockDNS,
-    updateEnableHaptics,
-    t,
-  ]);
+  };
 
-  const handleResetOnboarding = React.useCallback(() => {
+  const handleResetOnboarding = () => {
     Alert.alert(
       t("screen.settings.alerts.onboardingTitle"),
       t("screen.settings.alerts.onboardingMessage"),
@@ -219,7 +202,7 @@ export function GlassSettings() {
         },
       ],
     );
-  }, [resetOnboarding, t]);
+  };
 
   // Transport test state
   const [testMessage, setTestMessage] = React.useState("ping");
@@ -323,7 +306,7 @@ export function GlassSettings() {
     }
   };
 
-  const handleClearData = React.useCallback(() => {
+  const handleClearData = () => {
     Alert.alert(
       t("screen.glassSettings.alerts.clearCacheTitle"),
       t("screen.glassSettings.alerts.clearCacheMessage"),
@@ -356,7 +339,7 @@ export function GlassSettings() {
         },
       ],
     );
-  }, [clearingData, loadChats, t]);
+  };
 
   return (
     <>

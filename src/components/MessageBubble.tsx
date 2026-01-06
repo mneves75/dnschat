@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React from "react";
 import {
   View,
   StyleSheet,
@@ -125,22 +125,20 @@ function MessageBubbleComponent({ message }: MessageBubbleProps) {
     },
   };
 
-  const menuActions = useMemo(() => {
-    const copyImage = Platform.OS === 'ios' ? 'doc.on.doc' : undefined;
-    const shareImage = Platform.OS === 'ios' ? 'square.and.arrow.up' : undefined;
-    return [
-      {
-        id: 'copy',
-        title: t('screen.chat.messageActions.copy'),
-        ...(copyImage ? { image: copyImage } : {}),
-      },
-      {
-        id: 'share',
-        title: t('screen.chat.messageActions.share'),
-        ...(shareImage ? { image: shareImage } : {}),
-      },
-    ];
-  }, [t]); // Depends on t for locale changes
+  const copyImage = Platform.OS === 'ios' ? 'doc.on.doc' : undefined;
+  const shareImage = Platform.OS === 'ios' ? 'square.and.arrow.up' : undefined;
+  const menuActions = [
+    {
+      id: 'copy',
+      title: t('screen.chat.messageActions.copy'),
+      ...(copyImage ? { image: copyImage } : {}),
+    },
+    {
+      id: 'share',
+      title: t('screen.chat.messageActions.share'),
+      ...(shareImage ? { image: shareImage } : {}),
+    },
+  ];
 
   const messageContentProps = {
     message,

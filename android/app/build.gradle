@@ -206,7 +206,7 @@ dependencies {
     implementation("com.facebook.react:react-android")
 
     // DNS Java library for legacy DNS support (API < 29)
-    implementation("dnsjava:dnsjava:3.5.1")
+    implementation("dnsjava:dnsjava:3.5.2")
 
     testImplementation("junit:junit:4.13.2")
 

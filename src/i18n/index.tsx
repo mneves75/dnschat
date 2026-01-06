@@ -57,25 +57,22 @@ const I18nContext = React.createContext<I18nValue | undefined>(undefined);
 export const I18nProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { locale } = useSettings();
 
-  const value = React.useMemo<I18nValue>(() => {
-    const activeLocale = locale;
-    const fallback = enUS;
-    const dictionary = dictionaries[activeLocale] ?? fallback;
+  const activeLocale = locale;
+  const fallback = enUS;
+  const dictionary = dictionaries[activeLocale] ?? fallback;
+  const translate = (key: MessageKey, params?: TranslationParams) => {
+    const message = getMessage(dictionary, key) ?? getMessage(fallback, key);
+    if (typeof message !== "string") {
+      devWarn(`[i18n] Missing translation for key: ${key}`);
+      return key;
+    }
+    return formatMessage(message, params);
+  };
 
-    const translate = (key: MessageKey, params?: TranslationParams) => {
-      const message = getMessage(dictionary, key) ?? getMessage(fallback, key);
-      if (typeof message !== "string") {
-        devWarn(`[i18n] Missing translation for key: ${key}`);
-        return key;
-      }
-      return formatMessage(message, params);
-    };
-
-    return {
-      locale: activeLocale,
-      t: translate,
-    };
-  }, [locale]);
+  const value: I18nValue = {
+    locale: activeLocale,
+    t: translate,
+  };
 
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
 };

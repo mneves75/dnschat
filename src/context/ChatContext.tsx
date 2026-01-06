@@ -3,7 +3,6 @@ import React, {
   useContext,
   useState,
   useEffect,
-  useCallback,
 } from "react";
 import type { ReactNode } from "react";
 import uuid from "react-native-uuid";
@@ -28,7 +27,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const loadChats = useCallback(async () => {
+  const loadChats = async () => {
     try {
       setIsLoading(true);
 
@@ -66,13 +65,13 @@ export function ChatProvider({ children }: ChatProviderProps) {
     } finally {
       setIsLoading(false);
     }
-  }, [settings.preferredLocale]);
+  };
 
   useEffect(() => {
     loadChats();
-  }, [loadChats]);
+  }, [settings.preferredLocale]);
 
-  const createChat = useCallback(async (title?: string): Promise<Chat> => {
+  const createChat = async (title?: string): Promise<Chat> => {
     try {
       const newChat = await StorageService.createChat(title);
       setChats((prevChats) => [newChat, ...prevChats]);
@@ -83,7 +82,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
       setError(err instanceof Error ? err.message : "Failed to create chat");
       throw err;
     }
-  }, []);
+  };
 
   const deleteChat = async (chatId: string): Promise<void> => {
     try {
@@ -362,9 +361,9 @@ export function ChatProvider({ children }: ChatProviderProps) {
     }
   };
 
-  const clearError = useCallback(() => {
+  const clearError = () => {
     setError(null);
-  }, []);
+  };
 
   const contextValue: ChatContextType = {
     chats,

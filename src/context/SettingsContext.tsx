@@ -1,9 +1,7 @@
 import React, {
   createContext,
-  useCallback,
   useContext,
   useEffect,
-  useMemo,
   useState,
 } from "react";
 import type { ReactNode } from "react";
@@ -114,7 +112,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const persistSettings = useCallback(async (next: PersistedSettings) => {
+  const persistSettings = async (next: PersistedSettings) => {
     setSettings(next);
     try {
       await AsyncStorage.setItem(
@@ -125,161 +123,121 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       devWarn("[SettingsContext] Error saving settings", error);
       throw error;
     }
-  }, []);
+  };
 
-  const updateDnsServer = useCallback(
-    async (server: string) => {
-      const cleaned = sanitizeDnsServer(server);
-      let validatedServer: string;
-      try {
-        validatedServer = validateDNSServer(cleaned);
-      } catch (error) {
-        const message =
-          error instanceof Error ? error.message : String(error ?? "Validation failed");
-        await DNSLogService.recordSettingsEvent(
-          `DNS server validation failed for input '${server}'`,
-          message,
-        );
-        throw error;
-      }
-      if (settings.dnsServer === validatedServer) {
-        return;
-      }
-      await persistSettings({
-        ...settings,
-        dnsServer: validatedServer,
-      });
+  const updateDnsServer = async (server: string) => {
+    const cleaned = sanitizeDnsServer(server);
+    let validatedServer: string;
+    try {
+      validatedServer = validateDNSServer(cleaned);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : String(error ?? "Validation failed");
       await DNSLogService.recordSettingsEvent(
-        `DNS server set to ${validatedServer}`,
-        settings.dnsServer ? `previous: ${settings.dnsServer}` : undefined,
+        `DNS server validation failed for input '${server}'`,
+        message,
       );
-    },
-    [persistSettings, settings],
-  );
+      throw error;
+    }
+    if (settings.dnsServer === validatedServer) {
+      return;
+    }
+    await persistSettings({
+      ...settings,
+      dnsServer: validatedServer,
+    });
+    await DNSLogService.recordSettingsEvent(
+      `DNS server set to ${validatedServer}`,
+      settings.dnsServer ? `previous: ${settings.dnsServer}` : undefined,
+    );
+  };
 
-  const updateEnableMockDNS = useCallback(
-    async (enable: boolean) => {
-      if (settings.enableMockDNS === enable) {
-        return;
-      }
-      await persistSettings({
-        ...settings,
-        enableMockDNS: enable,
-      });
-      await DNSLogService.recordSettingsEvent(
-        `Mock DNS ${enable ? 'enabled' : 'disabled'}`,
-      );
-    },
-    [persistSettings, settings],
-  );
+  const updateEnableMockDNS = async (enable: boolean) => {
+    if (settings.enableMockDNS === enable) {
+      return;
+    }
+    await persistSettings({
+      ...settings,
+      enableMockDNS: enable,
+    });
+    await DNSLogService.recordSettingsEvent(
+      `Mock DNS ${enable ? 'enabled' : 'disabled'}`,
+    );
+  };
 
-  const updateAllowExperimentalTransports = useCallback(
-    async (enable: boolean) => {
-      if (settings.allowExperimentalTransports === enable) {
-        return;
-      }
-      await persistSettings({
-        ...settings,
-        allowExperimentalTransports: enable,
-      });
-      await DNSLogService.recordSettingsEvent(
-        `Experimental transports ${enable ? 'enabled' : 'disabled'}`,
-      );
-    },
-    [persistSettings, settings],
-  );
+  const updateAllowExperimentalTransports = async (enable: boolean) => {
+    if (settings.allowExperimentalTransports === enable) {
+      return;
+    }
+    await persistSettings({
+      ...settings,
+      allowExperimentalTransports: enable,
+    });
+    await DNSLogService.recordSettingsEvent(
+      `Experimental transports ${enable ? 'enabled' : 'disabled'}`,
+    );
+  };
 
-  const updateEnableHaptics = useCallback(
-    async (enable: boolean) => {
-      if (settings.enableHaptics === enable) {
-        return;
-      }
-      await persistSettings({
-        ...settings,
-        enableHaptics: enable,
-      });
-      await DNSLogService.recordSettingsEvent(
-        `Haptics ${enable ? 'enabled' : 'disabled'}`,
-      );
-    },
-    [persistSettings, settings],
-  );
+  const updateEnableHaptics = async (enable: boolean) => {
+    if (settings.enableHaptics === enable) {
+      return;
+    }
+    await persistSettings({
+      ...settings,
+      enableHaptics: enable,
+    });
+    await DNSLogService.recordSettingsEvent(
+      `Haptics ${enable ? 'enabled' : 'disabled'}`,
+    );
+  };
 
-  const updateLocale = useCallback(
-    async (locale: string | null) => {
-      const normalized = normalizePreferredLocale(locale);
-      if (settings.preferredLocale === normalized) {
-        return;
-      }
-      await persistSettings({
-        ...settings,
-        preferredLocale: normalized,
-      });
-      await DNSLogService.recordSettingsEvent(
-        `Preferred locale set to ${normalized ?? 'system default'}`,
-      );
-    },
-    [persistSettings, settings],
-  );
+  const updateLocale = async (locale: string | null) => {
+    const normalized = normalizePreferredLocale(locale);
+    if (settings.preferredLocale === normalized) {
+      return;
+    }
+    await persistSettings({
+      ...settings,
+      preferredLocale: normalized,
+    });
+    await DNSLogService.recordSettingsEvent(
+      `Preferred locale set to ${normalized ?? 'system default'}`,
+    );
+  };
 
-  const updateAccessibility = useCallback(
-    async (accessibilityConfig: import("./AccessibilityContext").AccessibilityConfig) => {
-      if (areAccessibilityConfigsEqual(settings.accessibility, accessibilityConfig)) {
-        return;
-      }
-      await persistSettings({
-        ...settings,
-        accessibility: accessibilityConfig,
-      });
-      await DNSLogService.recordSettingsEvent(
-        `Accessibility settings updated: ${JSON.stringify(accessibilityConfig)}`,
-      );
-    },
-    [persistSettings, settings],
-  );
+  const updateAccessibility = async (accessibilityConfig: AccessibilityConfig) => {
+    if (areAccessibilityConfigsEqual(settings.accessibility, accessibilityConfig)) {
+      return;
+    }
+    await persistSettings({
+      ...settings,
+      accessibility: accessibilityConfig,
+    });
+    await DNSLogService.recordSettingsEvent(
+      `Accessibility settings updated: ${JSON.stringify(accessibilityConfig)}`,
+    );
+  };
 
-  const activeLocale = useMemo(
-    () => resolveLocale(settings.preferredLocale ?? systemLocale),
-    [settings.preferredLocale, systemLocale],
-  );
+  const activeLocale = resolveLocale(settings.preferredLocale ?? systemLocale);
 
-  const contextValue = useMemo<SettingsContextValue>(
-    () => ({
-      dnsServer: settings.dnsServer,
-      updateDnsServer,
-      enableMockDNS: settings.enableMockDNS,
-      updateEnableMockDNS,
-      allowExperimentalTransports: settings.allowExperimentalTransports,
-      updateAllowExperimentalTransports,
-      enableHaptics: settings.enableHaptics,
-      updateEnableHaptics,
-      locale: activeLocale,
-      systemLocale,
-      preferredLocale: settings.preferredLocale,
-      availableLocales: SUPPORTED_LOCALE_OPTIONS,
-      updateLocale,
-      accessibility: settings.accessibility,
-      updateAccessibility,
-      loading,
-    }),
-    [
-      activeLocale,
-      loading,
-      settings.accessibility,
-      settings.allowExperimentalTransports,
-      settings.dnsServer,
-      settings.enableHaptics,
-      settings.enableMockDNS,
-      settings.preferredLocale,
-      systemLocale,
-      updateAccessibility,
-      updateAllowExperimentalTransports,
-      updateDnsServer,
-      updateEnableHaptics,
-      updateEnableMockDNS,
-      updateLocale,
-    ],
-  );
+  const contextValue: SettingsContextValue = {
+    dnsServer: settings.dnsServer,
+    updateDnsServer,
+    enableMockDNS: settings.enableMockDNS,
+    updateEnableMockDNS,
+    allowExperimentalTransports: settings.allowExperimentalTransports,
+    updateAllowExperimentalTransports,
+    enableHaptics: settings.enableHaptics,
+    updateEnableHaptics,
+    locale: activeLocale,
+    systemLocale,
+    preferredLocale: settings.preferredLocale,
+    availableLocales: SUPPORTED_LOCALE_OPTIONS,
+    updateLocale,
+    accessibility: settings.accessibility,
+    updateAccessibility,
+    loading,
+  };
 
   return (
     <SettingsContext.Provider value={contextValue}>

@@ -25,7 +25,7 @@
  * @reviewed-by John Carmack
  */
 
-import React, { useState, useRef, useMemo, useCallback } from "react";
+import React, { useState, useRef, useCallback, useMemo } from "react";
 import {
   View,
   TextInput,
@@ -111,14 +111,11 @@ export function ChatInput({
   const { supportsLiquidGlass } = useLiquidGlassCapabilities();
   // Resolve touch target up front so every memo below can safely reference it without tripping TDZ.
   const minimumTouchTarget = getMinimumTouchTarget();
-  const reportHeight = useCallback(
-    (height: number) => {
-      if (onHeightChange) {
-        onHeightChange(height);
-      }
-    },
-    [onHeightChange],
-  );
+  const reportHeight = useCallback((height: number) => {
+    if (onHeightChange) {
+      onHeightChange(height);
+    }
+  }, [onHeightChange]);
 
   /**
    * Height Calculation (Design System Derived)
@@ -137,22 +134,21 @@ export function ChatInput({
    * Uses actual typography line height, not magic numbers.
    * Calculated early so we can initialize inputHeight.
    */
+  const lineHeight = typography.body.lineHeight || 22;
+  // LiquidGlassSpacing.sm = 12px (vs reference 13px - prioritize design system consistency)
+  const verticalPadding = LiquidGlassSpacing.sm * 2; // top + bottom (12px * 2 = 24px)
+  const naturalMin = lineHeight + verticalPadding;
+
+  // CRITICAL FIX: Ensure min height >= touch target to prevent button overflow
+  // Without this, button positioning goes negative (e.g., (38 - 44) / 2 = -3px)
+  const touchTarget = minimumTouchTarget;
   const heightConstraints = useMemo(() => {
-    const lineHeight = typography.body.lineHeight || 22;
-    // LiquidGlassSpacing.sm = 12px (vs reference 13px - prioritize design system consistency)
-    const verticalPadding = LiquidGlassSpacing.sm * 2; // top + bottom (12px * 2 = 24px)
-    const naturalMin = lineHeight + verticalPadding;
-
-    // CRITICAL FIX: Ensure min height >= touch target to prevent button overflow
-    // Without this, button positioning goes negative (e.g., (38 - 44) / 2 = -3px)
-    const touchTarget = minimumTouchTarget;
     const min = Math.max(naturalMin, touchTarget);
-
     return {
       min,
       max: (lineHeight * 5) + verticalPadding,
     };
-  }, [typography.body.lineHeight, minimumTouchTarget]);
+  }, [lineHeight, naturalMin, touchTarget, verticalPadding]);
 
   React.useEffect(() => {
     // Initialize parent padding immediately so content never jumps on first layout.
@@ -282,15 +278,18 @@ export function ChatInput({
    *
    * Performance: Runs on UI thread via Reanimated.
    */
-  const handleContentSizeChange = useCallback((event: NativeSyntheticEvent<TextInputContentSizeChangeEventData>) => {
-    const { height } = event.nativeEvent.contentSize;
-    const constrainedHeight = Math.min(
-      Math.max(height, heightConstraints.min),
-      heightConstraints.max
-    );
+  const handleContentSizeChange = useCallback(
+    (event: NativeSyntheticEvent<TextInputContentSizeChangeEventData>) => {
+      const { height } = event.nativeEvent.contentSize;
+      const constrainedHeight = Math.min(
+        Math.max(height, heightConstraints.min),
+        heightConstraints.max
+      );
 
-    inputHeight.value = withSpring(constrainedHeight, SpringConfig.bouncy);
-  }, [inputHeight, heightConstraints]);
+      inputHeight.value = withSpring(constrainedHeight, SpringConfig.bouncy);
+    },
+    [heightConstraints.max, heightConstraints.min, inputHeight],
+  );
 
   /**
    * Handle Send
@@ -395,16 +394,19 @@ export function ChatInput({
     </Animated.View>
   ), [
     animatedInputStyle,
-    inputPadding,
-    typography,
-    palette,
-    message,
     handleContentSizeChange,
-    resolvedPlaceholder,
-    isLoading,
-    isDark,
     handleSend,
+    inputPadding,
+    isDark,
+    isLoading,
+    message,
+    palette.textPrimary,
+    palette.textTertiary,
+    resolvedPlaceholder,
     t,
+    typography.body.fontSize,
+    typography.body.letterSpacing,
+    typography.body.lineHeight,
   ]);
 
   /**
@@ -455,15 +457,17 @@ export function ChatInput({
       )}
     </AnimatedTouchable>
   ), [
-    animatedButtonStyle,
     animatedButtonPosition,
-    minimumTouchTarget,
+    animatedButtonStyle,
     canSend,
-    palette,
-    handleSend,
     handlePressIn,
     handlePressOut,
+    handleSend,
     isLoading,
+    minimumTouchTarget,
+    palette.textPrimary,
+    palette.tint,
+    palette.userBubble,
     t,
   ]);
 
@@ -484,7 +488,7 @@ export function ChatInput({
         {message.length}/{MESSAGE_CONSTANTS.MAX_MESSAGE_LENGTH}
       </Text>
     );
-  }, [showCharacterCount, message.length, palette.textSecondary]);
+  }, [message.length, palette.textSecondary, showCharacterCount]);
 
   return (
     <View

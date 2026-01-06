@@ -80,8 +80,8 @@ function assertIosDevelopmentTeamIsEmpty(iosContent) {
  */
 function readAndroidVersions() {
   const androidContent = fs.readFileSync(FILES.androidBuild, "utf8");
-  const versionNameMatch = androidContent.match(/versionName "([^"]+)"/);
-  const versionCodeMatch = androidContent.match(/versionCode (\d+)/);
+  const versionNameMatch = androidContent.match(/versionName\s*=?\s*"([^"]+)"/);
+  const versionCodeMatch = androidContent.match(/versionCode\s*=?\s*(\d+)/);
 
   const versionName = versionNameMatch ? String(versionNameMatch[1]).trim() : null;
   const versionCode = versionCodeMatch ? parseInt(versionCodeMatch[1], 10) : null;
@@ -178,8 +178,8 @@ function updateAndroidBuild(version, buildNumber) {
     let androidContent = fs.readFileSync(FILES.androidBuild, "utf8");
 
     // Extract current versions
-    const versionNameMatch = androidContent.match(/versionName "([^"]+)"/);
-    const versionCodeMatch = androidContent.match(/versionCode (\d+)/);
+    const versionNameMatch = androidContent.match(/versionName\s*=?\s*"([^"]+)"/);
+    const versionCodeMatch = androidContent.match(/versionCode\s*=?\s*(\d+)/);
 
     const oldVersionName = versionNameMatch ? versionNameMatch[1] : "unknown";
     const oldVersionCode = versionCodeMatch ? parseInt(versionCodeMatch[1]) : 0;
@@ -190,12 +190,12 @@ function updateAndroidBuild(version, buildNumber) {
     }
 
     androidContent = androidContent.replace(
-      /versionCode \d+/,
+      /versionCode\s*=?\s*\d+/,
       `versionCode ${buildNumber}`,
     );
 
     androidContent = androidContent.replace(
-      /versionName "[^"]+"/,
+      /versionName\s*=?\s*"[^"]+"/,
       `versionName "${version}"`,
     );
 

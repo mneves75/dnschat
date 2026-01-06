@@ -14,7 +14,7 @@ describe("android release policy: signing config", () => {
   it("wires release build type to a release signing config", () => {
     const gradle = fs.readFileSync("android/app/build.gradle", "utf8");
     expect(gradle).toMatch(
-      /buildTypes\s*\{[\s\S]*?release\s*\{[\s\S]*?\bhasReleaseSigning\b[\s\S]*?\bsigningConfig\s+signingConfigs\.release\b/,
+      /buildTypes\s*\{[\s\S]*?release\s*\{[\s\S]*?\bhasReleaseSigning\b[\s\S]*?\bsigningConfig\s*=?\s*signingConfigs\.release\b/,
     );
   });
 

@@ -214,18 +214,18 @@ export const GlassBottomSheet: React.FC<GlassBottomSheetProps> = ({
   const sheetHeight = screenHeight * height;
   const dragY = React.useRef(new Animated.Value(0)).current;
 
-  const handleBackdropPress = React.useCallback(() => {
+  const handleBackdropPress = () => {
     if (!disableBackdropDismiss) {
       onClose();
     }
-  }, [disableBackdropDismiss, onClose]);
+  };
 
-  const handleClosePress = React.useCallback(() => {
+  const handleClosePress = () => {
     // Haptic feedback
     if (Platform.OS === "ios") {
     }
     onClose();
-  }, [onClose]);
+  };
 
   // Drag gesture handling
   const onGestureEvent = Animated.event(
@@ -448,9 +448,9 @@ export const GlassActionSheet: React.FC<GlassActionSheetProps> = ({
 export const useGlassBottomSheet = () => {
   const [visible, setVisible] = React.useState(false);
 
-  const show = React.useCallback(() => setVisible(true), []);
-  const hide = React.useCallback(() => setVisible(false), []);
-  const toggle = React.useCallback(() => setVisible((prev) => !prev), []);
+  const show = () => setVisible(true);
+  const hide = () => setVisible(false);
+  const toggle = () => setVisible((prev) => !prev);
 
   return { visible, show, hide, toggle };
 };

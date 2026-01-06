@@ -92,20 +92,17 @@ export function LiquidGlassTextInput({
     borderWidth: borderWidth.value,
   }));
 
-  const syncBorderState = React.useCallback(
-    (nextFocused: boolean, nextHasError: boolean) => {
-      const targetColor = nextHasError
-        ? palette.destructive
-        : nextFocused
-          ? palette.accentTint
-          : palette.border;
-      const targetWidth = nextFocused ? 2 : 1;
+  const syncBorderState = (nextFocused: boolean, nextHasError: boolean) => {
+    const targetColor = nextHasError
+      ? palette.destructive
+      : nextFocused
+        ? palette.accentTint
+        : palette.border;
+    const targetWidth = nextFocused ? 2 : 1;
 
-      borderColor.value = withTiming(targetColor, TimingConfig.quick);
-      borderWidth.value = withSpring(targetWidth, SpringConfig.bouncy);
-    },
-    [borderColor, borderWidth, palette.accentTint, palette.border, palette.destructive],
-  );
+    borderColor.value = withTiming(targetColor, TimingConfig.quick);
+    borderWidth.value = withSpring(targetWidth, SpringConfig.bouncy);
+  };
 
   // Handle focus
   const handleFocus = (e: any) => {

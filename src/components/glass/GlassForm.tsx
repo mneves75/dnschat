@@ -106,21 +106,20 @@ const useGlassColors = () => {
 // ==================================================================================
 
 const useHapticFeedback = () => {
-  const triggerSelectionFeedback = React.useCallback(() => {
+  const triggerSelectionFeedback = () => {
     if (Platform.OS === "ios") {
       // iOS haptic feedback (would need expo-haptics)
       // HapticFeedback.selectionAsync();
     }
-  }, []);
+  };
 
-  const triggerImpactFeedback = React.useCallback(
-    (style: "light" | "medium" | "heavy" = "light") => {
-      if (Platform.OS === "ios") {
-        // HapticFeedback.impactAsync(HapticFeedback.ImpactFeedbackStyle[style]);
-      }
-    },
-    [],
-  );
+  const triggerImpactFeedback = (
+    style: "light" | "medium" | "heavy" = "light"
+  ) => {
+    if (Platform.OS === "ios") {
+      // HapticFeedback.impactAsync(HapticFeedback.ImpactFeedbackStyle[style]);
+    }
+  };
 
   return { triggerSelectionFeedback, triggerImpactFeedback };
 };
@@ -143,12 +142,11 @@ export const GlassForm: React.FC<GlassFormProps> = ({
   const insets = useSafeAreaInsets();
 
   const contentPaddingBottom = Math.max(insets.bottom, 24);
-  const contentStyle = React.useMemo(
-    () =>
-      [styles.scrollContent, { paddingBottom: contentPaddingBottom }, style]
-        .filter(Boolean) as ViewStyle[],
-    [contentPaddingBottom, style],
-  );
+  const contentStyle = [
+    styles.scrollContent,
+    { paddingBottom: contentPaddingBottom },
+    style,
+  ].filter(Boolean) as ViewStyle[];
 
   return (
     <SafeAreaView
@@ -248,12 +246,12 @@ export const GlassFormItem: React.FC<GlassFormItemProps> = ({
   const { triggerSelectionFeedback } = useHapticFeedback();
   const [isPressed, setIsPressed] = React.useState(false);
 
-  const handlePress = React.useCallback(() => {
+  const handlePress = () => {
     if (!disableHaptics) {
       triggerSelectionFeedback();
     }
     onPress?.();
-  }, [onPress, triggerSelectionFeedback, disableHaptics]);
+  };
 
   const itemStyle: ViewStyle = {
     backgroundColor: isPressed ? colors.highlighted : "transparent",
@@ -308,14 +306,14 @@ export const GlassFormLink: React.FC<GlassFormLinkProps> = ({
   url,
   ...props
 }) => {
-  const handlePress = React.useCallback(() => {
+  const handlePress = () => {
     if (href) {
       // Navigation logic would go here
     } else if (url) {
       // URL opening logic would go here
     }
     props.onPress?.();
-  }, [href, url, props.onPress]);
+  };
 
   return <GlassFormItem {...props} onPress={handlePress} showChevron={true} />;
 };

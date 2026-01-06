@@ -21,7 +21,7 @@
  * @see DESIGN-UI-UX-GUIDELINES.md - Screen entrance patterns
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   useSharedValue,
   useAnimatedStyle,
@@ -93,12 +93,12 @@ export function useScreenEntrance(
   const translateY = useSharedValue(shouldReduceMotion ? 0 : initialOffset);
   const [isReady, setIsReady] = useState(shouldReduceMotion);
 
-  const markReady = useCallback(() => {
+  const markReady = () => {
     setIsReady(true);
     if (onComplete) {
       onComplete();
     }
-  }, [onComplete]);
+  };
 
   const animate = () => {
     'worklet';

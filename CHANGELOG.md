@@ -6,8 +6,17 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## Unreleased
 
+### Changed
+
+- Enabled Android edge-to-edge and predictive back gesture support via Expo config.
+- Set explicit Android build properties (compile/target SDK 35, NDK r28) and aligned native module fallbacks.
+- Standardized Android dnsjava dependency version across app and native module.
+- Updated `sync-versions` script parsing to handle Gradle assignment syntax.
+
 ### Fixed
 
+- Stabilized chat loading and error alert behavior to avoid repeated alerts.
+- Gated native DNS debug logging behind explicit debug flags in runtime and tests.
 - Hid route group names from iOS back button titles (no more "(tabs)" in header).
 - Synced Android `DNSResolver.java` sources between `modules/dns-native` and the Expo prebuild output to prevent drift.
 - Fixed Android DNS query deduplication so only one execution runs per unique query.

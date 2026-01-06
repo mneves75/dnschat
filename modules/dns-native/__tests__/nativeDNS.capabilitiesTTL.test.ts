@@ -25,6 +25,7 @@ describe("NativeDNS capabilities TTL", () => {
     currentTime = 1000000;
     Date.now = jest.fn(() => currentTime);
     (Platform as any).OS = "ios";
+    (globalThis as any).__DNSCHAT_NATIVE_DEBUG__ = true;
 
     mockIsAvailable = jest.fn().mockResolvedValue({
       available: true,
@@ -44,6 +45,7 @@ describe("NativeDNS capabilities TTL", () => {
     console.log = originalConsoleLog;
     Date.now = originalDateNow;
     NativeModules["RNDNSModule"] = originalModule;
+    delete (globalThis as any).__DNSCHAT_NATIVE_DEBUG__;
   });
 
   it("caches capabilities within TTL window", async () => {

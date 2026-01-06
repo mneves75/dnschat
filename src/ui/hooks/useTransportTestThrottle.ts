@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef } from "react";
+import { useRef } from "react";
 
 export type TransportKind = "native" | "udp" | "tcp" | "https";
 
@@ -30,45 +30,34 @@ export function useTransportTestThrottle(config: TransportThrottleConfig = {}) {
     https: 0,
   });
 
-  const checkChainAvailability = useCallback(() => {
+  const checkChainAvailability = () => {
     const now = Date.now();
     if (now - chainLastRunRef.current < chainInterval) {
       return CHAIN_THROTTLE_MESSAGE;
     }
     return null;
-  }, [chainInterval]);
+  };
 
-  const registerChainRun = useCallback(() => {
+  const registerChainRun = () => {
     chainLastRunRef.current = Date.now();
-  }, []);
+  };
 
-  const checkForcedAvailability = useCallback(
-    (transport: TransportKind) => {
-      const now = Date.now();
-      if (now - forcedLastRunRef.current[transport] < forcedInterval) {
-        return FORCED_THROTTLE_MESSAGE;
-      }
-      return null;
-    },
-    [forcedInterval],
-  );
+  const checkForcedAvailability = (transport: TransportKind) => {
+    const now = Date.now();
+    if (now - forcedLastRunRef.current[transport] < forcedInterval) {
+      return FORCED_THROTTLE_MESSAGE;
+    }
+    return null;
+  };
 
-  const registerForcedRun = useCallback((transport: TransportKind) => {
+  const registerForcedRun = (transport: TransportKind) => {
     forcedLastRunRef.current[transport] = Date.now();
-  }, []);
+  };
 
-  return useMemo(
-    () => ({
-      checkChainAvailability,
-      registerChainRun,
-      checkForcedAvailability,
-      registerForcedRun,
-    }),
-    [
-      checkChainAvailability,
-      registerChainRun,
-      checkForcedAvailability,
-      registerForcedRun,
-    ],
-  );
+  return {
+    checkChainAvailability,
+    registerChainRun,
+    checkForcedAvailability,
+    registerForcedRun,
+  };
 }

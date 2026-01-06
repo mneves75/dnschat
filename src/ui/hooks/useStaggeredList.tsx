@@ -25,7 +25,7 @@
  * @see DESIGN-UI-UX-GUIDELINES.md - Stagger delay 50-100ms per item
  */
 
-import { useEffect, useCallback, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 import Animated, {
   useSharedValue,
@@ -125,7 +125,7 @@ export function useStaggeredList(
 
   const completedCount = useSharedValue(0);
 
-  const triggerAnimation = useCallback(() => {
+  const triggerAnimation = () => {
     if (shouldReduceMotion) {
       // Instant transition for reduced motion
       for (let i = 0; i < Math.min(itemCount, MAX_ITEMS); i++) {
@@ -164,16 +164,16 @@ export function useStaggeredList(
         withSpring(0, SpringConfig.gentle)
       );
     }
-  }, [itemCount, shouldReduceMotion, delayPerItem, maxConcurrent, onComplete, opacities, translates, completedCount]);
+  };
 
-  const reset = useCallback(() => {
+  const reset = () => {
     const offset = direction === 'left' ? -initialOffset : initialOffset;
     for (let i = 0; i < Math.min(itemCount, MAX_ITEMS); i++) {
       opacities[i].value = shouldReduceMotion ? 1 : 0;
       translates[i].value = shouldReduceMotion ? 0 : offset;
     }
     completedCount.value = 0;
-  }, [itemCount, shouldReduceMotion, initialOffset, direction, opacities, translates, completedCount]);
+  };
 
   // Trigger animation on mount if enabled
   useEffect(() => {
@@ -182,20 +182,6 @@ export function useStaggeredList(
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [itemCount]);
-
-  const getItemStyle = useCallback(
-    (index: number) => {
-      // Return a hook-compatible function that creates the animated style
-      // Note: This is a workaround since we can't call hooks inside callbacks
-      // The actual useAnimatedStyle is created in a wrapper
-      const safeIndex = Math.min(index, MAX_ITEMS - 1);
-      return {
-        opacity: opacities[safeIndex],
-        translateX: translates[safeIndex],
-      };
-    },
-    [opacities, translates]
-  );
 
   return {
     getItemStyle: (index: number) => {
@@ -295,7 +281,7 @@ export function useStaggeredListValues(
 
   const completedCount = useSharedValue(0);
 
-  const triggerAnimation = useCallback(() => {
+  const triggerAnimation = () => {
     if (shouldReduceMotion) {
       for (let i = 0; i < effectiveCount; i++) {
         opacities[i].value = 1;
@@ -327,16 +313,16 @@ export function useStaggeredListValues(
 
       translates[i].value = withDelay(delay, withSpring(0, SpringConfig.gentle));
     }
-  }, [effectiveCount, shouldReduceMotion, delayPerItem, maxConcurrent, onComplete, opacities, translates, completedCount]);
+  };
 
-  const reset = useCallback(() => {
+  const reset = () => {
     const offset = direction === 'left' ? -initialOffset : initialOffset;
     for (let i = 0; i < effectiveCount; i++) {
       opacities[i].value = shouldReduceMotion ? 1 : 0;
       translates[i].value = shouldReduceMotion ? 0 : offset;
     }
     completedCount.value = 0;
-  }, [effectiveCount, shouldReduceMotion, initialOffset, direction, opacities, translates, completedCount]);
+  };
 
   useEffect(() => {
     if (animateOnMount && itemCount > 0) {

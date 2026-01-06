@@ -15,11 +15,7 @@ const isJestRuntime = (): boolean => {
   }
 };
 
-const isNativeDebugEnabled = (): boolean => {
-  const dev = typeof __DEV__ !== "undefined" ? Boolean(__DEV__) : false;
-  if (!dev) return false;
-  if (isJestRuntime()) return false;
-
+const isExplicitDebugEnabled = (): boolean => {
   try {
     if ((globalThis as any).__DNSCHAT_NATIVE_DEBUG__ === true) return true;
   } catch {}
@@ -31,10 +27,25 @@ const isNativeDebugEnabled = (): boolean => {
   return false;
 };
 
-const DEV_LOGGING = isNativeDebugEnabled();
+const isNativeDebugEnabled = (): boolean => {
+  const dev = typeof __DEV__ !== "undefined" ? Boolean(__DEV__) : false;
+  const explicit = isExplicitDebugEnabled();
+
+  if (isJestRuntime()) {
+    return explicit;
+  }
+
+  if (!dev) return false;
+  return explicit;
+};
 const debugLog = (...args: unknown[]) => {
-  if (DEV_LOGGING) {
+  if (isNativeDebugEnabled()) {
     console.log(...args);
+  }
+};
+const debugWarn = (...args: unknown[]) => {
+  if (isNativeDebugEnabled()) {
+    console.warn(...args);
   }
 };
 
@@ -124,17 +135,17 @@ export class NativeDNS implements NativeDNSModule {
                 }
               })
               .catch((error: unknown) => {
-                console.warn("[NativeDNS] Failed to configure sanitizer:", error);
+                debugWarn("[NativeDNS] Failed to configure sanitizer:", error);
               });
           } else if (maybeResult !== undefined) {
             debugLog("[NativeDNS] Sanitizer configured via shared constants");
           }
         } catch (error) {
-          console.warn("[NativeDNS] Failed to configure sanitizer:", error);
+          debugWarn("[NativeDNS] Failed to configure sanitizer:", error);
         }
       }
     } catch (error) {
-      console.warn("[NativeDNS] Native DNS module not available:", error);
+      debugWarn("[NativeDNS] Native DNS module not available:", error);
       this.nativeModule = null;
     }
   }
@@ -268,8 +279,8 @@ export class NativeDNS implements NativeDNSModule {
         this.capabilitiesTimestamp = Date.now();
         return this.capabilities;
       } catch (error) {
-        console.warn("Failed to check DNS availability:", error);
-        this.capabilities = {
+      debugWarn("Failed to check DNS availability:", error);
+      this.capabilities = {
           available: false,
           platform: "web",
           supportsCustomServer: false,

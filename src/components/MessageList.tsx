@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useMemo, useCallback } from "react";
+import React, { useRef, useEffect } from "react";
 import {
   FlatList,
   View,
@@ -69,7 +69,10 @@ export function MessageList({
   // CLEAN SOLUTION: Single scroll function with guaranteed layout completion
   // Double RAF ensures FlatList has completed layout before scrolling
   // This is more reliable than setTimeout with arbitrary delays
-  const scrollToBottom = useCallback(() => {
+  // SINGLE SOURCE OF TRUTH: Scroll on any relevant change
+  // Triggers when: new messages arrive, keyboard shows/hides, input grows
+  // No complex logic, no timing assumptions, no conflicts
+  useEffect(() => {
     if (flatListRef.current && messages.length > 0) {
       // Double requestAnimationFrame guarantees FlatList layout is complete
       // First RAF: Browser schedules next paint
@@ -88,13 +91,6 @@ export function MessageList({
     }
   }, [messages.length, lastMessageKey, bottomInset]);
 
-  // SINGLE SOURCE OF TRUTH: Scroll on any relevant change
-  // Triggers when: new messages arrive, keyboard shows/hides, input grows
-  // No complex logic, no timing assumptions, no conflicts
-  useEffect(() => {
-    scrollToBottom();
-  }, [scrollToBottom]);
-
   // iOS 26 HIG: Render individual message bubble with solid backgrounds
   // MessageBubble uses solid colors (content layer) NOT glass (control layer)
   const renderMessage = ({ item: message }: ListRenderItemInfo<Message>) => {
@@ -103,10 +99,7 @@ export function MessageList({
 
   const keyExtractor = (item: Message) => item.id;
 
-  const contentContainerStyle = useMemo(
-    () => styles.contentContainer,
-    [],
-  );
+  const contentContainerStyle = styles.contentContainer;
 
   // CRITICAL FIX: FlatList.scrollToEnd() ignores contentContainerStyle.paddingBottom
   // Root cause: scrollToEnd() API scrolls to content boundary, excludes padding from calculation
@@ -114,13 +107,13 @@ export function MessageList({
   // Height = LiquidGlassSpacing.xs (8px) + bottomInset (inputHeight + safeArea + spacing + keyboardHeight)
   // This ensures last message is fully visible above keyboard with iOS HIG-compliant 8px spacing
   // testID enables integration testing, accessibilityElementsHidden prevents screen reader focus on invisible spacer
-  const renderFooter = useCallback(() => (
+  const renderFooter = () => (
     <View
       style={{ height: LiquidGlassSpacing.xs + bottomInset }}
       testID="message-list-footer"
       accessibilityElementsHidden={true}
     />
-  ), [bottomInset]);
+  );
 
   const renderEmptyComponent = () => (
     <View style={styles.emptyContainer}>

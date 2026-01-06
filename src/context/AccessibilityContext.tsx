@@ -10,7 +10,6 @@ import React, {
   useContext,
   useState,
   useEffect,
-  useCallback,
 } from "react";
 import type { ReactNode } from "react";
 import { AccessibilityInfo, Platform } from "react-native";
@@ -98,7 +97,7 @@ export function AccessibilityProvider({ children }: AccessibilityProviderProps) 
     }
   }, [settings.accessibility]);
 
-  const updateConfig = useCallback(async (updates: Partial<AccessibilityConfig>) => {
+  const updateConfig = async (updates: Partial<AccessibilityConfig>) => {
     const newConfig = { ...config, ...updates };
     setConfig(newConfig);
 
@@ -106,16 +105,16 @@ export function AccessibilityProvider({ children }: AccessibilityProviderProps) 
     if (settings.updateAccessibility) {
       await settings.updateAccessibility(newConfig);
     }
-  }, [config, settings]);
+  };
 
-  const announceToScreenReader = useCallback((message: string) => {
+  const announceToScreenReader = (message: string) => {
     if (screenReaderEnabled || config.screenReader) {
       // Use React Native's AccessibilityInfo for announcements
       AccessibilityInfo.announceForAccessibility(message);
     }
-  }, [screenReaderEnabled, config.screenReader]);
+  };
 
-  const getFontSizeScale = useCallback((): number => {
+  const getFontSizeScale = (): number => {
     const scales = {
       small: 0.875,
       medium: 1.0,
@@ -123,7 +122,7 @@ export function AccessibilityProvider({ children }: AccessibilityProviderProps) 
       'extra-large': 1.25,
     };
     return scales[config.fontSize] || 1.0;
-  }, [config.fontSize]);
+  };
 
   const contextValue: AccessibilityContextType = {
     config,

@@ -50,7 +50,7 @@ export function NetworkSetupScreen() {
     },
   ]);
 
-  const runNetworkOptimization = React.useCallback(async () => {
+  const runNetworkOptimization = async () => {
     setIsOptimizing(true);
 
     const updateTest = (index: number, updates: Partial<NetworkTest>) => {
@@ -89,9 +89,9 @@ export function NetworkSetupScreen() {
     } finally {
       setIsOptimizing(false);
     }
-  }, [t]);
+  };
 
-  const applyRecommendedSettings = React.useCallback(async () => {
+  const applyRecommendedSettings = async () => {
     if (recommendedSetting !== null) {
       Alert.alert(
         t("screen.onboarding.networkSetup.alerts.successTitle"),
@@ -99,7 +99,7 @@ export function NetworkSetupScreen() {
         [{ text: t("screen.onboarding.networkSetup.alerts.successButton"), style: "default" }],
       );
     }
-  }, [recommendedSetting, t]);
+  };
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -107,7 +107,7 @@ export function NetworkSetupScreen() {
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [runNetworkOptimization]);
+  }, [t]);
 
   return (
     <View style={styles.container}>

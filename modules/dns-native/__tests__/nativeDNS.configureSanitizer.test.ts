@@ -12,12 +12,14 @@ describe("NativeDNS sanitizer configuration", () => {
     console.warn = jest.fn();
     console.log = jest.fn();
     (Platform as any).OS = "android";
+    (globalThis as any).__DNSCHAT_NATIVE_DEBUG__ = true;
   });
 
   afterEach(() => {
     console.warn = originalConsoleWarn;
     console.log = originalConsoleLog;
     NativeModules['RNDNSModule'] = originalModule;
+    delete (globalThis as any).__DNSCHAT_NATIVE_DEBUG__;
   });
 
   it("propagates sanitizer configuration and ignores duplicate payloads", async () => {

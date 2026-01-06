@@ -21,6 +21,8 @@
         "foregroundImage": "./icons/dnschat_ios26.png",
         "backgroundColor": "#0D7377"
       },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": true,
       "package": "org.mvneves.dnschat"
     },
     "web": {
@@ -59,6 +61,12 @@
                 "COPY_PHASE_STRIP": "NO"
               }
             }
+          },
+          "android": {
+            "compileSdkVersion": 35,
+            "targetSdkVersion": 35,
+            "minSdkVersion": 21,
+            "ndkVersion": "28.0.13004108"
           }
         }
       ],

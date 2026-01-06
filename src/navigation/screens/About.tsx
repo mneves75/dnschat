@@ -9,7 +9,7 @@
  * @see IOS-GUIDELINES.md - iOS 26 Liquid Glass patterns
  */
 
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import { useRouter } from "expo-router";
 import { View, Text, StyleSheet, Linking, Image } from "react-native";
 import Animated from "react-native-reanimated";
@@ -77,49 +77,46 @@ export function About() {
   const { t } = useTranslation();
   const palette = useImessagePalette();
   const typography = useTypography();
-  const styles = useMemo(() => createStyles(palette), [palette]);
+  const styles = createStyles(palette);
   const { animatedStyle } = useScreenEntrance();
   const [iconError, setIconError] = useState(false);
 
-  const openLink = React.useCallback((url: string) => {
+  const openLink = (url: string) => {
     Linking.openURL(url);
-  }, []);
+  };
 
-  const credits = useMemo(
-    () => [
-      {
-        name: "@arxiv_daily",
-        description: t("screen.about.credits.arxivDaily"),
-        url: "https://x.com/Arxiv_Daily/status/1952452878716805172",
-      },
-      {
-        name: "@levelsio (Pieter Levels)",
-        description: t("screen.about.credits.levels"),
-        url: "https://x.com/levelsio",
-      },
-      {
-        name: "React Native Team",
-        description: t("screen.about.credits.reactNative"),
-        url: "https://reactnative.dev",
-      },
-      {
-        name: "Expo Team",
-        description: t("screen.about.credits.expo"),
-        url: "https://expo.dev",
-      },
-      {
-        name: "React Navigation",
-        description: t("screen.about.credits.reactNavigation"),
-        url: "https://reactnavigation.org",
-      },
-      {
-        name: "AsyncStorage Community",
-        description: t("screen.about.credits.asyncStorage"),
-        url: "https://react-native-async-storage.github.io",
-      },
-    ],
-    [t],
-  );
+  const credits = [
+    {
+      name: "@arxiv_daily",
+      description: t("screen.about.credits.arxivDaily"),
+      url: "https://x.com/Arxiv_Daily/status/1952452878716805172",
+    },
+    {
+      name: "@levelsio (Pieter Levels)",
+      description: t("screen.about.credits.levels"),
+      url: "https://x.com/levelsio",
+    },
+    {
+      name: "React Native Team",
+      description: t("screen.about.credits.reactNative"),
+      url: "https://reactnative.dev",
+    },
+    {
+      name: "Expo Team",
+      description: t("screen.about.credits.expo"),
+      url: "https://expo.dev",
+    },
+    {
+      name: "React Navigation",
+      description: t("screen.about.credits.reactNavigation"),
+      url: "https://reactnavigation.org",
+    },
+    {
+      name: "AsyncStorage Community",
+      description: t("screen.about.credits.asyncStorage"),
+      url: "https://react-native-async-storage.github.io",
+    },
+  ];
 
   const versionLabel = t("screen.about.versionLabel", {
     version: packageJson.version,

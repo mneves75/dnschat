@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from "react-native";
 import { format, isToday, isYesterday } from "date-fns";
 import type { Chat } from "../types/chat";
@@ -16,19 +16,15 @@ export function ChatListItem({ chat, onPress, onDelete }: ChatListItemProps) {
   const palette = useImessagePalette();
   const { t } = useI18n();
 
-  // Memoize dynamic styles based on palette
-  const dynamicStyles = useMemo(
-    () => ({
-      container: {
-        backgroundColor: palette.background,
-        borderBottomColor: palette.separator,
-      },
-      title: { color: palette.textPrimary },
-      date: { color: palette.textSecondary },
-      lastMessage: { color: palette.textSecondary },
-    }),
-    [palette]
-  );
+  const dynamicStyles = {
+    container: {
+      backgroundColor: palette.background,
+      borderBottomColor: palette.separator,
+    },
+    title: { color: palette.textPrimary },
+    date: { color: palette.textSecondary },
+    lastMessage: { color: palette.textSecondary },
+  };
 
   const getLastMessage = () => {
     const lastMessage = chat.messages[chat.messages.length - 1];

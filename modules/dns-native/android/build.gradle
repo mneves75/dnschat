@@ -2,11 +2,11 @@ apply plugin: "com.android.library"
 apply plugin: "kotlin-android"
 
 android {
-    compileSdkVersion safeExtGet("compileSdkVersion", 33)
+    compileSdkVersion safeExtGet("compileSdkVersion", 35)
 
     defaultConfig {
         minSdkVersion safeExtGet("minSdkVersion", 21)
-        targetSdkVersion safeExtGet("targetSdkVersion", 33)
+        targetSdkVersion safeExtGet("targetSdkVersion", 35)
         versionCode 1
         versionName "1.0"
     }
