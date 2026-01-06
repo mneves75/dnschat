@@ -241,3 +241,6 @@ ios/fastlane/report.xml
 
 # pnpm lock file (using npm)
 pnpm-lock.yaml
+
+# Guidelines reference (keep local only)
+/docs/GUIDELINES-REF/
