@@ -47,7 +47,7 @@ Bring the DNSChat repository into compliance with all documents listed in `docs/
 - [x] (2026-01-06 16:16Z) Audited `useEffect` usage across `app/` and `src/`, added explicit justification comments where missing, and re-ran unit tests.
 - [x] (2026-01-06 16:18Z) Updated Expo build properties to target Android SDK 36 in `app.json` and re-ran unit tests.
 - [x] (2026-01-06 16:19Z) Updated Android module defaults to SDK 36 in `modules/dns-native/android/build.gradle` and `android/app/src/main/java/com/dnsnative/build.gradle`, then re-ran unit tests.
-- [x] (2026-01-06 16:20Z) Ran full verification suite: `bun run lint`, `bun run test`, `bun run dns:harness:build`.
+- [x] (2026-01-06 17:05Z) Ran full verification suite: `bun run lint`, `bun run test`, `bun run dns:harness:build`.
 - [x] (2026-01-06 16:22Z) Updated `CHANGELOG.md` to reflect compliance and SDK alignment changes.
 - [x] (2026-01-06 16:28Z) Marked all items complete in `docs/engineering-todo.md` and prepared the final guideline-to-evidence review packet.
 - [x] (2026-01-06 16:30Z) Executed remediation tasks one-by-one with tests, updated docs, and committed per item.
@@ -100,7 +100,7 @@ Commands executed from repo root:
 Results:
 
 - Lint: passed.
-- Tests: 65 suites passed, 1 skipped; 712 tests passed, 13 skipped.
+- Tests: 65 suites passed, 1 skipped; 711 tests passed, 13 skipped.
 - Build: TypeScript harness compile succeeded.
 
 ## Guidelines Inventory (from `docs/GUIDELINES-REF/GUIDELINES_INDEX.json`)
