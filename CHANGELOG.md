@@ -18,6 +18,7 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 - Fixed patch-package parsing for @react-native-menu/menu and react-native-screens patches.
 - Added AsyncStorage dev dependency to `modules/dns-native` to unblock Jest mocks in module tests.
+- Updated `modules/dns-native/package-lock.json` so CI installs the AsyncStorage devDependency.
 - Stabilized chat loading and error alert behavior to avoid repeated alerts.
 - Gated native DNS debug logging behind explicit debug flags in runtime and tests.
 - Hid route group names from iOS back button titles (no more "(tabs)" in header).

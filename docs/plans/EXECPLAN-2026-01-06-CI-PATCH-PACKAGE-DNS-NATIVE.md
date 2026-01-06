@@ -94,6 +94,7 @@ Acceptance criteria:
 
 TODO:
 - Add `@react-native-async-storage/async-storage` as a devDependency to `modules/dns-native`.
+- Update `modules/dns-native/package-lock.json` so `npm ci` installs the devDependency.
 
 Verification:
 - `cd modules/dns-native && npm test`
@@ -167,6 +168,7 @@ All phases completed on 2026-01-06.
 ### Phase 2: dns-native test dependency
 
 - [x] Add `@react-native-async-storage/async-storage` devDependency to `modules/dns-native`.
+- [x] Update `modules/dns-native/package-lock.json` for CI installs.
 
 ### Phase 3: Validation + docs
 
