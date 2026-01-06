@@ -17,6 +17,9 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 - Docs: added data inventory/model registry and updated engineering exec tracking.
 - Removed manual memoization in `ChatInput` for React Compiler support and updated static tests.
 - Added explicit `useEffect` justification comments for external side effects.
+- Simplified Android native sanitizer config to store compiled patterns with equality based on pattern + flags.
+- Added DNS server health tracking in `DNSService` to record successes/failures per host:port.
+- Docs: refreshed exec plan verification logs and aligned DNS server migration notes to port 53 default.
 
 ### Fixed
 
@@ -43,6 +46,9 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 - Enforced DNS server allowlist inside native resolvers using shared constants.
 - Migrated Android DNS-over-HTTPS fallback to RFC 8484 wireformat (application/dns-message).
 - Hardened native UDP DNS response validation on Android/iOS (transaction ID, header flags, QDCOUNT, and question name/type/class matching).
+- Added Android JVM test stub for `android.util.Log` to unblock unit tests.
+- Added JVM tests for resolver dedup reuse, bounded thread pool, and Unicode flag handling.
+- Added DNSService fallback and server health coverage in Jest tests.
 
 ## 4.0.1 - 2026-01-05
 

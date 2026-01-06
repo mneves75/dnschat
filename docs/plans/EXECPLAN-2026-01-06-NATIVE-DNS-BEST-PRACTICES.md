@@ -108,3 +108,11 @@ Verification:
 ## Implementation status
 
 All phases completed on 2026-01-06.
+
+## Verification Log (re-run 2026-01-06)
+
+- `rg -n "deprecation" android` (no direct matches; Gradle build output captured deprecations).
+- `cd android && ./gradlew --warning-mode all :app:testDebugUnitTest` (build successful; warnings noted in output, including SDK path warning and Gradle toolchain advisory).
+- `rg -n "invalidate|cleanup" modules/dns-native/ios` (invalidate/cleanup present).
+- `rg -n "decomposedStringWithCompatibilityMapping" modules/dns-native/ios/DNSResolver.swift` (NFKD mapping present).
+- `rg -n "NFKD|invalidate|cleanup" CHANGELOG.md` (changelog entries present).

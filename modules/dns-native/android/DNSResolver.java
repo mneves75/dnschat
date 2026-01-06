@@ -862,20 +862,10 @@ public class DNSResolver {
         private static final String CODE_UNEXPECTED = "SANITIZER_CONFIG_UNEXPECTED";
 
         private static final SanitizerConfig DEFAULT = build(
-            "\\s+",
-            0,
             Pattern.compile("\\s+"),
-            "[^a-z0-9-]",
-            0,
             Pattern.compile("[^a-z0-9-]"),
-            "-{2,}",
-            0,
             Pattern.compile("-{2,}"),
-            "^-+|-+$",
-            0,
             Pattern.compile("^-+|-+$"),
-            "\\p{M}+",
-            Pattern.UNICODE_CASE | Pattern.UNICODE_CHARACTER_CLASS,
             Pattern.compile("\\p{M}+", Pattern.UNICODE_CASE | Pattern.UNICODE_CHARACTER_CLASS),
             "-",
             DEFAULT_MAX_LABEL_LENGTH,
@@ -884,24 +874,10 @@ public class DNSResolver {
             true
         );
 
-        final String whitespaceSource;
-        final int whitespaceFlags;
         final Pattern whitespacePattern;
-
-        final String invalidCharsSource;
-        final int invalidCharsFlags;
         final Pattern invalidCharsPattern;
-
-        final String dashCollapseSource;
-        final int dashCollapseFlags;
         final Pattern dashCollapsePattern;
-
-        final String edgeDashesSource;
-        final int edgeDashesFlags;
         final Pattern edgeDashesPattern;
-
-        final String combiningMarksSource;
-        final int combiningMarksFlags;
         final Pattern combiningMarksPattern;
 
         final String spaceReplacement;
@@ -911,20 +887,10 @@ public class DNSResolver {
         final boolean defaultConfig;
 
         private SanitizerConfig(
-            String whitespaceSource,
-            int whitespaceFlags,
             Pattern whitespacePattern,
-            String invalidCharsSource,
-            int invalidCharsFlags,
             Pattern invalidCharsPattern,
-            String dashCollapseSource,
-            int dashCollapseFlags,
             Pattern dashCollapsePattern,
-            String edgeDashesSource,
-            int edgeDashesFlags,
             Pattern edgeDashesPattern,
-            String combiningMarksSource,
-            int combiningMarksFlags,
             Pattern combiningMarksPattern,
             String spaceReplacement,
             int maxLabelLength,
@@ -932,20 +898,10 @@ public class DNSResolver {
             Set<String> allowedServers,
             boolean defaultConfig
         ) {
-            this.whitespaceSource = whitespaceSource;
-            this.whitespaceFlags = whitespaceFlags;
             this.whitespacePattern = whitespacePattern;
-            this.invalidCharsSource = invalidCharsSource;
-            this.invalidCharsFlags = invalidCharsFlags;
             this.invalidCharsPattern = invalidCharsPattern;
-            this.dashCollapseSource = dashCollapseSource;
-            this.dashCollapseFlags = dashCollapseFlags;
             this.dashCollapsePattern = dashCollapsePattern;
-            this.edgeDashesSource = edgeDashesSource;
-            this.edgeDashesFlags = edgeDashesFlags;
             this.edgeDashesPattern = edgeDashesPattern;
-            this.combiningMarksSource = combiningMarksSource;
-            this.combiningMarksFlags = combiningMarksFlags;
             this.combiningMarksPattern = combiningMarksPattern;
             this.spaceReplacement = spaceReplacement;
             this.maxLabelLength = maxLabelLength;
@@ -987,28 +943,18 @@ public class DNSResolver {
                 Normalizer.Form normalizationForm = parseNormalizationForm(readString(map, "unicodeNormalization"));
                 Set<String> allowedServers = readAllowedServers(map);
 
-                CompiledPattern whitespace = compilePattern(readMap(map, "whitespace"), "whitespace");
-                CompiledPattern invalidChars = compilePattern(readMap(map, "invalidChars"), "invalidChars");
-                CompiledPattern dashCollapse = compilePattern(readMap(map, "dashCollapse"), "dashCollapse");
-                CompiledPattern edgeDashes = compilePattern(readMap(map, "edgeDashes"), "edgeDashes");
-                CompiledPattern combiningMarks = compilePattern(readMap(map, "combiningMarks"), "combiningMarks");
+                Pattern whitespacePattern = compilePattern(readMap(map, "whitespace"), "whitespace");
+                Pattern invalidCharsPattern = compilePattern(readMap(map, "invalidChars"), "invalidChars");
+                Pattern dashCollapsePattern = compilePattern(readMap(map, "dashCollapse"), "dashCollapse");
+                Pattern edgeDashesPattern = compilePattern(readMap(map, "edgeDashes"), "edgeDashes");
+                Pattern combiningMarksPattern = compilePattern(readMap(map, "combiningMarks"), "combiningMarks");
 
                 return build(
-                    whitespace.source,
-                    whitespace.flags,
-                    whitespace.pattern,
-                    invalidChars.source,
-                    invalidChars.flags,
-                    invalidChars.pattern,
-                    dashCollapse.source,
-                    dashCollapse.flags,
-                    dashCollapse.pattern,
-                    edgeDashes.source,
-                    edgeDashes.flags,
-                    edgeDashes.pattern,
-                    combiningMarks.source,
-                    combiningMarks.flags,
-                    combiningMarks.pattern,
+                    whitespacePattern,
+                    invalidCharsPattern,
+                    dashCollapsePattern,
+                    edgeDashesPattern,
+                    combiningMarksPattern,
                     spaceReplacement,
                     maxLabelLength,
                     normalizationForm,
@@ -1023,20 +969,10 @@ public class DNSResolver {
         }
 
         private static SanitizerConfig build(
-            String whitespaceSource,
-            int whitespaceFlags,
             Pattern whitespacePattern,
-            String invalidCharsSource,
-            int invalidCharsFlags,
             Pattern invalidCharsPattern,
-            String dashCollapseSource,
-            int dashCollapseFlags,
             Pattern dashCollapsePattern,
-            String edgeDashesSource,
-            int edgeDashesFlags,
             Pattern edgeDashesPattern,
-            String combiningMarksSource,
-            int combiningMarksFlags,
             Pattern combiningMarksPattern,
             String spaceReplacement,
             int maxLabelLength,
@@ -1045,20 +981,10 @@ public class DNSResolver {
             boolean defaultConfig
         ) {
             return new SanitizerConfig(
-                whitespaceSource,
-                whitespaceFlags,
                 whitespacePattern,
-                invalidCharsSource,
-                invalidCharsFlags,
                 invalidCharsPattern,
-                dashCollapseSource,
-                dashCollapseFlags,
                 dashCollapsePattern,
-                edgeDashesSource,
-                edgeDashesFlags,
                 edgeDashesPattern,
-                combiningMarksSource,
-                combiningMarksFlags,
                 combiningMarksPattern,
                 spaceReplacement,
                 maxLabelLength,
@@ -1068,12 +994,12 @@ public class DNSResolver {
             );
         }
 
-        private static CompiledPattern compilePattern(Map<String, Object> descriptor, String key) {
+        private static Pattern compilePattern(Map<String, Object> descriptor, String key) {
             String pattern = readString(descriptor, "pattern");
             String flagsValue = readStringOptional(descriptor, "flags");
             int flags = parseFlags(flagsValue);
             try {
-                return new CompiledPattern(pattern, flags, Pattern.compile(pattern, flags));
+                return Pattern.compile(pattern, flags);
             } catch (Exception error) {
                 throw SanitizerConfigException.of(CODE_INVALID_REGEX, "Invalid regex for " + key + ": " + pattern, error);
             }
@@ -1218,6 +1144,14 @@ public class DNSResolver {
             return Collections.unmodifiableSet(normalized);
         }
 
+        private static boolean patternEquals(Pattern first, Pattern second) {
+            return first.pattern().equals(second.pattern()) && first.flags() == second.flags();
+        }
+
+        private static int patternHash(Pattern pattern) {
+            return Objects.hash(pattern.pattern(), pattern.flags());
+        }
+
         @Override
         public boolean equals(Object obj) {
             if (this == obj) {
@@ -1227,35 +1161,25 @@ public class DNSResolver {
                 return false;
             }
             SanitizerConfig other = (SanitizerConfig) obj;
-            return whitespaceFlags == other.whitespaceFlags
-                && invalidCharsFlags == other.invalidCharsFlags
-                && dashCollapseFlags == other.dashCollapseFlags
-                && edgeDashesFlags == other.edgeDashesFlags
-                && combiningMarksFlags == other.combiningMarksFlags
-                && maxLabelLength == other.maxLabelLength
+            return maxLabelLength == other.maxLabelLength
                 && normalizationForm == other.normalizationForm
                 && Objects.equals(allowedServers, other.allowedServers)
-                && whitespaceSource.equals(other.whitespaceSource)
-                && invalidCharsSource.equals(other.invalidCharsSource)
-                && dashCollapseSource.equals(other.dashCollapseSource)
-                && edgeDashesSource.equals(other.edgeDashesSource)
-                && combiningMarksSource.equals(other.combiningMarksSource)
+                && patternEquals(whitespacePattern, other.whitespacePattern)
+                && patternEquals(invalidCharsPattern, other.invalidCharsPattern)
+                && patternEquals(dashCollapsePattern, other.dashCollapsePattern)
+                && patternEquals(edgeDashesPattern, other.edgeDashesPattern)
+                && patternEquals(combiningMarksPattern, other.combiningMarksPattern)
                 && spaceReplacement.equals(other.spaceReplacement);
         }
 
         @Override
         public int hashCode() {
             return Objects.hash(
-                whitespaceSource,
-                whitespaceFlags,
-                invalidCharsSource,
-                invalidCharsFlags,
-                dashCollapseSource,
-                dashCollapseFlags,
-                edgeDashesSource,
-                edgeDashesFlags,
-                combiningMarksSource,
-                combiningMarksFlags,
+                patternHash(whitespacePattern),
+                patternHash(invalidCharsPattern),
+                patternHash(dashCollapsePattern),
+                patternHash(edgeDashesPattern),
+                patternHash(combiningMarksPattern),
                 spaceReplacement,
                 maxLabelLength,
                 normalizationForm,
@@ -1289,17 +1213,6 @@ public class DNSResolver {
             }
         }
 
-        private static final class CompiledPattern {
-            final String source;
-            final int flags;
-            final Pattern pattern;
-
-            CompiledPattern(String source, int flags, Pattern pattern) {
-                this.source = source;
-                this.flags = flags;
-                this.pattern = pattern;
-            }
-        }
     }
 
     public static class DNSCapabilities {

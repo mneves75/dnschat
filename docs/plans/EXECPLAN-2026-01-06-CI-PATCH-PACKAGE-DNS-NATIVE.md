@@ -175,3 +175,12 @@ All phases completed on 2026-01-06.
 - [x] Update docs index and changelog.
 - [x] Re-run patch-package dry run.
 - [x] Re-run lint/tests.
+
+## Verification Log (re-run 2026-01-06)
+
+- `./node_modules/.bin/patch-package --dry-run` (all patches applied).
+- `cd modules/dns-native && npm test` (7 passed, 1 skipped; 56 passed, 13 skipped).
+- `bun run lint` (pass).
+- `bun run test` (65 passed, 1 skipped; 711 passed, 13 skipped).
+- `rg -n "EXECPLAN-2026-01-06-CI-PATCH-PACKAGE-DNS-NATIVE" docs/README.md` (entry present).
+- `rg -n "patch-package|dns-native" CHANGELOG.md` (entries present).

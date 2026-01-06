@@ -187,3 +187,13 @@ All phases completed on 2026-01-06.
 - [x] Run lint.
 - [x] Run tests.
 - [x] Record audit outputs.
+
+## Verification Log (re-run 2026-01-06)
+
+- `gitleaks detect --source . --no-git --report-format json --report-path /tmp/gitleaks-report.json` (no leaks found).
+- `bun audit` (no vulnerabilities found).
+- `rg -n "compileSdkVersion|targetSdkVersion|minSdkVersion" app.json android modules` (SDK/NDK flags present with compile/target 36, min 21).
+- `rg -n "useMemo|useCallback" src` (only documentation note found in `src/components/ChatInput.tsx`).
+- `bun run lint` (pass).
+- `bun run test` (65 passed, 1 skipped; 711 passed, 13 skipped).
+- Manual dev-client smoke run not executed in this environment.

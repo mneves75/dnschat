@@ -10,6 +10,7 @@ Start here:
 - `docs/architecture/ENGINEERING-EXEC-SPEC-BEST-PRACTICES-ALIGNMENT.md` (security + best-practices hardening plan)
 - `docs/plans/EXECPLAN-2026-01-06-SECURITY-BEST-PRACTICES-AUDIT.md` (security audit + platform alignment)
 - `docs/plans/EXECPLAN-2026-01-06-CI-PATCH-PACKAGE-DNS-NATIVE.md` (CI patch-package + dns-native test fixes)
+- `docs/plans/EXECPLAN-2026-01-06-ENGINEERING-EXEC-SPEC-THOROUGH.md` (engineering exec spec thorough compliance pass)
 - `docs/plans/EXECPLAN-2026-01-06-GUIDELINES-COMPLIANCE-CODE-REVIEW.md` (guidelines compliance + code review)
 - `docs/plans/` (execution plans, current and historical)
 - `docs/technical/SPECIFICATION.md` (product + behavior spec)

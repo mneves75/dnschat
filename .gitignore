@@ -45,9 +45,9 @@ yarn-error.*
 .env*.local
 .env
 .env.*
-ios/.xcode.env.local
+/ios/.xcode.env.local
 # Android: local machine SDK path + signing material (never commit)
-android/local.properties
+/android/local.properties
 keystore.properties
 # Allow explicit example env files to be tracked.
 !.env*.example
@@ -62,7 +62,7 @@ keystore.properties
 *.p8
 *.p12
 debug.keystore
-android/app/debug.keystore
+/android/app/debug.keystore
 test-dns.js
 test-native-dns.js
 test-dnsservice.js
@@ -75,7 +75,7 @@ security-scan-*
 # Xcode user-specific data
 **/xcuserdata/
 *.xcuserdata
-ios/Pods/Pods.xcodeproj/xcuserdata/
+/ios/Pods/Pods.xcodeproj/xcuserdata/
 
 # Additional build artifacts
 *.orig
@@ -94,12 +94,12 @@ ios/Pods/Pods.xcodeproj/xcuserdata/
 BACKUP-COMPLETE-HISTORY-*/
 
 # Build artifacts that may contain sensitive info
-android/app/build/
-ios/build/
-ios/DerivedData/
-android/app/release/
-android/app/debug/
-android/.gradle-cache/
+/android/app/build/
+/ios/build/
+/ios/DerivedData/
+/android/app/release/
+/android/app/debug/
+/android/.gradle-cache/
 
 # IDE and editor files
 .vscode/settings.json
@@ -237,10 +237,18 @@ dmypy.json
 .pyre/
 
 # Fastlane generated files
-ios/fastlane/report.xml
+/ios/fastlane/report.xml
 
 # pnpm lock file (using npm)
 pnpm-lock.yaml
 
 # Guidelines reference (keep local only)
 /docs/GUIDELINES-REF/
+
+# Ensure local Expo modules keep native folders tracked (override generic ignores)
+!modules/**/android/
+!modules/**/android/**
+!modules/**/android/build.gradle
+!modules/**/ios/
+!modules/**/ios/**
+!modules/**/ios/*.podspec

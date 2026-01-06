@@ -142,3 +142,12 @@ Verification outputs (2026-01-05):
 
     node scripts/verify-dnsresolver-sync.js
     Result: DNSResolver.java copies are in sync.
+
+Verification log (re-run 2026-01-06):
+
+    cd android && GRADLE_USER_HOME=$PWD/.gradle-cache ./gradlew --no-daemon -Dorg.gradle.java.installations.auto-download=false -Dorg.gradle.java.installations.auto-detect=false -Dorg.gradle.java.installations.paths=/Library/Java/JavaVirtualMachines/jdk-21.jdk/Contents/Home :app:testDebugUnitTest
+    Result: BUILD SUCCESSFUL (5 tests)
+    Notes: Warning about missing sdk.dir; Gradle deprecation notice emitted.
+
+    node scripts/verify-dnsresolver-sync.js
+    Result: DNSResolver.java copies are in sync.

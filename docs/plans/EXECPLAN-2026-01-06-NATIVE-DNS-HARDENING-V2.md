@@ -98,3 +98,9 @@ Verification:
 ## Implementation status
 
 All phases completed on 2026-01-06.
+
+## Verification Log (re-run 2026-01-06)
+
+- `rg -n "ALLOWED_DNS_SERVERS|queryTXTDNSOverHTTPS|normalizeServerHost" src modules android ios` (allowlist + normalization references present).
+- `cd android && ./gradlew --warning-mode all :app:testDebugUnitTest --console=plain` (build successful; SDK path warning noted; Gradle toolchain advisory emitted).
+- `rg -n "DNS-over-HTTPS|allowlist" docs/technical/DNS-PROTOCOL-SPEC.md` (doc references present).

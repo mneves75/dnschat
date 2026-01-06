@@ -594,6 +594,14 @@ export function parseTXTResponse(txtRecords: string[]): string {
   return fullResponse;
 }
 
+type ServerHealthState = {
+  successes: number;
+  failures: number;
+  lastSuccessAt: number | null;
+  lastFailureAt: number | null;
+  lastError: string | null;
+};
+
 export class DNSService {
   private static readonly DEFAULT_DNS_SERVER = DNS_CONSTANTS.DEFAULT_DNS_SERVER;
   private static readonly DNS_PORT: number = DNS_CONSTANTS.DNS_PORT;
@@ -616,6 +624,7 @@ export class DNSService {
   private static requestHistory: number[] = [];
   private static cleanupIntervalId: ReturnType<typeof setInterval> | null = null;
   private static appStateSubscription: { remove: () => void } | null = null;
+  private static serverHealth = new Map<string, ServerHealthState>();
 
   private static isVerbose(): boolean {
     try {
@@ -666,6 +675,52 @@ export class DNSService {
     if (this.requestHistory.length > this.MAX_REQUEST_HISTORY_SIZE) {
       this.requestHistory = this.requestHistory.slice(-this.MAX_REQUEST_HISTORY_SIZE);
     }
+  }
+
+  private static getServerHealthKey(server: string, port: number): string {
+    return `${server}:${port}`;
+  }
+
+  private static recordServerSuccess(server: string, port: number): void {
+    const key = this.getServerHealthKey(server, port);
+    const current = this.serverHealth.get(key) ?? {
+      successes: 0,
+      failures: 0,
+      lastSuccessAt: null,
+      lastFailureAt: null,
+      lastError: null,
+    };
+    current.successes += 1;
+    current.lastSuccessAt = Date.now();
+    current.lastError = null;
+    this.serverHealth.set(key, current);
+  }
+
+  private static recordServerFailure(server: string, port: number, error: string): void {
+    const key = this.getServerHealthKey(server, port);
+    const current = this.serverHealth.get(key) ?? {
+      successes: 0,
+      failures: 0,
+      lastSuccessAt: null,
+      lastFailureAt: null,
+      lastError: null,
+    };
+    current.failures += 1;
+    current.lastFailureAt = Date.now();
+    current.lastError = error;
+    this.serverHealth.set(key, current);
+  }
+
+  static getServerHealthSnapshot(): Record<string, ServerHealthState> {
+    const snapshot: Record<string, ServerHealthState> = {};
+    for (const [key, value] of this.serverHealth.entries()) {
+      snapshot[key] = { ...value };
+    }
+    return snapshot;
+  }
+
+  static resetServerHealthForTests(): void {
+    this.serverHealth.clear();
   }
 
   /**
@@ -788,12 +843,14 @@ export class DNSService {
           allowExperimentalTransports,
         );
 
+        this.recordServerSuccess(targetServer, queryContext.targetPort);
         await DNSLogService.endQuery(true, result.response, result.method);
         return result.response;
       } catch (error) {
         const message = getErrorMessage(error);
         lastError = error instanceof Error ? error : new Error(message);
         this.vLog(`Server ${targetServer}:${queryContext.targetPort} failed: ${message}`);
+        this.recordServerFailure(targetServer, queryContext.targetPort, message);
 
         // Log server fallback if there's another server to try
         const serverIndex = serversToTry.indexOf(serverConfig);

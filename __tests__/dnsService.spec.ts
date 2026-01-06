@@ -1,4 +1,15 @@
+jest.mock('react-native', () => {
+  const actual = jest.requireActual('react-native');
+  return {
+    ...actual,
+    AppState: {
+      addEventListener: jest.fn(() => ({ remove: jest.fn() })),
+    },
+  };
+});
+
 import {
+  DNSService,
   parseTXTResponse,
   sanitizeDNSMessage,
   validateDNSMessage,
@@ -6,6 +17,7 @@ import {
   composeDNSQueryName,
   generateSecureDNSId,
 } from "../src/services/dnsService";
+import * as DNSLogService from "../src/services/dnsLogService";
 import { sanitizeDNSMessageReference } from "../modules/dns-native/constants";
 
 // Access private methods for test via any-cast
@@ -322,6 +334,67 @@ describe("DNS Service helpers", () => {
       } finally {
         (global as any).crypto = originalCrypto;
       }
+    });
+  });
+
+  describe("server fallback + health tracking", () => {
+    const dnsServiceAny = DNSService as any;
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+      (DNSLogService as any).startQuery = jest.fn(() => "query-1");
+      (DNSLogService as any).addLog = jest.fn();
+      (DNSLogService as any).logMethodFailure = jest.fn();
+      (DNSLogService as any).logFallback = jest.fn();
+      (DNSLogService as any).logServerFallback = jest.fn();
+      (DNSLogService as any).endQuery = jest.fn();
+      dnsServiceAny.resetServerHealthForTests?.();
+    });
+
+    afterEach(() => {
+      DNSService.destroyBackgroundListener();
+      jest.restoreAllMocks();
+    });
+
+    it("falls back to secondary server when primary fails", async () => {
+      const querySpy = jest
+        .spyOn(dnsServiceAny, "queryWithServer")
+        .mockRejectedValueOnce(new Error("Primary server down"))
+        .mockResolvedValueOnce({ response: "ok", method: "udp" });
+
+      const result = await DNSService.queryLLM(
+        "test fallback",
+        undefined,
+        true,
+        true,
+      );
+
+      expect(result).toBe("ok");
+      expect(querySpy).toHaveBeenCalledTimes(2);
+      const calls = querySpy.mock.calls as Array<[any, ...unknown[]]>;
+      const firstContext = calls[0]?.[0] as { targetServer: string };
+      const secondContext = calls[1]?.[0] as { targetServer: string };
+      expect(firstContext.targetServer).toBe("llm.pieter.com");
+      expect(secondContext.targetServer).toBe("ch.at");
+    });
+
+    it("tracks server health across failures and successes", async () => {
+      jest
+        .spyOn(dnsServiceAny, "queryWithServer")
+        .mockRejectedValueOnce(new Error("Primary server down"))
+        .mockResolvedValueOnce({ response: "ok", method: "udp" });
+
+      await DNSService.queryLLM(
+        "test health",
+        undefined,
+        true,
+        true,
+      );
+
+      const snapshot = dnsServiceAny.getServerHealthSnapshot();
+      expect(snapshot["llm.pieter.com:53"].failures).toBe(1);
+      expect(snapshot["llm.pieter.com:53"].lastError).toContain("Primary server down");
+      expect(snapshot["ch.at:53"].successes).toBe(1);
     });
   });
 });
