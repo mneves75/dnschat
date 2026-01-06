@@ -49,6 +49,12 @@ import { useTransportTestThrottle } from "../../ui/hooks/useTransportTestThrottl
 import { persistHapticsPreference } from "../../utils/haptics";
 import { devLog, devWarn } from "../../utils/devLog";
 
+const getErrorMessage = (error: unknown): string => {
+  if (error instanceof Error) return error.message;
+  if (typeof error === "string") return error;
+  return String(error);
+};
+
 // ==================================================================================
 // GLASS SETTINGS SCREEN COMPONENT
 // ==================================================================================
@@ -270,8 +276,8 @@ export function GlassSettings() {
         true,
       );
       setLastTestResult(response);
-    } catch (e: any) {
-      setLastTestError(e?.message || String(e));
+    } catch (e: unknown) {
+      setLastTestError(getErrorMessage(e));
     } finally {
       setTestRunning(false);
     }
@@ -299,8 +305,8 @@ export function GlassSettings() {
         dnsServer,
       );
       setLastTestResult(response);
-    } catch (e: any) {
-      setLastTestError(e?.message || String(e));
+    } catch (e: unknown) {
+      setLastTestError(getErrorMessage(e));
     } finally {
       setTestRunning(false);
     }
