@@ -31,6 +31,7 @@ Bring the DNSChat repository into compliance with all documents listed in `docs/
 - [x] (2026-01-06 15:26Z) Added `docs/model-registry.md` and re-ran unit tests.
 - [x] (2026-01-06 15:27Z) Updated `docs/README.md` to index the data inventory and model registry docs.
 - [x] (2026-01-06 15:29Z) Removed `@ts-ignore` from native DNS tests via constructor injection and re-ran unit tests.
+- [x] (2026-01-06 15:45Z) Tightened `src/services/dnsService.ts` typing (removed `any`, added decode helpers, and clarified socket/buffer types) and re-ran unit tests.
 - [ ] Execute remediation tasks one-by-one with tests, update docs, and commit per item.
 - [ ] Run full verification suite and assemble the review packet mapping each guideline to evidence.
 
@@ -38,6 +39,7 @@ Bring the DNSChat repository into compliance with all documents listed in `docs/
 
 - Jest reported 1 skipped suite / 13 skipped tests during baseline; this is expected but needs to be tracked as non-failing coverage.
 - Adding a private helper named `configureSanitizer` conflicted with the `NativeDNSModule` interface (TS2420) and caused test failures; resolved by renaming the helper.
+- Strict TypeScript settings required explicit type predicates and buffer conversions when tightening DNS service typing.
 
 ## Decision Log
 
