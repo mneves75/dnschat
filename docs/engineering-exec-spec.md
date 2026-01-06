@@ -48,6 +48,7 @@ Bring the DNSChat repository into compliance with all documents listed in `docs/
 - [x] (2026-01-06 16:18Z) Updated Expo build properties to target Android SDK 36 in `app.json` and re-ran unit tests.
 - [x] (2026-01-06 16:19Z) Updated Android module defaults to SDK 36 in `modules/dns-native/android/build.gradle` and `android/app/src/main/java/com/dnsnative/build.gradle`, then re-ran unit tests.
 - [x] (2026-01-06 16:20Z) Ran full verification suite: `bun run lint`, `bun run test`, `bun run dns:harness:build`.
+- [x] (2026-01-06 16:22Z) Updated `CHANGELOG.md` to reflect compliance and SDK alignment changes.
 - [ ] Execute remediation tasks one-by-one with tests, update docs, and commit per item.
 - [ ] Run full verification suite and assemble the review packet mapping each guideline to evidence.
 
