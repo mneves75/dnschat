@@ -1,13 +1,13 @@
 # DNSChat
 
 DNSChat is a React Native (Expo dev-client) app that sends short chat prompts as
-DNS TXT queries (default DNS server: `ch.at`). The app includes:
+DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 
 - A native DNS TXT resolver module for iOS/Android (`modules/dns-native/`)
 - JavaScript fallback transports (UDP/TCP) for constrained networks
 - An in-app Logs screen to inspect attempts, failures, and fallbacks
 
-[![Version](https://img.shields.io/badge/version-3.8.8-blue.svg)](https://github.com/mneves75/dnschat)
+[![Version](https://img.shields.io/badge/version-4.0.2-blue.svg)](https://github.com/mneves75/dnschat)
 [![React Native](https://img.shields.io/badge/React%20Native-0.81.5-blue.svg)](https://reactnative.dev/)
 [![Expo](https://img.shields.io/badge/Expo-54.0.30-black.svg)](https://expo.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9.2-blue.svg)](https://www.typescriptlang.org/)

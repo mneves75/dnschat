@@ -357,7 +357,7 @@ Navigate to: **Policy → App content → Data safety**
 | Device identifiers | No | No | - |
 | Location | No | No | - |
 
-*Messages are stored locally only (AsyncStorage) and transmitted via DNS queries to ch.at servers.
+*Messages are stored locally only (AsyncStorage) and transmitted via DNS queries to llm.pieter.com servers.
 
 ### Security Practices
 

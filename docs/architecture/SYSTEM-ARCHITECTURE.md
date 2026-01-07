@@ -66,5 +66,5 @@ The reference constants live in `modules/dns-native/constants.ts`.
 - The TypeScript transport chain does not implement DNS-over-HTTPS; `tcp` is
   DNS-over-TCP on port 53.
 - Android native DNS has its own internal fallback: raw UDP first, then
-  DNS-over-HTTPS for non-`ch.at` servers, then a legacy resolver (dnsjava).
+  DNS-over-HTTPS for non-LLM servers, then a legacy resolver (dnsjava).
   See `modules/dns-native/android/DNSResolver.java`.
