@@ -4,7 +4,7 @@ All notable changes to DNSChat will be documented in this file.
 
 The format is based on Keep a Changelog, and this project follows Semantic Versioning.
 
-## Unreleased
+## [4.0.2] - 2026-01-07
 
 ### Fixed
 
