@@ -6,6 +6,19 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## Unreleased
 
+### Fixed
+
+- **CRITICAL**: Fixed data race on static `allowedServers` variable using `@MainActor` isolation
+- **CRITICAL**: Fixed Unicode sanitization mismatch (Swift `.isDiacritic` vs JS `\p{M}`) by using `generalCategory` for combining marks
+- Fixed missing `@available(iOS 16.0, *)` annotations on `createQueryTask` and `withTimeout` functions
+- Fixed force unwrap in `withTimeout` with safe `guard let` pattern
+- Fixed `CancellationError` not mapped to `DNSError.cancelled` for consistent error handling
+- Added defensive iOS 16+ guard in `queryTXT` to prevent runtime crashes on older iOS versions
+- Added `.waiting(let error)` handling in NWConnection state handler for early network unreachable detection
+- Replaced deprecated `Task.sleep(nanoseconds:)` with `Task.sleep(for:)` API
+- Added `Task.checkCancellation()` in retry loop for faster cancellation response
+- Added comprehensive doc comments on concurrency-sensitive code paths
+
 ### Changed
 
 - Enabled Android edge-to-edge and predictive back gesture support via Expo config.
