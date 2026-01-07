@@ -33,13 +33,15 @@ final class DNSResolver: NSObject {
     // MARK: - State
     @MainActor private var activeQueries: [String: Task<[String], Error>] = [:]
 
+    /// Cancels all active queries and clears the query cache.
+    /// - Note: Must be called from MainActor. Task.cancel() is immediate;
+    ///   actual query completion happens asynchronously.
+    @MainActor
     func cleanup() {
-        Task { @MainActor in
-            for (_, task) in activeQueries {
-                task.cancel()
-            }
-            activeQueries.removeAll()
+        for (_, task) in activeQueries {
+            task.cancel()
         }
+        activeQueries.removeAll()
     }
 
     private struct DnsQuery {
@@ -161,8 +163,11 @@ final class DNSResolver: NSObject {
         }
     }
 
+    /// Performs the actual UDP DNS query.
+    /// - Note: Marked nonisolated to run off the MainActor in Swift 6.2+.
+    ///   For Swift 6.2+ with NonisolatedNonsendingByDefault, add @concurrent.
     @available(iOS 16.0, *)
-    private func performUDPQuery(server: String, queryName: String, port: UInt16) async throws -> [String] {
+    nonisolated private func performUDPQuery(server: String, queryName: String, port: UInt16) async throws -> [String] {
         // Build DNS query
         let query = try createDNSQuery(queryName: queryName)
 
@@ -172,6 +177,36 @@ final class DNSResolver: NSObject {
         let params = NWParameters.udp
         let connection = NWConnection(host: host, port: dnsPort, using: params)
 
+        // Use a dedicated serial queue for NWConnection callbacks.
+        // This provides better predictability than global queues and aligns
+        // with Swift 6.2+ concurrency best practices.
+        let connectionQueue = DispatchQueue(label: "com.dnschat.dns.connection", qos: .userInitiated)
+
+        // CRITICAL: Ensure connection cleanup on cancellation/timeout.
+        // When the parent Task is cancelled (e.g., by withTimeout), we MUST cancel
+        // the NWConnection to prevent resource leaks. Without this handler,
+        // a cancelled Task would orphan the connection.
+        return try await withTaskCancellationHandler {
+            try await performUDPQueryInternal(
+                connection: connection,
+                query: query,
+                queue: connectionQueue
+            )
+        } onCancel: {
+            // Called synchronously when Task is cancelled.
+            // Safe to call from any thread - NWConnection.cancel() is thread-safe.
+            connection.stateUpdateHandler = nil
+            connection.cancel()
+        }
+    }
+
+    /// Internal implementation of UDP query, separated for proper cancellation handling.
+    @available(iOS 16.0, *)
+    nonisolated private func performUDPQueryInternal(
+        connection: NWConnection,
+        query: DnsQuery,
+        queue: DispatchQueue
+    ) async throws -> [String] {
         // CRITICAL: Wait for connection ready state
         //
         // Race Condition: Network.framework's stateUpdateHandler can fire multiple times:
@@ -182,9 +217,8 @@ final class DNSResolver: NSObject {
         // Without ResumeGate, we'd crash with "Continuation already resumed" if state transitions
         // rapidly or error paths race. Gate ensures cont.resume() called exactly once.
         //
-        // Serial Queue: connection.start(queue:) specifies execution queue, but does NOT
-        // prevent rapid state changes - a single-threaded queue can still deliver
-        // ready → failed → cancelled in quick succession, each trying to resume.
+        // Serial Queue: Using a dedicated serial queue provides more predictable callback ordering
+        // than global queues, though rapid state changes can still occur.
         try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, Error>) in
             let gate = ResumeGate()
 
@@ -224,7 +258,7 @@ final class DNSResolver: NSObject {
                     break
                 }
             }
-            connection.start(queue: .global(qos: .userInitiated))
+            connection.start(queue: queue)
         }
 
         // Send DNS query packet
@@ -779,6 +813,11 @@ final class RNDNSModule: NSObject, RCTInvalidating {
     }
 
     @objc func invalidate() {
-        resolver.cleanup()
+        // Dispatch cleanup to MainActor since cleanup() is MainActor-isolated.
+        // React Native's invalidate() is synchronous, so we use Task for dispatch.
+        // This is safe because Task.cancel() is immediate - actual cleanup is async.
+        Task { @MainActor in
+            self.resolver.cleanup()
+        }
     }
 }

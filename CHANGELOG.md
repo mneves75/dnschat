@@ -18,6 +18,11 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 - Replaced deprecated `Task.sleep(nanoseconds:)` with `Task.sleep(for:)` API
 - Added `Task.checkCancellation()` in retry loop for faster cancellation response
 - Added comprehensive doc comments on concurrency-sensitive code paths
+- **CRITICAL**: Fixed NWConnection resource leak on timeout/cancellation using `withTaskCancellationHandler`
+- Fixed potential main thread blocking by marking `performUDPQuery` as `nonisolated` for Swift 6.2+ compatibility
+- Fixed `cleanup()` to use proper `@MainActor` isolation instead of fire-and-forget Task
+- Fixed `RNDNSModule.invalidate()` to dispatch to MainActor for cleanup
+- Replaced global queue with dedicated serial queue for NWConnection callbacks
 
 ### Changed
 

@@ -173,6 +173,85 @@ try await Task.sleep(for: .milliseconds(200))
 
 ---
 
+### Phase 9: NWConnection Cleanup on Timeout/Cancellation (Self-Critique Fix)
+
+**Issue**: When `withTimeout` throws `.timeout` or Task is cancelled, the `NWConnection` was orphaned - never cancelled. This caused resource leaks.
+
+**Root Cause**: The timeout mechanism cancels the Task, but NWConnection.cancel() was only called inside the receiveMessage callback. If timeout fired before response arrived, the connection leaked.
+
+**Fix Applied**:
+```swift
+// Wrap entire operation with cancellation handler
+return try await withTaskCancellationHandler {
+    try await performUDPQueryInternal(connection: connection, query: query, queue: queue)
+} onCancel: {
+    // Called synchronously when Task is cancelled (timeout or explicit)
+    connection.stateUpdateHandler = nil
+    connection.cancel()
+}
+```
+
+**Files Changed**:
+- `modules/dns-native/ios/DNSResolver.swift` lines 164-199
+
+---
+
+### Phase 10: Dedicated Serial Queue for NWConnection (Self-Critique Fix)
+
+**Issue**: Using `.global(qos: .userInitiated)` for NWConnection callbacks with Swift 6.2 strict concurrency can cause unpredictable callback ordering.
+
+**Fix Applied**:
+```swift
+// BEFORE - UNPREDICTABLE
+connection.start(queue: .global(qos: .userInitiated))
+
+// AFTER - PREDICTABLE
+let connectionQueue = DispatchQueue(label: "com.dnschat.dns.connection", qos: .userInitiated)
+connection.start(queue: connectionQueue)
+```
+
+---
+
+### Phase 11: nonisolated for Network Operations (Self-Critique Fix)
+
+**Issue**: In Swift 6.2 with `NonisolatedNonsendingByDefault`, `nonisolated async` functions run on the caller's actor by default. Since `performUDPQuery` is called from a `@MainActor` Task, network I/O could block the main thread.
+
+**Fix Applied**:
+```swift
+// Mark as nonisolated to run off MainActor
+// For Swift 6.2+ with NonisolatedNonsendingByDefault, add @concurrent
+@available(iOS 16.0, *)
+nonisolated private func performUDPQuery(...) async throws -> [String]
+```
+
+**Note**: When targeting Swift 6.2+ with the `NonisolatedNonsendingByDefault` feature flag, add `@concurrent` attribute.
+
+---
+
+### Phase 12: cleanup() Proper Actor Isolation (Self-Critique Fix)
+
+**Issue**: `cleanup()` was not properly isolated, and `invalidate()` called it directly without dispatching to MainActor.
+
+**Fix Applied**:
+```swift
+// BEFORE - FIRE AND FORGET
+func cleanup() {
+    Task { @MainActor in ... }
+}
+
+// AFTER - PROPERLY ISOLATED
+@MainActor
+func cleanup() {
+    for (_, task) in activeQueries { task.cancel() }
+    activeQueries.removeAll()
+}
+
+// In RNDNSModule.invalidate():
+Task { @MainActor in self.resolver.cleanup() }
+```
+
+---
+
 ## Verification
 
 ### Automated Tests
@@ -204,6 +283,10 @@ bun run lint
 | iOS 16+ guard | None | Defensive, already checked by isAvailable() |
 | CancellationError mapping | Low | Provides consistent error type |
 | withTimeout guard let | None | Safer than force unwrap |
+| withTaskCancellationHandler | Low | Standard Swift pattern for cleanup |
+| Dedicated serial queue | None | More predictable than global queues |
+| nonisolated on network ops | Low | Prevents main thread blocking |
+| @MainActor on cleanup() | None | Compile-time enforcement |
 
 ---
 
@@ -215,13 +298,19 @@ bun run lint
 
 3. **ResumeGateTests in CI**: Add Swift test target to run concurrency tests.
 
-4. **Connection Cleanup on Timeout**: Consider explicitly cancelling NWConnection when timeout triggers.
+4. **@concurrent Attribute**: When enabling `NonisolatedNonsendingByDefault` feature flag in Swift 6.2+, add `@concurrent` to `performUDPQuery` and `performUDPQueryInternal`.
+
+5. **Strict Concurrency Checking**: Consider enabling "Complete" strict concurrency checking in Xcode build settings.
 
 ---
 
 ## References
 
 - [Swift 6.2 Concurrency Changes - SwiftLee](https://www.avanderlee.com/concurrency/swift-6-2-concurrency-changes/)
+- [@concurrent Explained - SwiftLee](https://www.avanderlee.com/concurrency/concurrent-explained-with-code-examples/)
+- [Approachable Concurrency in Swift 6.2 - SwiftLee](https://www.avanderlee.com/concurrency/approachable-concurrency-in-swift-6-2-a-clear-guide/)
+- [Should you opt-in to Swift 6.2's Main Actor isolation? - Donny Wals](https://www.donnywals.com/should-you-opt-in-to-swift-6-2s-main-actor-isolation/)
+- [Concurrency Safe Global Variables - SwiftLee](https://www.avanderlee.com/concurrency/concurrency-safe-global-variables-to-prevent-data-races/)
 - [Modern Swift Lock: Mutex - SwiftLee](https://www.avanderlee.com/concurrency/modern-swift-lock-mutex-the-synchronization-framework/)
 - [NWConnection - Apple Developer](https://developer.apple.com/documentation/network/nwconnection)
 - [Unicode General Categories](https://unicode.org/reports/tr44/#General_Category_Values)
