@@ -9,12 +9,17 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 ### Changed
 
 - Bumped app version metadata to `4.0.5` (build `33`) across `package.json`, `app.json`, iOS project settings, and Android Gradle config.
-- Updated README stack metadata for `4.0.5` and Expo SDK 55 migration guidance.
+- Merged Expo SDK 55 migration into `main` with dependency and native-project alignment.
+- Upgraded stack to Expo `55.0.0`, React `19.2.0`, and React Native `0.83.2`.
+- Removed obsolete SDK54 `patch-package` patches after validating SDK55 compatibility.
+- Updated typed routes verification to support Expo Router 55+ generation paths.
+- Updated README and docs metadata to reflect the shipped SDK55 stack.
 
 ### Fixed
 
 - About and Settings now display runtime app version/build from Expo-native metadata (with safe fallback) instead of relying on a static package version import.
-- Documented iOS Hermes incident recovery path and clarified that Pods `Internal inconsistency error: never received target ended message` can be secondary fallout from an earlier Hermes script failure.
+- Fixed iOS runtime startup issue caused by StrictMode (`findHostInstance_DEPRECATED`) by removing StrictMode at root layout.
+- Fixed tab chat list runtime navigation error by removing focus-hook dependency that relied on missing navigation context during startup.
 
 ## [4.0.2] - 2026-01-07
 

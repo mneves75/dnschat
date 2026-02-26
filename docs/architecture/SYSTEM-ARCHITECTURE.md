@@ -5,8 +5,8 @@ DNS TXT query and renders the TXT response as chat output.
 
 Current stack (from `package.json`):
 
-- React Native `0.81.5` + React `19.1.0`
-- Expo SDK `54.0.30`
+- React Native `0.83.2` + React `19.2.0`
+- Expo SDK `55.0.0`
 - TypeScript `5.9.2`
 - Navigation: Expo Router (file-based routing) with React Navigation stacks/tabs
 

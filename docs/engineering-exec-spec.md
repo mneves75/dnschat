@@ -6,7 +6,7 @@ PLANS.md is not present in this repository, so this document is the sole source 
 
 ## Goals
 
-Bring the DNSChat repository into compliance with all documents listed in `docs/GUIDELINES-REF/GUIDELINES_INDEX.json`, align with current best practices for Expo SDK 54 / React Native 0.81.5, and provide hard verification evidence (lint/tests/builds and guideline-to-evidence mapping).
+Bring the DNSChat repository into compliance with all documents listed in `docs/GUIDELINES-REF/GUIDELINES_INDEX.json`, align with current best practices for Expo SDK 55 / React Native 0.83.2, and provide hard verification evidence (lint/tests/builds and guideline-to-evidence mapping).
 
 ## Non-goals
 
@@ -227,8 +227,8 @@ Verify: `app.json` `newArchEnabled` true; Android config uses SDK 36 + NDK r29; 
 
 EXPO-GUIDELINES.md
 Applicability: Yes.
-Rules: Expo SDK 54, typed routes, React Compiler, new arch; avoid deprecated expo-av; safe-area-context usage.
-Verify: `app.json` `experiments.typedRoutes` and `reactCompiler`; `bun run verify:typed-routes`; dependencies match SDK 54; no `expo-av` usage; use `react-native-safe-area-context`.
+Rules: Expo SDK 55, typed routes, React Compiler, new arch; avoid deprecated expo-av; safe-area-context usage.
+Verify: `app.json` `experiments.typedRoutes` and `reactCompiler`; `bun run verify:typed-routes`; dependencies match SDK 55; no `expo-av` usage; use `react-native-safe-area-context`.
 
 IOS-GUIDELINES.md
 Applicability: Partial (only for native iOS modules/configs).
@@ -410,7 +410,7 @@ Rules: N/A unless contributing to GUIDELINES-REF system itself.
 Verify: Not modified.
 
 docs/EXPO-SDK-BEST-PRACTICES-EXEC-SPEC.md
-Applicability: Yes (Expo SDK 54 verification checklist).
+Applicability: Yes (Expo SDK 55 verification checklist).
 Rules: Follow Expo-specific verification steps for config, SDK versions, and New Architecture.
 Verify: `app.json`, dependencies, and tests checked against Expo checklist.
 
