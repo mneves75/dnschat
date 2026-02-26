@@ -6,7 +6,6 @@
     "orientation": "default",
     "icon": "./icons/dnschat_ios26.png",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
     "experiments": {
       "reactCompiler": true,
       "typedRoutes": true
@@ -21,7 +20,6 @@
         "foregroundImage": "./icons/dnschat_ios26.png",
         "backgroundColor": "#0D7377"
       },
-      "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": true,
       "package": "org.mvneves.dnschat"
     },
@@ -71,7 +69,8 @@
         }
       ],
       "expo-localization",
-      "expo-router"
+      "expo-router",
+      "expo-secure-store"
     ]
   }
 }
