@@ -11,10 +11,6 @@ import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native
 import { useColorScheme } from "react-native";
 import { ErrorBoundary } from "../src/components/ErrorBoundary";
 import { HapticsConfigurator } from "../src/components/HapticsConfigurator";
-import {
-  LiquidGlassWrapper,
-  useLiquidGlassCapabilities,
-} from "../src/components/LiquidGlassWrapper";
 import { AccessibilityProvider } from "../src/context/AccessibilityContext";
 import { ChatProvider } from "../src/context/ChatContext";
 import { OnboardingProvider, useOnboarding } from "../src/context/OnboardingContext";
@@ -35,7 +31,6 @@ SplashScreen.preventAutoHideAsync().catch(() => {});
 
 function RootLayoutContent() {
   const { hasCompletedOnboarding, loading } = useOnboarding();
-  const { isSupported: glassSupported } = useLiquidGlassCapabilities();
   const router = useRouter();
   const segments = useSegments();
   const rootNavigationState = useRootNavigationState();
@@ -111,19 +106,6 @@ function RootLayoutContent() {
     </Stack>
   );
 
-  if (glassSupported && Platform.OS === "ios") {
-    return (
-      <LiquidGlassWrapper
-        variant="regular"
-        shape="rect"
-        enableContainer={true}
-        style={{ flex: 1, backgroundColor: "transparent" }}
-      >
-        {stack}
-      </LiquidGlassWrapper>
-    );
-  }
-
   return stack;
 }
 
@@ -132,29 +114,27 @@ export default function RootLayout() {
   const theme = colorScheme === "dark" ? DarkTheme : DefaultTheme;
 
   return (
-    <React.StrictMode>
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        <SafeAreaProvider>
-          <KeyboardProvider>
-            <ErrorBoundary>
-              <SettingsProvider>
-                <AccessibilityProvider>
-                  <I18nProvider>
-                    <OnboardingProvider>
-                      <ChatProvider>
-                        <HapticsConfigurator />
-                        <ThemeProvider value={theme}>
-                          <RootLayoutContent />
-                        </ThemeProvider>
-                      </ChatProvider>
-                    </OnboardingProvider>
-                  </I18nProvider>
-                </AccessibilityProvider>
-              </SettingsProvider>
-            </ErrorBoundary>
-          </KeyboardProvider>
-        </SafeAreaProvider>
-      </GestureHandlerRootView>
-    </React.StrictMode>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <KeyboardProvider>
+          <ErrorBoundary>
+            <SettingsProvider>
+              <AccessibilityProvider>
+                <I18nProvider>
+                  <OnboardingProvider>
+                    <ChatProvider>
+                      <HapticsConfigurator />
+                      <ThemeProvider value={theme}>
+                        <RootLayoutContent />
+                      </ThemeProvider>
+                    </ChatProvider>
+                  </OnboardingProvider>
+                </I18nProvider>
+              </AccessibilityProvider>
+            </SettingsProvider>
+          </ErrorBoundary>
+        </KeyboardProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What is DNSChat
 
-A React Native (Expo dev-client) chat app that sends short prompts as DNS TXT queries to LLM servers and renders responses. Uses React Native 0.81.5, Expo SDK 54.0.30, React 19.1.0, TypeScript 5.9.2.
+A React Native (Expo dev-client) chat app that sends short prompts as DNS TXT queries to LLM servers and renders responses. Uses React Native 0.83.2, Expo SDK 55.0.0, React 19.2.0, TypeScript 5.9.2.
 
 **Default DNS Server**: `llm.pieter.com:53` (by @levelsio)
 **Fallback Server**: `ch.at:53` (currently offline)

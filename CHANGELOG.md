@@ -4,6 +4,20 @@ All notable changes to DNSChat will be documented in this file.
 
 The format is based on Keep a Changelog, and this project follows Semantic Versioning.
 
+## [4.0.3] - 2026-02-26
+
+### Changed
+
+- Migrated app dependencies and native projects to Expo SDK 55 / React Native 0.83.2.
+- Removed obsolete SDK54 `patch-package` patches after validating SDK55 compatibility.
+- Updated typed routes verification to support Expo Router 55+ generation paths.
+- Bumped app version metadata to 4.0.3 (build 33) across iOS and Android configs.
+
+### Fixed
+
+- Fixed iOS runtime startup issue caused by StrictMode (`findHostInstance_DEPRECATED`) by removing StrictMode at root layout.
+- Fixed tab chat list runtime navigation error by removing focus-hook dependency that relied on missing navigation context during startup.
+
 ## [4.0.2] - 2026-01-07
 
 ### Fixed

@@ -27,7 +27,6 @@ import {
   TouchableOpacity,
 } from "react-native";
 import Animated from "react-native-reanimated";
-import { useIsFocused } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import { useChat } from "../../context/ChatContext";
 import {
@@ -242,21 +241,22 @@ export function GlassChatList() {
   const { t } = useTranslation();
   const { animatedStyle } = useScreenEntrance();
   const { opacities, translates } = useStaggeredListValues(chats.length);
-  const isFocused = useIsFocused();
 
   // Track initial load for skeleton display
   const [hasLoadedOnce, setHasLoadedOnce] = React.useState(false);
 
-  // Load chats when screen is focused (CRITICAL FIX)
-  // Effect: refresh chat list on focus and mark first load.
+  // Effect: load chat list on first mount and mark first load completion.
   React.useEffect(() => {
-    if (!isFocused) return;
+    let isMounted = true;
     loadChats().then(() => {
-      if (!hasLoadedOnce) {
+      if (isMounted && !hasLoadedOnce) {
         setHasLoadedOnce(true);
       }
     });
-  }, [hasLoadedOnce, isFocused]);
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Effect: surface chat load errors via alert.
   React.useEffect(() => {

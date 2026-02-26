@@ -61,7 +61,7 @@ Built with React Native 0.81 + New Architecture (Fabric):
 - Native Android DnsResolver API implementation (Java)
 - Intelligent DNS fallback: Native → UDP → TCP
 - Sub-second response times for AI queries
-- Optimized for Android API 21+ with TurboModules
+- Optimized for Android API 24+ with TurboModules
 - Production-hardened DNS injection protection
 
 **PRIVACY-FIRST ARCHITECTURE**
@@ -110,7 +110,7 @@ Your data never leaves your device:
 - Jest test suite with 23 test files
 
 **REQUIREMENTS**
-- Android 5.0 (API 21) or later
+- Android 7.0 (API 24) or later
 - 10 MB download size
 - Phone and tablet compatible
 

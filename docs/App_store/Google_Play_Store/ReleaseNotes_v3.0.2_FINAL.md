@@ -50,11 +50,10 @@ Feel your app interactions with native Android haptic feedback. Success vibratio
 
 ## Requirements
 
-- Android 5.0 (API 21) or later
+- Android 7.0 (API 24) or later
 - 10 MB download
 
 Thank you for using DNS Chat! Your privacy matters.
 
 ---
 **Character Count for Google Play:** ~490/500 (short version)
-

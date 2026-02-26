@@ -4,7 +4,7 @@ Complete step-by-step guide for publishing DNSChat to the Google Play Store.
 
 **App**: DNSChat
 **Package**: `org.mvneves.dnschat`
-**Current Version**: 4.0.0
+**Current Version**: 4.0.3
 
 ---
 
@@ -121,7 +121,7 @@ Full VoiceOver/TalkBack support with screen reader optimizations.
 
 TECHNICAL DETAILS:
 
-• Built with React Native and Expo SDK 54
+• Built with React Native and Expo SDK 55
 • React 19 with New Architecture enabled
 • Native DNS module for iOS and Android
 • Supports DNS servers: 1.1.1.1, 8.8.8.8, 9.9.9.9
@@ -323,10 +323,10 @@ See [ANDROID_RELEASE.md](./ANDROID_RELEASE.md) for signing configuration.
    - **Upload** new AAB
 4. Add release notes:
    ```
-   What's new in v4.0.0:
-   • Native DNS bridge parity fixes (port parameter supported on iOS/Android)
-   • Reanimated render warnings eliminated in core UI flows
-   • Version and release documentation refreshed for 4.0.0
+   What's new in v4.0.3:
+   • Upgraded to Expo SDK 55 / React Native 0.83.2
+   • Fixed iOS startup StrictMode runtime warning path
+   • Updated release documentation and version metadata to 4.0.3
    ```
 5. Click **"Review release"**
 6. Set rollout percentage (start with 10-20% recommended)
