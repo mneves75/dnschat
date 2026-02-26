@@ -66,13 +66,12 @@ type TouchableWithPointerEventsProps = TouchableOpacityProps & {
   pointerEvents?: ViewProps["pointerEvents"];
 };
 
-const TouchableWithPointerEvents = React.forwardRef<
-  React.ElementRef<typeof TouchableOpacity>,
-  TouchableWithPointerEventsProps
->(
-  (props, ref) => <TouchableOpacity ref={ref} {...props} />,
-);
-TouchableWithPointerEvents.displayName = "TouchableWithPointerEvents";
+function TouchableWithPointerEvents({
+  ref,
+  ...props
+}: TouchableWithPointerEventsProps & { ref?: React.Ref<React.ElementRef<typeof TouchableOpacity>> }) {
+  return <TouchableOpacity ref={ref} {...props} />;
+}
 
 // Reanimated's default TouchableOpacity typing omits pointerEvents, so we wrap it to expose the prop.
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableWithPointerEvents);

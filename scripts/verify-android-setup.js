@@ -42,6 +42,54 @@ function checkAdbAvailable() {
   }
 }
 
+function parseJavaMajorVersion(raw) {
+  const text = String(raw ?? "");
+  const match = text.match(/version\s+"(\d+)(?:\.\d+)?/i);
+  if (!match) return null;
+  const major = Number(match[1]);
+  return Number.isFinite(major) ? major : null;
+}
+
+function isSupportedAndroidJavaMajor(major) {
+  return Number.isFinite(major) && major >= 17 && major <= 21;
+}
+
+function checkJavaRuntimeCompatibility() {
+  try {
+    const output = execSync("java -version 2>&1", { encoding: "utf8" });
+    const major = parseJavaMajorVersion(output);
+    if (isSupportedAndroidJavaMajor(major)) {
+      success(`Java runtime major ${major} is supported (recommended: 17 or 21)`);
+      return true;
+    }
+    if (process.platform === "darwin") {
+      for (const version of ["17", "21"]) {
+        try {
+          const resolved = execSync(`/usr/libexec/java_home -v ${version}`, {
+            encoding: "utf8",
+          }).trim();
+          if (resolved && fs.existsSync(resolved)) {
+            warn(
+              `Current Java is ${major ?? "unknown"}, but JDK ${version} is installed at ${resolved}.`,
+            );
+            info(`Use: export JAVA_HOME="${resolved}"`);
+            return true;
+          }
+        } catch {
+          // Continue checking other versions.
+        }
+      }
+    }
+
+    error(`Unsupported Java runtime major version: ${major ?? "unknown"} (expected 17 or 21).`);
+    info("Set JAVA_HOME to a supported JDK before running Android native build.");
+    return false;
+  } catch {
+    error("Unable to execute 'java -version'. Install JDK 17 or 21 and set JAVA_HOME.");
+    return false;
+  }
+}
+
 function checkMetroPort() {
   try {
     const { execSync } = require("node:child_process");
@@ -204,6 +252,67 @@ function checkMainApplicationKt() {
       error(check.failMessage);
       allPassed = false;
     }
+  }
+
+  return allPassed;
+}
+
+function checkAndroidReleaseSigningPolicy() {
+  const appBuildGradlePath = path.join(
+    __dirname,
+    "..",
+    "android",
+    "app",
+    "build.gradle",
+  );
+
+  if (!fs.existsSync(appBuildGradlePath)) {
+    error("android/app/build.gradle not found");
+    return false;
+  }
+
+  const content = fs.readFileSync(appBuildGradlePath, "utf8");
+  const checks = [
+    {
+      name: "keystore.properties (android/) fallback",
+      pattern: /rootProject\.file\("keystore\.properties"\)/,
+      failMessage: "Missing rootProject keystore.properties fallback",
+    },
+    {
+      name: "keystore.properties (repo root) fallback",
+      pattern: /new File\(projectRoot,\s*"keystore\.properties"\)/,
+      failMessage: "Missing repo-root keystore.properties fallback",
+    },
+  ];
+
+  let allPassed = true;
+  for (const check of checks) {
+    if (check.pattern.test(content)) {
+      success(check.name);
+    } else {
+      error(check.failMessage);
+      allPassed = false;
+    }
+  }
+
+  const releaseBlock =
+    content.match(/buildTypes\s*\{[\s\S]*?release\s*\{([\s\S]*?)\n\s*}\s*}/)?.[1] ?? "";
+  if (/signingConfig\s+signingConfigs\.debug/.test(releaseBlock)) {
+    error("Release buildType still uses debug signingConfig");
+    allPassed = false;
+  } else {
+    success("Release buildType does not use debug signingConfig");
+  }
+
+  if (
+    /if \(hasReleaseSigning\)\s*\{[\s\S]*?signingConfig\s+signingConfigs\.release/.test(
+      releaseBlock,
+    )
+  ) {
+    success("Release buildType uses signingConfigs.release when hasReleaseSigning=true");
+  } else {
+    error("Release buildType missing conditional signingConfigs.release policy");
+    allPassed = false;
   }
 
   return allPassed;
@@ -400,6 +509,12 @@ function main() {
     warn("ADB not found in PATH (optional for file checks)");
   }
 
+  // Check 2.1: Java runtime compatibility
+  log("\n--- Java Runtime ---");
+  if (!checkJavaRuntimeCompatibility()) {
+    allChecksPassed = false;
+  }
+
   // Check 3: DNS Native files exist
   log("\n--- DNS Native Module Files ---");
   if (!checkDNSNativeFiles()) {
@@ -421,6 +536,13 @@ function main() {
   }
 
   // Check 6: Metro bundler
+  log("\n--- Android Release Signing Policy ---");
+  if (!checkAndroidReleaseSigningPolicy()) {
+    allChecksPassed = false;
+    error("Android release signing policy is not aligned.");
+  }
+
+  // Check 7: Metro bundler
   log("\n--- Metro Bundler ---");
   const metroPort = process.env.RCT_METRO_PORT || "8081";
   if (checkMetroPort()) {
@@ -430,7 +552,7 @@ function main() {
     info("Run: bun run start");
   }
 
-  // Check 7: ADB reverse (if adb available)
+  // Check 8: ADB reverse (if adb available)
   if (adbAvailable) {
     log("\n--- ADB Reverse ---");
     if (!checkAdbReverse()) {
@@ -456,6 +578,11 @@ if (require.main === module) {
 }
 
 module.exports = {
+  checkAndroidReleaseSigningPolicy,
+  checkJavaRuntimeCompatibility,
+  checkMainApplicationKt,
+  isSupportedAndroidJavaMajor,
+  parseJavaMajorVersion,
   parseJavaProperties,
   resolveAndroidSdkDir,
 };

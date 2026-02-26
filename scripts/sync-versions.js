@@ -44,6 +44,29 @@ function getSourceVersionFromPackageJson() {
   }
 }
 
+function readAppConfigVersions() {
+  const appJson = JSON.parse(fs.readFileSync(FILES.appJson, "utf8"));
+  const appVersion = appJson?.expo?.version ?? null;
+  const iosBuildRaw = appJson?.expo?.ios?.buildNumber ?? null;
+  const androidBuildRaw = appJson?.expo?.android?.versionCode ?? null;
+
+  const iosBuildNumber =
+    typeof iosBuildRaw === "string" && /^\d+$/.test(iosBuildRaw)
+      ? parseInt(iosBuildRaw, 10)
+      : typeof iosBuildRaw === "number" && Number.isFinite(iosBuildRaw)
+        ? iosBuildRaw
+        : null;
+
+  const androidVersionCode =
+    typeof androidBuildRaw === "number" && Number.isFinite(androidBuildRaw)
+      ? androidBuildRaw
+      : typeof androidBuildRaw === "string" && /^\d+$/.test(androidBuildRaw)
+        ? parseInt(androidBuildRaw, 10)
+        : null;
+
+  return { appVersion, iosBuildNumber, androidVersionCode };
+}
+
 /**
  * Parse iOS MARKETING_VERSION and CURRENT_PROJECT_VERSION from pbxproj text.
  */
@@ -102,23 +125,42 @@ function parseExplicitBuildNumber(rawValue) {
 /**
  * Update app.json version
  */
-function updateAppJson(version) {
+function updateAppJson(version, buildNumber) {
   try {
     const appJson = JSON.parse(fs.readFileSync(FILES.appJson, "utf8"));
-    const oldVersion = appJson.expo.version;
+    const oldVersion = appJson?.expo?.version ?? null;
+    const oldIosBuild = appJson?.expo?.ios?.buildNumber ?? null;
+    const oldAndroidBuild = appJson?.expo?.android?.versionCode ?? null;
+    const desiredIosBuild = String(buildNumber);
+    const desiredAndroidBuild = buildNumber;
 
-    if (oldVersion === version) {
-      console.log(`[sync-versions] app.json already at version ${version}`);
+    if (!appJson.expo) appJson.expo = {};
+    if (!appJson.expo.ios) appJson.expo.ios = {};
+    if (!appJson.expo.android) appJson.expo.android = {};
+
+    const alreadySynced =
+      oldVersion === version &&
+      oldIosBuild === desiredIosBuild &&
+      oldAndroidBuild === desiredAndroidBuild;
+
+    if (alreadySynced) {
+      console.log(
+        `[sync-versions] app.json already at version ${version} (ios build ${desiredIosBuild}, android build ${desiredAndroidBuild})`,
+      );
       return false;
     }
 
     appJson.expo.version = version;
+    appJson.expo.ios.buildNumber = desiredIosBuild;
+    appJson.expo.android.versionCode = desiredAndroidBuild;
 
     if (!isDryRun) {
       fs.writeFileSync(FILES.appJson, JSON.stringify(appJson, null, 2) + "\n");
     }
 
-    console.log(`[sync-versions] app.json: ${oldVersion} -> ${version} ${isDryRun ? "(dry run)" : ""}`);
+    console.log(
+      `[sync-versions] app.json: version ${oldVersion} -> ${version}, iOS build ${oldIosBuild} -> ${desiredIosBuild}, Android build ${oldAndroidBuild} -> ${desiredAndroidBuild} ${isDryRun ? "(dry run)" : ""}`,
+    );
     return true;
   } catch (error) {
     console.error("[sync-versions] Error updating app.json:", error.message);
@@ -217,6 +259,8 @@ function getTargetBuildNumber({
   iosBuildNumber,
   androidVersionName,
   androidVersionCode,
+  appIosBuildNumber,
+  appAndroidVersionCode,
   explicitBuildNumber,
   bumpBuild,
 }) {
@@ -227,6 +271,8 @@ function getTargetBuildNumber({
   const maxCurrentBuild = Math.max(
     iosBuildNumber ?? 0,
     androidVersionCode ?? 0,
+    appIosBuildNumber ?? 0,
+    appAndroidVersionCode ?? 0,
     0,
   );
 
@@ -266,6 +312,11 @@ function main() {
   console.log(`Source version (package.json): ${latestVersion}\n`);
 
   const {
+    appVersion,
+    iosBuildNumber: appIosBuildNumber,
+    androidVersionCode: appAndroidVersionCode,
+  } = readAppConfigVersions();
+  const {
     iosContent,
     marketingVersion: iosMarketingVersion,
     buildNumber: iosBuildNumber,
@@ -281,6 +332,8 @@ function main() {
     iosBuildNumber,
     androidVersionName,
     androidVersionCode,
+    appIosBuildNumber,
+    appAndroidVersionCode,
     explicitBuildNumber,
     bumpBuild: shouldBumpBuild,
   });
@@ -295,6 +348,9 @@ function main() {
           : "no bump";
 
   console.log(
+    `[sync-versions] app.json current: version=${appVersion ?? "missing"} iosBuild=${appIosBuildNumber ?? "missing"} androidBuild=${appAndroidVersionCode ?? "missing"}`,
+  );
+  console.log(
     `[sync-versions] iOS current: version=${iosMarketingVersion ?? "missing"} build=${iosBuildNumber ?? "missing"}`,
   );
   console.log(
@@ -305,7 +361,7 @@ function main() {
 
   // Update all files
   const updates = [
-    updateAppJson(latestVersion),
+    updateAppJson(latestVersion, buildNumber),
     updateIosProject(latestVersion, buildNumber),
     updateAndroidBuild(latestVersion, buildNumber),
   ];

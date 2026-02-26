@@ -7,7 +7,7 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 - JavaScript fallback transports (UDP/TCP) for constrained networks
 - An in-app Logs screen to inspect attempts, failures, and fallbacks
 
-[![Version](https://img.shields.io/badge/version-4.0.5-blue.svg)](https://github.com/mneves75/dnschat)
+[![Version](https://img.shields.io/badge/version-4.0.6-blue.svg)](https://github.com/mneves75/dnschat)
 [![React Native](https://img.shields.io/badge/React%20Native-0.83.2-blue.svg)](https://reactnative.dev/)
 [![Expo](https://img.shields.io/badge/Expo-55.0.0-black.svg)](https://expo.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9.2-blue.svg)](https://www.typescriptlang.org/)
@@ -16,14 +16,14 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 
 ## Tech stack
 
-- App version: `4.0.5` (build `33`)
+- App version: `4.0.6` (build `34`)
 - Expo workflow: Expo Router + dev-client + EAS-compatible native config
 - Expo SDK: `55.0.0`
 - React: `19.2.0`
 - React Native: `0.83.2`
 - TypeScript: `5.9.2`
 - Hermes: enabled
-- New Architecture: enabled (`newArchEnabled: true`)
+- New Architecture: enabled by default on SDK 55
 - React Compiler: enabled (`experiments.reactCompiler: true`)
 - Typed routes: enabled (`experiments.typedRoutes: true`)
 

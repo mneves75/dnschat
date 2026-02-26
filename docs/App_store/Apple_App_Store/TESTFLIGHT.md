@@ -151,7 +151,7 @@ bun run ios -- --verbose
 - **App Store Connect** app record created
 - **Code signing** configured correctly
 - **Bundle ID** matches (`org.mvneves.dnschat`)
-- **Version numbers** consistent (v4.0.5)
+- **Version numbers** consistent (v4.0.6)
 - **Native DNS module** compiles successfully
 - **Universal landscape support** enabled
 - **App Store screenshots** (current requirements):
@@ -203,4 +203,4 @@ If you encounter issues during the upload process:
 
 ---
 
-_TestFlight upload guide for DNSChat v4.0.5 - Last updated: 2026-02-26_
+_TestFlight upload guide for DNSChat v4.0.6 - Last updated: 2026-02-26_

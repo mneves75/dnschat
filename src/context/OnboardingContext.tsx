@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, use, useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { isScreenshotMode } from "../utils/screenshotMode";
 import { devWarn } from "../utils/devLog";
@@ -191,7 +191,7 @@ export function OnboardingProvider({
   };
 
   return (
-    <OnboardingContext.Provider
+    <OnboardingContext
       value={{
         hasCompletedOnboarding,
         currentStep,
@@ -206,12 +206,12 @@ export function OnboardingProvider({
       }}
     >
       {children}
-    </OnboardingContext.Provider>
+    </OnboardingContext>
   );
 }
 
 export function useOnboarding() {
-  const context = useContext(OnboardingContext);
+  const context = use(OnboardingContext);
   if (context === undefined) {
     throw new Error("useOnboarding must be used within an OnboardingProvider");
   }

@@ -53,4 +53,4 @@ For detailed Google Play Store publishing instructions, see:
 
 ## Notes
 
-- Latest release tag: `v4.0.5`
+- Latest release tag: `v4.0.6`
