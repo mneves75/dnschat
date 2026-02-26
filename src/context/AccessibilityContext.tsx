@@ -7,7 +7,7 @@
 
 import React, {
   createContext,
-  useContext,
+  use,
   useState,
   useEffect,
 } from "react";
@@ -135,14 +135,14 @@ export function AccessibilityProvider({ children }: AccessibilityProviderProps) 
   };
 
   return (
-    <AccessibilityContext.Provider value={contextValue}>
+    <AccessibilityContext value={contextValue}>
       {children}
-    </AccessibilityContext.Provider>
+    </AccessibilityContext>
   );
 }
 
 export function useAccessibility(): AccessibilityContextType {
-  const context = useContext(AccessibilityContext);
+  const context = use(AccessibilityContext);
   if (context === undefined) {
     throw new Error("useAccessibility must be used within an AccessibilityProvider");
   }

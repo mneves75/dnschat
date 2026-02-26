@@ -15,6 +15,10 @@ bun install
 bun run start
 ```
 
+## Issue templates
+
+Use [GitHub issue templates](https://github.com/mneves75/dnschat/issues/new/choose) for bug reports and feature requests.
+
 Common checks:
 
 ```bash
@@ -29,6 +33,9 @@ bun run verify:ios-pods
 
 # Android tooling sanity check
 bun run verify:android
+
+# Run all verification gates at once
+bun run verify:all
 ```
 
 DNS smoke checks:
@@ -52,6 +59,10 @@ bun run dns:harness -- --message "test message" --local-server
 - DNS is observable infrastructure; never put secrets/PII in prompts or logs.
 - Do not add unvalidated DNS endpoints; keep the DNS server whitelist consistent across layers.
 - Validate and sanitize inputs before building query names.
+
+## Reporting vulnerabilities
+
+See [SECURITY.md](SECURITY.md) for responsible disclosure.
 
 ## Git hooks
 

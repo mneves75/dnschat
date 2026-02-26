@@ -6,16 +6,14 @@ import android.content.res.Configuration
 import com.facebook.react.PackageList
 import com.facebook.react.ReactApplication
 import com.facebook.react.ReactNativeApplicationEntryPoint.loadReactNative
-import com.facebook.react.ReactNativeHost
 import com.facebook.react.ReactPackage
-import com.dnsnative.DNSNativePackage
 import com.facebook.react.ReactHost
 import com.facebook.react.common.ReleaseLevel
-import com.facebook.react.defaults.DefaultReactHost
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint
-import com.facebook.react.defaults.DefaultReactNativeHost
 
 import expo.modules.ApplicationLifecycleDispatcher
+import expo.modules.ExpoReactHostFactory
+import com.dnsnative.DNSNativePackage
 import expo.modules.adapters.react.ModuleRegistryAdapter
 import expo.modules.core.interfaces.Package
 import expo.modules.linking.ExpoLinkingPackage
@@ -23,25 +21,21 @@ import expo.modules.linking.ExpoLinkingPackage
 class MainApplication : Application(), ReactApplication {
   private val manualExpoPackages: List<Package> = listOf(ExpoLinkingPackage())
 
-  override val reactNativeHost: ReactNativeHost =
-      object : DefaultReactNativeHost(this) {
-        override fun getPackages(): List<ReactPackage> =
-            PackageList(this).packages.apply {
-              // DNS native module (not auto-linked)
-              add(DNSNativePackage())
-              // Manual Expo module registration (not auto-linked in some dev-client flows)
-              add(ModuleRegistryAdapter(manualExpoPackages))
-            }
 
-          override fun getJSMainModuleName(): String = ".expo/.virtual-metro-entry"
-
-          override fun getUseDeveloperSupport(): Boolean = BuildConfig.DEBUG
-
-          override val isNewArchEnabled: Boolean = BuildConfig.IS_NEW_ARCHITECTURE_ENABLED
-      }
-
-  override val reactHost: ReactHost
-    get() = DefaultReactHost.getDefaultReactHost(applicationContext, reactNativeHost)
+  override val reactHost: ReactHost by lazy {
+    ExpoReactHostFactory.getDefaultReactHost(
+      context = applicationContext,
+      packageList =
+        PackageList(this).packages.apply {
+          // Manual Expo module registration (not auto-linked in some dev-client flows)
+          add(ModuleRegistryAdapter(manualExpoPackages))
+          // DNS native module (not auto-linked)
+          add(DNSNativePackage())
+          // Packages that cannot be autolinked yet can be added manually here, for example:
+          // add(MyReactNativePackage())
+        }
+    )
+  }
 
   override fun onCreate() {
     super.onCreate()

@@ -11,7 +11,6 @@ final class DNSResolver: NSObject {
     private static let defaultDnsPort: UInt16 = 53
     private static let queryTimeout: TimeInterval = 10.0
     private static let maxNativeAttempts: Int = 3
-    private static let retryDelayNanoseconds: UInt64 = 200_000_000 // 200ms
     private static let maxLabelLength: Int = 63
     private static let maxQNameLength: Int = 255
     private static let dnsFlagQR: UInt16 = 0x8000
@@ -27,17 +26,22 @@ final class DNSResolver: NSObject {
         "1.1.1.1",
         "1.0.0.1",
     ]
+    /// Thread-safe storage for allowed servers using actor isolation.
+    /// Protects against data races when reading/writing from concurrent tasks.
+    @MainActor
     private static var allowedServers: Set<String> = defaultAllowedServers
     // MARK: - State
     @MainActor private var activeQueries: [String: Task<[String], Error>] = [:]
 
+    /// Cancels all active queries and clears the query cache.
+    /// - Note: Must be called from MainActor. Task.cancel() is immediate;
+    ///   actual query completion happens asynchronously.
+    @MainActor
     func cleanup() {
-        Task { @MainActor in
-            for (_, task) in activeQueries {
-                task.cancel()
-            }
-            activeQueries.removeAll()
+        for (_, task) in activeQueries {
+            task.cancel()
         }
+        activeQueries.removeAll()
     }
 
     private struct DnsQuery {
@@ -65,13 +69,8 @@ final class DNSResolver: NSObject {
         rejecter: @escaping RCTPromiseRejectBlock
     ) {
         let dnsPort = port.uint16Value > 0 ? port.uint16Value : Self.defaultDnsPort
-        let normalizedDomain: String
-        do {
-            normalizedDomain = try Self.normalizeServerHost(domain)
-        } catch {
-            rejecter("DNS_QUERY_FAILED", error.localizedDescription, error)
-            return
-        }
+
+        // Pre-validate message format synchronously (doesn't need MainActor)
         let queryName: String
         do {
             // Ensure Unicode input matches JS sanitization (fold accents, enforce ASCII)
@@ -81,32 +80,49 @@ final class DNSResolver: NSObject {
             return
         }
 
-        let queryId = "\(normalizedDomain):\(dnsPort)-\(queryName)"
-        
-        Task {
+        // Use Task with @MainActor to safely access allowedServers and activeQueries
+        Task { @MainActor in
+            // CRITICAL: Defensive guard for iOS 16+ requirement.
+            // isAvailable() should be checked by JS before calling queryTXT,
+            // but we add this guard to prevent crashes if that check is bypassed.
+            guard #available(iOS 16.0, *) else {
+                rejecter("DNS_QUERY_FAILED", "DNS native module requires iOS 16.0+", nil)
+                return
+            }
+
+            // Validate server on MainActor where allowedServers is isolated
+            let normalizedDomain: String
             do {
-                // Check for existing query
-                let existingQuery = await MainActor.run { self.activeQueries[queryId] }
-                if let existingQuery {
+                normalizedDomain = try Self.normalizeServerHost(domain)
+            } catch {
+                rejecter("DNS_QUERY_FAILED", error.localizedDescription, error)
+                return
+            }
+
+            let queryId = "\(normalizedDomain):\(dnsPort)-\(queryName)"
+
+            do {
+                // Check for existing query (already on MainActor)
+                if let existingQuery = self.activeQueries[queryId] {
                     let result = try await existingQuery.value
                     resolver(result)
                     return
                 }
-                
+
                 // Create new query with dynamic port
-                let queryTask = createQueryTask(server: normalizedDomain, queryName: queryName, port: dnsPort)
-                _ = await MainActor.run { self.activeQueries[queryId] = queryTask }
+                let queryTask = self.createQueryTask(server: normalizedDomain, queryName: queryName, port: dnsPort)
+                self.activeQueries[queryId] = queryTask
 
                 let result = try await queryTask.value
-                
-                // Clean up
-                _ = await MainActor.run { self.activeQueries.removeValue(forKey: queryId) }
+
+                // Clean up (already on MainActor)
+                self.activeQueries.removeValue(forKey: queryId)
 
                 resolver(result)
-                
+
             } catch {
-                // Clean up on error
-                _ = await MainActor.run { self.activeQueries.removeValue(forKey: queryId) }
+                // Clean up on error (already on MainActor)
+                self.activeQueries.removeValue(forKey: queryId)
 
                 rejecter("DNS_QUERY_FAILED", error.localizedDescription, error)
             }
@@ -115,29 +131,43 @@ final class DNSResolver: NSObject {
     
     // MARK: - Private Implementation
     
+    /// Creates an async task to perform the DNS query with retry logic.
+    /// - Note: Requires iOS 16.0+ for Network.framework and Task.sleep(for:) APIs.
+    @available(iOS 16.0, *)
     private func createQueryTask(server: String, queryName: String, port: UInt16) -> Task<[String], Error> {
         Task {
-            try await withTimeout(seconds: Self.queryTimeout) {
-                for attempt in 0..<Self.maxNativeAttempts {
-                    do {
-                        return try await self.performUDPQuery(server: server, queryName: queryName, port: port)
-                    } catch let error as DNSError {
-                        if case .noRecordsFound = error, attempt < Self.maxNativeAttempts - 1 {
-                            try await Task.sleep(nanoseconds: Self.retryDelayNanoseconds)
-                            continue
+            do {
+                return try await withTimeout(seconds: Self.queryTimeout) {
+                    for attempt in 0..<Self.maxNativeAttempts {
+                        // Check for cancellation before each attempt
+                        try Task.checkCancellation()
+
+                        do {
+                            return try await self.performUDPQuery(server: server, queryName: queryName, port: port)
+                        } catch let error as DNSError {
+                            if case .noRecordsFound = error, attempt < Self.maxNativeAttempts - 1 {
+                                // Check cancellation before sleeping
+                                try Task.checkCancellation()
+                                try await Task.sleep(for: .milliseconds(200))
+                                continue
+                            }
+                            throw error
                         }
-                        throw error
-                    } catch {
-                        throw error
                     }
+                    throw DNSError.noRecordsFound
                 }
-                throw DNSError.noRecordsFound
+            } catch is CancellationError {
+                // Convert Swift's CancellationError to our DNSError.cancelled for consistent error handling
+                throw DNSError.cancelled
             }
         }
     }
 
+    /// Performs the actual UDP DNS query.
+    /// - Note: Marked nonisolated to run off the MainActor in Swift 6.2+.
+    ///   For Swift 6.2+ with NonisolatedNonsendingByDefault, add @concurrent.
     @available(iOS 16.0, *)
-    private func performUDPQuery(server: String, queryName: String, port: UInt16) async throws -> [String] {
+    nonisolated private func performUDPQuery(server: String, queryName: String, port: UInt16) async throws -> [String] {
         // Build DNS query
         let query = try createDNSQuery(queryName: queryName)
 
@@ -147,6 +177,36 @@ final class DNSResolver: NSObject {
         let params = NWParameters.udp
         let connection = NWConnection(host: host, port: dnsPort, using: params)
 
+        // Use a dedicated serial queue for NWConnection callbacks.
+        // This provides better predictability than global queues and aligns
+        // with Swift 6.2+ concurrency best practices.
+        let connectionQueue = DispatchQueue(label: "com.dnschat.dns.connection", qos: .userInitiated)
+
+        // CRITICAL: Ensure connection cleanup on cancellation/timeout.
+        // When the parent Task is cancelled (e.g., by withTimeout), we MUST cancel
+        // the NWConnection to prevent resource leaks. Without this handler,
+        // a cancelled Task would orphan the connection.
+        return try await withTaskCancellationHandler {
+            try await performUDPQueryInternal(
+                connection: connection,
+                query: query,
+                queue: connectionQueue
+            )
+        } onCancel: {
+            // Called synchronously when Task is cancelled.
+            // Safe to call from any thread - NWConnection.cancel() is thread-safe.
+            connection.stateUpdateHandler = nil
+            connection.cancel()
+        }
+    }
+
+    /// Internal implementation of UDP query, separated for proper cancellation handling.
+    @available(iOS 16.0, *)
+    nonisolated private func performUDPQueryInternal(
+        connection: NWConnection,
+        query: DnsQuery,
+        queue: DispatchQueue
+    ) async throws -> [String] {
         // CRITICAL: Wait for connection ready state
         //
         // Race Condition: Network.framework's stateUpdateHandler can fire multiple times:
@@ -157,9 +217,8 @@ final class DNSResolver: NSObject {
         // Without ResumeGate, we'd crash with "Continuation already resumed" if state transitions
         // rapidly or error paths race. Gate ensures cont.resume() called exactly once.
         //
-        // Serial Queue: connection.start(queue:) specifies execution queue, but does NOT
-        // prevent rapid state changes - a single-threaded queue can still deliver
-        // ready → failed → cancelled in quick succession, each trying to resume.
+        // Serial Queue: Using a dedicated serial queue provides more predictable callback ordering
+        // than global queues, though rapid state changes can still occur.
         try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, Error>) in
             let gate = ResumeGate()
 
@@ -167,9 +226,24 @@ final class DNSResolver: NSObject {
                 switch state {
                 case .ready:
                     gate.tryResume {
+                        // Clear handler first to prevent retain cycle
                         connection.stateUpdateHandler = nil
                         cont.resume()
                     }
+                case .waiting(let error):
+                    // Connection cannot be established yet - log but don't fail immediately.
+                    // Network.framework may recover automatically. If it doesn't, we'll
+                    // eventually hit .failed or timeout.
+                    // For transient network issues, we want to give the connection a chance.
+                    // However, if this is a definitive error (e.g., no route), fail fast.
+                    if case .posix(let code) = error, code == .ENETUNREACH || code == .EHOSTUNREACH {
+                        gate.tryResume {
+                            connection.stateUpdateHandler = nil
+                            connection.cancel()
+                            cont.resume(throwing: DNSError.resolverFailed("Network unreachable: \(error.localizedDescription)"))
+                        }
+                    }
+                    // Otherwise, let it retry or timeout naturally
                 case .failed(let error):
                     gate.tryResume {
                         connection.stateUpdateHandler = nil
@@ -184,7 +258,7 @@ final class DNSResolver: NSObject {
                     break
                 }
             }
-            connection.start(queue: .global(qos: .userInitiated))
+            connection.start(queue: queue)
         }
 
         // Send DNS query packet
@@ -505,8 +579,19 @@ final class DNSResolver: NSObject {
 
     private func foldUnicode(_ value: String) -> String {
         // Match JS sanitizeDNSMessageReference: compatibility decomposition (NFKD) then strip combining marks.
+        // IMPORTANT: JS uses \p{M}+ which matches Unicode General Category "Mark" (combining characters).
+        // Swift's .isDiacritic is NOT the same - we must check the generalCategory instead.
         let decomposed = value.decomposedStringWithCompatibilityMapping
-        let scalars = decomposed.unicodeScalars.filter { !$0.properties.isDiacritic }
+        let scalars = decomposed.unicodeScalars.filter { scalar in
+            // Check if this scalar is in the "Mark" general category (M = Mn, Mc, Me)
+            // This matches the JS \p{M} regex
+            switch scalar.properties.generalCategory {
+            case .nonspacingMark, .spacingMark, .enclosingMark:
+                return false  // Filter out combining marks
+            default:
+                return true   // Keep everything else
+            }
+        }
         return String(String.UnicodeScalarView(scalars))
     }
 
@@ -518,6 +603,7 @@ final class DNSResolver: NSObject {
         return trimmed
     }
 
+    @MainActor
     private static func normalizeServerHost(_ value: String) throws -> String {
         let trimmed = normalizeServerHostInput(value)
         guard !trimmed.isEmpty else {
@@ -529,6 +615,7 @@ final class DNSResolver: NSObject {
         return trimmed
     }
 
+    @MainActor
     static func updateAllowedServers(_ config: [String: Any]) throws -> Bool {
         guard let servers = config["allowedServers"] as? [String] else {
             return false
@@ -636,6 +723,14 @@ internal final class ResumeGate: @unchecked Sendable {
 
 // MARK: - Timeout Utility
 
+/// Wraps an async operation with a timeout.
+/// - Parameters:
+///   - seconds: Maximum time to wait before throwing DNSError.timeout
+///   - operation: The async operation to execute
+/// - Returns: The result of the operation if it completes before timeout
+/// - Throws: DNSError.timeout if the operation exceeds the time limit
+/// - Note: Requires iOS 16.0+ for Task.sleep(for:) API
+@available(iOS 16.0, *)
 private func withTimeout<T>(
     seconds: TimeInterval,
     operation: @escaping () async throws -> T
@@ -644,14 +739,19 @@ private func withTimeout<T>(
         group.addTask {
             try await operation()
         }
-        
+
         group.addTask {
-            let nanoseconds = UInt64((max(seconds, 0) * 1_000_000_000).rounded())
-            try await Task.sleep(nanoseconds: nanoseconds)
+            try await Task.sleep(for: .seconds(max(seconds, 0)))
             throw DNSResolver.DNSError.timeout
         }
-        
-        let result = try await group.next()!
+
+        // Safe unwrap - we always have exactly 2 tasks, so next() will return a value.
+        // The first task to complete (either operation success or timeout) wins.
+        guard let result = try await group.next() else {
+            // Defensive fallback: should never happen with 2 tasks
+            throw DNSResolver.DNSError.timeout
+        }
+        // Cancel the remaining task (either timeout or operation)
         group.cancelAll()
         return result
     }
@@ -701,15 +801,23 @@ final class RNDNSModule: NSObject, RCTInvalidating {
         resolver: @escaping RCTPromiseResolveBlock,
         rejecter: @escaping RCTPromiseRejectBlock
     ) {
-        do {
-            let updated = try DNSResolver.updateAllowedServers(config as? [String: Any] ?? [:])
-            resolver(updated)
-        } catch {
-            rejecter("SANITIZER_CONFIG_INVALID", error.localizedDescription, error)
+        // updateAllowedServers is @MainActor, so dispatch to MainActor
+        Task { @MainActor in
+            do {
+                let updated = try DNSResolver.updateAllowedServers(config as? [String: Any] ?? [:])
+                resolver(updated)
+            } catch {
+                rejecter("SANITIZER_CONFIG_INVALID", error.localizedDescription, error)
+            }
         }
     }
 
     @objc func invalidate() {
-        resolver.cleanup()
+        // Dispatch cleanup to MainActor since cleanup() is MainActor-isolated.
+        // React Native's invalidate() is synchronous, so we use Task for dispatch.
+        // This is safe because Task.cancel() is immediate - actual cleanup is async.
+        Task { @MainActor in
+            self.resolver.cleanup()
+        }
     }
 }

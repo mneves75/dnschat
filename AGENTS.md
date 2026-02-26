@@ -11,6 +11,8 @@ This file provides a fast, practical map of the repo so agents can orient quickl
 
 DNSChat is an Expo dev-client React Native app that sends short prompts as DNS TXT queries and renders responses.
 
+**Stack**: Expo SDK 55 / React Native 0.83.2 / React 19.2.0 / TypeScript 5.9.2 / Hermes / New Architecture
+
 ## Key Entry Points
 
 - `entry.tsx` -> runtime bootstrap; imports crypto bootstrap, then `expo-router/entry`.
@@ -37,6 +39,7 @@ DNSChat is an Expo dev-client React Native app that sends short prompts as DNS T
 - Lint: `bun run lint`
 - Tests: `bun run test`
 - Version sync: `bun run sync-versions` (source = `package.json`)
+- Verify: `bun run verify:all` (runs all gates: lint, test, pods, sdk alignment, typed routes, etc.)
 
 ## Versioning Rules
 
@@ -56,3 +59,4 @@ DNSChat is an Expo dev-client React Native app that sends short prompts as DNS T
 - Keep iOS `DEVELOPMENT_TEAM` empty for public portability.
 - Keep `react-native-reanimated/plugin` last in `babel.config.js`.
 - Do not change DNS prompt limits without updating native constants and tests.
+- Run `bun run verify:all` before committing to catch drift early.

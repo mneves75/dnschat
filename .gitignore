@@ -12,10 +12,9 @@ expo-env.d.ts
 # Repo-local planning / editor assistants
 .claude/
 .cursor/
+.cachebro/
 agent_planning/
 .logs/
-
-# Case-insensitive filesystem duplicates
 
 # Native
 *.orig.*
@@ -24,6 +23,7 @@ agent_planning/
 *.p12
 *.key
 *.mobileprovision
+*.pem
 
 # Metro
 .metro-health-check*
@@ -35,8 +35,6 @@ yarn-error.*
 
 # macOS
 .DS_Store
-
-*.pem
 
 # iOS release automation outputs
 # Note: `ios/fastlane/screenshots/` is tracked (store listing assets), so do not ignore it.
@@ -58,9 +56,6 @@ keystore.properties
 
 # Security & Development Artifacts
 *.keystore
-*.jks
-*.p8
-*.p12
 debug.keystore
 /android/app/debug.keystore
 test-dns.js
@@ -104,19 +99,13 @@ BACKUP-COMPLETE-HISTORY-*/
 # IDE and editor files
 .vscode/settings.json
 .idea/
-*.swp
-*.swo
-*~
 
 # OS generated files
 Thumbs.db
 ehthumbs.db
 
-# Logs and debugging
+# Logs
 *.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
 
 # Runtime data
 pids
@@ -126,120 +115,10 @@ pids
 
 app-example
 
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-
-# Distribution / packaging
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
-
-# PyInstaller
-*.manifest
-*.spec
-
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
-
-# Unit test / coverage reports
-htmlcov/
-.tox/
-.nox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-.hypothesis/
-.pytest_cache/
-
-# Translations
-*.mo
-*.pot
-
-# Django stuff:
-*.log
-local_settings.py
-db.sqlite3
-
-# Flask stuff:
-instance/
-.webassets-cache
-
-# Scrapy stuff:
-.scrapy
-
-# Sphinx documentation
-docs/_build/
-
-# PyBuilder
-target/
-
-# Jupyter Notebook
-.ipynb_checkpoints
-
-# IPython
-profile_default/
-ipython_config.py
-
-# pyenv
-.python-version
-
-# celery beat schedule file
-celerybeat-schedule
-
-# SageMath parsed files
-*.sage.py
-
-# Environments
-.env
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
-
-# Spyder project settings
-.spyderproject
-.spyproject
-
-# Rope project settings
-.ropeproject
-
-# mkdocs documentation
-/site
-
-# mypy
-.mypy_cache/
-.dmypy.json
-dmypy.json
-
-# Pyre type checker
-.pyre/
-
 # Fastlane generated files
 /ios/fastlane/report.xml
 
-# pnpm lock file (using npm)
+# pnpm lock file (using bun)
 pnpm-lock.yaml
 
 # Guidelines reference (keep local only)

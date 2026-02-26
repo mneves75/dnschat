@@ -74,11 +74,11 @@ export const I18nProvider: React.FC<{ children: React.ReactNode }> = ({ children
     t: translate,
   };
 
-  return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
+  return <I18nContext value={value}>{children}</I18nContext>;
 };
 
 export const useI18n = () => {
-  const context = React.useContext(I18nContext);
+  const context = React.use(I18nContext);
   if (!context) {
     throw new Error("useI18n must be used within an I18nProvider");
   }

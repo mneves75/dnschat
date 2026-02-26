@@ -78,13 +78,13 @@ AI,chat,DNS,assistant,privacy,native,tech,innovation,queries,networking
 
 ---
 
-## What's New (Release Notes v4.0.5)
+## What's New (Release Notes v4.0.6)
 
 RELEASE FIXES
 
-- Upgraded app stack to Expo SDK 55 / React Native 0.83.2.
-- Fixed iOS startup runtime warning path by removing root StrictMode.
-- Refreshed version metadata and release documentation for 4.0.5.
+- Hardened CI verification gates (SDK alignment, typed routes, DNS resolver sync, Android 16KB).
+- Improved upgrade integrity checks to catch installed-dependency drift versus lockfile.
+- Refreshed version metadata and release documentation for 4.0.6.
 
 ---
 
@@ -123,8 +123,8 @@ Revolutionary AI chat using DNS queries. Native iOS performance, complete privac
 ### Bundle Information
 
 - **Bundle ID**: `org.mvneves.dnschat`
-- **Version**: `4.0.5`
-- **Build Number**: 33 (sync-versions)
+- **Version**: `4.0.6`
+- **Build Number**: 34 (sync-versions)
 - **Minimum iOS Version**: 16.0
 - **Device Support**: iPhone, iPad
 - **Orientation**: Portrait + Landscape (default)

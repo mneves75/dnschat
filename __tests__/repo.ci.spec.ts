@@ -23,6 +23,11 @@ describe("repo policy: CI configuration exists and matches spec", () => {
 
     expectOneOf(content, ["npm ci", "bun ci"]);
     expectOneOf(content, ["npm run verify:ios-pods", "bun run verify:ios-pods"]);
+    expectOneOf(content, ["npm run verify:expo-doctor", "bun run verify:expo-doctor"]);
+    expectOneOf(content, ["npm run verify:sdk-alignment", "bun run verify:sdk-alignment"]);
+    expectOneOf(content, ["npm run verify:typed-routes", "bun run verify:typed-routes"]);
+    expectOneOf(content, ["npm run verify:dnsresolver-sync", "bun run verify:dnsresolver-sync"]);
+    expectOneOf(content, ["npm run verify:react-compiler", "bun run verify:react-compiler"]);
     expectOneOf(content, ["npm run lint", "bun run lint"]);
     expectOneOf(content, ["npm test", "bun run test"]);
   });
@@ -75,10 +80,13 @@ describe("repo policy: CI configuration exists and matches spec", () => {
 
     // Android job must exist with Java 17 setup and Gradle builds
     expect(content).toContain("android:");
+    expect(content).toContain("timeout-minutes: 75");
     expect(content).toContain("actions/setup-java@");
     expect(content).toContain("java-version: 17");
+    expect(content).toContain("node-version: 20.19.4");
     expect(content).toContain("gradle/actions/setup-gradle@");
     expect(content).toContain("assembleDebug");
     expect(content).toContain("assembleRelease");
+    expect(content).toContain("verify:android-16kb");
   });
 });

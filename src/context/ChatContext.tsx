@@ -1,6 +1,6 @@
 import React, {
   createContext,
-  useContext,
+  use,
   useState,
   useEffect,
 } from "react";
@@ -380,12 +380,12 @@ export function ChatProvider({ children }: ChatProviderProps) {
   };
 
   return (
-    <ChatContext.Provider value={contextValue}>{children}</ChatContext.Provider>
+    <ChatContext value={contextValue}>{children}</ChatContext>
   );
 }
 
 export function useChat() {
-  const context = useContext(ChatContext);
+  const context = use(ChatContext);
   if (context === undefined) {
     throw new Error("useChat must be used within a ChatProvider");
   }

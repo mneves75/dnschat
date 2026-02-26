@@ -13,8 +13,14 @@ describe("repo policy: lint is portable (no global installs)", () => {
     expect(lintScript).toContain("lint:ast-grep");
 
     const lintAstGrep = pkg.scripts?.["lint:ast-grep"] ?? "";
-    expect(lintAstGrep).toContain("ast-grep scan");
+    const usesDirectAstGrep = lintAstGrep.includes("ast-grep scan");
+    const usesDeterministicRunner = lintAstGrep.includes("scripts/run-ast-grep.js");
+
+    expect(usesDirectAstGrep || usesDeterministicRunner).toBe(true);
     expect(lintAstGrep).toContain("project-rules/astgrep-liquid-glass.yml");
+    if (usesDeterministicRunner) {
+      expect(fs.existsSync("scripts/run-ast-grep.js")).toBe(true);
+    }
 
     expect(fs.existsSync("project-rules/astgrep-liquid-glass.yml")).toBe(true);
   });

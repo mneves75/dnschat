@@ -7,23 +7,34 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 - JavaScript fallback transports (UDP/TCP) for constrained networks
 - An in-app Logs screen to inspect attempts, failures, and fallbacks
 
-[![Version](https://img.shields.io/badge/version-4.0.5-blue.svg)](https://github.com/mneves75/dnschat)
+[![Version](https://img.shields.io/badge/version-4.0.6-blue.svg)](https://github.com/mneves75/dnschat)
 [![React Native](https://img.shields.io/badge/React%20Native-0.83.2-blue.svg)](https://reactnative.dev/)
 [![Expo](https://img.shields.io/badge/Expo-55.0.0-black.svg)](https://expo.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9.2-blue.svg)](https://www.typescriptlang.org/)
 [![iOS](https://img.shields.io/badge/iOS-16%2B-lightgrey.svg)](https://developer.apple.com/ios/)
 [![Android](https://img.shields.io/badge/Android-API%2024%2B-green.svg)](https://developer.android.com/)
+[![CI](https://github.com/mneves75/dnschat/actions/workflows/ci.yml/badge.svg)](https://github.com/mneves75/dnschat/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+## Features
+
+- Chat with LLMs over DNS - no API keys, no accounts, no tracking
+- Native DNS resolution on iOS and Android with JS fallback transports
+- Encrypted local chat history (AES-GCM)
+- Multi-server support with automatic transport fallback
+- Bilingual UI (English / Portuguese)
+- Full offline chat history with search
 
 ## Tech stack
 
-- App version: `4.0.5` (build `33`)
+- App version: `4.0.6` (build `34`)
 - Expo workflow: Expo Router + dev-client + EAS-compatible native config
 - Expo SDK: `55.0.0`
 - React: `19.2.0`
 - React Native: `0.83.2`
 - TypeScript: `5.9.2`
 - Hermes: enabled
-- New Architecture: enabled (`newArchEnabled: true`)
+- New Architecture: enabled by default on SDK 55
 - React Compiler: enabled (`experiments.reactCompiler: true`)
 - Typed routes: enabled (`experiments.typedRoutes: true`)
 
@@ -157,6 +168,12 @@ If you do not want repo-managed hooks, remove `.git/hooks/pre-commit` locally.
 - Store submission credentials are not committed. Keep `eas submit`/App Store
   Connect identifiers local (do not add them to `eas.json`).
 
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and guidelines.
+
+Report security vulnerabilities via [SECURITY.md](SECURITY.md).
+
 ## License
 
-MIT. See `LICENSE`.
+MIT. See [LICENSE](LICENSE).

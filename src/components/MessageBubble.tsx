@@ -183,24 +183,7 @@ function MessageBubbleComponent({ message }: MessageBubbleProps) {
   );
 }
 
-function arePropsEqual(
-  prevProps: MessageBubbleProps,
-  nextProps: MessageBubbleProps
-): boolean {
-  const prev = prevProps.message;
-  const next = nextProps.message;
-
-  // Compare all message fields that affect rendering
-  return (
-    prev.id === next.id &&
-    prev.role === next.role &&
-    prev.content === next.content &&
-    prev.status === next.status &&
-    prev.timestamp.getTime() === next.timestamp.getTime()
-  );
-}
-
-export const MessageBubble = React.memo(MessageBubbleComponent, arePropsEqual);
+export { MessageBubbleComponent as MessageBubble };
 
 const styles = StyleSheet.create({
   container: {

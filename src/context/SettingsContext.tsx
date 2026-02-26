@@ -1,6 +1,6 @@
 import React, {
   createContext,
-  useContext,
+  use,
   useEffect,
   useState,
 } from "react";
@@ -241,14 +241,14 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <SettingsContext.Provider value={contextValue}>
+    <SettingsContext value={contextValue}>
       {children}
-    </SettingsContext.Provider>
+    </SettingsContext>
   );
 }
 
 export function useSettings() {
-  const context = useContext(SettingsContext);
+  const context = use(SettingsContext);
   if (context === undefined) {
     throw new Error("useSettings must be used within a SettingsProvider");
   }
