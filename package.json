@@ -53,7 +53,7 @@
     "@expo/metro-runtime": "~55.0.6",
     "@noble/ciphers": "^2.1.1",
     "@noble/hashes": "^2.0.1",
-    "@react-native-async-storage/async-storage": "2.2.0",
+    "@react-native-async-storage/async-storage": "3.0.1",
     "@react-native-clipboard/clipboard": "^1.14.2",
     "@react-native-menu/menu": "^2.0.0",
     "@react-navigation/bottom-tabs": "^7.1.1",
