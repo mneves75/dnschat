@@ -4,6 +4,18 @@ All notable changes to DNSChat will be documented in this file.
 
 The format is based on Keep a Changelog, and this project follows Semantic Versioning.
 
+## [4.0.5] - 2026-02-26
+
+### Changed
+
+- Bumped app version metadata to `4.0.5` (build `33`) across `package.json`, `app.json`, iOS project settings, and Android Gradle config.
+- Updated README stack metadata for `4.0.5` and Expo SDK 55 migration guidance.
+
+### Fixed
+
+- About and Settings now display runtime app version/build from Expo-native metadata (with safe fallback) instead of relying on a static package version import.
+- Documented iOS Hermes incident recovery path and clarified that Pods `Internal inconsistency error: never received target ended message` can be secondary fallout from an earlier Hermes script failure.
+
 ## [4.0.2] - 2026-01-07
 
 ### Fixed

@@ -21,8 +21,8 @@ import { useTypography } from "../../ui/hooks/useTypography";
 import { LiquidGlassSpacing, getCornerRadius } from "../../ui/theme/liquidGlassSpacing";
 import { useScreenEntrance } from "../../ui/hooks/useScreenEntrance";
 import { devLog } from "../../utils/devLog";
+import { getAppVersionInfo } from "../../utils/appVersion";
 
-const packageJson = require("../../../package.json");
 const AppIcon = require("../../assets/dnschat_ios26.png");
 
 const createStyles = (palette: IMessagePalette) =>
@@ -119,7 +119,7 @@ export function About() {
   ];
 
   const versionLabel = t("screen.about.versionLabel", {
-    version: packageJson.version,
+    version: getAppVersionInfo().displayVersion,
   });
 
   return (

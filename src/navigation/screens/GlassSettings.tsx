@@ -37,7 +37,6 @@ import { StorageService } from "../../services/storageService";
 import { useImessagePalette } from "../../ui/theme/imessagePalette";
 import { useScreenEntrance } from "../../ui/hooks/useScreenEntrance";
 
-const packageJson = require("../../../package.json");
 import {
   Form,
   GlassBottomSheet,
@@ -48,6 +47,7 @@ import {
 import { useTransportTestThrottle } from "../../ui/hooks/useTransportTestThrottle";
 import { persistHapticsPreference } from "../../utils/haptics";
 import { devLog, devWarn } from "../../utils/devLog";
+import { getAppVersionInfo } from "../../utils/appVersion";
 
 const getErrorMessage = (error: unknown): string => {
   if (error instanceof Error) return error.message;
@@ -138,7 +138,7 @@ export function GlassSettings() {
     udp: t("screen.settings.sections.transportTest.transports.udp"),
     tcp: t("screen.settings.sections.transportTest.transports.tcp"),
   };
-  const appVersion: string = packageJson.version;
+  const appVersion: string = getAppVersionInfo().displayVersion;
   const aboutFeatureKeys = ["line1", "line2", "line3", "line4", "line5"] as const;
 
   // Action handlers
