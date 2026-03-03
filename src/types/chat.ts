@@ -25,4 +25,5 @@ export interface ChatContextType {
   loadChats: () => Promise<void>;
   setCurrentChat: (chat: Chat | null) => void;
   clearError: () => void;
+  createAndNavigateToChat: () => Promise<void>;
 }

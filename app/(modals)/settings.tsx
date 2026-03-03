@@ -14,7 +14,6 @@ export default function SettingsRoute() {
     <>
       <Stack.Screen
         options={{
-          title: t("screen.settings.navigationTitle"),
           presentation: "modal",
           headerRight: () => (
             <Pressable
@@ -29,6 +28,12 @@ export default function SettingsRoute() {
           ),
         }}
       />
+      <Stack.Screen.Title>{t("screen.settings.navigationTitle")}</Stack.Screen.Title>
+      <Stack.Toolbar placement="left">
+        <Stack.Toolbar.Button onPress={() => router.back()}>
+          {t("common.close")}
+        </Stack.Toolbar.Button>
+      </Stack.Toolbar>
       <GlassSettings />
     </>
   );

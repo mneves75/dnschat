@@ -30,6 +30,12 @@ export const ptBR = {
       devLogs: "Logs DNS do Dev",
       notFound: "404",
     },
+    toolbar: {
+      newChat: "Nova Conversa",
+      share: "Compartilhar",
+      clearChat: "Limpar Conversa",
+      dnsInfo: "Info DNS",
+    },
   },
   screen: {
     onboarding: {

@@ -7,7 +7,7 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 - JavaScript fallback transports (UDP/TCP) for constrained networks
 - An in-app Logs screen to inspect attempts, failures, and fallbacks
 
-[![Version](https://img.shields.io/badge/version-4.0.6-blue.svg)](https://github.com/mneves75/dnschat)
+[![Version](https://img.shields.io/badge/version-4.0.7-blue.svg)](https://github.com/mneves75/dnschat)
 [![React Native](https://img.shields.io/badge/React%20Native-0.83.2-blue.svg)](https://reactnative.dev/)
 [![Expo](https://img.shields.io/badge/Expo-55.0.0-black.svg)](https://expo.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9.2-blue.svg)](https://www.typescriptlang.org/)
@@ -24,10 +24,14 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 - Multi-server support with automatic transport fallback
 - Bilingual UI (English / Portuguese)
 - Full offline chat history with search
+- **NativeTabs** with SF Symbols (iOS) and Material Symbols (Android)
+- **Platform colors** via expo-router Color API (auto light/dark, Android 12+ dynamic)
+- **Native iOS toolbars** with share, clear, and new-chat actions (liquid glass)
+- **Zoom transitions** (iOS 18+) from chat list to thread
 
 ## Tech stack
 
-- App version: `4.0.6` (build `34`)
+- App version: `4.0.7` (build `35`)
 - Expo workflow: Expo Router + dev-client + EAS-compatible native config
 - Expo SDK: `55.0.0`
 - React: `19.2.0`

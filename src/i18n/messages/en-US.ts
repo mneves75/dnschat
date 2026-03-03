@@ -30,6 +30,12 @@ export const enUS = {
       devLogs: "Dev DNS Logs",
       notFound: "404",
     },
+    toolbar: {
+      newChat: "New Chat",
+      share: "Share",
+      clearChat: "Clear Chat",
+      dnsInfo: "DNS Info",
+    },
   },
   screen: {
     onboarding: {

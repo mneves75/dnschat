@@ -366,6 +366,11 @@ export function ChatProvider({ children }: ChatProviderProps) {
     setError(null);
   };
 
+  const createAndNavigateToChat = async (): Promise<void> => {
+    const newChat = await createChat();
+    setCurrentChat(newChat);
+  };
+
   const contextValue: ChatContextType = {
     chats,
     currentChat,
@@ -377,6 +382,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
     loadChats,
     setCurrentChat,
     clearError,
+    createAndNavigateToChat,
   };
 
   return (

@@ -27,7 +27,7 @@ import {
   TouchableOpacity,
 } from "react-native";
 import Animated from "react-native-reanimated";
-import { useRouter } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import { useChat } from "../../context/ChatContext";
 import {
   Form,
@@ -388,12 +388,16 @@ export function GlassChatList() {
                   opacity={opacities[index] ?? { value: 1 }}
                   translateX={translates[index] ?? { value: 0 }}
                 >
-                  <GlassChatItem
-                    chat={chat}
-                    onPress={() => handleChatPress(chat)}
-                    onDelete={() => handleDeleteChat(chat.id, chat.title)}
-                    onShare={() => handleShareChat(chat)}
-                  />
+                  <Link href={{ pathname: "/chat/[threadId]", params: { threadId: chat.id } }} asChild>
+                    <Link.AppleZoom>
+                      <GlassChatItem
+                        chat={chat}
+                        onPress={() => handleChatPress(chat)}
+                        onDelete={() => handleDeleteChat(chat.id, chat.title)}
+                        onShare={() => handleShareChat(chat)}
+                      />
+                    </Link.AppleZoom>
+                  </Link>
                 </AnimatedListItem>
               ))}
             </View>

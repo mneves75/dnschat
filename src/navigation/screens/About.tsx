@@ -13,7 +13,7 @@ import React, { useState } from "react";
 import { useRouter } from "expo-router";
 import { View, Text, StyleSheet, Linking, Image } from "react-native";
 import Animated from "react-native-reanimated";
-import { Form, LiquidGlassWrapper } from "../../components/glass";
+import { Form } from "../../components/glass";
 import { useTranslation } from "../../i18n";
 import { useImessagePalette } from "../../ui/theme/imessagePalette";
 import type { IMessagePalette } from "../../ui/theme/imessagePalette";
@@ -28,9 +28,10 @@ const AppIcon = require("../../assets/dnschat_ios26.png");
 const createStyles = (palette: IMessagePalette) =>
   StyleSheet.create({
     headerContainer: {
-      backgroundColor: palette.surface,
       marginHorizontal: LiquidGlassSpacing.lg,
       padding: LiquidGlassSpacing.xl,
+      borderRadius: 16,
+      backgroundColor: palette.surface,
     },
     header: {
       alignItems: "center",
@@ -39,7 +40,7 @@ const createStyles = (palette: IMessagePalette) =>
       width: 80,
       height: 80,
       borderRadius: 40,
-      backgroundColor: palette.accentSurface,
+      backgroundColor: palette.surface,
       marginBottom: LiquidGlassSpacing.md,
       alignItems: "center",
       justifyContent: "center",
@@ -60,7 +61,8 @@ const createStyles = (palette: IMessagePalette) =>
     versionBadge: {
       paddingHorizontal: LiquidGlassSpacing.sm,
       paddingVertical: LiquidGlassSpacing.xxs + 2, // 6px
-      backgroundColor: palette.accentSurface,
+      borderRadius: 24,
+      backgroundColor: palette.border,
       marginBottom: LiquidGlassSpacing.md,
     },
     versionText: {
@@ -126,12 +128,7 @@ export function About() {
     <Form.List testID="about-screen" navigationTitle={t("screen.about.navigationTitle")}>
       <Animated.View style={animatedStyle}>
         <Form.Section>
-        <LiquidGlassWrapper
-          variant="prominent"
-          shape="roundedRect"
-          cornerRadius={16}
-          style={styles.headerContainer}
-        >
+        <View style={styles.headerContainer}>
           <View style={styles.header}>
             <View style={styles.logoContainer}>
               {!iconError ? (
@@ -153,7 +150,7 @@ export function About() {
                   style={[
                     styles.logoText,
                     typography["headline"],
-                    { color: palette.accentTint, fontWeight: "bold" },
+                    { color: palette.textPrimary, fontWeight: "bold" },
                   ]}
                 >
                   {t("screen.about.fallbackInitials")}
@@ -169,21 +166,17 @@ export function About() {
             >
               {t("screen.about.appName")}
             </Text>
-            <LiquidGlassWrapper
-              variant="interactive"
-              shape="capsule"
-              style={styles.versionBadge}
-            >
+            <View style={styles.versionBadge}>
               <Text
                 style={[
                   styles.versionText,
                   typography["callout"],
-                  { color: palette.accentTint, fontWeight: "600" },
+                  { color: palette.textSecondary, fontWeight: "600" },
                 ]}
               >
                 {versionLabel}
               </Text>
-            </LiquidGlassWrapper>
+            </View>
             <Text
               style={[
                 styles.description,
@@ -194,7 +187,7 @@ export function About() {
               {t("screen.about.tagline")}
             </Text>
           </View>
-        </LiquidGlassWrapper>
+        </View>
       </Form.Section>
 
       <Form.Section title={t("screen.about.quickActions.title")}>

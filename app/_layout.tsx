@@ -21,9 +21,6 @@ import { AndroidStartupDiagnostics } from "../src/utils/androidStartupDiagnostic
 
 const NAVIGATION_ASSETS = [
   ...NavigationAssets,
-  require("../src/assets/newspaper.png"),
-  require("../src/assets/logs-icon.png"),
-  require("../src/assets/info-icon.png"),
 ];
 
 Asset.loadAsync(NAVIGATION_ASSETS).catch(() => {});
@@ -90,6 +87,7 @@ function RootLayoutContent() {
   const stack = (
     <Stack
       screenOptions={{
+        headerBackButtonDisplayMode: "minimal",
         headerBackTitleVisible: false,
         headerBackTitle: "",
       }}
@@ -98,7 +96,7 @@ function RootLayoutContent() {
         name="(tabs)"
         options={{ headerShown: false, title: "" }}
       />
-      <Stack.Screen name="chat/[threadId]" />
+      <Stack.Screen name="chat/[threadId]" options={{ headerBackTitle: "" }} />
       <Stack.Screen name="profile/[user]" />
       <Stack.Screen name="(modals)/settings" />
       <Stack.Screen name="dev/logs" />

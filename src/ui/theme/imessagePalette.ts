@@ -1,5 +1,7 @@
 import { useColorScheme } from "react-native";
+import type { ColorValue } from "react-native";
 import { useAccessibility } from "../../context/AccessibilityContext";
+import { systemColors } from "./platformColors";
 
 export interface IMessagePalette {
   background: string;
@@ -117,4 +119,8 @@ export const useImessagePalette = () => {
   const isDark = colorScheme === "dark";
 
   return getImessagePalette(isDark, { highContrast: isHighContrastEnabled });
+};
+
+export const useNativeColors = () => {
+  return systemColors as Record<keyof typeof systemColors, ColorValue | undefined>;
 };

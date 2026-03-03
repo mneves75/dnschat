@@ -1,5 +1,6 @@
 import React from "react";
-import { Stack, useLocalSearchParams, useRouter } from "expo-router";
+import { Link, Stack, useLocalSearchParams, useRouter } from "expo-router";
+import { Share, Alert } from "react-native";
 import { Chat } from "../../src/navigation/screens/Chat";
 import { useChat } from "../../src/context/ChatContext";
 import { useTranslation } from "../../src/i18n";
@@ -19,6 +20,7 @@ export default function ChatRoute() {
     loadChats,
     setCurrentChat,
     createChat,
+    deleteChat,
   } = useChat();
   const normalizedThreadId = normalizeRouteParam(threadId);
   const [isResolving, setIsResolving] = React.useState(false);
@@ -102,10 +104,46 @@ export default function ChatRoute() {
     setCurrentChat,
   ]);
 
+  const handleShare = async () => {
+    if (!currentChat) return;
+    const messages = currentChat.messages
+      .map((m) => `${m.role === "user" ? "You" : "AI"}: ${m.content}`)
+      .join("\n\n");
+    await Share.share({ message: messages, title: currentChat.title });
+  };
+
+  const handleClearChat = () => {
+    if (!currentChat) return;
+    Alert.alert(
+      t("common.clear"),
+      t("screen.glassChatList.alerts.deleteMessage", { title: currentChat.title }),
+      [
+        { text: t("common.cancel"), style: "cancel" },
+        {
+          text: t("common.clear"),
+          style: "destructive",
+          onPress: () => deleteChat(currentChat.id),
+        },
+      ],
+    );
+  };
+
   return (
     <>
-      <Stack.Screen options={{ title: t("screen.chat.navigationTitle") }} />
-      <Chat />
+      <Stack.Screen.Title>{currentChat?.title ?? t("screen.chat.navigationTitle")}</Stack.Screen.Title>
+      <Stack.Toolbar placement="right">
+        <Stack.Toolbar.Menu icon="ellipsis.circle">
+          <Stack.Toolbar.MenuAction icon="square.and.arrow.up" onPress={handleShare}>
+            {t("screen.chat.messageActions.share")}
+          </Stack.Toolbar.MenuAction>
+          <Stack.Toolbar.MenuAction icon="trash" destructive onPress={handleClearChat}>
+            {t("common.clear")}
+          </Stack.Toolbar.MenuAction>
+        </Stack.Toolbar.Menu>
+      </Stack.Toolbar>
+      <Link.AppleZoomTarget>
+        <Chat />
+      </Link.AppleZoomTarget>
     </>
   );
 }

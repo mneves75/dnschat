@@ -6,6 +6,24 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+## [4.0.7] - 2026-03-03
+
+### Added
+
+- **NativeTabs**: Adopted Expo Router v5.5 `NativeTabs` API with SF Symbols (iOS) and Material Symbols (Android), replacing JS tabs with PNG icons on native platforms. Web fallback via `_layout.web.tsx` platform extension.
+- **Color API**: New `platformColors.ts` with system color mappings via `expo-router` Color API. Added `useNativeColors()` hook for native `ColorValue` in style props. Colors auto-adapt to light/dark mode and Android 12+ dynamic colors.
+- **Stack declarative headers**: Migrated to inline `Stack.Screen.Title` in chat, settings, and not-found screens for co-located header declarations.
+- **Stack.Toolbar (iOS)**: Native iOS toolbar actions — share/clear menu in chat thread, new-chat button in chat list, close button in settings modal. Renders nothing on Android/Web.
+- **Zoom transitions (iOS 18+)**: `Link.AppleZoom` on chat list items with `Link.AppleZoomTarget` on chat screen for native zoom animation. Graceful push fallback on older platforms.
+- **Toolbar translations**: Added `navigation.toolbar` i18n keys (newChat, share, clearChat, dnsInfo) in en-US and pt-BR.
+- `createAndNavigateToChat` helper exposed from `ChatContext` for toolbar integration.
+
+### Fixed
+
+- Fixed NativeTabs import path for expo-router v55.0.2 (`unstable-native-tabs` instead of `native-tabs`), resolving iOS bundling failure.
+- Fixed "(tabs)" leaking into iOS back button title by setting explicit `headerBackTitle` on chat route.
+- Removed opaque blue background from About screen header card — let LiquidGlassWrapper handle tinting instead of doubling `palette.surface` over glass.
+
 ## [4.0.6] - 2026-02-26
 
 ### Changed
@@ -166,7 +184,8 @@ Versions 3.2.0 through 3.8.9 established the core feature set:
 - **3.3.0**: Android CI, release signing policy, Java 17 auto-detection
 - **3.2.x**: Public repo hardening (secrets scanning, policy tests, version sync gates), DNS server allowlist
 
-[Unreleased]: https://github.com/mneves75/dnschat/compare/v4.0.6...HEAD
+[Unreleased]: https://github.com/mneves75/dnschat/compare/v4.0.7...HEAD
+[4.0.7]: https://github.com/mneves75/dnschat/compare/v4.0.6...v4.0.7
 [4.0.6]: https://github.com/mneves75/dnschat/compare/v4.0.5...v4.0.6
 [4.0.5]: https://github.com/mneves75/dnschat/compare/v4.0.2...v4.0.5
 [4.0.2]: https://github.com/mneves75/dnschat/compare/v4.0.0...v4.0.2
