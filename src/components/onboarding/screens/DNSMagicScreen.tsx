@@ -8,6 +8,7 @@ import {
   ScrollView,
 } from "react-native";
 import { OnboardingNavigation } from "../OnboardingNavigation";
+import { useMotionReduction } from "../../../context/AccessibilityContext";
 import { DNSService } from "../../../services/dnsService";
 import { useImessagePalette } from "../../../ui/theme/imessagePalette";
 import { useTypography } from "../../../ui/hooks/useTypography";
@@ -27,6 +28,7 @@ export function DNSMagicScreen() {
   const palette = useImessagePalette();
   const typography = useTypography();
   const { t } = useTranslation();
+  const { shouldReduceMotion } = useMotionReduction();
 
   const [isRunning, setIsRunning] = useState(false);
   const [dnsSteps, setDnsSteps] = useState<DNSStep[]>([
@@ -61,6 +63,11 @@ export function DNSMagicScreen() {
 
   // Effect: start the pulse animation on mount and stop on unmount.
   useEffect(() => {
+    if (shouldReduceMotion) {
+      pulseAnim.setValue(1);
+      return;
+    }
+
     const pulse = Animated.loop(
       Animated.sequence([
         Animated.timing(pulseAnim, {
@@ -77,7 +84,7 @@ export function DNSMagicScreen() {
     );
     pulse.start();
     return () => pulse.stop();
-  }, []);
+  }, [pulseAnim, shouldReduceMotion]);
 
   const runDNSDemo = async () => {
     setIsRunning(true);
@@ -178,8 +185,12 @@ export function DNSMagicScreen() {
             disabled={isRunning}
             activeOpacity={0.7}
             accessibilityRole="button"
-            accessibilityLabel={isRunning ? "DNS query in progress" : "Start DNS demo"}
-            accessibilityHint="Demonstrates how DNS queries work through the fallback chain. Watch as your message travels through Native DNS, UDP, TCP, and HTTPS methods."
+            accessibilityLabel={t(
+              isRunning
+                ? "screen.onboarding.dnsMagic.accessibility.runningLabel"
+                : "screen.onboarding.dnsMagic.accessibility.idleLabel",
+            )}
+            accessibilityHint={t("screen.onboarding.dnsMagic.accessibility.demoHint")}
             accessibilityState={{ disabled: isRunning, busy: isRunning }}
           >
             <Text

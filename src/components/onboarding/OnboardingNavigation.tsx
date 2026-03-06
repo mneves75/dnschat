@@ -1,5 +1,6 @@
 import React from "react";
 import {
+  Alert,
   View,
   Text,
   TouchableOpacity,
@@ -9,12 +10,13 @@ import { useOnboarding } from "../../context/OnboardingContext";
 import { useImessagePalette } from "../../ui/theme/imessagePalette";
 import { useTypography } from "../../ui/hooks/useTypography";
 import { LiquidGlassSpacing } from "../../ui/theme/liquidGlassSpacing";
+import { useTranslation } from "../../i18n";
 
 interface OnboardingNavigationProps {
   showSkip?: boolean;
   showBack?: boolean;
   nextButtonText?: string;
-  onCustomNext?: () => void;
+  onCustomNext?: () => void | Promise<void>;
 }
 
 export function OnboardingNavigation({
@@ -25,6 +27,7 @@ export function OnboardingNavigation({
 }: OnboardingNavigationProps) {
   const palette = useImessagePalette();
   const typography = useTypography();
+  const { t } = useTranslation();
   const {
     currentStep,
     steps,
@@ -33,22 +36,47 @@ export function OnboardingNavigation({
     skipOnboarding,
     completeOnboarding,
   } = useOnboarding();
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const isLastStep = currentStep === steps.length - 1;
   const isFirstStep = currentStep === 0;
 
-  const handleNext = () => {
-    if (onCustomNext) {
-      onCustomNext();
-    } else if (isLastStep) {
-      completeOnboarding();
-    } else {
-      nextStep();
+  const runAction = async (action: () => Promise<void>) => {
+    if (isSubmitting) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await action();
+    } catch (error) {
+      Alert.alert(
+        t("common.errorTitle"),
+        error instanceof Error ? error.message : t("common.errorTitle"),
+      );
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
+  const handleNext = () => {
+    void runAction(async () => {
+      if (onCustomNext) {
+        await onCustomNext();
+      } else if (isLastStep) {
+        await completeOnboarding();
+      } else {
+        await nextStep();
+      }
+    });
+  };
+
   const handleSkip = () => {
-    skipOnboarding();
+    void runAction(skipOnboarding);
+  };
+
+  const handleBack = () => {
+    void runAction(previousStep);
   };
 
   return (
@@ -60,9 +88,10 @@ export function OnboardingNavigation({
             onPress={handleSkip}
             style={styles.skipButton}
             testID="skip-onboarding"
+            disabled={isSubmitting}
             accessibilityRole="button"
-            accessibilityLabel="Skip onboarding"
-            accessibilityHint="Skips the tutorial and goes directly to the app"
+            accessibilityLabel={t("screen.onboarding.navigation.skip")}
+            accessibilityHint={t("screen.onboarding.navigation.skipHint")}
           >
             <Text
               style={[
@@ -71,7 +100,7 @@ export function OnboardingNavigation({
                 { color: palette.textSecondary },
               ]}
             >
-              Skip
+              {t("screen.onboarding.navigation.skip")}
             </Text>
           </TouchableOpacity>
         )}
@@ -79,11 +108,12 @@ export function OnboardingNavigation({
         {/* iOS HIG: Back button for navigation between onboarding steps */}
         {showBack && !isFirstStep && (
           <TouchableOpacity
-            onPress={previousStep}
+            onPress={handleBack}
             style={styles.backButton}
+            disabled={isSubmitting}
             accessibilityRole="button"
-            accessibilityLabel="Back to previous step"
-            accessibilityHint="Returns to the previous onboarding screen"
+            accessibilityLabel={t("screen.onboarding.navigation.back")}
+            accessibilityHint={t("screen.onboarding.navigation.backHint")}
           >
             <Text
               style={[
@@ -92,7 +122,7 @@ export function OnboardingNavigation({
                 { color: palette.accentTint },
               ]}
             >
-              Back
+              {t("screen.onboarding.navigation.back")}
             </Text>
           </TouchableOpacity>
         )}
@@ -101,18 +131,22 @@ export function OnboardingNavigation({
       {/* iOS HIG: Primary action button - changes label and behavior on last step */}
       <TouchableOpacity
         onPress={handleNext}
+        disabled={isSubmitting}
         style={[
           styles.nextButton,
           { backgroundColor: palette.accentTint },
         ]}
         testID={isLastStep ? "onboarding-complete" : "onboarding-continue"}
         accessibilityRole="button"
-        accessibilityLabel={isLastStep ? "Get Started" : nextButtonText}
+        accessibilityLabel={
+          isLastStep ? t("screen.onboarding.navigation.getStarted") : nextButtonText
+        }
         accessibilityHint={
           isLastStep
-            ? "Completes onboarding and opens the app"
-            : "Proceeds to the next onboarding step"
+            ? t("screen.onboarding.navigation.completeHint")
+            : t("screen.onboarding.navigation.continueHint")
         }
+        accessibilityState={{ disabled: isSubmitting, busy: isSubmitting }}
       >
         <Text
           style={[
@@ -121,7 +155,7 @@ export function OnboardingNavigation({
             { color: palette.solid },
           ]}
         >
-          {isLastStep ? "Get Started" : nextButtonText}
+          {isLastStep ? t("screen.onboarding.navigation.getStarted") : nextButtonText}
         </Text>
       </TouchableOpacity>
     </View>

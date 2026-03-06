@@ -306,6 +306,89 @@ const getDecodedRcode = (decoded: DecodedPacket): string | undefined => {
   return typeof record.rcode === 'string' ? record.rcode : undefined;
 };
 
+const DNS_FLAG_QR = 0x8000;
+const DNS_FLAG_TC = 0x0200;
+const DNS_OPCODE_MASK = 0x7800;
+
+const normalizeQuestionName = (value: string): string =>
+  value.trim().toLowerCase().replace(/\.+$/g, '');
+
+const isIPv4Address = (value: string): boolean => /^(?:\d{1,3}\.){3}\d{1,3}$/.test(value);
+
+export function validateDecodedDnsResponseForTxt(
+  decoded: DecodedPacket,
+  options: {
+    expectedQueryId: number;
+    expectedQueryName: string;
+    expectedPort: number;
+    expectedServer: string;
+    sourceAddress?: string;
+    sourcePort?: number;
+  },
+): void {
+  if (decoded.id !== options.expectedQueryId) {
+    throw new Error(
+      `DNS response ID mismatch (expected ${options.expectedQueryId}, got ${decoded.id}) - possible spoofing attempt`,
+    );
+  }
+
+  const flags = typeof decoded.flags === 'number' ? decoded.flags : 0;
+  if ((flags & DNS_FLAG_QR) === 0) {
+    throw new Error('DNS response missing QR flag');
+  }
+
+  const opcode = (flags & DNS_OPCODE_MASK) >>> 11;
+  if (opcode !== 0) {
+    throw new Error('DNS response opcode not standard query');
+  }
+
+  if ((flags & DNS_FLAG_TC) !== 0) {
+    throw new Error('DNS response truncated (TC=1)');
+  }
+
+  const rcode = getDecodedRcode(decoded);
+  if (rcode && rcode !== 'NOERROR') {
+    throw new Error(`DNS query failed with rcode: ${rcode}`);
+  }
+
+  const questions = Array.isArray(decoded.questions) ? decoded.questions : [];
+  if (questions.length !== 1) {
+    throw new Error(`DNS response QDCOUNT=${questions.length}`);
+  }
+
+  const question = questions[0];
+  const questionName = typeof question?.name === 'string' ? normalizeQuestionName(question.name) : '';
+  if (questionName !== normalizeQuestionName(options.expectedQueryName)) {
+    throw new Error('DNS response question name mismatch');
+  }
+  if (question?.type !== 'TXT' || question?.class !== 'IN') {
+    throw new Error('DNS response question type/class mismatch');
+  }
+
+  if (
+    typeof options.sourcePort === 'number' &&
+    options.sourcePort !== options.expectedPort
+  ) {
+    throw new Error(
+      `DNS response from unexpected source port: ${options.sourcePort}`,
+    );
+  }
+
+  if (
+    typeof options.sourceAddress === 'string' &&
+    isIPv4Address(options.expectedServer) &&
+    options.sourceAddress !== options.expectedServer
+  ) {
+    throw new Error(
+      `DNS response from unexpected source address: ${options.sourceAddress}`,
+    );
+  }
+
+  if (!decoded.answers || decoded.answers.length === 0) {
+    throw new Error('No TXT records found');
+  }
+}
+
 const isTestRuntime = () =>
   typeof process !== 'undefined' &&
   typeof process.env === 'object' &&
@@ -575,6 +658,12 @@ export function parseTXTResponse(txtRecords: string[]): string {
   // - Conflicting duplicates (different content): Data corruption, must fail
   // Example: "1/3:Hello" received twice is OK, but "1/3:Hello" + "1/3:Goodbye" is corruption
   for (const part of parts) {
+    if (part.totalParts !== expectedTotal) {
+      throw new Error(
+        `Inconsistent multi-part response: expected ${expectedTotal} total parts but received ${part.totalParts} for part ${part.partNumber}`,
+      );
+    }
+
     if (byPart.has(part.partNumber)) {
       const existing = byPart.get(part.partNumber);
       // If content matches, this is a harmless retransmission - skip it
@@ -844,7 +933,7 @@ export class DNSService {
       // Prepare DNS query context for this server
       const queryContext = this.createQueryContext(message, targetServer);
 
-      DNSLogService.addLog({
+      DNSLogService.addLog(queryId, {
         id: `${queryId}-server-${targetServer}`,
         timestamp: new Date(),
         message: `Trying server: ${targetServer}:${queryContext.targetPort}`,
@@ -862,7 +951,7 @@ export class DNSService {
         );
 
         this.recordServerSuccess(targetServer, queryContext.targetPort);
-        await DNSLogService.endQuery(true, result.response, result.method);
+        await DNSLogService.endQuery(queryId, true, result.response, result.method);
         return result.response;
       } catch (error) {
         const message = getErrorMessage(error);
@@ -875,6 +964,7 @@ export class DNSService {
         const nextServer = serversToTry[serverIndex + 1];
         if (nextServer) {
           DNSLogService.logServerFallback(
+            queryId,
             `${targetServer}:${queryContext.targetPort}`,
             `${nextServer.host}:${nextServer.port}`,
           );
@@ -886,7 +976,7 @@ export class DNSService {
     }
 
     // All servers failed
-    await DNSLogService.endQuery(false, undefined, undefined);
+    await DNSLogService.endQuery(queryId, false, undefined, undefined);
 
     // Provide comprehensive error guidance
     const serverList = serversToTry.map(s => `${s.host}:${s.port}`).join(', ');
@@ -914,14 +1004,13 @@ export class DNSService {
     const { targetServer, targetPort } = queryContext;
 
     for (let attempt = 0; attempt < this.MAX_RETRIES; attempt++) {
-      try {
-        // Determine method order based on allowExperimentalTransports
-        const methodOrder = this.getMethodOrder(
-          enableMockDNS,
-          allowExperimentalTransports,
-        );
+      const methodOrder = this.getMethodOrder(
+        enableMockDNS,
+        allowExperimentalTransports,
+      );
 
-        DNSLogService.addLog({
+      try {
+        DNSLogService.addLog(queryId, {
           id: `${queryId}-order-${attempt}`,
           timestamp: new Date(),
           message: `Transport order: ${methodOrder.join(' → ')} for ${targetServer}:${targetPort}`,
@@ -934,19 +1023,16 @@ export class DNSService {
 
         for (const method of methodOrder) {
           try {
-            const result = await this.tryMethod(method, queryContext);
+            const result = await this.tryMethod(queryId, method, queryContext);
             if (result) {
               return result;
             }
           } catch (methodError) {
-            // Log the failure and continue to next method
-            DNSLogService.logMethodFailure(method, getErrorMessage(methodError), 0);
-
             // Log fallback to next method if available
             const nextMethodIndex = methodOrder.indexOf(method) + 1;
             const nextMethod = methodOrder[nextMethodIndex];
             if (nextMethod) {
-              DNSLogService.logFallback(method, nextMethod);
+              DNSLogService.logFallback(queryId, method, nextMethod);
             }
 
             // Continue to next method
@@ -978,11 +1064,11 @@ export class DNSService {
           throw error instanceof Error ? error : new Error(getErrorMessage(error));
         }
 
-        DNSLogService.addLog({
+        DNSLogService.addLog(queryId, {
           id: `retry-${Date.now()}`,
           timestamp: new Date(),
           message: `Retrying ${targetServer}:${targetPort} (attempt ${attempt + 2}/${this.MAX_RETRIES})`,
-          method: 'udp',
+          method: methodOrder[methodOrder.length - 1] ?? 'native',
           status: 'attempt',
           details: `Waiting ${this.RETRY_DELAY * Math.pow(2, attempt)}ms`,
         });
@@ -1098,26 +1184,17 @@ export class DNSService {
         socket.once('message', (response: Uint8Array, rinfo: { address: string; port: number }) => {
           try {
             const decoded = decodePacket(response);
+            validateDecodedDnsResponseForTxt(decoded, {
+              expectedQueryId: queryId,
+              expectedQueryName: queryName,
+              expectedPort: port,
+              expectedServer: dnsServer,
+              sourceAddress: rinfo.address,
+              sourcePort: rinfo.port,
+            });
+            const answers = decoded.answers ?? [];
 
-            // SECURITY: Validate response ID matches query ID to prevent DNS spoofing attacks.
-            // An attacker could send forged responses with guessed IDs; rejecting mismatches
-            // ensures we only accept legitimate responses from the queried server.
-            if (decoded.id !== queryId) {
-              throw new Error(
-                `DNS response ID mismatch (expected ${queryId}, got ${decoded.id}) - possible spoofing attempt`
-              );
-            }
-
-            const rcode = getDecodedRcode(decoded);
-            if (rcode && rcode !== 'NOERROR') {
-              throw new Error(`DNS query failed with rcode: ${rcode}`);
-            }
-
-            if (!decoded.answers || decoded.answers.length === 0) {
-              throw new Error('No TXT records found');
-            }
-
-            const txtRecords = decoded.answers
+            const txtRecords = answers
               .filter((answer) => answer.type === 'TXT')
               .map((answer) => {
                 if (Array.isArray(answer.data)) {
@@ -1424,26 +1501,15 @@ export class DNSService {
           if (expectedLength > 0 && responseBuffer.length >= expectedLength) {
             try {
               const decoded = decodePacket(responseBuffer.slice(0, expectedLength));
+              validateDecodedDnsResponseForTxt(decoded, {
+                expectedQueryId: queryId,
+                expectedQueryName: queryName,
+                expectedPort: port,
+                expectedServer: dnsServer,
+              });
+              const answers = decoded.answers ?? [];
 
-              // SECURITY: Validate response ID matches query ID to prevent DNS spoofing attacks.
-              // An attacker could send forged responses with guessed IDs; rejecting mismatches
-              // ensures we only accept legitimate responses from the queried server.
-              if (decoded.id !== queryId) {
-                throw new Error(
-                  `DNS response ID mismatch (expected ${queryId}, got ${decoded.id}) - possible spoofing attempt`
-                );
-              }
-
-              const rcode = getDecodedRcode(decoded);
-              if (rcode && rcode !== 'NOERROR') {
-                throw new Error(`DNS query failed with rcode: ${rcode}`);
-              }
-
-              if (!decoded.answers || decoded.answers.length === 0) {
-                throw new Error('No TXT records found');
-              }
-
-              const txtRecords = decoded.answers
+              const txtRecords = answers
                 .filter((answer) => answer.type === 'TXT')
                 .map((answer) => {
                   if (Array.isArray(answer.data)) {
@@ -1605,6 +1671,7 @@ export class DNSService {
   }
 
   private static async tryMethod(
+    queryId: string,
     method: 'native' | 'udp' | 'tcp' | 'mock',
     context: DNSQueryContext,
   ): Promise<{
@@ -1615,7 +1682,7 @@ export class DNSService {
     const { queryName, targetServer, targetPort, originalMessage, label } = context;
 
     try {
-      DNSLogService.logMethodAttempt(method, `Server: ${targetServer}:${targetPort}`);
+      DNSLogService.logMethodAttempt(queryId, method, `Server: ${targetServer}:${targetPort}`);
 
       let txtRecords: string[];
 
@@ -1760,6 +1827,7 @@ export class DNSService {
           this.vLog('NATIVE: Native DNS query completed successfully');
           this.vLog('NATIVE: Total duration:', nativeDuration, 'ms');
           DNSLogService.logMethodSuccess(
+            queryId,
             'native',
             nativeDuration,
             `Response received (${result.length} chars)`,
@@ -1803,7 +1871,7 @@ export class DNSService {
         case 'mock':
           const mockResponse = await MockDNSService.queryLLM(originalMessage);
           const mockDuration = Date.now() - startTime;
-          DNSLogService.logMethodSuccess('mock', mockDuration, `Mock response generated`);
+          DNSLogService.logMethodSuccess(queryId, 'mock', mockDuration, `Mock response generated`);
           return { response: mockResponse, method: 'mock' };
 
         default:
@@ -1815,13 +1883,13 @@ export class DNSService {
 
       const response = this.parseResponse(txtRecords);
       const successDuration = Date.now() - startTime;
-      DNSLogService.logMethodSuccess(method, successDuration, `Response received`);
+      DNSLogService.logMethodSuccess(queryId, method, successDuration, `Response received`);
 
       return { response, method };
     } catch (error) {
       const errorDuration = Date.now() - startTime;
       const message = getErrorMessage(error);
-      DNSLogService.logMethodFailure(method, message, errorDuration);
+      DNSLogService.logMethodFailure(queryId, method, message, errorDuration);
       throw error instanceof Error ? error : new Error(message);
     }
   }
@@ -1854,7 +1922,7 @@ export class DNSService {
 
     // Start logging the query
     const queryId = DNSLogService.startQuery(message);
-    DNSLogService.addLog({
+    DNSLogService.addLog(queryId, {
       id: `${queryId}-forced-query-name`,
       timestamp: new Date(),
       message: `Resolved DNS query name: ${context.queryName}`,
@@ -1869,6 +1937,7 @@ export class DNSService {
       this.vLog(`Testing ${transport.toUpperCase()} transport to ${targetServer}:${context.targetPort}`);
       this.vLog('Forced query name:', context.queryName);
       DNSLogService.logMethodAttempt(
+        queryId,
         transport,
         `FORCED test (no fallback) - Server: ${targetServer}:${context.targetPort}`,
       );
@@ -1913,11 +1982,12 @@ export class DNSService {
           const nativeDuration = Date.now() - startTime;
           this.vLog('NATIVE TEST: Forced test completed successfully');
           DNSLogService.logMethodSuccess(
+            queryId,
             'native',
             nativeDuration,
             `Forced test response received (${result.length} chars)`,
           );
-          await DNSLogService.endQuery(true, result, 'native');
+          await DNSLogService.endQuery(queryId, true, result, 'native');
           this.vLog(
             `Native transport test successful: ${result.substring(0, 100)}${result.length > 100 ? '...' : ''}`,
           );
@@ -1967,19 +2037,20 @@ export class DNSService {
       const response = this.parseResponse(txtRecords);
       const testSuccessDuration = Date.now() - startTime;
       DNSLogService.logMethodSuccess(
+        queryId,
         transport,
         testSuccessDuration,
         `Forced test response received`,
       );
-      await DNSLogService.endQuery(true, response, transport);
+      await DNSLogService.endQuery(queryId, true, response, transport);
       this.vLog(`${transport.toUpperCase()} transport test successful: ${response}`);
       return response;
     } catch (error) {
       const testErrorDuration = Date.now() - startTime;
       const message = getErrorMessage(error);
       this.vLog(`${transport.toUpperCase()} transport test failed:`, message);
-      DNSLogService.logMethodFailure(transport, message, testErrorDuration);
-      await DNSLogService.endQuery(false, undefined, transport);
+      DNSLogService.logMethodFailure(queryId, transport, message, testErrorDuration);
+      await DNSLogService.endQuery(queryId, false, undefined, transport);
       throw error instanceof Error ? error : new Error(message);
     }
   }

@@ -1,4 +1,4 @@
-import React, { createContext, use, useState, useEffect } from "react";
+import React, { createContext, use, useState, useEffect, useRef } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { isScreenshotMode } from "../utils/screenshotMode";
 import { devWarn } from "../utils/devLog";
@@ -22,6 +22,12 @@ interface OnboardingContextType {
   resetOnboarding: () => Promise<void>;
   markStepCompleted: (stepId: string) => void;
   loading: boolean;
+}
+
+interface PersistedOnboardingState {
+  completed: boolean;
+  stepIndex: number;
+  completedSteps: string[];
 }
 
 const OnboardingContext = createContext<OnboardingContextType | undefined>(
@@ -78,17 +84,39 @@ export function OnboardingProvider({
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [steps, setSteps] = useState<OnboardingStep[]>(ONBOARDING_STEPS);
   const [loading, setLoading] = useState(true);
+  const onboardingStateRef = useRef<PersistedOnboardingState>({
+    completed: false,
+    stepIndex: 0,
+    completedSteps: [],
+  });
+  const persistQueueRef = useRef<Promise<void>>(Promise.resolve());
 
   // Effect: load persisted onboarding state once on mount.
   useEffect(() => {
     loadOnboardingState();
   }, []);
 
+  const applySnapshot = (snapshot: PersistedOnboardingState) => {
+    onboardingStateRef.current = snapshot;
+    setHasCompletedOnboarding(snapshot.completed);
+    setCurrentStep(snapshot.stepIndex);
+    setSteps(
+      ONBOARDING_STEPS.map((step) => ({
+        ...step,
+        completed: snapshot.completedSteps.includes(step.id),
+      })),
+    );
+  };
+
   const loadOnboardingState = async () => {
     try {
       // Skip onboarding in screenshot mode so snapshot tooling can capture main app screens.
       if (isScreenshotMode()) {
-        setHasCompletedOnboarding(true);
+        applySnapshot({
+          completed: true,
+          stepIndex: ONBOARDING_STEPS.length - 1,
+          completedSteps: ONBOARDING_STEPS.map((step) => step.id),
+        });
         setLoading(false);
         return;
       }
@@ -97,17 +125,11 @@ export function OnboardingProvider({
       if (onboardingData) {
         const { completed, stepIndex, completedSteps } =
           JSON.parse(onboardingData);
-        setHasCompletedOnboarding(completed || false);
-        setCurrentStep(stepIndex || 0);
-
-        if (completedSteps) {
-          setSteps((prevSteps) =>
-            prevSteps.map((step) => ({
-              ...step,
-              completed: completedSteps.includes(step.id),
-            })),
-          );
-        }
+        applySnapshot({
+          completed: completed || false,
+          stepIndex: stepIndex || 0,
+          completedSteps: Array.isArray(completedSteps) ? completedSteps : [],
+        });
       }
     } catch (error) {
       devWarn("[OnboardingContext] Error loading onboarding state", error);
@@ -116,58 +138,61 @@ export function OnboardingProvider({
     }
   };
 
-  const saveOnboardingState = async (
-    completed: boolean,
-    stepIndex: number,
-    completedSteps: string[],
+  const persistSnapshot = async (
+    snapshot: PersistedOnboardingState,
+    options?: { remove?: boolean },
   ) => {
+    const run = persistQueueRef.current.then(async () => {
+      if (options?.remove) {
+        await AsyncStorage.removeItem(ONBOARDING_STORAGE_KEY);
+      } else {
+        await AsyncStorage.setItem(
+          ONBOARDING_STORAGE_KEY,
+          JSON.stringify(snapshot),
+        );
+      }
+      applySnapshot(snapshot);
+    });
+
+    persistQueueRef.current = run.catch(() => {});
+
     try {
-      await AsyncStorage.setItem(
-        ONBOARDING_STORAGE_KEY,
-        JSON.stringify({
-          completed,
-          stepIndex,
-          completedSteps,
-        }),
-      );
+      await run;
     } catch (error) {
       devWarn("[OnboardingContext] Error saving onboarding state", error);
+      throw error;
     }
   };
 
   const completeOnboarding = async () => {
-    setHasCompletedOnboarding(true);
-    const completedSteps = steps.map((step) => step.id);
-    await saveOnboardingState(true, steps.length - 1, completedSteps);
+    await persistSnapshot({
+      completed: true,
+      stepIndex: ONBOARDING_STEPS.length - 1,
+      completedSteps: ONBOARDING_STEPS.map((step) => step.id),
+    });
   };
 
-  // CRITICAL: These functions are async to properly await storage operations.
-  // Fire-and-forget async was causing silent loss of onboarding progress on save failures.
   const nextStep = async () => {
-    if (currentStep < steps.length - 1) {
-      const newStep = currentStep + 1;
-      setCurrentStep(newStep);
-      const completedSteps = steps.slice(0, newStep).map((step) => step.id);
-      try {
-        await saveOnboardingState(false, newStep, completedSteps);
-      } catch (error) {
-        // Log error but don't block UI - user can retry navigation
-        devWarn("[OnboardingContext] Failed to save onboarding progress", error);
-      }
+    const current = onboardingStateRef.current;
+    if (current.stepIndex < ONBOARDING_STEPS.length - 1) {
+      const newStep = current.stepIndex + 1;
+      await persistSnapshot({
+        completed: false,
+        stepIndex: newStep,
+        completedSteps: ONBOARDING_STEPS.slice(0, newStep).map((step) => step.id),
+      });
     }
   };
 
   const previousStep = async () => {
-    if (currentStep > 0) {
-      const newStep = currentStep - 1;
-      setCurrentStep(newStep);
-      const completedSteps = steps.slice(0, newStep).map((step) => step.id);
-      try {
-        await saveOnboardingState(false, newStep, completedSteps);
-      } catch (error) {
-        // Log error but don't block UI - user can retry navigation
-        devWarn("[OnboardingContext] Failed to save onboarding progress", error);
-      }
+    const current = onboardingStateRef.current;
+    if (current.stepIndex > 0) {
+      const newStep = current.stepIndex - 1;
+      await persistSnapshot({
+        completed: false,
+        stepIndex: newStep,
+        completedSteps: ONBOARDING_STEPS.slice(0, newStep).map((step) => step.id),
+      });
     }
   };
 
@@ -176,10 +201,14 @@ export function OnboardingProvider({
   };
 
   const resetOnboarding = async () => {
-    setHasCompletedOnboarding(false);
-    setCurrentStep(0);
-    setSteps(ONBOARDING_STEPS);
-    await AsyncStorage.removeItem(ONBOARDING_STORAGE_KEY);
+    await persistSnapshot(
+      {
+        completed: false,
+        stepIndex: 0,
+        completedSteps: [],
+      },
+      { remove: true },
+    );
   };
 
   const markStepCompleted = (stepId: string) => {

@@ -9,6 +9,7 @@ import {
   ScrollView,
 } from "react-native";
 import { OnboardingNavigation } from "../OnboardingNavigation";
+import { useSettings } from "../../../context/SettingsContext";
 import { useImessagePalette } from "../../../ui/theme/imessagePalette";
 import { useTypography } from "../../../ui/hooks/useTypography";
 import { LiquidGlassSpacing } from "../../../ui/theme/liquidGlassSpacing";
@@ -26,8 +27,12 @@ export function NetworkSetupScreen() {
   const palette = useImessagePalette();
   const typography = useTypography();
   const { t } = useTranslation();
+  const {
+    applyRecommendedNetworkSettings,
+  } = useSettings();
 
   const [isOptimizing, setIsOptimizing] = useState(false);
+  const [isApplyingSettings, setIsApplyingSettings] = useState(false);
   const [optimizationComplete, setOptimizationComplete] = useState(false);
   const [recommendedSetting, setRecommendedSetting] = useState<boolean | null>(
     null,
@@ -93,6 +98,20 @@ export function NetworkSetupScreen() {
 
   const applyRecommendedSettings = async () => {
     if (recommendedSetting !== null) {
+      setIsApplyingSettings(true);
+      try {
+        await applyRecommendedNetworkSettings(recommendedSetting);
+      } catch (error) {
+        devWarn("[NetworkSetupScreen] Failed to apply recommended settings", error);
+        Alert.alert(
+          t("screen.onboarding.networkSetup.alerts.errorTitle"),
+          t("screen.onboarding.networkSetup.alerts.errorMessage"),
+        );
+        return;
+      } finally {
+        setIsApplyingSettings(false);
+      }
+
       Alert.alert(
         t("screen.onboarding.networkSetup.alerts.successTitle"),
         t("screen.onboarding.networkSetup.alerts.successMessage"),
@@ -212,10 +231,11 @@ export function NetworkSetupScreen() {
                 { backgroundColor: palette.accentTint },
               ]}
               onPress={applyRecommendedSettings}
+              disabled={isApplyingSettings}
               activeOpacity={0.7}
               accessibilityRole="button"
-              accessibilityLabel="Apply recommended settings"
-              accessibilityHint="Configures DNS to use automatic fallback chain with the fastest available method based on your network test results"
+              accessibilityLabel={t("screen.onboarding.networkSetup.accessibility.applyLabel")}
+              accessibilityHint={t("screen.onboarding.networkSetup.accessibility.applyHint")}
             >
               <Text
                 style={[

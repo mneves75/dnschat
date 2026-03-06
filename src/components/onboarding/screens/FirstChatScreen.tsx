@@ -16,6 +16,7 @@ import { useTypography } from "../../../ui/hooks/useTypography";
 import { LiquidGlassSpacing } from "../../../ui/theme/liquidGlassSpacing";
 import { useTranslation } from "../../../i18n";
 import { SendIcon } from "../../icons/SendIcon";
+import { MESSAGE_CONSTANTS } from "../../../constants/appConstants";
 import { devWarn } from "../../../utils/devLog";
 
 interface Message {
@@ -191,8 +192,10 @@ export function FirstChatScreen() {
                   onPress={() => setInputText(suggestion)}
                   activeOpacity={0.7}
                   accessibilityRole="button"
-                  accessibilityLabel={`Suggestion: ${suggestion}`}
-                  accessibilityHint="Fills the message input with this suggested question"
+                  accessibilityLabel={t("screen.onboarding.firstChat.accessibility.suggestionLabel", {
+                    suggestion,
+                  })}
+                  accessibilityHint={t("screen.onboarding.firstChat.accessibility.suggestionHint")}
                 >
                   <Text
                     style={[
@@ -230,9 +233,11 @@ export function FirstChatScreen() {
             placeholder={t("screen.onboarding.firstChat.input.placeholder")}
             placeholderTextColor={palette.textTertiary}
             multiline
-            maxLength={200}
-            accessibilityLabel="Message input"
-            accessibilityHint="Type your message to send via DNS. Maximum 200 characters."
+            maxLength={MESSAGE_CONSTANTS.MAX_MESSAGE_LENGTH}
+            accessibilityLabel={t("screen.onboarding.firstChat.accessibility.inputLabel")}
+            accessibilityHint={t("screen.onboarding.firstChat.accessibility.inputHint", {
+              max: MESSAGE_CONSTANTS.MAX_MESSAGE_LENGTH,
+            })}
           />
           <TouchableOpacity
             style={[
@@ -248,8 +253,12 @@ export function FirstChatScreen() {
             disabled={!inputText.trim() || isLoading}
             activeOpacity={0.7}
             accessibilityRole="button"
-            accessibilityLabel={isLoading ? "Sending message" : "Send message"}
-            accessibilityHint="Sends your message through DNS TXT query"
+            accessibilityLabel={t(
+              isLoading
+                ? "screen.onboarding.firstChat.accessibility.sendingLabel"
+                : "screen.onboarding.firstChat.accessibility.sendLabel",
+            )}
+            accessibilityHint={t("screen.onboarding.firstChat.accessibility.sendHint")}
             accessibilityState={{
               disabled: !inputText.trim() || isLoading,
               busy: isLoading,

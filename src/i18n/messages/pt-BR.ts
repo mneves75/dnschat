@@ -39,6 +39,15 @@ export const ptBR = {
   },
   screen: {
     onboarding: {
+      navigation: {
+        skip: "Pular",
+        skipHint: "Pula o tutorial e vai direto para o app",
+        back: "Voltar",
+        backHint: "Retorna para a tela anterior do onboarding",
+        getStarted: "Começar",
+        continueHint: "Avança para a próxima etapa do onboarding",
+        completeHint: "Conclui o onboarding e abre o app",
+      },
       welcome: {
         title: "Bem-vindo ao DNS Chat",
         subtitle: "O primeiro aplicativo de chat do mundo que usa consultas DNS para se comunicar com IA",
@@ -82,6 +91,15 @@ export const ptBR = {
         navigation: {
           continue: "Incrível! Continuar",
           skip: "Pular Tutorial",
+        },
+        accessibility: {
+          suggestionLabel: "Sugestão: {{suggestion}}",
+          suggestionHint: "Preenche o campo de mensagem com esta pergunta sugerida",
+          inputLabel: "Campo de mensagem",
+          inputHint: "Digite sua mensagem para enviar via DNS. Máximo de {{max}} caracteres.",
+          sendLabel: "Enviar mensagem",
+          sendingLabel: "Enviando mensagem",
+          sendHint: "Envia sua mensagem através de uma consulta DNS TXT",
         },
       },
       dnsMagic: {
@@ -128,6 +146,11 @@ export const ptBR = {
           failed: "Falhou",
         },
         demoResponse: "Bem-vindo ao DNS Chat! Esta é uma demonstração de como suas mensagens viajam através de consultas DNS. Bem legal, né?",
+        accessibility: {
+          idleLabel: "Iniciar demonstração DNS",
+          runningLabel: "Consulta DNS em andamento",
+          demoHint: "Demonstra como as consultas DNS percorrem a cadeia de fallback. Veja sua mensagem passar por DNS nativo, UDP, TCP e HTTPS.",
+        },
       },
       networkSetup: {
         label: "Configuração",
@@ -172,6 +195,10 @@ export const ptBR = {
           successMessage: "Otimização de rede completa. O DNS usará cadeia de fallback automática para melhor desempenho.",
           successButton: "Ótimo",
         },
+        accessibility: {
+          applyLabel: "Aplicar configurações recomendadas",
+          applyHint: "Configura o DNS para usar a cadeia automática de fallback com o método mais rápido disponível com base nos resultados do teste de rede",
+        },
       },
       features: {
         logs: {
@@ -204,6 +231,7 @@ export const ptBR = {
           title: "Código Aberto",
           description: "Construído de forma transparente - explore o código e contribua para o futuro do chat DNS.",
           action: "Ver no GitHub",
+          accessibilityHint: "Abre o repositório do DNS Chat no GitHub no navegador para você ver o código-fonte e contribuir",
         },
         themes: {
           label: "Adapta",

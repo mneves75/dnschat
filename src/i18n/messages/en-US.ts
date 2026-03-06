@@ -39,6 +39,15 @@ export const enUS = {
   },
   screen: {
     onboarding: {
+      navigation: {
+        skip: "Skip",
+        skipHint: "Skips the tutorial and goes directly to the app",
+        back: "Back",
+        backHint: "Returns to the previous onboarding screen",
+        getStarted: "Get Started",
+        continueHint: "Proceeds to the next onboarding step",
+        completeHint: "Completes onboarding and opens the app",
+      },
       welcome: {
         title: "Welcome to DNS Chat",
         subtitle: "The world's first chat app that uses DNS queries to communicate with AI",
@@ -82,6 +91,15 @@ export const enUS = {
         navigation: {
           continue: "Amazing! Continue",
           skip: "Skip Tutorial",
+        },
+        accessibility: {
+          suggestionLabel: "Suggestion: {{suggestion}}",
+          suggestionHint: "Fills the message input with this suggested question",
+          inputLabel: "Message input",
+          inputHint: "Type your message to send via DNS. Maximum {{max}} characters.",
+          sendLabel: "Send message",
+          sendingLabel: "Sending message",
+          sendHint: "Sends your message through DNS TXT query",
         },
       },
       dnsMagic: {
@@ -128,6 +146,11 @@ export const enUS = {
           failed: "Failed",
         },
         demoResponse: "Welcome to DNS Chat! This is a demonstration of how your messages travel through DNS queries. Pretty cool, right?",
+        accessibility: {
+          idleLabel: "Start DNS demo",
+          runningLabel: "DNS query in progress",
+          demoHint: "Demonstrates how DNS queries work through the fallback chain. Watch as your message travels through Native DNS, UDP, TCP, and HTTPS methods.",
+        },
       },
       networkSetup: {
         label: "Setup",
@@ -172,6 +195,10 @@ export const enUS = {
           successMessage: "Network optimization complete. DNS will use automatic fallback chain for best performance.",
           successButton: "Great",
         },
+        accessibility: {
+          applyLabel: "Apply recommended settings",
+          applyHint: "Configures DNS to use automatic fallback chain with the fastest available method based on your network test results",
+        },
       },
       features: {
         logs: {
@@ -204,6 +231,7 @@ export const enUS = {
           title: "Open Source",
           description: "Built transparently - explore the code and contribute to the future of DNS chat.",
           action: "View on GitHub",
+          accessibilityHint: "Opens the DNS Chat GitHub repository in your browser where you can view the source code and contribute",
         },
         themes: {
           label: "Adapt",

@@ -1,8 +1,9 @@
 import React, {
   createContext,
   use,
-  useState,
   useEffect,
+  useRef,
+  useState,
 } from "react";
 import type { ReactNode } from "react";
 import uuid from "react-native-uuid";
@@ -26,8 +27,20 @@ export function ChatProvider({ children }: ChatProviderProps) {
   const [currentChat, setCurrentChat] = useState<Chat | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const sendInFlightRef = useRef(false);
 
-  const loadChats = async () => {
+  const replaceChatInState = (chatId: string, replacement: Chat) => {
+    setChats((prevChats) =>
+      prevChats.map((chat) => (chat.id === chatId ? replacement : chat)),
+    );
+    setCurrentChat((previous) => (previous?.id === chatId ? replacement : previous));
+  };
+
+  const loadChats = async (options?: {
+    preserveChatId?: string | null;
+    preserveError?: string | null;
+    clearError?: boolean;
+  }) => {
     try {
       setIsLoading(true);
 
@@ -36,29 +49,35 @@ export function ChatProvider({ children }: ChatProviderProps) {
         devLog("[ChatContext] Screenshot mode detected, loading mock conversations");
         const mockConversations = getMockConversations(settings.preferredLocale || "en-US");
         setChats(mockConversations as Chat[]);
-        // Set first conversation as current chat
-        if (mockConversations.length > 0) {
-          setCurrentChat(mockConversations[0] as Chat);
-        }
-        setError(null);
+        const preferredChat = options?.preserveChatId
+          ? (mockConversations.find((chat) => chat.id === options.preserveChatId) ?? null)
+          : null;
+        setCurrentChat((preferredChat ?? mockConversations[0] ?? null) as Chat | null);
+        setError(options?.clearError === false ? options?.preserveError ?? null : null);
         setIsLoading(false);
         return;
       }
 
       // NORMAL MODE: Load chats from storage
-      const loadedChats = await StorageService.loadChats();
+      const loadedChats = await StorageService.loadChats({
+        recoverOnCorruption: false,
+      });
       setChats(loadedChats);
-      if (loadedChats.length > 0) {
-        setCurrentChat(loadedChats[0] as Chat);
-      } else {
-        setCurrentChat(null);
-      }
-      setError(null);
+      const preferredChat = options?.preserveChatId
+        ? (loadedChats.find((chat) => chat.id === options.preserveChatId) ?? null)
+        : null;
+      setCurrentChat((preferredChat ?? loadedChats[0] ?? null) as Chat | null);
+      setError(options?.clearError === false ? options?.preserveError ?? null : null);
     } catch (err) {
       if (err instanceof StorageCorruptionError) {
+        await StorageService.loadChats();
         setChats([]);
         setCurrentChat(null);
-        setError("Chat storage was corrupted and has been reset.");
+        setError(
+          options?.clearError === false
+            ? options?.preserveError ?? "Chat storage was corrupted and has been reset."
+            : "Chat storage was corrupted and has been reset.",
+        );
       } else {
         setError(err instanceof Error ? err.message : "Failed to load chats");
       }
@@ -137,10 +156,21 @@ export function ChatProvider({ children }: ChatProviderProps) {
       return;
     }
 
+    if (sendInFlightRef.current) {
+      setError("Please wait for the current response to finish before sending another message.");
+      return;
+    }
+
     // SECURITY: Capture chat ID at function entry to prevent race conditions.
     // If user switches chats during async operations, error handling should
     // still update the correct chat, not the newly selected one.
     const chatIdAtSend = currentChat.id;
+    const chatTitleAtSend =
+      currentChat.title === "New Chat" && currentChat.messages.length === 0
+        ? `${content.slice(0, MESSAGE_CONSTANTS.TITLE_MAX_LENGTH)}${
+            content.length > MESSAGE_CONSTANTS.TITLE_MAX_LENGTH ? "..." : ""
+          }`
+        : currentChat.title;
     const chatTitleForLog =
       currentChat.title === "New Chat" && currentChat.messages.length === 0
         ? `${content.slice(0, MESSAGE_CONSTANTS.TITLE_MAX_LENGTH)}${
@@ -152,7 +182,10 @@ export function ChatProvider({ children }: ChatProviderProps) {
     // Must be declared outside try block so it's accessible in catch block.
     // Avoids stale closure bug where 'chats' array would be captured at function
     // definition time, not at error time.
+    let assistantMessage: Message | null = null;
     let assistantMessageId: string | null = null;
+    let assistantMessagePersisted = false;
+    let userMessagePersisted = false;
 
     try {
       sanitizeDNSMessage(content);
@@ -168,6 +201,8 @@ export function ChatProvider({ children }: ChatProviderProps) {
       setError(errorMessage);
       return;
     }
+
+    sendInFlightRef.current = true;
 
     // Create user message
     const userMessage: Message = {
@@ -186,12 +221,14 @@ export function ChatProvider({ children }: ChatProviderProps) {
     try {
       // Add user message to storage and state
       devLog("[ChatContext] Adding user message to storage...");
-      await StorageService.addMessage(currentChat.id, userMessage);
+      await StorageService.addMessage(chatIdAtSend, userMessage);
+      userMessagePersisted = true;
       devLog("[ChatContext] User message added to storage");
 
       // Update current chat with user message
       const updatedChat: Chat = {
         ...currentChat,
+        title: chatTitleAtSend,
         messages: [...currentChat.messages, userMessage],
         updatedAt: new Date(),
       };
@@ -200,19 +237,11 @@ export function ChatProvider({ children }: ChatProviderProps) {
         chatId: updatedChat.id,
         messageCount: updatedChat.messages.length,
       });
-      setCurrentChat(updatedChat);
-
-      // Update chats list
-      // CRITICAL FIX: Use updatedChat.id instead of stale currentChat.id closure
-      setChats((prevChats) =>
-        prevChats.map((chat) =>
-          chat.id === updatedChat.id ? updatedChat : chat,
-        ),
-      );
+      replaceChatInState(updatedChat.id, updatedChat);
       devLog("[ChatContext] State updated with user message");
 
       // Create assistant message with loading state
-      const assistantMessage: Message = {
+      assistantMessage = {
         id: uuid.v4() as string,
         role: "assistant",
         content: "",
@@ -231,7 +260,8 @@ export function ChatProvider({ children }: ChatProviderProps) {
 
       // Add assistant message placeholder
       devLog("[ChatContext] Adding assistant placeholder to storage...");
-      await StorageService.addMessage(currentChat.id, assistantMessage);
+      await StorageService.addMessage(chatIdAtSend, assistantMessage);
+      assistantMessagePersisted = true;
       devLog("[ChatContext] Assistant placeholder added to storage");
 
       const chatWithAssistantPlaceholder: Chat = {
@@ -243,14 +273,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
       devLog("[ChatContext] Updating state with assistant placeholder", {
         messageCount: chatWithAssistantPlaceholder.messages.length,
       });
-      setCurrentChat(chatWithAssistantPlaceholder);
-
-      // CRITICAL FIX: Use chatWithAssistantPlaceholder.id instead of stale currentChat.id closure
-      setChats((prevChats) =>
-        prevChats.map((chat) =>
-          chat.id === chatWithAssistantPlaceholder.id ? chatWithAssistantPlaceholder : chat,
-        ),
-      );
+      replaceChatInState(chatWithAssistantPlaceholder.id, chatWithAssistantPlaceholder);
       devLog("[ChatContext] State updated with assistant placeholder");
 
       // Get AI response using DNS service (respects enableMockDNS setting)
@@ -283,7 +306,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
       };
 
       devLog("[ChatContext] Updating assistant message in storage with response...");
-      await StorageService.updateMessage(currentChat.id, assistantMessage.id, {
+      await StorageService.updateMessage(chatIdAtSend, assistantMessage.id, {
         content: response,
         status: "sent",
       });
@@ -304,13 +327,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
         messageCount: finalChat.messages.length,
       });
 
-      setCurrentChat(finalChat);
-      // CRITICAL FIX: Use finalChat.id instead of stale currentChat.id closure
-      setChats((prevChats) =>
-        prevChats.map((chat) =>
-          chat.id === finalChat.id ? finalChat : chat,
-        ),
-      );
+      replaceChatInState(finalChat.id, finalChat);
 
       devLog("[ChatContext] Final state update complete");
       setError(null);
@@ -330,25 +347,43 @@ export function ChatProvider({ children }: ChatProviderProps) {
       // Both values were captured at creation time, eliminating stale closure bugs where:
       // - currentChat could change if user switches chats during async operation
       // - chats array could be stale (captured at function definition, not error time)
-      if (chatIdAtSend && assistantMessageId) {
+      if (chatIdAtSend && assistantMessage && userMessagePersisted) {
         try {
-          devLog("[ChatContext] Updating message with error status", {
-            messageId: assistantMessageId,
-            chatId: chatIdAtSend,
-          });
+          if (!assistantMessagePersisted) {
+            devLog("[ChatContext] Persisting failed assistant message after placeholder write error", {
+              messageId: assistantMessage.id,
+              chatId: chatIdAtSend,
+            });
 
-          await StorageService.updateMessage(
-            chatIdAtSend,
-            assistantMessageId,
-            {
+            await StorageService.addMessage(chatIdAtSend, {
+              ...assistantMessage,
               status: "error",
               content: `Error: ${errorMessage}`,
-            },
-          );
+            });
+            assistantMessagePersisted = true;
+          } else if (assistantMessageId) {
+            devLog("[ChatContext] Updating message with error status", {
+              messageId: assistantMessageId,
+              chatId: chatIdAtSend,
+            });
 
-          // Reload chats to reflect error state
+            await StorageService.updateMessage(
+              chatIdAtSend,
+              assistantMessageId,
+              {
+                status: "error",
+                content: `Error: ${errorMessage}`,
+              },
+            );
+          }
+
+          // Reload chats to reflect error state while preserving the selected thread.
           devLog("[ChatContext] Reloading chats after error...");
-          await loadChats();
+          await loadChats({
+            preserveChatId: chatIdAtSend,
+            preserveError: errorMessage,
+            clearError: false,
+          });
           devLog("[ChatContext] Chats reloaded after error");
         } catch (updateErr) {
           devWarn(
@@ -358,6 +393,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
         }
       }
     } finally {
+      sendInFlightRef.current = false;
       setIsLoading(false);
     }
   };

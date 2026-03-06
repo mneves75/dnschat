@@ -221,7 +221,7 @@ describe("FirstChatScreen - iOS 26 HIG Compliance", () => {
       expect(sourceCode).toContain("inputContainer");
       expect(sourceCode).toContain("TextInput");
       expect(sourceCode).toContain("multiline");
-      expect(sourceCode).toContain("maxLength={200}");
+      expect(sourceCode).toContain("maxLength={MESSAGE_CONSTANTS.MAX_MESSAGE_LENGTH}");
     });
 
     it("includes send button", () => {

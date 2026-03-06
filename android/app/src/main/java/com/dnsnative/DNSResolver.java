@@ -290,7 +290,8 @@ public class DNSResolver {
      * Executes the DNS query chain with fallback strategies.
      * This method is called only once per unique query due to atomic deduplication.
      *
-     * Fallback chain: Raw UDP -> DNS-over-HTTPS (unless ch.at) -> Legacy (dnsjava)
+     * Fallback chain: Raw UDP -> optional Cloudflare DoH (only when Cloudflare
+     * itself is the selected resolver) -> Legacy (dnsjava on the same resolver)
      */
     private void executeQueryChain(
         String queryName,
@@ -301,8 +302,9 @@ public class DNSResolver {
     ) {
         Log.d(TAG, "DNS: Active queries count: " + activeQueries.size());
 
-        // Android internal fallback strategy:
-        // Raw UDP -> DNS-over-HTTPS (unless ch.at) -> legacy (dnsjava)
+        // Android internal fallback strategy must preserve resolver truthfulness.
+        // Do not silently switch a Google/custom/authoritative resolver query to
+        // Cloudflare DoH, or the app will lie about which resolver answered.
         queryTXTRawUDP(queryName, normalizedDomain, port)
             .thenAccept(txtRecords -> {
                 activeQueries.remove(queryId);
@@ -310,8 +312,7 @@ public class DNSResolver {
                 result.complete(txtRecords);
             })
             .exceptionally(err -> {
-                // Gate DoH: disable for ch.at, otherwise try DoH then legacy
-                if (normalizedDomain != null && !normalizedDomain.equalsIgnoreCase("ch.at")) {
+                if (shouldUseCloudflareDohFallback(normalizedDomain, port)) {
                     Log.d(TAG, "DNS: Trying DNS-over-HTTPS (fallback 1)");
                     queryTXTDNSOverHTTPS(queryName)
                         .thenAccept(txtRecords -> {
@@ -336,7 +337,7 @@ public class DNSResolver {
                             return null;
                         });
                 } else {
-                    Log.d(TAG, "DNS: Skipping DoH for ch.at, trying legacy DNS");
+                    Log.d(TAG, "DNS: Skipping Cloudflare DoH, trying legacy DNS on the selected resolver");
                     queryTXTLegacy(normalizedDomain, queryName, port)
                         .thenAccept(txtRecords -> {
                             activeQueries.remove(queryId);
@@ -352,6 +353,10 @@ public class DNSResolver {
                 }
                 return null;
             });
+    }
+
+    private boolean shouldUseCloudflareDohFallback(String normalizedDomain, int port) {
+        return port == 53 && "1.1.1.1".equals(normalizedDomain);
     }
 
 
@@ -624,7 +629,10 @@ public class DNSResolver {
     ) throws Exception {
         List<String> results = new ArrayList<>();
         if (data == null || data.length < 12) {
-            return results;
+            throw new DNSError(
+                DNSError.Type.QUERY_FAILED,
+                "Response too short: " + (data == null ? 0 : data.length) + " bytes, minimum 12 required"
+            );
         }
 
         // Header

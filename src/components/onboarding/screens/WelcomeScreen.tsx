@@ -9,6 +9,7 @@ import {
   ScrollView,
 } from "react-native";
 import { OnboardingNavigation } from "../OnboardingNavigation";
+import { useMotionReduction } from "../../../context/AccessibilityContext";
 import { useImessagePalette } from "../../../ui/theme/imessagePalette";
 import { useTypography } from "../../../ui/hooks/useTypography";
 import { LiquidGlassSpacing } from "../../../ui/theme/liquidGlassSpacing";
@@ -22,12 +23,19 @@ export function WelcomeScreen() {
   const palette = useImessagePalette();
   const typography = useTypography();
   const { t } = useTranslation();
+  const { shouldReduceMotion } = useMotionReduction();
 
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
   const slideAnim = React.useRef(new Animated.Value(50)).current;
 
   // Effect: run welcome screen entrance animation on mount.
   React.useEffect(() => {
+    if (shouldReduceMotion) {
+      fadeAnim.setValue(1);
+      slideAnim.setValue(0);
+      return;
+    }
+
     const animation = Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
@@ -46,7 +54,7 @@ export function WelcomeScreen() {
     return () => {
       animation.stop();
     };
-  }, [fadeAnim, slideAnim]);
+  }, [fadeAnim, shouldReduceMotion, slideAnim]);
 
   return (
     <View testID="onboarding-welcome" style={styles.container}>

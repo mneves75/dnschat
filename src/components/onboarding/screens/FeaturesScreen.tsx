@@ -230,7 +230,7 @@ function FeatureCard({ feature, palette, typography }: FeatureCardProps) {
           activeOpacity={0.7}
           accessibilityRole="link"
           accessibilityLabel={feature.action.text}
-          accessibilityHint="Opens the DNS Chat GitHub repository in your browser where you can view the source code and contribute"
+          accessibilityHint={t("screen.onboarding.features.opensource.accessibilityHint")}
         >
           <Text
             style={[

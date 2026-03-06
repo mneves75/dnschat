@@ -51,6 +51,13 @@ const decodeUtf8 = (payload: Uint8Array): string => {
   return out;
 };
 
+const generateAndPersistKey = async (): Promise<Uint8Array> => {
+  const generated = await getRandomBytes(ENCRYPTION_CONSTANTS.KEY_LENGTH);
+  await SecureStore.setItemAsync(KEY_STORAGE_KEY, bytesToHex(generated));
+  cachedKey = generated;
+  return generated;
+};
+
 const loadEncryptionKey = async (): Promise<Uint8Array> => {
   if (cachedKey) return cachedKey;
   if (keyLoadInFlight) return keyLoadInFlight;
@@ -67,26 +74,29 @@ const loadEncryptionKey = async (): Promise<Uint8Array> => {
       if (stored) {
         const decoded = hexToBytes(stored);
         if (decoded.length !== ENCRYPTION_CONSTANTS.KEY_LENGTH) {
-          throw new Error(`Stored key has invalid length: ${decoded.length}`);
+          devWarn(
+            '[EncryptionService] Stored key has invalid length, rotating to a newly persisted key',
+            new Error(`Stored key has invalid length: ${decoded.length}`),
+          );
+          return await generateAndPersistKey();
         }
         cachedKey = decoded;
         return decoded;
       }
     } catch (error) {
       devWarn(
-        '[EncryptionService] Failed to read key from SecureStore, falling back to new key',
+        '[EncryptionService] Failed to read key from SecureStore',
         error,
       );
+      throw new Error('Encryption key is unavailable');
     }
 
-    const generated = await getRandomBytes(ENCRYPTION_CONSTANTS.KEY_LENGTH);
-    cachedKey = generated;
     try {
-      await SecureStore.setItemAsync(KEY_STORAGE_KEY, bytesToHex(generated));
+      return await generateAndPersistKey();
     } catch (error) {
       devWarn('[EncryptionService] Failed to persist key in SecureStore', error);
+      throw new Error('Encryption key could not be persisted');
     }
-    return generated;
   })();
 
   try {

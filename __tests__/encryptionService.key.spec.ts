@@ -67,4 +67,45 @@ describe("encryptionService key handling", () => {
       }
     }
   });
+
+  it("throws when a newly generated key cannot be persisted", async () => {
+    const originalWorkerId = process.env["JEST_WORKER_ID"];
+    delete process.env["JEST_WORKER_ID"];
+    try {
+      jest.resetModules();
+      const { encryptString } = require("../src/services/encryptionService");
+      const SecureStoreModule = require("expo-secure-store") as typeof SecureStore;
+      const mockSecureStore = SecureStoreModule as jest.Mocked<typeof SecureStore>;
+      mockSecureStore.getItemAsync.mockResolvedValue(null);
+      mockSecureStore.setItemAsync.mockRejectedValue(new Error("SecureStore unavailable"));
+
+      await expect(encryptString("hello")).rejects.toThrow(
+        "Encryption key could not be persisted",
+      );
+    } finally {
+      if (originalWorkerId !== undefined) {
+        process.env["JEST_WORKER_ID"] = originalWorkerId;
+      }
+    }
+  });
+
+  it("throws when the stored key cannot be read", async () => {
+    const originalWorkerId = process.env["JEST_WORKER_ID"];
+    delete process.env["JEST_WORKER_ID"];
+    try {
+      jest.resetModules();
+      const { encryptString } = require("../src/services/encryptionService");
+      const SecureStoreModule = require("expo-secure-store") as typeof SecureStore;
+      const mockSecureStore = SecureStoreModule as jest.Mocked<typeof SecureStore>;
+      mockSecureStore.getItemAsync.mockRejectedValue(new Error("SecureStore read failed"));
+
+      await expect(encryptString("hello")).rejects.toThrow(
+        "Encryption key is unavailable",
+      );
+    } finally {
+      if (originalWorkerId !== undefined) {
+        process.env["JEST_WORKER_ID"] = originalWorkerId;
+      }
+    }
+  });
 });

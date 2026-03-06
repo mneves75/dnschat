@@ -48,11 +48,12 @@ const LOG_RETENTION_DAYS = LOGGING_CONSTANTS.LOG_RETENTION_DAYS;
 const STORAGE_SIZE_WARNING_MB = LOGGING_CONSTANTS.STORAGE_SIZE_WARNING_MB;
 
 export class DNSLogService {
-  private static currentQueryLog: DNSQueryLog | null = null;
+  private static activeQueryLogs: Map<string, DNSQueryLog> = new Map();
   private static queryLogs: DNSQueryLog[] = [];
   private static listeners: Set<(logs: DNSQueryLog[]) => void> = new Set();
   private static idCounter = 0;
   private static cleanupIntervalId: ReturnType<typeof setInterval> | null = null;
+  private static persistenceQueue: Promise<void> = Promise.resolve();
   private static redactText(value: string): string {
     const hash = bytesToHex(sha256(utf8ToBytes(value)));
     return `sha256:${hash} len:${value.length}`;
@@ -161,7 +162,7 @@ export class DNSLogService {
     const chatTitle = context?.chatTitle?.trim() || undefined;
     const chatId = context?.chatId || undefined;
 
-    this.currentQueryLog = {
+    const queryLog: DNSQueryLog = {
       id: queryId,
       ...(chatId ? { chatId } : {}),
       ...(chatTitle ? { chatTitle } : {}),
@@ -170,7 +171,8 @@ export class DNSLogService {
       finalStatus: "pending",
       entries: [],
     };
-    this.addLog({
+    this.activeQueryLogs.set(queryId, queryLog);
+    this.addLog(queryId, {
       id: this.generateUniqueId(`${queryId}-start`),
       timestamp: new Date(),
       message: `Starting DNS query`,
@@ -182,18 +184,24 @@ export class DNSLogService {
     return queryId;
   }
 
-  static addLog(entry: DNSLogEntry) {
-    if (!this.currentQueryLog) return;
+  static addLog(queryId: string, entry: DNSLogEntry) {
+    const queryLog = this.activeQueryLogs.get(queryId);
+    if (!queryLog) return;
 
-    this.currentQueryLog.entries.push(entry);
+    queryLog.entries.push(entry);
     this.notifyListeners();
   }
 
-  static logMethodAttempt(method: DNSLogEntry["method"], details?: string) {
-    if (!this.currentQueryLog) return;
+  static logMethodAttempt(
+    queryId: string,
+    method: DNSLogEntry["method"],
+    details?: string,
+  ) {
+    const queryLog = this.activeQueryLogs.get(queryId);
+    if (!queryLog) return;
 
     const entry: DNSLogEntry = {
-      id: this.generateUniqueId(`${this.currentQueryLog.id}-${method}-attempt`),
+      id: this.generateUniqueId(`${queryLog.id}-${method}-attempt`),
       timestamp: new Date(),
       message: `Attempting ${method.toUpperCase()} DNS query`,
       method,
@@ -201,18 +209,20 @@ export class DNSLogService {
       ...(details !== undefined ? { details } : {}),
     };
 
-    this.addLog(entry);
+    this.addLog(queryId, entry);
   }
 
   static logMethodSuccess(
+    queryId: string,
     method: DNSLogEntry["method"],
     duration: number,
     details?: string,
   ) {
-    if (!this.currentQueryLog) return;
+    const queryLog = this.activeQueryLogs.get(queryId);
+    if (!queryLog) return;
 
     const entry: DNSLogEntry = {
-      id: this.generateUniqueId(`${this.currentQueryLog.id}-${method}-success`),
+      id: this.generateUniqueId(`${queryLog.id}-${method}-success`),
       timestamp: new Date(),
       message: `${method.toUpperCase()} query successful`,
       method,
@@ -221,18 +231,20 @@ export class DNSLogService {
       ...(details !== undefined ? { details } : {}),
     };
 
-    this.addLog(entry);
+    this.addLog(queryId, entry);
   }
 
   static logMethodFailure(
+    queryId: string,
     method: DNSLogEntry["method"],
     error: string,
     duration?: number,
   ) {
-    if (!this.currentQueryLog) return;
+    const queryLog = this.activeQueryLogs.get(queryId);
+    if (!queryLog) return;
 
     const entry: DNSLogEntry = {
-      id: this.generateUniqueId(`${this.currentQueryLog.id}-${method}-failure`),
+      id: this.generateUniqueId(`${queryLog.id}-${method}-failure`),
       timestamp: new Date(),
       message: `${method.toUpperCase()} query failed`,
       method,
@@ -241,17 +253,19 @@ export class DNSLogService {
       ...(duration !== undefined ? { duration } : {}),
     };
 
-    this.addLog(entry);
+    this.addLog(queryId, entry);
   }
 
   static logFallback(
+    queryId: string,
     fromMethod: DNSLogEntry["method"],
     toMethod: DNSLogEntry["method"],
   ) {
-    if (!this.currentQueryLog) return;
+    const queryLog = this.activeQueryLogs.get(queryId);
+    if (!queryLog) return;
 
     const entry: DNSLogEntry = {
-      id: this.generateUniqueId(`${this.currentQueryLog.id}-fallback`),
+      id: this.generateUniqueId(`${queryLog.id}-fallback`),
       timestamp: new Date(),
       message: `Falling back from ${fromMethod.toUpperCase()} to ${toMethod.toUpperCase()}`,
       method: fromMethod,
@@ -259,18 +273,19 @@ export class DNSLogService {
       details: `Next attempt: ${toMethod}`,
     };
 
-    this.addLog(entry);
+    this.addLog(queryId, entry);
   }
 
   /**
    * Log server-level fallback (e.g., llm.pieter.com:53 → ch.at:53)
    * Distinct from transport-level fallback (native → udp → tcp)
    */
-  static logServerFallback(fromServer: string, toServer: string) {
-    if (!this.currentQueryLog) return;
+  static logServerFallback(queryId: string, fromServer: string, toServer: string) {
+    const queryLog = this.activeQueryLogs.get(queryId);
+    if (!queryLog) return;
 
     const entry: DNSLogEntry = {
-      id: this.generateUniqueId(`${this.currentQueryLog.id}-server-fallback`),
+      id: this.generateUniqueId(`${queryLog.id}-server-fallback`),
       timestamp: new Date(),
       message: `Server fallback: ${fromServer} → ${toServer}`,
       method: "native",
@@ -278,55 +293,56 @@ export class DNSLogService {
       details: `Trying next server: ${toServer}`,
     };
 
-    this.addLog(entry);
+    this.addLog(queryId, entry);
   }
 
   static async endQuery(
+    queryId: string,
     success: boolean,
     response?: string,
     finalMethod?: DNSLogEntry["method"],
   ) {
-    if (!this.currentQueryLog) return;
+    const queryLog = this.activeQueryLogs.get(queryId);
+    if (!queryLog) return;
 
-    this.currentQueryLog.endTime = new Date();
-    this.currentQueryLog.totalDuration =
-      this.currentQueryLog.endTime.getTime() -
-      this.currentQueryLog.startTime.getTime();
-    this.currentQueryLog.finalStatus = success ? "success" : "failure";
-    if (finalMethod) {
-      this.currentQueryLog.finalMethod = finalMethod;
-    } else {
-      delete this.currentQueryLog.finalMethod;
-    }
+    const resolvedFinalMethod =
+      finalMethod ?? this.getLastTrackedMethod(queryLog) ?? "native";
+
+    queryLog.endTime = new Date();
+    queryLog.totalDuration =
+      queryLog.endTime.getTime() -
+      queryLog.startTime.getTime();
+    queryLog.finalStatus = success ? "success" : "failure";
+    queryLog.finalMethod = resolvedFinalMethod;
     if (response) {
-      this.currentQueryLog.response = this.redactText(response);
+      queryLog.response = this.redactText(response);
     } else {
-      delete this.currentQueryLog.response;
+      delete queryLog.response;
     }
 
     const finalEntry: DNSLogEntry = {
-      id: this.generateUniqueId(`${this.currentQueryLog.id}-end`),
+      id: this.generateUniqueId(`${queryLog.id}-end`),
       timestamp: new Date(),
       message: success
-        ? `Query completed successfully via ${finalMethod ? finalMethod.toUpperCase() : "UNKNOWN"}`
+        ? `Query completed successfully via ${resolvedFinalMethod.toUpperCase()}`
         : "Query failed after all attempts",
-      method: finalMethod || "mock",
+      method: resolvedFinalMethod,
       status: success ? "success" : "failure",
-      duration: this.currentQueryLog.totalDuration,
+      duration: queryLog.totalDuration,
     };
 
-    this.addLog(finalEntry);
+    this.addLog(queryId, finalEntry);
 
-    // Add to persistent storage
-    this.queryLogs.unshift({ ...this.currentQueryLog });
+    await this.enqueuePersistentMutation(() => {
+      this.activeQueryLogs.delete(queryId);
+      this.queryLogs.unshift({ ...queryLog, entries: [...queryLog.entries] });
 
-    // Limit the number of stored logs
-    if (this.queryLogs.length > MAX_LOGS) {
-      this.queryLogs = this.queryLogs.slice(0, MAX_LOGS);
-    }
+      if (this.queryLogs.length > MAX_LOGS) {
+        this.queryLogs = this.queryLogs.slice(0, MAX_LOGS);
+      }
 
-    await this.saveLogs();
-    this.currentQueryLog = null;
+      return true;
+    });
     this.notifyListeners();
   }
 
@@ -355,57 +371,62 @@ export class DNSLogService {
       entries: [entry],
     };
 
-    this.queryLogs.unshift(log);
-    if (this.queryLogs.length > MAX_LOGS) {
-      this.queryLogs = this.queryLogs.slice(0, MAX_LOGS);
-    }
-
-    await this.saveLogs();
+    await this.enqueuePersistentMutation(() => {
+      this.queryLogs.unshift(log);
+      if (this.queryLogs.length > MAX_LOGS) {
+        this.queryLogs = this.queryLogs.slice(0, MAX_LOGS);
+      }
+      return true;
+    });
     this.notifyListeners();
   }
 
   static async saveLogs() {
-    try {
-      const payload = await encryptString(JSON.stringify(this.queryLogs));
-      await AsyncStorage.setItem(STORAGE_KEY, payload);
-    } catch (error) {
-      devWarn("[DNSLogService] Failed to save DNS logs", error);
-    }
+    await this.enqueuePersistentMutation(() => true);
   }
 
   static async deleteLog(logId: string) {
-    const nextLogs = this.queryLogs.filter((log) => log.id !== logId);
-    if (nextLogs.length === this.queryLogs.length) {
-      return;
+    const changed = await this.enqueuePersistentMutation(() => {
+      const nextLogs = this.queryLogs.filter((log) => log.id !== logId);
+      if (nextLogs.length === this.queryLogs.length) {
+        return this.activeQueryLogs.delete(logId);
+      }
+
+      this.queryLogs = nextLogs;
+      return true;
+    });
+    if (changed) {
+      this.notifyListeners();
     }
-    this.queryLogs = nextLogs;
-    if (this.currentQueryLog?.id === logId) {
-      this.currentQueryLog = null;
-    }
-    await this.saveLogs();
-    this.notifyListeners();
   }
 
   static getLogs(): DNSQueryLog[] {
-    const logs = [...this.queryLogs];
-
-    // Include current query if in progress
-    if (this.currentQueryLog) {
-      logs.unshift({ ...this.currentQueryLog });
-    }
-
-    return logs;
+    const activeLogs = Array.from(this.activeQueryLogs.values())
+      .sort((left, right) => right.startTime.getTime() - left.startTime.getTime())
+      .map((log) => ({ ...log, entries: [...log.entries] }));
+    return [...activeLogs, ...this.queryLogs];
   }
 
   static getCurrentQueryLog(): DNSQueryLog | null {
-    return this.currentQueryLog;
+    const activeLogs = Array.from(this.activeQueryLogs.values())
+      .sort((left, right) => right.startTime.getTime() - left.startTime.getTime());
+    const latest = activeLogs[0];
+    return latest ? { ...latest, entries: [...latest.entries] } : null;
   }
 
   static async clearLogs() {
-    this.queryLogs = [];
-    this.currentQueryLog = null;
-    await AsyncStorage.removeItem(STORAGE_KEY);
-    this.notifyListeners();
+    const changed = await this.enqueuePersistentMutation(
+      () => {
+        const hasLogs = this.queryLogs.length > 0 || this.activeQueryLogs.size > 0;
+        this.queryLogs = [];
+        this.activeQueryLogs.clear();
+        return hasLogs;
+      },
+      () => AsyncStorage.removeItem(STORAGE_KEY),
+    );
+    if (changed) {
+      this.notifyListeners();
+    }
   }
 
   static subscribe(listener: (logs: DNSQueryLog[]) => void) {
@@ -419,30 +440,75 @@ export class DNSLogService {
    */
   static async cleanupOldLogs(): Promise<void> {
     const thirtyDaysAgo = new Date(Date.now() - LOG_RETENTION_DAYS * 24 * 60 * 60 * 1000);
-    const oldLogsCount = this.queryLogs.length;
-
-    // PERFORMANCE FIX: Use splice for in-place removal instead of filter
-    // This is more efficient for large arrays
-    let removedCount = 0;
-    for (let i = this.queryLogs.length - 1; i >= 0; i--) {
-      const log = this.queryLogs[i];
-      if (!log) {
-        continue;
+    const changed = await this.enqueuePersistentMutation(() => {
+      let removedCount = 0;
+      for (let i = this.queryLogs.length - 1; i >= 0; i--) {
+        const log = this.queryLogs[i];
+        if (!log) {
+          continue;
+        }
+        const logDate = new Date(log.startTime);
+        if (logDate <= thirtyDaysAgo) {
+          this.queryLogs.splice(i, 1);
+          removedCount++;
+        }
       }
-      const logDate = new Date(log.startTime);
-      if (logDate <= thirtyDaysAgo) {
-        this.queryLogs.splice(i, 1);
-        removedCount++;
-      }
-    }
 
-    if (removedCount > 0) {
+      if (removedCount > 0) {
+        devLog(
+          `Cleaned up ${removedCount} old DNS logs (older than ${LOG_RETENTION_DAYS} days)`,
+        );
+      }
+
+      return removedCount > 0;
+    });
+
+    if (changed) {
       devLog(
-        `Cleaned up ${removedCount} old DNS logs (older than ${LOG_RETENTION_DAYS} days)`,
+        `[DNSLogService] Cleanup persisted after removing logs older than ${LOG_RETENTION_DAYS} days`,
       );
-      await this.saveLogs();
       this.notifyListeners();
     }
+  }
+
+  private static getLastTrackedMethod(
+    queryLog: DNSQueryLog,
+  ): DNSLogEntry["method"] | undefined {
+    for (let index = queryLog.entries.length - 1; index >= 0; index--) {
+      const entry = queryLog.entries[index];
+      if (entry?.method) {
+        return entry.method;
+      }
+    }
+    return undefined;
+  }
+
+  private static async writePersistentLogs(): Promise<void> {
+    const payload = await encryptString(JSON.stringify(this.queryLogs));
+    await AsyncStorage.setItem(STORAGE_KEY, payload);
+  }
+
+  private static async enqueuePersistentMutation(
+    mutate: () => boolean | Promise<boolean>,
+    persist: () => Promise<void> = () => this.writePersistentLogs(),
+  ): Promise<boolean> {
+    let changed = false;
+
+    const run = this.persistenceQueue
+      .then(async () => {
+        changed = await mutate();
+        if (!changed) {
+          return;
+        }
+        await persist();
+      })
+      .catch((error) => {
+        devWarn("[DNSLogService] Failed to persist DNS logs", error);
+      });
+
+    this.persistenceQueue = run;
+    await run;
+    return changed;
   }
 
   /**

@@ -29,7 +29,7 @@ Algorithm (implemented by `composeDNSQueryName(label, dnsServer)`):
 1. Strip trailing dots and whitespace from `label`.
 2. Validate `dnsServer` (non-empty allowlisted hostname or IP; ports disallowed).
 3. Determine `zone`:
-   - If `dnsServer` is an IPv4 address, use default zone `ch.at`.
+   - If `dnsServer` is an IPv4 address, use default zone `llm.pieter.com`.
    - Else use `dnsServer` (lowercased, trailing dot removed) as the zone.
 4. Query name is `${label}.${zone}`.
 
@@ -55,9 +55,9 @@ Parsing rules (implemented by `parseTXTResponse(txtRecords)`):
    - Join `content` in order `1..N`.
 4. Empty final response is rejected.
 
-## UDP response validation (native)
+## Response validation
 
-Native UDP resolvers (iOS/Android) validate DNS responses before TXT parsing:
+Native UDP resolvers (iOS/Android) and JS UDP/TCP fallbacks validate DNS responses before TXT parsing:
 
 - Transaction ID must match the query.
 - Header flags must indicate a standard response (QR=1, opcode=0, TC=0, RCODE=0).
@@ -66,6 +66,7 @@ Native UDP resolvers (iOS/Android) validate DNS responses before TXT parsing:
   - QNAME equals the normalized query name (lowercased, sanitized).
   - QTYPE is TXT (16) and QCLASS is IN (1).
 - DNS name parsing handles compression pointers with strict bounds checks and a small max-jump guard.
+- JS UDP additionally rejects unexpected source metadata when the selected resolver is an explicit IPv4 address (source port must always match, and source address must match for IPv4-literal resolvers).
 
 ## Transport chain
 
@@ -79,7 +80,7 @@ Order used for iOS/Android builds:
 Android native module internal fallback chain:
 
 1. Raw UDP (native)
-2. DNS-over-HTTPS (wireformat, RFC 8484)
+2. DNS-over-HTTPS (wireformat, RFC 8484) only when the selected resolver is Cloudflare `1.1.1.1`
 3. Legacy resolver (dnsjava)
 
 Web builds use Mock because browsers cannot do custom DNS on port 53.

@@ -31,13 +31,18 @@ function RootLayoutContent() {
   const router = useRouter();
   const segments = useSegments();
   const rootNavigationState = useRootNavigationState();
+  const [hasSettledInitialRoute, setHasSettledInitialRoute] = React.useState(false);
+  const routeMatchesExpectation =
+    (!hasCompletedOnboarding && segments[0] === "onboarding") ||
+    (hasCompletedOnboarding && segments[0] !== "onboarding");
 
-  // Effect: hide the splash screen once onboarding state + navigation are ready.
+  // Effect: keep the splash screen visible until the initial onboarding route is settled.
   React.useEffect(() => {
-    if (!loading && rootNavigationState?.key) {
+    if (!hasSettledInitialRoute && !loading && rootNavigationState?.key && routeMatchesExpectation) {
+      setHasSettledInitialRoute(true);
       SplashScreen.hideAsync().catch(() => {});
     }
-  }, [loading, rootNavigationState?.key]);
+  }, [hasSettledInitialRoute, loading, rootNavigationState?.key, routeMatchesExpectation]);
 
   // Effect: enforce onboarding flow based on completion state.
   React.useEffect(() => {
@@ -80,7 +85,7 @@ function RootLayoutContent() {
     }
   }, []);
 
-  if (loading || !rootNavigationState?.key) {
+  if (!hasSettledInitialRoute) {
     return null;
   }
 
@@ -96,6 +101,7 @@ function RootLayoutContent() {
         name="(tabs)"
         options={{ headerShown: false, title: "" }}
       />
+      <Stack.Screen name="onboarding" options={{ headerShown: false, title: "" }} />
       <Stack.Screen name="chat/[threadId]" options={{ headerBackTitle: "" }} />
       <Stack.Screen name="profile/[user]" />
       <Stack.Screen name="(modals)/settings" />
