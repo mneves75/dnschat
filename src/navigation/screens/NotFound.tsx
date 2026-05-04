@@ -34,7 +34,7 @@ export function NotFound() {
     <Form.List
       testID="not-found-screen"
       navigationTitle={t("screen.notFound.navigationTitle", { defaultValue: "Not Found" })}
-      style={[styles.container, { backgroundColor: palette.backgroundPrimary }]}
+      style={[styles.container, { backgroundColor: palette.background }]}
     >
       <Form.Section>
         <Animated.View style={animatedStyle}>

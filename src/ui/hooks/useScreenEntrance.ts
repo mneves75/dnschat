@@ -22,6 +22,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import type { ViewStyle } from 'react-native';
 import {
   useSharedValue,
   useAnimatedStyle,
@@ -63,7 +64,7 @@ interface UseScreenEntranceResult {
   /**
    * Animated style to apply to the screen container
    */
-  animatedStyle: ReturnType<typeof useAnimatedStyle>;
+  animatedStyle: ViewStyle;
 
   /**
    * Whether the entrance animation has completed
@@ -136,7 +137,7 @@ export function useScreenEntrance(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const animatedStyle = useAnimatedStyle(() => {
+  const animatedStyle = useAnimatedStyle<ViewStyle>(() => {
     return {
       opacity: opacity.value,
       transform: [{ translateY: translateY.value }],

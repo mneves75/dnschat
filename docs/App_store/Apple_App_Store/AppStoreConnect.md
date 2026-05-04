@@ -78,13 +78,13 @@ AI,chat,DNS,assistant,privacy,native,tech,innovation,queries,networking
 
 ---
 
-## What's New (Release Notes v4.0.6)
+## What's New (Release Notes v4.0.7)
 
-RELEASE FIXES
+RELEASE FIXES AND HARDENING
 
-- Hardened CI verification gates (SDK alignment, typed routes, DNS resolver sync, Android 16KB).
-- Improved upgrade integrity checks to catch installed-dependency drift versus lockfile.
-- Refreshed version metadata and release documentation for 4.0.6.
+- Updated Expo SDK 55 and React Native patch dependencies for current compatibility.
+- Added export-compliance metadata for iOS non-exempt encryption status.
+- Fixed strict TypeScript/runtime issues found during source review and full verification.
 
 ---
 
@@ -123,8 +123,8 @@ Revolutionary AI chat using DNS queries. Native iOS performance, complete privac
 ### Bundle Information
 
 - **Bundle ID**: `org.mvneves.dnschat`
-- **Version**: `4.0.6`
-- **Build Number**: 34 (sync-versions)
+- **Version**: `4.0.7`
+- **Build Number**: 35 (sync-versions)
 - **Minimum iOS Version**: 16.0
 - **Device Support**: iPhone, iPad
 - **Orientation**: Portrait + Landscape (default)
@@ -261,7 +261,7 @@ No server infrastructure or user accounts required.
 - [ ] Configure pricing (Free)
 - [ ] Set availability (Worldwide)
 - [ ] Age rating questionnaire
-- [ ] Export compliance (No encryption)
+- [x] Export compliance (`ITSAppUsesNonExemptEncryption=false`; no non-exempt encryption)
 - [ ] Content rights declaration
 
 ### Review Submission
@@ -273,4 +273,4 @@ No server infrastructure or user accounts required.
 
 ---
 
-_Generated for DNS Chat v1.7.2 - Ready for Multi-Platform App Store submission_
+_Updated for DNS Chat v4.0.7 - Ready for Multi-Platform App Store submission_

@@ -41,6 +41,7 @@ export function MessageContent({
   const isUser = message.role === "user";
   const isLoading = message.status === "sending";
   const hasError = message.status === "error";
+  const markdownProps = markdownStyles ? { style: markdownStyles } : {};
 
   return (
     <>
@@ -48,7 +49,7 @@ export function MessageContent({
       {isUser ? (
         <Text style={[textStyles, typography.body]} selectable={false}>{message.content}</Text>
       ) : (
-        <Markdown style={markdownStyles}>{message.content}</Markdown>
+        <Markdown {...markdownProps}>{message.content}</Markdown>
       )}
 
       {/* Loading indicator for sending messages */}

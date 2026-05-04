@@ -8,12 +8,28 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ### Changed
 
+- Aligned Expo SDK 55 patch dependencies with Expo Doctor output: Expo `55.0.20`,
+  React Native `0.83.6`, Expo Router `55.0.13`, SecureStore `55.0.13`, and
+  matching React test renderer `19.2.0`.
+- Documented current verification and release expectations across README,
+  install, architecture, Android, App Store, and agent guidance surfaces.
 - Hardened onboarding, settings, and chat state transitions to fail closed on persistence errors, keep thread selection stable after send failures, and apply onboarding network recommendations atomically.
 - Localized onboarding accessibility labels and hints across navigation, DNS demo, first-chat, network setup, GitHub CTA, and the chat-list compose toolbar button.
 - Updated the DNS protocol spec to match the shipped resolver behavior and response-validation contract.
 
+### Added
+
+- Added Android SecureStore backup/data-extraction policy tests and XML rules so
+  encrypted key material is excluded from cloud backup and device transfer.
+
 ### Fixed
 
+- Removed stale Android release permissions for legacy storage and overlay windows.
+- Declared iOS non-exempt encryption status in Expo config and native Info.plist.
+- Fixed strict TypeScript/runtime defects in stack options, onboarding
+  translations, markdown/skeleton optional styles, glass form props, chat
+  clearing, Home navigation actions, screen entrance/list animation typing, and
+  DNS harness buffer handling.
 - Serialized DNS log persistence so concurrent query completion/settings events/deletes cannot overwrite each other on disk, and fixed final-method / retry attribution in DNS logs.
 - Tightened JS UDP/TCP DNS response validation to enforce ID, QR/opcode/TC, RCODE, single TXT question matching, and source metadata checks for IPv4 resolvers.
 - Rejected inconsistent multipart TXT totals in `parseTXTResponse()` to match native parser behavior.

@@ -41,11 +41,20 @@ metadata is not applicable.
 ## Quick verification
 
 ```bash
+# Align Expo-compatible native package versions when upgrading SDK patches
+bunx expo install --fix
+
+# Expo dependency and config checks
+bunx expo-doctor
+
 # Lint (includes ast-grep rules)
 bun run lint
 
 # Unit tests
 bun run test
+
+# Full local gate
+bun run verify:all
 
 # DNS smoke test
 node test-dns-simple.js "Hello world"

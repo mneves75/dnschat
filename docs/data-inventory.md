@@ -40,7 +40,9 @@ This document inventories the data stored or processed by DNSChat and satisfies 
 6) Encryption key material
 - Storage key: `dnschat.encryption_key` (SecureStore)
 - Contents: AES key for local payload encryption
-- Storage location: SecureStore (device protected storage)
+- Storage location: SecureStore (device protected storage). Android backup and
+  device-transfer rules exclude the SecureStore shared preferences file so key
+  material is not restored without the platform keystore.
 - Retention: Persistent until app uninstall or explicit secure-store reset
 
 ## Data in Transit
@@ -67,6 +69,10 @@ This document inventories the data stored or processed by DNSChat and satisfies 
 
 - Encryption at rest for chat payloads and log storage via AES-GCM.
 - SecureStore for encryption key material.
+- Android Auto Backup/device-transfer excludes SecureStore key material.
+- iOS declares `ITSAppUsesNonExemptEncryption=false`; the app uses platform
+  storage and standard local data protection, not non-exempt custom
+  cryptography for export-compliance purposes.
 - Redaction of log message content to hashed form.
 
 ## Review Cadence

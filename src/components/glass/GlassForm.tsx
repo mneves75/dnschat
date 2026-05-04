@@ -66,6 +66,8 @@ interface GlassFormItemProps {
   style?: StyleProp<ViewStyle>;
   /** Show chevron indicator */
   showChevron?: boolean;
+  /** Render title/subtitle using destructive colors */
+  destructive?: boolean;
   /** Disable haptic feedback */
   disableHaptics?: boolean;
   /** Test ID for testing */
@@ -239,6 +241,7 @@ export const GlassFormItem: React.FC<GlassFormItemProps> = ({
   onPress,
   style,
   showChevron = false,
+  destructive = false,
   disableHaptics = false,
   testID,
 }) => {
@@ -260,11 +263,21 @@ export const GlassFormItem: React.FC<GlassFormItemProps> = ({
   const ItemContent = (
     <View style={[styles.itemContainer, itemStyle, style]}>
       <View style={styles.itemContentLeft}>
-        <Text style={[styles.itemTitle, { color: colors.textPrimary }]}>
+        <Text
+          style={[
+            styles.itemTitle,
+            { color: destructive ? colors.palette.destructive : colors.textPrimary },
+          ]}
+        >
           {title}
         </Text>
         {subtitle && (
-          <Text style={[styles.itemSubtitle, { color: colors.textSecondary }]}>
+          <Text
+            style={[
+              styles.itemSubtitle,
+              { color: destructive ? colors.palette.destructive : colors.textSecondary },
+            ]}
+          >
             {subtitle}
           </Text>
         )}

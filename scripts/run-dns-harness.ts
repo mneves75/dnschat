@@ -81,7 +81,7 @@ const getErrorMessage = (error: unknown, fallback: string): string => {
   return fallback;
 };
 
-const normalizeTxtData = (data: TxtData): Array<string | Buffer> => {
+const normalizeTxtData = (data: TxtData): Array<string | Uint8Array> => {
   if (Array.isArray(data)) return data;
   return [data];
 };
@@ -91,7 +91,7 @@ const extractTxtRecords = (answers: Answer[] | undefined): string[] => {
   return answers
     .filter((answer): answer is TxtAnswer => answer.type === 'TXT')
     .flatMap((answer) => normalizeTxtData(answer.data))
-    .map((record) => (typeof record === 'string' ? record : record.toString('utf8')));
+    .map((record) => (typeof record === 'string' ? record : Buffer.from(record).toString('utf8')));
 };
 
 function parseArgs(argv: string[]): HarnessOptions {
@@ -304,7 +304,8 @@ async function startLocalDnsServer(responseText: string): Promise<LocalDnsServer
   const tcpServer = net.createServer((socket) => {
     let buffer = Buffer.alloc(0);
     socket.on('data', (chunk) => {
-      buffer = Buffer.concat([buffer, chunk]);
+      const data = typeof chunk === 'string' ? Buffer.from(chunk) : chunk;
+      buffer = Buffer.concat([buffer, data]);
       if (buffer.length < 2) {
         return;
       }
@@ -554,7 +555,7 @@ async function attemptTcp(
     });
 
     client.on('data', (data) => {
-      chunks.push(data);
+      chunks.push(typeof data === 'string' ? Buffer.from(data) : data);
     });
 
     client.on('end', async () => {

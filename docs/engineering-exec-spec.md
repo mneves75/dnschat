@@ -6,7 +6,7 @@ PLANS.md is not present in this repository, so this document is the sole source 
 
 ## Goals
 
-Bring the DNSChat repository into compliance with all documents listed in `docs/GUIDELINES-REF/GUIDELINES_INDEX.json`, align with current best practices for Expo SDK 55 / React Native 0.83.2, and provide hard verification evidence (lint/tests/builds and guideline-to-evidence mapping).
+Bring the DNSChat repository into compliance with all documents listed in `docs/GUIDELINES-REF/GUIDELINES_INDEX.json`, align with current best practices for Expo SDK 55 / React Native 0.83.6, and provide hard verification evidence (lint/tests/builds and guideline-to-evidence mapping).
 
 ## Non-goals
 
@@ -66,6 +66,7 @@ Bring the DNSChat repository into compliance with all documents listed in `docs/
 - [x] (2026-01-06 20:27Z) Added Expo Router typed-routes generator/verification script and React Compiler healthcheck command.
 - [x] (2026-01-06 20:30Z) Extended 16KB checker to validate AABs when provided; verified debug libs (AAB optional).
 - [x] (2026-01-06 22:00Z) Re-ran `bun run lint`, `bun run test`, `bun run verify:android`, `bun run verify:android-16kb`, `bun run verify:typed-routes`, and `bun run verify:react-compiler` to confirm post-review verification remains green (warnings only for Metro/ADB reverse).
+- [x] (2026-05-04) Re-ran source review against current Expo SDK 55 patch guidance, aligned dependencies to Expo `55.0.20` / React Native `0.83.6`, removed stale Android release permissions, added SecureStore backup exclusions, declared iOS non-exempt encryption status, fixed strict TypeScript/runtime defects, and re-ran `bun run verify:all`, `bunx tsc --noEmit`, `bunx tsc -p tsconfig.test.json --noEmit`, `bun run dns:harness:build`, and `bun run sync-versions:dry`.
 
 ## Surprises & Discoveries
 
@@ -90,7 +91,8 @@ Bring the DNSChat repository into compliance with all documents listed in `docs/
 - Compliance: removed disallowed `any`/`@ts-ignore` usage, documented data inventory/model registry, justified `useEffect` usage, aligned Android SDK defaults to 36 + NDK r29, added glass-style sanitization guards, enabled typed-routes generation checks, and verified 16KB page-size alignment for native libs.
 - React Compiler: removed manual memoization from `ChatInput` and updated static tests accordingly.
 - Verification: `bun run lint`, `bun run test`, and `bun run dns:harness:build` passed; unit tests still report 1 skipped suite / 13 skipped tests (integration only). Subsequent Android signing, ExpoLinking, UDP/TCP module loading, and diagnostics adjustments also re-ran unit tests with passing results. Final verification run on 2026-01-06 22:00Z confirms lint/tests + Android setup + 16KB alignment + typed routes + React Compiler healthcheck remain green (Metro/ADB reverse warnings only).
-- Residual risk: native platform builds and device-only integration tests were not executed in this environment.
+- Verification refresh: on 2026-05-04, `bun run verify:all` passed with Expo Doctor `17/17`, React Compiler `79/79`, and Jest `73` passed suites / `755` passed tests / `13` skipped tests. Additional `tsc`, test-config `tsc`, DNS harness build, and version dry-run gates passed.
+- Residual risk: native platform builds and device-only integration tests were not executed in this environment. `bun run verify:android-16kb` still requires Android native build artifacts before it can validate `.so` alignment.
 
 ## Context and Orientation
 

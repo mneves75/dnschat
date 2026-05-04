@@ -17,6 +17,7 @@ import {
   Text,
   View,
   Platform,
+  TouchableOpacity,
 } from "react-native";
 import Animated from "react-native-reanimated";
 import { useRouter } from "expo-router";
@@ -106,20 +107,24 @@ export function Home() {
                 </View>
               </View>
               {!isDnsConnected && (
-                <LiquidGlassWrapper
-                  variant="interactive"
-                  shape="capsule"
-                  style={styles.configureButton}
+                <TouchableOpacity
                   onPress={handleOpenSettings}
                   accessibilityLabel={t("screen.home.configureButton", {
                     defaultValue: "Configure DNS",
                   })}
                   accessibilityRole="button"
+                  activeOpacity={0.85}
                 >
-                  <Text style={[styles.configureButtonText, { color: palette.userBubble }]}>
-                    {t("screen.home.configure", { defaultValue: "Configure" })}
-                  </Text>
-                </LiquidGlassWrapper>
+                  <LiquidGlassWrapper
+                    variant="interactive"
+                    shape="capsule"
+                    style={styles.configureButton}
+                  >
+                    <Text style={[styles.configureButtonText, { color: palette.userBubble }]}>
+                      {t("screen.home.configure", { defaultValue: "Configure" })}
+                    </Text>
+                  </LiquidGlassWrapper>
+                </TouchableOpacity>
               )}
             </View>
             {isDnsConnected && (

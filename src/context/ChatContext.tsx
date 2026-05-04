@@ -120,6 +120,18 @@ export function ChatProvider({ children }: ChatProviderProps) {
     }
   };
 
+  const clearAllChats = async (): Promise<void> => {
+    try {
+      await StorageService.clearAllChats();
+      setChats([]);
+      setCurrentChat(null);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to clear chats");
+      throw err;
+    }
+  };
+
   /**
    * CRITICAL BUG FIX (v3.0.0):
    *
@@ -414,6 +426,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
     error,
     createChat,
     deleteChat,
+    clearAllChats,
     sendMessage,
     loadChats,
     setCurrentChat,

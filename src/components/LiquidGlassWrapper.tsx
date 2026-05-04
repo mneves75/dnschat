@@ -16,7 +16,7 @@ import { splitGlassStyles } from "./glass/glassStyleUtils";
 
 type GlassVariant = "regular" | "prominent" | "interactive";
 
-type GlassShape = "capsule" | "rect" | "roundedRect";
+type GlassShape = "capsule" | "circle" | "rect" | "roundedRect";
 
 const MIN_IOS_GLASS_VERSION = 26;
 
@@ -47,6 +47,8 @@ const shapeRadius = (shape: GlassShape, explicit?: number) => {
   switch (shape) {
     case "capsule":
       return 24;
+    case "circle":
+      return 9999;
     case "rect":
       return 0;
     case "roundedRect":

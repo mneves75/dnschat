@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What is DNSChat
 
-A React Native (Expo dev-client) chat app that sends short prompts as DNS TXT queries to LLM servers and renders responses. Uses React Native 0.83.2, Expo SDK 55.0.0, React 19.2.0, TypeScript 5.9.2.
+A React Native (Expo dev-client) chat app that sends short prompts as DNS TXT queries to LLM servers and renders responses. Uses React Native 0.83.6, Expo SDK 55.0.20, React 19.2.0, TypeScript 5.9.2.
 
 **Default DNS Server**: `llm.pieter.com:53` (by @levelsio)
 **Fallback Server**: `ch.at:53` (currently offline)
@@ -53,7 +53,7 @@ bun run clean-ios         # Deep pods reset
 
 # Android diagnostics
 bun run verify:android    # Sanity check tooling/device
-bun run verify:android-16kb # Validate 16KB page size alignment for native libs
+bun run verify:android-16kb # Validate 16KB page size alignment after a native Android build
 bun run verify:typed-routes # Generate and validate Expo Router typed routes
 bun run verify:react-compiler # Run React Compiler healthcheck
 bun run verify:all     # Run ALL verification gates (lint, test, pods, sdk alignment, etc.)
@@ -161,6 +161,8 @@ GitHub Actions (`.github/workflows/ci.yml`) runs on push to main and PRs:
 **iOS**: Requires Xcode 15+, iOS 16+ target. Device builds need signing team in Xcode (repo keeps `DEVELOPMENT_TEAM` empty).
 
 **Android**: Requires Java 17. `bun run android` auto-detects via `/usr/libexec/java_home -v 17` or Homebrew paths. Release signing credentials are never committed (uses `keystore.properties` or CI injection).
+
+Android release manifests intentionally avoid legacy storage and overlay permissions. SecureStore is excluded from Android backup/device-transfer rules via `android/app/src/main/res/xml/secure_store_backup_rules.xml` and `secure_store_data_extraction_rules.xml`.
 
 **Web**: Uses Mock DNS (browsers cannot do raw DNS on port 53).
 

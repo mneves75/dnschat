@@ -129,8 +129,8 @@ export function useStaggeredList(
     if (shouldReduceMotion) {
       // Instant transition for reduced motion
       for (let i = 0; i < Math.min(itemCount, MAX_ITEMS); i++) {
-        opacities[i].value = 1;
-        translates[i].value = 0;
+        opacities[i]!.value = 1;
+        translates[i]!.value = 0;
       }
       if (onComplete) {
         onComplete();
@@ -147,7 +147,7 @@ export function useStaggeredList(
       const batchIndex = Math.floor(i / maxConcurrent);
       const delay = (i % maxConcurrent) * delayPerItem + batchIndex * (delayPerItem * maxConcurrent);
 
-      opacities[i].value = withDelay(
+      opacities[i]!.value = withDelay(
         delay,
         withTiming(1, TimingConfig.normal, (finished) => {
           if (finished) {
@@ -159,7 +159,7 @@ export function useStaggeredList(
         })
       );
 
-      translates[i].value = withDelay(
+      translates[i]!.value = withDelay(
         delay,
         withSpring(0, SpringConfig.gentle)
       );
@@ -169,8 +169,8 @@ export function useStaggeredList(
   const reset = () => {
     const offset = direction === 'left' ? -initialOffset : initialOffset;
     for (let i = 0; i < Math.min(itemCount, MAX_ITEMS); i++) {
-      opacities[i].value = shouldReduceMotion ? 1 : 0;
-      translates[i].value = shouldReduceMotion ? 0 : offset;
+      opacities[i]!.value = shouldReduceMotion ? 1 : 0;
+      translates[i]!.value = shouldReduceMotion ? 0 : offset;
     }
     completedCount.value = 0;
   };
@@ -187,8 +187,8 @@ export function useStaggeredList(
   return {
     getItemStyle: (index: number) => {
       const safeIndex = Math.min(index, MAX_ITEMS - 1);
-      const opacity = opacities[safeIndex];
-      const translateX = translates[safeIndex];
+      const opacity = opacities[safeIndex] ?? opacities[0]!;
+      const translateX = translates[safeIndex] ?? translates[0]!;
 
       // This is a workaround - in actual usage, the consumer should use
       // AnimatedListItem component or create their own animated style
@@ -225,8 +225,8 @@ export function useStaggeredList(
  */
 interface AnimatedListItemProps {
   children: ReactNode;
-  opacity: SharedValue<number>;
-  translateX: SharedValue<number>;
+  opacity: Pick<SharedValue<number>, 'value'>;
+  translateX: Pick<SharedValue<number>, 'value'>;
   style?: ViewStyle;
 }
 
@@ -285,8 +285,8 @@ export function useStaggeredListValues(
   const triggerAnimation = () => {
     if (shouldReduceMotion) {
       for (let i = 0; i < effectiveCount; i++) {
-        opacities[i].value = 1;
-        translates[i].value = 0;
+        opacities[i]!.value = 1;
+        translates[i]!.value = 0;
       }
       if (onComplete) {
         onComplete();
@@ -300,7 +300,7 @@ export function useStaggeredListValues(
       const batchIndex = Math.floor(i / maxConcurrent);
       const delay = (i % maxConcurrent) * delayPerItem + batchIndex * (delayPerItem * maxConcurrent);
 
-      opacities[i].value = withDelay(
+      opacities[i]!.value = withDelay(
         delay,
         withTiming(1, TimingConfig.normal, (finished) => {
           if (finished) {
@@ -312,15 +312,15 @@ export function useStaggeredListValues(
         })
       );
 
-      translates[i].value = withDelay(delay, withSpring(0, SpringConfig.gentle));
+      translates[i]!.value = withDelay(delay, withSpring(0, SpringConfig.gentle));
     }
   };
 
   const reset = () => {
     const offset = direction === 'left' ? -initialOffset : initialOffset;
     for (let i = 0; i < effectiveCount; i++) {
-      opacities[i].value = shouldReduceMotion ? 1 : 0;
-      translates[i].value = shouldReduceMotion ? 0 : offset;
+      opacities[i]!.value = shouldReduceMotion ? 1 : 0;
+      translates[i]!.value = shouldReduceMotion ? 0 : offset;
     }
     completedCount.value = 0;
   };

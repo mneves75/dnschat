@@ -1,6 +1,6 @@
 # Installation
 
-This repo builds DNSChat `4.0.6` (React Native `0.83.2`, Expo SDK `55.0.0`).
+This repo builds DNSChat `4.0.7` (React Native `0.83.6`, Expo SDK `55.0.20`).
 
 Prereqs:
 
@@ -96,6 +96,16 @@ Basic diagnostics:
 ```bash
 bun run verify:android
 ```
+
+Full pre-commit/release gate:
+
+```bash
+bun run verify:all
+```
+
+`bun run verify:android-16kb` requires native Android build artifacts first; run
+it after `bun run android` or an equivalent release/debug build has produced
+native `.so` files.
 
 ## DNS smoke tests
 

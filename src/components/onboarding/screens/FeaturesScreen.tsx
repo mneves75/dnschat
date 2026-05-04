@@ -169,6 +169,8 @@ interface FeatureCardProps {
 }
 
 function FeatureCard({ feature, palette, typography }: FeatureCardProps) {
+  const { t } = useTranslation();
+
   return (
     <View
       style={[

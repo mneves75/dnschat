@@ -11,7 +11,7 @@ This document tracks the manual steps for preparing and shipping an Android buil
   - `app.json` (`expo.version`)
 - Ensure dependencies are Expo-SDK compatible:
   - Run `expo install --fix`
-  - Run `bun run test` and `bun run lint`
+  - Run `bun run verify:all`
 
 ## Build
 
@@ -47,10 +47,14 @@ accidentally producing a debug-signed “release”.
   - Install/launch on a physical device
   - Network/DNS flows work as expected
   - No unexpected runtime logs in production mode
+  - `bun run verify:android-16kb` passes after native Android build artifacts exist
 
 For detailed Google Play Store publishing instructions, see:
 **[ANDROID_GOOGLE_PLAY_STORE.md](./ANDROID_GOOGLE_PLAY_STORE.md)**
 
 ## Notes
 
-- Latest release tag: `v4.0.6`
+- Latest release tag: `v4.0.7`
+- Release manifests intentionally avoid legacy storage and overlay permissions.
+- SecureStore is excluded from Android backup/device-transfer rules under
+  `android/app/src/main/res/xml/`.

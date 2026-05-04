@@ -93,7 +93,6 @@ function RootLayoutContent() {
     <Stack
       screenOptions={{
         headerBackButtonDisplayMode: "minimal",
-        headerBackTitleVisible: false,
         headerBackTitle: "",
       }}
     >

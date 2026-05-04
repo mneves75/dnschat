@@ -164,6 +164,9 @@ export function SkeletonText({
       {Array.from({ length: lines }).map((_, index) => {
         const isLastLine = index === lines - 1;
         const lineWidth = isLastLine && shortLastLine && lines > 1 ? '60%' : width;
+        const boxProps = index < lines - 1
+          ? { style: { marginBottom: lineGap } }
+          : {};
 
         return (
           <SkeletonBox
@@ -171,7 +174,7 @@ export function SkeletonText({
             width={lineWidth}
             height={lineHeight}
             delay={index * staggerDelay}
-            style={index < lines - 1 ? { marginBottom: lineGap } : undefined}
+            {...boxProps}
           />
         );
       })}

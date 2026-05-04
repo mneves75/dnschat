@@ -8,8 +8,8 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 - An in-app Logs screen to inspect attempts, failures, and fallbacks
 
 [![Version](https://img.shields.io/badge/version-4.0.7-blue.svg)](https://github.com/mneves75/dnschat)
-[![React Native](https://img.shields.io/badge/React%20Native-0.83.2-blue.svg)](https://reactnative.dev/)
-[![Expo](https://img.shields.io/badge/Expo-55.0.0-black.svg)](https://expo.dev/)
+[![React Native](https://img.shields.io/badge/React%20Native-0.83.6-blue.svg)](https://reactnative.dev/)
+[![Expo](https://img.shields.io/badge/Expo-55.0.20-black.svg)](https://expo.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9.2-blue.svg)](https://www.typescriptlang.org/)
 [![iOS](https://img.shields.io/badge/iOS-16%2B-lightgrey.svg)](https://developer.apple.com/ios/)
 [![Android](https://img.shields.io/badge/Android-API%2024%2B-green.svg)](https://developer.android.com/)
@@ -33,9 +33,9 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 
 - App version: `4.0.7` (build `35`)
 - Expo workflow: Expo Router + dev-client + EAS-compatible native config
-- Expo SDK: `55.0.0`
+- Expo SDK: `55.0.20`
 - React: `19.2.0`
-- React Native: `0.83.2`
+- React Native: `0.83.6`
 - TypeScript: `5.9.2`
 - Hermes: enabled
 - New Architecture: enabled by default on SDK 55
@@ -134,6 +134,9 @@ bun run verify:ios-pods
 # Sanity checks for Android tooling/device expectations
 bun run verify:android
 
+# Full verification gate before committing/release work
+bun run verify:all
+
 # Sync app + native module versions (use :dry to preview)
 bun run sync-versions
 bun run sync-versions:dry
@@ -169,6 +172,8 @@ If you do not want repo-managed hooks, remove `.git/hooks/pre-commit` locally.
 
 - DNS is observable infrastructure. Do not send secrets or personal data.
 - DNS servers are validated/whitelisted (see `modules/dns-native/constants.ts`).
+- Local chat/log payloads are encrypted at rest; Android backup/device-transfer
+  rules exclude SecureStore key material.
 - Store submission credentials are not committed. Keep `eas submit`/App Store
   Connect identifiers local (do not add them to `eas.json`).
 

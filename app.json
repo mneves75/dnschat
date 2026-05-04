@@ -14,7 +14,10 @@
     "ios": {
       "supportsTablet": true,
       "buildNumber": "35",
-      "bundleIdentifier": "org.mvneves.dnschat"
+      "bundleIdentifier": "org.mvneves.dnschat",
+      "config": {
+        "usesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {

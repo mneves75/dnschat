@@ -68,7 +68,7 @@ function SettingsSectionSkeleton({
           <React.Fragment key={index}>
             <SettingsItemSkeleton delay={delay + (index + 1) * 75} />
             {index < itemCount - 1 && (
-              <View style={[styles.divider, { backgroundColor: palette.divider }]} />
+              <View style={[styles.divider, { backgroundColor: palette.separator }]} />
             )}
           </React.Fragment>
         ))}
