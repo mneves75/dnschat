@@ -19,3 +19,5 @@ If any on-device or hosted model is introduced, this file must be updated to inc
 ## Review Cadence
 
 - Reconfirm model usage status when adding new dependencies or integrating AI features.
+- Last reviewed during the full source/security sweep on `2026-05-05`; no app-owned
+  model usage was introduced.

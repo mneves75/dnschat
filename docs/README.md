@@ -16,6 +16,18 @@ Developer documentation for DNSChat. Code is the source of truth — these docs 
 - `docs/data-inventory.md` — on-device data storage, retention, encryption
 - `docs/model-registry.md` — model usage policy (currently: none)
 
+## Current verification baseline
+
+Last full sweep: `2026-05-05`.
+
+- `bun run verify:all` passes (`expo-doctor` 17/17, SDK alignment, typed routes,
+  DNS resolver sync, iOS pods, React Compiler, Android setup, lint, and Jest).
+- Jest baseline: 73 suites passed, 1 skipped; 757 tests passed.
+- `bun audit`, `npm audit` in `modules/dns-native`, and `gitleaks detect`
+  report no vulnerabilities or leaks.
+- Public docs and store copy must not claim that DNS prompts are private or
+  end-to-end encrypted; only local history is encrypted at rest.
+
 ## Release
 
 - `docs/ANDROID_RELEASE.md` — Android release checklist + signing

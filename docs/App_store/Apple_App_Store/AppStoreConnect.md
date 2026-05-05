@@ -59,12 +59,12 @@ CROSS-PLATFORM READY
 - Professional DNS-themed app icon and branding
 
 CUSTOMIZABLE
-Configure your own DNS server or use the default service. Perfect for developers, privacy enthusiasts, and anyone curious about innovative technology.
+Configure your own DNS server or use the default service. Perfect for developers, local-first app enthusiasts, and anyone curious about innovative technology.
 
 Perfect for:
 
 - Tech enthusiasts exploring cutting-edge communication
-- Privacy-conscious users seeking local-first apps
+- Local-first users who understand DNS queries are observable
 - Developers interested in DNS innovation
 - Anyone wanting a fast, reliable AI chat experience
 
@@ -74,7 +74,7 @@ Download now and be among the first to experience AI communication through DNS!
 
 ## Keywords (100 characters max)
 
-AI,chat,DNS,assistant,privacy,native,tech,innovation,queries,networking
+AI,chat,DNS,assistant,local,native,tech,innovation,queries,networking
 
 ---
 
@@ -90,7 +90,7 @@ RELEASE FIXES AND HARDENING
 
 ## Promotional Text (170 characters max)
 
-Revolutionary AI chat using DNS queries. Native iOS performance, complete privacy, ChatGPT-style interface. The future of decentralized communication.
+AI chat using DNS queries with native iOS performance, local encrypted history, and transparent networking.
 
 ---
 
@@ -146,7 +146,7 @@ Revolutionary AI chat using DNS queries. Native iOS performance, complete privac
 ```
 This app uses innovative DNS TXT queries to communicate with AI.
 Test with any message to see the DNS-based communication in action.
-All conversations are stored locally for privacy.
+Conversations are stored locally. DNS queries are observable, so do not send secrets or personal data.
 No server infrastructure or user accounts required.
 ```
 
@@ -219,7 +219,7 @@ No server infrastructure or user accounts required.
 ### Unique Value Proposition
 
 - **World's first** DNS-based AI communication
-- **Complete privacy** with local-only storage
+- **Local encrypted history** with no accounts or tracking
 - **Native performance** with Apple Network Framework
 - **No servers required** - pure DNS innovation
 - **Open source** and fully transparent

@@ -27,6 +27,19 @@ Please do not open public issues for security vulnerabilities.
 - Issues requiring physical device access
 - Denial of service against external DNS servers
 
+## Current Security Baseline
+
+Last full sweep: `2026-05-05`.
+
+- Dependency audits pass for the app (`bun audit`) and local native module
+  (`npm audit` in `modules/dns-native`).
+- Secret scanning passes with `gitleaks detect --source . --redact --no-banner --config .gitleaks.toml`.
+- Local chat history is encrypted at rest with AES-GCM using key material stored
+  in SecureStore.
+- DNS prompt/response transport is observable infrastructure. Do not send
+  secrets or personal data, and do not describe DNS prompts as private or
+  end-to-end encrypted.
+
 ## Supported Versions
 
 Only the latest release is actively maintained.

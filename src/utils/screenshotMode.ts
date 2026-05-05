@@ -61,28 +61,28 @@ export function getMockConversations(locale: string = "en-US") {
           messages: [
             {
               id: "msg-1",
-              content: "Como funciona a criptografia DNS?",
+              content: "Como o DNSChat protege meu histórico?",
               role: "user" as const,
               timestamp: new Date(now - 3500000),
               status: "sent" as const,
             },
             {
               id: "msg-2",
-              content: "DNS Chat usa criptografia de ponta a ponta através de queries TXT. Cada mensagem é cifrada antes de ser enviada como query DNS.",
+              content: "O DNSChat criptografa o histórico local no dispositivo. As consultas DNS continuam observáveis, então não envie segredos ou dados pessoais.",
               role: "assistant" as const,
               timestamp: new Date(now - 3400000),
               status: "sent" as const,
             },
             {
               id: "msg-3",
-              content: "Isso é completamente privado?",
+              content: "As consultas DNS são privadas?",
               role: "user" as const,
               timestamp: new Date(now - 3300000),
               status: "sent" as const,
             },
             {
               id: "msg-4",
-              content: "Sim! As mensagens são armazenadas apenas no seu dispositivo e transmitidas via DNS, tornando impossível a interceptação tradicional.",
+              content: "Não. O transporte DNS pode ser observado por resolvedores e redes. Use o app para prompts curtos e não sensíveis.",
               role: "assistant" as const,
               timestamp: new Date(now - 3200000),
               status: "sent" as const,
@@ -121,28 +121,28 @@ export function getMockConversations(locale: string = "en-US") {
           messages: [
             {
               id: "msg-1",
-              content: "How does DNS encryption work?",
+              content: "How does DNSChat protect my history?",
               role: "user" as const,
               timestamp: new Date(now - 3500000),
               status: "sent" as const,
             },
             {
               id: "msg-2",
-              content: "DNS Chat uses end-to-end encryption through TXT queries. Each message is encrypted before being sent as a DNS query.",
+              content: "DNSChat encrypts local history on device. DNS queries remain observable, so do not send secrets or personal data.",
               role: "assistant" as const,
               timestamp: new Date(now - 3400000),
               status: "sent" as const,
             },
             {
               id: "msg-3",
-              content: "Is this completely private?",
+              content: "Are DNS queries private?",
               role: "user" as const,
               timestamp: new Date(now - 3300000),
               status: "sent" as const,
             },
             {
               id: "msg-4",
-              content: "Yes! Messages are stored only on your device and transmitted via DNS, making traditional interception impossible.",
+              content: "No. DNS transport can be observed by resolvers and networks. Use the app for short, non-sensitive prompts.",
               role: "assistant" as const,
               timestamp: new Date(now - 3200000),
               status: "sent" as const,
@@ -186,16 +186,16 @@ export function getMockDNSLogs(locale: string = "en-US"): DNSQueryLog[] {
     {
       id: "log-1",
       query: isPortuguese
-        ? "Como funciona a criptografia DNS?"
-        : "How does DNS encryption work?",
+        ? "Como o DNSChat protege meu histórico?"
+        : "How does DNSChat protect my history?",
       startTime: new Date(now - 5000),
       endTime: new Date(now - 4500),
       totalDuration: 500,
       finalStatus: "success" as const,
       finalMethod: "native",
       response: isPortuguese
-        ? "DNS Chat usa criptografia de ponta a ponta através de queries TXT..."
-        : "DNS Chat uses end-to-end encryption through TXT queries...",
+        ? "O DNSChat criptografa o histórico local no dispositivo..."
+        : "DNSChat encrypts local history on device...",
       entries: [
         {
           id: "entry-1",
@@ -256,15 +256,15 @@ export function getMockDNSLogs(locale: string = "en-US"): DNSQueryLog[] {
     },
     {
       id: "log-3",
-      query: isPortuguese ? "Isso é privado?" : "Is this private?",
+      query: isPortuguese ? "As consultas DNS são privadas?" : "Are DNS queries private?",
       startTime: new Date(now - 1000),
       endTime: new Date(now - 850),
       totalDuration: 150,
       finalStatus: "success" as const,
       finalMethod: "native",
       response: isPortuguese
-        ? "Sim! As mensagens são armazenadas apenas no seu dispositivo..."
-        : "Yes! Messages are stored only on your device...",
+        ? "Não. O transporte DNS pode ser observado por resolvedores e redes..."
+        : "No. DNS transport can be observed by resolvers and networks...",
       entries: [
         {
           id: "entry-6",

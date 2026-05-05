@@ -125,11 +125,3 @@ pnpm-lock.yaml
 
 # Guidelines reference (keep local only)
 /docs/GUIDELINES-REF/
-
-# Ensure local Expo modules keep native folders tracked (override generic ignores)
-!modules/**/android/
-!modules/**/android/**
-!modules/**/android/build.gradle
-!modules/**/ios/
-!modules/**/ios/**
-!modules/**/ios/*.podspec

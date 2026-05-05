@@ -13,7 +13,7 @@ This file provides a fast, practical map of the repo so agents can orient quickl
 
 DNSChat is an Expo dev-client React Native app that sends short prompts as DNS TXT queries and renders responses.
 
-**Stack**: Expo SDK 55.0.20 / React Native 0.83.6 / React 19.2.0 / TypeScript 5.9.2 / Hermes / New Architecture
+**Stack**: Expo SDK 55.0.23 / React Native 0.83.6 / React 19.2.0 / TypeScript 5.9.x / Hermes / New Architecture
 
 The app's product promise is: no accounts, no API keys, no tracking, local encrypted history, and DNS-based prompt/response transport. DNS is observable infrastructure, so UX, docs, logs, and tests must never imply that DNS prompts are private.
 

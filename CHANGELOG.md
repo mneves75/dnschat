@@ -9,10 +9,13 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 ### Changed
 
 - Aligned Expo SDK 55 patch dependencies with Expo Doctor output: Expo `55.0.23`,
-  React Native `0.83.6`, Expo Router `55.0.13`, SecureStore `55.0.13`, and
+  React Native `0.83.6`, Expo Router `55.0.14`, SecureStore `55.0.13`, and
   matching React test renderer `19.2.0`.
 - Documented current verification and release expectations across README,
   install, architecture, Android, App Store, and agent guidance surfaces.
+- Clarified product privacy language across docs and screenshot-mode fixtures:
+  local history is encrypted at rest, but DNS prompts travel over observable DNS
+  infrastructure and must not be described as private or end-to-end encrypted.
 - Hardened onboarding, settings, and chat state transitions to fail closed on persistence errors, keep thread selection stable after send failures, and apply onboarding network recommendations atomically.
 - Localized onboarding accessibility labels and hints across navigation, DNS demo, first-chat, network setup, GitHub CTA, and the chat-list compose toolbar button.
 - Updated the DNS protocol spec to match the shipped resolver behavior and response-validation contract.
@@ -23,6 +26,8 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
   encrypted key material is excluded from cloud backup and device transfer.
 - Added `firebase-debug.log` patterns to `.gitignore` to keep local debug
   artifacts out of the repo.
+- Added repository policy tests that block misleading DNS privacy/encryption
+  claims and tracked Gradle cache folders.
 
 ### Removed
 
@@ -42,6 +47,13 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ### Fixed
 
+- Fixed the onboarding GitHub link to point at the public `mneves75/dnschat`
+  repository.
+- Removed false screenshot-mode examples that claimed DNS TXT queries provide
+  end-to-end encryption or make interception impossible.
+- Removed tracked Android `.gradle` cache artifacts from the repository index.
+- Updated dependency overrides and native-module dev tooling so `bun audit` and
+  `npm audit` in `modules/dns-native` report no vulnerabilities.
 - Fixed stale `ch.at` references in `docs/technical/DNS-PROTOCOL-SPEC.md`,
   `docs/technical/SPECIFICATION.md`, and `modules/dns-native/README.md` so the
   default zone, settings-migration target, and example queries all reflect the

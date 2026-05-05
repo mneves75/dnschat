@@ -10,7 +10,7 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 [![Version](https://img.shields.io/badge/version-4.0.7-blue.svg)](https://github.com/mneves75/dnschat)
 [![React Native](https://img.shields.io/badge/React%20Native-0.83.6-blue.svg)](https://reactnative.dev/)
 [![Expo](https://img.shields.io/badge/Expo-55.0.23-black.svg)](https://expo.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.9.2-blue.svg)](https://www.typescriptlang.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9.x-blue.svg)](https://www.typescriptlang.org/)
 [![iOS](https://img.shields.io/badge/iOS-16%2B-lightgrey.svg)](https://developer.apple.com/ios/)
 [![Android](https://img.shields.io/badge/Android-API%2024%2B-green.svg)](https://developer.android.com/)
 [![CI](https://github.com/mneves75/dnschat/actions/workflows/ci.yml/badge.svg)](https://github.com/mneves75/dnschat/actions/workflows/ci.yml)
@@ -36,7 +36,7 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 - Expo SDK: `55.0.23`
 - React: `19.2.0`
 - React Native: `0.83.6`
-- TypeScript: `5.9.2`
+- TypeScript: `5.9.x`
 - Hermes: enabled
 - New Architecture: enabled by default on SDK 55
 - React Compiler: enabled (`experiments.reactCompiler: true`)
@@ -187,6 +187,18 @@ Release:
 - [`docs/ANDROID_GOOGLE_PLAY_STORE.md`](docs/ANDROID_GOOGLE_PLAY_STORE.md) — Play Store publishing
 - [`docs/App_store/Apple_App_Store/AppStoreConnect.md`](docs/App_store/Apple_App_Store/AppStoreConnect.md) — App Store listing materials
 - [`docs/App_store/Apple_App_Store/TESTFLIGHT.md`](docs/App_store/Apple_App_Store/TESTFLIGHT.md) — TestFlight upload steps
+
+## Current verification baseline
+
+Last full sweep: `2026-05-05`.
+
+- `bun run verify:all` passes (`expo-doctor` 17/17, SDK alignment, typed routes,
+  DNS resolver sync, iOS pods, React Compiler, Android setup, lint, and Jest).
+- Jest baseline: 73 suites passed, 1 skipped; 757 tests passed.
+- `bun audit`, `npm audit` in `modules/dns-native`, and `gitleaks detect`
+  report no vulnerabilities or leaks.
+- DNS transport is observable. Public copy and tests intentionally avoid
+  claiming that DNS prompts are private or end-to-end encrypted.
 
 ## Security notes
 

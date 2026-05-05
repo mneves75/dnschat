@@ -104,8 +104,8 @@ Send short prompts as DNS TXT queries and receive AI-powered responses through t
 • Multiple DNS Transports
 Supports Native DNS, UDP, and TCP transports with automatic fallback for reliability.
 
-• Privacy-Focused
-No account required. Messages are processed through DNS - no traditional server infrastructure.
+• Local-First Storage
+No account required. Chat history is stored locally and encrypted at rest. DNS queries remain observable by resolvers and networks.
 
 • Beautiful iOS 26-Inspired UI
 Modern glass-effect interface with smooth animations and dark mode support.
@@ -121,7 +121,7 @@ Full VoiceOver/TalkBack support with screen reader optimizations.
 
 TECHNICAL DETAILS:
 
-• Built with React Native 0.83.6 and Expo SDK 55.0.20
+• Built with React Native 0.83.6 and Expo SDK 55.0.23
 • React 19 with New Architecture enabled
 • Native DNS module for iOS and Android
 • Supports DNS servers: 1.1.1.1, 8.8.8.8, 9.9.9.9
@@ -357,7 +357,7 @@ Navigate to: **Policy → App content → Data safety**
 | Device identifiers | No | No | - |
 | Location | No | No | - |
 
-*Messages are stored locally only (AsyncStorage) and transmitted via DNS queries to llm.pieter.com servers.
+*Messages are stored locally only (AsyncStorage) and transmitted via DNS queries to llm.pieter.com servers. DNS transport is observable; users should not send secrets or personal data.
 
 ### Security Practices
 

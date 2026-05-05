@@ -15,7 +15,7 @@ describe("DNSLogService cleanup scheduler", () => {
     const setIntervalSpy = jest
       .spyOn(global, "setInterval")
       .mockImplementation((..._args: Parameters<typeof setInterval>) => {
-        return 123 as unknown as NodeJS.Timeout;
+        return 123 as unknown as ReturnType<typeof setInterval>;
       });
 
     await DNSLogService.initializeCleanupScheduler();

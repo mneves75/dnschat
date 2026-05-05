@@ -76,7 +76,7 @@ export function FeaturesScreen() {
       action: {
         text: t("screen.onboarding.features.opensource.action"),
         onPress: () => {
-          Linking.openURL("https://github.com/mvneves/chat-dns");
+          Linking.openURL("https://github.com/mneves75/dnschat");
         },
       },
     },

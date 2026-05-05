@@ -130,7 +130,7 @@ describe("FeaturesScreen - iOS 26 HIG Compliance", () => {
     it("includes Open Source feature with GitHub link", () => {
       expect(sourceCode).toContain('t("screen.onboarding.features.opensource.title")');
       expect(sourceCode).toContain('t("screen.onboarding.features.opensource.action")');
-      expect(sourceCode).toContain("github.com/mvneves/chat-dns");
+      expect(sourceCode).toContain("github.com/mneves75/dnschat");
     });
   });
 
