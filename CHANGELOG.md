@@ -8,7 +8,7 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ### Changed
 
-- Aligned Expo SDK 55 patch dependencies with Expo Doctor output: Expo `55.0.20`,
+- Aligned Expo SDK 55 patch dependencies with Expo Doctor output: Expo `55.0.23`,
   React Native `0.83.6`, Expo Router `55.0.13`, SecureStore `55.0.13`, and
   matching React test renderer `19.2.0`.
 - Documented current verification and release expectations across README,
@@ -55,7 +55,6 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
   and version-sync sections.
 - Rewrote `docs/README.md` as a clean index without dead links to deleted plans
   and architecture docs.
-
 - Removed stale Android release permissions for legacy storage and overlay windows.
 - Declared iOS non-exempt encryption status in Expo config and native Info.plist.
 - Fixed strict TypeScript/runtime defects in stack options, onboarding

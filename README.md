@@ -9,7 +9,7 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 
 [![Version](https://img.shields.io/badge/version-4.0.7-blue.svg)](https://github.com/mneves75/dnschat)
 [![React Native](https://img.shields.io/badge/React%20Native-0.83.6-blue.svg)](https://reactnative.dev/)
-[![Expo](https://img.shields.io/badge/Expo-55.0.20-black.svg)](https://expo.dev/)
+[![Expo](https://img.shields.io/badge/Expo-55.0.23-black.svg)](https://expo.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9.2-blue.svg)](https://www.typescriptlang.org/)
 [![iOS](https://img.shields.io/badge/iOS-16%2B-lightgrey.svg)](https://developer.apple.com/ios/)
 [![Android](https://img.shields.io/badge/Android-API%2024%2B-green.svg)](https://developer.android.com/)
@@ -33,7 +33,7 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 
 - App version: `4.0.7` (build `35`)
 - Expo workflow: Expo Router + dev-client + EAS-compatible native config
-- Expo SDK: `55.0.20`
+- Expo SDK: `55.0.23`
 - React: `19.2.0`
 - React Native: `0.83.6`
 - TypeScript: `5.9.2`
@@ -162,11 +162,31 @@ If you do not want repo-managed hooks, remove `.git/hooks/pre-commit` locally.
 
 ## Documentation
 
-- `docs/README.md` (index)
-- `docs/INSTALL.md`
-- `docs/architecture/SYSTEM-ARCHITECTURE.md`
-- `docs/troubleshooting/COMMON-ISSUES.md`
-- `docs/technical/DNS-PROTOCOL-SPEC.md`
+Start here:
+
+- [`docs/README.md`](docs/README.md) — full documentation index
+- [`docs/INSTALL.md`](docs/INSTALL.md) — setup, build, verification
+- [`CLAUDE.md`](CLAUDE.md) / [`AGENTS.md`](AGENTS.md) — guidance for AI coding agents
+
+Architecture & spec:
+
+- [`docs/architecture/SYSTEM-ARCHITECTURE.md`](docs/architecture/SYSTEM-ARCHITECTURE.md) — what talks to what
+- [`docs/technical/DNS-PROTOCOL-SPEC.md`](docs/technical/DNS-PROTOCOL-SPEC.md) — query/response rules
+- [`docs/technical/SPECIFICATION.md`](docs/technical/SPECIFICATION.md) — product behavior + repo invariants
+- [`docs/technical/EXPO-DOCTOR-CONFIGURATION.md`](docs/technical/EXPO-DOCTOR-CONFIGURATION.md) — intentional Expo Doctor warnings
+
+Operational:
+
+- [`docs/troubleshooting/COMMON-ISSUES.md`](docs/troubleshooting/COMMON-ISSUES.md) — known issues + fixes
+- [`docs/data-inventory.md`](docs/data-inventory.md) — on-device data storage + retention
+- [`docs/model-registry.md`](docs/model-registry.md) — model usage policy
+
+Release:
+
+- [`docs/ANDROID_RELEASE.md`](docs/ANDROID_RELEASE.md) — Android release checklist
+- [`docs/ANDROID_GOOGLE_PLAY_STORE.md`](docs/ANDROID_GOOGLE_PLAY_STORE.md) — Play Store publishing
+- [`docs/App_store/Apple_App_Store/AppStoreConnect.md`](docs/App_store/Apple_App_Store/AppStoreConnect.md) — App Store listing materials
+- [`docs/App_store/Apple_App_Store/TESTFLIGHT.md`](docs/App_store/Apple_App_Store/TESTFLIGHT.md) — TestFlight upload steps
 
 ## Security notes
 
