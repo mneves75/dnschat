@@ -50,7 +50,7 @@ Order:
 3. TCP DNS (JS)
 4. Mock (optional dev fallback)
 
-Web builds use Mock because browsers cannot do custom DNS to `ch.at` on port 53.
+Web builds use Mock because browsers cannot do custom DNS to a resolver on port 53.
 
 ## Local persistence
 
@@ -108,7 +108,7 @@ Security:
 - No hardcoded credentials or private endpoints.
 - DNS server is validated/whitelisted (do not accept arbitrary user input).
   - Enforced by `validateDNSServer` (`src/services/dnsService.ts`) using the shared allowlist in `modules/dns-native/constants.ts`.
-  - Persisted settings are coerced back to `ch.at` during migration when an unallowlisted value is found (`src/context/settingsStorage.ts`).
+  - Persisted settings are coerced back to the default (`llm.pieter.com`) during migration when an unallowlisted or offline value is found (`src/context/settingsStorage.ts:DEFAULT_DNS_SERVER`).
 
 Repo quality:
 
@@ -145,7 +145,8 @@ Repo quality:
 
 5. Documentation correctness
    - Architecture doc explicitly states TS chain has no DNS-over-HTTPS
-   - Android native internal fallback chain may use DNS-over-HTTPS for non-`ch.at`
+   - Android native internal fallback chain only uses DNS-over-HTTPS when the
+     selected resolver is Cloudflare (`1.1.1.1`)
      (`docs/architecture/SYSTEM-ARCHITECTURE.md`)
 
 6. CI hardening (public repo baseline)

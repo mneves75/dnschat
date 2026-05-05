@@ -13,9 +13,10 @@ Status:
 
 ## Platform implementation
 
-- iOS: uses Apple's Network framework for DNS resolution (where available).
-- Android: attempts a raw UDP TXT query first; if that fails, it can fall back to
-  DNS-over-HTTPS for non-`ch.at` servers, then to a legacy resolver (dnsjava).
+- iOS: uses Apple's Network framework (`NWConnection`) for DNS resolution.
+- Android: attempts a raw UDP TXT query first; if that fails, it falls back to
+  DNS-over-HTTPS only when the selected resolver is Cloudflare (`1.1.1.1`),
+  then to a legacy resolver (dnsjava).
 
 Note: In the DNSChat app, the TypeScript layer controls the overall transport
 order (native -> UDP -> TCP -> mock). The Android native module also has its own
@@ -36,8 +37,8 @@ if (!capabilities.available) {
 
 // queryName must be the fully-qualified name you want to look up (already
 // sanitized/validated by the caller).
-const queryName = "hello-world.ch.at";
-const txtRecords = await nativeDNS.queryTXT("ch.at", queryName, 53);
+const queryName = "hello-world.llm.pieter.com";
+const txtRecords = await nativeDNS.queryTXT("llm.pieter.com", queryName, 53);
 const response = nativeDNS.parseMultiPartResponse(txtRecords);
 ```
 

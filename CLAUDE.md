@@ -13,14 +13,17 @@ A React Native (Expo dev-client) chat app that sends short prompts as DNS TXT qu
 
 | Task | Files to Check |
 |------|----------------|
+| Runtime bootstrap | `entry.tsx` -> `expo-router/entry` -> `app/_layout.tsx` |
+| Tab layout | `app/(tabs)/_layout.tsx` (web override: `_layout.web.tsx`) |
+| Chat thread route | `app/chat/[threadId].tsx` |
 | DNS query logic | `src/services/dnsService.ts` |
-| Server configuration | `modules/dns-native/constants.ts` |
-| Default server setting | `src/context/settingsStorage.ts` (DEFAULT_DNS_SERVER) |
+| Server configuration | `modules/dns-native/constants.ts` (`getLLMServers`, `getDefaultServer`) |
+| Default server setting | `src/context/settingsStorage.ts` (`DEFAULT_DNS_SERVER`) |
 | Settings UI | `src/navigation/screens/GlassSettings.tsx` |
 | Translations | `src/i18n/messages/en-US.ts`, `pt-BR.ts` |
 | Native DNS module | `modules/dns-native/index.ts` |
 | Chat context | `src/context/ChatContext.tsx` |
-| Message sanitization | `modules/dns-native/constants.ts` (sanitizeDNSMessageReference) |
+| Message sanitization | `modules/dns-native/constants.ts` (`sanitizeDNSMessageReference`) |
 
 ## Commands
 
@@ -65,6 +68,14 @@ bun run sync-versions:dry # Preview changes
 
 ## Architecture
 
+### Routing & Bootstrap
+
+This app uses **Expo Router** (file-based routing under `app/`), not React Navigation directly. `package.json:main` points at `entry.tsx`, which loads the crypto bootstrap then re-exports `expo-router/entry`. Provider wiring (Settings, Chat, Onboarding, Accessibility, Theme) lives in `app/_layout.tsx`.
+
+`src/navigation/screens/` contains screen components consumed by Expo Router routes — they are not routes themselves. Don't add new files there expecting routing to pick them up; add a route in `app/` and import the screen.
+
+`experiments.reactCompiler: true` and `experiments.typedRoutes: true` are enabled in `app.json`. Manual `useMemo`/`useCallback` should be removed (the compiler handles memoization). Run `bun run verify:typed-routes` after adding/renaming routes.
+
 ### DNS Server Fallback Chain
 
 **Server selection** (in `src/services/dnsService.ts:570-575`):
@@ -104,10 +115,15 @@ src/context/
   SettingsContext.tsx         # Settings state management
   ChatContext.tsx             # Chat state, sendMessage()
 
-src/navigation/screens/
+src/navigation/screens/        # Screen components rendered by Expo Router routes
   GlassSettings.tsx           # Settings UI with server picker
   GlassChatList.tsx           # Chat list
-  Thread.tsx                  # Chat thread
+  Chat.tsx                    # Chat thread (rendered from app/chat/[threadId].tsx)
+
+app/                          # Expo Router routes (file-based)
+  _layout.tsx                 # Root providers + onboarding gate
+  (tabs)/_layout.tsx          # Tab bar wiring
+  chat/[threadId].tsx         # Dynamic chat-thread route
 
 src/i18n/messages/
   en-US.ts, pt-BR.ts          # Translations including DNS server labels
@@ -149,6 +165,22 @@ Installed via `bun install` -> `scripts/install-git-hooks.js`. Runs:
 - References to deleted `LiquidGlassNative` module
 
 Use `components/LiquidGlassWrapper` instead.
+
+### Babel Constraint
+
+`react-native-reanimated/plugin` must remain the **last** entry in `babel.config.js:plugins`. The production-only `transform-remove-console` plugin runs before it.
+
+### Versioning
+
+`package.json:version` is the source of truth. To bump:
+
+```bash
+# 1. Edit package.json version manually, then:
+bun run sync-versions          # Propagates to app.json (iOS buildNumber, Android versionCode), native modules
+bun run sync-versions:dry      # Preview without writing
+```
+
+Never edit `ios/` or `android/` version fields by hand — they will be overwritten.
 
 ## CI
 

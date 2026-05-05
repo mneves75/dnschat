@@ -20,8 +20,8 @@ Sanitized label constraints:
 
 Terminology:
 
-- `targetServer`: DNS server/resolver we send packets to (e.g. `ch.at`, `8.8.8.8`).
-- `zone`: suffix used to build the query name (e.g. `ch.at`, `llm.pieter.com`).
+- `targetServer`: DNS server/resolver we send packets to (e.g. `llm.pieter.com`, `8.8.8.8`).
+- `zone`: suffix used to build the query name (e.g. `llm.pieter.com`).
 - `label`: sanitized message label.
 
 Algorithm (implemented by `composeDNSQueryName(label, dnsServer)`):
@@ -29,14 +29,16 @@ Algorithm (implemented by `composeDNSQueryName(label, dnsServer)`):
 1. Strip trailing dots and whitespace from `label`.
 2. Validate `dnsServer` (non-empty allowlisted hostname or IP; ports disallowed).
 3. Determine `zone`:
-   - If `dnsServer` is an IPv4 address, use default zone `llm.pieter.com`.
+   - If `dnsServer` is empty or an IPv4 address, use default zone `llm.pieter.com`
+     (`DNS_CONSTANTS.DEFAULT_DNS_SERVER`).
    - Else use `dnsServer` (lowercased, trailing dot removed) as the zone.
 4. Query name is `${label}.${zone}`.
 
 Important consequence:
 
 - If the user selects an IP resolver like `8.8.8.8`, we still query a name under
-  `ch.at` (e.g. `hello-world.ch.at`) but we send it to resolver `8.8.8.8`.
+  `llm.pieter.com` (e.g. `hello-world.llm.pieter.com`) but we send it to
+  resolver `8.8.8.8`.
 
 ## TXT response parsing
 

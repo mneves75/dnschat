@@ -21,8 +21,40 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 - Added Android SecureStore backup/data-extraction policy tests and XML rules so
   encrypted key material is excluded from cloud backup and device transfer.
+- Added `firebase-debug.log` patterns to `.gitignore` to keep local debug
+  artifacts out of the repo.
+
+### Removed
+
+- Removed historical execution plans and completed engineering specs:
+  `docs/plans/` directory (23 EXECPLANs from Jan 2026, all completed),
+  `docs/architecture/EXPO-ROUTER-INTEGRATION.md` and
+  `docs/architecture/ENGINEERING-EXEC-SPEC-BEST-PRACTICES-ALIGNMENT.md`
+  (both marked Status: Implemented), and `docs/engineering-exec-spec.md` /
+  `docs/engineering-todo.md` (Jan 6 work logs with all phases complete).
+- Removed version-pinned App Store materials superseded by 4.0.x: all
+  `docs/App_store/Apple_App_Store/*_v3.0.x*.md` and the entire
+  `docs/App_store/Google_Play_Store/` directory (replaced by current
+  `docs/ANDROID_GOOGLE_PLAY_STORE.md`).
+- Removed root-level transient artifacts: `INSTALL.md` (pointer duplicate of
+  `docs/INSTALL.md`), `progress.md`, `test_plan.md`, `audit_report.md` (Dec
+  2025 v3.4.0 audit), `firebase-debug.log`, and `remediation_checklist.json`.
 
 ### Fixed
+
+- Fixed stale `ch.at` references in `docs/technical/DNS-PROTOCOL-SPEC.md`,
+  `docs/technical/SPECIFICATION.md`, and `modules/dns-native/README.md` so the
+  default zone, settings-migration target, and example queries all reflect the
+  current `llm.pieter.com` default.
+- Corrected the documented Android DoH fallback condition in
+  `docs/technical/SPECIFICATION.md` and `modules/dns-native/README.md` to match
+  the shipped behavior (DoH is only used when the selected resolver is
+  Cloudflare `1.1.1.1`).
+- Fixed broken cross-references in `CLAUDE.md` (`Thread.tsx` → `app/chat/[threadId].tsx`)
+  and added Expo Router bootstrap, React Compiler, typed-routes, babel-plugin-order,
+  and version-sync sections.
+- Rewrote `docs/README.md` as a clean index without dead links to deleted plans
+  and architecture docs.
 
 - Removed stale Android release permissions for legacy storage and overlay windows.
 - Declared iOS non-exempt encryption status in Expo config and native Info.plist.

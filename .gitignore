@@ -64,6 +64,8 @@ test-dnsservice.js
 audit_report.md
 remediation_checklist.json
 security-scan-*
+firebase-debug.log
+firebase-debug.*.log
 .expo/xcodebuild*.log
 .expo/*.log
 
