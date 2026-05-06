@@ -85,7 +85,7 @@ This app uses **Expo Router** (file-based routing under `app/`), not React Navig
 
 ### DNS Server Fallback Chain
 
-**Server selection** (in `src/services/dnsService.ts:570-575`):
+**Server selection** (search `getLLMServers` in `src/services/dnsService.ts` — currently around line 920):
 - If user has selected a server in settings -> use ONLY that server (no fallback)
 - Otherwise -> use `getLLMServers()` which returns `[llm.pieter.com:53, ch.at:53]`
 
@@ -135,7 +135,12 @@ app/                          # Expo Router routes (file-based)
 src/i18n/messages/
   en-US.ts, pt-BR.ts          # Translations including DNS server labels
 
-docs/plans/                   # Execution plans and documentation
+docs/                         # Developer docs (see docs/README.md for index)
+  architecture/SYSTEM-ARCHITECTURE.md
+  technical/DNS-PROTOCOL-SPEC.md
+  technical/SPECIFICATION.md
+  troubleshooting/COMMON-ISSUES.md
+  data-inventory.md, model-registry.md
 ```
 
 ### Settings System
