@@ -59,6 +59,10 @@ For any source-code sweep, map findings and fixes back to these requirements. Do
 - Native module tests: `cd modules/dns-native && bun run test`
 - DNS harness: `bun run dns:harness -- --message "test message"`; add `--local-server` for offline UDP/TCP verification.
 - Security scan: `gitleaks detect --source . --redact --no-banner --config .gitleaks.toml`
+- iOS CLI build smoke: `xcodebuild clean build -workspace ios/DNSChat.xcworkspace -scheme DNSChat -configuration Debug -destination 'platform=iOS Simulator,name=iPhone 17'`
+- iOS unsigned release smoke: `xcodebuild clean build -workspace ios/DNSChat.xcworkspace -scheme DNSChat -configuration Release -destination 'generic/platform=iOS' CODE_SIGNING_ALLOWED=NO`
+- iOS unsigned archive smoke: `xcodebuild clean archive -workspace ios/DNSChat.xcworkspace -scheme DNSChat -configuration Release -destination 'generic/platform=iOS' -archivePath /tmp/DNSChat.xcarchive CODE_SIGNING_ALLOWED=NO`
+- ASC local health: `asc doctor` (upload/submission checks require local ASC credentials)
 - Version sync: `bun run sync-versions` (source = `package.json`)
 - Verify: `bun run verify:all` (runs all gates: lint, test, pods, sdk alignment, typed routes, etc.)
 
@@ -72,7 +76,7 @@ When asked for a broad review, "latest/best practices", "2026+", or a full sourc
 4. Check security explicitly: prompt validation, DNS server allowlist, DNS query composition, TXT parsing, encrypted local storage, SecureStore key handling, logs/redaction, backup exclusions, native permissions, release signing, dependency overrides, and secret scanning.
 5. Preserve behavior with focused regression tests before cleanup/refactor edits when behavior is not already protected.
 6. Keep native and TypeScript DNS constants synchronized. Do not change `MAX_MESSAGE_LENGTH`, `MAX_DNS_LABEL_LENGTH`, server order, or sanitizer behavior without native + JS tests and docs updates.
-7. Finish with evidence: `bun run verify:all`, `cd modules/dns-native && bun run test`, `gitleaks detect --source . --redact --no-banner --config .gitleaks.toml`, and any platform/runtime smoke required by the touched area.
+7. Finish with evidence: `bun run verify:all`, `cd modules/dns-native && bun run test`, `gitleaks detect --source . --redact --no-banner --config .gitleaks.toml`, `asc doctor`, and any platform/runtime smoke required by the touched area. For iOS release-readiness work, include `xcodebuild` Debug simulator build plus unsigned generic Release build/archive unless signing credentials are intentionally available.
 
 ## Versioning Rules
 

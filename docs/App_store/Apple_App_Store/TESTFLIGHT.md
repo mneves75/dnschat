@@ -77,7 +77,52 @@ open DNSChat.xcworkspace
 5. **Automatically manage signing** → **Next**
 6. Review and **Upload**
 
-### 7. **Alternative: Command Line Upload**
+### 7. **Command-line build validation**
+
+Run these before a signed upload when you want CLI evidence outside Xcode:
+
+```bash
+# Check available destinations
+xcodebuild -workspace ios/DNSChat.xcworkspace -scheme DNSChat -showdestinations
+
+# Debug simulator build
+xcodebuild clean build \
+  -workspace ios/DNSChat.xcworkspace \
+  -scheme DNSChat \
+  -configuration Debug \
+  -destination 'platform=iOS Simulator,name=iPhone 17'
+
+# Release compile/archive smoke without local signing credentials
+xcodebuild clean build \
+  -workspace ios/DNSChat.xcworkspace \
+  -scheme DNSChat \
+  -configuration Release \
+  -destination 'generic/platform=iOS' \
+  CODE_SIGNING_ALLOWED=NO
+
+xcodebuild clean archive \
+  -workspace ios/DNSChat.xcworkspace \
+  -scheme DNSChat \
+  -configuration Release \
+  -destination 'generic/platform=iOS' \
+  -archivePath /tmp/DNSChat.xcarchive \
+  CODE_SIGNING_ALLOWED=NO
+```
+
+Latest local evidence (`2026-05-05`, Xcode `26.5` / `17F42`):
+
+- Debug simulator build passed on iOS 26.5.
+- Generic iOS Release build passed unsigned.
+- Generic iOS Release archive passed unsigned.
+- `asc doctor` passed local checks.
+- `xcodebuild test` did not run because the `DNSChat` scheme has no XCTest bundles.
+- App Store Connect upload/submission checks were not run because no ASC credentials are configured locally.
+
+If Xcode script phases fail with a missing Node binary, inspect
+`ios/.xcode.env.local`. It is ignored by Git and can contain a stale local
+`NODE_BINARY` override.
+
+### 8. **Alternative: EAS command-line upload**
 
 If you prefer command line or need automation:
 
@@ -95,7 +140,7 @@ eas build --platform ios --profile production
 eas submit --platform ios --profile production
 ```
 
-### 8. **Configure TestFlight in App Store Connect**
+### 9. **Configure TestFlight in App Store Connect**
 
 **After upload processes**:
 
@@ -105,7 +150,7 @@ eas submit --platform ios --profile production
 4. **Internal Testing**: Add internal testers (up to 100)
 5. **External Testing**: Create test groups for external testers
 
-### 9. **Add TestFlight Testers**
+### 10. **Add TestFlight Testers**
 
 **Internal Testers** (App Store Connect users):
 
@@ -153,6 +198,10 @@ bun run ios -- --verbose
 - **Bundle ID** matches (`org.mvneves.dnschat`)
 - **Version numbers** consistent (v4.0.7)
 - **Native DNS module** compiles successfully
+- **Xcode CLI smoke** passed:
+  - Debug simulator build
+  - Generic iOS Release build/archive, or signed equivalent
+- **ASC local health** checked with `asc doctor`
 - **Universal landscape support** enabled
 - **App Store screenshots** (current requirements):
   - iPhone screenshots (current set stored in `docs/chatdns_ios_images/`)
@@ -203,4 +252,4 @@ If you encounter issues during the upload process:
 
 ---
 
-_TestFlight upload guide for DNSChat v4.0.7 - Last updated: 2026-05-04_
+_TestFlight upload guide for DNSChat v4.0.7 - Last updated: 2026-05-06_

@@ -29,11 +29,15 @@ Please do not open public issues for security vulnerabilities.
 
 ## Current Security Baseline
 
-Last full sweep: `2026-05-05`.
+Last full source/security sweep: `2026-05-05`.
+Last iOS CLI release smoke: `2026-05-05`.
 
 - Dependency audits pass for the app (`bun audit`) and local native module
   (`npm audit` in `modules/dns-native`).
 - Secret scanning passes with `gitleaks detect --source . --redact --no-banner --config .gitleaks.toml`.
+- Xcode Debug simulator build and unsigned generic iOS Release build/archive
+  pass. App Store Connect upload/submission checks still require local ASC
+  credentials and signed distribution assets.
 - Local chat history is encrypted at rest with AES-GCM using key material stored
   in SecureStore.
 - DNS prompt/response transport is observable infrastructure. Do not send

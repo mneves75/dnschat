@@ -48,7 +48,9 @@ bun run web
 - CocoaPods is still needed because this repo has native modules.
 - Simulator builds do not require code signing.
 - Device builds require you to pick your own signing team in Xcode (this repo keeps `DEVELOPMENT_TEAM` empty for public distribution).
-  If pods are broken:
+- Last verified CLI environment: Xcode `26.5` (`17F42`) on `2026-05-05`.
+
+If pods are broken:
 
 ```bash
 bun run fix-pods
@@ -72,6 +74,42 @@ Verify pods lockfile sync:
 ```bash
 bun run verify:ios-pods
 ```
+
+Native iOS build smoke:
+
+```bash
+# Pick a simulator from: xcodebuild -workspace ios/DNSChat.xcworkspace -scheme DNSChat -showdestinations
+xcodebuild clean build \
+  -workspace ios/DNSChat.xcworkspace \
+  -scheme DNSChat \
+  -configuration Debug \
+  -destination 'platform=iOS Simulator,name=iPhone 17'
+
+# Release compile/archive smoke without local signing credentials
+xcodebuild clean build \
+  -workspace ios/DNSChat.xcworkspace \
+  -scheme DNSChat \
+  -configuration Release \
+  -destination 'generic/platform=iOS' \
+  CODE_SIGNING_ALLOWED=NO
+
+xcodebuild clean archive \
+  -workspace ios/DNSChat.xcworkspace \
+  -scheme DNSChat \
+  -configuration Release \
+  -destination 'generic/platform=iOS' \
+  -archivePath /tmp/DNSChat.xcarchive \
+  CODE_SIGNING_ALLOWED=NO
+```
+
+`xcodebuild test` is not currently a native gate because the `DNSChat` scheme has
+no XCTest bundles. Use `bun run test` for the app test suite until a native test
+target is added.
+
+If Xcode script phases report a missing Node binary, check the ignored local file
+`ios/.xcode.env.local`. The tracked fallback in `ios/.xcode.env` uses
+`command -v node`, but a stale local override can point Xcode at a removed Node
+version.
 
 ### Android
 

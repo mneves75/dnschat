@@ -8,7 +8,7 @@
 
 ### Subtitle (30 characters max)
 
-**Revolutionary DNS-based AI chat**
+**AI chat over DNS queries**
 
 ### Marketing URL
 
@@ -26,15 +26,15 @@ https://github.com/mneves75/dnschat/blob/main/PRIVACY.md
 
 ## App Store Description (4000 characters max)
 
-Experience the future of AI communication with DNS Chat - the world's first mobile app to use DNS queries for AI conversations.
+DNS Chat is a mobile chat app that sends short prompts as DNS TXT queries and renders AI-style responses from compatible DNS servers.
 
-REVOLUTIONARY TECHNOLOGY
-Chat with AI using groundbreaking DNS-based communication. No traditional APIs, no servers - just pure innovation through DNS TXT queries. Featured approach inspired by top tech innovators.
+DNS-BASED TRANSPORT
+Chat through DNS TXT queries instead of traditional HTTPS API calls. Use the default compatible DNS service or configure supported servers from the app settings.
 
 NATIVE PERFORMANCE
 
 - Native iOS implementation using Apple Network Framework
-- Blazing-fast DNS queries with automatic failover
+- Fast DNS queries with automatic transport fallback
 - Works on cellular and WiFi networks worldwide
 - Production-ready with comprehensive error handling
 
@@ -45,12 +45,13 @@ MODERN CHAT EXPERIENCE
 - Dark/Light theme follows your device settings
 - Smooth animations and intuitive navigation
 
-PRIVACY & SECURITY
+LOCAL DATA & TRANSPARENCY
 
-- All conversations stored only on your device
+- Conversation history is stored locally on your device
 - No account required, no data tracking
 - Network-resilient with multiple fallback methods
 - Open-source and fully transparent
+- DNS queries are observable by DNS infrastructure, so do not send secrets or personal data
 
 CROSS-PLATFORM READY
 
@@ -59,16 +60,16 @@ CROSS-PLATFORM READY
 - Professional DNS-themed app icon and branding
 
 CUSTOMIZABLE
-Configure your own DNS server or use the default service. Perfect for developers, local-first app enthusiasts, and anyone curious about innovative technology.
+Choose from supported DNS servers or use the default service. Perfect for developers, local-first app enthusiasts, and anyone curious about protocol-level experimentation.
 
 Perfect for:
 
 - Tech enthusiasts exploring cutting-edge communication
-- Local-first users who understand DNS queries are observable
+- Local-first users who understand DNS queries are observable infrastructure
 - Developers interested in DNS innovation
 - Anyone wanting a fast, reliable AI chat experience
 
-Download now and be among the first to experience AI communication through DNS!
+Download now to try AI-style chat over DNS.
 
 ---
 
@@ -147,7 +148,7 @@ AI chat using DNS queries with native iOS performance, local encrypted history, 
 This app uses innovative DNS TXT queries to communicate with AI.
 Test with any message to see the DNS-based communication in action.
 Conversations are stored locally. DNS queries are observable, so do not send secrets or personal data.
-No server infrastructure or user accounts required.
+No user account is required. The app does not require app-owned backend infrastructure, but it does require a compatible DNS service.
 ```
 
 ---
@@ -158,16 +159,16 @@ No server infrastructure or user accounts required.
 
 1. **AI Chat** (High volume, medium competition)
 2. **DNS Assistant** (Low volume, low competition - unique positioning)
-3. **Privacy Chat** (Medium volume, medium competition)
+3. **Local Chat** (Medium volume, medium competition)
 4. **Native AI** (Medium volume, low competition)
 5. **Networking Tools** (Medium volume, high competition)
 
 ### Long-tail Keywords
 
 - "DNS based chat app"
-- "Privacy focused AI assistant"
+- "Local history AI assistant"
 - "Native iOS AI chat"
-- "Decentralized chat application"
+- "DNS TXT chat experiment"
 - "Network protocol innovation"
 
 ### Localization Strategy
@@ -218,10 +219,9 @@ No server infrastructure or user accounts required.
 
 ### Unique Value Proposition
 
-- **World's first** DNS-based AI communication
 - **Local encrypted history** with no accounts or tracking
 - **Native performance** with Apple Network Framework
-- **No servers required** - pure DNS innovation
+- **DNS TXT transport** with transparent networking behavior
 - **Open source** and fully transparent
 
 ---
@@ -258,6 +258,7 @@ No server infrastructure or user accounts required.
 ### App Store Connect Configuration
 
 - [ ] Upload final IPA build
+- [x] Local ASC health checked with `asc doctor` (`2026-05-05`)
 - [ ] Configure pricing (Free)
 - [ ] Set availability (Worldwide)
 - [ ] Age rating questionnaire
@@ -266,6 +267,10 @@ No server infrastructure or user accounts required.
 
 ### Review Submission
 
+- [x] Xcode Debug simulator build passed (`2026-05-05`, Xcode `26.5`)
+- [x] Xcode generic iOS Release build/archive passed unsigned (`2026-05-05`)
+- [ ] Signed archive/export
+- [ ] App Store Connect upload/submission check with configured ASC credentials
 - [ ] Final testing on TestFlight
 - [ ] Review guidelines compliance check
 - [ ] Submit for App Store Review
@@ -273,4 +278,4 @@ No server infrastructure or user accounts required.
 
 ---
 
-_Updated for DNS Chat v4.0.7 - Ready for Multi-Platform App Store submission_
+_Updated for DNS Chat v4.0.7 - release assets locally validated; signed export and ASC upload still pending_

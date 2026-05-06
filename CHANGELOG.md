@@ -8,11 +8,18 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ### Changed
 
+- Documented the latest iOS CLI release smoke across README, install,
+  TestFlight, App Store Connect, and agent guidance: Xcode `26.5` Debug simulator
+  build passes, generic iOS Release build/archive pass unsigned, `asc doctor`
+  passes local checks, and native XCTest/ASC upload remain blocked by missing
+  project bundles/credentials.
 - Aligned Expo SDK 55 patch dependencies with Expo Doctor output: Expo `55.0.23`,
   React Native `0.83.6`, Expo Router `55.0.14`, SecureStore `55.0.13`, and
   matching React test renderer `19.2.0`.
 - Documented current verification and release expectations across README,
   install, architecture, Android, App Store, and agent guidance surfaces.
+- Revised App Store marketing and ASO copy to avoid implying that DNS prompt
+  transport is private, end-to-end encrypted, or serverless.
 - Clarified product privacy language across docs and screenshot-mode fixtures:
   local history is encrypted at rest, but DNS prompts travel over observable DNS
   infrastructure and must not be described as private or end-to-end encrypted.
