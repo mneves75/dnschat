@@ -104,4 +104,20 @@ describe("DNSLogService concurrent query isolation", () => {
     expect(failedLog?.finalMethod).toBe("tcp");
     expect(failedLog?.entries.at(-1)?.method).toBe("tcp");
   });
+
+  it("redacts user prompt, chat title, and response content in persisted logs", async () => {
+    const queryId = DNSLogService.startQuery("secret prompt", {
+      chatId: "chat-1",
+      chatTitle: "secret prompt",
+    });
+
+    await DNSLogService.endQuery(queryId, true, "secret response", "native");
+
+    const log = DNSLogService.getLogs().find((entry) => entry.id === queryId);
+    const serialized = JSON.stringify(log);
+
+    expect(serialized).toContain("sha256:");
+    expect(serialized).not.toContain("secret prompt");
+    expect(serialized).not.toContain("secret response");
+  });
 });

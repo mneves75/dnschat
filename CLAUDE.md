@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What is DNSChat
 
-A React Native (Expo dev-client) chat app that sends short prompts as DNS TXT queries to LLM servers and renders responses. Uses React Native 0.83.6, Expo SDK 55.0.23, React 19.2.0, TypeScript 5.9.x.
+A React Native (Expo dev-client) chat app that sends short prompts as DNS TXT queries to LLM servers and renders responses. Uses React Native 0.83.6, Expo SDK 55.0.24, React 19.2.0, TypeScript 5.9.x.
 
 **Default DNS Server**: `llm.pieter.com:53` (by @levelsio)
 **Fallback Server**: `ch.at:53` (currently offline)
@@ -202,7 +202,7 @@ GitHub Actions (`.github/workflows/ci.yml`) runs on push to main and PRs:
 
 ## Platform Notes
 
-**iOS**: Requires Xcode 15+, iOS 16+ target. Device builds need signing team in Xcode (repo keeps `DEVELOPMENT_TEAM` empty). Last CLI smoke used Xcode `26.5` (`17F42`) and passed Debug simulator build plus unsigned generic Release build/archive. `xcodebuild test` is not a gate yet because the `DNSChat` scheme has no XCTest bundles.
+**iOS**: Requires Xcode 15+, iOS 16+ target. Device builds need signing team in Xcode (repo keeps `DEVELOPMENT_TEAM` empty). Last CLI smoke used Xcode `26.5` (`17F42`) on 2026-05-14 and passed Debug simulator build plus unsigned generic Release build/archive. `xcodebuild test` is not a gate yet because the `DNSChat` scheme has no XCTest bundles.
 
 **Android**: Requires Java 17. `bun run android` auto-detects via `/usr/libexec/java_home -v 17` or Homebrew paths. Release signing credentials are never committed (uses `keystore.properties` or CI injection).
 

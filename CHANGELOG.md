@@ -6,16 +6,14 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+## [4.0.8] - 2026-05-14
+
 ### Changed
 
 - Documented the latest iOS CLI release smoke across README, install,
   TestFlight, App Store Connect, and agent guidance: Xcode `26.5` Debug simulator
   build passes, generic iOS Release build/archive pass unsigned, `asc doctor`
-  passes local checks, and native XCTest/ASC upload remain blocked by missing
-  project bundles/credentials.
-- Aligned Expo SDK 55 patch dependencies with Expo Doctor output: Expo `55.0.23`,
-  React Native `0.83.6`, Expo Router `55.0.14`, SecureStore `55.0.13`, and
-  matching React test renderer `19.2.0`.
+  passes local checks, and TestFlight release notes are prepared for build `36`.
 - Documented current verification and release expectations across README,
   install, architecture, Android, App Store, and agent guidance surfaces.
 - Revised App Store marketing and ASO copy to avoid implying that DNS prompt
@@ -26,6 +24,15 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 - Hardened onboarding, settings, and chat state transitions to fail closed on persistence errors, keep thread selection stable after send failures, and apply onboarding network recommendations atomically.
 - Localized onboarding accessibility labels and hints across navigation, DNS demo, first-chat, network setup, GitHub CTA, and the chat-list compose toolbar button.
 - Updated the DNS protocol spec to match the shipped resolver behavior and response-validation contract.
+- Aligned Expo SDK 55 patch packages with the current Expo Doctor baseline:
+  Expo `55.0.24`, Expo Dev Client `55.0.33`, SecureStore `55.0.14`,
+  Crypto `55.0.15`, Localization `55.0.14`, Splash Screen `55.0.21`,
+  Build Properties `55.0.14`, and System UI `55.0.18`.
+- Added an explicit 2026 review plan comparing DNSChat against the current
+  Evan Bacon `chat-template`, Expo SDK 55 docs, React Native 0.83 security
+  guidance, and the app's DNS privacy contract.
+- Pinned the React Compiler healthcheck script to Bun execution so the full
+  verification gate avoids Node 26 CommonJS/ESM runner failures.
 
 ### Added
 
@@ -85,6 +92,12 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 - Rejected inconsistent multipart TXT totals in `parseTXTResponse()` to match native parser behavior.
 - Restored public-repo portability by clearing committed iOS `DEVELOPMENT_TEAM`, which unblocks `repo.noCredentials`, `sync-versions`, and the full verification gate.
 - Restricted Android native Cloudflare DoH fallback to the actual Cloudflare resolver (`1.1.1.1`) and reclassified `<12`-byte DNS packets as malformed responses instead of empty answers.
+- Migrated legacy plaintext chat/log payloads to encrypted storage on read and
+  encrypted corrupted plaintext backup payloads before writing recovery copies.
+- Redacted prompt-derived chat titles, DNS labels, query names, and responses
+  from persisted DNS logs.
+- Kept local Expo module native sources explicitly trackable in `.gitignore`
+  so Expo Doctor does not misclassify the owned `modules/dns-native` sources.
 
 ## [4.0.7] - 2026-03-03
 
@@ -264,7 +277,8 @@ Versions 3.2.0 through 3.8.9 established the core feature set:
 - **3.3.0**: Android CI, release signing policy, Java 17 auto-detection
 - **3.2.x**: Public repo hardening (secrets scanning, policy tests, version sync gates), DNS server allowlist
 
-[Unreleased]: https://github.com/mneves75/dnschat/compare/v4.0.7...HEAD
+[Unreleased]: https://github.com/mneves75/dnschat/compare/v4.0.8...HEAD
+[4.0.8]: https://github.com/mneves75/dnschat/compare/v4.0.7...v4.0.8
 [4.0.7]: https://github.com/mneves75/dnschat/compare/v4.0.6...v4.0.7
 [4.0.6]: https://github.com/mneves75/dnschat/compare/v4.0.5...v4.0.6
 [4.0.5]: https://github.com/mneves75/dnschat/compare/v4.0.2...v4.0.5

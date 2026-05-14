@@ -2,7 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { sha256 } from '@noble/hashes/sha2.js';
 import { bytesToHex, utf8ToBytes } from '@noble/hashes/utils.js';
 import { LOGGING_CONSTANTS, STORAGE_CONSTANTS } from '../constants/appConstants';
-import { decryptIfEncrypted, encryptString } from './encryptionService';
+import { decryptIfEncrypted, encryptString, isEncryptedPayload } from './encryptionService';
 import { isScreenshotMode, getMockDNSLogs } from '../utils/screenshotMode';
 import { devLog, devWarn } from "../utils/devLog";
 
@@ -59,6 +59,42 @@ export class DNSLogService {
     return `sha256:${hash} len:${value.length}`;
   }
 
+  static redactTextForLog(value: string): string {
+    return this.redactText(value);
+  }
+
+  private static async createCorruptionBackupPayload(
+    error: unknown,
+    storedPayload: string,
+  ): Promise<string> {
+    const timestamp = new Date().toISOString();
+    const payloadWasEncrypted = isEncryptedPayload(storedPayload);
+
+    try {
+      const protectedPayload = payloadWasEncrypted
+        ? storedPayload
+        : await encryptString(storedPayload);
+
+      return JSON.stringify({
+        timestamp,
+        error: error instanceof Error ? error.message : String(error),
+        payload: protectedPayload,
+        payloadWasEncrypted,
+      });
+    } catch (backupEncryptionError) {
+      devWarn(
+        "[DNSLogService] Failed to encrypt corrupted DNS logs backup payload",
+        backupEncryptionError,
+      );
+      return JSON.stringify({
+        timestamp,
+        error: error instanceof Error ? error.message : String(error),
+        payloadRedacted: true,
+        payloadWasEncrypted,
+      });
+    }
+  }
+
   /**
    * Generate a truly unique ID using multiple sources of entropy
    * Combines timestamp, performance counter, auto-incrementing counter, and random string
@@ -96,6 +132,7 @@ export class DNSLogService {
       // NORMAL MODE: Load logs from storage
       stored = await AsyncStorage.getItem(STORAGE_KEY);
       if (stored) {
+        const wasEncrypted = isEncryptedPayload(stored);
         const decrypted = await decryptIfEncrypted(stored);
         const parsed = JSON.parse(decrypted) as unknown;
         if (Array.isArray(parsed)) {
@@ -115,6 +152,10 @@ export class DNSLogService {
               entries: normalizedEntries,
             };
           });
+          if (!wasEncrypted) {
+            await this.writePersistentLogs();
+            devWarn("[DNSLogService] Migrated legacy plaintext DNS logs to encrypted payload");
+          }
         } else {
           this.queryLogs = [];
         }
@@ -123,11 +164,7 @@ export class DNSLogService {
       devWarn("[DNSLogService] Failed to load DNS logs", error);
       if (stored) {
         try {
-          const backupPayload = JSON.stringify({
-            timestamp: new Date().toISOString(),
-            error: error instanceof Error ? error.message : String(error),
-            payload: stored,
-          });
+          const backupPayload = await this.createCorruptionBackupPayload(error, stored);
           await AsyncStorage.setItem(LOGS_BACKUP_KEY, backupPayload);
           await AsyncStorage.removeItem(STORAGE_KEY);
           devWarn("[DNSLogService] Corrupted DNS logs backed up and cleared", {
@@ -159,7 +196,8 @@ export class DNSLogService {
   ): string {
     const queryId = `query-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     const redacted = this.redactText(query);
-    const chatTitle = context?.chatTitle?.trim() || undefined;
+    const rawChatTitle = context?.chatTitle?.trim() || undefined;
+    const chatTitle = rawChatTitle ? this.redactText(rawChatTitle) : undefined;
     const chatId = context?.chatId || undefined;
 
     const queryLog: DNSQueryLog = {

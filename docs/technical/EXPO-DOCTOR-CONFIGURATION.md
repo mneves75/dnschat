@@ -4,7 +4,7 @@ This repo intentionally uses a few package metadata exclusions, but the current
 baseline is expected to pass Expo Doctor.
 
 Current verified baseline: `bunx expo-doctor` passes 17/17 checks on
-`2026-05-05`.
+`2026-05-14`.
 
 ## Why ios/ + android/ exist (and stay committed)
 

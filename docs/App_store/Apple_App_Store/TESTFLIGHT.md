@@ -109,14 +109,14 @@ xcodebuild clean archive \
   CODE_SIGNING_ALLOWED=NO
 ```
 
-Latest local evidence (`2026-05-05`, Xcode `26.5` / `17F42`):
+Latest local evidence (`2026-05-14`, Xcode `26.5` / `17F42`):
 
 - Debug simulator build passed on iOS 26.5.
 - Generic iOS Release build passed unsigned.
 - Generic iOS Release archive passed unsigned.
 - `asc doctor` passed local checks.
 - `xcodebuild test` did not run because the `DNSChat` scheme has no XCTest bundles.
-- App Store Connect upload/submission checks were not run because no ASC credentials are configured locally.
+- App Store Connect upload/submission is attempted from CLI during the v4.0.8 release run when local ASC credentials are available.
 
 If Xcode script phases fail with a missing Node binary, inspect
 `ios/.xcode.env.local`. It is ignored by Git and can contain a stale local
@@ -196,7 +196,7 @@ bun run ios -- --verbose
 - **App Store Connect** app record created
 - **Code signing** configured correctly
 - **Bundle ID** matches (`org.mvneves.dnschat`)
-- **Version numbers** consistent (v4.0.7)
+- **Version numbers** consistent (v4.0.8 build 36)
 - **Native DNS module** compiles successfully
 - **Xcode CLI smoke** passed:
   - Debug simulator build
@@ -231,6 +231,14 @@ Once uploaded:
 3. **Feedback**: Collect user feedback through TestFlight
 4. **Iterate**: Upload new builds for continuous testing
 
+### What to Test for v4.0.8 build 36
+
+- Send short prompts through the default DNS service and confirm responses render.
+- Confirm Logs show resolver attempts and failures without exposing prompt text or TXT responses.
+- Confirm existing local chat history loads after update and remains available offline.
+- Check onboarding, settings, About, and language/accessibility labels in English and Portuguese.
+- Toggle supported DNS settings and confirm unsupported server choices fail closed.
+
 **Next Steps**: After TestFlight testing, you can submit for full App Store review and release!
 
 ## Useful links
@@ -252,4 +260,4 @@ If you encounter issues during the upload process:
 
 ---
 
-_TestFlight upload guide for DNSChat v4.0.7 - Last updated: 2026-05-06_
+_TestFlight upload guide for DNSChat v4.0.8 build 36 - Last updated: 2026-05-14_

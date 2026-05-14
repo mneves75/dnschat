@@ -85,7 +85,7 @@ export interface NativeDNSModule {
    * Query TXT records from a DNS server
    * @param domain - DNS server hostname (e.g., 'llm.pieter.com', 'ch.at')
    * @param message - Fully qualified domain name to query (already sanitized)
-   * @param port - DNS port (9000 for llm.pieter.com, 53 for standard DNS)
+   * @param port - DNS port (53 for the allowlisted resolvers)
    * @returns Promise resolving to array of TXT record strings
    */
   queryTXT(domain: string, message: string, port: number): Promise<string[]>;

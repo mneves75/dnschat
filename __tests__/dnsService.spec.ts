@@ -506,6 +506,24 @@ describe("DNS Service helpers", () => {
       expect(primary.lastError).toContain("Primary server down");
       expect(secondary.successes).toBe(1);
     });
+
+    it("does not persist raw DNS query names derived from user prompts", async () => {
+      const addLogSpy = jest.spyOn(DNSLogService, "addLog");
+      jest
+        .spyOn(dnsServiceInternals, "queryWithServer")
+        .mockResolvedValueOnce({ response: "ok", method: "udp" });
+
+      await DNSService.queryLLM(
+        "secret prompt",
+        "llm.pieter.com",
+        true,
+        true,
+      );
+
+      const serializedEntries = JSON.stringify(addLogSpy.mock.calls.map(([, entry]) => entry));
+      expect(serializedEntries).toContain("sha256:");
+      expect(serializedEntries).not.toContain("secret-prompt.llm.pieter.com");
+    });
   });
 
   describe("transport logging", () => {

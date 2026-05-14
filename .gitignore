@@ -98,6 +98,14 @@ BACKUP-COMPLETE-HISTORY-*/
 /android/app/debug/
 /android/.gradle-cache/
 
+# Local Expo module native sources must remain trackable for Expo Doctor.
+!modules/
+!modules/dns-native/
+!modules/dns-native/android/
+!modules/dns-native/android/**
+!modules/dns-native/ios/
+!modules/dns-native/ios/**
+
 # IDE and editor files
 .vscode/settings.json
 .idea/

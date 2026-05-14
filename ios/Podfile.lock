@@ -5,9 +5,9 @@ PODS:
   - EXConstants (55.0.16):
     - ExpoModulesCore
   - EXJSONUtils (55.0.2)
-  - EXManifests (55.0.16):
+  - EXManifests (55.0.17):
     - ExpoModulesCore
-  - Expo (55.0.23):
+  - Expo (55.0.24):
     - ExpoModulesCore
     - hermes-engine
     - RCTRequired
@@ -32,15 +32,15 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - expo-dev-client (55.0.32):
+  - expo-dev-client (55.0.33):
     - EXManifests
     - expo-dev-launcher
     - expo-dev-menu
     - expo-dev-menu-interface
     - EXUpdatesInterface
-  - expo-dev-launcher (55.0.33):
+  - expo-dev-launcher (55.0.34):
     - EXManifests
-    - expo-dev-launcher/Main (= 55.0.33)
+    - expo-dev-launcher/Main (= 55.0.34)
     - expo-dev-menu
     - expo-dev-menu-interface
     - ExpoModulesCore
@@ -69,7 +69,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - expo-dev-launcher/Main (55.0.33):
+  - expo-dev-launcher/Main (55.0.34):
     - EXManifests
     - expo-dev-launcher/Unsafe
     - expo-dev-menu
@@ -100,7 +100,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - expo-dev-launcher/Unsafe (55.0.33):
+  - expo-dev-launcher/Unsafe (55.0.34):
     - EXManifests
     - expo-dev-menu
     - expo-dev-menu-interface
@@ -130,8 +130,8 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - expo-dev-menu (55.0.27):
-    - expo-dev-menu/Main (= 55.0.27)
+  - expo-dev-menu (55.0.28):
+    - expo-dev-menu/Main (= 55.0.28)
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -154,7 +154,7 @@ PODS:
     - ReactNativeDependencies
     - Yoga
   - expo-dev-menu-interface (55.0.2)
-  - expo-dev-menu/Main (55.0.27):
+  - expo-dev-menu/Main (55.0.28):
     - EXManifests
     - expo-dev-menu-interface
     - ExpoModulesCore
@@ -182,11 +182,11 @@ PODS:
     - Yoga
   - ExpoAsset (55.0.17):
     - ExpoModulesCore
-  - ExpoCrypto (55.0.14):
+  - ExpoCrypto (55.0.15):
     - ExpoModulesCore
   - ExpoDomWebView (55.0.6):
     - ExpoModulesCore
-  - ExpoFileSystem (55.0.19):
+  - ExpoFileSystem (55.0.20):
     - ExpoModulesCore
   - ExpoFont (55.0.7):
     - ExpoModulesCore
@@ -205,7 +205,7 @@ PODS:
     - ExpoModulesCore
   - ExpoLinking (55.0.15):
     - ExpoModulesCore
-  - ExpoLocalization (55.0.13):
+  - ExpoLocalization (55.0.14):
     - ExpoModulesCore
   - ExpoLogBox (55.0.12):
     - React-Core
@@ -242,13 +242,13 @@ PODS:
   - ExpoRouter (55.0.14):
     - ExpoModulesCore
     - RNScreens
-  - ExpoSecureStore (55.0.13):
+  - ExpoSecureStore (55.0.14):
     - ExpoModulesCore
-  - ExpoSplashScreen (55.0.20):
+  - ExpoSplashScreen (55.0.21):
     - ExpoModulesCore
   - ExpoSymbols (55.0.8):
     - ExpoModulesCore
-  - ExpoSystemUI (55.0.17):
+  - ExpoSystemUI (55.0.18):
     - ExpoModulesCore
   - EXUpdatesInterface (55.1.6):
     - ExpoModulesCore
@@ -315,7 +315,7 @@ PODS:
     - React-utils
     - ReactNativeDependencies
     - Yoga
-  - React-Core-prebuilt (0.83.2):
+  - React-Core-prebuilt (0.83.6):
     - ReactNativeDependencies
   - React-Core/CoreModulesHeaders (0.83.6):
     - hermes-engine
@@ -2878,31 +2878,31 @@ SPEC CHECKSUMS:
   DNSNative: 24947d2dc17a14ca7db1baa55f9e5dfe189571f9
   EXConstants: dadbeba983acc30f855a919658a2b34fbd86615d
   EXJSONUtils: 04bc3807d351331a5fe154ce1da596ec15d99169
-  EXManifests: f4e50a54115948e206f4c2391bdea755a1aa74ec
-  Expo: 51ac8f3473586b2634d9dfe52324793b086acb5a
-  expo-dev-client: 3541acbf4b009c36c2509038eba98d2d041b8f1e
-  expo-dev-launcher: 230776e4791fc5c33aa48aa7cefa69c2221e1a6f
-  expo-dev-menu: 4d2d466f722275263e8e8ea543916de39178ce36
+  EXManifests: 35b26ca30c8a6bd427d1cba20348cd3c43684bb2
+  Expo: 16f3bba63c001ae67319631affd50e83c429d7c6
+  expo-dev-client: feba6f7be1640072de1f77c5cc8342d292bcfce0
+  expo-dev-launcher: 8b60faae5715d49afa48c86ae7422a6ffd3426ce
+  expo-dev-menu: a84da48edce4ed67b32c7f492763129587003960
   expo-dev-menu-interface: 833795f4c98a674d36cbc12b11b21756c38e01e8
   ExpoAsset: 7721c5c4ae2a7c3c8147a046727ac6c020b05648
-  ExpoCrypto: 9fd0b78215cffa1aa20de026d452242401aa37dc
+  ExpoCrypto: e7f4a14eaa6d6a6a2196cd7391d171c84be0b1aa
   ExpoDomWebView: b2e9d601f9cb77d3c97da73234e175b64be91928
-  ExpoFileSystem: 0b73b097e67c83622640168f620defc65a1a6f70
+  ExpoFileSystem: 5d01aa6678ccde01172351aad5720ee16845ae82
   ExpoFont: a95606f106a6394df8edf6d0d87aab9020af5ad4
   ExpoGlassEffect: 2dedac2fe817f9b02d0dad29ce0aef7afebc5cd4
   ExpoHaptics: 679f09dc37d5981e619bc197732007a3334e80b8
   ExpoImage: 74d26278507b0b0d85b1e50562412172603f59eb
   ExpoKeepAwake: d0eb7a0719500d2a43fbf29b6f79e84d70c75ebf
   ExpoLinking: 40f36cf134ea6930f37867858c0643877b865d53
-  ExpoLocalization: c5cd7fa65c797d3a2f1adbd1fd4c601c524fd677
+  ExpoLocalization: 8bda1a33676542204301b719b3a51b29e2bbd3fd
   ExpoLogBox: a678d36477ab9544fe63e0b5328a0716539b6774
   ExpoModulesCore: 5e1ad569ce7cf8d35c0737585f34cc299fc3f0ca
   ExpoModulesJSI: 964334271fc77832736f66ee1785761cdc778dbe
   ExpoRouter: 0948f6a7c3949e8405099663e55d149408afc021
-  ExpoSecureStore: 38954f6bcef1287aa04c06fba3b86e8af3291ccd
-  ExpoSplashScreen: 3e64eed7a300d4e1131e8b419b5cea6e604adba7
+  ExpoSecureStore: 0e7959ad3a9fa59306d55f26a37854640dd334c2
+  ExpoSplashScreen: 049301b226bce8284fcafb7923fcad3a43f23a9f
   ExpoSymbols: 446a0835f3fb505214891d72baf5edf1de2ee4e7
-  ExpoSystemUI: 580f7a0e688715502a690817789c95a59c72840f
+  ExpoSystemUI: fbc4f8af83f2b8338c1de69a79624769536f09d1
   EXUpdatesInterface: 4c11f4d1594526258f14d09817dc407acbf24e3b
   FBLazyVector: 427fa1856a481856091061293ce865a75aa4f20f
   hermes-engine: 0f05194b58e23447fe5ebb35f15b8820d006e4e3
@@ -2917,7 +2917,7 @@ SPEC CHECKSUMS:
   React: 9b033c7a99e1c8eec40960b6b2e6844e011e8bd1
   React-callinvoker: f64c8d57f45173835b6b9891cda27f1625551972
   React-Core: 341863a2597c4a2320f916b4232d280cb8a28e4b
-  React-Core-prebuilt: cd0fc60daded4d7b01c29cf560ea0e87a6175268
+  React-Core-prebuilt: 4e5850839bf538cb5a83aaee24516d94b6d58233
   React-CoreModules: 9370769c9b2b1732c58960687f4d50d9d3510efc
   React-cxxreact: 41ae74bd9eab80af9c5da6a9b4934eb97e2c7569
   React-debug: eb0f19ff879ad3870dc760b6c21ad56cbb3e4b98

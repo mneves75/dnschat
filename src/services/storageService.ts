@@ -2,7 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { Chat, Message } from "../types/chat";
 import uuid from "react-native-uuid";
 import { devLog, devWarn } from "../utils/devLog";
-import { decryptIfEncrypted, encryptString } from "./encryptionService";
+import { decryptIfEncrypted, encryptString, isEncryptedPayload } from "./encryptionService";
 import { STORAGE_CONSTANTS } from "../constants/appConstants";
 
 const CHATS_KEY = STORAGE_CONSTANTS.CHATS_KEY;
@@ -54,6 +54,39 @@ export class StorageService {
       );
     });
   }
+
+  private static async createCorruptionBackupPayload(
+    error: StorageCorruptionError,
+    storedPayload: string,
+  ): Promise<string> {
+    const timestamp = new Date().toISOString();
+    const payloadWasEncrypted = isEncryptedPayload(storedPayload);
+
+    try {
+      const protectedPayload = payloadWasEncrypted
+        ? storedPayload
+        : await encryptString(storedPayload);
+
+      return JSON.stringify({
+        timestamp,
+        error: error.message,
+        payload: protectedPayload,
+        payloadWasEncrypted,
+      });
+    } catch (backupEncryptionError) {
+      devWarn(
+        "[StorageService] Failed to encrypt corrupted storage backup payload",
+        backupEncryptionError,
+      );
+      return JSON.stringify({
+        timestamp,
+        error: error.message,
+        payloadRedacted: true,
+        payloadWasEncrypted,
+      });
+    }
+  }
+
   static async saveChats(chats: Chat[]): Promise<void> {
     const startTime = Date.now();
     devLog("[StorageService] saveChats called", {
@@ -88,9 +121,13 @@ export class StorageService {
     }
   }
 
-  static async loadChats(options?: { recoverOnCorruption?: boolean }): Promise<Chat[]> {
+  static async loadChats(options?: {
+    migratePlaintext?: boolean;
+    recoverOnCorruption?: boolean;
+  }): Promise<Chat[]> {
     const startTime = Date.now();
     devLog("[StorageService] loadChats called");
+    const migratePlaintext = options?.migratePlaintext !== false;
     const recoverOnCorruption = options?.recoverOnCorruption !== false;
     let serializedChats: string | null = null;
 
@@ -209,6 +246,11 @@ export class StorageService {
 
       const chats = parsed as Chat[];
 
+      if (migratePlaintext && !isEncryptedPayload(serializedChats)) {
+        await this.saveChats(chats);
+        devWarn("[StorageService] Migrated legacy plaintext chat storage to encrypted payload");
+      }
+
       const duration = Date.now() - startTime;
       devLog("[StorageService] loadChats completed", {
         chatCount: chats.length,
@@ -223,11 +265,10 @@ export class StorageService {
         if (recoverOnCorruption) {
           try {
             if (serializedChats) {
-              const backupPayload = JSON.stringify({
-                timestamp: new Date().toISOString(),
-                error: error.message,
-                payload: serializedChats,
-              });
+              const backupPayload = await this.createCorruptionBackupPayload(
+                error,
+                serializedChats,
+              );
               await AsyncStorage.setItem(CHAT_BACKUP_KEY, backupPayload);
               devWarn("[StorageService] Corrupted storage backed up", {
                 key: CHAT_BACKUP_KEY,
@@ -266,7 +307,7 @@ export class StorageService {
       };
 
       try {
-        const chats = await this.loadChats();
+        const chats = await this.loadChats({ migratePlaintext: false });
         chats.unshift(newChat);
         await this.saveChats(chats);
         return newChat;
@@ -283,7 +324,7 @@ export class StorageService {
   ): Promise<void> {
     return this.queueOperation(async () => {
       try {
-        const chats = await this.loadChats();
+        const chats = await this.loadChats({ migratePlaintext: false });
         const chatIndex = chats.findIndex((chat) => chat.id === chatId);
 
         if (chatIndex === -1) {
@@ -318,7 +359,7 @@ export class StorageService {
   static async deleteChat(chatId: string): Promise<void> {
     return this.queueOperation(async () => {
       try {
-        const chats = await this.loadChats();
+        const chats = await this.loadChats({ migratePlaintext: false });
         const filteredChats = chats.filter((chat) => chat.id !== chatId);
         await this.saveChats(filteredChats);
       } catch (error) {
@@ -341,7 +382,7 @@ export class StorageService {
 
       try {
         devLog("[StorageService] Loading chats for addMessage...");
-        const chats = await this.loadChats();
+        const chats = await this.loadChats({ migratePlaintext: false });
 
         const chatIndex = chats.findIndex((chat) => chat.id === chatId);
 
@@ -414,7 +455,7 @@ export class StorageService {
 
       try {
         devLog("[StorageService] Loading chats for updateMessage...");
-        const chats = await this.loadChats();
+        const chats = await this.loadChats({ migratePlaintext: false });
 
         const chatIndex = chats.findIndex((chat) => chat.id === chatId);
 

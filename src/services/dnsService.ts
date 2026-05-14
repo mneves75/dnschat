@@ -939,7 +939,7 @@ export class DNSService {
         message: `Trying server: ${targetServer}:${queryContext.targetPort}`,
         method: 'native',
         status: 'attempt',
-        details: `Query: ${queryContext.queryName}`,
+        details: `Query: ${DNSLogService.redactTextForLog(queryContext.queryName)}`,
       });
 
       try {
@@ -1221,7 +1221,7 @@ export class DNSService {
           queryBuffer,
           0,
           queryBuffer.length,
-          port,  // Use dynamic port (9000 for llm.pieter.com, 53 for others)
+          port,  // Use the allowlisted resolver port
           dnsServer,
           (error?: unknown) => {
             if (error) {
@@ -1547,7 +1547,7 @@ export class DNSService {
         try {
           socket.connect(
             {
-              port: port,  // Use dynamic port (9000 for llm.pieter.com, 53 for others)
+              port: port,  // Use the allowlisted resolver port
               host: dnsServer,
             },
             (connectResult: unknown) => {
@@ -1925,10 +1925,10 @@ export class DNSService {
     DNSLogService.addLog(queryId, {
       id: `${queryId}-forced-query-name`,
       timestamp: new Date(),
-      message: `Resolved DNS query name: ${context.queryName}`,
+      message: "Resolved DNS query name",
       method: transport,
       status: 'attempt',
-      details: `Label: ${context.label}`,
+      details: `Label: ${DNSLogService.redactTextForLog(context.label)}`,
     });
 
     const startTime = Date.now();

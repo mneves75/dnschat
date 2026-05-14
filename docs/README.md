@@ -8,6 +8,7 @@ Developer documentation for DNSChat. Code is the source of truth — these docs 
 - `docs/architecture/SYSTEM-ARCHITECTURE.md` — what talks to what
 - `docs/technical/DNS-PROTOCOL-SPEC.md` — DNS query/response rules (current behavior)
 - `docs/technical/SPECIFICATION.md` — product behavior + repo invariants
+- `docs/technical/CHAT-TEMPLATE-2026-REVIEW.md` — 2026 chat-template review plan and applied repairs
 - `docs/troubleshooting/COMMON-ISSUES.md` — known issues and fixes
 
 ## Reference
@@ -18,8 +19,8 @@ Developer documentation for DNSChat. Code is the source of truth — these docs 
 
 ## Current verification baseline
 
-Last full source/security sweep: `2026-05-05`.
-Last iOS CLI release smoke: `2026-05-05` with Xcode `26.5` (`17F42`).
+Last full source/security sweep: `2026-05-14`.
+Last iOS CLI release smoke: `2026-05-14` with Xcode `26.5` (`17F42`).
 
 - `bun run verify:all` passes (`expo-doctor` 17/17, SDK alignment, typed routes,
   DNS resolver sync, iOS pods, React Compiler, Android setup, lint, and Jest).

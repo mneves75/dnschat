@@ -4,7 +4,7 @@ Complete step-by-step guide for publishing DNSChat to the Google Play Store.
 
 **App**: DNSChat
 **Package**: `org.mvneves.dnschat`
-**Current Version**: 4.0.7
+**Current Version**: 4.0.8
 
 ---
 
@@ -121,7 +121,7 @@ Full VoiceOver/TalkBack support with screen reader optimizations.
 
 TECHNICAL DETAILS:
 
-• Built with React Native 0.83.6 and Expo SDK 55.0.23
+• Built with React Native 0.83.6 and Expo SDK 55.0.24
 • React 19 with New Architecture enabled
 • Native DNS module for iOS and Android
 • Supports DNS servers: 1.1.1.1, 8.8.8.8, 9.9.9.9
@@ -323,10 +323,10 @@ See [ANDROID_RELEASE.md](./ANDROID_RELEASE.md) for signing configuration.
    - **Upload** new AAB
 4. Add release notes:
    ```
-   What's new in v4.0.7:
-   • Updated Expo SDK 55 dependencies and React Native patches for current compatibility
-   • Removed stale Android release permissions and hardened SecureStore backup rules
-   • Added export-compliance, manifest-policy, typecheck, and verification coverage
+   What's new in v4.0.8:
+   • Updated Expo SDK 55 patch packages for the current compatibility baseline
+   • Hardened encrypted local storage migration and DNS log redaction
+   • Tightened DNS response validation and concurrent DNS log persistence
    ```
 5. Click **"Review release"**
 6. Set rollout percentage (start with 10-20% recommended)
@@ -436,6 +436,7 @@ Before submitting for review, verify:
 
 | Version | Date | Notes |
 |---------|------|-------|
+| 4.0.8 | 2026-05-14 | SDK patch alignment, encrypted-storage migration, DNS log redaction and validation hardening |
 | 4.0.7 | 2026-05-04 | Expo/RN patch alignment, permission cleanup, SecureStore backup hardening |
 | 3.6.0 | 2025-12-16 | Google Play Store documentation |
 | 3.5.0 | 2025-12-16 | Security hardening, TypeScript fixes |

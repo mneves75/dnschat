@@ -79,13 +79,24 @@ AI,chat,DNS,assistant,local,native,tech,innovation,queries,networking
 
 ---
 
-## What's New (Release Notes v4.0.7)
+## What's New (Release Notes v4.0.8)
 
-RELEASE FIXES AND HARDENING
+RELEASE HARDENING AND TRANSPARENCY
 
-- Updated Expo SDK 55 and React Native patch dependencies for current compatibility.
-- Added export-compliance metadata for iOS non-exempt encryption status.
-- Fixed strict TypeScript/runtime issues found during source review and full verification.
+- Updated Expo SDK 55 patch packages for the current compatibility baseline.
+- Improved DNS log persistence so concurrent events cannot overwrite each other.
+- Tightened DNS response validation for resolver IDs, questions, status, and TXT multipart totals.
+- Migrated legacy plaintext local payloads to encrypted storage on read.
+- Redacted prompt-derived DNS labels, chat titles, query names, and responses from persisted DNS logs.
+- Clarified in-app and store-facing privacy language: local history is encrypted at rest, while DNS transport remains observable infrastructure.
+
+## TestFlight What to Test (v4.0.8 build 36)
+
+- Send short prompts over the default DNS service and confirm responses render without transport errors.
+- Open Logs and confirm DNS attempts, fallback methods, and failures are visible without exposing prompt text or TXT response contents.
+- Confirm existing chat history still loads after updating and remains available offline.
+- Check onboarding, settings, About, and language/accessibility labels in English and Portuguese.
+- Exercise DNS server settings and confirm invalid or unsupported server choices fail closed.
 
 ---
 
@@ -112,10 +123,9 @@ AI chat using DNS queries with native iOS performance, local encrypted history, 
 
 ### Screenshots Location (Current)
 
-**iPhone screenshots** (current set, 4 images):
-`docs/chatdns_ios_images/`
+**iPhone screenshots**: current sets live under `ios/fastlane/screenshots/en-US/` and `ios/fastlane/screenshots/pt-BR/`.
 
-**iPad screenshots**: not captured yet. Capture required sizes before submission.
+**iPad screenshots**: current iPad Pro 13-inch sets live under the same `ios/fastlane/screenshots/` locale folders.
 
 ---
 
@@ -124,8 +134,8 @@ AI chat using DNS queries with native iOS performance, local encrypted history, 
 ### Bundle Information
 
 - **Bundle ID**: `org.mvneves.dnschat`
-- **Version**: `4.0.7`
-- **Build Number**: 35 (sync-versions)
+- **Version**: `4.0.8`
+- **Build Number**: 36 (sync-versions)
 - **Minimum iOS Version**: 16.0
 - **Device Support**: iPhone, iPad
 - **Orientation**: Portrait + Landscape (default)
@@ -258,7 +268,7 @@ No user account is required. The app does not require app-owned backend infrastr
 ### App Store Connect Configuration
 
 - [ ] Upload final IPA build
-- [x] Local ASC health checked with `asc doctor` (`2026-05-05`)
+- [x] Local ASC health checked with `asc doctor` (`2026-05-14`)
 - [ ] Configure pricing (Free)
 - [ ] Set availability (Worldwide)
 - [ ] Age rating questionnaire
@@ -267,8 +277,8 @@ No user account is required. The app does not require app-owned backend infrastr
 
 ### Review Submission
 
-- [x] Xcode Debug simulator build passed (`2026-05-05`, Xcode `26.5`)
-- [x] Xcode generic iOS Release build/archive passed unsigned (`2026-05-05`)
+- [x] Xcode Debug simulator build passed (`2026-05-14`, Xcode `26.5`)
+- [x] Xcode generic iOS Release build/archive passed unsigned (`2026-05-14`)
 - [ ] Signed archive/export
 - [ ] App Store Connect upload/submission check with configured ASC credentials
 - [ ] Final testing on TestFlight
@@ -278,4 +288,4 @@ No user account is required. The app does not require app-owned backend infrastr
 
 ---
 
-_Updated for DNS Chat v4.0.7 - release assets locally validated; signed export and ASC upload still pending_
+_Updated for DNS Chat v4.0.8 build 36 - release assets locally validated; signed export and ASC upload pending this release run_

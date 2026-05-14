@@ -11,7 +11,7 @@ import { DNS_CONSTANTS as NATIVE_DNS_CONSTANTS, getDefaultServer } from '../../m
 
 export const DNS_CONSTANTS = {
   DEFAULT_DNS_SERVER: getDefaultServer().host,  // llm.pieter.com
-  DEFAULT_DNS_PORT: getDefaultServer().port,    // 9000
+  DEFAULT_DNS_PORT: getDefaultServer().port,    // 53
   DNS_PORT: NATIVE_DNS_CONSTANTS.DNS_PORT,      // 53 (standard)
   QUERY_TIMEOUT_MS: NATIVE_DNS_CONSTANTS.QUERY_TIMEOUT_MS,
   MAX_RETRIES: NATIVE_DNS_CONSTANTS.MAX_RETRIES,

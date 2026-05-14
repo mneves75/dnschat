@@ -54,7 +54,7 @@ For detailed Google Play Store publishing instructions, see:
 
 ## Notes
 
-- Latest release tag: `v4.0.7`
+- Latest release tag: `v4.0.8`
 - Release manifests intentionally avoid legacy storage and overlay permissions.
 - SecureStore is excluded from Android backup/device-transfer rules under
   `android/app/src/main/res/xml/`.

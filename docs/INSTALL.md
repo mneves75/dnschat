@@ -1,6 +1,6 @@
 # Installation
 
-This repo builds DNSChat `4.0.7` (React Native `0.83.6`, Expo SDK `55.0.23`).
+This repo builds DNSChat `4.0.8` (React Native `0.83.6`, Expo SDK `55.0.24`).
 
 Prereqs:
 
@@ -48,7 +48,7 @@ bun run web
 - CocoaPods is still needed because this repo has native modules.
 - Simulator builds do not require code signing.
 - Device builds require you to pick your own signing team in Xcode (this repo keeps `DEVELOPMENT_TEAM` empty for public distribution).
-- Last verified CLI environment: Xcode `26.5` (`17F42`) on `2026-05-05`.
+- Last verified CLI environment: Xcode `26.5` (`17F42`) on `2026-05-14`.
 
 If pods are broken:
 

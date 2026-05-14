@@ -29,8 +29,8 @@ Please do not open public issues for security vulnerabilities.
 
 ## Current Security Baseline
 
-Last full source/security sweep: `2026-05-05`.
-Last iOS CLI release smoke: `2026-05-05`.
+Last full source/security sweep: `2026-05-14`.
+Last iOS CLI release smoke: `2026-05-14`.
 
 - Dependency audits pass for the app (`bun audit`) and local native module
   (`npm audit` in `modules/dns-native`).

@@ -50,8 +50,14 @@ describe("StorageService Corruption Handling", () => {
       expect(result).toEqual([]);
       expect(mockAsyncStorage.setItem).toHaveBeenCalledWith(
         "@chat_dns_chats_backup",
-        expect.stringContaining("not valid json"),
+        expect.not.stringContaining("not valid json"),
       );
+      const backupCall = mockAsyncStorage.setItem.mock.calls.find(
+        ([key]) => key === "@chat_dns_chats_backup",
+      );
+      const backupPayload = String(backupCall?.[1]);
+      expect(backupPayload).toContain("enc:v1:");
+      expect(backupPayload).toContain('"payloadWasEncrypted":false');
       expect(mockAsyncStorage.removeItem).toHaveBeenCalledWith("@chat_dns_chats");
     });
 
@@ -110,6 +116,31 @@ describe("StorageService Corruption Handling", () => {
       if (!first) throw new Error("Expected chat to exist");
       expect(first.id).toBe("chat-1");
       expect(first.title).toBe("Test Chat");
+    });
+
+    it("migrates valid legacy plaintext chat storage to encrypted payload", async () => {
+      const validChats = [
+        {
+          id: "chat-1",
+          title: "Legacy Chat",
+          createdAt: "2025-01-01T00:00:00.000Z",
+          updatedAt: "2025-01-01T00:00:00.000Z",
+          messages: [],
+        },
+      ];
+      mockAsyncStorage.getItem.mockResolvedValue(JSON.stringify(validChats));
+
+      const result = await StorageService.loadChats();
+
+      expect(result[0]?.title).toBe("Legacy Chat");
+      expect(mockAsyncStorage.setItem).toHaveBeenCalledWith(
+        "@chat_dns_chats",
+        expect.stringContaining("enc:v1:"),
+      );
+      const migrationCall = mockAsyncStorage.setItem.mock.calls.find(
+        ([key]) => key === "@chat_dns_chats",
+      );
+      expect(String(migrationCall?.[1])).not.toContain("Legacy Chat");
     });
 
     it("converts date strings to Date objects", async () => {

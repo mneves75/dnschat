@@ -18,17 +18,19 @@ This document inventories the data stored or processed by DNSChat and satisfies 
 - Encryption: same as chats
 - Retention: Persistent until app recovers/clears storage
 
-3) DNS query logs (redacted at rest)
+3) DNS query logs (redacted and encrypted at rest)
 - Storage key: `@dns_query_logs`
 - Contents: per-query log entries (hashed message text, status, method, timestamps, durations)
 - Storage location: AsyncStorage
 - Redaction: message content stored as `sha256:<hash> len:<length>`
+- Encryption: AES-GCM via `encryptionService` using a key stored in SecureStore
 - Retention: 30 days (automatic cleanup) and max 100 logs
 
-4) DNS logs backup
+4) DNS logs backup (encrypted at rest)
 - Storage key: `@dns_query_logs_backup`
 - Contents: backup payload for corrupted log storage
 - Storage location: AsyncStorage
+- Encryption: same as DNS query logs; legacy plaintext corruption payloads are encrypted before backup writes
 - Retention: Persistent until user clears logs or app removes backups
 
 5) User settings
@@ -80,4 +82,4 @@ This document inventories the data stored or processed by DNSChat and satisfies 
 ## Review Cadence
 
 - Review this inventory whenever storage keys, retention policies, or data flows change.
-- Last reviewed during the full source/security sweep on `2026-05-05`.
+- Last reviewed during the full source/security sweep on `2026-05-14`.
