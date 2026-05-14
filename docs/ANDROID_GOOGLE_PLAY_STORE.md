@@ -3,7 +3,7 @@
 Complete step-by-step guide for publishing DNSChat to the Google Play Store.
 
 **App**: DNSChat
-**Package**: `org.mvneves.dnschat`
+**Package**: `<ANDROID_PACKAGE>`
 **Current Version**: 4.0.8
 
 ---
@@ -128,7 +128,7 @@ TECHNICAL DETAILS:
 
 OPEN SOURCE:
 DNSChat is open source. View the code and contribute at:
-https://github.com/mneves75/dnschat
+<REPOSITORY_URL>
 
 NOTE: This app is for educational and demonstration purposes, showcasing DNS protocol capabilities.
 ```
@@ -139,8 +139,8 @@ NOTE: This app is for educational and demonstration purposes, showcasing DNS pro
 |-------|-------|
 | Email | your-support-email@example.com |
 | Phone | (Optional) |
-| Website | https://github.com/mneves75/dnschat |
-| Privacy policy | https://github.com/mneves75/dnschat/blob/main/PRIVACY.md |
+| Website | `<REPOSITORY_URL>` |
+| Privacy policy | `<PRIVACY_POLICY_URL>` |
 
 ---
 

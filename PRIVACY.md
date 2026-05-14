@@ -33,4 +33,4 @@ You can delete locally stored chat history and DNS logs at any time from the Set
 
 ## Contact
 
-If you have privacy questions, open an issue at https://github.com/mneves75/dnschat/issues.
+If you have privacy questions, open an issue in this repository.

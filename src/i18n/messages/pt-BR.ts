@@ -571,7 +571,7 @@ export const ptBR = {
       tagline:
         "Converse com IA por consultas DNS TXT – uma forma única de falar com modelos de linguagem.",
       versionLabel: "v{{version}}",
-      footer: "© 2025 Marcus Neves • Licença MIT",
+      footer: "© 2025 Colaboradores do DNSChat • Licença MIT",
       quickActions: {
         title: "Ações rápidas",
         settingsTitle: "Configurações",
@@ -627,8 +627,9 @@ export const ptBR = {
           },
         },
         developer: {
-          title: "Desenvolvedor",
-          creatorSubtitle: "Criado por {{handle}}",
+          title: "Mantenedores",
+          maintainersTitle: "Colaboradores do DNSChat",
+          maintainersSubtitle: "Mantenedores do projeto open-source",
           devLogsTitle: "Logs do desenvolvedor (Dev)",
           devLogsSubtitle: "Abrir visualizador de logs DNS",
         },

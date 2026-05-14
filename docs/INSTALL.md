@@ -12,7 +12,7 @@ Prereqs:
 ## Clone + install
 
 ```bash
-git clone https://github.com/mneves75/dnschat.git
+git clone <repository-url>
 cd dnschat
 bun install
 ```
@@ -47,7 +47,13 @@ bun run web
 - Default path: `bun run ios` (Expo prebuild + Xcode build).
 - CocoaPods is still needed because this repo has native modules.
 - Simulator builds do not require code signing.
-- Device builds require you to pick your own signing team in Xcode (this repo keeps `DEVELOPMENT_TEAM` empty for public distribution).
+- Device builds require a local signing team/profile (this repo keeps `DEVELOPMENT_TEAM` empty for public distribution).
+- For a full physical-device install, build and install the compiled native app.
+  Expo Go is not a valid substitute because DNSChat depends on native modules
+  and `expo-dev-client`.
+- Keep device names, device identifiers, local user paths, profile names,
+  certificate IDs, team IDs, and tester group names out of public docs. Use
+  placeholders in runbooks and keep exact release evidence in private notes.
 - Last verified CLI environment: Xcode `26.5` (`17F42`) on `2026-05-14`.
 
 If pods are broken:
@@ -101,6 +107,64 @@ xcodebuild clean archive \
   -archivePath /tmp/DNSChat.xcarchive \
   CODE_SIGNING_ALLOWED=NO
 ```
+
+Physical-device build/install shape:
+
+```bash
+# Use the real device identifier from xcrun xctrace list devices.
+xcodebuild clean build \
+  -workspace ios/DNSChat.xcworkspace \
+  -scheme DNSChat \
+  -configuration Debug \
+  -destination 'platform=iOS,id=<DEVICE_ID>' \
+  DEVELOPMENT_TEAM=<TEAM_ID> \
+  CODE_SIGN_STYLE=Manual \
+  PROVISIONING_PROFILE_SPECIFIER='<DEVELOPMENT_PROFILE>'
+
+xcrun devicectl device install app \
+  --device <COREDEVICE_ID> \
+  <DERIVED_DATA>/Build/Products/Debug-iphoneos/DNSChat.app
+```
+
+Latest physical-device evidence: the compiled Expo dev-client app installed on a
+physical device for version `4.0.8` build `36`. A CLI launch can fail with
+`SBMainWorkspace` reason `Locked` when the device is locked; that is not an
+install failure.
+
+Signed TestFlight release shape:
+
+```bash
+xcodebuild clean archive \
+  -workspace ios/DNSChat.xcworkspace \
+  -scheme DNSChat \
+  -configuration Release \
+  -destination 'generic/platform=iOS' \
+  -archivePath /tmp/DNSChat.xcarchive \
+  DEVELOPMENT_TEAM=<TEAM_ID> \
+  CODE_SIGN_STYLE=Manual \
+  PROVISIONING_PROFILE_SPECIFIER='<APP_STORE_PROFILE>' \
+  CODE_SIGN_IDENTITY='iPhone Distribution'
+
+xcodebuild -exportArchive \
+  -archivePath /tmp/DNSChat.xcarchive \
+  -exportPath /tmp/DNSChat-export \
+  -exportOptionsPlist /tmp/DNSChat-ExportOptions.plist
+
+asc publish testflight \
+  --app <APP_ID> \
+  --ipa /tmp/DNSChat-export/DNSChat.ipa \
+  --version <VERSION> \
+  --build-number <BUILD> \
+  --group <GROUPS> \
+  --wait
+```
+
+If `codesign` hangs after importing a new distribution certificate, use a local
+build keychain for that signing identity, unlock it, set the key partition list,
+make it first in `security list-keychains`, and pass
+`OTHER_CODE_SIGN_FLAGS='--keychain <keychain path>'` to `xcodebuild archive`.
+Keep all certificates, private keys, `.p12` files, provisioning profiles, and
+keychains out of git.
 
 `xcodebuild test` is not currently a native gate because the `DNSChat` scheme has
 no XCTest bundles. Use `bun run test` for the app test suite until a native test

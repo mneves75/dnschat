@@ -6,6 +6,14 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+### Changed
+
+- Documented the completed DNSChat `4.0.8` TestFlight release evidence across
+  README, install, security, App Store, TestFlight, and agent guidance docs:
+  physical-device compiled install, signed archive/export, TestFlight
+  validation, App Store version attachment, and public-doc redaction rules for
+  local release identifiers.
+
 ## [4.0.8] - 2026-05-14
 
 ### Changed
@@ -61,7 +69,7 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ### Fixed
 
-- Fixed the onboarding GitHub link to point at the public `mneves75/dnschat`
+- Fixed the onboarding GitHub link to point at the public repository
   repository.
 - Removed false screenshot-mode examples that claimed DNS TXT queries provide
   end-to-end encryption or make interception impossible.
@@ -277,10 +285,10 @@ Versions 3.2.0 through 3.8.9 established the core feature set:
 - **3.3.0**: Android CI, release signing policy, Java 17 auto-detection
 - **3.2.x**: Public repo hardening (secrets scanning, policy tests, version sync gates), DNS server allowlist
 
-[Unreleased]: https://github.com/mneves75/dnschat/compare/v4.0.8...HEAD
-[4.0.8]: https://github.com/mneves75/dnschat/compare/v4.0.7...v4.0.8
-[4.0.7]: https://github.com/mneves75/dnschat/compare/v4.0.6...v4.0.7
-[4.0.6]: https://github.com/mneves75/dnschat/compare/v4.0.5...v4.0.6
-[4.0.5]: https://github.com/mneves75/dnschat/compare/v4.0.2...v4.0.5
-[4.0.2]: https://github.com/mneves75/dnschat/compare/v4.0.0...v4.0.2
-[3.x]: https://github.com/mneves75/dnschat/compare/v3.2.0...v4.0.0
+[Unreleased]: https://github.com/<owner>/dnschat/compare/v4.0.8...HEAD
+[4.0.8]: https://github.com/<owner>/dnschat/compare/v4.0.7...v4.0.8
+[4.0.7]: https://github.com/<owner>/dnschat/compare/v4.0.6...v4.0.7
+[4.0.6]: https://github.com/<owner>/dnschat/compare/v4.0.5...v4.0.6
+[4.0.5]: https://github.com/<owner>/dnschat/compare/v4.0.2...v4.0.5
+[4.0.2]: https://github.com/<owner>/dnschat/compare/v4.0.0...v4.0.2
+[3.x]: https://github.com/<owner>/dnschat/compare/v3.2.0...v4.0.0

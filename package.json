@@ -3,7 +3,7 @@
   "version": "4.0.8",
   "description": "DNSChat - A React Native chat app using DNS TXT queries",
   "main": "entry.tsx",
-  "author": "mvneves",
+  "author": "DNSChat contributors",
   "license": "MIT",
   "homepage": "https://github.com/mneves75/dnschat",
   "repository": {

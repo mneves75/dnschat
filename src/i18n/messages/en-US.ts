@@ -572,7 +572,7 @@ export const enUS = {
       tagline:
         "Chat with AI using DNS TXT queries - a unique approach to LLM communication.",
       versionLabel: "v{{version}}",
-      footer: "© 2025 Marcus Neves • MIT Licensed",
+      footer: "© 2025 DNSChat contributors • MIT Licensed",
       quickActions: {
         title: "Quick Actions",
         settingsTitle: "Settings",
@@ -628,8 +628,9 @@ export const enUS = {
           },
         },
         developer: {
-          title: "Developer",
-          creatorSubtitle: "Created by {{handle}}",
+          title: "Maintainers",
+          maintainersTitle: "DNSChat contributors",
+          maintainersSubtitle: "Open-source project maintainers",
           devLogsTitle: "Developer Logs (Dev)",
           devLogsSubtitle: "Open DNS logs viewer screen",
         },

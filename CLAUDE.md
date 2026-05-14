@@ -61,6 +61,16 @@ xcodebuild clean build -workspace ios/DNSChat.xcworkspace -scheme DNSChat -confi
 xcodebuild clean archive -workspace ios/DNSChat.xcworkspace -scheme DNSChat -configuration Release -destination 'generic/platform=iOS' -archivePath /tmp/DNSChat.xcarchive CODE_SIGNING_ALLOWED=NO
 asc doctor                # Local App Store Connect CLI health; upload/submission checks need credentials
 
+# iOS physical-device / TestFlight release path
+# Device install must use the compiled native app, not Expo Go.
+xcodebuild clean build -workspace ios/DNSChat.xcworkspace -scheme DNSChat -configuration Debug -destination 'platform=iOS,id=<DEVICE_ID>' DEVELOPMENT_TEAM=<TEAM_ID> CODE_SIGN_STYLE=Manual PROVISIONING_PROFILE_SPECIFIER='<DEVELOPMENT_PROFILE>'
+xcrun devicectl device install app --device <COREDEVICE_ID> <DERIVED_DATA>/Build/Products/Debug-iphoneos/DNSChat.app
+
+# Signed TestFlight export requires a distribution identity + App Store profile.
+xcodebuild clean archive -workspace ios/DNSChat.xcworkspace -scheme DNSChat -configuration Release -destination 'generic/platform=iOS' -archivePath /tmp/DNSChat.xcarchive DEVELOPMENT_TEAM=<TEAM_ID> CODE_SIGN_STYLE=Manual PROVISIONING_PROFILE_SPECIFIER='<APP_STORE_PROFILE>' CODE_SIGN_IDENTITY='iPhone Distribution'
+xcodebuild -exportArchive -archivePath /tmp/DNSChat.xcarchive -exportPath /tmp/DNSChat-export -exportOptionsPlist /tmp/DNSChat-ExportOptions.plist
+asc publish testflight --app <APP_ID> --ipa /tmp/DNSChat-export/DNSChat.ipa --version <VERSION> --build-number <BUILD> --group <GROUPS> --wait
+
 # Android diagnostics
 bun run verify:android    # Sanity check tooling/device
 bun run verify:android-16kb # Validate 16KB page size alignment after a native Android build
@@ -202,7 +212,9 @@ GitHub Actions (`.github/workflows/ci.yml`) runs on push to main and PRs:
 
 ## Platform Notes
 
-**iOS**: Requires Xcode 15+, iOS 16+ target. Device builds need signing team in Xcode (repo keeps `DEVELOPMENT_TEAM` empty). Last CLI smoke used Xcode `26.5` (`17F42`) on 2026-05-14 and passed Debug simulator build plus unsigned generic Release build/archive. `xcodebuild test` is not a gate yet because the `DNSChat` scheme has no XCTest bundles.
+**iOS**: Requires Xcode 15+, iOS 16+ target. Device builds need a local signing team/profile, but the repo keeps `DEVELOPMENT_TEAM` empty for public portability. Last CLI smoke used Xcode `26.5` (`17F42`) on 2026-05-14 and passed Debug simulator build plus unsigned generic Release build/archive. The 2026-05-14 release run also installed the compiled Expo dev-client app on a physical device, produced a signed App Store archive/export, uploaded the TestFlight build, and attached it to the App Store version. Internal App Store Connect IDs, tester group names, device names, and local artifact paths belong in private release notes, not public docs. `xcodebuild test` is not a gate yet because the `DNSChat` scheme has no XCTest bundles.
+
+If a freshly imported distribution certificate makes `codesign` hang during `[CP] Embed Pods Frameworks`, isolate signing in a temporary or local build keychain, unlock it, set its key partition list, put it first in `security list-keychains`, and pass `OTHER_CODE_SIGN_FLAGS='--keychain <keychain path>'` to `xcodebuild archive`. Do not commit certificates, private keys, `.p12` files, provisioning profiles, or App Store Connect keys.
 
 **Android**: Requires Java 17. `bun run android` auto-detects via `/usr/libexec/java_home -v 17` or Homebrew paths. Release signing credentials are never committed (uses `keystore.properties` or CI injection).
 
@@ -221,5 +233,5 @@ Android release manifests intentionally avoid legacy storage and overlay permiss
 | Translation mismatch | Update both `en-US.ts` and `pt-BR.ts` |
 | Android "Failed to locate application identifier" | Run `npx expo prebuild --platform android --clean` |
 | Android minSdkVersion mismatch | Ensure `app.json` has `minSdkVersion: 24` (required by dependencies) |
-| Android signature mismatch on install | Uninstall existing app: `adb uninstall org.mvneves.dnschat` |
+| Android signature mismatch on install | Uninstall existing app: `adb uninstall <ANDROID_PACKAGE>` |
 | DNS Native Module not registered | The `dns-native-plugin.js` handles this - regenerate with prebuild |

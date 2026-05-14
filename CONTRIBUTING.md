@@ -17,7 +17,7 @@ bun run start
 
 ## Issue templates
 
-Use [GitHub issue templates](https://github.com/mneves75/dnschat/issues/new/choose) for bug reports and feature requests.
+Use this repository's GitHub issue templates for bug reports and feature requests.
 
 Common checks:
 

@@ -7,13 +7,13 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 - JavaScript fallback transports (UDP/TCP) for constrained networks
 - An in-app Logs screen to inspect attempts, failures, and fallbacks
 
-[![Version](https://img.shields.io/badge/version-4.0.8-blue.svg)](https://github.com/mneves75/dnschat)
+[![Version](https://img.shields.io/badge/version-4.0.8-blue.svg)](.)
 [![React Native](https://img.shields.io/badge/React%20Native-0.83.6-blue.svg)](https://reactnative.dev/)
 [![Expo](https://img.shields.io/badge/Expo-55.0.24-black.svg)](https://expo.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9.x-blue.svg)](https://www.typescriptlang.org/)
 [![iOS](https://img.shields.io/badge/iOS-16%2B-lightgrey.svg)](https://developer.apple.com/ios/)
 [![Android](https://img.shields.io/badge/Android-API%2024%2B-green.svg)](https://developer.android.com/)
-[![CI](https://github.com/mneves75/dnschat/actions/workflows/ci.yml/badge.svg)](https://github.com/mneves75/dnschat/actions/workflows/ci.yml)
+[![CI](actions/workflows/ci.yml/badge.svg)](actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ## Features
@@ -79,7 +79,7 @@ Prereqs:
 Install:
 
 ```bash
-git clone https://github.com/mneves75/dnschat.git
+git clone <repository-url>
 cd dnschat
 bun install
 ```
@@ -103,6 +103,11 @@ bun run web
 Notes:
 
 - iOS simulator builds work out of the box; device builds require you to pick your own signing team in Xcode (the repo keeps `DEVELOPMENT_TEAM` empty).
+- For a full physical-device Expo dev-client install, build the native `DNSChat`
+  target for the device identifier and install the compiled `.app`; Expo Go is
+  not a valid substitute for this repo because the app depends on native DNS
+  modules. Keep device names, local paths, and signing identifiers out of public
+  docs.
 
 ## DNS smoke tests
 
@@ -195,14 +200,21 @@ Last iOS CLI release smoke: `2026-05-14` with Xcode `26.5` (`17F42`).
 
 - `bun run verify:all` passes (`expo-doctor` 17/17, SDK alignment, typed routes,
   DNS resolver sync, iOS pods, React Compiler, Android setup, lint, and Jest).
-- Jest baseline: 73 suites passed, 1 skipped; 757 tests passed.
+- Jest baseline: 73 suites passed, 1 skipped; 761 tests passed, 13 skipped.
 - `bun audit`, `npm audit` in `modules/dns-native`, and `gitleaks detect`
   report no vulnerabilities or leaks.
 - `xcodebuild clean build` passes for Debug on an iOS 26.5 simulator.
 - `xcodebuild clean build` and `xcodebuild clean archive` pass for generic iOS
   Release when code signing is disabled (`CODE_SIGNING_ALLOWED=NO`).
-- `asc doctor` passes local checks, but App Store Connect credentials are not
-  configured on this machine, so upload/submission checks remain manual.
+- Physical-device compiled Expo dev-client install passed.
+- Signed App Store archive/export passed, and the IPA was uploaded to
+  TestFlight. The processed build is `VALID` and attached to the App Store
+  version; internal App Store Connect IDs are intentionally omitted from public
+  docs.
+- `asc validate testflight` and App Store version validation pass with `0`
+  errors and `0` warnings; the remaining App Store validation notes are
+  informational: manual release type and API-unverifiable App Privacy publish
+  state.
 - `xcodebuild test` is not a native gate yet because the `DNSChat` scheme has no
   XCTest bundles.
 - DNS transport is observable. Public copy and tests intentionally avoid

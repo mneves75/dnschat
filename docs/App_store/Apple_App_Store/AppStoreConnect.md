@@ -12,15 +12,15 @@
 
 ### Marketing URL
 
-https://github.com/mneves75/dnschat
+<REPOSITORY_URL>
 
 ### Support URL
 
-https://github.com/mneves75/dnschat/issues
+<ISSUES_URL>
 
 ### Privacy Policy URL
 
-https://github.com/mneves75/dnschat/blob/main/PRIVACY.md
+<PRIVACY_POLICY_URL>
 
 ---
 
@@ -139,11 +139,10 @@ Validated and uploaded for App Store Connect version `4.0.8` on `2026-05-14`:
 
 ### Bundle Information
 
-- **Bundle ID**: `org.mvneves.dnschat`
+- **Bundle ID**: `<BUNDLE_ID>`
 - **Version**: `4.0.8`
 - **Build Number**: 36 (sync-versions)
-- **App Store Version ID**: `3a0d39d0-e4aa-4c51-8d83-ac1d2806b37c`
-- **TestFlight Build ID**: `a1e00dc7-c1a3-406b-aad1-a7984fd471b7`
+- **App Store Connect internal IDs**: intentionally omitted from public docs; keep exact IDs in private release notes.
 - **Minimum iOS Version**: 16.0
 - **Device Support**: iPhone, iPad
 - **Orientation**: Portrait + Landscape (default)
@@ -211,7 +210,7 @@ No user account is required. The app does not require app-owned backend infrastr
 - [ ] App Store release announcement
 - [ ] GitHub repository promotion
 - [ ] Tech community outreach (HackerNews, Reddit r/programming)
-- [ ] Developer Twitter engagement
+- [ ] Social launch engagement
 
 ### Post-Launch (Week +1)
 
@@ -248,9 +247,9 @@ No user account is required. The app does not require app-owned backend infrastr
 
 ### Support Channels
 
-- **GitHub Issues**: https://github.com/mneves75/dnschat/issues
+- **GitHub Issues**: `<ISSUES_URL>`
 - **Email**: support@dnschat.app (to be configured)
-- **Twitter**: @dnschat (to be created)
+- **X/social**: @dnschat (to be created)
 
 ### Common Support Topics
 

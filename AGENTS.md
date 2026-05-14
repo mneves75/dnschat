@@ -67,6 +67,8 @@ For any source-code sweep, map findings and fixes back to these requirements. Do
 - iOS unsigned release smoke: `xcodebuild clean build -workspace ios/DNSChat.xcworkspace -scheme DNSChat -configuration Release -destination 'generic/platform=iOS' CODE_SIGNING_ALLOWED=NO`
 - iOS unsigned archive smoke: `xcodebuild clean archive -workspace ios/DNSChat.xcworkspace -scheme DNSChat -configuration Release -destination 'generic/platform=iOS' -archivePath /tmp/DNSChat.xcarchive CODE_SIGNING_ALLOWED=NO`
 - ASC local health: `asc doctor` (upload/submission checks require local ASC credentials)
+- iOS physical-device install: build the native `DNSChat` target for the device identifier and install the compiled `.app` with `xcrun devicectl device install app`; do not treat Expo Go as a valid full-app install because this repo depends on native DNS modules. Do not commit device names, UDIDs, local user paths, or profile identifiers to public docs.
+- TestFlight release: after signed archive/export, use `asc publish testflight --app <APP_ID> --ipa <IPA> --version <VERSION> --build-number <BUILD> --group <GROUPS> --wait`, then verify with `asc validate testflight` and `asc validate --app <APP_ID> --version <VERSION> --platform IOS`.
 - Version sync: `bun run sync-versions` (source = `package.json`); preview with `bun run sync-versions:dry`.
 - Individual verifies: `bun run verify:ios-pods`, `verify:android`, `verify:android-16kb`, `verify:typed-routes`, `verify:react-compiler`, `verify:sdk-alignment`, `verify:dnsresolver-sync`, `verify:expo-doctor`.
 - Verify (full gate): `bun run verify:all` runs all of the above plus lint and tests.
@@ -81,7 +83,7 @@ When asked for a broad review, "latest/best practices", "2026+", or a full sourc
 4. Check security explicitly: prompt validation, DNS server allowlist, DNS query composition, TXT parsing, encrypted local storage, SecureStore key handling, logs/redaction, backup exclusions, native permissions, release signing, dependency overrides, and secret scanning.
 5. Preserve behavior with focused regression tests before cleanup/refactor edits when behavior is not already protected.
 6. Keep native and TypeScript DNS constants synchronized. Do not change `MAX_MESSAGE_LENGTH`, `MAX_DNS_LABEL_LENGTH`, server order, or sanitizer behavior without native + JS tests and docs updates.
-7. Finish with evidence: `bun run verify:all`, `cd modules/dns-native && bun run test`, `gitleaks detect --source . --redact --no-banner --config .gitleaks.toml`, `asc doctor`, and any platform/runtime smoke required by the touched area. For iOS release-readiness work, include `xcodebuild` Debug simulator build plus unsigned generic Release build/archive unless signing credentials are intentionally available.
+7. Finish with evidence: `bun run verify:all`, `cd modules/dns-native && bun run test`, `gitleaks detect --source . --redact --no-banner --config .gitleaks.toml`, `asc doctor`, and any platform/runtime smoke required by the touched area. For iOS release-readiness work, include `xcodebuild` Debug simulator build plus unsigned generic Release build/archive unless signing credentials are intentionally available. When signing is available, prefer stronger evidence: signed archive/export, TestFlight upload, `asc validate testflight`, App Store version validation, and physical-device compiled-app install when requested.
 
 ## Versioning Rules
 
@@ -115,6 +117,8 @@ Release:
 
 - Use Bun as default package manager.
 - Keep iOS `DEVELOPMENT_TEAM` empty for public portability (enforced by `__tests__/repo.noCredentials.spec.ts`).
+- Keep signing assets local. Never commit certificates, private keys, `.p12` files, provisioning profiles, App Store Connect API keys, or temporary keychains created for archive/export.
+- Keep public docs privacy-clean. Use placeholders for local paths, device names, device identifiers, App Store Connect internal UUIDs, tester group names, certificate IDs, team IDs, and profile names.
 - Keep `react-native-reanimated/plugin` last in `babel.config.js`.
 - Keep React Compiler enabled and avoid adding manual `useMemo`/`useCallback` unless profiling proves it is needed.
 - Do not add new files under `src/navigation/screens/` expecting routing to pick them up — add a route under `app/` and import the screen.

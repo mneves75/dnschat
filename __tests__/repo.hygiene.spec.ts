@@ -1,4 +1,5 @@
 import { execSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 
 function listTrackedFiles(): string[] {
   return execSync("git ls-files", { encoding: "utf8" })
@@ -104,6 +105,30 @@ describe("repo hygiene", () => {
       }
 
       return false;
+    });
+
+    expect(offenders).toEqual([]);
+  });
+
+  it("does not publish local release identifiers in markdown docs", () => {
+    const tracked = listTrackedFiles();
+    const markdownFiles = tracked.filter((p) => p.endsWith(".md"));
+
+    const offenders = markdownFiles.flatMap((path) => {
+      const body = readFileSync(path, "utf8");
+
+      const rules: Array<[string, RegExp]> = [
+        ["local macOS user path", /\/Users\/(?!<username>|me\/)[A-Za-z0-9._-]+/],
+        [
+          "app-store-connect UUID",
+          /\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/i,
+        ],
+        ["concrete Apple team/profile id", /\b(?=[A-Z0-9]*\d)[A-Z0-9]{10}\b/],
+      ];
+
+      return rules
+        .filter(([, pattern]) => pattern.test(body))
+        .map(([name]) => `${path}: ${name}`);
     });
 
     expect(offenders).toEqual([]);

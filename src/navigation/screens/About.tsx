@@ -262,12 +262,8 @@ export function About() {
 
       <Form.Section title={t("screen.about.sections.developer.title")}>
         <Form.Item
-          title="Marcus Neves"
-          subtitle={t("screen.about.sections.developer.creatorSubtitle", {
-            handle: "@mneves75",
-          })}
-          onPress={() => openLink("https://x.com/mneves75")}
-          showChevron
+          title={t("screen.about.sections.developer.maintainersTitle")}
+          subtitle={t("screen.about.sections.developer.maintainersSubtitle")}
         />
         {typeof __DEV__ !== "undefined" && __DEV__ && (
           <Form.Item
