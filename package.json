@@ -83,7 +83,7 @@
     "react-native": "0.83.6",
     "react-native-device-info": "^14.0.4",
     "react-native-edge-to-edge": "1.6.0",
-    "react-native-gesture-handler": "~2.30.0",
+    "react-native-gesture-handler": "~2.31.2",
     "react-native-keyboard-controller": "1.20.7",
     "react-native-markdown-display": "^7.0.2",
     "react-native-reanimated": "4.2.1",
