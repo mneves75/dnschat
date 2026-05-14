@@ -127,6 +127,12 @@ AI chat using DNS queries with native iOS performance, local encrypted history, 
 
 **iPad screenshots**: current iPad Pro 13-inch sets live under the same `ios/fastlane/screenshots/` locale folders.
 
+Validated and uploaded for App Store Connect version `4.0.8` on `2026-05-14`:
+
+- `APP_IPHONE_65`: 8 screenshots each for `en-US` and `pt-BR`.
+- `APP_IPAD_PRO_3GEN_129`: 4 screenshots each for `en-US` and `pt-BR`.
+- Local validation passed with `asc screenshots validate` before upload.
+
 ---
 
 ## App Store Connect Technical Details
@@ -136,6 +142,8 @@ AI chat using DNS queries with native iOS performance, local encrypted history, 
 - **Bundle ID**: `org.mvneves.dnschat`
 - **Version**: `4.0.8`
 - **Build Number**: 36 (sync-versions)
+- **App Store Version ID**: `3a0d39d0-e4aa-4c51-8d83-ac1d2806b37c`
+- **TestFlight Build ID**: `a1e00dc7-c1a3-406b-aad1-a7984fd471b7`
 - **Minimum iOS Version**: 16.0
 - **Device Support**: iPhone, iPad
 - **Orientation**: Portrait + Landscape (default)
@@ -267,20 +275,21 @@ No user account is required. The app does not require app-owned backend infrastr
 
 ### App Store Connect Configuration
 
-- [ ] Upload final IPA build
+- [x] Upload final IPA build (`4.0.8` build `36`, TestFlight `VALID`, `2026-05-14`)
 - [x] Local ASC health checked with `asc doctor` (`2026-05-14`)
 - [ ] Configure pricing (Free)
 - [ ] Set availability (Worldwide)
 - [ ] Age rating questionnaire
 - [x] Export compliance (`ITSAppUsesNonExemptEncryption=false`; no non-exempt encryption)
-- [ ] Content rights declaration
+- [x] Content rights declaration (`DOES_NOT_USE_THIRD_PARTY_CONTENT`)
 
 ### Review Submission
 
 - [x] Xcode Debug simulator build passed (`2026-05-14`, Xcode `26.5`)
 - [x] Xcode generic iOS Release build/archive passed unsigned (`2026-05-14`)
-- [ ] Signed archive/export
-- [ ] App Store Connect upload/submission check with configured ASC credentials
+- [x] Signed archive/export passed (`/tmp/DNSChat-4.0.8-36.xcarchive`, `/tmp/DNSChat-4.0.8-export/DNSChat.ipa`)
+- [x] App Store Connect upload/submission check with configured ASC credentials
+- [x] TestFlight validation passed (`0` errors, `0` warnings)
 - [ ] Final testing on TestFlight
 - [ ] Review guidelines compliance check
 - [ ] Submit for App Store Review
@@ -288,4 +297,4 @@ No user account is required. The app does not require app-owned backend infrastr
 
 ---
 
-_Updated for DNS Chat v4.0.8 build 36 - release assets locally validated; signed export and ASC upload pending this release run_
+_Updated for DNS Chat v4.0.8 build 36 - release assets uploaded, signed IPA exported, TestFlight build valid, App Store version prepared for manual release_

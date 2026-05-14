@@ -114,9 +114,15 @@ Latest local evidence (`2026-05-14`, Xcode `26.5` / `17F42`):
 - Debug simulator build passed on iOS 26.5.
 - Generic iOS Release build passed unsigned.
 - Generic iOS Release archive passed unsigned.
+- Physical iMarcus install passed for the compiled Expo dev-client build (`org.mvneves.dnschat`, `4.0.8` build `36`).
+- Signed App Store archive passed at `/tmp/DNSChat-4.0.8-36.xcarchive`.
+- Signed IPA export passed at `/tmp/DNSChat-4.0.8-export/DNSChat.ipa`.
+- App Store Connect TestFlight upload passed for build ID `a1e00dc7-c1a3-406b-aad1-a7984fd471b7`.
+- TestFlight build processing completed as `VALID`; encryption status is `exempt`.
+- TestFlight validation passed with `0` errors and `0` warnings.
 - `asc doctor` passed local checks.
 - `xcodebuild test` did not run because the `DNSChat` scheme has no XCTest bundles.
-- App Store Connect upload/submission is attempted from CLI during the v4.0.8 release run when local ASC credentials are available.
+- App Store version `4.0.8` (`3a0d39d0-e4aa-4c51-8d83-ac1d2806b37c`) has build `36` attached.
 
 If Xcode script phases fail with a missing Node binary, inspect
 `ios/.xcode.env.local`. It is ignored by Git and can contain a stale local
@@ -204,8 +210,8 @@ bun run ios -- --verbose
 - **ASC local health** checked with `asc doctor`
 - **Universal landscape support** enabled
 - **App Store screenshots** (current requirements):
-  - iPhone screenshots (current set stored in `docs/chatdns_ios_images/`)
-  - iPad screenshots captured before submission (not yet available)
+  - iPhone screenshots uploaded for `en-US` and `pt-BR`
+  - iPad screenshots uploaded for `en-US` and `pt-BR`
 - **App icons** and metadata ready
 - **Privacy Policy** URL (required for App Store)
 
@@ -223,6 +229,14 @@ eas build --platform ios --profile production
 ```
 
 ### TestFlight distribution
+
+Current v4.0.8 distribution:
+
+- Build ID: `a1e00dc7-c1a3-406b-aad1-a7984fd471b7`
+- Version/build: `4.0.8` / `36`
+- Processing state: `VALID`
+- Groups: `TESTE1` and `TWITTER`
+- `TESTE1` already receives all builds; `TWITTER` was associated by `asc publish testflight`.
 
 Once uploaded:
 
