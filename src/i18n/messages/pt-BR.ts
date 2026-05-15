@@ -12,6 +12,7 @@ export const ptBR = {
     settings: "Configurações",
     language: "Idioma",
     followSystem: "Usar idioma do dispositivo",
+    unknownError: "Algo deu errado. Por favor, tente novamente.",
   },
   locales: {
     enUS: "Inglês (Estados Unidos)",
@@ -51,6 +52,7 @@ export const ptBR = {
       welcome: {
         title: "Bem-vindo ao DNS Chat",
         subtitle: "O primeiro aplicativo de chat do mundo que usa consultas DNS para se comunicar com IA",
+        appIconLabel: "Ícone do aplicativo DNS Chat",
         features: {
           revolutionary: {
             label: "Revolucionário",
@@ -154,50 +156,50 @@ export const ptBR = {
       },
       networkSetup: {
         label: "Configuração",
-        title: "Otimização de Rede",
-        subtitle: "Estamos testando sua rede para encontrar os métodos DNS mais rápidos",
-        disclaimer: "Esta é uma demonstração simulada",
+        title: "Configuração de Rede",
+        subtitle: "Escolha como o DNS Chat deve se conectar ao servidor LLM",
+        disclaimer: "Você pode alterar a ordem de transporte depois em Ajustes",
         tests: {
           native: {
             name: "DNS Nativo",
-            description: "DNS otimizado para a plataforma",
+            description: "Resolvedor DNS da plataforma",
           },
           udp: {
             name: "DNS via UDP",
-            description: "Consultas DNS tradicionais",
+            description: "Transporte DNS padrão",
           },
           tcp: {
             name: "DNS via TCP",
-            description: "Fallback TCP confiável",
+            description: "Transporte TCP de fallback",
           },
         },
         status: {
-          testing: "Testando",
+          testing: "Configurando",
           waiting: "Aguardando",
-          success: "Sucesso",
-          failed: "Falhou",
+          success: "Configurado",
+          failed: "Indisponível",
           skipped: "Pulado",
         },
         optimization: {
-          title: "Otimização Completa",
-          description: "Sua rede suporta todos os métodos DNS. O aplicativo usará automaticamente o método mais rápido disponível com fallback inteligente para desempenho ideal.",
+          title: "Configuração Aplicada",
+          description: "O DNS Chat usará a cadeia automática de fallback entre estes transportes. Você pode ajustar isso a qualquer momento em Ajustes.",
           applyButton: "Aplicar Configurações Recomendadas",
-          loading: "Otimizando suas configurações de DNS...",
+          loading: "Configurando a ordem de transporte...",
         },
         navigation: {
           continue: "Continuar",
-          skip: "Pular Otimização",
+          skip: "Pular",
         },
         alerts: {
           errorTitle: "Erro",
-          errorMessage: "Otimização de rede falhou. Usando configurações padrão.",
+          errorMessage: "Configuração de rede falhou. Usando configurações padrão.",
           successTitle: "Configurações Aplicadas",
-          successMessage: "Otimização de rede completa. O DNS usará cadeia de fallback automática para melhor desempenho.",
+          successMessage: "Configuração de rede concluída. O DNS usará a cadeia automática de fallback.",
           successButton: "Ótimo",
         },
         accessibility: {
           applyLabel: "Aplicar configurações recomendadas",
-          applyHint: "Configura o DNS para usar a cadeia automática de fallback com o método mais rápido disponível com base nos resultados do teste de rede",
+          applyHint: "Configura o DNS para usar a cadeia automática de fallback entre os transportes suportados",
         },
       },
       features: {
@@ -273,6 +275,13 @@ export const ptBR = {
         copy: "Copiar",
         share: "Compartilhar",
       },
+      accessibility: {
+        userMessage: "Sua mensagem: {{content}}",
+        assistantMessage: "Mensagem do assistente: {{content}}",
+        loadingHint: "Mensagem carregando",
+        menuHint: "Pressione e segure para mostrar opções de copiar e compartilhar",
+        messageListLabel: "Mensagens da conversa",
+      },
     },
     chatInput: {
       placeholder: "Mensagem...",
@@ -319,6 +328,7 @@ export const ptBR = {
         messageSingular: "{{count}} mensagem",
         messagePlural: "{{count}} mensagens",
       },
+      itemAccessibilityLabel: "Conversa: {{title}}. {{count}} mensagens. {{time}}.",
       actionSheet: {
         title: "Escolha uma ação",
         message: "Selecione o que fazer com esta conversa",
@@ -365,6 +375,15 @@ export const ptBR = {
         clearTitle: "Limpar logs",
         clearMessage: "Tem certeza de que deseja limpar todos os logs DNS?",
         clearConfirm: "Limpar",
+      },
+      accessibility: {
+        expandRow: "Mostrar detalhes da consulta DNS",
+        collapseRow: "Ocultar detalhes da consulta DNS",
+      },
+      status: {
+        success: "Sucesso",
+        failed: "Falhou",
+        unknown: "Desconhecido",
       },
     },
     settings: {

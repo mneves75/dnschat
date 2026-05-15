@@ -16,9 +16,11 @@
 
 import React from "react";
 import {
+  DynamicColorIOS,
   StyleSheet,
   Switch,
   Text,
+  TouchableOpacity,
   View,
   Alert,
   Platform,
@@ -45,7 +47,7 @@ import {
   LiquidGlassWrapper,
 } from "../../components/glass";
 import { useTransportTestThrottle } from "../../ui/hooks/useTransportTestThrottle";
-import { persistHapticsPreference } from "../../utils/haptics";
+import { HapticFeedback, persistHapticsPreference } from "../../utils/haptics";
 import { devLog, devWarn } from "../../utils/devLog";
 import { getAppVersionInfo } from "../../utils/appVersion";
 
@@ -148,6 +150,7 @@ export function GlassSettings() {
 
     // Haptic feedback
     if (Platform.OS === "ios") {
+      HapticFeedback.medium();
     }
   };
 
@@ -349,7 +352,10 @@ export function GlassSettings() {
 
   return (
     <>
-      <Form.List navigationTitle={t("screen.settings.navigationTitle")}>
+      <Form.List
+        testID="settings-screen"
+        navigationTitle={t("screen.settings.navigationTitle")}
+      >
         <Animated.View style={animatedStyle}>
           {/* DNS Configuration Section */}
           <Form.Section
@@ -357,6 +363,7 @@ export function GlassSettings() {
           footer={t("screen.settings.sections.dnsConfig.description")}
         >
           <Form.Item
+            testID="settings-dns-server"
             title={t("screen.settings.sections.dnsConfig.dnsServerLabel")}
             subtitle={currentDnsOption.label}
             rightContent={
@@ -369,28 +376,44 @@ export function GlassSettings() {
           />
 
           <Form.Item
+            testID="settings-mock-dns"
             title={t("screen.glassSettings.sections.dnsConfig.mockTitle")}
             subtitle={t("screen.glassSettings.sections.dnsConfig.mockSubtitle")}
             rightContent={
               <Switch
+                testID="settings-mock-dns-switch"
                 value={enableMockDNS}
                 onValueChange={handleToggleMockDNS}
                 trackColor={{ false: palette.textTertiary, true: palette.userBubble }}
-                thumbColor={Platform.OS === "ios" ? undefined : "#FFFFFF"}
+                thumbColor={
+                  Platform.OS === "android"
+                    ? enableMockDNS
+                      ? "#FFFFFF"
+                      : palette.textTertiary
+                    : undefined
+                }
               />
             }
           />
           <Form.Item
+            testID="settings-haptics"
             title={t("screen.settings.sections.appBehavior.enableHaptics.label")}
             subtitle={t(
               "screen.settings.sections.appBehavior.enableHaptics.description",
             )}
             rightContent={
               <Switch
+                testID="settings-haptics-switch"
                 value={enableHaptics}
                 onValueChange={handleToggleHaptics}
                 trackColor={{ false: palette.textTertiary, true: palette.userBubble }}
-                thumbColor={Platform.OS === "ios" ? undefined : "#FFFFFF"}
+                thumbColor={
+                  Platform.OS === "android"
+                    ? enableHaptics
+                      ? "#FFFFFF"
+                      : palette.textTertiary
+                    : undefined
+                }
               />
             }
           />
@@ -408,7 +431,7 @@ export function GlassSettings() {
               subtitle={option.subtitle}
               rightContent={
                 activeLocaleSelection === option.value && (
-                  <Text style={[styles.selectedIndicator, { color: palette.destructive }]}>•</Text>
+                  <Text style={[styles.selectedIndicator, { color: palette.userBubble }]}>•</Text>
                 )
               }
               onPress={() => handleSelectLocale(option.value)}
@@ -425,7 +448,6 @@ export function GlassSettings() {
           <Form.Item
             title={t("screen.settings.sections.transportTest.messageLabel")}
             subtitle={testMessage}
-            onPress={() => {}}
             rightContent={
               <Text style={[styles.valueText, { color: palette.textTertiary }]}>
                 {testMessage}
@@ -437,14 +459,23 @@ export function GlassSettings() {
             shape="capsule"
             style={{ marginVertical: 8, alignItems: "center", padding: 10 }}
           >
-            <Text
+            <TouchableOpacity
+              testID="settings-transport-test"
               onPress={handleTestSelectedPreference}
-              style={{ color: palette.userBubble }}
+              accessibilityRole="button"
+              accessibilityLabel={
+                testRunning
+                  ? t("screen.settings.sections.transportTest.testingButton")
+                  : t("screen.settings.sections.transportTest.testButton")
+              }
+              style={styles.transportTestButton}
             >
-              {testRunning
-                ? t("screen.settings.sections.transportTest.testingButton")
-                : t("screen.settings.sections.transportTest.testButton")}
-            </Text>
+              <Text style={{ color: palette.userBubble }}>
+                {testRunning
+                  ? t("screen.settings.sections.transportTest.testingButton")
+                  : t("screen.settings.sections.transportTest.testButton")}
+              </Text>
+            </TouchableOpacity>
           </LiquidGlassWrapper>
           <View
             style={{ flexDirection: "row", justifyContent: "space-around" }}
@@ -456,9 +487,17 @@ export function GlassSettings() {
                 shape="capsule"
                 style={{ paddingHorizontal: 12, paddingVertical: 6 }}
               >
-                <Text onPress={() => handleForceTransport(transportKey)}>
-                  {transportLabelMap[transportKey]}
-                </Text>
+                <TouchableOpacity
+                  testID={`settings-force-${transportKey}`}
+                  onPress={() => handleForceTransport(transportKey)}
+                  accessibilityRole="button"
+                  accessibilityLabel={transportLabelMap[transportKey]}
+                  style={styles.transportForceButton}
+                >
+                  <Text>
+                    {transportLabelMap[transportKey]}
+                  </Text>
+                </TouchableOpacity>
               </LiquidGlassWrapper>
             ))}
           </View>
@@ -486,6 +525,7 @@ export function GlassSettings() {
         {/* App Information Section */}
         <Form.Section title={t("screen.glassSettings.sections.about.title")}>
           <Form.Item
+            testID="settings-about-version"
             title={t("screen.glassSettings.sections.about.appVersionTitle")}
             subtitle={t(
               "screen.glassSettings.sections.about.appVersionSubtitle",
@@ -500,7 +540,16 @@ export function GlassSettings() {
                   { backgroundColor: palette.accentSurface },
                 ]}
               >
-                <Text style={styles.versionText}>
+                <Text
+                  style={[
+                    styles.versionText,
+                    {
+                      color: Platform.OS === "ios"
+                        ? DynamicColorIOS({ light: "#FF6B35", dark: "#FF8C5A" })
+                        : "#FF6B35",
+                    },
+                  ]}
+                >
                   {t("screen.glassSettings.sections.about.latestBadge")}
                 </Text>
               </LiquidGlassWrapper>
@@ -509,6 +558,7 @@ export function GlassSettings() {
           />
 
           <Form.Link
+            testID="settings-github-link"
             title={t("screen.glassSettings.sections.about.githubTitle")}
             subtitle={t(
               "screen.glassSettings.sections.about.githubSubtitle",
@@ -517,6 +567,7 @@ export function GlassSettings() {
           />
 
           <Form.Item
+            testID="settings-share-app"
             title={t("screen.glassSettings.sections.about.shareTitle")}
             subtitle={t("screen.glassSettings.sections.about.shareSubtitle")}
             onPress={handleShareApp}
@@ -530,6 +581,7 @@ export function GlassSettings() {
           footer={t("screen.glassSettings.sections.advanced.footer")}
         >
           <Form.Item
+            testID="settings-clear-data"
             title={t("screen.glassSettings.sections.advanced.clearCacheTitle")}
             subtitle={t(
               "screen.glassSettings.sections.advanced.clearCacheSubtitle",
@@ -539,6 +591,7 @@ export function GlassSettings() {
           />
 
           <Form.Item
+            testID="settings-reset-defaults"
             title={t("screen.glassSettings.sections.advanced.resetTitle")}
             subtitle={t(
               "screen.glassSettings.sections.advanced.resetSubtitle",
@@ -551,6 +604,7 @@ export function GlassSettings() {
         {/* Support Section */}
         <Form.Section title={t("screen.glassSettings.sections.support.title")}>
           <Form.Item
+            testID="settings-help"
             title={t("screen.glassSettings.sections.support.helpTitle")}
             subtitle={t("screen.glassSettings.sections.support.helpSubtitle")}
             onPress={supportSheet.show}
@@ -558,6 +612,7 @@ export function GlassSettings() {
           />
 
           <Form.Item
+            testID="settings-report-bug"
             title={t("screen.glassSettings.sections.support.bugTitle")}
             subtitle={t("screen.glassSettings.sections.support.bugSubtitle")}
             onPress={() =>
@@ -573,6 +628,7 @@ export function GlassSettings() {
             footer={t("screen.settings.sections.development.resetOnboardingSubtitle")}
           >
             <Form.Item
+              testID="settings-reset-onboarding"
               title={t("screen.settings.sections.development.resetOnboardingTitle")}
               subtitle={t("screen.settings.sections.development.resetOnboardingSubtitle")}
               onPress={handleResetOnboarding}
@@ -593,12 +649,13 @@ export function GlassSettings() {
         <View style={styles.dnsOptionsContainer}>
           {dnsServerOptions.map((option) => (
             <Form.Item
+              testID={`settings-dns-option-${option.value.replace(/[^a-z0-9]/gi, "-").toLowerCase()}`}
               key={option.value}
               title={option.label}
               subtitle={option.description}
               rightContent={
                 dnsServer === option.value && (
-                  <Text style={[styles.selectedIndicator, { color: palette.destructive }]}>•</Text>
+                  <Text style={[styles.selectedIndicator, { color: palette.userBubble }]}>•</Text>
                 )
               }
               onPress={() => handleDnsServerSelect(option.value)}
@@ -606,7 +663,7 @@ export function GlassSettings() {
                 styles.dnsOption,
                 { backgroundColor: palette.highlight },
                 dnsServer === option.value && {
-                  backgroundColor: `${palette.destructive}1A`,
+                  backgroundColor: `${palette.userBubble}1A`,
                 },
               ]}
             />
@@ -704,6 +761,20 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "400",
   },
+  transportTestButton: {
+    minHeight: 44,
+    minWidth: 44,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 12,
+  },
+  transportForceButton: {
+    minHeight: 44,
+    minWidth: 44,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 8,
+  },
   versionBadge: {
     paddingHorizontal: 8,
     paddingVertical: 4,
@@ -711,7 +782,7 @@ const styles = StyleSheet.create({
   versionText: {
     fontSize: 12,
     fontWeight: "600",
-    color: "#FF6B35", // Notion orange (brand accent, intentionally non-themed)
+    // color applied inline via DynamicColorIOS for theme awareness
   },
   dnsOptionsContainer: {
     paddingTop: 8,

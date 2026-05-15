@@ -1,0 +1,92 @@
+{
+  "version": 1,
+  "runner": "scripts/e2e-axe.js",
+  "features": [
+    {
+      "id": "F-APP-001",
+      "name": "Onboarding gate and onboarding flow",
+      "expected": "A fresh install opens onboarding, exposes welcome, DNS demo, network setup, first chat, and feature summary steps, then persists completion and lands on the chat list.",
+      "primarySelectors": [
+        "onboarding-welcome",
+        "onboarding-dns-magic",
+        "onboarding-network-setup",
+        "onboarding-first-chat",
+        "onboarding-features",
+        "chat-list"
+      ],
+      "coverage": ["axe-e2e", "jest"]
+    },
+    {
+      "id": "F-APP-002",
+      "name": "Chat list",
+      "expected": "The chat list renders empty and populated states, exposes a new chat action, routes into a thread, and updates aggregate chat/message statistics.",
+      "primarySelectors": ["chat-list", "chat-list-new-chat"],
+      "coverage": ["axe-e2e", "jest"]
+    },
+    {
+      "id": "F-CHAT-001",
+      "name": "Chat thread and messaging",
+      "expected": "A thread renders message history, accepts a prompt, disables duplicate sends while loading, shows user and assistant bubbles, and surfaces errors without hiding the failed message.",
+      "primarySelectors": ["chat-screen", "message-list", "chat-input-field", "chat-input-send"],
+      "coverage": ["axe-e2e", "jest"]
+    },
+    {
+      "id": "F-DNS-001",
+      "name": "DNS query transport behavior",
+      "expected": "Prompts are validated, sanitized, sent through the native, UDP, TCP, and mock fallback chain as configured, TXT responses are parsed, and DNS attempts are logged.",
+      "primarySelectors": ["settings-transport-test", "settings-force-native", "settings-force-udp", "settings-force-tcp", "logs-screen"],
+      "coverage": ["jest", "dns-harness", "axe-e2e-settings-smoke"]
+    },
+    {
+      "id": "F-SET-001",
+      "name": "Settings and app behavior configuration",
+      "expected": "Settings expose allowlisted DNS server selection, mock DNS, haptics, locale, transport tests, about/support actions, data clearing, defaults reset, and onboarding reset.",
+      "primarySelectors": [
+        "settings-screen",
+        "settings-dns-server",
+        "settings-mock-dns-switch",
+        "settings-haptics-switch",
+        "language-option-system",
+        "settings-clear-data",
+        "settings-reset-defaults",
+        "settings-reset-onboarding"
+      ],
+      "coverage": ["axe-e2e", "jest"]
+    },
+    {
+      "id": "F-LOG-001",
+      "name": "DNS logs",
+      "expected": "The logs tab shows empty and populated DNS query history, status, timing, expanded step details, pull refresh behavior, and clear-all action when logs exist.",
+      "primarySelectors": ["logs-screen", "logs-empty-state"],
+      "coverage": ["axe-e2e", "jest"]
+    },
+    {
+      "id": "F-UI-001",
+      "name": "About screen",
+      "expected": "The About tab shows app identity, version, project links, credits, and a route into Settings.",
+      "primarySelectors": ["about-screen", "about-settings-link"],
+      "coverage": ["axe-e2e", "jest"]
+    },
+    {
+      "id": "F-USER-001",
+      "name": "Profile and data management",
+      "expected": "The profile route shows user identity, conversation/message statistics, settings navigation, export placeholder, and clear-all data confirmation.",
+      "primarySelectors": ["profile-screen", "profile-settings-link", "profile-export-data", "profile-clear-all-data"],
+      "coverage": ["axe-e2e", "jest"]
+    },
+    {
+      "id": "F-ERR-001",
+      "name": "Not-found fallback",
+      "expected": "Unknown routes render a not-found screen with quick links back to chat, logs, and about.",
+      "primarySelectors": ["not-found-screen", "not-found-chat-link", "not-found-logs-link", "not-found-about-link"],
+      "coverage": ["axe-e2e", "jest"]
+    },
+    {
+      "id": "F-SYS-001",
+      "name": "Localization and accessibility context",
+      "expected": "Locale selection, system-locale fallback, reduced motion, font size, high contrast, screen reader flags, and accessible labels remain available to the app shell and screens.",
+      "primarySelectors": ["settings-screen", "language-option-system", "language-option-en-US", "language-option-pt-BR"],
+      "coverage": ["axe-e2e-settings-smoke", "jest"]
+    }
+  ]
+}

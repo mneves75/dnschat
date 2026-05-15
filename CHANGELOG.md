@@ -6,6 +6,39 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+## [4.0.10] - 2026-05-15
+
+### Added
+
+- Added a repeatable AXe simulator E2E loop with a source-backed feature
+  manifest, human coverage checklist, package scripts, and failure artifacts
+  for screenshots, accessibility dumps, and simulator diagnostics.
+- Added AXe/Jest coverage for 10 declared feature groups: onboarding, chat
+  list, chat thread, DNS transport settings smoke, settings, DNS logs, About,
+  profile, not-found fallback, and localization/accessibility context.
+
+### Changed
+
+- Bumped app metadata to `4.0.10` build `39` across Expo, iOS, and Android via
+  `sync-versions`.
+- Updated release docs, App Store/TestFlight notes, and agent guidance for the
+  AXe-verified release workflow.
+- Improved chat/onboarding/settings/logs/About/profile/not-found surfaces with
+  stable accessibility identifiers and AXe-visible controls for runtime E2E
+  validation.
+- Made `verify:expo-doctor` preload Ruby `logger` so local CocoaPods `1.16.2`
+  is detected reliably by Expo Doctor on this machine.
+- Aligned `expo-dev-client` to `55.0.34` with the Expo SDK 55 Doctor baseline
+  and refreshed iOS pods.
+
+### Fixed
+
+- Fixed AXe harness handling for delayed iOS deep-link confirmation prompts by
+  waiting through the full prompt window and tapping the actual `Button`
+  element.
+- Fixed AXe route assertions that targeted non-accessible root containers by
+  asserting visible labels and child controls instead.
+
 ## [4.0.9] - 2026-05-14
 
 ### Fixed
@@ -306,7 +339,9 @@ Versions 3.2.0 through 3.8.9 established the core feature set:
 - **3.3.0**: Android CI, release signing policy, Java 17 auto-detection
 - **3.2.x**: Public repo hardening (secrets scanning, policy tests, version sync gates), DNS server allowlist
 
-[Unreleased]: https://github.com/<owner>/dnschat/compare/v4.0.8...HEAD
+[Unreleased]: https://github.com/<owner>/dnschat/compare/v4.0.10...HEAD
+[4.0.10]: https://github.com/<owner>/dnschat/compare/v4.0.9...v4.0.10
+[4.0.9]: https://github.com/<owner>/dnschat/compare/v4.0.8...v4.0.9
 [4.0.8]: https://github.com/<owner>/dnschat/compare/v4.0.7...v4.0.8
 [4.0.7]: https://github.com/<owner>/dnschat/compare/v4.0.6...v4.0.7
 [4.0.6]: https://github.com/<owner>/dnschat/compare/v4.0.5...v4.0.6

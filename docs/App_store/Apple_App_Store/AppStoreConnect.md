@@ -79,23 +79,21 @@ AI,chat,DNS,assistant,local,native,tech,innovation,queries,networking
 
 ---
 
-## What's New (Release Notes v4.0.8)
+## What's New (Release Notes v4.0.10)
 
-RELEASE HARDENING AND TRANSPARENCY
+AXE-VERIFIED RELEASE
 
-- Updated Expo SDK 55 patch packages for the current compatibility baseline.
-- Improved DNS log persistence so concurrent events cannot overwrite each other.
-- Tightened DNS response validation for resolver IDs, questions, status, and TXT multipart totals.
-- Migrated legacy plaintext local payloads to encrypted storage on read.
-- Redacted prompt-derived DNS labels, chat titles, query names, and responses from persisted DNS logs.
-- Clarified in-app and store-facing privacy language: local history is encrypted at rest, while DNS transport remains observable infrastructure.
+- Added full AXe simulator E2E coverage for onboarding, chat, settings, DNS logs, About, profile, and fallback routes.
+- Improved accessibility identifiers and labels across core screens for more reliable navigation and assistive technology coverage.
+- Tightened release diagnostics with screenshot and accessibility-tree artifacts when E2E checks fail.
+- Kept privacy language explicit: local history is encrypted at rest, while DNS transport remains observable infrastructure.
 
-## TestFlight What to Test (v4.0.8 build 36)
+## TestFlight What to Test (v4.0.10 build 39)
 
+- Complete onboarding from a fresh install and confirm the app lands on the chat list.
 - Send short prompts over the default DNS service and confirm responses render without transport errors.
 - Open Logs and confirm DNS attempts, fallback methods, and failures are visible without exposing prompt text or TXT response contents.
-- Confirm existing chat history still loads after updating and remains available offline.
-- Check onboarding, settings, About, and language/accessibility labels in English and Portuguese.
+- Check Settings, About, Profile, and language/accessibility labels in English and Portuguese.
 - Exercise DNS server settings and confirm invalid or unsupported server choices fail closed.
 
 ---
@@ -127,7 +125,7 @@ AI chat using DNS queries with native iOS performance, local encrypted history, 
 
 **iPad screenshots**: current iPad Pro 13-inch sets live under the same `ios/fastlane/screenshots/` locale folders.
 
-Validated and uploaded for App Store Connect version `4.0.8` on `2026-05-14`:
+Validated screenshot sets currently available in App Store Connect:
 
 - `APP_IPHONE_65`: 8 screenshots each for `en-US` and `pt-BR`.
 - `APP_IPAD_PRO_3GEN_129`: 4 screenshots each for `en-US` and `pt-BR`.
@@ -140,8 +138,8 @@ Validated and uploaded for App Store Connect version `4.0.8` on `2026-05-14`:
 ### Bundle Information
 
 - **Bundle ID**: `<BUNDLE_ID>`
-- **Version**: `4.0.8`
-- **Build Number**: 36 (sync-versions)
+- **Version**: `4.0.10`
+- **Build Number**: 39 (sync-versions)
 - **App Store Connect internal IDs**: intentionally omitted from public docs; keep exact IDs in private release notes.
 - **Minimum iOS Version**: 16.0
 - **Device Support**: iPhone, iPad
@@ -274,8 +272,9 @@ No user account is required. The app does not require app-owned backend infrastr
 
 ### App Store Connect Configuration
 
-- [x] Upload final IPA build (`4.0.8` build `36`, TestFlight `VALID`, `2026-05-14`)
-- [x] Local ASC health checked with `asc doctor` (`2026-05-14`)
+- [x] Upload final IPA build (`4.0.10` build `39`)
+- [x] Local ASC health checked with `asc doctor` (`2026-05-15`)
+- [x] Apply App Store Connect metadata for `en-US` and `pt-BR`
 - [ ] Configure pricing (Free)
 - [ ] Set availability (Worldwide)
 - [ ] Age rating questionnaire
@@ -286,7 +285,7 @@ No user account is required. The app does not require app-owned backend infrastr
 
 - [x] Xcode Debug simulator build passed (`2026-05-14`, Xcode `26.5`)
 - [x] Xcode generic iOS Release build/archive passed unsigned (`2026-05-14`)
-- [x] Signed archive/export passed (`/tmp/DNSChat-4.0.8-36.xcarchive`, `/tmp/DNSChat-4.0.8-export/DNSChat.ipa`)
+- [x] Signed archive/export passed for `4.0.10` build `39`
 - [x] App Store Connect upload/submission check with configured ASC credentials
 - [x] TestFlight validation passed (`0` errors, `0` warnings)
 - [ ] Final testing on TestFlight
@@ -296,4 +295,4 @@ No user account is required. The app does not require app-owned backend infrastr
 
 ---
 
-_Updated for DNS Chat v4.0.8 build 36 - release assets uploaded, signed IPA exported, TestFlight build valid, App Store version prepared for manual release_
+_Updated for DNS Chat v4.0.10 build 39 - AXe feature coverage complete, App Store metadata applied, TestFlight upload valid_

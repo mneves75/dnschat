@@ -17,8 +17,8 @@ import {
   Text,
   StyleSheet,
   Platform,
-  TouchableOpacity,
 } from 'react-native';
+import { PressableRipple } from './PressableRipple';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -28,6 +28,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import Svg, { Path, Circle, Rect } from 'react-native-svg';
 import { useImessagePalette } from '../ui/theme/imessagePalette';
+import { useTypography } from '../ui/hooks/useTypography';
 import { LiquidGlassSpacing, getCornerRadius } from '../ui/theme/liquidGlassSpacing';
 import { useMotionReduction } from '../context/AccessibilityContext';
 import { LiquidGlassWrapper } from './glass';
@@ -328,6 +329,7 @@ export function EmptyState({
   testID,
 }: EmptyStateProps) {
   const palette = useImessagePalette();
+  const typography = useTypography();
   const { shouldReduceMotion } = useMotionReduction();
 
   // Animation values
@@ -372,23 +374,27 @@ export function EmptyState({
       </Animated.View>
 
       {/* Text */}
-      <Text style={[styles.title, { color: palette.textPrimary }]}>
+      <Text style={[styles.title, typography.title3, { color: palette.textPrimary }]}>
         {title}
       </Text>
-      <Text style={[styles.description, { color: palette.textSecondary }]}>
+      <Text style={[styles.description, typography.body, { color: palette.textSecondary }]}>
         {description}
       </Text>
 
       {/* Action Button */}
       {actionLabel && onAction && (
-        <TouchableOpacity
+        <PressableRipple
           onPress={onAction}
           style={[styles.actionButton, { backgroundColor: palette.userBubble }]}
+          variant="primary"
+          pressedOpacity={0.85}
           accessibilityRole="button"
           accessibilityLabel={actionLabel}
         >
-          <Text style={styles.actionButtonText}>{actionLabel}</Text>
-        </TouchableOpacity>
+          <Text style={[styles.actionButtonText, typography.callout, { color: palette.bubbleTextOnBlue }]}>
+            {actionLabel}
+          </Text>
+        </PressableRipple>
       )}
     </View>
   );
@@ -446,31 +452,27 @@ const styles = StyleSheet.create({
     marginBottom: LiquidGlassSpacing.lg,
   },
   title: {
-    fontSize: 20,
-    fontWeight: '600',
     textAlign: 'center',
     marginBottom: LiquidGlassSpacing.sm,
+    // fontSize/fontWeight applied inline via typography.title3
   },
   description: {
-    fontSize: 16,
-    fontWeight: '400',
     textAlign: 'center',
-    lineHeight: 22,
     marginBottom: LiquidGlassSpacing.lg,
+    // fontSize/fontWeight/lineHeight applied inline via typography.body
   },
   actionButton: {
     paddingHorizontal: LiquidGlassSpacing.lg,
     paddingVertical: LiquidGlassSpacing.sm,
     borderRadius: 22,
-    // iOS 26 HIG: Minimum 44pt touch target
-    minHeight: 44,
+    // iOS 26 HIG: Minimum 44pt touch target; Material 3: 48dp on Android
+    minHeight: Platform.OS === 'android' ? 48 : 44,
     justifyContent: 'center',
     alignItems: 'center',
+    overflow: 'hidden',
   },
   actionButtonText: {
-    color: '#FFFFFF',
-    fontSize: 17,
-    fontWeight: '600',
+    // fontSize/fontWeight applied inline via typography.callout
   },
 });
 

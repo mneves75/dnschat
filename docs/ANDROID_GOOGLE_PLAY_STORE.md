@@ -4,7 +4,7 @@ Complete step-by-step guide for publishing DNSChat to the Google Play Store.
 
 **App**: DNSChat
 **Package**: `<ANDROID_PACKAGE>`
-**Current Version**: 4.0.8
+**Current Version**: 4.0.10
 
 ---
 
@@ -323,10 +323,10 @@ See [ANDROID_RELEASE.md](./ANDROID_RELEASE.md) for signing configuration.
    - **Upload** new AAB
 4. Add release notes:
    ```
-   What's new in v4.0.8:
-   • Updated Expo SDK 55 patch packages for the current compatibility baseline
-   • Hardened encrypted local storage migration and DNS log redaction
-   • Tightened DNS response validation and concurrent DNS log persistence
+   What's new in v4.0.10:
+   • Added AXe simulator E2E coverage for 10 app feature groups
+   • Improved accessibility identifiers and labels across core screens
+   • Tightened release diagnostics with screenshot and accessibility artifacts
    ```
 5. Click **"Review release"**
 6. Set rollout percentage (start with 10-20% recommended)
@@ -436,6 +436,7 @@ Before submitting for review, verify:
 
 | Version | Date | Notes |
 |---------|------|-------|
+| 4.0.10 | 2026-05-15 | AXe simulator E2E coverage, accessibility identifiers, release diagnostics |
 | 4.0.8 | 2026-05-14 | SDK patch alignment, encrypted-storage migration, DNS log redaction and validation hardening |
 | 4.0.7 | 2026-05-04 | Expo/RN patch alignment, permission cleanup, SecureStore backup hardening |
 | 3.6.0 | 2025-12-16 | Google Play Store documentation |

@@ -8,7 +8,7 @@ export default function TabsLayout() {
   return (
     <NativeTabs
       labelStyle={Platform.OS === "ios" ? {
-        color: DynamicColorIOS({ dark: "#FFFFFF", light: "#8E8E93" }),
+        color: DynamicColorIOS({ dark: "#EBEBF599", light: "#8E8E93" }),
       } : undefined}
     >
       <NativeTabs.Trigger name="index">

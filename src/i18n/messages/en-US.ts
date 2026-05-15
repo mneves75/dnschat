@@ -12,6 +12,7 @@ export const enUS = {
     settings: "Settings",
     language: "Language",
     followSystem: "Use device language",
+    unknownError: "Something went wrong. Please try again.",
   },
   locales: {
     enUS: "English (United States)",
@@ -51,6 +52,7 @@ export const enUS = {
       welcome: {
         title: "Welcome to DNS Chat",
         subtitle: "The world's first chat app that uses DNS queries to communicate with AI",
+        appIconLabel: "DNS Chat app icon",
         features: {
           revolutionary: {
             label: "Revolutionary",
@@ -154,50 +156,50 @@ export const enUS = {
       },
       networkSetup: {
         label: "Setup",
-        title: "Network Optimization",
-        subtitle: "We're testing your network to find the fastest DNS methods",
-        disclaimer: "This is a simulated demonstration",
+        title: "Network Configuration",
+        subtitle: "Choose how DNS Chat should reach the LLM server",
+        disclaimer: "You can change the transport order later in Settings",
         tests: {
           native: {
             name: "Native DNS",
-            description: "Platform-optimized DNS",
+            description: "Platform DNS resolver",
           },
           udp: {
             name: "DNS over UDP",
-            description: "Traditional DNS queries",
+            description: "Standard DNS transport",
           },
           tcp: {
             name: "DNS over TCP",
-            description: "Reliable TCP fallback",
+            description: "TCP fallback transport",
           },
         },
         status: {
-          testing: "Testing",
+          testing: "Configuring",
           waiting: "Waiting",
-          success: "Success",
-          failed: "Failed",
+          success: "Configured",
+          failed: "Unavailable",
           skipped: "Skipped",
         },
         optimization: {
-          title: "Optimization Complete",
-          description: "Your network supports all DNS methods. The app will automatically use the fastest available method with intelligent fallback for optimal performance.",
+          title: "Configuration Applied",
+          description: "DNS Chat will use the automatic fallback chain across these transports. You can adjust this anytime in Settings.",
           applyButton: "Apply Recommended Settings",
-          loading: "Optimizing your DNS settings...",
+          loading: "Configuring transport order...",
         },
         navigation: {
           continue: "Continue",
-          skip: "Skip Optimization",
+          skip: "Skip",
         },
         alerts: {
           errorTitle: "Error",
-          errorMessage: "Network optimization failed. Using default settings.",
+          errorMessage: "Network configuration failed. Using default settings.",
           successTitle: "Settings Applied",
-          successMessage: "Network optimization complete. DNS will use automatic fallback chain for best performance.",
+          successMessage: "Network configuration complete. DNS will use the automatic fallback chain.",
           successButton: "Great",
         },
         accessibility: {
           applyLabel: "Apply recommended settings",
-          applyHint: "Configures DNS to use automatic fallback chain with the fastest available method based on your network test results",
+          applyHint: "Configures DNS to use the automatic fallback chain across the supported transports",
         },
       },
       features: {
@@ -273,6 +275,13 @@ export const enUS = {
         copy: "Copy",
         share: "Share",
       },
+      accessibility: {
+        userMessage: "Your message: {{content}}",
+        assistantMessage: "Assistant message: {{content}}",
+        loadingHint: "Message is loading",
+        menuHint: "Long press to show copy and share options",
+        messageListLabel: "Conversation messages",
+      },
     },
     chatInput: {
       placeholder: "Message...",
@@ -319,6 +328,7 @@ export const enUS = {
         messageSingular: "{{count}} message",
         messagePlural: "{{count}} messages",
       },
+      itemAccessibilityLabel: "Chat: {{title}}. {{count}} messages. {{time}}.",
       actionSheet: {
         title: "Choose an action",
         message: "Choose an action for this conversation",
@@ -365,6 +375,15 @@ export const enUS = {
         clearTitle: "Clear Logs",
         clearMessage: "Are you sure you want to clear all DNS query logs?",
         clearConfirm: "Clear",
+      },
+      accessibility: {
+        expandRow: "Show DNS query details",
+        collapseRow: "Hide DNS query details",
+      },
+      status: {
+        success: "Succeeded",
+        failed: "Failed",
+        unknown: "Unknown",
       },
     },
     settings: {

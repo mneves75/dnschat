@@ -232,14 +232,20 @@ describe("WelcomeScreen - iOS 26 HIG Compliance", () => {
   });
 
   describe("Animations", () => {
-    it("preserves fade animation", () => {
+    it("preserves fade animation driven by Reanimated", () => {
+      // Migrated from legacy RN Animated to Reanimated shared values.
       expect(sourceCode).toContain("fadeAnim");
-      expect(sourceCode).toContain("Animated.timing");
+      expect(sourceCode).toContain("withTiming");
     });
 
-    it("preserves slide animation", () => {
+    it("preserves slide animation driven by Reanimated", () => {
       expect(sourceCode).toContain("slideAnim");
-      expect(sourceCode).toContain("useNativeDriver: true");
+      expect(sourceCode).toContain("useSharedValue");
+    });
+
+    it("uses react-native-reanimated for animation primitives", () => {
+      expect(sourceCode).toContain("react-native-reanimated");
+      expect(sourceCode).not.toContain("useNativeDriver");
     });
   });
 

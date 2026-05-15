@@ -8,6 +8,8 @@ Developer documentation for DNSChat. Code is the source of truth — these docs 
 - `docs/architecture/SYSTEM-ARCHITECTURE.md` — what talks to what
 - `docs/technical/DNS-PROTOCOL-SPEC.md` — DNS query/response rules (current behavior)
 - `docs/technical/SPECIFICATION.md` — product behavior + repo invariants
+- `docs/e2e-axe-feature-coverage.md` — AXe simulator E2E feature checklist
+  and runner notes
 - `docs/technical/CHAT-TEMPLATE-2026-REVIEW.md` — 2026 chat-template review plan and applied repairs
 - `docs/troubleshooting/COMMON-ISSUES.md` — known issues and fixes
 
@@ -21,22 +23,24 @@ Developer documentation for DNSChat. Code is the source of truth — these docs 
 
 ## Current verification baseline
 
-Last full source/security sweep: `2026-05-14`.
+Last full source/security sweep: `2026-05-15`.
+Last AXe simulator E2E feature pass: `2026-05-15` for version `4.0.10` build
+`38`.
 Last iOS CLI release smoke: `2026-05-14` with Xcode `26.5` (`17F42`).
 
 - `bun run verify:all` passes (`expo-doctor` 17/17, SDK alignment, typed routes,
   DNS resolver sync, iOS pods, React Compiler, Android setup, lint, and Jest).
-- Jest baseline: 73 suites passed, 1 skipped; 761 tests passed, 13 skipped.
+- AXe E2E baseline: 10 feature groups passed in one owned simulator run.
+- Jest baseline: 74 suites passed, 1 skipped; 767 tests passed, 13 skipped.
 - `bun audit`, `npm audit` in `modules/dns-native`, and `gitleaks detect`
   report no vulnerabilities or leaks.
 - `xcodebuild clean build` passes for Debug on an iOS 26.5 simulator.
 - `xcodebuild clean build` and `xcodebuild clean archive` pass for generic iOS
   Release when code signing is disabled (`CODE_SIGNING_ALLOWED=NO`).
 - Physical-device compiled Expo dev-client install passed.
-- Signed App Store archive/export passed, TestFlight upload completed, the
-  processed build is `VALID`, and the App Store version has the release build
-  attached. Internal App Store Connect IDs are intentionally omitted from public
-  docs.
+- Signed App Store archive/export passed, App Store Connect metadata was
+  updated, TestFlight upload completed, and the processed build is `VALID`.
+  Internal App Store Connect IDs are intentionally omitted from public docs.
 - `asc validate testflight` and App Store version validation pass with `0`
   errors and `0` warnings; App Privacy publish-state still needs browser
   confirmation because the API cannot verify it.

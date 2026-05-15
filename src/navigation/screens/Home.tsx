@@ -17,7 +17,6 @@ import {
   Text,
   View,
   Platform,
-  TouchableOpacity,
 } from "react-native";
 import Animated from "react-native-reanimated";
 import { useRouter } from "expo-router";
@@ -25,6 +24,7 @@ import { useTranslation } from "../../i18n";
 import { useImessagePalette } from "../../ui/theme/imessagePalette";
 import { LiquidGlassSpacing, getCornerRadius } from "../../ui/theme/liquidGlassSpacing";
 import { Form, LiquidGlassWrapper } from "../../components/glass";
+import { PressableRipple } from "../../components/PressableRipple";
 import { useScreenEntrance } from "../../ui/hooks/useScreenEntrance";
 import { useChat } from "../../context/ChatContext";
 import { useSettings } from "../../context/SettingsContext";
@@ -107,13 +107,15 @@ export function Home() {
                 </View>
               </View>
               {!isDnsConnected && (
-                <TouchableOpacity
+                <PressableRipple
                   onPress={handleOpenSettings}
                   accessibilityLabel={t("screen.home.configureButton", {
                     defaultValue: "Configure DNS",
                   })}
                   accessibilityRole="button"
-                  activeOpacity={0.85}
+                  variant="primary"
+                  borderless
+                  pressedOpacity={0.85}
                 >
                   <LiquidGlassWrapper
                     variant="interactive"
@@ -124,7 +126,7 @@ export function Home() {
                       {t("screen.home.configure", { defaultValue: "Configure" })}
                     </Text>
                   </LiquidGlassWrapper>
-                </TouchableOpacity>
+                </PressableRipple>
               )}
             </View>
             {isDnsConnected && (

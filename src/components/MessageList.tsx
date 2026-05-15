@@ -13,7 +13,7 @@ import { MessageBubble } from "./MessageBubble";
 import type { Message } from "../types/chat";
 import { useImessagePalette } from "../ui/theme/imessagePalette";
 import { useTypography } from "../ui/hooks/useTypography";
-import { LiquidGlassSpacing } from "../ui/theme/liquidGlassSpacing";
+import { LiquidGlassSpacing, getCornerRadius } from "../ui/theme/liquidGlassSpacing";
 import { LiquidGlassWrapper, useLiquidGlassCapabilities } from "./LiquidGlassWrapper";
 import { useTranslation } from "../i18n";
 import { devLog } from "../utils/devLog";
@@ -89,7 +89,7 @@ export function MessageList({
         });
       });
     }
-  }, [messages.length, lastMessageKey, bottomInset]);
+  }, [messages.length, lastMessageKey]);
 
   // iOS 26 HIG: Render individual message bubble with solid backgrounds
   // MessageBubble uses solid colors (content layer) NOT glass (control layer)
@@ -155,7 +155,15 @@ export function MessageList({
         </LiquidGlassWrapper>
       ) : (
         // Android/Web: Standard view without glass
-        <View style={styles.emptyNonGlassCard}>
+        <View
+          style={[
+            styles.emptyNonGlassCard,
+            {
+              backgroundColor: palette.surface,
+              borderRadius: getCornerRadius('card'),
+            },
+          ]}
+        >
           <Text
             style={[
               styles.emptyText,
@@ -187,6 +195,8 @@ export function MessageList({
       refreshing={isRefreshing}
       onRefresh={onRefresh}
       tintColor={palette.accentTint}
+      colors={[palette.userBubble]}
+      progressBackgroundColor={palette.surface}
     />
   ) : undefined;
 
@@ -194,6 +204,7 @@ export function MessageList({
     <FlatList
       ref={flatListRef}
       testID={testID}
+      accessibilityLabel={t("screen.chat.accessibility.messageListLabel")}
       data={messages}
       renderItem={renderMessage}
       keyExtractor={keyExtractor}
@@ -250,11 +261,10 @@ const styles = StyleSheet.create({
     paddingVertical: LiquidGlassSpacing.lg,
   },
   // Android/Web: Standard card with subtle background
+  // backgroundColor and borderRadius applied inline at render site (palette-aware)
   emptyNonGlassCard: {
     paddingHorizontal: LiquidGlassSpacing.lg,
     paddingVertical: LiquidGlassSpacing.lg,
-    backgroundColor: "rgba(242, 242, 247, 0.5)", // Subtle background
-    borderRadius: 20,
   },
   emptyText: {
     // PATTERN: Static layout properties in StyleSheet, dynamic theme properties inline

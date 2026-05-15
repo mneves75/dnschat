@@ -314,8 +314,9 @@ describe("FeaturesScreen - iOS 26 HIG Compliance", () => {
   });
 
   describe("Accessibility", () => {
-    it("uses appropriate activeOpacity for touch feedback", () => {
-      expect(sourceCode).toContain("activeOpacity={0.7}");
+    it("uses appropriate pressedOpacity for touch feedback", () => {
+      // Migrated from TouchableOpacity activeOpacity to PressableRipple pressedOpacity
+      expect(sourceCode).toContain("pressedOpacity={0.7}");
     });
 
     it("applies proper text alignment for readability", () => {

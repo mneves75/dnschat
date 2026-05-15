@@ -16,21 +16,26 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   Alert,
   ActivityIndicator,
   Platform,
 } from "react-native";
 import Animated from "react-native-reanimated";
+import type { SharedValue } from "react-native-reanimated";
 import { DNSLogService } from "../../services/dnsLogService";
 import type { DNSQueryLog, DNSLogEntry } from "../../services/dnsLogService";
 import { Form, LiquidGlassWrapper } from "../../components/glass";
+import { PressableRipple } from "../../components/PressableRipple";
 import { useTranslation } from "../../i18n";
+import type { MessageKey, TranslationParams } from "../../i18n";
 import { useImessagePalette } from "../../ui/theme/imessagePalette";
+import type { IMessagePalette } from "../../ui/theme/imessagePalette";
 import { useScreenEntrance } from "../../ui/hooks/useScreenEntrance";
 import { useStaggeredListValues, AnimatedListItem } from "../../ui/hooks/useStaggeredList";
 import { LogsSkeleton } from "../../components/skeletons";
 import { EmptyState } from "../../components/EmptyState";
+
+type TFn = (key: MessageKey, params?: TranslationParams) => string;
 
 export function Logs() {
   const palette = useImessagePalette();
@@ -113,173 +118,6 @@ export function Logs() {
     );
   };
 
-  const renderLogEntry = (entry: DNSLogEntry, parentId?: string) => {
-    const statusIcon = DNSLogService.getStatusIcon(entry.status);
-    const methodColor = DNSLogService.getMethodColor(entry.method);
-
-    return (
-      <View key={`${parentId}-${entry.id}`} style={styles.logEntry}>
-        <View style={styles.entryHeader}>
-          <Text style={styles.entryIcon}>{statusIcon}</Text>
-          <View
-            style={[
-              styles.methodBadge,
-              { backgroundColor: methodColor + "20" },
-            ]}
-          >
-            <Text style={[styles.methodText, { color: methodColor }]}>
-              {entry.method?.toUpperCase() || t("screen.logs.labels.unknownMethod")}
-            </Text>
-          </View>
-          {entry.duration !== undefined && (
-            <Text style={[styles.duration, { color: palette.textSecondary }]}>
-              {DNSLogService.formatDuration(entry.duration)}
-            </Text>
-          )}
-        </View>
-        <Text style={[styles.entryMessage, { color: palette.textPrimary }]}>
-          {entry.message || t("screen.logs.labels.noMessage")}
-        </Text>
-        {entry.details && (
-          <Text style={[styles.entryDetails, { color: palette.textSecondary }]}>
-            {entry.details}
-          </Text>
-        )}
-        {entry.error && (
-          <Text style={[styles.entryError, { color: palette.destructive }]}>
-            {t("screen.logs.labels.errorPrefix", { message: entry.error })}
-          </Text>
-        )}
-      </View>
-    );
-  };
-
-  const renderQueryLog = ({ item, index }: { item: DNSQueryLog; index: number }) => {
-    const isExpanded = expandedLogs.has(item.id);
-    const isActive = item.finalStatus === "pending";
-    const statusColor =
-      item.finalStatus === "success"
-        ? palette.success
-        : item.finalStatus === "failure"
-          ? palette.destructive
-          : palette.userBubble; // Pending
-
-    return (
-      <AnimatedListItem
-        opacity={opacities[index] ?? { value: 1 }}
-        translateX={translates[index] ?? { value: 0 }}
-      >
-        <TouchableOpacity
-          onPress={() => toggleExpanded(item.id)}
-          style={styles.logItemWrapper}
-          activeOpacity={0.95}
-        >
-          <LiquidGlassWrapper
-            variant={isActive ? "interactive" : "regular"}
-            shape="roundedRect"
-            cornerRadius={12}
-            isInteractive={true}
-            style={[
-              styles.logCard,
-              isActive && { backgroundColor: palette.accentSurface },
-            ]}
-          >
-            <View style={styles.logHeader}>
-              <View style={styles.logHeaderLeft}>
-                <Text
-                  style={[styles.queryText, { color: palette.textPrimary }]}
-                  numberOfLines={1}
-                >
-                  {item.chatTitle || item.query || t("screen.logs.labels.noQuery")}
-                </Text>
-                <View style={styles.logMeta}>
-                  <Text style={[styles.timestamp, { color: palette.textTertiary }]}>
-                    {new Date(item.startTime).toLocaleTimeString()}
-                  </Text>
-                  {item.finalMethod && (
-                    <LiquidGlassWrapper
-                      variant="interactive"
-                      shape="capsule"
-                      style={[
-                        styles.methodBadge,
-                        { backgroundColor: `${palette.userBubble}26` },
-                      ]}
-                    >
-                      <Text style={[styles.methodText, { color: palette.userBubble }]}>
-                        {item.finalMethod?.toUpperCase() || "UNKNOWN"}
-                      </Text>
-                    </LiquidGlassWrapper>
-                  )}
-                  {item.totalDuration !== undefined && (
-                    <Text style={[styles.duration, { color: palette.textTertiary }]}>
-                      {DNSLogService.formatDuration(item.totalDuration)}
-                    </Text>
-                  )}
-                </View>
-              </View>
-              <View
-                style={[styles.statusIndicator, { backgroundColor: statusColor }]}
-              >
-                {isActive && (
-                  <ActivityIndicator size="small" color={palette.bubbleTextOnBlue} />
-                )}
-                {!isActive && (
-                  <Text style={[styles.statusText, { color: palette.bubbleTextOnBlue }]}>
-                    {item.finalStatus === "success"
-                      ? "OK"
-                      : item.finalStatus === "failure"
-                        ? "X"
-                        : "?"}
-                  </Text>
-                )}
-              </View>
-            </View>
-
-            {isExpanded && (
-              <View style={styles.logDetails}>
-                <View
-                  style={[styles.divider, { backgroundColor: palette.separator }]}
-                />
-
-                {item.response && (
-                  <View style={styles.responseSection}>
-                    <Text style={[styles.sectionTitle, { color: palette.textPrimary }]}>
-                      {t("screen.logs.labels.response")}
-                    </Text>
-                    <Text
-                      style={[styles.responseText, { color: palette.textSecondary }]}
-                      numberOfLines={3}
-                    >
-                      {item.response || t("screen.logs.labels.noResponse")}
-                    </Text>
-                  </View>
-                )}
-
-                <Text style={[styles.sectionTitle, { color: palette.textPrimary }]}>
-                  {t("screen.logs.labels.querySteps")}
-                </Text>
-                <View style={styles.entriesList}>
-                  {item.entries.map((entry, entryIndex) => (
-                    <React.Fragment key={`${item.id}-${entry.id || entryIndex}`}>
-                      {renderLogEntry(entry, item.id)}
-                      {entryIndex < item.entries.length - 1 && (
-                        <View
-                          style={[
-                            styles.entryDivider,
-                            { backgroundColor: palette.separator },
-                          ]}
-                        />
-                      )}
-                    </React.Fragment>
-                  ))}
-                </View>
-              </View>
-            )}
-          </LiquidGlassWrapper>
-        </TouchableOpacity>
-      </AnimatedListItem>
-    );
-  };
 
   return (
     <Form.List
@@ -315,7 +153,17 @@ export function Logs() {
           >
             <View style={styles.logsList}>
               {logs.map((item, index) => (
-                <View key={item.id}>{renderQueryLog({ item, index })}</View>
+                <LogQueryRow
+                  key={item.id}
+                  item={item}
+                  index={index}
+                  palette={palette}
+                  t={t}
+                  isExpanded={expandedLogs.has(item.id)}
+                  toggleExpanded={toggleExpanded}
+                  opacity={opacities[index] ?? { value: 1 }}
+                  translateX={translates[index] ?? { value: 0 }}
+                />
               ))}
             </View>
           </Form.Section>
@@ -325,6 +173,7 @@ export function Logs() {
         {logs.length > 0 && (
           <Form.Section title={t("screen.logs.actions.title")}>
             <Form.Item
+              testID="logs-clear-all"
               title={t("screen.logs.actions.clearAll")}
               subtitle={t("screen.logs.actions.clearAllSubtitle")}
               onPress={clearLogs}
@@ -337,6 +186,231 @@ export function Logs() {
     </Form.List>
   );
 }
+
+// ==================================================================================
+// MODULE-LEVEL ROW COMPONENTS
+// React Compiler can apply per-component memoization boundaries cleanly when these
+// are stable references at module scope.
+// ==================================================================================
+
+interface LogEntryRowProps {
+  entry: DNSLogEntry;
+  parentId: string;
+  palette: IMessagePalette;
+  t: TFn;
+}
+
+const LogEntryRow: React.FC<LogEntryRowProps> = ({ entry, parentId, palette, t }) => {
+  const statusIcon = DNSLogService.getStatusIcon(entry.status);
+  const methodColor = DNSLogService.getMethodColor(entry.method);
+
+  return (
+    <View key={`${parentId}-${entry.id}`} style={styles.logEntry}>
+      <View style={styles.entryHeader}>
+        <Text style={styles.entryIcon}>{statusIcon}</Text>
+        <View
+          style={[
+            styles.methodBadge,
+            { backgroundColor: methodColor + "20" },
+          ]}
+        >
+          <Text style={[styles.methodText, { color: methodColor }]}>
+            {entry.method?.toUpperCase() || t("screen.logs.labels.unknownMethod")}
+          </Text>
+        </View>
+        {entry.duration !== undefined && (
+          <Text style={[styles.duration, { color: palette.textSecondary }]}>
+            {DNSLogService.formatDuration(entry.duration)}
+          </Text>
+        )}
+      </View>
+      <Text style={[styles.entryMessage, { color: palette.textPrimary }]}>
+        {entry.message || t("screen.logs.labels.noMessage")}
+      </Text>
+      {entry.details && (
+        <Text style={[styles.entryDetails, { color: palette.textSecondary }]}>
+          {entry.details}
+        </Text>
+      )}
+      {entry.error && (
+        <Text style={[styles.entryError, { color: palette.destructive }]}>
+          {t("screen.logs.labels.errorPrefix", { message: entry.error })}
+        </Text>
+      )}
+    </View>
+  );
+};
+
+interface LogQueryRowProps {
+  item: DNSQueryLog;
+  index: number;
+  palette: IMessagePalette;
+  t: TFn;
+  isExpanded: boolean;
+  toggleExpanded: (id: string) => void;
+  opacity: Pick<SharedValue<number>, "value">;
+  translateX: Pick<SharedValue<number>, "value">;
+}
+
+const LogQueryRow: React.FC<LogQueryRowProps> = ({
+  item,
+  palette,
+  t,
+  isExpanded,
+  toggleExpanded,
+  opacity,
+  translateX,
+}) => {
+  const isActive = item.finalStatus === "pending";
+  const statusColor =
+    item.finalStatus === "success"
+      ? palette.success
+      : item.finalStatus === "failure"
+        ? palette.destructive
+        : palette.userBubble; // Pending
+
+  return (
+    <AnimatedListItem opacity={opacity} translateX={translateX}>
+      <PressableRipple
+        testID={`logs-entry-${item.id}`}
+        onPress={() => toggleExpanded(item.id)}
+        variant="surface"
+        rippleColor={palette.highlight}
+        pressedOpacity={0.95}
+        style={styles.logItemWrapper}
+        accessibilityRole="button"
+        accessibilityLabel={item.chatTitle ?? item.query}
+        accessibilityHint={
+          isExpanded
+            ? t("screen.logs.accessibility.collapseRow")
+            : t("screen.logs.accessibility.expandRow")
+        }
+        accessibilityState={{ expanded: isExpanded }}
+      >
+        <LiquidGlassWrapper
+          variant={isActive ? "interactive" : "regular"}
+          shape="roundedRect"
+          cornerRadius={12}
+          isInteractive={false}
+          style={[
+            styles.logCard,
+            isActive && { backgroundColor: palette.accentSurface },
+          ]}
+        >
+          <View style={styles.logHeader}>
+            <View style={styles.logHeaderLeft}>
+              <Text
+                style={[styles.queryText, { color: palette.textPrimary }]}
+                numberOfLines={1}
+              >
+                {item.chatTitle || item.query || t("screen.logs.labels.noQuery")}
+              </Text>
+              <View style={styles.logMeta}>
+                <Text style={[styles.timestamp, { color: palette.textTertiary }]}>
+                  {new Date(item.startTime).toLocaleTimeString()}
+                </Text>
+                {item.finalMethod && (
+                  <LiquidGlassWrapper
+                    variant="interactive"
+                    shape="capsule"
+                    style={[
+                      styles.methodBadge,
+                      { backgroundColor: `${palette.userBubble}26` },
+                    ]}
+                  >
+                    <Text style={[styles.methodText, { color: palette.userBubble }]}>
+                      {item.finalMethod?.toUpperCase() || "UNKNOWN"}
+                    </Text>
+                  </LiquidGlassWrapper>
+                )}
+                {item.totalDuration !== undefined && (
+                  <Text style={[styles.duration, { color: palette.textTertiary }]}>
+                    {DNSLogService.formatDuration(item.totalDuration)}
+                  </Text>
+                )}
+              </View>
+            </View>
+            <View
+              style={[styles.statusIndicator, { backgroundColor: statusColor }]}
+              accessible
+              accessibilityRole="image"
+              accessibilityLabel={
+                item.finalStatus === "success"
+                  ? t("screen.logs.status.success")
+                  : item.finalStatus === "failure"
+                    ? t("screen.logs.status.failed")
+                    : t("screen.logs.status.unknown")
+              }
+            >
+              {isActive && (
+                <ActivityIndicator size="small" color={palette.bubbleTextOnBlue} />
+              )}
+              {!isActive && (
+                <Text
+                  style={[styles.statusText, { color: palette.bubbleTextOnBlue }]}
+                  accessibilityElementsHidden
+                  importantForAccessibility="no-hide-descendants"
+                >
+                  {item.finalStatus === "success"
+                    ? "OK"
+                    : item.finalStatus === "failure"
+                      ? "X"
+                      : "?"}
+                </Text>
+              )}
+            </View>
+          </View>
+
+          {isExpanded && (
+            <View style={styles.logDetails}>
+              <View
+                style={[styles.divider, { backgroundColor: palette.separator }]}
+              />
+
+              {item.response && (
+                <View style={styles.responseSection}>
+                  <Text style={[styles.sectionTitle, { color: palette.textPrimary }]}>
+                    {t("screen.logs.labels.response")}
+                  </Text>
+                  <Text
+                    style={[styles.responseText, { color: palette.textSecondary }]}
+                    numberOfLines={3}
+                  >
+                    {item.response || t("screen.logs.labels.noResponse")}
+                  </Text>
+                </View>
+              )}
+
+              <Text style={[styles.sectionTitle, { color: palette.textPrimary }]}>
+                {t("screen.logs.labels.querySteps")}
+              </Text>
+              <View style={styles.entriesList}>
+                {item.entries.map((entry, entryIndex) => (
+                  <React.Fragment key={`${item.id}-${entry.id || entryIndex}`}>
+                    <LogEntryRow
+                      entry={entry}
+                      parentId={item.id}
+                      palette={palette}
+                      t={t}
+                    />
+                    {entryIndex < item.entries.length - 1 && (
+                      <View
+                        style={[
+                          styles.entryDivider,
+                          { backgroundColor: palette.separator },
+                        ]}
+                      />
+                    )}
+                  </React.Fragment>
+                ))}
+              </View>
+            </View>
+          )}
+        </LiquidGlassWrapper>
+      </PressableRipple>
+    </AnimatedListItem>
+  );
+};
 
 const styles = StyleSheet.create({
   logsList: {

@@ -3,11 +3,18 @@ import {
   View,
   Text,
   StyleSheet,
-  Animated,
-  TouchableOpacity,
   ScrollView,
 } from "react-native";
+import Animated, {
+  cancelAnimation,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from "react-native-reanimated";
 import { OnboardingNavigation } from "../OnboardingNavigation";
+import { PressableRipple } from "../../PressableRipple";
 import { useMotionReduction } from "../../../context/AccessibilityContext";
 import { DNSService } from "../../../services/dnsService";
 import { useImessagePalette } from "../../../ui/theme/imessagePalette";
@@ -59,32 +66,32 @@ export function DNSMagicScreen() {
   ]);
   const [response, setResponse] = useState<string>("");
 
-  const pulseAnim = React.useRef(new Animated.Value(1)).current;
+  const pulseAnim = useSharedValue(1);
 
-  // Effect: start the pulse animation on mount and stop on unmount.
+  // Effect: start the Reanimated pulse animation on mount and cancel on unmount.
   useEffect(() => {
     if (shouldReduceMotion) {
-      pulseAnim.setValue(1);
+      pulseAnim.value = 1;
       return;
     }
 
-    const pulse = Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, {
-          toValue: 1.1,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(pulseAnim, {
-          toValue: 1,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
-      ]),
+    pulseAnim.value = withRepeat(
+      withSequence(
+        withTiming(1.1, { duration: 1000 }),
+        withTiming(1, { duration: 1000 }),
+      ),
+      -1,
+      false,
     );
-    pulse.start();
-    return () => pulse.stop();
-  }, [pulseAnim, shouldReduceMotion]);
+
+    return () => {
+      cancelAnimation(pulseAnim);
+    };
+  }, [shouldReduceMotion]);
+
+  const pulseStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pulseAnim.value }],
+  }));
 
   const runDNSDemo = async () => {
     setIsRunning(true);
@@ -142,12 +149,10 @@ export function DNSMagicScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View testID="onboarding-dns-magic" style={styles.container}>
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.headerSection}>
-          <Animated.View
-            style={[styles.dnsIcon, { transform: [{ scale: pulseAnim }] }]}
-          >
+          <Animated.View style={[styles.dnsIcon, pulseStyle]}>
             <Text style={[typography.displayMedium, { color: palette.accentTint }]}>
               {t("screen.onboarding.dnsMagic.label")}
             </Text>
@@ -176,14 +181,16 @@ export function DNSMagicScreen() {
 
         <View style={styles.demoSection}>
           {/* iOS HIG: Primary action button to trigger DNS demonstration with fallback chain */}
-          <TouchableOpacity
+          <PressableRipple
+            testID="onboarding-dns-demo"
             style={[
               styles.demoButton,
               { backgroundColor: isRunning ? palette.surface : palette.accentTint },
             ]}
             onPress={runDNSDemo}
             disabled={isRunning}
-            activeOpacity={0.7}
+            variant="primary"
+            pressedOpacity={0.7}
             accessibilityRole="button"
             accessibilityLabel={t(
               isRunning
@@ -205,7 +212,7 @@ export function DNSMagicScreen() {
             >
               {isRunning ? t("screen.onboarding.dnsMagic.demoButtonRunning") : t("screen.onboarding.dnsMagic.demoButton")}
             </Text>
-          </TouchableOpacity>
+          </PressableRipple>
 
           <View style={styles.stepsContainer}>
             {dnsSteps.map((step, index) => (
@@ -221,6 +228,8 @@ export function DNSMagicScreen() {
 
           {response && (
             <View
+              accessible={true}
+              accessibilityLiveRegion="polite"
               style={[
                 styles.responseContainer,
                 {

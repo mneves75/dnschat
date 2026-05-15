@@ -135,10 +135,7 @@ export function Chat() {
         { backgroundColor: palette.background },
       ]}
     >
-      <StatusBar
-        barStyle={isDark ? "light-content" : "dark-content"}
-        backgroundColor={palette.background}
-      />
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
 
       <Animated.View
         style={[

@@ -125,18 +125,18 @@ function MessageBubbleComponent({ message }: MessageBubbleProps) {
     },
   };
 
-  const copyImage = Platform.OS === 'ios' ? 'doc.on.doc' : undefined;
-  const shareImage = Platform.OS === 'ios' ? 'square.and.arrow.up' : undefined;
+  const copyImage = Platform.OS === 'ios' ? 'doc.on.doc' : 'content_copy';
+  const shareImage = Platform.OS === 'ios' ? 'square.and.arrow.up' : 'share';
   const menuActions = [
     {
       id: 'copy',
       title: t('screen.chat.messageActions.copy'),
-      ...(copyImage ? { image: copyImage } : {}),
+      image: copyImage,
     },
     {
       id: 'share',
       title: t('screen.chat.messageActions.share'),
-      ...(shareImage ? { image: shareImage } : {}),
+      image: shareImage,
     },
   ];
 
@@ -154,8 +154,17 @@ function MessageBubbleComponent({ message }: MessageBubbleProps) {
       style={bubbleStyles}
       accessible={true}
       accessibilityRole="text"
-      accessibilityLabel={`${isUser ? 'Your' : 'Assistant'} message: ${message.content}`}
-      accessibilityHint={isLoading ? "Message is loading" : "Long press to show copy and share options"}
+      accessibilityLabel={t(
+        isUser
+          ? "screen.chat.accessibility.userMessage"
+          : "screen.chat.accessibility.assistantMessage",
+        { content: message.content.replace(/[`*_~]/g, "") },
+      )}
+      accessibilityHint={
+        isLoading
+          ? t("screen.chat.accessibility.loadingHint")
+          : t("screen.chat.accessibility.menuHint")
+      }
     >
       <MessageContent {...messageContentProps} />
     </View>

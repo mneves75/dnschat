@@ -201,9 +201,11 @@ describe("FirstChatScreen - iOS 26 HIG Compliance", () => {
   });
 
   describe("Component Structure", () => {
-    it("uses KeyboardAvoidingView for iOS keyboard handling", () => {
-      expect(sourceCode).toContain("KeyboardAvoidingView");
-      expect(sourceCode).toContain('behavior={Platform.OS === "ios" ? "padding" : "height"}');
+    it("uses KeyboardStickyView for input keyboard handling", () => {
+      // Migrated from KeyboardAvoidingView to KeyboardStickyView so only the
+      // input row follows the keyboard while OnboardingNavigation stays anchored.
+      expect(sourceCode).toContain("KeyboardStickyView");
+      expect(sourceCode).not.toContain("KeyboardAvoidingView");
     });
 
     it("includes header section with title and subtitle", () => {
@@ -258,8 +260,9 @@ describe("FirstChatScreen - iOS 26 HIG Compliance", () => {
       expect(sourceCode).toContain('placeholder={t("screen.onboarding.firstChat.input.placeholder")}');
     });
 
-    it("uses appropriate activeOpacity for touch feedback", () => {
-      expect(sourceCode).toContain("activeOpacity={0.7}");
+    it("uses appropriate pressedOpacity for touch feedback", () => {
+      // Migrated from TouchableOpacity activeOpacity to PressableRipple pressedOpacity
+      expect(sourceCode).toContain("pressedOpacity={0.7}");
     });
 
     it("disables send button when input is empty", () => {

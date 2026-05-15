@@ -13,6 +13,7 @@ module.exports = {
   AccessibilityInfo: {
     isReduceTransparencyEnabled: async () => false,
     addEventListener: () => ({ remove: noop }),
+    announceForAccessibility: noop,
   },
   StyleSheet: {
     create: (styles) => styles,
@@ -24,6 +25,7 @@ module.exports = {
         .filter(Boolean)
         .reduce((acc, style) => Object.assign(acc, style), {});
     },
+    hairlineWidth: 1,
   },
   View: createStubComponent("View"),
   Text: createStubComponent("Text"),
@@ -31,9 +33,27 @@ module.exports = {
   ScrollView: createStubComponent("ScrollView"),
   KeyboardAvoidingView: createStubComponent("KeyboardAvoidingView"),
   TouchableOpacity: createStubComponent("TouchableOpacity"),
+  Image: createStubComponent("Image"),
+  ActivityIndicator: createStubComponent("ActivityIndicator"),
   Switch: createStubComponent("Switch"),
   Alert: { alert: noop },
   Linking: { openURL: noop },
   Share: { share: async () => ({}) },
   useColorScheme: () => "light",
+  Dimensions: { get: () => ({ width: 375, height: 812 }) },
+  Animated: { Value: function (v) { this.value = v; return { setValue: noop, interpolate: () => 0 }; }, timing: () => ({ start: noop, stop: noop }), parallel: () => ({ start: noop, stop: noop }) },
+  Easing: { out: () => () => 0, cubic: () => 0 },
+  BackHandler: {
+    addEventListener: () => ({ remove: noop }),
+    removeEventListener: noop,
+    exitApp: noop,
+  },
+  InteractionManager: {
+    runAfterInteractions: (cb) => {
+      if (typeof cb === "function") cb();
+      return { cancel: noop };
+    },
+  },
+  DynamicColorIOS: (config) => config?.light ?? null,
+  PlatformColor: (name) => name,
 };

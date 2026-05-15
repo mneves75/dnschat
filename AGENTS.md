@@ -60,6 +60,7 @@ For any source-code sweep, map findings and fixes back to these requirements. Do
 - Dev: `bun run start`, `bun run ios`, `bun run android`, `bun run web`
 - Lint: `bun run lint`
 - Tests: `bun run test`
+- AXe E2E: `bun run e2e:axe:doctor`, `bun run e2e:axe:release`
 - Native module tests: `cd modules/dns-native && bun run test`
 - DNS harness: `bun run dns:harness -- --message "test message"`; add `--local-server` for offline UDP/TCP verification.
 - Security scan: `gitleaks detect --source . --redact --no-banner --config .gitleaks.toml`
@@ -72,7 +73,7 @@ For any source-code sweep, map findings and fixes back to these requirements. Do
 - TestFlight release: after signed archive/export, use `asc publish testflight --app <APP_ID> --ipa <IPA> --version <VERSION> --build-number <BUILD> --group <GROUPS> --wait`, then verify with `asc validate testflight` and `asc validate --app <APP_ID> --version <VERSION> --platform IOS`.
 - Version sync: `bun run sync-versions` (source = `package.json`); preview with `bun run sync-versions:dry`.
 - Individual verifies: `bun run verify:ios-pods`, `verify:android`, `verify:android-16kb`, `verify:typed-routes`, `verify:react-compiler`, `verify:sdk-alignment`, `verify:dnsresolver-sync`, `verify:expo-doctor`.
-- Verify (full gate): `bun run verify:all` runs all of the above plus public redaction, lint, and tests.
+- Verify (full gate): `bun run verify:all` runs all of the above plus public redaction, lint, and tests. Release-facing UI/runtime work should also run the AXe E2E feature pass when simulator automation is available.
 
 ## Review / Security Sweep Protocol
 

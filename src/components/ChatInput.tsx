@@ -29,16 +29,14 @@ import React, { useState, useRef } from "react";
 import {
   View,
   TextInput,
-  TouchableOpacity,
   StyleSheet,
   useColorScheme,
   Text,
   Platform,
   AccessibilityInfo,
+  InteractionManager,
 } from "react-native";
 import type {
-  TouchableOpacityProps,
-  ViewProps,
   NativeSyntheticEvent,
   TextInputContentSizeChangeEventData,
   StyleProp,
@@ -60,21 +58,12 @@ import { HapticFeedback } from "../utils/haptics";
 import { SendIcon } from "./icons/SendIcon";
 import { useTranslation } from "../i18n";
 import { LiquidGlassWrapper, useLiquidGlassCapabilities } from "./LiquidGlassWrapper";
+import { PressableRipple } from "./PressableRipple";
 import { MESSAGE_CONSTANTS } from "../constants/appConstants";
 
-type TouchableWithPointerEventsProps = TouchableOpacityProps & {
-  pointerEvents?: ViewProps["pointerEvents"];
-};
-
-function TouchableWithPointerEvents({
-  ref,
-  ...props
-}: TouchableWithPointerEventsProps & { ref?: React.Ref<React.ElementRef<typeof TouchableOpacity>> }) {
-  return <TouchableOpacity ref={ref} {...props} />;
-}
-
-// Reanimated's default TouchableOpacity typing omits pointerEvents, so we wrap it to expose the prop.
-const AnimatedTouchable = Animated.createAnimatedComponent(TouchableWithPointerEvents);
+// Animated wrapper around PressableRipple — preserves Reanimated style animations
+// while giving Android a proper Material 3 ripple via PressableRipple's android_ripple.
+const AnimatedPressableRipple = Animated.createAnimatedComponent(PressableRipple);
 
 // Constants derived from design system (no magic numbers!)
 const CHARACTER_COUNTER_THRESHOLD = MESSAGE_CONSTANTS.MAX_MESSAGE_LENGTH - 20; // Show at 90%
@@ -307,9 +296,9 @@ export function ChatInput({
 
       // Refocus the input after sending on iOS
       if (Platform.OS === "ios") {
-        setTimeout(() => {
+        InteractionManager.runAfterInteractions(() => {
           textInputRef.current?.focus();
-        }, 100);
+        });
       }
     }
   };
@@ -325,7 +314,8 @@ export function ChatInput({
    */
   const handlePressIn = () => {
     if (canSend) {
-      scale.value = withSpring(buttonPressScale, SpringConfig.bouncy);
+      // Non-bouncy spring to prevent overshoot above 1.0 (iOS HIG send button feel)
+      scale.value = withSpring(buttonPressScale, { damping: 20, stiffness: 300, mass: 1 });
       HapticFeedback.light();
     }
   };
@@ -337,7 +327,8 @@ export function ChatInput({
    * Spring animation provides natural feel.
    */
   const handlePressOut = () => {
-    scale.value = withSpring(1, SpringConfig.bouncy);
+    // Non-bouncy spring to prevent overshoot above 1.0
+    scale.value = withSpring(1, { damping: 20, stiffness: 300, mass: 1 });
   };
 
   /**
@@ -349,6 +340,7 @@ export function ChatInput({
   const renderTextInput = (additionalStyles: StyleProp<TextStyle>[] = []) => (
     <Animated.View style={[styles.inputWrapper, animatedInputStyle]}>
       <TextInput
+        testID={testID ? `${testID}-field` : undefined}
         ref={textInputRef}
         style={[
           styles.textInput,
@@ -401,7 +393,8 @@ export function ChatInput({
    * blocking touches to the TextInput underneath.
    */
   const renderSendButton = () => (
-    <AnimatedTouchable
+    <AnimatedPressableRipple
+      testID={testID ? `${testID}-send` : undefined}
       style={[
         animatedButtonStyle,
         animatedButtonPosition,
@@ -421,6 +414,10 @@ export function ChatInput({
       onPressOut={handlePressOut}
       disabled={!canSend}
       pointerEvents={canSend ? "auto" : "none"}
+      variant="icon"
+      borderless
+      rippleRadius={minimumTouchTarget / 2}
+      pressedOpacity={0.85}
       accessible={true}
       accessibilityRole="button"
       accessibilityLabel={
@@ -430,14 +427,13 @@ export function ChatInput({
       }
       accessibilityHint={t("components.chatInput.sendHint")}
       accessibilityState={{ disabled: !canSend }}
-      activeOpacity={1}
     >
       {isLoading ? (
         <Text style={[styles.sendButtonText, { color: palette.textPrimary }]}>...</Text>
       ) : (
         <SendIcon size={20} isActive={canSend} />
       )}
-    </AnimatedTouchable>
+    </AnimatedPressableRipple>
   );
 
   /**

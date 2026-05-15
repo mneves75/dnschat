@@ -3,12 +3,12 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   Alert,
   ActivityIndicator,
   ScrollView,
 } from "react-native";
 import { OnboardingNavigation } from "../OnboardingNavigation";
+import { PressableRipple } from "../../PressableRipple";
 import { useSettings } from "../../../context/SettingsContext";
 import { useImessagePalette } from "../../../ui/theme/imessagePalette";
 import { useTypography } from "../../../ui/hooks/useTypography";
@@ -19,7 +19,6 @@ import { devWarn } from "../../../utils/devLog";
 interface NetworkTest {
   method: string;
   status: "testing" | "success" | "failed" | "skipped";
-  latency?: number;
   description: string;
 }
 
@@ -65,28 +64,24 @@ export function NetworkSetupScreen() {
     };
 
     try {
-      const getRandomInt = (min: number, max: number) =>
-        Math.floor(Math.random() * (max - min + 1)) + min;
-
-      const nativeLatency = getRandomInt(50, 120);
-      const udpLatency = nativeLatency + getRandomInt(10, 50);
-      const tcpLatency = udpLatency + getRandomInt(10, 60);
-
+      // Visual configuration progression — no fake measurements. Each step
+      // transitions through active -> success purely to communicate that
+      // the transport order is being applied.
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      updateTest(0, { status: "success", latency: nativeLatency });
+      updateTest(0, { status: "success" });
 
       await new Promise((resolve) => setTimeout(resolve, 800));
-      updateTest(1, { status: "success", latency: udpLatency });
+      updateTest(1, { status: "success" });
 
       await new Promise((resolve) => setTimeout(resolve, 600));
-      updateTest(2, { status: "success", latency: tcpLatency });
+      updateTest(2, { status: "success" });
 
-      // All methods successful - automatic fallback chain configured
+      // Default to automatic fallback chain (no probing yet).
       setRecommendedSetting(true);
 
       setOptimizationComplete(true);
     } catch (error) {
-      devWarn("[NetworkSetupScreen] Network optimization failed", error);
+      devWarn("[NetworkSetupScreen] Network configuration failed", error);
       Alert.alert(
         t("screen.onboarding.networkSetup.alerts.errorTitle"),
         t("screen.onboarding.networkSetup.alerts.errorMessage"),
@@ -127,10 +122,10 @@ export function NetworkSetupScreen() {
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [t]);
+  }, [t, runNetworkOptimization]);
 
   return (
-    <View style={styles.container}>
+    <View testID="onboarding-network-setup" style={styles.container}>
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.content}
@@ -225,14 +220,16 @@ export function NetworkSetupScreen() {
             </Text>
 
             {/* iOS HIG: Primary action button to apply network optimization results */}
-            <TouchableOpacity
+            <PressableRipple
+              testID="onboarding-network-apply"
               style={[
                 styles.applyButton,
                 { backgroundColor: palette.accentTint },
               ]}
               onPress={applyRecommendedSettings}
               disabled={isApplyingSettings}
-              activeOpacity={0.7}
+              variant="primary"
+              pressedOpacity={0.7}
               accessibilityRole="button"
               accessibilityLabel={t("screen.onboarding.networkSetup.accessibility.applyLabel")}
               accessibilityHint={t("screen.onboarding.networkSetup.accessibility.applyHint")}
@@ -246,7 +243,7 @@ export function NetworkSetupScreen() {
               >
                 {t("screen.onboarding.networkSetup.optimization.applyButton")}
               </Text>
-            </TouchableOpacity>
+            </PressableRipple>
           </View>
         )}
 
@@ -324,6 +321,7 @@ function NetworkTestItem({ test, palette, typography, isActive }: NetworkTestIte
           borderWidth: isActive ? 2 : 1,
         },
       ]}
+      accessibilityLiveRegion={isActive ? "polite" : "none"}
     >
       <View style={styles.testHeader}>
         <View
@@ -362,17 +360,6 @@ function NetworkTestItem({ test, palette, typography, isActive }: NetworkTestIte
           >
             {getStatusLabel()}
           </Text>
-          {test.latency && (
-            <Text
-              style={[
-                typography.caption1,
-                styles.latencyBadge,
-                { color: getStatusColor(), fontWeight: "500" },
-              ]}
-            >
-              {test.latency}ms
-            </Text>
-          )}
         </View>
       </View>
     </View>
@@ -449,10 +436,6 @@ const styles = StyleSheet.create({
   },
   statusLabel: {
     marginBottom: 2,
-  },
-  latencyBadge: {
-    paddingHorizontal: LiquidGlassSpacing.xs,
-    paddingVertical: 2,
   },
   loadingSection: {
     alignItems: "center",

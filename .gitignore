@@ -75,6 +75,7 @@ firebase-debug.*.log
 /ios/Pods/Pods.xcodeproj/xcuserdata/
 
 # Additional build artifacts
+/artifacts/
 *.orig
 *.bak
 *~

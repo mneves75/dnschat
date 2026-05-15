@@ -14,16 +14,17 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
   Platform,
 } from "react-native";
-import type { ViewStyle, TextStyle, StyleProp } from "react-native";
+import type { ViewStyle, StyleProp } from "react-native";
 import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { LiquidGlassWrapper } from "../LiquidGlassWrapper";
+import { PressableRipple } from "../PressableRipple";
 import { useImessagePalette } from "../../ui/theme/imessagePalette";
+import { HapticFeedback } from "../../utils/haptics";
 
 // ==================================================================================
 // TYPES AND INTERFACES
@@ -72,6 +73,10 @@ interface GlassFormItemProps {
   disableHaptics?: boolean;
   /** Test ID for testing */
   testID?: string;
+  /** Accessibility label for UI automation and screen readers */
+  accessibilityLabel?: string;
+  /** Accessibility hint for screen readers */
+  accessibilityHint?: string;
 }
 
 interface GlassFormLinkProps extends GlassFormItemProps {
@@ -109,18 +114,11 @@ const useGlassColors = () => {
 
 const useHapticFeedback = () => {
   const triggerSelectionFeedback = () => {
-    if (Platform.OS === "ios") {
-      // iOS haptic feedback (would need expo-haptics)
-      // HapticFeedback.selectionAsync();
-    }
+    HapticFeedback.light();
   };
 
-  const triggerImpactFeedback = (
-    style: "light" | "medium" | "heavy" = "light"
-  ) => {
-    if (Platform.OS === "ios") {
-      // HapticFeedback.impactAsync(HapticFeedback.ImpactFeedbackStyle[style]);
-    }
+  const triggerImpactFeedback = () => {
+    HapticFeedback.medium();
   };
 
   return { triggerSelectionFeedback, triggerImpactFeedback };
@@ -153,7 +151,7 @@ export const GlassForm: React.FC<GlassFormProps> = ({
   return (
     <SafeAreaView
       testID={testID}
-      edges={["top", "right", "bottom", "left"]}
+      edges={["left", "right"]}
       style={[styles.safeAreaContainer, { backgroundColor: colors.background }]}
     >
       <ScrollView
@@ -194,7 +192,7 @@ export const GlassFormSection: React.FC<GlassFormSectionProps> = ({
       {title && (
         <View style={styles.sectionHeaderContainer}>
           <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
-            {title.toUpperCase()}
+            {title}
           </Text>
         </View>
       )}
@@ -244,10 +242,11 @@ export const GlassFormItem: React.FC<GlassFormItemProps> = ({
   destructive = false,
   disableHaptics = false,
   testID,
+  accessibilityLabel,
+  accessibilityHint,
 }) => {
   const colors = useGlassColors();
   const { triggerSelectionFeedback } = useHapticFeedback();
-  const [isPressed, setIsPressed] = React.useState(false);
 
   const handlePress = () => {
     if (!disableHaptics) {
@@ -256,12 +255,8 @@ export const GlassFormItem: React.FC<GlassFormItemProps> = ({
     onPress?.();
   };
 
-  const itemStyle: ViewStyle = {
-    backgroundColor: isPressed ? colors.highlighted : "transparent",
-  };
-
-  const ItemContent = (
-    <View style={[styles.itemContainer, itemStyle, style]}>
+  const renderContent = (extraStyle?: StyleProp<ViewStyle>) => (
+    <View style={[styles.itemContainer, extraStyle, style]}>
       <View style={styles.itemContentLeft}>
         <Text
           style={[
@@ -296,19 +291,29 @@ export const GlassFormItem: React.FC<GlassFormItemProps> = ({
 
   if (onPress) {
     return (
-      <TouchableOpacity
+      <PressableRipple
         testID={testID}
         onPress={handlePress}
-        onPressIn={() => setIsPressed(true)}
-        onPressOut={() => setIsPressed(false)}
-        activeOpacity={1}
+        variant="surface"
+        rippleColor={colors.highlighted}
+        pressedOpacity={0.85}
+        accessible
+        accessibilityRole="button"
+        accessibilityLabel={accessibilityLabel ?? title}
+        accessibilityHint={accessibilityHint ?? subtitle}
       >
-        {ItemContent}
-      </TouchableOpacity>
+        {({ pressed }) =>
+          renderContent(
+            pressed && Platform.OS === "ios"
+              ? { backgroundColor: colors.highlighted }
+              : null,
+          )
+        }
+      </PressableRipple>
     );
   }
 
-  return ItemContent;
+  return renderContent();
 };
 
 /**
@@ -378,6 +383,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "400",
     letterSpacing: -0.08,
+    textTransform: "uppercase",
   },
   sectionContent: {
     marginHorizontal: 20,
@@ -400,7 +406,7 @@ const styles = StyleSheet.create({
   itemContainer: {
     flexDirection: "row",
     alignItems: "center",
-    minHeight: 44,
+    minHeight: Platform.OS === "android" ? 48 : 44,
     paddingHorizontal: 20,
     paddingVertical: 12,
   },

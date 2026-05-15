@@ -21,7 +21,7 @@ import { useRouter } from "expo-router";
 import { useTranslation } from "../../i18n";
 import { useImessagePalette } from "../../ui/theme/imessagePalette";
 import { LiquidGlassSpacing, getCornerRadius } from "../../ui/theme/liquidGlassSpacing";
-import { Form, LiquidGlassWrapper } from "../../components/glass";
+import { Form, LiquidGlassWrapper, useLiquidGlassCapabilities } from "../../components/glass";
 import { useScreenEntrance } from "../../ui/hooks/useScreenEntrance";
 import { useChat } from "../../context/ChatContext";
 import { formatDistanceToNow } from "date-fns";
@@ -35,6 +35,7 @@ export function Profile({ user }: ProfileProps) {
   const router = useRouter();
   const palette = useImessagePalette();
   const { animatedStyle } = useScreenEntrance();
+  const { supportsLiquidGlass } = useLiquidGlassCapabilities();
   const { chats, clearAllChats } = useChat();
 
   // Calculate statistics
@@ -98,41 +99,79 @@ export function Profile({ user }: ProfileProps) {
       <Animated.View style={animatedStyle}>
         {/* Profile Header */}
         <Form.Section>
-          <View
-            style={[
-              styles.profileHeader,
-              { backgroundColor: Platform.OS === "android" ? palette.solid : palette.surface },
-            ]}
-          >
-            {/* Avatar */}
+          {supportsLiquidGlass ? (
             <LiquidGlassWrapper
-              variant="interactive"
-              shape="circle"
-              style={styles.avatarContainer}
-              accessibilityLabel={t("screen.profile.avatarLabel", {
-                defaultValue: "Profile avatar",
-              })}
+              variant="regular"
+              shape="roundedRect"
+              cornerRadius={getCornerRadius("card")}
+              style={styles.profileHeader}
             >
-              <Text style={[styles.avatarText, { color: palette.userBubble }]}>
-                {displayName.charAt(0).toUpperCase()}
-              </Text>
-            </LiquidGlassWrapper>
-
-            {/* Name */}
-            <Text style={[styles.userName, { color: palette.textPrimary }]}>
-              {displayName}
-            </Text>
-
-            {/* Member since */}
-            {oldestChat && (
-              <Text style={[styles.memberSince, { color: palette.textSecondary }]}>
-                {t("screen.profile.memberSince", {
-                  defaultValue: "First chat {{date}}",
-                  date: firstChatDate,
+              {/* Avatar */}
+              <LiquidGlassWrapper
+                variant="interactive"
+                shape="circle"
+                style={styles.avatarContainer}
+                accessibilityLabel={t("screen.profile.avatarLabel", {
+                  defaultValue: "Profile avatar",
                 })}
+              >
+                <Text style={[styles.avatarText, { color: palette.userBubble }]}>
+                  {displayName.charAt(0).toUpperCase()}
+                </Text>
+              </LiquidGlassWrapper>
+
+              {/* Name */}
+              <Text style={[styles.userName, { color: palette.textPrimary }]}>
+                {displayName}
               </Text>
-            )}
-          </View>
+
+              {/* Member since */}
+              {oldestChat && (
+                <Text style={[styles.memberSince, { color: palette.textSecondary }]}>
+                  {t("screen.profile.memberSince", {
+                    defaultValue: "First chat {{date}}",
+                    date: firstChatDate,
+                  })}
+                </Text>
+              )}
+            </LiquidGlassWrapper>
+          ) : (
+            <View
+              style={[
+                styles.profileHeader,
+                { backgroundColor: Platform.OS === "android" ? palette.solid : palette.surface },
+              ]}
+            >
+              {/* Avatar */}
+              <LiquidGlassWrapper
+                variant="interactive"
+                shape="circle"
+                style={styles.avatarContainer}
+                accessibilityLabel={t("screen.profile.avatarLabel", {
+                  defaultValue: "Profile avatar",
+                })}
+              >
+                <Text style={[styles.avatarText, { color: palette.userBubble }]}>
+                  {displayName.charAt(0).toUpperCase()}
+                </Text>
+              </LiquidGlassWrapper>
+
+              {/* Name */}
+              <Text style={[styles.userName, { color: palette.textPrimary }]}>
+                {displayName}
+              </Text>
+
+              {/* Member since */}
+              {oldestChat && (
+                <Text style={[styles.memberSince, { color: palette.textSecondary }]}>
+                  {t("screen.profile.memberSince", {
+                    defaultValue: "First chat {{date}}",
+                    date: firstChatDate,
+                  })}
+                </Text>
+              )}
+            </View>
+          )}
         </Form.Section>
 
         {/* Statistics Section */}
@@ -179,6 +218,7 @@ export function Profile({ user }: ProfileProps) {
           title={t("screen.profile.preferences.title", { defaultValue: "Preferences" })}
         >
           <Form.Item
+            testID="profile-settings-link"
             title={t("screen.profile.preferences.settings", { defaultValue: "Settings" })}
             subtitle={t("screen.profile.preferences.settingsDescription", {
               defaultValue: "DNS, accessibility, and more",
@@ -196,6 +236,7 @@ export function Profile({ user }: ProfileProps) {
           })}
         >
           <Form.Item
+            testID="profile-export-data"
             title={t("screen.profile.data.export", { defaultValue: "Export Data" })}
             subtitle={t("screen.profile.data.exportDescription", {
               defaultValue: "Download your chat history",
@@ -204,6 +245,7 @@ export function Profile({ user }: ProfileProps) {
             showChevron
           />
           <Form.Item
+            testID="profile-clear-all-data"
             title={t("screen.profile.data.clearAll", { defaultValue: "Clear All Data" })}
             subtitle={t("screen.profile.data.clearAllDescription", {
               defaultValue: "Delete all chats and messages",

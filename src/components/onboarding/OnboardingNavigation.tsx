@@ -1,12 +1,14 @@
 import React from "react";
 import {
   Alert,
+  BackHandler,
+  Platform,
   View,
   Text,
-  TouchableOpacity,
   StyleSheet,
 } from "react-native";
 import { useOnboarding } from "../../context/OnboardingContext";
+import { PressableRipple } from "../PressableRipple";
 import { useImessagePalette } from "../../ui/theme/imessagePalette";
 import { useTypography } from "../../ui/hooks/useTypography";
 import { LiquidGlassSpacing } from "../../ui/theme/liquidGlassSpacing";
@@ -50,10 +52,11 @@ export function OnboardingNavigation({
     try {
       await action();
     } catch (error) {
-      Alert.alert(
-        t("common.errorTitle"),
-        error instanceof Error ? error.message : t("common.errorTitle"),
-      );
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : t("common.unknownError");
+      Alert.alert(t("common.errorTitle"), message);
     } finally {
       setIsSubmitting(false);
     }
@@ -71,6 +74,23 @@ export function OnboardingNavigation({
     });
   };
 
+  // Effect: Android hardware back button — go to previous step instead of popping route.
+  React.useEffect(() => {
+    if (Platform.OS !== "android") return;
+    const subscription = BackHandler.addEventListener(
+      "hardwareBackPress",
+      () => {
+        if (isSubmitting) return true;
+        if (!isFirstStep) {
+          void runAction(previousStep);
+          return true;
+        }
+        return false; // let the system handle (will exit onboarding)
+      },
+    );
+    return () => subscription.remove();
+  }, [isSubmitting, isFirstStep, previousStep]);
+
   const handleSkip = () => {
     void runAction(skipOnboarding);
   };
@@ -84,11 +104,13 @@ export function OnboardingNavigation({
       <View style={styles.leftSection}>
         {/* iOS HIG: Skip button allows users to bypass onboarding tutorial */}
         {showSkip && !isLastStep && (
-          <TouchableOpacity
+          <PressableRipple
             onPress={handleSkip}
             style={styles.skipButton}
             testID="skip-onboarding"
             disabled={isSubmitting}
+            variant="surface"
+            pressedOpacity={0.6}
             accessibilityRole="button"
             accessibilityLabel={t("screen.onboarding.navigation.skip")}
             accessibilityHint={t("screen.onboarding.navigation.skipHint")}
@@ -102,15 +124,17 @@ export function OnboardingNavigation({
             >
               {t("screen.onboarding.navigation.skip")}
             </Text>
-          </TouchableOpacity>
+          </PressableRipple>
         )}
 
         {/* iOS HIG: Back button for navigation between onboarding steps */}
         {showBack && !isFirstStep && (
-          <TouchableOpacity
+          <PressableRipple
             onPress={handleBack}
             style={styles.backButton}
             disabled={isSubmitting}
+            variant="surface"
+            pressedOpacity={0.6}
             accessibilityRole="button"
             accessibilityLabel={t("screen.onboarding.navigation.back")}
             accessibilityHint={t("screen.onboarding.navigation.backHint")}
@@ -124,12 +148,12 @@ export function OnboardingNavigation({
             >
               {t("screen.onboarding.navigation.back")}
             </Text>
-          </TouchableOpacity>
+          </PressableRipple>
         )}
       </View>
 
       {/* iOS HIG: Primary action button - changes label and behavior on last step */}
-      <TouchableOpacity
+      <PressableRipple
         onPress={handleNext}
         disabled={isSubmitting}
         style={[
@@ -137,6 +161,8 @@ export function OnboardingNavigation({
           { backgroundColor: palette.accentTint },
         ]}
         testID={isLastStep ? "onboarding-complete" : "onboarding-continue"}
+        variant="primary"
+        pressedOpacity={0.85}
         accessibilityRole="button"
         accessibilityLabel={
           isLastStep ? t("screen.onboarding.navigation.getStarted") : nextButtonText
@@ -157,7 +183,7 @@ export function OnboardingNavigation({
         >
           {isLastStep ? t("screen.onboarding.navigation.getStarted") : nextButtonText}
         </Text>
-      </TouchableOpacity>
+      </PressableRipple>
     </View>
   );
 }

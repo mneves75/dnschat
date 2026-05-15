@@ -16,7 +16,6 @@ import Animated from "react-native-reanimated";
 import { Form } from "../../components/glass";
 import { useTranslation } from "../../i18n";
 import { useImessagePalette } from "../../ui/theme/imessagePalette";
-import type { IMessagePalette } from "../../ui/theme/imessagePalette";
 import { useTypography } from "../../ui/hooks/useTypography";
 import { LiquidGlassSpacing, getCornerRadius } from "../../ui/theme/liquidGlassSpacing";
 import { useScreenEntrance } from "../../ui/hooks/useScreenEntrance";
@@ -25,61 +24,11 @@ import { getAppVersionInfo } from "../../utils/appVersion";
 
 const AppIcon = require("../../assets/dnschat_ios26.png");
 
-const createStyles = (palette: IMessagePalette) =>
-  StyleSheet.create({
-    headerContainer: {
-      marginHorizontal: LiquidGlassSpacing.lg,
-      padding: LiquidGlassSpacing.xl,
-      borderRadius: 16,
-      backgroundColor: palette.surface,
-    },
-    header: {
-      alignItems: "center",
-    },
-    logoContainer: {
-      width: 80,
-      height: 80,
-      borderRadius: 40,
-      backgroundColor: palette.surface,
-      marginBottom: LiquidGlassSpacing.md,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    logoImage: {
-      width: 60,
-      height: 60,
-      borderRadius: getCornerRadius("input"),
-    },
-    logoText: {
-      // Typography applied inline
-    },
-    title: {
-      marginBottom: LiquidGlassSpacing.xs,
-      textAlign: "center",
-      // Typography applied inline
-    },
-    versionBadge: {
-      paddingHorizontal: LiquidGlassSpacing.sm,
-      paddingVertical: LiquidGlassSpacing.xxs + 2, // 6px
-      borderRadius: 24,
-      backgroundColor: palette.border,
-      marginBottom: LiquidGlassSpacing.md,
-    },
-    versionText: {
-      // Typography applied inline
-    },
-    description: {
-      textAlign: "center",
-      // Typography applied inline
-    },
-  });
-
 export function About() {
   const router = useRouter();
   const { t } = useTranslation();
   const palette = useImessagePalette();
   const typography = useTypography();
-  const styles = createStyles(palette);
   const { animatedStyle } = useScreenEntrance();
   const [iconError, setIconError] = useState(false);
 
@@ -128,7 +77,7 @@ export function About() {
     <Form.List testID="about-screen" navigationTitle={t("screen.about.navigationTitle")}>
       <Animated.View style={animatedStyle}>
         <Form.Section>
-        <View style={styles.headerContainer}>
+        <View style={[styles.headerContainer, { backgroundColor: palette.surface }]}>
           <View style={styles.header}>
             <View style={styles.logoContainer}>
               {!iconError ? (
@@ -148,7 +97,6 @@ export function About() {
               ) : (
                 <Text
                   style={[
-                    styles.logoText,
                     typography["headline"],
                     { color: palette.textPrimary, fontWeight: "bold" },
                   ]}
@@ -166,10 +114,9 @@ export function About() {
             >
               {t("screen.about.appName")}
             </Text>
-            <View style={styles.versionBadge}>
+            <View style={[styles.versionBadge, { backgroundColor: palette.border }]}>
               <Text
                 style={[
-                  styles.versionText,
                   typography["callout"],
                   { color: palette.textSecondary, fontWeight: "600" },
                 ]}
@@ -192,9 +139,10 @@ export function About() {
 
       <Form.Section title={t("screen.about.quickActions.title")}>
         <Form.Item
+          testID="about-settings-link"
           title={t("screen.about.quickActions.settingsTitle")}
           subtitle={t("screen.about.quickActions.settingsSubtitle")}
-          onPress={() => router.push("/settings")}
+          onPress={() => router.push("/(modals)/settings")}
           showChevron
         />
       </Form.Section>
@@ -253,9 +201,10 @@ export function About() {
           onPress={() => openLink("https://x.com/dnschat")}
         />
         <Form.Item
+          testID="about-project-settings-link"
           title={t("screen.about.sections.project.settings.title")}
           subtitle={t("screen.about.sections.project.settings.subtitle")}
-          onPress={() => router.push("/settings")}
+          onPress={() => router.push("/(modals)/settings")}
           showChevron
         />
       </Form.Section>
@@ -267,6 +216,7 @@ export function About() {
         />
         {typeof __DEV__ !== "undefined" && __DEV__ && (
           <Form.Item
+            testID="about-dev-logs-link"
             title={t("screen.about.sections.developer.devLogsTitle")}
             subtitle={t(
               "screen.about.sections.developer.devLogsSubtitle",
@@ -296,3 +246,46 @@ export function About() {
     </Form.List>
   );
 }
+
+const styles = StyleSheet.create({
+  headerContainer: {
+    marginHorizontal: LiquidGlassSpacing.lg,
+    padding: LiquidGlassSpacing.xl,
+    borderRadius: 16,
+    // backgroundColor applied inline from palette.surface
+  },
+  header: {
+    alignItems: "center",
+  },
+  logoContainer: {
+    // iOS HIG: app icons are rounded rectangles, not circles. The container
+    // is now a transparent positioning wrapper; the icon shape lives on the
+    // <Image> via getCornerRadius("appIcon").
+    width: 80,
+    height: 80,
+    marginBottom: LiquidGlassSpacing.md,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  logoImage: {
+    width: 80,
+    height: 80,
+    borderRadius: getCornerRadius("appIcon"),
+  },
+  title: {
+    marginBottom: LiquidGlassSpacing.xs,
+    textAlign: "center",
+    // Typography/color applied inline
+  },
+  versionBadge: {
+    paddingHorizontal: LiquidGlassSpacing.sm,
+    paddingVertical: LiquidGlassSpacing.xxs + 2, // 6px
+    borderRadius: 24,
+    marginBottom: LiquidGlassSpacing.md,
+    // backgroundColor applied inline from palette.border
+  },
+  description: {
+    textAlign: "center",
+    // Typography/color applied inline
+  },
+});
