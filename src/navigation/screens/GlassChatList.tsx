@@ -26,7 +26,7 @@ import {
   Platform,
 } from "react-native";
 import Animated from "react-native-reanimated";
-import { Link, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import { useChat } from "../../context/ChatContext";
 import {
   Form,
@@ -411,14 +411,12 @@ export function GlassChatList() {
                   opacity={opacities[index] ?? { value: 1 }}
                   translateX={translates[index] ?? { value: 0 }}
                 >
-                  <Link href={{ pathname: "/chat/[threadId]", params: { threadId: chat.id } }} asChild>
-                    <GlassChatItem
-                      chat={chat}
-                      onPress={() => handleChatPress(chat)}
-                      onDelete={() => handleDeleteChat(chat.id, chat.title)}
-                      onShare={() => handleShareChat(chat)}
-                    />
-                  </Link>
+                  <GlassChatItem
+                    chat={chat}
+                    onPress={() => handleChatPress(chat)}
+                    onDelete={() => handleDeleteChat(chat.id, chat.title)}
+                    onShare={() => handleShareChat(chat)}
+                  />
                 </AnimatedListItem>
               ))}
             </View>

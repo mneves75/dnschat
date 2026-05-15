@@ -79,19 +79,20 @@ AI,chat,DNS,assistant,local,native,tech,innovation,queries,networking
 
 ---
 
-## What's New (Release Notes v4.0.10)
+## What's New (Release Notes v4.0.11)
 
-AXE-VERIFIED RELEASE
+ROUTE QUALITY RELEASE
 
-- Added full AXe simulator E2E coverage for onboarding, chat, settings, DNS logs, About, profile, and fallback routes.
-- Improved accessibility identifiers and labels across core screens for more reliable navigation and assistive technology coverage.
-- Tightened release diagnostics with screenshot and accessibility-tree artifacts when E2E checks fail.
+- Fixed chat thread titles and toolbar actions so they always match the selected conversation.
+- Improved route handling for chat rows by keeping navigation ownership in one place.
+- Kept the Expo Router stack title blank until the selected chat is resolved, avoiding stale header text during transitions.
 - Kept privacy language explicit: local history is encrypted at rest, while DNS transport remains observable infrastructure.
 
-## TestFlight What to Test (v4.0.10 build 39)
+## TestFlight What to Test (v4.0.11 build 40)
 
 - Complete onboarding from a fresh install and confirm the app lands on the chat list.
 - Send short prompts over the default DNS service and confirm responses render without transport errors.
+- Open two existing conversations in sequence and confirm the thread title, share action, and clear action match the visible conversation.
 - Open Logs and confirm DNS attempts, fallback methods, and failures are visible without exposing prompt text or TXT response contents.
 - Check Settings, About, Profile, and language/accessibility labels in English and Portuguese.
 - Exercise DNS server settings and confirm invalid or unsupported server choices fail closed.
@@ -138,8 +139,8 @@ Validated screenshot sets currently available in App Store Connect:
 ### Bundle Information
 
 - **Bundle ID**: `<BUNDLE_ID>`
-- **Version**: `4.0.10`
-- **Build Number**: 39 (sync-versions)
+- **Version**: `4.0.11`
+- **Build Number**: 40 (sync-versions)
 - **App Store Connect internal IDs**: intentionally omitted from public docs; keep exact IDs in private release notes.
 - **Minimum iOS Version**: 16.0
 - **Device Support**: iPhone, iPad
@@ -272,7 +273,7 @@ No user account is required. The app does not require app-owned backend infrastr
 
 ### App Store Connect Configuration
 
-- [x] Upload final IPA build (`4.0.10` build `39`)
+- [x] Upload final IPA build (`4.0.11` build `40`)
 - [x] Local ASC health checked with `asc doctor` (`2026-05-15`)
 - [x] Apply App Store Connect metadata for `en-US` and `pt-BR`
 - [ ] Configure pricing (Free)
@@ -284,8 +285,10 @@ No user account is required. The app does not require app-owned backend infrastr
 ### Review Submission
 
 - [x] Xcode Debug simulator build passed (`2026-05-14`, Xcode `26.5`)
+- [x] AXe release simulator pass covered 10 feature groups (`2026-05-15`,
+  version `4.0.11` build `40`)
 - [x] Xcode generic iOS Release build/archive passed unsigned (`2026-05-14`)
-- [x] Signed archive/export passed for `4.0.10` build `39`
+- [x] Signed archive/export passed for `4.0.11` build `40`
 - [x] App Store Connect upload/submission check with configured ASC credentials
 - [x] TestFlight validation passed (`0` errors, `0` warnings)
 - [ ] Final testing on TestFlight
@@ -295,4 +298,4 @@ No user account is required. The app does not require app-owned backend infrastr
 
 ---
 
-_Updated for DNS Chat v4.0.10 build 39 - AXe feature coverage complete, App Store metadata applied, TestFlight upload valid_
+_Updated for DNS Chat v4.0.11 build 40 - Expo Router chat route fix, release metadata updated, TestFlight upload valid_

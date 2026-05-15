@@ -108,7 +108,7 @@ function RootLayoutContent() {
         options={{ headerShown: false, title: "" }}
       />
       <Stack.Screen name="onboarding" options={{ headerShown: false, title: "" }} />
-      <Stack.Screen name="chat/[threadId]" options={{ headerBackTitle: "" }} />
+      <Stack.Screen name="chat/[threadId]" options={{ headerBackTitle: "", title: "" }} />
       <Stack.Screen name="profile/[user]" />
       <Stack.Screen name="(modals)/settings" />
       <Stack.Screen name="dev/logs" />

@@ -6,6 +6,23 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+## [4.0.11] - 2026-05-15
+
+### Changed
+
+- Bumped app metadata to `4.0.11` build `40` across Expo, iOS, and Android via
+  `sync-versions`.
+- Updated release docs, App Store/TestFlight notes, and agent guidance for the
+  Expo Router route-resolution release.
+
+### Fixed
+
+- Fixed dynamic chat routes so the navigation title, share action, and delete
+  action resolve from the route `threadId` instead of a stale `currentChat`.
+- Removed duplicate chat-list route ownership so chat rows navigate through the
+  existing route handler without nesting an extra `Link` around the pressable
+  item.
+
 ## [4.0.10] - 2026-05-15
 
 ### Added
@@ -339,7 +356,8 @@ Versions 3.2.0 through 3.8.9 established the core feature set:
 - **3.3.0**: Android CI, release signing policy, Java 17 auto-detection
 - **3.2.x**: Public repo hardening (secrets scanning, policy tests, version sync gates), DNS server allowlist
 
-[Unreleased]: https://github.com/<owner>/dnschat/compare/v4.0.10...HEAD
+[Unreleased]: https://github.com/<owner>/dnschat/compare/v4.0.11...HEAD
+[4.0.11]: https://github.com/<owner>/dnschat/compare/v4.0.10...v4.0.11
 [4.0.10]: https://github.com/<owner>/dnschat/compare/v4.0.9...v4.0.10
 [4.0.9]: https://github.com/<owner>/dnschat/compare/v4.0.8...v4.0.9
 [4.0.8]: https://github.com/<owner>/dnschat/compare/v4.0.7...v4.0.8

@@ -40,7 +40,8 @@ Last iOS CLI release smoke: `2026-05-14`.
   and push protection when available.
 - Xcode Debug simulator build, unsigned generic iOS Release build/archive,
   physical-device compiled-app install, signed App Store archive/export, and
-  TestFlight upload all pass for `4.0.8` build `36`.
+  TestFlight upload all pass; the latest signed TestFlight evidence is
+  `4.0.11` build `40`.
 - The TestFlight build is `VALID`, encryption is `exempt`, and
   `asc validate testflight` reports `0` errors and `0` warnings. App Store
   version validation also reports `0` errors and `0` warnings, with App Privacy

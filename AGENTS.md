@@ -9,6 +9,14 @@ This file provides a fast, practical map of the repo so agents can orient quickl
 - Read `docs/technical/SPECIFICATION.md` before broad review, security work, or behavior changes; it is the current product and engineering behavior contract.
 - Read `SECURITY.md`, `docs/data-inventory.md`, and `docs/model-registry.md` before privacy, storage, logging, networking, or release-readiness changes.
 
+## Execution Standards
+
+- Always choose the best performance technique that is justified by the task, measured constraints, and the existing architecture. Do not trade maintainability for speculative micro-optimizations.
+- No laid-back approach. No loose thinking. Define the plan, execute it, critique the result, and close every material flaw before claiming the task is done.
+- No shortcuts. Work must be well-structured, neat, clean, and easy to review.
+- Do not overcomplicate. Prefer the simplest robust design that satisfies the requirement, then carry it end-to-end through implementation, documentation, and verification.
+- Do not be biased toward the user, the agent, or any proposed idea. Evaluate ideas logically against evidence, requirements, risk, and maintainability.
+
 ## What This App Is
 
 DNSChat is an Expo dev-client React Native app that sends short prompts as DNS TXT queries and renders responses.
@@ -93,6 +101,15 @@ When asked for a broad review, "latest/best practices", "2026+", or a full sourc
 - iOS/Android versions are synced via `scripts/sync-versions.js`.
 - Never edit `ios/` Xcode project version fields, `android/app/build.gradle` `versionName`/`versionCode`, or `app.json` `expo.version` by hand — `sync-versions` will overwrite them.
 - iOS `Info.plist` uses `$(MARKETING_VERSION)` / `$(CURRENT_PROJECT_VERSION)` build settings; do not hardcode versions there.
+
+## Release / TestFlight Protocol
+
+- Treat the uploaded TestFlight binary as evidence only if it was archived after the final source, dependency, pod, version, and docs state was verified. If any release-affecting file changes after upload, bump the build number with `bun run sync-versions --bump-build`, rebuild, export, upload, and validate a new build.
+- Run `bun run verify:all` before signed archive/export. If `expo-doctor` requires an SDK patch package that Bun blocks through `minimumReleaseAge`, do not weaken the global policy; use a one-command override only for the required package, update `package.json` and `bun.lock`, run `pod install` when native pods change, then rerun `verify:all`.
+- For TestFlight releases, require this evidence chain before claiming completion: signed archive succeeded, IPA export succeeded, `asc publish testflight --wait` returned `VALID`, `asc validate testflight` has `0` errors and `0` warnings, and `asc validate --app <APP_ID> --version <VERSION> --platform IOS` has no blocking findings.
+- Run AXe after release-facing UI, navigation, accessibility, or localization changes. The AXe harness must handle iOS deep-link confirmation prompts and bilingual labels (`en-US` and `pt-BR`); fix the harness if the app visibly satisfies the assertion but AXe waits on English-only copy.
+- Keep App Store Connect internal IDs, build IDs, tester group names, signing identities, profile names, team IDs, device identifiers, and local paths out of public docs and commit messages. Record exact identifiers only in private release notes outside git.
+- Do not describe a build as attached to an App Store version unless `asc` or App Store Connect evidence specifically proves that relationship. A processed `VALID` TestFlight build and an updated App Store version are separate claims.
 
 ## Docs You Will Touch Often
 
