@@ -173,7 +173,7 @@ jobs:
         run: mkdir -p artifacts/sbom
 
       - name: Generate SBOM (CycloneDX)
-        uses: anchore/sbom-action@a930d0ac434e3182448fe678398ba5713717112a # v0
+        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0
         with:
           path: .
           format: cyclonedx-json
