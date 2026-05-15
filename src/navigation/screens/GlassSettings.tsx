@@ -359,7 +359,11 @@ export function GlassSettings() {
           <Form.Item
             title={t("screen.settings.sections.dnsConfig.dnsServerLabel")}
             subtitle={currentDnsOption.label}
-            rightContent={<Text style={styles.valueText}>{dnsServer}</Text>}
+            rightContent={
+              <Text style={[styles.valueText, { color: palette.textTertiary }]}>
+                {dnsServer}
+              </Text>
+            }
             onPress={dnsServerSheet.show}
             showChevron
           />
@@ -404,7 +408,7 @@ export function GlassSettings() {
               subtitle={option.subtitle}
               rightContent={
                 activeLocaleSelection === option.value && (
-                  <Text style={styles.selectedIndicator}>•</Text>
+                  <Text style={[styles.selectedIndicator, { color: palette.destructive }]}>•</Text>
                 )
               }
               onPress={() => handleSelectLocale(option.value)}
@@ -422,7 +426,11 @@ export function GlassSettings() {
             title={t("screen.settings.sections.transportTest.messageLabel")}
             subtitle={testMessage}
             onPress={() => {}}
-            rightContent={<Text style={styles.valueText}>{testMessage}</Text>}
+            rightContent={
+              <Text style={[styles.valueText, { color: palette.textTertiary }]}>
+                {testMessage}
+              </Text>
+            }
           />
           <LiquidGlassWrapper
             variant="interactive"
@@ -456,7 +464,7 @@ export function GlassSettings() {
           </View>
 
           {lastTestResult && (
-            <View style={styles.aboutCard}>
+            <View style={[styles.aboutCard, { backgroundColor: palette.highlight }]}>
               <Text style={styles.aboutText}>
                 {t("screen.glassSettings.results.label", {
                   value: lastTestResult,
@@ -465,7 +473,7 @@ export function GlassSettings() {
             </View>
           )}
           {lastTestError && (
-            <View style={styles.aboutCard}>
+            <View style={[styles.aboutCard, { backgroundColor: palette.highlight }]}>
               <Text style={styles.aboutText}>
                 {t("screen.glassSettings.results.error", {
                   value: lastTestError,
@@ -487,7 +495,10 @@ export function GlassSettings() {
               <LiquidGlassWrapper
                 variant="interactive"
                 shape="capsule"
-                style={styles.versionBadge}
+                style={[
+                  styles.versionBadge,
+                  { backgroundColor: palette.accentSurface },
+                ]}
               >
                 <Text style={styles.versionText}>
                   {t("screen.glassSettings.sections.about.latestBadge")}
@@ -587,13 +598,16 @@ export function GlassSettings() {
               subtitle={option.description}
               rightContent={
                 dnsServer === option.value && (
-                  <Text style={styles.selectedIndicator}>•</Text>
+                  <Text style={[styles.selectedIndicator, { color: palette.destructive }]}>•</Text>
                 )
               }
               onPress={() => handleDnsServerSelect(option.value)}
               style={[
                 styles.dnsOption,
-                dnsServer === option.value && styles.selectedDnsOption,
+                { backgroundColor: palette.highlight },
+                dnsServer === option.value && {
+                  backgroundColor: `${palette.destructive}1A`,
+                },
               ]}
             />
           ))}
@@ -613,7 +627,7 @@ export function GlassSettings() {
             variant="regular"
             shape="roundedRect"
             cornerRadius={12}
-            style={styles.aboutCard}
+            style={[styles.aboutCard, { backgroundColor: palette.highlight }]}
           >
             <Text
               style={[styles.aboutText, { color: palette.textPrimary }]}
@@ -688,18 +702,16 @@ export function GlassSettings() {
 const styles = StyleSheet.create({
   valueText: {
     fontSize: 15,
-    color: "#8E8E93",
     fontWeight: "400",
   },
   versionBadge: {
     paddingHorizontal: 8,
     paddingVertical: 4,
-    backgroundColor: "rgba(0, 122, 255, 0.15)", // iOS system blue
   },
   versionText: {
     fontSize: 12,
     fontWeight: "600",
-    color: "#FF6B35", // Notion orange
+    color: "#FF6B35", // Notion orange (brand accent, intentionally non-themed)
   },
   dnsOptionsContainer: {
     paddingTop: 8,
@@ -707,15 +719,10 @@ const styles = StyleSheet.create({
   dnsOption: {
     marginBottom: 8,
     borderRadius: 8,
-    backgroundColor: "rgba(255, 255, 255, 0.05)",
-  },
-  selectedDnsOption: {
-    backgroundColor: "rgba(255, 69, 58, 0.1)", // Notion red
   },
   selectedIndicator: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#FF453A", // Modern red
   },
   aboutContent: {
     paddingTop: 16,
@@ -723,7 +730,6 @@ const styles = StyleSheet.create({
   aboutCard: {
     padding: 16,
     marginBottom: 20,
-    backgroundColor: "rgba(255, 255, 255, 0.08)",
   },
   aboutText: {
     fontSize: 16,

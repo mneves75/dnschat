@@ -49,6 +49,9 @@ jobs:
       - name: Verify DNSResolver sync
         run: bun run verify:dnsresolver-sync
 
+      - name: Verify public redaction
+        run: bun run verify:public-redaction
+
       - name: Verify React Compiler health
         run: bun run verify:react-compiler
 

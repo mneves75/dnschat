@@ -76,6 +76,7 @@ bun run verify:android    # Sanity check tooling/device
 bun run verify:android-16kb # Validate 16KB page size alignment after a native Android build
 bun run verify:typed-routes # Generate and validate Expo Router typed routes
 bun run verify:react-compiler # Run React Compiler healthcheck
+bun run verify:public-redaction # Ensure public docs do not expose local release identifiers
 bun run verify:all     # Run ALL verification gates (lint, test, pods, sdk alignment, etc.)
 
 # Version sync
@@ -214,7 +215,7 @@ GitHub Actions (`.github/workflows/ci.yml`) runs on push to main and PRs:
 
 **iOS**: Requires Xcode 15+, iOS 16+ target. Device builds need a local signing team/profile, but the repo keeps `DEVELOPMENT_TEAM` empty for public portability. Last CLI smoke used Xcode `26.5` (`17F42`) on 2026-05-14 and passed Debug simulator build plus unsigned generic Release build/archive. The 2026-05-14 release run also installed the compiled Expo dev-client app on a physical device, produced a signed App Store archive/export, uploaded the TestFlight build, and attached it to the App Store version. Internal App Store Connect IDs, tester group names, device names, and local artifact paths belong in private release notes, not public docs. `xcodebuild test` is not a gate yet because the `DNSChat` scheme has no XCTest bundles.
 
-If a freshly imported distribution certificate makes `codesign` hang during `[CP] Embed Pods Frameworks`, isolate signing in a temporary or local build keychain, unlock it, set its key partition list, put it first in `security list-keychains`, and pass `OTHER_CODE_SIGN_FLAGS='--keychain <keychain path>'` to `xcodebuild archive`. Do not commit certificates, private keys, `.p12` files, provisioning profiles, or App Store Connect keys.
+If a freshly imported distribution certificate makes `codesign` hang during `[CP] Embed Pods Frameworks`, isolate signing in a temporary or local build keychain, unlock it, set its key partition list, put it first in `security list-keychains`, and pass `OTHER_CODE_SIGN_FLAGS='--keychain <keychain path>'` to `xcodebuild archive`. Do not commit certificates, private keys, `.p12` files, provisioning profiles, or App Store Connect keys. Keep exact device, signing, tester-group, local-path, and App Store Connect evidence in private notes outside git; public docs must follow `docs/public-release-redaction.md`.
 
 **Android**: Requires Java 17. `bun run android` auto-detects via `/usr/libexec/java_home -v 17` or Homebrew paths. Release signing credentials are never committed (uses `keystore.properties` or CI injection).
 

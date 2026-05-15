@@ -63,6 +63,7 @@ For any source-code sweep, map findings and fixes back to these requirements. Do
 - Native module tests: `cd modules/dns-native && bun run test`
 - DNS harness: `bun run dns:harness -- --message "test message"`; add `--local-server` for offline UDP/TCP verification.
 - Security scan: `gitleaks detect --source . --redact --no-banner --config .gitleaks.toml`
+- Public redaction scan: `bun run verify:public-redaction`
 - iOS CLI build smoke: `xcodebuild clean build -workspace ios/DNSChat.xcworkspace -scheme DNSChat -configuration Debug -destination 'platform=iOS Simulator,name=iPhone 17'`
 - iOS unsigned release smoke: `xcodebuild clean build -workspace ios/DNSChat.xcworkspace -scheme DNSChat -configuration Release -destination 'generic/platform=iOS' CODE_SIGNING_ALLOWED=NO`
 - iOS unsigned archive smoke: `xcodebuild clean archive -workspace ios/DNSChat.xcworkspace -scheme DNSChat -configuration Release -destination 'generic/platform=iOS' -archivePath /tmp/DNSChat.xcarchive CODE_SIGNING_ALLOWED=NO`
@@ -71,7 +72,7 @@ For any source-code sweep, map findings and fixes back to these requirements. Do
 - TestFlight release: after signed archive/export, use `asc publish testflight --app <APP_ID> --ipa <IPA> --version <VERSION> --build-number <BUILD> --group <GROUPS> --wait`, then verify with `asc validate testflight` and `asc validate --app <APP_ID> --version <VERSION> --platform IOS`.
 - Version sync: `bun run sync-versions` (source = `package.json`); preview with `bun run sync-versions:dry`.
 - Individual verifies: `bun run verify:ios-pods`, `verify:android`, `verify:android-16kb`, `verify:typed-routes`, `verify:react-compiler`, `verify:sdk-alignment`, `verify:dnsresolver-sync`, `verify:expo-doctor`.
-- Verify (full gate): `bun run verify:all` runs all of the above plus lint and tests.
+- Verify (full gate): `bun run verify:all` runs all of the above plus public redaction, lint, and tests.
 
 ## Review / Security Sweep Protocol
 
@@ -118,7 +119,7 @@ Release:
 - Use Bun as default package manager.
 - Keep iOS `DEVELOPMENT_TEAM` empty for public portability (enforced by `__tests__/repo.noCredentials.spec.ts`).
 - Keep signing assets local. Never commit certificates, private keys, `.p12` files, provisioning profiles, App Store Connect API keys, or temporary keychains created for archive/export.
-- Keep public docs privacy-clean. Use placeholders for local paths, device names, device identifiers, App Store Connect internal UUIDs, tester group names, certificate IDs, team IDs, and profile names.
+- Keep public docs privacy-clean. Follow `docs/public-release-redaction.md`; use placeholders for local paths, device names, device identifiers, App Store Connect internal UUIDs, tester group names, certificate IDs, team IDs, and profile names.
 - Keep `react-native-reanimated/plugin` last in `babel.config.js`.
 - Keep React Compiler enabled and avoid adding manual `useMemo`/`useCallback` unless profiling proves it is needed.
 - Do not add new files under `src/navigation/screens/` expecting routing to pick them up — add a route under `app/` and import the screen.

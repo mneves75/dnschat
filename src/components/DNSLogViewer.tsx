@@ -65,7 +65,10 @@ export const DNSLogViewer: React.FC<DNSLogViewerProps> = ({
                     style={[
                       styles.badge,
                       typography.caption2,
-                      { backgroundColor: DNSLogService.getMethodColor(e.method) },
+                      {
+                        backgroundColor: DNSLogService.getMethodColor(e.method),
+                        color: palette.bubbleTextOnBlue,
+                      },
                     ]}
                   >
                     {e.method.toUpperCase()}
@@ -122,7 +125,6 @@ const styles = StyleSheet.create({
   entries: { marginTop: LiquidGlassSpacing.xs },
   entryRow: { flexDirection: "row", alignItems: "center", marginBottom: LiquidGlassSpacing.xxs },
   badge: {
-    color: "#fff",
     paddingHorizontal: LiquidGlassSpacing.xxs,
     paddingVertical: LiquidGlassSpacing.xxs / 2,
     borderRadius: LiquidGlassSpacing.xxs,

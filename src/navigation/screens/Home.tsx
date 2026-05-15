@@ -47,7 +47,7 @@ export function Home() {
 
   // DNS status indicator
   const isDnsConnected = Boolean(dnsServer);
-  const dnsStatusColor = isDnsConnected ? "#34C759" : palette.textTertiary;
+  const dnsStatusColor = isDnsConnected ? palette.success : palette.textTertiary;
   const dnsStatusText = isDnsConnected
     ? t("screen.home.dnsConnected", { defaultValue: "Connected" })
     : t("screen.home.dnsDisconnected", { defaultValue: "Not configured" });
@@ -195,7 +195,12 @@ export function Home() {
                 title={chat.title}
                 subtitle={formatDistanceToNow(chat.createdAt, { addSuffix: true })}
                 rightContent={
-                  <View style={styles.chatBadge}>
+                  <View
+                    style={[
+                      styles.chatBadge,
+                      { backgroundColor: palette.accentSurface },
+                    ]}
+                  >
                     <Text style={[styles.chatBadgeText, { color: palette.userBubble }]}>
                       {chat.messages.length}
                     </Text>
@@ -288,7 +293,6 @@ const styles = StyleSheet.create({
     minWidth: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: "rgba(0, 122, 255, 0.15)",
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 8,

@@ -16,6 +16,8 @@ Developer documentation for DNSChat. Code is the source of truth — these docs 
 - `docs/technical/EXPO-DOCTOR-CONFIGURATION.md` — why specific Expo Doctor warnings are intentional
 - `docs/data-inventory.md` — on-device data storage, retention, encryption
 - `docs/model-registry.md` — model usage policy (currently: none)
+- `docs/public-release-redaction.md` — public-doc redaction policy and release
+  evidence split
 
 ## Current verification baseline
 
@@ -42,6 +44,9 @@ Last iOS CLI release smoke: `2026-05-14` with Xcode `26.5` (`17F42`).
   XCTest bundles.
 - Public docs and store copy must not claim that DNS prompts are private or
   end-to-end encrypted; only local history is encrypted at rest.
+- Public docs must use placeholders for local/device/account-specific release
+  identifiers. Run `bun run verify:public-redaction` and `gitleaks detect`
+  before committing release docs.
 
 ## Release
 

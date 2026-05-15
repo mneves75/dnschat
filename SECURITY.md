@@ -35,8 +35,9 @@ Last iOS CLI release smoke: `2026-05-14`.
 - Dependency audits pass for the app (`bun audit`) and local native module
   (`npm audit` in `modules/dns-native`).
 - Secret scanning passes with `gitleaks detect --source . --redact --no-banner --config .gitleaks.toml`.
-- Public-repo leak prevention uses defense in depth: local `gitleaks`, repo
-  hygiene tests, GitHub secret scanning, and push protection when available.
+- Public-repo leak prevention uses defense in depth: local `gitleaks`,
+  `bun run verify:public-redaction`, repo hygiene tests, GitHub secret scanning,
+  and push protection when available.
 - Xcode Debug simulator build, unsigned generic iOS Release build/archive,
   physical-device compiled-app install, signed App Store archive/export, and
   TestFlight upload all pass for `4.0.8` build `36`.

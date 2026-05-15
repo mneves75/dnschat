@@ -159,7 +159,7 @@ export function Logs() {
     const isActive = item.finalStatus === "pending";
     const statusColor =
       item.finalStatus === "success"
-        ? "#34C759" // iOS success green
+        ? palette.success
         : item.finalStatus === "failure"
           ? palette.destructive
           : palette.userBubble; // Pending
@@ -179,7 +179,10 @@ export function Logs() {
             shape="roundedRect"
             cornerRadius={12}
             isInteractive={true}
-            style={[styles.logCard, isActive && styles.activeLogCard]}
+            style={[
+              styles.logCard,
+              isActive && { backgroundColor: palette.accentSurface },
+            ]}
           >
             <View style={styles.logHeader}>
               <View style={styles.logHeaderLeft}>
@@ -217,9 +220,11 @@ export function Logs() {
               <View
                 style={[styles.statusIndicator, { backgroundColor: statusColor }]}
               >
-                {isActive && <ActivityIndicator size="small" color="white" />}
+                {isActive && (
+                  <ActivityIndicator size="small" color={palette.bubbleTextOnBlue} />
+                )}
                 {!isActive && (
-                  <Text style={styles.statusText}>
+                  <Text style={[styles.statusText, { color: palette.bubbleTextOnBlue }]}>
                     {item.finalStatus === "success"
                       ? "OK"
                       : item.finalStatus === "failure"
@@ -345,9 +350,6 @@ const styles = StyleSheet.create({
     padding: 16,
     marginHorizontal: 20,
   },
-  activeLogCard: {
-    backgroundColor: "rgba(0, 122, 255, 0.1)", // iOS system blue for active
-  },
   logHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -389,7 +391,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   statusText: {
-    color: "white",
     fontWeight: "bold",
     fontSize: 16,
   },

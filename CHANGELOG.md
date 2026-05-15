@@ -8,6 +8,9 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ### Changed
 
+- Added a reusable public-release redaction policy, local verification script,
+  CI workflow, PR checklist, and docs guidance so release evidence stays split
+  between placeholder-based public runbooks and private operator notes.
 - Documented the completed DNSChat `4.0.8` TestFlight release evidence across
   README, install, security, App Store, TestFlight, and agent guidance docs:
   physical-device compiled install, signed archive/export, TestFlight

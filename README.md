@@ -133,6 +133,9 @@ bun run lint
 # Unit tests
 bun run test
 
+# Public-doc redaction gate
+bun run verify:public-redaction
+
 # Keep Expo iOS pods aligned with installed node_modules (iOS)
 bun run verify:ios-pods
 
@@ -228,6 +231,9 @@ Last iOS CLI release smoke: `2026-05-14` with Xcode `26.5` (`17F42`).
   rules exclude SecureStore key material.
 - Store submission credentials are not committed. Keep `eas submit`/App Store
   Connect identifiers local (do not add them to `eas.json`).
+- Public release docs use placeholders for local/device/account identifiers.
+  Run `bun run verify:public-redaction` before committing release notes or store
+  runbooks. Exact release evidence belongs in private notes outside git.
 
 ## Contributing
 
