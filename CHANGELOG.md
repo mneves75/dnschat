@@ -6,6 +6,24 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+## [4.0.9] - 2026-05-14
+
+### Fixed
+
+- Light/dark mode mismatch on the chat thread navigation header. The root
+  `<Stack>` in `app/_layout.tsx` now sets theme-aware `headerStyle`,
+  `headerTintColor`, `headerTitleStyle`, `headerShadowVisible: false`, and
+  `contentStyle` driven by `useImessagePalette()`. The chat header (back
+  arrow, title, three-dot toolbar) now matches the screen body in both modes
+  instead of rendering on a white background while the chat content is dark.
+- Hardcoded color leaks across screens migrated onto the existing palette
+  tokens: Home / Logs DNS-status indicator (`#34C759` → `palette.success`),
+  Logs status text and active card surface, Home chat badge surface, and
+  GlassSettings option cards (DNS picker, destructive surface, about card)
+  now resolve correctly in both light and dark themes. The DNSLogViewer
+  badge text now uses `palette.bubbleTextOnBlue` instead of a hardcoded
+  `#fff`.
+
 ### Changed
 
 - Added a reusable public-release redaction policy, local verification script,
