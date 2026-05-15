@@ -11,7 +11,7 @@
 
 import React, { useState } from "react";
 import { useRouter } from "expo-router";
-import { View, Text, StyleSheet, Linking, Image } from "react-native";
+import { View, Text, StyleSheet, Image } from "react-native";
 import Animated from "react-native-reanimated";
 import { Form } from "../../components/glass";
 import { useTranslation } from "../../i18n";
@@ -21,6 +21,7 @@ import { LiquidGlassSpacing, getCornerRadius } from "../../ui/theme/liquidGlassS
 import { useScreenEntrance } from "../../ui/hooks/useScreenEntrance";
 import { devLog } from "../../utils/devLog";
 import { getAppVersionInfo } from "../../utils/appVersion";
+import { openExternalUrl } from "../../utils/externalLinks";
 
 const AppIcon = require("../../assets/dnschat_ios26.png");
 
@@ -33,7 +34,7 @@ export function About() {
   const [iconError, setIconError] = useState(false);
 
   const openLink = (url: string) => {
-    Linking.openURL(url);
+    void openExternalUrl(url);
   };
 
   const credits = [

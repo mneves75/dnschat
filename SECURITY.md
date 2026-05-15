@@ -29,8 +29,8 @@ Please do not open public issues for security vulnerabilities.
 
 ## Current Security Baseline
 
-Last full source/security sweep: `2026-05-14`.
-Last iOS CLI release smoke: `2026-05-14`.
+Last full source/security sweep: `2026-05-15`.
+Last iOS signed release archive/export: `2026-05-15`.
 
 - Dependency audits pass for the app (`bun audit`) and local native module
   (`npm audit` in `modules/dns-native`).
@@ -41,7 +41,7 @@ Last iOS CLI release smoke: `2026-05-14`.
 - Xcode Debug simulator build, unsigned generic iOS Release build/archive,
   physical-device compiled-app install, signed App Store archive/export, and
   TestFlight upload all pass; the latest signed TestFlight evidence is
-  `4.0.11` build `40`.
+  `4.0.12` build `42`.
 - The TestFlight build is `VALID`, encryption is `exempt`, and
   `asc validate testflight` reports `0` errors and `0` warnings. App Store
   version validation also reports `0` errors and `0` warnings, with App Privacy

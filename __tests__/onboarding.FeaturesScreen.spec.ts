@@ -30,8 +30,8 @@ describe("FeaturesScreen - iOS 26 HIG Compliance", () => {
       expect(sourceCode).toContain("LiquidGlassSpacing");
     });
 
-    it("imports Linking for GitHub action", () => {
-      expect(sourceCode).toContain("Linking");
+    it("imports the shared external URL opener for GitHub action", () => {
+      expect(sourceCode).toContain("openExternalUrl");
     });
   });
 
@@ -308,8 +308,9 @@ describe("FeaturesScreen - iOS 26 HIG Compliance", () => {
       expect(sourceCode).toContain("typography={typography}");
     });
 
-    it("handles GitHub link properly", () => {
-      expect(sourceCode).toContain("Linking.openURL");
+    it("handles GitHub link through the shared external URL opener", () => {
+      expect(sourceCode).toContain("openExternalUrl");
+      expect(sourceCode).not.toContain("Linking.openURL");
     });
   });
 

@@ -112,15 +112,15 @@ xcodebuild clean archive \
 Latest public release evidence (`2026-05-15`, Xcode `26.5` / `17F42`):
 
 - Debug simulator build passed on iOS 26.5.
-- AXe release simulator pass covered 10 feature groups for version `4.0.11`
-  build `40`.
+- AXe release simulator pass covered 10 feature groups for version `4.0.12`
+  build `42`.
 - Generic iOS Release build passed unsigned.
 - Generic iOS Release archive passed unsigned.
 - Physical-device compiled Expo dev-client install passed for version `4.0.8` build `36`.
-- Signed App Store archive passed for version `4.0.11` build `40`.
-- Signed IPA export passed for version `4.0.11` build `40`.
+- Signed App Store archive passed for version `4.0.12` build `42`.
+- Signed IPA export passed for version `4.0.12` build `42`.
 - App Store Connect metadata was applied for `en-US` and `pt-BR` release fields.
-- App Store Connect TestFlight upload passed for version `4.0.11` build `40`.
+- App Store Connect TestFlight upload passed for version `4.0.12` build `42`.
 - TestFlight build processing completed as `VALID`; non-exempt encryption is `false`.
 - TestFlight validation passed with `0` errors and `0` warnings.
 - App Store version validation passed with `0` errors and `0` warnings; App Privacy publish-state remains API-unverifiable.
@@ -206,7 +206,7 @@ bun run ios -- --verbose
 - **App Store Connect** app record created
 - **Code signing** configured correctly
 - **Bundle ID** matches (`<BUNDLE_ID>`)
-- **Version numbers** consistent (v4.0.11 build 40)
+- **Version numbers** consistent (v4.0.12 build 42)
 - **Native DNS module** compiles successfully
 - **Xcode CLI smoke** passed:
   - Debug simulator build
@@ -234,9 +234,9 @@ eas build --platform ios --profile production
 
 ### TestFlight distribution
 
-Current v4.0.11 distribution target:
+Current v4.0.12 distribution target:
 
-- Version/build: `4.0.11` / `40`
+- Version/build: `4.0.12` / `42`
 - Processing state: `VALID`
 - Tester groups: configured in App Store Connect; internal group names are intentionally omitted from public docs.
 - Exact build IDs and App Store Connect version IDs belong in private release notes, not public runbooks.
@@ -248,12 +248,16 @@ After upload:
 3. **Feedback**: Collect user feedback through TestFlight
 4. **Iterate**: Upload new builds for continuous testing
 
-### What to Test for v4.0.11 build 40
+### What to Test for v4.0.12 build 42
 
 - Complete onboarding from a fresh install and confirm the app lands on the chat list.
 - Send short prompts through the default DNS service and confirm responses render.
-- Open two existing conversations in sequence and confirm the thread title,
-  share action, and clear action match the visible conversation.
+- Switch the device between light and dark mode and confirm chat detail toolbar
+  icons, header text, and header surfaces stay aligned with the app theme.
+- Type in a long chat thread and confirm the final message remains visible above
+  the composer as the keyboard/input inset changes.
+- Open onboarding/help, Settings, and About external links and confirm allowed
+  `https:` and `mailto:` destinations open normally.
 - Confirm Logs show resolver attempts and failures without exposing prompt text or TXT responses.
 - Confirm existing local chat history loads after update and remains available offline.
 - Check onboarding, settings, About, and language/accessibility labels in English and Portuguese.
@@ -280,4 +284,4 @@ If you encounter issues during the upload process:
 
 ---
 
-_TestFlight upload guide for DNSChat v4.0.11 build 40 - Last updated: 2026-05-15_
+_TestFlight upload guide for DNSChat v4.0.12 build 42 - Last updated: 2026-05-15_

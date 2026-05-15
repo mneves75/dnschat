@@ -24,7 +24,6 @@ import {
   View,
   Alert,
   Platform,
-  Linking,
   Share,
 } from "react-native";
 import Animated from "react-native-reanimated";
@@ -50,6 +49,7 @@ import { useTransportTestThrottle } from "../../ui/hooks/useTransportTestThrottl
 import { HapticFeedback, persistHapticsPreference } from "../../utils/haptics";
 import { devLog, devWarn } from "../../utils/devLog";
 import { getAppVersionInfo } from "../../utils/appVersion";
+import { openExternalUrl } from "../../utils/externalLinks";
 
 const getErrorMessage = (error: unknown): string => {
   if (error instanceof Error) return error.message;
@@ -166,7 +166,7 @@ export function GlassSettings() {
   };
 
   const handleOpenGitHub = () => {
-    Linking.openURL("https://github.com/mneves75/dnschat");
+    void openExternalUrl("https://github.com/mneves75/dnschat");
   };
 
   const handleResetSettings = () => {
@@ -615,9 +615,9 @@ export function GlassSettings() {
             testID="settings-report-bug"
             title={t("screen.glassSettings.sections.support.bugTitle")}
             subtitle={t("screen.glassSettings.sections.support.bugSubtitle")}
-            onPress={() =>
-              Linking.openURL("https://github.com/mneves75/dnschat/issues")
-            }
+            onPress={() => {
+              void openExternalUrl("https://github.com/mneves75/dnschat/issues");
+            }}
             showChevron
           />
         </Form.Section>
@@ -722,24 +722,27 @@ export function GlassSettings() {
         actions={[
           {
             title: t("screen.glassSettings.supportSheet.docs"),
-            onPress: () =>
-              Linking.openURL(
+            onPress: () => {
+              void openExternalUrl(
                 "https://github.com/mneves75/dnschat/blob/main/README.md",
-              ),
+              );
+            },
           },
           {
             title: t("screen.glassSettings.supportSheet.community"),
-            onPress: () =>
-              Linking.openURL(
+            onPress: () => {
+              void openExternalUrl(
                 "https://github.com/mneves75/dnschat/discussions",
-              ),
+              );
+            },
           },
           {
             title: t("screen.glassSettings.supportSheet.email"),
-            onPress: () =>
-              Linking.openURL(
-                "mailto:support@dnschat.app?subject=DNSChat Support",
-              ),
+            onPress: () => {
+              void openExternalUrl(
+                "mailto:support@dnschat.app?subject=DNSChat%20Support",
+              );
+            },
           },
           {
             title: t("screen.glassSettings.supportSheet.cancel"),

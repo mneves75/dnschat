@@ -7,7 +7,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { Assets as NavigationAssets } from "@react-navigation/elements";
-import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
+import { ThemeProvider } from "@react-navigation/native";
 import { useColorScheme } from "react-native";
 import { ErrorBoundary } from "../src/components/ErrorBoundary";
 import { HapticsConfigurator } from "../src/components/HapticsConfigurator";
@@ -18,6 +18,7 @@ import { SettingsProvider } from "../src/context/SettingsContext";
 import { I18nProvider } from "../src/i18n";
 import { DNSLogService } from "../src/services/dnsLogService";
 import { useImessagePalette } from "../src/ui/theme/imessagePalette";
+import { createNavigationTheme } from "../src/ui/theme/navigationTheme";
 import { AndroidStartupDiagnostics } from "../src/utils/androidStartupDiagnostics";
 
 const NAVIGATION_ASSETS = [
@@ -32,7 +33,21 @@ function RootLayoutContent() {
   const router = useRouter();
   const segments = useSegments();
   const rootNavigationState = useRootNavigationState();
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === "dark";
   const palette = useImessagePalette();
+  const navigationTheme = React.useMemo(
+    () => createNavigationTheme(palette, isDark),
+    [
+      isDark,
+      palette.background,
+      palette.backgroundSecondary,
+      palette.destructive,
+      palette.separator,
+      palette.textPrimary,
+      palette.userBubble,
+    ],
+  );
   const [hasSettledInitialRoute, setHasSettledInitialRoute] = React.useState(false);
   const routeMatchesExpectation =
     (!hasCompletedOnboarding && segments[0] === "onboarding") ||
@@ -116,13 +131,10 @@ function RootLayoutContent() {
     </Stack>
   );
 
-  return stack;
+  return <ThemeProvider value={navigationTheme}>{stack}</ThemeProvider>;
 }
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
-  const theme = colorScheme === "dark" ? DarkTheme : DefaultTheme;
-
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
@@ -134,9 +146,7 @@ export default function RootLayout() {
                   <OnboardingProvider>
                     <ChatProvider>
                       <HapticsConfigurator />
-                      <ThemeProvider value={theme}>
-                        <RootLayoutContent />
-                      </ThemeProvider>
+                      <RootLayoutContent />
                     </ChatProvider>
                   </OnboardingProvider>
                 </I18nProvider>

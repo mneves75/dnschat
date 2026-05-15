@@ -89,7 +89,7 @@ export function MessageList({
         });
       });
     }
-  }, [messages.length, lastMessageKey]);
+  }, [messages.length, lastMessageKey, bottomInset]);
 
   // iOS 26 HIG: Render individual message bubble with solid backgrounds
   // MessageBubble uses solid colors (content layer) NOT glass (control layer)

@@ -6,6 +6,29 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+## [4.0.12] - 2026-05-15
+
+### Fixed
+
+- Fixed native navigation chrome theme alignment so chat detail toolbar icons,
+  titles, and header surfaces resolve from the app palette in light and dark
+  modes instead of falling back to mismatched React Navigation defaults.
+- Fixed chat detail auto-scroll after keyboard/input inset changes so the final
+  message stays visible above the composer.
+
+### Security
+
+- Hardened external link handling by routing app-opened URLs through a shared
+  `https:` / `mailto:` allowlist with failure handling instead of direct native
+  opener calls.
+
+### Changed
+
+- Bumped app metadata to `4.0.12` build `42` across Expo, iOS, and Android via
+  `sync-versions`.
+- Updated release docs, App Store/TestFlight notes, and verification baseline
+  for the dark-mode navigation release.
+
 ## [4.0.11] - 2026-05-15
 
 ### Changed
@@ -356,7 +379,8 @@ Versions 3.2.0 through 3.8.9 established the core feature set:
 - **3.3.0**: Android CI, release signing policy, Java 17 auto-detection
 - **3.2.x**: Public repo hardening (secrets scanning, policy tests, version sync gates), DNS server allowlist
 
-[Unreleased]: https://github.com/<owner>/dnschat/compare/v4.0.11...HEAD
+[Unreleased]: https://github.com/<owner>/dnschat/compare/v4.0.12...HEAD
+[4.0.12]: https://github.com/<owner>/dnschat/compare/v4.0.11...v4.0.12
 [4.0.11]: https://github.com/<owner>/dnschat/compare/v4.0.10...v4.0.11
 [4.0.10]: https://github.com/<owner>/dnschat/compare/v4.0.9...v4.0.10
 [4.0.9]: https://github.com/<owner>/dnschat/compare/v4.0.8...v4.0.9

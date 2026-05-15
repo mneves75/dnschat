@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  Linking,
 } from "react-native";
 import { OnboardingNavigation } from "../OnboardingNavigation";
 import { PressableRipple } from "../../PressableRipple";
@@ -12,6 +11,7 @@ import { useImessagePalette } from "../../../ui/theme/imessagePalette";
 import { useTypography } from "../../../ui/hooks/useTypography";
 import { LiquidGlassSpacing } from "../../../ui/theme/liquidGlassSpacing";
 import { useTranslation } from "../../../i18n";
+import { openExternalUrl } from "../../../utils/externalLinks";
 
 interface Feature {
   label: string;
@@ -76,7 +76,7 @@ export function FeaturesScreen() {
       action: {
         text: t("screen.onboarding.features.opensource.action"),
         onPress: () => {
-          Linking.openURL("https://github.com/mneves75/dnschat");
+          void openExternalUrl("https://github.com/mneves75/dnschat");
         },
       },
     },

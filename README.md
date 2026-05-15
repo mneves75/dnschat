@@ -7,7 +7,7 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 - JavaScript fallback transports (UDP/TCP) for constrained networks
 - An in-app Logs screen to inspect attempts, failures, and fallbacks
 
-[![Version](https://img.shields.io/badge/version-4.0.11-blue.svg)](.)
+[![Version](https://img.shields.io/badge/version-4.0.12-blue.svg)](.)
 [![React Native](https://img.shields.io/badge/React%20Native-0.83.6-blue.svg)](https://reactnative.dev/)
 [![Expo](https://img.shields.io/badge/Expo-55.0.24-black.svg)](https://expo.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9.x-blue.svg)](https://www.typescriptlang.org/)
@@ -31,7 +31,7 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 
 ## Tech stack
 
-- App version: `4.0.11` (build `40`)
+- App version: `4.0.12` (build `42`)
 - Expo workflow: Expo Router + dev-client + EAS-compatible native config
 - Expo SDK: `55.0.24`
 - React: `19.2.0`
@@ -203,25 +203,26 @@ Release:
 ## Current verification baseline
 
 Last full source/security sweep: `2026-05-15`.
-Last AXe simulator E2E feature pass: `2026-05-15` for version `4.0.11` build
-`40`.
-Last iOS CLI release smoke: `2026-05-14` with Xcode `26.5` (`17F42`).
+Last AXe simulator E2E feature pass: `2026-05-15` for version `4.0.12` build
+`42`.
+Last iOS signed release archive/export: `2026-05-15` for version `4.0.12`
+build `42`.
 
 - `bun run verify:all` passes (`expo-doctor` 17/17, SDK alignment, typed routes,
   DNS resolver sync, iOS pods, React Compiler, Android setup, lint, and Jest).
 - AXe E2E baseline: 10 feature groups passed in one owned release-simulator
   run.
-- Jest baseline: 75 suites passed, 1 skipped; 769 tests passed, 13 skipped.
+- Jest baseline: 78 suites passed, 1 skipped; 776 tests passed, 13 skipped.
 - `bun audit`, `npm audit` in `modules/dns-native`, and `gitleaks detect`
   report no vulnerabilities or leaks.
 - `xcodebuild clean build` passes for Debug on an iOS 26.5 simulator.
 - `xcodebuild clean build` and `xcodebuild clean archive` pass for generic iOS
   Release when code signing is disabled (`CODE_SIGNING_ALLOWED=NO`).
 - Physical-device compiled Expo dev-client install passed.
-- Signed App Store archive/export passed, App Store Connect metadata was
-  updated, and the IPA was uploaded to TestFlight. The processed build is
-  `VALID`; internal App Store Connect IDs are intentionally omitted from public
-  docs.
+- Signed App Store archive/export passed, TestFlight upload completed, the
+  processed build is `VALID`, and TestFlight validation reports `0` errors and
+  `0` warnings. Internal App Store Connect IDs are intentionally omitted from
+  public docs.
 - `asc validate testflight` and App Store version validation pass with `0`
   errors and `0` warnings; the remaining App Store validation notes are
   informational: manual release type and API-unverifiable App Privacy publish
