@@ -275,7 +275,7 @@ No user account is required. The app does not require app-owned backend infrastr
 
 ### App Store Connect Configuration
 
-- [ ] Upload final IPA build (`4.0.13` build `43`)
+- [x] Upload final IPA build (`4.0.13` build `43`)
 - [x] Local ASC health checked with `asc doctor` (`2026-05-17`)
 - [x] Apply App Store Connect metadata for `en-US` and `pt-BR`
 - [ ] Configure pricing (Free)
@@ -290,9 +290,9 @@ No user account is required. The app does not require app-owned backend infrastr
 - [x] AXe release simulator pass covered 10 feature groups (`2026-05-17`,
   version `4.0.13` build `43`)
 - [x] Xcode generic iOS Release build/archive passed unsigned (`2026-05-14`)
-- [ ] Signed archive/export passed for `4.0.13` build `43`
-- [ ] App Store Connect upload/submission check with configured ASC credentials
-- [ ] TestFlight validation passed (`0` errors, `0` warnings)
+- [x] Signed archive/export passed for `4.0.13` build `43`
+- [x] App Store Connect upload/submission check with configured ASC credentials
+- [x] TestFlight validation passed (`0` errors, `0` warnings)
 - [ ] Final testing on TestFlight
 - [ ] Review guidelines compliance check
 - [ ] Submit for App Store Review
@@ -300,4 +300,4 @@ No user account is required. The app does not require app-owned backend infrastr
 
 ---
 
-_Updated for DNS Chat v4.0.13 build 43 - Clawpatch hardening release target_
+_Updated for DNS Chat v4.0.13 build 43 - Clawpatch hardening release uploaded to TestFlight_

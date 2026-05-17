@@ -117,10 +117,10 @@ Latest public release evidence (`2026-05-17`, Xcode `26.5` / `17F42`):
 - Generic iOS Release build passed unsigned.
 - Generic iOS Release archive passed unsigned.
 - Physical-device compiled Expo dev-client install passed for version `4.0.8` build `36`.
-- Signed App Store archive passed for version `4.0.12` build `42`.
-- Signed IPA export passed for version `4.0.12` build `42`.
+- Signed App Store archive passed for version `4.0.13` build `43`.
+- Signed IPA export passed for version `4.0.13` build `43`.
 - App Store Connect metadata was applied for `en-US` and `pt-BR` release fields.
-- App Store Connect TestFlight upload passed for version `4.0.12` build `42`.
+- App Store Connect TestFlight upload passed for version `4.0.13` build `43`.
 - TestFlight build processing completed as `VALID`; non-exempt encryption is `false`.
 - TestFlight validation passed with `0` errors and `0` warnings.
 - App Store version validation passed with `0` errors and `0` warnings; App Privacy publish-state remains API-unverifiable.
@@ -237,7 +237,7 @@ eas build --platform ios --profile production
 Current v4.0.13 distribution target:
 
 - Version/build: `4.0.13` / `43`
-- Processing state: pending upload
+- Processing state: `VALID`
 - Tester groups: configured in App Store Connect; internal group names are intentionally omitted from public docs.
 - Exact build IDs and App Store Connect version IDs belong in private release notes, not public runbooks.
 

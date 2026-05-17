@@ -205,8 +205,8 @@ Release:
 Last full source/security sweep: `2026-05-17`.
 Last AXe simulator E2E feature pass: `2026-05-17` for version `4.0.13` build
 `43`.
-Last iOS signed release archive/export: `2026-05-15` for version `4.0.12`
-build `42`; version `4.0.13` build `43` is the current release target.
+Last iOS signed release archive/export: `2026-05-17` for version `4.0.13`
+build `43`.
 
 - `bun run verify:all` passes (`expo-doctor` 17/17, SDK alignment, typed routes,
   DNS resolver sync, iOS pods, React Compiler, Android setup, lint, and Jest).

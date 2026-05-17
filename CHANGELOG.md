@@ -45,6 +45,9 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 - Bumped app metadata to `4.0.13` build `43` across Expo, iOS, and Android via
   `sync-versions`.
+- Shipped `4.0.13` build `43` through signed iOS archive/export and TestFlight
+  processing, with TestFlight and App Store version validations returning no
+  errors or warnings.
 - Updated release docs, App Store/TestFlight notes, and verification baseline
   for the Clawpatch hardening release.
 

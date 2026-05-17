@@ -134,7 +134,7 @@ install failure.
 Latest AXe simulator release evidence: `2026-05-17`, version `4.0.13` build
 `43`, 10 feature groups passed in one owned release-simulator run.
 
-Latest signed TestFlight evidence: version `4.0.12` build `42` archived,
+Latest signed TestFlight evidence: version `4.0.13` build `43` archived,
 exported, uploaded, processed as `VALID`, and passed TestFlight validation with
 `0` errors and `0` warnings. App Store Connect identifiers, signing identifiers,
 tester group names, local paths, and device identifiers are intentionally omitted
