@@ -16,7 +16,6 @@ import {
   StyleSheet,
   useColorScheme,
   Platform,
-  Dimensions,
 } from "react-native";
 import type { ViewStyle, TextStyle, StyleProp } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -144,6 +143,8 @@ const SFSymbolFallback: React.FC<{
         color,
         fontWeight: isActive ? "600" : "400",
       }}
+      accessible={false}
+      importantForAccessibility="no"
     >
       {fallbackIcon}
     </Text>
@@ -190,6 +191,9 @@ const GlassTabItem: React.FC<GlassTabItemProps> = ({
       onPressOut={() => setIsPressed(false)}
       activeOpacity={1}
       disabled={tab.disabled}
+      accessibilityRole="tab"
+      accessibilityLabel={tab.title}
+      accessibilityState={{ selected: isActive, disabled: tab.disabled }}
     >
       {/* Icon */}
       <View style={styles.tabIconContainer}>
@@ -250,7 +254,6 @@ export const GlassTabBar: React.FC<GlassTabBarProps> = ({
   safeAreaInsets = true,
 }) => {
   const colors = useGlassTabColors();
-  const { height: screenHeight } = Dimensions.get("window");
 
   if (hidden) {
     return null;
@@ -284,7 +287,7 @@ export const GlassTabBar: React.FC<GlassTabBarProps> = ({
 
   if (safeAreaInsets && Platform.OS === "ios") {
     return (
-      <SafeAreaView style={styles.safeAreaContainer}>
+      <SafeAreaView edges={["bottom"]} style={styles.safeAreaContainer}>
         {TabBarContent}
       </SafeAreaView>
     );

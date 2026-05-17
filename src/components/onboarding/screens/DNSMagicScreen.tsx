@@ -121,16 +121,19 @@ export function DNSMagicScreen() {
 
     try {
       updateStep("1", "active", t("screen.onboarding.dnsMagic.fallbackMethods.native.active"));
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      updateStep("1", "success", t("screen.onboarding.dnsMagic.fallbackMethods.native.success"), 1200);
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      const queryStartedAt = Date.now();
 
       const result = await DNSService.queryLLM(
         testMessage,
         undefined,
         false,
         true,
+      );
+      updateStep(
+        "1",
+        "success",
+        t("screen.onboarding.dnsMagic.fallbackMethods.native.success"),
+        Date.now() - queryStartedAt,
       );
       setResponse(result);
     } catch (error) {
@@ -141,7 +144,7 @@ export function DNSMagicScreen() {
       updateStep("2", "active", t("screen.onboarding.dnsMagic.fallbackMethods.udp.active"));
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      updateStep("2", "success", t("screen.onboarding.dnsMagic.fallbackMethods.udp.success"), 800);
+      updateStep("2", "failed", t("screen.onboarding.dnsMagic.fallbackMethods.udp.failed"));
       setResponse(t("screen.onboarding.dnsMagic.demoResponse"));
     }
 

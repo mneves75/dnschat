@@ -277,8 +277,18 @@ const run = () => {
     }
   }
 
-  if (soFiles.length === 0) {
-    fail("No native .so files found. Build the Android app before checking 16KB alignment.");
+  const aabSoFileCount = aabResults.reduce(
+    (count, result) => count + result.soFiles.length,
+    0,
+  );
+
+  if (soFiles.length === 0 && aabSoFileCount === 0) {
+    if (aabPaths.length > 0) {
+      fail("No native .so files found in the supplied AAB artifact(s).");
+      return;
+    }
+
+    warn("No native .so files found. Skipping 16KB alignment until Android build artifacts exist.");
     return;
   }
 

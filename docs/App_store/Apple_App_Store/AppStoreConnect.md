@@ -79,20 +79,20 @@ AI,chat,DNS,assistant,local,native,tech,innovation,queries,networking
 
 ---
 
-## What's New (Release Notes v4.0.12)
+## What's New (Release Notes v4.0.13)
 
-DARK MODE NAVIGATION RELEASE
+CLAWPATCH HARDENING RELEASE
 
-- Fixed chat detail toolbar icons, titles, and header surfaces so they follow the app theme in light and dark mode.
-- Improved chat scrolling while typing so the latest message stays visible above the composer.
-- Hardened app-opened external links through an allowlist for supported HTTPS and email destinations.
+- Hardened DNS resolver validation, native logging, and backpressure handling.
+- Improved bilingual UI, accessibility labels, loading states, and error states.
+- Expanded release verification with TypeScript checking, AXe screenshot proof, and Clawpatch regression coverage.
 - Kept privacy language explicit: local history is encrypted at rest, while DNS transport remains observable infrastructure.
 
-## TestFlight What to Test (v4.0.12 build 42)
+## TestFlight What to Test (v4.0.13 build 43)
 
 - Complete onboarding from a fresh install and confirm the app lands on the chat list.
 - Send short prompts over the default DNS service and confirm responses render without transport errors.
-- Switch the device between light and dark mode and confirm chat detail toolbar icons, header text, and header surfaces stay aligned with the app theme.
+- Confirm DNS failures, invalid settings, and unsupported server choices fail closed without exposing prompt text or TXT response contents.
 - Type in a long chat thread and confirm the final message remains visible above the composer as the keyboard/input inset changes.
 - Open onboarding/help, Settings, and About external links and confirm allowed HTTPS and email destinations open normally.
 - Open Logs and confirm DNS attempts, fallback methods, and failures are visible without exposing prompt text or TXT response contents.
@@ -141,8 +141,8 @@ Validated screenshot sets currently available in App Store Connect:
 ### Bundle Information
 
 - **Bundle ID**: `<BUNDLE_ID>`
-- **Version**: `4.0.12`
-- **Build Number**: 42 (sync-versions)
+- **Version**: `4.0.13`
+- **Build Number**: 43 (sync-versions)
 - **App Store Connect internal IDs**: intentionally omitted from public docs; keep exact IDs in private release notes.
 - **Minimum iOS Version**: 16.0
 - **Device Support**: iPhone, iPad
@@ -275,8 +275,8 @@ No user account is required. The app does not require app-owned backend infrastr
 
 ### App Store Connect Configuration
 
-- [x] Upload final IPA build (`4.0.12` build `42`)
-- [x] Local ASC health checked with `asc doctor` (`2026-05-15`)
+- [ ] Upload final IPA build (`4.0.13` build `43`)
+- [x] Local ASC health checked with `asc doctor` (`2026-05-17`)
 - [x] Apply App Store Connect metadata for `en-US` and `pt-BR`
 - [ ] Configure pricing (Free)
 - [ ] Set availability (Worldwide)
@@ -287,12 +287,12 @@ No user account is required. The app does not require app-owned backend infrastr
 ### Review Submission
 
 - [x] Xcode Debug simulator build passed (`2026-05-14`, Xcode `26.5`)
-- [x] AXe release simulator pass covered 10 feature groups (`2026-05-15`,
-  version `4.0.12` build `42`)
+- [x] AXe release simulator pass covered 10 feature groups (`2026-05-17`,
+  version `4.0.13` build `43`)
 - [x] Xcode generic iOS Release build/archive passed unsigned (`2026-05-14`)
-- [x] Signed archive/export passed for `4.0.12` build `42`
-- [x] App Store Connect upload/submission check with configured ASC credentials
-- [x] TestFlight validation passed (`0` errors, `0` warnings)
+- [ ] Signed archive/export passed for `4.0.13` build `43`
+- [ ] App Store Connect upload/submission check with configured ASC credentials
+- [ ] TestFlight validation passed (`0` errors, `0` warnings)
 - [ ] Final testing on TestFlight
 - [ ] Review guidelines compliance check
 - [ ] Submit for App Store Review
@@ -300,4 +300,4 @@ No user account is required. The app does not require app-owned backend infrastr
 
 ---
 
-_Updated for DNS Chat v4.0.12 build 42 - Dark-mode navigation release, external link hardening, TestFlight upload valid_
+_Updated for DNS Chat v4.0.13 build 43 - Clawpatch hardening release target_

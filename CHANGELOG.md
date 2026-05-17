@@ -6,6 +6,48 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+## [4.0.13] - 2026-05-17
+
+### Added
+
+- Added Clawpatch-driven regression coverage for chat input behavior, message
+  list auto-scroll/footer inset behavior, screen safe-area layout, staggered-list
+  API shape, haptics configuration, i18n parity, route gates, native DNS port
+  validation, and release-script policies.
+- Added an app TypeScript `typecheck` script to the release verification gate.
+
+### Fixed
+
+- Hardened native DNS resolvers by validating TXT answer owner/class, rejecting
+  invalid ports, avoiding prompt-derived native logs, and failing closed when
+  resolver executors are saturated.
+- Hardened release scripts for Android 16KB checks, version/build validation,
+  ADB reverse serial handling, DNS harness transport parsing, and AXe success
+  screenshot capture.
+- Fixed cold chat deep-link hydration, chat deletion races, plaintext migration
+  overwrite risk, DNS log subscription timing, Secure RNG bootstrap failure
+  handling, haptics availability retries, and visible DNS log redaction.
+- Fixed bilingual user-facing copy gaps across chat list, share, logs, skeletons,
+  error states, profile clear-all, onboarding progress/navigation, and toast
+  dismissal accessibility.
+- Fixed UI edge cases in GlassForm navigation, bottom-sheet drag reset, tab-bar
+  safe-area/accessibility semantics, text-input focus state, glass card styling,
+  async button press containment, empty-state accessibility, and loading states.
+
+### Security
+
+- Disabled Android application backup for local encrypted-history storage while
+  keeping SecureStore key material excluded from backup/device-transfer rules.
+- Removed debug-optimized Android overlay/cleartext overrides and JitPack
+  dependency resolution from the native DNS module.
+
+### Changed
+
+- Bumped app metadata to `4.0.13` build `43` across Expo, iOS, and Android via
+  `sync-versions`.
+- Updated release docs, App Store/TestFlight notes, and verification baseline
+  for the Clawpatch hardening release.
+
 ## [4.0.12] - 2026-05-15
 
 ### Fixed
@@ -379,7 +421,8 @@ Versions 3.2.0 through 3.8.9 established the core feature set:
 - **3.3.0**: Android CI, release signing policy, Java 17 auto-detection
 - **3.2.x**: Public repo hardening (secrets scanning, policy tests, version sync gates), DNS server allowlist
 
-[Unreleased]: https://github.com/<owner>/dnschat/compare/v4.0.12...HEAD
+[Unreleased]: https://github.com/<owner>/dnschat/compare/v4.0.13...HEAD
+[4.0.13]: https://github.com/<owner>/dnschat/compare/v4.0.12...v4.0.13
 [4.0.12]: https://github.com/<owner>/dnschat/compare/v4.0.11...v4.0.12
 [4.0.11]: https://github.com/<owner>/dnschat/compare/v4.0.10...v4.0.11
 [4.0.10]: https://github.com/<owner>/dnschat/compare/v4.0.9...v4.0.10

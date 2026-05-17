@@ -33,10 +33,12 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
@@ -84,12 +86,12 @@ public class DNSResolver {
         THREAD_POOL_SIZE,                              // Max pool size (fixed)
         60L, TimeUnit.SECONDS,                         // Idle thread timeout
         new LinkedBlockingQueue<>(QUEUE_CAPACITY),     // Bounded queue
-        new ThreadPoolExecutor.CallerRunsPolicy()      // Backpressure: run on caller thread
+        new ThreadPoolExecutor.AbortPolicy()           // Never run blocking DNS work on caller thread
     );
     private final ConnectivityManager connectivityManager;
     
     // Query deduplication - prevents multiple identical requests (matches iOS implementation)
-    private static final Map<String, CompletableFuture<List<String>>> activeQueries = new ConcurrentHashMap<>();
+    private final Map<String, CompletableFuture<List<String>>> activeQueries = new ConcurrentHashMap<>();
 
     private static final class DnsQuery {
         final byte[] payload;
@@ -105,6 +107,18 @@ public class DNSResolver {
 
     public DNSResolver(ConnectivityManager connectivityManager) {
         this.connectivityManager = connectivityManager;
+    }
+
+    private <T> CompletableFuture<T> supplyDnsAsync(Supplier<T> supplier) {
+        try {
+            return CompletableFuture.supplyAsync(supplier, executor);
+        } catch (RejectedExecutionException error) {
+            CompletableFuture<T> failed = new CompletableFuture<>();
+            failed.completeExceptionally(
+                new DNSError(DNSError.Type.QUERY_FAILED, "DNS resolver is busy; retry shortly", error)
+            );
+            return failed;
+        }
     }
 
     /**
@@ -217,7 +231,7 @@ public class DNSResolver {
             return failed;
         }
 
-        final int dnsPort = port > 0 ? port : DNS_PORT;
+        final int dnsPort = port;
         if (dnsPort < 1 || dnsPort > 65535) {
             CompletableFuture<List<String>> failed = new CompletableFuture<>();
             failed.completeExceptionally(
@@ -242,10 +256,10 @@ public class DNSResolver {
         AtomicBoolean shouldStartQuery = new AtomicBoolean(false);
         CompletableFuture<List<String>> result = activeQueries.compute(queryId, (key, existing) -> {
             if (existing != null) {
-                Log.d(TAG, "DNS: Reusing existing query for: " + key);
+                Log.d(TAG, "DNS: Reusing existing query for selected resolver");
                 return existing;
             }
-            Log.d(TAG, "DNS: Creating new query for: " + key);
+            Log.d(TAG, "DNS: Creating new query for selected resolver");
             shouldStartQuery.set(true);
             return new CompletableFuture<List<String>>();
         });
@@ -255,7 +269,7 @@ public class DNSResolver {
             try {
                 executeQueryChain(queryName, normalizedDomain, dnsPort, queryId, result);
             } catch (RuntimeException error) {
-                activeQueries.remove(queryId);
+                activeQueries.remove(queryId, result);
                 result.completeExceptionally(error);
             }
         }
@@ -307,7 +321,7 @@ public class DNSResolver {
         // Cloudflare DoH, or the app will lie about which resolver answered.
         queryTXTRawUDP(queryName, normalizedDomain, port)
             .thenAccept(txtRecords -> {
-                activeQueries.remove(queryId);
+                activeQueries.remove(queryId, result);
                 Log.d(TAG, "DNS: Query completed, active queries: " + activeQueries.size());
                 result.complete(txtRecords);
             })
@@ -316,7 +330,7 @@ public class DNSResolver {
                     Log.d(TAG, "DNS: Trying DNS-over-HTTPS (fallback 1)");
                     queryTXTDNSOverHTTPS(queryName)
                         .thenAccept(txtRecords -> {
-                            activeQueries.remove(queryId);
+                            activeQueries.remove(queryId, result);
                             Log.d(TAG, "DNS: Query completed (HTTPS), active queries: " + activeQueries.size());
                             result.complete(txtRecords);
                         })
@@ -324,12 +338,12 @@ public class DNSResolver {
                             Log.d(TAG, "DNS: Trying legacy DNS (fallback 2)");
                             queryTXTLegacy(normalizedDomain, queryName, port)
                                 .thenAccept(txtRecords -> {
-                                    activeQueries.remove(queryId);
+                                    activeQueries.remove(queryId, result);
                                     Log.d(TAG, "DNS: Query completed (legacy), active queries: " + activeQueries.size());
                                     result.complete(txtRecords);
                                 })
                                 .exceptionally(err3 -> {
-                                    activeQueries.remove(queryId);
+                                    activeQueries.remove(queryId, result);
                                     Log.d(TAG, "DNS: All fallback methods failed, active queries: " + activeQueries.size());
                                     result.completeExceptionally(err3);
                                     return null;
@@ -340,12 +354,12 @@ public class DNSResolver {
                     Log.d(TAG, "DNS: Skipping Cloudflare DoH, trying legacy DNS on the selected resolver");
                     queryTXTLegacy(normalizedDomain, queryName, port)
                         .thenAccept(txtRecords -> {
-                            activeQueries.remove(queryId);
+                            activeQueries.remove(queryId, result);
                             Log.d(TAG, "DNS: Query completed (legacy), active queries: " + activeQueries.size());
                             result.complete(txtRecords);
                         })
                         .exceptionally(err3 -> {
-                            activeQueries.remove(queryId);
+                            activeQueries.remove(queryId, result);
                             Log.d(TAG, "DNS: All fallback methods failed, active queries: " + activeQueries.size());
                             result.completeExceptionally(err3);
                             return null;
@@ -361,7 +375,7 @@ public class DNSResolver {
 
 
     private CompletableFuture<List<String>> queryTXTLegacy(String domain, String queryName, int port) {
-        return CompletableFuture.supplyAsync(() -> {
+        return supplyDnsAsync(() -> {
             DNSError lastError = null;
             for (int attempt = 0; attempt < MAX_NATIVE_ATTEMPTS; attempt++) {
                 try {
@@ -423,7 +437,7 @@ public class DNSResolver {
      * Send a raw UDP DNS TXT query for the fully-qualified domain name provided by the JS bridge.
      */
     private CompletableFuture<List<String>> queryTXTRawUDP(String queryName, String server, int port) {
-        return CompletableFuture.supplyAsync(() -> {
+        return supplyDnsAsync(() -> {
             DNSError lastError = null;
             for (int attempt = 0; attempt < MAX_NATIVE_ATTEMPTS; attempt++) {
                 DatagramSocket socket = null;
@@ -685,27 +699,24 @@ public class DNSResolver {
         }
 
         for (int i = 0; i < anCount && offset + 10 <= data.length; i++) {
-            // Skip NAME (could be pointer or full name)
-            if ((data[offset] & 0xC0) == 0xC0) {
-                offset += 2;
-            } else {
-                while (offset < data.length) {
-                    int len = data[offset] & 0xFF;
-                    offset += 1;
-                    if (len == 0) break;
-                    offset += len;
-                }
-            }
+            NameParseResult answerName = readName(data, offset);
+            offset = answerName.nextOffset;
 
             if (offset + 10 > data.length) break;
             int type = ((data[offset] & 0xFF) << 8) | (data[offset + 1] & 0xFF);
-            offset += 2; // TYPE
-            offset += 2; // CLASS
+            offset += 2;
+            int answerClass = ((data[offset] & 0xFF) << 8) | (data[offset + 1] & 0xFF);
+            offset += 2;
             offset += 4; // TTL
             int rdLength = ((data[offset] & 0xFF) << 8) | (data[offset + 1] & 0xFF);
             offset += 2;
 
-            if (type == 16 && offset + rdLength <= data.length) { // TXT
+            if (
+                type == 16 &&
+                answerClass == 1 &&
+                answerName.name.equals(expectedQueryName) &&
+                offset + rdLength <= data.length
+            ) {
                 int end = offset + rdLength;
                 int p = offset;
                 while (p < end) {
@@ -797,9 +808,9 @@ public class DNSResolver {
      * DNS-over-HTTPS query using wireformat (RFC 8484) via Cloudflare.
      */
     private CompletableFuture<List<String>> queryTXTDNSOverHTTPS(String message) {
-        return CompletableFuture.supplyAsync(() -> {
+        return supplyDnsAsync(() -> {
             try {
-                Log.d(TAG, "DNS-over-HTTPS: Querying Cloudflare for: " + message);
+                Log.d(TAG, "DNS-over-HTTPS: Querying Cloudflare for selected DNS name");
 
                 DnsQuery query = buildDnsQuery(message, true);
                 String baseURL = "https://cloudflare-dns.com/dns-query";

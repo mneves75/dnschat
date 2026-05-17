@@ -266,7 +266,7 @@ export const LiquidGlassWrapper: React.FC<LiquidGlassProps> = ({
 }) => {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
-  const [reduceTransparency, setReduceTransparency] = useState(false);
+  const [reduceTransparency, setReduceTransparency] = useState(Platform.OS === "ios");
 
   // Effect: sync reduce-transparency accessibility setting on iOS.
   useEffect(() => {
@@ -400,7 +400,7 @@ export const useLiquidGlassCapabilities = () => {
     () => computeGlassAvailability(),
   );
   const [loading, setLoading] = useState(Platform.OS === "ios");
-  const [reduceTransparency, setReduceTransparency] = useState(false);
+  const [reduceTransparency, setReduceTransparency] = useState(Platform.OS === "ios");
 
   // Effect: compute glass capability and watch reduce-transparency changes on iOS.
   useEffect(() => {
@@ -418,9 +418,6 @@ export const useLiquidGlassCapabilities = () => {
       setAvailability(computeGlassAvailability());
     };
 
-    updateAvailability();
-    setLoading(false);
-
     const handleReduceTransparency = (value: boolean) => {
       setReduceTransparency(Boolean(value));
     };
@@ -430,9 +427,14 @@ export const useLiquidGlassCapabilities = () => {
       handleReduceTransparency,
     );
 
-    AccessibilityInfo.isReduceTransparencyEnabled().then((value) => {
-      handleReduceTransparency(Boolean(value));
-    });
+    AccessibilityInfo.isReduceTransparencyEnabled()
+      .then((value) => {
+        handleReduceTransparency(Boolean(value));
+      })
+      .finally(() => {
+        updateAvailability();
+        setLoading(false);
+      });
 
     return () => {
       subscription.remove();

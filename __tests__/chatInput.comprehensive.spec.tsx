@@ -30,16 +30,14 @@ describe("ChatInput Component - John Carmack Quality Standards", () => {
 
     it("calculates CHARACTER_COUNTER_THRESHOLD from constants", () => {
       expect(source).toContain(
-        "MESSAGE_CONSTANTS.MAX_MESSAGE_LENGTH - 20"
+        "Math.ceil(MESSAGE_CONSTANTS.MAX_MESSAGE_LENGTH * 0.9)"
       );
-      expect(source).toContain("// Show at 90%");
     });
 
     it("calculates ACCESSIBILITY_ALERT_THRESHOLD from constants", () => {
       expect(source).toContain(
-        "MESSAGE_CONSTANTS.MAX_MESSAGE_LENGTH - 10"
+        "Math.ceil(MESSAGE_CONSTANTS.MAX_MESSAGE_LENGTH * 0.92)"
       );
-      expect(source).toContain("// Alert at 92%");
     });
 
     it("uses LiquidGlassSpacing for all spacing values", () => {
@@ -138,11 +136,10 @@ describe("ChatInput Component - John Carmack Quality Standards", () => {
   });
 
   describe("Character Counter at 90% Threshold", () => {
-    it("shows counter at 90% (MAX_LENGTH - 20)", () => {
+    it("shows counter at 90%", () => {
       expect(source).toContain(
-        "const CHARACTER_COUNTER_THRESHOLD = MESSAGE_CONSTANTS.MAX_MESSAGE_LENGTH - 20"
+        "const CHARACTER_COUNTER_THRESHOLD = Math.ceil(MESSAGE_CONSTANTS.MAX_MESSAGE_LENGTH * 0.9)"
       );
-      expect(source).toContain("// Show at 90%");
     });
 
     it("uses threshold in showCharacterCount condition", () => {
@@ -189,9 +186,9 @@ describe("ChatInput Component - John Carmack Quality Standards", () => {
       expect(source).toContain("AccessibilityInfo.announceForAccessibility");
     });
 
-    it("announces at 92% threshold (MAX_LENGTH - 10)", () => {
+    it("announces at 92% threshold", () => {
       expect(source).toContain("ACCESSIBILITY_ALERT_THRESHOLD");
-      expect(source).toContain("MESSAGE_CONSTANTS.MAX_MESSAGE_LENGTH - 10");
+      expect(source).toContain("Math.ceil(MESSAGE_CONSTANTS.MAX_MESSAGE_LENGTH * 0.92)");
     });
 
     it("uses i18n for accessibility announcement", () => {

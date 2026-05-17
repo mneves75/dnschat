@@ -120,4 +120,16 @@ describe("DNSLogService concurrent query isolation", () => {
     expect(serialized).not.toContain("secret prompt");
     expect(serialized).not.toContain("secret response");
   });
+
+  it("sends the current log snapshot when subscribing after async initialization", () => {
+    const queryId = DNSLogService.startQuery("delta");
+    const listener = jest.fn();
+
+    const unsubscribe = DNSLogService.subscribe(listener);
+    unsubscribe();
+
+    expect(listener).toHaveBeenCalledWith(
+      expect.arrayContaining([expect.objectContaining({ id: queryId })]),
+    );
+  });
 });

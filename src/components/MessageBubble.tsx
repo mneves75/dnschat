@@ -16,6 +16,7 @@ import { ClipboardService } from "../services/ClipboardService";
 import { ShareService } from "../services/ShareService";
 import { MessageContent } from "./MessageContent";
 import { useTranslation } from "../i18n";
+import { useSettings } from "../context/SettingsContext";
 
 // Platform-specific monospace font for code rendering
 const MONOSPACE_FONT = Platform.select({
@@ -34,6 +35,7 @@ function MessageBubbleComponent({ message }: MessageBubbleProps) {
   const typography = useTypography();
   const palette = useImessagePalette();
   const { t } = useTranslation();
+  const { locale } = useSettings();
 
   const isUser = message.role === "user";
   const isLoading = message.status === "sending";
@@ -51,7 +53,7 @@ function MessageBubbleComponent({ message }: MessageBubbleProps) {
 
       case 'share':
         // Share message via native share sheet
-        await ShareService.shareMessage(message.content, message.timestamp);
+        await ShareService.shareMessage(message.content, message.timestamp, locale);
         break;
 
       default:

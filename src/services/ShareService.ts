@@ -1,6 +1,7 @@
 import { Alert, Share } from 'react-native';
 import { HapticFeedback } from '../utils/haptics';
-import { format } from 'date-fns';
+import { createTranslator } from '../i18n';
+import type { SupportedLocale } from '../i18n/translations';
 
 /**
  * ShareService
@@ -24,11 +25,17 @@ export class ShareService {
    * TRICKY: User dismissal does NOT throw an error on iOS (it just resolves with dismissedAction).
    * We only catch actual errors (e.g., no share providers available, invalid content).
    */
-  static async shareMessage(content: string, timestamp?: Date): Promise<void> {
+  static async shareMessage(
+    content: string,
+    timestamp?: Date,
+    locale: SupportedLocale = "en-US",
+  ): Promise<void> {
     if (!content || content.trim().length === 0) {
       // Empty content, silently return
       return;
     }
+
+    const t = createTranslator(locale);
 
     try {
       // Provide haptic feedback before opening share sheet
@@ -37,15 +44,18 @@ export class ShareService {
       // Format share content with timestamp if available
       let shareText = content;
       if (timestamp) {
-        const formattedDate = format(timestamp, 'MMM d, yyyy h:mm a');
-        shareText = `${content}\n\n— Shared from DNSChat on ${formattedDate}`;
+        const formattedDate = new Intl.DateTimeFormat(locale, {
+          dateStyle: "medium",
+          timeStyle: "short",
+        }).format(timestamp);
+        shareText = `${content}\n\n${t("components.share.footer", { date: formattedDate })}`;
       }
 
       // Use React Native's Share.share() for text-only content
       // Works reliably on iOS (UIActivityViewController) and Android (Intent.ACTION_SEND)
       await Share.share({
         message: shareText,
-        title: 'Share Message',
+        title: t("components.share.title"),
       });
 
       // Note: We don't need to check result.action because:
@@ -59,9 +69,9 @@ export class ShareService {
       // TRICKY: Only show alert for real errors. Type guard for Error object.
       if (error instanceof Error) {
         Alert.alert(
-          'Share Failed',
-          'Unable to share this message. Please try again.',
-          [{ text: 'OK' }]
+          t("components.share.failedTitle"),
+          t("components.share.failedMessage"),
+          [{ text: t("common.ok") }],
         );
       }
     }
@@ -75,7 +85,10 @@ export class ShareService {
    *
    * Future enhancement: Combine multiple messages into formatted conversation.
    */
-  static async shareConversation(messages: string[]): Promise<void> {
+  static async shareConversation(
+    messages: string[],
+    locale: SupportedLocale = "en-US",
+  ): Promise<void> {
     if (!messages || messages.length === 0) {
       // Empty conversation, silently return
       return;
@@ -85,6 +98,6 @@ export class ShareService {
       .map((msg, index) => `${index + 1}. ${msg}`)
       .join('\n\n');
 
-    await this.shareMessage(conversationText);
+    await this.shareMessage(conversationText, undefined, locale);
   }
 }

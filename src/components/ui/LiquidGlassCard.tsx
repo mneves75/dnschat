@@ -169,7 +169,7 @@ export function LiquidGlassCard({
         accessibilityHint={accessibilityHint}
         accessibilityState={{ disabled }}
         testID={testID}
-        style={[enablePressAnimation && animatedStyle, style]}
+        style={[enablePressAnimation && animatedStyle, containerStyle]}
       >
         <LiquidGlassWrapper
           variant="regular"
@@ -210,6 +210,7 @@ export function LiquidGlassCard({
     <View
       accessible={!!accessibilityLabel}
       accessibilityLabel={accessibilityLabel}
+      accessibilityHint={accessibilityHint}
       testID={testID}
       style={containerStyle}
     >

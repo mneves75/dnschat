@@ -109,10 +109,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
       await StorageService.deleteChat(chatId);
       setChats((prevChats) => prevChats.filter((chat) => chat.id !== chatId));
 
-      // If we deleted the current chat, clear it
-      if (currentChat?.id === chatId) {
-        setCurrentChat(null);
-      }
+      setCurrentChat((previous) => (previous?.id === chatId ? null : previous));
 
       setError(null);
     } catch (err) {

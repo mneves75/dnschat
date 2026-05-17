@@ -30,5 +30,11 @@ describe("repo policy: dependency hygiene", () => {
     const offenders = banned.filter((name) => allDeps.has(name));
     expect(offenders).toEqual([]);
   });
-});
 
+  it("does not use dynamic React Native versions in native Gradle modules", () => {
+    const gradle = fs.readFileSync("modules/dns-native/android/build.gradle", "utf8");
+
+    expect(gradle).toContain('implementation "com.facebook.react:react-android"');
+    expect(gradle).not.toContain("react-native:+");
+  });
+});

@@ -40,6 +40,14 @@ describe("HapticFeedback capability gating", () => {
     await expect(__hapticsTestHooks.shouldPlayCheck()).resolves.toBe(false);
   });
 
+  it("skips when the native availability probe is missing", async () => {
+    delete ExpoHaptics.isAvailableAsync;
+    const { configureHaptics, __hapticsTestHooks } = loadModule();
+    configureHaptics({ userEnabled: true, reduceMotion: false });
+
+    await expect(__hapticsTestHooks.shouldPlayCheck()).resolves.toBe(false);
+  });
+
   it("invokes Expo haptics when enabled and supported", async () => {
     ExpoHaptics.isAvailableAsync = jest
       .fn<Promise<boolean>, []>()
@@ -57,6 +65,24 @@ describe("HapticFeedback capability gating", () => {
     expect(notificationSpy).toHaveBeenCalledTimes(1);
     expect(notificationSpy).toHaveBeenCalledWith(
       ExpoHaptics.NotificationFeedbackType.Success,
+    );
+  });
+
+  it("retries availability after a transient preload failure", async () => {
+    ExpoHaptics.isAvailableAsync = jest
+      .fn<Promise<boolean>, []>()
+      .mockRejectedValueOnce(new Error("transient"))
+      .mockResolvedValueOnce(true);
+
+    const { preloadHaptics, HapticFeedback, configureHaptics } = loadModule();
+    configureHaptics({ userEnabled: true, reduceMotion: false });
+
+    await expect(preloadHaptics()).resolves.toBe(false);
+    await HapticFeedback.light();
+
+    expect(ExpoHaptics.isAvailableAsync).toHaveBeenCalledTimes(2);
+    expect(ExpoHaptics.impactAsync).toHaveBeenCalledWith(
+      ExpoHaptics.ImpactFeedbackStyle.Light,
     );
   });
 });

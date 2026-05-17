@@ -143,6 +143,30 @@ describe("StorageService Corruption Handling", () => {
       expect(String(migrationCall?.[1])).not.toContain("Legacy Chat");
     });
 
+    it("does not overwrite chat storage when plaintext migration sees a concurrent write", async () => {
+      const legacyChats = [
+        {
+          id: "chat-1",
+          title: "Legacy Chat",
+          createdAt: "2025-01-01T00:00:00.000Z",
+          updatedAt: "2025-01-01T00:00:00.000Z",
+          messages: [],
+        },
+      ];
+      const legacyPayload = JSON.stringify(legacyChats);
+      mockAsyncStorage.getItem
+        .mockResolvedValueOnce(legacyPayload)
+        .mockResolvedValueOnce("enc:v1:concurrent-write");
+
+      const result = await StorageService.loadChats();
+
+      expect(result[0]?.title).toBe("Legacy Chat");
+      expect(mockAsyncStorage.setItem).not.toHaveBeenCalledWith(
+        "@chat_dns_chats",
+        expect.any(String),
+      );
+    });
+
     it("converts date strings to Date objects", async () => {
       const chatsWithDates = [
         {

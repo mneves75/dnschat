@@ -98,7 +98,7 @@ export function LiquidGlassTextInput({
     borderWidth: borderWidth.value,
   }));
 
-  const syncBorderState = (nextFocused: boolean, nextHasError: boolean) => {
+  const syncBorderState = React.useCallback((nextFocused: boolean, nextHasError: boolean) => {
     const targetColor = nextHasError
       ? palette.destructive
       : nextFocused
@@ -108,7 +108,7 @@ export function LiquidGlassTextInput({
 
     borderColor.value = withTiming(targetColor, TimingConfig.quick);
     borderWidth.value = withSpring(targetWidth, SpringConfig.bouncy);
-  };
+  }, [borderColor, borderWidth, palette.accentTint, palette.border, palette.destructive]);
 
   // Handle focus
   const handleFocus = (e: FocusEvent) => {
@@ -171,6 +171,7 @@ export function LiquidGlassTextInput({
 
         {/* Text Input */}
         <TextInput
+          {...textInputProps}
           value={value}
           onChangeText={onChangeText}
           onFocus={handleFocus}
@@ -193,7 +194,6 @@ export function LiquidGlassTextInput({
           accessibilityLabel={label || textInputProps.placeholder}
           accessibilityHint={helperText || errorText}
           accessibilityState={{ disabled: !editable }}
-          {...textInputProps}
         />
 
         {/* Right Icon or Clear Button */}

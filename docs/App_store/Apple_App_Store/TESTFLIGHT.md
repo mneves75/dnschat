@@ -109,11 +109,11 @@ xcodebuild clean archive \
   CODE_SIGNING_ALLOWED=NO
 ```
 
-Latest public release evidence (`2026-05-15`, Xcode `26.5` / `17F42`):
+Latest public release evidence (`2026-05-17`, Xcode `26.5` / `17F42`):
 
 - Debug simulator build passed on iOS 26.5.
-- AXe release simulator pass covered 10 feature groups for version `4.0.12`
-  build `42`.
+- AXe release simulator pass covered 10 feature groups for version `4.0.13`
+  build `43`.
 - Generic iOS Release build passed unsigned.
 - Generic iOS Release archive passed unsigned.
 - Physical-device compiled Expo dev-client install passed for version `4.0.8` build `36`.
@@ -206,7 +206,7 @@ bun run ios -- --verbose
 - **App Store Connect** app record created
 - **Code signing** configured correctly
 - **Bundle ID** matches (`<BUNDLE_ID>`)
-- **Version numbers** consistent (v4.0.12 build 42)
+- **Version numbers** consistent (v4.0.13 build 43)
 - **Native DNS module** compiles successfully
 - **Xcode CLI smoke** passed:
   - Debug simulator build
@@ -234,10 +234,10 @@ eas build --platform ios --profile production
 
 ### TestFlight distribution
 
-Current v4.0.12 distribution target:
+Current v4.0.13 distribution target:
 
-- Version/build: `4.0.12` / `42`
-- Processing state: `VALID`
+- Version/build: `4.0.13` / `43`
+- Processing state: pending upload
 - Tester groups: configured in App Store Connect; internal group names are intentionally omitted from public docs.
 - Exact build IDs and App Store Connect version IDs belong in private release notes, not public runbooks.
 
@@ -248,12 +248,12 @@ After upload:
 3. **Feedback**: Collect user feedback through TestFlight
 4. **Iterate**: Upload new builds for continuous testing
 
-### What to Test for v4.0.12 build 42
+### What to Test for v4.0.13 build 43
 
 - Complete onboarding from a fresh install and confirm the app lands on the chat list.
 - Send short prompts through the default DNS service and confirm responses render.
-- Switch the device between light and dark mode and confirm chat detail toolbar
-  icons, header text, and header surfaces stay aligned with the app theme.
+- Confirm DNS failures, invalid settings, and unsupported server choices fail
+  closed without exposing prompt text or TXT responses.
 - Type in a long chat thread and confirm the final message remains visible above
   the composer as the keyboard/input inset changes.
 - Open onboarding/help, Settings, and About external links and confirm allowed
@@ -284,4 +284,4 @@ If you encounter issues during the upload process:
 
 ---
 
-_TestFlight upload guide for DNSChat v4.0.12 build 42 - Last updated: 2026-05-15_
+_TestFlight upload guide for DNSChat v4.0.13 build 43 - Last updated: 2026-05-17_

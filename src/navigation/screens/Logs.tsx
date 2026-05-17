@@ -279,7 +279,7 @@ const LogQueryRow: React.FC<LogQueryRowProps> = ({
         pressedOpacity={0.95}
         style={styles.logItemWrapper}
         accessibilityRole="button"
-        accessibilityLabel={item.chatTitle ?? item.query}
+        accessibilityLabel={t("screen.logs.labels.redactedQuery")}
         accessibilityHint={
           isExpanded
             ? t("screen.logs.accessibility.collapseRow")
@@ -303,7 +303,7 @@ const LogQueryRow: React.FC<LogQueryRowProps> = ({
                 style={[styles.queryText, { color: palette.textPrimary }]}
                 numberOfLines={1}
               >
-                {item.chatTitle || item.query || t("screen.logs.labels.noQuery")}
+                {t("screen.logs.labels.redactedQuery")}
               </Text>
               <View style={styles.logMeta}>
                 <Text style={[styles.timestamp, { color: palette.textTertiary }]}>
@@ -376,7 +376,7 @@ const LogQueryRow: React.FC<LogQueryRowProps> = ({
                     style={[styles.responseText, { color: palette.textSecondary }]}
                     numberOfLines={3}
                   >
-                    {item.response || t("screen.logs.labels.noResponse")}
+                    {t("screen.logs.labels.redactedResponse")}
                   </Text>
                 </View>
               )}

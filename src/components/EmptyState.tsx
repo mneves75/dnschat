@@ -360,13 +360,14 @@ export function EmptyState({
 
   const IconComponent = iconComponents[iconType];
   const effectiveIconColor = iconColor || palette.userBubble;
+  const hasAction = Boolean(actionLabel && onAction);
 
   const content = (
     <View
       style={styles.content}
-      accessible={true}
-      accessibilityRole="text"
-      accessibilityLabel={`${title}. ${description}`}
+      accessible={!hasAction}
+      accessibilityRole={!hasAction ? "text" : undefined}
+      accessibilityLabel={!hasAction ? `${title}. ${description}` : undefined}
     >
       {/* Icon */}
       <Animated.View style={[styles.iconContainer, iconContainerStyle]}>

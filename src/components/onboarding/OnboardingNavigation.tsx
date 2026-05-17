@@ -24,7 +24,7 @@ interface OnboardingNavigationProps {
 export function OnboardingNavigation({
   showSkip = true,
   showBack = true,
-  nextButtonText = "Continue",
+  nextButtonText,
   onCustomNext,
 }: OnboardingNavigationProps) {
   const palette = useImessagePalette();
@@ -39,15 +39,17 @@ export function OnboardingNavigation({
     completeOnboarding,
   } = useOnboarding();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const isSubmittingRef = React.useRef(false);
 
   const isLastStep = currentStep === steps.length - 1;
   const isFirstStep = currentStep === 0;
 
   const runAction = async (action: () => Promise<void>) => {
-    if (isSubmitting) {
+    if (isSubmittingRef.current) {
       return;
     }
 
+    isSubmittingRef.current = true;
     setIsSubmitting(true);
     try {
       await action();
@@ -58,6 +60,7 @@ export function OnboardingNavigation({
           : t("common.unknownError");
       Alert.alert(t("common.errorTitle"), message);
     } finally {
+      isSubmittingRef.current = false;
       setIsSubmitting(false);
     }
   };
@@ -98,6 +101,11 @@ export function OnboardingNavigation({
   const handleBack = () => {
     void runAction(previousStep);
   };
+  const resolvedNextButtonText =
+    nextButtonText ??
+    (isLastStep
+      ? t("screen.onboarding.navigation.getStarted")
+      : t("screen.onboarding.navigation.continue"));
 
   return (
     <View style={styles.container}>
@@ -164,9 +172,7 @@ export function OnboardingNavigation({
         variant="primary"
         pressedOpacity={0.85}
         accessibilityRole="button"
-        accessibilityLabel={
-          isLastStep ? t("screen.onboarding.navigation.getStarted") : nextButtonText
-        }
+        accessibilityLabel={resolvedNextButtonText}
         accessibilityHint={
           isLastStep
             ? t("screen.onboarding.navigation.completeHint")
@@ -181,7 +187,7 @@ export function OnboardingNavigation({
             { color: palette.solid },
           ]}
         >
-          {isLastStep ? t("screen.onboarding.navigation.getStarted") : nextButtonText}
+          {resolvedNextButtonText}
         </Text>
       </PressableRipple>
     </View>

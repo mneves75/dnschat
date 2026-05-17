@@ -403,6 +403,24 @@ function writeFailureArtifacts(options, name, elements, lastDescribeError) {
   return { screenshotPath, dumpPath };
 }
 
+function captureRequiredScreenshot(options, name) {
+  const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+  const slug = slugifyArtifactName(name);
+  const screenshotPath = path.join(options.artifactsDir, `${timestamp}-${slug}.png`);
+
+  fs.mkdirSync(options.artifactsDir, { recursive: true });
+  const screenshot = run("xcrun", ["simctl", "io", options.udid, "screenshot", screenshotPath], {
+    timeout: 30000,
+    allowFailure: true,
+  });
+
+  if (screenshot.status !== 0 || !fs.existsSync(screenshotPath) || fs.statSync(screenshotPath).size === 0) {
+    throw new Error(`Required screenshot failed: ${screenshot.stderr || screenshot.stdout || screenshotPath}`);
+  }
+
+  return screenshotPath;
+}
+
 function hasId(elements, id) {
   return elements.some((element) => element.id === id);
 }
@@ -712,6 +730,8 @@ function runOnboarding(options) {
   waitForOnboardingStep(options, "onboarding-network-setup", [
     "Network Optimization",
     "Otimização de Rede",
+    "Network Configuration",
+    "Configuração de Rede",
   ]);
   console.log("F-APP-001 onboarding: network setup");
 
@@ -978,6 +998,8 @@ function main() {
     runProfileSmoke(options);
     runNotFoundSmoke(options);
 
+    const screenshotPath = captureRequiredScreenshot(options, "axe-e2e-success");
+    console.log(`AXe E2E screenshot: ${screenshotPath}`);
     console.log(`AXe E2E passed for ${MANIFEST.features.length} feature groups.`);
   } finally {
     if (createdSimulator && options.deleteCreatedSimulator) {

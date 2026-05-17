@@ -30,11 +30,10 @@ android {
 repositories {
     google()
     mavenCentral()
-    maven { url "https://www.jitpack.io" }
 }
 
 dependencies {
-    implementation "com.facebook.react:react-native:+"
+    implementation "com.facebook.react:react-android"
     
     // dnsjava for DNS operations on older Android versions
     implementation "dnsjava:dnsjava:3.5.2"

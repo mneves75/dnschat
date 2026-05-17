@@ -9,7 +9,11 @@ function parseAdbDevices(output) {
     .split("\n")
     .slice(1)
     .map((line) => line.trim())
-    .filter((line) => line && !line.startsWith("*") && !line.includes("offline"))
+    .filter((line) => {
+      if (!line || line.startsWith("*")) return false;
+      const [, state] = line.split(/\s+/, 2);
+      return state === "device";
+    })
     .map((line) => line.split(/\s+/)[0]);
 }
 

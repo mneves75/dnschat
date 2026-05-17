@@ -7,14 +7,18 @@
  * @example
  * ```tsx
  * export function MyList({ items }: { items: Item[] }) {
- *   const { getItemStyle, triggerAnimation } = useStaggeredList(items.length);
+ *   const { opacities, translates } = useStaggeredListValues(items.length);
  *
  *   return (
  *     <View>
  *       {items.map((item, index) => (
- *         <Animated.View key={item.id} style={getItemStyle(index)}>
+ *         <AnimatedListItem
+ *           key={item.id}
+ *           opacity={opacities[index]}
+ *           translateX={translates[index]}
+ *         >
  *           <ListItem item={item} />
- *         </Animated.View>
+ *         </AnimatedListItem>
  *       ))}
  *     </View>
  *   );
@@ -78,11 +82,6 @@ interface UseStaggeredListOptions {
 }
 
 interface UseStaggeredListResult {
-  /**
-   * Get animated style for a specific item index
-   */
-  getItemStyle: (index: number) => ReturnType<typeof useAnimatedStyle>;
-
   /**
    * Manually trigger the stagger animation
    */
@@ -185,18 +184,6 @@ export function useStaggeredList(
   }, [itemCount]);
 
   return {
-    getItemStyle: (index: number) => {
-      const safeIndex = Math.min(index, MAX_ITEMS - 1);
-      const opacity = opacities[safeIndex] ?? opacities[0]!;
-      const translateX = translates[safeIndex] ?? translates[0]!;
-
-      // This is a workaround - in actual usage, the consumer should use
-      // AnimatedListItem component or create their own animated style
-      return useAnimatedStyle(() => ({
-        opacity: opacity.value,
-        transform: [{ translateX: translateX.value }],
-      }));
-    },
     triggerAnimation,
     reset,
   };

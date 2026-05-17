@@ -126,18 +126,31 @@ function parseArgs(argv: string[]): HarnessOptions {
       server = takeValue(arg, i);
       i += 1;
     } else if (arg === '--port' || arg === '-p') {
-      port = parseInt(takeValue(arg, i), 10) || DEFAULT_PORT;
+      const rawPort = takeValue(arg, i);
+      if (!/^\d+$/.test(rawPort)) {
+        throw new Error(`Invalid --port value: ${rawPort}`);
+      }
+      port = parseInt(rawPort, 10);
       i += 1;
     } else if (arg === '--method-order') {
       const raw = takeValue(arg, i);
       i += 1;
       methodOrderExplicit = true;
-      methodOrder = raw
+      const parsedMethodOrder = raw
         .split(',')
         .map((item) => item.trim().toLowerCase())
-        .filter((item): item is HarnessMethod => METHOD_NAMES.includes(item as HarnessMethod));
+        .filter(Boolean);
+      const invalidMethods = parsedMethodOrder.filter(
+        (item) => !METHOD_NAMES.includes(item as HarnessMethod),
+      );
+      if (invalidMethods.length > 0) {
+        throw new Error(
+          `Invalid --method-order transport(s): ${invalidMethods.join(", ")}. Valid transports: ${METHOD_NAMES.join(",")}`,
+        );
+      }
+      methodOrder = parsedMethodOrder as HarnessMethod[];
       if (methodOrder.length === 0) {
-        methodOrder = DEFAULT_METHOD_ORDER;
+        throw new Error("--method-order must include at least one transport");
       }
     } else if (arg === '--timeout') {
       timeoutMs = parseInt(takeValue(arg, i), 10) || DEFAULT_TIMEOUT_MS;

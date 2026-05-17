@@ -10,5 +10,15 @@ describe("scripts/sync-versions.js", () => {
 
     expect(output).toContain("All versions are already synchronized.");
   });
-});
 
+  it("rejects partially numeric explicit build numbers", () => {
+    const scriptPath = path.resolve(__dirname, "../scripts/sync-versions.js");
+
+    expect(() =>
+      execFileSync(process.execPath, [scriptPath, "--dry-run", "--build-number", "42abc"], {
+        encoding: "utf8",
+        stdio: "pipe",
+      }),
+    ).toThrow();
+  });
+});

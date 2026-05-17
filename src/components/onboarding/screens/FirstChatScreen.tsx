@@ -103,8 +103,8 @@ export function FirstChatScreen() {
           msg.id === assistantMessage.id
             ? {
                 ...msg,
-                text: t("screen.onboarding.firstChat.successMessage"),
-                status: "sent",
+                text: t("screen.onboarding.firstChat.failureMessage"),
+                status: "failed",
               }
             : msg,
         ),

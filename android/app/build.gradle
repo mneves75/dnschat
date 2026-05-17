@@ -85,11 +85,14 @@ def keystoreProperties = new Properties()
 def keystorePropertiesFile = rootProject.file("keystore.properties")
 def repoKeystorePropertiesFile = new File(projectRoot, "keystore.properties")
 def hasReleaseSigning = false
+def keystorePropertiesBaseDir = null
 if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+    keystorePropertiesBaseDir = keystorePropertiesFile.getParentFile()
     hasReleaseSigning = true
 } else if (repoKeystorePropertiesFile.exists()) {
     keystoreProperties.load(new FileInputStream(repoKeystorePropertiesFile))
+    keystorePropertiesBaseDir = repoKeystorePropertiesFile.getParentFile()
     hasReleaseSigning = true
 }
 
@@ -105,8 +108,8 @@ android {
         applicationId 'org.mvneves.dnschat'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 42
-        versionName "4.0.12"
+        versionCode 43
+        versionName "4.0.13"
 
         buildConfigField "String", "REACT_NATIVE_RELEASE_LEVEL", "\"${findProperty('reactNativeReleaseLevel') ?: 'stable'}\""
     }
@@ -119,7 +122,7 @@ android {
         }
         release {
             if (hasReleaseSigning) {
-                storeFile file(keystoreProperties['storeFile'])
+                storeFile new File(keystorePropertiesBaseDir, keystoreProperties['storeFile'])
                 storePassword keystoreProperties['storePassword']
                 keyAlias keystoreProperties['keyAlias']
                 keyPassword keystoreProperties['keyPassword']

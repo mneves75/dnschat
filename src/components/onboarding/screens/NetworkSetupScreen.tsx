@@ -53,8 +53,9 @@ export function NetworkSetupScreen() {
       description: t("screen.onboarding.networkSetup.tests.tcp.description"),
     },
   ]);
+  const isMountedRef = React.useRef(true);
 
-  const runNetworkOptimization = async () => {
+  const runNetworkOptimization = React.useCallback(async () => {
     setIsOptimizing(true);
 
     const updateTest = (index: number, updates: Partial<NetworkTest>) => {
@@ -68,12 +69,15 @@ export function NetworkSetupScreen() {
       // transitions through active -> success purely to communicate that
       // the transport order is being applied.
       await new Promise((resolve) => setTimeout(resolve, 1000));
+      if (!isMountedRef.current) return;
       updateTest(0, { status: "success" });
 
       await new Promise((resolve) => setTimeout(resolve, 800));
+      if (!isMountedRef.current) return;
       updateTest(1, { status: "success" });
 
       await new Promise((resolve) => setTimeout(resolve, 600));
+      if (!isMountedRef.current) return;
       updateTest(2, { status: "success" });
 
       // Default to automatic fallback chain (no probing yet).
@@ -87,9 +91,11 @@ export function NetworkSetupScreen() {
         t("screen.onboarding.networkSetup.alerts.errorMessage"),
       );
     } finally {
-      setIsOptimizing(false);
+      if (isMountedRef.current) {
+        setIsOptimizing(false);
+      }
     }
-  };
+  }, [t]);
 
   const applyRecommendedSettings = async () => {
     if (recommendedSetting !== null) {
@@ -117,11 +123,15 @@ export function NetworkSetupScreen() {
 
   // Effect: defer network optimization to allow initial UI paint.
   useEffect(() => {
+    isMountedRef.current = true;
     const timer = setTimeout(() => {
       runNetworkOptimization();
     }, 1000);
 
-    return () => clearTimeout(timer);
+    return () => {
+      isMountedRef.current = false;
+      clearTimeout(timer);
+    };
   }, [t, runNetworkOptimization]);
 
   return (

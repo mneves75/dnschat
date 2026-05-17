@@ -1,5 +1,4 @@
 import { getRandomValues } from 'expo-crypto';
-import { devLog } from '../utils/devLog';
 
 type RandomValuesArray =
   | Uint8Array
@@ -28,7 +27,7 @@ const setGlobalCrypto = (value: GlobalCrypto): void => {
   record['crypto'] = value;
 };
 
-const ensureCryptoRng = () => {
+export const ensureCryptoRng = () => {
   try {
     const globalCrypto = getGlobalCrypto();
 
@@ -43,9 +42,16 @@ const ensureCryptoRng = () => {
     } else if (typeof globalThis !== 'undefined') {
       setGlobalCrypto({ getRandomValues: shim });
     }
-  } catch (error) {
-    devLog('[CryptoBootstrap] Failed to ensure secure RNG', error);
+  } catch {
+    // Fall through to the hard postcondition below.
   }
+
+  const verifiedCrypto = getGlobalCrypto();
+  if (verifiedCrypto && typeof verifiedCrypto.getRandomValues === 'function') {
+    return;
+  }
+
+  throw new Error('[CryptoBootstrap] Secure RNG unavailable');
 };
 
 ensureCryptoRng();

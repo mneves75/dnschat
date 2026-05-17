@@ -469,6 +469,7 @@ export class DNSLogService {
 
   static subscribe(listener: (logs: DNSQueryLog[]) => void) {
     this.listeners.add(listener);
+    listener(this.getLogs());
     return () => this.listeners.delete(listener);
   }
 

@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from "react-native";
-import { format, isToday, isYesterday } from "date-fns";
+import { isToday, isYesterday } from "date-fns";
 import type { Chat } from "../types/chat";
 import { TrashIcon } from "./icons/TrashIcon";
 import { useImessagePalette } from "../ui/theme/imessagePalette";
@@ -14,7 +14,7 @@ interface ChatListItemProps {
 
 export function ChatListItem({ chat, onPress, onDelete }: ChatListItemProps) {
   const palette = useImessagePalette();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
 
   const dynamicStyles = {
     container: {
@@ -28,34 +28,40 @@ export function ChatListItem({ chat, onPress, onDelete }: ChatListItemProps) {
 
   const getLastMessage = () => {
     const lastMessage = chat.messages[chat.messages.length - 1];
-    if (!lastMessage) return "No messages yet";
+    if (!lastMessage) return t("screen.chatList.noMessages");
 
     return lastMessage.role === "user"
-      ? `You: ${lastMessage.content}`
+      ? t("screen.chatList.lastUserPrefix", { content: lastMessage.content })
       : lastMessage.content;
   };
 
   const formatDate = (date: Date) => {
     if (isToday(date)) {
-      return format(date, "HH:mm");
+      return new Intl.DateTimeFormat(locale, {
+        hour: "2-digit",
+        minute: "2-digit",
+      }).format(date);
     } else if (isYesterday(date)) {
-      return "Yesterday";
+      return t("screen.chatList.yesterday");
     } else {
-      return format(date, "MMM d");
+      return new Intl.DateTimeFormat(locale, {
+        month: "short",
+        day: "numeric",
+      }).format(date);
     }
   };
 
   const handleDeletePress = () => {
     Alert.alert(
-      "Delete Chat",
-      `Are you sure you want to delete "${chat.title}"?`,
+      t("screen.chatList.deleteTitle"),
+      t("screen.chatList.deleteMessage", { title: chat.title }),
       [
         {
-          text: "Cancel",
+          text: t("common.cancel"),
           style: "cancel",
         },
         {
-          text: "Delete",
+          text: t("common.delete"),
           style: "destructive",
           onPress: () => onDelete(chat.id),
         },

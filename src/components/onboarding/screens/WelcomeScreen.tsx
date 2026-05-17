@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  Dimensions,
   Image,
   ScrollView,
 } from "react-native";
@@ -20,8 +19,6 @@ import { LiquidGlassSpacing } from "../../../ui/theme/liquidGlassSpacing";
 import { useTranslation } from "../../../i18n";
 
 const AppIcon = require("../../../assets/dnschat_ios26.png");
-
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 export function WelcomeScreen() {
   const palette = useImessagePalette();

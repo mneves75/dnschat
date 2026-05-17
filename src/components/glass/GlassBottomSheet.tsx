@@ -216,6 +216,12 @@ export const GlassBottomSheet: React.FC<GlassBottomSheetProps> = ({
   const sheetHeight = screenHeight * height;
   const dragY = React.useRef(new Animated.Value(0)).current;
 
+  React.useEffect(() => {
+    if (visible) {
+      dragY.setValue(0);
+    }
+  }, [visible, dragY]);
+
   const handleBackdropPress = () => {
     if (!disableBackdropDismiss) {
       onClose();
@@ -240,7 +246,7 @@ export const GlassBottomSheet: React.FC<GlassBottomSheetProps> = ({
       const { translationY, velocityY } = event.nativeEvent;
 
       if (translationY > 100 || velocityY > 500) {
-        // Close the sheet
+        dragY.setValue(0);
         onClose();
       } else {
         // Snap back

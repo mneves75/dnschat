@@ -13,6 +13,7 @@ export const ptBR = {
     language: "Idioma",
     followSystem: "Usar idioma do dispositivo",
     unknownError: "Algo deu errado. Por favor, tente novamente.",
+    done: "Concluído",
   },
   locales: {
     enUS: "Inglês (Estados Unidos)",
@@ -46,6 +47,8 @@ export const ptBR = {
         back: "Voltar",
         backHint: "Retorna para a tela anterior do onboarding",
         getStarted: "Começar",
+        continue: "Continuar",
+        stepCounter: "Etapa {{current}} de {{total}}",
         continueHint: "Avança para a próxima etapa do onboarding",
         completeHint: "Conclui o onboarding e abre o app",
       },
@@ -77,6 +80,7 @@ export const ptBR = {
         subtitle: "Envie uma mensagem e veja ela viajar pelo DNS",
         welcomeMessage: "Oi! Sou seu assistente de IA. Tente me enviar uma mensagem para ver como a magia do DNS funciona!",
         successMessage: "Ótimo! Você enviou com sucesso sua primeira mensagem DNS. Em um cenário real, isso retornaria uma resposta de IA via registros DNS TXT. A magia é que sua mensagem viajou pela infraestrutura DNS!",
+        failureMessage: "A mensagem DNS não pôde ser entregue. Verifique as configurações de rede ou tente novamente mais tarde.",
         suggestions: {
           title: "Experimente uma destas:",
           option1: "O que é DNS?",
@@ -279,6 +283,7 @@ export const ptBR = {
         userMessage: "Sua mensagem: {{content}}",
         assistantMessage: "Mensagem do assistente: {{content}}",
         loadingHint: "Mensagem carregando",
+        errorIndicator: "Falha ao enviar mensagem",
         menuHint: "Pressione e segure para mostrar opções de copiar e compartilhar",
         messageListLabel: "Mensagens da conversa",
       },
@@ -292,6 +297,13 @@ export const ptBR = {
       emptySubtitle:
         "Crie uma nova conversa para começar a falar com o assistente de IA.",
       newChatButton: "Iniciar nova conversa",
+      noMessages: "Ainda não há mensagens",
+      lastUserPrefix: "Você: {{content}}",
+      yesterday: "Ontem",
+      deleteTitle: "Apagar conversa",
+      deleteMessage: "Tem certeza de que deseja apagar \"{{title}}\"?",
+      createErrorTitle: "Não foi possível criar a conversa",
+      createErrorMessage: "Falha ao criar a conversa",
       accessibility: {
         deleteButton: "Apagar conversa",
         deleteButtonHint: "Toque duas vezes para apagar esta conversa",
@@ -359,6 +371,8 @@ export const ptBR = {
         noQuery: "Sem consulta",
         noMessage: "Sem mensagem",
         noResponse: "Sem resposta",
+        redactedQuery: "Consulta DNS",
+        redactedResponse: "Resposta ocultada",
         response: "Resposta:",
         querySteps: "Etapas da consulta:",
         resultTitle: "Resultado do último teste:",
@@ -696,6 +710,9 @@ export const ptBR = {
         clearDataMessage:
           "Isso excluirá todas as conversas e mensagens. Esta ação não pode ser desfeita.",
         clearDataConfirm: "Limpar dados",
+        clearDataSuccessTitle: "Dados limpos",
+        clearDataSuccessMessage: "Todas as conversas foram apagadas deste dispositivo.",
+        clearDataErrorMessage: "Não foi possível limpar seus dados locais de chat. Tente novamente.",
         exportTitle: "Exportar dados",
         exportMessage: "A exportação de dados estará disponível em uma atualização futura.",
       },
@@ -743,6 +760,17 @@ export const ptBR = {
     dnsLogViewer: {
       empty: "Nenhum log DNS ainda",
       responseLabel: "Resposta",
+      redactedTitle: "Consulta DNS",
+      redactedResponse: "Resposta ocultada",
+    },
+    share: {
+      title: "Compartilhar mensagem",
+      footer: "Compartilhado do DNSChat em {{date}}",
+      failedTitle: "Falha ao compartilhar",
+      failedMessage: "Não foi possível compartilhar esta mensagem. Tente novamente.",
+    },
+    skeleton: {
+      message: "Carregando mensagem",
     },
   },
 } as const;

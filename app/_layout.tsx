@@ -102,10 +102,6 @@ function RootLayoutContent() {
     }
   }, []);
 
-  if (!hasSettledInitialRoute) {
-    return null;
-  }
-
   const stack = (
     <Stack
       screenOptions={{

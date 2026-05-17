@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   Pressable,
-  useColorScheme,
   Platform,
 } from "react-native";
 import Animated, {
@@ -19,6 +18,7 @@ import { useImessagePalette } from "../../ui/theme/imessagePalette";
 import { LiquidGlassSpacing, getCornerRadius } from "../../ui/theme/liquidGlassSpacing";
 import { SpringConfig, TimingConfig } from "../../utils/animations";
 import { HapticFeedback } from "../../utils/haptics";
+import { useTranslation } from "../../i18n";
 
 type ToastVariant = "success" | "warning" | "error" | "info";
 type ToastPosition = "top" | "bottom";
@@ -67,10 +67,9 @@ export function Toast({
   onAction,
   testID,
 }: ToastProps) {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
   const typography = useTypography();
   const palette = useImessagePalette();
+  const { t } = useTranslation();
 
   const translateY = useSharedValue(position === "top" ? -200 : 200);
   const opacity = useSharedValue(0);
@@ -82,11 +81,27 @@ export function Toast({
     visibleRef.current = visible;
   }, [visible]);
 
-  const finishHide = () => {
+  const finishHide = React.useCallback(() => {
     if (!visibleRef.current) {
       setIsMounted(false);
     }
-  };
+  }, []);
+
+  const handleDismiss = React.useCallback(() => {
+    visibleRef.current = false;
+    translateY.value = withSpring(
+      position === "top" ? -200 : 200,
+      SpringConfig.stiff,
+      (finished) => {
+        if (finished) {
+          runOnJS(onDismiss)();
+          runOnJS(finishHide)();
+        }
+      }
+    );
+    opacity.value = withTiming(0, TimingConfig.quick);
+    HapticFeedback.light();
+  }, [finishHide, onDismiss, opacity, position, translateY]);
 
   // Get variant-specific colors and icon
   const getVariantStyles = () => {
@@ -168,24 +183,7 @@ export function Toast({
       opacity.value = withTiming(0, TimingConfig.quick);
     }
     return undefined;
-  }, [visible, variant, duration, position, finishHide, opacity, translateY]);
-
-  // Handle dismiss
-  const handleDismiss = () => {
-    visibleRef.current = false;
-    translateY.value = withSpring(
-      position === "top" ? -200 : 200,
-      SpringConfig.stiff,
-      (finished) => {
-        if (finished) {
-          runOnJS(onDismiss)();
-          runOnJS(finishHide)();
-        }
-      }
-    );
-    opacity.value = withTiming(0, TimingConfig.quick);
-    HapticFeedback.light();
-  };
+  }, [visible, variant, duration, position, finishHide, handleDismiss, opacity, translateY]);
 
   // Handle action
   const handleAction = () => {
@@ -221,7 +219,7 @@ export function Toast({
         accessible={true}
         accessibilityRole="alert"
         accessibilityLiveRegion="assertive"
-        accessibilityLabel={`${variant} notification: ${title || ""} ${message}`}
+        accessibilityLabel={`${title ? `${title} ` : ""}${message}`}
       >
         {/* Icon */}
         <View style={styles.iconContainer}>
@@ -282,7 +280,7 @@ export function Toast({
           style={styles.dismissButton}
           accessible={true}
           accessibilityRole="button"
-          accessibilityLabel="Dismiss notification"
+          accessibilityLabel={t("common.close")}
           hitSlop={8}
         >
           <Text style={[styles.dismissText, { color: variantStyle.textColor }]}>

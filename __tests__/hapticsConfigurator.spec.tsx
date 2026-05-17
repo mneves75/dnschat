@@ -1,4 +1,5 @@
 import React from "react";
+import { Platform } from "react-native";
 import TestRenderer, { act } from "react-test-renderer";
 import { createWithSuppressedWarnings } from "./utils/reactTestRenderer";
 
@@ -41,6 +42,32 @@ describe("HapticsConfigurator", () => {
     jest.clearAllMocks();
     mockUseSettings.mockReset();
     mockUseAccessibility.mockReset();
+    Platform.OS = "ios";
+  });
+
+  it("does nothing while settings are loading", async () => {
+    mockUseSettings.mockReturnValue({ enableHaptics: true, loading: true });
+    mockUseAccessibility.mockReturnValue({ config: { reduceMotion: false } });
+
+    await act(async () => {
+      createWithSuppressedWarnings(<HapticsConfigurator />);
+    });
+
+    expect(configureHaptics).not.toHaveBeenCalled();
+    expect(preloadHaptics).not.toHaveBeenCalled();
+  });
+
+  it("does nothing on non-iOS platforms", async () => {
+    Platform.OS = "android";
+    mockUseSettings.mockReturnValue({ enableHaptics: true, loading: false });
+    mockUseAccessibility.mockReturnValue({ config: { reduceMotion: false } });
+
+    await act(async () => {
+      createWithSuppressedWarnings(<HapticsConfigurator />);
+    });
+
+    expect(configureHaptics).not.toHaveBeenCalled();
+    expect(preloadHaptics).not.toHaveBeenCalled();
   });
 
   it("configures and preloads when settings are ready", async () => {
@@ -75,5 +102,30 @@ describe("HapticsConfigurator", () => {
 
     expect(configureHaptics).toHaveBeenCalledTimes(2);
     expect(preloadHaptics).toHaveBeenCalledTimes(1);
+  });
+
+  it("propagates reduce-motion changes into the haptics configuration", async () => {
+    mockUseSettings.mockReturnValue({ enableHaptics: true, loading: false });
+    mockUseAccessibility
+      .mockReturnValueOnce({ config: { reduceMotion: false } })
+      .mockReturnValue({ config: { reduceMotion: true } });
+
+    let renderer: TestRenderer.ReactTestRenderer;
+    await act(async () => {
+      renderer = createWithSuppressedWarnings(<HapticsConfigurator />);
+    });
+
+    await act(async () => {
+      renderer!.update(<HapticsConfigurator />);
+    });
+
+    expect(configureHaptics).toHaveBeenNthCalledWith(1, {
+      userEnabled: true,
+      reduceMotion: false,
+    });
+    expect(configureHaptics).toHaveBeenNthCalledWith(2, {
+      userEnabled: true,
+      reduceMotion: true,
+    });
   });
 });

@@ -66,8 +66,8 @@ import { MESSAGE_CONSTANTS } from "../constants/appConstants";
 const AnimatedPressableRipple = Animated.createAnimatedComponent(PressableRipple);
 
 // Constants derived from design system (no magic numbers!)
-const CHARACTER_COUNTER_THRESHOLD = MESSAGE_CONSTANTS.MAX_MESSAGE_LENGTH - 20; // Show at 90%
-const ACCESSIBILITY_ALERT_THRESHOLD = MESSAGE_CONSTANTS.MAX_MESSAGE_LENGTH - 10; // Alert at 92%
+const CHARACTER_COUNTER_THRESHOLD = Math.ceil(MESSAGE_CONSTANTS.MAX_MESSAGE_LENGTH * 0.9);
+const ACCESSIBILITY_ALERT_THRESHOLD = Math.ceil(MESSAGE_CONSTANTS.MAX_MESSAGE_LENGTH * 0.92);
 const ANIMATION_DURATION_MS = 200;
 const BUTTON_SPACING = LiquidGlassSpacing.xxs; // 4px from edge
 

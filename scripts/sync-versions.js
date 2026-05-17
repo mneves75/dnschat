@@ -114,6 +114,10 @@ function readAndroidVersions() {
 
 function parseExplicitBuildNumber(rawValue) {
   if (rawValue == null) return null;
+  if (!/^\d+$/.test(String(rawValue))) {
+    console.error(`[sync-versions] Invalid --build-number: ${JSON.stringify(rawValue)}`);
+    process.exit(1);
+  }
   const parsed = Number.parseInt(String(rawValue), 10);
   if (!Number.isFinite(parsed) || parsed <= 0) {
     console.error(`[sync-versions] Invalid --build-number: ${JSON.stringify(rawValue)}`);
@@ -261,6 +265,7 @@ function getTargetBuildNumber({
   androidVersionCode,
   appIosBuildNumber,
   appAndroidVersionCode,
+  appVersion,
   explicitBuildNumber,
   bumpBuild,
 }) {
@@ -277,7 +282,9 @@ function getTargetBuildNumber({
   );
 
   const versionsNeedUpdate =
-    iosMarketingVersion !== targetVersion || androidVersionName !== targetVersion;
+    appVersion !== targetVersion ||
+    iosMarketingVersion !== targetVersion ||
+    androidVersionName !== targetVersion;
 
   if (explicitBuildNumber != null) {
     if (explicitBuildNumber <= maxCurrentBuild) {
@@ -334,6 +341,7 @@ function main() {
     androidVersionCode,
     appIosBuildNumber,
     appAndroidVersionCode,
+    appVersion,
     explicitBuildNumber,
     bumpBuild: shouldBumpBuild,
   });

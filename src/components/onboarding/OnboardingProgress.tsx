@@ -4,22 +4,36 @@ import {
   Text,
   StyleSheet,
   Animated,
-  Dimensions,
+  useWindowDimensions,
 } from "react-native";
 import { useOnboarding } from "../../context/OnboardingContext";
 import { useImessagePalette } from "../../ui/theme/imessagePalette";
 import { useTypography } from "../../ui/hooks/useTypography";
 import { LiquidGlassSpacing } from "../../ui/theme/liquidGlassSpacing";
+import { useTranslation } from "../../i18n";
+import type { MessageKey } from "../../i18n";
 
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
-const PROGRESS_WIDTH = SCREEN_WIDTH - (LiquidGlassSpacing.md * 2);
+const STEP_TITLE_KEYS: Record<string, MessageKey> = {
+  WelcomeScreen: "screen.onboarding.welcome.title",
+  DNSMagicScreen: "screen.onboarding.dnsMagic.title",
+  NetworkSetupScreen: "screen.onboarding.networkSetup.title",
+  FirstChatScreen: "screen.onboarding.firstChat.title",
+  FeaturesScreen: "screen.onboarding.ready.title",
+};
 
 export function OnboardingProgress() {
   const palette = useImessagePalette();
   const typography = useTypography();
   const { currentStep, steps } = useOnboarding();
+  const { t } = useTranslation();
+  const { width: screenWidth } = useWindowDimensions();
 
   const progress = (currentStep + 1) / steps.length;
+  const progressWidth = Math.max(0, screenWidth - (LiquidGlassSpacing.md * 2));
+  const currentStepData = steps[currentStep];
+  const currentStepTitleKey = currentStepData
+    ? STEP_TITLE_KEYS[currentStepData.component]
+    : undefined;
   const animatedWidth = React.useRef(new Animated.Value(0)).current;
 
   // Effect: animate progress bar when onboarding step changes.
@@ -41,7 +55,10 @@ export function OnboardingProgress() {
             { color: palette.textSecondary },
           ]}
         >
-          Step {currentStep + 1} of {steps.length}
+          {t("screen.onboarding.navigation.stepCounter", {
+            current: currentStep + 1,
+            total: steps.length,
+          })}
         </Text>
         <Text
           style={[
@@ -50,7 +67,7 @@ export function OnboardingProgress() {
             { color: palette.textPrimary },
           ]}
         >
-          {steps[currentStep]?.title || ""}
+          {currentStepTitleKey ? t(currentStepTitleKey) : ""}
         </Text>
       </View>
 
@@ -68,7 +85,7 @@ export function OnboardingProgress() {
               {
                 width: animatedWidth.interpolate({
                   inputRange: [0, 1],
-                  outputRange: [0, PROGRESS_WIDTH],
+                  outputRange: [0, progressWidth],
                 }),
               },
             ]}
@@ -113,7 +130,7 @@ const styles = StyleSheet.create({
     position: "relative",
   },
   progressBackground: {
-    width: PROGRESS_WIDTH,
+    width: "100%",
     height: LiquidGlassSpacing.xxs,
     borderRadius: 2,
     overflow: "hidden",
@@ -127,7 +144,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     position: "absolute",
     top: -2,
-    width: PROGRESS_WIDTH,
+    width: "100%",
     paddingHorizontal: LiquidGlassSpacing.xxs,
   },
   dot: {

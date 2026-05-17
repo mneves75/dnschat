@@ -3,10 +3,9 @@ import {
   FlatList,
   View,
   StyleSheet,
-  useColorScheme,
   Text,
   RefreshControl,
-  Platform,
+  ActivityIndicator,
 } from "react-native";
 import type { ListRenderItemInfo } from "react-native";
 import { MessageBubble } from "./MessageBubble";
@@ -42,8 +41,6 @@ export function MessageList({
   testID,
 }: MessageListProps) {
   const flatListRef = useRef<FlatList<Message>>(null);
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
   const { supportsLiquidGlass } = useLiquidGlassCapabilities();
 
   // iOS 26 HIG: Semantic color palette that adapts to light/dark/high-contrast modes
@@ -187,6 +184,15 @@ export function MessageList({
     </View>
   );
 
+  const renderLoadingComponent = () => (
+    <View style={styles.emptyContainer}>
+      <ActivityIndicator
+        color={palette.accentTint}
+        accessibilityLabel={t("screen.chat.accessibility.loadingHint")}
+      />
+    </View>
+  );
+
   const refreshControl = onRefresh ? (
     // iOS 26 HIG: RefreshControl tint uses accentTint (semantic blue)
     // Replaces hardcoded "#000000" / "#FFFFFF" for proper theme adaptation
@@ -213,7 +219,7 @@ export function MessageList({
       showsVerticalScrollIndicator={false}
       // REMOVED: onContentSizeChange scroll handler - conflicts with useEffect scroll
       // Our scrollToBottom with double RAF handles all scenarios reliably
-      ListEmptyComponent={renderEmptyComponent}
+      ListEmptyComponent={isLoading ? renderLoadingComponent : renderEmptyComponent}
       ListFooterComponent={renderFooter}
       refreshControl={refreshControl}
       keyboardShouldPersistTaps="handled"

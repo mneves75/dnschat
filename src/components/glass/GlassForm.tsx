@@ -16,6 +16,7 @@ import {
   ScrollView,
   Platform,
 } from "react-native";
+import { useRouter } from "expo-router";
 import type { ViewStyle, StyleProp } from "react-native";
 import {
   SafeAreaView,
@@ -25,6 +26,7 @@ import { LiquidGlassWrapper } from "../LiquidGlassWrapper";
 import { PressableRipple } from "../PressableRipple";
 import { useImessagePalette } from "../../ui/theme/imessagePalette";
 import { HapticFeedback } from "../../utils/haptics";
+import { openExternalUrl } from "../../utils/externalLinks";
 
 // ==================================================================================
 // TYPES AND INTERFACES
@@ -69,6 +71,8 @@ interface GlassFormItemProps {
   showChevron?: boolean;
   /** Render title/subtitle using destructive colors */
   destructive?: boolean;
+  /** Disable press handling */
+  disabled?: boolean;
   /** Disable haptic feedback */
   disableHaptics?: boolean;
   /** Test ID for testing */
@@ -240,6 +244,7 @@ export const GlassFormItem: React.FC<GlassFormItemProps> = ({
   style,
   showChevron = false,
   destructive = false,
+  disabled = false,
   disableHaptics = false,
   testID,
   accessibilityLabel,
@@ -249,6 +254,9 @@ export const GlassFormItem: React.FC<GlassFormItemProps> = ({
   const { triggerSelectionFeedback } = useHapticFeedback();
 
   const handlePress = () => {
+    if (disabled) {
+      return;
+    }
     if (!disableHaptics) {
       triggerSelectionFeedback();
     }
@@ -256,7 +264,13 @@ export const GlassFormItem: React.FC<GlassFormItemProps> = ({
   };
 
   const renderContent = (extraStyle?: StyleProp<ViewStyle>) => (
-    <View style={[styles.itemContainer, extraStyle, style]}>
+    <View
+      testID={onPress ? undefined : testID}
+      accessible={!onPress && Boolean(accessibilityLabel || accessibilityHint)}
+      accessibilityLabel={!onPress ? accessibilityLabel : undefined}
+      accessibilityHint={!onPress ? accessibilityHint : undefined}
+      style={[styles.itemContainer, extraStyle, style]}
+    >
       <View style={styles.itemContentLeft}>
         <Text
           style={[
@@ -294,6 +308,7 @@ export const GlassFormItem: React.FC<GlassFormItemProps> = ({
       <PressableRipple
         testID={testID}
         onPress={handlePress}
+        disabled={disabled}
         variant="surface"
         rippleColor={colors.highlighted}
         pressedOpacity={0.85}
@@ -301,6 +316,7 @@ export const GlassFormItem: React.FC<GlassFormItemProps> = ({
         accessibilityRole="button"
         accessibilityLabel={accessibilityLabel ?? title}
         accessibilityHint={accessibilityHint ?? subtitle}
+        accessibilityState={{ disabled }}
       >
         {({ pressed }) =>
           renderContent(
@@ -324,11 +340,13 @@ export const GlassFormLink: React.FC<GlassFormLinkProps> = ({
   url,
   ...props
 }) => {
+  const router = useRouter();
+
   const handlePress = () => {
     if (href) {
-      // Navigation logic would go here
+      router.push(href as Parameters<typeof router.push>[0]);
     } else if (url) {
-      // URL opening logic would go here
+      void openExternalUrl(url);
     }
     props.onPress?.();
   };

@@ -13,6 +13,7 @@ export const enUS = {
     language: "Language",
     followSystem: "Use device language",
     unknownError: "Something went wrong. Please try again.",
+    done: "Done",
   },
   locales: {
     enUS: "English (United States)",
@@ -46,6 +47,8 @@ export const enUS = {
         back: "Back",
         backHint: "Returns to the previous onboarding screen",
         getStarted: "Get Started",
+        continue: "Continue",
+        stepCounter: "Step {{current}} of {{total}}",
         continueHint: "Proceeds to the next onboarding step",
         completeHint: "Completes onboarding and opens the app",
       },
@@ -77,6 +80,7 @@ export const enUS = {
         subtitle: "Send a message and watch it travel through DNS",
         welcomeMessage: "Hi! I'm your AI assistant. Try sending me a message to see how DNS magic works!",
         successMessage: "Great! You've successfully sent your first DNS message. In a real scenario, this would return an AI response via DNS TXT records. The magic is that your message traveled through the DNS infrastructure!",
+        failureMessage: "The DNS message could not be delivered. Check your network settings or try again later.",
         suggestions: {
           title: "Try one of these:",
           option1: "What is DNS?",
@@ -279,6 +283,7 @@ export const enUS = {
         userMessage: "Your message: {{content}}",
         assistantMessage: "Assistant message: {{content}}",
         loadingHint: "Message is loading",
+        errorIndicator: "Message failed to send",
         menuHint: "Long press to show copy and share options",
         messageListLabel: "Conversation messages",
       },
@@ -292,6 +297,13 @@ export const enUS = {
       emptySubtitle:
         "Start a new conversation to begin chatting with the AI assistant.",
       newChatButton: "Start New Chat",
+      noMessages: "No messages yet",
+      lastUserPrefix: "You: {{content}}",
+      yesterday: "Yesterday",
+      deleteTitle: "Delete Chat",
+      deleteMessage: "Are you sure you want to delete \"{{title}}\"?",
+      createErrorTitle: "Unable to create chat",
+      createErrorMessage: "Failed to create chat",
       accessibility: {
         deleteButton: "Delete chat",
         deleteButtonHint: "Double tap to delete this conversation",
@@ -359,6 +371,8 @@ export const enUS = {
         noQuery: "No query",
         noMessage: "No message",
         noResponse: "No response",
+        redactedQuery: "DNS query",
+        redactedResponse: "Response redacted",
         response: "Response:",
         querySteps: "Query Steps:",
         resultTitle: "Last Test Result:",
@@ -697,6 +711,9 @@ export const enUS = {
         clearDataMessage:
           "This will delete all your chats and messages. This action cannot be undone.",
         clearDataConfirm: "Clear Data",
+        clearDataSuccessTitle: "Data cleared",
+        clearDataSuccessMessage: "All conversations were deleted from this device.",
+        clearDataErrorMessage: "Unable to clear your local chat data. Please try again.",
         exportTitle: "Export Data",
         exportMessage: "Data export will be available in a future update.",
       },
@@ -744,6 +761,17 @@ export const enUS = {
     dnsLogViewer: {
       empty: "No DNS logs yet",
       responseLabel: "Response",
+      redactedTitle: "DNS query",
+      redactedResponse: "Response redacted",
+    },
+    share: {
+      title: "Share Message",
+      footer: "Shared from DNSChat on {{date}}",
+      failedTitle: "Share Failed",
+      failedMessage: "Unable to share this message. Please try again.",
+    },
+    skeleton: {
+      message: "Loading message",
     },
   },
 } as const;

@@ -26,8 +26,10 @@ export default function ChatListRoute() {
       });
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Failed to create chat";
-      Alert.alert("Unable to create chat", message);
+        error instanceof Error
+          ? error.message
+          : t("screen.chatList.createErrorMessage");
+      Alert.alert(t("screen.chatList.createErrorTitle"), message);
     } finally {
       setIsCreatingChat(false);
     }

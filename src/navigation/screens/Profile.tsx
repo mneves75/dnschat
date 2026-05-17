@@ -37,6 +37,7 @@ export function Profile({ user }: ProfileProps) {
   const { animatedStyle } = useScreenEntrance();
   const { supportsLiquidGlass } = useLiquidGlassCapabilities();
   const { chats, clearAllChats } = useChat();
+  const [isClearingData, setIsClearingData] = React.useState(false);
 
   // Calculate statistics
   const totalChats = chats.length;
@@ -58,6 +59,10 @@ export function Profile({ user }: ProfileProps) {
   const displayName = user || t("screen.profile.defaultUser", { defaultValue: "User" });
 
   const handleClearData = () => {
+    if (isClearingData) {
+      return;
+    }
+
     Alert.alert(
       t("screen.profile.alerts.clearDataTitle", { defaultValue: "Clear All Data" }),
       t("screen.profile.alerts.clearDataMessage", {
@@ -68,8 +73,27 @@ export function Profile({ user }: ProfileProps) {
         {
           text: t("screen.profile.alerts.clearDataConfirm", { defaultValue: "Clear Data" }),
           style: "destructive",
-          onPress: () => {
-            clearAllChats?.();
+          onPress: async () => {
+            if (isClearingData) {
+              return;
+            }
+            setIsClearingData(true);
+            try {
+              await clearAllChats?.();
+              Alert.alert(
+                t("screen.profile.alerts.clearDataSuccessTitle"),
+                t("screen.profile.alerts.clearDataSuccessMessage"),
+                [{ text: t("common.ok") }],
+              );
+            } catch {
+              Alert.alert(
+                t("common.errorTitle"),
+                t("screen.profile.alerts.clearDataErrorMessage"),
+                [{ text: t("common.ok") }],
+              );
+            } finally {
+              setIsClearingData(false);
+            }
           },
         },
       ]
@@ -251,6 +275,7 @@ export function Profile({ user }: ProfileProps) {
               defaultValue: "Delete all chats and messages",
             })}
             onPress={handleClearData}
+            disabled={isClearingData}
             showChevron
             destructive
           />

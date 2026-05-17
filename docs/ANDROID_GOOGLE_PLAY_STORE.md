@@ -4,7 +4,7 @@ Complete step-by-step guide for publishing DNSChat to the Google Play Store.
 
 **App**: DNSChat
 **Package**: `<ANDROID_PACKAGE>`
-**Current Version**: 4.0.12
+**Current Version**: 4.0.13
 
 ---
 
@@ -323,10 +323,10 @@ See [ANDROID_RELEASE.md](./ANDROID_RELEASE.md) for signing configuration.
    - **Upload** new AAB
 4. Add release notes:
    ```
-   What's new in v4.0.12:
-   • Fixed chat detail navigation chrome in light and dark mode
-   • Improved chat scrolling while typing so the latest message stays visible
-   • Hardened app-opened external links with a shared allowlist
+   What's new in v4.0.13:
+   • Hardened DNS resolver validation, logging, and backpressure handling
+   • Improved bilingual UI, accessibility labels, and loading/error states
+   • Expanded release verification with typecheck, AXe screenshot proof, and Clawpatch regression coverage
    ```
 5. Click **"Review release"**
 6. Set rollout percentage (start with 10-20% recommended)
@@ -436,6 +436,7 @@ Before submitting for review, verify:
 
 | Version | Date | Notes |
 |---------|------|-------|
+| 4.0.13 | 2026-05-17 | Clawpatch hardening, DNS/native validation, release-gate and UI regression coverage |
 | 4.0.12 | 2026-05-15 | Dark-mode navigation chrome fix, chat composer scroll stability, external link allowlist |
 | 4.0.11 | 2026-05-15 | Expo Router chat route fix, route-owned toolbar actions, release docs sync |
 | 4.0.10 | 2026-05-15 | AXe simulator E2E coverage, accessibility identifiers, release diagnostics |

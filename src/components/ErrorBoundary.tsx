@@ -6,6 +6,8 @@ import {
   TouchableOpacity,
   useColorScheme,
 } from "react-native";
+import { useTranslation } from "../i18n";
+import { devWarn } from "../utils/devLog";
 
 interface Props {
   children: React.ReactNode;
@@ -27,7 +29,10 @@ export class ErrorBoundary extends React.Component<Props, State> {
   }
 
   override componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error("ErrorBoundary caught an error:", error, errorInfo);
+    devWarn("ErrorBoundary caught an error", {
+      error: error.message,
+      componentStack: errorInfo.componentStack,
+    });
   }
 
   override render() {
@@ -53,6 +58,7 @@ interface ErrorFallbackProps {
 function ErrorFallback({ error, onRetry }: ErrorFallbackProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
+  const { t } = useTranslation();
 
   return (
     <View
@@ -64,7 +70,7 @@ function ErrorFallback({ error, onRetry }: ErrorFallbackProps) {
       <Text
         style={[styles.title, isDark ? styles.darkTitle : styles.lightTitle]}
       >
-        Oops! Something went wrong
+        {t("common.errorTitle")}
       </Text>
       <Text
         style={[
@@ -72,7 +78,7 @@ function ErrorFallback({ error, onRetry }: ErrorFallbackProps) {
           isDark ? styles.darkMessage : styles.lightMessage,
         ]}
       >
-        {error?.message || "An unexpected error occurred"}
+        {error?.message || t("common.unknownError")}
       </Text>
       <TouchableOpacity
         style={[
@@ -87,7 +93,7 @@ function ErrorFallback({ error, onRetry }: ErrorFallbackProps) {
             isDark ? styles.darkRetryButtonText : styles.lightRetryButtonText,
           ]}
         >
-          Try Again
+          {t("common.reset")}
         </Text>
       </TouchableOpacity>
     </View>

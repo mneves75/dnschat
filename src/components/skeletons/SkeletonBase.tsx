@@ -207,7 +207,10 @@ export function SkeletonCard({ children, delay = 0, style }: SkeletonCardProps) 
 
   // Effect: fade in skeleton card unless reduced motion is enabled.
   useEffect(() => {
-    if (shouldReduceMotion) return;
+    if (shouldReduceMotion) {
+      opacity.value = 1;
+      return;
+    }
 
     opacity.value = withDelay(delay, withTiming(1, { duration: 200 }));
   }, [shouldReduceMotion, delay, opacity]);

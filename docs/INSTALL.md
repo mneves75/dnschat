@@ -1,6 +1,6 @@
 # Installation
 
-This repo builds DNSChat `4.0.12` (React Native `0.83.6`, Expo SDK `55.0.24`).
+This repo builds DNSChat `4.0.13` (React Native `0.83.6`, Expo SDK `55.0.24`).
 
 Prereqs:
 
@@ -131,8 +131,8 @@ physical device for version `4.0.8` build `36`. A CLI launch can fail with
 `SBMainWorkspace` reason `Locked` when the device is locked; that is not an
 install failure.
 
-Latest AXe simulator release evidence: `2026-05-15`, version `4.0.12` build
-`42`, 10 feature groups passed in one owned release-simulator run.
+Latest AXe simulator release evidence: `2026-05-17`, version `4.0.13` build
+`43`, 10 feature groups passed in one owned release-simulator run.
 
 Latest signed TestFlight evidence: version `4.0.12` build `42` archived,
 exported, uploaded, processed as `VALID`, and passed TestFlight validation with

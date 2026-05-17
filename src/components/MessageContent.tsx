@@ -8,6 +8,7 @@ import type { Message } from "../types/chat";
 import type { IMessagePalette } from "../ui/theme/imessagePalette";
 import type { TypographyScale } from "../ui/theme/liquidGlassTypography";
 import { LiquidGlassSpacing } from "../ui/theme/liquidGlassSpacing";
+import { useTranslation } from "../i18n";
 
 interface MessageContentProps {
   message: Message;
@@ -38,6 +39,7 @@ export function MessageContent({
   palette,
   typography,
 }: MessageContentProps) {
+  const { t } = useTranslation();
   const isUser = message.role === "user";
   const isLoading = message.status === "sending";
   const hasError = message.status === "error";
@@ -85,7 +87,7 @@ export function MessageContent({
           <Text
             style={[styles.errorIndicator, { backgroundColor: palette.destructive, color: palette.bubbleTextOnBlue }]}
             accessible={true}
-            accessibilityLabel="Message failed to send"
+            accessibilityLabel={t("screen.chat.accessibility.errorIndicator")}
             selectable={false}
           >
             !

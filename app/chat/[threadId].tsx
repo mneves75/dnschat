@@ -25,6 +25,8 @@ export default function ChatRoute() {
   } = useChat();
   const normalizedThreadId = normalizeRouteParam(threadId);
   const [isResolving, setIsResolving] = React.useState(false);
+  const [isRouteHydrating, setIsRouteHydrating] = React.useState(false);
+  const [hasAttemptedRouteLoad, setHasAttemptedRouteLoad] = React.useState(false);
   const lastAttemptedRef = React.useRef<string | null>(null);
   const routeChat = React.useMemo(
     () => resolveRouteChat(chats, currentChat, normalizedThreadId),
@@ -33,22 +35,32 @@ export default function ChatRoute() {
 
   // Effect: load chats lazily when a thread route is hit without cached data.
   React.useEffect(() => {
-    if (!normalizedThreadId || isLoading || chats.length > 0) {
+    if (!normalizedThreadId || isLoading || chats.length > 0 || hasAttemptedRouteLoad) {
       return;
     }
 
-    loadChats().catch((error) => {
-      devWarn("[ChatRoute] Failed to load chats", error);
-    });
-  }, [chats.length, isLoading, loadChats, normalizedThreadId]);
+    setHasAttemptedRouteLoad(true);
+    setIsRouteHydrating(true);
+    loadChats()
+      .catch((error) => {
+        devWarn("[ChatRoute] Failed to load chats", error);
+      })
+      .finally(() => {
+        setIsRouteHydrating(false);
+      });
+  }, [chats.length, hasAttemptedRouteLoad, isLoading, loadChats, normalizedThreadId]);
 
   // Effect: resolve the route thread id into a chat or create one and redirect.
   React.useEffect(() => {
-    if (isLoading || isResolving) {
+    if (isLoading || isResolving || isRouteHydrating) {
       return;
     }
 
     const targetId = normalizedThreadId;
+
+    if (targetId && chats.length === 0 && !hasAttemptedRouteLoad) {
+      return;
+    }
 
     if (!targetId) {
       if (!currentChat) {
@@ -102,7 +114,9 @@ export default function ChatRoute() {
     chats,
     createChat,
     currentChat,
+    hasAttemptedRouteLoad,
     isLoading,
+    isRouteHydrating,
     isResolving,
     normalizedThreadId,
     router,

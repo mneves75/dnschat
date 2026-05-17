@@ -7,6 +7,19 @@ const createStubComponent = (name) => {
   return Comp;
 };
 
+const Pressable = React.forwardRef((props, ref) =>
+  React.createElement("Pressable", { ...props, ref }, props?.children ?? null)
+);
+Pressable.displayName = "Pressable";
+
+const FlatList = React.forwardRef((props, ref) => {
+  React.useImperativeHandle(ref, () => ({
+    scrollToEnd: (...args) => globalThis.__RN_FLATLIST_SCROLL_TO_END?.(...args),
+  }));
+  return React.createElement("FlatList", props, props?.children ?? null);
+});
+FlatList.displayName = "FlatList";
+
 module.exports = {
   Platform: { OS: "ios", Version: "26.0" },
   NativeModules: {},
@@ -30,6 +43,9 @@ module.exports = {
   View: createStubComponent("View"),
   Text: createStubComponent("Text"),
   TextInput: createStubComponent("TextInput"),
+  Pressable,
+  FlatList,
+  RefreshControl: createStubComponent("RefreshControl"),
   ScrollView: createStubComponent("ScrollView"),
   KeyboardAvoidingView: createStubComponent("KeyboardAvoidingView"),
   TouchableOpacity: createStubComponent("TouchableOpacity"),

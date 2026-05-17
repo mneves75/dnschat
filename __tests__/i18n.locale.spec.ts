@@ -4,7 +4,9 @@ import { normalizePreferredLocale } from "../src/context/settingsStorage";
 describe("locale helpers", () => {
   it("maps shorthand codes to supported locales", () => {
     expect(resolveLocale("pt")).toBe("pt-BR");
+    expect(resolveLocale("pt-PT")).toBe("pt-BR");
     expect(resolveLocale("EN_us")).toBe("en-US");
+    expect(resolveLocale("en-GB")).toBe("en-US");
   });
 
   it("falls back to English when locale is unknown", () => {

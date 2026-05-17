@@ -68,7 +68,12 @@ final class DNSResolver: NSObject {
         resolver: @escaping RCTPromiseResolveBlock,
         rejecter: @escaping RCTPromiseRejectBlock
     ) {
-        let dnsPort = port.uint16Value > 0 ? port.uint16Value : Self.defaultDnsPort
+        let requestedPort = port.intValue
+        guard requestedPort >= 1 && requestedPort <= Int(UInt16.max) else {
+            rejecter("DNS_QUERY_FAILED", "Invalid DNS port: \(requestedPort). Must be between 1 and 65535.", nil)
+            return
+        }
+        let dnsPort = UInt16(requestedPort)
 
         // Pre-validate message format synchronously (doesn't need MainActor)
         let queryName: String

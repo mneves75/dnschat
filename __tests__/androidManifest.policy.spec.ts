@@ -1,6 +1,7 @@
 import fs from "node:fs";
 
 const MAIN_MANIFEST = "android/app/src/main/AndroidManifest.xml";
+const DEBUG_OPTIMIZED_MANIFEST = "android/app/src/debugOptimized/AndroidManifest.xml";
 
 function read(path: string): string {
   return fs.readFileSync(path, "utf8");
@@ -36,6 +37,17 @@ describe("android manifest policy", () => {
       .filter((path) => !fs.existsSync(path));
 
     expect(missing).toEqual([]);
+  });
+
+  it("disables app backup for local encrypted chat history", () => {
+    const manifest = read(MAIN_MANIFEST);
+    expect(manifest).toContain('android:allowBackup="false"');
+  });
+
+  it("keeps debugOptimized free of release-risk permissions and cleartext overrides", () => {
+    const manifest = read(DEBUG_OPTIMIZED_MANIFEST);
+    expect(manifest).not.toContain("android.permission.SYSTEM_ALERT_WINDOW");
+    expect(manifest).not.toContain("android:usesCleartextTraffic");
   });
 
   it("excludes SecureStore from Android backup and device transfer", () => {

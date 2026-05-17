@@ -55,6 +55,15 @@ export class StorageService {
     });
   }
 
+  private static serializeChats(chats: Chat[]): string {
+    return JSON.stringify(chats, (key, value) => {
+      if (key === "createdAt" || key === "updatedAt" || key === "timestamp") {
+        return new Date(value).toISOString();
+      }
+      return value;
+    });
+  }
+
   private static async createCorruptionBackupPayload(
     error: StorageCorruptionError,
     storedPayload: string,
@@ -95,12 +104,7 @@ export class StorageService {
     });
 
     try {
-      const serializedChats = JSON.stringify(chats, (key, value) => {
-        if (key === "createdAt" || key === "updatedAt" || key === "timestamp") {
-          return new Date(value).toISOString();
-        }
-        return value;
-      });
+      const serializedChats = this.serializeChats(chats);
 
       devLog("[StorageService] Serialized chats", {
         dataSize: serializedChats.length,
@@ -247,8 +251,14 @@ export class StorageService {
       const chats = parsed as Chat[];
 
       if (migratePlaintext && !isEncryptedPayload(serializedChats)) {
-        await this.saveChats(chats);
-        devWarn("[StorageService] Migrated legacy plaintext chat storage to encrypted payload");
+        const latestPayload = await AsyncStorage.getItem(CHATS_KEY);
+        if (latestPayload === serializedChats) {
+          const encryptedPayload = await encryptString(this.serializeChats(chats));
+          await AsyncStorage.setItem(CHATS_KEY, encryptedPayload);
+          devWarn("[StorageService] Migrated legacy plaintext chat storage to encrypted payload");
+        } else {
+          devWarn("[StorageService] Skipped plaintext migration because chat storage changed concurrently");
+        }
       }
 
       const duration = Date.now() - startTime;
