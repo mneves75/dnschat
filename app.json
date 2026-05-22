@@ -2,7 +2,7 @@
   "expo": {
     "name": "DNS Chat",
     "slug": "chat-dns",
-    "version": "4.0.13",
+    "version": "4.0.14",
     "orientation": "default",
     "icon": "./icons/dnschat_ios26.png",
     "userInterfaceStyle": "automatic",
@@ -13,7 +13,8 @@
     "scheme": "dnschat",
     "ios": {
       "supportsTablet": true,
-      "buildNumber": "43",
+      "deploymentTarget": "16.4",
+      "buildNumber": "44",
       "bundleIdentifier": "org.mvneves.dnschat",
       "config": {
         "usesNonExemptEncryption": false
@@ -24,7 +25,7 @@
         "foregroundImage": "./icons/dnschat_ios26.png",
         "backgroundColor": "#0D7377"
       },
-      "versionCode": 43,
+      "versionCode": 44,
       "predictiveBackGestureEnabled": true,
       "package": "org.mvneves.dnschat"
     },
@@ -47,7 +48,7 @@
         "expo-build-properties",
         {
           "ios": {
-            "deploymentTarget": "16.0",
+            "deploymentTarget": "16.4",
             "flipper": false,
             "ccacheEnabled": true,
             "generateStaticFrameworks": true,

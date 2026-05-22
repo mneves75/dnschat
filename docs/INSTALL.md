@@ -1,12 +1,12 @@
 # Installation
 
-This repo builds DNSChat `4.0.13` (React Native `0.83.6`, Expo SDK `55.0.24`).
+This repo builds DNSChat `4.0.14` (React Native `0.85.x`, Expo SDK `56`).
 
 Prereqs:
 
 - Node.js 18+
 - Git
-- iOS: macOS + Xcode 15+ (iOS 16+ simulator/device)
+- iOS: macOS + Xcode 26.4+ (iOS 16.4+ simulator/device)
 - Android: Java 17 + Android Studio/SDK (API 24+)
 
 ## Clone + install

@@ -1,13 +1,11 @@
-import { Asset } from "expo-asset";
 import { Stack, useRootNavigationState, useRouter, useSegments } from "expo-router";
+import { ThemeProvider } from "expo-router/react-navigation";
 import * as SplashScreen from "expo-splash-screen";
 import * as React from "react";
 import { Platform } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { Assets as NavigationAssets } from "@react-navigation/elements";
-import { ThemeProvider } from "@react-navigation/native";
 import { useColorScheme } from "react-native";
 import { ErrorBoundary } from "../src/components/ErrorBoundary";
 import { HapticsConfigurator } from "../src/components/HapticsConfigurator";
@@ -21,11 +19,6 @@ import { useImessagePalette } from "../src/ui/theme/imessagePalette";
 import { createNavigationTheme } from "../src/ui/theme/navigationTheme";
 import { AndroidStartupDiagnostics } from "../src/utils/androidStartupDiagnostics";
 
-const NAVIGATION_ASSETS = [
-  ...NavigationAssets,
-];
-
-Asset.loadAsync(NAVIGATION_ASSETS).catch(() => {});
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
 function RootLayoutContent() {

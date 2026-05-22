@@ -79,16 +79,16 @@ AI,chat,DNS,assistant,local,native,tech,innovation,queries,networking
 
 ---
 
-## What's New (Release Notes v4.0.13)
+## What's New (Release Notes v4.0.14)
 
-CLAWPATCH HARDENING RELEASE
+SDK 56 PLATFORM UPGRADE
 
-- Hardened DNS resolver validation, native logging, and backpressure handling.
-- Improved bilingual UI, accessibility labels, loading states, and error states.
-- Expanded release verification with TypeScript checking, AXe screenshot proof, and Clawpatch regression coverage.
-- Kept privacy language explicit: local history is encrypted at rest, while DNS transport remains observable infrastructure.
+- Upgraded the baseline to Expo SDK 56, React Native 0.85.3, React 19.2.3, and TypeScript 6.0.3.
+- Raised the iOS deployment target to 16.4 and refreshed the native module graph for SDK 56.
+- Migrated app navigation theme imports to Expo Router SDK 56 entry points and removed unused direct React Navigation packages.
+- Replaced removed React Native `StyleSheet.absoluteFillObject` usage in the glass bottom-sheet backdrop.
 
-## TestFlight What to Test (v4.0.13 build 43)
+## TestFlight What to Test (v4.0.14 build 44)
 
 - Complete onboarding from a fresh install and confirm the app lands on the chat list.
 - Send short prompts over the default DNS service and confirm responses render without transport errors.
@@ -141,10 +141,10 @@ Validated screenshot sets currently available in App Store Connect:
 ### Bundle Information
 
 - **Bundle ID**: `<BUNDLE_ID>`
-- **Version**: `4.0.13`
-- **Build Number**: 43 (sync-versions)
+- **Version**: `4.0.14`
+- **Build Number**: 44 (sync-versions)
 - **App Store Connect internal IDs**: intentionally omitted from public docs; keep exact IDs in private release notes.
-- **Minimum iOS Version**: 16.0
+- **Minimum iOS Version**: 16.4
 - **Device Support**: iPhone, iPad
 - **Orientation**: Portrait + Landscape (default)
 
@@ -300,4 +300,4 @@ No user account is required. The app does not require app-owned backend infrastr
 
 ---
 
-_Updated for DNS Chat v4.0.13 build 43 - Clawpatch hardening release uploaded to TestFlight_
+_Updated for DNS Chat v4.0.14 build 44 - SDK 56 platform upgrade; signed App Store archive and TestFlight upload not yet completed for this version_

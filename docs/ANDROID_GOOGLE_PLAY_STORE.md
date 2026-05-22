@@ -4,7 +4,7 @@ Complete step-by-step guide for publishing DNSChat to the Google Play Store.
 
 **App**: DNSChat
 **Package**: `<ANDROID_PACKAGE>`
-**Current Version**: 4.0.13
+**Current Version**: 4.0.14
 
 ---
 
@@ -121,7 +121,7 @@ Full VoiceOver/TalkBack support with screen reader optimizations.
 
 TECHNICAL DETAILS:
 
-• Built with React Native 0.83.6 and Expo SDK 55.0.24
+• Built with React Native 0.85.3 and Expo SDK 56.0.3
 • React 19 with New Architecture enabled
 • Native DNS module for iOS and Android
 • Supports DNS servers: 1.1.1.1, 8.8.8.8, 9.9.9.9
@@ -323,10 +323,11 @@ See [ANDROID_RELEASE.md](./ANDROID_RELEASE.md) for signing configuration.
    - **Upload** new AAB
 4. Add release notes:
    ```
-   What's new in v4.0.13:
-   • Hardened DNS resolver validation, logging, and backpressure handling
-   • Improved bilingual UI, accessibility labels, and loading/error states
-   • Expanded release verification with typecheck, AXe screenshot proof, and Clawpatch regression coverage
+   What's new in v4.0.14:
+   • Upgraded to Expo SDK 56, React Native 0.85.3, React 19.2.3, TypeScript 6.0
+   • Raised iOS deployment target to 16.4 and refreshed native module graph
+   • Migrated navigation theme imports to Expo Router SDK 56 entry points
+   • Replaced removed `StyleSheet.absoluteFillObject` in glass bottom-sheet backdrop
    ```
 5. Click **"Review release"**
 6. Set rollout percentage (start with 10-20% recommended)
@@ -436,6 +437,7 @@ Before submitting for review, verify:
 
 | Version | Date | Notes |
 |---------|------|-------|
+| 4.0.14 | 2026-05-22 | Expo SDK 56 / React Native 0.85.3 / React 19.2.3 / TypeScript 6.0 baseline upgrade; iOS deployment target raised to 16.4 |
 | 4.0.13 | 2026-05-17 | Clawpatch hardening, DNS/native validation, release-gate and UI regression coverage |
 | 4.0.12 | 2026-05-15 | Dark-mode navigation chrome fix, chat composer scroll stability, external link allowlist |
 | 4.0.11 | 2026-05-15 | Expo Router chat route fix, route-owned toolbar actions, release docs sync |

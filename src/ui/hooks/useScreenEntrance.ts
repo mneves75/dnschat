@@ -31,7 +31,7 @@ import {
   Easing,
   runOnJS,
 } from 'react-native-reanimated';
-import type { WithSpringConfig, WithTimingConfig } from 'react-native-reanimated';
+import type { AnimatedStyle, WithSpringConfig, WithTimingConfig } from 'react-native-reanimated';
 import { useMotionReduction } from '../../context/AccessibilityContext';
 import { SpringConfig, TimingConfig } from '../../utils/animations';
 
@@ -64,7 +64,7 @@ interface UseScreenEntranceResult {
   /**
    * Animated style to apply to the screen container
    */
-  animatedStyle: ViewStyle;
+  animatedStyle: AnimatedStyle<ViewStyle>;
 
   /**
    * Whether the entrance animation has completed

@@ -105,7 +105,7 @@ jest.mock("../src/i18n", () => ({
   }),
 }));
 
-jest.mock("@react-navigation/native", () => ({
+jest.mock("expo-router", () => ({
   useNavigation: () => ({ goBack: jest.fn(), setOptions: jest.fn(), navigate: jest.fn() }),
   useTheme: () => ({
     colors: {

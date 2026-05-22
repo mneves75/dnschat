@@ -7,11 +7,11 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 - JavaScript fallback transports (UDP/TCP) for constrained networks
 - An in-app Logs screen to inspect attempts, failures, and fallbacks
 
-[![Version](https://img.shields.io/badge/version-4.0.13-blue.svg)](.)
-[![React Native](https://img.shields.io/badge/React%20Native-0.83.6-blue.svg)](https://reactnative.dev/)
-[![Expo](https://img.shields.io/badge/Expo-55.0.24-black.svg)](https://expo.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.9.x-blue.svg)](https://www.typescriptlang.org/)
-[![iOS](https://img.shields.io/badge/iOS-16%2B-lightgrey.svg)](https://developer.apple.com/ios/)
+[![Version](https://img.shields.io/badge/version-4.0.14-blue.svg)](.)
+[![React Native](https://img.shields.io/badge/React%20Native-0.85.3-blue.svg)](https://reactnative.dev/)
+[![Expo](https://img.shields.io/badge/Expo-56.0.3-black.svg)](https://expo.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-6.0.x-blue.svg)](https://www.typescriptlang.org/)
+[![iOS](https://img.shields.io/badge/iOS-16.4%2B-lightgrey.svg)](https://developer.apple.com/ios/)
 [![Android](https://img.shields.io/badge/Android-API%2024%2B-green.svg)](https://developer.android.com/)
 [![CI](actions/workflows/ci.yml/badge.svg)](actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -31,14 +31,14 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 
 ## Tech stack
 
-- App version: `4.0.13` (build `43`)
+- App version: `4.0.14` (build `44`)
 - Expo workflow: Expo Router + dev-client + EAS-compatible native config
-- Expo SDK: `55.0.24`
-- React: `19.2.0`
-- React Native: `0.83.6`
-- TypeScript: `5.9.x`
+- Expo SDK: `56.0.3`
+- React: `19.2.3`
+- React Native: `0.85.3`
+- TypeScript: `6.0.x`
 - Hermes: enabled
-- New Architecture: enabled by default on SDK 55
+- New Architecture: enabled by default on SDK 56
 - React Compiler: enabled (`experiments.reactCompiler: true`)
 - Typed routes: enabled (`experiments.typedRoutes: true`)
 
@@ -72,8 +72,8 @@ port 53.
 
 Prereqs:
 
-- Node.js 18+
-- iOS: Xcode 15+ (macOS only), iOS 16+ device/simulator
+- Node.js 20.19.4+
+- iOS: Xcode 26.4+ (macOS only), iOS 16.4+ device/simulator
 - Android: Java 17 + Android SDK
 
 Install:

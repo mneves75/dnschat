@@ -1,5 +1,4 @@
-import { DarkTheme, DefaultTheme } from "@react-navigation/native";
-import type { Theme } from "@react-navigation/native";
+import { DarkTheme, DefaultTheme, type Theme } from "expo-router/react-navigation";
 import type { IMessagePalette } from "./imessagePalette";
 
 export function createNavigationTheme(

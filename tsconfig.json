@@ -10,7 +10,8 @@
     "noPropertyAccessFromIndexSignature": true,
     "noUncheckedIndexedAccess": true,
     "useUnknownInCatchVariables": true,
-    "verbatimModuleSyntax": true
+    "verbatimModuleSyntax": true,
+    "types": ["jest", "node", "react-test-renderer"]
   },
   "include": [
     "**/*.ts",

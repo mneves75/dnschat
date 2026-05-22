@@ -6,7 +6,7 @@ import {
   IMESSAGE_LIGHT,
 } from "../src/ui/theme/imessagePalette";
 
-jest.mock("@react-navigation/native", () => ({
+jest.mock("expo-router/react-navigation", () => ({
   DefaultTheme: {
     dark: false,
     colors: {

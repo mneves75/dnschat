@@ -6,6 +6,34 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+## [4.0.14] - 2026-05-22
+
+### Changed
+
+- Upgraded the app baseline to Expo SDK `56.0.3`, React Native `0.85.3`,
+  React `19.2.3`, and TypeScript `6.0.3`.
+- Raised the iOS deployment baseline to `16.4` and regenerated CocoaPods for
+  the SDK 56 native module graph.
+- Migrated app navigation theme imports to Expo Router SDK 56 entry points and
+  removed unused direct React Navigation packages.
+- Bumped app metadata to `4.0.14` build `44` across Expo, iOS, and Android via
+  `sync-versions`.
+
+### Fixed
+
+- Replaced the removed React Native `StyleSheet.absoluteFillObject` usage in
+  the glass bottom-sheet backdrop.
+
+### Verified
+
+- Lint (`ast-grep`), `verify:ios-pods`, and the full Jest suite (816 passed /
+  13 skipped, 95 of 96 suites) passed against the SDK 56 baseline.
+- Debug + Release iOS device builds compiled and installed on a physical
+  iPhone 17 Pro Max via `xcrun devicectl`; the Release build is Apple
+  Development signed (team-only) and launched on-device.
+- Signed App Store archive, IPA export, and TestFlight upload are intentionally
+  not part of this entry — those gates were not run for `4.0.14` build `44`.
+
 ## [4.0.13] - 2026-05-17
 
 ### Added

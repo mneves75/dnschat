@@ -20,4 +20,13 @@ module.exports = {
   useLocalSearchParams: () => ({}),
   useSegments: () => [],
   useRootNavigationState: () => ({ key: "test" }),
+  useNavigation: () => ({ goBack: jest.fn(), setOptions: jest.fn(), navigate: jest.fn() }),
+  useTheme: () => ({
+    colors: {
+      text: "#000",
+      border: "#444",
+      background: "#fff",
+      card: "#fafafa",
+    },
+  }),
 };

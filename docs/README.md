@@ -8,6 +8,7 @@ Developer documentation for DNSChat. Code is the source of truth — these docs 
 - `docs/architecture/SYSTEM-ARCHITECTURE.md` — what talks to what
 - `docs/technical/DNS-PROTOCOL-SPEC.md` — DNS query/response rules (current behavior)
 - `docs/technical/SPECIFICATION.md` — product behavior + repo invariants
+- `docs/plans/SDK56_UPGRADE_PLAN.md` — SDK 56 upgrade plan and verification gate
 - `docs/e2e-axe-feature-coverage.md` — AXe simulator E2E feature checklist
   and runner notes
 - `docs/technical/CHAT-TEMPLATE-2026-REVIEW.md` — 2026 chat-template review plan and applied repairs

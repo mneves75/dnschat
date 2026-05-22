@@ -1,6 +1,7 @@
 import { Tabs } from "expo-router";
 import React from "react";
 import { Image } from "react-native";
+import type { ColorValue } from "react-native";
 import { useTranslation } from "../../src/i18n";
 import { useImessagePalette } from "../../src/ui/theme/imessagePalette";
 
@@ -8,7 +9,7 @@ const chatIcon = require("../../src/assets/newspaper.png");
 const logsIcon = require("../../src/assets/logs-icon.png");
 const infoIcon = require("../../src/assets/info-icon.png");
 
-function TabIcon({ source, color }: { source: number; color: string }) {
+function TabIcon({ source, color }: { source: number; color: ColorValue }) {
   return (
     <Image
       source={source}

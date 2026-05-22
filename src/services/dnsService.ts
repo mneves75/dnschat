@@ -404,7 +404,7 @@ const warnInsecureRandom = () => {
   );
 };
 
-const fillSecureRandom = (target: Uint16Array): boolean => {
+const fillSecureRandom = (target: Uint16Array<ArrayBuffer>): boolean => {
   try {
     if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
       crypto.getRandomValues(target);
@@ -426,7 +426,7 @@ const fillSecureRandom = (target: Uint16Array): boolean => {
  * @returns A random integer in range [0, 65535]
  */
 export function generateSecureDNSId(): number {
-  const arr = new Uint16Array(1);
+  const arr = new Uint16Array(new ArrayBuffer(2));
   if (fillSecureRandom(arr)) {
     const value = arr[0];
     return value ?? Math.floor(Math.random() * 65536);

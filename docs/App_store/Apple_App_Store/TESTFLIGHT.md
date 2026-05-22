@@ -109,7 +109,21 @@ xcodebuild clean archive \
   CODE_SIGNING_ALLOWED=NO
 ```
 
-Latest public release evidence (`2026-05-17`, Xcode `26.5` / `17F42`):
+Latest public release evidence (`2026-05-22`, Xcode `26.5` / `17F42`, SDK 56 baseline):
+
+- Lint (`ast-grep`), `verify:ios-pods`, and the full Jest suite (816 passed /
+  13 skipped, 95 of 96 suites) passed for version `4.0.14` build `44`.
+- Physical-device Debug build (Apple Development signing) compiled and installed
+  via `xcrun devicectl` on an iPhone 17 Pro Max for version `4.0.14` build `44`.
+- Physical-device Release build (Apple Development signing) compiled and
+  installed via `xcrun devicectl` on the same device for version `4.0.14`
+  build `44`, and the bundle launched successfully.
+- Signed App Store archive, signed IPA export, and App Store Connect TestFlight
+  upload were NOT run for `4.0.14` build `44` because no Apple Distribution
+  identity was available locally.
+- Internal App Store Connect IDs, tester group names, device names, device identifiers, local paths, team IDs, profile names, and certificate IDs are intentionally omitted from public docs.
+
+Prior signed-release evidence (`2026-05-17`, Xcode `26.5` / `17F42`):
 
 - Debug simulator build passed on iOS 26.5.
 - AXe release simulator pass covered 10 feature groups for version `4.0.13`
@@ -126,7 +140,6 @@ Latest public release evidence (`2026-05-17`, Xcode `26.5` / `17F42`):
 - App Store version validation passed with `0` errors and `0` warnings; App Privacy publish-state remains API-unverifiable.
 - `asc doctor` passed local checks.
 - `xcodebuild test` did not run because the `DNSChat` scheme has no XCTest bundles.
-- Internal App Store Connect IDs, tester group names, device names, device identifiers, local paths, team IDs, profile names, and certificate IDs are intentionally omitted from public docs.
 
 If Xcode script phases fail with a missing Node binary, inspect
 `ios/.xcode.env.local`. It is ignored by Git and can contain a stale local
@@ -206,7 +219,7 @@ bun run ios -- --verbose
 - **App Store Connect** app record created
 - **Code signing** configured correctly
 - **Bundle ID** matches (`<BUNDLE_ID>`)
-- **Version numbers** consistent (v4.0.13 build 43)
+- **Version numbers** consistent (v4.0.14 build 44)
 - **Native DNS module** compiles successfully
 - **Xcode CLI smoke** passed:
   - Debug simulator build
@@ -234,10 +247,10 @@ eas build --platform ios --profile production
 
 ### TestFlight distribution
 
-Current v4.0.13 distribution target:
+Current v4.0.14 distribution target:
 
-- Version/build: `4.0.13` / `43`
-- Processing state: `VALID`
+- Version/build: `4.0.14` / `44`
+- Processing state: pending upload (signed App Store archive and TestFlight upload not yet run for this build)
 - Tester groups: configured in App Store Connect; internal group names are intentionally omitted from public docs.
 - Exact build IDs and App Store Connect version IDs belong in private release notes, not public runbooks.
 
@@ -248,7 +261,7 @@ After upload:
 3. **Feedback**: Collect user feedback through TestFlight
 4. **Iterate**: Upload new builds for continuous testing
 
-### What to Test for v4.0.13 build 43
+### What to Test for v4.0.14 build 44
 
 - Complete onboarding from a fresh install and confirm the app lands on the chat list.
 - Send short prompts through the default DNS service and confirm responses render.
@@ -284,4 +297,4 @@ If you encounter issues during the upload process:
 
 ---
 
-_TestFlight upload guide for DNSChat v4.0.13 build 43 - Last updated: 2026-05-17_
+_TestFlight upload guide for DNSChat v4.0.14 build 44 - Last updated: 2026-05-22_
