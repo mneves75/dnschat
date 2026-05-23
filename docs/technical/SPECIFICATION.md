@@ -28,7 +28,9 @@ Rationale: avoid silent truncation and avoid DNS injection/encoding ambiguity.
 
 ## DNS query behavior
 
-Source of truth: `src/services/dnsService.ts`.
+Source of truth: `src/services/dnsService.ts` (orchestration + parsing) and
+`src/services/dnsWire.ts` (wire format: encode TXT query, decode packet, TCP
+framing, TXT extraction, decoded-response validation).
 
 End-to-end steps:
 

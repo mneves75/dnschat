@@ -37,6 +37,7 @@ Routes live exclusively in `app/`. `src/navigation/screens/*.tsx` files are scre
 ## Core Logic
 
 - `src/services/dnsService.ts` -> DNS query pipeline (native -> UDP -> TCP -> mock).
+- `src/services/dnsWire.ts` -> DNS wire format: TXT query encoding, packet decoding, TCP framing, TXT extraction, and decoded-response validation (extracted so transport orchestration stays smaller without changing DNS behavior).
 - `src/services/dnsLogService.ts` -> log storage and cleanup scheduler.
 - `src/services/storageService.ts` -> encrypted local storage for chats/logs.
 - `src/services/encryptionService.ts` -> AES-GCM encryption helpers and SecureStore-backed key handling.

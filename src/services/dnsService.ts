@@ -1,7 +1,4 @@
 import { Platform, AppState } from 'react-native';
-import type { Buffer as NodeBuffer } from 'buffer';
-import type { DecodedPacket } from 'dns-packet';
-import * as dns from 'dns-packet';
 import { nativeDNS, DNSError, DNSErrorType } from '../../modules/dns-native';
 export { DNSError, DNSErrorType } from '../../modules/dns-native';
 import {
@@ -15,6 +12,16 @@ import {
 } from '../../modules/dns-native/constants';
 import { getRandomValues as expoGetRandomValues } from 'expo-crypto';
 import { DNSLogService } from './dnsLogService';
+import {
+  createTcpTxtDnsQueryFrame,
+  decodeDnsPacket,
+  encodeTxtDnsQuery,
+  extractTxtRecordsFromDecodedResponse,
+  readTcpFrameLength,
+  type BufferFactory,
+  type BufferLike,
+} from './dnsWire';
+export { validateDecodedDnsResponseForTxt } from './dnsWire';
 import { ERROR_MESSAGES } from '../constants/appConstants';
 import { devLog, devLogArgs } from '../utils/devLog';
 
@@ -95,19 +102,6 @@ type TcpSocketModule = {
   Socket: new () => TcpSocketInstance;
 };
 
-type BufferLike = Uint8Array & {
-  readUInt16BE?: (offset: number) => number;
-  writeUInt16BE?: (value: number, offset: number) => void;
-};
-
-type BufferFactory = {
-  alloc(size: number): BufferLike;
-  allocUnsafe(size: number): BufferLike;
-  concat(chunks: BufferLike[]): BufferLike;
-  from(data: Uint8Array | ArrayBuffer | ArrayLike<number>): BufferLike;
-  isBuffer(value: unknown): value is BufferLike;
-};
-
 const isUDPModule = (value: unknown): value is UDPModule =>
   typeof value === 'object' &&
   value !== null &&
@@ -147,19 +141,6 @@ const isBufferFactory = (value: unknown): value is BufferFactory => {
     typeof candidate.concat === 'function' &&
     typeof candidate.from === 'function'
   );
-};
-
-const toUint8Array = (value: unknown): Uint8Array | null => {
-  if (value instanceof Uint8Array) return value;
-  if (value instanceof ArrayBuffer) return new Uint8Array(value);
-  if (ArrayBuffer.isView(value) && value.buffer) {
-    return new Uint8Array(value.buffer);
-  }
-  if (value && typeof value === 'object' && 'length' in value) {
-    const arrayLike = value as ArrayLike<number>;
-    return new Uint8Array(Array.from(arrayLike));
-  }
-  return null;
 };
 
 const getErrorMessage = (error: unknown): string => {
@@ -292,103 +273,6 @@ if (!Buffer) {
   };
 }
 
-const toNodeBuffer = (data: Uint8Array): NodeBuffer => {
-  if (Buffer && typeof Buffer.from === 'function') {
-    return Buffer.from(data) as unknown as NodeBuffer;
-  }
-  return data as unknown as NodeBuffer;
-};
-
-const decodePacket = (data: Uint8Array): DecodedPacket => dns.decode(toNodeBuffer(data));
-
-const getDecodedRcode = (decoded: DecodedPacket): string | undefined => {
-  const record = decoded as { rcode?: unknown };
-  return typeof record.rcode === 'string' ? record.rcode : undefined;
-};
-
-const DNS_FLAG_QR = 0x8000;
-const DNS_FLAG_TC = 0x0200;
-const DNS_OPCODE_MASK = 0x7800;
-
-const normalizeQuestionName = (value: string): string =>
-  value.trim().toLowerCase().replace(/\.+$/g, '');
-
-const isIPv4Address = (value: string): boolean => /^(?:\d{1,3}\.){3}\d{1,3}$/.test(value);
-
-export function validateDecodedDnsResponseForTxt(
-  decoded: DecodedPacket,
-  options: {
-    expectedQueryId: number;
-    expectedQueryName: string;
-    expectedPort: number;
-    expectedServer: string;
-    sourceAddress?: string;
-    sourcePort?: number;
-  },
-): void {
-  if (decoded.id !== options.expectedQueryId) {
-    throw new Error(
-      `DNS response ID mismatch (expected ${options.expectedQueryId}, got ${decoded.id}) - possible spoofing attempt`,
-    );
-  }
-
-  const flags = typeof decoded.flags === 'number' ? decoded.flags : 0;
-  if ((flags & DNS_FLAG_QR) === 0) {
-    throw new Error('DNS response missing QR flag');
-  }
-
-  const opcode = (flags & DNS_OPCODE_MASK) >>> 11;
-  if (opcode !== 0) {
-    throw new Error('DNS response opcode not standard query');
-  }
-
-  if ((flags & DNS_FLAG_TC) !== 0) {
-    throw new Error('DNS response truncated (TC=1)');
-  }
-
-  const rcode = getDecodedRcode(decoded);
-  if (rcode && rcode !== 'NOERROR') {
-    throw new Error(`DNS query failed with rcode: ${rcode}`);
-  }
-
-  const questions = Array.isArray(decoded.questions) ? decoded.questions : [];
-  if (questions.length !== 1) {
-    throw new Error(`DNS response QDCOUNT=${questions.length}`);
-  }
-
-  const question = questions[0];
-  const questionName = typeof question?.name === 'string' ? normalizeQuestionName(question.name) : '';
-  if (questionName !== normalizeQuestionName(options.expectedQueryName)) {
-    throw new Error('DNS response question name mismatch');
-  }
-  if (question?.type !== 'TXT' || question?.class !== 'IN') {
-    throw new Error('DNS response question type/class mismatch');
-  }
-
-  if (
-    typeof options.sourcePort === 'number' &&
-    options.sourcePort !== options.expectedPort
-  ) {
-    throw new Error(
-      `DNS response from unexpected source port: ${options.sourcePort}`,
-    );
-  }
-
-  if (
-    typeof options.sourceAddress === 'string' &&
-    isIPv4Address(options.expectedServer) &&
-    options.sourceAddress !== options.expectedServer
-  ) {
-    throw new Error(
-      `DNS response from unexpected source address: ${options.sourceAddress}`,
-    );
-  }
-
-  if (!decoded.answers || decoded.answers.length === 0) {
-    throw new Error('No TXT records found');
-  }
-}
-
 const isTestRuntime = () =>
   typeof process !== 'undefined' &&
   typeof process.env === 'object' &&
@@ -452,35 +336,6 @@ function safeStringify(value: unknown): string {
     } catch {
       return '<unstringifiable>';
     }
-  }
-}
-
-function safeDecodeBytes(bytes: unknown): string {
-  const asUint8 = toUint8Array(bytes);
-  if (!asUint8) return '';
-  try {
-    const decoderCtor = typeof TextDecoder !== 'undefined' ? TextDecoder : null;
-    if (decoderCtor) {
-      const dec = new decoderCtor('utf-8');
-      return dec.decode(asUint8);
-    }
-  } catch {}
-  try {
-    if (Buffer && typeof Buffer.from === 'function') {
-      return toNodeBuffer(asUint8).toString('utf8');
-    }
-  } catch {}
-  try {
-    const arr = asUint8;
-    let out = '';
-    for (let i = 0; i < arr.length; i++) {
-      const byte = arr[i];
-      if (byte === undefined) continue;
-      out += String.fromCharCode(byte);
-    }
-    return out;
-  } catch {
-    return '';
   }
 }
 
@@ -1159,21 +1014,8 @@ export class DNSService {
 
       // SECURITY: Store query ID for response validation (RFC 5452 - DNS cache poisoning prevention)
       const queryId = generateSecureDNSId();
-      const dnsQuery = {
-        type: 'query' as const,
-        id: queryId,
-        flags: 0x0100, // Standard query with recursion desired
-        questions: [
-          {
-            type: 'TXT' as const,
-            class: 'IN' as const,
-            name: queryName,
-          },
-        ],
-      };
-
       try {
-        const queryBuffer = dns.encode(dnsQuery);
+        const queryBuffer = encodeTxtDnsQuery(queryName, queryId);
 
         timeoutId = setTimeout(() => {
           onError(new Error('DNS query timed out'));
@@ -1183,32 +1025,15 @@ export class DNSService {
 
         socket.once('message', (response: Uint8Array, rinfo: { address: string; port: number }) => {
           try {
-            const decoded = decodePacket(response);
-            validateDecodedDnsResponseForTxt(decoded, {
+            const decoded = decodeDnsPacket(response, Buffer);
+            const txtRecords = extractTxtRecordsFromDecodedResponse(decoded, {
               expectedQueryId: queryId,
               expectedQueryName: queryName,
               expectedPort: port,
               expectedServer: dnsServer,
               sourceAddress: rinfo.address,
               sourcePort: rinfo.port,
-            });
-            const answers = decoded.answers ?? [];
-
-            const txtRecords = answers
-              .filter((answer) => answer.type === 'TXT')
-              .map((answer) => {
-                if (Array.isArray(answer.data)) {
-                  return answer.data.join('');
-                } else if (
-                  answer.data instanceof Uint8Array ||
-                  (answer.data && typeof answer.data === 'object' && 'length' in answer.data)
-                ) {
-                  return safeDecodeBytes(answer.data as Uint8Array);
-                } else {
-                  return answer.data ? answer.data.toString() : '';
-                }
-              })
-              .filter((record) => record.length > 0);
+            }, Buffer);
 
             cleanup();
             resolve(txtRecords);
@@ -1386,73 +1211,9 @@ export class DNSService {
 
       // SECURITY: Store query ID for response validation (RFC 5452 - DNS cache poisoning prevention)
       const queryId = generateSecureDNSId();
-      const dnsQuery = {
-        type: 'query' as const,
-        id: queryId,
-        flags: 0x0100, // Standard query with recursion desired
-        questions: [
-          {
-            type: 'TXT' as const,
-            class: 'IN' as const,
-            name: queryName,
-          },
-        ],
-      };
-
       try {
-        this.vLog('TCP: Encoding DNS query...');
-        const queryBuffer = dns.encode(dnsQuery);
-        this.vLog('TCP: DNS query encoded, length:', queryBuffer?.length);
-
-        if (!queryBuffer) {
-          throw new Error('DNS packet encoding failed - queryBuffer is null/undefined');
-        }
-
-        // TRICKY: DNS-over-TCP requires 2-byte length prefix (RFC 7766)
-        // This is the key difference between UDP and TCP DNS:
-        // - UDP: Send raw DNS packet
-        // - TCP: Send [2-byte length prefix] + [DNS packet]
-        // The length prefix tells the server how many bytes to read
-        this.vLog('TCP: Creating length prefix...');
-        this.vLog('TCP: Buffer available:', !!Buffer);
-        this.vLog('TCP: Buffer.allocUnsafe available:', !!Buffer?.allocUnsafe);
-
-        let lengthPrefix;
-        try {
-          lengthPrefix = Buffer.allocUnsafe(2);
-          this.vLog('TCP: Length prefix buffer created');
-        } catch (bufferError) {
-          this.vLog('TCP: Buffer.allocUnsafe failed:', bufferError);
-          throw new Error(`Buffer allocation failed: ${bufferError}`);
-        }
-
-        // TRICKY: Write length as big-endian 16-bit integer
-        // Big-endian (network byte order): most significant byte first
-        // For polyfill compatibility, support both Buffer.writeUInt16BE and manual write
-        this.vLog('TCP: Writing length prefix...');
-        if (lengthPrefix.writeUInt16BE) {
-          this.vLog('TCP: Using Buffer.writeUInt16BE method');
-          lengthPrefix.writeUInt16BE(queryBuffer.length, 0);
-        } else {
-          this.vLog('TCP: Using manual big-endian write (polyfill mode)');
-          // Manual big-endian write for Buffer polyfill
-          // Example: length 512 = 0x0200 -> [0x02, 0x00]
-          lengthPrefix[0] = (queryBuffer.length >> 8) & 0xff;  // High byte
-          lengthPrefix[1] = queryBuffer.length & 0xff;          // Low byte
-        }
-        this.vLog('TCP: Length prefix written:', Array.from(lengthPrefix));
-
-        this.vLog('TCP: Concatenating buffers...');
-        this.vLog('TCP: Buffer.concat available:', !!Buffer?.concat);
-
-        let tcpQuery;
-        try {
-          tcpQuery = Buffer.concat([lengthPrefix, queryBuffer]);
-          this.vLog('TCP: TCP query buffer created, total length:', tcpQuery?.length);
-        } catch (concatError) {
-          this.vLog('TCP: Buffer.concat failed:', concatError);
-          throw new Error(`Buffer concatenation failed: ${concatError}`);
-        }
+        const tcpQuery = createTcpTxtDnsQueryFrame(queryName, queryId, Buffer);
+        this.vLog('TCP: TCP query frame created, total length:', tcpQuery.length);
 
         this.vLog('TCP: Setting up timeout...');
         timeoutId = setTimeout(() => {
@@ -1485,45 +1246,20 @@ export class DNSService {
 
           // Read the length prefix if we haven't yet
           if (expectedLength === 0 && responseBuffer.length >= 2) {
-            // Read big-endian 16-bit integer
-            if (responseBuffer.readUInt16BE) {
-              expectedLength = responseBuffer.readUInt16BE(0);
-            } else {
-              // Manual big-endian read for polyfill
-              const high = responseBuffer[0] ?? 0;
-              const low = responseBuffer[1] ?? 0;
-              expectedLength = (high << 8) | low;
-            }
+            expectedLength = readTcpFrameLength(responseBuffer);
             responseBuffer = responseBuffer.slice(2); // Remove length prefix
           }
 
           // Check if we have received the complete response
           if (expectedLength > 0 && responseBuffer.length >= expectedLength) {
             try {
-              const decoded = decodePacket(responseBuffer.slice(0, expectedLength));
-              validateDecodedDnsResponseForTxt(decoded, {
+              const decoded = decodeDnsPacket(responseBuffer.slice(0, expectedLength), Buffer);
+              const txtRecords = extractTxtRecordsFromDecodedResponse(decoded, {
                 expectedQueryId: queryId,
                 expectedQueryName: queryName,
                 expectedPort: port,
                 expectedServer: dnsServer,
-              });
-              const answers = decoded.answers ?? [];
-
-              const txtRecords = answers
-                .filter((answer) => answer.type === 'TXT')
-                .map((answer) => {
-                  if (Array.isArray(answer.data)) {
-                    return answer.data.join('');
-                  } else if (
-                    answer.data instanceof Uint8Array ||
-                    (answer.data && typeof answer.data === 'object' && 'length' in answer.data)
-                  ) {
-                    return safeDecodeBytes(answer.data as Uint8Array);
-                  } else {
-                    return answer.data ? answer.data.toString() : '';
-                  }
-                })
-                .filter((record) => record.length > 0);
+              }, Buffer);
 
               cleanup();
               resolve(txtRecords);

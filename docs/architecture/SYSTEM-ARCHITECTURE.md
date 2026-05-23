@@ -36,6 +36,7 @@ App:
 - `app/(tabs)/_layout.tsx` tab navigation
 - `app/chat/[threadId].tsx` chat route wrapper
 - `src/services/dnsService.ts` query pipeline + fallback order + parsing
+- `src/services/dnsWire.ts` DNS wire format: TXT query encoding, packet decoding, TCP framing, TXT extraction, decoded-response validation
 - `src/services/dnsLogService.ts` logging model used by the Logs screen (redacted + encrypted at rest)
 - `src/services/storageService.ts` AsyncStorage persistence (encrypted at rest)
 - Android SecureStore backup/device-transfer exclusion rules live in

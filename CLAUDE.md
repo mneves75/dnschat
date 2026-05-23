@@ -17,6 +17,7 @@ A React Native (Expo dev-client) chat app that sends short prompts as DNS TXT qu
 | Tab layout | `app/(tabs)/_layout.tsx` (web override: `_layout.web.tsx`) |
 | Chat thread route | `app/chat/[threadId].tsx` |
 | DNS query logic | `src/services/dnsService.ts` |
+| DNS wire format (encode / decode / TCP frame / TXT extract) | `src/services/dnsWire.ts` |
 | Server configuration | `modules/dns-native/constants.ts` (`getLLMServers`, `getDefaultServer`) |
 | Default server setting | `src/context/settingsStorage.ts` (`DEFAULT_DNS_SERVER`) |
 | Settings UI | `src/navigation/screens/GlassSettings.tsx` |
@@ -98,7 +99,7 @@ This app uses **Expo Router** (file-based routing under `app/`), not React Navig
 
 ### DNS Server Fallback Chain
 
-**Server selection** (search `getLLMServers` in `src/services/dnsService.ts` — currently around line 920):
+**Server selection** (search `getLLMServers` in `src/services/dnsService.ts` — currently around line 775):
 - If user has selected a server in settings -> use ONLY that server (no fallback)
 - Otherwise -> use `getLLMServers()` which returns `[llm.pieter.com:53, ch.at:53]`
 
@@ -125,7 +126,8 @@ modules/dns-native/           # Native DNS module (TS API + iOS/Android bridges)
   __tests__/                  # Module tests (run separately)
 
 src/services/
-  dnsService.ts               # Query pipeline, transport chain, parsing (1600+ lines)
+  dnsService.ts               # Query pipeline, transport chain, parsing (~1815 lines)
+  dnsWire.ts                  # DNS wire format: encode TXT query, decode packet, TCP framing, TXT extraction, response validation
   dnsLogService.ts            # Logging for Logs screen
   storageService.ts           # AsyncStorage persistence
   encryptionService.ts        # Secure storage

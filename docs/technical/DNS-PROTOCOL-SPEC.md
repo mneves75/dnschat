@@ -1,7 +1,9 @@
 # DNS protocol spec (app behavior)
 
 This doc describes what DNSChat actually does today (code is the source of
-truth). For implementation, see `src/services/dnsService.ts` and
+truth). For implementation, see `src/services/dnsService.ts` (transport
+orchestration + TXT parsing), `src/services/dnsWire.ts` (TXT query encoding,
+packet decoding, TCP framing, TXT extraction, decoded-response validation), and
 `modules/dns-native/constants.ts`.
 
 ## Inputs and limits

@@ -6,6 +6,16 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+### Changed
+
+- Consolidated DNS packet encoding, TCP framing, response validation, and TXT
+  extraction behind a dedicated wire-format module so transport orchestration
+  stays smaller without changing DNS behavior.
+- Aligned the Expo SDK 56 patch package set and regenerated CocoaPods after
+  `expo-doctor` reported package-version drift.
+- Pinned the React Compiler healthcheck as a dev dependency so the verification
+  script runs from a local binary instead of transient `bunx` resolution.
+
 ## [4.0.14] - 2026-05-22
 
 ### Changed
