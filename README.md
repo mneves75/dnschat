@@ -9,7 +9,7 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 
 [![Version](https://img.shields.io/badge/version-4.0.14-blue.svg)](.)
 [![React Native](https://img.shields.io/badge/React%20Native-0.85.3-blue.svg)](https://reactnative.dev/)
-[![Expo](https://img.shields.io/badge/Expo-56.0.3-black.svg)](https://expo.dev/)
+[![Expo](https://img.shields.io/badge/Expo-56.0.4-black.svg)](https://expo.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0.x-blue.svg)](https://www.typescriptlang.org/)
 [![iOS](https://img.shields.io/badge/iOS-16.4%2B-lightgrey.svg)](https://developer.apple.com/ios/)
 [![Android](https://img.shields.io/badge/Android-API%2024%2B-green.svg)](https://developer.android.com/)
@@ -33,7 +33,7 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 
 - App version: `4.0.14` (build `44`)
 - Expo workflow: Expo Router + dev-client + EAS-compatible native config
-- Expo SDK: `56.0.3`
+- Expo SDK: `56.0.4`
 - React: `19.2.3`
 - React Native: `0.85.3`
 - TypeScript: `6.0.x`
@@ -67,6 +67,10 @@ The transport order used by `src/services/dnsService.ts` is:
 
 Web preview uses the Mock path by default because browsers cannot do raw DNS on
 port 53.
+
+DNS packet encoding, DNS-over-TCP framing, decoded-response validation, and TXT
+record extraction live in `src/services/dnsWire.ts`; `dnsService.ts` owns the
+transport chain, retries, logging, and server fallback orchestration.
 
 ## Quick start
 
@@ -202,19 +206,23 @@ Release:
 
 ## Current verification baseline
 
+Last architecture/dependency verification: `2026-05-23`.
 Last full source/security sweep: `2026-05-17`.
 Last AXe simulator E2E feature pass: `2026-05-17` for version `4.0.13` build
 `43`.
 Last iOS signed release archive/export: `2026-05-17` for version `4.0.13`
 build `43`.
 
-- `bun run verify:all` passes (`expo-doctor` 17/17, SDK alignment, typed routes,
+- `bun run verify:all` passes (`expo-doctor` 19/19, SDK alignment, typed routes,
   DNS resolver sync, iOS pods, React Compiler, Android setup, lint, and Jest).
+- Native DNS module tests pass (`7` suites passed, `1` skipped; `56` tests
+  passed, `13` skipped).
 - AXe E2E baseline: 10 feature groups passed in one owned release-simulator
   run.
-- Jest baseline: 95 suites passed, 1 skipped; 816 tests passed, 13 skipped.
-- `bun audit`, `npm audit` in `modules/dns-native`, and `gitleaks detect`
-  report no vulnerabilities or leaks.
+- Jest baseline: 96 suites passed, 1 skipped; 819 tests passed, 13 skipped.
+- `gitleaks detect` reports no leaks.
+- `bun audit` and `npm audit` in `modules/dns-native` last reported no
+  vulnerabilities on `2026-05-17`.
 - `xcodebuild clean build` passes for Debug on an iOS 26.5 simulator.
 - `xcodebuild clean build` and `xcodebuild clean archive` pass for generic iOS
   Release when code signing is disabled (`CODE_SIGNING_ALLOWED=NO`).

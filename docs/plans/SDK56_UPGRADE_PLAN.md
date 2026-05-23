@@ -1,6 +1,6 @@
 # Expo SDK 56 upgrade plan
 
-Status: implementation in progress on 2026-05-22.
+Status: implemented and verified on 2026-05-23.
 
 Authoritative references checked on 2026-05-22:
 
@@ -24,15 +24,15 @@ Authoritative references checked on 2026-05-22:
 1. Use the SDK 56 upgrade command with Bun:
 
    ```bash
-   bunx expo install expo@~56.0.3 --fix --bun -- --minimum-release-age 0
+   bunx expo install expo@~56.0.4 --fix --bun -- --minimum-release-age 0
    ```
 
    The `--minimum-release-age 0` override is scoped to this install because SDK 56 was published on 2026-05-21 and Bun's repo policy otherwise blocks fresh packages.
 
 2. Expected aligned versions:
 
-   - Expo `56.0.3`
-   - Expo Router `56.2.5`
+   - Expo `56.0.4`
+   - Expo Router `56.2.6`
    - React Native `0.85.3`
    - React `19.2.3`
    - TypeScript `6.0.3`
@@ -79,13 +79,15 @@ Authoritative references checked on 2026-05-22:
 
 ## Phase 4: architecture deepening
 
-Top recommendation from the architecture review: split `src/services/dnsService.ts` behind a `DNSTransport` interface with adapters for native, UDP, TCP, and mock transports.
+Implemented architecture deepening: split DNS packet encoding, DNS-over-TCP
+framing, decoded-response validation, and TXT extraction into
+`src/services/dnsWire.ts`.
 
 Why this comes first:
 
-- Locality: SDK/networking regressions concentrate in one adapter.
-- Leverage: transport tests hit one interface while preserving native/JS parity.
-- Depth: fallback orchestration becomes smaller while transport implementations absorb protocol-specific complexity.
+- Locality: DNS wire-format invariants now live in one module.
+- Leverage: UDP and TCP adapters share one packet/framing/validation interface.
+- Depth: fallback orchestration is smaller while protocol-specific complexity sits behind the wire-format module.
 
 Work order:
 

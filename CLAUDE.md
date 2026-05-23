@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What is DNSChat
 
-A React Native (Expo dev-client) chat app that sends short prompts as DNS TXT queries to LLM servers and renders responses. Uses React Native 0.85.x, Expo SDK 56, React 19.2.0, TypeScript 6.x.
+A React Native (Expo dev-client) chat app that sends short prompts as DNS TXT queries to LLM servers and renders responses. Uses React Native 0.85.x, Expo SDK 56.0.4, React 19.2.3, TypeScript 6.x.
 
 **Default DNS Server**: `llm.pieter.com:53` (by @levelsio)
 **Fallback Server**: `ch.at:53` (currently offline)
@@ -16,7 +16,7 @@ A React Native (Expo dev-client) chat app that sends short prompts as DNS TXT qu
 | Runtime bootstrap | `entry.tsx` -> `expo-router/entry` -> `app/_layout.tsx` |
 | Tab layout | `app/(tabs)/_layout.tsx` (web override: `_layout.web.tsx`) |
 | Chat thread route | `app/chat/[threadId].tsx` |
-| DNS query logic | `src/services/dnsService.ts` |
+| DNS query orchestration | `src/services/dnsService.ts` |
 | DNS wire format (encode / decode / TCP frame / TXT extract) | `src/services/dnsWire.ts` |
 | Server configuration | `modules/dns-native/constants.ts` (`getLLMServers`, `getDefaultServer`) |
 | Default server setting | `src/context/settingsStorage.ts` (`DEFAULT_DNS_SERVER`) |
@@ -126,7 +126,7 @@ modules/dns-native/           # Native DNS module (TS API + iOS/Android bridges)
   __tests__/                  # Module tests (run separately)
 
 src/services/
-  dnsService.ts               # Query pipeline, transport chain, parsing (~1815 lines)
+  dnsService.ts               # Query orchestration, transport chain, retries/logging
   dnsWire.ts                  # DNS wire format: encode TXT query, decode packet, TCP framing, TXT extraction, response validation
   dnsLogService.ts            # Logging for Logs screen
   storageService.ts           # AsyncStorage persistence

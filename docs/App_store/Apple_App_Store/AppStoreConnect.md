@@ -83,7 +83,7 @@ AI,chat,DNS,assistant,local,native,tech,innovation,queries,networking
 
 SDK 56 PLATFORM UPGRADE
 
-- Upgraded the baseline to Expo SDK 56, React Native 0.85.3, React 19.2.3, and TypeScript 6.0.3.
+- Upgraded the baseline to Expo SDK 56.0.4, React Native 0.85.3, React 19.2.3, and TypeScript 6.0.3.
 - Raised the iOS deployment target to 16.4 and refreshed the native module graph for SDK 56.
 - Migrated app navigation theme imports to Expo Router SDK 56 entry points and removed unused direct React Navigation packages.
 - Replaced removed React Native `StyleSheet.absoluteFillObject` usage in the glass bottom-sheet backdrop.

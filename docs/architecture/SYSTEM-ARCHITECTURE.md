@@ -6,7 +6,7 @@ DNS TXT query and renders the TXT response as chat output.
 Current stack (from `package.json`):
 
 - React Native `0.85.3` + React `19.2.3`
-- Expo SDK `56.0.3`
+- Expo SDK `56.0.4`
 - TypeScript `6.0.3`
 - Navigation: Expo Router (file-based routing) with native tabs and router-managed stacks
 
@@ -35,7 +35,7 @@ App:
 - `app/_layout.tsx` root providers + router stack
 - `app/(tabs)/_layout.tsx` tab navigation
 - `app/chat/[threadId].tsx` chat route wrapper
-- `src/services/dnsService.ts` query pipeline + fallback order + parsing
+- `src/services/dnsService.ts` query orchestration + fallback order + retries/logging
 - `src/services/dnsWire.ts` DNS wire format: TXT query encoding, packet decoding, TCP framing, TXT extraction, decoded-response validation
 - `src/services/dnsLogService.ts` logging model used by the Logs screen (redacted + encrypted at rest)
 - `src/services/storageService.ts` AsyncStorage persistence (encrypted at rest)
@@ -54,14 +54,16 @@ Native DNS module:
 3. Sanitize into a single DNS label (lowercase, replace whitespace with `-`,
    remove invalid, enforce 63-char DNS label limit).
 4. Compose query name `label.<zone>` and send it via the transport chain.
-5. Validate DNS response headers (native UDP) before parsing:
+5. Validate DNS response headers before parsing:
    - Transaction ID match, QR/opcode/TC/RCODE checks, QDCOUNT=1.
    - Question section matches QNAME/QTYPE/QCLASS.
 6. Parse TXT response:
    - Plain TXT records: concatenate non-empty records and return.
    - Multipart `n/N:` records: require a complete set `1..N` and join in order.
 
-The reference constants live in `modules/dns-native/constants.ts`.
+The reference constants live in `modules/dns-native/constants.ts`. Shared
+TypeScript wire-format helpers live in `src/services/dnsWire.ts` so UDP and TCP
+adapters use the same packet, framing, validation, and TXT extraction rules.
 
 ## DNS-over-HTTPS notes
 

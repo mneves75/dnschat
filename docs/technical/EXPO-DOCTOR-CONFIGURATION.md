@@ -3,8 +3,8 @@
 This repo intentionally uses a few package metadata exclusions, but the current
 baseline is expected to pass Expo Doctor.
 
-Current verified baseline: `bunx expo-doctor` passes 17/17 checks on
-`2026-05-14`.
+Current verified baseline: `bun run verify:expo-doctor` passes 19/19 checks on
+`2026-05-23`.
 
 ## Why ios/ + android/ exist (and stay committed)
 
@@ -47,7 +47,7 @@ metadata is not applicable.
 bunx expo install --fix
 
 # Expo dependency and config checks
-bunx expo-doctor
+bun run verify:expo-doctor
 
 # Lint (includes ast-grep rules)
 bun run lint

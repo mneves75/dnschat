@@ -24,19 +24,23 @@ Developer documentation for DNSChat. Code is the source of truth — these docs 
 
 ## Current verification baseline
 
+Last architecture/dependency verification: `2026-05-23`.
 Last full source/security sweep: `2026-05-17`.
 Last AXe simulator E2E feature pass: `2026-05-17` for version `4.0.13` build
 `43`.
 Last iOS signed release archive/export: `2026-05-17` for version `4.0.13`
 build `43`.
 
-- `bun run verify:all` passes (`expo-doctor` 17/17, SDK alignment, typed routes,
+- `bun run verify:all` passes (`expo-doctor` 19/19, SDK alignment, typed routes,
   DNS resolver sync, iOS pods, React Compiler, Android setup, lint, and Jest).
+- Native DNS module tests pass (`7` suites passed, `1` skipped; `56` tests
+  passed, `13` skipped).
 - AXe E2E baseline: 10 feature groups passed in one owned release-simulator
   run.
-- Jest baseline: 95 suites passed, 1 skipped; 816 tests passed, 13 skipped.
-- `bun audit`, `npm audit` in `modules/dns-native`, and `gitleaks detect`
-  report no vulnerabilities or leaks.
+- Jest baseline: 96 suites passed, 1 skipped; 819 tests passed, 13 skipped.
+- `gitleaks detect` reports no leaks.
+- `bun audit` and `npm audit` in `modules/dns-native` last reported no
+  vulnerabilities on `2026-05-17`.
 - `xcodebuild clean build` passes for Debug on an iOS 26.5 simulator.
 - `xcodebuild clean build` and `xcodebuild clean archive` pass for generic iOS
   Release when code signing is disabled (`CODE_SIGNING_ALLOWED=NO`).
