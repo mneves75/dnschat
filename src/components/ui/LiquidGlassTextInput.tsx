@@ -25,6 +25,7 @@ import { useImessagePalette } from "../../ui/theme/imessagePalette";
 import { LiquidGlassSpacing, getCornerRadius } from "../../ui/theme/liquidGlassSpacing";
 import { SpringConfig, TimingConfig } from "../../utils/animations";
 import { HapticFeedback } from "../../utils/haptics";
+import { useTranslation } from "../../i18n";
 
 export interface LiquidGlassTextInputProps extends Omit<TextInputProps, "style"> {
   /** Input label */
@@ -83,6 +84,7 @@ export function LiquidGlassTextInput({
   const isDark = colorScheme === "dark";
   const typography = useTypography();
   const palette = useImessagePalette();
+  const { t } = useTranslation();
   const [isFocused, setIsFocused] = useState(false);
 
   const borderColor = useSharedValue(palette.border);
@@ -91,6 +93,8 @@ export function LiquidGlassTextInput({
   const hasError = !!errorText;
   const hasText = !!value && value.length > 0;
   const characterCount = value?.length || 0;
+  const accessibilityLabel = textInputProps.accessibilityLabel ?? label;
+  const accessibilityHint = textInputProps.accessibilityHint ?? errorText ?? helperText;
 
   // Animated border for focus state
   const animatedBorderStyle = useAnimatedStyle(() => ({
@@ -191,8 +195,8 @@ export function LiquidGlassTextInput({
           placeholderTextColor={palette.textSecondary}
           keyboardAppearance={isDark ? "dark" : "light"}
           accessible={true}
-          accessibilityLabel={label || textInputProps.placeholder}
-          accessibilityHint={helperText || errorText}
+          accessibilityLabel={accessibilityLabel}
+          accessibilityHint={accessibilityHint}
           accessibilityState={{ disabled: !editable }}
         />
 
@@ -202,7 +206,7 @@ export function LiquidGlassTextInput({
             onPress={handleClear}
             style={styles.clearButton}
             accessible={true}
-            accessibilityLabel="Clear text"
+            accessibilityLabel={t("common.clear")}
             accessibilityRole="button"
             hitSlop={8}
           >
@@ -228,7 +232,7 @@ export function LiquidGlassTextInput({
               },
             ]}
             accessible={true}
-            accessibilityLiveRegion={hasError ? "assertive" : "polite"}
+            accessibilityLiveRegion={hasError ? "polite" : undefined}
           >
             {errorText || helperText}
           </Text>

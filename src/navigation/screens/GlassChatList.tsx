@@ -356,6 +356,7 @@ export function GlassChatList() {
       testID="chat-list"
       navigationTitle={t("screen.glassChatList.navigationTitle")}
       style={styles.container}
+      contentContainerStyle={styles.scrollContent}
     >
       <Animated.View style={animatedStyle}>
         {/* New Chat Section */}
@@ -373,13 +374,6 @@ export function GlassChatList() {
                 variant="interactive"
                 shape="capsule"
                 style={styles.newChatBadge}
-                accessibilityLabel={t(
-                  "screen.glassChatList.newConversation.button",
-                )}
-                accessibilityRole="button"
-                accessibilityHint={t(
-                  "screen.glassChatList.newConversation.description",
-                )}
               >
                 <PlusIcon size={20} />
               </LiquidGlassWrapper>
@@ -477,6 +471,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  scrollContent: {
+    paddingBottom: 140,
+  },
   newChatBadge: {
     // iOS 26 HIG: Minimum 44pt touch target
     // 20px icon + 12px padding all sides = 44×44px total
@@ -497,13 +494,15 @@ const styles = StyleSheet.create({
     padding: 16,
     marginHorizontal: 20,
     borderRadius: 12,
-    // iOS 26 HIG: Use iOS standard materials (shadows) for depth, not glass
-    shadowColor: "#000000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 2,
-    // Android: Material Design elevation
-    elevation: 2,
+    ...(Platform.OS === "web"
+      ? { boxShadow: "0px 1px 2px rgba(0, 0, 0, 0.08)" }
+      : {
+          shadowColor: "#111827",
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: 0.08,
+          shadowRadius: 2,
+          elevation: 2,
+        }),
   },
   chatItemPressed: {
     transform: [{ scale: 0.98 }],

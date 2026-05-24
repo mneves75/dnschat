@@ -468,6 +468,8 @@ export function GlassSettings() {
                   ? t("screen.settings.sections.transportTest.testingButton")
                   : t("screen.settings.sections.transportTest.testButton")
               }
+              accessibilityHint={t("screen.settings.sections.transportTest.testHint")}
+              accessibilityState={{ busy: testRunning }}
               style={styles.transportTestButton}
             >
               <Text style={{ color: palette.userBubble }}>
@@ -491,7 +493,13 @@ export function GlassSettings() {
                   testID={`settings-force-${transportKey}`}
                   onPress={() => handleForceTransport(transportKey)}
                   accessibilityRole="button"
-                  accessibilityLabel={transportLabelMap[transportKey]}
+                  accessibilityLabel={t(
+                    "screen.settings.sections.transportTest.forceAccessibilityLabel",
+                    { transport: transportLabelMap[transportKey] },
+                  )}
+                  accessibilityHint={t("screen.settings.sections.transportTest.forceHint", {
+                    transport: transportLabelMap[transportKey],
+                  })}
                   style={styles.transportForceButton}
                 >
                   <Text>

@@ -28,8 +28,8 @@ Last architecture/dependency verification: `2026-05-24`.
 Last full source/security sweep: `2026-05-17`.
 Last AXe simulator E2E feature pass: `2026-05-17` for version `4.0.13` build
 `43`.
-Last iOS signed release archive/export: `2026-05-17` for version `4.0.13`
-build `43`.
+Last iOS signed release archive/export: `2026-05-24` for version `4.0.15`
+build `45`.
 
 - `bun run verify:all` passes on `2026-05-24` (`expo-doctor` 19/19, SDK
   alignment, typed routes, `tsc --noEmit`, DNS resolver sync, iOS pods, React
@@ -39,25 +39,21 @@ build `43`.
   `56` tests passed, `13` skipped).
 - AXe E2E baseline: 10 feature groups passed in one owned release-simulator
   run on `2026-05-17`.
-- Jest baseline on `2026-05-24`: 96 suites passed, 1 skipped; 819 tests passed,
-  13 skipped.
-- `gitleaks detect` on `2026-05-24` reports `no leaks found` across `338`
+- Jest baseline on `2026-05-24`: 101 suites passed, 1 skipped; 844 tests
+  passed, 13 skipped.
+- `gitleaks detect` on `2026-05-24` reports `no leaks found` across `348`
   scanned commits.
-- `bun audit` on `2026-05-24` reports `3 moderate transitive (dev-only)
-  advisories` in `ws`, `brace-expansion`, and `uuid` pulled through Expo CLI,
-  Metro, Jest, and `@expo/config-plugins/xcode`. `npm audit` in
-  `modules/dns-native` reports the same `brace-expansion` advisory. None affect
-  shipped runtime code; remediation is tracked separately. The prior clean
-  audit baseline was `2026-05-17`.
+- `bun audit` on `2026-05-24` reports `No vulnerabilities found`.
 - `xcodebuild clean build` passes for Debug on an iOS 26.5 simulator on
   `2026-05-24`.
 - `xcodebuild clean build` and `xcodebuild clean archive` pass for generic iOS
   Release when code signing is disabled (`CODE_SIGNING_ALLOWED=NO`) on
   `2026-05-24`.
 - Physical-device compiled Expo dev-client install passed.
-- Signed App Store archive/export passed, App Store Connect metadata was
-  updated, TestFlight upload completed, and the processed build is `VALID`.
-  Internal App Store Connect IDs are intentionally omitted from public docs.
+- Latest signed TestFlight target: `4.0.15` build `45`. The release lane uses
+  signed App Store archive/export, App Store Connect upload, processing, and
+  validation before the build is described as distributed. Internal App Store
+  Connect IDs are intentionally omitted from public docs.
 - `asc validate testflight` and App Store version validation pass with `0`
   errors and `0` warnings; App Privacy publish-state still needs browser
   confirmation because the API cannot verify it.

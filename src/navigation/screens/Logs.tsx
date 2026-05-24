@@ -227,16 +227,16 @@ const LogEntryRow: React.FC<LogEntryRowProps> = ({ entry, parentId, palette, t }
       <Text style={[styles.entryMessage, { color: palette.textPrimary }]}>
         {entry.message || t("screen.logs.labels.noMessage")}
       </Text>
-      {entry.details && (
+      {entry.details ? (
         <Text style={[styles.entryDetails, { color: palette.textSecondary }]}>
           {entry.details}
         </Text>
-      )}
-      {entry.error && (
+      ) : null}
+      {entry.error ? (
         <Text style={[styles.entryError, { color: palette.destructive }]}>
           {t("screen.logs.labels.errorPrefix", { message: entry.error })}
         </Text>
-      )}
+      ) : null}
     </View>
   );
 };
@@ -309,7 +309,7 @@ const LogQueryRow: React.FC<LogQueryRowProps> = ({
                 <Text style={[styles.timestamp, { color: palette.textTertiary }]}>
                   {new Date(item.startTime).toLocaleTimeString()}
                 </Text>
-                {item.finalMethod && (
+                {Boolean(item.finalMethod) && (
                   <LiquidGlassWrapper
                     variant="interactive"
                     shape="capsule"
@@ -367,7 +367,7 @@ const LogQueryRow: React.FC<LogQueryRowProps> = ({
                 style={[styles.divider, { backgroundColor: palette.separator }]}
               />
 
-              {item.response && (
+              {Boolean(item.response) && (
                 <View style={styles.responseSection}>
                   <Text style={[styles.sectionTitle, { color: palette.textPrimary }]}>
                     {t("screen.logs.labels.response")}

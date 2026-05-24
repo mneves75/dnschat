@@ -4,6 +4,7 @@ import {
   StyleSheet,
   Pressable,
   useColorScheme,
+  Platform,
 } from "react-native";
 import type { ViewStyle } from "react-native";
 import Animated, {
@@ -115,11 +116,15 @@ export function LiquidGlassCard({
       case "solid":
         return {
           backgroundColor: palette.surface,
-          shadowColor: "#000000",
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: isDark ? 0.3 : 0.1,
-          shadowRadius: 8,
-          elevation: 4,
+          ...(Platform.OS === "web"
+            ? { boxShadow: `0px 2px 8px rgba(0, 0, 0, ${isDark ? 0.3 : 0.1})` }
+            : {
+                shadowColor: "#111827",
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: isDark ? 0.3 : 0.1,
+                shadowRadius: 8,
+                elevation: 4,
+              }),
         };
 
       case "outlined":
@@ -132,11 +137,15 @@ export function LiquidGlassCard({
       case "elevated":
         return {
           backgroundColor: palette.surface,
-          shadowColor: "#000000",
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: isDark ? 0.4 : 0.15,
-          shadowRadius: 12,
-          elevation: 8,
+          ...(Platform.OS === "web"
+            ? { boxShadow: `0px 4px 12px rgba(0, 0, 0, ${isDark ? 0.4 : 0.15})` }
+            : {
+                shadowColor: "#111827",
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: isDark ? 0.4 : 0.15,
+                shadowRadius: 12,
+                elevation: 8,
+              }),
         };
 
       default:

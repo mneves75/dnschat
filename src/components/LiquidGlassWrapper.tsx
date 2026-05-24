@@ -183,6 +183,7 @@ export const buildFallbackStyle = (
 
   const backgroundColor = getBackgroundColor();
   const borderColor = getBorderColor();
+  const borderRadius = shapeRadius(shape, cornerRadius);
 
   const normalizeColor = (value: string) =>
     forceOpaque ? ensureOpaqueColor(value) : value;
@@ -191,7 +192,7 @@ export const buildFallbackStyle = (
   if (Platform.OS === "android") {
     return {
       backgroundColor: normalizeColor(backgroundColor),
-      borderRadius: shapeRadius(shape, cornerRadius),
+      borderRadius,
       borderWidth: 1,
       borderColor: normalizeColor(borderColor),
       overflow: "hidden" as const,
@@ -199,10 +200,23 @@ export const buildFallbackStyle = (
     };
   }
 
+  if (Platform.OS === "web") {
+    return {
+      backgroundColor: normalizeColor(backgroundColor),
+      borderRadius,
+      borderWidth: 1,
+      borderColor: normalizeColor(borderColor),
+      overflow: "hidden" as const,
+      boxShadow: isInteractive
+        ? `0px 10px 24px rgba(10, 132, 255, ${isDark ? 0.35 : 0.25})`
+        : `0px ${isDark ? 12 : 8}px 20px rgba(0, 0, 0, ${isDark ? 0.4 : 0.12})`,
+    };
+  }
+
   // iOS: use shadow properties
   return {
     backgroundColor: normalizeColor(backgroundColor),
-    borderRadius: shapeRadius(shape, cornerRadius),
+    borderRadius,
     borderWidth: 1,
     borderColor: normalizeColor(borderColor),
     overflow: "hidden" as const,
@@ -214,7 +228,7 @@ export const buildFallbackStyle = (
           shadowOffset: { width: 0, height: 10 },
         }
       : {
-          shadowColor: "#000000",
+          shadowColor: "#111827",
           shadowOpacity: isDark ? 0.4 : 0.12,
           shadowRadius: 20,
           shadowOffset: { width: 0, height: isDark ? 12 : 8 },

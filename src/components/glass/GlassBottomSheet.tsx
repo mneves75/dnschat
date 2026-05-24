@@ -18,7 +18,7 @@ import {
   StyleSheet,
   useColorScheme,
   Platform,
-  Dimensions,
+  useWindowDimensions,
   Animated,
 } from "react-native";
 import type { ViewStyle } from "react-native";
@@ -26,6 +26,7 @@ import { PanGestureHandler, State } from "react-native-gesture-handler";
 import type { PanGestureHandlerStateChangeEvent } from "react-native-gesture-handler";
 import { LiquidGlassWrapper } from "../LiquidGlassWrapper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTranslation } from "../../i18n";
 
 // ==================================================================================
 // TYPES AND INTERFACES
@@ -69,6 +70,10 @@ interface GlassSheetAction {
   style?: "default" | "destructive" | "cancel";
   /** Disabled state */
   disabled?: boolean;
+  /** Accessibility label override */
+  accessibilityLabel?: string;
+  /** Accessibility hint */
+  accessibilityHint?: string;
   /** Custom icon */
   icon?: React.ReactNode;
 }
@@ -105,7 +110,7 @@ const useGlassSheetColors = () => {
     handle: isDark ? "rgba(255, 255, 255, 0.3)" : "rgba(0, 0, 0, 0.2)",
 
     // Text colors
-    textPrimary: isDark ? "#FFFFFF" : "#000000",
+    textPrimary: isDark ? "#F9FAFB" : "#111827",
     textSecondary: isDark ? "#AEAEB2" : "#6D6D70",
     textTertiary: isDark ? "#8E8E93" : "#8E8E93",
 
@@ -135,6 +140,7 @@ const useSheetAnimation = (
   const translateY = React.useRef(new Animated.Value(1000)).current;
   const backdropOpacity = React.useRef(new Animated.Value(0)).current;
   const scale = React.useRef(new Animated.Value(0.95)).current;
+  const useNativeDriver = Platform.OS !== "web";
 
   // Effect: run show/hide animations when sheet visibility changes.
   React.useEffect(() => {
@@ -144,17 +150,17 @@ const useSheetAnimation = (
         Animated.timing(translateY, {
           toValue: 0,
           duration: animationDuration,
-          useNativeDriver: true,
+          useNativeDriver,
         }),
         Animated.timing(backdropOpacity, {
           toValue: 1,
           duration: animationDuration,
-          useNativeDriver: true,
+          useNativeDriver,
         }),
         Animated.timing(scale, {
           toValue: 1,
           duration: animationDuration,
-          useNativeDriver: true,
+          useNativeDriver,
         }),
       ]).start();
     } else {
@@ -163,17 +169,17 @@ const useSheetAnimation = (
         Animated.timing(translateY, {
           toValue: 1000,
           duration: animationDuration,
-          useNativeDriver: true,
+          useNativeDriver,
         }),
         Animated.timing(backdropOpacity, {
           toValue: 0,
           duration: animationDuration,
-          useNativeDriver: true,
+          useNativeDriver,
         }),
         Animated.timing(scale, {
           toValue: 0.95,
           duration: animationDuration,
-          useNativeDriver: true,
+          useNativeDriver,
         }),
       ]).start();
     }
@@ -206,12 +212,13 @@ export const GlassBottomSheet: React.FC<GlassBottomSheetProps> = ({
 }) => {
   const colors = useGlassSheetColors();
   const insets = useSafeAreaInsets();
+  const { height: screenHeight } = useWindowDimensions();
+  const { t } = useTranslation();
   const {
     translateY,
     backdropOpacity: animatedBackdropOpacity,
     scale,
   } = useSheetAnimation(visible, animationDuration);
-  const { height: screenHeight } = Dimensions.get("window");
 
   const sheetHeight = screenHeight * height;
   const dragY = React.useRef(new Animated.Value(0)).current;
@@ -280,10 +287,16 @@ export const GlassBottomSheet: React.FC<GlassBottomSheetProps> = ({
       animationType="none"
       statusBarTranslucent
       onRequestClose={onClose}
+      accessibilityViewIsModal
     >
       {/* Backdrop */}
       <TouchableWithoutFeedback onPress={handleBackdropPress}>
-        <Animated.View style={[styles.backdrop, backdropStyle]} />
+        <Animated.View
+          style={[styles.backdrop, backdropStyle]}
+          accessible={false}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+        />
       </TouchableWithoutFeedback>
 
       {/* Sheet */}
@@ -317,19 +330,19 @@ export const GlassBottomSheet: React.FC<GlassBottomSheetProps> = ({
           )}
 
           {/* Header */}
-          {(title || subtitle || showCloseButton || headerContent) && (
+          {Boolean(title || subtitle || showCloseButton || headerContent) && (
             <View style={styles.header}>
               {headerContent || (
                 <>
                   <View style={styles.headerText}>
-                    {title && (
+                    {Boolean(title) && (
                       <Text
                         style={[styles.title, { color: colors.textPrimary }]}
                       >
                         {title}
                       </Text>
                     )}
-                    {subtitle && (
+                    {Boolean(subtitle) && (
                       <Text
                         style={[
                           styles.subtitle,
@@ -345,6 +358,9 @@ export const GlassBottomSheet: React.FC<GlassBottomSheetProps> = ({
                     <TouchableOpacity
                       style={styles.closeButton}
                       onPress={handleClosePress}
+                      accessibilityRole="button"
+                      accessibilityLabel={t("common.close")}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                     >
                       <Text
                         style={[
@@ -406,9 +422,13 @@ export const GlassActionSheet: React.FC<GlassActionSheetProps> = ({
                 }
               }}
               disabled={action.disabled}
+              accessibilityRole="button"
+              accessibilityLabel={action.accessibilityLabel ?? action.title}
+              accessibilityHint={action.accessibilityHint}
+              accessibilityState={{ disabled: action.disabled }}
             >
               <View style={styles.actionContent}>
-                {action.icon && (
+                {Boolean(action.icon) && (
                   <View style={styles.actionIcon}>{action.icon}</View>
                 )}
                 <Text

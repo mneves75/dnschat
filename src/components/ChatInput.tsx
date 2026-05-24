@@ -389,7 +389,7 @@ export function ChatInput({
    * Integrated inside input with absolute positioning.
    * Vertically centered based on current input height.
    *
-   * CRITICAL: pointerEvents="none" when disabled prevents button from
+   * CRITICAL: style.pointerEvents="none" when disabled prevents button from
    * blocking touches to the TextInput underneath.
    */
   const renderSendButton = () => (
@@ -407,13 +407,13 @@ export function ChatInput({
           // iOS Messages pattern: SOLID blue button when active, gray tint when disabled
           // accentTint was 55%/65% opacity - too transparent for button background
           backgroundColor: canSend ? palette.userBubble : palette.tint,
+          pointerEvents: canSend ? "auto" : "none",
         },
       ]}
       onPress={handleSend}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
       disabled={!canSend}
-      pointerEvents={canSend ? "auto" : "none"}
       variant="icon"
       borderless
       rippleRadius={minimumTouchTarget / 2}

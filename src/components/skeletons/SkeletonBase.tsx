@@ -241,13 +241,15 @@ const styles = StyleSheet.create({
     padding: 16,
     marginHorizontal: 20,
     borderRadius: 12,
-    // iOS shadows
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 2,
-    // Android elevation
-    elevation: 2,
+    ...(Platform.OS === 'web'
+      ? { boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.08)' }
+      : {
+          shadowColor: '#111827',
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: 0.08,
+          shadowRadius: 2,
+          elevation: 2,
+        }),
   },
 });
 

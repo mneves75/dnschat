@@ -86,6 +86,8 @@ function ErrorFallback({ error, onRetry }: ErrorFallbackProps) {
           isDark ? styles.darkRetryButton : styles.lightRetryButton,
         ]}
         onPress={onRetry}
+        accessibilityRole="button"
+        accessibilityLabel={t("common.reset")}
       >
         <Text
           style={[
@@ -108,10 +110,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
   },
   lightContainer: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#F8F9FA",
   },
   darkContainer: {
-    backgroundColor: "#000000",
+    backgroundColor: "#111113",
   },
   title: {
     fontSize: 24,
@@ -120,10 +122,10 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   lightTitle: {
-    color: "#000000",
+    color: "#1C1C1E",
   },
   darkTitle: {
-    color: "#FFFFFF",
+    color: "#F5F5F7",
   },
   message: {
     fontSize: 16,

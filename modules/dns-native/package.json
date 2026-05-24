@@ -40,6 +40,9 @@
   "peerDependencies": {
     "react-native": ">=0.70.0"
   },
+  "overrides": {
+    "brace-expansion": "5.0.6"
+  },
   "files": [
     "index.ts",
     "ios/",

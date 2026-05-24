@@ -434,7 +434,10 @@ export const ptBR = {
           placeholder: "ping",
           testButton: "Testar preferência selecionada",
           testingButton: "Testando...",
+          testHint: "Executa o teste DNS usando a preferência de transporte atual",
           forceLabel: "Forçar transporte específico",
+          forceHint: "Executa o teste DNS usando apenas o transporte {{transport}}",
+          forceAccessibilityLabel: "Forçar transporte {{transport}}",
           transports: {
             native: "Nativo",
             udp: "UDP",

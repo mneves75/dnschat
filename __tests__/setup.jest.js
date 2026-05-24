@@ -37,6 +37,13 @@ const bytesToHex = (bytes) =>
 const hexToBytes = (hex) => {
   const clean = (hex ?? '').trim();
   if (!clean) return new Uint8Array();
+  if (clean.length % 2 !== 0) {
+    throw new Error(`hex string expected, got unpadded hex of length ${clean.length}`);
+  }
+  const nonHex = clean.match(/[^0-9a-f]/i);
+  if (nonHex) {
+    throw new Error(`hex string expected, got non-hex character "${nonHex[0]}"`);
+  }
   const pairs = clean.match(/.{1,2}/g) ?? [];
   return Uint8Array.from(pairs.map((pair) => parseInt(pair, 16)));
 };

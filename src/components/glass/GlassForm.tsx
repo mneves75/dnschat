@@ -39,6 +39,8 @@ interface GlassFormProps {
   children: React.ReactNode;
   /** Custom container style */
   style?: StyleProp<ViewStyle>;
+  /** Custom ScrollView content container style */
+  contentContainerStyle?: StyleProp<ViewStyle>;
   /** Enable nested scrolling on Android */
   nestedScrollEnabled?: boolean;
   /** Test ID for UI testing */
@@ -139,6 +141,7 @@ export const GlassForm: React.FC<GlassFormProps> = ({
   navigationTitle,
   children,
   style,
+  contentContainerStyle,
   nestedScrollEnabled = false,
   testID,
 }) => {
@@ -149,14 +152,14 @@ export const GlassForm: React.FC<GlassFormProps> = ({
   const contentStyle = [
     styles.scrollContent,
     { paddingBottom: contentPaddingBottom },
-    style,
+    contentContainerStyle,
   ].filter(Boolean) as ViewStyle[];
 
   return (
     <SafeAreaView
       testID={testID}
       edges={["left", "right"]}
-      style={[styles.safeAreaContainer, { backgroundColor: colors.background }]}
+      style={[styles.safeAreaContainer, { backgroundColor: colors.background }, style]}
     >
       <ScrollView
         style={styles.scrollContainer}
@@ -193,7 +196,7 @@ export const GlassFormSection: React.FC<GlassFormSectionProps> = ({
 
   return (
     <View style={[styles.sectionContainer, style]}>
-      {title && (
+      {Boolean(title) && (
         <View style={styles.sectionHeaderContainer}>
           <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
             {title}
@@ -222,7 +225,7 @@ export const GlassFormSection: React.FC<GlassFormSectionProps> = ({
         ))}
       </LiquidGlassWrapper>
 
-      {footer && (
+      {Boolean(footer) && (
         <View style={styles.sectionFooterContainer}>
           <Text style={[styles.sectionFooter, { color: colors.textTertiary }]}>
             {footer}
@@ -280,7 +283,7 @@ export const GlassFormItem: React.FC<GlassFormItemProps> = ({
         >
           {title}
         </Text>
-        {subtitle && (
+        {Boolean(subtitle) && (
           <Text
             style={[
               styles.itemSubtitle,
@@ -378,6 +381,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
+    flexGrow: 1,
     paddingBottom: 24,
   },
   titleContainer: {

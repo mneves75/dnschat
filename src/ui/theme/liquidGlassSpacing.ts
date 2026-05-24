@@ -212,7 +212,7 @@ export const Elevation = {
 
 export const GlassElevation = {
   regular: Platform.OS === 'ios' ? {
-    shadowColor: '#000000',
+    shadowColor: '#111827',
     shadowRadius: 20,
     shadowOpacity: 0.12,
     shadowOffset: { width: 0, height: 8 },

@@ -600,6 +600,17 @@ export class DNSService {
     if (this.isVerbose()) devLogArgs(...args);
   }
 
+  private static recordSummary(records: string[] | undefined): {
+    count: number;
+    maxLength: number;
+  } {
+    if (!records?.length) return { count: 0, maxLength: 0 };
+    return {
+      count: records.length,
+      maxLength: Math.max(...records.map((record) => record.length)),
+    };
+  }
+
   private static initializeBackgroundListener() {
     if (this.backgroundListenerInitialized || Platform.OS === 'web') {
       return;
@@ -1426,8 +1437,10 @@ export class DNSService {
         case 'native':
           this.vLog('NATIVE: Starting native DNS transport test');
           this.vLog('NATIVE: Target server:', targetServer);
-          this.vLog('NATIVE: Query name:', queryName);
-          this.vLog('NATIVE: Label:', label);
+          this.vLog('NATIVE: Query metadata:', {
+            queryNameLength: queryName.length,
+            labelLength: label.length,
+          });
 
           const result = await this.handleBackgroundSuspension(async () => {
             this.vLog('NATIVE: Checking native DNS capabilities...');
@@ -1466,7 +1479,7 @@ export class DNSService {
                 this.vLog('NATIVE: Calling nativeDNS.queryTXT with:', {
                   server: targetServer,
                   port: targetPort,
-                  queryName,
+                  queryNameLength: queryName.length,
                 });
 
                 const queryStartTime = Date.now();
@@ -1477,12 +1490,10 @@ export class DNSService {
                 );
                 const queryDuration = Date.now() - queryStartTime;
 
-                this.vLog('NATIVE: Raw TXT records received:', records);
                 this.vLog('NATIVE: Query took:', queryDuration, 'ms');
-                this.vLog('NATIVE: Records count:', records?.length || 0);
                 this.vLog(
-                  'NATIVE: Records type:',
-                  Array.isArray(records) ? 'array' : typeof records,
+                  'NATIVE: TXT record summary:',
+                  this.recordSummary(records),
                 );
 
                 // Validate records - native module contract guarantees string[] or throws
@@ -1500,10 +1511,6 @@ export class DNSService {
                 const parsedResponse = nativeDNS.parseMultiPartResponse(records);
                 this.vLog('NATIVE: Response parsed successfully');
                 this.vLog('NATIVE: Parsed response length:', parsedResponse?.length || 0);
-                this.vLog(
-                  'NATIVE: Parsed response preview:',
-                  parsedResponse?.substring(0, 100) + (parsedResponse?.length > 100 ? '...' : ''),
-                );
 
                 return parsedResponse;
               } catch (nativeError) {
@@ -1671,7 +1678,10 @@ export class DNSService {
 
     try {
       this.vLog(`Testing ${transport.toUpperCase()} transport to ${targetServer}:${context.targetPort}`);
-      this.vLog('Forced query name:', context.queryName);
+      this.vLog('Forced query metadata:', {
+        queryNameLength: context.queryName.length,
+        labelLength: context.label.length,
+      });
       DNSLogService.logMethodAttempt(
         queryId,
         transport,
@@ -1701,7 +1711,7 @@ export class DNSService {
               );
               const testQueryDuration = Date.now() - testStartTime;
 
-              this.vLog('NATIVE TEST: Records received:', records);
+              this.vLog('NATIVE TEST: TXT record summary:', this.recordSummary(records));
               this.vLog('NATIVE TEST: Query duration:', testQueryDuration, 'ms');
 
               const parsedResult = nativeDNS.parseMultiPartResponse(records);
@@ -1724,9 +1734,7 @@ export class DNSService {
             `Forced test response received (${result.length} chars)`,
           );
           await DNSLogService.endQuery(queryId, true, result, 'native');
-          this.vLog(
-            `Native transport test successful: ${result.substring(0, 100)}${result.length > 100 ? '...' : ''}`,
-          );
+          this.vLog('Native transport test successful:', { responseLength: result.length });
           return result;
 
         case 'udp':
@@ -1779,7 +1787,9 @@ export class DNSService {
         `Forced test response received`,
       );
       await DNSLogService.endQuery(queryId, true, response, transport);
-      this.vLog(`${transport.toUpperCase()} transport test successful: ${response}`);
+      this.vLog(`${transport.toUpperCase()} transport test successful:`, {
+        responseLength: response.length,
+      });
       return response;
     } catch (error) {
       const testErrorDuration = Date.now() - startTime;

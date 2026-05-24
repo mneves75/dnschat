@@ -1,6 +1,6 @@
 # Installation
 
-This repo builds DNSChat `4.0.14` (React Native `0.85.x`, Expo SDK `56.0.4`).
+This repo builds DNSChat `4.0.15` (React Native `0.85.x`, Expo SDK `56.0.4`).
 
 Prereqs:
 
@@ -134,11 +134,11 @@ install failure.
 Latest AXe simulator release evidence: `2026-05-17`, version `4.0.13` build
 `43`, 10 feature groups passed in one owned release-simulator run.
 
-Latest signed TestFlight evidence: version `4.0.13` build `43` archived,
-exported, uploaded, processed as `VALID`, and passed TestFlight validation with
-`0` errors and `0` warnings. App Store Connect identifiers, signing identifiers,
-tester group names, local paths, and device identifiers are intentionally omitted
-from public docs.
+Latest signed TestFlight target: version `4.0.15` build `45`. The release lane
+archives, exports, uploads, waits for processing, and validates TestFlight
+before the build is described as distributed. App Store Connect identifiers,
+signing identifiers, tester group names, local paths, and device identifiers are
+intentionally omitted from public docs.
 
 Signed TestFlight release shape:
 

@@ -135,6 +135,7 @@ export function Toast({
   };
 
   const variantStyle = getVariantStyles();
+  const liveRegion = variant === "error" ? "assertive" : "polite";
 
   // Effect: animate toast visibility and manage the auto-dismiss timer.
   useEffect(() => {
@@ -216,19 +217,27 @@ export function Toast({
           styles.toast,
           { backgroundColor: variantStyle.backgroundColor },
         ]}
-        accessible={true}
-        accessibilityRole="alert"
-        accessibilityLiveRegion="assertive"
-        accessibilityLabel={`${title ? `${title} ` : ""}${message}`}
+        accessible={false}
       >
         {/* Icon */}
-        <View style={styles.iconContainer}>
+        <View
+          style={styles.iconContainer}
+          accessible={false}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+        >
           <Text style={styles.icon}>{variantStyle.icon}</Text>
         </View>
 
         {/* Content */}
-        <View style={styles.content}>
-          {title && (
+        <View
+          style={styles.content}
+          accessible={true}
+          accessibilityRole={variant === "error" ? "alert" : undefined}
+          accessibilityLiveRegion={liveRegion}
+          accessibilityLabel={`${title ? `${title} ` : ""}${message}`}
+        >
+          {Boolean(title) && (
             <Text
               style={[
                 styles.title,
@@ -253,7 +262,7 @@ export function Toast({
         </View>
 
         {/* Action Button */}
-        {actionLabel && onAction && (
+        {Boolean(actionLabel) && onAction && (
           <Pressable
             onPress={handleAction}
             style={styles.actionButton}
@@ -311,11 +320,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: LiquidGlassSpacing.md,
     paddingVertical: LiquidGlassSpacing.sm,
     borderRadius: getCornerRadius("button"),
-    shadowColor: "#000000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+    ...(Platform.OS === "web"
+      ? { boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.3)" }
+      : {
+          shadowColor: "#111827",
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.3,
+          shadowRadius: 8,
+          elevation: 8,
+        }),
   },
   iconContainer: {
     width: 28,

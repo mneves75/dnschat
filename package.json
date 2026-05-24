@@ -1,6 +1,6 @@
 {
   "name": "chat-dns",
-  "version": "4.0.14",
+  "version": "4.0.15",
   "description": "DNSChat - A React Native chat app using DNS TXT queries",
   "main": "entry.tsx",
   "author": "DNSChat contributors",
@@ -33,9 +33,9 @@
     "clean-ios": "cd ios && rm -rf Pods/ build/ && pod install",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "jest --runInBand",
-    "e2e:axe": "bun scripts/e2e-axe.js",
-    "e2e:axe:doctor": "bun scripts/e2e-axe.js --doctor",
-    "e2e:axe:release": "bun scripts/e2e-axe.js --create-simulator --delete-created-simulator --build-release --reset-app",
+    "e2e:axe": "node scripts/e2e-axe.js",
+    "e2e:axe:doctor": "node scripts/e2e-axe.js --doctor",
+    "e2e:axe:release": "node scripts/e2e-axe.js --create-simulator --delete-created-simulator --build-release --reset-app",
     "test:android": "jest --runInBand --testPathPattern=androidStartupDiagnostics",
     "verify:android": "node scripts/verify-android-setup.js",
     "verify:android-16kb": "node scripts/check-android-16kb.js",
@@ -114,10 +114,13 @@
   "overrides": {
     "expo-constants": "56.0.15",
     "@xmldom/xmldom": ">=0.8.13",
+    "brace-expansion": "5.0.6",
     "handlebars": ">=4.7.9",
     "markdown-it": ">=12.3.2",
     "node-forge": ">=1.4.0",
     "postcss": ">=8.5.10",
+    "uuid": "11.1.1",
+    "ws": "8.20.1",
     "yaml": ">=2.8.3"
   },
   "expo": {

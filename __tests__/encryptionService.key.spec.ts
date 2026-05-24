@@ -19,6 +19,8 @@ const toHex = (bytes: Uint8Array) =>
 describe("encryptionService key handling", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.dontMock("react-native");
+    delete (globalThis as { localStorage?: unknown }).localStorage;
   });
 
   it("persists generated key using a valid SecureStore key name", async () => {
@@ -54,6 +56,29 @@ describe("encryptionService key handling", () => {
       const mockSecureStore = SecureStoreModule as jest.Mocked<typeof SecureStore>;
       const badKey = new Uint8Array(ENCRYPTION_CONSTANTS.KEY_LENGTH - 1).fill(1);
       mockSecureStore.getItemAsync.mockResolvedValue(toHex(badKey));
+
+      await encryptString("hello");
+
+      expect(mockSecureStore.setItemAsync).toHaveBeenCalledWith(
+        "dnschat.encryption_key",
+        expect.any(String),
+      );
+    } finally {
+      if (originalWorkerId !== undefined) {
+        process.env["JEST_WORKER_ID"] = originalWorkerId;
+      }
+    }
+  });
+
+  it("regenerates when stored key is malformed hex", async () => {
+    const originalWorkerId = process.env["JEST_WORKER_ID"];
+    delete process.env["JEST_WORKER_ID"];
+    try {
+      jest.resetModules();
+      const { encryptString } = require("../src/services/encryptionService");
+      const SecureStoreModule = require("expo-secure-store") as typeof SecureStore;
+      const mockSecureStore = SecureStoreModule as jest.Mocked<typeof SecureStore>;
+      mockSecureStore.getItemAsync.mockResolvedValue("not-hex-key-material");
 
       await encryptString("hello");
 
@@ -106,6 +131,47 @@ describe("encryptionService key handling", () => {
       if (originalWorkerId !== undefined) {
         process.env["JEST_WORKER_ID"] = originalWorkerId;
       }
+    }
+  });
+
+  it("uses web fallback storage instead of SecureStore when running on web", async () => {
+    const originalWorkerId = process.env["JEST_WORKER_ID"];
+    delete process.env["JEST_WORKER_ID"];
+    try {
+      jest.resetModules();
+      jest.doMock("react-native", () => ({
+        Platform: { OS: "web" },
+      }));
+      const store = new Map<string, string>();
+      Object.defineProperty(globalThis, "localStorage", {
+        configurable: true,
+        value: {
+          getItem: jest.fn((key: string) => store.get(key) ?? null),
+          setItem: jest.fn((key: string, value: string) => {
+            store.set(key, value);
+          }),
+        },
+      });
+
+      const { encryptString, decryptIfEncrypted } = require("../src/services/encryptionService");
+      const SecureStoreModule = require("expo-secure-store") as typeof SecureStore;
+      const mockSecureStore = SecureStoreModule as jest.Mocked<typeof SecureStore>;
+
+      const encrypted = await encryptString("hello web");
+      await expect(decryptIfEncrypted(encrypted)).resolves.toBe("hello web");
+
+      expect(mockSecureStore.getItemAsync).not.toHaveBeenCalled();
+      expect(mockSecureStore.setItemAsync).not.toHaveBeenCalled();
+      expect(globalThis.localStorage.setItem).toHaveBeenCalledWith(
+        "dnschat.encryption_key",
+        expect.any(String),
+      );
+    } finally {
+      if (originalWorkerId !== undefined) {
+        process.env["JEST_WORKER_ID"] = originalWorkerId;
+      }
+      jest.dontMock("react-native");
+      delete (globalThis as { localStorage?: unknown }).localStorage;
     }
   });
 });
