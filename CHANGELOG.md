@@ -40,6 +40,9 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 - `bun run verify:all`, native DNS module tests, `gitleaks detect`,
   `bun audit`, and `asc doctor` passed before the TestFlight release lane.
+- Signed App Store archive/export, App Store Connect TestFlight upload, and
+  `asc validate testflight` passed for build `45`; App Store version validation
+  is not applicable until a matching App Store version record exists.
 
 ## [4.0.14] - 2026-05-22
 
