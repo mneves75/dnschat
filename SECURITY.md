@@ -44,11 +44,11 @@ Last iOS signed release archive/export: `2026-05-24`.
   target is `4.0.15` build `45`.
 - The TestFlight build is `VALID`, encryption is `exempt`, and
   `asc validate testflight` reports `0` errors and `0` warnings. App Store
-  version validation also reports `0` errors and `0` warnings, with App Privacy
-  publish-state still requiring browser confirmation because the public API
-  cannot verify it. Internal App Store Connect IDs, tester group names, device
-  names, local paths, and signing identifiers are intentionally omitted from
-  public docs.
+  version validation is not applicable until a matching App Store version
+  record exists in App Store Connect; App Privacy publish-state still requires
+  browser confirmation because the public API cannot verify it. Internal App
+  Store Connect IDs, tester group names, device names, local paths, and signing
+  identifiers are intentionally omitted from public docs.
 - Local chat history is encrypted at rest with AES-GCM. Native builds store key
   material in SecureStore; Web preview uses same-origin browser storage for the
   local-only preview key because SecureStore is not available in browsers, so

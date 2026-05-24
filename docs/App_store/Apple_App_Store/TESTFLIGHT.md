@@ -131,8 +131,8 @@ Latest public release target (`2026-05-24`, Xcode `26.5` / `17F42`, SDK 56.0.4 b
 - Physical-device Release install completed for `4.0.15` build `45`. A
   `devicectl` relaunch can still be denied by iOS when the phone is locked; that
   is tracked separately from install proof.
-- Signed App Store archive, signed IPA export, and App Store Connect TestFlight
-  upload are the current release gate for `4.0.15` build `45`.
+- Signed App Store archive, signed IPA export, App Store Connect TestFlight
+  upload, and TestFlight validation passed for `4.0.15` build `45`.
 - Internal App Store Connect IDs, tester group names, device names, device identifiers, local paths, team IDs, profile names, and certificate IDs are intentionally omitted from public docs.
 
 Earlier 4.0.14 baseline evidence (`2026-05-22`, Xcode `26.5` / `17F42`, SDK 56 baseline):
@@ -162,7 +162,8 @@ Prior signed-release evidence (`2026-05-17`, Xcode `26.5` / `17F42`):
 - App Store Connect TestFlight upload passed for version `4.0.13` build `43`.
 - TestFlight build processing completed as `VALID`; non-exempt encryption is `false`.
 - TestFlight validation passed with `0` errors and `0` warnings.
-- App Store version validation passed with `0` errors and `0` warnings; App Privacy publish-state remains API-unverifiable.
+- App Store version validation is not applicable until a matching App Store
+  version record exists; App Privacy publish-state remains API-unverifiable.
 - `asc doctor` passed local checks.
 - `xcodebuild test` did not run because the `DNSChat` scheme has no XCTest bundles.
 
@@ -275,7 +276,8 @@ eas build --platform ios --profile production
 Current v4.0.15 distribution target:
 
 - Version/build: `4.0.15` / `45`
-- Processing state: pending signed archive/export, upload, and TestFlight validation
+- Processing state: `VALID`; TestFlight validation reports `0` errors and `0`
+  warnings
 - Tester groups: configured in App Store Connect; internal group names are intentionally omitted from public docs.
 - Exact build IDs and App Store Connect version IDs belong in private release notes, not public runbooks.
 

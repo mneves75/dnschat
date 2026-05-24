@@ -236,10 +236,10 @@ build `45`.
   a signed App Store archive/export and App Store Connect processing before the
   build is described as distributed. Internal App Store Connect IDs are
   intentionally omitted from public docs.
-- `asc validate testflight` and App Store version validation pass with `0`
-  errors and `0` warnings; the remaining App Store validation notes are
-  informational: manual release type and API-unverifiable App Privacy publish
-  state.
+- `asc validate testflight` passes with `0` errors and `0` warnings. App Store
+  version validation is not applicable until a matching App Store version
+  record exists; the remaining App Store validation note is API-unverifiable App
+  Privacy publish state.
 - `xcodebuild test` is not a native gate yet because the `DNSChat` scheme has no
   XCTest bundles.
 - DNS transport is observable. Public copy and tests intentionally avoid
