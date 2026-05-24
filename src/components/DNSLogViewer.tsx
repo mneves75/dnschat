@@ -23,6 +23,7 @@ export const DNSLogViewer: React.FC<DNSLogViewerProps> = ({
   const palette = useImessagePalette();
   const typography = useTypography();
 
+  // Effect: subscribe to DNS log updates and clean up on unmount.
   useEffect(() => {
     const unsub = DNSLogService.subscribe(setLogs);
     return () => {
@@ -46,7 +47,7 @@ export const DNSLogViewer: React.FC<DNSLogViewerProps> = ({
           >
             <View style={styles.headerRow}>
               <Text style={[styles.title, typography.headline, { color: palette.textPrimary }]}>
-                {log.chatTitle || log.query}
+                {t("components.dnsLogViewer.redactedTitle")}
               </Text>
               <Text style={[styles.duration, typography.caption1, { color: palette.textSecondary }]}>
                 {DNSLogService.formatDuration(log.totalDuration)}
@@ -64,7 +65,10 @@ export const DNSLogViewer: React.FC<DNSLogViewerProps> = ({
                     style={[
                       styles.badge,
                       typography.caption2,
-                      { backgroundColor: DNSLogService.getMethodColor(e.method) },
+                      {
+                        backgroundColor: DNSLogService.getMethodColor(e.method),
+                        color: palette.bubbleTextOnBlue,
+                      },
                     ]}
                   >
                     {e.method.toUpperCase()}
@@ -89,7 +93,7 @@ export const DNSLogViewer: React.FC<DNSLogViewerProps> = ({
                   {t("components.dnsLogViewer.responseLabel")}
                 </Text>
                 <Text style={[typography.footnote, { color: palette.textPrimary }]}>
-                  {log.response}
+                  {t("components.dnsLogViewer.redactedResponse")}
                 </Text>
               </View>
             ) : null}
@@ -121,7 +125,6 @@ const styles = StyleSheet.create({
   entries: { marginTop: LiquidGlassSpacing.xs },
   entryRow: { flexDirection: "row", alignItems: "center", marginBottom: LiquidGlassSpacing.xxs },
   badge: {
-    color: "#fff",
     paddingHorizontal: LiquidGlassSpacing.xxs,
     paddingVertical: LiquidGlassSpacing.xxs / 2,
     borderRadius: LiquidGlassSpacing.xxs,

@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { View, StyleSheet, useColorScheme } from "react-native";
+import { View, StyleSheet } from "react-native";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -10,6 +10,7 @@ import Animated, {
 import { useImessagePalette } from "../ui/theme/imessagePalette";
 import { LiquidGlassSpacing, getCornerRadius } from "../ui/theme/liquidGlassSpacing";
 import { shimmerDuration } from "../utils/animations";
+import { useTranslation } from "../i18n";
 
 interface SkeletonMessageProps {
   /**
@@ -19,10 +20,15 @@ interface SkeletonMessageProps {
 }
 
 export function SkeletonMessage({ isUser = false }: SkeletonMessageProps) {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
   const palette = useImessagePalette();
+  const { t } = useTranslation();
   const shimmer = useSharedValue(0);
+  const lineColor = palette.textPrimary === "#FFFFFF"
+    ? "rgba(255, 255, 255, 0.2)"
+    : "rgba(0, 0, 0, 0.1)";
+  const timestampColor = palette.textPrimary === "#FFFFFF"
+    ? "rgba(255, 255, 255, 0.15)"
+    : "rgba(0, 0, 0, 0.08)";
 
   // Start shimmer animation on mount
   useEffect(() => {
@@ -50,16 +56,16 @@ export function SkeletonMessage({ isUser = false }: SkeletonMessageProps) {
         isUser ? styles.userContainer : styles.assistantContainer,
       ]}
       accessible={true}
-      accessibilityLabel="Loading message"
+      accessibilityLabel={t("components.skeleton.message")}
       accessibilityRole="progressbar"
     >
       <View
         style={[
           styles.bubble,
           isUser ? styles.userBubble : styles.assistantBubble,
-          isDark ? styles.darkBubble : styles.lightBubble,
-          isUser && isDark ? styles.darkUserBubble : {},
-          !isUser && isDark ? styles.darkAssistantBubble : {},
+          {
+            backgroundColor: isUser ? palette.userBubble : palette.assistantBubble,
+          },
         ]}
       >
         {/* First line skeleton (80% width) */}
@@ -67,11 +73,7 @@ export function SkeletonMessage({ isUser = false }: SkeletonMessageProps) {
           style={[
             styles.textLine,
             styles.textLineLong,
-            {
-              backgroundColor: isDark
-                ? "rgba(255, 255, 255, 0.2)"
-                : "rgba(0, 0, 0, 0.1)",
-            },
+            { backgroundColor: lineColor },
             shimmerStyle,
           ]}
         />
@@ -81,11 +83,7 @@ export function SkeletonMessage({ isUser = false }: SkeletonMessageProps) {
           style={[
             styles.textLine,
             styles.textLineMedium,
-            {
-              backgroundColor: isDark
-                ? "rgba(255, 255, 255, 0.2)"
-                : "rgba(0, 0, 0, 0.1)",
-            },
+            { backgroundColor: lineColor },
             shimmerStyle,
           ]}
         />
@@ -94,11 +92,7 @@ export function SkeletonMessage({ isUser = false }: SkeletonMessageProps) {
         <Animated.View
           style={[
             styles.timestamp,
-            {
-              backgroundColor: isDark
-                ? "rgba(255, 255, 255, 0.15)"
-                : "rgba(0, 0, 0, 0.08)",
-            },
+            { backgroundColor: timestampColor },
             shimmerStyle,
           ]}
         />

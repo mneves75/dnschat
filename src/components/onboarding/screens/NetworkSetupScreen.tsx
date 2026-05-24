@@ -3,12 +3,13 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   Alert,
   ActivityIndicator,
   ScrollView,
 } from "react-native";
 import { OnboardingNavigation } from "../OnboardingNavigation";
+import { PressableRipple } from "../../PressableRipple";
+import { useSettings } from "../../../context/SettingsContext";
 import { useImessagePalette } from "../../../ui/theme/imessagePalette";
 import { useTypography } from "../../../ui/hooks/useTypography";
 import { LiquidGlassSpacing } from "../../../ui/theme/liquidGlassSpacing";
@@ -18,7 +19,6 @@ import { devWarn } from "../../../utils/devLog";
 interface NetworkTest {
   method: string;
   status: "testing" | "success" | "failed" | "skipped";
-  latency?: number;
   description: string;
 }
 
@@ -26,8 +26,12 @@ export function NetworkSetupScreen() {
   const palette = useImessagePalette();
   const typography = useTypography();
   const { t } = useTranslation();
+  const {
+    applyRecommendedNetworkSettings,
+  } = useSettings();
 
   const [isOptimizing, setIsOptimizing] = useState(false);
+  const [isApplyingSettings, setIsApplyingSettings] = useState(false);
   const [optimizationComplete, setOptimizationComplete] = useState(false);
   const [recommendedSetting, setRecommendedSetting] = useState<boolean | null>(
     null,
@@ -49,6 +53,7 @@ export function NetworkSetupScreen() {
       description: t("screen.onboarding.networkSetup.tests.tcp.description"),
     },
   ]);
+  const isMountedRef = React.useRef(true);
 
   const runNetworkOptimization = React.useCallback(async () => {
     setIsOptimizing(true);
@@ -60,57 +65,77 @@ export function NetworkSetupScreen() {
     };
 
     try {
-      const getRandomInt = (min: number, max: number) =>
-        Math.floor(Math.random() * (max - min + 1)) + min;
-
-      const nativeLatency = getRandomInt(50, 120);
-      const udpLatency = nativeLatency + getRandomInt(10, 50);
-      const tcpLatency = udpLatency + getRandomInt(10, 60);
-
+      // Visual configuration progression — no fake measurements. Each step
+      // transitions through active -> success purely to communicate that
+      // the transport order is being applied.
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      updateTest(0, { status: "success", latency: nativeLatency });
+      if (!isMountedRef.current) return;
+      updateTest(0, { status: "success" });
 
       await new Promise((resolve) => setTimeout(resolve, 800));
-      updateTest(1, { status: "success", latency: udpLatency });
+      if (!isMountedRef.current) return;
+      updateTest(1, { status: "success" });
 
       await new Promise((resolve) => setTimeout(resolve, 600));
-      updateTest(2, { status: "success", latency: tcpLatency });
+      if (!isMountedRef.current) return;
+      updateTest(2, { status: "success" });
 
-      // All methods successful - automatic fallback chain configured
+      // Default to automatic fallback chain (no probing yet).
       setRecommendedSetting(true);
 
       setOptimizationComplete(true);
     } catch (error) {
-      devWarn("[NetworkSetupScreen] Network optimization failed", error);
+      devWarn("[NetworkSetupScreen] Network configuration failed", error);
       Alert.alert(
         t("screen.onboarding.networkSetup.alerts.errorTitle"),
         t("screen.onboarding.networkSetup.alerts.errorMessage"),
       );
     } finally {
-      setIsOptimizing(false);
+      if (isMountedRef.current) {
+        setIsOptimizing(false);
+      }
     }
   }, [t]);
 
-  const applyRecommendedSettings = React.useCallback(async () => {
+  const applyRecommendedSettings = async () => {
     if (recommendedSetting !== null) {
+      setIsApplyingSettings(true);
+      try {
+        await applyRecommendedNetworkSettings(recommendedSetting);
+      } catch (error) {
+        devWarn("[NetworkSetupScreen] Failed to apply recommended settings", error);
+        Alert.alert(
+          t("screen.onboarding.networkSetup.alerts.errorTitle"),
+          t("screen.onboarding.networkSetup.alerts.errorMessage"),
+        );
+        return;
+      } finally {
+        setIsApplyingSettings(false);
+      }
+
       Alert.alert(
         t("screen.onboarding.networkSetup.alerts.successTitle"),
         t("screen.onboarding.networkSetup.alerts.successMessage"),
         [{ text: t("screen.onboarding.networkSetup.alerts.successButton"), style: "default" }],
       );
     }
-  }, [recommendedSetting, t]);
+  };
 
+  // Effect: defer network optimization to allow initial UI paint.
   useEffect(() => {
+    isMountedRef.current = true;
     const timer = setTimeout(() => {
       runNetworkOptimization();
     }, 1000);
 
-    return () => clearTimeout(timer);
-  }, [runNetworkOptimization]);
+    return () => {
+      isMountedRef.current = false;
+      clearTimeout(timer);
+    };
+  }, [t, runNetworkOptimization]);
 
   return (
-    <View style={styles.container}>
+    <View testID="onboarding-network-setup" style={styles.container}>
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.content}
@@ -205,16 +230,19 @@ export function NetworkSetupScreen() {
             </Text>
 
             {/* iOS HIG: Primary action button to apply network optimization results */}
-            <TouchableOpacity
+            <PressableRipple
+              testID="onboarding-network-apply"
               style={[
                 styles.applyButton,
                 { backgroundColor: palette.accentTint },
               ]}
               onPress={applyRecommendedSettings}
-              activeOpacity={0.7}
+              disabled={isApplyingSettings}
+              variant="primary"
+              pressedOpacity={0.7}
               accessibilityRole="button"
-              accessibilityLabel="Apply recommended settings"
-              accessibilityHint="Configures DNS to use automatic fallback chain with the fastest available method based on your network test results"
+              accessibilityLabel={t("screen.onboarding.networkSetup.accessibility.applyLabel")}
+              accessibilityHint={t("screen.onboarding.networkSetup.accessibility.applyHint")}
             >
               <Text
                 style={[
@@ -225,7 +253,7 @@ export function NetworkSetupScreen() {
               >
                 {t("screen.onboarding.networkSetup.optimization.applyButton")}
               </Text>
-            </TouchableOpacity>
+            </PressableRipple>
           </View>
         )}
 
@@ -303,6 +331,7 @@ function NetworkTestItem({ test, palette, typography, isActive }: NetworkTestIte
           borderWidth: isActive ? 2 : 1,
         },
       ]}
+      accessibilityLiveRegion={isActive ? "polite" : "none"}
     >
       <View style={styles.testHeader}>
         <View
@@ -341,17 +370,6 @@ function NetworkTestItem({ test, palette, typography, isActive }: NetworkTestIte
           >
             {getStatusLabel()}
           </Text>
-          {test.latency && (
-            <Text
-              style={[
-                typography.caption1,
-                styles.latencyBadge,
-                { color: getStatusColor(), fontWeight: "500" },
-              ]}
-            >
-              {test.latency}ms
-            </Text>
-          )}
         </View>
       </View>
     </View>
@@ -428,10 +446,6 @@ const styles = StyleSheet.create({
   },
   statusLabel: {
     marginBottom: 2,
-  },
-  latencyBadge: {
-    paddingHorizontal: LiquidGlassSpacing.xs,
-    paddingVertical: 2,
   },
   loadingSection: {
     alignItems: "center",

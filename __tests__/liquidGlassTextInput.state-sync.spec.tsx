@@ -9,7 +9,7 @@ jest.mock("react-native-reanimated", () => {
   const { View } = require("react-native");
   const AnimatedMock = {
     View,
-    createAnimatedComponent: (Component: any) => Component,
+    createAnimatedComponent: <P,>(Component: React.ComponentType<P>) => Component,
     useSharedValue: (value: unknown) => ({ value }),
     useAnimatedStyle: (fn: () => Record<string, unknown>) =>
       new Proxy(
@@ -26,8 +26,8 @@ jest.mock("react-native-reanimated", () => {
       ),
     withTiming: (value: unknown) => value,
     withSpring: (value: unknown) => value,
-    Easing: { out: (fn: any) => fn, ease: () => null },
-    runOnJS: (fn: any) => fn,
+    Easing: { out: (fn: (value: number) => number) => fn, ease: () => null },
+    runOnJS: <T extends (...args: unknown[]) => unknown>(fn: T) => fn,
   };
   return { __esModule: true, default: AnimatedMock, ...AnimatedMock };
 });

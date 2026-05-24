@@ -46,7 +46,7 @@ describe("MessageList - iOS 26 HIG Compliance", () => {
 
     it("imports LiquidGlassSpacing for 8px grid system", () => {
       expect(sourceCode).toContain(
-        'import { LiquidGlassSpacing } from "../ui/theme/liquidGlassSpacing"'
+        'import { LiquidGlassSpacing, getCornerRadius } from "../ui/theme/liquidGlassSpacing"'
       );
     });
 

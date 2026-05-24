@@ -1,18 +1,22 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
+import type { StyleProp, TextStyle } from "react-native";
 import { format } from "date-fns";
 import Markdown from "react-native-markdown-display";
+import type { MarkdownProps } from "react-native-markdown-display";
 import type { Message } from "../types/chat";
-import { useTypography } from "../ui/hooks/useTypography";
+import type { IMessagePalette } from "../ui/theme/imessagePalette";
+import type { TypographyScale } from "../ui/theme/liquidGlassTypography";
 import { LiquidGlassSpacing } from "../ui/theme/liquidGlassSpacing";
+import { useTranslation } from "../i18n";
 
 interface MessageContentProps {
   message: Message;
   textColor: string;
-  textStyles: any;
-  markdownStyles: any;
-  palette: any;
-  typography: any;
+  textStyles: StyleProp<TextStyle>;
+  markdownStyles: MarkdownProps["style"];
+  palette: IMessagePalette;
+  typography: TypographyScale;
 }
 
 /**
@@ -35,9 +39,11 @@ export function MessageContent({
   palette,
   typography,
 }: MessageContentProps) {
+  const { t } = useTranslation();
   const isUser = message.role === "user";
   const isLoading = message.status === "sending";
   const hasError = message.status === "error";
+  const markdownProps = markdownStyles ? { style: markdownStyles } : {};
 
   return (
     <>
@@ -45,7 +51,7 @@ export function MessageContent({
       {isUser ? (
         <Text style={[textStyles, typography.body]} selectable={false}>{message.content}</Text>
       ) : (
-        <Markdown style={markdownStyles}>{message.content}</Markdown>
+        <Markdown {...markdownProps}>{message.content}</Markdown>
       )}
 
       {/* Loading indicator for sending messages */}
@@ -81,7 +87,7 @@ export function MessageContent({
           <Text
             style={[styles.errorIndicator, { backgroundColor: palette.destructive, color: palette.bubbleTextOnBlue }]}
             accessible={true}
-            accessibilityLabel="Message failed to send"
+            accessibilityLabel={t("screen.chat.accessibility.errorIndicator")}
             selectable={false}
           >
             !

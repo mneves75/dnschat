@@ -127,9 +127,18 @@ describe("NetworkSetupScreen - iOS 26 HIG Compliance", () => {
       expect(sourceCode).toContain('t("screen.onboarding.networkSetup.tests.tcp.name")');
     });
 
-    it("displays latency metrics", () => {
-      expect(sourceCode).toContain("latency");
-      expect(sourceCode).toContain("ms");
+    it("does not display fabricated latency metrics", () => {
+      // HIG: never show simulated milliseconds as if measured. The screen now
+      // animates a configuration progression instead of fake test results.
+      expect(sourceCode).not.toContain("latency");
+      expect(sourceCode).not.toMatch(/\$\{[^}]*\}ms/);
+      expect(sourceCode).not.toContain("Math.random");
+    });
+
+    it("transitions steps through a configuration progression", () => {
+      // Each step still moves to "success" so the visual progress conveys
+      // that the transport order is being applied.
+      expect(sourceCode).toContain('status: "success"');
     });
   });
 

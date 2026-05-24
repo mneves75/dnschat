@@ -1,6 +1,5 @@
 import React from "react";
 import Svg, { Circle, Path } from "react-native-svg";
-import { useImessagePalette } from "../../ui/theme/imessagePalette";
 import { devWarn } from "../../utils/devLog";
 
 interface SendIconProps {
@@ -11,14 +10,14 @@ interface SendIconProps {
   size?: number;
   /**
    * @deprecated Use semantic colors from theme palette instead.
-   * This prop is kept for backward compatibility but will be removed.
-   * The icon now automatically uses palette colors for iOS 26 HIG compliance.
+   * This prop is honored only when explicitly provided for backward compatibility.
+   * The default icon relies on the button background for iOS 26 HIG compliance.
    */
   arrowColor?: string;
   /**
    * @deprecated Use semantic colors from theme palette instead.
-   * This prop is kept for backward compatibility but will be removed.
-   * The icon now automatically uses palette colors for iOS 26 HIG compliance.
+   * This prop is honored only when explicitly provided for backward compatibility.
+   * The default icon relies on the button background for iOS 26 HIG compliance.
    */
   circleColor?: string;
   /**
@@ -31,7 +30,7 @@ interface SendIconProps {
  * Send icon following iOS 26 Human Interface Guidelines.
  *
  * **Design System Compliance**:
- * - Pure arrow icon (NO background circle) - button provides the circular background
+ * - Pure arrow icon by default - button provides the circular background
  * - White arrow for optimal contrast against button's colored background
  * - Always uses white color as the icon sits on the button's solid background
  * - High contrast mode: Automatically increased opacity for accessibility
@@ -43,8 +42,8 @@ interface SendIconProps {
  * - Scales proportionally with size for consistent visual weight
  * - Round linecaps for authentic iOS aesthetic
  *
- * **CRITICAL**: Do NOT add Circle element here - ChatInput button already provides
- * circular background. Icon should be arrow-only to prevent double-circle effect.
+ * **CRITICAL**: Keep the default render arrow-only to prevent double-circle
+ * artifacts. The deprecated circleColor path exists only for legacy callers.
  *
  * @see https://developer.apple.com/design/human-interface-guidelines/color
  * @see src/ui/theme/imessagePalette.ts for semantic color definitions
@@ -56,25 +55,26 @@ export function SendIcon({
   circleColor: deprecatedCircleColor,
   isActive = true,
 }: SendIconProps) {
-  const palette = useImessagePalette();
-
-  // Always use white arrow - button provides the colored circular background
-  // This matches iOS Messages pattern: white icon on colored button
-  const finalArrowColor = "#FFFFFF";
+  const finalArrowColor = deprecatedArrowColor ?? "#FFFFFF";
+  const arrowOpacity = isActive ? 1 : 0.55;
 
   if (deprecatedCircleColor || deprecatedArrowColor) {
     devWarn(
-      "[SendIcon] circleColor and arrowColor props are deprecated; icon now uses a white arrow on the button background.",
+      "[SendIcon] circleColor and arrowColor props are deprecated; prefer semantic button colors.",
     );
   }
 
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      {deprecatedCircleColor ? (
+        <Circle cx="12" cy="12" r="10" fill={deprecatedCircleColor} />
+      ) : null}
       {/* Up arrow - always white for contrast against button's colored background */}
       {/* NO Circle element - button provides circular background to prevent double-circle */}
       <Path
         d="M12 8v8M8 12l4-4 4 4"
         stroke={finalArrowColor}
+        opacity={arrowOpacity}
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"

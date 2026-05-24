@@ -47,6 +47,7 @@ function extractUrls(content: string): string[] {
 describe("repo policy: no private URLs", () => {
   it("does not include localhost/private network URLs in tracked files", () => {
     const relevant = listTrackedFiles().filter((file) => {
+      if (file.startsWith("__tests__/")) return false;
       return (
         file.startsWith("src/") ||
         file.startsWith("docs/") ||
@@ -76,6 +77,41 @@ describe("repo policy: no private URLs", () => {
         }
         if (isPrivateHostname(hostname)) {
           offenders.push({ file, url, hostname });
+        }
+      }
+    }
+
+    expect(offenders).toEqual([]);
+  });
+
+  it("does not publish misleading DNS privacy or encryption claims", () => {
+    const relevant = listTrackedFiles().filter((file) => {
+      if (file.startsWith("__tests__/")) return false;
+      return (
+        file.startsWith("src/") ||
+        file.startsWith("docs/") ||
+        file.endsWith(".md") ||
+        file.endsWith(".ts") ||
+        file.endsWith(".tsx")
+      );
+    });
+
+    const forbiddenClaims = [
+      /DNS Chat uses end-to-end encryption through TXT queries/i,
+      /DNSChat uses end-to-end encryption through TXT queries/i,
+      /criptografia de ponta a ponta atrav[eé]s de queries TXT/i,
+      /transmitted via DNS, making traditional interception impossible/i,
+      /tornando imposs[ií]vel a intercepta[cç][aã]o tradicional/i,
+    ];
+    const offenders: { file: string; pattern: string }[] = [];
+
+    for (const file of relevant) {
+      if (!fs.existsSync(file)) continue;
+      if (fs.statSync(file).isDirectory()) continue;
+      const content = fs.readFileSync(file, "utf8");
+      for (const pattern of forbiddenClaims) {
+        if (pattern.test(content)) {
+          offenders.push({ file, pattern: String(pattern) });
         }
       }
     }

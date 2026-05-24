@@ -1,4 +1,5 @@
 import { nativeDNS, DNSError, DNSErrorType, NativeDNS } from "../index";
+import type { NativeDNSModule } from "../index";
 import { NativeModules } from "react-native";
 
 // Mock React Native NativeModules
@@ -12,11 +13,11 @@ jest.mock("react-native", () => ({
 }));
 
 describe("Native DNS Module", () => {
-  let mockNativeModule: any;
+  let mockNativeModule: jest.Mocked<NativeDNSModule>;
   let testDNS: NativeDNS;
 
   beforeEach(() => {
-    mockNativeModule = NativeModules['RNDNSModule'];
+    mockNativeModule = NativeModules['RNDNSModule'] as jest.Mocked<NativeDNSModule>;
     testDNS = new NativeDNS();
 
     // Reset all mocks
@@ -60,14 +61,7 @@ describe("Native DNS Module", () => {
     });
 
     it("should handle unavailable native module", async () => {
-      // Create DNS instance without native module
-      const dnsWithoutNative = new (class extends NativeDNS {
-        constructor() {
-          super();
-          // @ts-ignore - access private property for testing
-          this.nativeModule = null;
-        }
-      })();
+      const dnsWithoutNative = new NativeDNS(null);
 
       const capabilities = await dnsWithoutNative.isAvailable();
 
@@ -161,14 +155,7 @@ describe("Native DNS Module", () => {
     });
 
     it("should handle native module unavailable", async () => {
-      // Create DNS instance without native module
-      const dnsWithoutNative = new (class extends NativeDNS {
-        constructor() {
-          super();
-          // @ts-ignore - access private property for testing
-          this.nativeModule = null;
-        }
-      })();
+      const dnsWithoutNative = new NativeDNS(null);
 
       await expect(dnsWithoutNative.queryTXT("ch.at", "test")).rejects.toThrow(
         new DNSError(

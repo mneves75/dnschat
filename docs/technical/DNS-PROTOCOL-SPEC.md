@@ -1,7 +1,9 @@
 # DNS protocol spec (app behavior)
 
 This doc describes what DNSChat actually does today (code is the source of
-truth). For implementation, see `src/services/dnsService.ts` and
+truth). For implementation, see `src/services/dnsService.ts` (transport
+orchestration + TXT parsing), `src/services/dnsWire.ts` (TXT query encoding,
+packet decoding, TCP framing, TXT extraction, decoded-response validation), and
 `modules/dns-native/constants.ts`.
 
 ## Inputs and limits
@@ -20,8 +22,8 @@ Sanitized label constraints:
 
 Terminology:
 
-- `targetServer`: DNS server/resolver we send packets to (e.g. `ch.at`, `8.8.8.8`).
-- `zone`: suffix used to build the query name (e.g. `ch.at`, `llm.pieter.com`).
+- `targetServer`: DNS server/resolver we send packets to (e.g. `llm.pieter.com`, `8.8.8.8`).
+- `zone`: suffix used to build the query name (e.g. `llm.pieter.com`).
 - `label`: sanitized message label.
 
 Algorithm (implemented by `composeDNSQueryName(label, dnsServer)`):
@@ -29,14 +31,16 @@ Algorithm (implemented by `composeDNSQueryName(label, dnsServer)`):
 1. Strip trailing dots and whitespace from `label`.
 2. Validate `dnsServer` (non-empty allowlisted hostname or IP; ports disallowed).
 3. Determine `zone`:
-   - If `dnsServer` is an IPv4 address, use default zone `ch.at`.
+   - If `dnsServer` is empty or an IPv4 address, use default zone `llm.pieter.com`
+     (`DNS_CONSTANTS.DEFAULT_DNS_SERVER`).
    - Else use `dnsServer` (lowercased, trailing dot removed) as the zone.
 4. Query name is `${label}.${zone}`.
 
 Important consequence:
 
 - If the user selects an IP resolver like `8.8.8.8`, we still query a name under
-  `ch.at` (e.g. `hello-world.ch.at`) but we send it to resolver `8.8.8.8`.
+  `llm.pieter.com` (e.g. `hello-world.llm.pieter.com`) but we send it to
+  resolver `8.8.8.8`.
 
 ## TXT response parsing
 
@@ -55,6 +59,19 @@ Parsing rules (implemented by `parseTXTResponse(txtRecords)`):
    - Join `content` in order `1..N`.
 4. Empty final response is rejected.
 
+## Response validation
+
+Native UDP resolvers (iOS/Android) and JS UDP/TCP fallbacks validate DNS responses before TXT parsing:
+
+- Transaction ID must match the query.
+- Header flags must indicate a standard response (QR=1, opcode=0, TC=0, RCODE=0).
+- QDCOUNT must be `1` (single-question query).
+- The response question section must match the original query:
+  - QNAME equals the normalized query name (lowercased, sanitized).
+  - QTYPE is TXT (16) and QCLASS is IN (1).
+- DNS name parsing handles compression pointers with strict bounds checks and a small max-jump guard.
+- JS UDP additionally rejects unexpected source metadata when the selected resolver is an explicit IPv4 address (source port must always match, and source address must match for IPv4-literal resolvers).
+
 ## Transport chain
 
 Order used for iOS/Android builds:
@@ -64,10 +81,16 @@ Order used for iOS/Android builds:
 3. TCP DNS (JavaScript, `react-native-tcp-socket`)
 4. Mock (optional dev fallback)
 
+Android native module internal fallback chain:
+
+1. Raw UDP (native)
+2. DNS-over-HTTPS (wireformat, RFC 8484) only when the selected resolver is Cloudflare `1.1.1.1`
+3. Legacy resolver (dnsjava)
+
 Web builds use Mock because browsers cannot do custom DNS on port 53.
 
 ## Security model (non-negotiable)
 
 - Do not send secrets or personal data; DNS is observable infrastructure.
-- DNS server input is validated and constrained; see whitelist and sanitizer
-  rules in `modules/dns-native/constants.ts`.
+- DNS server input is validated and constrained in both JS and native; see whitelist and
+  sanitizer rules in `modules/dns-native/constants.ts`.

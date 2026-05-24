@@ -42,6 +42,54 @@ function checkAdbAvailable() {
   }
 }
 
+function parseJavaMajorVersion(raw) {
+  const text = String(raw ?? "");
+  const match = text.match(/version\s+"(\d+)(?:\.\d+)?/i);
+  if (!match) return null;
+  const major = Number(match[1]);
+  return Number.isFinite(major) ? major : null;
+}
+
+function isSupportedAndroidJavaMajor(major) {
+  return Number.isFinite(major) && major >= 17 && major <= 21;
+}
+
+function checkJavaRuntimeCompatibility() {
+  try {
+    const output = execSync("java -version 2>&1", { encoding: "utf8" });
+    const major = parseJavaMajorVersion(output);
+    if (isSupportedAndroidJavaMajor(major)) {
+      success(`Java runtime major ${major} is supported (recommended: 17 or 21)`);
+      return true;
+    }
+    if (process.platform === "darwin") {
+      for (const version of ["17", "21"]) {
+        try {
+          const resolved = execSync(`/usr/libexec/java_home -v ${version}`, {
+            encoding: "utf8",
+          }).trim();
+          if (resolved && fs.existsSync(resolved)) {
+            warn(
+              `Current Java is ${major ?? "unknown"}, but JDK ${version} is installed at ${resolved}.`,
+            );
+            info(`Use: export JAVA_HOME="${resolved}"`);
+            return true;
+          }
+        } catch {
+          // Continue checking other versions.
+        }
+      }
+    }
+
+    error(`Unsupported Java runtime major version: ${major ?? "unknown"} (expected 17 or 21).`);
+    info("Set JAVA_HOME to a supported JDK before running Android native build.");
+    return false;
+  } catch {
+    error("Unable to execute 'java -version'. Install JDK 17 or 21 and set JAVA_HOME.");
+    return false;
+  }
+}
+
 function checkMetroPort() {
   try {
     const { execSync } = require("node:child_process");
@@ -191,7 +239,7 @@ function checkMainApplicationKt() {
     },
     {
       name: "DNSNativePackage registration",
-      pattern: /packages\.add\(DNSNativePackage\(\)\)/,
+      pattern: /add\(DNSNativePackage\(\)\)/,
       failMessage: "DNSNativePackage not added to packages list",
     },
   ];
@@ -204,6 +252,67 @@ function checkMainApplicationKt() {
       error(check.failMessage);
       allPassed = false;
     }
+  }
+
+  return allPassed;
+}
+
+function checkAndroidReleaseSigningPolicy() {
+  const appBuildGradlePath = path.join(
+    __dirname,
+    "..",
+    "android",
+    "app",
+    "build.gradle",
+  );
+
+  if (!fs.existsSync(appBuildGradlePath)) {
+    error("android/app/build.gradle not found");
+    return false;
+  }
+
+  const content = fs.readFileSync(appBuildGradlePath, "utf8");
+  const checks = [
+    {
+      name: "keystore.properties (android/) fallback",
+      pattern: /rootProject\.file\("keystore\.properties"\)/,
+      failMessage: "Missing rootProject keystore.properties fallback",
+    },
+    {
+      name: "keystore.properties (repo root) fallback",
+      pattern: /new File\(projectRoot,\s*"keystore\.properties"\)/,
+      failMessage: "Missing repo-root keystore.properties fallback",
+    },
+  ];
+
+  let allPassed = true;
+  for (const check of checks) {
+    if (check.pattern.test(content)) {
+      success(check.name);
+    } else {
+      error(check.failMessage);
+      allPassed = false;
+    }
+  }
+
+  const releaseBlock =
+    content.match(/buildTypes\s*\{[\s\S]*?release\s*\{([\s\S]*?)\n\s*}\s*}/)?.[1] ?? "";
+  if (/signingConfig\s+signingConfigs\.debug/.test(releaseBlock)) {
+    error("Release buildType still uses debug signingConfig");
+    allPassed = false;
+  } else {
+    success("Release buildType does not use debug signingConfig");
+  }
+
+  if (
+    /if \(hasReleaseSigning\)\s*\{[\s\S]*?signingConfig\s+signingConfigs\.release/.test(
+      releaseBlock,
+    )
+  ) {
+    success("Release buildType uses signingConfigs.release when hasReleaseSigning=true");
+  } else {
+    error("Release buildType missing conditional signingConfigs.release policy");
+    allPassed = false;
   }
 
   return allPassed;
@@ -240,6 +349,84 @@ function checkDNSNativeFiles() {
   }
 
   return allExist;
+}
+
+function parseJsonFile(filePath) {
+  try {
+    return JSON.parse(fs.readFileSync(filePath, "utf8"));
+  } catch {
+    return null;
+  }
+}
+
+function resolveNdkVersionFromAppJson(projectRoot) {
+  const appJsonPath = path.join(projectRoot, "app.json");
+  const appJson = parseJsonFile(appJsonPath);
+  const plugins = appJson?.expo?.plugins;
+  if (!Array.isArray(plugins)) return null;
+
+  for (const plugin of plugins) {
+    if (!Array.isArray(plugin)) continue;
+    if (plugin[0] !== "expo-build-properties") continue;
+    const config = plugin[1];
+    if (config?.android?.ndkVersion) {
+      return String(config.android.ndkVersion);
+    }
+  }
+
+  return null;
+}
+
+function getInstalledNdkVersions(sdkDir) {
+  if (!sdkDir) return [];
+  const ndkRoot = path.join(sdkDir, "ndk");
+  if (!fs.existsSync(ndkRoot)) return [];
+  return fs
+    .readdirSync(ndkRoot)
+    .filter((entry) => fs.statSync(path.join(ndkRoot, entry)).isDirectory());
+}
+
+function compareVersions(a, b) {
+  const aParts = String(a).split(/[.+-]/).map((part) => Number(part));
+  const bParts = String(b).split(/[.+-]/).map((part) => Number(part));
+  const length = Math.max(aParts.length, bParts.length);
+  for (let i = 0; i < length; i += 1) {
+    const aValue = aParts[i] ?? 0;
+    const bValue = bParts[i] ?? 0;
+    if (aValue === bValue) continue;
+    return aValue > bValue ? -1 : 1;
+  }
+  return 0;
+}
+
+function checkNdkVersion(projectRoot) {
+  const sdk = resolveAndroidSdkDir({ projectRoot });
+  if (!sdk.ok) {
+    warn("Android SDK not found; skipping NDK verification");
+    return false;
+  }
+
+  const requested = resolveNdkVersionFromAppJson(projectRoot);
+  if (!requested) {
+    warn("No NDK version specified in app.json (expo-build-properties)");
+    return false;
+  }
+
+  const installed = getInstalledNdkVersions(sdk.sdkDir);
+  if (!installed.includes(requested)) {
+    error(`NDK ${requested} not installed under ${sdk.sdkDir}/ndk`);
+    info(`Installed NDKs: ${installed.length ? installed.join(", ") : "none"}`);
+    return false;
+  }
+
+  const minimum = "28.0.0";
+  if (compareVersions(requested, minimum) === 1) {
+    error(`NDK ${requested} is below ${minimum} (16KB page-size requirement)`);
+    return false;
+  }
+
+  success(`NDK ${requested} installed`);
+  return true;
 }
 
 function checkAdbReverse() {
@@ -322,6 +509,12 @@ function main() {
     warn("ADB not found in PATH (optional for file checks)");
   }
 
+  // Check 2.1: Java runtime compatibility
+  log("\n--- Java Runtime ---");
+  if (!checkJavaRuntimeCompatibility()) {
+    allChecksPassed = false;
+  }
+
   // Check 3: DNS Native files exist
   log("\n--- DNS Native Module Files ---");
   if (!checkDNSNativeFiles()) {
@@ -329,29 +522,42 @@ function main() {
     error("DNS native module files are missing. Run: npx expo prebuild");
   }
 
-  // Check 4: MainApplication.kt registration
+  // Check 4: NDK version
+  log("\n--- Android NDK ---");
+  if (!checkNdkVersion(projectRoot)) {
+    allChecksPassed = false;
+  }
+
+  // Check 5: MainApplication.kt registration
   log("\n--- MainApplication.kt Registration ---");
   if (!checkMainApplicationKt()) {
     allChecksPassed = false;
     error("DNS native module not properly registered in MainApplication.kt");
   }
 
-  // Check 5: Metro bundler
+  // Check 6: Metro bundler
+  log("\n--- Android Release Signing Policy ---");
+  if (!checkAndroidReleaseSigningPolicy()) {
+    allChecksPassed = false;
+    error("Android release signing policy is not aligned.");
+  }
+
+  // Check 7: Metro bundler
   log("\n--- Metro Bundler ---");
   const metroPort = process.env.RCT_METRO_PORT || "8081";
   if (checkMetroPort()) {
     success("Metro bundler is running");
   } else {
     warn(`Metro bundler not running on port ${metroPort}`);
-    info("Run: npm start");
+    info("Run: bun run start");
   }
 
-  // Check 6: ADB reverse (if adb available)
+  // Check 8: ADB reverse (if adb available)
   if (adbAvailable) {
     log("\n--- ADB Reverse ---");
     if (!checkAdbReverse()) {
       warn("ADB reverse not configured for all devices");
-      info("Run: npm run android (automatically sets up reverse)");
+      info("Run: bun run android (automatically sets up reverse)");
     }
   }
 
@@ -359,7 +565,7 @@ function main() {
 
   if (allChecksPassed) {
     success("All critical checks passed!");
-    log("You can now run: npm run android");
+    log("You can now run: bun run android");
     process.exit(0);
   } else {
     error("Some checks failed. Please fix the issues above.");
@@ -372,6 +578,11 @@ if (require.main === module) {
 }
 
 module.exports = {
+  checkAndroidReleaseSigningPolicy,
+  checkJavaRuntimeCompatibility,
+  checkMainApplicationKt,
+  isSupportedAndroidJavaMajor,
+  parseJavaMajorVersion,
   parseJavaProperties,
   resolveAndroidSdkDir,
 };

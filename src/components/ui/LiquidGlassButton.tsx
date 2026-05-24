@@ -19,6 +19,7 @@ import { useImessagePalette } from '../../ui/theme/imessagePalette';
 import { getMinimumTouchTarget, getCornerRadius } from '../../ui/theme/liquidGlassSpacing';
 import { SpringConfig, buttonPressScale } from '../../utils/animations';
 import { HapticFeedback } from '../../utils/haptics';
+import { devWarn } from '../../utils/devLog';
 
 type ButtonVariant = 'filled' | 'prominent' | 'tinted' | 'plain' | 'outlined';
 type ButtonSize = 'small' | 'medium' | 'large';
@@ -88,6 +89,7 @@ export function LiquidGlassButton({
   const typography = useTypography();
   const palette = useImessagePalette();
   const [isPressed, setIsPressed] = useState(false);
+  const isHandlingPressRef = React.useRef(false);
   const scale = useSharedValue(1);
 
   const minimumTouchTarget = getMinimumTouchTarget();
@@ -119,13 +121,20 @@ export function LiquidGlassButton({
 
   // Handle actual press
   const handlePress = async () => {
-    if (!isDisabled) {
+    if (!isDisabled && !isHandlingPressRef.current) {
+      isHandlingPressRef.current = true;
       // Medium haptic for button press
       if (!disableHaptics) {
         HapticFeedback.medium();
       }
 
-      await onPress();
+      try {
+        await onPress();
+      } catch (error) {
+        devWarn('[LiquidGlassButton] onPress rejected', error);
+      } finally {
+        isHandlingPressRef.current = false;
+      }
     }
   };
 

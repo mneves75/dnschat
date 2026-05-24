@@ -6,6 +6,7 @@
 
 import { NativeModules, Platform } from "react-native";
 import { nativeDNS, DNSError, DNSErrorType } from "../index";
+import type { NativeDNSModule } from "../index";
 import { sanitizeDNSMessageReference } from "../constants";
 
 // Skip these tests in CI/automated environments
@@ -210,9 +211,24 @@ describeIntegration("Native DNS Integration Tests", () => {
   });
 
   describe("Sanitization Parity", () => {
-    const nativeModule: any = (NativeModules as any)?.["RNDNSModule"];
-    const canValidate =
-      Platform?.OS === "android" && typeof nativeModule?.debugSanitizeLabel === "function";
+    type NativeModuleWithDebug = NativeDNSModule & {
+      debugSanitizeLabel: (label: string) => Promise<string>;
+    };
+
+    const getDebugModule = (): NativeModuleWithDebug | null => {
+      if (Platform?.OS !== "android") return null;
+      const nativeModulesRecord: Record<string, unknown> = NativeModules;
+      const moduleCandidate = nativeModulesRecord["RNDNSModule"];
+      if (!moduleCandidate || typeof moduleCandidate !== "object") return null;
+      const debugFn = (moduleCandidate as Record<string, unknown>)[
+        "debugSanitizeLabel"
+      ];
+      if (typeof debugFn !== "function") return null;
+      return moduleCandidate as NativeModuleWithDebug;
+    };
+
+    const debugModule = getDebugModule();
+    const canValidate = debugModule !== null;
 
     (canValidate ? it : it.skip)(
       "matches JavaScript reference sanitizer for tricky inputs",
@@ -224,9 +240,11 @@ describeIntegration("Native DNS Integration Tests", () => {
           "Äccênted   Ñame   With   Extra   Spaces",
         ];
 
+        if (!debugModule) return;
+
         for (const sample of samples) {
           const expected = sanitizeDNSMessageReference(sample);
-          const nativeValue: string = await nativeModule.debugSanitizeLabel(sample);
+          const nativeValue = await debugModule.debugSanitizeLabel(sample);
           // debugNormalizeQueryName returns the full query; focus on first label for comparison.
           const nativeLabel = nativeValue.split(".")[0];
           expect(nativeLabel).toBe(expected);
@@ -240,9 +258,11 @@ describeIntegration("Native DNS Integration Tests", () => {
         const rocket = String.fromCodePoint(0x1F680);
         const invalidSamples = ["   ", rocket.repeat(3), "***", "--"];
 
+        if (!debugModule) return;
+
         for (const sample of invalidSamples) {
           expect(() => sanitizeDNSMessageReference(sample)).toThrow();
-          await expect(nativeModule.debugSanitizeLabel(sample)).rejects.toMatchObject({
+          await expect(debugModule.debugSanitizeLabel(sample)).rejects.toMatchObject({
             code: "QUERY_FAILED",
           });
         }

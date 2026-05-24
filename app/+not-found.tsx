@@ -8,7 +8,7 @@ export default function NotFoundRoute() {
 
   return (
     <>
-      <Stack.Screen options={{ title: t("navigation.stack.notFound") }} />
+      <Stack.Screen.Title>{t("navigation.stack.notFound")}</Stack.Screen.Title>
       <NotFound />
     </>
   );

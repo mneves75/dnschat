@@ -6,18 +6,25 @@ import { getNativeSanitizerConfig } from "../constants";
 describe("NativeDNS sanitizer configuration", () => {
   const originalConsoleWarn = console.warn;
   const originalConsoleLog = console.log;
-  const originalModule = NativeModules['RNDNSModule'];
+  const originalModule = NativeModules["RNDNSModule"];
+  const originalPlatformOS = Platform.OS;
+  const nativeModulesRecord = NativeModules as Record<string, unknown>;
+  const platformRecord = Platform as unknown as Record<string, unknown>;
+  const globalRecord = globalThis as Record<string, unknown>;
 
   beforeEach(() => {
     console.warn = jest.fn();
     console.log = jest.fn();
-    (Platform as any).OS = "android";
+    platformRecord["OS"] = "android";
+    globalRecord["__DNSCHAT_NATIVE_DEBUG__"] = true;
   });
 
   afterEach(() => {
     console.warn = originalConsoleWarn;
     console.log = originalConsoleLog;
-    NativeModules['RNDNSModule'] = originalModule;
+    nativeModulesRecord["RNDNSModule"] = originalModule;
+    platformRecord["OS"] = originalPlatformOS;
+    delete globalRecord["__DNSCHAT_NATIVE_DEBUG__"];
   });
 
   it("propagates sanitizer configuration and ignores duplicate payloads", async () => {
@@ -26,7 +33,7 @@ describe("NativeDNS sanitizer configuration", () => {
       .mockResolvedValueOnce(true)
       .mockResolvedValueOnce(false);
 
-    (NativeModules as any)["RNDNSModule"] = {
+    nativeModulesRecord["RNDNSModule"] = {
       configureSanitizer: configureSanitizerMock,
       queryTXT: jest.fn(),
       isAvailable: jest.fn().mockResolvedValue({ available: true, platform: "android", supportsCustomServer: true, supportsAsyncQuery: true, apiLevel: 34 }),
@@ -51,7 +58,7 @@ describe("NativeDNS sanitizer configuration", () => {
 
   it("logs a warning when sanitizer configuration fails", async () => {
     const error = Object.assign(new Error("Invalid regex"), { code: "SANITIZER_CONFIG_REGEX" });
-    (NativeModules as any)["RNDNSModule"] = {
+    nativeModulesRecord["RNDNSModule"] = {
       configureSanitizer: jest.fn().mockRejectedValue(error),
       queryTXT: jest.fn(),
       isAvailable: jest.fn().mockResolvedValue({ available: true, platform: "android", supportsCustomServer: true, supportsAsyncQuery: true, apiLevel: 34 }),
@@ -61,6 +68,6 @@ describe("NativeDNS sanitizer configuration", () => {
     await Promise.resolve();
     await Promise.resolve();
 
-    expect(console.warn).toHaveBeenCalledWith("[NativeDNS] Failed to configure Android sanitizer:", error);
+    expect(console.warn).toHaveBeenCalledWith("[NativeDNS] Failed to configure sanitizer:", error);
   });
 });

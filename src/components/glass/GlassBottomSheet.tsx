@@ -23,6 +23,7 @@ import {
 } from "react-native";
 import type { ViewStyle } from "react-native";
 import { PanGestureHandler, State } from "react-native-gesture-handler";
+import type { PanGestureHandlerStateChangeEvent } from "react-native-gesture-handler";
 import { LiquidGlassWrapper } from "../LiquidGlassWrapper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -135,6 +136,7 @@ const useSheetAnimation = (
   const backdropOpacity = React.useRef(new Animated.Value(0)).current;
   const scale = React.useRef(new Animated.Value(0.95)).current;
 
+  // Effect: run show/hide animations when sheet visibility changes.
   React.useEffect(() => {
     if (visible) {
       // Show animation
@@ -214,18 +216,24 @@ export const GlassBottomSheet: React.FC<GlassBottomSheetProps> = ({
   const sheetHeight = screenHeight * height;
   const dragY = React.useRef(new Animated.Value(0)).current;
 
-  const handleBackdropPress = React.useCallback(() => {
+  React.useEffect(() => {
+    if (visible) {
+      dragY.setValue(0);
+    }
+  }, [visible, dragY]);
+
+  const handleBackdropPress = () => {
     if (!disableBackdropDismiss) {
       onClose();
     }
-  }, [disableBackdropDismiss, onClose]);
+  };
 
-  const handleClosePress = React.useCallback(() => {
+  const handleClosePress = () => {
     // Haptic feedback
     if (Platform.OS === "ios") {
     }
     onClose();
-  }, [onClose]);
+  };
 
   // Drag gesture handling
   const onGestureEvent = Animated.event(
@@ -233,12 +241,12 @@ export const GlassBottomSheet: React.FC<GlassBottomSheetProps> = ({
     { useNativeDriver: false },
   );
 
-  const onHandlerStateChange = (event: any) => {
+  const onHandlerStateChange = (event: PanGestureHandlerStateChangeEvent) => {
     if (event.nativeEvent.state === State.END) {
       const { translationY, velocityY } = event.nativeEvent;
 
       if (translationY > 100 || velocityY > 500) {
-        // Close the sheet
+        dragY.setValue(0);
         onClose();
       } else {
         // Snap back
@@ -448,9 +456,9 @@ export const GlassActionSheet: React.FC<GlassActionSheetProps> = ({
 export const useGlassBottomSheet = () => {
   const [visible, setVisible] = React.useState(false);
 
-  const show = React.useCallback(() => setVisible(true), []);
-  const hide = React.useCallback(() => setVisible(false), []);
-  const toggle = React.useCallback(() => setVisible((prev) => !prev), []);
+  const show = () => setVisible(true);
+  const hide = () => setVisible(false);
+  const toggle = () => setVisible((prev) => !prev);
 
   return { visible, show, hide, toggle };
 };
@@ -467,7 +475,11 @@ export type { GlassBottomSheetProps, GlassSheetAction, GlassActionSheetProps };
 
 const styles = StyleSheet.create({
   backdrop: {
-    ...StyleSheet.absoluteFillObject,
+    position: "absolute",
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
   },
   sheetContainer: {
     position: "absolute",

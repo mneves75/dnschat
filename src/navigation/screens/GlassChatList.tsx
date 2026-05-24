@@ -24,10 +24,8 @@ import {
   Alert,
   useColorScheme,
   Platform,
-  TouchableOpacity,
 } from "react-native";
 import Animated from "react-native-reanimated";
-import { useFocusEffect } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import { useChat } from "../../context/ChatContext";
 import {
@@ -36,28 +34,27 @@ import {
   useGlassBottomSheet,
   LiquidGlassWrapper,
 } from "../../components/glass";
+import { PressableRipple } from "../../components/PressableRipple";
 import { TrashIcon } from "../../components/icons/TrashIcon";
 import { PlusIcon } from "../../components/icons/PlusIcon";
 import { formatDistanceToNow } from "date-fns";
 import { useTranslation } from "../../i18n";
 import { useImessagePalette } from "../../ui/theme/imessagePalette";
+import { useTypography } from "../../ui/hooks/useTypography";
 import { devLog } from "../../utils/devLog";
+import { HapticFeedback } from "../../utils/haptics";
 import { useScreenEntrance } from "../../ui/hooks/useScreenEntrance";
 import { useStaggeredListValues, AnimatedListItem } from "../../ui/hooks/useStaggeredList";
 import { ChatListSkeleton } from "../../components/skeletons";
 import { EmptyState } from "../../components/EmptyState";
+import type { Chat } from "../../types/chat";
 
 // ==================================================================================
 // TYPES
 // ==================================================================================
 
 interface ChatItemProps {
-  chat: {
-    id: string;
-    title: string;
-    createdAt: Date;
-    messages: any[];
-  };
+  chat: Chat;
   onPress: () => void;
   onDelete: () => void;
   onShare?: () => void;
@@ -76,8 +73,8 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
   const colorScheme = useColorScheme();
   const { t } = useTranslation();
   const palette = useImessagePalette();
+  const typography = useTypography();
   const actionSheet = useGlassBottomSheet();
-  const [isPressed, setIsPressed] = React.useState(false);
 
   const isDark = colorScheme === "dark";
   const lastMessage = chat.messages[chat.messages.length - 1];
@@ -91,25 +88,34 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
       : t("screen.glassChatList.badges.messagePlural", {
           count: messageCount,
         });
+  const itemAccessibilityLabel = t(
+    "screen.glassChatList.itemAccessibilityLabel",
+    {
+      title: chat.title,
+      count: messageCount,
+      time: timeAgo,
+    },
+  );
 
-  const handleLongPress = React.useCallback(() => {
+  const handleLongPress = () => {
     // Haptic feedback
     if (Platform.OS === "ios") {
+      HapticFeedback.medium();
     }
     actionSheet.show();
-  }, [actionSheet]);
+  };
 
   // iOS 26 HIG: Chat list items are CONTENT, not controls
   // Use solid backgrounds (standard materials), NOT Liquid Glass
   // Real iMessage uses solid backgrounds for chat list items
   // Android: Use solid color (palette.solid) since rgba appears gray without blur
   const itemBackgroundColor = Platform.OS === "android" ? palette.solid : palette.surface;
-  const ChatContent = (
+  const renderChatContent = (pressed: boolean) => (
     <View
       style={[
         styles.chatItemContainer,
         { backgroundColor: itemBackgroundColor },
-        isPressed && { backgroundColor: palette.highlight },
+        pressed && Platform.OS === "ios" && { backgroundColor: palette.highlight },
       ]}
     >
       <View style={styles.chatItemContent}>
@@ -118,6 +124,7 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
           <Text
             style={[
               styles.chatTitle,
+              typography.headline,
               { color: palette.textPrimary },
             ]}
           >
@@ -128,6 +135,7 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
             <Text
               style={[
                 styles.chatPreview,
+                typography.subheadline,
                 { color: palette.textSecondary },
               ]}
             >
@@ -141,6 +149,7 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
             <Text
               style={[
                 styles.chatTime,
+                typography.caption1,
                 { color: palette.textTertiary },
               ]}
             >
@@ -178,16 +187,21 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
 
   return (
     <>
-      <TouchableOpacity
+      <PressableRipple
+        testID={`chat-list-item-${chat.id}`}
         onPress={onPress}
         onLongPress={handleLongPress}
-        onPressIn={() => setIsPressed(true)}
-        onPressOut={() => setIsPressed(false)}
+        variant="surface"
+        rippleColor={palette.highlight}
+        pressedOpacity={0.95}
         style={styles.chatItemWrapper}
-        activeOpacity={0.95}
+        accessible
+        accessibilityRole="link"
+        accessibilityLabel={itemAccessibilityLabel}
+        accessibilityHint={t("screen.glassChatList.actionSheet.openChat")}
       >
-        {ChatContent}
-      </TouchableOpacity>
+        {({ pressed }) => renderChatContent(pressed)}
+      </PressableRipple>
 
       {/* Chat Action Sheet */}
       <GlassActionSheet
@@ -250,17 +264,20 @@ export function GlassChatList() {
   // Track initial load for skeleton display
   const [hasLoadedOnce, setHasLoadedOnce] = React.useState(false);
 
-  // Load chats when screen is focused (CRITICAL FIX)
-  useFocusEffect(
-    React.useCallback(() => {
-      loadChats().then(() => {
-        if (!hasLoadedOnce) {
-          setHasLoadedOnce(true);
-        }
-      });
-    }, [loadChats, hasLoadedOnce]),
-  );
+  // Effect: load chat list on first mount and mark first load completion.
+  React.useEffect(() => {
+    let isMounted = true;
+    loadChats().then(() => {
+      if (isMounted && !hasLoadedOnce) {
+        setHasLoadedOnce(true);
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
+  // Effect: surface chat load errors via alert.
   React.useEffect(() => {
     if (!error) return;
     Alert.alert(t("screen.chat.errorAlertTitle"), error, [
@@ -269,13 +286,13 @@ export function GlassChatList() {
         onPress: clearError,
       },
     ]);
-  }, [error, clearError, t]);
+  }, [error, t]);
 
   const isDark = colorScheme === "dark";
   const [refreshing, setRefreshing] = React.useState(false);
   const showSkeleton = isLoading && !hasLoadedOnce && chats.length === 0;
 
-  const handleNewChat = React.useCallback(async () => {
+  const handleNewChat = async () => {
     const newChat = await createChat();
     setCurrentChat(newChat);
     router.push({
@@ -285,55 +302,50 @@ export function GlassChatList() {
 
     // Haptic feedback
     if (Platform.OS === "ios") {
+      HapticFeedback.medium();
     }
-  }, [createChat, router, setCurrentChat]);
+  };
 
-  const handleChatPress = React.useCallback(
-    (chat: any) => {
-      setCurrentChat(chat);
-      router.push({
-        pathname: "/chat/[threadId]",
-        params: { threadId: chat.id },
-      });
-    },
-    [setCurrentChat, router],
-  );
+  const handleChatPress = (chat: Chat) => {
+    setCurrentChat(chat);
+    router.push({
+      pathname: "/chat/[threadId]",
+      params: { threadId: chat.id },
+    });
+  };
 
-  const handleDeleteChat = React.useCallback(
-    (chatId: string, chatTitle: string) => {
-      Alert.alert(
-        t("screen.glassChatList.alerts.deleteTitle"),
-        t("screen.glassChatList.alerts.deleteMessage", { title: chatTitle }),
-        [
-          { text: t("common.cancel"), style: "cancel" },
-          {
-            text: t("screen.glassChatList.actionSheet.deleteChat"),
-            style: "destructive",
-            onPress: () => {
-              deleteChat(chatId);
-              // Haptic feedback
-              // Intentionally no-op here: haptics are handled at the component level.
-            },
+  const handleDeleteChat = (chatId: string, chatTitle: string) => {
+    Alert.alert(
+      t("screen.glassChatList.alerts.deleteTitle"),
+      t("screen.glassChatList.alerts.deleteMessage", { title: chatTitle }),
+      [
+        { text: t("common.cancel"), style: "cancel" },
+        {
+          text: t("screen.glassChatList.actionSheet.deleteChat"),
+          style: "destructive",
+          onPress: () => {
+            deleteChat(chatId);
+            // Haptic feedback
+            // Intentionally no-op here: haptics are handled at the component level.
           },
-        ],
-      );
-    },
-    [deleteChat, t],
-  );
+        },
+      ],
+    );
+  };
 
-  const handleRefresh = React.useCallback(async () => {
+  const handleRefresh = async () => {
     setRefreshing(true);
     try {
       await loadChats();
     } finally {
       setRefreshing(false);
     }
-  }, [loadChats]);
+  };
 
-  const handleShareChat = React.useCallback((chat: any) => {
+  const handleShareChat = (chat: Chat) => {
     // Share functionality would go here
     devLog("Sharing chat", { chatId: chat?.id });
-  }, []);
+  };
 
   const recentFooter = chats.length === 1
     ? t("screen.glassChatList.recent.footerSingle", { count: chats.length })
@@ -351,8 +363,11 @@ export function GlassChatList() {
           title={t("screen.glassChatList.newConversation.title")}
         >
           <Form.Item
+            testID="chat-list-new-chat"
             title={t("screen.glassChatList.newConversation.button")}
             subtitle={t("screen.glassChatList.newConversation.description")}
+            accessibilityLabel={t("screen.glassChatList.newConversation.button")}
+            accessibilityHint={t("screen.glassChatList.newConversation.description")}
             rightContent={
               <LiquidGlassWrapper
                 variant="interactive"
@@ -423,6 +438,7 @@ export function GlassChatList() {
         {chats.length > 0 && (
           <Form.Section title={t("screen.glassChatList.stats.title")}>
             <Form.Item
+              testID="chat-list-total-messages"
               title={t("screen.glassChatList.stats.totalMessagesTitle")}
               subtitle={t("screen.glassChatList.stats.totalMessagesSubtitle")}
               rightContent={
@@ -432,6 +448,7 @@ export function GlassChatList() {
               }
             />
             <Form.Item
+              testID="chat-list-average-messages"
               title={t("screen.glassChatList.stats.averageTitle")}
               subtitle={t("screen.glassChatList.stats.averageSubtitle")}
               rightContent={
@@ -499,15 +516,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   chatTitle: {
-    fontSize: 17,
-    fontWeight: "600",
     marginBottom: 4,
+    // fontSize/fontWeight applied inline via typography.headline
   },
   chatPreview: {
-    fontSize: 15,
-    fontWeight: "400",
     marginBottom: 8,
-    lineHeight: 20,
+    // fontSize/fontWeight/lineHeight applied inline via typography.subheadline
   },
   chatMeta: {
     flexDirection: "row",
@@ -515,8 +529,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   chatTime: {
-    fontSize: 13,
-    fontWeight: "400",
+    // fontSize/fontWeight applied inline via typography.caption1
   },
   chatBadges: {
     flexDirection: "row",

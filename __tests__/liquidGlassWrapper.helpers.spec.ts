@@ -8,6 +8,7 @@ import {
   buildFallbackStyle,
   shouldUseGlassEffect,
 } from "../src/components/LiquidGlassWrapper";
+import { splitGlassStyles } from "../src/components/glass/glassStyleUtils";
 
 const { isLiquidGlassAvailable } = require("expo-glass-effect") as {
   isLiquidGlassAvailable: jest.Mock<boolean, []>;
@@ -128,5 +129,35 @@ describe("LiquidGlassWrapper helpers", () => {
     expect(shouldUseGlassEffect(false)).toBe(false);
 
     restore();
+  });
+
+  it("splits border and shadow styles away from the native glass view", () => {
+    const { containerStyle, glassStyle } = splitGlassStyles({
+      margin: 12,
+      padding: 16,
+      borderWidth: 2,
+      borderColor: "#fff",
+      shadowColor: "#000",
+      shadowOpacity: 0.2,
+      shadowRadius: 10,
+      shadowOffset: { width: 0, height: 4 },
+      borderRadius: 20,
+      height: 120,
+      flexGrow: 1,
+    });
+
+    expect(containerStyle.margin).toBe(12);
+    expect(containerStyle.borderWidth).toBe(2);
+    expect(containerStyle.shadowColor).toBe("#000");
+    expect(containerStyle.borderRadius).toBe(20);
+    expect(containerStyle.height).toBe(120);
+    expect(containerStyle.flexGrow).toBe(1);
+
+    expect(glassStyle.padding).toBe(16);
+    expect(glassStyle.borderWidth).toBeUndefined();
+    expect(glassStyle.shadowColor).toBeUndefined();
+    expect(glassStyle.borderRadius).toBe(20);
+    expect(glassStyle.height).toBe(120);
+    expect(glassStyle.flexGrow).toBe(1);
   });
 });

@@ -53,6 +53,26 @@ describe("AndroidStartupDiagnostics", () => {
 
       const dnsCheck = results.find((r) => r.name === "DNS Native Module");
       expect(dnsCheck).toBeDefined();
+      expect(dnsCheck?.status).toBe("warning");
+
+      require("react-native").Platform = originalPlatform;
+      require("react-native").NativeModules = originalNativeModules;
+    });
+
+    it("should fail when DNS module missing but core modules present", async () => {
+      const originalPlatform = require("react-native").Platform;
+      const originalNativeModules = require("react-native").NativeModules;
+
+      require("react-native").Platform = { OS: "android" };
+      require("react-native").NativeModules = {
+        RNGestureHandlerModule: {},
+        RNCSafeAreaProvider: {},
+      };
+
+      const results = await AndroidStartupDiagnostics.runDiagnostics();
+
+      const dnsCheck = results.find((r) => r.name === "DNS Native Module");
+      expect(dnsCheck).toBeDefined();
       expect(dnsCheck?.status).toBe("fail");
 
       require("react-native").Platform = originalPlatform;

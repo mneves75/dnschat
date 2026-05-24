@@ -4,9 +4,17 @@ import path from "node:path";
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const {
+  checkAndroidReleaseSigningPolicy,
+  isSupportedAndroidJavaMajor,
+  checkMainApplicationKt,
+  parseJavaMajorVersion,
   parseJavaProperties,
   resolveAndroidSdkDir,
 } = require("../scripts/verify-android-setup.js") as {
+  checkAndroidReleaseSigningPolicy: () => boolean;
+  isSupportedAndroidJavaMajor: (major: number | null) => boolean;
+  checkMainApplicationKt: () => boolean;
+  parseJavaMajorVersion: (raw: string) => number | null;
   parseJavaProperties: (raw: string) => Record<string, string>;
   resolveAndroidSdkDir: (args: {
     projectRoot: string;
@@ -79,5 +87,22 @@ describe("scripts/verify-android-setup.js helpers", () => {
     expect(result.ok).toBe(false);
     expect(result.sdkDir).toBeNull();
   });
-});
 
+  it("parses Java major version and validates supported range", () => {
+    expect(parseJavaMajorVersion('openjdk version "21.0.9" 2025-10-21 LTS')).toBe(21);
+    expect(parseJavaMajorVersion('openjdk version "25.0.2" 2026-01-20 LTS')).toBe(25);
+    expect(parseJavaMajorVersion("invalid")).toBeNull();
+    expect(isSupportedAndroidJavaMajor(17)).toBe(true);
+    expect(isSupportedAndroidJavaMajor(21)).toBe(true);
+    expect(isSupportedAndroidJavaMajor(25)).toBe(false);
+    expect(isSupportedAndroidJavaMajor(null)).toBe(false);
+  });
+
+  it("validates current MainApplication registration policy", () => {
+    expect(checkMainApplicationKt()).toBe(true);
+  });
+
+  it("validates current Android release signing policy", () => {
+    expect(checkAndroidReleaseSigningPolicy()).toBe(true);
+  });
+});

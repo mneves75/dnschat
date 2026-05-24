@@ -79,4 +79,15 @@ describe("repo policy: no release credentials", () => {
       }
     }
   });
+
+  it("keeps iOS export compliance aligned for standard app encryption", () => {
+    const infoPlist = "ios/DNSChat/Info.plist";
+    if (!fs.existsSync(infoPlist)) return;
+
+    const content = fs.readFileSync(infoPlist, "utf8");
+    expect(content).toContain("<key>ITSAppUsesNonExemptEncryption</key>");
+    expect(content).toMatch(
+      /<key>ITSAppUsesNonExemptEncryption<\/key>\s*<false\/>/,
+    );
+  });
 });

@@ -8,33 +8,33 @@
 
 ### Subtitle (30 characters max)
 
-**Revolutionary DNS-based AI chat**
+**AI chat over DNS queries**
 
 ### Marketing URL
 
-https://github.com/mneves75/dnschat
+<REPOSITORY_URL>
 
 ### Support URL
 
-https://github.com/mneves75/dnschat/issues
+<ISSUES_URL>
 
 ### Privacy Policy URL
 
-https://github.com/mneves75/dnschat/blob/main/PRIVACY.md
+<PRIVACY_POLICY_URL>
 
 ---
 
 ## App Store Description (4000 characters max)
 
-Experience the future of AI communication with DNS Chat - the world's first mobile app to use DNS queries for AI conversations.
+DNS Chat is a mobile chat app that sends short prompts as DNS TXT queries and renders AI-style responses from compatible DNS servers.
 
-REVOLUTIONARY TECHNOLOGY
-Chat with AI using groundbreaking DNS-based communication. No traditional APIs, no servers - just pure innovation through DNS TXT queries. Featured approach inspired by top tech innovators.
+DNS-BASED TRANSPORT
+Chat through DNS TXT queries instead of traditional HTTPS API calls. Use the default compatible DNS service or configure supported servers from the app settings.
 
 NATIVE PERFORMANCE
 
 - Native iOS implementation using Apple Network Framework
-- Blazing-fast DNS queries with automatic failover
+- Fast DNS queries with automatic transport fallback
 - Works on cellular and WiFi networks worldwide
 - Production-ready with comprehensive error handling
 
@@ -45,12 +45,13 @@ MODERN CHAT EXPERIENCE
 - Dark/Light theme follows your device settings
 - Smooth animations and intuitive navigation
 
-PRIVACY & SECURITY
+LOCAL DATA & TRANSPARENCY
 
-- All conversations stored only on your device
+- Conversation history is stored locally on your device
 - No account required, no data tracking
 - Network-resilient with multiple fallback methods
 - Open-source and fully transparent
+- DNS queries are observable by DNS infrastructure, so do not send secrets or personal data
 
 CROSS-PLATFORM READY
 
@@ -59,38 +60,50 @@ CROSS-PLATFORM READY
 - Professional DNS-themed app icon and branding
 
 CUSTOMIZABLE
-Configure your own DNS server or use the default service. Perfect for developers, privacy enthusiasts, and anyone curious about innovative technology.
+Choose from supported DNS servers or use the default service. Perfect for developers, local-first app enthusiasts, and anyone curious about protocol-level experimentation.
 
 Perfect for:
 
 - Tech enthusiasts exploring cutting-edge communication
-- Privacy-conscious users seeking local-first apps
+- Local-first users who understand DNS queries are observable infrastructure
 - Developers interested in DNS innovation
 - Anyone wanting a fast, reliable AI chat experience
 
-Download now and be among the first to experience AI communication through DNS!
+Download now to try AI-style chat over DNS.
 
 ---
 
 ## Keywords (100 characters max)
 
-AI,chat,DNS,assistant,privacy,native,tech,innovation,queries,networking
+AI,chat,DNS,assistant,local,native,tech,innovation,queries,networking
 
 ---
 
-## What's New (Release Notes v4.0.0)
+## What's New (Release Notes v4.0.14)
 
-RELEASE FIXES
+SDK 56 PLATFORM UPGRADE
 
-- Native DNS bridge parity fixes (port parameter supported on iOS/Android)
-- Reanimated render warnings eliminated in core UI flows
-- Version and release documentation refreshed for 4.0.0
+- Upgraded the baseline to Expo SDK 56.0.4, React Native 0.85.3, React 19.2.3, and TypeScript 6.0.3.
+- Raised the iOS deployment target to 16.4 and refreshed the native module graph for SDK 56.
+- Migrated app navigation theme imports to Expo Router SDK 56 entry points and removed unused direct React Navigation packages.
+- Replaced removed React Native `StyleSheet.absoluteFillObject` usage in the glass bottom-sheet backdrop.
+
+## TestFlight What to Test (v4.0.14 build 44)
+
+- Complete onboarding from a fresh install and confirm the app lands on the chat list.
+- Send short prompts over the default DNS service and confirm responses render without transport errors.
+- Confirm DNS failures, invalid settings, and unsupported server choices fail closed without exposing prompt text or TXT response contents.
+- Type in a long chat thread and confirm the final message remains visible above the composer as the keyboard/input inset changes.
+- Open onboarding/help, Settings, and About external links and confirm allowed HTTPS and email destinations open normally.
+- Open Logs and confirm DNS attempts, fallback methods, and failures are visible without exposing prompt text or TXT response contents.
+- Check Settings, About, Profile, and language/accessibility labels in English and Portuguese.
+- Exercise DNS server settings and confirm invalid or unsupported server choices fail closed.
 
 ---
 
 ## Promotional Text (170 characters max)
 
-Revolutionary AI chat using DNS queries. Native iOS performance, complete privacy, ChatGPT-style interface. The future of decentralized communication.
+AI chat using DNS queries with native iOS performance, local encrypted history, and transparent networking.
 
 ---
 
@@ -111,10 +124,15 @@ Revolutionary AI chat using DNS queries. Native iOS performance, complete privac
 
 ### Screenshots Location (Current)
 
-**iPhone screenshots** (current set, 4 images):
-`docs/chatdns_ios_images/`
+**iPhone screenshots**: current sets live under `ios/fastlane/screenshots/en-US/` and `ios/fastlane/screenshots/pt-BR/`.
 
-**iPad screenshots**: not captured yet. Capture required sizes before submission.
+**iPad screenshots**: current iPad Pro 13-inch sets live under the same `ios/fastlane/screenshots/` locale folders.
+
+Validated screenshot sets currently available in App Store Connect:
+
+- `APP_IPHONE_65`: 8 screenshots each for `en-US` and `pt-BR`.
+- `APP_IPAD_PRO_3GEN_129`: 4 screenshots each for `en-US` and `pt-BR`.
+- Local validation passed with `asc screenshots validate` before upload.
 
 ---
 
@@ -122,10 +140,11 @@ Revolutionary AI chat using DNS queries. Native iOS performance, complete privac
 
 ### Bundle Information
 
-- **Bundle ID**: `org.mvneves.dnschat`
-- **Version**: `4.0.0`
-- **Build Number**: 28 (sync-versions)
-- **Minimum iOS Version**: 16.0
+- **Bundle ID**: `<BUNDLE_ID>`
+- **Version**: `4.0.14`
+- **Build Number**: 44 (sync-versions)
+- **App Store Connect internal IDs**: intentionally omitted from public docs; keep exact IDs in private release notes.
+- **Minimum iOS Version**: 16.4
 - **Device Support**: iPhone, iPad
 - **Orientation**: Portrait + Landscape (default)
 
@@ -146,8 +165,8 @@ Revolutionary AI chat using DNS queries. Native iOS performance, complete privac
 ```
 This app uses innovative DNS TXT queries to communicate with AI.
 Test with any message to see the DNS-based communication in action.
-All conversations are stored locally for privacy.
-No server infrastructure or user accounts required.
+Conversations are stored locally. DNS queries are observable, so do not send secrets or personal data.
+No user account is required. The app does not require app-owned backend infrastructure, but it does require a compatible DNS service.
 ```
 
 ---
@@ -158,16 +177,16 @@ No server infrastructure or user accounts required.
 
 1. **AI Chat** (High volume, medium competition)
 2. **DNS Assistant** (Low volume, low competition - unique positioning)
-3. **Privacy Chat** (Medium volume, medium competition)
+3. **Local Chat** (Medium volume, medium competition)
 4. **Native AI** (Medium volume, low competition)
 5. **Networking Tools** (Medium volume, high competition)
 
 ### Long-tail Keywords
 
 - "DNS based chat app"
-- "Privacy focused AI assistant"
+- "Local history AI assistant"
 - "Native iOS AI chat"
-- "Decentralized chat application"
+- "DNS TXT chat experiment"
 - "Network protocol innovation"
 
 ### Localization Strategy
@@ -192,7 +211,7 @@ No server infrastructure or user accounts required.
 - [ ] App Store release announcement
 - [ ] GitHub repository promotion
 - [ ] Tech community outreach (HackerNews, Reddit r/programming)
-- [ ] Developer Twitter engagement
+- [ ] Social launch engagement
 
 ### Post-Launch (Week +1)
 
@@ -218,10 +237,9 @@ No server infrastructure or user accounts required.
 
 ### Unique Value Proposition
 
-- **World's first** DNS-based AI communication
-- **Complete privacy** with local-only storage
+- **Local encrypted history** with no accounts or tracking
 - **Native performance** with Apple Network Framework
-- **No servers required** - pure DNS innovation
+- **DNS TXT transport** with transparent networking behavior
 - **Open source** and fully transparent
 
 ---
@@ -230,9 +248,9 @@ No server infrastructure or user accounts required.
 
 ### Support Channels
 
-- **GitHub Issues**: https://github.com/mneves75/dnschat/issues
+- **GitHub Issues**: `<ISSUES_URL>`
 - **Email**: support@dnschat.app (to be configured)
-- **Twitter**: @dnschat (to be created)
+- **X/social**: @dnschat (to be created)
 
 ### Common Support Topics
 
@@ -257,15 +275,24 @@ No server infrastructure or user accounts required.
 
 ### App Store Connect Configuration
 
-- [ ] Upload final IPA build
+- [x] Upload final IPA build (`4.0.13` build `43`)
+- [x] Local ASC health checked with `asc doctor` (`2026-05-17`)
+- [x] Apply App Store Connect metadata for `en-US` and `pt-BR`
 - [ ] Configure pricing (Free)
 - [ ] Set availability (Worldwide)
 - [ ] Age rating questionnaire
-- [ ] Export compliance (No encryption)
-- [ ] Content rights declaration
+- [x] Export compliance (`ITSAppUsesNonExemptEncryption=false`; no non-exempt encryption)
+- [x] Content rights declaration (`DOES_NOT_USE_THIRD_PARTY_CONTENT`)
 
 ### Review Submission
 
+- [x] Xcode Debug simulator build passed (`2026-05-14`, Xcode `26.5`)
+- [x] AXe release simulator pass covered 10 feature groups (`2026-05-17`,
+  version `4.0.13` build `43`)
+- [x] Xcode generic iOS Release build/archive passed unsigned (`2026-05-14`)
+- [x] Signed archive/export passed for `4.0.13` build `43`
+- [x] App Store Connect upload/submission check with configured ASC credentials
+- [x] TestFlight validation passed (`0` errors, `0` warnings)
 - [ ] Final testing on TestFlight
 - [ ] Review guidelines compliance check
 - [ ] Submit for App Store Review
@@ -273,4 +300,4 @@ No server infrastructure or user accounts required.
 
 ---
 
-_Generated for DNS Chat v1.7.2 - Ready for Multi-Platform App Store submission_
+_Updated for DNS Chat v4.0.14 build 44 - SDK 56 platform upgrade; signed App Store archive and TestFlight upload not yet completed for this version_

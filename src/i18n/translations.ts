@@ -32,7 +32,20 @@ export function resolveLocale(candidate?: string | null): SupportedLocale {
   }
 
   const key = candidate.toLowerCase();
-  return NORMALIZED_LOCALE_MAP[key] ?? DEFAULT_LOCALE;
+  const normalized = NORMALIZED_LOCALE_MAP[key];
+  if (normalized) {
+    return normalized;
+  }
+
+  const language = key.split(/[-_]/)[0];
+  if (language === "pt") {
+    return "pt-BR";
+  }
+  if (language === "en") {
+    return "en-US";
+  }
+
+  return DEFAULT_LOCALE;
 }
 
 export function isSupportedLocale(locale: string): locale is SupportedLocale {

@@ -7,14 +7,18 @@
  * @example
  * ```tsx
  * export function MyList({ items }: { items: Item[] }) {
- *   const { getItemStyle, triggerAnimation } = useStaggeredList(items.length);
+ *   const { opacities, translates } = useStaggeredListValues(items.length);
  *
  *   return (
  *     <View>
  *       {items.map((item, index) => (
- *         <Animated.View key={item.id} style={getItemStyle(index)}>
+ *         <AnimatedListItem
+ *           key={item.id}
+ *           opacity={opacities[index]}
+ *           translateX={translates[index]}
+ *         >
  *           <ListItem item={item} />
- *         </Animated.View>
+ *         </AnimatedListItem>
  *       ))}
  *     </View>
  *   );
@@ -25,7 +29,7 @@
  * @see DESIGN-UI-UX-GUIDELINES.md - Stagger delay 50-100ms per item
  */
 
-import { useEffect, useCallback, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 import Animated, {
   useSharedValue,
@@ -79,11 +83,6 @@ interface UseStaggeredListOptions {
 
 interface UseStaggeredListResult {
   /**
-   * Get animated style for a specific item index
-   */
-  getItemStyle: (index: number) => ReturnType<typeof useAnimatedStyle>;
-
-  /**
    * Manually trigger the stagger animation
    */
   triggerAnimation: () => void;
@@ -125,12 +124,12 @@ export function useStaggeredList(
 
   const completedCount = useSharedValue(0);
 
-  const triggerAnimation = useCallback(() => {
+  const triggerAnimation = () => {
     if (shouldReduceMotion) {
       // Instant transition for reduced motion
       for (let i = 0; i < Math.min(itemCount, MAX_ITEMS); i++) {
-        opacities[i].value = 1;
-        translates[i].value = 0;
+        opacities[i]!.value = 1;
+        translates[i]!.value = 0;
       }
       if (onComplete) {
         onComplete();
@@ -147,7 +146,7 @@ export function useStaggeredList(
       const batchIndex = Math.floor(i / maxConcurrent);
       const delay = (i % maxConcurrent) * delayPerItem + batchIndex * (delayPerItem * maxConcurrent);
 
-      opacities[i].value = withDelay(
+      opacities[i]!.value = withDelay(
         delay,
         withTiming(1, TimingConfig.normal, (finished) => {
           if (finished) {
@@ -159,23 +158,24 @@ export function useStaggeredList(
         })
       );
 
-      translates[i].value = withDelay(
+      translates[i]!.value = withDelay(
         delay,
         withSpring(0, SpringConfig.gentle)
       );
     }
-  }, [itemCount, shouldReduceMotion, delayPerItem, maxConcurrent, onComplete, opacities, translates, completedCount]);
+  };
 
-  const reset = useCallback(() => {
+  const reset = () => {
     const offset = direction === 'left' ? -initialOffset : initialOffset;
     for (let i = 0; i < Math.min(itemCount, MAX_ITEMS); i++) {
-      opacities[i].value = shouldReduceMotion ? 1 : 0;
-      translates[i].value = shouldReduceMotion ? 0 : offset;
+      opacities[i]!.value = shouldReduceMotion ? 1 : 0;
+      translates[i]!.value = shouldReduceMotion ? 0 : offset;
     }
     completedCount.value = 0;
-  }, [itemCount, shouldReduceMotion, initialOffset, direction, opacities, translates, completedCount]);
+  };
 
   // Trigger animation on mount if enabled
+  // Effect: trigger stagger animation on mount when enabled.
   useEffect(() => {
     if (animateOnMount && itemCount > 0) {
       triggerAnimation();
@@ -183,33 +183,7 @@ export function useStaggeredList(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [itemCount]);
 
-  const getItemStyle = useCallback(
-    (index: number) => {
-      // Return a hook-compatible function that creates the animated style
-      // Note: This is a workaround since we can't call hooks inside callbacks
-      // The actual useAnimatedStyle is created in a wrapper
-      const safeIndex = Math.min(index, MAX_ITEMS - 1);
-      return {
-        opacity: opacities[safeIndex],
-        translateX: translates[safeIndex],
-      };
-    },
-    [opacities, translates]
-  );
-
   return {
-    getItemStyle: (index: number) => {
-      const safeIndex = Math.min(index, MAX_ITEMS - 1);
-      const opacity = opacities[safeIndex];
-      const translateX = translates[safeIndex];
-
-      // This is a workaround - in actual usage, the consumer should use
-      // AnimatedListItem component or create their own animated style
-      return useAnimatedStyle(() => ({
-        opacity: opacity.value,
-        transform: [{ translateX: translateX.value }],
-      }));
-    },
     triggerAnimation,
     reset,
   };
@@ -238,8 +212,8 @@ export function useStaggeredList(
  */
 interface AnimatedListItemProps {
   children: ReactNode;
-  opacity: SharedValue<number>;
-  translateX: SharedValue<number>;
+  opacity: Pick<SharedValue<number>, 'value'>;
+  translateX: Pick<SharedValue<number>, 'value'>;
   style?: ViewStyle;
 }
 
@@ -295,11 +269,11 @@ export function useStaggeredListValues(
 
   const completedCount = useSharedValue(0);
 
-  const triggerAnimation = useCallback(() => {
+  const triggerAnimation = () => {
     if (shouldReduceMotion) {
       for (let i = 0; i < effectiveCount; i++) {
-        opacities[i].value = 1;
-        translates[i].value = 0;
+        opacities[i]!.value = 1;
+        translates[i]!.value = 0;
       }
       if (onComplete) {
         onComplete();
@@ -313,7 +287,7 @@ export function useStaggeredListValues(
       const batchIndex = Math.floor(i / maxConcurrent);
       const delay = (i % maxConcurrent) * delayPerItem + batchIndex * (delayPerItem * maxConcurrent);
 
-      opacities[i].value = withDelay(
+      opacities[i]!.value = withDelay(
         delay,
         withTiming(1, TimingConfig.normal, (finished) => {
           if (finished) {
@@ -325,18 +299,18 @@ export function useStaggeredListValues(
         })
       );
 
-      translates[i].value = withDelay(delay, withSpring(0, SpringConfig.gentle));
+      translates[i]!.value = withDelay(delay, withSpring(0, SpringConfig.gentle));
     }
-  }, [effectiveCount, shouldReduceMotion, delayPerItem, maxConcurrent, onComplete, opacities, translates, completedCount]);
+  };
 
-  const reset = useCallback(() => {
+  const reset = () => {
     const offset = direction === 'left' ? -initialOffset : initialOffset;
     for (let i = 0; i < effectiveCount; i++) {
-      opacities[i].value = shouldReduceMotion ? 1 : 0;
-      translates[i].value = shouldReduceMotion ? 0 : offset;
+      opacities[i]!.value = shouldReduceMotion ? 1 : 0;
+      translates[i]!.value = shouldReduceMotion ? 0 : offset;
     }
     completedCount.value = 0;
-  }, [effectiveCount, shouldReduceMotion, initialOffset, direction, opacities, translates, completedCount]);
+  };
 
   useEffect(() => {
     if (animateOnMount && itemCount > 0) {

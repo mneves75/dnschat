@@ -57,31 +57,28 @@ const I18nContext = React.createContext<I18nValue | undefined>(undefined);
 export const I18nProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { locale } = useSettings();
 
-  const value = React.useMemo<I18nValue>(() => {
-    const activeLocale = locale;
-    const fallback = enUS;
-    const dictionary = dictionaries[activeLocale] ?? fallback;
+  const activeLocale = locale;
+  const fallback = enUS;
+  const dictionary = dictionaries[activeLocale] ?? fallback;
+  const translate = (key: MessageKey, params?: TranslationParams) => {
+    const message = getMessage(dictionary, key) ?? getMessage(fallback, key);
+    if (typeof message !== "string") {
+      devWarn(`[i18n] Missing translation for key: ${key}`);
+      return key;
+    }
+    return formatMessage(message, params);
+  };
 
-    const translate = (key: MessageKey, params?: TranslationParams) => {
-      const message = getMessage(dictionary, key) ?? getMessage(fallback, key);
-      if (typeof message !== "string") {
-        devWarn(`[i18n] Missing translation for key: ${key}`);
-        return key;
-      }
-      return formatMessage(message, params);
-    };
+  const value: I18nValue = {
+    locale: activeLocale,
+    t: translate,
+  };
 
-    return {
-      locale: activeLocale,
-      t: translate,
-    };
-  }, [locale]);
-
-  return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
+  return <I18nContext value={value}>{children}</I18nContext>;
 };
 
 export const useI18n = () => {
-  const context = React.useContext(I18nContext);
+  const context = React.use(I18nContext);
   if (!context) {
     throw new Error("useI18n must be used within an I18nProvider");
   }

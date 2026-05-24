@@ -34,6 +34,7 @@ export type NativeSanitizerConfig = {
   unicodeNormalization: 'NFKD';
   spaceReplacement: string;
   maxLabelLength: number;
+  allowedServers: string[];
   whitespace: RegexDescriptor;
   invalidChars: RegexDescriptor;
   dashCollapse: RegexDescriptor;
@@ -130,10 +131,10 @@ export const DNS_CONSTANTS = {
   ALLOWED_DNS_SERVERS: DNS_SERVERS.map(s => s.host),
 
   // Network configuration
-  // IMPORTANT: DEFAULT_DNS_SERVER is now llm.pieter.com (port 9000)
+  // IMPORTANT: DEFAULT_DNS_SERVER is now llm.pieter.com (port 53)
   // ch.at is offline, llm.pieter.com is the new primary server
   DEFAULT_DNS_SERVER: getDefaultServer().host,
-  DEFAULT_DNS_PORT: getDefaultServer().port,  // 9000 for llm.pieter.com
+  DEFAULT_DNS_PORT: getDefaultServer().port,  // Matches the current default DNS server port
   DNS_PORT: 53,                 // Standard DNS port (for fallback servers)
   QUERY_TIMEOUT_MS: 10000,      // 10 seconds
   MAX_RETRIES: 3,               // Maximum retry attempts
@@ -153,6 +154,7 @@ export const DNS_SANITIZER_CONFIG: NativeSanitizerConfig = {
   unicodeNormalization: 'NFKD',
   spaceReplacement: DNS_CONSTANTS.SPACE_REPLACEMENT,
   maxLabelLength: DNS_CONSTANTS.MAX_DNS_LABEL_LENGTH,
+  allowedServers: DNS_CONSTANTS.ALLOWED_DNS_SERVERS,
   whitespace: {
     pattern: '\\s+',
     flags: 'g',
@@ -236,6 +238,7 @@ export const getNativeSanitizerConfig = (): NativeSanitizerConfig => ({
   unicodeNormalization: DNS_SANITIZER_CONFIG.unicodeNormalization,
   spaceReplacement: DNS_SANITIZER_CONFIG.spaceReplacement,
   maxLabelLength: DNS_SANITIZER_CONFIG.maxLabelLength,
+  allowedServers: [...DNS_SANITIZER_CONFIG.allowedServers],
   whitespace: { ...DNS_SANITIZER_CONFIG.whitespace },
   invalidChars: { ...DNS_SANITIZER_CONFIG.invalidChars },
   dashCollapse: { ...DNS_SANITIZER_CONFIG.dashCollapse },

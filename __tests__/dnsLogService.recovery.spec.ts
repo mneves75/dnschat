@@ -11,16 +11,21 @@ jest.mock("@react-native-async-storage/async-storage", () => ({
 jest.mock("../src/services/encryptionService", () => ({
   decryptIfEncrypted: jest.fn(),
   encryptString: jest.fn(async (payload: string) => payload),
+  isEncryptedPayload: jest.fn((payload: string) => payload.startsWith("enc:v1:")),
 }));
 
 const mockAsyncStorage = AsyncStorage as jest.Mocked<typeof AsyncStorage>;
 const { decryptIfEncrypted } = jest.requireMock("../src/services/encryptionService");
+const dnsLogServiceInternals = DNSLogService as unknown as {
+  currentQueryLog: unknown;
+  queryLogs: unknown[];
+};
 
 describe("DNSLogService recovery", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    (DNSLogService as any).currentQueryLog = null;
-    (DNSLogService as any).queryLogs = [];
+    dnsLogServiceInternals.currentQueryLog = null;
+    dnsLogServiceInternals.queryLogs = [];
   });
 
   afterEach(() => {
@@ -41,5 +46,23 @@ describe("DNSLogService recovery", () => {
       STORAGE_CONSTANTS.LOGS_KEY,
     );
     expect(DNSLogService.getLogs()).toEqual([]);
+  });
+
+  it("encrypts corrupted legacy plaintext logs before writing a backup", async () => {
+    mockAsyncStorage.getItem.mockResolvedValue("{not json");
+    decryptIfEncrypted.mockResolvedValue("{not json");
+    const { encryptString } = jest.requireMock("../src/services/encryptionService");
+    encryptString.mockImplementation(async (payload: string) => `enc:v1:${payload.length}`);
+
+    await DNSLogService.initialize();
+
+    expect(mockAsyncStorage.setItem).toHaveBeenCalledWith(
+      STORAGE_CONSTANTS.LOGS_BACKUP_KEY,
+      expect.not.stringContaining("{not json"),
+    );
+    expect(mockAsyncStorage.setItem).toHaveBeenCalledWith(
+      STORAGE_CONSTANTS.LOGS_BACKUP_KEY,
+      expect.stringContaining("enc:v1:"),
+    );
   });
 });

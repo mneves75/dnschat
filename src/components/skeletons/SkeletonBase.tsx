@@ -62,6 +62,7 @@ export function SkeletonBox({
   const { shouldReduceMotion } = useMotionReduction();
   const shimmer = useSharedValue(0);
 
+  // Effect: start or freeze shimmer animation based on reduced-motion setting.
   useEffect(() => {
     if (shouldReduceMotion) {
       shimmer.value = 0.5; // Static mid-opacity for reduced motion
@@ -163,6 +164,9 @@ export function SkeletonText({
       {Array.from({ length: lines }).map((_, index) => {
         const isLastLine = index === lines - 1;
         const lineWidth = isLastLine && shortLastLine && lines > 1 ? '60%' : width;
+        const boxProps = index < lines - 1
+          ? { style: { marginBottom: lineGap } }
+          : {};
 
         return (
           <SkeletonBox
@@ -170,7 +174,7 @@ export function SkeletonText({
             width={lineWidth}
             height={lineHeight}
             delay={index * staggerDelay}
-            style={index < lines - 1 ? { marginBottom: lineGap } : undefined}
+            {...boxProps}
           />
         );
       })}
@@ -201,8 +205,12 @@ export function SkeletonCard({ children, delay = 0, style }: SkeletonCardProps) 
   const { shouldReduceMotion } = useMotionReduction();
   const opacity = useSharedValue(shouldReduceMotion ? 1 : 0);
 
+  // Effect: fade in skeleton card unless reduced motion is enabled.
   useEffect(() => {
-    if (shouldReduceMotion) return;
+    if (shouldReduceMotion) {
+      opacity.value = 1;
+      return;
+    }
 
     opacity.value = withDelay(delay, withTiming(1, { duration: 200 }));
   }, [shouldReduceMotion, delay, opacity]);

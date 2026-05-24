@@ -9,7 +9,7 @@
  * @see IOS-GUIDELINES.md - iOS 26 Liquid Glass patterns
  */
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   StyleSheet,
   useColorScheme,
@@ -46,21 +46,22 @@ export function Chat() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { shouldReduceMotion } = useMotionReduction();
-  const minimumTouchTarget = useMemo(() => getMinimumTouchTarget(), []);
+  const minimumTouchTarget = getMinimumTouchTarget();
   const bodyLineHeight = typography["body"]?.lineHeight ?? 22;
-  const minimumInputHeight = useMemo(
-    () => Math.max(bodyLineHeight + LiquidGlassSpacing.sm * 2, minimumTouchTarget),
-    [bodyLineHeight, minimumTouchTarget],
+  const minimumInputHeight = Math.max(
+    bodyLineHeight + LiquidGlassSpacing.sm * 2,
+    minimumTouchTarget,
   );
   const [inputHeight, setInputHeight] = useState(minimumInputHeight);
-  const handleInputHeightChange = useCallback((height: number) => {
+  const handleInputHeightChange = (height: number) => {
     setInputHeight((previous) =>
       Math.abs(previous - height) < 1 ? previous : height,
     );
-  }, []);
+  };
 
   // Subtle entrance animation (fade only - no translateY to avoid keyboard conflicts)
   const opacity = useSharedValue(shouldReduceMotion ? 1 : 0);
+  // Effect: animate screen opacity on mount unless reduced motion is enabled.
   useEffect(() => {
     if (!shouldReduceMotion) {
       opacity.value = withTiming(1, { duration: 200 });
@@ -82,10 +83,8 @@ export function Chat() {
   // 2. Safe area bottom inset (home indicator on iOS)
   // 3. Spacing between input and last message (LiquidGlassSpacing.xs = 8px)
   // 4. Keyboard height when visible (KeyboardStickyView uses transform, keyboard covers screen)
-  const messageListBottomInset = useMemo(
-    () => inputHeight + insets.bottom + LiquidGlassSpacing.xs + keyboardHeight,
-    [inputHeight, insets.bottom, keyboardHeight],
-  );
+  const messageListBottomInset =
+    inputHeight + insets.bottom + LiquidGlassSpacing.xs + keyboardHeight;
 
   // Log when currentChat changes
   // IMPORTANT: Use optional chaining on messages to prevent crash when currentChat exists but messages is undefined
@@ -104,6 +103,7 @@ export function Chat() {
     });
   }, [currentChat?.messages]);
 
+  // Effect: present an alert when the chat error state changes.
   useEffect(() => {
     // Show error alert when error occurs
     if (error) {
@@ -115,7 +115,7 @@ export function Chat() {
         },
       ]);
     }
-  }, [error, clearError]);
+  }, [error, t]);
 
   const handleSendMessage = async (message: string) => {
     try {
@@ -135,10 +135,7 @@ export function Chat() {
         { backgroundColor: palette.background },
       ]}
     >
-      <StatusBar
-        barStyle={isDark ? "light-content" : "dark-content"}
-        backgroundColor={palette.background}
-      />
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
 
       <Animated.View
         style={[

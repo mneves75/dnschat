@@ -14,6 +14,7 @@ export function HapticsConfigurator() {
   const { config } = useAccessibility();
   const hasPreloadedRef = useRef(false);
 
+  // Effect: configure native haptics when settings/accessibility change and preload once.
   useEffect(() => {
     if (Platform.OS !== "ios" || settingsLoading) {
       return;

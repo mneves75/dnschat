@@ -1,40 +1,44 @@
 package com.dnsnative;
 
+// NOTE: This file is duplicated in the Expo prebuild output. Keep the copies in sync.
+
 import android.net.ConnectivityManager;
-import android.net.DnsResolver;
 import android.net.Network;
 import android.os.Build;
-import android.os.CancellationSignal;
 import android.util.Log;
 
 import java.net.InetAddress;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
-import java.net.URLEncoder;
-import java.net.UnknownHostException;
-import java.io.BufferedReader;
-import java.io.IOException;
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-
-import org.json.JSONArray;
-import org.json.JSONObject;
+import java.io.OutputStream;
+import java.time.Duration;
+import java.security.SecureRandom;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.text.Normalizer;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
@@ -42,32 +46,112 @@ import org.xbill.DNS.*;
 
 public class DNSResolver {
     private static final String TAG = "DNSResolver";
-    private static final String DNS_SERVER = "ch.at";
-    private static final int DNS_PORT = 53;
+    private static final int DNS_PORT = 53;  // Default DNS port (RFC 1035)
     private static final int QUERY_TIMEOUT_MS = 10000;
     private static final int DEFAULT_MAX_LABEL_LENGTH = 63;
     private static final int MAX_QNAME_LENGTH = 255;
     private static final int MAX_NATIVE_ATTEMPTS = 3;
     private static final long RETRY_DELAY_MS = 200L;
+    private static final int DNS_FLAG_QR = 0x8000;
+    private static final int DNS_FLAG_TC = 0x0200;
+    private static final int DNS_OPCODE_MASK = 0x7800;
+    private static final int DNS_RCODE_MASK = 0x000F;
+    private static final int DNS_POINTER_MASK = 0xC0;
+    private static final int DNS_POINTER_OFFSET_MASK = 0x3F;
+    private static final int EXPECTED_QDCOUNT = 1;
+    private static final int MAX_POINTER_JUMPS = 10;
+    private static final SecureRandom DNS_SECURE_RANDOM = new SecureRandom();
     private static final AtomicReference<SanitizerConfig> SANITIZER =
         new AtomicReference<>(SanitizerConfig.defaultInstance());
     private static final AtomicBoolean DEFAULT_SANITIZER_NOTICE_EMITTED = new AtomicBoolean(false);
-    
-    private final ExecutorService executor = Executors.newCachedThreadPool();
+    private static final Set<String> DEFAULT_ALLOWED_SERVERS = Collections.unmodifiableSet(
+        new HashSet<>(Arrays.asList(
+            "llm.pieter.com",
+            "ch.at",
+            "8.8.8.8",
+            "8.8.4.4",
+            "1.1.1.1",
+            "1.0.0.1"
+        ))
+    );
+
+    // Thread pool configuration for DNS queries
+    // Fixed size prevents thread explosion under load
+    // Size equals CPU cores for optimal I/O-bound task performance
+    private static final int THREAD_POOL_SIZE = Math.max(2, Runtime.getRuntime().availableProcessors());
+    private static final int QUEUE_CAPACITY = 50;
+
+    private final ExecutorService executor = new ThreadPoolExecutor(
+        THREAD_POOL_SIZE,                              // Core pool size
+        THREAD_POOL_SIZE,                              // Max pool size (fixed)
+        60L, TimeUnit.SECONDS,                         // Idle thread timeout
+        new LinkedBlockingQueue<>(QUEUE_CAPACITY),     // Bounded queue
+        new ThreadPoolExecutor.AbortPolicy()           // Never run blocking DNS work on caller thread
+    );
     private final ConnectivityManager connectivityManager;
     
     // Query deduplication - prevents multiple identical requests (matches iOS implementation)
-    private static final Map<String, CompletableFuture<List<String>>> activeQueries = new ConcurrentHashMap<>();
+    private final Map<String, CompletableFuture<List<String>>> activeQueries = new ConcurrentHashMap<>();
+
+    private static final class DnsQuery {
+        final byte[] payload;
+        final int transactionId;
+        final String queryName;
+
+        DnsQuery(byte[] payload, int transactionId, String queryName) {
+            this.payload = payload;
+            this.transactionId = transactionId;
+            this.queryName = queryName;
+        }
+    }
 
     public DNSResolver(ConnectivityManager connectivityManager) {
         this.connectivityManager = connectivityManager;
     }
 
+    private <T> CompletableFuture<T> supplyDnsAsync(Supplier<T> supplier) {
+        try {
+            return CompletableFuture.supplyAsync(supplier, executor);
+        } catch (RejectedExecutionException error) {
+            CompletableFuture<T> failed = new CompletableFuture<>();
+            failed.completeExceptionally(
+                new DNSError(DNSError.Type.QUERY_FAILED, "DNS resolver is busy; retry shortly", error)
+            );
+            return failed;
+        }
+    }
+
     /**
-     * Cleans up the thread pool. Should be called when the module is invalidated
-     * to prevent thread leaks on app lifecycle events.
+     * Cleans up resources. Should be called when the module is invalidated
+     * to prevent memory leaks on app lifecycle events.
+     *
+     * This method:
+     * 1. Cancels all pending queries with a CANCELLED error
+     * 2. Clears the static activeQueries map to prevent memory leaks
+     * 3. Shuts down the executor thread pool
+     *
+     * CRITICAL: This MUST be called from invalidate() to prevent static map leaks.
      */
     public void cleanup() {
+        int pendingQueries = activeQueries.size();
+        // Phase 1: Cancel all pending queries to prevent dangling futures
+        // This is critical for preventing memory leaks through the static activeQueries map
+        for (Map.Entry<String, CompletableFuture<List<String>>> entry : activeQueries.entrySet()) {
+            CompletableFuture<List<String>> future = entry.getValue();
+            if (!future.isDone()) {
+                future.completeExceptionally(
+                    new DNSError(DNSError.Type.CANCELLED, "DNS resolver is shutting down")
+                );
+            }
+        }
+        activeQueries.clear();
+        try {
+            Log.d(TAG, "DNS: Cleanup complete - cleared " + pendingQueries + " active queries");
+        } catch (RuntimeException ignored) {
+            // Avoid crashing local JVM unit tests that use android.jar stubs.
+        }
+
+        // Phase 2: Shutdown executor thread pool
         if (!executor.isShutdown()) {
             executor.shutdown();
             try {
@@ -119,6 +203,24 @@ public class DNSResolver {
     }
 
     public CompletableFuture<List<String>> queryTXT(String domain, String message, int port) {
+        // Validate and normalize domain parameter
+        if (domain == null) {
+            CompletableFuture<List<String>> failed = new CompletableFuture<>();
+            failed.completeExceptionally(
+                new DNSError(DNSError.Type.QUERY_FAILED, "DNS domain cannot be null or empty")
+            );
+            return failed;
+        }
+
+        String trimmedDomain = domain.trim();
+        if (trimmedDomain.isEmpty()) {
+            CompletableFuture<List<String>> failed = new CompletableFuture<>();
+            failed.completeExceptionally(
+                new DNSError(DNSError.Type.QUERY_FAILED, "DNS domain cannot be null or empty")
+            );
+            return failed;
+        }
+
         // Normalize the fully-qualified query name provided by the JS bridge
         final String queryName;
         try {
@@ -129,7 +231,7 @@ public class DNSResolver {
             return failed;
         }
 
-        final int dnsPort = port > 0 ? port : DNS_PORT;
+        final int dnsPort = port;
         if (dnsPort < 1 || dnsPort > 65535) {
             CompletableFuture<List<String>> failed = new CompletableFuture<>();
             failed.completeExceptionally(
@@ -139,50 +241,109 @@ public class DNSResolver {
             return failed;
         }
 
-        final String queryId = domain + ":" + dnsPort + "-" + queryName;
-
-        // Check for existing query (deduplication) - matches iOS behavior
-        CompletableFuture<List<String>> existingQuery = activeQueries.get(queryId);
-        if (existingQuery != null) {
-            Log.d(TAG, "DNS: Reusing existing query for: " + queryId);
-            return existingQuery;
+        final String normalizedDomain;
+        try {
+            normalizedDomain = normalizeServerHost(trimmedDomain);
+        } catch (DNSError error) {
+            CompletableFuture<List<String>> failed = new CompletableFuture<>();
+            failed.completeExceptionally(error);
+            return failed;
         }
-        
-        Log.d(TAG, "DNS: Creating new query for: " + queryId);
-        
-        // Create new query with automatic cleanup
-        CompletableFuture<List<String>> result = new CompletableFuture<>();
-        activeQueries.put(queryId, result);
+        final String queryId = normalizedDomain + ":" + dnsPort + "-" + queryName;
+
+        // Atomic query deduplication using compute() - prevents race conditions
+        // If no existing query, create new one and mark it for execution
+        AtomicBoolean shouldStartQuery = new AtomicBoolean(false);
+        CompletableFuture<List<String>> result = activeQueries.compute(queryId, (key, existing) -> {
+            if (existing != null) {
+                Log.d(TAG, "DNS: Reusing existing query for selected resolver");
+                return existing;
+            }
+            Log.d(TAG, "DNS: Creating new query for selected resolver");
+            shouldStartQuery.set(true);
+            return new CompletableFuture<List<String>>();
+        });
+
+        // Only execute if we created it (avoids duplicate execution when reused)
+        if (shouldStartQuery.get()) {
+            try {
+                executeQueryChain(queryName, normalizedDomain, dnsPort, queryId, result);
+            } catch (RuntimeException error) {
+                activeQueries.remove(queryId, result);
+                result.completeExceptionally(error);
+            }
+        }
+
+        return result;
+    }
+
+    private static String normalizeServerHostInput(String domain) {
+        String trimmed = domain.trim().toLowerCase(Locale.US);
+        int end = trimmed.length();
+        while (end > 0 && trimmed.charAt(end - 1) == '.') {
+            end--;
+        }
+        return end == 0 ? "" : trimmed.substring(0, end);
+    }
+
+    private static String normalizeServerHost(String domain) throws DNSError {
+        String normalized = normalizeServerHostInput(domain);
+        if (normalized.isEmpty()) {
+            throw new DNSError(DNSError.Type.QUERY_FAILED, "DNS domain cannot be empty");
+        }
+        SanitizerConfig config = SANITIZER.get();
+        if (config.allowedServers != null
+            && !config.allowedServers.isEmpty()
+            && !config.allowedServers.contains(normalized)) {
+            throw new DNSError(DNSError.Type.QUERY_FAILED, "DNS server not allowed");
+        }
+        return normalized;
+    }
+
+    /**
+     * Executes the DNS query chain with fallback strategies.
+     * This method is called only once per unique query due to atomic deduplication.
+     *
+     * Fallback chain: Raw UDP -> optional Cloudflare DoH (only when Cloudflare
+     * itself is the selected resolver) -> Legacy (dnsjava on the same resolver)
+     */
+    private void executeQueryChain(
+        String queryName,
+        String normalizedDomain,
+        int port,
+        String queryId,
+        CompletableFuture<List<String>> result
+    ) {
         Log.d(TAG, "DNS: Active queries count: " + activeQueries.size());
-        
-        // Android internal fallback strategy:
-        // Raw UDP -> DNS-over-HTTPS (unless ch.at) -> legacy (dnsjava)
-        queryTXTRawUDP(queryName, domain, dnsPort)
+
+        // Android internal fallback strategy must preserve resolver truthfulness.
+        // Do not silently switch a Google/custom/authoritative resolver query to
+        // Cloudflare DoH, or the app will lie about which resolver answered.
+        queryTXTRawUDP(queryName, normalizedDomain, port)
             .thenAccept(txtRecords -> {
-                activeQueries.remove(queryId);
+                activeQueries.remove(queryId, result);
                 Log.d(TAG, "DNS: Query completed, active queries: " + activeQueries.size());
                 result.complete(txtRecords);
             })
             .exceptionally(err -> {
-                // Gate DoH: disable for ch.at, otherwise try DoH then legacy
-                if (domain != null && !domain.equalsIgnoreCase("ch.at")) {
+                if (shouldUseCloudflareDohFallback(normalizedDomain, port)) {
                     Log.d(TAG, "DNS: Trying DNS-over-HTTPS (fallback 1)");
                     queryTXTDNSOverHTTPS(queryName)
                         .thenAccept(txtRecords -> {
-                            activeQueries.remove(queryId);
+                            activeQueries.remove(queryId, result);
                             Log.d(TAG, "DNS: Query completed (HTTPS), active queries: " + activeQueries.size());
                             result.complete(txtRecords);
                         })
                         .exceptionally(err2 -> {
                             Log.d(TAG, "DNS: Trying legacy DNS (fallback 2)");
-                            queryTXTLegacy(domain, queryName, dnsPort)
+                            queryTXTLegacy(normalizedDomain, queryName, port)
                                 .thenAccept(txtRecords -> {
-                                    activeQueries.remove(queryId);
+                                    activeQueries.remove(queryId, result);
                                     Log.d(TAG, "DNS: Query completed (legacy), active queries: " + activeQueries.size());
                                     result.complete(txtRecords);
                                 })
                                 .exceptionally(err3 -> {
-                                    activeQueries.remove(queryId);
+                                    activeQueries.remove(queryId, result);
                                     Log.d(TAG, "DNS: All fallback methods failed, active queries: " + activeQueries.size());
                                     result.completeExceptionally(err3);
                                     return null;
@@ -190,15 +351,15 @@ public class DNSResolver {
                             return null;
                         });
                 } else {
-                    Log.d(TAG, "DNS: Skipping DoH for ch.at, trying legacy DNS");
-                    queryTXTLegacy(domain, queryName, dnsPort)
+                    Log.d(TAG, "DNS: Skipping Cloudflare DoH, trying legacy DNS on the selected resolver");
+                    queryTXTLegacy(normalizedDomain, queryName, port)
                         .thenAccept(txtRecords -> {
-                            activeQueries.remove(queryId);
+                            activeQueries.remove(queryId, result);
                             Log.d(TAG, "DNS: Query completed (legacy), active queries: " + activeQueries.size());
                             result.complete(txtRecords);
                         })
                         .exceptionally(err3 -> {
-                            activeQueries.remove(queryId);
+                            activeQueries.remove(queryId, result);
                             Log.d(TAG, "DNS: All fallback methods failed, active queries: " + activeQueries.size());
                             result.completeExceptionally(err3);
                             return null;
@@ -206,12 +367,15 @@ public class DNSResolver {
                 }
                 return null;
             });
-        return result;
+    }
+
+    private boolean shouldUseCloudflareDohFallback(String normalizedDomain, int port) {
+        return port == 53 && "1.1.1.1".equals(normalizedDomain);
     }
 
 
     private CompletableFuture<List<String>> queryTXTLegacy(String domain, String queryName, int port) {
-        return CompletableFuture.supplyAsync(() -> {
+        return supplyDnsAsync(() -> {
             DNSError lastError = null;
             for (int attempt = 0; attempt < MAX_NATIVE_ATTEMPTS; attempt++) {
                 try {
@@ -219,17 +383,17 @@ public class DNSResolver {
 
                     SimpleResolver resolver = new SimpleResolver(domain);
                     resolver.setPort(port);
-                    resolver.setTimeout(QUERY_TIMEOUT_MS / 1000);
+                    resolver.setTimeout(Duration.ofMillis(QUERY_TIMEOUT_MS));
                     lookup.setResolver(resolver);
 
-                    Record[] records = lookup.run();
+                    org.xbill.DNS.Record[] records = lookup.run();
 
                     if (records == null || records.length == 0) {
                         throw new DNSError(DNSError.Type.NO_RECORDS_FOUND, "No TXT records found in legacy query");
                     }
 
                     List<String> txtRecords = new ArrayList<>();
-                    for (Record record : records) {
+                    for (org.xbill.DNS.Record record : records) {
                         if (record instanceof TXTRecord) {
                             TXTRecord txtRecord = (TXTRecord) record;
                             List<?> strings = txtRecord.getStrings();
@@ -273,29 +437,37 @@ public class DNSResolver {
      * Send a raw UDP DNS TXT query for the fully-qualified domain name provided by the JS bridge.
      */
     private CompletableFuture<List<String>> queryTXTRawUDP(String queryName, String server, int port) {
-        return CompletableFuture.supplyAsync(() -> {
+        return supplyDnsAsync(() -> {
             DNSError lastError = null;
             for (int attempt = 0; attempt < MAX_NATIVE_ATTEMPTS; attempt++) {
                 DatagramSocket socket = null;
                 try {
-                    byte[] query = buildDnsQuery(queryName);
+                    DnsQuery query = buildDnsQuery(queryName, false);
 
                     socket = new DatagramSocket();
                     socket.setSoTimeout(QUERY_TIMEOUT_MS);
                     InetAddress serverAddr = InetAddress.getByName(server);
 
-                    DatagramPacket packet = new DatagramPacket(query, query.length, serverAddr, port);
+                    DatagramPacket packet = new DatagramPacket(query.payload, query.payload.length, serverAddr, port);
                     socket.send(packet);
 
                     byte[] buffer = new byte[2048];
                     DatagramPacket responsePacket = new DatagramPacket(buffer, buffer.length);
                     socket.receive(responsePacket);
 
+                    if (!serverAddr.equals(responsePacket.getAddress()) || responsePacket.getPort() != port) {
+                        throw new DNSError(
+                            DNSError.Type.QUERY_FAILED,
+                            "DNS response from unexpected source: " +
+                                responsePacket.getAddress().getHostAddress() + ":" + responsePacket.getPort()
+                        );
+                    }
+
                     int length = responsePacket.getLength();
                     byte[] response = new byte[length];
                     System.arraycopy(buffer, 0, response, 0, length);
 
-                    List<String> txtRecords = parseDnsTxtResponse(response);
+                    List<String> txtRecords = parseDnsTxtResponse(response, query.transactionId, query.queryName);
                     if (txtRecords.isEmpty()) {
                         throw new DNSError(DNSError.Type.NO_RECORDS_FOUND, "No TXT records found in UDP response");
                     }
@@ -326,13 +498,17 @@ public class DNSResolver {
         }, executor);
     }
 
-    private byte[] buildDnsQuery(String queryName) throws DNSError {
+    private DnsQuery buildDnsQuery(String queryName) throws DNSError {
+        return buildDnsQuery(queryName, false);
+    }
+
+    private DnsQuery buildDnsQuery(String queryName, boolean useZeroTransactionId) throws DNSError {
         byte[] qname = encodeDomainName(queryName);
 
         // DNS Header (12 bytes) + QNAME + QTYPE + QCLASS
         ByteBuffer buffer = ByteBuffer.allocate(12 + qname.length + 2 + 2);
 
-        int transactionId = (int) (Math.random() * 0xFFFF) & 0xFFFF;
+        int transactionId = useZeroTransactionId ? 0 : DNS_SECURE_RANDOM.nextInt(0x10000);
         buffer.putShort((short) transactionId);      // ID
         buffer.putShort((short) 0x0100);             // Flags: standard query, recursion desired
         buffer.putShort((short) 1);                  // QDCOUNT
@@ -346,7 +522,7 @@ public class DNSResolver {
         buffer.putShort((short) 16);
         buffer.putShort((short) 1);
 
-        return buffer.array();
+        return new DnsQuery(buffer.array(), transactionId, queryName);
     }
 
     private byte[] encodeDomainName(String fqdn) throws DNSError {
@@ -460,48 +636,87 @@ public class DNSResolver {
         return config.combiningMarksPattern.matcher(normalized).replaceAll("");
     }
 
-    private List<String> parseDnsTxtResponse(byte[] data) throws Exception {
+    private List<String> parseDnsTxtResponse(
+        byte[] data,
+        int expectedTransactionId,
+        String expectedQueryName
+    ) throws Exception {
         List<String> results = new ArrayList<>();
         if (data == null || data.length < 12) {
-            return results;
+            throw new DNSError(
+                DNSError.Type.QUERY_FAILED,
+                "Response too short: " + (data == null ? 0 : data.length) + " bytes, minimum 12 required"
+            );
         }
 
         // Header
+        int responseId = ((data[0] & 0xFF) << 8) | (data[1] & 0xFF);
+        if (responseId != expectedTransactionId) {
+            throw new DNSError(
+                DNSError.Type.QUERY_FAILED,
+                "DNS response ID mismatch - possible spoofing attempt"
+            );
+        }
+        int flags = ((data[2] & 0xFF) << 8) | (data[3] & 0xFF);
+        if ((flags & DNS_FLAG_QR) == 0) {
+            throw new DNSError(DNSError.Type.QUERY_FAILED, "DNS response missing QR flag");
+        }
+        int opcode = (flags & DNS_OPCODE_MASK) >>> 11;
+        if (opcode != 0) {
+            throw new DNSError(DNSError.Type.QUERY_FAILED, "DNS response opcode not standard query");
+        }
+        if ((flags & DNS_FLAG_TC) != 0) {
+            throw new DNSError(DNSError.Type.QUERY_FAILED, "DNS response truncated (TC=1)");
+        }
+        int rcode = flags & DNS_RCODE_MASK;
+        if (rcode != 0) {
+            throw new DNSError(DNSError.Type.QUERY_FAILED, "DNS response rcode=" + rcode);
+        }
+        int qdCount = ((data[4] & 0xFF) << 8) | (data[5] & 0xFF);
         int anCount = ((data[6] & 0xFF) << 8) | (data[7] & 0xFF);
+        if (qdCount != EXPECTED_QDCOUNT) {
+            throw new DNSError(DNSError.Type.QUERY_FAILED, "DNS response QDCOUNT=" + qdCount);
+        }
 
         int offset = 12;
         // Skip QNAME
-        while (offset < data.length) {
-            int len = data[offset] & 0xFF;
-            offset += 1;
-            if (len == 0) break;
-            offset += len;
+        for (int q = 0; q < qdCount; q++) {
+            NameParseResult questionName = readName(data, offset);
+            offset = questionName.nextOffset;
+            if (!questionName.name.equals(expectedQueryName)) {
+                throw new DNSError(DNSError.Type.QUERY_FAILED, "DNS response question name mismatch");
+            }
+            if (offset + 4 > data.length) {
+                throw new DNSError(DNSError.Type.QUERY_FAILED, "DNS response question truncated");
+            }
+            int qtype = ((data[offset] & 0xFF) << 8) | (data[offset + 1] & 0xFF);
+            offset += 2;
+            int qclass = ((data[offset] & 0xFF) << 8) | (data[offset + 1] & 0xFF);
+            offset += 2;
+            if (qtype != 16 || qclass != 1) {
+                throw new DNSError(DNSError.Type.QUERY_FAILED, "DNS response question type/class mismatch");
+            }
         }
-        // Skip QTYPE + QCLASS
-        offset += 4;
 
         for (int i = 0; i < anCount && offset + 10 <= data.length; i++) {
-            // Skip NAME (could be pointer or full name)
-            if ((data[offset] & 0xC0) == 0xC0) {
-                offset += 2;
-            } else {
-                while (offset < data.length) {
-                    int len = data[offset] & 0xFF;
-                    offset += 1;
-                    if (len == 0) break;
-                    offset += len;
-                }
-            }
+            NameParseResult answerName = readName(data, offset);
+            offset = answerName.nextOffset;
 
             if (offset + 10 > data.length) break;
             int type = ((data[offset] & 0xFF) << 8) | (data[offset + 1] & 0xFF);
-            offset += 2; // TYPE
-            offset += 2; // CLASS
+            offset += 2;
+            int answerClass = ((data[offset] & 0xFF) << 8) | (data[offset + 1] & 0xFF);
+            offset += 2;
             offset += 4; // TTL
             int rdLength = ((data[offset] & 0xFF) << 8) | (data[offset + 1] & 0xFF);
             offset += 2;
 
-            if (type == 16 && offset + rdLength <= data.length) { // TXT
+            if (
+                type == 16 &&
+                answerClass == 1 &&
+                answerName.name.equals(expectedQueryName) &&
+                offset + rdLength <= data.length
+            ) {
                 int end = offset + rdLength;
                 int p = offset;
                 while (p < end) {
@@ -523,83 +738,130 @@ public class DNSResolver {
         return results;
     }
 
+    private static final class NameParseResult {
+        final String name;
+        final int nextOffset;
+
+        NameParseResult(String name, int nextOffset) {
+            this.name = name;
+            this.nextOffset = nextOffset;
+        }
+    }
+
+    private NameParseResult readName(byte[] data, int offset) throws DNSError {
+        StringBuilder name = new StringBuilder();
+        int currentOffset = offset;
+        int nextOffset = offset;
+        boolean jumped = false;
+        int jumps = 0;
+
+        while (currentOffset < data.length) {
+            int len = data[currentOffset] & 0xFF;
+            if (len == 0) {
+                currentOffset += 1;
+                if (!jumped) {
+                    nextOffset = currentOffset;
+                }
+                break;
+            }
+
+            if ((len & DNS_POINTER_MASK) == DNS_POINTER_MASK) {
+                if (currentOffset + 1 >= data.length) {
+                    throw new DNSError(DNSError.Type.QUERY_FAILED, "DNS response name pointer truncated");
+                }
+                int pointer =
+                    ((len & DNS_POINTER_OFFSET_MASK) << 8) | (data[currentOffset + 1] & 0xFF);
+                if (pointer >= data.length) {
+                    throw new DNSError(DNSError.Type.QUERY_FAILED, "DNS response name pointer out of range");
+                }
+                if (!jumped) {
+                    nextOffset = currentOffset + 2;
+                }
+                currentOffset = pointer;
+                jumped = true;
+                jumps++;
+                if (jumps > MAX_POINTER_JUMPS) {
+                    throw new DNSError(DNSError.Type.QUERY_FAILED, "DNS response name pointer loop");
+                }
+                continue;
+            }
+
+            currentOffset += 1;
+            if (currentOffset + len > data.length) {
+                throw new DNSError(DNSError.Type.QUERY_FAILED, "DNS response name truncated");
+            }
+            if (name.length() > 0) {
+                name.append('.');
+            }
+            String label = new String(data, currentOffset, len, StandardCharsets.US_ASCII);
+            name.append(label);
+            currentOffset += len;
+            if (!jumped) {
+                nextOffset = currentOffset;
+            }
+        }
+
+        return new NameParseResult(name.toString().toLowerCase(Locale.US), nextOffset);
+    }
+
     /**
-     * DNS-over-HTTPS query using Cloudflare API (matches iOS implementation)
+     * DNS-over-HTTPS query using wireformat (RFC 8484) via Cloudflare.
      */
     private CompletableFuture<List<String>> queryTXTDNSOverHTTPS(String message) {
-        return CompletableFuture.supplyAsync(() -> {
+        return supplyDnsAsync(() -> {
             try {
-                Log.d(TAG, "DNS-over-HTTPS: Querying Cloudflare for: " + message);
-                
-                // Use Cloudflare DNS-over-HTTPS API (matches iOS implementation)
+                Log.d(TAG, "DNS-over-HTTPS: Querying Cloudflare for selected DNS name");
+
+                DnsQuery query = buildDnsQuery(message, true);
                 String baseURL = "https://cloudflare-dns.com/dns-query";
-                String encodedMessage = URLEncoder.encode(message, "UTF-8");
-                String urlString = baseURL + "?name=" + encodedMessage + "&type=TXT";
-                
-                URL url = new URL(urlString);
-                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                connection.setRequestMethod("GET");
-                connection.setRequestProperty("Accept", "application/dns-json");
-                connection.setConnectTimeout(QUERY_TIMEOUT_MS);
-                connection.setReadTimeout(QUERY_TIMEOUT_MS);
-                
-                int responseCode = connection.getResponseCode();
-                if (responseCode != 200) {
-                    throw new DNSError(DNSError.Type.QUERY_FAILED, "DNS-over-HTTPS request failed with code: " + responseCode);
+                HttpURLConnection connection = null;
+                try {
+                    URL url = URI.create(baseURL).toURL();
+                    connection = (HttpURLConnection) url.openConnection();
+                    connection.setRequestMethod("POST");
+                    connection.setDoOutput(true);
+                    connection.setRequestProperty("Content-Type", "application/dns-message");
+                    connection.setRequestProperty("Accept", "application/dns-message");
+                    connection.setConnectTimeout(QUERY_TIMEOUT_MS);
+                    connection.setReadTimeout(QUERY_TIMEOUT_MS);
+                    connection.setFixedLengthStreamingMode(query.payload.length);
+
+                    try (OutputStream outputStream = connection.getOutputStream()) {
+                        outputStream.write(query.payload);
+                        outputStream.flush();
+                    }
+
+                    int responseCode = connection.getResponseCode();
+                    if (responseCode != 200) {
+                        throw new DNSError(
+                            DNSError.Type.QUERY_FAILED,
+                            "DNS-over-HTTPS request failed with code: " + responseCode
+                        );
+                    }
+
+                    byte[] responseBytes;
+                    try (InputStream inputStream = connection.getInputStream();
+                        ByteArrayOutputStream buffer = new ByteArrayOutputStream()) {
+                        byte[] chunk = new byte[4096];
+                        int read;
+                        while ((read = inputStream.read(chunk)) != -1) {
+                            buffer.write(chunk, 0, read);
+                        }
+                        responseBytes = buffer.toByteArray();
+                    }
+
+                    return parseDnsTxtResponse(responseBytes, query.transactionId, query.queryName);
+                } finally {
+                    if (connection != null) {
+                        connection.disconnect();
+                    }
                 }
-                
-                // Read response
-                BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-                StringBuilder response = new StringBuilder();
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    response.append(line);
-                }
-                reader.close();
-                connection.disconnect();
-                
-                // Parse Cloudflare DNS JSON response (matches iOS parsing logic)
-                return parseDNSOverHTTPSResponse(response.toString());
-                
             } catch (DNSError e) {
                 throw e; // Re-throw structured errors
             } catch (Exception e) {
                 throw new DNSError(DNSError.Type.QUERY_FAILED, "DNS-over-HTTPS query failed: " + e.getMessage(), e);
             }
         }, executor);
-    }
-
-    private List<String> parseDNSOverHTTPSResponse(String jsonResponse) throws DNSError {
-        try {
-            JSONObject json = new JSONObject(jsonResponse);
-            
-            if (!json.has("Answer")) {
-                throw new DNSError(DNSError.Type.NO_RECORDS_FOUND, "No Answer section in DNS-over-HTTPS response");
-            }
-            
-            JSONArray answers = json.getJSONArray("Answer");
-            List<String> txtRecords = new ArrayList<>();
-            
-            for (int i = 0; i < answers.length(); i++) {
-                JSONObject answer = answers.getJSONObject(i);
-                if (answer.has("type") && answer.getInt("type") == 16 && answer.has("data")) {
-                    String data = answer.getString("data");
-                    // Remove quotes from TXT record data (matches iOS behavior)
-                    String cleanData = data.replaceAll("^\"|\"$", "");
-                    txtRecords.add(cleanData);
-                }
-            }
-            
-            if (txtRecords.isEmpty()) {
-                throw new DNSError(DNSError.Type.NO_RECORDS_FOUND, "No TXT records found in DNS-over-HTTPS response");
-            }
-            
-            Log.d(TAG, "[pkg] DNS-over-HTTPS: Found " + txtRecords.size() + " TXT records");
-            return txtRecords;
-            
-        } catch (Exception e) {
-            throw new DNSError(DNSError.Type.QUERY_FAILED, "Failed to parse DNS-over-HTTPS response: " + e.getMessage(), e);
-        }
     }
 
 
@@ -618,87 +880,61 @@ public class DNSResolver {
         private static final String CODE_INVALID_REGEX = "SANITIZER_CONFIG_REGEX";
         private static final String CODE_UNEXPECTED = "SANITIZER_CONFIG_UNEXPECTED";
 
+        // Combining marks Unicode ranges (portable alternative to \p{M} which requires UNICODE_CHARACTER_CLASS):
+        // \u0300-\u036f = Combining Diacritical Marks
+        // \u1ab0-\u1aff = Combining Diacritical Marks Extended
+        // \u1dc0-\u1dff = Combining Diacritical Marks Supplement
+        // \u20d0-\u20ff = Combining Diacritical Marks for Symbols
+        // \ufe20-\ufe2f = Combining Half Marks
+        private static final String COMBINING_MARKS_PATTERN =
+            "[\u0300-\u036f\u1ab0-\u1aff\u1dc0-\u1dff\u20d0-\u20ff\ufe20-\ufe2f]+";
+
         private static final SanitizerConfig DEFAULT = build(
-            "\\s+",
-            0,
-            "[^a-z0-9-]",
-            0,
-            "-{2,}",
-            0,
-            "^-+|-+$",
-            0,
-            "\\p{M}+",
-            Pattern.UNICODE_CASE | Pattern.UNICODE_CHARACTER_CLASS,
+            Pattern.compile("\\s+"),
+            Pattern.compile("[^a-z0-9-]"),
+            Pattern.compile("-{2,}"),
+            Pattern.compile("^-+|-+$"),
+            Pattern.compile(COMBINING_MARKS_PATTERN),
             "-",
             DEFAULT_MAX_LABEL_LENGTH,
             Normalizer.Form.NFKD,
+            DEFAULT_ALLOWED_SERVERS,
             true
         );
 
-        final String whitespaceSource;
-        final int whitespaceFlags;
         final Pattern whitespacePattern;
-
-        final String invalidCharsSource;
-        final int invalidCharsFlags;
         final Pattern invalidCharsPattern;
-
-        final String dashCollapseSource;
-        final int dashCollapseFlags;
         final Pattern dashCollapsePattern;
-
-        final String edgeDashesSource;
-        final int edgeDashesFlags;
         final Pattern edgeDashesPattern;
-
-        final String combiningMarksSource;
-        final int combiningMarksFlags;
         final Pattern combiningMarksPattern;
 
         final String spaceReplacement;
         final int maxLabelLength;
         final Normalizer.Form normalizationForm;
+        final Set<String> allowedServers;
         final boolean defaultConfig;
 
         private SanitizerConfig(
-            String whitespaceSource,
-            int whitespaceFlags,
             Pattern whitespacePattern,
-            String invalidCharsSource,
-            int invalidCharsFlags,
             Pattern invalidCharsPattern,
-            String dashCollapseSource,
-            int dashCollapseFlags,
             Pattern dashCollapsePattern,
-            String edgeDashesSource,
-            int edgeDashesFlags,
             Pattern edgeDashesPattern,
-            String combiningMarksSource,
-            int combiningMarksFlags,
             Pattern combiningMarksPattern,
             String spaceReplacement,
             int maxLabelLength,
             Normalizer.Form normalizationForm,
+            Set<String> allowedServers,
             boolean defaultConfig
         ) {
-            this.whitespaceSource = whitespaceSource;
-            this.whitespaceFlags = whitespaceFlags;
             this.whitespacePattern = whitespacePattern;
-            this.invalidCharsSource = invalidCharsSource;
-            this.invalidCharsFlags = invalidCharsFlags;
             this.invalidCharsPattern = invalidCharsPattern;
-            this.dashCollapseSource = dashCollapseSource;
-            this.dashCollapseFlags = dashCollapseFlags;
             this.dashCollapsePattern = dashCollapsePattern;
-            this.edgeDashesSource = edgeDashesSource;
-            this.edgeDashesFlags = edgeDashesFlags;
             this.edgeDashesPattern = edgeDashesPattern;
-            this.combiningMarksSource = combiningMarksSource;
-            this.combiningMarksFlags = combiningMarksFlags;
             this.combiningMarksPattern = combiningMarksPattern;
             this.spaceReplacement = spaceReplacement;
             this.maxLabelLength = maxLabelLength;
             this.normalizationForm = normalizationForm;
+            this.allowedServers = allowedServers;
             this.defaultConfig = defaultConfig;
         }
 
@@ -725,40 +961,32 @@ public class DNSResolver {
                 }
 
                 int maxLabelLength = readInt(map, "maxLabelLength");
-                if (maxLabelLength <= 0 || maxLabelLength > MAX_QNAME_LENGTH) {
+                if (maxLabelLength <= 0 || maxLabelLength > DEFAULT_MAX_LABEL_LENGTH) {
                     throw SanitizerConfigException.of(
                         CODE_INVALID_RANGE,
-                        "maxLabelLength must be between 1 and " + MAX_QNAME_LENGTH
+                        "maxLabelLength must be between 1 and " + DEFAULT_MAX_LABEL_LENGTH
                     );
                 }
 
                 Normalizer.Form normalizationForm = parseNormalizationForm(readString(map, "unicodeNormalization"));
+                Set<String> allowedServers = readAllowedServers(map);
 
-                CompiledPattern whitespace = compilePattern(readMap(map, "whitespace"), "whitespace");
-                CompiledPattern invalidChars = compilePattern(readMap(map, "invalidChars"), "invalidChars");
-                CompiledPattern dashCollapse = compilePattern(readMap(map, "dashCollapse"), "dashCollapse");
-                CompiledPattern edgeDashes = compilePattern(readMap(map, "edgeDashes"), "edgeDashes");
-                CompiledPattern combiningMarks = compilePattern(readMap(map, "combiningMarks"), "combiningMarks");
+                Pattern whitespacePattern = compilePattern(readMap(map, "whitespace"), "whitespace");
+                Pattern invalidCharsPattern = compilePattern(readMap(map, "invalidChars"), "invalidChars");
+                Pattern dashCollapsePattern = compilePattern(readMap(map, "dashCollapse"), "dashCollapse");
+                Pattern edgeDashesPattern = compilePattern(readMap(map, "edgeDashes"), "edgeDashes");
+                Pattern combiningMarksPattern = compilePattern(readMap(map, "combiningMarks"), "combiningMarks");
 
                 return build(
-                    whitespace.source,
-                    whitespace.flags,
-                    whitespace.pattern,
-                    invalidChars.source,
-                    invalidChars.flags,
-                    invalidChars.pattern,
-                    dashCollapse.source,
-                    dashCollapse.flags,
-                    dashCollapse.pattern,
-                    edgeDashes.source,
-                    edgeDashes.flags,
-                    edgeDashes.pattern,
-                    combiningMarks.source,
-                    combiningMarks.flags,
-                    combiningMarks.pattern,
+                    whitespacePattern,
+                    invalidCharsPattern,
+                    dashCollapsePattern,
+                    edgeDashesPattern,
+                    combiningMarksPattern,
                     spaceReplacement,
                     maxLabelLength,
                     normalizationForm,
+                    allowedServers,
                     false
                 );
             } catch (SanitizerConfigException error) {
@@ -769,55 +997,37 @@ public class DNSResolver {
         }
 
         private static SanitizerConfig build(
-            String whitespaceSource,
-            int whitespaceFlags,
             Pattern whitespacePattern,
-            String invalidCharsSource,
-            int invalidCharsFlags,
             Pattern invalidCharsPattern,
-            String dashCollapseSource,
-            int dashCollapseFlags,
             Pattern dashCollapsePattern,
-            String edgeDashesSource,
-            int edgeDashesFlags,
             Pattern edgeDashesPattern,
-            String combiningMarksSource,
-            int combiningMarksFlags,
             Pattern combiningMarksPattern,
             String spaceReplacement,
             int maxLabelLength,
             Normalizer.Form normalizationForm,
+            Set<String> allowedServers,
             boolean defaultConfig
         ) {
             return new SanitizerConfig(
-                whitespaceSource,
-                whitespaceFlags,
                 whitespacePattern,
-                invalidCharsSource,
-                invalidCharsFlags,
                 invalidCharsPattern,
-                dashCollapseSource,
-                dashCollapseFlags,
                 dashCollapsePattern,
-                edgeDashesSource,
-                edgeDashesFlags,
                 edgeDashesPattern,
-                combiningMarksSource,
-                combiningMarksFlags,
                 combiningMarksPattern,
                 spaceReplacement,
                 maxLabelLength,
                 normalizationForm,
+                allowedServers,
                 defaultConfig
             );
         }
 
-        private static CompiledPattern compilePattern(Map<String, Object> descriptor, String key) {
+        private static Pattern compilePattern(Map<String, Object> descriptor, String key) {
             String pattern = readString(descriptor, "pattern");
             String flagsValue = readStringOptional(descriptor, "flags");
             int flags = parseFlags(flagsValue);
             try {
-                return new CompiledPattern(pattern, flags, Pattern.compile(pattern, flags));
+                return Pattern.compile(pattern, flags);
             } catch (Exception error) {
                 throw SanitizerConfigException.of(CODE_INVALID_REGEX, "Invalid regex for " + key + ": " + pattern, error);
             }
@@ -840,6 +1050,9 @@ public class DNSResolver {
                         flags |= Pattern.DOTALL;
                         break;
                     case 'u':
+                        // UNICODE_CHARACTER_CLASS enables Unicode-aware character classes
+                        // This makes \d, \w, \s match Unicode characters, not just ASCII
+                        // Reference: https://stackoverflow.com/questions/72236081/different-java-regex-matching-behavior-when-using-unicode-character-class-flag
                         flags |= Pattern.UNICODE_CASE | Pattern.UNICODE_CHARACTER_CLASS;
                         break;
                     case 'g':
@@ -925,6 +1138,48 @@ public class DNSResolver {
             );
         }
 
+        private static Set<String> readAllowedServers(Map<String, Object> map) {
+            Object value = map.get("allowedServers");
+            if (value == null) {
+                return DEFAULT_ALLOWED_SERVERS;
+            }
+            if (!(value instanceof List)) {
+                throw SanitizerConfigException.of(
+                    CODE_INVALID_TYPE,
+                    "Expected array for key 'allowedServers'"
+                );
+            }
+            List<?> rawList = (List<?>) value;
+            Set<String> normalized = new HashSet<>();
+            for (Object item : rawList) {
+                if (!(item instanceof String)) {
+                    throw SanitizerConfigException.of(
+                        CODE_INVALID_TYPE,
+                        "Expected string entries in 'allowedServers'"
+                    );
+                }
+                String normalizedHost = normalizeServerHostInput((String) item);
+                if (!normalizedHost.isEmpty()) {
+                    normalized.add(normalizedHost);
+                }
+            }
+            if (normalized.isEmpty()) {
+                throw SanitizerConfigException.of(
+                    CODE_INVALID_RANGE,
+                    "allowedServers must contain at least one entry"
+                );
+            }
+            return Collections.unmodifiableSet(normalized);
+        }
+
+        private static boolean patternEquals(Pattern first, Pattern second) {
+            return first.pattern().equals(second.pattern()) && first.flags() == second.flags();
+        }
+
+        private static int patternHash(Pattern pattern) {
+            return Objects.hash(pattern.pattern(), pattern.flags());
+        }
+
         @Override
         public boolean equals(Object obj) {
             if (this == obj) {
@@ -934,37 +1189,29 @@ public class DNSResolver {
                 return false;
             }
             SanitizerConfig other = (SanitizerConfig) obj;
-            return whitespaceFlags == other.whitespaceFlags
-                && invalidCharsFlags == other.invalidCharsFlags
-                && dashCollapseFlags == other.dashCollapseFlags
-                && edgeDashesFlags == other.edgeDashesFlags
-                && combiningMarksFlags == other.combiningMarksFlags
-                && maxLabelLength == other.maxLabelLength
+            return maxLabelLength == other.maxLabelLength
                 && normalizationForm == other.normalizationForm
-                && whitespaceSource.equals(other.whitespaceSource)
-                && invalidCharsSource.equals(other.invalidCharsSource)
-                && dashCollapseSource.equals(other.dashCollapseSource)
-                && edgeDashesSource.equals(other.edgeDashesSource)
-                && combiningMarksSource.equals(other.combiningMarksSource)
+                && Objects.equals(allowedServers, other.allowedServers)
+                && patternEquals(whitespacePattern, other.whitespacePattern)
+                && patternEquals(invalidCharsPattern, other.invalidCharsPattern)
+                && patternEquals(dashCollapsePattern, other.dashCollapsePattern)
+                && patternEquals(edgeDashesPattern, other.edgeDashesPattern)
+                && patternEquals(combiningMarksPattern, other.combiningMarksPattern)
                 && spaceReplacement.equals(other.spaceReplacement);
         }
 
         @Override
         public int hashCode() {
             return Objects.hash(
-                whitespaceSource,
-                whitespaceFlags,
-                invalidCharsSource,
-                invalidCharsFlags,
-                dashCollapseSource,
-                dashCollapseFlags,
-                edgeDashesSource,
-                edgeDashesFlags,
-                combiningMarksSource,
-                combiningMarksFlags,
+                patternHash(whitespacePattern),
+                patternHash(invalidCharsPattern),
+                patternHash(dashCollapsePattern),
+                patternHash(edgeDashesPattern),
+                patternHash(combiningMarksPattern),
                 spaceReplacement,
                 maxLabelLength,
-                normalizationForm
+                normalizationForm,
+                allowedServers
             );
         }
 
@@ -994,17 +1241,6 @@ public class DNSResolver {
             }
         }
 
-        private static final class CompiledPattern {
-            final String source;
-            final int flags;
-            final Pattern pattern;
-
-            CompiledPattern(String source, int flags, Pattern pattern) {
-                this.source = source;
-                this.flags = flags;
-                this.pattern = pattern;
-            }
-        }
     }
 
     public static class DNSCapabilities {
@@ -1026,7 +1262,7 @@ public class DNSResolver {
     /**
      * Structured DNS error types matching iOS DNSError enum for cross-platform consistency
      */
-    public static class DNSError extends Exception {
+    public static class DNSError extends RuntimeException {
         public enum Type {
             RESOLVER_FAILED,
             QUERY_FAILED,

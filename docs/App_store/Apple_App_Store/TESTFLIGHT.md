@@ -23,7 +23,7 @@ To upload your DNSChat iOS app to TestFlight, you'll need to follow these steps:
    - Click "My Apps" → "+" → "New App"
    - **Platform**: iOS
    - **Name**: DNS Chat
-   - **Bundle ID**: `org.mvneves.dnschat` (from your app.json)
+   - **Bundle ID**: `<BUNDLE_ID>` (from your app.json)
    - **Language**: English
    - **SKU**: Any unique identifier (e.g., "dnschat-ios-2025")
 
@@ -53,7 +53,7 @@ open DNSChat.xcworkspace
 1. **Select Project** → Select "DNSChat" target
 2. **Signing & Capabilities** tab
 3. **Team**: Select your Apple Developer team
-4. **Bundle Identifier**: Ensure it matches `org.mvneves.dnschat`
+4. **Bundle Identifier**: Ensure it matches `<BUNDLE_ID>`
 5. **Signing**: Select "Automatically manage signing"
 
 ### 5. **Build for Archive**
@@ -77,7 +77,107 @@ open DNSChat.xcworkspace
 5. **Automatically manage signing** → **Next**
 6. Review and **Upload**
 
-### 7. **Alternative: Command Line Upload**
+### 7. **Command-line build validation**
+
+Run these before a signed upload when you want CLI evidence outside Xcode:
+
+```bash
+# Check available destinations
+xcodebuild -workspace ios/DNSChat.xcworkspace -scheme DNSChat -showdestinations
+
+# Debug simulator build
+xcodebuild clean build \
+  -workspace ios/DNSChat.xcworkspace \
+  -scheme DNSChat \
+  -configuration Debug \
+  -destination 'platform=iOS Simulator,name=iPhone 17'
+
+# Release compile/archive smoke without local signing credentials
+xcodebuild clean build \
+  -workspace ios/DNSChat.xcworkspace \
+  -scheme DNSChat \
+  -configuration Release \
+  -destination 'generic/platform=iOS' \
+  CODE_SIGNING_ALLOWED=NO
+
+xcodebuild clean archive \
+  -workspace ios/DNSChat.xcworkspace \
+  -scheme DNSChat \
+  -configuration Release \
+  -destination 'generic/platform=iOS' \
+  -archivePath /tmp/DNSChat.xcarchive \
+  CODE_SIGNING_ALLOWED=NO
+```
+
+Latest public release evidence (`2026-05-24`, Xcode `26.5` / `17F42`, SDK 56.0.4 baseline post-`dnsWire` refactor):
+
+- `bun run verify:all` passed end-to-end: `verify:public-redaction`,
+  `verify:expo-doctor` (19/19 checks, 0 issues), `verify:sdk-alignment`,
+  `verify:typed-routes`, `tsc --noEmit`, `verify:dnsresolver-sync`,
+  `verify:ios-pods`, `verify:react-compiler` (86/86 components),
+  `verify:android` (critical checks), `verify:android-16kb` (skipped without
+  native artifacts), `lint`, `bun run test`.
+- App Jest suite: 96 of 97 suites passed (1 skipped), 819 passed, 13 skipped
+  for version `4.0.14` build `44`.
+- `modules/dns-native` Jest suite: 7 of 8 suites passed (1 skipped), 56
+  passed, 13 skipped.
+- `gitleaks detect --source . --redact --no-banner --config .gitleaks.toml`
+  scanned 338 commits / 10.32 MB and reported `no leaks found`.
+- `xcodebuild clean build` Debug iPhone 17 simulator: `BUILD SUCCEEDED`.
+- `xcodebuild clean build` and `xcodebuild clean archive` generic iOS Release
+  with `CODE_SIGNING_ALLOWED=NO` both succeeded; the unsigned archive embeds
+  `DNSChat.app` with `CFBundleShortVersionString=4.0.14` and `CFBundleVersion=44`.
+- `bun audit` reports `3 moderate transitive (dev-only) advisories` in `ws`
+  (GHSA-58qx-3vcg-4xpx), `brace-expansion` (GHSA-jxxr-4gwj-5jf2), and `uuid`
+  (GHSA-w5hq-g745-h8pq) pulled through Expo CLI, Metro, Jest, and
+  `@expo/config-plugins/xcode`. `npm audit` in `modules/dns-native` reports the
+  same `brace-expansion` advisory. None affect shipped runtime code.
+- Physical-device install of the post-`dnsWire` bundle was NOT completed for
+  version `4.0.14` build `44` because the paired device was unavailable to
+  `xcrun devicectl` during this verification window. The previously installed
+  Release bundle from the 4.0.14 baseline (pre-`dnsWire`) is still present on
+  the device.
+- Signed App Store archive, signed IPA export, and App Store Connect TestFlight
+  upload were NOT run for `4.0.14` build `44` because no Apple Distribution
+  identity was available locally.
+- Internal App Store Connect IDs, tester group names, device names, device identifiers, local paths, team IDs, profile names, and certificate IDs are intentionally omitted from public docs.
+
+Earlier 4.0.14 baseline evidence (`2026-05-22`, Xcode `26.5` / `17F42`, SDK 56 baseline):
+
+- Lint (`ast-grep`), `verify:ios-pods`, and the full Jest suite (816 passed /
+  13 skipped, 95 of 96 suites) passed for version `4.0.14` build `44`.
+- Physical-device Debug build (Apple Development signing) compiled and installed
+  via `xcrun devicectl` on an iPhone 17 Pro Max for version `4.0.14` build `44`.
+- Physical-device Release build (Apple Development signing) compiled and
+  installed via `xcrun devicectl` on the same device for version `4.0.14`
+  build `44`, and the bundle launched successfully.
+- Signed App Store archive, signed IPA export, and App Store Connect TestFlight
+  upload were NOT run for `4.0.14` build `44` because no Apple Distribution
+  identity was available locally.
+
+Prior signed-release evidence (`2026-05-17`, Xcode `26.5` / `17F42`):
+
+- Debug simulator build passed on iOS 26.5.
+- AXe release simulator pass covered 10 feature groups for version `4.0.13`
+  build `43`.
+- Generic iOS Release build passed unsigned.
+- Generic iOS Release archive passed unsigned.
+- Physical-device compiled Expo dev-client install passed for version `4.0.8` build `36`.
+- Signed App Store archive passed for version `4.0.13` build `43`.
+- Signed IPA export passed for version `4.0.13` build `43`.
+- App Store Connect metadata was applied for `en-US` and `pt-BR` release fields.
+- App Store Connect TestFlight upload passed for version `4.0.13` build `43`.
+- TestFlight build processing completed as `VALID`; non-exempt encryption is `false`.
+- TestFlight validation passed with `0` errors and `0` warnings.
+- App Store version validation passed with `0` errors and `0` warnings; App Privacy publish-state remains API-unverifiable.
+- `asc doctor` passed local checks.
+- `xcodebuild test` did not run because the `DNSChat` scheme has no XCTest bundles.
+
+If Xcode script phases fail with a missing Node binary, inspect
+`ios/.xcode.env.local`. It is ignored by Git and can contain a stale local
+`NODE_BINARY` override.
+
+### 8. **Alternative: EAS command-line upload**
 
 If you prefer command line or need automation:
 
@@ -95,7 +195,7 @@ eas build --platform ios --profile production
 eas submit --platform ios --profile production
 ```
 
-### 8. **Configure TestFlight in App Store Connect**
+### 9. **Configure TestFlight in App Store Connect**
 
 **After upload processes**:
 
@@ -105,7 +205,7 @@ eas submit --platform ios --profile production
 4. **Internal Testing**: Add internal testers (up to 100)
 5. **External Testing**: Create test groups for external testers
 
-### 9. **Add TestFlight Testers**
+### 10. **Add TestFlight Testers**
 
 **Internal Testers** (App Store Connect users):
 
@@ -142,7 +242,7 @@ bun run ios -- --verbose
 
 #### Bundle Identifier Conflicts:
 
-- Ensure `org.mvneves.dnschat` is unique in App Store Connect
+- Ensure `<BUNDLE_ID>` is unique in App Store Connect
 - Check it matches exactly in `app.json` and Xcode
 
 ### Pre-upload checklist
@@ -150,13 +250,17 @@ bun run ios -- --verbose
 - **Apple Developer Account** active
 - **App Store Connect** app record created
 - **Code signing** configured correctly
-- **Bundle ID** matches (`org.mvneves.dnschat`)
-- **Version numbers** consistent (v4.0.0)
+- **Bundle ID** matches (`<BUNDLE_ID>`)
+- **Version numbers** consistent (v4.0.14 build 44)
 - **Native DNS module** compiles successfully
+- **Xcode CLI smoke** passed:
+  - Debug simulator build
+  - Generic iOS Release build/archive, or signed equivalent
+- **ASC local health** checked with `asc doctor`
 - **Universal landscape support** enabled
 - **App Store screenshots** (current requirements):
-  - iPhone screenshots (current set stored in `docs/chatdns_ios_images/`)
-  - iPad screenshots captured before submission (not yet available)
+  - iPhone screenshots uploaded for `en-US` and `pt-BR`
+  - iPad screenshots uploaded for `en-US` and `pt-BR`
 - **App icons** and metadata ready
 - **Privacy Policy** URL (required for App Store)
 
@@ -175,12 +279,34 @@ eas build --platform ios --profile production
 
 ### TestFlight distribution
 
-Once uploaded:
+Current v4.0.14 distribution target:
+
+- Version/build: `4.0.14` / `44`
+- Processing state: pending upload (signed App Store archive and TestFlight upload not yet run for this build)
+- Tester groups: configured in App Store Connect; internal group names are intentionally omitted from public docs.
+- Exact build IDs and App Store Connect version IDs belong in private release notes, not public runbooks.
+
+After upload:
 
 1. **Internal Testing**: Immediate access for team members
 2. **External Testing**: Public beta testing after Apple review
 3. **Feedback**: Collect user feedback through TestFlight
 4. **Iterate**: Upload new builds for continuous testing
+
+### What to Test for v4.0.14 build 44
+
+- Complete onboarding from a fresh install and confirm the app lands on the chat list.
+- Send short prompts through the default DNS service and confirm responses render.
+- Confirm DNS failures, invalid settings, and unsupported server choices fail
+  closed without exposing prompt text or TXT responses.
+- Type in a long chat thread and confirm the final message remains visible above
+  the composer as the keyboard/input inset changes.
+- Open onboarding/help, Settings, and About external links and confirm allowed
+  `https:` and `mailto:` destinations open normally.
+- Confirm Logs show resolver attempts and failures without exposing prompt text or TXT responses.
+- Confirm existing local chat history loads after update and remains available offline.
+- Check onboarding, settings, About, and language/accessibility labels in English and Portuguese.
+- Toggle supported DNS settings and confirm unsupported server choices fail closed.
 
 **Next Steps**: After TestFlight testing, you can submit for full App Store review and release!
 
@@ -203,4 +329,4 @@ If you encounter issues during the upload process:
 
 ---
 
-_TestFlight upload guide for DNSChat v3.2.1 - Last updated: 2025-12-16_
+_TestFlight upload guide for DNSChat v4.0.14 build 44 - Last updated: 2026-05-22_

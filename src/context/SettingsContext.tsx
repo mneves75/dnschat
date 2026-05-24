@@ -1,9 +1,8 @@
 import React, {
   createContext,
-  useCallback,
-  useContext,
+  use,
   useEffect,
-  useMemo,
+  useRef,
   useState,
 } from "react";
 import type { ReactNode } from "react";
@@ -38,6 +37,9 @@ interface SettingsContextValue {
   updateEnableMockDNS: (enable: boolean) => Promise<void>;
   allowExperimentalTransports: boolean;
   updateAllowExperimentalTransports: (enable: boolean) => Promise<void>;
+  applyRecommendedNetworkSettings: (
+    allowExperimentalTransports: boolean,
+  ) => Promise<void>;
   enableHaptics: boolean;
   updateEnableHaptics: (enable: boolean) => Promise<void>;
   locale: SupportedLocale;
@@ -65,46 +67,55 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     () => DEFAULT_SETTINGS,
   );
   const [loading, setLoading] = useState(true);
+  const settingsRef = useRef<PersistedSettings>(DEFAULT_SETTINGS);
+  const persistQueueRef = useRef<Promise<void>>(Promise.resolve());
 
+  // Effect: load persisted settings on mount and migrate if needed.
   useEffect(() => {
     let isMounted = true;
 
-    const loadSettings = async () => {
-      try {
-        const settingsJson = await AsyncStorage.getItem(SETTINGS_STORAGE_KEY);
-        if (!settingsJson) {
-          if (isMounted) {
-            setSettings({ ...DEFAULT_SETTINGS });
+    const loadSettings = () => {
+      persistQueueRef.current = persistQueueRef.current.then(async () => {
+        try {
+          const settingsJson = await AsyncStorage.getItem(SETTINGS_STORAGE_KEY);
+          if (!settingsJson) {
+            const next = { ...DEFAULT_SETTINGS };
+            settingsRef.current = next;
+            if (isMounted) {
+              setSettings(next);
+            }
+            return;
           }
-          return;
-        }
 
-        const parsed = JSON.parse(settingsJson) as unknown;
-        const migrated = migrateSettings(parsed);
+          const parsed = JSON.parse(settingsJson) as unknown;
+          const migrated = migrateSettings(parsed);
 
-        // Clean up legacy fields from AsyncStorage after migration
-        const originalVersion = (parsed as { version?: number })?.version;
-        if (originalVersion !== SETTINGS_VERSION) {
-          // Migration occurred - persist cleaned settings to remove legacy fields
-          await AsyncStorage.setItem(
-            SETTINGS_STORAGE_KEY,
-            JSON.stringify(migrated),
-          );
-        }
+          // Migration occurred - persist cleaned settings to remove legacy fields.
+          const originalVersion = (parsed as { version?: number })?.version;
+          if (originalVersion !== SETTINGS_VERSION) {
+            await AsyncStorage.setItem(
+              SETTINGS_STORAGE_KEY,
+              JSON.stringify(migrated),
+            );
+          }
 
-        if (isMounted) {
-          setSettings(migrated);
+          settingsRef.current = migrated;
+          if (isMounted) {
+            setSettings(migrated);
+          }
+        } catch (error) {
+          devWarn("[SettingsContext] Error loading settings", error);
+          const next = { ...DEFAULT_SETTINGS };
+          settingsRef.current = next;
+          if (isMounted) {
+            setSettings(next);
+          }
+        } finally {
+          if (isMounted) {
+            setLoading(false);
+          }
         }
-      } catch (error) {
-        devWarn("[SettingsContext] Error loading settings", error);
-        if (isMounted) {
-          setSettings({ ...DEFAULT_SETTINGS });
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
+      });
     };
 
     loadSettings();
@@ -114,182 +125,235 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const persistSettings = useCallback(async (next: PersistedSettings) => {
-    setSettings(next);
-    try {
+  const persistSettings = async (
+    updater: (previous: PersistedSettings) => PersistedSettings,
+  ): Promise<{
+    previous: PersistedSettings;
+    next: PersistedSettings;
+    changed: boolean;
+  }> => {
+    let outcome:
+      | {
+          previous: PersistedSettings;
+          next: PersistedSettings;
+          changed: boolean;
+        }
+      | null = null;
+
+    const run = persistQueueRef.current.then(async () => {
+      const previous = settingsRef.current;
+      const next = updater(previous);
+      const changed = next !== previous;
+      outcome = { previous, next, changed };
+
+      if (!changed) {
+        return;
+      }
+
       await AsyncStorage.setItem(
         SETTINGS_STORAGE_KEY,
         JSON.stringify(next),
       );
+      settingsRef.current = next;
+      setSettings(next);
+    });
+
+    persistQueueRef.current = run.catch(() => {});
+
+    try {
+      await run;
     } catch (error) {
       devWarn("[SettingsContext] Error saving settings", error);
       throw error;
     }
-  }, []);
 
-  const updateDnsServer = useCallback(
-    async (server: string) => {
-      const cleaned = sanitizeDnsServer(server);
-      let validatedServer: string;
-      try {
-        validatedServer = validateDNSServer(cleaned);
-      } catch (error) {
-        const message =
-          error instanceof Error ? error.message : String(error ?? "Validation failed");
-        await DNSLogService.recordSettingsEvent(
-          `DNS server validation failed for input '${server}'`,
-          message,
-        );
-        throw error;
-      }
-      if (settings.dnsServer === validatedServer) {
-        return;
-      }
-      await persistSettings({
-        ...settings,
-        dnsServer: validatedServer,
-      });
+    if (!outcome) {
+      const snapshot = settingsRef.current;
+      return { previous: snapshot, next: snapshot, changed: false };
+    }
+
+    return outcome;
+  };
+
+  const updateDnsServer = async (server: string) => {
+    const cleaned = sanitizeDnsServer(server);
+    let validatedServer: string;
+    try {
+      validatedServer = validateDNSServer(cleaned);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : String(error ?? "Validation failed");
       await DNSLogService.recordSettingsEvent(
-        `DNS server set to ${validatedServer}`,
-        settings.dnsServer ? `previous: ${settings.dnsServer}` : undefined,
+        `DNS server validation failed for input '${server}'`,
+        message,
       );
-    },
-    [persistSettings, settings],
-  );
+      throw error;
+    }
+    const { previous, changed } = await persistSettings((current) =>
+      current.dnsServer === validatedServer
+        ? current
+        : {
+            ...current,
+            dnsServer: validatedServer,
+          },
+    );
+    if (!changed) {
+      return;
+    }
+    await DNSLogService.recordSettingsEvent(
+      `DNS server set to ${validatedServer}`,
+      previous.dnsServer ? `previous: ${previous.dnsServer}` : undefined,
+    );
+  };
 
-  const updateEnableMockDNS = useCallback(
-    async (enable: boolean) => {
-      if (settings.enableMockDNS === enable) {
-        return;
-      }
-      await persistSettings({
-        ...settings,
-        enableMockDNS: enable,
-      });
-      await DNSLogService.recordSettingsEvent(
-        `Mock DNS ${enable ? 'enabled' : 'disabled'}`,
-      );
-    },
-    [persistSettings, settings],
-  );
+  const updateEnableMockDNS = async (enable: boolean) => {
+    const { changed } = await persistSettings((current) =>
+      current.enableMockDNS === enable
+        ? current
+        : {
+            ...current,
+            enableMockDNS: enable,
+          },
+    );
+    if (!changed) {
+      return;
+    }
+    await DNSLogService.recordSettingsEvent(
+      `Mock DNS ${enable ? 'enabled' : 'disabled'}`,
+    );
+  };
 
-  const updateAllowExperimentalTransports = useCallback(
-    async (enable: boolean) => {
-      if (settings.allowExperimentalTransports === enable) {
-        return;
-      }
-      await persistSettings({
-        ...settings,
-        allowExperimentalTransports: enable,
-      });
-      await DNSLogService.recordSettingsEvent(
-        `Experimental transports ${enable ? 'enabled' : 'disabled'}`,
-      );
-    },
-    [persistSettings, settings],
-  );
+  const updateAllowExperimentalTransports = async (enable: boolean) => {
+    const { changed } = await persistSettings((current) =>
+      current.allowExperimentalTransports === enable
+        ? current
+        : {
+            ...current,
+            allowExperimentalTransports: enable,
+          },
+    );
+    if (!changed) {
+      return;
+    }
+    await DNSLogService.recordSettingsEvent(
+      `Experimental transports ${enable ? 'enabled' : 'disabled'}`,
+    );
+  };
 
-  const updateEnableHaptics = useCallback(
-    async (enable: boolean) => {
-      if (settings.enableHaptics === enable) {
-        return;
-      }
-      await persistSettings({
-        ...settings,
-        enableHaptics: enable,
-      });
-      await DNSLogService.recordSettingsEvent(
-        `Haptics ${enable ? 'enabled' : 'disabled'}`,
-      );
-    },
-    [persistSettings, settings],
-  );
+  const applyRecommendedNetworkSettings = async (
+    enableExperimentalTransports: boolean,
+  ) => {
+    const { previous, next, changed } = await persistSettings((current) => {
+      const updated: PersistedSettings = {
+        ...current,
+        dnsServer: DEFAULT_SETTINGS.dnsServer,
+        enableMockDNS: false,
+        allowExperimentalTransports: enableExperimentalTransports,
+      };
 
-  const updateLocale = useCallback(
-    async (locale: string | null) => {
-      const normalized = normalizePreferredLocale(locale);
-      if (settings.preferredLocale === normalized) {
-        return;
-      }
-      await persistSettings({
-        ...settings,
-        preferredLocale: normalized,
-      });
-      await DNSLogService.recordSettingsEvent(
-        `Preferred locale set to ${normalized ?? 'system default'}`,
-      );
-    },
-    [persistSettings, settings],
-  );
+      return (
+        current.dnsServer === updated.dnsServer &&
+        current.enableMockDNS === updated.enableMockDNS &&
+        current.allowExperimentalTransports ===
+          updated.allowExperimentalTransports
+      )
+        ? current
+        : updated;
+    });
 
-  const updateAccessibility = useCallback(
-    async (accessibilityConfig: import("./AccessibilityContext").AccessibilityConfig) => {
-      if (areAccessibilityConfigsEqual(settings.accessibility, accessibilityConfig)) {
-        return;
-      }
-      await persistSettings({
-        ...settings,
-        accessibility: accessibilityConfig,
-      });
-      await DNSLogService.recordSettingsEvent(
-        `Accessibility settings updated: ${JSON.stringify(accessibilityConfig)}`,
-      );
-    },
-    [persistSettings, settings],
-  );
+    if (!changed) {
+      return;
+    }
 
-  const activeLocale = useMemo(
-    () => resolveLocale(settings.preferredLocale ?? systemLocale),
-    [settings.preferredLocale, systemLocale],
-  );
+    await DNSLogService.recordSettingsEvent(
+      `Recommended onboarding network profile applied`,
+      `dnsServer: ${previous.dnsServer} -> ${next.dnsServer}; mockDNS: ${previous.enableMockDNS} -> ${next.enableMockDNS}; experimental: ${previous.allowExperimentalTransports} -> ${next.allowExperimentalTransports}`,
+    );
+  };
 
-  const contextValue = useMemo<SettingsContextValue>(
-    () => ({
-      dnsServer: settings.dnsServer,
-      updateDnsServer,
-      enableMockDNS: settings.enableMockDNS,
-      updateEnableMockDNS,
-      allowExperimentalTransports: settings.allowExperimentalTransports,
-      updateAllowExperimentalTransports,
-      enableHaptics: settings.enableHaptics,
-      updateEnableHaptics,
-      locale: activeLocale,
-      systemLocale,
-      preferredLocale: settings.preferredLocale,
-      availableLocales: SUPPORTED_LOCALE_OPTIONS,
-      updateLocale,
-      accessibility: settings.accessibility,
-      updateAccessibility,
-      loading,
-    }),
-    [
-      activeLocale,
-      loading,
-      settings.accessibility,
-      settings.allowExperimentalTransports,
-      settings.dnsServer,
-      settings.enableHaptics,
-      settings.enableMockDNS,
-      settings.preferredLocale,
-      systemLocale,
-      updateAccessibility,
-      updateAllowExperimentalTransports,
-      updateDnsServer,
-      updateEnableHaptics,
-      updateEnableMockDNS,
-      updateLocale,
-    ],
-  );
+  const updateEnableHaptics = async (enable: boolean) => {
+    const { changed } = await persistSettings((current) =>
+      current.enableHaptics === enable
+        ? current
+        : {
+            ...current,
+            enableHaptics: enable,
+          },
+    );
+    if (!changed) {
+      return;
+    }
+    await DNSLogService.recordSettingsEvent(
+      `Haptics ${enable ? 'enabled' : 'disabled'}`,
+    );
+  };
+
+  const updateLocale = async (locale: string | null) => {
+    const normalized = normalizePreferredLocale(locale);
+    const { changed } = await persistSettings((current) =>
+      current.preferredLocale === normalized
+        ? current
+        : {
+            ...current,
+            preferredLocale: normalized,
+          },
+    );
+    if (!changed) {
+      return;
+    }
+    await DNSLogService.recordSettingsEvent(
+      `Preferred locale set to ${normalized ?? 'system default'}`,
+    );
+  };
+
+  const updateAccessibility = async (accessibilityConfig: AccessibilityConfig) => {
+    const { changed } = await persistSettings((current) =>
+      areAccessibilityConfigsEqual(current.accessibility, accessibilityConfig)
+        ? current
+        : {
+            ...current,
+            accessibility: accessibilityConfig,
+          },
+    );
+    if (!changed) {
+      return;
+    }
+    await DNSLogService.recordSettingsEvent(
+      `Accessibility settings updated: ${JSON.stringify(accessibilityConfig)}`,
+    );
+  };
+
+  const activeLocale = resolveLocale(settings.preferredLocale ?? systemLocale);
+
+  const contextValue: SettingsContextValue = {
+    dnsServer: settings.dnsServer,
+    updateDnsServer,
+    enableMockDNS: settings.enableMockDNS,
+    updateEnableMockDNS,
+    allowExperimentalTransports: settings.allowExperimentalTransports,
+    updateAllowExperimentalTransports,
+    applyRecommendedNetworkSettings,
+    enableHaptics: settings.enableHaptics,
+    updateEnableHaptics,
+    locale: activeLocale,
+    systemLocale,
+    preferredLocale: settings.preferredLocale,
+    availableLocales: SUPPORTED_LOCALE_OPTIONS,
+    updateLocale,
+    accessibility: settings.accessibility,
+    updateAccessibility,
+    loading,
+  };
 
   return (
-    <SettingsContext.Provider value={contextValue}>
+    <SettingsContext value={contextValue}>
       {children}
-    </SettingsContext.Provider>
+    </SettingsContext>
   );
 }
 
 export function useSettings() {
-  const context = useContext(SettingsContext);
+  const context = use(SettingsContext);
   if (context === undefined) {
     throw new Error("useSettings must be used within a SettingsProvider");
   }
