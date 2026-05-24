@@ -7,7 +7,7 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 - JavaScript fallback transports (UDP/TCP) for constrained networks
 - An in-app Logs screen to inspect attempts, failures, and fallbacks
 
-[![Version](https://img.shields.io/badge/version-4.0.14-blue.svg)](.)
+[![Version](https://img.shields.io/badge/version-4.0.15-blue.svg)](.)
 [![React Native](https://img.shields.io/badge/React%20Native-0.85.3-blue.svg)](https://reactnative.dev/)
 [![Expo](https://img.shields.io/badge/Expo-56.0.4-black.svg)](https://expo.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0.x-blue.svg)](https://www.typescriptlang.org/)
@@ -31,7 +31,7 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 
 ## Tech stack
 
-- App version: `4.0.14` (build `44`)
+- App version: `4.0.15` (build `45`)
 - Expo workflow: Expo Router + dev-client + EAS-compatible native config
 - Expo SDK: `56.0.4`
 - React: `19.2.3`
@@ -210,8 +210,8 @@ Last architecture/dependency verification: `2026-05-24`.
 Last full source/security sweep: `2026-05-17`.
 Last AXe simulator E2E feature pass: `2026-05-17` for version `4.0.13` build
 `43`.
-Last iOS signed release archive/export: `2026-05-17` for version `4.0.13`
-build `43`.
+Last iOS signed release archive/export: `2026-05-24` for version `4.0.15`
+build `45`.
 
 - `bun run verify:all` passes on `2026-05-24` (`expo-doctor` 19/19, SDK
   alignment, typed routes, `tsc --noEmit`, DNS resolver sync, iOS pods, React
@@ -221,26 +221,21 @@ build `43`.
   `56` tests passed, `13` skipped).
 - AXe E2E baseline: 10 feature groups passed in one owned release-simulator
   run on `2026-05-17`.
-- Jest baseline on `2026-05-24`: 96 suites passed, 1 skipped; 819 tests passed,
-  13 skipped.
-- `gitleaks detect` on `2026-05-24` reports `no leaks found` across `338`
+- Jest baseline on `2026-05-24`: 101 suites passed, 1 skipped; 844 tests
+  passed, 13 skipped.
+- `gitleaks detect` on `2026-05-24` reports `no leaks found` across `348`
   scanned commits.
-- `bun audit` on `2026-05-24` reports `3 moderate transitive (dev-only)
-  advisories` in `ws`, `brace-expansion`, and `uuid` pulled through Expo CLI,
-  Metro, Jest, and `@expo/config-plugins/xcode`. `npm audit` in
-  `modules/dns-native` reports the same `brace-expansion` advisory. None affect
-  shipped runtime code; remediation is tracked separately. The prior clean
-  audit baseline was `2026-05-17`.
+- `bun audit` on `2026-05-24` reports `No vulnerabilities found`.
 - `xcodebuild clean build` passes for Debug on an iOS 26.5 simulator on
   `2026-05-24`.
 - `xcodebuild clean build` and `xcodebuild clean archive` pass for generic iOS
   Release when code signing is disabled (`CODE_SIGNING_ALLOWED=NO`) on
   `2026-05-24`.
 - Physical-device compiled Expo dev-client install passed.
-- Signed App Store archive/export passed, TestFlight upload completed, the
-  processed build is `VALID`, and TestFlight validation reports `0` errors and
-  `0` warnings. Internal App Store Connect IDs are intentionally omitted from
-  public docs.
+- Latest signed TestFlight target: `4.0.15` build `45`. The release lane uses
+  a signed App Store archive/export and App Store Connect processing before the
+  build is described as distributed. Internal App Store Connect IDs are
+  intentionally omitted from public docs.
 - `asc validate testflight` and App Store version validation pass with `0`
   errors and `0` warnings; the remaining App Store validation notes are
   informational: manual release type and API-unverifiable App Privacy publish
@@ -254,8 +249,11 @@ build `43`.
 
 - DNS is observable infrastructure. Do not send secrets or personal data.
 - DNS servers are validated/whitelisted (see `modules/dns-native/constants.ts`).
-- Local chat/log payloads are encrypted at rest; Android backup/device-transfer
-  rules exclude SecureStore key material.
+- Local chat/log payloads are encrypted at rest. Native builds keep encryption
+  key material in SecureStore, and Android backup/device-transfer rules exclude
+  that SecureStore data. Web preview uses same-origin browser storage for the
+  local-only preview key because SecureStore is not available in browsers; do
+  not treat Web preview storage as a secure production at-rest boundary.
 - Store submission credentials are not committed. Keep `eas submit`/App Store
   Connect identifiers local (do not add them to `eas.json`).
 - Public release docs use placeholders for local/device/account identifiers.

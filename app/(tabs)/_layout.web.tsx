@@ -13,7 +13,8 @@ function TabIcon({ source, color }: { source: number; color: ColorValue }) {
   return (
     <Image
       source={source}
-      style={{ width: 22, height: 22, tintColor: color }}
+      style={{ width: 22, height: 22 }}
+      tintColor={color}
       resizeMode="contain"
     />
   );

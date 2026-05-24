@@ -72,6 +72,10 @@ jest.mock("../src/ui/theme/imessagePalette", () => ({
   useImessagePalette: () => paletteMock(),
 }));
 
+jest.mock("../src/i18n", () => ({
+  useTranslation: () => ({ t: (key: string) => key }),
+}));
+
 function borderColor(tree: ReactTestRenderer) {
   const container = tree.root.findByProps({
     testID: "liquid-glass-input-container",

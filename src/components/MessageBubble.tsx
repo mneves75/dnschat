@@ -216,19 +216,27 @@ const styles = StyleSheet.create({
     },
   // iOS standard material: prominent shadow for user/error bubbles
   prominentShadow: {
-    shadowColor: "#000000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: Platform.OS === "android" ? 4 : undefined,
+    ...(Platform.OS === "web"
+      ? { boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.15)" }
+      : {
+          shadowColor: "#111827",
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.15,
+          shadowRadius: 4,
+          elevation: Platform.OS === "android" ? 4 : undefined,
+        }),
   },
   // iOS standard material: subtle shadow for assistant bubbles
   subtleShadow: {
-    shadowColor: "#000000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 2,
-    elevation: Platform.OS === "android" ? 2 : undefined,
+    ...(Platform.OS === "web"
+      ? { boxShadow: "0px 1px 2px rgba(0, 0, 0, 0.08)" }
+      : {
+          shadowColor: "#111827",
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: 0.08,
+          shadowRadius: 2,
+          elevation: Platform.OS === "android" ? 2 : undefined,
+        }),
   },
   text: {
     // Typography and color applied inline from palette

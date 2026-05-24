@@ -434,7 +434,10 @@ export const enUS = {
           placeholder: "ping",
           testButton: "Test Selected Preference",
           testingButton: "Testing...",
+          testHint: "Runs the DNS test using the current transport preference",
           forceLabel: "Force Specific Transport",
+          forceHint: "Runs the DNS test using only the {{transport}} transport",
+          forceAccessibilityLabel: "Force {{transport}} transport",
           transports: {
             native: "Native",
             udp: "UDP",

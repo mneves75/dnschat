@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { View, StyleSheet } from "react-native";
+import { View, StyleSheet, Platform } from "react-native";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -118,11 +118,15 @@ const styles = StyleSheet.create({
     paddingVertical: LiquidGlassSpacing.sm,
     borderRadius: getCornerRadius("message"),
     minWidth: 120,
-    shadowColor: "#000000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 2,
+    ...(Platform.OS === "web"
+      ? { boxShadow: "0px 1px 3px rgba(0, 0, 0, 0.1)" }
+      : {
+          shadowColor: "#111827",
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: 0.1,
+          shadowRadius: 3,
+          elevation: 2,
+        }),
   },
   userBubble: {
     backgroundColor: "#007AFF",

@@ -4,7 +4,7 @@ Complete step-by-step guide for publishing DNSChat to the Google Play Store.
 
 **App**: DNSChat
 **Package**: `<ANDROID_PACKAGE>`
-**Current Version**: 4.0.14
+**Current Version**: 4.0.15
 
 ---
 
@@ -323,11 +323,11 @@ See [ANDROID_RELEASE.md](./ANDROID_RELEASE.md) for signing configuration.
    - **Upload** new AAB
 4. Add release notes:
    ```
-   What's new in v4.0.14:
-   • Upgraded to Expo SDK 56, React Native 0.85.3, React 19.2.3, TypeScript 6.0
-   • Raised iOS deployment target to 16.4 and refreshed native module graph
-   • Migrated navigation theme imports to Expo Router SDK 56 entry points
-   • Replaced removed `StyleSheet.absoluteFillObject` in glass bottom-sheet backdrop
+   What's new in v4.0.15:
+   • Fixed main chat list scrolling above the native tab bar
+   • Hardened encrypted key fallback handling and DNS log redaction checks
+   • Added release-policy, web-runtime, accessibility, and UI regression coverage
+   • Kept Expo SDK 56.0.4 / React Native 0.85.3 / React 19.2.3 aligned
    ```
 5. Click **"Review release"**
 6. Set rollout percentage (start with 10-20% recommended)
@@ -437,6 +437,7 @@ Before submitting for review, verify:
 
 | Version | Date | Notes |
 |---------|------|-------|
+| 4.0.15 | 2026-05-24 | Main chat list scroll fix; encrypted-key, DNS logging, Liquid Glass, and release-policy regression coverage |
 | 4.0.14 | 2026-05-22 | Expo SDK 56.0.4 / React Native 0.85.3 / React 19.2.3 / TypeScript 6.0 baseline upgrade; iOS deployment target raised to 16.4; DNS wire-format module extracted |
 | 4.0.13 | 2026-05-17 | Clawpatch hardening, DNS/native validation, release-gate and UI regression coverage |
 | 4.0.12 | 2026-05-15 | Dark-mode navigation chrome fix, chat composer scroll stability, external link allowlist |

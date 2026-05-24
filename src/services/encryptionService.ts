@@ -1,5 +1,6 @@
 import * as SecureStore from 'expo-secure-store';
 import { getRandomBytesAsync, getRandomValues } from 'expo-crypto';
+import { Platform } from 'react-native';
 import { gcm } from '@noble/ciphers/aes.js';
 import { bytesToHex, hexToBytes, utf8ToBytes } from '@noble/hashes/utils.js';
 import { ENCRYPTION_CONSTANTS } from '../constants/appConstants';
@@ -37,6 +38,58 @@ const getRandomBytes = async (size: number): Promise<Uint8Array> => {
   return getRandomBytesAsync(size);
 };
 
+const isWebRuntime = (): boolean => Platform.OS === 'web';
+
+const getKeyStorageName = (): string => (isWebRuntime() ? 'web fallback key storage' : 'SecureStore');
+
+const getWebStoredKey = (): string | null => {
+  if (!isWebRuntime()) return null;
+  try {
+    const localStorage = globalThis.localStorage;
+    if (!localStorage || typeof localStorage.getItem !== 'function') return null;
+    return localStorage.getItem(KEY_STORAGE_KEY);
+  } catch (error) {
+    devWarn('[EncryptionService] Failed to read web fallback key storage', error);
+    return null;
+  }
+};
+
+const setWebStoredKey = (key: string): boolean => {
+  if (!isWebRuntime()) return false;
+  try {
+    const localStorage = globalThis.localStorage;
+    if (!localStorage || typeof localStorage.setItem !== 'function') return false;
+    localStorage.setItem(KEY_STORAGE_KEY, key);
+    return true;
+  } catch (error) {
+    devWarn('[EncryptionService] Failed to persist web fallback key storage', error);
+    return false;
+  }
+};
+
+const decodeStoredKey = async (stored: string): Promise<Uint8Array> => {
+  let decoded: Uint8Array;
+  try {
+    decoded = hexToBytes(stored);
+  } catch (error) {
+    devWarn(
+      '[EncryptionService] Stored key is malformed, rotating to a newly persisted key',
+      error,
+    );
+    return generateAndPersistKey();
+  }
+
+  if (decoded.length !== ENCRYPTION_CONSTANTS.KEY_LENGTH) {
+    devWarn(
+      '[EncryptionService] Stored key has invalid length, rotating to a newly persisted key',
+      new Error(`Stored key has invalid length: ${decoded.length}`),
+    );
+    return generateAndPersistKey();
+  }
+
+  return decoded;
+};
+
 const decodeUtf8 = (payload: Uint8Array): string => {
   try {
     if (typeof TextDecoder !== 'undefined') {
@@ -53,7 +106,19 @@ const decodeUtf8 = (payload: Uint8Array): string => {
 
 const generateAndPersistKey = async (): Promise<Uint8Array> => {
   const generated = await getRandomBytes(ENCRYPTION_CONSTANTS.KEY_LENGTH);
-  await SecureStore.setItemAsync(KEY_STORAGE_KEY, bytesToHex(generated));
+  const encoded = bytesToHex(generated);
+
+  if (isWebRuntime()) {
+    if (!setWebStoredKey(encoded)) {
+      devWarn(
+        '[EncryptionService] Web key fallback is session-only because localStorage is unavailable',
+      );
+    }
+    cachedKey = generated;
+    return generated;
+  }
+
+  await SecureStore.setItemAsync(KEY_STORAGE_KEY, encoded);
   cachedKey = generated;
   return generated;
 };
@@ -69,32 +134,30 @@ const loadEncryptionKey = async (): Promise<Uint8Array> => {
       return testKey;
     }
 
-    try {
-      const stored = await SecureStore.getItemAsync(KEY_STORAGE_KEY);
-      if (stored) {
-        const decoded = hexToBytes(stored);
-        if (decoded.length !== ENCRYPTION_CONSTANTS.KEY_LENGTH) {
-          devWarn(
-            '[EncryptionService] Stored key has invalid length, rotating to a newly persisted key',
-            new Error(`Stored key has invalid length: ${decoded.length}`),
-          );
-          return await generateAndPersistKey();
-        }
-        cachedKey = decoded;
-        return decoded;
+    const stored = await (async () => {
+      try {
+        return isWebRuntime()
+          ? getWebStoredKey()
+          : await SecureStore.getItemAsync(KEY_STORAGE_KEY);
+      } catch (error) {
+        devWarn(
+          `[EncryptionService] Failed to read key from ${getKeyStorageName()}`,
+          error,
+        );
+        throw new Error('Encryption key is unavailable');
       }
-    } catch (error) {
-      devWarn(
-        '[EncryptionService] Failed to read key from SecureStore',
-        error,
-      );
-      throw new Error('Encryption key is unavailable');
+    })();
+
+    if (stored) {
+      const decoded = await decodeStoredKey(stored);
+      cachedKey = decoded;
+      return decoded;
     }
 
     try {
       return await generateAndPersistKey();
     } catch (error) {
-      devWarn('[EncryptionService] Failed to persist key in SecureStore', error);
+      devWarn(`[EncryptionService] Failed to persist key in ${getKeyStorageName()}`, error);
       throw new Error('Encryption key could not be persisted');
     }
   })();

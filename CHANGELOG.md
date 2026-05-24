@@ -6,6 +6,16 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+## [4.0.15] - 2026-05-24
+
+### Added
+
+- Added focused regression coverage for the shared glass form scroll contract so
+  the chat list cannot regress into a non-scrollable content container.
+- Added privacy and release-policy tests covering encrypted key fallback
+  handling, DNS log redaction, dependency override expectations, web runtime
+  boundaries, bottom-sheet accessibility, and visual design guardrails.
+
 ### Changed
 
 - Consolidated DNS packet encoding, TCP framing, response validation, and TXT
@@ -15,6 +25,21 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
   `expo-doctor` reported package-version drift.
 - Pinned the React Compiler healthcheck as a dev dependency so the verification
   script runs from a local binary instead of transient `bunx` resolution.
+- Bumped app metadata to `4.0.15` build `45` across Expo, iOS, and Android via
+  `sync-versions`.
+
+### Fixed
+
+- Fixed the main chat list on iOS so long conversation history scrolls normally
+  above the floating native tab bar.
+- Hardened encrypted storage key handling, DNS resolver logging, Liquid Glass
+  form controls, skeleton surfaces, toast/error states, and bilingual user-facing
+  copy without changing DNS protocol behavior.
+
+### Verified
+
+- `bun run verify:all`, native DNS module tests, `gitleaks detect`,
+  `bun audit`, and `asc doctor` passed before the TestFlight release lane.
 
 ## [4.0.14] - 2026-05-22
 
@@ -462,7 +487,9 @@ Versions 3.2.0 through 3.8.9 established the core feature set:
 - **3.3.0**: Android CI, release signing policy, Java 17 auto-detection
 - **3.2.x**: Public repo hardening (secrets scanning, policy tests, version sync gates), DNS server allowlist
 
-[Unreleased]: https://github.com/<owner>/dnschat/compare/v4.0.13...HEAD
+[Unreleased]: https://github.com/<owner>/dnschat/compare/v4.0.15...HEAD
+[4.0.15]: https://github.com/<owner>/dnschat/compare/v4.0.14...v4.0.15
+[4.0.14]: https://github.com/<owner>/dnschat/compare/v4.0.13...v4.0.14
 [4.0.13]: https://github.com/<owner>/dnschat/compare/v4.0.12...v4.0.13
 [4.0.12]: https://github.com/<owner>/dnschat/compare/v4.0.11...v4.0.12
 [4.0.11]: https://github.com/<owner>/dnschat/compare/v4.0.10...v4.0.11

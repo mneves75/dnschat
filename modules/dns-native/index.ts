@@ -209,7 +209,10 @@ export class NativeDNS implements NativeDNSModule {
       );
     }
 
-    debugLog(`[NativeDNS] queryTXT: ${domain}:${dnsPort} - ${message.trim()}`);
+    debugLog(
+      `[NativeDNS] queryTXT: ${domain}:${dnsPort}`,
+      { queryNameLength: message.trim().length },
+    );
 
     try {
       const result = await this.nativeModule.queryTXT(domain, message.trim(), dnsPort);

@@ -109,7 +109,7 @@ xcodebuild clean archive \
   CODE_SIGNING_ALLOWED=NO
 ```
 
-Latest public release evidence (`2026-05-24`, Xcode `26.5` / `17F42`, SDK 56.0.4 baseline post-`dnsWire` refactor):
+Latest public release target (`2026-05-24`, Xcode `26.5` / `17F42`, SDK 56.0.4 baseline):
 
 - `bun run verify:all` passed end-to-end: `verify:public-redaction`,
   `verify:expo-doctor` (19/19 checks, 0 issues), `verify:sdk-alignment`,
@@ -117,29 +117,22 @@ Latest public release evidence (`2026-05-24`, Xcode `26.5` / `17F42`, SDK 56.0.4
   `verify:ios-pods`, `verify:react-compiler` (86/86 components),
   `verify:android` (critical checks), `verify:android-16kb` (skipped without
   native artifacts), `lint`, `bun run test`.
-- App Jest suite: 96 of 97 suites passed (1 skipped), 819 passed, 13 skipped
-  for version `4.0.14` build `44`.
+- App Jest suite: 101 of 102 suites passed (1 skipped), 844 passed, 13 skipped
+  for version `4.0.15` build `45`.
 - `modules/dns-native` Jest suite: 7 of 8 suites passed (1 skipped), 56
   passed, 13 skipped.
 - `gitleaks detect --source . --redact --no-banner --config .gitleaks.toml`
-  scanned 338 commits / 10.32 MB and reported `no leaks found`.
+  scanned 348 commits / 11.07 MB and reported `no leaks found`.
 - `xcodebuild clean build` Debug iPhone 17 simulator: `BUILD SUCCEEDED`.
 - `xcodebuild clean build` and `xcodebuild clean archive` generic iOS Release
   with `CODE_SIGNING_ALLOWED=NO` both succeeded; the unsigned archive embeds
-  `DNSChat.app` with `CFBundleShortVersionString=4.0.14` and `CFBundleVersion=44`.
-- `bun audit` reports `3 moderate transitive (dev-only) advisories` in `ws`
-  (GHSA-58qx-3vcg-4xpx), `brace-expansion` (GHSA-jxxr-4gwj-5jf2), and `uuid`
-  (GHSA-w5hq-g745-h8pq) pulled through Expo CLI, Metro, Jest, and
-  `@expo/config-plugins/xcode`. `npm audit` in `modules/dns-native` reports the
-  same `brace-expansion` advisory. None affect shipped runtime code.
-- Physical-device install of the post-`dnsWire` bundle was NOT completed for
-  version `4.0.14` build `44` because the paired device was unavailable to
-  `xcrun devicectl` during this verification window. The previously installed
-  Release bundle from the 4.0.14 baseline (pre-`dnsWire`) is still present on
-  the device.
+  `DNSChat.app` with `CFBundleShortVersionString=4.0.15` and `CFBundleVersion=45`.
+- `bun audit` reports `No vulnerabilities found`.
+- Physical-device Release install completed for `4.0.15` build `45`. A
+  `devicectl` relaunch can still be denied by iOS when the phone is locked; that
+  is tracked separately from install proof.
 - Signed App Store archive, signed IPA export, and App Store Connect TestFlight
-  upload were NOT run for `4.0.14` build `44` because no Apple Distribution
-  identity was available locally.
+  upload are the current release gate for `4.0.15` build `45`.
 - Internal App Store Connect IDs, tester group names, device names, device identifiers, local paths, team IDs, profile names, and certificate IDs are intentionally omitted from public docs.
 
 Earlier 4.0.14 baseline evidence (`2026-05-22`, Xcode `26.5` / `17F42`, SDK 56 baseline):
@@ -251,7 +244,7 @@ bun run ios -- --verbose
 - **App Store Connect** app record created
 - **Code signing** configured correctly
 - **Bundle ID** matches (`<BUNDLE_ID>`)
-- **Version numbers** consistent (v4.0.14 build 44)
+- **Version numbers** consistent (v4.0.15 build 45)
 - **Native DNS module** compiles successfully
 - **Xcode CLI smoke** passed:
   - Debug simulator build
@@ -279,10 +272,10 @@ eas build --platform ios --profile production
 
 ### TestFlight distribution
 
-Current v4.0.14 distribution target:
+Current v4.0.15 distribution target:
 
-- Version/build: `4.0.14` / `44`
-- Processing state: pending upload (signed App Store archive and TestFlight upload not yet run for this build)
+- Version/build: `4.0.15` / `45`
+- Processing state: pending signed archive/export, upload, and TestFlight validation
 - Tester groups: configured in App Store Connect; internal group names are intentionally omitted from public docs.
 - Exact build IDs and App Store Connect version IDs belong in private release notes, not public runbooks.
 
@@ -293,9 +286,11 @@ After upload:
 3. **Feedback**: Collect user feedback through TestFlight
 4. **Iterate**: Upload new builds for continuous testing
 
-### What to Test for v4.0.14 build 44
+### What to Test for v4.0.15 build 45
 
 - Complete onboarding from a fresh install and confirm the app lands on the chat list.
+- Scroll a long recent-conversation list and confirm the rows move freely above
+  the floating native tab bar.
 - Send short prompts through the default DNS service and confirm responses render.
 - Confirm DNS failures, invalid settings, and unsupported server choices fail
   closed without exposing prompt text or TXT responses.
@@ -329,4 +324,4 @@ If you encounter issues during the upload process:
 
 ---
 
-_TestFlight upload guide for DNSChat v4.0.14 build 44 - Last updated: 2026-05-22_
+_TestFlight upload guide for DNSChat v4.0.15 build 45 - Last updated: 2026-05-24_

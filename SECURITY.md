@@ -20,7 +20,7 @@ Please do not open public issues for security vulnerabilities.
 - App source code (TypeScript, React Native)
 - Native modules (`modules/dns-native/`)
 - Dependency vulnerabilities
-- Data handling and storage (AsyncStorage, SecureStore)
+- Data handling and storage (AsyncStorage, SecureStore, Web preview browser storage)
 
 **Out of scope:**
 - DNS server infrastructure (`llm.pieter.com`, `ch.at`) — these are third-party services
@@ -29,19 +29,19 @@ Please do not open public issues for security vulnerabilities.
 
 ## Current Security Baseline
 
-Last full source/security sweep: `2026-05-15`.
-Last iOS signed release archive/export: `2026-05-15`.
+Last full source/security sweep: `2026-05-24`.
+Last iOS signed release archive/export: `2026-05-24`.
 
-- Dependency audits pass for the app (`bun audit`) and local native module
-  (`npm audit` in `modules/dns-native`).
+- Dependency audits pass on `2026-05-24` (`bun audit` reports
+  `No vulnerabilities found`).
 - Secret scanning passes with `gitleaks detect --source . --redact --no-banner --config .gitleaks.toml`.
 - Public-repo leak prevention uses defense in depth: local `gitleaks`,
   `bun run verify:public-redaction`, repo hygiene tests, GitHub secret scanning,
   and push protection when available.
 - Xcode Debug simulator build, unsigned generic iOS Release build/archive,
   physical-device compiled-app install, signed App Store archive/export, and
-  TestFlight upload all pass; the latest signed TestFlight evidence is
-  `4.0.12` build `42`.
+  TestFlight upload are part of the release gate; the latest signed TestFlight
+  target is `4.0.15` build `45`.
 - The TestFlight build is `VALID`, encryption is `exempt`, and
   `asc validate testflight` reports `0` errors and `0` warnings. App Store
   version validation also reports `0` errors and `0` warnings, with App Privacy
@@ -49,8 +49,10 @@ Last iOS signed release archive/export: `2026-05-15`.
   cannot verify it. Internal App Store Connect IDs, tester group names, device
   names, local paths, and signing identifiers are intentionally omitted from
   public docs.
-- Local chat history is encrypted at rest with AES-GCM using key material stored
-  in SecureStore.
+- Local chat history is encrypted at rest with AES-GCM. Native builds store key
+  material in SecureStore; Web preview uses same-origin browser storage for the
+  local-only preview key because SecureStore is not available in browsers, so
+  Web preview storage is not a secure production at-rest boundary.
 - DNS prompt/response transport is observable infrastructure. Do not send
   secrets or personal data, and do not describe DNS prompts as private or
   end-to-end encrypted.

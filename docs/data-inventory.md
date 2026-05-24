@@ -8,7 +8,9 @@ This document inventories the data stored or processed by DNSChat and satisfies 
 - Storage key: `@chat_dns_chats`
 - Contents: chat threads, message IDs, roles (`user`/`assistant`), message content, timestamps, titles
 - Storage location: AsyncStorage (device local)
-- Encryption: AES-GCM via `encryptionService` using a key stored in SecureStore
+- Encryption: AES-GCM via `encryptionService`; native key material is stored in
+  SecureStore, while Web preview stores the local-only preview key in
+  same-origin browser storage because SecureStore is not available in browsers.
 - Retention: Persistent until user deletes chats or clears app data
 
 2) Chat backup (encrypted at rest)
@@ -23,7 +25,9 @@ This document inventories the data stored or processed by DNSChat and satisfies 
 - Contents: per-query log entries (hashed message text, status, method, timestamps, durations)
 - Storage location: AsyncStorage
 - Redaction: message content stored as `sha256:<hash> len:<length>`
-- Encryption: AES-GCM via `encryptionService` using a key stored in SecureStore
+- Encryption: AES-GCM via `encryptionService`; native key material is stored in
+  SecureStore, while Web preview stores the local-only preview key in
+  same-origin browser storage because SecureStore is not available in browsers.
 - Retention: 30 days (automatic cleanup) and max 100 logs
 
 4) DNS logs backup (encrypted at rest)
@@ -40,11 +44,14 @@ This document inventories the data stored or processed by DNSChat and satisfies 
 - Retention: Persistent until user resets settings or clears app data
 
 6) Encryption key material
-- Storage key: `dnschat.encryption_key` (SecureStore)
+- Storage key: `dnschat.encryption_key`
 - Contents: AES key for local payload encryption
-- Storage location: SecureStore (device protected storage). Android backup and
-  device-transfer rules exclude the SecureStore shared preferences file so key
-  material is not restored without the platform keystore.
+- Storage location: SecureStore in native builds (device protected storage).
+  Android backup and device-transfer rules exclude the SecureStore shared
+  preferences file so key material is not restored without the platform
+  keystore. Web preview stores the key in same-origin browser storage as a
+  browser-only fallback and must not be treated as a secure production at-rest
+  boundary.
 - Retention: Persistent until app uninstall or explicit secure-store reset
 
 ## Data in Transit
@@ -72,7 +79,10 @@ This document inventories the data stored or processed by DNSChat and satisfies 
 ## Security Controls
 
 - Encryption at rest for chat payloads and log storage via AES-GCM.
-- SecureStore for encryption key material.
+- SecureStore for encryption key material in native builds.
+- Same-origin browser storage for Web preview encryption key material because
+  SecureStore is not available in browsers; this is not a secure production
+  at-rest boundary.
 - Android Auto Backup/device-transfer excludes SecureStore key material.
 - iOS declares `ITSAppUsesNonExemptEncryption=false`; the app uses platform
   storage and standard local data protection, not non-exempt custom
@@ -82,4 +92,4 @@ This document inventories the data stored or processed by DNSChat and satisfies 
 ## Review Cadence
 
 - Review this inventory whenever storage keys, retention policies, or data flows change.
-- Last reviewed during the full source/security sweep on `2026-05-14`.
+- Last reviewed during the full source/security sweep on `2026-05-24`.

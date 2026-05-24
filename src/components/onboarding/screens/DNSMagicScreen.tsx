@@ -229,7 +229,7 @@ export function DNSMagicScreen() {
             ))}
           </View>
 
-          {response && (
+          {response.length > 0 && (
             <View
               accessible={true}
               accessibilityLiveRegion="polite"
@@ -341,7 +341,7 @@ function DNSStepItem({ step, palette, typography }: DNSStepItemProps) {
         >
           {getStatusLabel()}
         </Text>
-        {step.timing && (
+        {step.timing !== undefined && (
           <Text
             style={[
               typography.caption1,
