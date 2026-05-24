@@ -3,19 +3,20 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   TextInput,
   ScrollView,
-  KeyboardAvoidingView,
-  Platform,
 } from "react-native";
+import { KeyboardStickyView } from "react-native-keyboard-controller";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { OnboardingNavigation } from "../OnboardingNavigation";
+import { PressableRipple } from "../../PressableRipple";
 import { DNSService } from "../../../services/dnsService";
 import { useImessagePalette } from "../../../ui/theme/imessagePalette";
 import { useTypography } from "../../../ui/hooks/useTypography";
 import { LiquidGlassSpacing } from "../../../ui/theme/liquidGlassSpacing";
 import { useTranslation } from "../../../i18n";
 import { SendIcon } from "../../icons/SendIcon";
+import { MESSAGE_CONSTANTS } from "../../../constants/appConstants";
 import { devWarn } from "../../../utils/devLog";
 
 interface Message {
@@ -30,6 +31,7 @@ export function FirstChatScreen() {
   const palette = useImessagePalette();
   const typography = useTypography();
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const isMountedRef = useRef(true);
 
   const [messages, setMessages] = useState<Message[]>([
@@ -44,6 +46,7 @@ export function FirstChatScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [hasTriedChat, setHasTriedChat] = useState(false);
 
+  // Effect: mark unmounted state to prevent async updates after unmount.
   useEffect(() => {
     return () => {
       isMountedRef.current = false;
@@ -100,8 +103,8 @@ export function FirstChatScreen() {
           msg.id === assistantMessage.id
             ? {
                 ...msg,
-                text: t("screen.onboarding.firstChat.successMessage"),
-                status: "sent",
+                text: t("screen.onboarding.firstChat.failureMessage"),
+                status: "failed",
               }
             : msg,
         ),
@@ -121,10 +124,7 @@ export function FirstChatScreen() {
   ];
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-    >
+    <View testID="onboarding-first-chat" style={styles.container}>
       <View style={styles.content}>
         <View style={styles.headerSection}>
           <Text style={[typography.displayMedium, { color: palette.accentTint }]}>
@@ -178,8 +178,9 @@ export function FirstChatScreen() {
                 {t("screen.onboarding.firstChat.suggestions.title")}
               </Text>
               {suggestedMessages.map((suggestion, index) => (
-                <TouchableOpacity
-                  key={index}
+                <PressableRipple
+                  testID={`onboarding-first-chat-suggestion-${index + 1}`}
+                  key={suggestion}
                   style={[
                     styles.suggestionButton,
                     {
@@ -188,10 +189,13 @@ export function FirstChatScreen() {
                     },
                   ]}
                   onPress={() => setInputText(suggestion)}
-                  activeOpacity={0.7}
+                  variant="surface"
+                  pressedOpacity={0.7}
                   accessibilityRole="button"
-                  accessibilityLabel={`Suggestion: ${suggestion}`}
-                  accessibilityHint="Fills the message input with this suggested question"
+                  accessibilityLabel={t("screen.onboarding.firstChat.accessibility.suggestionLabel", {
+                    suggestion,
+                  })}
+                  accessibilityHint={t("screen.onboarding.firstChat.accessibility.suggestionHint")}
                 >
                   <Text
                     style={[
@@ -202,13 +206,16 @@ export function FirstChatScreen() {
                   >
                     {suggestion}
                   </Text>
-                </TouchableOpacity>
+                </PressableRipple>
               ))}
             </View>
           )}
         </ScrollView>
+      </View>
 
-        {/* iOS HIG: Message input with send button */}
+      {/* iOS HIG: Message input row follows the keyboard via KeyboardStickyView.
+          OnboardingNavigation stays anchored to the safe-area bottom below. */}
+      <KeyboardStickyView style={styles.stickyInputWrapper}>
         <View
           style={[
             styles.inputContainer,
@@ -219,6 +226,7 @@ export function FirstChatScreen() {
           ]}
         >
           <TextInput
+            testID="onboarding-first-chat-input"
             style={[
               typography.callout,
               styles.textInput,
@@ -229,11 +237,14 @@ export function FirstChatScreen() {
             placeholder={t("screen.onboarding.firstChat.input.placeholder")}
             placeholderTextColor={palette.textTertiary}
             multiline
-            maxLength={200}
-            accessibilityLabel="Message input"
-            accessibilityHint="Type your message to send via DNS. Maximum 200 characters."
+            maxLength={MESSAGE_CONSTANTS.MAX_MESSAGE_LENGTH}
+            accessibilityLabel={t("screen.onboarding.firstChat.accessibility.inputLabel")}
+            accessibilityHint={t("screen.onboarding.firstChat.accessibility.inputHint", {
+              max: MESSAGE_CONSTANTS.MAX_MESSAGE_LENGTH,
+            })}
           />
-          <TouchableOpacity
+          <PressableRipple
+            testID="onboarding-first-chat-send"
             style={[
               styles.sendButton,
               {
@@ -245,10 +256,17 @@ export function FirstChatScreen() {
             ]}
             onPress={sendMessage}
             disabled={!inputText.trim() || isLoading}
-            activeOpacity={0.7}
+            variant="icon"
+            borderless
+            rippleRadius={22}
+            pressedOpacity={0.7}
             accessibilityRole="button"
-            accessibilityLabel={isLoading ? "Sending message" : "Send message"}
-            accessibilityHint="Sends your message through DNS TXT query"
+            accessibilityLabel={t(
+              isLoading
+                ? "screen.onboarding.firstChat.accessibility.sendingLabel"
+                : "screen.onboarding.firstChat.accessibility.sendLabel",
+            )}
+            accessibilityHint={t("screen.onboarding.firstChat.accessibility.sendHint")}
             accessibilityState={{
               disabled: !inputText.trim() || isLoading,
               busy: isLoading,
@@ -259,14 +277,16 @@ export function FirstChatScreen() {
             ) : (
               <SendIcon size={20} isActive={!!inputText.trim()} />
             )}
-          </TouchableOpacity>
+          </PressableRipple>
         </View>
-      </View>
+      </KeyboardStickyView>
 
-      <OnboardingNavigation
-        nextButtonText={hasTriedChat ? t("screen.onboarding.firstChat.navigation.continue") : t("screen.onboarding.firstChat.navigation.skip")}
-      />
-    </KeyboardAvoidingView>
+      <View style={{ paddingBottom: insets.bottom }}>
+        <OnboardingNavigation
+          nextButtonText={hasTriedChat ? t("screen.onboarding.firstChat.navigation.continue") : t("screen.onboarding.firstChat.navigation.skip")}
+        />
+      </View>
+    </View>
   );
 }
 
@@ -389,9 +409,14 @@ const styles = StyleSheet.create({
     borderRadius: LiquidGlassSpacing.lg,
     borderWidth: 1,
     alignSelf: "flex-start",
+    overflow: "hidden",
   },
   suggestionText: {
     fontWeight: "500",
+  },
+  stickyInputWrapper: {
+    paddingHorizontal: LiquidGlassSpacing.md,
+    paddingVertical: LiquidGlassSpacing.xs,
   },
   inputContainer: {
     flexDirection: "row",
@@ -399,7 +424,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: LiquidGlassSpacing.sm,
     paddingVertical: LiquidGlassSpacing.xs,
     borderRadius: LiquidGlassSpacing.xl,
-    marginBottom: LiquidGlassSpacing.md,
     borderWidth: 1,
   },
   textInput: {

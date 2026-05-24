@@ -3,12 +3,16 @@ import {
   View,
   Text,
   StyleSheet,
-  Animated,
-  Dimensions,
   Image,
   ScrollView,
 } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 import { OnboardingNavigation } from "../OnboardingNavigation";
+import { useMotionReduction } from "../../../context/AccessibilityContext";
 import { useImessagePalette } from "../../../ui/theme/imessagePalette";
 import { useTypography } from "../../../ui/hooks/useTypography";
 import { LiquidGlassSpacing } from "../../../ui/theme/liquidGlassSpacing";
@@ -16,36 +20,31 @@ import { useTranslation } from "../../../i18n";
 
 const AppIcon = require("../../../assets/dnschat_ios26.png");
 
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
-
 export function WelcomeScreen() {
   const palette = useImessagePalette();
   const typography = useTypography();
   const { t } = useTranslation();
+  const { shouldReduceMotion } = useMotionReduction();
 
-  const fadeAnim = React.useRef(new Animated.Value(0)).current;
-  const slideAnim = React.useRef(new Animated.Value(50)).current;
+  const fadeAnim = useSharedValue(shouldReduceMotion ? 1 : 0);
+  const slideAnim = useSharedValue(shouldReduceMotion ? 0 : 50);
 
+  // Effect: run welcome screen entrance animation on mount via Reanimated.
   React.useEffect(() => {
-    const animation = Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 800,
-        useNativeDriver: true,
-      }),
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 800,
-        useNativeDriver: true,
-      }),
-    ]);
+    if (shouldReduceMotion) {
+      fadeAnim.value = 1;
+      slideAnim.value = 0;
+      return;
+    }
 
-    animation.start();
+    fadeAnim.value = withTiming(1, { duration: 800 });
+    slideAnim.value = withTiming(0, { duration: 800 });
+  }, [shouldReduceMotion]);
 
-    return () => {
-      animation.stop();
-    };
-  }, [fadeAnim, slideAnim]);
+  const heroAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: fadeAnim.value,
+    transform: [{ translateY: slideAnim.value }],
+  }));
 
   return (
     <View testID="onboarding-welcome" style={styles.container}>
@@ -54,20 +53,14 @@ export function WelcomeScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <Animated.View
-          style={[
-            styles.heroSection,
-            {
-              opacity: fadeAnim,
-              transform: [{ translateY: slideAnim }],
-            },
-          ]}
-        >
+        <Animated.View style={[styles.heroSection, heroAnimatedStyle]}>
           <View style={styles.iconContainer}>
             <Image
               source={AppIcon}
               style={styles.appIcon}
               resizeMode="contain"
+              accessibilityRole="image"
+              accessibilityLabel={t("screen.onboarding.welcome.appIconLabel")}
             />
           </View>
 
@@ -145,6 +138,9 @@ function FeatureItem({ label, title, description, palette, typography }: Feature
         ]}
       >
         <Text
+          accessible={false}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
           style={[
             typography.headline,
             styles.featureLabel,
@@ -209,7 +205,6 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     textAlign: "center",
-    opacity: 0.8,
   },
   featuresSection: {
     gap: LiquidGlassSpacing.xl,
@@ -237,6 +232,5 @@ const styles = StyleSheet.create({
     marginBottom: LiquidGlassSpacing.xxs,
   },
   featureDescription: {
-    opacity: 0.8,
   },
 });

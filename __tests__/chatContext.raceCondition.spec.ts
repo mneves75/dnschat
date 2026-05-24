@@ -52,7 +52,7 @@ describe("ChatContext Race Condition Prevention", () => {
   describe("Error Handler Uses Captured Values", () => {
     it("uses chatIdAtSend in error handler condition", () => {
       // Error handler should check captured chatId, not currentChat
-      expect(source).toContain("if (chatIdAtSend && assistantMessageId)");
+      expect(source).toContain("if (chatIdAtSend && assistantMessage && userMessagePersisted)");
     });
 
     it("passes chatIdAtSend to StorageService.updateMessage", () => {
@@ -107,8 +107,11 @@ describe("ChatContext Race Condition Prevention", () => {
       );
     });
 
-    it("reloads chats after error update", () => {
-      expect(source).toContain("await loadChats();");
+    it("reloads chats after error update while preserving selection and error state", () => {
+      expect(source).toContain("await loadChats({");
+      expect(source).toContain("preserveChatId: chatIdAtSend");
+      expect(source).toContain("preserveError: errorMessage");
+      expect(source).toContain("clearError: false");
     });
   });
 });

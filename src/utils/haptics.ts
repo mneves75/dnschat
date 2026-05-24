@@ -23,8 +23,8 @@ const resolveAvailabilityCheck = (): Promise<boolean> => {
   if (typeof availabilityFn === "function") {
     return availabilityFn();
   }
-  // expo-haptics typings miss isAvailableAsync; fallback to iOS assumption.
-  return Promise.resolve(Platform.OS === "ios");
+  // If the native availability probe is missing, do not touch CoreHaptics.
+  return Promise.resolve(false);
 };
 
 const ensureHardwareSupport = async (): Promise<boolean> => {
@@ -42,7 +42,6 @@ const ensureHardwareSupport = async (): Promise<boolean> => {
         return available;
       })
       .catch((error: unknown) => {
-        hardwareSupported = false;
         devWarn('Haptics availability check failed:', error);
         return false;
       })
@@ -97,9 +96,7 @@ export const configureHaptics = (config: HapticConfiguration = {}) => {
   }
 };
 
-export const preloadHaptics = async () => {
-  await ensureHardwareSupport();
-};
+export const preloadHaptics = () => ensureHardwareSupport();
 
 /**
  * Haptic Feedback System for iOS 26 Liquid Glass

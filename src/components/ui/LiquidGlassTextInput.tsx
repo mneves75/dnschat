@@ -7,7 +7,13 @@ import {
   useColorScheme,
   Pressable,
 } from "react-native";
-import type { TextInputProps, ViewStyle, TextStyle } from "react-native";
+import type {
+  TextInputProps,
+  ViewStyle,
+  TextStyle,
+  FocusEvent,
+  BlurEvent,
+} from "react-native";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -92,23 +98,20 @@ export function LiquidGlassTextInput({
     borderWidth: borderWidth.value,
   }));
 
-  const syncBorderState = React.useCallback(
-    (nextFocused: boolean, nextHasError: boolean) => {
-      const targetColor = nextHasError
-        ? palette.destructive
-        : nextFocused
-          ? palette.accentTint
-          : palette.border;
-      const targetWidth = nextFocused ? 2 : 1;
+  const syncBorderState = React.useCallback((nextFocused: boolean, nextHasError: boolean) => {
+    const targetColor = nextHasError
+      ? palette.destructive
+      : nextFocused
+        ? palette.accentTint
+        : palette.border;
+    const targetWidth = nextFocused ? 2 : 1;
 
-      borderColor.value = withTiming(targetColor, TimingConfig.quick);
-      borderWidth.value = withSpring(targetWidth, SpringConfig.bouncy);
-    },
-    [borderColor, borderWidth, palette.accentTint, palette.border, palette.destructive],
-  );
+    borderColor.value = withTiming(targetColor, TimingConfig.quick);
+    borderWidth.value = withSpring(targetWidth, SpringConfig.bouncy);
+  }, [borderColor, borderWidth, palette.accentTint, palette.border, palette.destructive]);
 
   // Handle focus
-  const handleFocus = (e: any) => {
+  const handleFocus = (e: FocusEvent) => {
     setIsFocused(true);
     syncBorderState(true, hasError);
     HapticFeedback.selection();
@@ -116,7 +119,7 @@ export function LiquidGlassTextInput({
   };
 
   // Handle blur
-  const handleBlur = (e: any) => {
+  const handleBlur = (e: BlurEvent) => {
     setIsFocused(false);
     syncBorderState(false, hasError);
     textInputProps.onBlur?.(e);
@@ -168,6 +171,7 @@ export function LiquidGlassTextInput({
 
         {/* Text Input */}
         <TextInput
+          {...textInputProps}
           value={value}
           onChangeText={onChangeText}
           onFocus={handleFocus}
@@ -190,7 +194,6 @@ export function LiquidGlassTextInput({
           accessibilityLabel={label || textInputProps.placeholder}
           accessibilityHint={helperText || errorText}
           accessibilityState={{ disabled: !editable }}
-          {...textInputProps}
         />
 
         {/* Right Icon or Clear Button */}

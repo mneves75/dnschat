@@ -1,18 +1,46 @@
 # DNSChat
 
 DNSChat is a React Native (Expo dev-client) app that sends short chat prompts as
-DNS TXT queries (default DNS server: `ch.at`). The app includes:
+DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 
 - A native DNS TXT resolver module for iOS/Android (`modules/dns-native/`)
 - JavaScript fallback transports (UDP/TCP) for constrained networks
 - An in-app Logs screen to inspect attempts, failures, and fallbacks
 
-[![Version](https://img.shields.io/badge/version-3.8.8-blue.svg)](https://github.com/mneves75/dnschat)
-[![React Native](https://img.shields.io/badge/React%20Native-0.81.5-blue.svg)](https://reactnative.dev/)
-[![Expo](https://img.shields.io/badge/Expo-54.0.30-black.svg)](https://expo.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.9.2-blue.svg)](https://www.typescriptlang.org/)
-[![iOS](https://img.shields.io/badge/iOS-16%2B-lightgrey.svg)](https://developer.apple.com/ios/)
-[![Android](https://img.shields.io/badge/Android-API%2021%2B-green.svg)](https://developer.android.com/)
+[![Version](https://img.shields.io/badge/version-4.0.14-blue.svg)](.)
+[![React Native](https://img.shields.io/badge/React%20Native-0.85.3-blue.svg)](https://reactnative.dev/)
+[![Expo](https://img.shields.io/badge/Expo-56.0.4-black.svg)](https://expo.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-6.0.x-blue.svg)](https://www.typescriptlang.org/)
+[![iOS](https://img.shields.io/badge/iOS-16.4%2B-lightgrey.svg)](https://developer.apple.com/ios/)
+[![Android](https://img.shields.io/badge/Android-API%2024%2B-green.svg)](https://developer.android.com/)
+[![CI](actions/workflows/ci.yml/badge.svg)](actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+## Features
+
+- Chat with LLMs over DNS - no API keys, no accounts, no tracking
+- Native DNS resolution on iOS and Android with JS fallback transports
+- Encrypted local chat history (AES-GCM)
+- Multi-server support with automatic transport fallback
+- Bilingual UI (English / Portuguese)
+- Full offline chat history with search
+- **NativeTabs** with SF Symbols (iOS) and Material Symbols (Android)
+- **Platform colors** via expo-router Color API (auto light/dark, Android 12+ dynamic)
+- **Native iOS toolbars** with share, clear, and new-chat actions (liquid glass)
+- **Zoom transitions** (iOS 18+) from chat list to thread
+
+## Tech stack
+
+- App version: `4.0.14` (build `44`)
+- Expo workflow: Expo Router + dev-client + EAS-compatible native config
+- Expo SDK: `56.0.4`
+- React: `19.2.3`
+- React Native: `0.85.3`
+- TypeScript: `6.0.x`
+- Hermes: enabled
+- New Architecture: enabled by default on SDK 56
+- React Compiler: enabled (`experiments.reactCompiler: true`)
+- Typed routes: enabled (`experiments.typedRoutes: true`)
 
 ## How DNSChat encodes prompts
 
@@ -40,18 +68,22 @@ The transport order used by `src/services/dnsService.ts` is:
 Web preview uses the Mock path by default because browsers cannot do raw DNS on
 port 53.
 
+DNS packet encoding, DNS-over-TCP framing, decoded-response validation, and TXT
+record extraction live in `src/services/dnsWire.ts`; `dnsService.ts` owns the
+transport chain, retries, logging, and server fallback orchestration.
+
 ## Quick start
 
 Prereqs:
 
-- Node.js 18+
-- iOS: Xcode 15+ (macOS only), iOS 16+ device/simulator
+- Node.js 20.19.4+
+- iOS: Xcode 26.4+ (macOS only), iOS 16.4+ device/simulator
 - Android: Java 17 + Android SDK
 
 Install:
 
 ```bash
-git clone https://github.com/mneves75/dnschat.git
+git clone <repository-url>
 cd dnschat
 bun install
 ```
@@ -75,6 +107,11 @@ bun run web
 Notes:
 
 - iOS simulator builds work out of the box; device builds require you to pick your own signing team in Xcode (the repo keeps `DEVELOPMENT_TEAM` empty).
+- For a full physical-device Expo dev-client install, build the native `DNSChat`
+  target for the device identifier and install the compiled `.app`; Expo Go is
+  not a valid substitute for this repo because the app depends on native DNS
+  modules. Keep device names, local paths, and signing identifiers out of public
+  docs.
 
 ## DNS smoke tests
 
@@ -100,11 +137,21 @@ bun run lint
 # Unit tests
 bun run test
 
+# AXe simulator E2E
+bun run e2e:axe:doctor
+bun run e2e:axe:release
+
+# Public-doc redaction gate
+bun run verify:public-redaction
+
 # Keep Expo iOS pods aligned with installed node_modules (iOS)
 bun run verify:ios-pods
 
 # Sanity checks for Android tooling/device expectations
 bun run verify:android
+
+# Full verification gate before committing/release work
+bun run verify:all
 
 # Sync app + native module versions (use :dry to preview)
 bun run sync-versions
@@ -131,19 +178,96 @@ If you do not want repo-managed hooks, remove `.git/hooks/pre-commit` locally.
 
 ## Documentation
 
-- `docs/README.md` (index)
-- `docs/INSTALL.md`
-- `docs/architecture/SYSTEM-ARCHITECTURE.md`
-- `docs/troubleshooting/COMMON-ISSUES.md`
-- `docs/technical/DNS-PROTOCOL-SPEC.md`
+Start here:
+
+- [`docs/README.md`](docs/README.md) — full documentation index
+- [`docs/INSTALL.md`](docs/INSTALL.md) — setup, build, verification
+- [`CLAUDE.md`](CLAUDE.md) / [`AGENTS.md`](AGENTS.md) — guidance for AI coding agents
+
+Architecture & spec:
+
+- [`docs/architecture/SYSTEM-ARCHITECTURE.md`](docs/architecture/SYSTEM-ARCHITECTURE.md) — what talks to what
+- [`docs/technical/DNS-PROTOCOL-SPEC.md`](docs/technical/DNS-PROTOCOL-SPEC.md) — query/response rules
+- [`docs/technical/SPECIFICATION.md`](docs/technical/SPECIFICATION.md) — product behavior + repo invariants
+- [`docs/technical/EXPO-DOCTOR-CONFIGURATION.md`](docs/technical/EXPO-DOCTOR-CONFIGURATION.md) — intentional Expo Doctor warnings
+
+Operational:
+
+- [`docs/troubleshooting/COMMON-ISSUES.md`](docs/troubleshooting/COMMON-ISSUES.md) — known issues + fixes
+- [`docs/data-inventory.md`](docs/data-inventory.md) — on-device data storage + retention
+- [`docs/model-registry.md`](docs/model-registry.md) — model usage policy
+
+Release:
+
+- [`docs/ANDROID_RELEASE.md`](docs/ANDROID_RELEASE.md) — Android release checklist
+- [`docs/ANDROID_GOOGLE_PLAY_STORE.md`](docs/ANDROID_GOOGLE_PLAY_STORE.md) — Play Store publishing
+- [`docs/App_store/Apple_App_Store/AppStoreConnect.md`](docs/App_store/Apple_App_Store/AppStoreConnect.md) — App Store listing materials
+- [`docs/App_store/Apple_App_Store/TESTFLIGHT.md`](docs/App_store/Apple_App_Store/TESTFLIGHT.md) — TestFlight upload steps
+
+## Current verification baseline
+
+Last architecture/dependency verification: `2026-05-24`.
+Last full source/security sweep: `2026-05-17`.
+Last AXe simulator E2E feature pass: `2026-05-17` for version `4.0.13` build
+`43`.
+Last iOS signed release archive/export: `2026-05-17` for version `4.0.13`
+build `43`.
+
+- `bun run verify:all` passes on `2026-05-24` (`expo-doctor` 19/19, SDK
+  alignment, typed routes, `tsc --noEmit`, DNS resolver sync, iOS pods, React
+  Compiler 86/86 components, Android setup, Android 16KB check skipped without
+  native artifacts, lint, and Jest).
+- Native DNS module tests pass on `2026-05-24` (`7` suites passed, `1` skipped;
+  `56` tests passed, `13` skipped).
+- AXe E2E baseline: 10 feature groups passed in one owned release-simulator
+  run on `2026-05-17`.
+- Jest baseline on `2026-05-24`: 96 suites passed, 1 skipped; 819 tests passed,
+  13 skipped.
+- `gitleaks detect` on `2026-05-24` reports `no leaks found` across `338`
+  scanned commits.
+- `bun audit` on `2026-05-24` reports `3 moderate transitive (dev-only)
+  advisories` in `ws`, `brace-expansion`, and `uuid` pulled through Expo CLI,
+  Metro, Jest, and `@expo/config-plugins/xcode`. `npm audit` in
+  `modules/dns-native` reports the same `brace-expansion` advisory. None affect
+  shipped runtime code; remediation is tracked separately. The prior clean
+  audit baseline was `2026-05-17`.
+- `xcodebuild clean build` passes for Debug on an iOS 26.5 simulator on
+  `2026-05-24`.
+- `xcodebuild clean build` and `xcodebuild clean archive` pass for generic iOS
+  Release when code signing is disabled (`CODE_SIGNING_ALLOWED=NO`) on
+  `2026-05-24`.
+- Physical-device compiled Expo dev-client install passed.
+- Signed App Store archive/export passed, TestFlight upload completed, the
+  processed build is `VALID`, and TestFlight validation reports `0` errors and
+  `0` warnings. Internal App Store Connect IDs are intentionally omitted from
+  public docs.
+- `asc validate testflight` and App Store version validation pass with `0`
+  errors and `0` warnings; the remaining App Store validation notes are
+  informational: manual release type and API-unverifiable App Privacy publish
+  state.
+- `xcodebuild test` is not a native gate yet because the `DNSChat` scheme has no
+  XCTest bundles.
+- DNS transport is observable. Public copy and tests intentionally avoid
+  claiming that DNS prompts are private or end-to-end encrypted.
 
 ## Security notes
 
 - DNS is observable infrastructure. Do not send secrets or personal data.
 - DNS servers are validated/whitelisted (see `modules/dns-native/constants.ts`).
+- Local chat/log payloads are encrypted at rest; Android backup/device-transfer
+  rules exclude SecureStore key material.
 - Store submission credentials are not committed. Keep `eas submit`/App Store
   Connect identifiers local (do not add them to `eas.json`).
+- Public release docs use placeholders for local/device/account identifiers.
+  Run `bun run verify:public-redaction` before committing release notes or store
+  runbooks. Exact release evidence belongs in private notes outside git.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and guidelines.
+
+Report security vulnerabilities via [SECURITY.md](SECURITY.md).
 
 ## License
 
-MIT. See `LICENSE`.
+MIT. See [LICENSE](LICENSE).

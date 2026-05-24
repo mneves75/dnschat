@@ -1,5 +1,4 @@
 import { getRandomValues } from 'expo-crypto';
-import { devLog } from '../utils/devLog';
 
 type RandomValuesArray =
   | Uint8Array
@@ -10,11 +9,27 @@ type RandomValuesArray =
   | Int32Array
   | Uint8ClampedArray;
 
-const ensureCryptoRng = () => {
+type GlobalCrypto = {
+  getRandomValues?: (array: RandomValuesArray) => RandomValuesArray;
+};
+
+const getGlobalCrypto = (): GlobalCrypto | undefined => {
+  if (typeof globalThis === 'undefined') return undefined;
+  const record = globalThis as Record<string, unknown>;
+  const cryptoValue = record['crypto'];
+  if (!cryptoValue || typeof cryptoValue !== 'object') return undefined;
+  return cryptoValue as GlobalCrypto;
+};
+
+const setGlobalCrypto = (value: GlobalCrypto): void => {
+  if (typeof globalThis === 'undefined') return;
+  const record = globalThis as Record<string, unknown>;
+  record['crypto'] = value;
+};
+
+export const ensureCryptoRng = () => {
   try {
-    const globalCrypto = (globalThis as any)?.crypto as
-      | { getRandomValues?: (array: RandomValuesArray) => RandomValuesArray }
-      | undefined;
+    const globalCrypto = getGlobalCrypto();
 
     if (globalCrypto && typeof globalCrypto.getRandomValues === 'function') {
       return;
@@ -25,11 +40,18 @@ const ensureCryptoRng = () => {
     if (globalCrypto) {
       globalCrypto.getRandomValues = shim;
     } else if (typeof globalThis !== 'undefined') {
-      (globalThis as any).crypto = { getRandomValues: shim };
+      setGlobalCrypto({ getRandomValues: shim });
     }
-  } catch (error) {
-    devLog('[CryptoBootstrap] Failed to ensure secure RNG', error);
+  } catch {
+    // Fall through to the hard postcondition below.
   }
+
+  const verifiedCrypto = getGlobalCrypto();
+  if (verifiedCrypto && typeof verifiedCrypto.getRandomValues === 'function') {
+    return;
+  }
+
+  throw new Error('[CryptoBootstrap] Secure RNG unavailable');
 };
 
 ensureCryptoRng();

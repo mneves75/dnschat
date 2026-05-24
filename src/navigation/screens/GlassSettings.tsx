@@ -16,13 +16,14 @@
 
 import React from "react";
 import {
+  DynamicColorIOS,
   StyleSheet,
   Switch,
   Text,
+  TouchableOpacity,
   View,
   Alert,
   Platform,
-  Linking,
   Share,
 } from "react-native";
 import Animated from "react-native-reanimated";
@@ -37,7 +38,6 @@ import { StorageService } from "../../services/storageService";
 import { useImessagePalette } from "../../ui/theme/imessagePalette";
 import { useScreenEntrance } from "../../ui/hooks/useScreenEntrance";
 
-const packageJson = require("../../../package.json");
 import {
   Form,
   GlassBottomSheet,
@@ -46,8 +46,16 @@ import {
   LiquidGlassWrapper,
 } from "../../components/glass";
 import { useTransportTestThrottle } from "../../ui/hooks/useTransportTestThrottle";
-import { persistHapticsPreference } from "../../utils/haptics";
+import { HapticFeedback, persistHapticsPreference } from "../../utils/haptics";
 import { devLog, devWarn } from "../../utils/devLog";
+import { getAppVersionInfo } from "../../utils/appVersion";
+import { openExternalUrl } from "../../utils/externalLinks";
+
+const getErrorMessage = (error: unknown): string => {
+  if (error instanceof Error) return error.message;
+  if (typeof error === "string") return error;
+  return String(error);
+};
 
 // ==================================================================================
 // GLASS SETTINGS SCREEN COMPONENT
@@ -79,23 +87,20 @@ export function GlassSettings() {
   const supportSheet = useGlassBottomSheet();
 
   // DNS Service options - llm.pieter.com is now the default (ch.at is offline)
-  const dnsServerOptions = React.useMemo(
-    () => [
-      {
-        value: "llm.pieter.com",
-        label: t("screen.glassSettings.dnsOptions.llmPieter.label"),
-        description: t(
-          "screen.glassSettings.dnsOptions.llmPieter.description",
-        ),
-      },
-      {
-        value: "ch.at",
-        label: t("screen.glassSettings.dnsOptions.chAt.label"),
-        description: t("screen.glassSettings.dnsOptions.chAt.description"),
-      },
-    ],
-    [t],
-  );
+  const dnsServerOptions = [
+    {
+      value: "llm.pieter.com",
+      label: t("screen.glassSettings.dnsOptions.llmPieter.label"),
+      description: t(
+        "screen.glassSettings.dnsOptions.llmPieter.description",
+      ),
+    },
+    {
+      value: "ch.at",
+      label: t("screen.glassSettings.dnsOptions.chAt.label"),
+      description: t("screen.glassSettings.dnsOptions.chAt.description"),
+    },
+  ];
 
   const fallbackDnsOption =
     dnsServerOptions[0] ?? {
@@ -107,57 +112,49 @@ export function GlassSettings() {
     dnsServerOptions.find((option) => option.value === dnsServer) ??
     fallbackDnsOption;
   const activeLocaleSelection = preferredLocale ?? null;
-  const localeOptions = React.useMemo(
-    () => [
-      {
-        key: "system",
-        title: t("screen.settings.sections.language.systemOption"),
+  const localeOptions = [
+    {
+      key: "system",
+      title: t("screen.settings.sections.language.systemOption"),
+      subtitle: t(
+        "screen.settings.sections.language.systemDescription",
+        { language: t(LOCALE_LABEL_KEYS[systemLocale]) },
+      ),
+      value: null as string | null,
+    },
+    ...availableLocales.map((option) => {
+      const label = t(LOCALE_LABEL_KEYS[option.locale]);
+      return {
+        key: option.locale,
+        title: label,
         subtitle: t(
-          "screen.settings.sections.language.systemDescription",
-          { language: t(LOCALE_LABEL_KEYS[systemLocale]) },
+          "screen.settings.sections.language.optionDescription",
+          { language: label },
         ),
-        value: null as string | null,
-      },
-      ...availableLocales.map((option) => {
-        const label = t(LOCALE_LABEL_KEYS[option.locale]);
-        return {
-          key: option.locale,
-          title: label,
-          subtitle: t(
-            "screen.settings.sections.language.optionDescription",
-            { language: label },
-          ),
-          value: option.locale,
-        };
-      }),
-    ],
-    [availableLocales, systemLocale, t],
-  );
-  const transportLabelMap = React.useMemo(
-    () => ({
-      native: t("screen.settings.sections.transportTest.transports.native"),
-      udp: t("screen.settings.sections.transportTest.transports.udp"),
-      tcp: t("screen.settings.sections.transportTest.transports.tcp"),
+        value: option.locale,
+      };
     }),
-    [t],
-  );
-  const appVersion: string = packageJson.version;
+  ];
+  const transportLabelMap = {
+    native: t("screen.settings.sections.transportTest.transports.native"),
+    udp: t("screen.settings.sections.transportTest.transports.udp"),
+    tcp: t("screen.settings.sections.transportTest.transports.tcp"),
+  };
+  const appVersion: string = getAppVersionInfo().displayVersion;
   const aboutFeatureKeys = ["line1", "line2", "line3", "line4", "line5"] as const;
 
   // Action handlers
-  const handleDnsServerSelect = React.useCallback(
-    async (server: string) => {
-      await updateDnsServer(server);
-      dnsServerSheet.hide();
+  const handleDnsServerSelect = async (server: string) => {
+    await updateDnsServer(server);
+    dnsServerSheet.hide();
 
-      // Haptic feedback
-      if (Platform.OS === "ios") {
-      }
-    },
-    [updateDnsServer, dnsServerSheet],
-  );
+    // Haptic feedback
+    if (Platform.OS === "ios") {
+      HapticFeedback.medium();
+    }
+  };
 
-  const handleShareApp = React.useCallback(async () => {
+  const handleShareApp = async () => {
     try {
       await Share.share({
         message: t("screen.glassSettings.sections.about.shareMessage"),
@@ -166,13 +163,13 @@ export function GlassSettings() {
     } catch (error) {
       devWarn("[GlassSettings] Share failed", error);
     }
-  }, [t]);
+  };
 
-  const handleOpenGitHub = React.useCallback(() => {
-    Linking.openURL("https://github.com/mneves75/dnschat");
-  }, []);
+  const handleOpenGitHub = () => {
+    void openExternalUrl("https://github.com/mneves75/dnschat");
+  };
 
-  const handleResetSettings = React.useCallback(() => {
+  const handleResetSettings = () => {
     Alert.alert(
       t("screen.glassSettings.alerts.resetTitle"),
       t("screen.glassSettings.alerts.resetMessage"),
@@ -193,14 +190,9 @@ export function GlassSettings() {
         },
       ],
     );
-  }, [
-    updateDnsServer,
-    updateEnableMockDNS,
-    updateEnableHaptics,
-    t,
-  ]);
+  };
 
-  const handleResetOnboarding = React.useCallback(() => {
+  const handleResetOnboarding = () => {
     Alert.alert(
       t("screen.settings.alerts.onboardingTitle"),
       t("screen.settings.alerts.onboardingMessage"),
@@ -219,7 +211,7 @@ export function GlassSettings() {
         },
       ],
     );
-  }, [resetOnboarding, t]);
+  };
 
   // Transport test state
   const [testMessage, setTestMessage] = React.useState("ping");
@@ -287,8 +279,8 @@ export function GlassSettings() {
         true,
       );
       setLastTestResult(response);
-    } catch (e: any) {
-      setLastTestError(e?.message || String(e));
+    } catch (e: unknown) {
+      setLastTestError(getErrorMessage(e));
     } finally {
       setTestRunning(false);
     }
@@ -316,14 +308,14 @@ export function GlassSettings() {
         dnsServer,
       );
       setLastTestResult(response);
-    } catch (e: any) {
-      setLastTestError(e?.message || String(e));
+    } catch (e: unknown) {
+      setLastTestError(getErrorMessage(e));
     } finally {
       setTestRunning(false);
     }
   };
 
-  const handleClearData = React.useCallback(() => {
+  const handleClearData = () => {
     Alert.alert(
       t("screen.glassSettings.alerts.clearCacheTitle"),
       t("screen.glassSettings.alerts.clearCacheMessage"),
@@ -356,11 +348,14 @@ export function GlassSettings() {
         },
       ],
     );
-  }, [clearingData, loadChats, t]);
+  };
 
   return (
     <>
-      <Form.List navigationTitle={t("screen.settings.navigationTitle")}>
+      <Form.List
+        testID="settings-screen"
+        navigationTitle={t("screen.settings.navigationTitle")}
+      >
         <Animated.View style={animatedStyle}>
           {/* DNS Configuration Section */}
           <Form.Section
@@ -368,36 +363,57 @@ export function GlassSettings() {
           footer={t("screen.settings.sections.dnsConfig.description")}
         >
           <Form.Item
+            testID="settings-dns-server"
             title={t("screen.settings.sections.dnsConfig.dnsServerLabel")}
             subtitle={currentDnsOption.label}
-            rightContent={<Text style={styles.valueText}>{dnsServer}</Text>}
+            rightContent={
+              <Text style={[styles.valueText, { color: palette.textTertiary }]}>
+                {dnsServer}
+              </Text>
+            }
             onPress={dnsServerSheet.show}
             showChevron
           />
 
           <Form.Item
+            testID="settings-mock-dns"
             title={t("screen.glassSettings.sections.dnsConfig.mockTitle")}
             subtitle={t("screen.glassSettings.sections.dnsConfig.mockSubtitle")}
             rightContent={
               <Switch
+                testID="settings-mock-dns-switch"
                 value={enableMockDNS}
                 onValueChange={handleToggleMockDNS}
                 trackColor={{ false: palette.textTertiary, true: palette.userBubble }}
-                thumbColor={Platform.OS === "ios" ? undefined : "#FFFFFF"}
+                thumbColor={
+                  Platform.OS === "android"
+                    ? enableMockDNS
+                      ? "#FFFFFF"
+                      : palette.textTertiary
+                    : undefined
+                }
               />
             }
           />
           <Form.Item
+            testID="settings-haptics"
             title={t("screen.settings.sections.appBehavior.enableHaptics.label")}
             subtitle={t(
               "screen.settings.sections.appBehavior.enableHaptics.description",
             )}
             rightContent={
               <Switch
+                testID="settings-haptics-switch"
                 value={enableHaptics}
                 onValueChange={handleToggleHaptics}
                 trackColor={{ false: palette.textTertiary, true: palette.userBubble }}
-                thumbColor={Platform.OS === "ios" ? undefined : "#FFFFFF"}
+                thumbColor={
+                  Platform.OS === "android"
+                    ? enableHaptics
+                      ? "#FFFFFF"
+                      : palette.textTertiary
+                    : undefined
+                }
               />
             }
           />
@@ -415,7 +431,7 @@ export function GlassSettings() {
               subtitle={option.subtitle}
               rightContent={
                 activeLocaleSelection === option.value && (
-                  <Text style={styles.selectedIndicator}>•</Text>
+                  <Text style={[styles.selectedIndicator, { color: palette.userBubble }]}>•</Text>
                 )
               }
               onPress={() => handleSelectLocale(option.value)}
@@ -432,22 +448,34 @@ export function GlassSettings() {
           <Form.Item
             title={t("screen.settings.sections.transportTest.messageLabel")}
             subtitle={testMessage}
-            onPress={() => {}}
-            rightContent={<Text style={styles.valueText}>{testMessage}</Text>}
+            rightContent={
+              <Text style={[styles.valueText, { color: palette.textTertiary }]}>
+                {testMessage}
+              </Text>
+            }
           />
           <LiquidGlassWrapper
             variant="interactive"
             shape="capsule"
             style={{ marginVertical: 8, alignItems: "center", padding: 10 }}
           >
-            <Text
+            <TouchableOpacity
+              testID="settings-transport-test"
               onPress={handleTestSelectedPreference}
-              style={{ color: palette.userBubble }}
+              accessibilityRole="button"
+              accessibilityLabel={
+                testRunning
+                  ? t("screen.settings.sections.transportTest.testingButton")
+                  : t("screen.settings.sections.transportTest.testButton")
+              }
+              style={styles.transportTestButton}
             >
-              {testRunning
-                ? t("screen.settings.sections.transportTest.testingButton")
-                : t("screen.settings.sections.transportTest.testButton")}
-            </Text>
+              <Text style={{ color: palette.userBubble }}>
+                {testRunning
+                  ? t("screen.settings.sections.transportTest.testingButton")
+                  : t("screen.settings.sections.transportTest.testButton")}
+              </Text>
+            </TouchableOpacity>
           </LiquidGlassWrapper>
           <View
             style={{ flexDirection: "row", justifyContent: "space-around" }}
@@ -459,15 +487,23 @@ export function GlassSettings() {
                 shape="capsule"
                 style={{ paddingHorizontal: 12, paddingVertical: 6 }}
               >
-                <Text onPress={() => handleForceTransport(transportKey)}>
-                  {transportLabelMap[transportKey]}
-                </Text>
+                <TouchableOpacity
+                  testID={`settings-force-${transportKey}`}
+                  onPress={() => handleForceTransport(transportKey)}
+                  accessibilityRole="button"
+                  accessibilityLabel={transportLabelMap[transportKey]}
+                  style={styles.transportForceButton}
+                >
+                  <Text>
+                    {transportLabelMap[transportKey]}
+                  </Text>
+                </TouchableOpacity>
               </LiquidGlassWrapper>
             ))}
           </View>
 
           {lastTestResult && (
-            <View style={styles.aboutCard}>
+            <View style={[styles.aboutCard, { backgroundColor: palette.highlight }]}>
               <Text style={styles.aboutText}>
                 {t("screen.glassSettings.results.label", {
                   value: lastTestResult,
@@ -476,7 +512,7 @@ export function GlassSettings() {
             </View>
           )}
           {lastTestError && (
-            <View style={styles.aboutCard}>
+            <View style={[styles.aboutCard, { backgroundColor: palette.highlight }]}>
               <Text style={styles.aboutText}>
                 {t("screen.glassSettings.results.error", {
                   value: lastTestError,
@@ -489,6 +525,7 @@ export function GlassSettings() {
         {/* App Information Section */}
         <Form.Section title={t("screen.glassSettings.sections.about.title")}>
           <Form.Item
+            testID="settings-about-version"
             title={t("screen.glassSettings.sections.about.appVersionTitle")}
             subtitle={t(
               "screen.glassSettings.sections.about.appVersionSubtitle",
@@ -498,9 +535,21 @@ export function GlassSettings() {
               <LiquidGlassWrapper
                 variant="interactive"
                 shape="capsule"
-                style={styles.versionBadge}
+                style={[
+                  styles.versionBadge,
+                  { backgroundColor: palette.accentSurface },
+                ]}
               >
-                <Text style={styles.versionText}>
+                <Text
+                  style={[
+                    styles.versionText,
+                    {
+                      color: Platform.OS === "ios"
+                        ? DynamicColorIOS({ light: "#FF6B35", dark: "#FF8C5A" })
+                        : "#FF6B35",
+                    },
+                  ]}
+                >
                   {t("screen.glassSettings.sections.about.latestBadge")}
                 </Text>
               </LiquidGlassWrapper>
@@ -509,6 +558,7 @@ export function GlassSettings() {
           />
 
           <Form.Link
+            testID="settings-github-link"
             title={t("screen.glassSettings.sections.about.githubTitle")}
             subtitle={t(
               "screen.glassSettings.sections.about.githubSubtitle",
@@ -517,6 +567,7 @@ export function GlassSettings() {
           />
 
           <Form.Item
+            testID="settings-share-app"
             title={t("screen.glassSettings.sections.about.shareTitle")}
             subtitle={t("screen.glassSettings.sections.about.shareSubtitle")}
             onPress={handleShareApp}
@@ -530,6 +581,7 @@ export function GlassSettings() {
           footer={t("screen.glassSettings.sections.advanced.footer")}
         >
           <Form.Item
+            testID="settings-clear-data"
             title={t("screen.glassSettings.sections.advanced.clearCacheTitle")}
             subtitle={t(
               "screen.glassSettings.sections.advanced.clearCacheSubtitle",
@@ -539,6 +591,7 @@ export function GlassSettings() {
           />
 
           <Form.Item
+            testID="settings-reset-defaults"
             title={t("screen.glassSettings.sections.advanced.resetTitle")}
             subtitle={t(
               "screen.glassSettings.sections.advanced.resetSubtitle",
@@ -551,6 +604,7 @@ export function GlassSettings() {
         {/* Support Section */}
         <Form.Section title={t("screen.glassSettings.sections.support.title")}>
           <Form.Item
+            testID="settings-help"
             title={t("screen.glassSettings.sections.support.helpTitle")}
             subtitle={t("screen.glassSettings.sections.support.helpSubtitle")}
             onPress={supportSheet.show}
@@ -558,11 +612,12 @@ export function GlassSettings() {
           />
 
           <Form.Item
+            testID="settings-report-bug"
             title={t("screen.glassSettings.sections.support.bugTitle")}
             subtitle={t("screen.glassSettings.sections.support.bugSubtitle")}
-            onPress={() =>
-              Linking.openURL("https://github.com/mneves75/dnschat/issues")
-            }
+            onPress={() => {
+              void openExternalUrl("https://github.com/mneves75/dnschat/issues");
+            }}
             showChevron
           />
         </Form.Section>
@@ -573,6 +628,7 @@ export function GlassSettings() {
             footer={t("screen.settings.sections.development.resetOnboardingSubtitle")}
           >
             <Form.Item
+              testID="settings-reset-onboarding"
               title={t("screen.settings.sections.development.resetOnboardingTitle")}
               subtitle={t("screen.settings.sections.development.resetOnboardingSubtitle")}
               onPress={handleResetOnboarding}
@@ -593,18 +649,22 @@ export function GlassSettings() {
         <View style={styles.dnsOptionsContainer}>
           {dnsServerOptions.map((option) => (
             <Form.Item
+              testID={`settings-dns-option-${option.value.replace(/[^a-z0-9]/gi, "-").toLowerCase()}`}
               key={option.value}
               title={option.label}
               subtitle={option.description}
               rightContent={
                 dnsServer === option.value && (
-                  <Text style={styles.selectedIndicator}>•</Text>
+                  <Text style={[styles.selectedIndicator, { color: palette.userBubble }]}>•</Text>
                 )
               }
               onPress={() => handleDnsServerSelect(option.value)}
               style={[
                 styles.dnsOption,
-                dnsServer === option.value && styles.selectedDnsOption,
+                { backgroundColor: palette.highlight },
+                dnsServer === option.value && {
+                  backgroundColor: `${palette.userBubble}1A`,
+                },
               ]}
             />
           ))}
@@ -624,7 +684,7 @@ export function GlassSettings() {
             variant="regular"
             shape="roundedRect"
             cornerRadius={12}
-            style={styles.aboutCard}
+            style={[styles.aboutCard, { backgroundColor: palette.highlight }]}
           >
             <Text
               style={[styles.aboutText, { color: palette.textPrimary }]}
@@ -662,24 +722,27 @@ export function GlassSettings() {
         actions={[
           {
             title: t("screen.glassSettings.supportSheet.docs"),
-            onPress: () =>
-              Linking.openURL(
+            onPress: () => {
+              void openExternalUrl(
                 "https://github.com/mneves75/dnschat/blob/main/README.md",
-              ),
+              );
+            },
           },
           {
             title: t("screen.glassSettings.supportSheet.community"),
-            onPress: () =>
-              Linking.openURL(
+            onPress: () => {
+              void openExternalUrl(
                 "https://github.com/mneves75/dnschat/discussions",
-              ),
+              );
+            },
           },
           {
             title: t("screen.glassSettings.supportSheet.email"),
-            onPress: () =>
-              Linking.openURL(
-                "mailto:support@dnschat.app?subject=DNSChat Support",
-              ),
+            onPress: () => {
+              void openExternalUrl(
+                "mailto:support@dnschat.app?subject=DNSChat%20Support",
+              );
+            },
           },
           {
             title: t("screen.glassSettings.supportSheet.cancel"),
@@ -699,18 +762,30 @@ export function GlassSettings() {
 const styles = StyleSheet.create({
   valueText: {
     fontSize: 15,
-    color: "#8E8E93",
     fontWeight: "400",
+  },
+  transportTestButton: {
+    minHeight: 44,
+    minWidth: 44,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 12,
+  },
+  transportForceButton: {
+    minHeight: 44,
+    minWidth: 44,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 8,
   },
   versionBadge: {
     paddingHorizontal: 8,
     paddingVertical: 4,
-    backgroundColor: "rgba(0, 122, 255, 0.15)", // iOS system blue
   },
   versionText: {
     fontSize: 12,
     fontWeight: "600",
-    color: "#FF6B35", // Notion orange
+    // color applied inline via DynamicColorIOS for theme awareness
   },
   dnsOptionsContainer: {
     paddingTop: 8,
@@ -718,15 +793,10 @@ const styles = StyleSheet.create({
   dnsOption: {
     marginBottom: 8,
     borderRadius: 8,
-    backgroundColor: "rgba(255, 255, 255, 0.05)",
-  },
-  selectedDnsOption: {
-    backgroundColor: "rgba(255, 69, 58, 0.1)", // Notion red
   },
   selectedIndicator: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#FF453A", // Modern red
   },
   aboutContent: {
     paddingTop: 16,
@@ -734,7 +804,6 @@ const styles = StyleSheet.create({
   aboutCard: {
     padding: 16,
     marginBottom: 20,
-    backgroundColor: "rgba(255, 255, 255, 0.08)",
   },
   aboutText: {
     fontSize: 16,

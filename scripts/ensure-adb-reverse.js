@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-const { execSync } = require("node:child_process");
+const { execFileSync } = require("node:child_process");
 const { setTimeout: delay } = require("node:timers/promises");
 const { parseAdbDevices, resolveMetroPort } = require("./utils/adbReverse");
 
@@ -16,7 +16,7 @@ function warn(message) {
 
 function getConnectedDevices() {
   try {
-    const output = execSync("adb devices", { encoding: "utf8" });
+    const output = execFileSync("adb", ["devices"], { encoding: "utf8" });
     return parseAdbDevices(output);
   } catch (error) {
     warn(`Unable to execute 'adb devices': ${error.message.trim()}`);
@@ -27,7 +27,7 @@ function getConnectedDevices() {
 function reversePortForDevices(devices, port) {
   devices.forEach((serial) => {
     try {
-      execSync(`adb -s ${serial} reverse tcp:${port} tcp:${port}`, {
+      execFileSync("adb", ["-s", serial, "reverse", `tcp:${port}`, `tcp:${port}`], {
         stdio: "ignore",
       });
       log(`Reversed tcp:${port} on ${serial}`);

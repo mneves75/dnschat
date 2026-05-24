@@ -24,6 +24,7 @@ import { useTranslation } from "../../i18n";
 import { useImessagePalette } from "../../ui/theme/imessagePalette";
 import { LiquidGlassSpacing, getCornerRadius } from "../../ui/theme/liquidGlassSpacing";
 import { Form, LiquidGlassWrapper } from "../../components/glass";
+import { PressableRipple } from "../../components/PressableRipple";
 import { useScreenEntrance } from "../../ui/hooks/useScreenEntrance";
 import { useChat } from "../../context/ChatContext";
 import { useSettings } from "../../context/SettingsContext";
@@ -46,7 +47,7 @@ export function Home() {
 
   // DNS status indicator
   const isDnsConnected = Boolean(dnsServer);
-  const dnsStatusColor = isDnsConnected ? "#34C759" : palette.textTertiary;
+  const dnsStatusColor = isDnsConnected ? palette.success : palette.textTertiary;
   const dnsStatusText = isDnsConnected
     ? t("screen.home.dnsConnected", { defaultValue: "Connected" })
     : t("screen.home.dnsDisconnected", { defaultValue: "Not configured" });
@@ -106,20 +107,26 @@ export function Home() {
                 </View>
               </View>
               {!isDnsConnected && (
-                <LiquidGlassWrapper
-                  variant="interactive"
-                  shape="capsule"
-                  style={styles.configureButton}
+                <PressableRipple
                   onPress={handleOpenSettings}
                   accessibilityLabel={t("screen.home.configureButton", {
                     defaultValue: "Configure DNS",
                   })}
                   accessibilityRole="button"
+                  variant="primary"
+                  borderless
+                  pressedOpacity={0.85}
                 >
-                  <Text style={[styles.configureButtonText, { color: palette.userBubble }]}>
-                    {t("screen.home.configure", { defaultValue: "Configure" })}
-                  </Text>
-                </LiquidGlassWrapper>
+                  <LiquidGlassWrapper
+                    variant="interactive"
+                    shape="capsule"
+                    style={styles.configureButton}
+                  >
+                    <Text style={[styles.configureButtonText, { color: palette.userBubble }]}>
+                      {t("screen.home.configure", { defaultValue: "Configure" })}
+                    </Text>
+                  </LiquidGlassWrapper>
+                </PressableRipple>
               )}
             </View>
             {isDnsConnected && (
@@ -190,7 +197,12 @@ export function Home() {
                 title={chat.title}
                 subtitle={formatDistanceToNow(chat.createdAt, { addSuffix: true })}
                 rightContent={
-                  <View style={styles.chatBadge}>
+                  <View
+                    style={[
+                      styles.chatBadge,
+                      { backgroundColor: palette.accentSurface },
+                    ]}
+                  >
                     <Text style={[styles.chatBadgeText, { color: palette.userBubble }]}>
                       {chat.messages.length}
                     </Text>
@@ -283,7 +295,6 @@ const styles = StyleSheet.create({
     minWidth: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: "rgba(0, 122, 255, 0.15)",
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 8,

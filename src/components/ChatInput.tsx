@@ -25,22 +25,22 @@
  * @reviewed-by John Carmack
  */
 
-import React, { useState, useRef, useMemo, useCallback } from "react";
+import React, { useState, useRef } from "react";
 import {
   View,
   TextInput,
-  TouchableOpacity,
   StyleSheet,
   useColorScheme,
   Text,
   Platform,
   AccessibilityInfo,
+  InteractionManager,
 } from "react-native";
 import type {
-  TouchableOpacityProps,
-  ViewProps,
   NativeSyntheticEvent,
   TextInputContentSizeChangeEventData,
+  StyleProp,
+  TextStyle,
 } from "react-native";
 import Animated, {
   useSharedValue,
@@ -58,26 +58,16 @@ import { HapticFeedback } from "../utils/haptics";
 import { SendIcon } from "./icons/SendIcon";
 import { useTranslation } from "../i18n";
 import { LiquidGlassWrapper, useLiquidGlassCapabilities } from "./LiquidGlassWrapper";
+import { PressableRipple } from "./PressableRipple";
 import { MESSAGE_CONSTANTS } from "../constants/appConstants";
 
-type TouchableWithPointerEventsProps = TouchableOpacityProps & {
-  pointerEvents?: ViewProps["pointerEvents"];
-};
-
-const TouchableWithPointerEvents = React.forwardRef<
-  React.ElementRef<typeof TouchableOpacity>,
-  TouchableWithPointerEventsProps
->(
-  (props, ref) => <TouchableOpacity ref={ref} {...props} />,
-);
-TouchableWithPointerEvents.displayName = "TouchableWithPointerEvents";
-
-// Reanimated's default TouchableOpacity typing omits pointerEvents, so we wrap it to expose the prop.
-const AnimatedTouchable = Animated.createAnimatedComponent(TouchableWithPointerEvents);
+// Animated wrapper around PressableRipple — preserves Reanimated style animations
+// while giving Android a proper Material 3 ripple via PressableRipple's android_ripple.
+const AnimatedPressableRipple = Animated.createAnimatedComponent(PressableRipple);
 
 // Constants derived from design system (no magic numbers!)
-const CHARACTER_COUNTER_THRESHOLD = MESSAGE_CONSTANTS.MAX_MESSAGE_LENGTH - 20; // Show at 90%
-const ACCESSIBILITY_ALERT_THRESHOLD = MESSAGE_CONSTANTS.MAX_MESSAGE_LENGTH - 10; // Alert at 92%
+const CHARACTER_COUNTER_THRESHOLD = Math.ceil(MESSAGE_CONSTANTS.MAX_MESSAGE_LENGTH * 0.9);
+const ACCESSIBILITY_ALERT_THRESHOLD = Math.ceil(MESSAGE_CONSTANTS.MAX_MESSAGE_LENGTH * 0.92);
 const ANIMATION_DURATION_MS = 200;
 const BUTTON_SPACING = LiquidGlassSpacing.xxs; // 4px from edge
 
@@ -109,16 +99,13 @@ export function ChatInput({
   const palette = useImessagePalette();
   const { t } = useTranslation();
   const { supportsLiquidGlass } = useLiquidGlassCapabilities();
-  // Resolve touch target up front so every memo below can safely reference it without tripping TDZ.
+  // Resolve touch target up front for layout calculations.
   const minimumTouchTarget = getMinimumTouchTarget();
-  const reportHeight = useCallback(
-    (height: number) => {
-      if (onHeightChange) {
-        onHeightChange(height);
-      }
-    },
-    [onHeightChange],
-  );
+  const reportHeight = (height: number) => {
+    if (onHeightChange) {
+      onHeightChange(height);
+    }
+  };
 
   /**
    * Height Calculation (Design System Derived)
@@ -137,27 +124,23 @@ export function ChatInput({
    * Uses actual typography line height, not magic numbers.
    * Calculated early so we can initialize inputHeight.
    */
-  const heightConstraints = useMemo(() => {
-    const lineHeight = typography.body.lineHeight || 22;
-    // LiquidGlassSpacing.sm = 12px (vs reference 13px - prioritize design system consistency)
-    const verticalPadding = LiquidGlassSpacing.sm * 2; // top + bottom (12px * 2 = 24px)
-    const naturalMin = lineHeight + verticalPadding;
+  const lineHeight = typography.body.lineHeight || 22;
+  // LiquidGlassSpacing.sm = 12px (vs reference 13px - prioritize design system consistency)
+  const verticalPadding = LiquidGlassSpacing.sm * 2; // top + bottom (12px * 2 = 24px)
+  const naturalMin = lineHeight + verticalPadding;
 
-    // CRITICAL FIX: Ensure min height >= touch target to prevent button overflow
-    // Without this, button positioning goes negative (e.g., (38 - 44) / 2 = -3px)
-    const touchTarget = minimumTouchTarget;
-    const min = Math.max(naturalMin, touchTarget);
-
-    return {
-      min,
-      max: (lineHeight * 5) + verticalPadding,
-    };
-  }, [typography.body.lineHeight, minimumTouchTarget]);
+  // CRITICAL FIX: Ensure min height >= touch target to prevent button overflow
+  // Without this, button positioning goes negative (e.g., (38 - 44) / 2 = -3px)
+  const touchTarget = minimumTouchTarget;
+  const heightConstraints = {
+    min: Math.max(naturalMin, touchTarget),
+    max: (lineHeight * 5) + verticalPadding,
+  };
 
   React.useEffect(() => {
     // Initialize parent padding immediately so content never jumps on first layout.
-    reportHeight(Math.round(heightConstraints.min));
-  }, [heightConstraints.min, reportHeight]);
+    onHeightChange?.(Math.round(heightConstraints.min));
+  }, [heightConstraints.min, onHeightChange]);
 
   // Reanimated shared values for UI thread performance
   const inputHeight = useSharedValue(heightConstraints.min);
@@ -198,9 +181,9 @@ export function ChatInput({
    * Right padding accommodates integrated send button.
    * Calculated from actual touch target size, not hardcoded.
    */
-  const inputPadding = useMemo(() => ({
+  const inputPadding = {
     paddingRight: minimumTouchTarget + BUTTON_SPACING,
-  }), [minimumTouchTarget]);
+  };
 
   /**
    * Update Send Button Opacity
@@ -282,7 +265,9 @@ export function ChatInput({
    *
    * Performance: Runs on UI thread via Reanimated.
    */
-  const handleContentSizeChange = useCallback((event: NativeSyntheticEvent<TextInputContentSizeChangeEventData>) => {
+  const handleContentSizeChange = (
+    event: NativeSyntheticEvent<TextInputContentSizeChangeEventData>,
+  ) => {
     const { height } = event.nativeEvent.contentSize;
     const constrainedHeight = Math.min(
       Math.max(height, heightConstraints.min),
@@ -290,7 +275,7 @@ export function ChatInput({
     );
 
     inputHeight.value = withSpring(constrainedHeight, SpringConfig.bouncy);
-  }, [inputHeight, heightConstraints]);
+  };
 
   /**
    * Handle Send
@@ -301,7 +286,7 @@ export function ChatInput({
    * 4. Clears input
    * 5. Refocuses input (iOS only)
    */
-  const handleSend = useCallback(() => {
+  const handleSend = () => {
     if (message.trim() && !isLoading) {
       // Haptic feedback on send
       HapticFeedback.medium();
@@ -311,12 +296,12 @@ export function ChatInput({
 
       // Refocus the input after sending on iOS
       if (Platform.OS === "ios") {
-        setTimeout(() => {
+        InteractionManager.runAfterInteractions(() => {
           textInputRef.current?.focus();
-        }, 100);
+        });
       }
     }
-  }, [message, isLoading, onSendMessage]);
+  };
 
   /**
    * Handle Press In
@@ -327,12 +312,13 @@ export function ChatInput({
    *
    * Only triggers when send is enabled (canSend).
    */
-  const handlePressIn = useCallback(() => {
+  const handlePressIn = () => {
     if (canSend) {
-      scale.value = withSpring(buttonPressScale, SpringConfig.bouncy);
+      // Non-bouncy spring to prevent overshoot above 1.0 (iOS HIG send button feel)
+      scale.value = withSpring(buttonPressScale, { damping: 20, stiffness: 300, mass: 1 });
       HapticFeedback.light();
     }
-  }, [canSend, scale]);
+  };
 
   /**
    * Handle Press Out
@@ -340,9 +326,10 @@ export function ChatInput({
    * Returns button to normal scale (1.0x).
    * Spring animation provides natural feel.
    */
-  const handlePressOut = useCallback(() => {
-    scale.value = withSpring(1, SpringConfig.bouncy);
-  }, [scale]);
+  const handlePressOut = () => {
+    // Non-bouncy spring to prevent overshoot above 1.0
+    scale.value = withSpring(1, { damping: 20, stiffness: 300, mass: 1 });
+  };
 
   /**
    * Render Text Input
@@ -350,9 +337,10 @@ export function ChatInput({
    * Common props shared between glass and fallback variants.
    * Extracted to reduce duplication.
    */
-  const renderTextInput = useCallback((additionalStyles: any[] = []) => (
+  const renderTextInput = (additionalStyles: StyleProp<TextStyle>[] = []) => (
     <Animated.View style={[styles.inputWrapper, animatedInputStyle]}>
       <TextInput
+        testID={testID ? `${testID}-field` : undefined}
         ref={textInputRef}
         style={[
           styles.textInput,
@@ -393,19 +381,7 @@ export function ChatInput({
         accessibilityHint={t("components.chatInput.accessibilityHint")}
       />
     </Animated.View>
-  ), [
-    animatedInputStyle,
-    inputPadding,
-    typography,
-    palette,
-    message,
-    handleContentSizeChange,
-    resolvedPlaceholder,
-    isLoading,
-    isDark,
-    handleSend,
-    t,
-  ]);
+  );
 
   /**
    * Render Send Button
@@ -416,8 +392,9 @@ export function ChatInput({
    * CRITICAL: pointerEvents="none" when disabled prevents button from
    * blocking touches to the TextInput underneath.
    */
-  const renderSendButton = useCallback(() => (
-    <AnimatedTouchable
+  const renderSendButton = () => (
+    <AnimatedPressableRipple
+      testID={testID ? `${testID}-send` : undefined}
       style={[
         animatedButtonStyle,
         animatedButtonPosition,
@@ -437,6 +414,10 @@ export function ChatInput({
       onPressOut={handlePressOut}
       disabled={!canSend}
       pointerEvents={canSend ? "auto" : "none"}
+      variant="icon"
+      borderless
+      rippleRadius={minimumTouchTarget / 2}
+      pressedOpacity={0.85}
       accessible={true}
       accessibilityRole="button"
       accessibilityLabel={
@@ -446,26 +427,14 @@ export function ChatInput({
       }
       accessibilityHint={t("components.chatInput.sendHint")}
       accessibilityState={{ disabled: !canSend }}
-      activeOpacity={1}
     >
       {isLoading ? (
         <Text style={[styles.sendButtonText, { color: palette.textPrimary }]}>...</Text>
       ) : (
         <SendIcon size={20} isActive={canSend} />
       )}
-    </AnimatedTouchable>
-  ), [
-    animatedButtonStyle,
-    animatedButtonPosition,
-    minimumTouchTarget,
-    canSend,
-    palette,
-    handleSend,
-    handlePressIn,
-    handlePressOut,
-    isLoading,
-    t,
-  ]);
+    </AnimatedPressableRipple>
+  );
 
   /**
    * Render Character Counter
@@ -476,7 +445,7 @@ export function ChatInput({
    * Note: Positioned outside inputWithButtonContainer to avoid
    * flex layout issues on Android (would appear beside input).
    */
-  const renderCharacterCounter = useCallback(() => {
+  const renderCharacterCounter = () => {
     if (!showCharacterCount) return null;
 
     return (
@@ -484,7 +453,7 @@ export function ChatInput({
         {message.length}/{MESSAGE_CONSTANTS.MAX_MESSAGE_LENGTH}
       </Text>
     );
-  }, [showCharacterCount, message.length, palette.textSecondary]);
+  };
 
   return (
     <View

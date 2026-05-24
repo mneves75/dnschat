@@ -27,14 +27,14 @@ export function NotFound() {
   const { animatedStyle } = useScreenEntrance();
 
   const handleGoHome = () => {
-    router.replace("/");
+    router.replace("/(tabs)");
   };
 
   return (
     <Form.List
       testID="not-found-screen"
       navigationTitle={t("screen.notFound.navigationTitle", { defaultValue: "Not Found" })}
-      style={[styles.container, { backgroundColor: palette.backgroundPrimary }]}
+      style={[styles.container, { backgroundColor: palette.background }]}
     >
       <Form.Section>
         <Animated.View style={animatedStyle}>
@@ -56,14 +56,16 @@ export function NotFound() {
         title={t("screen.notFound.quickLinks", { defaultValue: "Quick Links" })}
       >
         <Form.Item
+          testID="not-found-chat-link"
           title={t("navigation.tabs.chat")}
           subtitle={t("screen.notFound.chatDescription", {
             defaultValue: "Start a new conversation",
           })}
-          onPress={() => router.replace("/")}
+          onPress={() => router.replace("/(tabs)")}
           showChevron
         />
         <Form.Item
+          testID="not-found-logs-link"
           title={t("navigation.tabs.logs")}
           subtitle={t("screen.notFound.logsDescription", {
             defaultValue: "View DNS query logs",
@@ -72,6 +74,7 @@ export function NotFound() {
           showChevron
         />
         <Form.Item
+          testID="not-found-about-link"
           title={t("navigation.tabs.about")}
           subtitle={t("screen.notFound.aboutDescription", {
             defaultValue: "Learn more about DNSChat",

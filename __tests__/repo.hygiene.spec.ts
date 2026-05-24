@@ -35,6 +35,12 @@ describe("repo hygiene", () => {
     expect(offenders).toEqual([]);
   });
 
+  it("does not track generated Gradle cache folders", () => {
+    const tracked = listTrackedFiles();
+    const offenders = tracked.filter((p) => p.includes("/.gradle/") || p.startsWith(".gradle/"));
+    expect(offenders).toEqual([]);
+  });
+
   it("tracks fastlane config/screenshots but not generated reports", () => {
     const tracked = listTrackedFiles();
     const fastlaneFiles = tracked.filter((p) => p.startsWith("ios/fastlane/"));
@@ -101,5 +107,11 @@ describe("repo hygiene", () => {
     });
 
     expect(offenders).toEqual([]);
+  });
+
+  it("does not publish local release identifiers in markdown docs", () => {
+    expect(() => {
+      execSync("node scripts/check-public-redaction.js", { encoding: "utf8" });
+    }).not.toThrow();
   });
 });

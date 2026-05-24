@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 
 describe("iOS Podspec deployment target", () => {
-  it("sets iOS deployment target to 16.0 or higher", () => {
+  it("sets iOS deployment target to 16.4 or higher", () => {
     const podspecPath = path.join(__dirname, "..", "ios", "DNSNative.podspec");
     const content = fs.readFileSync(podspecPath, "utf-8");
 
@@ -19,6 +19,6 @@ describe("iOS Podspec deployment target", () => {
     if (deploymentMatch?.[1]) versions.push(parseFloat(deploymentMatch[1]));
 
     expect(versions.length).toBeGreaterThanOrEqual(1);
-    versions.forEach((v) => expect(v).toBeGreaterThanOrEqual(16.0));
+    versions.forEach((v) => expect(v).toBeGreaterThanOrEqual(16.4));
   });
 });

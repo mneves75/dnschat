@@ -7,7 +7,7 @@ module.exports = {
     '^.+\\.(ts|tsx)$': ['ts-jest', { tsconfig: '<rootDir>/tsconfig.test.json' }],
   },
   moduleNameMapper: {
-    '^react-native$': '<rootDir>/../../__tests__/mocks/react-native.js',
+    '^react-native$': '<rootDir>/mocks/react-native.js',
   },
   moduleFileExtensions: ['ts', 'tsx', 'js', 'json'],
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],

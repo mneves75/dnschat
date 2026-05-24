@@ -51,70 +51,7 @@ class DNSChatUITests: XCTestCase {
 
         app.launch()
 
-        // Wait for React Native to initialize
-        // iPad uses sidebar navigation, iPhone uses tab bar
-        let tabBar = app.tabBars.firstMatch
-        let skipButton = app.buttons["skip-onboarding"]
-
-        // Wait for navigation to appear (tab bar on iPhone, or other indicators on iPad)
-        let navExists = waitForNavigation(timeout: 5)
-
-        if !navExists {
-            // Onboarding is showing - need to skip it
-            // First, wait a bit for React Native to fully initialize
-            sleep(2)
-
-            // Try to find and tap the skip button
-            if skipButton.waitForExistence(timeout: 10) {
-                skipButton.tap()
-                sleep(2)
-            } else {
-                // Alternative: Try to complete onboarding by tapping "Continue" button
-                let continueButton = app.buttons["onboarding-continue"]
-                let completeButton = app.buttons["onboarding-complete"]
-
-                // Complete each onboarding step (max 6 steps)
-                for _ in 0..<6 {
-                    // First check if we've reached the navigation
-                    if isIPad {
-                        // iPad: Check for sidebar or content area
-                        if app.otherElements["chat-list"].exists || app.otherElements["about-screen"].exists {
-                            break
-                        }
-                    } else {
-                        // iPhone: Check for tab bar
-                        if tabBar.exists {
-                            break
-                        }
-                    }
-
-                    // Try continue button (regular steps)
-                    if continueButton.waitForExistence(timeout: 3) {
-                        continueButton.tap()
-                        sleep(1)
-                        continue
-                    }
-
-                    // Try complete button (last step)
-                    if completeButton.waitForExistence(timeout: 2) {
-                        completeButton.tap()
-                        sleep(2)
-                        break
-                    }
-
-                    // Try skip button as fallback
-                    if skipButton.waitForExistence(timeout: 2) {
-                        skipButton.tap()
-                        sleep(2)
-                        break
-                    }
-                }
-            }
-
-            // After completing onboarding, verify navigation now exists
-            let finalNavExists = waitForNavigation(timeout: 10)
-            XCTAssertTrue(finalNavExists, "Navigation not found after completing onboarding (iPad: \(isIPad))")
-        }
+        XCTAssertTrue(ensureNavigationReady(timeout: 15), "Navigation not found after onboarding recovery (iPad: \(isIPad))")
 
         // Additional wait for animations and rendering
         sleep(2)
@@ -144,6 +81,55 @@ class DNSChatUITests: XCTestCase {
             usleep(100_000) // 100ms
         }
         return false
+    }
+
+    // Helper to recover from a first-launch onboarding state before screenshots.
+    private func ensureNavigationReady(timeout: TimeInterval) -> Bool {
+        if waitForNavigation(timeout: 5) {
+            return true
+        }
+
+        let tabBar = app.tabBars.firstMatch
+        let skipButton = app.buttons["skip-onboarding"]
+        sleep(2)
+
+        if skipButton.waitForExistence(timeout: 10) {
+            skipButton.tap()
+            sleep(2)
+        } else {
+            let continueButton = app.buttons["onboarding-continue"]
+            let completeButton = app.buttons["onboarding-complete"]
+
+            for _ in 0..<6 {
+                if isIPad {
+                    if app.otherElements["chat-list"].exists || app.otherElements["about-screen"].exists {
+                        break
+                    }
+                } else if tabBar.exists {
+                    break
+                }
+
+                if continueButton.waitForExistence(timeout: 3) {
+                    continueButton.tap()
+                    sleep(1)
+                    continue
+                }
+
+                if completeButton.waitForExistence(timeout: 2) {
+                    completeButton.tap()
+                    sleep(2)
+                    break
+                }
+
+                if skipButton.waitForExistence(timeout: 2) {
+                    skipButton.tap()
+                    sleep(2)
+                    break
+                }
+            }
+        }
+
+        return waitForNavigation(timeout: timeout)
     }
 
     // Helper to tap navigation item (handles iPad sidebar vs iPhone tab bar)
@@ -211,8 +197,7 @@ class DNSChatUITests: XCTestCase {
         app.launchArguments.append("dark")
         app.launch()
 
-        // Wait for navigation to appear
-        XCTAssertTrue(waitForNavigation(timeout: 15), "Navigation not found in dark mode")
+        XCTAssertTrue(ensureNavigationReady(timeout: 15), "Navigation not found in dark mode after onboarding recovery")
         sleep(2)
 
         // Navigate to Chat List using localized title

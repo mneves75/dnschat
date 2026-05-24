@@ -1,10 +1,24 @@
 import dnsPacket from "dns-packet";
-import { composeDNSQueryName, sanitizeDNSMessage } from "../../../src/services/dnsService";
 import { NativeDNS } from "../index";
+import { sanitizeDNSMessageReference } from "../constants";
+
+function composeDNSQueryName(label: string, dnsServer: string): string {
+  const trimmedLabel = label.replace(/\.+$/g, "").trim();
+  if (!trimmedLabel) {
+    throw new Error("DNS label must be non-empty when composing query name");
+  }
+
+  const zone = dnsServer.replace(/\.+$/g, "").trim().toLowerCase();
+  if (!zone) {
+    throw new Error("DNS server must be non-empty when composing query name");
+  }
+
+  return `${trimmedLabel}.${zone}`;
+}
 
 describe("DNS packet compatibility", () => {
   it("encodes sanitized prompts as multi-label FQDNs", () => {
-    const label = sanitizeDNSMessage("Hello Swift DNS");
+    const label = sanitizeDNSMessageReference("Hello Swift DNS");
     const queryName = composeDNSQueryName(label, "ch.at");
 
     expect(queryName).toBe("hello-swift-dns.ch.at");
@@ -98,7 +112,7 @@ describe("DNS packet compatibility", () => {
   });
 
   it("keeps Unicode input DNS-safe by folding diacritics", () => {
-    const label = sanitizeDNSMessage("Água São Paulo");
+    const label = sanitizeDNSMessageReference("Água São Paulo");
     expect(label).toBe("agua-sao-paulo");
 
     const fqdn = composeDNSQueryName(label, "ch.at");

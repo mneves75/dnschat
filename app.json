@@ -2,11 +2,10 @@
   "expo": {
     "name": "DNS Chat",
     "slug": "chat-dns",
-    "version": "4.0.0",
+    "version": "4.0.14",
     "orientation": "default",
     "icon": "./icons/dnschat_ios26.png",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
     "experiments": {
       "reactCompiler": true,
       "typedRoutes": true
@@ -14,13 +13,20 @@
     "scheme": "dnschat",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "org.mvneves.dnschat"
+      "deploymentTarget": "16.4",
+      "buildNumber": "44",
+      "bundleIdentifier": "org.mvneves.dnschat",
+      "config": {
+        "usesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./icons/dnschat_ios26.png",
         "backgroundColor": "#0D7377"
       },
+      "versionCode": 44,
+      "predictiveBackGestureEnabled": true,
       "package": "org.mvneves.dnschat"
     },
     "web": {
@@ -42,10 +48,9 @@
         "expo-build-properties",
         {
           "ios": {
-            "deploymentTarget": "16.0",
+            "deploymentTarget": "16.4",
             "flipper": false,
             "ccacheEnabled": true,
-            "newArchEnabled": true,
             "generateStaticFrameworks": true,
             "generateSourcemap": true,
             "includeSymbolsInDsym": true,
@@ -56,14 +61,22 @@
                 "DEPLOYMENT_POSTPROCESSING": "YES",
                 "SEPARATE_STRIP": "YES",
                 "STRIP_INSTALLED_PRODUCT": "YES",
-                "COPY_PHASE_STRIP": "NO"
+                "COPY_PHASE_STRIP": "NO",
+                "ENABLE_USER_SCRIPT_SANDBOXING": "NO"
               }
             }
+          },
+          "android": {
+            "compileSdkVersion": 36,
+            "targetSdkVersion": 36,
+            "minSdkVersion": 24,
+            "ndkVersion": "29.0.14206865"
           }
         }
       ],
       "expo-localization",
-      "expo-router"
+      "expo-router",
+      "expo-secure-store"
     ]
   }
 }

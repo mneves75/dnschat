@@ -3,11 +3,19 @@ import {
   View,
   Text,
   StyleSheet,
-  Animated,
-  TouchableOpacity,
   ScrollView,
 } from "react-native";
+import Animated, {
+  cancelAnimation,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from "react-native-reanimated";
 import { OnboardingNavigation } from "../OnboardingNavigation";
+import { PressableRipple } from "../../PressableRipple";
+import { useMotionReduction } from "../../../context/AccessibilityContext";
 import { DNSService } from "../../../services/dnsService";
 import { useImessagePalette } from "../../../ui/theme/imessagePalette";
 import { useTypography } from "../../../ui/hooks/useTypography";
@@ -27,6 +35,7 @@ export function DNSMagicScreen() {
   const palette = useImessagePalette();
   const typography = useTypography();
   const { t } = useTranslation();
+  const { shouldReduceMotion } = useMotionReduction();
 
   const [isRunning, setIsRunning] = useState(false);
   const [dnsSteps, setDnsSteps] = useState<DNSStep[]>([
@@ -57,26 +66,32 @@ export function DNSMagicScreen() {
   ]);
   const [response, setResponse] = useState<string>("");
 
-  const pulseAnim = React.useRef(new Animated.Value(1)).current;
+  const pulseAnim = useSharedValue(1);
 
+  // Effect: start the Reanimated pulse animation on mount and cancel on unmount.
   useEffect(() => {
-    const pulse = Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, {
-          toValue: 1.1,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(pulseAnim, {
-          toValue: 1,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
-      ]),
+    if (shouldReduceMotion) {
+      pulseAnim.value = 1;
+      return;
+    }
+
+    pulseAnim.value = withRepeat(
+      withSequence(
+        withTiming(1.1, { duration: 1000 }),
+        withTiming(1, { duration: 1000 }),
+      ),
+      -1,
+      false,
     );
-    pulse.start();
-    return () => pulse.stop();
-  }, []);
+
+    return () => {
+      cancelAnimation(pulseAnim);
+    };
+  }, [shouldReduceMotion]);
+
+  const pulseStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pulseAnim.value }],
+  }));
 
   const runDNSDemo = async () => {
     setIsRunning(true);
@@ -106,16 +121,19 @@ export function DNSMagicScreen() {
 
     try {
       updateStep("1", "active", t("screen.onboarding.dnsMagic.fallbackMethods.native.active"));
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      updateStep("1", "success", t("screen.onboarding.dnsMagic.fallbackMethods.native.success"), 1200);
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      const queryStartedAt = Date.now();
 
       const result = await DNSService.queryLLM(
         testMessage,
         undefined,
         false,
         true,
+      );
+      updateStep(
+        "1",
+        "success",
+        t("screen.onboarding.dnsMagic.fallbackMethods.native.success"),
+        Date.now() - queryStartedAt,
       );
       setResponse(result);
     } catch (error) {
@@ -126,7 +144,7 @@ export function DNSMagicScreen() {
       updateStep("2", "active", t("screen.onboarding.dnsMagic.fallbackMethods.udp.active"));
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      updateStep("2", "success", t("screen.onboarding.dnsMagic.fallbackMethods.udp.success"), 800);
+      updateStep("2", "failed", t("screen.onboarding.dnsMagic.fallbackMethods.udp.failed"));
       setResponse(t("screen.onboarding.dnsMagic.demoResponse"));
     }
 
@@ -134,12 +152,10 @@ export function DNSMagicScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View testID="onboarding-dns-magic" style={styles.container}>
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.headerSection}>
-          <Animated.View
-            style={[styles.dnsIcon, { transform: [{ scale: pulseAnim }] }]}
-          >
+          <Animated.View style={[styles.dnsIcon, pulseStyle]}>
             <Text style={[typography.displayMedium, { color: palette.accentTint }]}>
               {t("screen.onboarding.dnsMagic.label")}
             </Text>
@@ -168,17 +184,23 @@ export function DNSMagicScreen() {
 
         <View style={styles.demoSection}>
           {/* iOS HIG: Primary action button to trigger DNS demonstration with fallback chain */}
-          <TouchableOpacity
+          <PressableRipple
+            testID="onboarding-dns-demo"
             style={[
               styles.demoButton,
               { backgroundColor: isRunning ? palette.surface : palette.accentTint },
             ]}
             onPress={runDNSDemo}
             disabled={isRunning}
-            activeOpacity={0.7}
+            variant="primary"
+            pressedOpacity={0.7}
             accessibilityRole="button"
-            accessibilityLabel={isRunning ? "DNS query in progress" : "Start DNS demo"}
-            accessibilityHint="Demonstrates how DNS queries work through the fallback chain. Watch as your message travels through Native DNS, UDP, TCP, and HTTPS methods."
+            accessibilityLabel={t(
+              isRunning
+                ? "screen.onboarding.dnsMagic.accessibility.runningLabel"
+                : "screen.onboarding.dnsMagic.accessibility.idleLabel",
+            )}
+            accessibilityHint={t("screen.onboarding.dnsMagic.accessibility.demoHint")}
             accessibilityState={{ disabled: isRunning, busy: isRunning }}
           >
             <Text
@@ -193,7 +215,7 @@ export function DNSMagicScreen() {
             >
               {isRunning ? t("screen.onboarding.dnsMagic.demoButtonRunning") : t("screen.onboarding.dnsMagic.demoButton")}
             </Text>
-          </TouchableOpacity>
+          </PressableRipple>
 
           <View style={styles.stepsContainer}>
             {dnsSteps.map((step, index) => (
@@ -209,6 +231,8 @@ export function DNSMagicScreen() {
 
           {response && (
             <View
+              accessible={true}
+              accessibilityLiveRegion="polite"
               style={[
                 styles.responseContainer,
                 {

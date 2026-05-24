@@ -1,4 +1,4 @@
-import { NativeModules, Platform } from "react-native";
+import { NativeModules } from "react-native";
 import { getNativeSanitizerConfig, getServerPort, DNS_CONSTANTS } from "./constants";
 import type { NativeSanitizerConfig } from "./constants";
 
@@ -15,13 +15,10 @@ const isJestRuntime = (): boolean => {
   }
 };
 
-const isNativeDebugEnabled = (): boolean => {
-  const dev = typeof __DEV__ !== "undefined" ? Boolean(__DEV__) : false;
-  if (!dev) return false;
-  if (isJestRuntime()) return false;
-
+const isExplicitDebugEnabled = (): boolean => {
   try {
-    if ((globalThis as any).__DNSCHAT_NATIVE_DEBUG__ === true) return true;
+    const globalRecord = globalThis as Record<string, unknown>;
+    if (globalRecord["__DNSCHAT_NATIVE_DEBUG__"] === true) return true;
   } catch {}
   try {
     if (typeof process !== "undefined" && process.env?.["DNSCHAT_NATIVE_DEBUG"] === "1") {
@@ -31,11 +28,48 @@ const isNativeDebugEnabled = (): boolean => {
   return false;
 };
 
-const DEV_LOGGING = isNativeDebugEnabled();
+const isNativeDebugEnabled = (): boolean => {
+  const dev = typeof __DEV__ !== "undefined" ? Boolean(__DEV__) : false;
+  const explicit = isExplicitDebugEnabled();
+
+  if (isJestRuntime()) {
+    return explicit;
+  }
+
+  if (!dev) return false;
+  return explicit;
+};
 const debugLog = (...args: unknown[]) => {
-  if (DEV_LOGGING) {
+  if (isNativeDebugEnabled()) {
     console.log(...args);
   }
+};
+const debugWarn = (...args: unknown[]) => {
+  if (isNativeDebugEnabled()) {
+    console.warn(...args);
+  }
+};
+
+const getErrorMessage = (error: unknown): string => {
+  if (error instanceof Error) return error.message;
+  if (typeof error === "string") return error;
+  if (error && typeof error === "object") {
+    const record = error as Record<string, unknown>;
+    if (typeof record["message"] === "string") return record["message"];
+  }
+  return "Unknown DNS error occurred";
+};
+
+const getErrorCode = (error: unknown): string | undefined => {
+  if (!error || typeof error !== "object") return undefined;
+  const record = error as Record<string, unknown>;
+  return typeof record["code"] === "string" ? record["code"] : undefined;
+};
+
+const getErrorDetails = (error: unknown): { message: string; code?: string } => {
+  const message = getErrorMessage(error);
+  const code = getErrorCode(error);
+  return code ? { message, code } : { message };
 };
 
 export interface DNSCapabilities {
@@ -51,7 +85,7 @@ export interface NativeDNSModule {
    * Query TXT records from a DNS server
    * @param domain - DNS server hostname (e.g., 'llm.pieter.com', 'ch.at')
    * @param message - Fully qualified domain name to query (already sanitized)
-   * @param port - DNS port (9000 for llm.pieter.com, 53 for standard DNS)
+   * @param port - DNS port (53 for the allowlisted resolvers)
    * @returns Promise resolving to array of TXT record strings
    */
   queryTXT(domain: string, message: string, port: number): Promise<string[]>;
@@ -98,45 +132,52 @@ export class NativeDNS implements NativeDNSModule {
   // to detect network changes (e.g., WiFi to cellular, VPN connection).
   private static readonly CAPABILITIES_TTL_MS = 30000;
 
-  constructor() {
+  private configureSanitizerIfNeeded(): void {
+    if (!this.nativeModule) return;
+    debugLog("[NativeDNS] RNDNSModule methods:", Object.keys(this.nativeModule));
+    try {
+      const maybeResult = this.nativeModule.configureSanitizer?.(
+        getNativeSanitizerConfig(),
+      );
+
+      if (maybeResult && typeof (maybeResult as Promise<unknown>).then === "function") {
+        (maybeResult as Promise<boolean>)
+          .then((didUpdate) => {
+            if (didUpdate) {
+              debugLog("[NativeDNS] Sanitizer configured via shared constants");
+            } else {
+              debugLog("[NativeDNS] Sanitizer already up to date; skipped reconfiguration");
+            }
+          })
+          .catch((error: unknown) => {
+            debugWarn("[NativeDNS] Failed to configure sanitizer:", error);
+          });
+      } else if (maybeResult !== undefined) {
+        debugLog("[NativeDNS] Sanitizer configured via shared constants");
+      }
+    } catch (error) {
+      debugWarn("[NativeDNS] Failed to configure sanitizer:", error);
+    }
+  }
+
+  constructor(nativeModuleOverride?: NativeDNSModule | null) {
     // Try to get the native module, but don't crash if it's not available
     debugLog("[NativeDNS] constructor called");
     debugLog("[NativeDNS] Available NativeModules keys:", Object.keys(NativeModules));
     debugLog("[NativeDNS] Looking for RNDNSModule...");
 
+    if (nativeModuleOverride !== undefined) {
+      this.nativeModule = nativeModuleOverride;
+      this.configureSanitizerIfNeeded();
+      return;
+    }
+
     try {
       this.nativeModule = NativeModules["RNDNSModule"] as NativeDNSModule;
       debugLog("[NativeDNS] RNDNSModule found:", !!this.nativeModule);
-      if (this.nativeModule) {
-        debugLog("[NativeDNS] RNDNSModule methods:", Object.keys(this.nativeModule));
-        if (Platform?.OS === "android") {
-          try {
-            const maybeResult = this.nativeModule.configureSanitizer?.(
-              getNativeSanitizerConfig(),
-            );
-
-            if (maybeResult && typeof (maybeResult as Promise<unknown>).then === "function") {
-              (maybeResult as Promise<boolean>)
-                .then((didUpdate) => {
-                  if (didUpdate) {
-                    debugLog("[NativeDNS] Android sanitizer configured via shared constants");
-                  } else {
-                    debugLog("[NativeDNS] Android sanitizer already up to date; skipped reconfiguration");
-                  }
-                })
-                .catch((error: unknown) => {
-                  console.warn("[NativeDNS] Failed to configure Android sanitizer:", error);
-                });
-            } else {
-              debugLog("[NativeDNS] Android sanitizer configured via shared constants");
-            }
-          } catch (error) {
-            console.warn("[NativeDNS] Failed to configure Android sanitizer:", error);
-          }
-        }
-      }
+      this.configureSanitizerIfNeeded();
     } catch (error) {
-      console.warn("[NativeDNS] Native DNS module not available:", error);
+      debugWarn("[NativeDNS] Native DNS module not available:", error);
       this.nativeModule = null;
     }
   }
@@ -181,55 +222,59 @@ export class NativeDNS implements NativeDNSModule {
       }
 
       return result;
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Preserve already-classified DNSError types
       if (error instanceof DNSError) {
         throw error;
       }
 
+      const details = getErrorDetails(error);
+      const messageLower = details.message.toLowerCase();
+      const cause = error instanceof Error ? error : undefined;
+
       // Map native errors to our error types
-      if (error?.code === "DNS_QUERY_FAILED") {
+      if (details.code === "DNS_QUERY_FAILED") {
         throw new DNSError(
           DNSErrorType.DNS_QUERY_FAILED,
-          error.message || "DNS query failed",
-          error,
+          details.message || "DNS query failed",
+          cause,
         );
       }
 
       if (
-        error?.message?.includes("timeout") ||
-        error?.message?.includes("timed out")
+        messageLower.includes("timeout") ||
+        messageLower.includes("timed out")
       ) {
-        throw new DNSError(DNSErrorType.TIMEOUT, "DNS query timed out", error);
+        throw new DNSError(DNSErrorType.TIMEOUT, "DNS query timed out", cause);
       }
 
       if (
-        error?.message?.includes("network") ||
-        error?.message?.includes("connectivity")
+        messageLower.includes("network") ||
+        messageLower.includes("connectivity")
       ) {
         throw new DNSError(
           DNSErrorType.NETWORK_UNAVAILABLE,
           "Network unavailable for DNS query",
-          error,
+          cause,
         );
       }
 
       if (
-        error?.message?.includes("permission") ||
-        error?.message?.includes("denied")
+        messageLower.includes("permission") ||
+        messageLower.includes("denied")
       ) {
         throw new DNSError(
           DNSErrorType.PERMISSION_DENIED,
           "DNS query permission denied",
-          error,
+          cause,
         );
       }
 
       // Default to DNS query failed
       throw new DNSError(
         DNSErrorType.DNS_QUERY_FAILED,
-        error?.message || "Unknown DNS error occurred",
-        error,
+        details.message || "Unknown DNS error occurred",
+        cause,
       );
     }
   }
@@ -270,8 +315,8 @@ export class NativeDNS implements NativeDNSModule {
         this.capabilitiesTimestamp = Date.now();
         return this.capabilities;
       } catch (error) {
-        console.warn("Failed to check DNS availability:", error);
-        this.capabilities = {
+      debugWarn("Failed to check DNS availability:", error);
+      this.capabilities = {
           available: false,
           platform: "web",
           supportsCustomServer: false,

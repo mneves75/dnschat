@@ -1,27 +1,85 @@
 # DNSChat docs
 
-This folder is the developer documentation for DNSChat.
+Developer documentation for DNSChat. Code is the source of truth — these docs explain *why* and *how it fits together*.
 
-Start here:
+## Start here
 
-- `docs/INSTALL.md` (setup + build commands)
-- `docs/architecture/SYSTEM-ARCHITECTURE.md` (what talks to what)
-- `docs/architecture/EXPO-ROUTER-INTEGRATION.md` (engineering exec spec + phased migration plan)
-- `docs/architecture/ENGINEERING-EXEC-SPEC-BEST-PRACTICES-ALIGNMENT.md` (security + best-practices hardening plan)
-- `docs/plans/` (execution plans, current and historical)
-- `docs/technical/SPECIFICATION.md` (product + behavior spec)
-- `docs/technical/DNS-PROTOCOL-SPEC.md` (DNS query/response rules)
-- `docs/troubleshooting/COMMON-ISSUES.md` (known issues + fixes)
+- `docs/INSTALL.md` — setup, build, and verification commands
+- `docs/architecture/SYSTEM-ARCHITECTURE.md` — what talks to what
+- `docs/technical/DNS-PROTOCOL-SPEC.md` — DNS query/response rules (current behavior)
+- `docs/technical/SPECIFICATION.md` — product behavior + repo invariants
+- `docs/plans/SDK56_UPGRADE_PLAN.md` — SDK 56 upgrade plan and verification gate
+- `docs/e2e-axe-feature-coverage.md` — AXe simulator E2E feature checklist
+  and runner notes
+- `docs/technical/CHAT-TEMPLATE-2026-REVIEW.md` — 2026 chat-template review plan and applied repairs
+- `docs/troubleshooting/COMMON-ISSUES.md` — known issues and fixes
 
-Folders:
+## Reference
 
-- `docs/architecture/` system design notes
-- `docs/technical/` DNS protocol + native module specs
-- `docs/troubleshooting/` build + runtime diagnostics
-- `docs/plans/` execution plans
+- `docs/technical/EXPO-DOCTOR-CONFIGURATION.md` — why specific Expo Doctor warnings are intentional
+- `docs/data-inventory.md` — on-device data storage, retention, encryption
+- `docs/model-registry.md` — model usage policy (currently: none)
+- `docs/public-release-redaction.md` — public-doc redaction policy and release
+  evidence split
 
-External references (when needed):
+## Current verification baseline
+
+Last architecture/dependency verification: `2026-05-24`.
+Last full source/security sweep: `2026-05-17`.
+Last AXe simulator E2E feature pass: `2026-05-17` for version `4.0.13` build
+`43`.
+Last iOS signed release archive/export: `2026-05-17` for version `4.0.13`
+build `43`.
+
+- `bun run verify:all` passes on `2026-05-24` (`expo-doctor` 19/19, SDK
+  alignment, typed routes, `tsc --noEmit`, DNS resolver sync, iOS pods, React
+  Compiler 86/86 components, Android setup, Android 16KB check skipped without
+  native artifacts, lint, and Jest).
+- Native DNS module tests pass on `2026-05-24` (`7` suites passed, `1` skipped;
+  `56` tests passed, `13` skipped).
+- AXe E2E baseline: 10 feature groups passed in one owned release-simulator
+  run on `2026-05-17`.
+- Jest baseline on `2026-05-24`: 96 suites passed, 1 skipped; 819 tests passed,
+  13 skipped.
+- `gitleaks detect` on `2026-05-24` reports `no leaks found` across `338`
+  scanned commits.
+- `bun audit` on `2026-05-24` reports `3 moderate transitive (dev-only)
+  advisories` in `ws`, `brace-expansion`, and `uuid` pulled through Expo CLI,
+  Metro, Jest, and `@expo/config-plugins/xcode`. `npm audit` in
+  `modules/dns-native` reports the same `brace-expansion` advisory. None affect
+  shipped runtime code; remediation is tracked separately. The prior clean
+  audit baseline was `2026-05-17`.
+- `xcodebuild clean build` passes for Debug on an iOS 26.5 simulator on
+  `2026-05-24`.
+- `xcodebuild clean build` and `xcodebuild clean archive` pass for generic iOS
+  Release when code signing is disabled (`CODE_SIGNING_ALLOWED=NO`) on
+  `2026-05-24`.
+- Physical-device compiled Expo dev-client install passed.
+- Signed App Store archive/export passed, App Store Connect metadata was
+  updated, TestFlight upload completed, and the processed build is `VALID`.
+  Internal App Store Connect IDs are intentionally omitted from public docs.
+- `asc validate testflight` and App Store version validation pass with `0`
+  errors and `0` warnings; App Privacy publish-state still needs browser
+  confirmation because the API cannot verify it.
+- `xcodebuild test` is not a native gate yet because the `DNSChat` scheme has no
+  XCTest bundles.
+- Public docs and store copy must not claim that DNS prompts are private or
+  end-to-end encrypted; only local history is encrypted at rest.
+- Public docs must use placeholders for local/device/account-specific release
+  identifiers. Run `bun run verify:public-redaction` and `gitleaks detect`
+  before committing release docs.
+
+## Release
+
+- `docs/ANDROID_RELEASE.md` — Android release checklist + signing
+- `docs/ANDROID_GOOGLE_PLAY_STORE.md` — Play Store publishing guide
+- `docs/App_store/Apple_App_Store/AppStoreConnect.md` — App Store listing materials
+- `docs/App_store/Apple_App_Store/TESTFLIGHT.md` — TestFlight upload steps
+
+## External
 
 - React Native: https://reactnative.dev/docs/getting-started
 - Expo: https://docs.expo.dev/
-- DNS RFC: https://www.rfc-editor.org/rfc/rfc1035
+- Expo Router: https://docs.expo.dev/router/introduction/
+- DNS RFC 1035: https://www.rfc-editor.org/rfc/rfc1035
+- DNS-over-TCP RFC 7766: https://www.rfc-editor.org/rfc/rfc7766

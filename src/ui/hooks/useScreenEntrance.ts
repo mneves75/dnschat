@@ -21,7 +21,8 @@
  * @see DESIGN-UI-UX-GUIDELINES.md - Screen entrance patterns
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import type { ViewStyle } from 'react-native';
 import {
   useSharedValue,
   useAnimatedStyle,
@@ -30,7 +31,7 @@ import {
   Easing,
   runOnJS,
 } from 'react-native-reanimated';
-import type { WithSpringConfig, WithTimingConfig } from 'react-native-reanimated';
+import type { AnimatedStyle, WithSpringConfig, WithTimingConfig } from 'react-native-reanimated';
 import { useMotionReduction } from '../../context/AccessibilityContext';
 import { SpringConfig, TimingConfig } from '../../utils/animations';
 
@@ -63,7 +64,7 @@ interface UseScreenEntranceResult {
   /**
    * Animated style to apply to the screen container
    */
-  animatedStyle: ReturnType<typeof useAnimatedStyle>;
+  animatedStyle: AnimatedStyle<ViewStyle>;
 
   /**
    * Whether the entrance animation has completed
@@ -93,12 +94,12 @@ export function useScreenEntrance(
   const translateY = useSharedValue(shouldReduceMotion ? 0 : initialOffset);
   const [isReady, setIsReady] = useState(shouldReduceMotion);
 
-  const markReady = useCallback(() => {
+  const markReady = () => {
     setIsReady(true);
     if (onComplete) {
       onComplete();
     }
-  }, [onComplete]);
+  };
 
   const animate = () => {
     'worklet';
@@ -136,7 +137,7 @@ export function useScreenEntrance(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const animatedStyle = useAnimatedStyle(() => {
+  const animatedStyle = useAnimatedStyle<ViewStyle>(() => {
     return {
       opacity: opacity.value,
       transform: [{ translateY: translateY.value }],

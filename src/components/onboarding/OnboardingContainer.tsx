@@ -2,7 +2,6 @@ import React from "react";
 import {
   View,
   StyleSheet,
-  Dimensions,
   StatusBar,
   useColorScheme,
 } from "react-native";
@@ -15,8 +14,6 @@ import { DNSMagicScreen } from "./screens/DNSMagicScreen";
 import { NetworkSetupScreen } from "./screens/NetworkSetupScreen";
 import { FirstChatScreen } from "./screens/FirstChatScreen";
 import { FeaturesScreen } from "./screens/FeaturesScreen";
-
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 export function OnboardingContainer() {
   const palette = useImessagePalette();
@@ -63,6 +60,6 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    width: SCREEN_WIDTH,
+    width: "100%",
   },
 });

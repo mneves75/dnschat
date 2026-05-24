@@ -21,8 +21,10 @@ export interface ChatContextType {
   error: string | null;
   createChat: (title?: string) => Promise<Chat>;
   deleteChat: (chatId: string) => Promise<void>;
+  clearAllChats: () => Promise<void>;
   sendMessage: (content: string) => Promise<void>;
   loadChats: () => Promise<void>;
   setCurrentChat: (chat: Chat | null) => void;
   clearError: () => void;
+  createAndNavigateToChat: () => Promise<void>;
 }

@@ -103,6 +103,7 @@ export const LiquidGlassRadius = {
   sheet: 14,        // Sheets and modals
   capsule: 999,     // Fully rounded (pill shape)
   message: 20,      // Message bubbles (iMessage style)
+  appIcon: 18,      // iOS app icon (rounded rectangle, ~17.5pt at 80pt size)
 } as const;
 
 /**
@@ -136,6 +137,7 @@ export const getCornerRadius = (type: keyof typeof LiquidGlassRadius) => {
     sheet: Material3Radius.extraLarge,
     capsule: Material3Radius.full,
     message: Material3Radius.large,
+    appIcon: Material3Radius.large,
   };
 
   return materialMapping[type];

@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React from "react";
 import {
   View,
   StyleSheet,
@@ -16,6 +16,7 @@ import { ClipboardService } from "../services/ClipboardService";
 import { ShareService } from "../services/ShareService";
 import { MessageContent } from "./MessageContent";
 import { useTranslation } from "../i18n";
+import { useSettings } from "../context/SettingsContext";
 
 // Platform-specific monospace font for code rendering
 const MONOSPACE_FONT = Platform.select({
@@ -34,6 +35,7 @@ function MessageBubbleComponent({ message }: MessageBubbleProps) {
   const typography = useTypography();
   const palette = useImessagePalette();
   const { t } = useTranslation();
+  const { locale } = useSettings();
 
   const isUser = message.role === "user";
   const isLoading = message.status === "sending";
@@ -51,7 +53,7 @@ function MessageBubbleComponent({ message }: MessageBubbleProps) {
 
       case 'share':
         // Share message via native share sheet
-        await ShareService.shareMessage(message.content, message.timestamp);
+        await ShareService.shareMessage(message.content, message.timestamp, locale);
         break;
 
       default:
@@ -125,22 +127,20 @@ function MessageBubbleComponent({ message }: MessageBubbleProps) {
     },
   };
 
-  const menuActions = useMemo(() => {
-    const copyImage = Platform.OS === 'ios' ? 'doc.on.doc' : undefined;
-    const shareImage = Platform.OS === 'ios' ? 'square.and.arrow.up' : undefined;
-    return [
-      {
-        id: 'copy',
-        title: t('screen.chat.messageActions.copy'),
-        ...(copyImage ? { image: copyImage } : {}),
-      },
-      {
-        id: 'share',
-        title: t('screen.chat.messageActions.share'),
-        ...(shareImage ? { image: shareImage } : {}),
-      },
-    ];
-  }, [t]); // Depends on t for locale changes
+  const copyImage = Platform.OS === 'ios' ? 'doc.on.doc' : 'content_copy';
+  const shareImage = Platform.OS === 'ios' ? 'square.and.arrow.up' : 'share';
+  const menuActions = [
+    {
+      id: 'copy',
+      title: t('screen.chat.messageActions.copy'),
+      image: copyImage,
+    },
+    {
+      id: 'share',
+      title: t('screen.chat.messageActions.share'),
+      image: shareImage,
+    },
+  ];
 
   const messageContentProps = {
     message,
@@ -156,8 +156,17 @@ function MessageBubbleComponent({ message }: MessageBubbleProps) {
       style={bubbleStyles}
       accessible={true}
       accessibilityRole="text"
-      accessibilityLabel={`${isUser ? 'Your' : 'Assistant'} message: ${message.content}`}
-      accessibilityHint={isLoading ? "Message is loading" : "Long press to show copy and share options"}
+      accessibilityLabel={t(
+        isUser
+          ? "screen.chat.accessibility.userMessage"
+          : "screen.chat.accessibility.assistantMessage",
+        { content: message.content.replace(/[`*_~]/g, "") },
+      )}
+      accessibilityHint={
+        isLoading
+          ? t("screen.chat.accessibility.loadingHint")
+          : t("screen.chat.accessibility.menuHint")
+      }
     >
       <MessageContent {...messageContentProps} />
     </View>
@@ -185,24 +194,7 @@ function MessageBubbleComponent({ message }: MessageBubbleProps) {
   );
 }
 
-function arePropsEqual(
-  prevProps: MessageBubbleProps,
-  nextProps: MessageBubbleProps
-): boolean {
-  const prev = prevProps.message;
-  const next = nextProps.message;
-
-  // Compare all message fields that affect rendering
-  return (
-    prev.id === next.id &&
-    prev.role === next.role &&
-    prev.content === next.content &&
-    prev.status === next.status &&
-    prev.timestamp.getTime() === next.timestamp.getTime()
-  );
-}
-
-export const MessageBubble = React.memo(MessageBubbleComponent, arePropsEqual);
+export { MessageBubbleComponent as MessageBubble };
 
 const styles = StyleSheet.create({
   container: {

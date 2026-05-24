@@ -16,6 +16,7 @@ import dgram from 'node:dgram';
 import net from 'node:net';
 import crypto from 'node:crypto';
 import dnsPacket from 'dns-packet';
+import type { Answer, TxtAnswer, TxtData } from 'dns-packet';
 
 const DEFAULT_SERVER = 'ch.at';
 const DEFAULT_PORT = 53;
@@ -68,6 +69,31 @@ type HarnessResult = {
   resolvedText?: string;
 };
 
+const getErrorMessage = (error: unknown, fallback: string): string => {
+  if (error instanceof Error) return error.message || fallback;
+  if (typeof error === 'string') return error || fallback;
+  if (error && typeof error === 'object') {
+    const record = error as Record<string, unknown>;
+    if (typeof record['message'] === 'string') {
+      return record['message'] || fallback;
+    }
+  }
+  return fallback;
+};
+
+const normalizeTxtData = (data: TxtData): Array<string | Uint8Array> => {
+  if (Array.isArray(data)) return data;
+  return [data];
+};
+
+const extractTxtRecords = (answers: Answer[] | undefined): string[] => {
+  if (!answers || answers.length === 0) return [];
+  return answers
+    .filter((answer): answer is TxtAnswer => answer.type === 'TXT')
+    .flatMap((answer) => normalizeTxtData(answer.data))
+    .map((record) => (typeof record === 'string' ? record : Buffer.from(record).toString('utf8')));
+};
+
 function parseArgs(argv: string[]): HarnessOptions {
   const args = [...argv];
   let message = '';
@@ -100,18 +126,31 @@ function parseArgs(argv: string[]): HarnessOptions {
       server = takeValue(arg, i);
       i += 1;
     } else if (arg === '--port' || arg === '-p') {
-      port = parseInt(takeValue(arg, i), 10) || DEFAULT_PORT;
+      const rawPort = takeValue(arg, i);
+      if (!/^\d+$/.test(rawPort)) {
+        throw new Error(`Invalid --port value: ${rawPort}`);
+      }
+      port = parseInt(rawPort, 10);
       i += 1;
     } else if (arg === '--method-order') {
       const raw = takeValue(arg, i);
       i += 1;
       methodOrderExplicit = true;
-      methodOrder = raw
+      const parsedMethodOrder = raw
         .split(',')
         .map((item) => item.trim().toLowerCase())
-        .filter((item): item is HarnessMethod => METHOD_NAMES.includes(item as HarnessMethod));
+        .filter(Boolean);
+      const invalidMethods = parsedMethodOrder.filter(
+        (item) => !METHOD_NAMES.includes(item as HarnessMethod),
+      );
+      if (invalidMethods.length > 0) {
+        throw new Error(
+          `Invalid --method-order transport(s): ${invalidMethods.join(", ")}. Valid transports: ${METHOD_NAMES.join(",")}`,
+        );
+      }
+      methodOrder = parsedMethodOrder as HarnessMethod[];
       if (methodOrder.length === 0) {
-        methodOrder = DEFAULT_METHOD_ORDER;
+        throw new Error("--method-order must include at least one transport");
       }
     } else if (arg === '--timeout') {
       timeoutMs = parseInt(takeValue(arg, i), 10) || DEFAULT_TIMEOUT_MS;
@@ -278,7 +317,8 @@ async function startLocalDnsServer(responseText: string): Promise<LocalDnsServer
   const tcpServer = net.createServer((socket) => {
     let buffer = Buffer.alloc(0);
     socket.on('data', (chunk) => {
-      buffer = Buffer.concat([buffer, chunk]);
+      const data = typeof chunk === 'string' ? Buffer.from(chunk) : chunk;
+      buffer = Buffer.concat([buffer, data]);
       if (buffer.length < 2) {
         return;
       }
@@ -362,11 +402,11 @@ async function attemptNative(
       durationMs: Date.now() - start,
       txtRecords: records,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     return {
       status: 'failure',
       durationMs: 0,
-      error: error instanceof Error ? error.message : String(error ?? 'Native query failed'),
+      error: getErrorMessage(error, 'Native query failed'),
     };
   }
 }
@@ -430,10 +470,7 @@ async function attemptUdp(
       }
       try {
         const decoded = dnsPacket.decode(response);
-        const answers = (decoded.answers || [])
-          .filter((answer) => answer.type === 'TXT')
-          .flatMap((answer: any) => answer.data || [])
-          .map((buf: Buffer) => buf.toString('utf8'));
+        const answers = extractTxtRecords(decoded.answers);
         resolve({
           status: 'success',
           durationMs: Date.now() - start,
@@ -441,11 +478,11 @@ async function attemptUdp(
           ...(requestPath ? { rawRequestPath: requestPath } : {}),
           ...(responsePath ? { rawResponsePath: responsePath } : {}),
         });
-      } catch (error: any) {
+      } catch (error: unknown) {
         resolve({
           status: 'failure',
           durationMs: Date.now() - start,
-          error: error.message || 'Failed to decode UDP response',
+          error: getErrorMessage(error, 'Failed to decode UDP response'),
           ...(requestPath ? { rawRequestPath: requestPath } : {}),
           ...(responsePath ? { rawResponsePath: responsePath } : {}),
         });
@@ -531,7 +568,7 @@ async function attemptTcp(
     });
 
     client.on('data', (data) => {
-      chunks.push(data);
+      chunks.push(typeof data === 'string' ? Buffer.from(data) : data);
     });
 
     client.on('end', async () => {
@@ -543,10 +580,7 @@ async function attemptTcp(
 
       try {
         const decodedMessage = parseTcpResponse(responseBuffer);
-        const answers = (decodedMessage.answers || [])
-          .filter((answer: any) => answer.type === 'TXT')
-          .flatMap((answer: any) => answer.data || [])
-          .map((buf: Buffer) => buf.toString('utf8'));
+        const answers = extractTxtRecords(decodedMessage.answers);
         resolve({
           status: 'success',
           durationMs: Date.now() - start,
@@ -554,11 +588,11 @@ async function attemptTcp(
           ...(requestPath ? { rawRequestPath: requestPath } : {}),
           ...(responsePath ? { rawResponsePath: responsePath } : {}),
         });
-      } catch (error: any) {
+      } catch (error: unknown) {
         resolve({
           status: 'failure',
           durationMs: Date.now() - start,
-          error: error.message || 'Failed to decode TCP response',
+          error: getErrorMessage(error, 'Failed to decode TCP response'),
           ...(requestPath ? { rawRequestPath: requestPath } : {}),
           ...(responsePath ? { rawResponsePath: responsePath } : {}),
         });

@@ -3,8 +3,8 @@
 Complete step-by-step guide for publishing DNSChat to the Google Play Store.
 
 **App**: DNSChat
-**Package**: `org.mvneves.dnschat`
-**Current Version**: 4.0.0
+**Package**: `<ANDROID_PACKAGE>`
+**Current Version**: 4.0.14
 
 ---
 
@@ -104,8 +104,8 @@ Send short prompts as DNS TXT queries and receive AI-powered responses through t
 • Multiple DNS Transports
 Supports Native DNS, UDP, and TCP transports with automatic fallback for reliability.
 
-• Privacy-Focused
-No account required. Messages are processed through DNS - no traditional server infrastructure.
+• Local-First Storage
+No account required. Chat history is stored locally and encrypted at rest. DNS queries remain observable by resolvers and networks.
 
 • Beautiful iOS 26-Inspired UI
 Modern glass-effect interface with smooth animations and dark mode support.
@@ -121,14 +121,14 @@ Full VoiceOver/TalkBack support with screen reader optimizations.
 
 TECHNICAL DETAILS:
 
-• Built with React Native and Expo SDK 54
+• Built with React Native 0.85.3 and Expo SDK 56.0.4
 • React 19 with New Architecture enabled
 • Native DNS module for iOS and Android
 • Supports DNS servers: 1.1.1.1, 8.8.8.8, 9.9.9.9
 
 OPEN SOURCE:
 DNSChat is open source. View the code and contribute at:
-https://github.com/mneves75/dnschat
+<REPOSITORY_URL>
 
 NOTE: This app is for educational and demonstration purposes, showcasing DNS protocol capabilities.
 ```
@@ -139,8 +139,8 @@ NOTE: This app is for educational and demonstration purposes, showcasing DNS pro
 |-------|-------|
 | Email | your-support-email@example.com |
 | Phone | (Optional) |
-| Website | https://github.com/mneves75/dnschat |
-| Privacy policy | https://github.com/mneves75/dnschat/blob/main/PRIVACY.md |
+| Website | `<REPOSITORY_URL>` |
+| Privacy policy | `<PRIVACY_POLICY_URL>` |
 
 ---
 
@@ -323,10 +323,11 @@ See [ANDROID_RELEASE.md](./ANDROID_RELEASE.md) for signing configuration.
    - **Upload** new AAB
 4. Add release notes:
    ```
-   What's new in v4.0.0:
-   • Native DNS bridge parity fixes (port parameter supported on iOS/Android)
-   • Reanimated render warnings eliminated in core UI flows
-   • Version and release documentation refreshed for 4.0.0
+   What's new in v4.0.14:
+   • Upgraded to Expo SDK 56, React Native 0.85.3, React 19.2.3, TypeScript 6.0
+   • Raised iOS deployment target to 16.4 and refreshed native module graph
+   • Migrated navigation theme imports to Expo Router SDK 56 entry points
+   • Replaced removed `StyleSheet.absoluteFillObject` in glass bottom-sheet backdrop
    ```
 5. Click **"Review release"**
 6. Set rollout percentage (start with 10-20% recommended)
@@ -357,13 +358,14 @@ Navigate to: **Policy → App content → Data safety**
 | Device identifiers | No | No | - |
 | Location | No | No | - |
 
-*Messages are stored locally only (AsyncStorage) and transmitted via DNS queries to ch.at servers.
+*Messages are stored locally only (AsyncStorage) and transmitted via DNS queries to llm.pieter.com servers. DNS transport is observable; users should not send secrets or personal data.
 
 ### Security Practices
 
 - [ ] Data encrypted in transit (DNS over standard port 53 is not encrypted)
 - [x] Data encrypted at rest (local AES-GCM)
 - [x] Data stored locally on device only
+- [x] SecureStore key material excluded from Android backup/device transfer
 - [x] Users can request data deletion (clear from Settings)
 
 ---
@@ -404,6 +406,7 @@ Before submitting for review, verify:
 - [ ] minSdkVersion meets requirements (API 24+)
 - [ ] targetSdkVersion is current (API 34+)
 - [ ] No debug code in release build
+- [ ] Android 16KB native-library check passes after build artifacts exist
 
 ---
 
@@ -434,6 +437,13 @@ Before submitting for review, verify:
 
 | Version | Date | Notes |
 |---------|------|-------|
+| 4.0.14 | 2026-05-22 | Expo SDK 56.0.4 / React Native 0.85.3 / React 19.2.3 / TypeScript 6.0 baseline upgrade; iOS deployment target raised to 16.4; DNS wire-format module extracted |
+| 4.0.13 | 2026-05-17 | Clawpatch hardening, DNS/native validation, release-gate and UI regression coverage |
+| 4.0.12 | 2026-05-15 | Dark-mode navigation chrome fix, chat composer scroll stability, external link allowlist |
+| 4.0.11 | 2026-05-15 | Expo Router chat route fix, route-owned toolbar actions, release docs sync |
+| 4.0.10 | 2026-05-15 | AXe simulator E2E coverage, accessibility identifiers, release diagnostics |
+| 4.0.8 | 2026-05-14 | SDK patch alignment, encrypted-storage migration, DNS log redaction and validation hardening |
+| 4.0.7 | 2026-05-04 | Expo/RN patch alignment, permission cleanup, SecureStore backup hardening |
 | 3.6.0 | 2025-12-16 | Google Play Store documentation |
 | 3.5.0 | 2025-12-16 | Security hardening, TypeScript fixes |
 | 3.4.0 | 2025-12-16 | Security fixes (8 critical) |
@@ -441,4 +451,4 @@ Before submitting for review, verify:
 
 ---
 
-*Last updated: 2025-12-16*
+*Last updated: 2026-05-15*

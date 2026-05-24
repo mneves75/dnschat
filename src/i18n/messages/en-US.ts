@@ -12,6 +12,8 @@ export const enUS = {
     settings: "Settings",
     language: "Language",
     followSystem: "Use device language",
+    unknownError: "Something went wrong. Please try again.",
+    done: "Done",
   },
   locales: {
     enUS: "English (United States)",
@@ -30,12 +32,30 @@ export const enUS = {
       devLogs: "Dev DNS Logs",
       notFound: "404",
     },
+    toolbar: {
+      newChat: "New Chat",
+      share: "Share",
+      clearChat: "Clear Chat",
+      dnsInfo: "DNS Info",
+    },
   },
   screen: {
     onboarding: {
+      navigation: {
+        skip: "Skip",
+        skipHint: "Skips the tutorial and goes directly to the app",
+        back: "Back",
+        backHint: "Returns to the previous onboarding screen",
+        getStarted: "Get Started",
+        continue: "Continue",
+        stepCounter: "Step {{current}} of {{total}}",
+        continueHint: "Proceeds to the next onboarding step",
+        completeHint: "Completes onboarding and opens the app",
+      },
       welcome: {
         title: "Welcome to DNS Chat",
         subtitle: "The world's first chat app that uses DNS queries to communicate with AI",
+        appIconLabel: "DNS Chat app icon",
         features: {
           revolutionary: {
             label: "Revolutionary",
@@ -60,6 +80,7 @@ export const enUS = {
         subtitle: "Send a message and watch it travel through DNS",
         welcomeMessage: "Hi! I'm your AI assistant. Try sending me a message to see how DNS magic works!",
         successMessage: "Great! You've successfully sent your first DNS message. In a real scenario, this would return an AI response via DNS TXT records. The magic is that your message traveled through the DNS infrastructure!",
+        failureMessage: "The DNS message could not be delivered. Check your network settings or try again later.",
         suggestions: {
           title: "Try one of these:",
           option1: "What is DNS?",
@@ -76,6 +97,15 @@ export const enUS = {
         navigation: {
           continue: "Amazing! Continue",
           skip: "Skip Tutorial",
+        },
+        accessibility: {
+          suggestionLabel: "Suggestion: {{suggestion}}",
+          suggestionHint: "Fills the message input with this suggested question",
+          inputLabel: "Message input",
+          inputHint: "Type your message to send via DNS. Maximum {{max}} characters.",
+          sendLabel: "Send message",
+          sendingLabel: "Sending message",
+          sendHint: "Sends your message through DNS TXT query",
         },
       },
       dnsMagic: {
@@ -122,49 +152,58 @@ export const enUS = {
           failed: "Failed",
         },
         demoResponse: "Welcome to DNS Chat! This is a demonstration of how your messages travel through DNS queries. Pretty cool, right?",
+        accessibility: {
+          idleLabel: "Start DNS demo",
+          runningLabel: "DNS query in progress",
+          demoHint: "Demonstrates how DNS queries work through the fallback chain. Watch as your message travels through Native DNS, UDP, TCP, and HTTPS methods.",
+        },
       },
       networkSetup: {
         label: "Setup",
-        title: "Network Optimization",
-        subtitle: "We're testing your network to find the fastest DNS methods",
-        disclaimer: "This is a simulated demonstration",
+        title: "Network Configuration",
+        subtitle: "Choose how DNS Chat should reach the LLM server",
+        disclaimer: "You can change the transport order later in Settings",
         tests: {
           native: {
             name: "Native DNS",
-            description: "Platform-optimized DNS",
+            description: "Platform DNS resolver",
           },
           udp: {
             name: "DNS over UDP",
-            description: "Traditional DNS queries",
+            description: "Standard DNS transport",
           },
           tcp: {
             name: "DNS over TCP",
-            description: "Reliable TCP fallback",
+            description: "TCP fallback transport",
           },
         },
         status: {
-          testing: "Testing",
+          testing: "Configuring",
           waiting: "Waiting",
-          success: "Success",
-          failed: "Failed",
+          success: "Configured",
+          failed: "Unavailable",
           skipped: "Skipped",
         },
         optimization: {
-          title: "Optimization Complete",
-          description: "Your network supports all DNS methods. The app will automatically use the fastest available method with intelligent fallback for optimal performance.",
+          title: "Configuration Applied",
+          description: "DNS Chat will use the automatic fallback chain across these transports. You can adjust this anytime in Settings.",
           applyButton: "Apply Recommended Settings",
-          loading: "Optimizing your DNS settings...",
+          loading: "Configuring transport order...",
         },
         navigation: {
           continue: "Continue",
-          skip: "Skip Optimization",
+          skip: "Skip",
         },
         alerts: {
           errorTitle: "Error",
-          errorMessage: "Network optimization failed. Using default settings.",
+          errorMessage: "Network configuration failed. Using default settings.",
           successTitle: "Settings Applied",
-          successMessage: "Network optimization complete. DNS will use automatic fallback chain for best performance.",
+          successMessage: "Network configuration complete. DNS will use the automatic fallback chain.",
           successButton: "Great",
+        },
+        accessibility: {
+          applyLabel: "Apply recommended settings",
+          applyHint: "Configures DNS to use the automatic fallback chain across the supported transports",
         },
       },
       features: {
@@ -198,6 +237,7 @@ export const enUS = {
           title: "Open Source",
           description: "Built transparently - explore the code and contribute to the future of DNS chat.",
           action: "View on GitHub",
+          accessibilityHint: "Opens the DNS Chat GitHub repository in your browser where you can view the source code and contribute",
         },
         themes: {
           label: "Adapt",
@@ -239,6 +279,14 @@ export const enUS = {
         copy: "Copy",
         share: "Share",
       },
+      accessibility: {
+        userMessage: "Your message: {{content}}",
+        assistantMessage: "Assistant message: {{content}}",
+        loadingHint: "Message is loading",
+        errorIndicator: "Message failed to send",
+        menuHint: "Long press to show copy and share options",
+        messageListLabel: "Conversation messages",
+      },
     },
     chatInput: {
       placeholder: "Message...",
@@ -249,6 +297,13 @@ export const enUS = {
       emptySubtitle:
         "Start a new conversation to begin chatting with the AI assistant.",
       newChatButton: "Start New Chat",
+      noMessages: "No messages yet",
+      lastUserPrefix: "You: {{content}}",
+      yesterday: "Yesterday",
+      deleteTitle: "Delete Chat",
+      deleteMessage: "Are you sure you want to delete \"{{title}}\"?",
+      createErrorTitle: "Unable to create chat",
+      createErrorMessage: "Failed to create chat",
       accessibility: {
         deleteButton: "Delete chat",
         deleteButtonHint: "Double tap to delete this conversation",
@@ -285,6 +340,7 @@ export const enUS = {
         messageSingular: "{{count}} message",
         messagePlural: "{{count}} messages",
       },
+      itemAccessibilityLabel: "Chat: {{title}}. {{count}} messages. {{time}}.",
       actionSheet: {
         title: "Choose an action",
         message: "Choose an action for this conversation",
@@ -315,6 +371,8 @@ export const enUS = {
         noQuery: "No query",
         noMessage: "No message",
         noResponse: "No response",
+        redactedQuery: "DNS query",
+        redactedResponse: "Response redacted",
         response: "Response:",
         querySteps: "Query Steps:",
         resultTitle: "Last Test Result:",
@@ -331,6 +389,15 @@ export const enUS = {
         clearTitle: "Clear Logs",
         clearMessage: "Are you sure you want to clear all DNS query logs?",
         clearConfirm: "Clear",
+      },
+      accessibility: {
+        expandRow: "Show DNS query details",
+        collapseRow: "Hide DNS query details",
+      },
+      status: {
+        success: "Succeeded",
+        failed: "Failed",
+        unknown: "Unknown",
       },
     },
     settings: {
@@ -538,7 +605,7 @@ export const enUS = {
       tagline:
         "Chat with AI using DNS TXT queries - a unique approach to LLM communication.",
       versionLabel: "v{{version}}",
-      footer: "© 2025 Marcus Neves • MIT Licensed",
+      footer: "© 2025 DNSChat contributors • MIT Licensed",
       quickActions: {
         title: "Quick Actions",
         settingsTitle: "Settings",
@@ -594,8 +661,9 @@ export const enUS = {
           },
         },
         developer: {
-          title: "Developer",
-          creatorSubtitle: "Created by {{handle}}",
+          title: "Maintainers",
+          maintainersTitle: "DNSChat contributors",
+          maintainersSubtitle: "Open-source project maintainers",
           devLogsTitle: "Developer Logs (Dev)",
           devLogsSubtitle: "Open DNS logs viewer screen",
         },
@@ -611,13 +679,74 @@ export const enUS = {
       subtitle: "Open up 'app/(tabs)/index.tsx' to start working on your app!",
       goToProfile: "Go to Profile",
       goToSettings: "Go to Settings",
+      navigationTitle: "Home",
+      dnsConnected: "Connected",
+      dnsDisconnected: "Not configured",
+      dnsStatus: "DNS Status",
+      configureButton: "Configure DNS",
+      configure: "Configure",
+      quickActions: {
+        title: "Quick Actions",
+        newChat: "New Chat",
+        newChatDescription: "Start a new DNS conversation",
+        viewLogs: "View Logs",
+        viewLogsDescription: "Inspect DNS query history",
+      },
+      recentChats: {
+        title: "Recent Chats",
+        footer: "Your latest conversations",
+      },
+      allChats: "All Chats",
+      allChatsDescription: "Open the full chat list",
     },
     profile: {
       title: "{{user}}'s Profile",
+      navigationTitle: "Profile",
+      noChatsYet: "No chats yet",
+      defaultUser: "User",
+      avatarLabel: "Profile avatar",
+      memberSince: "First chat {{date}}",
+      alerts: {
+        clearDataTitle: "Clear All Data",
+        clearDataMessage:
+          "This will delete all your chats and messages. This action cannot be undone.",
+        clearDataConfirm: "Clear Data",
+        clearDataSuccessTitle: "Data cleared",
+        clearDataSuccessMessage: "All conversations were deleted from this device.",
+        clearDataErrorMessage: "Unable to clear your local chat data. Please try again.",
+        exportTitle: "Export Data",
+        exportMessage: "Data export will be available in a future update.",
+      },
+      statistics: {
+        title: "Statistics",
+        footer: "Your chat activity summary",
+        totalChats: "Total Conversations",
+        totalMessages: "Total Messages",
+        averageMessages: "Avg. Messages per Chat",
+      },
+      preferences: {
+        title: "Preferences",
+        settings: "Settings",
+        settingsDescription: "DNS, accessibility, and more",
+      },
+      data: {
+        title: "Data Management",
+        footer: "Manage your chat history and personal data",
+        export: "Export Data",
+        exportDescription: "Download your chat history",
+        clearAll: "Clear All Data",
+        clearAllDescription: "Delete all chats and messages",
+      },
     },
     notFound: {
       title: "404",
       goHome: "Go to Home",
+      navigationTitle: "Not Found",
+      description: "The page you're looking for doesn't exist or has been moved.",
+      quickLinks: "Quick Links",
+      chatDescription: "Start a new conversation",
+      logsDescription: "View DNS query logs",
+      aboutDescription: "Learn more about DNSChat",
     },
   },
   components: {
@@ -632,6 +761,17 @@ export const enUS = {
     dnsLogViewer: {
       empty: "No DNS logs yet",
       responseLabel: "Response",
+      redactedTitle: "DNS query",
+      redactedResponse: "Response redacted",
+    },
+    share: {
+      title: "Share Message",
+      footer: "Shared from DNSChat on {{date}}",
+      failedTitle: "Share Failed",
+      failedMessage: "Unable to share this message. Please try again.",
+    },
+    skeleton: {
+      message: "Loading message",
     },
   },
 } as const;

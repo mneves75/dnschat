@@ -19,11 +19,16 @@ describe('@react-native-menu/menu Android patch', () => {
   const menuViewPath = path.join(menuAndroidSrc, 'MenuView.kt');
   const menuViewManagerBasePath = path.join(menuAndroidSrc, 'MenuViewManagerBase.kt');
 
-  it('overrides hitSlopRect property instead of calling removed setter', () => {
+  it('uses property-based hitSlop handling instead of removed setter method', () => {
     const contents = fs.readFileSync(menuViewPath, 'utf8');
 
-    expect(contents).toContain('override var hitSlopRect');
-    expect(contents).toContain('set(value) {');
+    const hasDirectOverride = contents.includes('override var hitSlopRect');
+    const hasBackedPropertySetter =
+      contents.includes('private var mHitSlopRect') &&
+      contents.includes('set(value) {') &&
+      contents.includes('super.hitSlopRect = value');
+
+    expect(hasDirectOverride || hasBackedPropertySetter).toBe(true);
     expect(contents).not.toContain('override fun setHitSlopRect');
   });
 
@@ -31,7 +36,7 @@ describe('@react-native-menu/menu Android patch', () => {
     const contents = fs.readFileSync(menuViewManagerBasePath, 'utf8');
 
     expect(contents).toContain('view.hitSlopRect = null');
-    expect(contents).toContain('view.hitSlopRect = Rect(');
+    expect(contents).toMatch(/view\.hitSlopRect\s*=\s*\(?\s*Rect\(/);
     expect(contents).toContain('view.overflow = overflow');
     expect(contents).not.toContain('view.setHitSlopRect');
     expect(contents).not.toContain('view.setOverflow(');

@@ -176,8 +176,10 @@ describe("MessageBubble - iOS 26 HIG Compliance", () => {
       expect(sourceCode).toContain("interface MessageBubbleProps");
     });
 
-    it("exports component with React.memo", () => {
-      expect(sourceCode).toContain("export const MessageBubble = React.memo");
+    it("exports MessageBubble component", () => {
+      expect(sourceCode).toMatch(
+        /export\s+(const\s+MessageBubble\s*=|{\s*MessageBubbleComponent\s+as\s+MessageBubble\s*})/
+      );
     });
   });
 

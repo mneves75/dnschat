@@ -30,8 +30,8 @@ describe("FeaturesScreen - iOS 26 HIG Compliance", () => {
       expect(sourceCode).toContain("LiquidGlassSpacing");
     });
 
-    it("imports Linking for GitHub action", () => {
-      expect(sourceCode).toContain("Linking");
+    it("imports the shared external URL opener for GitHub action", () => {
+      expect(sourceCode).toContain("openExternalUrl");
     });
   });
 
@@ -130,7 +130,7 @@ describe("FeaturesScreen - iOS 26 HIG Compliance", () => {
     it("includes Open Source feature with GitHub link", () => {
       expect(sourceCode).toContain('t("screen.onboarding.features.opensource.title")');
       expect(sourceCode).toContain('t("screen.onboarding.features.opensource.action")');
-      expect(sourceCode).toContain("github.com/mvneves/chat-dns");
+      expect(sourceCode).toContain("github.com/mneves75/dnschat");
     });
   });
 
@@ -308,14 +308,16 @@ describe("FeaturesScreen - iOS 26 HIG Compliance", () => {
       expect(sourceCode).toContain("typography={typography}");
     });
 
-    it("handles GitHub link properly", () => {
-      expect(sourceCode).toContain("Linking.openURL");
+    it("handles GitHub link through the shared external URL opener", () => {
+      expect(sourceCode).toContain("openExternalUrl");
+      expect(sourceCode).not.toContain("Linking.openURL");
     });
   });
 
   describe("Accessibility", () => {
-    it("uses appropriate activeOpacity for touch feedback", () => {
-      expect(sourceCode).toContain("activeOpacity={0.7}");
+    it("uses appropriate pressedOpacity for touch feedback", () => {
+      // Migrated from TouchableOpacity activeOpacity to PressableRipple pressedOpacity
+      expect(sourceCode).toContain("pressedOpacity={0.7}");
     });
 
     it("applies proper text alignment for readability", () => {

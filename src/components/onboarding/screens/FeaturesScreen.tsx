@@ -4,14 +4,14 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
-  Linking,
 } from "react-native";
 import { OnboardingNavigation } from "../OnboardingNavigation";
+import { PressableRipple } from "../../PressableRipple";
 import { useImessagePalette } from "../../../ui/theme/imessagePalette";
 import { useTypography } from "../../../ui/hooks/useTypography";
 import { LiquidGlassSpacing } from "../../../ui/theme/liquidGlassSpacing";
 import { useTranslation } from "../../../i18n";
+import { openExternalUrl } from "../../../utils/externalLinks";
 
 interface Feature {
   label: string;
@@ -76,17 +76,20 @@ export function FeaturesScreen() {
       action: {
         text: t("screen.onboarding.features.opensource.action"),
         onPress: () => {
-          Linking.openURL("https://github.com/mvneves/chat-dns");
+          void openExternalUrl("https://github.com/mneves75/dnschat");
         },
       },
     },
   ];
 
   return (
-    <View style={styles.container}>
+    <View testID="onboarding-features" style={styles.container}>
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.headerSection}>
-          <Text style={[typography.displayMedium, { color: palette.accentTint }]}>
+          <Text
+            accessibilityElementsHidden={true}
+            style={[typography.displayMedium, { color: palette.accentTint }]}
+          >
             {t("screen.onboarding.header.label")}
           </Text>
 
@@ -112,9 +115,9 @@ export function FeaturesScreen() {
         </View>
 
         <View style={styles.featuresGrid}>
-          {features.map((feature, index) => (
+          {features.map((feature) => (
             <FeatureCard
-              key={index}
+              key={feature.label}
               feature={feature}
               palette={palette}
               typography={typography}
@@ -169,6 +172,8 @@ interface FeatureCardProps {
 }
 
 function FeatureCard({ feature, palette, typography }: FeatureCardProps) {
+  const { t } = useTranslation();
+
   return (
     <View
       style={[
@@ -221,16 +226,17 @@ function FeatureCard({ feature, palette, typography }: FeatureCardProps) {
 
       {feature.action && (
         /* iOS HIG: External link button to open GitHub repository in browser */
-        <TouchableOpacity
+        <PressableRipple
           style={[
             styles.featureAction,
             { backgroundColor: palette.accentTint },
           ]}
           onPress={feature.action.onPress}
-          activeOpacity={0.7}
+          variant="primary"
+          pressedOpacity={0.7}
           accessibilityRole="link"
           accessibilityLabel={feature.action.text}
-          accessibilityHint="Opens the DNS Chat GitHub repository in your browser where you can view the source code and contribute"
+          accessibilityHint={t("screen.onboarding.features.opensource.accessibilityHint")}
         >
           <Text
             style={[
@@ -241,7 +247,7 @@ function FeatureCard({ feature, palette, typography }: FeatureCardProps) {
           >
             {feature.action.text}
           </Text>
-        </TouchableOpacity>
+        </PressableRipple>
       )}
     </View>
   );

@@ -25,19 +25,20 @@ describe("Onboarding Accessibility Tests", () => {
 
     it("Skip button has accessibilityRole, Label, and Hint", () => {
       expect(source).toContain('accessibilityRole="button"');
-      expect(source).toContain('accessibilityLabel="Skip onboarding"');
-      expect(source).toContain("Skips the tutorial and goes directly to the app");
+      expect(source).toContain('accessibilityLabel={t("screen.onboarding.navigation.skip")}');
+      expect(source).toContain('accessibilityHint={t("screen.onboarding.navigation.skipHint")}');
     });
 
     it("Back button has accessibilityRole, Label, and Hint", () => {
-      expect(source).toContain('accessibilityLabel="Back to previous step"');
-      expect(source).toContain("Returns to the previous onboarding screen");
+      expect(source).toContain('accessibilityLabel={t("screen.onboarding.navigation.back")}');
+      expect(source).toContain('accessibilityHint={t("screen.onboarding.navigation.backHint")}');
     });
 
     it("Next/Get Started button has dynamic accessibilityLabel", () => {
-      expect(source).toContain('accessibilityLabel={isLastStep ? "Get Started" : nextButtonText}');
-      expect(source).toContain("Completes onboarding and opens the app");
-      expect(source).toContain("Proceeds to the next onboarding step");
+      expect(source).toContain('t("screen.onboarding.navigation.getStarted")');
+      expect(source).toContain('t("screen.onboarding.navigation.completeHint")');
+      expect(source).toContain('t("screen.onboarding.navigation.continueHint")');
+      expect(source).toContain("accessibilityState={{ disabled: isSubmitting, busy: isSubmitting }}");
     });
 
     it("has iOS HIG comments explaining button purposes", () => {
@@ -56,8 +57,9 @@ describe("Onboarding Accessibility Tests", () => {
 
     it("Send button has accessibilityRole, dynamic Label, and Hint", () => {
       expect(source).toContain('accessibilityRole="button"');
-      expect(source).toContain('accessibilityLabel={isLoading ? "Sending message" : "Send message"}');
-      expect(source).toContain('accessibilityHint="Sends your message through DNS TXT query"');
+      expect(source).toContain('screen.onboarding.firstChat.accessibility.sendingLabel');
+      expect(source).toContain('screen.onboarding.firstChat.accessibility.sendLabel');
+      expect(source).toContain('screen.onboarding.firstChat.accessibility.sendHint');
     });
 
     it("Send button has accessibilityState with disabled and busy", () => {
@@ -68,13 +70,14 @@ describe("Onboarding Accessibility Tests", () => {
 
     it("Suggestion buttons have accessibilityRole, Label, and Hint", () => {
       expect(source).toContain('accessibilityRole="button"');
-      expect(source).toContain('accessibilityLabel={`Suggestion: ${suggestion}`}');
-      expect(source).toContain('accessibilityHint="Fills the message input with this suggested question"');
+      expect(source).toContain("screen.onboarding.firstChat.accessibility.suggestionLabel");
+      expect(source).toContain("screen.onboarding.firstChat.accessibility.suggestionHint");
     });
 
     it("TextInput has accessibilityLabel and Hint", () => {
-      expect(source).toContain('accessibilityLabel="Message input"');
-      expect(source).toContain("Type your message to send via DNS. Maximum 200 characters.");
+      expect(source).toContain("screen.onboarding.firstChat.accessibility.inputLabel");
+      expect(source).toContain("MESSAGE_CONSTANTS.MAX_MESSAGE_LENGTH");
+      expect(source).toContain("screen.onboarding.firstChat.accessibility.inputHint");
     });
 
     it("has iOS HIG comment for message suggestions", () => {
@@ -91,9 +94,9 @@ describe("Onboarding Accessibility Tests", () => {
 
     it("Start Demo button has accessibilityRole, dynamic Label, and Hint", () => {
       expect(source).toContain('accessibilityRole="button"');
-      expect(source).toContain('accessibilityLabel={isRunning ? "DNS query in progress" : "Start DNS demo"}');
-      expect(source).toContain("Demonstrates how DNS queries work through the fallback chain");
-      expect(source).toContain("Watch as your message travels through Native DNS, UDP, TCP, and HTTPS methods");
+      expect(source).toContain("screen.onboarding.dnsMagic.accessibility.runningLabel");
+      expect(source).toContain("screen.onboarding.dnsMagic.accessibility.idleLabel");
+      expect(source).toContain("screen.onboarding.dnsMagic.accessibility.demoHint");
     });
 
     it("Start Demo button has accessibilityState reflecting disabled and busy states", () => {
@@ -114,9 +117,8 @@ describe("Onboarding Accessibility Tests", () => {
 
     it("Apply Settings button has accessibilityRole, Label, and Hint", () => {
       expect(source).toContain('accessibilityRole="button"');
-      expect(source).toContain('accessibilityLabel="Apply recommended settings"');
-      expect(source).toContain("Configures DNS to use automatic fallback chain");
-      expect(source).toContain("based on your network test results");
+      expect(source).toContain("screen.onboarding.networkSetup.accessibility.applyLabel");
+      expect(source).toContain("screen.onboarding.networkSetup.accessibility.applyHint");
     });
 
     it("has iOS HIG comment for apply button", () => {
@@ -138,8 +140,7 @@ describe("Onboarding Accessibility Tests", () => {
 
     it("GitHub link has accessibilityLabel and descriptive Hint", () => {
       expect(source).toContain('accessibilityLabel={feature.action.text}');
-      expect(source).toContain("Opens the DNS Chat GitHub repository in your browser");
-      expect(source).toContain("where you can view the source code and contribute");
+      expect(source).toContain("screen.onboarding.features.opensource.accessibilityHint");
     });
 
     it("has iOS HIG comment for external link", () => {

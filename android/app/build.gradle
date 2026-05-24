@@ -2,11 +2,6 @@ apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
 
-// Release signing notes:
-// - Never sign "release" builds with the debug keystore (Play rejects it; it also hides misconfiguration).
-// - For local release builds, it's OK to produce an unsigned artifact unless you provide signing creds.
-// - For CI/EAS, signing is typically injected via Gradle properties (android.injected.signing.*) or a keystore.properties file.
-
 def projectRoot = rootDir.getAbsoluteFile().getParentFile().getAbsolutePath()
 
 /**
@@ -16,7 +11,7 @@ def projectRoot = rootDir.getAbsoluteFile().getParentFile().getAbsolutePath()
 react {
     entryFile = file(["node", "-e", "require('expo/scripts/resolveAppEntry')", projectRoot, "android", "absolute"].execute(null, rootDir).text.trim())
     reactNativeDir = new File(["node", "--print", "require.resolve('react-native/package.json')"].execute(null, rootDir).text.trim()).getParentFile().getAbsoluteFile()
-    hermesCommand = new File(["node", "--print", "require.resolve('react-native/package.json')"].execute(null, rootDir).text.trim()).getParentFile().getAbsolutePath() + "/sdks/hermesc/%OS-BIN%/hermesc"
+    hermesCommand = new File(["node", "--print", "require.resolve('hermes-compiler/package.json', { paths: [require.resolve('react-native/package.json')] })"].execute(null, rootDir).text.trim()).getParentFile().getAbsolutePath() + "/hermesc/%OS-BIN%/hermesc"
     codegenDir = new File(["node", "--print", "require.resolve('@react-native/codegen/package.json', { paths: [require.resolve('react-native/package.json')] })"].execute(null, rootDir).text.trim()).getParentFile().getAbsoluteFile()
 
     enableBundleCompression = (findProperty('android.enableBundleCompression') ?: false).toBoolean()
@@ -69,9 +64,9 @@ react {
 }
 
 /**
- * Set this to true to Run Proguard on Release builds to minify the Java bytecode.
+ * Set this to true in release builds to optimize the app using [R8](https://developer.android.com/topic/performance/app-optimization/enable-app-optimization).
  */
-def enableProguardInReleaseBuilds = (findProperty('android.enableProguardInReleaseBuilds') ?: false).toBoolean()
+def enableMinifyInReleaseBuilds = (findProperty('android.enableMinifyInReleaseBuilds') ?: false).toBoolean()
 
 /**
  * The preferred build flavor of JavaScriptCore (JSC)
@@ -87,36 +82,20 @@ def enableProguardInReleaseBuilds = (findProperty('android.enableProguardInRelea
 def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
 
 def keystoreProperties = new Properties()
-// Support both common placements:
-// - android/keystore.properties (Gradle-local, conventional)
-// - <repo-root>/keystore.properties (repo-wide, still ignored by git)
-def keystorePropertiesFileCandidates = [
-    rootProject.file("keystore.properties"),
-    new File(projectRoot, "keystore.properties"),
-]
-
-def keystorePropertiesFile = keystorePropertiesFileCandidates.find { it.exists() }
-if (keystorePropertiesFile != null) {
+def keystorePropertiesFile = rootProject.file("keystore.properties")
+def repoKeystorePropertiesFile = new File(projectRoot, "keystore.properties")
+def hasReleaseSigning = false
+def keystorePropertiesBaseDir = null
+if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+    keystorePropertiesBaseDir = keystorePropertiesFile.getParentFile()
+    hasReleaseSigning = true
+} else if (repoKeystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(repoKeystorePropertiesFile))
+    keystorePropertiesBaseDir = repoKeystorePropertiesFile.getParentFile()
+    hasReleaseSigning = true
 }
 
-// Determine whether we have enough data to sign a release build.
-// If not, we intentionally leave Release unsigned (Gradle will still produce an artifact).
-def injectedStoreFile = project.findProperty("android.injected.signing.store.file")
-def injectedStorePassword = project.findProperty("android.injected.signing.store.password")
-def injectedKeyAlias = project.findProperty("android.injected.signing.key.alias")
-def injectedKeyPassword = project.findProperty("android.injected.signing.key.password")
-def hasInjectedSigning =
-    injectedStoreFile && injectedStorePassword && injectedKeyAlias && injectedKeyPassword
-
-def storeFileProp = keystoreProperties["storeFile"] ?: (project.findProperty("MYAPP_UPLOAD_STORE_FILE") ?: null)
-def storePasswordProp = keystoreProperties["storePassword"] ?: (project.findProperty("MYAPP_UPLOAD_STORE_PASSWORD") ?: null)
-def keyAliasProp = keystoreProperties["keyAlias"] ?: (project.findProperty("MYAPP_UPLOAD_KEY_ALIAS") ?: null)
-def keyPasswordProp = keystoreProperties["keyPassword"] ?: (project.findProperty("MYAPP_UPLOAD_KEY_PASSWORD") ?: null)
-def hasExplicitSigning =
-    storeFileProp && storePasswordProp && keyAliasProp && keyPasswordProp
-
-def hasReleaseSigning = hasInjectedSigning || hasExplicitSigning
 
 android {
     ndkVersion rootProject.ext.ndkVersion
@@ -129,8 +108,10 @@ android {
         applicationId 'org.mvneves.dnschat'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 30
-        versionName "4.0.0"
+        versionCode 44
+        versionName "4.0.14"
+
+        buildConfigField "String", "REACT_NATIVE_RELEASE_LEVEL", "\"${findProperty('reactNativeReleaseLevel') ?: 'stable'}\""
     }
     signingConfigs {
         debug {
@@ -140,19 +121,11 @@ android {
             keyPassword 'android'
         }
         release {
-            // Prefer injected signing (used by CI tooling) when present.
-            if (hasInjectedSigning) {
-                storeFile file(injectedStoreFile)
-                storePassword injectedStorePassword
-                keyAlias injectedKeyAlias
-                keyPassword injectedKeyPassword
-            } else if (hasExplicitSigning) {
-                storeFile file(storeFileProp)
-                storePassword storePasswordProp
-                keyAlias keyAliasProp
-                keyPassword keyPasswordProp
-            } else {
-                // Intentionally leave unset. See `hasReleaseSigning` above.
+            if (hasReleaseSigning) {
+                storeFile new File(keystorePropertiesBaseDir, keystoreProperties['storeFile'])
+                storePassword keystoreProperties['storePassword']
+                keyAlias keystoreProperties['keyAlias']
+                keyPassword keystoreProperties['keyPassword']
             }
         }
     }
@@ -161,19 +134,23 @@ android {
             signingConfig signingConfigs.debug
         }
         release {
-            // Do not sign release with debug keys; sign only when credentials are provided.
+            // Caution! In production, you need to generate your own keystore file.
+            // see https://reactnative.dev/docs/signed-apk-android.
             if (hasReleaseSigning) {
                 signingConfig signingConfigs.release
             }
-            shrinkResources (findProperty('android.enableShrinkResourcesInReleaseBuilds')?.toBoolean() ?: false)
-            minifyEnabled enableProguardInReleaseBuilds
+            def enableShrinkResources = findProperty('android.enableShrinkResourcesInReleaseBuilds') ?: 'false'
+            shrinkResources enableShrinkResources.toBoolean()
+            minifyEnabled enableMinifyInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
-            crunchPngs (findProperty('android.enablePngCrunchInReleaseBuilds')?.toBoolean() ?: true)
+            def enablePngCrunchInRelease = findProperty('android.enablePngCrunchInReleaseBuilds') ?: 'true'
+            crunchPngs enablePngCrunchInRelease.toBoolean()
         }
     }
     packagingOptions {
         jniLibs {
-            useLegacyPackaging (findProperty('expo.useLegacyPackaging')?.toBoolean() ?: false)
+            def enableLegacyPackaging = findProperty('expo.useLegacyPackaging') ?: 'false'
+            useLegacyPackaging enableLegacyPackaging.toBoolean()
         }
     }
     androidResources {
@@ -202,11 +179,11 @@ android {
 }
 
 dependencies {
+    // DNS Java library for legacy DNS support (API < 29)
+    implementation("dnsjava:dnsjava:3.5.2")
+
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
-    
-    // DNS Java library for legacy DNS support (API < 29)
-    implementation("dnsjava:dnsjava:3.5.1")
 
     def isGifEnabled = (findProperty('expo.gif.enabled') ?: "") == "true";
     def isWebpEnabled = (findProperty('expo.webp.enabled') ?: "") == "true";

@@ -12,6 +12,8 @@ export const ptBR = {
     settings: "Configurações",
     language: "Idioma",
     followSystem: "Usar idioma do dispositivo",
+    unknownError: "Algo deu errado. Por favor, tente novamente.",
+    done: "Concluído",
   },
   locales: {
     enUS: "Inglês (Estados Unidos)",
@@ -30,12 +32,30 @@ export const ptBR = {
       devLogs: "Logs DNS do Dev",
       notFound: "404",
     },
+    toolbar: {
+      newChat: "Nova Conversa",
+      share: "Compartilhar",
+      clearChat: "Limpar Conversa",
+      dnsInfo: "Info DNS",
+    },
   },
   screen: {
     onboarding: {
+      navigation: {
+        skip: "Pular",
+        skipHint: "Pula o tutorial e vai direto para o app",
+        back: "Voltar",
+        backHint: "Retorna para a tela anterior do onboarding",
+        getStarted: "Começar",
+        continue: "Continuar",
+        stepCounter: "Etapa {{current}} de {{total}}",
+        continueHint: "Avança para a próxima etapa do onboarding",
+        completeHint: "Conclui o onboarding e abre o app",
+      },
       welcome: {
         title: "Bem-vindo ao DNS Chat",
         subtitle: "O primeiro aplicativo de chat do mundo que usa consultas DNS para se comunicar com IA",
+        appIconLabel: "Ícone do aplicativo DNS Chat",
         features: {
           revolutionary: {
             label: "Revolucionário",
@@ -60,6 +80,7 @@ export const ptBR = {
         subtitle: "Envie uma mensagem e veja ela viajar pelo DNS",
         welcomeMessage: "Oi! Sou seu assistente de IA. Tente me enviar uma mensagem para ver como a magia do DNS funciona!",
         successMessage: "Ótimo! Você enviou com sucesso sua primeira mensagem DNS. Em um cenário real, isso retornaria uma resposta de IA via registros DNS TXT. A magia é que sua mensagem viajou pela infraestrutura DNS!",
+        failureMessage: "A mensagem DNS não pôde ser entregue. Verifique as configurações de rede ou tente novamente mais tarde.",
         suggestions: {
           title: "Experimente uma destas:",
           option1: "O que é DNS?",
@@ -76,6 +97,15 @@ export const ptBR = {
         navigation: {
           continue: "Incrível! Continuar",
           skip: "Pular Tutorial",
+        },
+        accessibility: {
+          suggestionLabel: "Sugestão: {{suggestion}}",
+          suggestionHint: "Preenche o campo de mensagem com esta pergunta sugerida",
+          inputLabel: "Campo de mensagem",
+          inputHint: "Digite sua mensagem para enviar via DNS. Máximo de {{max}} caracteres.",
+          sendLabel: "Enviar mensagem",
+          sendingLabel: "Enviando mensagem",
+          sendHint: "Envia sua mensagem através de uma consulta DNS TXT",
         },
       },
       dnsMagic: {
@@ -122,49 +152,58 @@ export const ptBR = {
           failed: "Falhou",
         },
         demoResponse: "Bem-vindo ao DNS Chat! Esta é uma demonstração de como suas mensagens viajam através de consultas DNS. Bem legal, né?",
+        accessibility: {
+          idleLabel: "Iniciar demonstração DNS",
+          runningLabel: "Consulta DNS em andamento",
+          demoHint: "Demonstra como as consultas DNS percorrem a cadeia de fallback. Veja sua mensagem passar por DNS nativo, UDP, TCP e HTTPS.",
+        },
       },
       networkSetup: {
         label: "Configuração",
-        title: "Otimização de Rede",
-        subtitle: "Estamos testando sua rede para encontrar os métodos DNS mais rápidos",
-        disclaimer: "Esta é uma demonstração simulada",
+        title: "Configuração de Rede",
+        subtitle: "Escolha como o DNS Chat deve se conectar ao servidor LLM",
+        disclaimer: "Você pode alterar a ordem de transporte depois em Ajustes",
         tests: {
           native: {
             name: "DNS Nativo",
-            description: "DNS otimizado para a plataforma",
+            description: "Resolvedor DNS da plataforma",
           },
           udp: {
             name: "DNS via UDP",
-            description: "Consultas DNS tradicionais",
+            description: "Transporte DNS padrão",
           },
           tcp: {
             name: "DNS via TCP",
-            description: "Fallback TCP confiável",
+            description: "Transporte TCP de fallback",
           },
         },
         status: {
-          testing: "Testando",
+          testing: "Configurando",
           waiting: "Aguardando",
-          success: "Sucesso",
-          failed: "Falhou",
+          success: "Configurado",
+          failed: "Indisponível",
           skipped: "Pulado",
         },
         optimization: {
-          title: "Otimização Completa",
-          description: "Sua rede suporta todos os métodos DNS. O aplicativo usará automaticamente o método mais rápido disponível com fallback inteligente para desempenho ideal.",
+          title: "Configuração Aplicada",
+          description: "O DNS Chat usará a cadeia automática de fallback entre estes transportes. Você pode ajustar isso a qualquer momento em Ajustes.",
           applyButton: "Aplicar Configurações Recomendadas",
-          loading: "Otimizando suas configurações de DNS...",
+          loading: "Configurando a ordem de transporte...",
         },
         navigation: {
           continue: "Continuar",
-          skip: "Pular Otimização",
+          skip: "Pular",
         },
         alerts: {
           errorTitle: "Erro",
-          errorMessage: "Otimização de rede falhou. Usando configurações padrão.",
+          errorMessage: "Configuração de rede falhou. Usando configurações padrão.",
           successTitle: "Configurações Aplicadas",
-          successMessage: "Otimização de rede completa. O DNS usará cadeia de fallback automática para melhor desempenho.",
+          successMessage: "Configuração de rede concluída. O DNS usará a cadeia automática de fallback.",
           successButton: "Ótimo",
+        },
+        accessibility: {
+          applyLabel: "Aplicar configurações recomendadas",
+          applyHint: "Configura o DNS para usar a cadeia automática de fallback entre os transportes suportados",
         },
       },
       features: {
@@ -198,6 +237,7 @@ export const ptBR = {
           title: "Código Aberto",
           description: "Construído de forma transparente - explore o código e contribua para o futuro do chat DNS.",
           action: "Ver no GitHub",
+          accessibilityHint: "Abre o repositório do DNS Chat no GitHub no navegador para você ver o código-fonte e contribuir",
         },
         themes: {
           label: "Adapta",
@@ -239,6 +279,14 @@ export const ptBR = {
         copy: "Copiar",
         share: "Compartilhar",
       },
+      accessibility: {
+        userMessage: "Sua mensagem: {{content}}",
+        assistantMessage: "Mensagem do assistente: {{content}}",
+        loadingHint: "Mensagem carregando",
+        errorIndicator: "Falha ao enviar mensagem",
+        menuHint: "Pressione e segure para mostrar opções de copiar e compartilhar",
+        messageListLabel: "Mensagens da conversa",
+      },
     },
     chatInput: {
       placeholder: "Mensagem...",
@@ -249,6 +297,13 @@ export const ptBR = {
       emptySubtitle:
         "Crie uma nova conversa para começar a falar com o assistente de IA.",
       newChatButton: "Iniciar nova conversa",
+      noMessages: "Ainda não há mensagens",
+      lastUserPrefix: "Você: {{content}}",
+      yesterday: "Ontem",
+      deleteTitle: "Apagar conversa",
+      deleteMessage: "Tem certeza de que deseja apagar \"{{title}}\"?",
+      createErrorTitle: "Não foi possível criar a conversa",
+      createErrorMessage: "Falha ao criar a conversa",
       accessibility: {
         deleteButton: "Apagar conversa",
         deleteButtonHint: "Toque duas vezes para apagar esta conversa",
@@ -285,6 +340,7 @@ export const ptBR = {
         messageSingular: "{{count}} mensagem",
         messagePlural: "{{count}} mensagens",
       },
+      itemAccessibilityLabel: "Conversa: {{title}}. {{count}} mensagens. {{time}}.",
       actionSheet: {
         title: "Escolha uma ação",
         message: "Selecione o que fazer com esta conversa",
@@ -315,6 +371,8 @@ export const ptBR = {
         noQuery: "Sem consulta",
         noMessage: "Sem mensagem",
         noResponse: "Sem resposta",
+        redactedQuery: "Consulta DNS",
+        redactedResponse: "Resposta ocultada",
         response: "Resposta:",
         querySteps: "Etapas da consulta:",
         resultTitle: "Resultado do último teste:",
@@ -331,6 +389,15 @@ export const ptBR = {
         clearTitle: "Limpar logs",
         clearMessage: "Tem certeza de que deseja limpar todos os logs DNS?",
         clearConfirm: "Limpar",
+      },
+      accessibility: {
+        expandRow: "Mostrar detalhes da consulta DNS",
+        collapseRow: "Ocultar detalhes da consulta DNS",
+      },
+      status: {
+        success: "Sucesso",
+        failed: "Falhou",
+        unknown: "Desconhecido",
       },
     },
     settings: {
@@ -537,7 +604,7 @@ export const ptBR = {
       tagline:
         "Converse com IA por consultas DNS TXT – uma forma única de falar com modelos de linguagem.",
       versionLabel: "v{{version}}",
-      footer: "© 2025 Marcus Neves • Licença MIT",
+      footer: "© 2025 Colaboradores do DNSChat • Licença MIT",
       quickActions: {
         title: "Ações rápidas",
         settingsTitle: "Configurações",
@@ -593,8 +660,9 @@ export const ptBR = {
           },
         },
         developer: {
-          title: "Desenvolvedor",
-          creatorSubtitle: "Criado por {{handle}}",
+          title: "Mantenedores",
+          maintainersTitle: "Colaboradores do DNSChat",
+          maintainersSubtitle: "Mantenedores do projeto open-source",
           devLogsTitle: "Logs do desenvolvedor (Dev)",
           devLogsSubtitle: "Abrir visualizador de logs DNS",
         },
@@ -610,13 +678,74 @@ export const ptBR = {
       subtitle: "Abra 'app/(tabs)/index.tsx' para começar a trabalhar no app!",
       goToProfile: "Ir para o perfil",
       goToSettings: "Ir para configurações",
+      navigationTitle: "Início",
+      dnsConnected: "Conectado",
+      dnsDisconnected: "Não configurado",
+      dnsStatus: "Status DNS",
+      configureButton: "Configurar DNS",
+      configure: "Configurar",
+      quickActions: {
+        title: "Ações rápidas",
+        newChat: "Nova conversa",
+        newChatDescription: "Iniciar uma nova conversa por DNS",
+        viewLogs: "Ver logs",
+        viewLogsDescription: "Inspecionar histórico de consultas DNS",
+      },
+      recentChats: {
+        title: "Conversas recentes",
+        footer: "Suas conversas mais recentes",
+      },
+      allChats: "Todas as conversas",
+      allChatsDescription: "Abrir lista completa de conversas",
     },
     profile: {
       title: "Perfil de {{user}}",
+      navigationTitle: "Perfil",
+      noChatsYet: "Ainda sem conversas",
+      defaultUser: "Usuário",
+      avatarLabel: "Avatar do perfil",
+      memberSince: "Primeira conversa {{date}}",
+      alerts: {
+        clearDataTitle: "Limpar todos os dados",
+        clearDataMessage:
+          "Isso excluirá todas as conversas e mensagens. Esta ação não pode ser desfeita.",
+        clearDataConfirm: "Limpar dados",
+        clearDataSuccessTitle: "Dados limpos",
+        clearDataSuccessMessage: "Todas as conversas foram apagadas deste dispositivo.",
+        clearDataErrorMessage: "Não foi possível limpar seus dados locais de chat. Tente novamente.",
+        exportTitle: "Exportar dados",
+        exportMessage: "A exportação de dados estará disponível em uma atualização futura.",
+      },
+      statistics: {
+        title: "Estatísticas",
+        footer: "Resumo da sua atividade de chat",
+        totalChats: "Total de conversas",
+        totalMessages: "Total de mensagens",
+        averageMessages: "Média de mensagens por conversa",
+      },
+      preferences: {
+        title: "Preferências",
+        settings: "Configurações",
+        settingsDescription: "DNS, acessibilidade e mais",
+      },
+      data: {
+        title: "Gerenciamento de dados",
+        footer: "Gerencie seu histórico de conversas e dados pessoais",
+        export: "Exportar dados",
+        exportDescription: "Baixar seu histórico de conversas",
+        clearAll: "Limpar todos os dados",
+        clearAllDescription: "Excluir todas as conversas e mensagens",
+      },
     },
     notFound: {
       title: "404",
       goHome: "Ir para início",
+      navigationTitle: "Não encontrado",
+      description: "A página que você procura não existe ou foi movida.",
+      quickLinks: "Links rápidos",
+      chatDescription: "Iniciar uma nova conversa",
+      logsDescription: "Ver logs de consultas DNS",
+      aboutDescription: "Saiba mais sobre o DNSChat",
     },
   },
   components: {
@@ -631,6 +760,17 @@ export const ptBR = {
     dnsLogViewer: {
       empty: "Nenhum log DNS ainda",
       responseLabel: "Resposta",
+      redactedTitle: "Consulta DNS",
+      redactedResponse: "Resposta ocultada",
+    },
+    share: {
+      title: "Compartilhar mensagem",
+      footer: "Compartilhado do DNSChat em {{date}}",
+      failedTitle: "Falha ao compartilhar",
+      failedMessage: "Não foi possível compartilhar esta mensagem. Tente novamente.",
+    },
+    skeleton: {
+      message: "Carregando mensagem",
     },
   },
 } as const;

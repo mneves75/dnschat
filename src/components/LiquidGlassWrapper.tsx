@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   AccessibilityInfo,
   Platform,
@@ -12,10 +12,11 @@ import {
   isLiquidGlassAvailable as expoIsLiquidGlassAvailable,
 } from "expo-glass-effect";
 import { getImessagePalette } from "../ui/theme/imessagePalette";
+import { splitGlassStyles } from "./glass/glassStyleUtils";
 
 type GlassVariant = "regular" | "prominent" | "interactive";
 
-type GlassShape = "capsule" | "rect" | "roundedRect";
+type GlassShape = "capsule" | "circle" | "rect" | "roundedRect";
 
 const MIN_IOS_GLASS_VERSION = 26;
 
@@ -46,6 +47,8 @@ const shapeRadius = (shape: GlassShape, explicit?: number) => {
   switch (shape) {
     case "capsule":
       return 24;
+    case "circle":
+      return 9999;
     case "rect":
       return 0;
     case "roundedRect":
@@ -263,8 +266,9 @@ export const LiquidGlassWrapper: React.FC<LiquidGlassProps> = ({
 }) => {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
-  const [reduceTransparency, setReduceTransparency] = useState(false);
+  const [reduceTransparency, setReduceTransparency] = useState(Platform.OS === "ios");
 
+  // Effect: sync reduce-transparency accessibility setting on iOS.
   useEffect(() => {
     if (Platform.OS !== "ios") return;
 
@@ -290,19 +294,15 @@ export const LiquidGlassWrapper: React.FC<LiquidGlassProps> = ({
   const glassKey = isInteractive ? "interactive" : "static";
   const radius = shapeRadius(shape, cornerRadius);
 
-  const baseContainerStyle = useMemo(
-    () => ({
-      borderRadius: radius,
-    }),
-    [radius],
-  );
+  const baseContainerStyle = { borderRadius: radius };
 
-  const fallbackStyle = useMemo(
-    () =>
-      buildFallbackStyle(variant, isDark, shape, cornerRadius, isInteractive, {
-        forceOpaque: reduceTransparency,
-      }),
-    [variant, isDark, shape, cornerRadius, isInteractive, reduceTransparency],
+  const fallbackStyle = buildFallbackStyle(
+    variant,
+    isDark,
+    shape,
+    cornerRadius,
+    isInteractive,
+    { forceOpaque: reduceTransparency },
   );
 
   const tint = tintForVariant(variant, isDark, tintColor);
@@ -318,13 +318,17 @@ export const LiquidGlassWrapper: React.FC<LiquidGlassProps> = ({
     );
   }
 
+  const { containerStyle, glassStyle } = splitGlassStyles(style);
+  const containerStyles = [baseContainerStyle, containerStyle];
+  const glassStyles = [baseContainerStyle, glassStyle];
+
   const glassContent = (
     <GlassView
       key={glassKey}
       glassEffectStyle={glassEffect}
       isInteractive={isInteractive}
       tintColor={tint}
-      style={[baseContainerStyle, style]}
+      style={glassStyles}
       {...rest}
     >
       {children}
@@ -333,16 +337,18 @@ export const LiquidGlassWrapper: React.FC<LiquidGlassProps> = ({
 
   if (enableContainer) {
     return (
-      <GlassContainer
-        spacing={containerSpacing}
-        style={[baseContainerStyle, style]}
-      >
-        {glassContent}
-      </GlassContainer>
+      <View style={containerStyles}>
+        <GlassContainer
+          spacing={containerSpacing}
+          style={glassStyles}
+        >
+          {glassContent}
+        </GlassContainer>
+      </View>
     );
   }
 
-  return glassContent;
+  return <View style={containerStyles}>{glassContent}</View>;
 };
 
 export const LiquidGlassButton: React.FC<LiquidGlassProps> = ({
@@ -394,8 +400,9 @@ export const useLiquidGlassCapabilities = () => {
     () => computeGlassAvailability(),
   );
   const [loading, setLoading] = useState(Platform.OS === "ios");
-  const [reduceTransparency, setReduceTransparency] = useState(false);
+  const [reduceTransparency, setReduceTransparency] = useState(Platform.OS === "ios");
 
+  // Effect: compute glass capability and watch reduce-transparency changes on iOS.
   useEffect(() => {
     if (Platform.OS !== "ios") {
       setAvailability({
@@ -411,9 +418,6 @@ export const useLiquidGlassCapabilities = () => {
       setAvailability(computeGlassAvailability());
     };
 
-    updateAvailability();
-    setLoading(false);
-
     const handleReduceTransparency = (value: boolean) => {
       setReduceTransparency(Boolean(value));
     };
@@ -423,9 +427,14 @@ export const useLiquidGlassCapabilities = () => {
       handleReduceTransparency,
     );
 
-    AccessibilityInfo.isReduceTransparencyEnabled().then((value) => {
-      handleReduceTransparency(Boolean(value));
-    });
+    AccessibilityInfo.isReduceTransparencyEnabled()
+      .then((value) => {
+        handleReduceTransparency(Boolean(value));
+      })
+      .finally(() => {
+        updateAvailability();
+        setLoading(false);
+      });
 
     return () => {
       subscription.remove();
