@@ -6,6 +6,32 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+### Added
+
+- Added regression coverage for Markdown link routing, DNS TXT answer owner/class
+  validation, sanitized multipart conflict errors, onboarding transport copy, and
+  accessibility actions on message/chat/log/settings surfaces.
+
+### Changed
+
+- Extended the DNS resolver sync gate to cover the tracked iOS prebuild resolver
+  copy as well as Android.
+- Updated onboarding copy so DNS is described as observable infrastructure and
+  the TypeScript transport chain is limited to Native, UDP, and TCP.
+
+### Fixed
+
+- Routed Markdown links from assistant DNS responses through the shared external
+  URL allowlist instead of the markdown library's raw opener.
+- Hardened JS and iOS TXT parsing so accepted answers must match the requested
+  owner name and IN class.
+- Removed TXT payload fragments from multipart conflict errors before they can
+  reach encrypted DNS logs.
+- Fixed onboarding's DNS demo so it probes each displayed transport directly
+  instead of reporting fallback success as Native DNS success.
+- Added explicit assistive-technology actions and labels for Settings switches,
+  message copy/share, chat open/share/delete, and DNS log summaries.
+
 ## [4.0.15] - 2026-05-24
 
 ### Added

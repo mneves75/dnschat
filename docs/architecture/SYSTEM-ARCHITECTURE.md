@@ -44,8 +44,8 @@ App:
 
 Native DNS module:
 
-- `modules/dns-native/` shared TS API + iOS/Android bridge code
-- `ios/DNSNative/` iOS native module project files used by Expo prebuild
+- `modules/dns-native/` shared TS API and source-of-truth iOS/Android bridge code.
+- `ios/DNSNative/` tracked iOS prebuild copy; resolver changes must stay synchronized with `modules/dns-native/ios/` and are checked by `bun run verify:dnsresolver-sync`.
 
 ## DNS query pipeline (what matters)
 
@@ -57,6 +57,7 @@ Native DNS module:
 5. Validate DNS response headers before parsing:
    - Transaction ID match, QR/opcode/TC/RCODE checks, QDCOUNT=1.
    - Question section matches QNAME/QTYPE/QCLASS.
+   - TXT answer owner name and class match the original query.
 6. Parse TXT response:
    - Plain TXT records: concatenate non-empty records and return.
    - Multipart `n/N:` records: require a complete set `1..N` and join in order.
@@ -71,5 +72,5 @@ adapters use the same packet, framing, validation, and TXT extraction rules.
 - The TypeScript transport chain does not implement DNS-over-HTTPS; `tcp` is
   DNS-over-TCP on port 53.
 - Android native DNS has its own internal fallback: raw UDP first, then
-  DNS-over-HTTPS for non-LLM servers, then a legacy resolver (dnsjava).
+  DNS-over-HTTPS only when the selected resolver is Cloudflare `1.1.1.1`, then a legacy resolver (dnsjava).
   See `modules/dns-native/android/DNSResolver.java`.

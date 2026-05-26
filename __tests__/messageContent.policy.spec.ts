@@ -6,6 +6,10 @@ describe("MessageContent render policy", () => {
   it("covers loading, markdown, plain text, and localized error indicator branches", () => {
     expect(source).toContain('message.status === "sending"');
     expect(source).toContain("<Markdown");
+    expect(source).toContain("onLinkPress={handleMarkdownLinkPress}");
+    expect(source).toContain("openExternalUrl(url)");
+    expect(source).toContain("return false");
+    expect(source).not.toContain("Linking.openURL");
     expect(source).toContain("{message.content}");
     expect(source).toContain('t("screen.chat.accessibility.errorIndicator")');
     expect(source).not.toContain("Error indicator");

@@ -25,6 +25,7 @@ import {
   useColorScheme,
   Platform,
 } from "react-native";
+import type { AccessibilityActionEvent } from "react-native";
 import Animated from "react-native-reanimated";
 import { useRouter } from "expo-router";
 import { useChat } from "../../context/ChatContext";
@@ -41,12 +42,13 @@ import { formatDistanceToNow } from "date-fns";
 import { useTranslation } from "../../i18n";
 import { useImessagePalette } from "../../ui/theme/imessagePalette";
 import { useTypography } from "../../ui/hooks/useTypography";
-import { devLog } from "../../utils/devLog";
 import { HapticFeedback } from "../../utils/haptics";
 import { useScreenEntrance } from "../../ui/hooks/useScreenEntrance";
 import { useStaggeredListValues, AnimatedListItem } from "../../ui/hooks/useStaggeredList";
 import { ChatListSkeleton } from "../../components/skeletons";
 import { EmptyState } from "../../components/EmptyState";
+import { ShareService } from "../../services/ShareService";
+import { useSettings } from "../../context/SettingsContext";
 import type { Chat } from "../../types/chat";
 
 // ==================================================================================
@@ -103,6 +105,29 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
       HapticFeedback.medium();
     }
     actionSheet.show();
+  };
+  const chatAccessibilityActions = [
+    { name: "activate", label: t("screen.glassChatList.actionSheet.openChat") },
+    ...(onShare
+      ? [{ name: "share", label: t("screen.glassChatList.actionSheet.shareChat") }]
+      : []),
+    { name: "delete", label: t("screen.glassChatList.actionSheet.deleteChat") },
+  ];
+  const handleAccessibilityAction = (event: AccessibilityActionEvent) => {
+    switch (event.nativeEvent.actionName) {
+      case "activate":
+        onPress();
+        break;
+      case "share":
+        onShare?.();
+        break;
+      case "delete":
+        onDelete();
+        break;
+      default:
+        handleLongPress();
+        break;
+    }
   };
 
   // iOS 26 HIG: Chat list items are CONTENT, not controls
@@ -198,7 +223,9 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
         accessible
         accessibilityRole="link"
         accessibilityLabel={itemAccessibilityLabel}
-        accessibilityHint={t("screen.glassChatList.actionSheet.openChat")}
+        accessibilityHint={t("screen.glassChatList.itemAccessibilityHint")}
+        accessibilityActions={chatAccessibilityActions}
+        onAccessibilityAction={handleAccessibilityAction}
       >
         {({ pressed }) => renderChatContent(pressed)}
       </PressableRipple>
@@ -258,6 +285,7 @@ export function GlassChatList() {
     clearError,
   } = useChat();
   const { t } = useTranslation();
+  const { locale } = useSettings();
   const { animatedStyle } = useScreenEntrance();
   const { opacities, translates } = useStaggeredListValues(chats.length);
 
@@ -342,9 +370,11 @@ export function GlassChatList() {
     }
   };
 
-  const handleShareChat = (chat: Chat) => {
-    // Share functionality would go here
-    devLog("Sharing chat", { chatId: chat?.id });
+  const handleShareChat = async (chat: Chat) => {
+    await ShareService.shareConversation(
+      chat.messages.map((message) => message.content),
+      locale,
+    );
   };
 
   const recentFooter = chats.length === 1

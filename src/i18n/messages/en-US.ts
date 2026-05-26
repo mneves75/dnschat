@@ -63,9 +63,9 @@ export const enUS = {
             description: "Chat through DNS TXT records - no traditional APIs needed",
           },
           private: {
-            label: "Private",
-            title: "Privacy-Focused",
-            description: "Your conversations travel through the global DNS infrastructure",
+            label: "Observable",
+            title: "DNS Is Observable",
+            description: "Do not send secrets or personal data; DNS infrastructure can observe queries",
           },
           fast: {
             label: "Fast",
@@ -135,14 +135,7 @@ export const enUS = {
             pending: "TCP connection standing by...",
             active: "Attempting TCP DNS query...",
             success: "TCP fallback successful",
-            failed: "TCP failed, trying HTTPS...",
-          },
-          https: {
-            name: "HTTPS Fallback",
-            pending: "Cloudflare DNS API ready...",
-            active: "Attempting HTTPS DNS query...",
-            success: "HTTPS fallback successful",
-            failed: "All DNS methods exhausted",
+            failed: "TCP failed; no more DNS transports configured",
           },
         },
         status: {
@@ -152,10 +145,11 @@ export const enUS = {
           failed: "Failed",
         },
         demoResponse: "Welcome to DNS Chat! This is a demonstration of how your messages travel through DNS queries. Pretty cool, right?",
+        demoFailure: "No DNS response returned during this demo. You can continue and adjust Settings later.",
         accessibility: {
           idleLabel: "Start DNS demo",
           runningLabel: "DNS query in progress",
-          demoHint: "Demonstrates how DNS queries work through the fallback chain. Watch as your message travels through Native DNS, UDP, TCP, and HTTPS methods.",
+          demoHint: "Demonstrates how DNS queries work through the fallback chain. Watch as your message travels through Native DNS, UDP, and TCP methods.",
         },
       },
       networkSetup: {
@@ -215,7 +209,7 @@ export const enUS = {
         customize: {
           label: "Customize",
           title: "Customizable Settings",
-          description: "Configure DNS servers, enable HTTPS preferences, and optimize for your network.",
+          description: "Configure DNS servers, haptics, and transport behavior for your network.",
         },
         liquidGlass: {
           label: "iOS 26",
@@ -341,6 +335,7 @@ export const enUS = {
         messagePlural: "{{count}} messages",
       },
       itemAccessibilityLabel: "Chat: {{title}}. {{count}} messages. {{time}}.",
+      itemAccessibilityHint: "Double tap to open. Use available actions to share or delete this conversation.",
       actionSheet: {
         title: "Choose an action",
         message: "Choose an action for this conversation",
@@ -373,6 +368,7 @@ export const enUS = {
         noResponse: "No response",
         redactedQuery: "DNS query",
         redactedResponse: "Response redacted",
+        durationPending: "Duration pending",
         response: "Response:",
         querySteps: "Query Steps:",
         resultTitle: "Last Test Result:",
@@ -393,10 +389,12 @@ export const enUS = {
       accessibility: {
         expandRow: "Show DNS query details",
         collapseRow: "Hide DNS query details",
+        rowLabel: "DNS query. Status: {{status}}. Method: {{method}}. Started at {{time}}. Duration: {{duration}}.",
       },
       status: {
         success: "Succeeded",
         failed: "Failed",
+        pending: "Pending",
         unknown: "Unknown",
       },
     },

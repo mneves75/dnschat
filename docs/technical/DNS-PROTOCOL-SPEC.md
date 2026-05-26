@@ -69,6 +69,7 @@ Native UDP resolvers (iOS/Android) and JS UDP/TCP fallbacks validate DNS respons
 - The response question section must match the original query:
   - QNAME equals the normalized query name (lowercased, sanitized).
   - QTYPE is TXT (16) and QCLASS is IN (1).
+- Accepted TXT answers must also match the original owner name and IN class.
 - DNS name parsing handles compression pointers with strict bounds checks and a small max-jump guard.
 - JS UDP additionally rejects unexpected source metadata when the selected resolver is an explicit IPv4 address (source port must always match, and source address must match for IPv4-literal resolvers).
 

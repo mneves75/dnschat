@@ -9,6 +9,7 @@ import type { IMessagePalette } from "../ui/theme/imessagePalette";
 import type { TypographyScale } from "../ui/theme/liquidGlassTypography";
 import { LiquidGlassSpacing } from "../ui/theme/liquidGlassSpacing";
 import { useTranslation } from "../i18n";
+import { openExternalUrl } from "../utils/externalLinks";
 
 interface MessageContentProps {
   message: Message;
@@ -18,6 +19,11 @@ interface MessageContentProps {
   palette: IMessagePalette;
   typography: TypographyScale;
 }
+
+const handleMarkdownLinkPress = (url: string): boolean => {
+  void openExternalUrl(url);
+  return false;
+};
 
 /**
  * MessageContent Component
@@ -51,7 +57,9 @@ export function MessageContent({
       {isUser ? (
         <Text style={[textStyles, typography.body]} selectable={false}>{message.content}</Text>
       ) : (
-        <Markdown {...markdownProps}>{message.content}</Markdown>
+        <Markdown {...markdownProps} onLinkPress={handleMarkdownLinkPress}>
+          {message.content}
+        </Markdown>
       )}
 
       {/* Loading indicator for sending messages */}

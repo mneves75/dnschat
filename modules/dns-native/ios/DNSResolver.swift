@@ -434,26 +434,17 @@ final class DNSResolver: NSObject {
         }
         
         for _ in 0..<anCount {
-            if offset + 10 > bytes.count { break }
-            // NAME (pointer or labels)
-            if (bytes[offset] & 0xC0) == 0xC0 {
-                offset += 2
-            } else {
-                while offset < bytes.count {
-                    let len = Int(bytes[offset])
-                    offset += 1
-                    if len == 0 { break }
-                    offset += len
-                }
-            }
+            let (answerName, answerOffset) = try readName(bytes: bytes, offset: offset)
+            offset = answerOffset
             if offset + 10 > bytes.count { break }
             let type = Int(bytes[offset]) << 8 | Int(bytes[offset + 1])
             offset += 2 // TYPE
+            let answerClass = Int(bytes[offset]) << 8 | Int(bytes[offset + 1])
             offset += 2 // CLASS
             offset += 4 // TTL
             let rdLength = Int(bytes[offset]) << 8 | Int(bytes[offset + 1])
             offset += 2
-            if type == 16 && offset + rdLength <= bytes.count { // TXT
+            if type == 16 && answerClass == 1 && answerName == expectedQueryName && offset + rdLength <= bytes.count { // TXT
                 let end = offset + rdLength
                 var p = offset
                 while p < end {

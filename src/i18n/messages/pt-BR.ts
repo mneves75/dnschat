@@ -63,9 +63,9 @@ export const ptBR = {
             description: "Converse através de registros DNS TXT - sem APIs tradicionais",
           },
           private: {
-            label: "Privado",
-            title: "Focado em Privacidade",
-            description: "Suas conversas viajam pela infraestrutura global de DNS",
+            label: "Observável",
+            title: "DNS é observável",
+            description: "Não envie segredos ou dados pessoais; a infraestrutura DNS pode observar consultas",
           },
           fast: {
             label: "Rápido",
@@ -135,14 +135,7 @@ export const ptBR = {
             pending: "Conexão TCP em espera...",
             active: "Tentando consulta DNS via TCP...",
             success: "Fallback TCP bem-sucedido",
-            failed: "TCP falhou, tentando HTTPS...",
-          },
-          https: {
-            name: "Fallback HTTPS",
-            pending: "API DNS Cloudflare pronta...",
-            active: "Tentando consulta DNS via HTTPS...",
-            success: "Fallback HTTPS bem-sucedido",
-            failed: "Todos os métodos DNS esgotados",
+            failed: "TCP falhou; não há mais transportes DNS configurados",
           },
         },
         status: {
@@ -152,10 +145,11 @@ export const ptBR = {
           failed: "Falhou",
         },
         demoResponse: "Bem-vindo ao DNS Chat! Esta é uma demonstração de como suas mensagens viajam através de consultas DNS. Bem legal, né?",
+        demoFailure: "Nenhuma resposta DNS retornou durante esta demonstração. Você pode continuar e ajustar as Configurações depois.",
         accessibility: {
           idleLabel: "Iniciar demonstração DNS",
           runningLabel: "Consulta DNS em andamento",
-          demoHint: "Demonstra como as consultas DNS percorrem a cadeia de fallback. Veja sua mensagem passar por DNS nativo, UDP, TCP e HTTPS.",
+          demoHint: "Demonstra como as consultas DNS percorrem a cadeia de fallback. Veja sua mensagem passar por DNS nativo, UDP e TCP.",
         },
       },
       networkSetup: {
@@ -215,7 +209,7 @@ export const ptBR = {
         customize: {
           label: "Personalizar",
           title: "Configurações Personalizáveis",
-          description: "Configure servidores DNS, ative preferências HTTPS e otimize para sua rede.",
+          description: "Configure servidores DNS, hápticos e comportamento de transporte para sua rede.",
         },
         liquidGlass: {
           label: "iOS 26",
@@ -341,6 +335,7 @@ export const ptBR = {
         messagePlural: "{{count}} mensagens",
       },
       itemAccessibilityLabel: "Conversa: {{title}}. {{count}} mensagens. {{time}}.",
+      itemAccessibilityHint: "Toque duas vezes para abrir. Use as ações disponíveis para compartilhar ou apagar esta conversa.",
       actionSheet: {
         title: "Escolha uma ação",
         message: "Selecione o que fazer com esta conversa",
@@ -373,6 +368,7 @@ export const ptBR = {
         noResponse: "Sem resposta",
         redactedQuery: "Consulta DNS",
         redactedResponse: "Resposta ocultada",
+        durationPending: "Duração pendente",
         response: "Resposta:",
         querySteps: "Etapas da consulta:",
         resultTitle: "Resultado do último teste:",
@@ -393,10 +389,12 @@ export const ptBR = {
       accessibility: {
         expandRow: "Mostrar detalhes da consulta DNS",
         collapseRow: "Ocultar detalhes da consulta DNS",
+        rowLabel: "Consulta DNS. Status: {{status}}. Método: {{method}}. Iniciada às {{time}}. Duração: {{duration}}.",
       },
       status: {
         success: "Sucesso",
         failed: "Falhou",
+        pending: "Pendente",
         unknown: "Desconhecido",
       },
     },
