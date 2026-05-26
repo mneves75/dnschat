@@ -1,5 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { DNSLogService } from "../src/services/dnsLogService";
+import { parseTXTResponse } from "../src/services/dnsService";
 
 jest.mock("@react-native-async-storage/async-storage", () => ({
   getItem: jest.fn(),
@@ -119,6 +120,27 @@ describe("DNSLogService concurrent query isolation", () => {
     expect(serialized).toContain("sha256:");
     expect(serialized).not.toContain("secret prompt");
     expect(serialized).not.toContain("secret response");
+  });
+
+  it("does not persist conflicting multipart TXT payload fragments in failure logs", async () => {
+    const queryId = DNSLogService.startQuery("secret prompt");
+
+    let errorMessage = "";
+    try {
+      parseTXTResponse(["1/2:secret-fragment", "1/2:different-secret", "2/2:tail"]);
+    } catch (error) {
+      errorMessage = error instanceof Error ? error.message : String(error);
+    }
+
+    DNSLogService.logMethodFailure(queryId, "tcp", errorMessage, 9);
+    await DNSLogService.endQuery(queryId, false);
+
+    const log = DNSLogService.getLogs().find((entry) => entry.id === queryId);
+    const serialized = JSON.stringify(log);
+
+    expect(serialized).toContain("Conflicting content for part 1");
+    expect(serialized).not.toContain("secret-fragment");
+    expect(serialized).not.toContain("different-secret");
   });
 
   it("sends the current log snapshot when subscribing after async initialization", () => {

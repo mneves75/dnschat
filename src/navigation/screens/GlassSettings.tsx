@@ -384,6 +384,8 @@ export function GlassSettings() {
                 testID="settings-mock-dns-switch"
                 value={enableMockDNS}
                 onValueChange={handleToggleMockDNS}
+                accessibilityLabel={t("screen.glassSettings.sections.dnsConfig.mockTitle")}
+                accessibilityHint={t("screen.glassSettings.sections.dnsConfig.mockSubtitle")}
                 trackColor={{ false: palette.textTertiary, true: palette.userBubble }}
                 thumbColor={
                   Platform.OS === "android"
@@ -406,6 +408,10 @@ export function GlassSettings() {
                 testID="settings-haptics-switch"
                 value={enableHaptics}
                 onValueChange={handleToggleHaptics}
+                accessibilityLabel={t("screen.settings.sections.appBehavior.enableHaptics.label")}
+                accessibilityHint={t(
+                  "screen.settings.sections.appBehavior.enableHaptics.description",
+                )}
                 trackColor={{ false: palette.textTertiary, true: palette.userBubble }}
                 thumbColor={
                   Platform.OS === "android"

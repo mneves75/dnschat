@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DNSChat Implementation Notes</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.5;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 960px;
+      padding: 32px 20px;
+    }
+    h1, h2, h3 {
+      line-height: 1.2;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+    th, td {
+      border: 1px solid CanvasText;
+      padding: 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .status {
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+  <h1>DNSChat Implementation Notes</h1>
+  <p><strong>Scope:</strong> full frontend UI/UX and source-code review for this DNSChat repo, followed by justified fixes, tests, verification, commit, and push when available.</p>
+  <p><strong>Stop condition:</strong> no known critical/high issues remain; medium findings are either fixed or explicitly justified; strongest local checks have fresh outcomes; browser/runtime evidence is captured for user-visible frontend changes when feasible.</p>
+
+  <h2>Scope Lock</h2>
+  <ul>
+    <li>Repo root confirmed: <code>&lt;repo-root&gt;</code>.</li>
+    <li>Branch: <code>main</code>, tracking <code>origin/main</code>.</li>
+    <li>Starting commit: <code>e70d23b Record final TestFlight evidence</code>.</li>
+    <li>Package manager: Bun. Current shell reported <code>bun 1.4.0</code> and <code>node v24.15.0</code>.</li>
+    <li>Remote: <code>origin &lt;remote-url&gt;</code> (push availability checked locally).</li>
+    <li>Initial tracked source/test/script inventory: 257 files under <code>app/</code>, <code>src/</code>, <code>modules/dns-native/</code>, <code>scripts/</code>, and <code>__tests__/</code>.</li>
+  </ul>
+
+  <h2>Current Guidance Checked</h2>
+  <ul>
+    <li>Repo instructions: <code>AGENTS.md</code>, <code>CLAUDE.md</code>, and <code>docs/technical/SPECIFICATION.md</code>.</li>
+    <li>Skills loaded: <code>code-review</code>, <code>frontend-design</code>, <code>design-review</code>, <code>modern-web-guidance</code>, and <code>security-best-practices</code>.</li>
+    <li>Security references loaded: JavaScript/TypeScript React frontend and general frontend security.</li>
+    <li>Modern web guidance retrieved: accessibility, accessible error announcements, deferred rendering, and web security.</li>
+    <li>Official docs checked: Expo SDK 56 changelog and upgrade/router migration docs; React Native 0.85 release notes, accessibility/text docs, FlatList/Hermes docs; React 19 versions and React Compiler docs.</li>
+  </ul>
+
+  <h2>Design Decisions</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Decision</th>
+        <th>Reasoning</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Keep DNS privacy warnings explicit in UX/docs.</td>
+        <td>The product contract says DNS is observable infrastructure; UI and docs must not imply DNS prompts are private.</td>
+        <td class="status">Accepted</td>
+      </tr>
+      <tr>
+        <td>Prefer focused fixes over broad redesign.</td>
+        <td>The app already has a release-tested design system and broad prior verification; changes should target concrete production risks found in this pass.</td>
+        <td class="status">Accepted</td>
+      </tr>
+      <tr>
+        <td>Do not add dependencies unless a current blocker proves they are necessary.</td>
+        <td>Repo instructions prefer deletion, existing utilities, and local patterns; no dependency gap has been proven yet.</td>
+        <td class="status">Accepted</td>
+      </tr>
+      <tr>
+        <td>Use per-transport DNS probes in onboarding demo instead of the normal fallback query.</td>
+        <td>The old demo could report Native DNS success even when <code>queryLLM</code> succeeded through a fallback. Forced <code>testTransport</code> probes keep the UI claim aligned with the actual transport being shown.</td>
+        <td class="status">Accepted</td>
+      </tr>
+      <tr>
+        <td>Fix iOS resolver copy drift by synchronizing the tracked prebuild copy and extending the sync gate.</td>
+        <td>The built module source lives in <code>modules/dns-native/ios/</code>, but <code>ios/DNSNative/</code> remains tracked. A sync check is cheaper and safer than silently leaving stale native code in the repo.</td>
+        <td class="status">Accepted</td>
+      </tr>
+      <tr>
+        <td>Deploy to TestFlight at the end of the run if release credentials and signing are available.</td>
+        <td>The user explicitly requested TestFlight after the initial review goal. This makes build-number sync, archive/export, upload, and ASC validation part of the final release lane.</td>
+        <td class="status">Accepted</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Intentional Deviations</h2>
+  <ul>
+    <li>Claude Code was requested for frontend/design review, but <code>claude --bare</code> reported <code>Not logged in</code>. Codex-native design/source/architecture review continued instead.</li>
+  </ul>
+
+  <h2>Tradeoffs</h2>
+  <ul>
+    <li>Use prior memory as context only. Re-run current checks before claiming the current implementation is clean.</li>
+    <li>Use browser/UI smoke after frontend-visible edits. If no UI code changes are needed, browser smoke still gives confidence but is not a substitute for native release gates.</li>
+    <li>Keep network-setup onboarding as a configuration animation rather than live network probing. The DNS demo now probes transports directly; the setup screen labels only the fallback order being configured.</li>
+  </ul>
+
+  <h2>Audit Log</h2>
+  <ol>
+    <li>Scope lock completed. Worktree initially clean; remote present.</li>
+    <li>Security grep found no immediate app-code <code>dangerouslySetInnerHTML</code>, <code>innerHTML</code>, <code>eval</code>, or untrusted browser navigation sink in owned app code. Expected hits include storage, accessibility props, test mocks, scripts, and diagnostics utilities.</li>
+    <li>Version/docs grep did not find stale <code>4.0.11</code>-<code>4.0.14</code> or build <code>40</code>-<code>44</code> claims in primary docs/config surfaces.</li>
+    <li>High finding fixed: assistant Markdown content is untrusted DNS TXT response data, and <code>react-native-markdown-display</code> defaults link presses to <code>Linking.openURL</code>. <code>MessageContent</code> now supplies <code>onLinkPress</code>, routes URLs through the shared <code>openExternalUrl</code> allowlist, and returns <code>false</code> so the markdown library does not perform a second raw open.</li>
+    <li>Frontend/design high findings fixed: onboarding no longer claims DNS prompts are private, no longer advertises a TypeScript HTTPS fallback, and the DNS Magic demo no longer reports fallback success as native success.</li>
+    <li>Accessibility medium findings fixed: Settings switches now expose direct labels/hints, message bubbles expose copy/share actions, chat-list rows expose open/share/delete actions, and log rows announce status, method, start time, and duration.</li>
+    <li>Source/security medium findings fixed: JS and iOS TXT extraction now require matching answer owner name and IN class, multipart conflict errors no longer include TXT payload fragments, and the iOS resolver sync gate now covers the tracked prebuild copy.</li>
+    <li>Post-milestone reviewer found no critical/high issues. One medium was fixed: chat-list Share accessibility action now calls <code>ShareService.shareConversation</code> instead of the previous no-op debug path.</li>
+  </ol>
+
+  <h2>Open Questions And Risks</h2>
+  <ul>
+    <li>App Store-version validation is not applicable for this TestFlight-only deployment because App Store Connect has no App Store version record for <code>4.0.15</code>. Creating one would be a separate App Store release-state change.</li>
+    <li>Node currently resolves to v24.15.0; current Expo Doctor and native checks passed in this environment, so no Node override was needed.</li>
+  </ul>
+
+  <h2>Validation Evidence</h2>
+  <ul>
+    <li><code>bun run verify:all</code>: passed. Expo Doctor <code>19/19</code>, React Compiler <code>86/86</code>, TypeScript, lint, SDK alignment, typed routes, DNS resolver sync, iOS pods sync, Android setup critical checks, and Jest all passed. Jest result: <code>101</code> passed suites, <code>1</code> skipped; <code>844</code> passed tests, <code>13</code> skipped.</li>
+    <li><code>cd modules/dns-native &amp;&amp; bun run test</code>: passed. <code>7</code> passed suites, <code>1</code> skipped; <code>56</code> passed tests, <code>13</code> skipped.</li>
+    <li><code>gitleaks detect --source . --redact --no-banner --config .gitleaks.toml</code>: passed, no leaks found.</li>
+    <li><code>bun audit</code>: passed, no vulnerabilities found.</li>
+    <li><code>bun run verify:dnsresolver-sync</code>: passed after extending the gate to Android and iOS resolver copies.</li>
+    <li><code>bun run typecheck</code>: passed after the first fix milestone.</li>
+    <li><code>bun run test -- --runTestsByPath ...</code> focused milestone run: passed. <code>14</code> suites passed; <code>222</code> tests passed.</li>
+    <li><code>bun run verify:all</code>: passed after fixes. Expo Doctor <code>19/19</code>, TypeScript, resolver sync, iOS pods, React Compiler <code>84/84</code>, lint, and Jest all passed. Jest result: <code>102</code> passed suites, <code>1</code> skipped; <code>852</code> passed tests, <code>13</code> skipped.</li>
+    <li><code>cd modules/dns-native &amp;&amp; bun run test</code>: passed after fixes. <code>7</code> passed suites, <code>1</code> skipped; <code>56</code> passed tests, <code>13</code> skipped.</li>
+    <li><code>gitleaks detect --source . --redact --no-banner --config .gitleaks.toml</code>: passed after fixes, no leaks found.</li>
+    <li><code>bun audit</code>: passed after fixes, no vulnerabilities found.</li>
+    <li><code>asc doctor</code>: passed; system keychain, default profile, private key, and temp-file checks reported no issues.</li>
+    <li>Browser/UI smoke after frontend edits: desktop <code>1280x720</code> and mobile <code>390x844</code> onboarding checks passed. Evidence: observable-DNS warning present, DNS Magic transport copy present, unsupported HTTPS copy absent, and no browser JavaScript errors.</li>
+    <li><code>bun run sync-versions --bump-build</code>: passed; version remained <code>4.0.15</code> and native build number advanced to <code>46</code>.</li>
+    <li><code>bun run verify:all</code>: passed after build-number sync. Expo Doctor <code>19/19</code>, TypeScript, resolver sync, iOS pods, React Compiler <code>84/84</code>, lint, and Jest all passed. Jest result: <code>102</code> passed suites, <code>1</code> skipped; <code>852</code> passed tests, <code>13</code> skipped.</li>
+    <li><code>xcodebuild clean archive</code> for generic iOS Release: first pass failed because the public project intentionally leaves <code>DEVELOPMENT_TEAM</code> empty; retry passed with the local signing team supplied only as a command-line build setting.</li>
+    <li><code>xcodebuild -exportArchive</code>: passed; App Store Connect IPA export succeeded.</li>
+    <li><code>asc publish testflight --wait</code>: passed; uploaded <code>4.0.15</code> build <code>46</code>, processing state <code>VALID</code>. The internal TestFlight group already receives all builds.</li>
+    <li>TestFlight build notes: added en-US and pt-BR <code>What to Test</code> notes through the App Store Connect API after the ASC shortcut command rejected the unattached TestFlight build.</li>
+    <li><code>asc validate testflight</code>: passed after notes update; <code>0</code> errors, <code>0</code> warnings, <code>0</code> blocking findings.</li>
+    <li><code>asc builds list</code>: confirmed latest iOS TestFlight build is <code>4.0.15</code> build <code>46</code> with processing state <code>VALID</code>.</li>
+    <li><code>asc validate --app ... --version 4.0.15 --platform IOS</code>: blocked because no App Store version record exists for <code>4.0.15</code>; TestFlight deployment itself is validated separately above.</li>
+  </ul>
+</body>
+</html>

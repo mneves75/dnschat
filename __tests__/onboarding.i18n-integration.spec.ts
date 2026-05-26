@@ -167,12 +167,12 @@ describe("Onboarding i18n Integration", () => {
       "screen.onboarding.dnsMagic.fallbackMethods.native.failed",
       "screen.onboarding.dnsMagic.fallbackMethods.udp.name",
       "screen.onboarding.dnsMagic.fallbackMethods.tcp.name",
-      "screen.onboarding.dnsMagic.fallbackMethods.https.name",
       "screen.onboarding.dnsMagic.status.pending",
       "screen.onboarding.dnsMagic.status.active",
       "screen.onboarding.dnsMagic.status.success",
       "screen.onboarding.dnsMagic.status.failed",
       "screen.onboarding.dnsMagic.demoResponse",
+      "screen.onboarding.dnsMagic.demoFailure",
     ];
 
     it("en-US has all required keys", () => {
@@ -203,6 +203,16 @@ describe("Onboarding i18n Integration", () => {
       ).not.toBe(
         getNestedValue(ptBRMessages, "screen.onboarding.dnsMagic.status.success")
       );
+    });
+
+    it("does not advertise unsupported TypeScript HTTPS fallback", () => {
+      const enHint = getNestedValue(enUSMessages, "screen.onboarding.dnsMagic.accessibility.demoHint");
+      const ptHint = getNestedValue(ptBRMessages, "screen.onboarding.dnsMagic.accessibility.demoHint");
+
+      expect(enHint).not.toMatch(/HTTPS|Cloudflare/);
+      expect(ptHint).not.toMatch(/HTTPS|Cloudflare/);
+      expect(getNestedValue(enUSMessages, "screen.onboarding.dnsMagic.fallbackMethods.https.name")).toBeUndefined();
+      expect(getNestedValue(ptBRMessages, "screen.onboarding.dnsMagic.fallbackMethods.https.name")).toBeUndefined();
     });
   });
 
@@ -371,9 +381,9 @@ describe("Onboarding i18n Integration", () => {
       const sourceCode = fs.readFileSync(filePath, "utf8");
 
       // Should initialize state with translated method names
-      expect(sourceCode).toContain('t("screen.onboarding.dnsMagic.fallbackMethods.native.name")');
-      expect(sourceCode).toContain('t("screen.onboarding.dnsMagic.fallbackMethods.udp.name")');
-      expect(sourceCode).toContain('t("screen.onboarding.dnsMagic.fallbackMethods.tcp.name")');
+      expect(sourceCode).toContain('methodKey: "screen.onboarding.dnsMagic.fallbackMethods.native.name"');
+      expect(sourceCode).toContain('methodKey: "screen.onboarding.dnsMagic.fallbackMethods.udp.name"');
+      expect(sourceCode).toContain('methodKey: "screen.onboarding.dnsMagic.fallbackMethods.tcp.name"');
     });
 
     it("NetworkSetupScreen initializes network tests with translations", () => {

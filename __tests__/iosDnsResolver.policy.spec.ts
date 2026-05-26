@@ -9,4 +9,10 @@ describe("iOS DNSResolver native policy", () => {
     expect(source).toContain("let dnsPort = UInt16(requestedPort)");
     expect(source).not.toContain("port.uint16Value > 0 ? port.uint16Value");
   });
+
+  it("validates TXT answer owner name and class before accepting record data", () => {
+    expect(source).toContain("let (answerName, answerOffset) = try readName(bytes: bytes, offset: offset)");
+    expect(source).toContain("let answerClass = Int(bytes[offset]) << 8 | Int(bytes[offset + 1])");
+    expect(source).toContain("answerClass == 1 && answerName == expectedQueryName");
+  });
 });

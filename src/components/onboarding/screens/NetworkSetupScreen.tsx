@@ -18,7 +18,7 @@ import { devWarn } from "../../../utils/devLog";
 
 interface NetworkTest {
   method: string;
-  status: "testing" | "success" | "failed" | "skipped";
+  status: "waiting" | "configuring" | "configured";
   description: string;
 }
 
@@ -39,17 +39,17 @@ export function NetworkSetupScreen() {
   const [networkTests, setNetworkTests] = useState<NetworkTest[]>([
     {
       method: t("screen.onboarding.networkSetup.tests.native.name"),
-      status: "testing",
+      status: "waiting",
       description: t("screen.onboarding.networkSetup.tests.native.description"),
     },
     {
       method: t("screen.onboarding.networkSetup.tests.udp.name"),
-      status: "testing",
+      status: "waiting",
       description: t("screen.onboarding.networkSetup.tests.udp.description"),
     },
     {
       method: t("screen.onboarding.networkSetup.tests.tcp.name"),
-      status: "testing",
+      status: "waiting",
       description: t("screen.onboarding.networkSetup.tests.tcp.description"),
     },
   ]);
@@ -65,20 +65,22 @@ export function NetworkSetupScreen() {
     };
 
     try {
-      // Visual configuration progression — no fake measurements. Each step
-      // transitions through active -> success purely to communicate that
-      // the transport order is being applied.
+      // Visual configuration progression; this applies the transport order
+      // without pretending to measure live network success.
+      updateTest(0, { status: "configuring" });
       await new Promise((resolve) => setTimeout(resolve, 1000));
       if (!isMountedRef.current) return;
-      updateTest(0, { status: "success" });
+      updateTest(0, { status: "configured" });
 
+      updateTest(1, { status: "configuring" });
       await new Promise((resolve) => setTimeout(resolve, 800));
       if (!isMountedRef.current) return;
-      updateTest(1, { status: "success" });
+      updateTest(1, { status: "configured" });
 
+      updateTest(2, { status: "configuring" });
       await new Promise((resolve) => setTimeout(resolve, 600));
       if (!isMountedRef.current) return;
-      updateTest(2, { status: "success" });
+      updateTest(2, { status: "configured" });
 
       // Default to automatic fallback chain (no probing yet).
       setRecommendedSetting(true);
@@ -194,7 +196,7 @@ export function NetworkSetupScreen() {
               test={test}
               palette={palette}
               typography={typography}
-              isActive={isOptimizing && test.status === "testing"}
+              isActive={isOptimizing && test.status === "configuring"}
             />
           ))}
         </View>
@@ -293,14 +295,12 @@ function NetworkTestItem({ test, palette, typography, isActive }: NetworkTestIte
 
   const getStatusLabel = () => {
     switch (test.status) {
-      case "testing":
-        return isActive ? t("screen.onboarding.networkSetup.status.testing") : t("screen.onboarding.networkSetup.status.waiting");
-      case "success":
+      case "configuring":
+        return t("screen.onboarding.networkSetup.status.testing");
+      case "configured":
         return t("screen.onboarding.networkSetup.status.success");
-      case "failed":
-        return t("screen.onboarding.networkSetup.status.failed");
-      case "skipped":
-        return t("screen.onboarding.networkSetup.status.skipped");
+      case "waiting":
+        return t("screen.onboarding.networkSetup.status.waiting");
       default:
         return t("screen.onboarding.networkSetup.status.waiting");
     }
@@ -308,13 +308,11 @@ function NetworkTestItem({ test, palette, typography, isActive }: NetworkTestIte
 
   const getStatusColor = () => {
     switch (test.status) {
-      case "testing":
+      case "configuring":
         return palette.accentTint;
-      case "success":
+      case "configured":
         return palette.success;
-      case "failed":
-        return palette.destructive;
-      case "skipped":
+      case "waiting":
         return palette.textTertiary;
       default:
         return palette.textTertiary;
@@ -332,6 +330,8 @@ function NetworkTestItem({ test, palette, typography, isActive }: NetworkTestIte
         },
       ]}
       accessibilityLiveRegion={isActive ? "polite" : "none"}
+      accessible
+      accessibilityLabel={`${test.method}. ${test.description}. ${getStatusLabel()}.`}
     >
       <View style={styles.testHeader}>
         <View

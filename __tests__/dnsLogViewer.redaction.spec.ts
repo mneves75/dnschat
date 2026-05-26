@@ -14,5 +14,6 @@ describe("DNS log UI redaction policy", () => {
     expect(logsScreen).not.toContain("{item.response ||");
     expect(logsScreen).toContain('t("screen.logs.labels.redactedQuery")');
     expect(logsScreen).toContain('t("screen.logs.labels.redactedResponse")');
+    expect(logsScreen).toContain('t("screen.logs.accessibility.rowLabel"');
   });
 });

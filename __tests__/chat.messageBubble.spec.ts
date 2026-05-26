@@ -195,6 +195,12 @@ describe("MessageBubble - iOS 26 HIG Compliance", () => {
       expect(sourceCode).toContain("shouldOpenOnLongPress");
     });
 
+    it("exposes copy and share as accessibility actions", () => {
+      expect(sourceCode).toContain("accessibilityActions");
+      expect(sourceCode).toContain("onAccessibilityAction");
+      expect(sourceCode).toContain("runMessageAction");
+    });
+
     it("includes haptic feedback", () => {
       expect(sourceCode).toContain("HapticFeedback");
     });

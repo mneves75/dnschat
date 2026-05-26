@@ -14,7 +14,7 @@
     "ios": {
       "supportsTablet": true,
       "deploymentTarget": "16.4",
-      "buildNumber": "45",
+      "buildNumber": "46",
       "bundleIdentifier": "org.mvneves.dnschat",
       "config": {
         "usesNonExemptEncryption": false
@@ -25,7 +25,7 @@
         "foregroundImage": "./icons/dnschat_ios26.png",
         "backgroundColor": "#0D7377"
       },
-      "versionCode": 45,
+      "versionCode": 46,
       "predictiveBackGestureEnabled": true,
       "package": "org.mvneves.dnschat"
     },

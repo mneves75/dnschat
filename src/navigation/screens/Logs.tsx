@@ -268,6 +268,19 @@ const LogQueryRow: React.FC<LogQueryRowProps> = ({
       : item.finalStatus === "failure"
         ? palette.destructive
         : palette.userBubble; // Pending
+  const statusLabel =
+    item.finalStatus === "success"
+      ? t("screen.logs.status.success")
+      : item.finalStatus === "failure"
+        ? t("screen.logs.status.failed")
+        : t("screen.logs.status.pending");
+  const methodLabel =
+    item.finalMethod?.toUpperCase() || t("screen.logs.labels.unknownMethod");
+  const durationLabel =
+    item.totalDuration !== undefined
+      ? DNSLogService.formatDuration(item.totalDuration)
+      : t("screen.logs.labels.durationPending");
+  const timeLabel = new Date(item.startTime).toLocaleTimeString();
 
   return (
     <AnimatedListItem opacity={opacity} translateX={translateX}>
@@ -279,7 +292,12 @@ const LogQueryRow: React.FC<LogQueryRowProps> = ({
         pressedOpacity={0.95}
         style={styles.logItemWrapper}
         accessibilityRole="button"
-        accessibilityLabel={t("screen.logs.labels.redactedQuery")}
+        accessibilityLabel={t("screen.logs.accessibility.rowLabel", {
+          status: statusLabel,
+          method: methodLabel,
+          time: timeLabel,
+          duration: durationLabel,
+        })}
         accessibilityHint={
           isExpanded
             ? t("screen.logs.accessibility.collapseRow")
@@ -307,7 +325,7 @@ const LogQueryRow: React.FC<LogQueryRowProps> = ({
               </Text>
               <View style={styles.logMeta}>
                 <Text style={[styles.timestamp, { color: palette.textTertiary }]}>
-                  {new Date(item.startTime).toLocaleTimeString()}
+                  {timeLabel}
                 </Text>
                 {Boolean(item.finalMethod) && (
                   <LiquidGlassWrapper
@@ -319,7 +337,7 @@ const LogQueryRow: React.FC<LogQueryRowProps> = ({
                     ]}
                   >
                     <Text style={[styles.methodText, { color: palette.userBubble }]}>
-                      {item.finalMethod?.toUpperCase() || "UNKNOWN"}
+                      {methodLabel}
                     </Text>
                   </LiquidGlassWrapper>
                 )}
@@ -335,11 +353,7 @@ const LogQueryRow: React.FC<LogQueryRowProps> = ({
               accessible
               accessibilityRole="image"
               accessibilityLabel={
-                item.finalStatus === "success"
-                  ? t("screen.logs.status.success")
-                  : item.finalStatus === "failure"
-                    ? t("screen.logs.status.failed")
-                    : t("screen.logs.status.unknown")
+                statusLabel
               }
             >
               {isActive && (

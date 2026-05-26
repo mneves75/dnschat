@@ -92,6 +92,12 @@ describe("DNSMagicScreen - iOS 26 HIG Compliance", () => {
     it("includes getStatusLabel function", () => {
       expect(sourceCode).toContain("getStatusLabel");
     });
+
+    it("tests each supported DNS transport directly instead of misreporting fallback as native success", () => {
+      expect(sourceCode).toContain("DNSService.testTransport");
+      expect(sourceCode).not.toContain("DNSService.queryLLM");
+      expect(sourceCode).not.toContain("fallbackMethods.https");
+    });
   });
 
   describe("No Hardcoded Colors", () => {

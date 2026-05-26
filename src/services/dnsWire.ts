@@ -24,6 +24,14 @@ type TxtResponseValidationOptions = {
   sourcePort?: number;
 };
 
+type DecodedAnswer = NonNullable<DecodedPacket['answers']>[number];
+type MatchingTxtAnswer = DecodedAnswer & {
+  data?: unknown;
+  name: string;
+  type: 'TXT';
+  class: 'IN';
+};
+
 const DNS_FLAG_QR = 0x8000;
 const DNS_FLAG_TC = 0x0200;
 const DNS_OPCODE_MASK = 0x7800;
@@ -32,6 +40,18 @@ const normalizeQuestionName = (value: string): string =>
   value.trim().toLowerCase().replace(/\.+$/g, '');
 
 const isIPv4Address = (value: string): boolean => /^(?:\d{1,3}\.){3}\d{1,3}$/.test(value);
+
+const isTxtAnswerForQuery = (
+  answer: DecodedAnswer,
+  expectedQueryName: string,
+): answer is MatchingTxtAnswer => {
+  const answerName = typeof answer.name === 'string' ? normalizeQuestionName(answer.name) : '';
+  return (
+    answer.type === 'TXT' &&
+    answer.class === 'IN' &&
+    answerName === normalizeQuestionName(expectedQueryName)
+  );
+};
 
 const toUint8Array = (value: unknown): Uint8Array | null => {
   if (value instanceof Uint8Array) return value;
@@ -201,8 +221,12 @@ export function validateDecodedDnsResponseForTxt(
     );
   }
 
-  if (!decoded.answers || decoded.answers.length === 0) {
+  const answers = Array.isArray(decoded.answers) ? decoded.answers : [];
+  if (answers.length === 0) {
     throw new Error('No TXT records found');
+  }
+  if (!answers.some((answer) => isTxtAnswerForQuery(answer, options.expectedQueryName))) {
+    throw new Error('No matching TXT records found');
   }
 }
 
@@ -214,7 +238,7 @@ export function extractTxtRecordsFromDecodedResponse(
   validateDecodedDnsResponseForTxt(decoded, validation);
 
   return (decoded.answers ?? [])
-    .filter((answer) => answer.type === 'TXT')
+    .filter((answer) => isTxtAnswerForQuery(answer, validation.expectedQueryName))
     .map((answer) => {
       if (Array.isArray(answer.data)) {
         return answer.data.join('');

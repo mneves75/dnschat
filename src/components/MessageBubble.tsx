@@ -5,6 +5,7 @@ import {
   useColorScheme,
   Platform,
 } from "react-native";
+import type { AccessibilityActionEvent } from "react-native";
 import { MenuView } from '@react-native-menu/menu';
 import type { NativeActionEvent } from '@react-native-menu/menu';
 import type { Message } from "../types/chat";
@@ -42,17 +43,15 @@ function MessageBubbleComponent({ message }: MessageBubbleProps) {
   const hasError = message.status === "error";
   const messageCornerRadius = getCornerRadius('message');
 
-  const handleMenuPress = async (event: NativeActionEvent) => {
-    const actionKey = event.nativeEvent.event;
-
+  const runMessageAction = async (actionKey: string) => {
     switch (actionKey) {
       case 'copy':
-        // Copy message content to clipboard
+        void HapticFeedback.light();
         await ClipboardService.copy(message.content);
         break;
 
       case 'share':
-        // Share message via native share sheet
+        void HapticFeedback.light();
         await ShareService.shareMessage(message.content, message.timestamp, locale);
         break;
 
@@ -60,6 +59,14 @@ function MessageBubbleComponent({ message }: MessageBubbleProps) {
         // Unknown action, silently ignore
         break;
     }
+  };
+
+  const handleMenuPress = async (event: NativeActionEvent) => {
+    await runMessageAction(event.nativeEvent.event);
+  };
+
+  const handleAccessibilityAction = (event: AccessibilityActionEvent) => {
+    void runMessageAction(event.nativeEvent.actionName);
   };
 
   // iOS 26 HIG: Message bubbles are CONTENT, not controls
@@ -141,6 +148,12 @@ function MessageBubbleComponent({ message }: MessageBubbleProps) {
       image: shareImage,
     },
   ];
+  const messageAccessibilityActions = isLoading
+    ? undefined
+    : [
+        { name: 'copy', label: t('screen.chat.messageActions.copy') },
+        { name: 'share', label: t('screen.chat.messageActions.share') },
+      ];
 
   const messageContentProps = {
     message,
@@ -167,6 +180,8 @@ function MessageBubbleComponent({ message }: MessageBubbleProps) {
           ? t("screen.chat.accessibility.loadingHint")
           : t("screen.chat.accessibility.menuHint")
       }
+      accessibilityActions={messageAccessibilityActions}
+      onAccessibilityAction={isLoading ? undefined : handleAccessibilityAction}
     >
       <MessageContent {...messageContentProps} />
     </View>

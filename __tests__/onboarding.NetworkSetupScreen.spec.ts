@@ -88,8 +88,6 @@ describe("NetworkSetupScreen - iOS 26 HIG Compliance", () => {
       expect(sourceCode).toContain('t("screen.onboarding.networkSetup.status.testing")');
       expect(sourceCode).toContain('t("screen.onboarding.networkSetup.status.waiting")');
       expect(sourceCode).toContain('t("screen.onboarding.networkSetup.status.success")');
-      expect(sourceCode).toContain('t("screen.onboarding.networkSetup.status.failed")');
-      expect(sourceCode).toContain('t("screen.onboarding.networkSetup.status.skipped")');
     });
   });
 
@@ -98,7 +96,6 @@ describe("NetworkSetupScreen - iOS 26 HIG Compliance", () => {
       expect(sourceCode).toContain("palette.textTertiary");
       expect(sourceCode).toContain("palette.accentTint");
       expect(sourceCode).toContain("palette.success");
-      expect(sourceCode).toContain("palette.destructive");
     });
 
     it("includes status indicator component", () => {
@@ -136,9 +133,9 @@ describe("NetworkSetupScreen - iOS 26 HIG Compliance", () => {
     });
 
     it("transitions steps through a configuration progression", () => {
-      // Each step still moves to "success" so the visual progress conveys
+      // Each step moves to "configured" so the visual progress conveys
       // that the transport order is being applied.
-      expect(sourceCode).toContain('status: "success"');
+      expect(sourceCode).toContain('status: "configured"');
     });
   });
 

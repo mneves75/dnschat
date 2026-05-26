@@ -527,8 +527,7 @@ export function parseTXTResponse(txtRecords: string[]): string {
       }
       // If content differs, this is data corruption - fail immediately
       throw new Error(
-        `Conflicting content for part ${part.partNumber}: ` +
-        `existing="${existing?.substring(0, 50)}..." vs new="${part.content.substring(0, 50)}..."`
+        `Conflicting content for part ${part.partNumber}: duplicate part payload differs`,
       );
     }
     byPart.set(part.partNumber, part.content);

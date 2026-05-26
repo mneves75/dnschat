@@ -31,39 +31,55 @@ interface DNSStep {
   timing?: number;
 }
 
+const DNS_DEMO_STEPS = [
+  {
+    id: "1",
+    transport: "native",
+    methodKey: "screen.onboarding.dnsMagic.fallbackMethods.native.name",
+    pendingKey: "screen.onboarding.dnsMagic.fallbackMethods.native.pending",
+    activeKey: "screen.onboarding.dnsMagic.fallbackMethods.native.active",
+    successKey: "screen.onboarding.dnsMagic.fallbackMethods.native.success",
+    failedKey: "screen.onboarding.dnsMagic.fallbackMethods.native.failed",
+  },
+  {
+    id: "2",
+    transport: "udp",
+    methodKey: "screen.onboarding.dnsMagic.fallbackMethods.udp.name",
+    pendingKey: "screen.onboarding.dnsMagic.fallbackMethods.udp.pending",
+    activeKey: "screen.onboarding.dnsMagic.fallbackMethods.udp.active",
+    successKey: "screen.onboarding.dnsMagic.fallbackMethods.udp.success",
+    failedKey: "screen.onboarding.dnsMagic.fallbackMethods.udp.failed",
+  },
+  {
+    id: "3",
+    transport: "tcp",
+    methodKey: "screen.onboarding.dnsMagic.fallbackMethods.tcp.name",
+    pendingKey: "screen.onboarding.dnsMagic.fallbackMethods.tcp.pending",
+    activeKey: "screen.onboarding.dnsMagic.fallbackMethods.tcp.active",
+    successKey: "screen.onboarding.dnsMagic.fallbackMethods.tcp.success",
+    failedKey: "screen.onboarding.dnsMagic.fallbackMethods.tcp.failed",
+  },
+] as const;
+
+const wait = (ms: number): Promise<void> =>
+  new Promise((resolve) => setTimeout(resolve, ms));
+
 export function DNSMagicScreen() {
   const palette = useImessagePalette();
   const typography = useTypography();
   const { t } = useTranslation();
   const { shouldReduceMotion } = useMotionReduction();
 
+  const createInitialDnsSteps = (): DNSStep[] =>
+    DNS_DEMO_STEPS.map((step) => ({
+      id: step.id,
+      method: t(step.methodKey),
+      status: "pending",
+      message: t(step.pendingKey),
+    }));
+
   const [isRunning, setIsRunning] = useState(false);
-  const [dnsSteps, setDnsSteps] = useState<DNSStep[]>([
-    {
-      id: "1",
-      method: t("screen.onboarding.dnsMagic.fallbackMethods.native.name"),
-      status: "pending",
-      message: t("screen.onboarding.dnsMagic.fallbackMethods.native.pending"),
-    },
-    {
-      id: "2",
-      method: t("screen.onboarding.dnsMagic.fallbackMethods.udp.name"),
-      status: "pending",
-      message: t("screen.onboarding.dnsMagic.fallbackMethods.udp.pending"),
-    },
-    {
-      id: "3",
-      method: t("screen.onboarding.dnsMagic.fallbackMethods.tcp.name"),
-      status: "pending",
-      message: t("screen.onboarding.dnsMagic.fallbackMethods.tcp.pending"),
-    },
-    {
-      id: "4",
-      method: t("screen.onboarding.dnsMagic.fallbackMethods.https.name"),
-      status: "pending",
-      message: t("screen.onboarding.dnsMagic.fallbackMethods.https.pending"),
-    },
-  ]);
+  const [dnsSteps, setDnsSteps] = useState<DNSStep[]>(createInitialDnsSteps);
   const [response, setResponse] = useState<string>("");
 
   const pulseAnim = useSharedValue(1);
@@ -96,6 +112,7 @@ export function DNSMagicScreen() {
   const runDNSDemo = async () => {
     setIsRunning(true);
     setResponse("");
+    setDnsSteps(createInitialDnsSteps());
 
     const testMessage = "Hello from DNS onboarding!";
 
@@ -120,35 +137,34 @@ export function DNSMagicScreen() {
     };
 
     try {
-      updateStep("1", "active", t("screen.onboarding.dnsMagic.fallbackMethods.native.active"));
-      const queryStartedAt = Date.now();
+      for (const step of DNS_DEMO_STEPS) {
+        updateStep(step.id, "active", t(step.activeKey));
+        const queryStartedAt = Date.now();
 
-      const result = await DNSService.queryLLM(
-        testMessage,
-        undefined,
-        false,
-        true,
-      );
-      updateStep(
-        "1",
-        "success",
-        t("screen.onboarding.dnsMagic.fallbackMethods.native.success"),
-        Date.now() - queryStartedAt,
-      );
-      setResponse(result);
-    } catch (error) {
-      devWarn("[DNSMagicScreen] Native DNS query failed", error);
-      updateStep("1", "failed", t("screen.onboarding.dnsMagic.fallbackMethods.native.failed"));
-      await new Promise((resolve) => setTimeout(resolve, 500));
+        try {
+          const result = await DNSService.testTransport(
+            testMessage,
+            step.transport,
+          );
+          updateStep(
+            step.id,
+            "success",
+            t(step.successKey),
+            Date.now() - queryStartedAt,
+          );
+          setResponse(result || t("screen.onboarding.dnsMagic.demoResponse"));
+          return;
+        } catch (error) {
+          devWarn(`[DNSMagicScreen] ${step.transport.toUpperCase()} DNS demo failed`, error);
+          updateStep(step.id, "failed", t(step.failedKey));
+          await wait(350);
+        }
+      }
 
-      updateStep("2", "active", t("screen.onboarding.dnsMagic.fallbackMethods.udp.active"));
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      updateStep("2", "failed", t("screen.onboarding.dnsMagic.fallbackMethods.udp.failed"));
-      setResponse(t("screen.onboarding.dnsMagic.demoResponse"));
+      setResponse(t("screen.onboarding.dnsMagic.demoFailure"));
+    } finally {
+      setIsRunning(false);
     }
-
-    setIsRunning(false);
   };
 
   return (

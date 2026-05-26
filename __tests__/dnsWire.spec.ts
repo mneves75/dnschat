@@ -63,4 +63,56 @@ describe('DNS wire helpers', () => {
       ),
     ).toEqual(['hello ', 'world']);
   });
+
+  it('ignores TXT answers whose owner name or class does not match the original query', () => {
+    const decoded = {
+      id: 1111,
+      type: 'response',
+      flags: 0x8100,
+      rcode: 'NOERROR',
+      questions: [{ name: 'hello.ch.at', type: 'TXT', class: 'IN' }],
+      answers: [
+        { name: 'other.ch.at', type: 'TXT', class: 'IN', data: ['wrong-name'] },
+        { name: 'hello.ch.at', type: 'TXT', class: 'CH', data: ['wrong-class'] },
+        { name: 'hello.ch.at', type: 'TXT', class: 'IN', data: ['ok'] },
+      ],
+    } as unknown as import('dns-packet').DecodedPacket;
+
+    expect(
+      extractTxtRecordsFromDecodedResponse(
+        decoded,
+        {
+          expectedQueryId: 1111,
+          expectedQueryName: 'hello.ch.at',
+          expectedPort: 53,
+          expectedServer: 'ch.at',
+        },
+        bufferFactory,
+      ),
+    ).toEqual(['ok']);
+  });
+
+  it('rejects responses with no matching TXT answers', () => {
+    const decoded = {
+      id: 1111,
+      type: 'response',
+      flags: 0x8100,
+      rcode: 'NOERROR',
+      questions: [{ name: 'hello.ch.at', type: 'TXT', class: 'IN' }],
+      answers: [{ name: 'other.ch.at', type: 'TXT', class: 'IN', data: ['wrong-name'] }],
+    } as unknown as import('dns-packet').DecodedPacket;
+
+    expect(() =>
+      extractTxtRecordsFromDecodedResponse(
+        decoded,
+        {
+          expectedQueryId: 1111,
+          expectedQueryName: 'hello.ch.at',
+          expectedPort: 53,
+          expectedServer: 'ch.at',
+        },
+        bufferFactory,
+      ),
+    ).toThrow('No matching TXT records found');
+  });
 });
