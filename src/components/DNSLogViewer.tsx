@@ -18,7 +18,7 @@ interface DNSLogViewerProps {
 export const DNSLogViewer: React.FC<DNSLogViewerProps> = ({
   maxEntries = 20,
 }) => {
-  const [logs, setLogs] = useState<DNSQueryLog[]>(DNSLogService.getLogs());
+  const [logs, setLogs] = useState<DNSQueryLog[]>(() => DNSLogService.getLogs());
   const { t } = useTranslation();
   const palette = useImessagePalette();
   const typography = useTypography();

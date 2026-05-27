@@ -3,7 +3,6 @@ import { ThemeProvider } from "expo-router/react-navigation";
 import * as SplashScreen from "expo-splash-screen";
 import * as React from "react";
 import { Platform } from "react-native";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useColorScheme } from "react-native";
@@ -23,7 +22,7 @@ SplashScreen.preventAutoHideAsync().catch(() => {});
 
 function RootLayoutContent() {
   const { hasCompletedOnboarding, loading } = useOnboarding();
-  const router = useRouter();
+  const { replace } = useRouter();
   const segments = useSegments();
   const rootNavigationState = useRootNavigationState();
   const colorScheme = useColorScheme();
@@ -63,14 +62,14 @@ function RootLayoutContent() {
     const inOnboarding = segments[0] === "onboarding";
 
     if (!hasCompletedOnboarding && !inOnboarding) {
-      router.replace("/onboarding");
+      replace("/onboarding");
       return;
     }
 
     if (hasCompletedOnboarding && inOnboarding) {
-      router.replace("/(tabs)");
+      replace("/(tabs)");
     }
-  }, [hasCompletedOnboarding, loading, rootNavigationState?.key, router, segments]);
+  }, [hasCompletedOnboarding, loading, rootNavigationState?.key, replace, segments]);
 
   // Effect: initialize DNS log storage once on mount.
   React.useEffect(() => {
@@ -125,25 +124,23 @@ function RootLayoutContent() {
 
 export default function RootLayout() {
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaProvider>
-        <KeyboardProvider>
-          <ErrorBoundary>
-            <SettingsProvider>
-              <AccessibilityProvider>
-                <I18nProvider>
-                  <OnboardingProvider>
-                    <ChatProvider>
-                      <HapticsConfigurator />
-                      <RootLayoutContent />
-                    </ChatProvider>
-                  </OnboardingProvider>
-                </I18nProvider>
-              </AccessibilityProvider>
-            </SettingsProvider>
-          </ErrorBoundary>
-        </KeyboardProvider>
-      </SafeAreaProvider>
-    </GestureHandlerRootView>
+    <SafeAreaProvider>
+      <KeyboardProvider>
+        <ErrorBoundary>
+          <SettingsProvider>
+            <AccessibilityProvider>
+              <I18nProvider>
+                <OnboardingProvider>
+                  <ChatProvider>
+                    <HapticsConfigurator />
+                    <RootLayoutContent />
+                  </ChatProvider>
+                </OnboardingProvider>
+              </I18nProvider>
+            </AccessibilityProvider>
+          </SettingsProvider>
+        </ErrorBoundary>
+      </KeyboardProvider>
+    </SafeAreaProvider>
   );
 }

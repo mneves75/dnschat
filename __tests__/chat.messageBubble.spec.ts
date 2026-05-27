@@ -190,9 +190,10 @@ describe("MessageBubble - iOS 26 HIG Compliance", () => {
       expect(sourceCode).toContain("accessibilityRole");
     });
 
-    it("supports long press interaction via MenuView", () => {
-      expect(sourceCode).toContain("MenuView");
+    it("supports long press interaction via NativeMenu", () => {
+      expect(sourceCode).toContain("NativeMenu");
       expect(sourceCode).toContain("shouldOpenOnLongPress");
+      expect(sourceCode).not.toContain("@react-native-menu/menu");
     });
 
     it("exposes copy and share as accessibility actions", () => {

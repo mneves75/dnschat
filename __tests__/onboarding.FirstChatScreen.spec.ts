@@ -205,7 +205,19 @@ describe("FirstChatScreen - iOS 26 HIG Compliance", () => {
       // Migrated from KeyboardAvoidingView to KeyboardStickyView so only the
       // input row follows the keyboard while OnboardingNavigation stays anchored.
       expect(sourceCode).toContain("KeyboardStickyView");
+      expect(sourceCode).toContain("offset={stickyInputOffset}");
+      expect(sourceCode).toContain("Math.min(navigationHeight, keyboardHeight)");
       expect(sourceCode).not.toContain("KeyboardAvoidingView");
+    });
+
+    it("reserves keyboard overlap in the messages scroll area", () => {
+      expect(sourceCode).toContain("useKeyboardState");
+      expect(sourceCode).toContain(
+        "const keyboardOverlayInset = Math.max(0, keyboardHeight - navigationHeight)",
+      );
+      expect(sourceCode).toContain("paddingBottom: keyboardOverlayInset");
+      expect(sourceCode).toContain('keyboardShouldPersistTaps="handled"');
+      expect(sourceCode).toContain("cancelAnimationFrame(frameId)");
     });
 
     it("includes header section with title and subtitle", () => {

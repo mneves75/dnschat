@@ -12,7 +12,7 @@ export default function ChatRoute() {
   const { threadId } = useLocalSearchParams<{
     threadId?: string | string[];
   }>();
-  const router = useRouter();
+  const { replace } = useRouter();
   const { t } = useTranslation();
   const {
     chats,
@@ -72,7 +72,7 @@ export default function ChatRoute() {
         createChat()
           .then((chat) => {
             setCurrentChat(chat);
-            router.replace({
+            replace({
               pathname: "/chat/[threadId]",
               params: { threadId: chat.id },
             });
@@ -101,7 +101,7 @@ export default function ChatRoute() {
     createChat()
       .then((chat) => {
         setCurrentChat(chat);
-        router.replace({
+        replace({
           pathname: "/chat/[threadId]",
           params: { threadId: chat.id },
         });
@@ -119,7 +119,7 @@ export default function ChatRoute() {
     isRouteHydrating,
     isResolving,
     normalizedThreadId,
-    router,
+    replace,
     setCurrentChat,
   ]);
 

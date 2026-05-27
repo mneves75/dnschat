@@ -31,7 +31,7 @@ import { useImessagePalette } from '../ui/theme/imessagePalette';
 import { useTypography } from '../ui/hooks/useTypography';
 import { LiquidGlassSpacing, getCornerRadius } from '../ui/theme/liquidGlassSpacing';
 import { useMotionReduction } from '../context/AccessibilityContext';
-import { LiquidGlassWrapper } from './glass';
+import { LiquidGlassWrapper } from './LiquidGlassWrapper';
 import { TimingConfig, SpringConfig } from '../utils/animations';
 
 export type EmptyStateIconType =

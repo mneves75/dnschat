@@ -79,19 +79,20 @@ AI,chat,DNS,assistant,local,native,tech,innovation,queries,networking
 
 ---
 
-## What's New (Release Notes v4.0.15)
+## What's New (Release Notes v4.0.16)
 
-CHAT LIST SCROLL AND RELEASE HARDENING
+EXPO UI ADAPTERS AND REACT DOCTOR CLEANUP
 
-- Fixed the main chat list so long conversation history scrolls correctly above the native tab bar.
-- Added regression coverage for glass form scrolling, bottom-sheet accessibility, web runtime boundaries, and UI design policies.
-- Hardened encrypted key fallback handling and DNS log privacy checks.
-- Kept the Expo SDK 56.0.4, React Native 0.85.3, React 19.2.3, and TypeScript 6.0 baseline aligned.
+- Added native menu and bottom-sheet adapter hardening with explicit web and test fallbacks.
+- Fixed React Doctor findings and reached 100/100 for both app and native module workspaces.
+- Added regression coverage for accessibility actions, DNS transport truthfulness, and native UI fallback behavior.
+- Kept the Expo SDK 56, React Native 0.85.3, React 19.2.3, and TypeScript 6.0 baseline aligned.
 
-## TestFlight What to Test (v4.0.15 build 45)
+## TestFlight What to Test (v4.0.16 build 47)
 
 - Complete onboarding from a fresh install and confirm the app lands on the chat list.
-- On the chat list, scroll a long recent-conversation history and confirm rows move behind neither the page container nor the native tab bar.
+- Open message/chat/log/settings menus and confirm menu actions remain reachable on supported native platforms and fall back cleanly elsewhere.
+- Open bottom sheets from settings and chat actions and confirm dismissal, accessibility labels, and hit targets behave correctly.
 - Send short prompts over the default DNS service and confirm responses render without transport errors.
 - Confirm DNS failures, invalid settings, and unsupported server choices fail closed without exposing prompt text or TXT response contents.
 - Type in a long chat thread and confirm the final message remains visible above the composer as the keyboard/input inset changes.
@@ -142,8 +143,8 @@ Validated screenshot sets currently available in App Store Connect:
 ### Bundle Information
 
 - **Bundle ID**: `<BUNDLE_ID>`
-- **Version**: `4.0.15`
-- **Build Number**: 45 (sync-versions)
+- **Version**: `4.0.16`
+- **Build Number**: 47 (sync-versions)
 - **App Store Connect internal IDs**: intentionally omitted from public docs; keep exact IDs in private release notes.
 - **Minimum iOS Version**: 16.4
 - **Device Support**: iPhone, iPad
@@ -301,4 +302,4 @@ No user account is required. The app does not require app-owned backend infrastr
 
 ---
 
-_Updated for DNS Chat v4.0.15 build 45 - chat-list scroll fix and release hardening_
+_Updated for DNS Chat v4.0.16 build 47 - Expo UI adapter hardening and React Doctor cleanup_

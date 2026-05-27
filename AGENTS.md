@@ -21,7 +21,7 @@ This file provides a fast, practical map of the repo so agents can orient quickl
 
 DNSChat is an Expo dev-client React Native app that sends short prompts as DNS TXT queries and renders responses.
 
-**Stack**: Expo SDK 56.0.4 / React Native 0.85.3 / React 19.2.3 / TypeScript 6.0.x / Hermes / New Architecture
+**Stack**: Expo SDK 56.0.5 / React Native 0.85.3 / React 19.2.3 / TypeScript 6.0.x / Hermes / New Architecture
 
 The app's product promise is: no accounts, no API keys, no tracking, local encrypted history, and DNS-based prompt/response transport. DNS is observable infrastructure, so UX, docs, logs, and tests must never imply that DNS prompts are private.
 
@@ -73,6 +73,7 @@ For any source-code sweep, map findings and fixes back to these requirements. Do
 - Native module tests: `cd modules/dns-native && bun run test`
 - DNS harness: `bun run dns:harness -- --message "test message"`; add `--local-server` for offline UDP/TCP verification.
 - Security scan: `gitleaks detect --source . --redact --no-banner --config .gitleaks.toml`
+- React Doctor: `npx react-doctor@latest`
 - Public redaction scan: `bun run verify:public-redaction`
 - iOS CLI build smoke: `xcodebuild clean build -workspace ios/DNSChat.xcworkspace -scheme DNSChat -configuration Debug -destination 'platform=iOS Simulator,name=iPhone 17'`
 - iOS unsigned release smoke: `xcodebuild clean build -workspace ios/DNSChat.xcworkspace -scheme DNSChat -configuration Release -destination 'generic/platform=iOS' CODE_SIGNING_ALLOWED=NO`

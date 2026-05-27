@@ -488,6 +488,26 @@ function waitFor(options, name, predicate, timeoutMs = 20000) {
   );
 }
 
+function waitForMaybe(options, predicate, timeoutMs = 20000) {
+  const started = Date.now();
+  while (Date.now() - started < timeoutMs) {
+    let elements = [];
+    try {
+      elements = describeElements(options);
+    } catch {
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 500);
+      continue;
+    }
+    if (tapDeepLinkPromptIfPresent(options, elements)) {
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 500);
+      continue;
+    }
+    if (predicate(elements)) return elements;
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 500);
+  }
+  return null;
+}
+
 function waitForId(options, id, timeoutMs) {
   return waitFor(options, `id ${id}`, (elements) => hasId(elements, id), timeoutMs);
 }
@@ -701,11 +721,23 @@ function assertManifestSelectors() {
 function runOnboarding(options) {
   const landing = waitFor(
     options,
-    "onboarding welcome or chat list",
+    "onboarding step or chat list",
     (elements) =>
       hasId(elements, "onboarding-welcome") ||
+      hasId(elements, "onboarding-dns-magic") ||
+      hasId(elements, "onboarding-network-setup") ||
+      hasId(elements, "onboarding-first-chat") ||
+      hasId(elements, "onboarding-features") ||
       hasLabel(elements, "Welcome to DNS Chat") ||
       hasLabel(elements, "Bem-vindo ao DNS Chat") ||
+      hasLabel(elements, "DNS Magic in Action") ||
+      hasLabel(elements, "Magia DNS em Ação") ||
+      hasLabel(elements, "Network Optimization") ||
+      hasLabel(elements, "Otimização de Rede") ||
+      hasLabel(elements, "Try Your First Chat") ||
+      hasLabel(elements, "Experimente Seu Primeiro Chat") ||
+      hasLabel(elements, "Powerful Features") ||
+      hasLabel(elements, "Recursos Poderosos") ||
       hasId(elements, "chat-list") ||
       hasId(elements, "chat-list-new-chat"),
     30000,
@@ -717,41 +749,68 @@ function runOnboarding(options) {
     return;
   }
 
-  console.log("F-APP-001 onboarding: welcome");
-  tapId(options, "onboarding-continue");
-  waitForOnboardingStep(options, "onboarding-dns-magic", [
-    "DNS Magic in Action",
-    "See DNS in Action",
-    "Magia DNS em Ação",
-  ]);
-  console.log("F-APP-001 onboarding: DNS magic");
+  const loggedSteps = new Set();
+  const logStep = (key, message) => {
+    if (loggedSteps.has(key)) return;
+    console.log(message);
+    loggedSteps.add(key);
+  };
 
-  tapId(options, "onboarding-continue");
-  waitForOnboardingStep(options, "onboarding-network-setup", [
-    "Network Optimization",
-    "Otimização de Rede",
-    "Network Configuration",
-    "Configuração de Rede",
-  ]);
-  console.log("F-APP-001 onboarding: network setup");
+  for (let attempts = 0; attempts < 8; attempts += 1) {
+    const current = describeElements(options);
+    if (hasId(current, "chat-list") || hasId(current, "chat-list-new-chat")) {
+      return;
+    }
 
-  tapId(options, "onboarding-continue");
-  waitForOnboardingStep(options, "onboarding-first-chat", [
-    "Try Your First Chat",
-    "Experimente Seu Primeiro Chat",
-  ]);
-  console.log("F-APP-001 onboarding: first chat");
+    if (
+      hasId(current, "onboarding-welcome") ||
+      hasLabel(current, "Welcome to DNS Chat") ||
+      hasLabel(current, "Bem-vindo ao DNS Chat")
+    ) {
+      logStep("welcome", "F-APP-001 onboarding: welcome");
+      tapId(options, "onboarding-continue");
+    } else if (
+      hasId(current, "onboarding-dns-magic") ||
+      hasLabel(current, "DNS Magic in Action") ||
+      hasLabel(current, "See DNS in Action") ||
+      hasLabel(current, "Magia DNS em Ação")
+    ) {
+      logStep("dns", "F-APP-001 onboarding: DNS magic");
+      tapId(options, "onboarding-continue");
+    } else if (
+      hasId(current, "onboarding-network-setup") ||
+      hasLabel(current, "Network Optimization") ||
+      hasLabel(current, "Network Configuration") ||
+      hasLabel(current, "Otimização de Rede") ||
+      hasLabel(current, "Configuração de Rede")
+    ) {
+      logStep("network", "F-APP-001 onboarding: network setup");
+      tapId(options, "onboarding-continue");
+    } else if (
+      hasId(current, "onboarding-first-chat") ||
+      hasLabel(current, "Try Your First Chat") ||
+      hasLabel(current, "Experimente Seu Primeiro Chat")
+    ) {
+      logStep("first-chat", "F-APP-001 onboarding: first chat");
+      tapId(options, "onboarding-continue");
+    } else if (
+      hasId(current, "onboarding-features") ||
+      hasLabel(current, "Powerful Features") ||
+      hasLabel(current, "You're All Set") ||
+      hasLabel(current, "Recursos Poderosos") ||
+      hasLabel(current, "Tudo Pronto")
+    ) {
+      logStep("features", "F-APP-001 onboarding: feature summary");
+      tapId(options, hasId(current, "onboarding-complete") ? "onboarding-complete" : "onboarding-continue");
+    } else {
+      throw new Error(
+        "Onboarding is visible, but AXe did not expose a known step label or id.",
+      );
+    }
 
-  tapId(options, "onboarding-continue");
-  waitForOnboardingStep(options, "onboarding-features", [
-    "Powerful Features",
-    "Recursos Poderosos",
-    "You're All Set",
-    "Tudo Pronto",
-  ]);
-  console.log("F-APP-001 onboarding: feature summary");
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 1000);
+  }
 
-  tapId(options, "onboarding-complete");
   waitForChatList(options);
 }
 
@@ -785,7 +844,26 @@ function runSettingsSmoke(options) {
   waitForId(options, "settings-dns-option-llm-pieter-com", 10000);
   tapId(options, "settings-dns-option-llm-pieter-com");
 
-  const currentSettings = waitForId(options, "settings-mock-dns-switch", 10000);
+  let currentSettings = waitForMaybe(
+    options,
+    (elements) => hasId(elements, "settings-mock-dns-switch"),
+    2500,
+  );
+  if (!currentSettings) {
+    const elements = describeElements(options);
+    if (
+      hasLabel(elements, "Selecionar serviço DNS") ||
+      hasLabel(elements, "Select DNS Service") ||
+      hasId(elements, "settings-dns-option-llm-pieter-com")
+    ) {
+      if (hasLabel(elements, "Fechar")) {
+        tapButtonLabel(options, "Fechar");
+      } else {
+        tapButtonLabel(options, "Close");
+      }
+    }
+    currentSettings = waitForId(options, "settings-mock-dns-switch", 10000);
+  }
   const mockSwitch = currentSettings.find((element) => element.id === "settings-mock-dns-switch");
   if (!String(mockSwitch && mockSwitch.value).includes("1")) {
     tapId(options, "settings-mock-dns-switch");

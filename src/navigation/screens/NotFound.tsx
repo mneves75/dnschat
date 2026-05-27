@@ -16,18 +16,19 @@ import { useRouter } from "expo-router";
 import { useTranslation } from "../../i18n";
 import { useImessagePalette } from "../../ui/theme/imessagePalette";
 import { LiquidGlassSpacing, getCornerRadius } from "../../ui/theme/liquidGlassSpacing";
-import { Form, LiquidGlassWrapper } from "../../components/glass";
+import { Form } from "../../components/glass/GlassForm";
+import { LiquidGlassWrapper } from "../../components/LiquidGlassWrapper";
 import { useScreenEntrance } from "../../ui/hooks/useScreenEntrance";
 import { EmptyState } from "../../components/EmptyState";
 
 export function NotFound() {
   const { t } = useTranslation();
-  const router = useRouter();
+  const { replace } = useRouter();
   const palette = useImessagePalette();
   const { animatedStyle } = useScreenEntrance();
 
   const handleGoHome = () => {
-    router.replace("/(tabs)");
+    replace("/(tabs)");
   };
 
   return (
@@ -61,7 +62,7 @@ export function NotFound() {
           subtitle={t("screen.notFound.chatDescription", {
             defaultValue: "Start a new conversation",
           })}
-          onPress={() => router.replace("/(tabs)")}
+          onPress={() => replace("/(tabs)")}
           showChevron
         />
         <Form.Item
@@ -70,7 +71,7 @@ export function NotFound() {
           subtitle={t("screen.notFound.logsDescription", {
             defaultValue: "View DNS query logs",
           })}
-          onPress={() => router.replace("/(tabs)/logs")}
+          onPress={() => replace("/(tabs)/logs")}
           showChevron
         />
         <Form.Item
@@ -79,7 +80,7 @@ export function NotFound() {
           subtitle={t("screen.notFound.aboutDescription", {
             defaultValue: "Learn more about DNSChat",
           })}
-          onPress={() => router.replace("/(tabs)/about")}
+          onPress={() => replace("/(tabs)/about")}
           showChevron
         />
       </Form.Section>

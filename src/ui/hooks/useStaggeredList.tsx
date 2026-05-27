@@ -38,6 +38,7 @@ import Animated, {
   withSpring,
   withDelay,
   runOnJS,
+  makeMutable,
 } from 'react-native-reanimated';
 import type { SharedValue } from 'react-native-reanimated';
 import type { ViewStyle } from 'react-native';
@@ -113,12 +114,12 @@ export function useStaggeredList(
 
   // Create shared values for each possible item (capped at MAX_ITEMS)
   const opacities = useRef(
-    Array.from({ length: MAX_ITEMS }, () => useSharedValue(shouldReduceMotion ? 1 : 0))
+    Array.from({ length: MAX_ITEMS }, () => makeMutable(shouldReduceMotion ? 1 : 0))
   ).current;
 
   const translates = useRef(
     Array.from({ length: MAX_ITEMS }, () =>
-      useSharedValue(shouldReduceMotion ? 0 : (direction === 'left' ? -initialOffset : initialOffset))
+      makeMutable(shouldReduceMotion ? 0 : (direction === 'left' ? -initialOffset : initialOffset))
     )
   ).current;
 
@@ -258,12 +259,12 @@ export function useStaggeredListValues(
 
   // Create shared values
   const opacities = useRef(
-    Array.from({ length: MAX_ITEMS }, () => useSharedValue(shouldReduceMotion ? 1 : 0))
+    Array.from({ length: MAX_ITEMS }, () => makeMutable(shouldReduceMotion ? 1 : 0))
   ).current;
 
   const translates = useRef(
     Array.from({ length: MAX_ITEMS }, () =>
-      useSharedValue(shouldReduceMotion ? 0 : (direction === 'left' ? -initialOffset : initialOffset))
+      makeMutable(shouldReduceMotion ? 0 : (direction === 'left' ? -initialOffset : initialOffset))
     )
   ).current;
 

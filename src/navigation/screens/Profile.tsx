@@ -21,7 +21,8 @@ import { useRouter } from "expo-router";
 import { useTranslation } from "../../i18n";
 import { useImessagePalette } from "../../ui/theme/imessagePalette";
 import { LiquidGlassSpacing, getCornerRadius } from "../../ui/theme/liquidGlassSpacing";
-import { Form, LiquidGlassWrapper, useLiquidGlassCapabilities } from "../../components/glass";
+import { Form } from "../../components/glass/GlassForm";
+import { LiquidGlassWrapper, useLiquidGlassCapabilities } from "../../components/LiquidGlassWrapper";
 import { useScreenEntrance } from "../../ui/hooks/useScreenEntrance";
 import { useChat } from "../../context/ChatContext";
 import { formatDistanceToNow } from "date-fns";
@@ -32,7 +33,7 @@ interface ProfileProps {
 
 export function Profile({ user }: ProfileProps) {
   const { t } = useTranslation();
-  const router = useRouter();
+  const { push } = useRouter();
   const palette = useImessagePalette();
   const { animatedStyle } = useScreenEntrance();
   const { supportsLiquidGlass } = useLiquidGlassCapabilities();
@@ -111,7 +112,7 @@ export function Profile({ user }: ProfileProps) {
   };
 
   const handleOpenSettings = () => {
-    router.push("/(modals)/settings");
+    push("/(modals)/settings");
   };
 
   return (

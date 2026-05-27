@@ -23,7 +23,8 @@ import { useRouter } from "expo-router";
 import { useTranslation } from "../../i18n";
 import { useImessagePalette } from "../../ui/theme/imessagePalette";
 import { LiquidGlassSpacing, getCornerRadius } from "../../ui/theme/liquidGlassSpacing";
-import { Form, LiquidGlassWrapper } from "../../components/glass";
+import { Form } from "../../components/glass/GlassForm";
+import { LiquidGlassWrapper } from "../../components/LiquidGlassWrapper";
 import { PressableRipple } from "../../components/PressableRipple";
 import { useScreenEntrance } from "../../ui/hooks/useScreenEntrance";
 import { useChat } from "../../context/ChatContext";
@@ -34,15 +35,15 @@ import { formatDistanceToNow } from "date-fns";
 
 export function Home() {
   const { t } = useTranslation();
-  const router = useRouter();
+  const { push } = useRouter();
   const palette = useImessagePalette();
   const { animatedStyle } = useScreenEntrance();
   const { chats, createChat, setCurrentChat } = useChat();
   const { dnsServer } = useSettings();
 
   // Get recent chats (last 3)
-  const recentChats = [...chats]
-    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+  const recentChats = chats
+    .toSorted((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
     .slice(0, 3);
 
   // DNS status indicator
@@ -55,7 +56,7 @@ export function Home() {
   const handleNewChat = async () => {
     const newChat = await createChat();
     setCurrentChat(newChat);
-    router.push({
+    push({
       pathname: "/chat/[threadId]",
       params: { threadId: newChat.id },
     });
@@ -63,18 +64,18 @@ export function Home() {
 
   const handleOpenChat = (chat: typeof chats[0]) => {
     setCurrentChat(chat);
-    router.push({
+    push({
       pathname: "/chat/[threadId]",
       params: { threadId: chat.id },
     });
   };
 
   const handleOpenLogs = () => {
-    router.push("/(tabs)/logs");
+    push("/(tabs)/logs");
   };
 
   const handleOpenSettings = () => {
-    router.push("/(modals)/settings");
+    push("/(modals)/settings");
   };
 
   return (
@@ -222,7 +223,7 @@ export function Home() {
             subtitle={t("screen.home.allChatsDescription", {
               defaultValue: "View all your chat history",
             })}
-            onPress={() => router.push("/")}
+            onPress={() => push("/")}
             showChevron
           />
         </Form.Section>

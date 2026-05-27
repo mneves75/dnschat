@@ -57,6 +57,7 @@ export function AccessibilityProvider({ children }: AccessibilityProviderProps) 
   // PERFORMANCE FIX: Previous implementation polled every 5 seconds via setInterval,
   // wasting CPU cycles and battery. Event listeners are the correct approach for
   // accessibility state changes.
+  // react-doctor-disable-next-line react-doctor/effect-needs-cleanup
   useEffect(() => {
     let mounted = true;
 

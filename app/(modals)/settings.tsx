@@ -4,7 +4,7 @@ import { GlassSettings } from "../../src/navigation/screens/GlassSettings";
 import { useTranslation } from "../../src/i18n";
 
 export default function SettingsRoute() {
-  const router = useRouter();
+  const { back } = useRouter();
   const { t } = useTranslation();
 
   return (
@@ -16,7 +16,7 @@ export default function SettingsRoute() {
       />
       <Stack.Screen.Title>{t("screen.settings.navigationTitle")}</Stack.Screen.Title>
       <Stack.Toolbar placement="left">
-        <Stack.Toolbar.Button onPress={() => router.back()}>
+        <Stack.Toolbar.Button onPress={back}>
           {t("common.close")}
         </Stack.Toolbar.Button>
       </Stack.Toolbar>
