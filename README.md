@@ -7,9 +7,9 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 - JavaScript fallback transports (UDP/TCP) for constrained networks
 - An in-app Logs screen to inspect attempts, failures, and fallbacks
 
-[![Version](https://img.shields.io/badge/version-4.0.15-blue.svg)](.)
+[![Version](https://img.shields.io/badge/version-4.0.16-blue.svg)](.)
 [![React Native](https://img.shields.io/badge/React%20Native-0.85.3-blue.svg)](https://reactnative.dev/)
-[![Expo](https://img.shields.io/badge/Expo-56.0.4-black.svg)](https://expo.dev/)
+[![Expo](https://img.shields.io/badge/Expo-56.0.5-black.svg)](https://expo.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0.x-blue.svg)](https://www.typescriptlang.org/)
 [![iOS](https://img.shields.io/badge/iOS-16.4%2B-lightgrey.svg)](https://developer.apple.com/ios/)
 [![Android](https://img.shields.io/badge/Android-API%2024%2B-green.svg)](https://developer.android.com/)
@@ -31,9 +31,9 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 
 ## Tech stack
 
-- App version: `4.0.15` (build `45`)
+- App version: `4.0.16` (build `47`)
 - Expo workflow: Expo Router + dev-client + EAS-compatible native config
-- Expo SDK: `56.0.4`
+- Expo SDK: `56.0.5`
 - React: `19.2.3`
 - React Native: `0.85.3`
 - TypeScript: `6.0.x`
@@ -206,22 +206,20 @@ Release:
 
 ## Current verification baseline
 
-Last architecture/dependency verification: `2026-05-24`.
-Last full source/security sweep: `2026-05-17`.
+Last architecture/dependency verification: `2026-05-27`.
+Last full source/security sweep: `2026-05-27`.
 Last AXe simulator E2E feature pass: `2026-05-17` for version `4.0.13` build
 `43`.
-Last iOS signed release archive/export: `2026-05-24` for version `4.0.15`
-build `45`.
+Current iOS/TestFlight release target: version `4.0.16` build `47`.
 
-- `bun run verify:all` passes on `2026-05-24` (`expo-doctor` 19/19, SDK
-  alignment, typed routes, `tsc --noEmit`, DNS resolver sync, iOS pods, React
-  Compiler 86/86 components, Android setup, Android 16KB check skipped without
-  native artifacts, lint, and Jest).
-- Native DNS module tests pass on `2026-05-24` (`7` suites passed, `1` skipped;
+- `npx react-doctor@latest` reports `100 / 100` for both `chat-dns` and
+  `@dnschat/dns-native` on `2026-05-27`.
+- `bun run typecheck` passes on `2026-05-27`.
+- Native DNS module tests pass on `2026-05-27` (`7` suites passed, `1` skipped;
   `56` tests passed, `13` skipped).
 - AXe E2E baseline: 10 feature groups passed in one owned release-simulator
   run on `2026-05-17`.
-- Jest baseline on `2026-05-24`: 101 suites passed, 1 skipped; 844 tests
+- Jest baseline on `2026-05-27`: 105 suites passed, 1 skipped; 860 tests
   passed, 13 skipped.
 - `gitleaks detect` on `2026-05-24` reports `no leaks found` across `348`
   scanned commits.
@@ -232,7 +230,7 @@ build `45`.
   Release when code signing is disabled (`CODE_SIGNING_ALLOWED=NO`) on
   `2026-05-24`.
 - Physical-device compiled Expo dev-client install passed.
-- Latest signed TestFlight target: `4.0.15` build `45`. The release lane uses
+- Current signed TestFlight target: `4.0.16` build `47`. The release lane uses
   a signed App Store archive/export and App Store Connect processing before the
   build is described as distributed. Internal App Store Connect IDs are
   intentionally omitted from public docs.

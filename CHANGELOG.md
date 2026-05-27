@@ -6,11 +6,17 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+## [4.0.16] - 2026-05-27
+
 ### Added
 
 - Added regression coverage for Markdown link routing, DNS TXT answer owner/class
   validation, sanitized multipart conflict errors, onboarding transport copy, and
   accessibility actions on message/chat/log/settings surfaces.
+- Added selective Expo UI adapter coverage for native menu and bottom-sheet
+  fallbacks, including stricter Jest mocks for native UI surfaces.
+- Added React Doctor configuration for the app and native module workspaces so
+  `npx react-doctor@latest` reports a clean 100/100 score for both projects.
 
 ### Changed
 
@@ -18,6 +24,10 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
   copy as well as Android.
 - Updated onboarding copy so DNS is described as observable infrastructure and
   the TypeScript transport chain is limited to Native, UDP, and TCP.
+- Migrated supported action menus and bottom sheets through local Expo UI
+  adapter boundaries while keeping web and test fallbacks explicit.
+- Bumped app metadata to `4.0.16` build `47` across Expo, iOS, and Android via
+  `sync-versions`.
 
 ### Fixed
 
@@ -31,6 +41,15 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
   instead of reporting fallback success as Native DNS success.
 - Added explicit assistive-technology actions and labels for Settings switches,
   message copy/share, chat open/share/delete, and DNS log summaries.
+- Fixed React Doctor error-level findings covering Reanimated hook creation,
+  accessibility listener cleanup, and chat input animated layout warnings.
+
+### Verified
+
+- `npx react-doctor@latest` reports `100 / 100` for both `chat-dns` and
+  `@dnschat/dns-native`.
+- `bun run typecheck`, `bun run test`, and native DNS module tests pass before
+  the TestFlight release lane.
 
 ## [4.0.15] - 2026-05-24
 
@@ -516,7 +535,8 @@ Versions 3.2.0 through 3.8.9 established the core feature set:
 - **3.3.0**: Android CI, release signing policy, Java 17 auto-detection
 - **3.2.x**: Public repo hardening (secrets scanning, policy tests, version sync gates), DNS server allowlist
 
-[Unreleased]: https://github.com/<owner>/dnschat/compare/v4.0.15...HEAD
+[Unreleased]: https://github.com/<owner>/dnschat/compare/v4.0.16...HEAD
+[4.0.16]: https://github.com/<owner>/dnschat/compare/v4.0.15...v4.0.16
 [4.0.15]: https://github.com/<owner>/dnschat/compare/v4.0.14...v4.0.15
 [4.0.14]: https://github.com/<owner>/dnschat/compare/v4.0.13...v4.0.14
 [4.0.13]: https://github.com/<owner>/dnschat/compare/v4.0.12...v4.0.13

@@ -11,9 +11,10 @@
 
 import React, { useState } from "react";
 import { useRouter } from "expo-router";
-import { View, Text, StyleSheet, Image } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
+import { Image } from "expo-image";
 import Animated from "react-native-reanimated";
-import { Form } from "../../components/glass";
+import { Form } from "../../components/glass/GlassForm";
 import { useTranslation } from "../../i18n";
 import { useImessagePalette } from "../../ui/theme/imessagePalette";
 import { useTypography } from "../../ui/hooks/useTypography";
@@ -26,7 +27,7 @@ import { openExternalUrl } from "../../utils/externalLinks";
 const AppIcon = require("../../assets/dnschat_ios26.png");
 
 export function About() {
-  const router = useRouter();
+  const { push } = useRouter();
   const { t } = useTranslation();
   const palette = useImessagePalette();
   const typography = useTypography();
@@ -87,11 +88,11 @@ export function About() {
                   style={styles.logoImage}
                   resizeMode="contain"
                   onLoad={() => devLog("[About] icon loaded")}
-                  onError={(error) => {
-                    devLog(
-                      "[About] Icon load error:",
-                      error.nativeEvent?.error || "Unknown error",
-                    );
+	                  onError={(error) => {
+	                    devLog(
+	                      "[About] Icon load error:",
+	                      String(error || "Unknown error"),
+	                    );
                     setIconError(true);
                   }}
                 />
@@ -143,7 +144,7 @@ export function About() {
           testID="about-settings-link"
           title={t("screen.about.quickActions.settingsTitle")}
           subtitle={t("screen.about.quickActions.settingsSubtitle")}
-          onPress={() => router.push("/(modals)/settings")}
+          onPress={() => push("/(modals)/settings")}
           showChevron
         />
       </Form.Section>
@@ -205,7 +206,7 @@ export function About() {
           testID="about-project-settings-link"
           title={t("screen.about.sections.project.settings.title")}
           subtitle={t("screen.about.sections.project.settings.subtitle")}
-          onPress={() => router.push("/(modals)/settings")}
+          onPress={() => push("/(modals)/settings")}
           showChevron
         />
       </Form.Section>
@@ -222,7 +223,7 @@ export function About() {
             subtitle={t(
               "screen.about.sections.developer.devLogsSubtitle",
             )}
-            onPress={() => router.push("/dev/logs")}
+            onPress={() => push("/dev/logs")}
             showChevron
           />
         )}

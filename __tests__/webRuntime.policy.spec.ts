@@ -32,11 +32,13 @@ describe("web runtime policy", () => {
     expect(source).not.toContain('pointerEvents={canSend ? "auto" : "none"}');
   });
 
-  it("does not request the native animated driver on web-only glass sheet animations", () => {
+  it("does not keep custom animated glass sheet presentation after the Expo UI migration", () => {
     const source = readSource("src/components/glass/GlassBottomSheet.tsx");
 
-    expect(source).toContain('const useNativeDriver = Platform.OS !== "web"');
-    expect(source).not.toContain("useNativeDriver: true");
+    expect(source).toContain("NativeBottomSheet");
+    expect(source).not.toContain("Animated.timing");
+    expect(source).not.toContain("PanGestureHandler");
+    expect(source).not.toContain("useNativeDriver");
   });
 
   it("does not render empty string guards as raw View text on onboarding web", () => {

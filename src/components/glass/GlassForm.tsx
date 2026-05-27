@@ -343,11 +343,11 @@ export const GlassFormLink: React.FC<GlassFormLinkProps> = ({
   url,
   ...props
 }) => {
-  const router = useRouter();
+  const { push } = useRouter();
 
   const handlePress = () => {
     if (href) {
-      router.push(href as Parameters<typeof router.push>[0]);
+      push(href as Parameters<typeof push>[0]);
     } else if (url) {
       void openExternalUrl(url);
     }

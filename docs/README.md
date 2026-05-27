@@ -9,6 +9,8 @@ Developer documentation for DNSChat. Code is the source of truth — these docs 
 - `docs/technical/DNS-PROTOCOL-SPEC.md` — DNS query/response rules (current behavior)
 - `docs/technical/SPECIFICATION.md` — product behavior + repo invariants
 - `docs/plans/SDK56_UPGRADE_PLAN.md` — SDK 56 upgrade plan and verification gate
+- `docs/plans/EXPO_UI_COMPONENT_MIGRATION_PLAN.md` - Expo UI adoption decision
+  and migration plan
 - `docs/e2e-axe-feature-coverage.md` — AXe simulator E2E feature checklist
   and runner notes
 - `docs/technical/CHAT-TEMPLATE-2026-REVIEW.md` — 2026 chat-template review plan and applied repairs
@@ -24,22 +26,20 @@ Developer documentation for DNSChat. Code is the source of truth — these docs 
 
 ## Current verification baseline
 
-Last architecture/dependency verification: `2026-05-24`.
-Last full source/security sweep: `2026-05-17`.
+Last architecture/dependency verification: `2026-05-27`.
+Last full source/security sweep: `2026-05-27`.
 Last AXe simulator E2E feature pass: `2026-05-17` for version `4.0.13` build
 `43`.
-Last iOS signed release archive/export: `2026-05-24` for version `4.0.15`
-build `45`.
+Current iOS/TestFlight release target: version `4.0.16` build `47`.
 
-- `bun run verify:all` passes on `2026-05-24` (`expo-doctor` 19/19, SDK
-  alignment, typed routes, `tsc --noEmit`, DNS resolver sync, iOS pods, React
-  Compiler 86/86 components, Android setup, Android 16KB check skipped without
-  native artifacts, lint, and Jest).
-- Native DNS module tests pass on `2026-05-24` (`7` suites passed, `1` skipped;
+- `npx react-doctor@latest` reports `100 / 100` for both `chat-dns` and
+  `@dnschat/dns-native` on `2026-05-27`.
+- `bun run typecheck` passes on `2026-05-27`.
+- Native DNS module tests pass on `2026-05-27` (`7` suites passed, `1` skipped;
   `56` tests passed, `13` skipped).
 - AXe E2E baseline: 10 feature groups passed in one owned release-simulator
   run on `2026-05-17`.
-- Jest baseline on `2026-05-24`: 101 suites passed, 1 skipped; 844 tests
+- Jest baseline on `2026-05-27`: 105 suites passed, 1 skipped; 860 tests
   passed, 13 skipped.
 - `gitleaks detect` on `2026-05-24` reports `no leaks found` across `348`
   scanned commits.
@@ -50,7 +50,7 @@ build `45`.
   Release when code signing is disabled (`CODE_SIGNING_ALLOWED=NO`) on
   `2026-05-24`.
 - Physical-device compiled Expo dev-client install passed.
-- Latest signed TestFlight target: `4.0.15` build `45`. The release lane uses
+- Current signed TestFlight target: `4.0.16` build `47`. The release lane uses
   signed App Store archive/export, App Store Connect upload, processing, and
   validation before the build is described as distributed. Internal App Store
   Connect IDs are intentionally omitted from public docs.

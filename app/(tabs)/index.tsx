@@ -6,7 +6,7 @@ import { useTranslation } from "../../src/i18n";
 import { GlassChatList } from "../../src/navigation/screens/GlassChatList";
 
 export default function ChatListRoute() {
-  const router = useRouter();
+  const { push } = useRouter();
   const { createChat, setCurrentChat } = useChat();
   const { t } = useTranslation();
   const [isCreatingChat, setIsCreatingChat] = React.useState(false);
@@ -20,7 +20,7 @@ export default function ChatListRoute() {
     try {
       const newChat = await createChat();
       setCurrentChat(newChat);
-      router.push({
+      push({
         pathname: "/chat/[threadId]",
         params: { threadId: newChat.id },
       });

@@ -92,7 +92,7 @@ export function getDefaultServer(): DNSServerConfig {
  * Get servers sorted by priority (for fallback chain)
  */
 export function getServersByPriority(): DNSServerConfig[] {
-  return [...DNS_SERVERS].sort((a, b) => a.priority - b.priority);
+  return DNS_SERVERS.toSorted((a, b) => a.priority - b.priority);
 }
 
 /**

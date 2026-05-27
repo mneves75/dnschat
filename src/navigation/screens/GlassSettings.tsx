@@ -662,17 +662,15 @@ export function GlassSettings() {
       >
         <View style={styles.dnsOptionsContainer}>
           {dnsServerOptions.map((option) => (
-            <Form.Item
+            <TouchableOpacity
               testID={`settings-dns-option-${option.value.replace(/[^a-z0-9]/gi, "-").toLowerCase()}`}
               key={option.value}
-              title={option.label}
-              subtitle={option.description}
-              rightContent={
-                dnsServer === option.value && (
-                  <Text style={[styles.selectedIndicator, { color: palette.userBubble }]}>•</Text>
-                )
-              }
               onPress={() => handleDnsServerSelect(option.value)}
+              accessibilityRole="button"
+              accessibilityLabel={option.label}
+              accessibilityHint={option.description}
+              accessibilityState={{ selected: dnsServer === option.value }}
+              activeOpacity={0.82}
               style={[
                 styles.dnsOption,
                 { backgroundColor: palette.highlight },
@@ -680,7 +678,26 @@ export function GlassSettings() {
                   backgroundColor: `${palette.userBubble}1A`,
                 },
               ]}
-            />
+            >
+              <View style={styles.dnsOptionContent}>
+                <View style={styles.dnsOptionText}>
+                  <Text style={[styles.dnsOptionTitle, { color: palette.textPrimary }]}>
+                    {option.label}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.dnsOptionSubtitle,
+                      { color: palette.textSecondary },
+                    ]}
+                  >
+                    {option.description}
+                  </Text>
+                </View>
+                {dnsServer === option.value && (
+                  <Text style={[styles.selectedIndicator, { color: palette.userBubble }]}>•</Text>
+                )}
+              </View>
+            </TouchableOpacity>
           ))}
         </View>
       </GlassBottomSheet>
@@ -807,6 +824,26 @@ const styles = StyleSheet.create({
   dnsOption: {
     marginBottom: 8,
     borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
+  dnsOptionContent: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  dnsOptionText: {
+    flex: 1,
+  },
+  dnsOptionTitle: {
+    fontSize: 16,
+    fontWeight: "500",
+    letterSpacing: 0,
+  },
+  dnsOptionSubtitle: {
+    fontSize: 13,
+    fontWeight: "400",
+    letterSpacing: 0,
+    marginTop: 2,
   },
   selectedIndicator: {
     fontSize: 16,

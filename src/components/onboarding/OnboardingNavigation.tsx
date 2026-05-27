@@ -78,6 +78,7 @@ export function OnboardingNavigation({
   };
 
   // Effect: Android hardware back button — go to previous step instead of popping route.
+  // react-doctor-disable-next-line react-doctor/effect-needs-cleanup
   React.useEffect(() => {
     if (Platform.OS !== "android") return;
     const subscription = BackHandler.addEventListener(

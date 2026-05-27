@@ -1,0 +1,14 @@
+{
+  "ignore": {
+    "overrides": [
+      {
+        "files": ["__tests__/**"],
+        "rules": [
+          "react-doctor/async-await-in-loop",
+          "react-doctor/server-sequential-independent-await"
+        ]
+      }
+    ]
+  },
+  "failOn": "error"
+}

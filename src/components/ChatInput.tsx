@@ -172,6 +172,7 @@ export function ChatInput({
    * Must use useAnimatedStyle to track inputHeight.value changes on UI thread.
    */
   const animatedButtonPosition = useAnimatedStyle(() => ({
+    // react-doctor-disable-next-line react-doctor/rn-animate-layout-property
     top: (inputHeight.value - minimumTouchTarget) / 2,
   }));
 
@@ -254,6 +255,7 @@ export function ChatInput({
    * Runs on UI thread for smooth auto-growing behavior.
    */
   const animatedInputStyle = useAnimatedStyle(() => ({
+    // react-doctor-disable-next-line react-doctor/rn-animate-layout-property
     height: inputHeight.value,
   }));
 

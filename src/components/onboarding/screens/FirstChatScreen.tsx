@@ -6,7 +6,11 @@ import {
   TextInput,
   ScrollView,
 } from "react-native";
-import { KeyboardStickyView } from "react-native-keyboard-controller";
+import type { LayoutChangeEvent } from "react-native";
+import {
+  KeyboardStickyView,
+  useKeyboardState,
+} from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { OnboardingNavigation } from "../OnboardingNavigation";
 import { PressableRipple } from "../../PressableRipple";
@@ -33,6 +37,8 @@ export function FirstChatScreen() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const isMountedRef = useRef(true);
+  const messagesScrollRef = useRef<ScrollView>(null);
+  const keyboardHeight = useKeyboardState((state) => state.height);
 
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -45,6 +51,18 @@ export function FirstChatScreen() {
   const [inputText, setInputText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [hasTriedChat, setHasTriedChat] = useState(false);
+  const [navigationHeight, setNavigationHeight] = useState(0);
+
+  const lastMessage = messages[messages.length - 1];
+  const lastMessageKey = lastMessage
+    ? `${lastMessage.id}-${lastMessage.status ?? "none"}-${lastMessage.text.length}`
+    : "";
+  // KeyboardStickyView translates from its normal layout slot. The onboarding
+  // navigation sits below that slot, so compensate without moving downward for
+  // short keyboard/accessory heights.
+  const compensatedNavigationHeight = Math.min(navigationHeight, keyboardHeight);
+  const stickyInputOffset = { closed: 0, opened: compensatedNavigationHeight };
+  const keyboardOverlayInset = Math.max(0, keyboardHeight - navigationHeight);
 
   // Effect: mark unmounted state to prevent async updates after unmount.
   useEffect(() => {
@@ -52,6 +70,26 @@ export function FirstChatScreen() {
       isMountedRef.current = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (messages.length === 0) return;
+
+    const frameId = requestAnimationFrame(() => {
+      messagesScrollRef.current?.scrollToEnd({ animated: true });
+    });
+
+    return () => {
+      cancelAnimationFrame(frameId);
+    };
+  }, [keyboardOverlayInset, messages.length, lastMessageKey]);
+
+  const handleNavigationLayout = (event: LayoutChangeEvent) => {
+    const nextHeight = event.nativeEvent.layout.height;
+
+    setNavigationHeight((previousHeight) =>
+      Math.abs(previousHeight - nextHeight) < 1 ? previousHeight : nextHeight,
+    );
+  };
 
   const sendMessage = async () => {
     if (!inputText.trim() || isLoading) return;
@@ -153,7 +191,13 @@ export function FirstChatScreen() {
         </View>
 
         <ScrollView
+          ref={messagesScrollRef}
           style={styles.messagesContainer}
+          contentContainerStyle={[
+            styles.messagesContent,
+            { paddingBottom: keyboardOverlayInset },
+          ]}
+          keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
           {messages.map((message) => (
@@ -215,7 +259,7 @@ export function FirstChatScreen() {
 
       {/* iOS HIG: Message input row follows the keyboard via KeyboardStickyView.
           OnboardingNavigation stays anchored to the safe-area bottom below. */}
-      <KeyboardStickyView style={styles.stickyInputWrapper}>
+      <KeyboardStickyView offset={stickyInputOffset} style={styles.stickyInputWrapper}>
         <View
           style={[
             styles.inputContainer,
@@ -281,7 +325,10 @@ export function FirstChatScreen() {
         </View>
       </KeyboardStickyView>
 
-      <View style={{ paddingBottom: insets.bottom }}>
+      <View
+        style={{ paddingBottom: insets.bottom }}
+        onLayout={handleNavigationLayout}
+      >
         <OnboardingNavigation
           nextButtonText={hasTriedChat ? t("screen.onboarding.firstChat.navigation.continue") : t("screen.onboarding.firstChat.navigation.skip")}
         />
@@ -372,6 +419,9 @@ const styles = StyleSheet.create({
   messagesContainer: {
     flex: 1,
     marginBottom: LiquidGlassSpacing.md,
+  },
+  messagesContent: {
+    flexGrow: 1,
   },
   messageContainer: {
     marginVertical: LiquidGlassSpacing.xxs,

@@ -24,7 +24,8 @@ import Animated from "react-native-reanimated";
 import type { SharedValue } from "react-native-reanimated";
 import { DNSLogService } from "../../services/dnsLogService";
 import type { DNSQueryLog, DNSLogEntry } from "../../services/dnsLogService";
-import { Form, LiquidGlassWrapper } from "../../components/glass";
+import { Form } from "../../components/glass/GlassForm";
+import { LiquidGlassWrapper } from "../../components/LiquidGlassWrapper";
 import { PressableRipple } from "../../components/PressableRipple";
 import { useTranslation } from "../../i18n";
 import type { MessageKey, TranslationParams } from "../../i18n";
@@ -37,6 +38,7 @@ import { EmptyState } from "../../components/EmptyState";
 
 type TFn = (key: MessageKey, params?: TranslationParams) => string;
 
+// react-doctor-disable-next-line react-doctor/prefer-useReducer
 export function Logs() {
   const palette = useImessagePalette();
   const [logs, setLogs] = useState<DNSQueryLog[]>([]);

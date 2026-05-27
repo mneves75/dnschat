@@ -29,12 +29,9 @@ import type { AccessibilityActionEvent } from "react-native";
 import Animated from "react-native-reanimated";
 import { useRouter } from "expo-router";
 import { useChat } from "../../context/ChatContext";
-import {
-  Form,
-  GlassActionSheet,
-  useGlassBottomSheet,
-  LiquidGlassWrapper,
-} from "../../components/glass";
+import { Form } from "../../components/glass/GlassForm";
+import { GlassActionSheet, useGlassBottomSheet } from "../../components/glass/GlassBottomSheet";
+import { LiquidGlassWrapper } from "../../components/LiquidGlassWrapper";
 import { PressableRipple } from "../../components/PressableRipple";
 import { TrashIcon } from "../../components/icons/TrashIcon";
 import { PlusIcon } from "../../components/icons/PlusIcon";
@@ -271,7 +268,7 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
 // ==================================================================================
 
 export function GlassChatList() {
-  const router = useRouter();
+  const { push } = useRouter();
   const colorScheme = useColorScheme();
   const palette = useImessagePalette();
   const {
@@ -323,7 +320,7 @@ export function GlassChatList() {
   const handleNewChat = async () => {
     const newChat = await createChat();
     setCurrentChat(newChat);
-    router.push({
+    push({
       pathname: "/chat/[threadId]",
       params: { threadId: newChat.id },
     });
@@ -336,7 +333,7 @@ export function GlassChatList() {
 
   const handleChatPress = (chat: Chat) => {
     setCurrentChat(chat);
-    router.push({
+    push({
       pathname: "/chat/[threadId]",
       params: { threadId: chat.id },
     });

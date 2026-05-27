@@ -109,7 +109,7 @@ xcodebuild clean archive \
   CODE_SIGNING_ALLOWED=NO
 ```
 
-Latest public release target (`2026-05-24`, Xcode `26.5` / `17F42`, SDK 56.0.4 baseline):
+Latest public release target (`2026-05-27`, Xcode `26.5` / `17F42`, SDK 56.0.5 baseline):
 
 - `bun run verify:all` passed end-to-end: `verify:public-redaction`,
   `verify:expo-doctor` (19/19 checks, 0 issues), `verify:sdk-alignment`,
@@ -118,21 +118,21 @@ Latest public release target (`2026-05-24`, Xcode `26.5` / `17F42`, SDK 56.0.4 b
   `verify:android` (critical checks), `verify:android-16kb` (skipped without
   native artifacts), `lint`, `bun run test`.
 - App Jest suite: 101 of 102 suites passed (1 skipped), 844 passed, 13 skipped
-  for version `4.0.15` build `45`.
+  for version `4.0.16` build `47`.
 - `modules/dns-native` Jest suite: 7 of 8 suites passed (1 skipped), 56
   passed, 13 skipped.
 - `gitleaks detect --source . --redact --no-banner --config .gitleaks.toml`
   scanned 348 commits / 11.07 MB and reported `no leaks found`.
 - `xcodebuild clean build` Debug iPhone 17 simulator: `BUILD SUCCEEDED`.
 - `xcodebuild clean build` and `xcodebuild clean archive` generic iOS Release
-  with `CODE_SIGNING_ALLOWED=NO` both succeeded; the unsigned archive embeds
-  `DNSChat.app` with `CFBundleShortVersionString=4.0.15` and `CFBundleVersion=45`.
+  with `CODE_SIGNING_ALLOWED=NO` both succeeded for the prior release lane; the
+  current release target is `4.0.16` build `47`.
 - `bun audit` reports `No vulnerabilities found`.
 - Physical-device Release install completed for `4.0.15` build `45`. A
   `devicectl` relaunch can still be denied by iOS when the phone is locked; that
   is tracked separately from install proof.
-- Signed App Store archive, signed IPA export, App Store Connect TestFlight
-  upload, and TestFlight validation passed for `4.0.15` build `45`.
+- Current signed App Store archive/export and TestFlight upload target is
+  `4.0.16` build `47`; exact App Store Connect identifiers remain private.
 - Internal App Store Connect IDs, tester group names, device names, device identifiers, local paths, team IDs, profile names, and certificate IDs are intentionally omitted from public docs.
 
 Earlier 4.0.14 baseline evidence (`2026-05-22`, Xcode `26.5` / `17F42`, SDK 56 baseline):
@@ -245,7 +245,7 @@ bun run ios -- --verbose
 - **App Store Connect** app record created
 - **Code signing** configured correctly
 - **Bundle ID** matches (`<BUNDLE_ID>`)
-- **Version numbers** consistent (v4.0.15 build 45)
+- **Version numbers** consistent (v4.0.16 build 47)
 - **Native DNS module** compiles successfully
 - **Xcode CLI smoke** passed:
   - Debug simulator build
@@ -273,11 +273,11 @@ eas build --platform ios --profile production
 
 ### TestFlight distribution
 
-Current v4.0.15 distribution target:
+Current v4.0.16 distribution target:
 
-- Version/build: `4.0.15` / `45`
-- Processing state: `VALID`; TestFlight validation reports `0` errors and `0`
-  warnings
+- Version/build: `4.0.16` / `47`
+- Processing state and TestFlight validation must be confirmed after the signed
+  IPA upload for this build.
 - Tester groups: configured in App Store Connect; internal group names are intentionally omitted from public docs.
 - Exact build IDs and App Store Connect version IDs belong in private release notes, not public runbooks.
 
@@ -288,11 +288,12 @@ After upload:
 3. **Feedback**: Collect user feedback through TestFlight
 4. **Iterate**: Upload new builds for continuous testing
 
-### What to Test for v4.0.15 build 45
+### What to Test for v4.0.16 build 47
 
 - Complete onboarding from a fresh install and confirm the app lands on the chat list.
-- Scroll a long recent-conversation list and confirm the rows move freely above
-  the floating native tab bar.
+- Open native menu and bottom-sheet actions from chat, logs, messages, and
+  settings; confirm they remain accessible and fall back cleanly where native UI
+  is unavailable.
 - Send short prompts through the default DNS service and confirm responses render.
 - Confirm DNS failures, invalid settings, and unsupported server choices fail
   closed without exposing prompt text or TXT responses.
@@ -326,4 +327,4 @@ If you encounter issues during the upload process:
 
 ---
 
-_TestFlight upload guide for DNSChat v4.0.15 build 45 - Last updated: 2026-05-24_
+_TestFlight upload guide for DNSChat v4.0.16 build 47 - Last updated: 2026-05-27_

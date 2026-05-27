@@ -6,8 +6,6 @@ import {
   Platform,
 } from "react-native";
 import type { AccessibilityActionEvent } from "react-native";
-import { MenuView } from '@react-native-menu/menu';
-import type { NativeActionEvent } from '@react-native-menu/menu';
 import type { Message } from "../types/chat";
 import { useTypography } from "../ui/hooks/useTypography";
 import { useImessagePalette } from "../ui/theme/imessagePalette";
@@ -18,6 +16,11 @@ import { ShareService } from "../services/ShareService";
 import { MessageContent } from "./MessageContent";
 import { useTranslation } from "../i18n";
 import { useSettings } from "../context/SettingsContext";
+import { NativeMenu } from "./platform/NativeMenu";
+import type { NativeMenuAction, NativeMenuActionEvent } from "./platform/NativeMenu";
+
+const androidCopyIcon = require("../assets/icons/menu-content-copy.xml");
+const androidShareIcon = require("../assets/icons/menu-share.xml");
 
 // Platform-specific monospace font for code rendering
 const MONOSPACE_FONT = Platform.select({
@@ -61,7 +64,7 @@ function MessageBubbleComponent({ message }: MessageBubbleProps) {
     }
   };
 
-  const handleMenuPress = async (event: NativeActionEvent) => {
+  const handleMenuPress = async (event: NativeMenuActionEvent) => {
     await runMessageAction(event.nativeEvent.event);
   };
 
@@ -134,18 +137,24 @@ function MessageBubbleComponent({ message }: MessageBubbleProps) {
     },
   };
 
-  const copyImage = Platform.OS === 'ios' ? 'doc.on.doc' : 'content_copy';
-  const shareImage = Platform.OS === 'ios' ? 'square.and.arrow.up' : 'share';
-  const menuActions = [
+  const copyImage = Platform.select({
+    ios: 'doc.on.doc',
+    android: androidCopyIcon,
+  }) as NativeMenuAction["image"];
+  const shareImage = Platform.select({
+    ios: 'square.and.arrow.up',
+    android: androidShareIcon,
+  }) as NativeMenuAction["image"];
+  const menuActions: NativeMenuAction[] = [
     {
       id: 'copy',
       title: t('screen.chat.messageActions.copy'),
-      image: copyImage,
+      ...(copyImage ? { image: copyImage } : {}),
     },
     {
       id: 'share',
       title: t('screen.chat.messageActions.share'),
-      image: shareImage,
+      ...(shareImage ? { image: shareImage } : {}),
     },
   ];
   const messageAccessibilityActions = isLoading
@@ -195,13 +204,13 @@ function MessageBubbleComponent({ message }: MessageBubbleProps) {
       ]}
     >
       {!isLoading ? (
-        <MenuView
+        <NativeMenu
           onPressAction={handleMenuPress}
           actions={menuActions}
           shouldOpenOnLongPress={true}
         >
           {content}
-        </MenuView>
+        </NativeMenu>
       ) : (
         content
       )}
