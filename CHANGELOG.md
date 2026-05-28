@@ -63,6 +63,13 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 - `bun run typecheck` passes.
 - Focused regression sets pass: i18n parity, settings migration, onboarding
   accessibility, ChatInput behavior, and native menu fallback.
+- Post-review hardening (build 51): `bun run verify:all` passes (871 tests,
+  13 skipped), `modules/dns-native` tests pass (56), `gitleaks` reports no
+  leaks, and an independent code review found no critical/high/medium issues.
+- TestFlight: signed archive and IPA export succeeded; `asc publish testflight`
+  processed build 51 to `VALID`; `asc validate testflight --strict` reports
+  0 errors / 0 warnings with bilingual "What to Test" notes. App Store version
+  validation is not applicable (no 4.0.18 App Store version record exists).
 
 ## [4.0.17] - 2026-05-28
 
