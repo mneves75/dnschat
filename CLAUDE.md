@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What is DNSChat
 
-A React Native Expo app that sends short prompts as DNS TXT queries to LLM servers and renders responses. Uses React Native 0.85.x, Expo SDK 56.0.5, React 19.2.3, TypeScript 6.x.
+A React Native Expo app that sends short prompts as DNS TXT queries to LLM servers and renders responses. Uses React Native 0.85.x, Expo SDK 56.0.6, React 19.2.3, TypeScript 6.x.
 
 **Default DNS Server**: `llm.pieter.com:53` (by @levelsio)
 **Fallback Server**: `ch.at:53` (currently offline)
@@ -25,6 +25,11 @@ A React Native Expo app that sends short prompts as DNS TXT queries to LLM serve
 | Native DNS module | `modules/dns-native/index.ts` |
 | Chat context | `src/context/ChatContext.tsx` |
 | Message sanitization | `modules/dns-native/constants.ts` (`sanitizeDNSMessageReference`) |
+| Color/typography/spacing tokens | `src/ui/theme/imessagePalette.ts`, `liquidGlassTypography.ts`, `liquidGlassSpacing.ts` |
+| Theme preference (System/Light/Dark) | `src/context/settingsStorage.ts:themePreference` -> `app/_layout.tsx` `Appearance.setColorScheme` |
+| Responsive layout (phone/tablet/desktop) | `src/ui/hooks/useResponsiveLayout.ts` |
+| Accessibility provider + resilient hooks | `src/context/AccessibilityContext.tsx` |
+| Glass UI primitives | `src/components/LiquidGlassWrapper.tsx`, `src/components/glass/*` |
 
 ## Commands
 
@@ -160,14 +165,25 @@ docs/                         # Developer docs (see docs/README.md for index)
 
 ### Settings System
 
-**User settings** stored in AsyncStorage:
+**User settings** stored in AsyncStorage at key `@chat_dns_settings`, schema versioned (`SETTINGS_VERSION` in `src/context/settingsStorage.ts`):
 - `dnsServer`: Selected DNS server (default: `llm.pieter.com`)
 - `enableMockDNS`: Use mock responses for testing
 - `allowExperimentalTransports`: Enable UDP/TCP fallbacks
 - `enableHaptics`: Haptic feedback
-- `preferredLocale`: Language preference
+- `preferredLocale`: Language preference (null = follow system)
+- `themePreference`: `'system' | 'light' | 'dark'` — applied globally via `Appearance.setColorScheme('unspecified' | 'light' | 'dark')` in `app/_layout.tsx`
+- `accessibility`: `{ fontSize, highContrast, reduceMotion, screenReader }`
 
 **Important**: When `dnsServer` is set, the app uses ONLY that server with NO fallback chain.
+
+**When you bump `SETTINGS_VERSION`**: add a migration branch in `migrateSettings()` (covers v1, v2, v3, v4+) and update the spec at `__tests__/settings.migration.spec.ts`. New fields must be backfilled with safe defaults across every prior version.
+
+### Theming & Accessibility
+
+- **Palette**: `useImessagePalette()` is the single source of truth for colours. It auto-resolves dark/light and honours `useHighContrast()`. Don't hard-code hex strings in components — read from the palette.
+- **Resilient hooks**: `useHighContrast`, `useMotionReduction`, `useScreenReader`, `useFontSize` return defaults when no `AccessibilityProvider` is mounted (so isolated unit tests don't need to wrap providers). Only `useAccessibility()` itself throws when used outside a provider — keep it that way to catch real wiring bugs.
+- **Reduce motion**: any animation in `ChatInput`, `LiquidGlassButton`, `GlassBottomSheet`, screen entrance, etc., must short-circuit to the end state when `shouldReduceMotion` is true. Do not gate haptics on it — those still fire.
+- **Responsive bubbles / icons**: `useResponsiveLayout()` returns `{ messageMaxWidth, tabIconSize, isPhone/isTablet/isDesktop }`. Breakpoints: phone < 600, tablet 600–1024, desktop ≥ 1024. Apply `messageMaxWidth` instead of a fixed `"75%"` for chat content.
 
 ### Native Module
 
@@ -221,6 +237,18 @@ GitHub Actions (`.github/workflows/ci.yml`) runs on push to main and PRs:
 
 If a freshly imported distribution certificate makes `codesign` hang during `[CP] Embed Pods Frameworks`, isolate signing in a temporary or local build keychain, unlock it, set its key partition list, put it first in `security list-keychains`, and pass `OTHER_CODE_SIGN_FLAGS='--keychain <keychain path>'` to `xcodebuild archive`. Do not commit certificates, private keys, `.p12` files, provisioning profiles, or App Store Connect keys. Keep exact device, signing, tester-group, local-path, and App Store Connect evidence in private notes outside git; public docs must follow `docs/public-release-redaction.md`.
 
+**Profile ↔ certificate mismatch recovery**: when `xcodebuild archive` fails with `Provisioning profile X doesn't include signing certificate Apple Distribution: …`, the profile was issued for the legacy `iPhone Distribution` cert while the keychain only carries the modern `Apple Distribution` cert. Use the `asc` CLI to pull a profile bound to the current cert instead of editing entitlements:
+
+```bash
+asc profiles list                                          # find an IOS_APP_STORE profile linked to the Apple Distribution cert
+asc profiles view --id <PROFILE_ID> --include certificates # verify the linked cert id
+asc profiles download --id <PROFILE_ID> --output /tmp/<name>.mobileprovision
+security cms -D -i /tmp/<name>.mobileprovision > /tmp/profile.plist
+PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print UUID" /tmp/profile.plist)
+cp /tmp/<name>.mobileprovision "$HOME/Library/MobileDevice/Provisioning Profiles/$PROFILE_UUID.mobileprovision"
+# Then re-archive with PROVISIONING_PROFILE_SPECIFIER set to the new profile name and CODE_SIGN_IDENTITY='Apple Distribution'.
+```
+
 **Android**: Requires Java 17. `bun run android` auto-detects via `/usr/libexec/java_home -v 17` or Homebrew paths. Release signing credentials are never committed (uses `keystore.properties` or CI injection).
 
 Android release manifests intentionally avoid legacy storage and overlay permissions. SecureStore is excluded from Android backup/device-transfer rules via `android/app/src/main/res/xml/secure_store_backup_rules.xml` and `secure_store_data_extraction_rules.xml`.
@@ -240,3 +268,6 @@ Android release manifests intentionally avoid legacy storage and overlay permiss
 | Android minSdkVersion mismatch | Ensure `app.json` has `minSdkVersion: 24` (required by dependencies) |
 | Android signature mismatch on install | Uninstall existing app: `adb uninstall <ANDROID_PACKAGE>` |
 | DNS Native Module not registered | The `dns-native-plugin.js` handles this - regenerate with prebuild |
+| `useAccessibility must be used within an AccessibilityProvider` in tests | Use the resilient variants (`useHighContrast`, `useMotionReduction`, …) which default-out; only call `useAccessibility()` from components that always render under the provider tree (or stub it in the suite's `jest.mock("../src/context/AccessibilityContext", …)`). |
+| `Provisioning profile … doesn't include signing certificate` during archive | Pull the matching profile via `asc profiles download` (see "Platform Notes / iOS"). |
+| Theme override doesn't apply | `Appearance.setColorScheme()` accepts `'unspecified' \| 'light' \| 'dark'` on RN 0.85, not `null` or `undefined`. |

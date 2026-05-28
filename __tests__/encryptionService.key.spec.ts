@@ -174,4 +174,47 @@ describe("encryptionService key handling", () => {
       delete (globalThis as { localStorage?: unknown }).localStorage;
     }
   });
+
+  it("warns exactly once that web preview key storage is not a secure at-rest boundary", async () => {
+    const originalWorkerId = process.env["JEST_WORKER_ID"];
+    delete process.env["JEST_WORKER_ID"];
+    try {
+      jest.resetModules();
+      jest.doMock("react-native", () => ({
+        Platform: { OS: "web" },
+      }));
+      const devWarn = jest.fn();
+      jest.doMock("../src/utils/devLog", () => ({
+        devWarn,
+        devLog: jest.fn(),
+      }));
+      const store = new Map<string, string>();
+      Object.defineProperty(globalThis, "localStorage", {
+        configurable: true,
+        value: {
+          getItem: jest.fn((key: string) => store.get(key) ?? null),
+          setItem: jest.fn((key: string, value: string) => {
+            store.set(key, value);
+          }),
+        },
+      });
+
+      const { encryptString } = require("../src/services/encryptionService");
+
+      await encryptString("first");
+      await encryptString("second");
+
+      const webWarnings = devWarn.mock.calls.filter(([message]) =>
+        String(message).includes("not a secure at-rest boundary"),
+      );
+      expect(webWarnings).toHaveLength(1);
+    } finally {
+      if (originalWorkerId !== undefined) {
+        process.env["JEST_WORKER_ID"] = originalWorkerId;
+      }
+      jest.dontMock("../src/utils/devLog");
+      jest.dontMock("react-native");
+      delete (globalThis as { localStorage?: unknown }).localStorage;
+    }
+  });
 });

@@ -37,6 +37,20 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 - Onboarding NetworkSetup loading and recommendation panels now announce via
   `accessibilityLiveRegion` so the screen reader hears completion without
   re-focus.
+- Settings transport test/force buttons now size to the platform minimum touch
+  target via `getMinimumTouchTarget()` (44pt iOS / 48dp Android) instead of a
+  hardcoded 44, matching `ChatInput`/`Chat`/`LiquidGlassButton`.
+
+### Fixed
+
+- Corrupted chat storage with a `null` or non-primitive `createdAt`/`updatedAt`/
+  `timestamp` is now rejected as `StorageCorruptionError` instead of being
+  silently coerced to the 1970 epoch by `new Date(null)` (which would reorder
+  the chat list). Date reviver validates value type before constructing `Date`.
+- Web preview now emits a one-time runtime warning when the encryption key is
+  persisted to browser storage, making explicit that web storage is not a secure
+  at-rest boundary (already documented in `SECURITY.md` / `docs/data-inventory.md`;
+  native builds continue to use SecureStore).
 
 ### Migration
 

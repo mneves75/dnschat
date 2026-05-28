@@ -157,6 +157,14 @@ export class StorageService {
             // SECURITY FIX: Validate date parsing to prevent Invalid Date propagation.
             // new Date('garbage') returns an Invalid Date object (not null),
             // which causes silent failures downstream.
+            // Reject non-string/non-number values first: new Date(null) coerces to
+            // the 1970 epoch (a *valid* Date), which would silently corrupt
+            // timestamps and reorder chats instead of being caught below.
+            if (typeof value !== "string" && typeof value !== "number") {
+              throw new StorageCorruptionError(
+                `Invalid date type for ${key}: ${value === null ? "null" : typeof value}`,
+              );
+            }
             const date = new Date(value);
             if (isNaN(date.getTime())) {
               throw new StorageCorruptionError(

@@ -41,6 +41,66 @@
   <p><strong>Scope:</strong> full frontend UI/UX and source-code review for this DNSChat repo, followed by justified fixes, tests, verification, commit, and push when available.</p>
   <p><strong>Stop condition:</strong> no known critical/high issues remain; medium findings are either fixed or explicitly justified; strongest local checks have fresh outcomes; browser/runtime evidence is captured for user-visible frontend changes when feasible.</p>
 
+  <hr />
+  <h2>Review Pass &mdash; 2026-05-28 (v4.0.18, build 50)</h2>
+  <p>
+    Five-dimension adversarial review (UI/UX, correctness/architecture, security/privacy, performance,
+    tests/deps/docs) via 28 review + verification agents. The codebase is mature and previously hardened:
+    <strong>23 raw findings reduced to 4 confirmed</strong> after skeptical verification, with
+    <strong>0 critical, 0 high</strong>. Independent code-reviewer pass: <strong>APPROVE</strong>
+    (0 crit/high/med).
+  </p>
+
+  <h3>Findings &amp; resolutions</h3>
+  <table>
+    <thead><tr><th>Severity</th><th>Finding</th><th>Resolution</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="status">Medium</td>
+        <td>Web preview persists the AES-GCM key in <code>localStorage</code> (plaintext, script-readable).</td>
+        <td><strong>Handled.</strong> Already documented as "not a secure production at-rest boundary" in <code>SECURITY.md</code> + <code>docs/data-inventory.md</code>; web is the Mock-DNS preview surface. Closed the runtime-silence gap with a one-time <code>devWarn</code> in <code>encryptionService.ts</code>. Rejected IndexedDB/passphrase re-architecture as unjustified complexity for a preview surface.</td>
+      </tr>
+      <tr>
+        <td class="status">Low</td>
+        <td><code>GlassSettings</code> transport buttons hardcoded <code>minHeight/minWidth: 44</code> (Android wants 48dp).</td>
+        <td><strong>Fixed.</strong> Reused existing <code>getMinimumTouchTarget()</code> helper (44 iOS / 48 Android), applied inline; matches <code>ChatInput</code>/<code>Chat</code>/<code>LiquidGlassButton</code>.</td>
+      </tr>
+      <tr>
+        <td class="status">Low</td>
+        <td>Date reviver: <code>new Date(null)</code> yields a valid 1970 epoch, so a null/object timestamp in corrupted storage would silently reorder chats.</td>
+        <td><strong>Fixed.</strong> Type guard in <code>storageService.ts</code> rejects non-string/non-number date values before <code>new Date()</code>, throwing <code>StorageCorruptionError</code>. Safe (dates serialize as ISO strings). +2 regression tests.</td>
+      </tr>
+      <tr>
+        <td class="status">Low</td>
+        <td><code>CLAUDE.md</code>/<code>AGENTS.md</code> stated Expo SDK 56.0.5; resolved version is 56.0.6.</td>
+        <td><strong>Fixed.</strong> Updated both docs to 56.0.6.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Decisions &amp; tradeoffs (this pass)</h3>
+  <ul>
+    <li><strong>No new dependencies.</strong> All fixes reuse existing utilities (<code>getMinimumTouchTarget</code>, <code>devWarn</code>, <code>StorageCorruptionError</code>).</li>
+    <li><strong>Version:</strong> build was already 49&rarr;50 in the worktree and never archived/uploaded, so the source fixes belong to the existing unbuilt build 50. Re-bumping to 51 would waste an unbuilt number. <code>sync-versions --dry-run</code> confirms synchronization at 4.0.18 / build 50.</li>
+    <li><strong>Web key confidentiality vs live XSS</strong> intentionally unchanged: warning surfaces the boundary but does not enforce it &mdash; acceptable for a preview-only surface.</li>
+  </ul>
+
+  <h3>Validation evidence (this pass)</h3>
+  <ul>
+    <li><code>bun run verify:all</code> &mdash; pass, 871 passed / 13 skipped (was 868; +3 new regression tests).</li>
+    <li><code>bun run typecheck</code> &mdash; pass (exit 0).</li>
+    <li><code>cd modules/dns-native &amp;&amp; bun run test</code> &mdash; pass, 56 passed / 13 skipped.</li>
+    <li><code>gitleaks detect --redact</code> &mdash; no leaks (354 commits scanned).</li>
+    <li>Independent <code>code-reviewer</code> subagent &mdash; APPROVE, 0 crit/high/med.</li>
+  </ul>
+
+  <h3>Open questions / residual risks (this pass)</h3>
+  <ul>
+    <li>iOS/Android native build and AXe E2E not run (no signing credentials / simulator automation this pass). Changes are JS/TS + docs only with no native module, DNS constant, or routing changes, so native rebuild risk is low. Release evidence (signed archive, TestFlight upload, <code>asc validate</code>) remains a separate credential-gated step.</li>
+    <li>Highest evidence-backed confidence, not absolute: covered by unit/integration tests, typecheck, lint, secret scan, and independent review; no device runtime smoke this pass.</li>
+  </ul>
+  <hr />
+
   <h2>Scope Lock</h2>
   <ul>
     <li>Repo root confirmed: <code>&lt;repo-root&gt;</code>.</li>

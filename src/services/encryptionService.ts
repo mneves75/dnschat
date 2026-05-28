@@ -13,6 +13,7 @@ const ENCRYPTION_PREFIX = 'enc:v1:';
 let cachedKey: Uint8Array | null = null;
 let keyLoadInFlight: Promise<Uint8Array> | null = null;
 let cachedDecoder: TextDecoder | null = null;
+let warnedWebKeyPersisted = false;
 
 const isTestRuntime = () =>
   typeof process !== 'undefined' &&
@@ -60,6 +61,15 @@ const setWebStoredKey = (key: string): boolean => {
     const localStorage = globalThis.localStorage;
     if (!localStorage || typeof localStorage.setItem !== 'function') return false;
     localStorage.setItem(KEY_STORAGE_KEY, key);
+    if (!warnedWebKeyPersisted) {
+      warnedWebKeyPersisted = true;
+      // Web preview stores the key in same-origin browser storage, which is not a
+      // secure production at-rest boundary (see SECURITY.md / docs/data-inventory.md).
+      // Surface this at runtime so it is never silently treated as native SecureStore.
+      devWarn(
+        '[EncryptionService] Web preview persists the encryption key in browser storage; this is not a secure at-rest boundary.',
+      );
+    }
     return true;
   } catch (error) {
     devWarn('[EncryptionService] Failed to persist web fallback key storage', error);

@@ -61,6 +61,16 @@ const SettingsContext = createContext<SettingsContextValue | undefined>(
 );
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
+  const contextValue = useSettingsContextValue();
+
+  return (
+    <SettingsContext value={contextValue}>
+      {children}
+    </SettingsContext>
+  );
+}
+
+function useSettingsContextValue(): SettingsContextValue {
   const localizationLocales = Localization.getLocales();
   const defaultSystemLocale = resolveLocale(
     localizationLocales[0]?.languageTag ?? localizationLocales[0]?.languageCode,
@@ -369,11 +379,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     loading,
   };
 
-  return (
-    <SettingsContext value={contextValue}>
-      {children}
-    </SettingsContext>
-  );
+  return contextValue;
 }
 
 export function useSettings() {
