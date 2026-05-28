@@ -481,6 +481,21 @@ export const enUS = {
           systemDescription: "Currently {{language}}",
           optionDescription: "Set interface language to {{language}}",
         },
+        appearance: {
+          title: "Appearance",
+          description:
+            "Choose the app theme. System follows your device setting.",
+          summaryHint: "Summarized feature description",
+          themeLabel: "Theme",
+          themeHint: "Choose between system, light, or dark mode",
+          options: {
+            system: "Match device",
+            light: "Light",
+            dark: "Dark",
+          },
+          sheetTitle: "Choose theme",
+          sheetSubtitle: "Override the system appearance for DNS Chat only.",
+        },
       },
       actions: {
         resetButton: "Reset to Default",

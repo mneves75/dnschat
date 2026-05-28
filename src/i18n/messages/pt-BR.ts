@@ -481,6 +481,21 @@ export const ptBR = {
           systemDescription: "Atualmente {{language}}",
           optionDescription: "Definir interface para {{language}}",
         },
+        appearance: {
+          title: "Aparência",
+          description:
+            "Escolha o tema do app. A opção sistema segue a configuração do dispositivo.",
+          summaryHint: "Descrição resumida do recurso",
+          themeLabel: "Tema",
+          themeHint: "Escolha entre sistema, claro ou escuro",
+          options: {
+            system: "Seguir dispositivo",
+            light: "Claro",
+            dark: "Escuro",
+          },
+          sheetTitle: "Escolher tema",
+          sheetSubtitle: "Sobrescreve a aparência do sistema apenas no DNS Chat.",
+        },
       },
       actions: {
         resetButton: "Restaurar padrão",

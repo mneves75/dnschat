@@ -1,6 +1,6 @@
 import { useColorScheme } from "react-native";
 import type { ColorValue } from "react-native";
-import { useAccessibility } from "../../context/AccessibilityContext";
+import { useHighContrast } from "../../context/AccessibilityContext";
 import { systemColors } from "./platformColors";
 
 export interface IMessagePalette {
@@ -115,10 +115,12 @@ export const getImessagePalette = (
 
 export const useImessagePalette = () => {
   const colorScheme = useColorScheme();
-  const { isHighContrastEnabled } = useAccessibility();
+  // useHighContrast is provider-resilient: tests that mount components without
+  // AccessibilityProvider still get the standard palette.
+  const { isHighContrast } = useHighContrast();
   const isDark = colorScheme === "dark";
 
-  return getImessagePalette(isDark, { highContrast: isHighContrastEnabled });
+  return getImessagePalette(isDark, { highContrast: isHighContrast });
 };
 
 export const useNativeColors = () => {

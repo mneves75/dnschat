@@ -4,8 +4,8 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  useColorScheme,
 } from "react-native";
+import { useImessagePalette } from "../ui/theme/imessagePalette";
 import { devWarn } from "../utils/devLog";
 
 const FALLBACK_COPY = {
@@ -61,43 +61,26 @@ interface ErrorFallbackProps {
 }
 
 function ErrorFallback({ error, onRetry }: ErrorFallbackProps) {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
+  const palette = useImessagePalette();
 
   return (
     <View
-      style={[
-        styles.container,
-        isDark ? styles.darkContainer : styles.lightContainer,
-      ]}
+      style={[styles.container, { backgroundColor: palette.background }]}
     >
-      <Text
-        style={[styles.title, isDark ? styles.darkTitle : styles.lightTitle]}
-      >
+      <Text style={[styles.title, { color: palette.textPrimary }]}>
         {FALLBACK_COPY.title}
       </Text>
-      <Text
-        style={[
-          styles.message,
-          isDark ? styles.darkMessage : styles.lightMessage,
-        ]}
-      >
+      <Text style={[styles.message, { color: palette.textSecondary }]}>
         {error?.message || FALLBACK_COPY.unknownError}
       </Text>
       <TouchableOpacity
-        style={[
-          styles.retryButton,
-          isDark ? styles.darkRetryButton : styles.lightRetryButton,
-        ]}
+        style={[styles.retryButton, { backgroundColor: palette.userBubble }]}
         onPress={onRetry}
         accessibilityRole="button"
         accessibilityLabel={FALLBACK_COPY.reset}
       >
         <Text
-          style={[
-            styles.retryButtonText,
-            isDark ? styles.darkRetryButtonText : styles.lightRetryButtonText,
-          ]}
+          style={[styles.retryButtonText, { color: palette.bubbleTextOnBlue }]}
         >
           {FALLBACK_COPY.reset}
         </Text>
@@ -113,23 +96,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 32,
   },
-  lightContainer: {
-    backgroundColor: "#F8F9FA",
-  },
-  darkContainer: {
-    backgroundColor: "#111113",
-  },
   title: {
     fontSize: 24,
     fontWeight: "bold",
     marginBottom: 16,
     textAlign: "center",
-  },
-  lightTitle: {
-    color: "#1C1C1E",
-  },
-  darkTitle: {
-    color: "#F5F5F7",
   },
   message: {
     fontSize: 16,
@@ -137,31 +108,13 @@ const styles = StyleSheet.create({
     textAlign: "center",
     lineHeight: 22,
   },
-  lightMessage: {
-    color: "#8E8E93",
-  },
-  darkMessage: {
-    color: "#8E8E93",
-  },
   retryButton: {
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 24,
   },
-  lightRetryButton: {
-    backgroundColor: "#007AFF",
-  },
-  darkRetryButton: {
-    backgroundColor: "#007AFF",
-  },
   retryButtonText: {
     fontSize: 16,
     fontWeight: "600",
-  },
-  lightRetryButtonText: {
-    color: "#FFFFFF",
-  },
-  darkRetryButtonText: {
-    color: "#FFFFFF",
   },
 });

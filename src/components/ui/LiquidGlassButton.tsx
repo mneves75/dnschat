@@ -18,6 +18,7 @@ import { useTypography } from '../../ui/hooks/useTypography';
 import { useImessagePalette } from '../../ui/theme/imessagePalette';
 import { getMinimumTouchTarget, getCornerRadius } from '../../ui/theme/liquidGlassSpacing';
 import { SpringConfig, buttonPressScale } from '../../utils/animations';
+import { useMotionReduction } from '../../context/AccessibilityContext';
 import { HapticFeedback } from '../../utils/haptics';
 import { devWarn } from '../../utils/devLog';
 
@@ -88,6 +89,7 @@ export function LiquidGlassButton({
 }: LiquidGlassButtonProps) {
   const typography = useTypography();
   const palette = useImessagePalette();
+  const { shouldReduceMotion } = useMotionReduction();
   const [isPressed, setIsPressed] = useState(false);
   const isHandlingPressRef = React.useRef(false);
   const scale = useSharedValue(1);
@@ -104,7 +106,11 @@ export function LiquidGlassButton({
   const handlePressIn = () => {
     if (!isDisabled) {
       setIsPressed(true);
-      scale.value = withSpring(buttonPressScale, SpringConfig.bouncy);
+      if (shouldReduceMotion) {
+        scale.value = buttonPressScale;
+      } else {
+        scale.value = withSpring(buttonPressScale, SpringConfig.bouncy);
+      }
 
       // Haptic feedback
       if (!disableHaptics) {
@@ -116,6 +122,10 @@ export function LiquidGlassButton({
   // Handle press out
   const handlePressOut = () => {
     setIsPressed(false);
+    if (shouldReduceMotion) {
+      scale.value = 1;
+      return;
+    }
     scale.value = withSpring(1, SpringConfig.bouncy);
   };
 

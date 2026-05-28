@@ -73,6 +73,8 @@ export function GlassSettings() {
     preferredLocale,
     availableLocales,
     updateLocale,
+    themePreference,
+    updateThemePreference,
     loading,
   } = useSettings();
   const { loadChats } = useChat();
@@ -85,6 +87,40 @@ export function GlassSettings() {
   const dnsServerSheet = useGlassBottomSheet();
   const aboutSheet = useGlassBottomSheet();
   const supportSheet = useGlassBottomSheet();
+  const themeSheet = useGlassBottomSheet();
+
+  const themeOptions: { value: "system" | "light" | "dark"; title: string }[] = [
+    {
+      value: "system",
+      title: t("screen.settings.sections.appearance.options.system"),
+    },
+    {
+      value: "light",
+      title: t("screen.settings.sections.appearance.options.light"),
+    },
+    {
+      value: "dark",
+      title: t("screen.settings.sections.appearance.options.dark"),
+    },
+  ];
+  const currentThemeTitle =
+    themeOptions.find((option) => option.value === themePreference)?.title ??
+    themeOptions[0]?.title ??
+    t("screen.settings.sections.appearance.options.system");
+
+  const handleSelectTheme = async (
+    preference: "system" | "light" | "dark",
+  ) => {
+    try {
+      await updateThemePreference(preference);
+      themeSheet.hide();
+      if (Platform.OS === "ios") {
+        HapticFeedback.light();
+      }
+    } catch (error) {
+      devWarn("[GlassSettings] Failed to update theme preference", error);
+    }
+  };
 
   // DNS Service options - llm.pieter.com is now the default (ch.at is offline)
   const dnsServerOptions = [
@@ -426,6 +462,22 @@ export function GlassSettings() {
         </Form.Section>
 
         <Form.Section
+          title={t("screen.settings.sections.appearance.title")}
+          footer={t("screen.settings.sections.appearance.description")}
+        >
+          <Form.Item
+            testID="settings-theme"
+            title={t("screen.settings.sections.appearance.themeLabel")}
+            subtitle={currentThemeTitle}
+            onPress={themeSheet.show}
+            accessibilityHint={t(
+              "screen.settings.sections.appearance.themeHint",
+            )}
+            showChevron
+          />
+        </Form.Section>
+
+        <Form.Section
           title={t("screen.settings.sections.language.title")}
           footer={t("screen.settings.sections.language.description")}
         >
@@ -696,6 +748,61 @@ export function GlassSettings() {
                 </View>
                 {dnsServer === option.value && (
                   <Text style={[styles.selectedIndicator, { color: palette.userBubble }]}>•</Text>
+                )}
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </GlassBottomSheet>
+
+      {/* Theme Selection Bottom Sheet */}
+      <GlassBottomSheet
+        visible={themeSheet.visible}
+        onClose={themeSheet.hide}
+        title={t("screen.settings.sections.appearance.sheetTitle")}
+        subtitle={t("screen.settings.sections.appearance.sheetSubtitle")}
+        height={0.55}
+      >
+        <View style={styles.dnsOptionsContainer}>
+          {themeOptions.map((option) => (
+            <TouchableOpacity
+              testID={`settings-theme-option-${option.value}`}
+              key={option.value}
+              onPress={() => handleSelectTheme(option.value)}
+              accessibilityRole="button"
+              accessibilityLabel={option.title}
+              accessibilityState={{
+                selected: themePreference === option.value,
+              }}
+              activeOpacity={0.82}
+              style={[
+                styles.dnsOption,
+                { backgroundColor: palette.highlight },
+                themePreference === option.value && {
+                  backgroundColor: `${palette.userBubble}1A`,
+                },
+              ]}
+            >
+              <View style={styles.dnsOptionContent}>
+                <View style={styles.dnsOptionText}>
+                  <Text
+                    style={[
+                      styles.dnsOptionTitle,
+                      { color: palette.textPrimary },
+                    ]}
+                  >
+                    {option.title}
+                  </Text>
+                </View>
+                {themePreference === option.value && (
+                  <Text
+                    style={[
+                      styles.selectedIndicator,
+                      { color: palette.userBubble },
+                    ]}
+                  >
+                    •
+                  </Text>
                 )}
               </View>
             </TouchableOpacity>

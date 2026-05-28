@@ -8,6 +8,7 @@ import {
 import type { AccessibilityActionEvent } from "react-native";
 import type { Message } from "../types/chat";
 import { useTypography } from "../ui/hooks/useTypography";
+import { useResponsiveLayout } from "../ui/hooks/useResponsiveLayout";
 import { useImessagePalette } from "../ui/theme/imessagePalette";
 import { LiquidGlassSpacing, getCornerRadius } from "../ui/theme/liquidGlassSpacing";
 import { HapticFeedback } from "../utils/haptics";
@@ -38,6 +39,7 @@ function MessageBubbleComponent({ message }: MessageBubbleProps) {
   const isDark = colorScheme === "dark";
   const typography = useTypography();
   const palette = useImessagePalette();
+  const { messageMaxWidth } = useResponsiveLayout();
   const { t } = useTranslation();
   const { locale } = useSettings();
 
@@ -200,6 +202,7 @@ function MessageBubbleComponent({ message }: MessageBubbleProps) {
     <View
       style={[
         styles.container,
+        { maxWidth: messageMaxWidth },
         isUser ? styles.userContainer : styles.assistantContainer,
       ]}
     >
@@ -224,7 +227,7 @@ const styles = StyleSheet.create({
   container: {
     marginVertical: LiquidGlassSpacing.xxs,
     marginHorizontal: LiquidGlassSpacing.md,
-    maxWidth: "75%",
+    // maxWidth provided inline via useResponsiveLayout (75% phone / 60% tablet / 560 desktop)
   },
   userContainer: {
     alignSelf: "flex-end",

@@ -25,6 +25,10 @@ jest.mock("../src/context/AccessibilityContext", () => ({
     isReduceTransparencyEnabled: false,
     highContrastEnabled: false,
   }),
+  useHighContrast: () => ({ isHighContrast: false }),
+  useMotionReduction: () => ({ shouldReduceMotion: false, animationDuration: undefined }),
+  useScreenReader: () => ({ isEnabled: false, announce: () => undefined }),
+  useFontSize: () => ({ scale: 1.0 }),
 }));
 
 jest.mock("../src/components/glass", () => {

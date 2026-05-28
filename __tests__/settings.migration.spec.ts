@@ -6,7 +6,7 @@ import {
 } from '../src/context/settingsStorage';
 
 describe('SettingsContext migrateSettings', () => {
-  it('migrates legacy v1 payload (no version) to v3', () => {
+  it('migrates legacy v1 payload (no version) to current version', () => {
     const legacyPayload = {
       dnsServer: '8.8.8.8',
       enableMockDNS: true,
@@ -21,11 +21,12 @@ describe('SettingsContext migrateSettings', () => {
       allowExperimentalTransports: true,
       enableHaptics: true,
       preferredLocale: null,
+      themePreference: 'system',
       accessibility: DEFAULT_SETTINGS.accessibility,
     });
   });
 
-  it('migrates v2 payload to v4 (removes HTTPS fields, enables experimental transports, migrates ch.at)', () => {
+  it('migrates v2 payload to current version (removes HTTPS fields, enables experimental transports, migrates ch.at)', () => {
     const v2Payload = {
       version: 2,
       dnsServer: 'ch.at',
@@ -47,6 +48,7 @@ describe('SettingsContext migrateSettings', () => {
       allowExperimentalTransports: true,
       enableHaptics: true,
       preferredLocale: 'en-US',
+      themePreference: 'system',
       accessibility: DEFAULT_SETTINGS.accessibility,
     });
   });
@@ -89,6 +91,7 @@ describe('SettingsContext migrateSettings', () => {
       allowExperimentalTransports: false,
       enableHaptics: false,
       preferredLocale: 'pt-BR',
+      themePreference: 'system',
       accessibility: DEFAULT_SETTINGS.accessibility,
     });
   });
@@ -111,8 +114,29 @@ describe('SettingsContext migrateSettings', () => {
       allowExperimentalTransports: true,
       enableHaptics: true,
       preferredLocale: 'en-US',
+      themePreference: 'system',
       accessibility: DEFAULT_SETTINGS.accessibility,
     });
+  });
+
+  it('preserves themePreference for v4+ payloads and normalizes invalid values', () => {
+    const validPayload = {
+      version: 4,
+      dnsServer: 'llm.pieter.com',
+      enableMockDNS: false,
+      allowExperimentalTransports: true,
+      enableHaptics: true,
+      preferredLocale: null,
+      themePreference: 'dark',
+      accessibility: DEFAULT_SETTINGS.accessibility,
+    };
+    expect(migrateSettings(validPayload).themePreference).toBe('dark');
+
+    const invalidPayload = {
+      ...validPayload,
+      themePreference: 'bogus',
+    };
+    expect(migrateSettings(invalidPayload).themePreference).toBe('system');
   });
 
   it('falls back to default dnsServer when payload is not allowlisted', () => {

@@ -6,6 +6,50 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+## [4.0.18] - 2026-05-28
+
+### Added
+
+- User-facing theme picker in Settings (System / Light / Dark). Selection is
+  persisted alongside other preferences and applied globally via
+  `Appearance.setColorScheme` so palette, navigation, and system controls all
+  observe the override.
+- `useResponsiveLayout` hook driving message-bubble max-width and web tab icon
+  size so iPad/landscape and large desktop windows no longer leave chat bubbles
+  stretched or icons disproportionately small.
+- Accessibility-grouped `accessibilityRole="summary"` containers on onboarding
+  Feature cards and the Ready card so screen readers announce each item once
+  with full context instead of per-text-node.
+
+### Changed
+
+- Removed hard-coded hex colours from `ErrorBoundary`, `SkeletonMessage`,
+  `Toast`, and the web `NativeMenu` fallback. All four now resolve colours
+  through `useImessagePalette()` so dark mode and high-contrast preferences
+  apply consistently.
+- `useImessagePalette`, `useMotionReduction`, `useScreenReader`, `useFontSize`,
+  and `useHighContrast` now fall back to safe defaults when no
+  `AccessibilityProvider` is mounted (kept the explicit-throw contract only on
+  the top-level `useAccessibility` hook).
+- Honoured the reduce-motion preference on `ChatInput` send-button press,
+  height resets, opacity transitions, `LiquidGlassButton` press scale, and
+  `GlassBottomSheet` enter/exit timings.
+- Onboarding NetworkSetup loading and recommendation panels now announce via
+  `accessibilityLiveRegion` so the screen reader hears completion without
+  re-focus.
+
+### Migration
+
+- Settings schema bumped to `SETTINGS_VERSION = 5` with a new
+  `themePreference: 'system' | 'light' | 'dark'` field (default `system`).
+  Migrations from v1–v4 backfill the field and preserve existing values.
+
+### Verified
+
+- `bun run typecheck` passes.
+- Focused regression sets pass: i18n parity, settings migration, onboarding
+  accessibility, ChatInput behavior, and native menu fallback.
+
 ## [4.0.17] - 2026-05-28
 
 ### Changed

@@ -6,7 +6,6 @@ import {
   StyleSheet,
   Text,
   View,
-  useColorScheme,
 } from "react-native";
 import { MenuView } from "@expo/ui/community/menu";
 import type {
@@ -14,6 +13,7 @@ import type {
   MenuComponentProps,
   NativeActionEvent,
 } from "@expo/ui/community/menu";
+import { useImessagePalette } from "../../ui/theme/imessagePalette";
 import { useTranslation } from "../../i18n";
 
 export type NativeMenuAction = MenuAction;
@@ -87,8 +87,7 @@ function WebMenuFallback({
   testID,
 }: NativeMenuProps) {
   const { t } = useTranslation();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
+  const palette = useImessagePalette();
   const [visible, setVisible] = React.useState(false);
   const visibleActions = React.useMemo(
     () => actions.filter((action) => !action.attributes?.hidden),
@@ -136,7 +135,10 @@ function WebMenuFallback({
           <View
             style={[
               styles.menu,
-              isDark ? styles.darkMenu : styles.lightMenu,
+              {
+                backgroundColor: palette.solid,
+                borderColor: palette.border,
+              },
             ]}
           >
             {visibleActions.map((action) => (
@@ -155,8 +157,11 @@ function WebMenuFallback({
                 <Text
                   style={[
                     styles.menuItemText,
-                    isDark ? styles.darkMenuText : styles.lightMenuText,
-                    action.attributes?.destructive && styles.destructiveText,
+                    {
+                      color: action.attributes?.destructive
+                        ? palette.destructive
+                        : palette.textPrimary,
+                    },
                   ]}
                 >
                   {action.title}
@@ -184,14 +189,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: StyleSheet.hairlineWidth,
   },
-  lightMenu: {
-    backgroundColor: "#FFFFFF",
-    borderColor: "rgba(60, 60, 67, 0.18)",
-  },
-  darkMenu: {
-    backgroundColor: "#1C1C1E",
-    borderColor: "rgba(84, 84, 88, 0.6)",
-  },
   menuItem: {
     minHeight: 44,
     justifyContent: "center",
@@ -204,14 +201,5 @@ const styles = StyleSheet.create({
   menuItemText: {
     fontSize: 16,
     fontWeight: "400",
-  },
-  lightMenuText: {
-    color: "#111827",
-  },
-  darkMenuText: {
-    color: "#F9FAFB",
-  },
-  destructiveText: {
-    color: "#FF3B30",
   },
 });
