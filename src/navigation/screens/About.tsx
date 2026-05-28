@@ -11,8 +11,9 @@
 
 import React, { useState } from "react";
 import { useRouter } from "expo-router";
-import { View, Text, StyleSheet } from "react-native";
-import { Image } from "expo-image";
+// expo-image is intentionally avoided here because its native module was absent from release builds and caused a startup crash.
+// react-doctor-disable-next-line react-doctor/rn-prefer-expo-image
+import { Image, View, Text, StyleSheet } from "react-native";
 import Animated from "react-native-reanimated";
 import { Form } from "../../components/glass/GlassForm";
 import { useTranslation } from "../../i18n";
@@ -88,11 +89,11 @@ export function About() {
                   style={styles.logoImage}
                   resizeMode="contain"
                   onLoad={() => devLog("[About] icon loaded")}
-	                  onError={(error) => {
-	                    devLog(
-	                      "[About] Icon load error:",
-	                      String(error || "Unknown error"),
-	                    );
+                  onError={(error) => {
+                    devLog(
+                      "[About] Icon load error:",
+                      error.nativeEvent.error || "Unknown error",
+                    );
                     setIconError(true);
                   }}
                 />

@@ -197,6 +197,53 @@ describe("StorageService Corruption Handling", () => {
       expect(firstMessage.timestamp).toBeInstanceOf(Date);
     });
 
+    it("treats a null date as corruption instead of silently coercing to the 1970 epoch", async () => {
+      // Regression: new Date(null) returns a *valid* Date (epoch 0), which would
+      // silently corrupt timestamps and reorder the chat list rather than be caught.
+      const chatsWithNullDate = [
+        {
+          id: "chat-1",
+          title: "Test",
+          createdAt: null,
+          updatedAt: "2025-06-15T13:00:00.000Z",
+          messages: [],
+        },
+      ];
+      mockAsyncStorage.getItem.mockResolvedValue(
+        JSON.stringify(chatsWithNullDate),
+      );
+
+      await expect(
+        StorageService.loadChats({ recoverOnCorruption: false }),
+      ).rejects.toThrow(/Invalid date type for createdAt: null/);
+    });
+
+    it("treats an object-valued timestamp as corruption", async () => {
+      const chatsWithObjectDate = [
+        {
+          id: "chat-1",
+          title: "Test",
+          createdAt: "2025-06-15T12:00:00.000Z",
+          updatedAt: "2025-06-15T13:00:00.000Z",
+          messages: [
+            {
+              id: "msg-1",
+              content: "Hello",
+              role: "user",
+              timestamp: { spoofed: true },
+            },
+          ],
+        },
+      ];
+      mockAsyncStorage.getItem.mockResolvedValue(
+        JSON.stringify(chatsWithObjectDate),
+      );
+
+      await expect(
+        StorageService.loadChats({ recoverOnCorruption: false }),
+      ).rejects.toThrow(/Invalid date type for timestamp: object/);
+    });
+
     it("preserves error cause when recovery disabled", async () => {
       mockAsyncStorage.getItem.mockResolvedValue("{truncated json");
 

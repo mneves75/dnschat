@@ -36,6 +36,7 @@ import { DEFAULT_DNS_SERVER } from "../../context/settingsStorage";
 import { DNSLogService } from "../../services/dnsLogService";
 import { StorageService } from "../../services/storageService";
 import { useImessagePalette } from "../../ui/theme/imessagePalette";
+import { getMinimumTouchTarget } from "../../ui/theme/liquidGlassSpacing";
 import { useScreenEntrance } from "../../ui/hooks/useScreenEntrance";
 
 import {
@@ -81,6 +82,9 @@ export function GlassSettings() {
   const { t } = useTranslation();
   const { resetOnboarding } = useOnboarding();
   const palette = useImessagePalette();
+  // Honour platform minimum touch targets (44pt iOS / 48dp Android) instead of
+  // hardcoding 44, matching ChatInput/Chat/LiquidGlassButton.
+  const minimumTouchTarget = getMinimumTouchTarget();
   const { animatedStyle } = useScreenEntrance();
 
   // Bottom sheet states
@@ -529,7 +533,10 @@ export function GlassSettings() {
               }
               accessibilityHint={t("screen.settings.sections.transportTest.testHint")}
               accessibilityState={{ busy: testRunning }}
-              style={styles.transportTestButton}
+              style={[
+                styles.transportTestButton,
+                { minHeight: minimumTouchTarget, minWidth: minimumTouchTarget },
+              ]}
             >
               <Text style={{ color: palette.userBubble }}>
                 {testRunning
@@ -559,7 +566,10 @@ export function GlassSettings() {
                   accessibilityHint={t("screen.settings.sections.transportTest.forceHint", {
                     transport: transportLabelMap[transportKey],
                   })}
-                  style={styles.transportForceButton}
+                  style={[
+                    styles.transportForceButton,
+                    { minHeight: minimumTouchTarget, minWidth: minimumTouchTarget },
+                  ]}
                 >
                   <Text style={{ color: palette.userBubble }}>
                     {transportLabelMap[transportKey]}
@@ -904,15 +914,11 @@ const styles = StyleSheet.create({
     fontWeight: "400",
   },
   transportTestButton: {
-    minHeight: 44,
-    minWidth: 44,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 12,
   },
   transportForceButton: {
-    minHeight: 44,
-    minWidth: 44,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 8,
