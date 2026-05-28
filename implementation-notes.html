@@ -42,7 +42,7 @@
   <p><strong>Stop condition:</strong> no known critical/high issues remain; medium findings are either fixed or explicitly justified; strongest local checks have fresh outcomes; browser/runtime evidence is captured for user-visible frontend changes when feasible.</p>
 
   <hr />
-  <h2>Review Pass &mdash; 2026-05-28 (v4.0.18, build 50)</h2>
+  <h2>Review Pass &mdash; 2026-05-28 (v4.0.18, build 51)</h2>
   <p>
     Five-dimension adversarial review (UI/UX, correctness/architecture, security/privacy, performance,
     tests/deps/docs) via 28 review + verification agents. The codebase is mature and previously hardened:
@@ -81,7 +81,7 @@
   <h3>Decisions &amp; tradeoffs (this pass)</h3>
   <ul>
     <li><strong>No new dependencies.</strong> All fixes reuse existing utilities (<code>getMinimumTouchTarget</code>, <code>devWarn</code>, <code>StorageCorruptionError</code>).</li>
-    <li><strong>Version:</strong> build was already 49&rarr;50 in the worktree and never archived/uploaded, so the source fixes belong to the existing unbuilt build 50. Re-bumping to 51 would waste an unbuilt number. <code>sync-versions --dry-run</code> confirms synchronization at 4.0.18 / build 50.</li>
+    <li><strong>Version:</strong> preflight against App Store Connect showed build 50 was <em>already uploaded and VALID</em> (it contained the pre-hardening source), so it could not be reused. Per the release protocol, bumped to build 51 (<code>sync-versions --bump-build</code>) so the TestFlight binary matches the committed post-hardening source. Marketing version stays 4.0.18.</li>
     <li><strong>Web key confidentiality vs live XSS</strong> intentionally unchanged: warning surfaces the boundary but does not enforce it &mdash; acceptable for a preview-only surface.</li>
   </ul>
 
@@ -94,10 +94,18 @@
     <li>Independent <code>code-reviewer</code> subagent &mdash; APPROVE, 0 crit/high/med.</li>
   </ul>
 
+  <h3>TestFlight deploy (build 51)</h3>
+  <ul>
+    <li>Signing mismatch resolved: the previously referenced App Store profile embedded the legacy <em>iPhone Distribution</em> cert, but the keychain carries <em>Apple Distribution</em>. Downloaded and installed the ASC profile bound to the current Apple Distribution cert via <code>asc profiles download</code>, then archived with it.</li>
+    <li>Build 50 was already uploaded and VALID on App Store Connect (pre-hardening source), so bumped to build 51 and archived from the committed post-hardening source.</li>
+    <li>Evidence chain: signed archive succeeded &rarr; IPA export succeeded &rarr; <code>asc publish testflight --wait</code> returned <code>processingState: VALID</code> &rarr; bilingual "What to Test" notes set (en-US + pt-BR) &rarr; <code>asc validate testflight --strict</code> = 0 errors / 0 warnings / 0 blocking (exit 0). Distributed to the internal tester group.</li>
+    <li>App Store version validation is N/A: no App Store version 4.0.18 record exists (TestFlight-only release, not an App Store submission).</li>
+  </ul>
+
   <h3>Open questions / residual risks (this pass)</h3>
   <ul>
-    <li>iOS/Android native build and AXe E2E not run (no signing credentials / simulator automation this pass). Changes are JS/TS + docs only with no native module, DNS constant, or routing changes, so native rebuild risk is low. Release evidence (signed archive, TestFlight upload, <code>asc validate</code>) remains a separate credential-gated step.</li>
-    <li>Highest evidence-backed confidence, not absolute: covered by unit/integration tests, typecheck, lint, secret scan, and independent review; no device runtime smoke this pass.</li>
+    <li>AXe E2E simulator feature pass not run this session (no simulator automation invoked). Changes are JS/TS + docs only with no native module, DNS constant, or routing changes; the signed device binary built and processed cleanly through App Store Connect.</li>
+    <li>Highest evidence-backed confidence, not absolute: covered by unit/integration tests, typecheck, lint, secret scan, independent review, and a VALID signed TestFlight build; no on-device interactive smoke of the touch-target/theme changes this pass.</li>
   </ul>
   <hr />
 
