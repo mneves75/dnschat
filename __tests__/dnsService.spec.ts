@@ -524,6 +524,19 @@ describe("DNS Service helpers", () => {
       expect(serializedEntries).toContain("sha256:");
       expect(serializedEntries).not.toContain("secret-prompt.llm.pieter.com");
     });
+
+    it("returns a successful DNS response when final query logging fails", async () => {
+      jest.spyOn(DNSLogService, "endQuery").mockRejectedValueOnce(
+        new Error("log persistence failed"),
+      );
+      jest
+        .spyOn(dnsServiceInternals, "queryWithServer")
+        .mockResolvedValueOnce({ response: "ok", method: "udp" });
+
+      await expect(
+        DNSService.queryLLM("logging failure", "llm.pieter.com", true, true),
+      ).resolves.toBe("ok");
+    });
   });
 
   describe("transport logging", () => {

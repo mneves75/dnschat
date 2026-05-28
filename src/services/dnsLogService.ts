@@ -453,15 +453,26 @@ export class DNSLogService {
   }
 
   static async clearLogs() {
-    const changed = await this.enqueuePersistentMutation(
-      () => {
-        const hasLogs = this.queryLogs.length > 0 || this.activeQueryLogs.size > 0;
+    const run = this.persistenceQueue.then(async () => {
+      await Promise.all([
+        AsyncStorage.removeItem(STORAGE_KEY),
+        AsyncStorage.removeItem(LOGS_BACKUP_KEY),
+      ]);
+
+      const changed = this.queryLogs.length > 0 || this.activeQueryLogs.size > 0;
         this.queryLogs = [];
         this.activeQueryLogs.clear();
-        return hasLogs;
+      return changed;
+    });
+
+    this.persistenceQueue = run.then(
+      () => undefined,
+      (error) => {
+        devWarn("[DNSLogService] Failed to clear DNS logs", error);
       },
-      () => AsyncStorage.removeItem(STORAGE_KEY),
     );
+
+    const changed = await run;
     if (changed) {
       this.notifyListeners();
     }
@@ -533,20 +544,18 @@ export class DNSLogService {
   ): Promise<boolean> {
     let changed = false;
 
-    const run = this.persistenceQueue
-      .then(async () => {
-        changed = await mutate();
-        if (!changed) {
-          return;
-        }
-        await persist();
-      })
-      .catch((error) => {
-        devWarn("[DNSLogService] Failed to persist DNS logs", error);
-      });
+    const run = this.persistenceQueue.then(async () => {
+      changed = await mutate();
+      if (!changed) {
+        return;
+      }
+      await persist();
+    });
 
-    this.persistenceQueue = run;
-    await run;
+    this.persistenceQueue = run.catch((error) => {
+      devWarn("[DNSLogService] Failed to persist DNS logs", error);
+    });
+    await this.persistenceQueue;
     return changed;
   }
 

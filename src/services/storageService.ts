@@ -541,7 +541,10 @@ export class StorageService {
     // if clear happens while another operation is in progress
     return this.queueOperation(async () => {
       try {
-        await AsyncStorage.removeItem(CHATS_KEY);
+        await Promise.all([
+          AsyncStorage.removeItem(CHATS_KEY),
+          AsyncStorage.removeItem(CHAT_BACKUP_KEY),
+        ]);
       } catch (error) {
         devWarn("[StorageService] Error clearing chats", error);
         throw error;

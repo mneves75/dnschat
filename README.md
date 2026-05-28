@@ -1,13 +1,13 @@
 # DNSChat
 
-DNSChat is a React Native (Expo dev-client) app that sends short chat prompts as
+DNSChat is a React Native Expo app that sends short chat prompts as
 DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 
 - A native DNS TXT resolver module for iOS/Android (`modules/dns-native/`)
 - JavaScript fallback transports (UDP/TCP) for constrained networks
 - An in-app Logs screen to inspect attempts, failures, and fallbacks
 
-[![Version](https://img.shields.io/badge/version-4.0.16-blue.svg)](.)
+[![Version](https://img.shields.io/badge/version-4.0.17-blue.svg)](.)
 [![React Native](https://img.shields.io/badge/React%20Native-0.85.3-blue.svg)](https://reactnative.dev/)
 [![Expo](https://img.shields.io/badge/Expo-56.0.5-black.svg)](https://expo.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0.x-blue.svg)](https://www.typescriptlang.org/)
@@ -31,8 +31,8 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 
 ## Tech stack
 
-- App version: `4.0.16` (build `47`)
-- Expo workflow: Expo Router + dev-client + EAS-compatible native config
+- App version: `4.0.17` (build `48`)
+- Expo workflow: Expo Router + EAS-compatible native config
 - Expo SDK: `56.0.5`
 - React: `19.2.3`
 - React Native: `0.85.3`
@@ -91,7 +91,7 @@ bun install
 Run:
 
 ```bash
-# Dev server (Expo dev-client)
+# Dev server
 bun run start
 
 # iOS
@@ -107,7 +107,7 @@ bun run web
 Notes:
 
 - iOS simulator builds work out of the box; device builds require you to pick your own signing team in Xcode (the repo keeps `DEVELOPMENT_TEAM` empty).
-- For a full physical-device Expo dev-client install, build the native `DNSChat`
+- For a full physical-device install, build the native `DNSChat`
   target for the device identifier and install the compiled `.app`; Expo Go is
   not a valid substitute for this repo because the app depends on native DNS
   modules. Keep device names, local paths, and signing identifiers out of public
@@ -210,7 +210,7 @@ Last architecture/dependency verification: `2026-05-27`.
 Last full source/security sweep: `2026-05-27`.
 Last AXe simulator E2E feature pass: `2026-05-17` for version `4.0.13` build
 `43`.
-Current iOS/TestFlight release target: version `4.0.16` build `47`.
+Current iOS/TestFlight release target: version `4.0.17` build `48`.
 
 - `npx react-doctor@latest` reports `100 / 100` for both `chat-dns` and
   `@dnschat/dns-native` on `2026-05-27`.
@@ -229,8 +229,8 @@ Current iOS/TestFlight release target: version `4.0.16` build `47`.
 - `xcodebuild clean build` and `xcodebuild clean archive` pass for generic iOS
   Release when code signing is disabled (`CODE_SIGNING_ALLOWED=NO`) on
   `2026-05-24`.
-- Physical-device compiled Expo dev-client install passed.
-- Current signed TestFlight target: `4.0.16` build `47`. The release lane uses
+- Physical-device compiled app install passed.
+- Current signed TestFlight target: `4.0.17` build `48`. The release lane uses
   a signed App Store archive/export and App Store Connect processing before the
   build is described as distributed. Internal App Store Connect IDs are
   intentionally omitted from public docs.

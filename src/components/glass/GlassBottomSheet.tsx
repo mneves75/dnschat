@@ -1,27 +1,46 @@
 /**
- * GlassBottomSheet - native Expo UI bottom sheet facade.
+ * GlassBottomSheet - React Native modal sheet.
  *
- * The public API stays stable for DNSChat screens, while modal presentation,
- * drag dismissal, scrim behavior, and platform sheet chrome are delegated to
- * Expo UI's SwiftUI / Jetpack Compose bottom sheet implementation.
+ * Keep this implementation independent of native Expo UI adapters. The iOS
+ * TestFlight startup crash for build 47 occurred in a React Native fatal path
+ * after the Expo UI bottom-sheet migration, and hidden per-row native sheets
+ * made that startup surface too broad for production.
  */
 
 import React from "react";
 import {
+  // react-doctor-disable-next-line react-doctor/rn-prefer-reanimated
+  Animated,
+  Modal,
+  Platform,
   StyleSheet,
   Text,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   View,
   useColorScheme,
+  useWindowDimensions,
 } from "react-native";
-import type { NativeBottomSheetProps } from "../platform/NativeBottomSheet";
-import { NativeBottomSheet } from "../platform/NativeBottomSheet";
+import type { StyleProp, ViewStyle } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTranslation } from "../../i18n";
+import { LiquidGlassWrapper } from "../LiquidGlassWrapper";
 
-interface GlassBottomSheetProps extends NativeBottomSheetProps {
-  /** Retained for source compatibility; native sheet opacity is platform-owned. */
+interface GlassBottomSheetProps {
+  visible: boolean;
+  onClose: () => void;
+  children: React.ReactNode;
+  title?: string;
+  subtitle?: string;
+  style?: StyleProp<ViewStyle>;
+  height?: number;
+  dragToDismiss?: boolean;
+  disableBackdropDismiss?: boolean;
   backdropOpacity?: number;
-  /** Retained for source compatibility; native sheet animation is platform-owned. */
   animationDuration?: number;
+  showCloseButton?: boolean;
+  headerContent?: React.ReactNode;
+  testID?: string;
 }
 
 interface GlassSheetAction {
@@ -41,10 +60,176 @@ interface GlassActionSheetProps
 }
 
 export const GlassBottomSheet: React.FC<GlassBottomSheetProps> = ({
-  backdropOpacity: _backdropOpacity,
-  animationDuration: _animationDuration,
-  ...props
-}) => <NativeBottomSheet {...props} />;
+  visible,
+  onClose,
+  children,
+  title,
+  subtitle,
+  style,
+  height = 0.6,
+  dragToDismiss = true,
+  disableBackdropDismiss = false,
+  backdropOpacity = 1,
+  animationDuration = 300,
+  showCloseButton = true,
+  headerContent,
+  testID,
+}) => {
+  const colors = useGlassSheetColors();
+  const insets = useSafeAreaInsets();
+  const { height: screenHeight } = useWindowDimensions();
+  const { t } = useTranslation();
+  const translateY = React.useRef(new Animated.Value(1000)).current;
+  const animatedBackdropOpacity = React.useRef(new Animated.Value(0)).current;
+  const scale = React.useRef(new Animated.Value(0.96)).current;
+  const useNativeDriver = Platform.OS !== "web";
+
+  React.useEffect(() => {
+    Animated.parallel([
+      Animated.timing(translateY, {
+        toValue: visible ? 0 : 1000,
+        duration: animationDuration,
+        useNativeDriver,
+      }),
+      Animated.timing(animatedBackdropOpacity, {
+        toValue: visible ? 1 : 0,
+        duration: animationDuration,
+        useNativeDriver,
+      }),
+      Animated.timing(scale, {
+        toValue: visible ? 1 : 0.96,
+        duration: animationDuration,
+        useNativeDriver,
+      }),
+    ]).start();
+  }, [
+    animatedBackdropOpacity,
+    animationDuration,
+    scale,
+    translateY,
+    useNativeDriver,
+    visible,
+  ]);
+
+  const handleBackdropPress = () => {
+    if (!disableBackdropDismiss) {
+      onClose();
+    }
+  };
+
+  const sheetHeight = screenHeight * Math.max(0.1, Math.min(1, height));
+  const backdropStyle = {
+    opacity: Animated.multiply(animatedBackdropOpacity, backdropOpacity),
+    backgroundColor: colors.backdrop,
+  };
+
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="none"
+      statusBarTranslucent
+      onRequestClose={onClose}
+      accessibilityViewIsModal
+    >
+      <TouchableWithoutFeedback onPress={handleBackdropPress}>
+        <Animated.View
+          style={[styles.backdrop, backdropStyle]}
+          accessible={false}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+        />
+      </TouchableWithoutFeedback>
+
+      <Animated.View
+        style={[
+          styles.sheetContainer,
+          {
+            backgroundColor: colors.sheetBackground,
+            borderTopColor: colors.sheetBorder,
+            height: sheetHeight + insets.bottom,
+            transform: [{ translateY }, { scale }],
+          },
+          style,
+        ]}
+      >
+        <LiquidGlassWrapper
+          variant="prominent"
+          shape="roundedRect"
+          cornerRadius={16}
+          enableContainer
+          style={styles.sheetContent}
+        >
+          {dragToDismiss && (
+            <View style={styles.handleContainer} accessible={false}>
+              <View style={[styles.handle, { backgroundColor: colors.handle }]} />
+            </View>
+          )}
+
+          {Boolean(title || subtitle || showCloseButton || headerContent) && (
+            <View
+              style={[
+                styles.header,
+                { borderBottomColor: colors.separator },
+              ]}
+            >
+              {headerContent || (
+                <>
+                  <View style={styles.headerText}>
+                    {Boolean(title) && (
+                      <Text
+                        style={[styles.title, { color: colors.textPrimary }]}
+                      >
+                        {title}
+                      </Text>
+                    )}
+                    {Boolean(subtitle) && (
+                      <Text
+                        style={[
+                          styles.subtitle,
+                          { color: colors.textSecondary },
+                        ]}
+                      >
+                        {subtitle}
+                      </Text>
+                    )}
+                  </View>
+
+                  {showCloseButton && (
+                    <TouchableOpacity
+                      style={[
+                        styles.closeButton,
+                        { backgroundColor: colors.closeButtonBackground },
+                      ]}
+                      onPress={onClose}
+                      accessibilityRole="button"
+                      accessibilityLabel={t("common.close")}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    >
+                      <Text
+                        style={[
+                          styles.closeButtonText,
+                          { color: colors.actionDefault },
+                        ]}
+                      >
+                        X
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </>
+              )}
+            </View>
+          )}
+
+          <View testID={testID} style={styles.content}>
+            {children}
+          </View>
+          <View style={{ height: insets.bottom }} />
+        </LiquidGlassWrapper>
+      </Animated.View>
+    </Modal>
+  );
+};
 
 export const GlassActionSheet: React.FC<GlassActionSheetProps> = ({
   actions,
@@ -132,27 +317,103 @@ export const useGlassBottomSheet = () => {
 };
 
 function useGlassSheetColors() {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
+  const isDark = useColorScheme() === "dark";
 
   return {
+    backdrop: isDark ? "rgba(0, 0, 0, 0.6)" : "rgba(0, 0, 0, 0.4)",
+    sheetBackground: isDark ? "rgba(28, 28, 30, 0.95)" : "rgba(255, 255, 255, 0.95)",
+    sheetBorder: isDark ? "rgba(84, 84, 88, 0.4)" : "rgba(198, 198, 200, 0.3)",
+    handle: isDark ? "rgba(255, 255, 255, 0.3)" : "rgba(0, 0, 0, 0.2)",
+    textPrimary: isDark ? "#F9FAFB" : "#111827",
     textSecondary: isDark ? "#AEAEB2" : "#6D6D70",
     actionDefault: "#007AFF",
     actionDestructive: isDark ? "#FF453A" : "#FF3B30",
     actionDisabled: "#8E8E93",
     separator: isDark ? "rgba(84, 84, 88, 0.6)" : "rgba(60, 60, 67, 0.15)",
+    closeButtonBackground:
+      Platform.OS === "ios"
+        ? isDark
+          ? "rgba(118, 118, 128, 0.24)"
+          : "rgba(118, 118, 128, 0.12)"
+        : "transparent",
   };
 }
 
 export type { GlassBottomSheetProps, GlassSheetAction, GlassActionSheetProps };
 
 const styles = StyleSheet.create({
+  backdrop: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+  },
+  sheetContainer: {
+    position: "absolute",
+    right: 0,
+    bottom: 0,
+    left: 0,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    overflow: "hidden",
+  },
+  sheetContent: {
+    flex: 1,
+    backgroundColor: "transparent",
+  },
+  handleContainer: {
+    paddingVertical: 8,
+    alignItems: "center",
+  },
+  handle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  headerText: {
+    flex: 1,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: "600",
+    letterSpacing: 0,
+  },
+  subtitle: {
+    fontSize: 16,
+    fontWeight: "400",
+    letterSpacing: 0,
+    marginTop: 4,
+  },
+  closeButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  closeButtonText: {
+    fontSize: 18,
+    fontWeight: "400",
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 20,
+  },
   actionsContainer: {
     paddingVertical: 8,
   },
   actionItem: {
-    paddingVertical: 16,
     paddingHorizontal: 20,
+    paddingVertical: 16,
   },
   actionDisabled: {
     opacity: 0.5,
@@ -162,8 +423,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   actionIcon: {
-    marginRight: 12,
     width: 24,
+    marginRight: 12,
     alignItems: "center",
   },
   actionText: {

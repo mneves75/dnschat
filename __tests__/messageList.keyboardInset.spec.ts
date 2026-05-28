@@ -6,6 +6,8 @@ describe("MessageList keyboard inset behavior", () => {
     const sourcePath = path.resolve(__dirname, "../src/components/MessageList.tsx");
     const source = fs.readFileSync(sourcePath, "utf8");
 
-    expect(source).toContain("[messages.length, lastMessageKey, bottomInset]");
+    expect(source).toContain("[messages.length, lastMessageKey, bottomInset, lastMessage?.role]");
+    expect(source).toContain("isNearBottomRef");
+    expect(source).toContain("messageWasAdded");
   });
 });

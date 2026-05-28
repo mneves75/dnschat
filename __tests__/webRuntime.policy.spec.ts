@@ -32,13 +32,23 @@ describe("web runtime policy", () => {
     expect(source).not.toContain('pointerEvents={canSend ? "auto" : "none"}');
   });
 
-  it("does not keep custom animated glass sheet presentation after the Expo UI migration", () => {
+  it("does not import native Expo UI bottom sheets on the startup settings path", () => {
     const source = readSource("src/components/glass/GlassBottomSheet.tsx");
 
-    expect(source).toContain("NativeBottomSheet");
-    expect(source).not.toContain("Animated.timing");
+    expect(source).toContain("Modal");
+    expect(source).not.toContain("NativeBottomSheet");
+    expect(source).not.toContain("@expo/ui/community/bottom-sheet");
     expect(source).not.toContain("PanGestureHandler");
-    expect(source).not.toContain("useNativeDriver");
+  });
+
+  it("constrains form and chat content width on desktop web", () => {
+    const formSource = readSource("src/components/glass/GlassForm.tsx");
+    const chatSource = readSource("src/navigation/screens/Chat.tsx");
+
+    expect(formSource).toContain("webContentWidth");
+    expect(formSource).toContain("maxWidth: 860");
+    expect(chatSource).toContain("webContent");
+    expect(chatSource).toContain("maxWidth: 860");
   });
 
   it("does not render empty string guards as raw View text on onboarding web", () => {

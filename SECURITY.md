@@ -29,10 +29,10 @@ Please do not open public issues for security vulnerabilities.
 
 ## Current Security Baseline
 
-Last full source/security sweep: `2026-05-24`.
-Last iOS signed release archive/export: `2026-05-24`.
+Last full source/security sweep: `2026-05-28`.
+Last iOS signed release archive/export: pending for `4.0.17` build `48`.
 
-- Dependency audits pass on `2026-05-24` (`bun audit` reports
+- Dependency audits pass on `2026-05-28` (`bun audit` reports
   `No vulnerabilities found`).
 - Secret scanning passes with `gitleaks detect --source . --redact --no-banner --config .gitleaks.toml`.
 - Public-repo leak prevention uses defense in depth: local `gitleaks`,
@@ -40,15 +40,15 @@ Last iOS signed release archive/export: `2026-05-24`.
   and push protection when available.
 - Xcode Debug simulator build, unsigned generic iOS Release build/archive,
   physical-device compiled-app install, signed App Store archive/export, and
-  TestFlight upload are part of the release gate; the latest signed TestFlight
-  target is `4.0.15` build `45`.
-- The TestFlight build is `VALID`, encryption is `exempt`, and
-  `asc validate testflight` reports `0` errors and `0` warnings. App Store
-  version validation is not applicable until a matching App Store version
-  record exists in App Store Connect; App Privacy publish-state still requires
-  browser confirmation because the public API cannot verify it. Internal App
-  Store Connect IDs, tester group names, device names, local paths, and signing
-  identifiers are intentionally omitted from public docs.
+  TestFlight upload are part of the release gate; the current signed TestFlight
+  target is `4.0.17` build `48`.
+- TestFlight validation must report `0` errors and `0` warnings before a build
+  is described as distributed. App Store version validation is not applicable
+  until a matching App Store version record exists in App Store Connect; App
+  Privacy publish-state still requires browser confirmation because the public
+  API cannot verify it. Internal App Store Connect IDs, tester group names,
+  device names, local paths, and signing identifiers are intentionally omitted
+  from public docs.
 - Local chat history is encrypted at rest with AES-GCM. Native builds store key
   material in SecureStore; Web preview uses same-origin browser storage for the
   local-only preview key because SecureStore is not available in browsers, so

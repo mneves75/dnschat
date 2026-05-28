@@ -118,7 +118,7 @@ Latest public release target (`2026-05-27`, Xcode `26.5` / `17F42`, SDK 56.0.5 b
   `verify:android` (critical checks), `verify:android-16kb` (skipped without
   native artifacts), `lint`, `bun run test`.
 - App Jest suite: 101 of 102 suites passed (1 skipped), 844 passed, 13 skipped
-  for version `4.0.16` build `47`.
+  for version `4.0.17` build `48`.
 - `modules/dns-native` Jest suite: 7 of 8 suites passed (1 skipped), 56
   passed, 13 skipped.
 - `gitleaks detect --source . --redact --no-banner --config .gitleaks.toml`
@@ -126,13 +126,13 @@ Latest public release target (`2026-05-27`, Xcode `26.5` / `17F42`, SDK 56.0.5 b
 - `xcodebuild clean build` Debug iPhone 17 simulator: `BUILD SUCCEEDED`.
 - `xcodebuild clean build` and `xcodebuild clean archive` generic iOS Release
   with `CODE_SIGNING_ALLOWED=NO` both succeeded for the prior release lane; the
-  current release target is `4.0.16` build `47`.
+  current release target is `4.0.17` build `48`.
 - `bun audit` reports `No vulnerabilities found`.
 - Physical-device Release install completed for `4.0.15` build `45`. A
   `devicectl` relaunch can still be denied by iOS when the phone is locked; that
   is tracked separately from install proof.
 - Current signed App Store archive/export and TestFlight upload target is
-  `4.0.16` build `47`; exact App Store Connect identifiers remain private.
+  `4.0.17` build `48`; exact App Store Connect identifiers remain private.
 - Internal App Store Connect IDs, tester group names, device names, device identifiers, local paths, team IDs, profile names, and certificate IDs are intentionally omitted from public docs.
 
 Earlier 4.0.14 baseline evidence (`2026-05-22`, Xcode `26.5` / `17F42`, SDK 56 baseline):
@@ -155,7 +155,7 @@ Prior signed-release evidence (`2026-05-17`, Xcode `26.5` / `17F42`):
   build `43`.
 - Generic iOS Release build passed unsigned.
 - Generic iOS Release archive passed unsigned.
-- Physical-device compiled Expo dev-client install passed for version `4.0.8` build `36`.
+- Physical-device compiled app install passed for version `4.0.8` build `36`.
 - Signed App Store archive passed for version `4.0.13` build `43`.
 - Signed IPA export passed for version `4.0.13` build `43`.
 - App Store Connect metadata was applied for `en-US` and `pt-BR` release fields.
@@ -245,7 +245,7 @@ bun run ios -- --verbose
 - **App Store Connect** app record created
 - **Code signing** configured correctly
 - **Bundle ID** matches (`<BUNDLE_ID>`)
-- **Version numbers** consistent (v4.0.16 build 47)
+- **Version numbers** consistent (v4.0.17 build 48)
 - **Native DNS module** compiles successfully
 - **Xcode CLI smoke** passed:
   - Debug simulator build
@@ -273,9 +273,9 @@ eas build --platform ios --profile production
 
 ### TestFlight distribution
 
-Current v4.0.16 distribution target:
+Current v4.0.17 distribution target:
 
-- Version/build: `4.0.16` / `47`
+- Version/build: `4.0.17` / `48`
 - Processing state and TestFlight validation must be confirmed after the signed
   IPA upload for this build.
 - Tester groups: configured in App Store Connect; internal group names are intentionally omitted from public docs.
@@ -288,17 +288,18 @@ After upload:
 3. **Feedback**: Collect user feedback through TestFlight
 4. **Iterate**: Upload new builds for continuous testing
 
-### What to Test for v4.0.16 build 47
+### What to Test for v4.0.17 build 48
 
 - Complete onboarding from a fresh install and confirm the app lands on the chat list.
-- Open native menu and bottom-sheet actions from chat, logs, messages, and
-  settings; confirm they remain accessible and fall back cleanly where native UI
-  is unavailable.
+- Open native menu actions and React Native modal sheet actions from chat, logs,
+  messages, and settings; confirm they remain accessible and dismiss cleanly.
+- Open a stale chat deep link and confirm the conversation-not-found state
+  appears instead of a blank chat.
 - Send short prompts through the default DNS service and confirm responses render.
 - Confirm DNS failures, invalid settings, and unsupported server choices fail
   closed without exposing prompt text or TXT responses.
-- Type in a long chat thread and confirm the final message remains visible above
-  the composer as the keyboard/input inset changes.
+- Type in a long chat thread and confirm new messages follow the bottom while
+  manual scrollback is not forced down by background updates.
 - Open onboarding/help, Settings, and About external links and confirm allowed
   `https:` and `mailto:` destinations open normally.
 - Confirm Logs show resolver attempts and failures without exposing prompt text or TXT responses.
@@ -327,4 +328,4 @@ If you encounter issues during the upload process:
 
 ---
 
-_TestFlight upload guide for DNSChat v4.0.16 build 47 - Last updated: 2026-05-27_
+_TestFlight upload guide for DNSChat v4.0.17 build 48 - Last updated: 2026-05-28_

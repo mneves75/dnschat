@@ -11,8 +11,8 @@ function listTrackedFiles() {
     .filter((path) => existsSync(path));
 }
 
-function isPublicMarkdown(path) {
-  return path.endsWith(".md");
+function isPublicDoc(path) {
+  return path.endsWith(".md") || path.endsWith(".html");
 }
 
 function isUserFacingSource(path) {
@@ -25,7 +25,7 @@ function isUserFacingSource(path) {
 }
 
 function isScannable(path) {
-  return isPublicMarkdown(path) || isUserFacingSource(path) || path.startsWith(".github/");
+  return isPublicDoc(path) || isUserFacingSource(path) || path.startsWith(".github/");
 }
 
 const rules = [
@@ -38,25 +38,25 @@ const rules = [
     id: "app-store-connect-uuid",
     description: "Internal App Store Connect UUIDs belong in private release notes.",
     pattern: /\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi,
-    markdownOnly: true,
+    publicDocOnly: true,
   },
   {
     id: "apple-team-profile-id",
     description: "Concrete Apple team/profile/certificate IDs must be placeholders in public docs.",
     pattern: /\b(?=[A-Z0-9]*\d)(?=[A-Z0-9]*[A-Z])[A-Z0-9]{10}\b/g,
-    markdownOnly: true,
+    publicDocOnly: true,
   },
   {
     id: "apple-device-identifier",
     description: "Concrete Apple device identifiers must be placeholders in public docs.",
     pattern: /\b[0-9A-F]{8}-[0-9A-F]{16}\b/g,
-    markdownOnly: true,
+    publicDocOnly: true,
   },
   {
     id: "concrete-testflight-group",
     description: "Private TestFlight group names must be placeholders in public docs.",
     pattern: /(--group\s+(?!<GROUPS>)[^\s]+|Groups?:\s+`[^<][^`]+`)/gi,
-    markdownOnly: true,
+    publicDocOnly: true,
   },
   {
     id: "personal-device-name-pattern",
@@ -76,7 +76,7 @@ for (const path of listTrackedFiles().filter(isScannable)) {
   const body = readFileSync(path, "utf8");
 
   for (const rule of rules) {
-    if (rule.markdownOnly && !isPublicMarkdown(path)) continue;
+    if (rule.publicDocOnly && !isPublicDoc(path)) continue;
 
     const matches = [...body.matchAll(rule.pattern)];
     for (const match of matches) {

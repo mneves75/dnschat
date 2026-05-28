@@ -6,22 +6,21 @@ const readSource = (relativePath: string) =>
 
 describe("glass modal accessibility policy", () => {
   const bottomSheetSource = readSource("src/components/glass/GlassBottomSheet.tsx");
-  const nativeBottomSheetSource = readSource("src/components/platform/NativeBottomSheet.tsx");
 
   it("treats native bottom sheets as modal accessibility scopes", () => {
-    expect(nativeBottomSheetSource).toContain("accessibilityViewIsModal");
+    expect(bottomSheetSource).toContain("accessibilityViewIsModal");
   });
 
-  it("delegates backdrop and drag behavior to Expo UI instead of a custom modal layer", () => {
-    expect(nativeBottomSheetSource).toContain("@expo/ui/community/bottom-sheet");
-    expect(nativeBottomSheetSource).toContain("enablePanDownToClose: canDismissFromSheet");
-    expect(bottomSheetSource).not.toContain("TouchableWithoutFeedback");
+  it("does not mount Expo UI bottom sheets before a user opens a sheet", () => {
+    expect(bottomSheetSource).not.toContain("@expo/ui/community/bottom-sheet");
+    expect(bottomSheetSource).not.toContain("NativeBottomSheet");
     expect(bottomSheetSource).not.toContain("PanGestureHandler");
-    expect(bottomSheetSource).not.toContain("accessibilityElementsHidden");
+    expect(bottomSheetSource).toContain("TouchableWithoutFeedback");
+    expect(bottomSheetSource).toContain("accessibilityElementsHidden");
   });
 
   it("gives close and action sheet controls accessible button metadata", () => {
-    expect(nativeBottomSheetSource).toContain('accessibilityLabel={t("common.close")}');
+    expect(bottomSheetSource).toContain('accessibilityLabel={t("common.close")}');
     expect(bottomSheetSource).toContain('accessibilityRole="button"');
     expect(bottomSheetSource).toContain("accessibilityLabel={action.accessibilityLabel ?? action.title}");
     expect(bottomSheetSource).toContain("accessibilityState={{ disabled: action.disabled }}");
@@ -54,7 +53,8 @@ describe("shared interactive control accessibility policy", () => {
   it("labels the error-boundary recovery action", () => {
     const source = readSource("src/components/ErrorBoundary.tsx");
     expect(source).toContain('accessibilityRole="button"');
-    expect(source).toContain('accessibilityLabel={t("common.reset")}');
+    expect(source).toContain("FALLBACK_COPY");
+    expect(source).toContain("accessibilityLabel={FALLBACK_COPY.reset}");
   });
 
   it("keeps toast actions reachable and reserves assertive live regions for errors", () => {

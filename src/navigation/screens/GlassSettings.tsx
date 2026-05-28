@@ -441,6 +441,7 @@ export function GlassSettings() {
                 )
               }
               onPress={() => handleSelectLocale(option.value)}
+              accessibilityState={{ selected: activeLocaleSelection === option.value }}
               showChevron
             />
           ))}
@@ -508,7 +509,7 @@ export function GlassSettings() {
                   })}
                   style={styles.transportForceButton}
                 >
-                  <Text>
+                  <Text style={{ color: palette.userBubble }}>
                     {transportLabelMap[transportKey]}
                   </Text>
                 </TouchableOpacity>
@@ -518,7 +519,7 @@ export function GlassSettings() {
 
           {lastTestResult && (
             <View style={[styles.aboutCard, { backgroundColor: palette.highlight }]}>
-              <Text style={styles.aboutText}>
+              <Text style={[styles.aboutText, { color: palette.textPrimary }]}>
                 {t("screen.glassSettings.results.label", {
                   value: lastTestResult,
                 })}
@@ -527,7 +528,7 @@ export function GlassSettings() {
           )}
           {lastTestError && (
             <View style={[styles.aboutCard, { backgroundColor: palette.highlight }]}>
-              <Text style={styles.aboutText}>
+              <Text style={[styles.aboutText, { color: palette.textPrimary }]}>
                 {t("screen.glassSettings.results.error", {
                   value: lastTestError,
                 })}
@@ -636,7 +637,7 @@ export function GlassSettings() {
           />
         </Form.Section>
 
-        {/* Development Section */}
+        {/* App tour reset */}
           <Form.Section
             title={t("screen.settings.sections.development.title")}
             footer={t("screen.settings.sections.development.resetOnboardingSubtitle")}

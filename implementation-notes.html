@@ -158,5 +158,93 @@
     <li><code>asc builds list</code>: confirmed latest iOS TestFlight build is <code>4.0.15</code> build <code>46</code> with processing state <code>VALID</code>.</li>
     <li><code>asc validate --app ... --version 4.0.15 --platform IOS</code>: blocked because no App Store version record exists for <code>4.0.15</code>; TestFlight deployment itself is validated separately above.</li>
   </ul>
+
+  <h2>2026-05-27 Startup Crash And Full Review Run</h2>
+  <p><strong>Scope:</strong> investigate iOS real-device startup crash evidence, complete full frontend UI/UX and source/security review, implement justified fixes, verify, document, commit, and push when safe.</p>
+  <p><strong>Stop condition:</strong> no known critical/high findings remain; medium findings are fixed or explicitly justified; strongest feasible local, browser, native, and release checks have current outcomes.</p>
+
+  <h3>Run Scope Lock</h3>
+  <ul>
+    <li>Repo root confirmed: <code>&lt;repo-root&gt;</code>.</li>
+    <li>Branch: <code>main</code>.</li>
+    <li>Remote present: <code>origin &lt;remote-url&gt;</code>.</li>
+    <li>Starting tracked worktree: clean. Existing untracked runtime state directory <code>.omc/</code> was present and is being left untouched unless it becomes task-relevant.</li>
+    <li>Package manager: Bun; scripts include <code>verify:all</code>, <code>typecheck</code>, <code>test</code>, native DNS module tests, AXe E2E, redaction, iOS pod, React Compiler, and Expo Doctor gates.</li>
+  </ul>
+
+  <h3>Guidance And Review Lanes</h3>
+  <ul>
+    <li>Repo instructions and versioning/release guardrails from <code>AGENTS.md</code> are active.</li>
+    <li>Skills used: <code>code-review</code>, <code>modern-web-guidance</code>, <code>frontend-design</code>, <code>design-review</code>, and <code>security-best-practices</code>.</li>
+    <li>Claude Code availability: installed and able to run a project health check; frontend/design review will be attempted through Claude Code and Codex-native designer review.</li>
+    <li>Codex-native sidecar lanes launched: source code review, architecture review, frontend/design review, startup-crash debugging, and official-doc research.</li>
+    <li>App Store Connect crash URL is credential-gated; current run will use available authenticated local tooling and device logs, and will record any access blocker explicitly.</li>
+  </ul>
+
+  <h3>Current Decisions</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Decision</th>
+        <th>Reasoning</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Prioritize the startup crash before broader cleanup.</td>
+        <td>A launch crash is a critical user-visible failure and can invalidate UI/source review if the app cannot reach the first screen.</td>
+        <td class="status">Active</td>
+      </tr>
+      <tr>
+        <td>Do not commit App Store Connect internal identifiers, local signing values, device identifiers, or local account paths.</td>
+        <td>Repo release docs require public redaction hygiene; such values may be used only as local command inputs when already authorized.</td>
+        <td class="status">Active</td>
+      </tr>
+      <tr>
+        <td>Leave unrelated <code>.omc/</code> runtime state untracked.</td>
+        <td>It was present before this run and is not part of the app source, docs, or release evidence.</td>
+        <td class="status">Active</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Run Audit Log</h3>
+  <ol>
+    <li>Scope lock completed. Device list confirms the requested physical device is connected; device identifiers are intentionally omitted from this note.</li>
+    <li>Claude Code health check completed and reported the previous <code>main</code> state healthy; deeper crash/design review is still in progress for this run.</li>
+    <li>Modern web guidance search started for Expo React Native Web accessibility, responsive UI, empty/loading/error states, and performance.</li>
+    <li>App Store Connect crash evidence was retrieved through authenticated local tooling. The affected TestFlight build crashed at launch with <code>EXC_CRASH (SIGABRT)</code>; the native backtrace entered <code>RCTFatal</code>/<code>RCTExceptionsManager</code> from a React Native fatal JS exception path, but the ASC crash log did not include the JS exception message.</li>
+    <li>Critical startup mitigations applied: removed the undeclared root <code>react-native-gesture-handler</code> import, made <code>ErrorBoundary</code> independent of <code>I18nProvider</code>, removed <code>expo-dev-client</code> and EXDev pods/resources from the release graph, and rolled <code>GlassBottomSheet</code> back from the Expo UI bottom-sheet adapter to a React Native modal implementation.</li>
+    <li>Frontend/UI fixes applied: constrained desktop chat/form content width, fixed dark-mode transport diagnostic text color, added an explicit missing-conversation state for stale chat URLs, exposed selected language state, renamed the app-tour reset section, removed the duplicated onboarding progress title, softened overclaiming copy, and changed the version badge from "Latest" to an installed-version label.</li>
+    <li>Source/security fixes applied: cleared corrupted chat/log backup payloads during user data clear, made user-triggered log deletion storage-first, kept routine DNS logging best-effort so successful DNS responses are not converted to false failures, validated Android legacy dnsjava TXT records by owner name and IN class, and extended public redaction scanning to tracked HTML docs.</li>
+    <li>Milestone reviewer found one high issue in log-persistence propagation and two medium issues in clear-log rollback/docs. The high and clear-log issues were fixed with focused regressions; dev-client docs/tooling were updated after the dependency removal.</li>
+    <li>Second milestone reviewer found no critical/high issues. Two medium findings were fixed: the Logs screen now handles local-data clear failures without falsely clearing the visible list, and release docs no longer imply the rolled-back native bottom-sheet adapter is active.</li>
+  </ol>
+
+  <h3>Run Open Questions And Risks</h3>
+  <ul>
+    <li>App Store version validation for <code>4.0.17</code> is blocked because App Store Connect has no App Store version record for that version yet. TestFlight upload, processing, and TestFlight readiness validation are separate and passed for this release build.</li>
+    <li>The Expo Router native tabs API is still the SDK 56 native-tabs surface. It remains accepted for this release because replacing route-level navigation would be a broader UX migration; the risk is tracked as a medium item requiring future release-simulator and physical-device coverage.</li>
+  </ul>
+
+  <h3>Run Validation Evidence</h3>
+  <ul>
+    <li><code>bun run test -- --runTestsByPath ...</code> focused milestone run: passed. <code>10</code> suites passed; <code>102</code> tests passed.</li>
+    <li><code>bun run typecheck</code>: passed after the startup-crash, UI, dev-client removal, and persistence fixes.</li>
+    <li><code>npx react-doctor@latest</code>: passed with <code>100 / 100</code> for both <code>chat-dns</code> and <code>@dnschat/dns-native</code>. The modal sheet keeps a narrow documented exemption for React Native <code>Animated</code> because the Reanimated/native-sheet alternative was the crash-risk surface being rolled back.</li>
+    <li><code>bun run verify:ios-pods</code>, <code>bun run verify:public-redaction</code>, <code>bun run verify:dnsresolver-sync</code>, <code>bun run verify:sdk-alignment</code>, <code>bun run lint</code>, <code>cd modules/dns-native &amp;&amp; bun run test</code>, <code>bun audit</code>, and <code>git diff --check</code>: passed after the dev-client removal and Android DNS fallback fixes.</li>
+    <li><code>bun run verify:all</code>: passed after the final UI, startup, logging, docs, and test updates. The gate reported Expo Doctor <code>19/19</code>, React Compiler <code>85/85</code>, lint pass, and Jest <code>104</code> passed suites / <code>866</code> passed tests with <code>1</code> suite and <code>13</code> tests intentionally skipped. Android setup reported no critical issues; emulator/device-dependent Android checks were skipped because no Android runtime was connected.</li>
+    <li>Browser/UI smoke: desktop <code>1280x720</code> and mobile <code>390x844</code> onboarding rendered with no browser errors; stale chat deep link rendered the explicit missing-conversation state with no browser errors.</li>
+    <li>Simulator install/launch: the locally built Debug simulator app installed and launched successfully as <code>org.mvneves.dnschat</code>.</li>
+    <li>Signed iOS App Store archive: passed for version <code>4.0.17</code> build <code>48</code>.</li>
+    <li>Signed IPA export: passed for version <code>4.0.17</code> build <code>48</code>.</li>
+    <li>TestFlight upload and processing: passed. App Store Connect reported build <code>4.0.17</code> / <code>48</code> as <code>VALID</code>.</li>
+    <li><code>asc validate testflight</code>: passed with <code>0</code> errors, <code>0</code> warnings, and <code>0</code> blocking findings for the uploaded build.</li>
+    <li><code>asc validate --app ... --version 4.0.17 --platform IOS</code>: blocked because no App Store version record exists for <code>4.0.17</code>; this is not a TestFlight processing blocker.</li>
+    <li>Physical-device Debug build/install/launch: passed on the connected real device. The process remained listed several seconds after launch, covering the reported startup-crash path without exposing device identifiers in tracked notes.</li>
+    <li><code>RUBYOPT=-rlogger pod install</code>: passed after removing <code>expo-dev-client</code>; CocoaPods removed Expo dev launcher/menu pods and regenerated the project. The direct <code>pod install</code> attempt without <code>RUBYOPT</code> hit the known Ruby logger load issue.</li>
+    <li><code>bun run sync-versions --bump-build</code>: passed; app metadata advanced to <code>4.0.17</code> build <code>48</code>.</li>
+  </ul>
 </body>
 </html>

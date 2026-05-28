@@ -256,7 +256,7 @@ export const enUS = {
       },
       ready: {
         title: "You're All Set",
-        description: "You now know how to use DNS Chat and have optimized settings for your network. Start chatting and experience the magic of DNS-powered conversations!",
+        description: "You now know how DNS Chat sends short messages over DNS and where to adjust the transport settings. Start a conversation when you are ready.",
         button: "Start Chatting",
       },
     },
@@ -268,6 +268,14 @@ export const enUS = {
       emptyState: {
         title: "Start a conversation!",
         description: "Send a message to begin chatting with the AI assistant.",
+      },
+      missing: {
+        navigationTitle: "Conversation Not Found",
+        title: "Conversation not found",
+        description:
+          "This conversation is no longer on this device. You can return to your chats or start a new conversation.",
+        startNew: "Start New Chat",
+        backToChats: "Back to Chats",
       },
       messageActions: {
         copy: "Copy",
@@ -385,6 +393,8 @@ export const enUS = {
         clearTitle: "Clear Logs",
         clearMessage: "Are you sure you want to clear all DNS query logs?",
         clearConfirm: "Clear",
+        clearErrorTitle: "Unable to Clear Logs",
+        clearErrorMessage: "DNS logs could not be removed from local storage. Please try again.",
       },
       accessibility: {
         expandRow: "Show DNS query details",
@@ -459,7 +469,7 @@ export const enUS = {
             "Deletes all local chats and DNS logs stored on this device",
         },
         development: {
-          title: "Development",
+          title: "App Tour",
           resetOnboardingTitle: "Reset Onboarding",
           resetOnboardingSubtitle: "Show the onboarding flow again",
         },
@@ -552,13 +562,13 @@ export const enUS = {
           title: "About",
           appVersionTitle: "App Version",
           appVersionSubtitle: "DNSChat v{{version}}",
-          latestBadge: "Latest",
+          latestBadge: "Installed",
           githubTitle: "GitHub Repository",
           githubSubtitle: "View source code and contribute",
           shareTitle: "Share DNSChat",
           shareSubtitle: "Tell others about this app",
           shareMessage:
-            "Check out DNSChat - Chat over DNS! A unique way to communicate using DNS TXT queries.",
+            "Check out DNSChat - a DNS TXT experiment for short AI prompts.",
         },
         advanced: {
           title: "Advanced",
@@ -616,7 +626,7 @@ export const enUS = {
         arxivDaily: "Ch.at original concept and LLM over DNS service",
         levels: "Retweeted @arxiv_daily",
         reactNative: "Cross-platform mobile framework",
-        expo: "Development build and tooling platform",
+        expo: "Expo app and build tooling platform",
         reactNavigation: "Navigation library for React Native",
         asyncStorage: "Local storage solution",
       },

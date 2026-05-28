@@ -816,7 +816,11 @@ export class DNSService {
         );
 
         this.recordServerSuccess(targetServer, queryContext.targetPort);
-        await DNSLogService.endQuery(queryId, true, result.response, result.method);
+        try {
+          await DNSLogService.endQuery(queryId, true, result.response, result.method);
+        } catch (logError) {
+          devLog("[DNSService] Failed to persist successful DNS query log", logError);
+        }
         return result.response;
       } catch (error) {
         const message = getErrorMessage(error);
@@ -841,7 +845,11 @@ export class DNSService {
     }
 
     // All servers failed
-    await DNSLogService.endQuery(queryId, false, undefined, undefined);
+    try {
+      await DNSLogService.endQuery(queryId, false, undefined, undefined);
+    } catch (logError) {
+      devLog("[DNSService] Failed to persist failed DNS query log", logError);
+    }
 
     // Provide comprehensive error guidance
     const serverList = serversToTry.map(s => `${s.host}:${s.port}`).join(', ');

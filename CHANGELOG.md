@@ -6,6 +6,38 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+## [4.0.17] - 2026-05-28
+
+### Changed
+
+- Removed `expo-dev-client` from the release dependency graph and refreshed the
+  iOS pod/project references so TestFlight builds no longer carry Expo dev
+  launcher/menu resources.
+- Rolled `GlassBottomSheet` back to the React Native modal implementation and
+  removed the hidden native bottom-sheet adapter surface implicated by the
+  build 47 startup-crash investigation.
+- Updated Settings, onboarding, and web chat layout copy/spacing to reduce
+  overclaiming, expose selected language state, keep desktop chat/form width
+  readable, and avoid dark-mode diagnostic text contrast failures.
+
+### Fixed
+
+- Made the root error boundary provider-independent so startup/render failures
+  below `I18nProvider` can show a recovery UI instead of throwing again.
+- Kept DNS query success independent from DNS-log persistence failures while
+  preserving user-visible failure reporting for explicit log deletion.
+- Cleared corrupted chat/log backup payloads when users clear local data, and
+  made log deletion mutate in-memory state only after storage deletion succeeds.
+- Hardened Android legacy DNS fallback parsing so accepted TXT records must
+  match the requested owner name and IN class.
+- Replaced missing chat deep links with an explicit "conversation not found"
+  state instead of silently creating a blank conversation.
+
+### Verified
+
+- Focused regression set passed: `10` Jest suites and `102` tests.
+- `bun run typecheck` passed after the startup-crash and persistence fixes.
+
 ## [4.0.16] - 2026-05-27
 
 ### Added
@@ -535,7 +567,8 @@ Versions 3.2.0 through 3.8.9 established the core feature set:
 - **3.3.0**: Android CI, release signing policy, Java 17 auto-detection
 - **3.2.x**: Public repo hardening (secrets scanning, policy tests, version sync gates), DNS server allowlist
 
-[Unreleased]: https://github.com/<owner>/dnschat/compare/v4.0.16...HEAD
+[Unreleased]: https://github.com/<owner>/dnschat/compare/v4.0.17...HEAD
+[4.0.17]: https://github.com/<owner>/dnschat/compare/v4.0.16...v4.0.17
 [4.0.16]: https://github.com/<owner>/dnschat/compare/v4.0.15...v4.0.16
 [4.0.15]: https://github.com/<owner>/dnschat/compare/v4.0.14...v4.0.15
 [4.0.14]: https://github.com/<owner>/dnschat/compare/v4.0.13...v4.0.14

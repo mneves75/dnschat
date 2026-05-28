@@ -2,6 +2,8 @@ import React from "react";
 import { Link, Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { Share, Alert } from "react-native";
 import { Chat } from "../../src/navigation/screens/Chat";
+import { EmptyState } from "../../src/components/EmptyState";
+import { Form } from "../../src/components/glass/GlassForm";
 import { useChat } from "../../src/context/ChatContext";
 import { useTranslation } from "../../src/i18n";
 import { resolveRouteChat } from "../../src/utils/chatRoute";
@@ -31,6 +33,13 @@ export default function ChatRoute() {
   const routeChat = React.useMemo(
     () => resolveRouteChat(chats, currentChat, normalizedThreadId),
     [chats, currentChat, normalizedThreadId],
+  );
+  const isMissingRouteChat = Boolean(
+    normalizedThreadId &&
+      !isLoading &&
+      !isRouteHydrating &&
+      !routeChat &&
+      (hasAttemptedRouteLoad || chats.length > 0),
   );
 
   // Effect: load chats lazily when a thread route is hit without cached data.
@@ -92,24 +101,6 @@ export default function ChatRoute() {
       }
       return;
     }
-
-    if (lastAttemptedRef.current === targetId) {
-      return;
-    }
-    lastAttemptedRef.current = targetId;
-    setIsResolving(true);
-    createChat()
-      .then((chat) => {
-        setCurrentChat(chat);
-        replace({
-          pathname: "/chat/[threadId]",
-          params: { threadId: chat.id },
-        });
-      })
-      .catch((error) => {
-        devWarn("[ChatRoute] Failed to recover chat", error);
-      })
-      .finally(() => setIsResolving(false));
   }, [
     chats,
     createChat,
@@ -147,6 +138,29 @@ export default function ChatRoute() {
     );
   };
 
+  const handleBackToChats = () => {
+    replace("/(tabs)");
+  };
+
+  const handleStartNewChat = () => {
+    if (isResolving) {
+      return;
+    }
+    setIsResolving(true);
+    createChat()
+      .then((chat) => {
+        setCurrentChat(chat);
+        replace({
+          pathname: "/chat/[threadId]",
+          params: { threadId: chat.id },
+        });
+      })
+      .catch((error) => {
+        devWarn("[ChatRoute] Failed to create replacement chat", error);
+      })
+      .finally(() => setIsResolving(false));
+  };
+
   return (
     <>
       <Stack.Screen.Title>{routeChat?.title ?? ""}</Stack.Screen.Title>
@@ -162,9 +176,35 @@ export default function ChatRoute() {
           </Stack.Toolbar.Menu>
         </Stack.Toolbar>
       ) : null}
-      <Link.AppleZoomTarget>
-        <Chat />
-      </Link.AppleZoomTarget>
+      {isMissingRouteChat ? (
+        <Form.List
+          testID="chat-route-missing"
+          navigationTitle={t("screen.chat.missing.navigationTitle")}
+        >
+          <Form.Section>
+            <EmptyState
+              title={t("screen.chat.missing.title")}
+              description={t("screen.chat.missing.description")}
+              iconType="error"
+              actionLabel={t("screen.chat.missing.startNew")}
+              onAction={handleStartNewChat}
+              testID="chat-route-missing-state"
+            />
+          </Form.Section>
+          <Form.Section>
+            <Form.Item
+              testID="chat-route-back-to-chats"
+              title={t("screen.chat.missing.backToChats")}
+              onPress={handleBackToChats}
+              showChevron
+            />
+          </Form.Section>
+        </Form.List>
+      ) : (
+        <Link.AppleZoomTarget>
+          <Chat />
+        </Link.AppleZoomTarget>
+      )}
     </>
   );
 }

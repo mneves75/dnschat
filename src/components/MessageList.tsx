@@ -7,7 +7,11 @@ import {
   RefreshControl,
   ActivityIndicator,
 } from "react-native";
-import type { ListRenderItemInfo } from "react-native";
+import type {
+  ListRenderItemInfo,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+} from "react-native";
 import { MessageBubble } from "./MessageBubble";
 import type { Message } from "../types/chat";
 import { useImessagePalette } from "../ui/theme/imessagePalette";
@@ -41,6 +45,8 @@ export function MessageList({
   testID,
 }: MessageListProps) {
   const flatListRef = useRef<FlatList<Message>>(null);
+  const isNearBottomRef = useRef(true);
+  const previousMessageCountRef = useRef(messages.length);
   const { supportsLiquidGlass } = useLiquidGlassCapabilities();
 
   // iOS 26 HIG: Semantic color palette that adapts to light/dark/high-contrast modes
@@ -70,7 +76,12 @@ export function MessageList({
   // Triggers when: new messages arrive, keyboard shows/hides, input grows
   // No complex logic, no timing assumptions, no conflicts
   useEffect(() => {
-    if (flatListRef.current && messages.length > 0) {
+    const messageWasAdded = messages.length > previousMessageCountRef.current;
+    previousMessageCountRef.current = messages.length;
+    const shouldFollowConversation =
+      isNearBottomRef.current || messageWasAdded || lastMessage?.role === "user";
+
+    if (flatListRef.current && messages.length > 0 && shouldFollowConversation) {
       // Double requestAnimationFrame guarantees FlatList layout is complete
       // First RAF: Browser schedules next paint
       // Second RAF: Layout has been calculated and committed
@@ -86,7 +97,14 @@ export function MessageList({
         });
       });
     }
-  }, [messages.length, lastMessageKey, bottomInset]);
+  }, [messages.length, lastMessageKey, bottomInset, lastMessage?.role]);
+
+  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
+    const distanceFromBottom =
+      contentSize.height - (contentOffset.y + layoutMeasurement.height);
+    isNearBottomRef.current = distanceFromBottom < 160;
+  };
 
   // iOS 26 HIG: Render individual message bubble with solid backgrounds
   // MessageBubble uses solid colors (content layer) NOT glass (control layer)
@@ -217,6 +235,8 @@ export function MessageList({
       style={styles.container}
       contentContainerStyle={contentContainerStyle}
       showsVerticalScrollIndicator={false}
+      onScroll={handleScroll}
+      scrollEventThrottle={120}
       // REMOVED: onContentSizeChange scroll handler - conflicts with useEffect scroll
       // Our scrollToBottom with double RAF handles all scenarios reliably
       ListEmptyComponent={isLoading ? renderLoadingComponent : renderEmptyComponent}

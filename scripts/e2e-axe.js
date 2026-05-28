@@ -702,7 +702,7 @@ function assertNotDevLauncher(elements) {
 
   if (isDevLauncher) {
     throw new Error(
-      "The simulator is showing Expo development launcher, not DNSChat. Run e2e:axe:release or start Expo dev-client and open the app runtime before E2E.",
+      "The simulator is showing Expo development launcher, not DNSChat. Run e2e:axe:release or launch the compiled DNSChat app runtime before E2E.",
     );
   }
 }

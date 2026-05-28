@@ -8,4 +8,10 @@ describe("root layout routing policy", () => {
     expect(source).not.toContain("if (!hasSettledInitialRoute) return null");
     expect(source).toContain('<Stack.Screen name="chat/[threadId]"');
   });
+
+  it("keeps the splash screen visible until DNS log storage initialization settles", () => {
+    expect(source).toContain("hasInitializedLogs");
+    expect(source).toContain("DNSLogService.initialize()");
+    expect(source).toContain("setHasInitializedLogs(true)");
+  });
 });

@@ -19,7 +19,7 @@ This file provides a fast, practical map of the repo so agents can orient quickl
 
 ## What This App Is
 
-DNSChat is an Expo dev-client React Native app that sends short prompts as DNS TXT queries and renders responses.
+DNSChat is an Expo React Native app that sends short prompts as DNS TXT queries and renders responses. Development and release builds use the compiled native app, not Expo Go or Expo dev-client.
 
 **Stack**: Expo SDK 56.0.5 / React Native 0.85.3 / React 19.2.3 / TypeScript 6.0.x / Hermes / New Architecture
 

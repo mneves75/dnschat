@@ -30,7 +30,7 @@ Last architecture/dependency verification: `2026-05-27`.
 Last full source/security sweep: `2026-05-27`.
 Last AXe simulator E2E feature pass: `2026-05-17` for version `4.0.13` build
 `43`.
-Current iOS/TestFlight release target: version `4.0.16` build `47`.
+Current iOS/TestFlight release target: version `4.0.17` build `48`.
 
 - `npx react-doctor@latest` reports `100 / 100` for both `chat-dns` and
   `@dnschat/dns-native` on `2026-05-27`.
@@ -49,8 +49,8 @@ Current iOS/TestFlight release target: version `4.0.16` build `47`.
 - `xcodebuild clean build` and `xcodebuild clean archive` pass for generic iOS
   Release when code signing is disabled (`CODE_SIGNING_ALLOWED=NO`) on
   `2026-05-24`.
-- Physical-device compiled Expo dev-client install passed.
-- Current signed TestFlight target: `4.0.16` build `47`. The release lane uses
+- Physical-device compiled app install passed.
+- Current signed TestFlight target: `4.0.17` build `48`. The release lane uses
   signed App Store archive/export, App Store Connect upload, processing, and
   validation before the build is described as distributed. Internal App Store
   Connect IDs are intentionally omitted from public docs.

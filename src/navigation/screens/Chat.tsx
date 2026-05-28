@@ -16,6 +16,7 @@ import {
   Alert,
   StatusBar,
   View,
+  Platform,
 } from "react-native";
 import Animated, {
   useAnimatedStyle,
@@ -140,6 +141,7 @@ export function Chat() {
       <Animated.View
         style={[
           styles.content,
+          Platform.OS === "web" && styles.webContent,
           { paddingHorizontal: LiquidGlassSpacing.xs },
           animatedStyle,
         ]}
@@ -181,6 +183,11 @@ const styles = StyleSheet.create({
     flex: 1,
     // paddingTop removed: MessageList.contentContainerStyle already provides 8px top padding
     // Eliminates double padding (16px gap) between navigation header and first message
+  },
+  webContent: {
+    width: "100%",
+    maxWidth: 860,
+    alignSelf: "center",
   },
   keyboardAccessory: {
     paddingHorizontal: LiquidGlassSpacing.xs,

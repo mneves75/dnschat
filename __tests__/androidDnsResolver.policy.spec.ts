@@ -26,6 +26,12 @@ describe("Android DNSResolver native policy", () => {
     expect(source).toContain("answerName.name.equals(expectedQueryName)");
   });
 
+  it("applies owner-name and class validation to the legacy dnsjava fallback", () => {
+    expect(source).toContain("isExpectedLegacyTxtRecord(record, queryName)");
+    expect(source).toContain("record.getDClass() == DClass.IN");
+    expect(source).toContain("normalizeDnsName(record.getName().toString())");
+  });
+
   it("does not log prompt-derived DNS query names", () => {
     expect(source).toContain("DNS: Creating new query for selected resolver");
     expect(source).toContain("DNS-over-HTTPS: Querying Cloudflare for selected DNS name");
