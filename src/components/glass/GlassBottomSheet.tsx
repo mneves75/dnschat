@@ -24,6 +24,7 @@ import {
 import type { StyleProp, ViewStyle } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "../../i18n";
+import { useMotionReduction } from "../../context/AccessibilityContext";
 import { LiquidGlassWrapper } from "../LiquidGlassWrapper";
 
 interface GlassBottomSheetProps {
@@ -79,26 +80,28 @@ export const GlassBottomSheet: React.FC<GlassBottomSheetProps> = ({
   const insets = useSafeAreaInsets();
   const { height: screenHeight } = useWindowDimensions();
   const { t } = useTranslation();
+  const { shouldReduceMotion } = useMotionReduction();
   const translateY = React.useRef(new Animated.Value(1000)).current;
   const animatedBackdropOpacity = React.useRef(new Animated.Value(0)).current;
   const scale = React.useRef(new Animated.Value(0.96)).current;
   const useNativeDriver = Platform.OS !== "web";
 
   React.useEffect(() => {
+    const duration = shouldReduceMotion ? 0 : animationDuration;
     Animated.parallel([
       Animated.timing(translateY, {
         toValue: visible ? 0 : 1000,
-        duration: animationDuration,
+        duration,
         useNativeDriver,
       }),
       Animated.timing(animatedBackdropOpacity, {
         toValue: visible ? 1 : 0,
-        duration: animationDuration,
+        duration,
         useNativeDriver,
       }),
       Animated.timing(scale, {
         toValue: visible ? 1 : 0.96,
-        duration: animationDuration,
+        duration,
         useNativeDriver,
       }),
     ]).start();
@@ -106,6 +109,7 @@ export const GlassBottomSheet: React.FC<GlassBottomSheetProps> = ({
     animatedBackdropOpacity,
     animationDuration,
     scale,
+    shouldReduceMotion,
     translateY,
     useNativeDriver,
     visible,

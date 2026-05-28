@@ -18,12 +18,14 @@ import {
   sanitizeDnsServer,
   resolveLocale,
   normalizePreferredLocale,
+  normalizeThemePreference,
   areAccessibilityConfigsEqual,
 } from "./settingsStorage";
 import type {
   PersistedSettings,
   SupportedLocale,
   SupportedLocaleOption,
+  ThemePreference,
 } from "./settingsStorage";
 import type { AccessibilityConfig } from "./AccessibilityContext";
 import { DNSLogService } from "../services/dnsLogService";
@@ -47,6 +49,8 @@ interface SettingsContextValue {
   preferredLocale: string | null;
   availableLocales: SupportedLocaleOption[];
   updateLocale: (locale: string | null) => Promise<void>;
+  themePreference: ThemePreference;
+  updateThemePreference: (preference: ThemePreference) => Promise<void>;
   accessibility: AccessibilityConfig;
   updateAccessibility: (config: AccessibilityConfig) => Promise<void>;
   loading: boolean;
@@ -306,6 +310,24 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     );
   };
 
+  const updateThemePreference = async (preference: ThemePreference) => {
+    const normalized = normalizeThemePreference(preference);
+    const { changed } = await persistSettings((current) =>
+      current.themePreference === normalized
+        ? current
+        : {
+            ...current,
+            themePreference: normalized,
+          },
+    );
+    if (!changed) {
+      return;
+    }
+    await DNSLogService.recordSettingsEvent(
+      `Theme preference set to ${normalized}`,
+    );
+  };
+
   const updateAccessibility = async (accessibilityConfig: AccessibilityConfig) => {
     const { changed } = await persistSettings((current) =>
       areAccessibilityConfigsEqual(current.accessibility, accessibilityConfig)
@@ -340,6 +362,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     preferredLocale: settings.preferredLocale,
     availableLocales: SUPPORTED_LOCALE_OPTIONS,
     updateLocale,
+    themePreference: settings.themePreference,
+    updateThemePreference,
     accessibility: settings.accessibility,
     updateAccessibility,
     loading,
@@ -364,4 +388,5 @@ export type {
   PersistedSettings as SettingsStorageSnapshot,
   SupportedLocale,
   SupportedLocaleOption,
+  ThemePreference,
 } from "./settingsStorage";

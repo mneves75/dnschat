@@ -12,6 +12,21 @@ export interface AccessibilityConfig {
   screenReader: boolean;
 }
 
+export type ThemePreference = 'system' | 'light' | 'dark';
+
+export const THEME_PREFERENCE_VALUES: readonly ThemePreference[] = [
+  'system',
+  'light',
+  'dark',
+];
+
+export function normalizeThemePreference(value: unknown): ThemePreference {
+  if (typeof value !== 'string') return 'system';
+  return (THEME_PREFERENCE_VALUES as readonly string[]).includes(value)
+    ? (value as ThemePreference)
+    : 'system';
+}
+
 export interface PersistedSettings {
   version: number;
   dnsServer: string;
@@ -19,6 +34,7 @@ export interface PersistedSettings {
   allowExperimentalTransports: boolean;
   enableHaptics: boolean;
   preferredLocale: string | null;
+  themePreference: ThemePreference;
   accessibility: AccessibilityConfig;
 }
 
@@ -29,7 +45,7 @@ export interface LegacySettingsV1 {
 
 export const DEFAULT_DNS_SERVER = "llm.pieter.com";
 export const SETTINGS_STORAGE_KEY = "@chat_dns_settings";
-export const SETTINGS_VERSION = 4;
+export const SETTINGS_VERSION = 5;
 
 /**
  * Migrate DNS server from ch.at (offline) to llm.pieter.com
@@ -50,6 +66,7 @@ export const DEFAULT_SETTINGS: PersistedSettings = {
   allowExperimentalTransports: true,
   enableHaptics: true,
   preferredLocale: null,
+  themePreference: 'system',
   accessibility: {
     fontSize: 'medium',
     highContrast: false,
@@ -106,7 +123,11 @@ export function migrateSettings(raw: unknown): PersistedSettings {
     screenReader: Boolean(accessibilitySource?.screenReader),
   };
 
-  // Version 2 or earlier → Version 4: Remove HTTPS options, enable fallbacks, migrate offline servers
+  const resolvedThemePreference = normalizeThemePreference(
+    (candidate as { themePreference?: unknown }).themePreference,
+  );
+
+  // Version 2 or earlier → Version 5: Remove HTTPS options, enable fallbacks, migrate offline servers
   if (typeof candidate.version === "number" && candidate.version < 3) {
     return {
       version: SETTINGS_VERSION,
@@ -121,11 +142,12 @@ export function migrateSettings(raw: unknown): PersistedSettings {
         candidate.preferredLocale === undefined
           ? null
           : normalizePreferredLocale(candidate.preferredLocale),
+      themePreference: resolvedThemePreference,
       accessibility: resolvedAccessibility,
     };
   }
 
-  // Version 3 → Version 4: Migrate ch.at (offline) to llm.pieter.com
+  // Version 3 → Version 5: Migrate ch.at (offline) to llm.pieter.com
   if (typeof candidate.version === "number" && candidate.version === 3) {
     return {
       version: SETTINGS_VERSION,
@@ -142,15 +164,16 @@ export function migrateSettings(raw: unknown): PersistedSettings {
         candidate.preferredLocale === undefined
           ? null
           : normalizePreferredLocale(candidate.preferredLocale),
+      themePreference: resolvedThemePreference,
       accessibility: resolvedAccessibility,
     };
   }
 
-  // Version 4+: No migration needed, preserve settings
+  // Version 4+: No DNS migration needed; backfill themePreference (default 'system')
   if (typeof candidate.version === "number") {
     return {
       version: SETTINGS_VERSION,
-      dnsServer: normalizePersistedDnsServer(candidate.dnsServer, false), // No migration for v4+
+      dnsServer: normalizePersistedDnsServer(candidate.dnsServer, false),
       enableMockDNS: Boolean(candidate.enableMockDNS),
       allowExperimentalTransports: Boolean(
         candidate.allowExperimentalTransports ?? true,
@@ -163,11 +186,12 @@ export function migrateSettings(raw: unknown): PersistedSettings {
         candidate.preferredLocale === undefined
           ? null
           : normalizePreferredLocale(candidate.preferredLocale),
+      themePreference: resolvedThemePreference,
       accessibility: resolvedAccessibility,
     };
   }
 
-  // Legacy v1 (no version field) → Version 4
+  // Legacy v1 (no version field) → Version 5
   const legacy = candidate as LegacySettingsV1;
   return {
     version: SETTINGS_VERSION,
@@ -176,6 +200,7 @@ export function migrateSettings(raw: unknown): PersistedSettings {
     allowExperimentalTransports: true,
     enableHaptics: true,
     preferredLocale: null,
+    themePreference: 'system',
     accessibility: { ...DEFAULT_SETTINGS.accessibility },
   };
 }

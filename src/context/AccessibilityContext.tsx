@@ -150,37 +150,44 @@ export function useAccessibility(): AccessibilityContextType {
   return context;
 }
 
+// Optional variant for components rendered outside the provider (e.g. focused
+// unit tests that mount a single component). Returns defaults so consumers
+// such as useMotionReduction/useHighContrast remain safe to call.
+function useOptionalAccessibility(): AccessibilityContextType | undefined {
+  return use(AccessibilityContext);
+}
+
 // Accessibility utility hooks
 export function useScreenReader() {
-  const { isScreenReaderEnabled, announceToScreenReader } = useAccessibility();
-
+  const ctx = useOptionalAccessibility();
   return {
-    isEnabled: isScreenReaderEnabled,
-    announce: announceToScreenReader,
+    isEnabled: ctx?.isScreenReaderEnabled ?? false,
+    announce: ctx?.announceToScreenReader ?? (() => undefined),
   };
 }
 
 export function useMotionReduction() {
-  const { isReduceMotionEnabled } = useAccessibility();
+  const ctx = useOptionalAccessibility();
+  const shouldReduceMotion = ctx?.isReduceMotionEnabled ?? false;
 
   return {
-    shouldReduceMotion: isReduceMotionEnabled,
-    animationDuration: isReduceMotionEnabled ? 0 : undefined,
+    shouldReduceMotion,
+    animationDuration: shouldReduceMotion ? 0 : undefined,
   };
 }
 
 export function useHighContrast() {
-  const { isHighContrastEnabled } = useAccessibility();
+  const ctx = useOptionalAccessibility();
 
   return {
-    isHighContrast: isHighContrastEnabled,
+    isHighContrast: ctx?.isHighContrastEnabled ?? false,
   };
 }
 
 export function useFontSize() {
-  const { getFontSizeScale } = useAccessibility();
+  const ctx = useOptionalAccessibility();
 
   return {
-    scale: getFontSizeScale(),
+    scale: ctx?.getFontSizeScale ? ctx.getFontSizeScale() : 1.0,
   };
 }

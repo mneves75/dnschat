@@ -129,25 +129,9 @@ const styles = StyleSheet.create({
         }),
   },
   userBubble: {
-    backgroundColor: "#007AFF",
     borderBottomRightRadius: 6,
   },
   assistantBubble: {
-    backgroundColor: "#F0F0F0",
-    borderBottomLeftRadius: 6,
-  },
-  darkBubble: {
-    // Handled by specific bubble types
-  },
-  lightBubble: {
-    // Handled by specific bubble types
-  },
-  darkUserBubble: {
-    backgroundColor: "#007AFF",
-    borderBottomRightRadius: 6,
-  },
-  darkAssistantBubble: {
-    backgroundColor: "#2C2C2E",
     borderBottomLeftRadius: 6,
   },
   textLine: {

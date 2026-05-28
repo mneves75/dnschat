@@ -203,6 +203,7 @@ export function NetworkSetupScreen() {
 
         {optimizationComplete && recommendedSetting !== null && (
           <View
+            accessibilityLiveRegion="polite"
             style={[
               styles.recommendationContainer,
               {
@@ -260,9 +261,22 @@ export function NetworkSetupScreen() {
         )}
 
         {!optimizationComplete && (
-          <View style={styles.loadingSection}>
+          <View
+            accessible={true}
+            accessibilityLabel={t(
+              "screen.onboarding.networkSetup.optimization.loading",
+            )}
+            accessibilityHint={t(
+              "screen.onboarding.networkSetup.optimization.loading",
+            )}
+            accessibilityRole="progressbar"
+            accessibilityLiveRegion="polite"
+            style={styles.loadingSection}
+          >
             <ActivityIndicator size="large" color={palette.accentTint} />
             <Text
+              accessible={false}
+              importantForAccessibility="no-hide-descendants"
               style={[
                 typography.callout,
                 styles.loadingText,

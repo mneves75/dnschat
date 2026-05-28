@@ -2,7 +2,7 @@ import { Stack, useRootNavigationState, useRouter, useSegments } from "expo-rout
 import { ThemeProvider } from "expo-router/react-navigation";
 import * as SplashScreen from "expo-splash-screen";
 import * as React from "react";
-import { Platform } from "react-native";
+import { Appearance, Platform } from "react-native";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useColorScheme } from "react-native";
@@ -11,7 +11,7 @@ import { HapticsConfigurator } from "../src/components/HapticsConfigurator";
 import { AccessibilityProvider } from "../src/context/AccessibilityContext";
 import { ChatProvider } from "../src/context/ChatContext";
 import { OnboardingProvider, useOnboarding } from "../src/context/OnboardingContext";
-import { SettingsProvider } from "../src/context/SettingsContext";
+import { SettingsProvider, useSettings } from "../src/context/SettingsContext";
 import { I18nProvider } from "../src/i18n";
 import { DNSLogService } from "../src/services/dnsLogService";
 import { useImessagePalette } from "../src/ui/theme/imessagePalette";
@@ -22,9 +22,20 @@ SplashScreen.preventAutoHideAsync().catch(() => {});
 
 function RootLayoutContent() {
   const { hasCompletedOnboarding, loading } = useOnboarding();
+  const { themePreference } = useSettings();
   const { replace } = useRouter();
   const segments = useSegments();
   const rootNavigationState = useRootNavigationState();
+
+  // Apply user theme preference globally via Appearance.setColorScheme so
+  // every useColorScheme() consumer (palette, navigation, system controls)
+  // observes the override. RN 0.85 uses 'unspecified' to defer to the OS.
+  React.useEffect(() => {
+    Appearance.setColorScheme(
+      themePreference === "system" ? "unspecified" : themePreference,
+    );
+  }, [themePreference]);
+
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
   const palette = useImessagePalette();

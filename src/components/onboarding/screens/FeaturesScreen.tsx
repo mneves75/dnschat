@@ -126,6 +126,10 @@ export function FeaturesScreen() {
         </View>
 
         <View
+          accessible={true}
+          accessibilityRole="summary"
+          accessibilityLabel={`${t("screen.onboarding.ready.title")}. ${t("screen.onboarding.ready.description")}`}
+          accessibilityHint={t("screen.settings.sections.appearance.summaryHint")}
           style={[
             styles.readySection,
             {
@@ -135,6 +139,8 @@ export function FeaturesScreen() {
           ]}
         >
           <Text
+            accessible={false}
+            importantForAccessibility="no-hide-descendants"
             style={[
               typography.title3,
               styles.readyTitle,
@@ -145,6 +151,8 @@ export function FeaturesScreen() {
           </Text>
 
           <Text
+            accessible={false}
+            importantForAccessibility="no-hide-descendants"
             style={[
               typography.callout,
               styles.readyText,
@@ -176,6 +184,10 @@ function FeatureCard({ feature, palette, typography }: FeatureCardProps) {
 
   return (
     <View
+      accessible={true}
+      accessibilityRole="summary"
+      accessibilityLabel={`${feature.label}. ${feature.title}. ${feature.description}`}
+      accessibilityHint={t("screen.settings.sections.appearance.summaryHint")}
       style={[
         styles.featureCard,
         {
@@ -185,6 +197,8 @@ function FeatureCard({ feature, palette, typography }: FeatureCardProps) {
       ]}
     >
       <View
+        accessible={false}
+        importantForAccessibility="no-hide-descendants"
         style={[
           styles.featureLabelContainer,
           {
@@ -205,6 +219,8 @@ function FeatureCard({ feature, palette, typography }: FeatureCardProps) {
       </View>
 
       <Text
+        accessible={false}
+        importantForAccessibility="no-hide-descendants"
         style={[
           typography.headline,
           styles.featureTitle,
@@ -215,6 +231,8 @@ function FeatureCard({ feature, palette, typography }: FeatureCardProps) {
       </Text>
 
       <Text
+        accessible={false}
+        importantForAccessibility="no-hide-descendants"
         style={[
           typography.callout,
           styles.featureDescription,

@@ -54,6 +54,7 @@ import { useTypography } from "../ui/hooks/useTypography";
 import { useImessagePalette } from "../ui/theme/imessagePalette";
 import { LiquidGlassSpacing, getMinimumTouchTarget } from "../ui/theme/liquidGlassSpacing";
 import { SpringConfig, buttonPressScale } from "../utils/animations";
+import { useMotionReduction } from "../context/AccessibilityContext";
 import { HapticFeedback } from "../utils/haptics";
 import { SendIcon } from "./icons/SendIcon";
 import { useTranslation } from "../i18n";
@@ -99,6 +100,7 @@ export function ChatInput({
   const palette = useImessagePalette();
   const { t } = useTranslation();
   const { supportsLiquidGlass } = useLiquidGlassCapabilities();
+  const { shouldReduceMotion } = useMotionReduction();
   // Resolve touch target up front for layout calculations.
   const minimumTouchTarget = getMinimumTouchTarget();
   const reportHeight = (height: number) => {
@@ -193,8 +195,13 @@ export function ChatInput({
    * Uses Reanimated withTiming for smooth UI thread animation.
    */
   React.useEffect(() => {
-    opacity.value = withTiming(canSend ? 1 : 0.4, { duration: ANIMATION_DURATION_MS });
-  }, [canSend, opacity]);
+    const target = canSend ? 1 : 0.4;
+    if (shouldReduceMotion) {
+      opacity.value = target;
+      return;
+    }
+    opacity.value = withTiming(target, { duration: ANIMATION_DURATION_MS });
+  }, [canSend, opacity, shouldReduceMotion]);
 
   /**
    * Accessibility Announcement for Character Limit
@@ -219,9 +226,13 @@ export function ChatInput({
    */
   React.useEffect(() => {
     if (message === "") {
+      if (shouldReduceMotion) {
+        inputHeight.value = heightConstraints.min;
+        return;
+      }
       inputHeight.value = withSpring(heightConstraints.min, SpringConfig.bouncy);
     }
-  }, [message, inputHeight, heightConstraints.min]);
+  }, [message, inputHeight, heightConstraints.min, shouldReduceMotion]);
 
   useAnimatedReaction(
     () => inputHeight.value,
@@ -276,6 +287,10 @@ export function ChatInput({
       heightConstraints.max
     );
 
+    if (shouldReduceMotion) {
+      inputHeight.value = constrainedHeight;
+      return;
+    }
     inputHeight.value = withSpring(constrainedHeight, SpringConfig.bouncy);
   };
 
@@ -316,9 +331,11 @@ export function ChatInput({
    */
   const handlePressIn = () => {
     if (canSend) {
-      // Non-bouncy spring to prevent overshoot above 1.0 (iOS HIG send button feel)
-      scale.value = withSpring(buttonPressScale, { damping: 20, stiffness: 300, mass: 1 });
       HapticFeedback.light();
+      // Non-bouncy spring to prevent overshoot above 1.0; skip when reducing motion.
+      scale.value = shouldReduceMotion
+        ? buttonPressScale
+        : withSpring(buttonPressScale, { damping: 20, stiffness: 300, mass: 1 });
     }
   };
 
@@ -329,6 +346,10 @@ export function ChatInput({
    * Spring animation provides natural feel.
    */
   const handlePressOut = () => {
+    if (shouldReduceMotion) {
+      scale.value = 1;
+      return;
+    }
     // Non-bouncy spring to prevent overshoot above 1.0
     scale.value = withSpring(1, { damping: 20, stiffness: 300, mass: 1 });
   };

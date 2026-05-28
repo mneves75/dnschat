@@ -7,7 +7,7 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 - JavaScript fallback transports (UDP/TCP) for constrained networks
 - An in-app Logs screen to inspect attempts, failures, and fallbacks
 
-[![Version](https://img.shields.io/badge/version-4.0.17-blue.svg)](.)
+[![Version](https://img.shields.io/badge/version-4.0.18-blue.svg)](.)
 [![React Native](https://img.shields.io/badge/React%20Native-0.85.3-blue.svg)](https://reactnative.dev/)
 [![Expo](https://img.shields.io/badge/Expo-56.0.5-black.svg)](https://expo.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0.x-blue.svg)](https://www.typescriptlang.org/)
@@ -31,7 +31,7 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 
 ## Tech stack
 
-- App version: `4.0.17` (build `48`)
+- App version: `4.0.18` (build `49`)
 - Expo workflow: Expo Router + EAS-compatible native config
 - Expo SDK: `56.0.5`
 - React: `19.2.3`
@@ -210,7 +210,7 @@ Last architecture/dependency verification: `2026-05-27`.
 Last full source/security sweep: `2026-05-27`.
 Last AXe simulator E2E feature pass: `2026-05-17` for version `4.0.13` build
 `43`.
-Current iOS/TestFlight release target: version `4.0.17` build `48`.
+Current iOS/TestFlight release target: version `4.0.18` build `49`.
 
 - `npx react-doctor@latest` reports `100 / 100` for both `chat-dns` and
   `@dnschat/dns-native` on `2026-05-27`.
@@ -230,7 +230,7 @@ Current iOS/TestFlight release target: version `4.0.17` build `48`.
   Release when code signing is disabled (`CODE_SIGNING_ALLOWED=NO`) on
   `2026-05-24`.
 - Physical-device compiled app install passed.
-- Current signed TestFlight target: `4.0.17` build `48`. The release lane uses
+- Current signed TestFlight target: `4.0.18` build `49`. The release lane uses
   a signed App Store archive/export and App Store Connect processing before the
   build is described as distributed. Internal App Store Connect IDs are
   intentionally omitted from public docs.

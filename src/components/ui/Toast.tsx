@@ -103,33 +103,34 @@ export function Toast({
     HapticFeedback.light();
   }, [finishHide, onDismiss, opacity, position, translateY]);
 
-  // Get variant-specific colors and icon
+  // Get variant-specific colors and icon. Pull from palette so dark mode
+  // and high-contrast modes are respected.
   const getVariantStyles = () => {
     switch (variant) {
       case "success":
         return {
-          backgroundColor: "#34C759",
+          backgroundColor: palette.success,
           icon: "OK",
-          textColor: "#FFFFFF",
+          textColor: palette.bubbleTextOnBlue,
         };
       case "warning":
         return {
-          backgroundColor: "#FF9500",
+          backgroundColor: palette.warning,
           icon: "!",
-          textColor: "#FFFFFF",
+          textColor: palette.bubbleTextOnBlue,
         };
       case "error":
         return {
-          backgroundColor: "#FF3B30",
+          backgroundColor: palette.destructive,
           icon: "X",
-          textColor: "#FFFFFF",
+          textColor: palette.bubbleTextOnBlue,
         };
       case "info":
       default:
         return {
           backgroundColor: palette.accentTint,
           icon: "i",
-          textColor: "#FFFFFF",
+          textColor: palette.bubbleTextOnBlue,
         };
     }
   };
