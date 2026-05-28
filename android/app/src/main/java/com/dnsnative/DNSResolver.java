@@ -394,7 +394,7 @@ public class DNSResolver {
 
                     List<String> txtRecords = new ArrayList<>();
                     for (org.xbill.DNS.Record record : records) {
-                        if (record instanceof TXTRecord) {
+                        if (record instanceof TXTRecord && isExpectedLegacyTxtRecord(record, queryName)) {
                             TXTRecord txtRecord = (TXTRecord) record;
                             List<?> strings = txtRecord.getStrings();
                             for (Object str : strings) {
@@ -431,6 +431,20 @@ public class DNSResolver {
                 ? lastError
                 : new DNSError(DNSError.Type.NO_RECORDS_FOUND, "No TXT records found in legacy query");
         }, executor);
+    }
+
+    private static boolean isExpectedLegacyTxtRecord(org.xbill.DNS.Record record, String queryName) {
+        return record.getType() == Type.TXT
+            && record.getDClass() == DClass.IN
+            && normalizeDnsName(record.getName().toString()).equals(normalizeDnsName(queryName));
+    }
+
+    private static String normalizeDnsName(String name) {
+        String normalized = name == null ? "" : name.trim().toLowerCase(Locale.ROOT);
+        while (normalized.endsWith(".")) {
+            normalized = normalized.substring(0, normalized.length() - 1);
+        }
+        return normalized;
     }
 
     /**

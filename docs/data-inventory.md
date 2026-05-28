@@ -22,7 +22,8 @@ This document inventories the data stored or processed by DNSChat and satisfies 
 
 3) DNS query logs (redacted and encrypted at rest)
 - Storage key: `@dns_query_logs`
-- Contents: per-query log entries (hashed message text, status, method, timestamps, durations)
+- Contents: per-query log entries (hashed message text and chat title, raw local
+  chat ID, status, method, timestamps, durations)
 - Storage location: AsyncStorage
 - Redaction: message content stored as `sha256:<hash> len:<length>`
 - Encryption: AES-GCM via `encryptionService`; native key material is stored in
@@ -92,4 +93,5 @@ This document inventories the data stored or processed by DNSChat and satisfies 
 ## Review Cadence
 
 - Review this inventory whenever storage keys, retention policies, or data flows change.
-- Last reviewed during the full source/security sweep on `2026-05-24`.
+- Last reviewed during the startup crash and full source/security sweep on
+  `2026-05-27`.

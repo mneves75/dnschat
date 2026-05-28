@@ -11,15 +11,6 @@ import { useImessagePalette } from "../../ui/theme/imessagePalette";
 import { useTypography } from "../../ui/hooks/useTypography";
 import { LiquidGlassSpacing } from "../../ui/theme/liquidGlassSpacing";
 import { useTranslation } from "../../i18n";
-import type { MessageKey } from "../../i18n";
-
-const STEP_TITLE_KEYS: Record<string, MessageKey> = {
-  WelcomeScreen: "screen.onboarding.welcome.title",
-  DNSMagicScreen: "screen.onboarding.dnsMagic.title",
-  NetworkSetupScreen: "screen.onboarding.networkSetup.title",
-  FirstChatScreen: "screen.onboarding.firstChat.title",
-  FeaturesScreen: "screen.onboarding.ready.title",
-};
 
 export function OnboardingProgress() {
   const palette = useImessagePalette();
@@ -30,10 +21,6 @@ export function OnboardingProgress() {
 
   const progress = (currentStep + 1) / steps.length;
   const progressWidth = Math.max(0, screenWidth - (LiquidGlassSpacing.md * 2));
-  const currentStepData = steps[currentStep];
-  const currentStepTitleKey = currentStepData
-    ? STEP_TITLE_KEYS[currentStepData.component]
-    : undefined;
   const animatedWidth = React.useRef(new Animated.Value(0)).current;
 
   // Effect: animate progress bar when onboarding step changes.
@@ -59,15 +46,6 @@ export function OnboardingProgress() {
             current: currentStep + 1,
             total: steps.length,
           })}
-        </Text>
-        <Text
-          style={[
-            typography.title3,
-            styles.titleText,
-            { color: palette.textPrimary },
-          ]}
-        >
-          {currentStepTitleKey ? t(currentStepTitleKey) : ""}
         </Text>
       </View>
 
@@ -122,9 +100,6 @@ const styles = StyleSheet.create({
   stepText: {
     fontWeight: "500",
     marginBottom: LiquidGlassSpacing.xxs,
-  },
-  titleText: {
-    fontWeight: "700",
   },
   progressContainer: {
     position: "relative",

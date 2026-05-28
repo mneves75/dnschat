@@ -27,7 +27,7 @@ class MainApplication : Application(), ReactApplication {
       context = applicationContext,
       packageList =
         PackageList(this).packages.apply {
-          // Manual Expo module registration (not auto-linked in some dev-client flows)
+          // Manual Expo module registration for modules that may not autolink.
           add(ModuleRegistryAdapter(manualExpoPackages))
           // DNS native module (not auto-linked)
           add(DNSNativePackage())

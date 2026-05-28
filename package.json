@@ -1,6 +1,6 @@
 {
   "name": "chat-dns",
-  "version": "4.0.16",
+  "version": "4.0.17",
   "description": "DNSChat - A React Native chat app using DNS TXT queries",
   "main": "entry.tsx",
   "author": "DNSChat contributors",
@@ -22,7 +22,7 @@
     "dns-txt"
   ],
   "scripts": {
-    "start": "expo start --dev-client",
+    "start": "expo start",
     "web": "expo start --web",
     "android": "node scripts/run-android.js",
     "android:java24": "expo run:android",
@@ -69,7 +69,6 @@
     "expo-build-properties": "~56.0.15",
     "expo-constants": "56.0.16",
     "expo-crypto": "~56.0.4",
-    "expo-dev-client": "~56.0.16",
     "expo-glass-effect": "~56.0.4",
     "expo-haptics": "~56.0.3",
     "expo-linking": "~56.0.12",

@@ -122,8 +122,8 @@ describe('StorageService Race Condition Prevention', () => {
         return undefined;
       });
 
-      mockAsyncStorage.removeItem.mockImplementation(async () => {
-        operationOrder.push('clear');
+      mockAsyncStorage.removeItem.mockImplementation(async (key) => {
+        operationOrder.push(`clear:${key}`);
         currentStorage = '[]';
         return undefined;
       });
@@ -145,7 +145,8 @@ describe('StorageService Race Condition Prevention', () => {
       expect(operationOrder).toEqual([
         'save:1chats', // First create
         'save:2chats', // Second create
-        'clear', // Clear all
+        'clear:@chat_dns_chats', // Clear primary storage
+        'clear:@chat_dns_chats_backup', // Clear corruption backup
       ]);
 
       // Final state should be empty (cleared)

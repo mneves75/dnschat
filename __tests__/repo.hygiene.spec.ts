@@ -109,7 +109,7 @@ describe("repo hygiene", () => {
     expect(offenders).toEqual([]);
   });
 
-  it("does not publish local release identifiers in markdown docs", () => {
+  it("does not publish local release identifiers in public docs", () => {
     expect(() => {
       execSync("node scripts/check-public-redaction.js", { encoding: "utf8" });
     }).not.toThrow();

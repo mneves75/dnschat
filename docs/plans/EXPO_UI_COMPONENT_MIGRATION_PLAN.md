@@ -4,14 +4,18 @@ Reviewed on: 2026-05-26
 
 ## Implementation status
 
-Status: implemented on 2026-05-26.
+Status: partially implemented on 2026-05-26; revised on 2026-05-27 after
+TestFlight startup-crash evidence.
 
 - Message long-press actions now use `src/components/platform/NativeMenu.tsx`,
   backed by `@expo/ui/community/menu` on native platforms and an accessible RN
   fallback on web.
-- Bottom sheets now use `src/components/platform/NativeBottomSheet.tsx` behind
-  the existing `GlassBottomSheet`, `GlassActionSheet`, and
-  `useGlassBottomSheet` API.
+- Bottom sheets were rolled back to the React Native `Modal` implementation in
+  `src/components/glass/GlassBottomSheet.tsx`. The local
+  `NativeBottomSheet` adapter was removed because the build 47 crash evidence
+  pointed at an early React Native fatal path after the Expo UI bottom-sheet
+  migration, and hidden per-row native sheet mounts made the startup surface too
+  broad for release.
 - Direct app dependencies on `@react-native-menu/menu` and
   `react-native-gesture-handler` were removed. `react-native-gesture-handler`
   remains available transitively through Expo Router.
@@ -28,11 +32,13 @@ Status: implemented on 2026-05-26.
   states and close Expo UI sheets through the native close control when AXe
   option-tap dismissal is not exposed.
 - Follow-up hardening on 2026-05-26 localized the web menu fallback close
-  affordance, added adapter behavior tests for `NativeMenu` and
-  `NativeBottomSheet`, documented Expo UI's shared native dismissal switch, and
-  fixed action sheet keys to avoid duplicate-label collisions. Verification:
-  focused migration tests, `bunx tsc --noEmit`, `git diff --check`,
-  `bun run verify:all`, native DNS module tests, and gitleaks.
+  affordance, added adapter behavior tests, documented Expo UI's shared native
+  dismissal switch, and fixed action sheet keys to avoid duplicate-label
+  collisions. The 2026-05-27 crash review removed the bottom-sheet adapter and
+  replaced those tests with a policy that prevents `@expo/ui/community/bottom-sheet`
+  from being mounted before a sheet is opened. Verification: focused migration
+  tests, `bun run typecheck`, `git diff --check`, `bun run verify:all`, native
+  DNS module tests, and gitleaks.
 
 ## Decision
 
@@ -88,7 +94,7 @@ Better-fit migration targets:
 | Current surface | Current implementation | Expo UI target | Decision |
 | --- | --- | --- | --- |
 | Message long-press actions | `@react-native-menu/menu` in `src/components/MessageBubble.tsx` | `@expo/ui/community/menu` | Migrate native, keep a web fallback because Expo UI menu web actions do not fire. |
-| DNS server/about/support sheets | Custom `GlassBottomSheet` in `src/components/glass/GlassBottomSheet.tsx` | `@expo/ui/community/bottom-sheet` through a local adapter | Migrate. Current code reimplements modal presentation, drag, backdrop, and sheet sizing. |
+| DNS server/about/support sheets | Custom `GlassBottomSheet` in `src/components/glass/GlassBottomSheet.tsx` | None for the current release | Do not migrate for this release. The Expo UI bottom-sheet adapter widened the startup crash surface before real-device proof was available. Revisit only with a dedicated physical-device smoke plan. |
 | Future picker-like selections | Custom sheet rows in `GlassSettings.tsx` | Drop-in or universal `Picker` only where the wheel/dropdown UX fits | Defer until the sheet migration is stable; picker may lose descriptive row copy. |
 
 Not better as an immediate migration:
@@ -111,18 +117,10 @@ Create a small adapter layer before changing call sites:
   - Web: keep an accessible RN fallback so copy/share actions still work.
   - Normalize `NativeActionEvent` handling so `MessageBubble` does not depend
     on package-specific event types.
-- `src/components/platform/NativeBottomSheet.tsx`
-  - Wrap `@expo/ui/community/bottom-sheet`.
-  - Preserve the existing `visible`, `onClose`, `title`, `subtitle`, `height`,
-    `showCloseButton`, `dragToDismiss`, and `testID` contract where possible.
-  - Map `height` to `snapPoints`.
-  - Map `dragToDismiss` to `enablePanDownToClose`.
-  - Keep RN children inside `BottomSheetView`.
-  - Prefer native sheet background on iOS and Android; only add custom glass
-    content inside the sheet when visual QA proves it improves the result.
-
-Adapters are required so Expo UI can be removed or downgraded without rewriting
-feature screens again.
+The bottom-sheet adapter is intentionally absent. Any future attempt to use
+`@expo/ui/community/bottom-sheet` must be isolated behind the existing
+`GlassBottomSheet` API, must avoid mounting hidden native sheets for every list
+row, and must ship only after simulator plus physical-device launch proof.
 
 ## Execution phases
 
@@ -174,6 +172,8 @@ the adapter; no data migration is involved.
 
 ### Phase 2: bottom sheet replacement
 
+Status: rolled back. Do not execute in the current release lane.
+
 1. Add `NativeBottomSheet.tsx` adapter behind the existing `GlassBottomSheet`
    public API.
 2. Replace the internals of `src/components/glass/GlassBottomSheet.tsx` with
@@ -198,22 +198,24 @@ the adapter; no data migration is involved.
    - test IDs and accessibility labels
    - bilingual title/subtitle copy
 
-Validation:
+Validation required before this phase can be reopened:
 
 - `bunx tsc --noEmit`
 - `bun run test -- --runTestsByPath __tests__/settings*.spec.ts`
 - `bun run e2e:axe:doctor`
 - `bun run e2e:axe:release` when simulator automation is available
+- Physical-device launch proof on iOS before TestFlight upload.
 - Manual runtime proof on iOS and Android for each sheet listed above.
 - Web preview proof with `bun run web` because the Expo UI bottom sheet uses a
   web drawer implementation.
 
-Rollback: switch `GlassBottomSheet` export back to the current implementation.
-Keep the adapter isolated until the runtime proof is green.
+Rollback already happened on 2026-05-27: `GlassBottomSheet` uses React Native
+`Modal`, `Animated`, and local accessibility semantics again; the native adapter
+file and tests were removed.
 
 ### Phase 3: dependency cleanup
 
-After Phases 1 and 2 pass:
+After Phase 1 passes and Phase 2 remains rolled back:
 
 1. Remove `@react-native-menu/menu`.
 2. Check whether `react-native-gesture-handler` is still needed outside the

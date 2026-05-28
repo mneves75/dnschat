@@ -6,8 +6,13 @@ import {
   TouchableOpacity,
   useColorScheme,
 } from "react-native";
-import { useTranslation } from "../i18n";
 import { devWarn } from "../utils/devLog";
+
+const FALLBACK_COPY = {
+  title: "Something went wrong",
+  unknownError: "An unexpected error occurred.",
+  reset: "Reset",
+};
 
 interface Props {
   children: React.ReactNode;
@@ -58,7 +63,6 @@ interface ErrorFallbackProps {
 function ErrorFallback({ error, onRetry }: ErrorFallbackProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
-  const { t } = useTranslation();
 
   return (
     <View
@@ -70,7 +74,7 @@ function ErrorFallback({ error, onRetry }: ErrorFallbackProps) {
       <Text
         style={[styles.title, isDark ? styles.darkTitle : styles.lightTitle]}
       >
-        {t("common.errorTitle")}
+        {FALLBACK_COPY.title}
       </Text>
       <Text
         style={[
@@ -78,7 +82,7 @@ function ErrorFallback({ error, onRetry }: ErrorFallbackProps) {
           isDark ? styles.darkMessage : styles.lightMessage,
         ]}
       >
-        {error?.message || t("common.unknownError")}
+        {error?.message || FALLBACK_COPY.unknownError}
       </Text>
       <TouchableOpacity
         style={[
@@ -87,7 +91,7 @@ function ErrorFallback({ error, onRetry }: ErrorFallbackProps) {
         ]}
         onPress={onRetry}
         accessibilityRole="button"
-        accessibilityLabel={t("common.reset")}
+        accessibilityLabel={FALLBACK_COPY.reset}
       >
         <Text
           style={[
@@ -95,7 +99,7 @@ function ErrorFallback({ error, onRetry }: ErrorFallbackProps) {
             isDark ? styles.darkRetryButtonText : styles.lightRetryButtonText,
           ]}
         >
-          {t("common.reset")}
+          {FALLBACK_COPY.reset}
         </Text>
       </TouchableOpacity>
     </View>

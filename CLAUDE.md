@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What is DNSChat
 
-A React Native (Expo dev-client) chat app that sends short prompts as DNS TXT queries to LLM servers and renders responses. Uses React Native 0.85.x, Expo SDK 56.0.5, React 19.2.3, TypeScript 6.x.
+A React Native Expo app that sends short prompts as DNS TXT queries to LLM servers and renders responses. Uses React Native 0.85.x, Expo SDK 56.0.5, React 19.2.3, TypeScript 6.x.
 
 **Default DNS Server**: `llm.pieter.com:53` (by @levelsio)
 **Fallback Server**: `ch.at:53` (currently offline)
@@ -30,7 +30,7 @@ A React Native (Expo dev-client) chat app that sends short prompts as DNS TXT qu
 
 ```bash
 # Development
-bun run start       # Expo dev-client server
+bun run start       # Expo development server
 bun run ios         # Build and run iOS
 bun run android     # Build and run Android (auto-selects Java 17)
 bun run web         # Web preview (uses Mock DNS)
@@ -217,7 +217,7 @@ GitHub Actions (`.github/workflows/ci.yml`) runs on push to main and PRs:
 
 ## Platform Notes
 
-**iOS**: Requires Xcode 26.4+, iOS 16.4+ target. Device builds need a local signing team/profile, but the repo keeps `DEVELOPMENT_TEAM` empty for public portability. The current TestFlight release target is version `4.0.16` build `47`; signed App Store archive/export, upload, and validation evidence must be collected before describing the build as distributed. Internal App Store Connect IDs, tester group names, device names, and local artifact paths belong in private release notes, not public docs. `xcodebuild test` is not a gate yet because the `DNSChat` scheme has no XCTest bundles.
+**iOS**: Requires Xcode 26.4+, iOS 16.4+ target. Device builds need a local signing team/profile, but the repo keeps `DEVELOPMENT_TEAM` empty for public portability. The current TestFlight release target is version `4.0.17` build `48`; signed App Store archive/export, upload, and validation evidence must be collected before describing the build as distributed. Internal App Store Connect IDs, tester group names, device names, and local artifact paths belong in private release notes, not public docs. `xcodebuild test` is not a gate yet because the `DNSChat` scheme has no XCTest bundles.
 
 If a freshly imported distribution certificate makes `codesign` hang during `[CP] Embed Pods Frameworks`, isolate signing in a temporary or local build keychain, unlock it, set its key partition list, put it first in `security list-keychains`, and pass `OTHER_CODE_SIGN_FLAGS='--keychain <keychain path>'` to `xcodebuild archive`. Do not commit certificates, private keys, `.p12` files, provisioning profiles, or App Store Connect keys. Keep exact device, signing, tester-group, local-path, and App Store Connect evidence in private notes outside git; public docs must follow `docs/public-release-redaction.md`.
 

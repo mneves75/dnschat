@@ -112,8 +112,15 @@ export function Logs() {
           text: t("screen.logs.alerts.clearConfirm"),
           style: "destructive",
           onPress: async () => {
-            await DNSLogService.clearLogs();
-            setLogs([]);
+            try {
+              await DNSLogService.clearLogs();
+              setLogs([]);
+            } catch {
+              Alert.alert(
+                t("screen.logs.alerts.clearErrorTitle"),
+                t("screen.logs.alerts.clearErrorMessage"),
+              );
+            }
           },
         },
       ],

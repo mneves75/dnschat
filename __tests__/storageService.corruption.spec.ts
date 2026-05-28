@@ -239,4 +239,13 @@ describe("StorageService Corruption Handling", () => {
       expect(error.cause).toBe(cause);
     });
   });
+
+  describe("clearAllChats", () => {
+    it("removes primary chat storage and corrupted chat backups", async () => {
+      await StorageService.clearAllChats();
+
+      expect(mockAsyncStorage.removeItem).toHaveBeenCalledWith("@chat_dns_chats");
+      expect(mockAsyncStorage.removeItem).toHaveBeenCalledWith("@chat_dns_chats_backup");
+    });
+  });
 });

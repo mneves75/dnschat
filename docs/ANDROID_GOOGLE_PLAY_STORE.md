@@ -4,7 +4,7 @@ Complete step-by-step guide for publishing DNSChat to the Google Play Store.
 
 **App**: DNSChat
 **Package**: `<ANDROID_PACKAGE>`
-**Current Version**: 4.0.16
+**Current Version**: 4.0.17
 
 ---
 
@@ -323,11 +323,11 @@ See [ANDROID_RELEASE.md](./ANDROID_RELEASE.md) for signing configuration.
    - **Upload** new AAB
 4. Add release notes:
    ```
-   What's new in v4.0.16:
-   - Added Expo UI-backed menu and bottom-sheet adapter hardening
-   - Fixed React Doctor findings and reached 100/100 for app and native workspaces
-   - Added regression coverage for accessibility, native UI fallbacks, and DNS transport truthfulness
-   - Kept Expo SDK 56.0.5 / React Native 0.85.3 / React 19.2.3 aligned
+   What's new in v4.0.17:
+   - Hardened startup after build 47 crash evidence
+   - Removed dev-client release resources and rolled sheets back to safer modals
+   - Fixed stale chat links, log persistence handling, and local-data cleanup
+   - Kept React Doctor 100/100 for app and native workspaces
    ```
 5. Click **"Review release"**
 6. Set rollout percentage (start with 10-20% recommended)
@@ -437,6 +437,7 @@ Before submitting for review, verify:
 
 | Version | Date | Notes |
 |---------|------|-------|
+| 4.0.17 | 2026-05-28 | Startup crash hardening, dev-client removal, bottom-sheet rollback, persistence and UI fixes |
 | 4.0.16 | 2026-05-27 | Expo UI adapter hardening, React Doctor 100/100, accessibility and DNS transport regression coverage |
 | 4.0.15 | 2026-05-24 | Main chat list scroll fix; encrypted-key, DNS logging, Liquid Glass, and release-policy regression coverage |
 | 4.0.14 | 2026-05-22 | Expo SDK 56.0.4 / React Native 0.85.3 / React 19.2.3 / TypeScript 6.0 baseline upgrade; iOS deployment target raised to 16.4; DNS wire-format module extracted |

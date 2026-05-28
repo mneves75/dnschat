@@ -256,7 +256,7 @@ export const ptBR = {
       },
       ready: {
         title: "Tudo Pronto",
-        description: "Agora você sabe como usar o DNS Chat e tem configurações otimizadas para sua rede. Comece a conversar e experimente a magia das conversas via DNS!",
+        description: "Agora você sabe como o DNS Chat envia mensagens curtas por DNS e onde ajustar os transportes. Comece uma conversa quando estiver pronto.",
         button: "Começar a Conversar",
       },
     },
@@ -268,6 +268,14 @@ export const ptBR = {
       emptyState: {
         title: "Comece uma conversa!",
         description: "Envie uma mensagem para iniciar o chat com o assistente de IA.",
+      },
+      missing: {
+        navigationTitle: "Conversa não encontrada",
+        title: "Conversa não encontrada",
+        description:
+          "Esta conversa não está mais neste dispositivo. Você pode voltar para suas conversas ou iniciar uma nova.",
+        startNew: "Nova conversa",
+        backToChats: "Voltar para conversas",
       },
       messageActions: {
         copy: "Copiar",
@@ -385,6 +393,8 @@ export const ptBR = {
         clearTitle: "Limpar logs",
         clearMessage: "Tem certeza de que deseja limpar todos os logs DNS?",
         clearConfirm: "Limpar",
+        clearErrorTitle: "Não foi possível limpar os logs",
+        clearErrorMessage: "Os logs DNS não puderam ser removidos do armazenamento local. Tente novamente.",
       },
       accessibility: {
         expandRow: "Mostrar detalhes da consulta DNS",
@@ -459,7 +469,7 @@ export const ptBR = {
             "Exclui todos os chats e logs DNS armazenados localmente neste dispositivo",
         },
         development: {
-          title: "Desenvolvimento",
+          title: "Tour do app",
           resetOnboardingTitle: "Redefinir onboarding",
           resetOnboardingSubtitle: "Exibir o tour novamente",
         },
@@ -552,13 +562,13 @@ export const ptBR = {
           title: "Sobre",
           appVersionTitle: "Versão do app",
           appVersionSubtitle: "DNSChat v{{version}}",
-          latestBadge: "Atual",
+          latestBadge: "Instalada",
           githubTitle: "Repositório no GitHub",
           githubSubtitle: "Veja o código-fonte e contribua",
           shareTitle: "Compartilhar DNSChat",
           shareSubtitle: "Divulgue este aplicativo",
           shareMessage:
-            "Conheça o DNSChat — converse via DNS! Uma forma única de comunicar usando consultas TXT.",
+            "Conheça o DNSChat — um experimento com consultas DNS TXT para prompts curtos de IA.",
         },
         advanced: {
           title: "Avançado",

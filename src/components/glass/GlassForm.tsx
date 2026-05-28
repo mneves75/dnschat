@@ -17,7 +17,7 @@ import {
   Platform,
 } from "react-native";
 import { useRouter } from "expo-router";
-import type { ViewStyle, StyleProp } from "react-native";
+import type { AccessibilityState, ViewStyle, StyleProp } from "react-native";
 import {
   SafeAreaView,
   useSafeAreaInsets,
@@ -83,6 +83,8 @@ interface GlassFormItemProps {
   accessibilityLabel?: string;
   /** Accessibility hint for screen readers */
   accessibilityHint?: string;
+  /** Accessibility state for selectable rows */
+  accessibilityState?: AccessibilityState;
 }
 
 interface GlassFormLinkProps extends GlassFormItemProps {
@@ -151,6 +153,7 @@ export const GlassForm: React.FC<GlassFormProps> = ({
   const contentPaddingBottom = Math.max(insets.bottom, 24);
   const contentStyle = [
     styles.scrollContent,
+    Platform.OS === "web" && styles.webContentWidth,
     { paddingBottom: contentPaddingBottom },
     contentContainerStyle,
   ].filter(Boolean) as ViewStyle[];
@@ -164,7 +167,7 @@ export const GlassForm: React.FC<GlassFormProps> = ({
       <ScrollView
         style={styles.scrollContainer}
         contentInsetAdjustmentBehavior="automatic"
-        showsVerticalScrollIndicator={false}
+        showsVerticalScrollIndicator={Platform.OS === "web"}
         contentContainerStyle={contentStyle}
         nestedScrollEnabled={nestedScrollEnabled}
       >
@@ -252,6 +255,7 @@ export const GlassFormItem: React.FC<GlassFormItemProps> = ({
   testID,
   accessibilityLabel,
   accessibilityHint,
+  accessibilityState,
 }) => {
   const colors = useGlassColors();
   const { triggerSelectionFeedback } = useHapticFeedback();
@@ -319,7 +323,7 @@ export const GlassFormItem: React.FC<GlassFormItemProps> = ({
         accessibilityRole="button"
         accessibilityLabel={accessibilityLabel ?? title}
         accessibilityHint={accessibilityHint ?? subtitle}
-        accessibilityState={{ disabled }}
+        accessibilityState={{ ...accessibilityState, disabled }}
       >
         {({ pressed }) =>
           renderContent(
@@ -383,6 +387,11 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingBottom: 24,
+  },
+  webContentWidth: {
+    width: "100%",
+    maxWidth: 860,
+    alignSelf: "center",
   },
   titleContainer: {
     paddingHorizontal: 20,

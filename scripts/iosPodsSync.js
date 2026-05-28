@@ -44,9 +44,6 @@ function getInstalledPackageVersion(packageName, projectRoot) {
 
 function defaultPodSyncTargets() {
   return [
-    { packageName: "expo-dev-launcher", podName: "expo-dev-launcher" },
-    { packageName: "expo-dev-client", podName: "expo-dev-client" },
-    { packageName: "expo-dev-menu", podName: "expo-dev-menu" },
     { packageName: "expo", podName: "Expo" },
     { packageName: "expo-modules-core", podName: "ExpoModulesCore" },
   ];

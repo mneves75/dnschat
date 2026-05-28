@@ -1,6 +1,6 @@
 # Installation
 
-This repo builds DNSChat `4.0.16` (React Native `0.85.x`, Expo SDK `56.0.5`).
+This repo builds DNSChat `4.0.17` (React Native `0.85.x`, Expo SDK `56.0.5`).
 
 Prereqs:
 
@@ -27,7 +27,7 @@ Notes:
 ## Run
 
 ```bash
-# Dev server (Expo dev-client)
+# Dev server
 bun run start
 
 # iOS (Expo run:ios)
@@ -49,8 +49,7 @@ bun run web
 - Simulator builds do not require code signing.
 - Device builds require a local signing team/profile (this repo keeps `DEVELOPMENT_TEAM` empty for public distribution).
 - For a full physical-device install, build and install the compiled native app.
-  Expo Go is not a valid substitute because DNSChat depends on native modules
-  and `expo-dev-client`.
+  Expo Go is not a valid substitute because DNSChat depends on native modules.
 - Keep device names, device identifiers, local user paths, profile names,
   certificate IDs, team IDs, and tester group names out of public docs. Use
   placeholders in runbooks and keep exact release evidence in private notes.
@@ -126,7 +125,7 @@ xcrun devicectl device install app \
   <DERIVED_DATA>/Build/Products/Debug-iphoneos/DNSChat.app
 ```
 
-Latest physical-device evidence: the compiled Expo dev-client app installed on a
+Latest physical-device evidence: the compiled native app installed on a
 physical device for version `4.0.8` build `36`. A CLI launch can fail with
 `SBMainWorkspace` reason `Locked` when the device is locked; that is not an
 install failure.
@@ -134,7 +133,7 @@ install failure.
 Latest AXe simulator release evidence: `2026-05-17`, version `4.0.13` build
 `43`, 10 feature groups passed in one owned release-simulator run.
 
-Current signed TestFlight target: version `4.0.16` build `47`. The release lane
+Current signed TestFlight target: version `4.0.17` build `48`. The release lane
 archives, exports, uploads, waits for processing, and validates TestFlight
 before the build is described as distributed. App Store Connect identifiers,
 signing identifiers, tester group names, local paths, and device identifiers are

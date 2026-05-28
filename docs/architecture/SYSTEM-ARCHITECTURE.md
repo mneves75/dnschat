@@ -1,6 +1,6 @@
 # System architecture
 
-DNSChat is a React Native app (Expo dev-client) that turns a short prompt into a
+DNSChat is a React Native Expo app that turns a short prompt into a
 DNS TXT query and renders the TXT response as chat output.
 
 Current stack (from `package.json`):

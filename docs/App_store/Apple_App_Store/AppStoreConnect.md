@@ -79,23 +79,24 @@ AI,chat,DNS,assistant,local,native,tech,innovation,queries,networking
 
 ---
 
-## What's New (Release Notes v4.0.16)
+## What's New (Release Notes v4.0.17)
 
-EXPO UI ADAPTERS AND REACT DOCTOR CLEANUP
+STARTUP CRASH HARDENING AND TESTFLIGHT CLEANUP
 
-- Added native menu and bottom-sheet adapter hardening with explicit web and test fallbacks.
-- Fixed React Doctor findings and reached 100/100 for both app and native module workspaces.
-- Added regression coverage for accessibility actions, DNS transport truthfulness, and native UI fallback behavior.
-- Kept the Expo SDK 56, React Native 0.85.3, React 19.2.3, and TypeScript 6.0 baseline aligned.
+- Removed dev-client release resources and rolled settings/chat sheets back to a safer modal implementation after build 47 startup-crash evidence.
+- Fixed startup recovery, stale chat links, log persistence failure handling, and local-data cleanup.
+- Improved desktop web width, dark-mode diagnostic text, language selection state, and onboarding copy.
+- Kept React Doctor at 100/100 for both app and native module workspaces.
 
-## TestFlight What to Test (v4.0.16 build 47)
+## TestFlight What to Test (v4.0.17 build 48)
 
 - Complete onboarding from a fresh install and confirm the app lands on the chat list.
-- Open message/chat/log/settings menus and confirm menu actions remain reachable on supported native platforms and fall back cleanly elsewhere.
-- Open bottom sheets from settings and chat actions and confirm dismissal, accessibility labels, and hit targets behave correctly.
+- Open message/chat/log/settings menus and confirm actions remain reachable on supported native platforms and fall back cleanly elsewhere.
+- Open settings and chat sheets and confirm React Native modal dismissal, accessibility labels, and hit targets behave correctly.
+- Open a stale chat deep link and confirm the conversation-not-found state appears instead of a blank chat.
 - Send short prompts over the default DNS service and confirm responses render without transport errors.
 - Confirm DNS failures, invalid settings, and unsupported server choices fail closed without exposing prompt text or TXT response contents.
-- Type in a long chat thread and confirm the final message remains visible above the composer as the keyboard/input inset changes.
+- Type in a long chat thread and confirm new messages follow the bottom while manual scrollback is not forced down by background updates.
 - Open onboarding/help, Settings, and About external links and confirm allowed HTTPS and email destinations open normally.
 - Open Logs and confirm DNS attempts, fallback methods, and failures are visible without exposing prompt text or TXT response contents.
 - Check Settings, About, Profile, and language/accessibility labels in English and Portuguese.
@@ -143,7 +144,7 @@ Validated screenshot sets currently available in App Store Connect:
 ### Bundle Information
 
 - **Bundle ID**: `<BUNDLE_ID>`
-- **Version**: `4.0.16`
+- **Version**: `4.0.17`
 - **Build Number**: 47 (sync-versions)
 - **App Store Connect internal IDs**: intentionally omitted from public docs; keep exact IDs in private release notes.
 - **Minimum iOS Version**: 16.4
@@ -302,4 +303,4 @@ No user account is required. The app does not require app-owned backend infrastr
 
 ---
 
-_Updated for DNS Chat v4.0.16 build 47 - Expo UI adapter hardening and React Doctor cleanup_
+_Updated for DNS Chat v4.0.17 build 48 - startup crash hardening and TestFlight cleanup_

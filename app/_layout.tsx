@@ -41,17 +41,30 @@ function RootLayoutContent() {
     ],
   );
   const [hasSettledInitialRoute, setHasSettledInitialRoute] = React.useState(false);
+  const [hasInitializedLogs, setHasInitializedLogs] = React.useState(false);
   const routeMatchesExpectation =
     (!hasCompletedOnboarding && segments[0] === "onboarding") ||
     (hasCompletedOnboarding && segments[0] !== "onboarding");
 
   // Effect: keep the splash screen visible until the initial onboarding route is settled.
   React.useEffect(() => {
-    if (!hasSettledInitialRoute && !loading && rootNavigationState?.key && routeMatchesExpectation) {
+    if (
+      !hasSettledInitialRoute &&
+      !loading &&
+      hasInitializedLogs &&
+      rootNavigationState?.key &&
+      routeMatchesExpectation
+    ) {
       setHasSettledInitialRoute(true);
       SplashScreen.hideAsync().catch(() => {});
     }
-  }, [hasSettledInitialRoute, loading, rootNavigationState?.key, routeMatchesExpectation]);
+  }, [
+    hasInitializedLogs,
+    hasSettledInitialRoute,
+    loading,
+    rootNavigationState?.key,
+    routeMatchesExpectation,
+  ]);
 
   // Effect: enforce onboarding flow based on completion state.
   React.useEffect(() => {
@@ -75,6 +88,8 @@ function RootLayoutContent() {
   React.useEffect(() => {
     DNSLogService.initialize().catch(() => {
       // Non-fatal: logs viewer will still function in-memory
+    }).finally(() => {
+      setHasInitializedLogs(true);
     });
   }, []);
 
