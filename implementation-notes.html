@@ -42,6 +42,108 @@
   <p><strong>Stop condition:</strong> no known critical/high issues remain; medium findings are either fixed or explicitly justified; strongest local checks have fresh outcomes; browser/runtime evidence is captured for user-visible frontend changes when feasible.</p>
 
   <hr />
+  <h2>Review Pass &mdash; 2026-05-31 (v4.0.18, build 51 &rarr; 52)</h2>
+  <p>
+    Fresh full review (frontend UI/UX, source correctness/architecture, security/privacy,
+    state/data integrity, dependencies/config/tests) on top of the 2026-05-28 pass. Method:
+    direct deep reads of the highest-risk surfaces plus delegated review agents. Background
+    review-agent fan-out was intermittently rate-limited server-side, so the security/correctness
+    surfaces were reviewed directly in the main session; the focused fix was independently
+    approved by a code-reviewer agent.
+  </p>
+  <p>
+    <strong>Result: 0 critical, 0 high, 1 confirmed low/medium fixed.</strong> The DNS pipeline
+    (RFC 5452 response validation, secure-RNG-with-production-throw, max-response-size guard,
+    socket cleanup via settled-flags, multipart dup/conflict detection), AES-GCM storage,
+    settings migration (v1..v5), SHA-256 log redaction (query + response + chat title),
+    provider wiring, and native&harr;JS constant parity (maxLabelLength=63, allowlist) were all
+    re-verified as sound.
+  </p>
+
+  <h3>Findings &amp; resolutions</h3>
+  <table>
+    <thead><tr><th>Severity</th><th>Finding</th><th>Resolution</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="status">Low&ndash;Med</td>
+        <td>
+          <code>SkeletonMessage.tsx:108</code> hardcoded <code>maxWidth: "75%"</code> while the
+          real <code>MessageBubble</code> uses <code>useResponsiveLayout().messageMaxWidth</code>
+          (tablet <code>60%</code>, desktop <code>560</code>). On tablet/desktop the loading
+          placeholder was wider than the bubble that replaced it &rarr; visible layout shift;
+          also violates the documented chat-content width rule.
+        </td>
+        <td>
+          Applied <code>{ maxWidth: messageMaxWidth }</code> inline (mirrors
+          <code>MessageBubble</code>), removed the hardcoded value. Added behavioral regression
+          test <code>__tests__/skeletonMessage.responsiveWidth.spec.tsx</code>. Code-reviewer:
+          <strong>APPROVE</strong>.
+        </td>
+      </tr>
+      <tr>
+        <td class="status">Justified non-fix</td>
+        <td>
+          Skeletons derive dark mode via <code>palette.textPrimary === "#FFFFFF"</code> (coupling
+          to a literal).
+        </td>
+        <td>
+          Left as-is: high-contrast mode does not alter <code>textPrimary</code> (stays
+          <code>#FFFFFF</code>/<code>#000000</code>), so it is correct today; the idiom is shared
+          across several skeleton files and rewriting all of them would be churn without behavior
+          change. Documented here instead.
+        </td>
+      </tr>
+      <tr>
+        <td class="status">Justified non-fix</td>
+        <td>
+          <code>GlassBottomSheet</code> defines its own hardcoded action-color object rather than
+          reading the palette, so it does not respond to high-contrast.
+        </td>
+        <td>
+          Left as-is: values match iOS system colors and the sheet already honors reduce-motion;
+          flagged for a future palette-token pass, not a user-blocking defect.
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Verification evidence (2026-05-31)</h3>
+  <ul>
+    <li><code>bun run typecheck</code> &mdash; exit 0.</li>
+    <li><code>bun run lint</code> (ast-grep) &mdash; exit 0.</li>
+    <li><code>bun run test</code> &mdash; 105 suites passed (1 skipped); 873 passed, 13 skipped
+      (up from 871; +1 new regression test; the redundant source-text guard was trimmed per
+      review feedback, keeping the load-bearing behavioral assertion).</li>
+    <li>Dependency posture: security overrides pin transitive deps (xmldom, handlebars,
+      node-forge, ws, postcss, yaml, etc.) to patched ranges; single build-tooling patch
+      (<code>expo-modules-autolinking</code>); <code>DEVELOPMENT_TEAM</code> empty (portability).</li>
+  </ul>
+
+  <h3>Open risks / not done</h3>
+  <ul>
+    <li><strong>expo-doctor patch-version drift (pre-existing, documented blocker)</strong> &mdash;
+      <code>bun run verify:expo-doctor</code> now reports 19/20 (was 19/19 on 2026-05-28). Five
+      Expo SDK packages are a patch behind the installed SDK's required versions:
+      <code>expo</code> (56.0.6 vs ~56.0.8), <code>expo-router</code> (56.2.7 vs ~56.2.8),
+      <code>expo-linking</code> (56.0.12 vs ~56.0.13), <code>expo-build-properties</code>
+      (56.0.15 vs ~56.0.16), <code>@expo/ui</code> (56.0.14 vs ~56.0.15). This is SDK-requirement
+      drift since the last baseline, not caused by this pass (no dependency files changed). Resolving
+      it is a release-affecting dependency bump that needs <code>pod install</code> + a native
+      rebuild/verification (and may hit Bun <code>minimumReleaseAge</code>), so it is intentionally
+      deferred to its own change rather than bundled into this fix. All other <code>verify:all</code>
+      gates pass (public-redaction, sdk-alignment, typed-routes, typecheck, dnsresolver-sync,
+      ios-pods, react-compiler, android, android-16kb, lint, test).</li>
+    <li><strong>Native build / archive / TestFlight upload not run this pass</strong> &mdash;
+      build <code>52</code> is bumped locally but credential-gated signed archive/export/upload
+      (the app's "staging" = TestFlight internal track) was not performed. Build <code>52</code>
+      must be archived, exported, uploaded, and validated before it can be described as
+      distributed.</li>
+    <li>iOS/Android runtime UI verification (simulator screenshots) of the skeleton width across
+      breakpoints was not captured this pass; the change is covered by a deterministic behavioral
+      unit test and a 1:1 mirror of the already-shipped <code>MessageBubble</code> pattern.</li>
+  </ul>
+
+  <hr />
   <h2>Review Pass &mdash; 2026-05-28 (v4.0.18, build 51)</h2>
   <p>
     Five-dimension adversarial review (UI/UX, correctness/architecture, security/privacy, performance,

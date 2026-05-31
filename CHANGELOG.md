@@ -6,6 +6,15 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+### Fixed
+
+- `SkeletonMessage` now adopts the responsive `useResponsiveLayout().messageMaxWidth`
+  (phone `75%`, tablet `60%`, desktop `560`) instead of a hardcoded `maxWidth: "75%"`.
+  Previously the loading placeholder was wider than the `MessageBubble` that replaced
+  it on tablet/desktop, causing a visible layout shift when a response arrived. Now
+  matches the documented chat-content width rule and `MessageBubble`'s pattern. Build
+  `51` -> `52`.
+
 ## [4.0.18] - 2026-05-28
 
 ### Added
