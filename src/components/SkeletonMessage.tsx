@@ -9,6 +9,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { useImessagePalette } from "../ui/theme/imessagePalette";
 import { LiquidGlassSpacing, getCornerRadius } from "../ui/theme/liquidGlassSpacing";
+import { useResponsiveLayout } from "../ui/hooks/useResponsiveLayout";
 import { shimmerDuration } from "../utils/animations";
 import { useTranslation } from "../i18n";
 
@@ -21,6 +22,7 @@ interface SkeletonMessageProps {
 
 export function SkeletonMessage({ isUser = false }: SkeletonMessageProps) {
   const palette = useImessagePalette();
+  const { messageMaxWidth } = useResponsiveLayout();
   const { t } = useTranslation();
   const shimmer = useSharedValue(0);
   const lineColor = palette.textPrimary === "#FFFFFF"
@@ -54,6 +56,9 @@ export function SkeletonMessage({ isUser = false }: SkeletonMessageProps) {
       style={[
         styles.container,
         isUser ? styles.userContainer : styles.assistantContainer,
+        // Match MessageBubble's responsive width so the loading placeholder and the
+        // rendered message occupy the same footprint (no layout shift on tablet/desktop).
+        { maxWidth: messageMaxWidth },
       ]}
       accessible={true}
       accessibilityLabel={t("components.skeleton.message")}
@@ -105,7 +110,8 @@ const styles = StyleSheet.create({
   container: {
     marginVertical: LiquidGlassSpacing.xxs,
     marginHorizontal: LiquidGlassSpacing.md,
-    maxWidth: "75%",
+    // maxWidth is applied inline from useResponsiveLayout().messageMaxWidth so the
+    // skeleton matches the real MessageBubble footprint across phone/tablet/desktop.
   },
   userContainer: {
     alignSelf: "flex-end",

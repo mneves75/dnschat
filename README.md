@@ -31,7 +31,7 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 
 ## Tech stack
 
-- App version: `4.0.18` (build `51`)
+- App version: `4.0.18` (build `52`)
 - Expo workflow: Expo Router + EAS-compatible native config
 - Expo SDK: `56.0.5`
 - React: `19.2.3`
@@ -206,11 +206,14 @@ Release:
 
 ## Current verification baseline
 
-Last architecture/dependency verification: `2026-05-28`.
-Last full source/security sweep: `2026-05-28`.
+Last architecture/dependency verification: `2026-05-31`.
+Last full source/security sweep: `2026-05-31`.
 Last AXe simulator E2E feature pass: `2026-05-17` for version `4.0.13` build
 `43`.
-Current iOS/TestFlight release target: version `4.0.18` build `51`.
+Last uploaded/processed TestFlight build: version `4.0.18` build `51`
+(`VALID` on `2026-05-28`). Current local release target: version `4.0.18` build
+`52` (post-review skeleton-width fix; pending a fresh signed archive/export and
+TestFlight upload before it can be described as distributed).
 
 - `npx react-doctor@latest` reports `100 / 100` for both `chat-dns` and
   `@dnschat/dns-native` on `2026-05-27`.
@@ -219,9 +222,9 @@ Current iOS/TestFlight release target: version `4.0.18` build `51`.
   `56` tests passed, `13` skipped).
 - AXe E2E baseline: 10 feature groups passed in one owned release-simulator
   run on `2026-05-17`.
-- Jest baseline on `2026-05-28`: 104 suites passed, 1 skipped; 871 tests
-  passed, 13 skipped (includes 3 new regression tests for the storage date
-  corruption guard and the web-preview encryption-key warning).
+- Jest baseline on `2026-05-31`: 105 suites passed, 1 skipped; 873 tests
+  passed, 13 skipped (adds a regression test asserting `SkeletonMessage` adopts
+  the responsive `messageMaxWidth` instead of a fixed `75%`).
 - `gitleaks detect` on `2026-05-28` reports `no leaks found` across `354`
   scanned commits.
 - `bun audit` on `2026-05-24` reports `No vulnerabilities found`.
@@ -231,9 +234,11 @@ Current iOS/TestFlight release target: version `4.0.18` build `51`.
   Release when code signing is disabled (`CODE_SIGNING_ALLOWED=NO`) on
   `2026-05-24`.
 - Physical-device compiled app install passed.
-- Current signed TestFlight target: `4.0.18` build `51`, uploaded and processed
+- Last signed TestFlight build: `4.0.18` build `51`, uploaded and processed
   to `VALID` in App Store Connect on `2026-05-28` and distributed to the internal
-  tester group. The release lane uses a signed App Store archive/export and App
+  tester group. Build `52` adds the post-review skeleton-width fix and must be
+  re-archived, exported, uploaded, and validated before it is described as
+  distributed. The release lane uses a signed App Store archive/export and App
   Store Connect processing before the build is described as distributed. Internal
   App Store Connect IDs and tester group names are intentionally omitted from
   public docs.
