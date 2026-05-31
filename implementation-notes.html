@@ -119,21 +119,41 @@
       (<code>expo-modules-autolinking</code>); <code>DEVELOPMENT_TEAM</code> empty (portability).</li>
   </ul>
 
+  <h3>Milestone 2 &mdash; Expo SDK patch alignment (2026-05-31, user-authorized)</h3>
+  <p>
+    The expo-doctor patch drift (initially deferred) was bumped at the user's direction. Five Expo
+    SDK packages were aligned to the SDK-required versions:
+    <code>expo</code> 56.0.6&rarr;56.0.8, <code>expo-router</code> 56.2.7&rarr;56.2.8,
+    <code>expo-linking</code> 56.0.12&rarr;56.0.13, <code>expo-build-properties</code>
+    56.0.15&rarr;56.0.16, <code>@expo/ui</code> 56.0.14&rarr;56.0.15.
+  </p>
+  <ul>
+    <li>Bun's global <code>minimumReleaseAge = 604800</code> (7-day supply-chain delay) blocked the
+      fresh patches. Used the AGENTS.md-sanctioned per-command override
+      (<code>bun add --minimum-release-age=0 &lt;exact versions&gt;</code>) for only these packages;
+      the global <code>~/.bunfig.toml</code> policy was NOT weakened.</li>
+    <li>The <code>expo@56.0.8</code> bump pulled <code>expo-modules-autolinking@56.0.14</code>, which
+      ships the Swift-macro-plugin resolution fix upstream (cleaner <code>require.resolve(..., { paths })</code>
+      form). The local <code>expo-modules-autolinking@56.0.13</code> Bun patch therefore became
+      obsolete and was <strong>removed</strong> (patch file deleted, <code>patchedDependencies</code>
+      entry dropped, migration-plan doc updated). Verified the pristine 56.0.14 cache copy already
+      contains the fix.</li>
+    <li>The postinstall hook re-ran <code>pod install</code> (112 pods, complete). <code>verify:ios-pods</code>
+      lockfile-sync check: OK.</li>
+  </ul>
+
+  <h3>Verification evidence (2026-05-31, Milestone 2)</h3>
+  <ul>
+    <li><code>bun run verify:expo-doctor</code> &mdash; <strong>20/20 checks passed, no issues</strong>
+      (was 19/20 before the bump).</li>
+    <li><code>bun run verify:all</code> &mdash; exit 0 (public-redaction, expo-doctor, sdk-alignment,
+      typed-routes, typecheck, dnsresolver-sync, ios-pods, react-compiler, android, android-16kb,
+      lint, test all pass). Jest: 105 suites passed (1 skipped); 872 passed, 13 skipped.</li>
+  </ul>
+
   <h3>Open risks / not done</h3>
   <ul>
-    <li><strong>expo-doctor patch-version drift (pre-existing, documented blocker)</strong> &mdash;
-      <code>bun run verify:expo-doctor</code> now reports 19/20 (was 19/19 on 2026-05-28). Five
-      Expo SDK packages are a patch behind the installed SDK's required versions:
-      <code>expo</code> (56.0.6 vs ~56.0.8), <code>expo-router</code> (56.2.7 vs ~56.2.8),
-      <code>expo-linking</code> (56.0.12 vs ~56.0.13), <code>expo-build-properties</code>
-      (56.0.15 vs ~56.0.16), <code>@expo/ui</code> (56.0.14 vs ~56.0.15). This is SDK-requirement
-      drift since the last baseline, not caused by this pass (no dependency files changed). Resolving
-      it is a release-affecting dependency bump that needs <code>pod install</code> + a native
-      rebuild/verification (and may hit Bun <code>minimumReleaseAge</code>), so it is intentionally
-      deferred to its own change rather than bundled into this fix. All other <code>verify:all</code>
-      gates pass (public-redaction, sdk-alignment, typed-routes, typecheck, dnsresolver-sync,
-      ios-pods, react-compiler, android, android-16kb, lint, test).</li>
-    <li><strong>Native build / archive / TestFlight upload not run this pass</strong> &mdash;
+    <li><strong>Native build / archive / TestFlight upload not run autonomously</strong> &mdash;
       build <code>52</code> is bumped locally but credential-gated signed archive/export/upload
       (the app's "staging" = TestFlight internal track) was not performed. Build <code>52</code>
       must be archived, exported, uploaded, and validated before it can be described as

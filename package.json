@@ -56,7 +56,7 @@
   },
   "dependencies": {
     "@expo/metro-runtime": "~56.0.13",
-    "@expo/ui": "~56.0.14",
+    "@expo/ui": "~56.0.15",
     "@noble/ciphers": "^2.1.1",
     "@noble/hashes": "^2.0.1",
     "@react-native-async-storage/async-storage": "2.2.0",
@@ -64,16 +64,16 @@
     "@types/dns-packet": "^5.6.5",
     "date-fns": "^4.1.0",
     "dns-packet": "^5.6.1",
-    "expo": "~56.0.6",
+    "expo": "~56.0.8",
     "expo-asset": "~56.0.15",
-    "expo-build-properties": "~56.0.15",
+    "expo-build-properties": "~56.0.16",
     "expo-constants": "56.0.16",
     "expo-crypto": "~56.0.4",
     "expo-glass-effect": "~56.0.4",
     "expo-haptics": "~56.0.3",
-    "expo-linking": "~56.0.12",
+    "expo-linking": "~56.0.13",
     "expo-localization": "~56.0.6",
-    "expo-router": "~56.2.7",
+    "expo-router": "~56.2.8",
     "expo-secure-store": "~56.0.4",
     "expo-splash-screen": "~56.0.10",
     "expo-status-bar": "~56.0.4",
@@ -136,8 +136,5 @@
       }
     }
   },
-  "private": true,
-  "patchedDependencies": {
-    "expo-modules-autolinking@56.0.13": "patches/expo-modules-autolinking@56.0.13.patch"
-  }
+  "private": true
 }

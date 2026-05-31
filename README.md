@@ -33,7 +33,7 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 
 - App version: `4.0.18` (build `52`)
 - Expo workflow: Expo Router + EAS-compatible native config
-- Expo SDK: `56.0.5`
+- Expo SDK: `56.0.8`
 - React: `19.2.3`
 - React Native: `0.85.3`
 - TypeScript: `6.0.x`
@@ -217,12 +217,16 @@ TestFlight upload before it can be described as distributed).
 
 - `npx react-doctor@latest` reports `100 / 100` for both `chat-dns` and
   `@dnschat/dns-native` on `2026-05-27`.
-- `bun run typecheck` passes on `2026-05-28`.
+- `bun run typecheck` passes on `2026-05-31`.
+- `bun run verify:expo-doctor` reports `20/20 checks passed, no issues` on
+  `2026-05-31` after the Expo SDK patch alignment (expo `56.0.8`, expo-router
+  `56.2.8`, expo-linking `56.0.13`, expo-build-properties `56.0.16`, @expo/ui
+  `56.0.15`).
 - Native DNS module tests pass on `2026-05-28` (`7` suites passed, `1` skipped;
   `56` tests passed, `13` skipped).
 - AXe E2E baseline: 10 feature groups passed in one owned release-simulator
   run on `2026-05-17`.
-- Jest baseline on `2026-05-31`: 105 suites passed, 1 skipped; 873 tests
+- Jest baseline on `2026-05-31`: 105 suites passed, 1 skipped; 872 tests
   passed, 13 skipped (adds a regression test asserting `SkeletonMessage` adopts
   the responsive `messageMaxWidth` instead of a fixed `75%`).
 - `gitleaks detect` on `2026-05-28` reports `no leaks found` across `354`
