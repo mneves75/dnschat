@@ -22,8 +22,11 @@ TestFlight startup-crash evidence.
 - Android menu icons are local XML assets; iOS menu icons use SF Symbols.
 - `@expo/ui` required the Expo SDK 56 patch package set to stay aligned with
   Expo Doctor.
-- A Bun native patch for `expo-modules-autolinking@56.0.13` keeps Expo Swift
-  macro plugin resolution compatible with Bun's hoisted dependency layout.
+- A Bun native patch for `expo-modules-autolinking@56.0.13` previously kept Expo
+  Swift macro plugin resolution compatible with Bun's hoisted dependency layout.
+  Removed on 2026-05-31: `expo-modules-autolinking@56.0.14` (pulled in by the
+  `expo@56.0.8` SDK patch bump) ships the equivalent macro-plugin resolution
+  upstream, so the patch became obsolete.
 - The iOS pod graph was refreshed for `React-Core-prebuilt` and
   `ReactNativeDependencies` after the SDK 56 package changes.
 - Final validation included `bun run verify:all`, native DNS module tests,

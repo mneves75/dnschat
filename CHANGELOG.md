@@ -15,6 +15,21 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
   matches the documented chat-content width rule and `MessageBubble`'s pattern. Build
   `51` -> `52`.
 
+### Changed
+
+- Aligned five Expo SDK packages to the versions required by the installed SDK so
+  `expo-doctor` returns `20/20`: `expo` `56.0.6`->`56.0.8`, `expo-router`
+  `56.2.7`->`56.2.8`, `expo-linking` `56.0.12`->`56.0.13`, `expo-build-properties`
+  `56.0.15`->`56.0.16`, `@expo/ui` `56.0.14`->`56.0.15`. Installed with a per-command
+  `--minimum-release-age=0` override for only these packages (global Bun supply-chain
+  policy unchanged).
+
+### Removed
+
+- Dropped the obsolete `expo-modules-autolinking@56.0.13` Bun patch. `expo@56.0.8`
+  pulls `expo-modules-autolinking@56.0.14`, which ships the Swift macro-plugin
+  resolution fix upstream, so the local patch was no longer applied or needed.
+
 ## [4.0.18] - 2026-05-28
 
 ### Added
