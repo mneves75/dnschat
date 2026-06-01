@@ -264,6 +264,7 @@ export const enUS = {
       navigationTitle: "Chat",
       errorAlertTitle: "Error",
       errorAlertDismiss: "OK",
+      errorRetry: "Retry",
       placeholder: "Ask me anything...",
       emptyState: {
         title: "Start a conversation!",

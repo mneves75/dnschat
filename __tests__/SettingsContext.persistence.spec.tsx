@@ -3,6 +3,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { act } from "react-test-renderer";
 import { SettingsProvider, useSettings } from "../src/context/SettingsContext";
 import { createWithSuppressedWarnings } from "./utils/reactTestRenderer";
+import { DNSLogService } from "../src/services/dnsLogService";
 
 jest.mock("@react-native-async-storage/async-storage", () => ({
   getItem: jest.fn(),
@@ -163,5 +164,17 @@ describe("SettingsProvider persistence", () => {
       throw new Error("Expected persisted payload after hydration race");
     }
     expect(JSON.parse(lastPayload).enableMockDNS).toBe(true);
+  });
+
+  it("does not persist rejected DNS server input verbatim in settings logs", async () => {
+    const settings = await renderProvider();
+    const rejectedInput = "internal.secret.example";
+
+    await expect(settings.updateDnsServer(rejectedInput)).rejects.toThrow("DNS server not allowed");
+
+    const recordSettingsEvent = DNSLogService.recordSettingsEvent as jest.Mock;
+    const serializedCalls = JSON.stringify(recordSettingsEvent.mock.calls);
+    expect(serializedCalls).toContain("DNS server validation failed");
+    expect(serializedCalls).not.toContain(rejectedInput);
   });
 });

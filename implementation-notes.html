@@ -42,6 +42,84 @@
   <p><strong>Stop condition:</strong> no known critical/high issues remain; medium findings are either fixed or explicitly justified; strongest local checks have fresh outcomes; browser/runtime evidence is captured for user-visible frontend changes when feasible.</p>
 
   <hr />
+  <h2>Review Pass &mdash; 2026-06-01 (active)</h2>
+  <p>
+    Scope locked to <code>&lt;REPO_ROOT&gt;</code> on branch
+    <code>main</code>. Package manager: Bun. Current dirty state includes benchmark/performance
+    edits in <code>modules/dns-native/constants.ts</code>, <code>modules/dns-native/index.ts</code>,
+    <code>src/services/dnsService.ts</code>, <code>src/services/dnsWire.ts</code>, UI/accessibility
+    files, and untracked <code>knip.json</code>; these are treated as existing worktree state and
+    not reverted without evidence.
+  </p>
+  <p>
+    Required goal: full UI/UX, source, security, dependency, tests, docs, React Doctor, version,
+    commit, push, and staging-deploy closure where locally authorized. Claude Code availability,
+    current official framework guidance, and strongest local checks are being verified during this
+    pass. Credential-gated release/deploy lanes will be recorded explicitly if blocked.
+  </p>
+  <h3>Live decisions / blockers</h3>
+  <ul>
+    <li>Using Codex-native review and direct implementation as the main lane; Claude Code design review is available and completed.</li>
+    <li>No new dependencies unless a concrete finding cannot be fixed with existing repo patterns.</li>
+    <li>Official/current guidance checked for React Native reduce-motion APIs and Expo Haptics, plus local modern-web accessibility/forms guidance and JavaScript/React security references.</li>
+    <li>Claude Code design review found no visual-system blocker but flagged toast reduce-motion and no-retry error handling as the highest-leverage fixes.</li>
+  </ul>
+  <h3>Findings &amp; fixes</h3>
+  <ul>
+    <li><strong>Medium UX/accessibility fixed:</strong> <code>src/components/ui/Toast.tsx</code> now uses <code>useMotionReduction()</code> and snaps toast show/hide state instead of running bouncy slide animations when reduced motion is enabled.</li>
+    <li><strong>Medium failure-path UX fixed:</strong> <code>src/navigation/screens/Chat.tsx</code> now gives failed-send toasts a localized <code>Retry</code> action when the failed assistant response can be paired with the preceding user prompt.</li>
+    <li><strong>Security/privacy keep:</strong> existing dirty change in <code>src/components/MessageContent.tsx</code> suppresses markdown images and routes links through the existing <code>openExternalUrl</code> policy helper.</li>
+    <li><strong>Known non-blocking design debt:</strong> message bubble tap feedback, typing indicator animation, Android keyboard refocus, destructive-delete haptic, and chat-list refresh wiring remain polish backlog; none are critical/high release blockers after the shipped failure-path fixes.</li>
+  </ul>
+  <h3>Live validation evidence</h3>
+  <ul>
+    <li><code>bun run test -- --runTestsByPath __tests__/dnsWire.spec.ts __tests__/dnsService.parse.spec.ts __tests__/dnsConstants.spec.ts __tests__/messageContent.policy.spec.ts __tests__/skeletonMessage.responsiveWidth.spec.tsx</code> &mdash; pass, 17 tests.</li>
+    <li><code>bun run test -- --runTestsByPath __tests__/chat.retryToast.spec.ts __tests__/toast.reduceMotion.spec.ts __tests__/i18n.parity.spec.ts</code> &mdash; pass, 4 tests.</li>
+    <li><code>bun run typecheck</code> &mdash; pass after tightening exact optional <code>Toast</code> action props.</li>
+  </ul>
+
+  <h3>React Doctor closure &mdash; 2026-06-01</h3>
+  <p>
+    Baseline <code>npx react-doctor@latest .</code> scored <strong>chat-dns 99/100</strong> and
+    <strong>@dnschat/dns-native 100/100</strong>. The chat-dns gap was caused entirely by Dead Code
+    warnings (54 unused exports, 22 unused files, 1 unused dev dependency). Root cause: the existing
+    <code>react-doctor.config.json</code> ignore overrides targeted the obsolete rule namespaces
+    (<code>react-doctor/*</code>, bare <code>unused-*</code>, <code>knip/*</code>), but react-doctor
+    v0.2.6 emits these under the <code>deslop/*</code> namespace, so none of the intended ignores
+    applied.
+  </p>
+  <ul>
+    <li><strong>Real dead code deleted (prefer-deletion):</strong> verified zero import references
+      repo-wide, then removed 9 stale orphan files &mdash;
+      <code>src/components/ChatListItem.tsx</code>, <code>src/components/InfoIcon.tsx</code>,
+      <code>src/components/icons/LogsIcon.tsx</code>, <code>src/components/icons/SettingsIcon.tsx</code>,
+      <code>src/components/ui/LiquidGlassButton.tsx</code>, <code>src/components/ui/LiquidGlassCard.tsx</code>,
+      <code>src/navigation/screens/Home.tsx</code> (React-Navigation-era screen never wired into Expo
+      Router; only it referenced the two icons), and the unused barrels
+      <code>src/components/onboarding/index.ts</code> and <code>src/ui/hooks/index.ts</code>
+      (consumers import the concrete modules directly). Source file count dropped 262 &rarr; 253.</li>
+    <li><strong>Config namespace corrected (false positives / out-of-scope kept):</strong> added the
+      real <code>deslop/unused-file</code>, <code>deslop/unused-export</code>,
+      <code>deslop/unused-dev-dependency</code> IDs alongside the legacy IDs in the existing per-directory
+      overrides (<code>docs/GUIDELINES-REF/**</code> vendored subtree, <code>plugins/**</code>,
+      <code>test-dns-simple.js</code>, <code>app/** + src/**</code> design-token/util export surfaces,
+      <code>package.json</code>'s <code>@ast-grep/cli</code> dev dep which IS used by the lint script,
+      <code>.omc/**</code>, and the dns-native <code>constants.ts</code>). No detection rule was disabled
+      globally; per-directory granularity is preserved.</li>
+    <li><strong>Result:</strong> re-run reports <strong>chat-dns 100/100 &mdash; &ldquo;No issues found!&rdquo;</strong>
+      and <strong>@dnschat/dns-native 100/100</strong>. The 4 advisory <code>getServerConfig</code>-family
+      unused-export warnings in dns-native predate this pass and do not reduce its score.</li>
+  </ul>
+  <h3>Verification evidence &mdash; 2026-06-01 (React Doctor pass)</h3>
+  <ul>
+    <li><code>npx react-doctor@latest .</code> &mdash; chat-dns 100/100 (no issues), dns-native 100/100.</li>
+    <li><code>npx tsc --noEmit -p tsconfig.json</code> &mdash; 0 errors after deletions.</li>
+    <li><code>bun run lint</code> (ast-grep liquid-glass rules) &mdash; exit 0.</li>
+    <li><code>bun run test</code> &mdash; 107 suites passed (1 skipped), 878 tests passed (13 skipped), 0 failures, 45.5s.</li>
+    <li><code>bun run verify:react-compiler</code> &mdash; 82/82 components compiled, no incompatible libraries.</li>
+  </ul>
+
+  <hr />
   <h2>Review Pass &mdash; 2026-05-31 (v4.0.18, build 51 &rarr; 52)</h2>
   <p>
     Fresh full review (frontend UI/UX, source correctness/architecture, security/privacy,

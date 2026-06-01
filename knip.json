@@ -1,0 +1,33 @@
+{
+  "$schema": "https://unpkg.com/knip@latest/schema.json",
+  "ignore": [
+    "docs/GUIDELINES-REF/**",
+    "plugins/**",
+    "test-dns-simple.js"
+  ],
+  "ignoreExports": [
+    "modules/dns-native/constants.ts",
+    "src/components/DNSLogViewer.tsx",
+    "src/components/EmptyState.tsx",
+    "src/components/layout/Screen.tsx",
+    "src/components/skeletons/ChatListSkeleton.tsx",
+    "src/components/skeletons/LogsSkeleton.tsx",
+    "src/components/skeletons/SettingsSkeleton.tsx",
+    "src/components/skeletons/SkeletonBase.tsx",
+    "src/components/ui/LiquidGlassTextInput.tsx",
+    "src/components/ui/Toast.tsx",
+    "src/constants/appConstants.ts",
+    "src/context/settingsStorage.ts",
+    "src/i18n/translations.ts",
+    "src/navigation/screens/DevLogs.tsx",
+    "src/navigation/screens/Profile.tsx",
+    "src/ui/hooks/useStaggeredList.tsx",
+    "src/ui/theme/liquidGlassSpacing.ts",
+    "src/ui/theme/liquidGlassTypography.ts",
+    "src/utils/animations.ts",
+    "src/utils/dnsErrors.ts"
+  ],
+  "ignoreDependencies": [
+    "@ast-grep/cli"
+  ]
+}

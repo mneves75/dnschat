@@ -47,6 +47,7 @@ import { EmptyState } from "../../components/EmptyState";
 import { ShareService } from "../../services/ShareService";
 import { useSettings } from "../../context/SettingsContext";
 import type { Chat } from "../../types/chat";
+import { Toast } from "../../components/ui/Toast";
 
 // ==================================================================================
 // TYPES
@@ -288,6 +289,7 @@ export function GlassChatList() {
 
   // Track initial load for skeleton display
   const [hasLoadedOnce, setHasLoadedOnce] = React.useState(false);
+  const [visibleError, setVisibleError] = React.useState<string | null>(null);
 
   // Effect: load chat list on first mount and mark first load completion.
   React.useEffect(() => {
@@ -305,13 +307,13 @@ export function GlassChatList() {
   // Effect: surface chat load errors via alert.
   React.useEffect(() => {
     if (!error) return;
-    Alert.alert(t("screen.chat.errorAlertTitle"), error, [
-      {
-        text: t("screen.chat.errorAlertDismiss"),
-        onPress: clearError,
-      },
-    ]);
-  }, [error, t]);
+    setVisibleError(error);
+  }, [error]);
+
+  const handleDismissError = React.useCallback(() => {
+    setVisibleError(null);
+    clearError();
+  }, [clearError]);
 
   const isDark = colorScheme === "dark";
   const [refreshing, setRefreshing] = React.useState(false);
@@ -379,12 +381,13 @@ export function GlassChatList() {
     : t("screen.glassChatList.recent.footerMultiple", { count: chats.length });
 
   return (
-    <Form.List
-      testID="chat-list"
-      navigationTitle={t("screen.glassChatList.navigationTitle")}
-      style={styles.container}
-      contentContainerStyle={styles.scrollContent}
-    >
+    <>
+      <Form.List
+        testID="chat-list"
+        navigationTitle={t("screen.glassChatList.navigationTitle")}
+        style={styles.container}
+        contentContainerStyle={styles.scrollContent}
+      >
       <Animated.View style={animatedStyle}>
         {/* New Chat Section */}
         <Form.Section
@@ -485,8 +488,18 @@ export function GlassChatList() {
             />
           </Form.Section>
         )}
-      </Animated.View>
-    </Form.List>
+        </Animated.View>
+      </Form.List>
+      <Toast
+        visible={Boolean(visibleError)}
+        variant="error"
+        title={t("screen.chat.errorAlertTitle")}
+        message={visibleError ?? ""}
+        duration={6000}
+        onDismiss={handleDismissError}
+        testID="chat-list-error-toast"
+      />
+    </>
   );
 }
 

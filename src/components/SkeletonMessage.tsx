@@ -12,6 +12,7 @@ import { LiquidGlassSpacing, getCornerRadius } from "../ui/theme/liquidGlassSpac
 import { useResponsiveLayout } from "../ui/hooks/useResponsiveLayout";
 import { shimmerDuration } from "../utils/animations";
 import { useTranslation } from "../i18n";
+import { useMotionReduction } from "../context/AccessibilityContext";
 
 interface SkeletonMessageProps {
   /**
@@ -24,6 +25,7 @@ export function SkeletonMessage({ isUser = false }: SkeletonMessageProps) {
   const palette = useImessagePalette();
   const { messageMaxWidth } = useResponsiveLayout();
   const { t } = useTranslation();
+  const { shouldReduceMotion } = useMotionReduction();
   const shimmer = useSharedValue(0);
   const lineColor = palette.textPrimary === "#FFFFFF"
     ? "rgba(255, 255, 255, 0.2)"
@@ -34,6 +36,11 @@ export function SkeletonMessage({ isUser = false }: SkeletonMessageProps) {
 
   // Start shimmer animation on mount
   useEffect(() => {
+    if (shouldReduceMotion) {
+      shimmer.value = 0;
+      return;
+    }
+
     shimmer.value = withRepeat(
       withTiming(1, {
         duration: shimmerDuration,
@@ -42,7 +49,7 @@ export function SkeletonMessage({ isUser = false }: SkeletonMessageProps) {
       -1, // Infinite loop
       false // Don't reverse
     );
-  }, []);
+  }, [shouldReduceMotion, shimmer]);
 
   // Animated shimmer style
   const shimmerStyle = useAnimatedStyle(() => {

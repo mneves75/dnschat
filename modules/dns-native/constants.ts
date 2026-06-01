@@ -61,12 +61,45 @@ export const DNS_SERVERS: DNSServerConfig[] = [
   { host: '1.0.0.1', port: 53, priority: 10, description: 'Cloudflare DNS secondary' },
 ];
 
+const DNS_SERVER_BY_HOST: Record<string, DNSServerConfig> = {
+  'llm.pieter.com': DNS_SERVERS[0] as DNSServerConfig,
+  'ch.at': DNS_SERVERS[1] as DNSServerConfig,
+  '8.8.8.8': DNS_SERVERS[2] as DNSServerConfig,
+  '8.8.4.4': DNS_SERVERS[3] as DNSServerConfig,
+  '1.1.1.1': DNS_SERVERS[4] as DNSServerConfig,
+  '1.0.0.1': DNS_SERVERS[5] as DNSServerConfig,
+};
+const LLM_DNS_SERVERS = [
+  DNS_SERVERS[0],
+  DNS_SERVERS[1],
+] as DNSServerConfig[];
+const DEFAULT_DNS_SERVER_CONFIG = DNS_SERVERS[0] as DNSServerConfig;
+
+const cloneServerConfig = (server: DNSServerConfig): DNSServerConfig => ({
+  ...server,
+});
+
+const cloneNativeSanitizerConfig = (): NativeSanitizerConfig => ({
+  unicodeNormalization: DNS_SANITIZER_CONFIG.unicodeNormalization,
+  spaceReplacement: DNS_SANITIZER_CONFIG.spaceReplacement,
+  maxLabelLength: DNS_SANITIZER_CONFIG.maxLabelLength,
+  allowedServers: [...DNS_SANITIZER_CONFIG.allowedServers],
+  whitespace: { ...DNS_SANITIZER_CONFIG.whitespace },
+  invalidChars: { ...DNS_SANITIZER_CONFIG.invalidChars },
+  dashCollapse: { ...DNS_SANITIZER_CONFIG.dashCollapse },
+  edgeDashes: { ...DNS_SANITIZER_CONFIG.edgeDashes },
+  combiningMarks: { ...DNS_SANITIZER_CONFIG.combiningMarks },
+});
+
 /**
  * Get server configuration by hostname
  */
 export function getServerConfig(host: string): DNSServerConfig | undefined {
-  const normalized = host.toLowerCase().trim().replace(/\.+$/, '');
-  return DNS_SERVERS.find(s => s.host.toLowerCase() === normalized);
+  const direct = DNS_SERVER_BY_HOST[host];
+  if (direct) return cloneServerConfig(direct);
+  const normalized = (host.endsWith('.') ? host.replace(/\.+$/, '') : host).toLowerCase().trim();
+  const server = DNS_SERVER_BY_HOST[normalized];
+  return server ? cloneServerConfig(server) : undefined;
 }
 
 /**
@@ -81,18 +114,14 @@ export function getServerPort(host: string): number {
  * Get the default DNS server configuration
  */
 export function getDefaultServer(): DNSServerConfig {
-  const defaultServer = DNS_SERVERS.find(s => s.isDefault);
-  if (!defaultServer) {
-    throw new Error('No default DNS server configured');
-  }
-  return defaultServer;
+  return cloneServerConfig(DEFAULT_DNS_SERVER_CONFIG);
 }
 
 /**
  * Get servers sorted by priority (for fallback chain)
  */
 export function getServersByPriority(): DNSServerConfig[] {
-  return DNS_SERVERS.toSorted((a, b) => a.priority - b.priority);
+  return DNS_SERVERS.map(cloneServerConfig);
 }
 
 /**
@@ -100,7 +129,7 @@ export function getServersByPriority(): DNSServerConfig[] {
  * These are the only servers that can process chat messages
  */
 export function getLLMServers(): DNSServerConfig[] {
-  return DNS_SERVERS.filter(s => s.priority <= 2);  // Priority 1-2 are LLM servers
+  return LLM_DNS_SERVERS.map(cloneServerConfig);  // Priority 1-2 are LLM servers
 }
 
 export const DNS_CONSTANTS = {
@@ -128,11 +157,10 @@ export const DNS_CONSTANTS = {
   ],
 
   // DNS server whitelist (derived from DNS_SERVERS for backward compatibility)
-  ALLOWED_DNS_SERVERS: DNS_SERVERS.map(s => s.host),
+  ALLOWED_DNS_SERVERS: ['llm.pieter.com', 'ch.at', '8.8.8.8', '8.8.4.4', '1.1.1.1', '1.0.0.1'],
 
   // Network configuration
   // IMPORTANT: DEFAULT_DNS_SERVER is now llm.pieter.com (port 53)
-  // ch.at is offline, llm.pieter.com is the new primary server
   DEFAULT_DNS_SERVER: getDefaultServer().host,
   DEFAULT_DNS_PORT: getDefaultServer().port,  // Matches the current default DNS server port
   DNS_PORT: 53,                 // Standard DNS port (for fallback servers)
@@ -184,6 +212,8 @@ const INVALID_CHARS_REGEX = createRegExp(DNS_SANITIZER_CONFIG.invalidChars);
 const DASH_COLLAPSE_REGEX = createRegExp(DNS_SANITIZER_CONFIG.dashCollapse);
 const EDGE_DASHES_REGEX = createRegExp(DNS_SANITIZER_CONFIG.edgeDashes);
 const COMBINING_MARKS_REGEX = createRegExp(DNS_SANITIZER_CONFIG.combiningMarks);
+const VALID_DNS_LABEL_REGEX = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
+const NON_ASCII_REGEX = /[^\x00-\x7F]/;
 
 /**
  * Sanitize a message according to shared rules
@@ -195,16 +225,19 @@ export function sanitizeDNSMessageReference(message: string): string {
       `Message too long (maximum ${DNS_CONSTANTS.MAX_MESSAGE_LENGTH} characters before sanitization)`,
     );
   }
+  if (message.length <= DNS_CONSTANTS.MAX_DNS_LABEL_LENGTH && VALID_DNS_LABEL_REGEX.test(message)) return message;
 
   let result = message;
 
   // Step 1: Normalize and strip combining marks so á/ç map to ASCII
-  try {
-    result = result.normalize(DNS_SANITIZER_CONFIG.unicodeNormalization);
-  } catch {
-    // Some environments (very old JS runtimes) may not support normalize; fallback silently
+  if (NON_ASCII_REGEX.test(result)) {
+    try {
+      result = result.normalize(DNS_SANITIZER_CONFIG.unicodeNormalization);
+    } catch {
+      // Some environments (very old JS runtimes) may not support normalize; fallback silently
+    }
+    result = result.replace(COMBINING_MARKS_REGEX, '');
   }
-  result = result.replace(COMBINING_MARKS_REGEX, '');
 
   // Step 2: Lowercase
   result = result.toLowerCase();
@@ -234,14 +267,4 @@ export function sanitizeDNSMessageReference(message: string): string {
   return result;
 }
 
-export const getNativeSanitizerConfig = (): NativeSanitizerConfig => ({
-  unicodeNormalization: DNS_SANITIZER_CONFIG.unicodeNormalization,
-  spaceReplacement: DNS_SANITIZER_CONFIG.spaceReplacement,
-  maxLabelLength: DNS_SANITIZER_CONFIG.maxLabelLength,
-  allowedServers: [...DNS_SANITIZER_CONFIG.allowedServers],
-  whitespace: { ...DNS_SANITIZER_CONFIG.whitespace },
-  invalidChars: { ...DNS_SANITIZER_CONFIG.invalidChars },
-  dashCollapse: { ...DNS_SANITIZER_CONFIG.dashCollapse },
-  edgeDashes: { ...DNS_SANITIZER_CONFIG.edgeDashes },
-  combiningMarks: { ...DNS_SANITIZER_CONFIG.combiningMarks },
-});
+export const getNativeSanitizerConfig = (): NativeSanitizerConfig => cloneNativeSanitizerConfig();
