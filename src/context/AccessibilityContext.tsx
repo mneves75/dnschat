@@ -44,6 +44,7 @@ interface AccessibilityProviderProps {
 export function AccessibilityProvider({ children }: AccessibilityProviderProps) {
   const settings = useSettings();
   const [screenReaderEnabled, setScreenReaderEnabled] = useState(false);
+  const [systemReduceMotionEnabled, setSystemReduceMotionEnabled] = useState(false);
   const [config, setConfig] = useState<AccessibilityConfig>(
     settings.accessibility || {
       fontSize: 'medium',
@@ -91,6 +92,37 @@ export function AccessibilityProvider({ children }: AccessibilityProviderProps) 
     };
   }, []);
 
+  useEffect(() => {
+    let mounted = true;
+
+    const checkReduceMotion = async () => {
+      try {
+        const isEnabled = await AccessibilityInfo.isReduceMotionEnabled();
+        if (mounted) {
+          setSystemReduceMotionEnabled(isEnabled);
+        }
+      } catch (error) {
+        devWarn("[AccessibilityContext] Failed to check reduce motion status", error);
+      }
+    };
+
+    checkReduceMotion();
+
+    const subscription = AccessibilityInfo.addEventListener(
+      "reduceMotionChanged",
+      (isEnabled) => {
+        if (mounted) {
+          setSystemReduceMotionEnabled(isEnabled);
+        }
+      },
+    );
+
+    return () => {
+      mounted = false;
+      subscription.remove();
+    };
+  }, []);
+
   // Update config when settings change
   useEffect(() => {
     if (settings.accessibility) {
@@ -130,7 +162,7 @@ export function AccessibilityProvider({ children }: AccessibilityProviderProps) 
     updateConfig,
     announceToScreenReader,
     isScreenReaderEnabled: screenReaderEnabled || config.screenReader,
-    isReduceMotionEnabled: config.reduceMotion,
+    isReduceMotionEnabled: systemReduceMotionEnabled || config.reduceMotion,
     isHighContrastEnabled: config.highContrast,
     getFontSizeScale,
   };

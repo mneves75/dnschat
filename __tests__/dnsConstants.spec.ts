@@ -28,4 +28,13 @@ describe('DNS constants', () => {
     expect(servers[0]?.host).toBe('llm.pieter.com');
     expect(servers[1]?.host).toBe('ch.at');
   });
+
+  it('returns defensive copies of exported server lists', () => {
+    const first = getLLMServers();
+    first.pop();
+    first[0]!.host = 'mutated.example';
+
+    const second = getLLMServers();
+    expect(second.map(server => server.host)).toEqual(['llm.pieter.com', 'ch.at']);
+  });
 });

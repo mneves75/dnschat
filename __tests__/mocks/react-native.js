@@ -24,6 +24,8 @@ module.exports = {
   Platform: { OS: "ios", Version: "26.0" },
   NativeModules: {},
   AccessibilityInfo: {
+    isReduceMotionEnabled: async () => false,
+    isScreenReaderEnabled: async () => false,
     isReduceTransparencyEnabled: async () => false,
     addEventListener: () => ({ remove: noop }),
     announceForAccessibility: noop,

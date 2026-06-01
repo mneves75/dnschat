@@ -198,8 +198,8 @@ function useSettingsContextValue(): SettingsContextValue {
       const message =
         error instanceof Error ? error.message : String(error ?? "Validation failed");
       await DNSLogService.recordSettingsEvent(
-        `DNS server validation failed for input '${server}'`,
-        message,
+        "DNS server validation failed",
+        `${message}; inputLength=${server.length}`,
       );
       throw error;
     }

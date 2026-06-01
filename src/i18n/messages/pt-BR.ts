@@ -264,6 +264,7 @@ export const ptBR = {
       navigationTitle: "Chat",
       errorAlertTitle: "Erro",
       errorAlertDismiss: "OK",
+      errorRetry: "Tentar de novo",
       placeholder: "Pergunte qualquer coisa...",
       emptyState: {
         title: "Comece uma conversa!",

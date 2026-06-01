@@ -13,7 +13,6 @@ import React, { useEffect, useState } from "react";
 import {
   StyleSheet,
   useColorScheme,
-  Alert,
   StatusBar,
   View,
   Platform,
@@ -37,6 +36,25 @@ import { useTranslation } from "../../i18n";
 import { useTypography } from "../../ui/hooks/useTypography";
 import { useMotionReduction } from "../../context/AccessibilityContext";
 import { devLog, devWarn } from "../../utils/devLog";
+import { Toast } from "../../components/ui/Toast";
+import type { Message } from "../../types/chat";
+
+function getRetryableFailedPrompt(messages: Message[]): string | null {
+  for (let index = messages.length - 1; index > 0; index -= 1) {
+    const message = messages[index];
+    const previous = messages[index - 1];
+    if (
+      message?.role === "assistant" &&
+      message.status === "error" &&
+      previous?.role === "user" &&
+      previous.content.trim()
+    ) {
+      return previous.content;
+    }
+  }
+
+  return null;
+}
 
 export function Chat() {
   const colorScheme = useColorScheme();
@@ -54,6 +72,8 @@ export function Chat() {
     minimumTouchTarget,
   );
   const [inputHeight, setInputHeight] = useState(minimumInputHeight);
+  const [visibleError, setVisibleError] = useState<string | null>(null);
+  const retryablePrompt = getRetryableFailedPrompt(currentChat?.messages ?? []);
   const handleInputHeightChange = (height: number) => {
     setInputHeight((previous) =>
       Math.abs(previous - height) < 1 ? previous : height,
@@ -106,17 +126,16 @@ export function Chat() {
 
   // Effect: present an alert when the chat error state changes.
   useEffect(() => {
-    // Show error alert when error occurs
     if (error) {
       devWarn("[Chat] Error occurred", error);
-      Alert.alert(t("screen.chat.errorAlertTitle"), error, [
-        {
-          text: t("screen.chat.errorAlertDismiss"),
-          onPress: clearError,
-        },
-      ]);
+      setVisibleError(error);
     }
-  }, [error, t]);
+  }, [error]);
+
+  const handleDismissError = () => {
+    setVisibleError(null);
+    clearError();
+  };
 
   const handleSendMessage = async (message: string) => {
     try {
@@ -125,6 +144,16 @@ export function Chat() {
       // Error handling is done in the context
       devWarn("[Chat] Failed to send message", err);
     }
+  };
+
+  const handleRetryLastFailedMessage = async () => {
+    if (!retryablePrompt || isLoading) {
+      return;
+    }
+
+    setVisibleError(null);
+    clearError();
+    await handleSendMessage(retryablePrompt);
   };
 
   return (
@@ -153,6 +182,22 @@ export function Chat() {
           bottomInset={messageListBottomInset}
         />
       </Animated.View>
+
+      <Toast
+        visible={Boolean(visibleError)}
+        variant="error"
+        title={t("screen.chat.errorAlertTitle")}
+        message={visibleError ?? ""}
+        duration={6000}
+        onDismiss={handleDismissError}
+        {...(retryablePrompt
+          ? {
+              actionLabel: t("screen.chat.errorRetry"),
+              onAction: handleRetryLastFailedMessage,
+            }
+          : {})}
+        testID="chat-error-toast"
+      />
 
       <KeyboardStickyView
         style={[

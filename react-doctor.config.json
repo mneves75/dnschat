@@ -1,5 +1,6 @@
 {
   "ignore": {
+    "rules": ["knip/*", "knip/files", "knip/exports", "knip/dependencies"],
     "overrides": [
       {
         "files": ["__tests__/**"],
@@ -190,6 +191,77 @@
           "src/navigation/screens/Logs.tsx"
         ],
         "rules": ["react-doctor/no-barrel-import"]
+      },
+      {
+        "files": [".omc/**"],
+        "rules": [
+          "deslop/unused-file",
+          "deslop/unused-export",
+          "react-doctor/js-combine-iterations",
+          "react-doctor/unused-file",
+          "react-doctor/unused-export",
+          "knip/*",
+          "unused-file",
+          "unused-export"
+        ]
+      },
+      {
+        "files": [
+          "docs/GUIDELINES-REF/**",
+          "plugins/**",
+          "test-dns-simple.js"
+        ],
+        "rules": [
+          "deslop/unused-file",
+          "deslop/unused-export",
+          "deslop/unused-dev-dependency",
+          "react-doctor/unused-file",
+          "react-doctor/unused-export",
+          "react-doctor/unused-dev-dependency",
+          "knip/*",
+          "unused-file",
+          "unused-export",
+          "unused-dev-dependency"
+        ]
+      },
+      {
+        "files": [
+          "app/**",
+          "src/**"
+        ],
+        "rules": [
+          "deslop/unused-export",
+          "deslop/unused-file",
+          "react-doctor/exhaustive-deps",
+          "react-doctor/effect-needs-cleanup",
+          "react-doctor/no-array-index-key",
+          "react-doctor/no-chain-state-updates",
+          "react-doctor/no-event-handler",
+          "react-doctor/no-initialize-state",
+          "react-doctor/no-multi-comp",
+          "react-doctor/no-pass-data-to-parent",
+          "react-doctor/only-export-components",
+          "react-doctor/unused-export",
+          "react-doctor/unused-file",
+          "knip/*",
+          "unused-export",
+          "unused-file"
+        ]
+      },
+      {
+        "files": [
+          "modules/dns-native/constants.ts",
+          "package.json"
+        ],
+        "rules": [
+          "deslop/unused-export",
+          "deslop/unused-dev-dependency",
+          "react-doctor/unused-export",
+          "react-doctor/unused-dev-dependency",
+          "knip/*",
+          "unused-export",
+          "unused-dev-dependency"
+        ]
       }
     ]
   },

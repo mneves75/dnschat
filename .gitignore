@@ -16,6 +16,7 @@ expo-env.d.ts
 agent_planning/
 .logs/
 .clawpatch/
+.omc/
 
 # Native
 *.orig.*
