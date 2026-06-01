@@ -28,15 +28,16 @@ import { devLog, devLogArgs } from '../utils/devLog';
 const DEFAULT_DNS_ZONE = DNS_CONSTANTS.DEFAULT_DNS_SERVER;
 
 function normalizeDNSServerInput(server: string): string {
-  return server.trim().toLowerCase().replace(/\.+$/g, '');
+  const normalized = server.trim().toLowerCase();
+  return normalized.endsWith('.') ? normalized.replace(/\.+$/g, '') : normalized;
 }
 
 const ALLOWED_DNS_SERVER_SET = new Set(
-  DNS_CONSTANTS.ALLOWED_DNS_SERVERS.map(normalizeDNSServerInput),
+  DNS_CONSTANTS.ALLOWED_DNS_SERVERS,
 );
 
 export function composeDNSQueryName(label: string, dnsServer: string): string {
-  const trimmedLabel = label.replace(/\.+$/g, '').trim();
+  const trimmedLabel = label.endsWith('.') ? label.replace(/\.+$/g, '').trim() : label.trim();
   if (!trimmedLabel) {
     throw new Error('DNS label must be non-empty when composing query name');
   }
@@ -45,7 +46,7 @@ export function composeDNSQueryName(label: string, dnsServer: string): string {
   // keep behavior consistent everywhere we accept DNS server input.
   const serverInput = validateDNSServer(dnsServer);
   const ipRegex = /^(?:\d{1,3}\.){3}\d{1,3}$/;
-  const zone = !serverInput || ipRegex.test(serverInput) ? DEFAULT_DNS_ZONE : serverInput.toLowerCase();
+  const zone = ipRegex.test(serverInput) ? DEFAULT_DNS_ZONE : serverInput;
 
   return `${trimmedLabel}.${zone}`;
 }
@@ -137,7 +138,6 @@ const isBufferFactory = (value: unknown): value is BufferFactory => {
   const candidate = value as Partial<BufferFactory>;
   return (
     typeof candidate.alloc === 'function' &&
-    typeof candidate.allocUnsafe === 'function' &&
     typeof candidate.concat === 'function' &&
     typeof candidate.from === 'function'
   );
@@ -251,7 +251,6 @@ if (!Buffer) {
   // Provides only methods needed by dns-packet library for DNS protocol handling
   Buffer = {
     alloc: (size: number) => new Uint8Array(size),
-    allocUnsafe: (size: number) => new Uint8Array(size),
     concat: (arrays: Uint8Array[]) => {
       const totalLength = arrays.reduce((len, arr) => len + arr.length, 0);
       const result = new Uint8Array(totalLength);
@@ -265,11 +264,8 @@ if (!Buffer) {
     from: (data: Uint8Array | ArrayBuffer | ArrayLike<number>) => {
       if (data instanceof Uint8Array) return data;
       if (data instanceof ArrayBuffer) return new Uint8Array(data);
-      return new Uint8Array(Array.from(data));
+      return new Uint8Array(data);
     },
-    isBuffer: (obj: unknown): obj is BufferLike =>
-      obj instanceof Uint8Array ||
-      (typeof obj === 'object' && obj !== null && 'length' in obj),
   };
 }
 
@@ -401,6 +397,9 @@ export function validateDNSServer(server: string): string {
   }
 
   const normalizedServer = normalizeDNSServerInput(server);
+  if (ALLOWED_DNS_SERVER_SET.has(normalizedServer)) {
+    return normalizedServer;
+  }
 
   // Disallow ports in the DNS server field.
   //
@@ -409,7 +408,7 @@ export function validateDNSServer(server: string): string {
   // - Allowing arbitrary ports is unnecessary and complicates validation, logging, and security review.
   // - Keeping this strict prevents accidental input like "1.1.1.1:53" which would otherwise
   //   propagate to socket calls as an invalid host string.
-  const colonCount = (normalizedServer.match(/:/g) ?? []).length;
+  let colonCount = 0; for (let i = 0; i < normalizedServer.length; i++) if (normalizedServer.charCodeAt(i) === 58) colonCount++;
   if (normalizedServer.includes('[') || normalizedServer.includes(']')) {
     throw new Error(ERROR_MESSAGES.DNS_SERVER_INVALID);
   }
@@ -444,11 +443,7 @@ export function validateDNSServer(server: string): string {
   }
 
   // SECURITY: Allowlist only known-safe resolvers/endpoints.
-  if (!ALLOWED_DNS_SERVER_SET.has(normalizedServer)) {
-    throw new Error(ERROR_MESSAGES.DNS_SERVER_NOT_ALLOWED);
-  }
-
-  return normalizedServer;
+  throw new Error(ERROR_MESSAGES.DNS_SERVER_NOT_ALLOWED);
 }
 
 /**
@@ -462,13 +457,22 @@ export function parseTXTResponse(txtRecords: string[]): string {
   if (!Array.isArray(txtRecords) || txtRecords.length === 0) {
     throw new Error('No TXT records to parse');
   }
+  if (txtRecords.length === 1) {
+    const rawValue = String(txtRecords[0] ?? '');
+    const first = rawValue.charCodeAt(0);
+    if ((first < 48 || first > 57) && first > 32) return rawValue;
+    if (!rawValue.trim()) throw new Error('Received empty response');
+    if (!/^\s*\d+\/\d+:/.test(rawValue)) return rawValue;
+  }
 
   type Part = { partNumber: number; totalParts: number; content: string };
   const parts: Part[] = [];
-  const plainSegments: string[] = [];
+  let plainResponse = '';
+  let hasPlainResponse = false;
 
   for (const record of txtRecords) {
     const rawValue = String(record ?? '');
+    const first = rawValue.charCodeAt(0); if ((first < 48 || first > 57) && first > 32) { plainResponse += rawValue; hasPlainResponse = true; continue; }
     const trimmedValue = rawValue.trim();
     if (!trimmedValue) {
       continue;
@@ -482,16 +486,15 @@ export function parseTXTResponse(txtRecords: string[]): string {
         content: match[3],
       });
     } else {
-      plainSegments.push(rawValue);
+      plainResponse += rawValue; hasPlainResponse = true;
     }
   }
 
-  if (plainSegments.length > 0) {
-    const combinedRaw = plainSegments.join('');
-    if (!combinedRaw.trim()) {
+  if (hasPlainResponse) {
+    if (!plainResponse.trim()) {
       throw new Error('Received empty response');
     }
-    return combinedRaw;
+    return plainResponse;
   }
 
   if (parts.length === 0) {
@@ -503,15 +506,9 @@ export function parseTXTResponse(txtRecords: string[]): string {
     throw new Error('No TXT records to parse');
   }
   const expectedTotal = firstPart.totalParts;
-  const byPart = new Map<number, string>();
+  const byPart = new Array<string | undefined>(expectedTotal);
+  let receivedParts = 0;
 
-  // TRICKY: Handle duplicate parts from UDP retransmission
-  // UDP is unreliable - packets can be duplicated, reordered, or lost
-  // DNS servers may send the same TXT record multiple times
-  // We must detect duplicates and handle them correctly:
-  // - Identical duplicates (same content): Safe to ignore (normal retransmission)
-  // - Conflicting duplicates (different content): Data corruption, must fail
-  // Example: "1/3:Hello" received twice is OK, but "1/3:Hello" + "1/3:Goodbye" is corruption
   for (const part of parts) {
     if (part.totalParts !== expectedTotal) {
       throw new Error(
@@ -519,36 +516,35 @@ export function parseTXTResponse(txtRecords: string[]): string {
       );
     }
 
-    if (byPart.has(part.partNumber)) {
-      const existing = byPart.get(part.partNumber);
-      // If content matches, this is a harmless retransmission - skip it
+    const index = part.partNumber - 1;
+    const existing = byPart[index];
+    if (existing !== undefined) {
       if (existing === part.content) {
-        continue;  // Duplicate but identical - safe to ignore
+        continue;
       }
-      // If content differs, this is data corruption - fail immediately
       throw new Error(
         `Conflicting content for part ${part.partNumber}: duplicate part payload differs`,
       );
     }
-    byPart.set(part.partNumber, part.content);
+    byPart[index] = part.content;
+    receivedParts++;
   }
 
-  if (expectedTotal <= 0 || byPart.size !== expectedTotal) {
+  if (expectedTotal <= 0 || receivedParts !== expectedTotal) {
     throw new Error(
-      `Incomplete multi-part response: got ${byPart.size} parts, expected ${expectedTotal}`,
+      `Incomplete multi-part response: got ${receivedParts} parts, expected ${expectedTotal}`,
     );
   }
 
-  const ordered: string[] = [];
+  let fullResponse = '';
   for (let i = 1; i <= expectedTotal; i++) {
-    const content = byPart.get(i);
+    const content = byPart[i - 1];
     if (typeof content !== 'string') {
       throw new Error(`Incomplete multi-part response: missing part ${i}`);
     }
-    ordered.push(content);
+    fullResponse += content;
   }
 
-  const fullResponse = ordered.join('');
   if (!fullResponse.trim()) {
     throw new Error('Received empty response');
   }
@@ -604,10 +600,11 @@ export class DNSService {
     maxLength: number;
   } {
     if (!records?.length) return { count: 0, maxLength: 0 };
-    return {
-      count: records.length,
-      maxLength: Math.max(...records.map((record) => record.length)),
-    };
+    let maxLength = 0;
+    for (const record of records) {
+      if (record.length > maxLength) maxLength = record.length;
+    }
+    return { count: records.length, maxLength };
   }
 
   private static initializeBackgroundListener() {
@@ -640,10 +637,12 @@ export class DNSService {
    */
   private static cleanupRequestHistory(): void {
     const now = Date.now();
-    this.requestHistory = this.requestHistory.filter(
-      (timestamp) => now - timestamp <= this.RATE_LIMIT_WINDOW
-    );
-    // Enforce max size as additional safety (circular buffer behavior)
+    let write = 0;
+    for (let i = 0; i < this.requestHistory.length; i++) {
+      const timestamp = this.requestHistory[i] ?? 0;
+      if (now - timestamp <= this.RATE_LIMIT_WINDOW) this.requestHistory[write++] = timestamp;
+    }
+    this.requestHistory.length = write;
     if (this.requestHistory.length > this.MAX_REQUEST_HISTORY_SIZE) {
       this.requestHistory = this.requestHistory.slice(-this.MAX_REQUEST_HISTORY_SIZE);
     }
@@ -784,7 +783,9 @@ export class DNSService {
       ? [{ host: validateDNSServer(dnsServer), port: getServerPort(dnsServer), priority: 1 }]
       : getLLMServers();  // Returns [llm.pieter.com:53, ch.at:53]
 
-    this.vLog(`Server fallback chain: ${serversToTry.map(s => `${s.host}:${s.port}`).join(' → ')}`);
+    if (this.isVerbose()) {
+      this.vLog(`Server fallback chain: ${serversToTry.map(s => `${s.host}:${s.port}`).join(' → ')}`);
+    }
 
     // Start logging the query
     const queryId = DNSLogService.startQuery(message, logContext);
@@ -1260,18 +1261,18 @@ export class DNSService {
             return;
           }
 
-          responseBuffer = Buffer.concat([responseBuffer, data]);
+          responseBuffer = responseBuffer.length === 0 ? data : Buffer.concat([responseBuffer, data]);
 
           // Read the length prefix if we haven't yet
           if (expectedLength === 0 && responseBuffer.length >= 2) {
             expectedLength = readTcpFrameLength(responseBuffer);
-            responseBuffer = responseBuffer.slice(2); // Remove length prefix
+            responseBuffer = responseBuffer.subarray(2); // Remove length prefix
           }
 
           // Check if we have received the complete response
           if (expectedLength > 0 && responseBuffer.length >= expectedLength) {
             try {
-              const decoded = decodeDnsPacket(responseBuffer.slice(0, expectedLength), Buffer);
+              const decoded = decodeDnsPacket(responseBuffer.subarray(0, expectedLength), Buffer);
               const txtRecords = extractTxtRecordsFromDecodedResponse(decoded, {
                 expectedQueryId: queryId,
                 expectedQueryName: queryName,
@@ -1498,10 +1499,7 @@ export class DNSService {
                 const queryDuration = Date.now() - queryStartTime;
 
                 this.vLog('NATIVE: Query took:', queryDuration, 'ms');
-                this.vLog(
-                  'NATIVE: TXT record summary:',
-                  this.recordSummary(records),
-                );
+                if (this.isVerbose()) this.vLog('NATIVE: TXT record summary:', this.recordSummary(records));
 
                 // Validate records - native module contract guarantees string[] or throws
                 if (!records || !Array.isArray(records)) {
@@ -1718,7 +1716,7 @@ export class DNSService {
               );
               const testQueryDuration = Date.now() - testStartTime;
 
-              this.vLog('NATIVE TEST: TXT record summary:', this.recordSummary(records));
+              if (this.isVerbose()) this.vLog('NATIVE TEST: TXT record summary:', this.recordSummary(records));
               this.vLog('NATIVE TEST: Query duration:', testQueryDuration, 'ms');
 
               const parsedResult = nativeDNS.parseMultiPartResponse(records);

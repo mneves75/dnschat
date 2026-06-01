@@ -3,7 +3,7 @@ import { View, Text, StyleSheet } from "react-native";
 import type { StyleProp, TextStyle } from "react-native";
 import { format } from "date-fns";
 import Markdown from "react-native-markdown-display";
-import type { MarkdownProps } from "react-native-markdown-display";
+import type { MarkdownProps, RenderRules } from "react-native-markdown-display";
 import type { Message } from "../types/chat";
 import type { IMessagePalette } from "../ui/theme/imessagePalette";
 import type { TypographyScale } from "../ui/theme/liquidGlassTypography";
@@ -23,6 +23,10 @@ interface MessageContentProps {
 const handleMarkdownLinkPress = (url: string): boolean => {
   void openExternalUrl(url);
   return false;
+};
+
+const markdownRules: RenderRules = {
+  image: () => null,
 };
 
 /**
@@ -57,7 +61,11 @@ export function MessageContent({
       {isUser ? (
         <Text style={[textStyles, typography.body]} selectable={false}>{message.content}</Text>
       ) : (
-        <Markdown {...markdownProps} onLinkPress={handleMarkdownLinkPress}>
+        <Markdown
+          {...markdownProps}
+          onLinkPress={handleMarkdownLinkPress}
+          rules={markdownRules}
+        >
           {message.content}
         </Markdown>
       )}

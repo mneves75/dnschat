@@ -19,6 +19,7 @@ import { LiquidGlassSpacing, getCornerRadius } from "../../ui/theme/liquidGlassS
 import { SpringConfig, TimingConfig } from "../../utils/animations";
 import { HapticFeedback } from "../../utils/haptics";
 import { useTranslation } from "../../i18n";
+import { useMotionReduction } from "../../context/AccessibilityContext";
 
 type ToastVariant = "success" | "warning" | "error" | "info";
 type ToastPosition = "top" | "bottom";
@@ -70,8 +71,10 @@ export function Toast({
   const typography = useTypography();
   const palette = useImessagePalette();
   const { t } = useTranslation();
+  const { shouldReduceMotion } = useMotionReduction();
 
-  const translateY = useSharedValue(position === "top" ? -200 : 200);
+  const hiddenTranslateY = position === "top" ? -200 : 200;
+  const translateY = useSharedValue(hiddenTranslateY);
   const opacity = useSharedValue(0);
   const [isMounted, setIsMounted] = useState(visible);
   const visibleRef = useRef(visible);
@@ -89,8 +92,17 @@ export function Toast({
 
   const handleDismiss = React.useCallback(() => {
     visibleRef.current = false;
+    if (shouldReduceMotion) {
+      translateY.value = hiddenTranslateY;
+      opacity.value = 0;
+      onDismiss();
+      finishHide();
+      HapticFeedback.light();
+      return;
+    }
+
     translateY.value = withSpring(
-      position === "top" ? -200 : 200,
+      hiddenTranslateY,
       SpringConfig.stiff,
       (finished) => {
         if (finished) {
@@ -101,7 +113,14 @@ export function Toast({
     );
     opacity.value = withTiming(0, TimingConfig.quick);
     HapticFeedback.light();
-  }, [finishHide, onDismiss, opacity, position, translateY]);
+  }, [
+    finishHide,
+    hiddenTranslateY,
+    onDismiss,
+    opacity,
+    shouldReduceMotion,
+    translateY,
+  ]);
 
   // Get variant-specific colors and icon. Pull from palette so dark mode
   // and high-contrast modes are respected.
@@ -158,9 +177,14 @@ export function Toast({
           HapticFeedback.light();
       }
 
-      // Slide in
-      translateY.value = withSpring(0, SpringConfig.bouncy);
-      opacity.value = withTiming(1, TimingConfig.quick);
+      if (shouldReduceMotion) {
+        translateY.value = 0;
+        opacity.value = 1;
+      } else {
+        // Slide in
+        translateY.value = withSpring(0, SpringConfig.bouncy);
+        opacity.value = withTiming(1, TimingConfig.quick);
+      }
 
       // Auto-dismiss
       if (duration > 0) {
@@ -172,9 +196,16 @@ export function Toast({
       }
     } else {
       visibleRef.current = false;
+      if (shouldReduceMotion) {
+        translateY.value = hiddenTranslateY;
+        opacity.value = 0;
+        finishHide();
+        return undefined;
+      }
+
       // Slide out
       translateY.value = withSpring(
-        position === "top" ? -200 : 200,
+        hiddenTranslateY,
         SpringConfig.stiff,
         (finished) => {
           if (finished) {
@@ -185,7 +216,17 @@ export function Toast({
       opacity.value = withTiming(0, TimingConfig.quick);
     }
     return undefined;
-  }, [visible, variant, duration, position, finishHide, handleDismiss, opacity, translateY]);
+  }, [
+    visible,
+    variant,
+    duration,
+    finishHide,
+    handleDismiss,
+    hiddenTranslateY,
+    opacity,
+    shouldReduceMotion,
+    translateY,
+  ]);
 
   // Handle action
   const handleAction = () => {

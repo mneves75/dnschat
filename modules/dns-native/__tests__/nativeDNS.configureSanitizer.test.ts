@@ -56,6 +56,16 @@ describe("NativeDNS sanitizer configuration", () => {
     expect(dns).toBeInstanceOf(NativeDNS);
   });
 
+  it("returns defensive sanitizer config copies", () => {
+    const config = getNativeSanitizerConfig();
+    config.allowedServers.pop();
+    config.invalidChars.pattern = "mutated";
+
+    const nextConfig = getNativeSanitizerConfig();
+    expect(nextConfig.allowedServers).toContain("llm.pieter.com");
+    expect(nextConfig.invalidChars.pattern).toBe("[^a-z0-9-]");
+  });
+
   it("logs a warning when sanitizer configuration fails", async () => {
     const error = Object.assign(new Error("Invalid regex"), { code: "SANITIZER_CONFIG_REGEX" });
     nativeModulesRecord["RNDNSModule"] = {

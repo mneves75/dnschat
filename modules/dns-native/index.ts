@@ -190,7 +190,8 @@ export class NativeDNS implements NativeDNSModule {
       );
     }
 
-    if (!message?.trim()) {
+    const trimmedMessage = message?.trim();
+    if (!trimmedMessage) {
       throw new DNSError(
         DNSErrorType.INVALID_RESPONSE,
         "Message cannot be empty",
@@ -211,11 +212,11 @@ export class NativeDNS implements NativeDNSModule {
 
     debugLog(
       `[NativeDNS] queryTXT: ${domain}:${dnsPort}`,
-      { queryNameLength: message.trim().length },
+      { queryNameLength: trimmedMessage.length },
     );
 
     try {
-      const result = await this.nativeModule.queryTXT(domain, message.trim(), dnsPort);
+      const result = await this.nativeModule.queryTXT(domain, trimmedMessage, dnsPort);
 
       if (!Array.isArray(result) || result.length === 0) {
         throw new DNSError(
@@ -355,8 +356,15 @@ export class NativeDNS implements NativeDNSModule {
         "No TXT records to parse",
       );
     }
+    if (txtRecords.length === 1) {
+      const rawValue = String(txtRecords[0] ?? '');
+      const first = rawValue.charCodeAt(0); if ((first < 48 || first > 57) && first > 32) return rawValue;
+      if (!rawValue.trim()) throw new DNSError(DNSErrorType.INVALID_RESPONSE, 'Received empty response');
+      if (!/^\s*\d+\/\d+:/.test(rawValue)) return rawValue;
+    }
 
-    const plainSegments: string[] = [];
+    let plainResponse = '';
+    let hasPlainResponse = false;
     const parts: Array<{
       partNumber: number;
       totalParts: number;
@@ -365,6 +373,7 @@ export class NativeDNS implements NativeDNSModule {
 
     for (const record of txtRecords) {
       const rawValue = String(record ?? '');
+      const first = rawValue.charCodeAt(0); if ((first < 48 || first > 57) && first > 32) { plainResponse += rawValue; hasPlainResponse = true; continue; }
       const trimmedValue = rawValue.trim();
       if (!trimmedValue) {
         continue;
@@ -378,19 +387,18 @@ export class NativeDNS implements NativeDNSModule {
           content: match[3],
         });
       } else {
-        plainSegments.push(rawValue);
+        plainResponse += rawValue; hasPlainResponse = true;
       }
     }
 
-    if (plainSegments.length > 0) {
-      const combined = plainSegments.join('');
-      if (!combined.trim()) {
+    if (hasPlainResponse) {
+      if (!plainResponse.trim()) {
         throw new DNSError(
           DNSErrorType.INVALID_RESPONSE,
           'Received empty response',
         );
       }
-      return combined;
+      return plainResponse;
     }
 
     if (parts.length === 0) {
@@ -401,7 +409,8 @@ export class NativeDNS implements NativeDNSModule {
     }
 
     const expectedTotal = parts[0]?.totalParts || 0;
-    const seen = new Map<number, string>();
+    const seen = new Array<string | undefined>(expectedTotal);
+    let receivedParts = 0;
 
     for (const part of parts) {
       if (part.totalParts !== expectedTotal) {
@@ -411,7 +420,8 @@ export class NativeDNS implements NativeDNSModule {
         );
       }
 
-      const existingContent = seen.get(part.partNumber);
+      const index = part.partNumber - 1;
+      const existingContent = seen[index];
       if (existingContent !== undefined) {
         if (existingContent === part.content) {
           // Harmless retransmission; skip duplicates with identical payloads
@@ -423,29 +433,29 @@ export class NativeDNS implements NativeDNSModule {
           `Conflicting content for part ${part.partNumber}`,
         );
       }
-      seen.set(part.partNumber, part.content);
+      seen[index] = part.content;
+      receivedParts++;
     }
 
-    if (expectedTotal <= 0 || seen.size !== expectedTotal) {
+    if (expectedTotal <= 0 || receivedParts !== expectedTotal) {
       throw new DNSError(
         DNSErrorType.INVALID_RESPONSE,
-        `Incomplete multi-part response: got ${seen.size} parts, expected ${expectedTotal}`,
+        `Incomplete multi-part response: got ${receivedParts} parts, expected ${expectedTotal}`,
       );
     }
 
-    const ordered: string[] = [];
+    let full = '';
     for (let i = 1; i <= expectedTotal; i += 1) {
-      const content = seen.get(i);
+      const content = seen[i - 1];
       if (typeof content !== 'string') {
         throw new DNSError(
           DNSErrorType.INVALID_RESPONSE,
           `Incomplete multi-part response: missing part ${i}`,
         );
       }
-      ordered.push(content);
+      full += content;
     }
 
-    const full = ordered.join('');
     if (!full.trim()) {
       throw new DNSError(
         DNSErrorType.INVALID_RESPONSE,

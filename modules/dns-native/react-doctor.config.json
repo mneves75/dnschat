@@ -1,11 +1,24 @@
 {
   "ignore": {
+    "rules": ["knip/*", "knip/files", "knip/exports", "knip/dependencies"],
     "overrides": [
       {
         "files": ["__tests__/**"],
         "rules": [
           "react-doctor/async-await-in-loop",
           "react-doctor/server-sequential-independent-await"
+        ]
+      },
+      {
+        "files": ["constants.ts", "package.json"],
+        "rules": [
+          "deslop/unused-export",
+          "deslop/unused-dev-dependency",
+          "react-doctor/unused-export",
+          "react-doctor/unused-dev-dependency",
+          "knip/*",
+          "unused-export",
+          "unused-dev-dependency"
         ]
       }
     ]

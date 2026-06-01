@@ -6,6 +6,7 @@ describe("MessageContent render policy", () => {
   it("covers loading, markdown, plain text, and localized error indicator branches", () => {
     expect(source).toContain('message.status === "sending"');
     expect(source).toContain("<Markdown");
+    expect(source).toContain('image: () => null');
     expect(source).toContain("onLinkPress={handleMarkdownLinkPress}");
     expect(source).toContain("openExternalUrl(url)");
     expect(source).toContain("return false");
