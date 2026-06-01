@@ -119,6 +119,42 @@
     <li><code>bun run verify:react-compiler</code> &mdash; 82/82 components compiled, no incompatible libraries.</li>
   </ul>
 
+  <h3>Release &mdash; 4.0.19 build 53 (2026-06-01)</h3>
+  <p>
+    PR #163 was squash-merged to <code>main</code>, then version bumped
+    <code>4.0.18</code> &rarr; <code>4.0.19</code> (build <code>52</code> &rarr;
+    <code>53</code>) via <code>sync-versions --build-number 53</code>
+    (<code>package.json</code>, <code>app.json</code>, iOS pbxproj, Android gradle;
+    <code>verify:sdk-alignment</code> OK).
+  </p>
+  <ul>
+    <li><strong>Device deploy:</strong> Release-config build (Apple Development
+      signing, dev provisioning profile) installed and launched on the paired
+      physical device via <code>devicectl</code>; on-device Info.plist confirms
+      <code>4.0.19 (53)</code>.</li>
+    <li><strong>TestFlight:</strong> clean Release archive signed with Apple
+      Distribution, exported with an <code>app-store-connect</code>
+      ExportOptions plist, and uploaded via <code>asc publish testflight</code>.
+      App Store Connect processing returned <code>processingState: VALID</code>;
+      auto-distributed to the internal tester group. Bilingual
+      (<code>en-US</code>/<code>pt-BR</code>) per-build test notes set via
+      <code>asc builds test-notes</code>;
+      <code>asc validate testflight --strict</code> reported <code>0</code>
+      errors / <code>0</code> warnings.</li>
+    <li><strong>Build-pipeline note:</strong> the first archive attempt silently
+      no-op'd because the shell's <code>noclobber</code> blocked the log redirect
+      onto a stale file, leaving xcodebuild un-run; detected via the downstream
+      "archive not found" export error. Re-ran with forced overwrite
+      (<code>&gt;|</code>) and reused the device-build derivedData to avoid a
+      second full clean compile (the clean archive was being interrupted before
+      completion).</li>
+    <li><strong>Docs updated:</strong> README badge/version/verification baseline,
+      CHANGELOG <code>[4.0.19]</code>, and the CLAUDE.md iOS release-status line.
+      All release identifiers (team, profile, device, build, App Store Connect
+      IDs) remain out of the public tree per the redaction gates;
+      <code>verify:public-redaction</code> + <code>gitleaks</code> stay clean.</li>
+  </ul>
+
   <hr />
   <h2>Review Pass &mdash; 2026-05-31 (v4.0.18, build 51 &rarr; 52)</h2>
   <p>

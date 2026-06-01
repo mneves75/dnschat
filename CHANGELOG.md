@@ -6,8 +6,23 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+## [4.0.19] - 2026-06-01
+
+Build `52` -> `53`. First distributed build carrying the React Doctor `100/100`
+dead-code cleanup and the reduce-motion / retry UX fixes; it also rolls up the
+previously-undistributed build `52` changes below.
+
+### Added
+
+- Chat failed-send errors now surface a non-blocking error toast with a localized
+  **Retry** action that resends the last failed user prompt, replacing the blocking
+  `Alert.alert` dialog.
+
 ### Fixed
 
+- `Toast` snaps to its end state and skips spring/timing animations when reduce motion
+  is enabled (haptics still fire), and now honors the OS-level reduce-motion setting via
+  `AccessibilityInfo` in addition to the in-app accessibility toggle.
 - `SkeletonMessage` now adopts the responsive `useResponsiveLayout().messageMaxWidth`
   (phone `75%`, tablet `60%`, desktop `560`) instead of a hardcoded `maxWidth: "75%"`.
   Previously the loading placeholder was wider than the `MessageBubble` that replaced
@@ -17,6 +32,11 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ### Changed
 
+- Corrected the `react-doctor.config.json` ignore overrides to use the current
+  `deslop/*` rule namespace (root + `modules/dns-native`). The overrides previously
+  targeted obsolete `react-doctor/*` / bare ids that no longer matched react-doctor
+  v0.2.6 output, so no dead-code ignore applied; `chat-dns` now scores `100/100`
+  with no detection rule disabled globally. Pruned the matching `knip.json` entries.
 - Aligned five Expo SDK packages to the versions required by the installed SDK so
   `expo-doctor` returns `20/20`: `expo` `56.0.6`->`56.0.8`, `expo-router`
   `56.2.7`->`56.2.8`, `expo-linking` `56.0.12`->`56.0.13`, `expo-build-properties`
@@ -26,9 +46,16 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ### Removed
 
+- Deleted 9 unreferenced dead-code files (verified zero repo-wide imports):
+  `ChatListItem`, `InfoIcon`, `icons/LogsIcon`, `icons/SettingsIcon`,
+  `ui/LiquidGlassButton`, `ui/LiquidGlassCard`, the unwired `navigation/screens/Home`
+  screen, and the unused `onboarding/index` and `ui/hooks/index` barrels. Net `-715`
+  lines; source file count `262` -> `253`.
 - Dropped the obsolete `expo-modules-autolinking@56.0.13` Bun patch. `expo@56.0.8`
   pulls `expo-modules-autolinking@56.0.14`, which ships the Swift macro-plugin
   resolution fix upstream, so the local patch was no longer applied or needed.
+- Removed the unused `@react-native-async-storage/async-storage` dependency from the
+  `@dnschat/dns-native` workspace `package.json` (not imported anywhere in the module).
 
 ## [4.0.18] - 2026-05-28
 

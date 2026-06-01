@@ -7,7 +7,7 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 - JavaScript fallback transports (UDP/TCP) for constrained networks
 - An in-app Logs screen to inspect attempts, failures, and fallbacks
 
-[![Version](https://img.shields.io/badge/version-4.0.18-blue.svg)](.)
+[![Version](https://img.shields.io/badge/version-4.0.19-blue.svg)](.)
 [![React Native](https://img.shields.io/badge/React%20Native-0.85.3-blue.svg)](https://reactnative.dev/)
 [![Expo](https://img.shields.io/badge/Expo-56.0.5-black.svg)](https://expo.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0.x-blue.svg)](https://www.typescriptlang.org/)
@@ -31,7 +31,7 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 
 ## Tech stack
 
-- App version: `4.0.18` (build `52`)
+- App version: `4.0.19` (build `53`)
 - Expo workflow: Expo Router + EAS-compatible native config
 - Expo SDK: `56.0.8`
 - React: `19.2.3`
@@ -210,13 +210,13 @@ Last architecture/dependency verification: `2026-05-31`.
 Last full source/security sweep: `2026-05-31`.
 Last AXe simulator E2E feature pass: `2026-05-17` for version `4.0.13` build
 `43`.
-Last uploaded/processed TestFlight build: version `4.0.18` build `51`
-(`VALID` on `2026-05-28`). Current local release target: version `4.0.18` build
-`52` (post-review skeleton-width fix; pending a fresh signed archive/export and
-TestFlight upload before it can be described as distributed).
+Last uploaded/processed TestFlight build: version `4.0.19` build `53`
+(`VALID` on `2026-06-01`, distributed to the internal tester group). Current
+local release target: version `4.0.19` build `53`.
 
-- `npx react-doctor@latest` reports `100 / 100` for both `chat-dns` and
-  `@dnschat/dns-native` on `2026-05-27`.
+- `npx react-doctor@latest` reports `100 / 100` for both `chat-dns` (`No issues
+  found`) and `@dnschat/dns-native` on `2026-06-01`, after deleting 9 unreferenced
+  dead-code files and correcting the ignore-rule namespace to `deslop/*`.
 - `bun run typecheck` passes on `2026-05-31`.
 - `bun run verify:expo-doctor` reports `20/20 checks passed, no issues` on
   `2026-05-31` after the Expo SDK patch alignment (expo `56.0.8`, expo-router
@@ -226,9 +226,9 @@ TestFlight upload before it can be described as distributed).
   `56` tests passed, `13` skipped).
 - AXe E2E baseline: 10 feature groups passed in one owned release-simulator
   run on `2026-05-17`.
-- Jest baseline on `2026-05-31`: 105 suites passed, 1 skipped; 872 tests
-  passed, 13 skipped (adds a regression test asserting `SkeletonMessage` adopts
-  the responsive `messageMaxWidth` instead of a fixed `75%`).
+- Jest baseline on `2026-06-01`: 107 suites passed, 1 skipped; 878 tests
+  passed, 13 skipped (adds regression tests for the reduce-motion toast and the
+  failed-send retry toast).
 - `gitleaks detect` on `2026-05-28` reports `no leaks found` across `354`
   scanned commits.
 - `bun audit` on `2026-05-24` reports `No vulnerabilities found`.
@@ -238,14 +238,14 @@ TestFlight upload before it can be described as distributed).
   Release when code signing is disabled (`CODE_SIGNING_ALLOWED=NO`) on
   `2026-05-24`.
 - Physical-device compiled app install passed.
-- Last signed TestFlight build: `4.0.18` build `51`, uploaded and processed
-  to `VALID` in App Store Connect on `2026-05-28` and distributed to the internal
-  tester group. Build `52` adds the post-review skeleton-width fix and must be
-  re-archived, exported, uploaded, and validated before it is described as
-  distributed. The release lane uses a signed App Store archive/export and App
-  Store Connect processing before the build is described as distributed. Internal
-  App Store Connect IDs and tester group names are intentionally omitted from
-  public docs.
+- Last signed TestFlight build: `4.0.19` build `53`, archived with Apple
+  Distribution signing, exported, uploaded, and processed to `VALID` in App Store
+  Connect on `2026-06-01` and distributed to the internal tester group;
+  `asc validate testflight --strict` reports `0` errors and `0` warnings with
+  bilingual (`en-US`/`pt-BR`) test notes set. The release lane uses a signed App
+  Store archive/export and App Store Connect processing before the build is
+  described as distributed. Internal App Store Connect IDs and tester group names
+  are intentionally omitted from public docs.
 - `asc validate testflight` passes with `0` errors and `0` warnings for build
   `51` on `2026-05-28` (bilingual "What to Test" notes present). App Store
   version validation is not applicable until a matching App Store version
