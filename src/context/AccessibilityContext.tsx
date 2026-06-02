@@ -23,6 +23,13 @@ export interface AccessibilityConfig {
   screenReader: boolean;
 }
 
+const DEFAULT_ACCESSIBILITY_CONFIG: AccessibilityConfig = {
+  fontSize: 'medium',
+  highContrast: false,
+  reduceMotion: false,
+  screenReader: false,
+};
+
 interface AccessibilityContextType {
   config: AccessibilityConfig;
   updateConfig: (updates: Partial<AccessibilityConfig>) => Promise<void>;
@@ -44,15 +51,13 @@ interface AccessibilityProviderProps {
 export function AccessibilityProvider({ children }: AccessibilityProviderProps) {
   const settings = useSettings();
   const [screenReaderEnabled, setScreenReaderEnabled] = useState(false);
-  const [systemReduceMotionEnabled, setSystemReduceMotionEnabled] = useState(false);
-  const [config, setConfig] = useState<AccessibilityConfig>(
-    settings.accessibility || {
-      fontSize: 'medium',
-      highContrast: false,
-      reduceMotion: false,
-      screenReader: false,
-    }
-  );
+
+  // Single source of truth: derive config directly from persisted settings
+  // instead of mirroring it into local state through an effect. Mirroring
+  // (setState-in-effect on a context value) is an update-loop hazard and can
+  // drift from settings; a derived value keeps the provider a pure function of
+  // its inputs.
+  const config = settings.accessibility ?? DEFAULT_ACCESSIBILITY_CONFIG;
 
   // Monitor screen reader status using event listeners (not polling)
   // PERFORMANCE FIX: Previous implementation polled every 5 seconds via setInterval,
@@ -92,52 +97,10 @@ export function AccessibilityProvider({ children }: AccessibilityProviderProps) 
     };
   }, []);
 
-  useEffect(() => {
-    let mounted = true;
-
-    const checkReduceMotion = async () => {
-      try {
-        const isEnabled = await AccessibilityInfo.isReduceMotionEnabled();
-        if (mounted) {
-          setSystemReduceMotionEnabled(isEnabled);
-        }
-      } catch (error) {
-        devWarn("[AccessibilityContext] Failed to check reduce motion status", error);
-      }
-    };
-
-    checkReduceMotion();
-
-    const subscription = AccessibilityInfo.addEventListener(
-      "reduceMotionChanged",
-      (isEnabled) => {
-        if (mounted) {
-          setSystemReduceMotionEnabled(isEnabled);
-        }
-      },
-    );
-
-    return () => {
-      mounted = false;
-      subscription.remove();
-    };
-  }, []);
-
-  // Update config when settings change
-  useEffect(() => {
-    if (settings.accessibility) {
-      setConfig(settings.accessibility);
-    }
-  }, [settings.accessibility]);
-
   const updateConfig = async (updates: Partial<AccessibilityConfig>) => {
-    const newConfig = { ...config, ...updates };
-    setConfig(newConfig);
-
-    // Update settings context
-    if (settings.updateAccessibility) {
-      await settings.updateAccessibility(newConfig);
-    }
+    // Persist through settings; `config` re-derives from the updated settings,
+    // so there is no separate local copy to keep in sync.
+    await settings.updateAccessibility?.({ ...config, ...updates });
   };
 
   const announceToScreenReader = (message: string) => {
@@ -162,7 +125,11 @@ export function AccessibilityProvider({ children }: AccessibilityProviderProps) 
     updateConfig,
     announceToScreenReader,
     isScreenReaderEnabled: screenReaderEnabled || config.screenReader,
-    isReduceMotionEnabled: systemReduceMotionEnabled || config.reduceMotion,
+    // Driven solely by the in-app preference so the value is stable for the whole
+    // session. Deriving it from an async OS probe (which flips false -> true after
+    // mount) re-triggered motion-transition effects in animated screens and could
+    // drive a render loop; see CHANGELOG 4.0.20.
+    isReduceMotionEnabled: config.reduceMotion,
     isHighContrastEnabled: config.highContrast,
     getFontSizeScale,
   };

@@ -6,6 +6,36 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+## [4.0.20] - 2026-06-02
+
+Build `53` -> `54`. Hotfix for a crash introduced in `4.0.19`.
+
+### Fixed
+
+- **Crash on launch for users with iOS Reduce Motion enabled** ("Maximum update
+  depth exceeded"). `4.0.19` derived `isReduceMotionEnabled` from an async
+  `AccessibilityInfo` probe that flips `false -> true` after mount; that runtime
+  transition re-triggered motion-transition effects across animated screens and
+  drove an infinite render loop. Reduce motion is now a stable, in-app preference
+  for the whole session.
+
+### Changed
+
+- `AccessibilityContext` no longer mirrors `settings.accessibility` into local
+  state via an effect (an update-loop hazard); `config` is now derived directly
+  from settings as the single source of truth, and `updateConfig` persists
+  through settings.
+- Added a behavioral render test (`accessibility.reduceMotion.behavior.spec.tsx`)
+  that mounts the provider and fails if the async OS-driven flip or the
+  `reduceMotionChanged` subscription is reintroduced. (The previous reduce-motion
+  "tests" only string-matched source and could not catch the regression.)
+
+### Known limitation
+
+- The app no longer auto-adopts the OS Reduce Motion setting; users enable reduced
+  motion via in-app Accessibility settings. Safe OS auto-detection (without a
+  post-mount transition) is deferred pending on-device/simulator verification.
+
 ## [4.0.19] - 2026-06-01
 
 Build `52` -> `53`. First distributed build carrying the React Doctor `100/100`
