@@ -210,9 +210,12 @@ Last architecture/dependency verification: `2026-05-31`.
 Last full source/security sweep: `2026-05-31`.
 Last AXe simulator E2E feature pass: `2026-05-17` for version `4.0.13` build
 `43`.
-Last uploaded/processed TestFlight build: version `4.0.19` build `53`
-(`VALID` on `2026-06-01`, distributed to the internal tester group). Current
-local release target: version `4.0.19` build `53`.
+Last uploaded/processed TestFlight build: version `4.0.20` build `54`
+(`VALID` on `2026-06-02`, distributed to the internal tester group). Current
+local release target: version `4.0.20` build `54`. Build `54` hotfixes a
+launch crash in `4.0.19`/`53` that hit users with iOS Reduce Motion enabled;
+the fixed build was verified to launch cleanly on an iOS Simulator with system
+Reduce Motion enabled (the original crash condition).
 
 - `npx react-doctor@latest` reports `100 / 100` for both `chat-dns` (`No issues
   found`) and `@dnschat/dns-native` on `2026-06-01`, after deleting 9 unreferenced
@@ -226,9 +229,9 @@ local release target: version `4.0.19` build `53`.
   `56` tests passed, `13` skipped).
 - AXe E2E baseline: 10 feature groups passed in one owned release-simulator
   run on `2026-05-17`.
-- Jest baseline on `2026-06-01`: 107 suites passed, 1 skipped; 878 tests
-  passed, 13 skipped (adds regression tests for the reduce-motion toast and the
-  failed-send retry toast).
+- Jest baseline on `2026-06-02`: 108 suites passed, 1 skipped; 881 tests
+  passed, 13 skipped (adds a behavioral render test asserting reduce motion is a
+  stable in-app preference with no async OS-driven flip).
 - `gitleaks detect` on `2026-05-28` reports `no leaks found` across `354`
   scanned commits.
 - `bun audit` on `2026-05-24` reports `No vulnerabilities found`.
@@ -238,11 +241,12 @@ local release target: version `4.0.19` build `53`.
   Release when code signing is disabled (`CODE_SIGNING_ALLOWED=NO`) on
   `2026-05-24`.
 - Physical-device compiled app install passed.
-- Last signed TestFlight build: `4.0.19` build `53`, archived with Apple
+- Last signed TestFlight build: `4.0.20` build `54`, archived with Apple
   Distribution signing, exported, uploaded, and processed to `VALID` in App Store
-  Connect on `2026-06-01` and distributed to the internal tester group;
+  Connect on `2026-06-02` and distributed to the internal tester group;
   `asc validate testflight --strict` reports `0` errors and `0` warnings with
-  bilingual (`en-US`/`pt-BR`) test notes set. The release lane uses a signed App
+  bilingual (`en-US`/`pt-BR`) test notes set. Build `54` is a hotfix over the
+  `4.0.19`/`53` reduce-motion launch crash. The release lane uses a signed App
   Store archive/export and App Store Connect processing before the build is
   described as distributed. Internal App Store Connect IDs and tester group names
   are intentionally omitted from public docs.

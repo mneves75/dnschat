@@ -156,6 +156,66 @@
   </ul>
 
   <hr />
+  <h2>Incident + Hotfix &mdash; 4.0.20 build 54 (2026-06-02)</h2>
+  <p>
+    <strong>Symptom:</strong> the distributed <code>4.0.19</code>/<code>53</code> build crashed on
+    launch into the in-app <code>ErrorBoundary</code> ("Something went wrong &mdash; Maximum update
+    depth exceeded") for users with iOS Reduce Motion enabled (user-reported screenshot).
+  </p>
+  <p>
+    <strong>Root cause (by elimination):</strong> <code>4.0.19</code> changed
+    <code>AccessibilityContext.isReduceMotionEnabled</code> from the constant
+    <code>config.reduceMotion</code> to <code>systemReduceMotionEnabled || config.reduceMotion</code>,
+    where <code>systemReduceMotionEnabled</code> is seeded by an async
+    <code>AccessibilityInfo.isReduceMotionEnabled()</code> probe that resolves <em>after</em> mount.
+    For a Reduce-Motion user this flips <code>shouldReduceMotion</code> <code>false &rarr; true</code>
+    at runtime, re-triggering motion-transition effects across animated screens and driving an
+    infinite render loop. Build <code>53</code> was the first distributed build to expose it because
+    earlier builds kept <code>shouldReduceMotion</code> constant. Exhaustive static review of every
+    reduce-motion consumer found no single-file <code>setState</code> loop, which is consistent with a
+    transition-triggered interaction rather than one bad component.
+  </p>
+  <h3>Fix</h3>
+  <ul>
+    <li><code>AccessibilityContext</code>: <code>isReduceMotionEnabled = config.reduceMotion</code>
+      (stable for the whole session); removed the <code>systemReduceMotionEnabled</code> state, its
+      async probe, and the <code>reduceMotionChanged</code> subscription.</li>
+    <li>Removed the mirror-state anti-pattern: <code>config</code> is derived directly from
+      <code>settings.accessibility</code> (single source of truth) instead of being copied into local
+      state via an effect; <code>updateConfig</code> persists through settings.</li>
+    <li>Added <code>__tests__/accessibility.reduceMotion.behavior.spec.tsx</code> &mdash; a behavioral
+      render test (mounts the provider). The previous reduce-motion "tests" only string-matched
+      source, which is why the regression shipped green.</li>
+  </ul>
+  <h3>Validation evidence</h3>
+  <ul>
+    <li>New behavioral test <strong>fails on the pre-fix code</strong> (2/3 assertions) and
+      <strong>passes on the fix</strong> &mdash; reproduces and guards the trigger.</li>
+    <li><code>bun run test</code> &mdash; 108 suites passed (1 skipped), 881 tests passed (13 skipped),
+      0 failures. <code>tsc</code> 0 errors. <code>lint</code> exit 0. React Doctor
+      <code>100/100</code> both projects.</li>
+    <li><strong>On-device-class verification:</strong> built Release for the iOS Simulator (via
+      <code>xcodebuild</code>; the <code>expo run:ios</code> path was blocked by an unrelated expo-cli
+      <code>DOMParser</code> error) and launched it on a Simulator with system Reduce Motion
+      <em>enabled</em> &mdash; the fixed build renders onboarding normally with no
+      <code>ErrorBoundary</code>, i.e. the original crash condition no longer crashes.</li>
+    <li>Signed Apple Distribution archive + export + <code>asc publish testflight</code> &rarr;
+      <code>processingState VALID</code>; <code>asc validate testflight --strict</code> 0 errors / 0
+      warnings; bilingual notes set; distributed to the internal group. Fixed build also reinstalled on
+      the paired physical device.</li>
+  </ul>
+  <h3>Residual risk / deferred</h3>
+  <ul>
+    <li>An in-app Reduce-Motion <em>toggle</em> still transitions <code>shouldReduceMotion</code> at
+      runtime; static review found no consumer-side <code>setState</code> loop, but this path was not
+      exercised through the UI (Release build exposes a flat a11y tree; deep navigation not drivable
+      here). Recommend confirming the toggle on the installed device build.</li>
+    <li>OS Reduce-Motion auto-detection is intentionally removed. A safe re-introduction (e.g. a value
+      that is correct from first paint, avoiding a post-mount transition) is deferred until it can be
+      verified on-device with Reduce Motion enabled.</li>
+  </ul>
+
+  <hr />
   <h2>Review Pass &mdash; 2026-05-31 (v4.0.18, build 51 &rarr; 52)</h2>
   <p>
     Fresh full review (frontend UI/UX, source correctness/architecture, security/privacy,
