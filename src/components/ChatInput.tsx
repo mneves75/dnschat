@@ -68,7 +68,7 @@ const AnimatedPressableRipple = Animated.createAnimatedComponent(PressableRipple
 
 // Constants derived from design system (no magic numbers!)
 const CHARACTER_COUNTER_THRESHOLD = Math.ceil(MESSAGE_CONSTANTS.MAX_MESSAGE_LENGTH * 0.9);
-const ACCESSIBILITY_ALERT_THRESHOLD = Math.ceil(MESSAGE_CONSTANTS.MAX_MESSAGE_LENGTH * 0.92);
+const CHARACTER_ANNOUNCEMENT_REMAINING = new Set([10, 5, 0]);
 const ANIMATION_DURATION_MS = 200;
 const BUTTON_SPACING = LiquidGlassSpacing.xxs; // 4px from edge
 
@@ -210,8 +210,8 @@ export function ChatInput({
    * Triggers at 92% (last 10 characters).
    */
   React.useEffect(() => {
-    if (message.length > ACCESSIBILITY_ALERT_THRESHOLD) {
-      const remaining = MESSAGE_CONSTANTS.MAX_MESSAGE_LENGTH - message.length;
+    const remaining = MESSAGE_CONSTANTS.MAX_MESSAGE_LENGTH - message.length;
+    if (CHARACTER_ANNOUNCEMENT_REMAINING.has(remaining)) {
       AccessibilityInfo.announceForAccessibility(
         t("components.chatInput.charactersRemaining", { count: remaining })
       );
@@ -452,7 +452,7 @@ export function ChatInput({
       accessibilityState={{ disabled: !canSend }}
     >
       {isLoading ? (
-        <Text style={[styles.sendButtonText, { color: palette.textPrimary }]}>...</Text>
+        <Text style={[styles.sendButtonText, { color: palette.textPrimary }]}>…</Text>
       ) : (
         <SendIcon size={20} isActive={canSend} />
       )}

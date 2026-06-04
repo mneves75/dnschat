@@ -25,6 +25,9 @@ function TabIcon({
       style={{ width: size, height: size }}
       tintColor={color}
       resizeMode="contain"
+      accessible={false}
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
     />
   );
 }

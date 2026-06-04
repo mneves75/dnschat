@@ -26,6 +26,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "../../i18n";
 import { useMotionReduction } from "../../context/AccessibilityContext";
 import { LiquidGlassWrapper } from "../LiquidGlassWrapper";
+import { useImessagePalette } from "../../ui/theme/imessagePalette";
 
 interface GlassBottomSheetProps {
   visible: boolean;
@@ -84,7 +85,14 @@ export const GlassBottomSheet: React.FC<GlassBottomSheetProps> = ({
   const translateY = React.useRef(new Animated.Value(1000)).current;
   const animatedBackdropOpacity = React.useRef(new Animated.Value(0)).current;
   const scale = React.useRef(new Animated.Value(0.96)).current;
+  const sheetRef = React.useRef<View>(null);
+  const restoreFocusRef = React.useRef<HTMLElement | null>(null);
+  const onCloseRef = React.useRef(onClose);
   const useNativeDriver = Platform.OS !== "web";
+
+  React.useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   React.useEffect(() => {
     const duration = shouldReduceMotion ? 0 : animationDuration;
@@ -126,6 +134,97 @@ export const GlassBottomSheet: React.FC<GlassBottomSheetProps> = ({
     opacity: Animated.multiply(animatedBackdropOpacity, backdropOpacity),
     backgroundColor: colors.backdrop,
   };
+  const webDialogProps =
+    Platform.OS === "web"
+      ? ({
+          role: "dialog",
+          "aria-modal": true,
+          tabIndex: -1,
+        } as const)
+      : {};
+
+  React.useEffect(() => {
+    if (
+      Platform.OS !== "web" ||
+      !visible ||
+      typeof document === "undefined" ||
+      typeof requestAnimationFrame === "undefined"
+    ) {
+      return;
+    }
+
+    const focusableSelector = [
+      "button",
+      "[href]",
+      "input",
+      "select",
+      "textarea",
+      "[tabindex]:not([tabindex=\"-1\"])",
+    ].join(",");
+    const getSheetElement = () => sheetRef.current as unknown as HTMLElement | null;
+    const getFocusableElements = () => {
+      const sheetElement = getSheetElement();
+      if (!sheetElement?.querySelectorAll) return [];
+      return Array.from(sheetElement.querySelectorAll<HTMLElement>(focusableSelector)).filter(
+        (element) =>
+          !element.hasAttribute("disabled") &&
+          element.getAttribute("aria-hidden") !== "true",
+      );
+    };
+
+    restoreFocusRef.current =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
+
+    const focusSheet = () => {
+      const focusTargets = getFocusableElements();
+      const sheetElement = getSheetElement();
+      (focusTargets[0] ?? sheetElement)?.focus?.();
+    };
+
+    const frameId = requestAnimationFrame(focusSheet);
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onCloseRef.current();
+        return;
+      }
+
+      if (event.key !== "Tab") {
+        return;
+      }
+
+      const focusTargets = getFocusableElements();
+      if (focusTargets.length === 0) {
+        event.preventDefault();
+        getSheetElement()?.focus?.();
+        return;
+      }
+
+      const first = focusTargets[0];
+      const last = focusTargets[focusTargets.length - 1];
+      if (!first || !last) {
+        return;
+      }
+
+      const active = document.activeElement;
+      if (event.shiftKey && active === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && active === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      cancelAnimationFrame(frameId);
+      document.removeEventListener("keydown", handleKeyDown);
+      restoreFocusRef.current?.focus?.();
+      restoreFocusRef.current = null;
+    };
+  }, [visible]);
 
   return (
     <Modal
@@ -146,6 +245,8 @@ export const GlassBottomSheet: React.FC<GlassBottomSheetProps> = ({
       </TouchableWithoutFeedback>
 
       <Animated.View
+        ref={sheetRef}
+        {...webDialogProps}
         style={[
           styles.sheetContainer,
           {
@@ -313,33 +414,32 @@ export const GlassActionSheet: React.FC<GlassActionSheetProps> = ({
 export const useGlassBottomSheet = () => {
   const [visible, setVisible] = React.useState(false);
 
-  const show = () => setVisible(true);
-  const hide = () => setVisible(false);
-  const toggle = () => setVisible((prev) => !prev);
+  const show = React.useCallback(() => setVisible(true), []);
+  const hide = React.useCallback(() => setVisible(false), []);
+  const toggle = React.useCallback(() => setVisible((prev) => !prev), []);
 
   return { visible, show, hide, toggle };
 };
 
 function useGlassSheetColors() {
   const isDark = useColorScheme() === "dark";
+  const palette = useImessagePalette();
 
   return {
     backdrop: isDark ? "rgba(0, 0, 0, 0.6)" : "rgba(0, 0, 0, 0.4)",
-    sheetBackground: isDark ? "rgba(28, 28, 30, 0.95)" : "rgba(255, 255, 255, 0.95)",
-    sheetBorder: isDark ? "rgba(84, 84, 88, 0.4)" : "rgba(198, 198, 200, 0.3)",
-    handle: isDark ? "rgba(255, 255, 255, 0.3)" : "rgba(0, 0, 0, 0.2)",
-    textPrimary: isDark ? "#F9FAFB" : "#111827",
-    textSecondary: isDark ? "#AEAEB2" : "#6D6D70",
-    actionDefault: "#007AFF",
-    actionDestructive: isDark ? "#FF453A" : "#FF3B30",
-    actionDisabled: "#8E8E93",
-    separator: isDark ? "rgba(84, 84, 88, 0.6)" : "rgba(60, 60, 67, 0.15)",
+    sheetBackground: palette.backgroundSecondary,
+    sheetBorder: palette.separator,
+    handle: palette.textTertiary,
+    textPrimary: palette.textPrimary,
+    textSecondary: palette.textSecondary,
+    actionDefault: palette.userBubble,
+    actionDestructive: palette.destructive,
+    actionDisabled: palette.textTertiary,
+    separator: palette.separator,
     closeButtonBackground:
       Platform.OS === "ios"
-        ? isDark
-          ? "rgba(118, 118, 128, 0.24)"
-          : "rgba(118, 118, 128, 0.12)"
-        : "transparent",
+        ? palette.highlight
+        : palette.transparent,
   };
 }
 

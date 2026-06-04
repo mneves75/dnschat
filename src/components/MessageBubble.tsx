@@ -30,6 +30,9 @@ const MONOSPACE_FONT = Platform.select({
   default: 'Courier',
 });
 
+const MARKDOWN_LINK_PATTERN =
+  /\[[^\]]+\]\((?:https:\/\/|mailto:)[^)]+\)|(?:https:\/\/|mailto:)\S+/i;
+
 interface MessageBubbleProps {
   message: Message;
 }
@@ -46,6 +49,7 @@ function MessageBubbleComponent({ message }: MessageBubbleProps) {
   const isUser = message.role === "user";
   const isLoading = message.status === "sending";
   const hasError = message.status === "error";
+  const exposesInteractiveMarkdown = !isUser && MARKDOWN_LINK_PATTERN.test(message.content);
   const messageCornerRadius = getCornerRadius('message');
 
   const runMessageAction = async (actionKey: string) => {
@@ -178,21 +182,23 @@ function MessageBubbleComponent({ message }: MessageBubbleProps) {
   const content = (
     <View
       style={bubbleStyles}
-      accessible={true}
-      accessibilityRole="text"
-      accessibilityLabel={t(
-        isUser
-          ? "screen.chat.accessibility.userMessage"
-          : "screen.chat.accessibility.assistantMessage",
-        { content: message.content.replace(/[`*_~]/g, "") },
-      )}
-      accessibilityHint={
-        isLoading
-          ? t("screen.chat.accessibility.loadingHint")
-          : t("screen.chat.accessibility.menuHint")
-      }
-      accessibilityActions={messageAccessibilityActions}
-      onAccessibilityAction={isLoading ? undefined : handleAccessibilityAction}
+      accessible={!exposesInteractiveMarkdown}
+      {...(!exposesInteractiveMarkdown
+        ? {
+            accessibilityRole: "text" as const,
+            accessibilityLabel: t(
+              isUser
+                ? "screen.chat.accessibility.userMessage"
+                : "screen.chat.accessibility.assistantMessage",
+              { content: message.content.replace(/[`*_~]/g, "") },
+            ),
+            accessibilityHint: isLoading
+              ? t("screen.chat.accessibility.loadingHint")
+              : t("screen.chat.accessibility.menuHint"),
+            accessibilityActions: messageAccessibilityActions,
+            onAccessibilityAction: isLoading ? undefined : handleAccessibilityAction,
+          }
+        : {})}
     >
       <MessageContent {...messageContentProps} />
     </View>

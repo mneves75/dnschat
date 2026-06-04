@@ -1,4 +1,5 @@
 import React from "react";
+import fs from "node:fs";
 import { act } from "react-test-renderer";
 import type { ReactTestRenderer } from "react-test-renderer";
 import { MessageList } from "../src/components/MessageList";
@@ -49,6 +50,7 @@ const baseMessage: Message = {
 };
 
 describe("MessageList behavior", () => {
+  const source = fs.readFileSync("src/components/MessageList.tsx", "utf8");
   let originalRequestAnimationFrame: typeof global.requestAnimationFrame | undefined;
   let scrollToEnd: jest.Mock;
 
@@ -116,5 +118,13 @@ describe("MessageList behavior", () => {
 
     expect(footerProps["testID"]).toBe("message-list-footer");
     expect(footerProps["style"]).toEqual({ height: LiquidGlassSpacing.xs + 42 });
+  });
+
+  it("cancels scheduled scroll frames and respects reduced motion", () => {
+    expect(source).toContain("outerFrameId");
+    expect(source).toContain("innerFrameId");
+    expect(source).toContain("cancelAnimationFrame(outerFrameId)");
+    expect(source).toContain("cancelAnimationFrame(innerFrameId)");
+    expect(source).toContain("animated: !shouldReduceMotion");
   });
 });

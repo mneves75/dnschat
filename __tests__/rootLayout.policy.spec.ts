@@ -14,4 +14,8 @@ describe("root layout routing policy", () => {
     expect(source).toContain("DNSLogService.initialize()");
     expect(source).toContain("setHasInitializedLogs(true)");
   });
+
+  it("guards Appearance.setColorScheme for web runtimes that do not expose it", () => {
+    expect(source).toContain('typeof Appearance.setColorScheme !== "function"');
+  });
 });

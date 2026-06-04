@@ -121,10 +121,10 @@ describe("ChatInput behavior", () => {
     expect(onSendMessage).not.toHaveBeenCalled();
   });
 
-  it("shows the counter after the documented threshold and announces the remaining count", () => {
+  it("shows the counter after the documented threshold and announces only milestone remaining counts", () => {
     const announceSpy = jest.spyOn(AccessibilityInfo, "announceForAccessibility");
     const tree = renderChatInput();
-    const nearLimit = "x".repeat(Math.ceil(MESSAGE_CONSTANTS.MAX_MESSAGE_LENGTH * 0.92) + 1);
+    const nearLimit = "x".repeat(MESSAGE_CONSTANTS.MAX_MESSAGE_LENGTH - 9);
 
     act(() => {
       tree.root.findByProps({ testID: "chat-input-field" }).props["onChangeText"](nearLimit);
@@ -133,8 +133,15 @@ describe("ChatInput behavior", () => {
     const rendered = JSON.stringify(tree.toJSON());
     expect(rendered).toContain(String(nearLimit.length));
     expect(rendered).toContain(String(MESSAGE_CONSTANTS.MAX_MESSAGE_LENGTH));
+    expect(announceSpy).not.toHaveBeenCalled();
+
+    const milestone = "x".repeat(MESSAGE_CONSTANTS.MAX_MESSAGE_LENGTH - 5);
+    act(() => {
+      tree.root.findByProps({ testID: "chat-input-field" }).props["onChangeText"](milestone);
+    });
+
     expect(announceSpy).toHaveBeenCalledWith(
-      `components.chatInput.charactersRemaining:${MESSAGE_CONSTANTS.MAX_MESSAGE_LENGTH - nearLimit.length}`,
+      "components.chatInput.charactersRemaining:5",
     );
   });
 });

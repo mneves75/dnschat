@@ -461,37 +461,40 @@ describe("DNS Service helpers", () => {
       jest.restoreAllMocks();
     });
 
-    it("falls back to secondary server when primary fails", async () => {
+    it("does not automatically fall back to offline ch.at when the primary fails", async () => {
       const querySpy = jest
         .spyOn(dnsServiceInternals, "queryWithServer")
-        .mockRejectedValueOnce(new Error("Primary server down"))
-        .mockResolvedValueOnce({ response: "ok", method: "udp" });
+        .mockRejectedValueOnce(new Error("Primary server down"));
 
-      const result = await DNSService.queryLLM(
+      await expect(DNSService.queryLLM(
         "test fallback",
         undefined,
         true,
         true,
-      );
+      )).rejects.toThrow("llm.pieter.com:53");
 
-      expect(result).toBe("ok");
-      expect(querySpy).toHaveBeenCalledTimes(2);
+      expect(querySpy).toHaveBeenCalledTimes(1);
       const calls = querySpy.mock.calls as Array<[{ targetServer: string }, ...unknown[]]>;
       const firstContext = calls[0]?.[0] as { targetServer: string };
-      const secondContext = calls[1]?.[0] as { targetServer: string };
       expect(firstContext.targetServer).toBe("llm.pieter.com");
-      expect(secondContext.targetServer).toBe("ch.at");
     });
 
     it("tracks server health across failures and successes", async () => {
-      jest
+      const querySpy = jest
         .spyOn(dnsServiceInternals, "queryWithServer")
-        .mockRejectedValueOnce(new Error("Primary server down"))
-        .mockResolvedValueOnce({ response: "ok", method: "udp" });
+        .mockRejectedValueOnce(new Error("Primary server down"));
 
-      await DNSService.queryLLM(
+      await expect(DNSService.queryLLM(
         "test health",
         undefined,
+        true,
+        true,
+      )).rejects.toThrow("llm.pieter.com:53");
+
+      querySpy.mockResolvedValueOnce({ response: "ok", method: "udp" });
+      await DNSService.queryLLM(
+        "test explicit secondary",
+        "ch.at",
         true,
         true,
       );

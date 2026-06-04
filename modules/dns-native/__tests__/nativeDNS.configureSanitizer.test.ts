@@ -1,6 +1,6 @@
 import { NativeModules, Platform } from "react-native";
 
-import { NativeDNS } from "../index";
+import { DNSErrorType, NativeDNS } from "../index";
 import { getNativeSanitizerConfig } from "../constants";
 
 describe("NativeDNS sanitizer configuration", () => {
@@ -66,18 +66,28 @@ describe("NativeDNS sanitizer configuration", () => {
     expect(nextConfig.invalidChars.pattern).toBe("[^a-z0-9-]");
   });
 
-  it("logs a warning when sanitizer configuration fails", async () => {
+  it("marks native DNS unavailable when sanitizer configuration fails", async () => {
     const error = Object.assign(new Error("Invalid regex"), { code: "SANITIZER_CONFIG_REGEX" });
+    const queryTXT = jest.fn().mockResolvedValue(["ok"]);
     nativeModulesRecord["RNDNSModule"] = {
       configureSanitizer: jest.fn().mockRejectedValue(error),
-      queryTXT: jest.fn(),
+      queryTXT,
       isAvailable: jest.fn().mockResolvedValue({ available: true, platform: "android", supportsCustomServer: true, supportsAsyncQuery: true, apiLevel: 34 }),
     };
 
-    new NativeDNS();
+    const dns = new NativeDNS();
     await Promise.resolve();
     await Promise.resolve();
 
     expect(console.warn).toHaveBeenCalledWith("[NativeDNS] Failed to configure sanitizer:", error);
+    await expect(dns.queryTXT("llm.pieter.com", "hello.llm.pieter.com", 53)).rejects.toMatchObject({
+      type: DNSErrorType.PLATFORM_UNSUPPORTED,
+      message: "Native DNS sanitizer configuration failed",
+    });
+    await expect(dns.isAvailable()).resolves.toMatchObject({
+      available: false,
+      platform: "android",
+    });
+    expect(queryTXT).not.toHaveBeenCalled();
   });
 });

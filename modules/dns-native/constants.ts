@@ -71,7 +71,6 @@ const DNS_SERVER_BY_HOST: Record<string, DNSServerConfig> = {
 };
 const LLM_DNS_SERVERS = [
   DNS_SERVERS[0],
-  DNS_SERVERS[1],
 ] as DNSServerConfig[];
 const DEFAULT_DNS_SERVER_CONFIG = DNS_SERVERS[0] as DNSServerConfig;
 
@@ -129,7 +128,7 @@ export function getServersByPriority(): DNSServerConfig[] {
  * These are the only servers that can process chat messages
  */
 export function getLLMServers(): DNSServerConfig[] {
-  return LLM_DNS_SERVERS.map(cloneServerConfig);  // Priority 1-2 are LLM servers
+  return LLM_DNS_SERVERS.map(cloneServerConfig);
 }
 
 export const DNS_CONSTANTS = {

@@ -268,9 +268,9 @@ describe("MessageList - iOS 26 HIG Compliance", () => {
       );
     });
 
-    it("uses animated scrolling for smooth UX", () => {
-      // Always use animated: true for user-facing scroll animations
-      expect(sourceCode).toContain("animated: true");
+    it("uses animated scrolling unless Reduce Motion is enabled", () => {
+      expect(sourceCode).toContain("useMotionReduction");
+      expect(sourceCode).toContain("animated: !shouldReduceMotion");
     });
   });
 

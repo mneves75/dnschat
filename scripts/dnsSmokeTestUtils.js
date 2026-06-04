@@ -1,4 +1,4 @@
-const DEFAULT_ZONE = "ch.at";
+const DEFAULT_ZONE = "llm.pieter.com";
 const DEFAULT_PORT = 53;
 const MAX_MESSAGE_LENGTH = 120;
 const MAX_DNS_LABEL_LENGTH = 63;
@@ -87,9 +87,9 @@ function composeQueryName(label, zone) {
 /**
  * Interpret CLI flags for resolver/zone selection.
  *
- * In this repo, "ch.at" can be both:
- * - the DNS server (resolver) we query (dig @ch.at ...)
- * - the zone suffix where TXT records live (<label>.ch.at)
+ * In this repo, the default live resolver/zone is llm.pieter.com. ch.at is
+ * still accepted explicitly for historical and fallback smoke tests, but it is
+ * currently not the default because it is offline.
  *
  * We keep both configurable to support smoke-testing from different networks.
  */
@@ -101,7 +101,8 @@ function resolveTargetFromArgs({ resolverArg, zoneArg, portArg }) {
   const resolverPort = explicitPort || resolverParsed?.port || DEFAULT_PORT;
   const zone = stripTrailingDots(zoneArg || DEFAULT_ZONE).trim().toLowerCase();
 
-  // If resolver is an IP and no explicit zone was provided, default to ch.at.
+  // If resolver is an IP and no explicit zone was provided, default to the
+  // app's primary DNS zone.
   const effectiveZone = zoneArg ? zone : isIpv4(resolverHost) ? DEFAULT_ZONE : zone;
 
   return {
@@ -121,4 +122,3 @@ module.exports = {
   composeQueryName,
   resolveTargetFromArgs,
 };
-

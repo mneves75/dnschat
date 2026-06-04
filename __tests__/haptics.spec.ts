@@ -18,16 +18,19 @@ describe("HapticFeedback capability gating", () => {
 
   it("skips when the user disables haptics", async () => {
     const { configureHaptics, __hapticsTestHooks } = loadModule();
-    configureHaptics({ userEnabled: false, reduceMotion: false });
+    configureHaptics({ userEnabled: false });
 
     await expect(__hapticsTestHooks.shouldPlayCheck()).resolves.toBe(false);
   });
 
-  it("skips when reduce motion is enabled", async () => {
+  it("still plays when only reduce motion is enabled", async () => {
+    ExpoHaptics.isAvailableAsync = jest
+      .fn<Promise<boolean>, []>()
+      .mockResolvedValue(true);
     const { configureHaptics, __hapticsTestHooks } = loadModule();
-    configureHaptics({ userEnabled: true, reduceMotion: true });
+    configureHaptics({ userEnabled: true });
 
-    await expect(__hapticsTestHooks.shouldPlayCheck()).resolves.toBe(false);
+    await expect(__hapticsTestHooks.shouldPlayCheck()).resolves.toBe(true);
   });
 
   it("skips when hardware support is missing", async () => {
@@ -35,7 +38,7 @@ describe("HapticFeedback capability gating", () => {
       .fn<Promise<boolean>, []>()
       .mockResolvedValue(false);
     const { configureHaptics, __hapticsTestHooks } = loadModule();
-    configureHaptics({ userEnabled: true, reduceMotion: false });
+    configureHaptics({ userEnabled: true });
 
     await expect(__hapticsTestHooks.shouldPlayCheck()).resolves.toBe(false);
   });
@@ -43,7 +46,7 @@ describe("HapticFeedback capability gating", () => {
   it("skips when the native availability probe is missing", async () => {
     delete ExpoHaptics.isAvailableAsync;
     const { configureHaptics, __hapticsTestHooks } = loadModule();
-    configureHaptics({ userEnabled: true, reduceMotion: false });
+    configureHaptics({ userEnabled: true });
 
     await expect(__hapticsTestHooks.shouldPlayCheck()).resolves.toBe(false);
   });
@@ -56,7 +59,7 @@ describe("HapticFeedback capability gating", () => {
       .spyOn(ExpoHaptics, "notificationAsync")
       .mockResolvedValue(undefined);
     const { HapticFeedback, configureHaptics, __hapticsTestHooks } = loadModule();
-    configureHaptics({ userEnabled: true, reduceMotion: false });
+    configureHaptics({ userEnabled: true });
 
     await expect(__hapticsTestHooks.shouldPlayCheck()).resolves.toBe(true);
 
@@ -75,7 +78,7 @@ describe("HapticFeedback capability gating", () => {
       .mockResolvedValueOnce(true);
 
     const { preloadHaptics, HapticFeedback, configureHaptics } = loadModule();
-    configureHaptics({ userEnabled: true, reduceMotion: false });
+    configureHaptics({ userEnabled: true });
 
     await expect(preloadHaptics()).resolves.toBe(false);
     await HapticFeedback.light();

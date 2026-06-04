@@ -42,7 +42,72 @@
   <p><strong>Stop condition:</strong> no known critical/high issues remain; medium findings are either fixed or explicitly justified; strongest local checks have fresh outcomes; browser/runtime evidence is captured for user-visible frontend changes when feasible.</p>
 
   <hr />
-  <h2>Review Pass &mdash; 2026-06-01 (active)</h2>
+  <h2>Review Pass &mdash; 2026-06-03 (active)</h2>
+  <p>
+    Scope locked to <code>&lt;REPO_ROOT&gt;</code> on branch
+    <code>main</code> at <code>819acec</code>. Package manager: Bun. Initial worktree:
+    clean. Current version before this pass: <code>4.0.20</code> build
+    <code>54</code>.
+  </p>
+  <p>
+    Required goal: full UI/UX, source, security, dependency, tests, docs, version,
+    commit, push, and staging-deploy closure where locally authorized. Claude Code
+    is available (<code>2.1.162</code>) and is running a read-only design review.
+    Codex native review agents were delegated for source, design, and
+    security/architecture lanes before implementation.
+  </p>
+  <h3>Current guidance loaded</h3>
+  <ul>
+    <li>Repo contract: <code>AGENTS.md</code>, <code>CLAUDE.md</code>, <code>docs/technical/SPECIFICATION.md</code>, <code>SECURITY.md</code>, <code>docs/data-inventory.md</code>.</li>
+    <li>Skill guidance: <code>modern-web-guidance</code> (<code>forms</code>, <code>css</code>), <code>frontend-design</code>, <code>design-review</code>, <code>claude</code>, <code>review</code>, <code>security-best-practices</code>, <code>react-native-best-practices</code>, iOS and Android design guidelines.</li>
+    <li>Current official docs checked: Expo SDK 56 stack alignment, Expo Router typed routes, Expo React Compiler, React Native 0.85 release notes, and Expo SecureStore backup guidance.</li>
+  </ul>
+  <h3>Initial confirmed findings</h3>
+  <ul>
+    <li><strong>Medium release-readiness docs drift (fixed below):</strong> <code>SECURITY.md</code>, <code>docs/README.md</code>, <code>docs/INSTALL.md</code>, App Store docs, and Android release docs referenced old <code>4.0.17</code>/<code>48</code> or pre-hotfix evidence while <code>README.md</code>/<code>CLAUDE.md</code> and package metadata were already at <code>4.0.20</code>/<code>54</code>.</li>
+    <li><strong>Medium developer/runtime smoke drift (fixed below):</strong> <code>scripts/run-dns-harness.ts</code> and <code>scripts/dnsSmokeTestUtils.js</code> defaulted to <code>ch.at</code> even though repo guidance marks <code>ch.at</code> offline and the app default is <code>llm.pieter.com</code>.</li>
+    <li><strong>Validated baseline:</strong> <code>bun run verify:public-redaction</code> passed; <code>gitleaks detect --source . --redact --no-banner --config .gitleaks.toml</code> scanned 363 commits with no leaks.</li>
+  </ul>
+  <h3>Fixes applied</h3>
+  <ul>
+    <li><strong>High accessibility fixed:</strong> <code>AccessibilityContext</code> now resolves the initial OS Reduce Motion value before rendering children and subscribes to later <code>reduceMotionChanged</code> events. This restores system preference support without the <code>4.0.19</code> startup false-to-true transition that caused the launch loop.</li>
+    <li><strong>High accessibility fixed:</strong> assistant bubbles with markdown links no longer expose the whole bubble as one accessible text element, allowing links to remain reachable to screen readers.</li>
+    <li><strong>High web accessibility fixed:</strong> <code>GlassBottomSheet</code> now exposes web dialog semantics, traps Tab focus, closes on Escape, and restores prior focus on dismiss.</li>
+    <li><strong>Medium UX fixed:</strong> shared typography now applies the in-app font-size scale; chat-list/profile relative timestamps use the selected app locale; bottom-sheet action/text colors come from the shared palette.</li>
+    <li><strong>Medium interaction contract fixed:</strong> haptics remain independent from Reduce Motion; reduced motion ends animations, while haptics still fire when enabled by the user and supported by hardware.</li>
+    <li><strong>Medium reliability fixed:</strong> the DNS harness defaults to <code>llm.pieter.com</code>, automatic resolver fallback no longer tries known-offline <code>ch.at</code>, and the native DNS module fails closed when sanitizer configuration fails.</li>
+    <li><strong>Medium screen-reader polish fixed:</strong> chat input character-limit announcements are milestone-based, decorative status/icon elements are hidden, transport-test results use live regions, and onboarding send control uses the platform minimum touch target.</li>
+    <li><strong>Docs/version fixed:</strong> version bumped to <code>4.0.21</code> build <code>55</code> with <code>bun run sync-versions --bump-build</code>; README, changelog, agent guidance, security policy, Android, and App Store/TestFlight runbooks were aligned to the local target while keeping build <code>54</code> as the last uploaded TestFlight evidence.</li>
+  </ul>
+  <h3>Validation evidence so far</h3>
+  <ul>
+    <li><code>bun run sync-versions --bump-build</code> &mdash; passed; metadata advanced from <code>4.0.20</code>/<code>54</code> to <code>4.0.21</code>/<code>55</code>.</li>
+    <li><code>bun run dns:harness -- --message "test message" --local-server --timeout 1000</code> &mdash; passed; offline local UDP path queried <code>test-message.llm.pieter.com</code>.</li>
+    <li><code>bun run test -- --runTestsByPath __tests__/dnsSmokeTestUtils.spec.ts</code> &mdash; passed, 11 tests.</li>
+    <li><code>bun run test -- --runTestsByPath __tests__/messageContent.policy.spec.ts __tests__/glassBottomSheet.accessibility.spec.ts</code> &mdash; passed, 13 tests.</li>
+    <li><code>bun run test -- --runTestsByPath __tests__/messageList.behavior.spec.tsx</code> &mdash; passed, 3 tests.</li>
+    <li><code>bun run test -- --runTestsByPath __tests__/dnsService.spec.ts __tests__/dnsConstants.spec.ts</code> &mdash; passed, 49 tests.</li>
+    <li><code>cd modules/dns-native &amp;&amp; bun run test -- --runTestsByPath __tests__/nativeDNS.configureSanitizer.test.ts</code> &mdash; passed, 3 tests.</li>
+    <li><code>bun run test -- --runTestsByPath __tests__/accessibility.reduceMotion.behavior.spec.tsx __tests__/hapticsConfigurator.spec.tsx __tests__/typography.dynamicType.spec.ts __tests__/dateLocale.spec.ts __tests__/glassBottomSheet.accessibility.spec.ts</code> &mdash; passed, 25 tests.</li>
+    <li><code>bun run typecheck</code> &mdash; passed after accessibility, native sanitizer, typography, and date-locale changes.</li>
+    <li><code>cd modules/dns-native &amp;&amp; bun run test</code> &mdash; passed; 7 suites passed, 1 skipped; 57 tests passed, 13 skipped.</li>
+    <li><code>bun run test</code> &mdash; passed; 110 suites passed, 1 skipped; 893 tests passed, 13 skipped.</li>
+    <li><code>bun run verify:all</code> &mdash; passed after the final web runtime guard; includes public redaction, Expo Doctor 20/20, SDK alignment, typed routes, typecheck, DNS resolver sync, iOS pods sync, React Compiler healthcheck 83/83, Android critical checks, lint, and full Jest.</li>
+    <li><code>gitleaks detect --source . --redact --no-banner --config .gitleaks.toml</code> &mdash; passed; 363 commits scanned, no leaks found.</li>
+    <li><code>bun audit</code> &mdash; passed; no vulnerabilities found.</li>
+    <li><code>asc doctor</code> &mdash; passed local health checks for the current <code>4.0.21</code>/<code>55</code> target.</li>
+    <li><code>npx react-doctor@latest --verbose .</code> &mdash; reported <code>93 / 100</code>. Remaining diagnostics are advisory React Compiler optimization findings, not unresolved critical/high issues.</li>
+    <li><code>xcodebuild clean build</code> Debug simulator, unsigned generic iOS Release build, and unsigned generic iOS Release archive &mdash; passed.</li>
+    <li>Web smoke on port <code>8097</code> initially exposed <code>Appearance.default.setColorScheme is not a function</code>; fixed with a platform guard and regression test. Follow-up Playwright desktop and mobile screenshots rendered onboarding cleanly with <code>0</code> browser console errors.</li>
+  </ul>
+  <h3>Open validation / release gates</h3>
+  <ul>
+    <li>Signed TestFlight upload and staging deployment remain external release gates; build <code>55</code> must not be described as uploaded unless signed archive/export, App Store Connect processing, and TestFlight validation evidence prove it.</li>
+    <li>Full AXe feature flow and physical-device install were not rerun in this pass. AXe doctor is healthy, and prior physical-device install evidence remains historical rather than build <code>55</code> proof.</li>
+  </ul>
+
+  <hr />
+  <h2>Review Pass &mdash; 2026-06-01 (historical)</h2>
   <p>
     Scope locked to <code>&lt;REPO_ROOT&gt;</code> on branch
     <code>main</code>. Package manager: Bun. Current dirty state includes benchmark/performance

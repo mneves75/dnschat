@@ -5,7 +5,7 @@
  * configured transport order (native -> UDP -> TCP by default).
  *
  * Usage examples:
- *   npx ts-node scripts/run-dns-harness.ts --message "Hello" --server ch.at \
+ *   npx ts-node scripts/run-dns-harness.ts --message "Hello" --server llm.pieter.com \
  *     --method-order native,udp,tcp --json-out artifacts/result.json --raw-out artifacts/raw
  */
 
@@ -18,7 +18,7 @@ import crypto from 'node:crypto';
 import dnsPacket from 'dns-packet';
 import type { Answer, TxtAnswer, TxtData } from 'dns-packet';
 
-const DEFAULT_SERVER = 'ch.at';
+const DEFAULT_SERVER = 'llm.pieter.com';
 const DEFAULT_PORT = 53;
 const DEFAULT_METHOD_ORDER: HarnessMethod[] = ['native', 'udp', 'tcp'];
 const DEFAULT_TIMEOUT_MS = 5000;

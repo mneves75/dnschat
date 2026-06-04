@@ -6,6 +6,50 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+## [4.0.21] - 2026-06-03
+
+Build `54` -> `55`. Production-readiness review pass after the 4.0.20
+reduce-motion hotfix.
+
+### Fixed
+
+- Restored OS Reduce Motion support without reintroducing the 4.0.19 startup
+  false-to-true animation transition: the provider now resolves the initial OS
+  value before rendering children and subscribes to later
+  `reduceMotionChanged` updates.
+- Kept haptics independent from Reduce Motion per the repo interaction
+  contract: reduced motion ends animations, while haptics still fire when the
+  user enables them and hardware supports them.
+- Applied the in-app font-size accessibility setting to shared typography
+  styles instead of leaving the setting disconnected.
+- Localized relative timestamps in the chat list and profile screens through
+  the selected app locale.
+- Exposed markdown links inside assistant bubbles to screen readers instead of
+  letting the parent bubble swallow interactive link semantics.
+- Added web dialog semantics and a keyboard focus trap to the shared bottom
+  sheet, including Escape-to-close and focus restoration.
+- Made the native DNS sanitizer fail closed when native sanitizer configuration
+  fails, instead of falling through to unsanitized native DNS calls.
+- Stopped automatic DNS fallback from trying the known-offline `ch.at` service;
+  the server remains allowlisted for explicit user selection.
+
+### Changed
+
+- Default DNS harness checks now target `llm.pieter.com`, matching the app
+  default and avoiding accidental dependence on the offline `ch.at` endpoint.
+- Bottom sheet text/action colors now come from the shared iMessage palette so
+  dark mode and high-contrast state apply consistently.
+- Reduced screen-reader noise in chat input character-limit announcements,
+  marked decorative tab/log-status icons as hidden, and improved loading/live
+  region announcements.
+
+### Added
+
+- Regression coverage for OS Reduce Motion startup behavior, dynamic type,
+  locale mapping, bottom-sheet accessibility/palette policy, markdown link
+  exposure, native sanitizer fail-closed behavior, DNS fallback policy, and
+  local DNS harness defaults.
+
 ## [4.0.20] - 2026-06-02
 
 Build `53` -> `54`. Hotfix for a crash introduced in `4.0.19`.
@@ -713,7 +757,11 @@ Versions 3.2.0 through 3.8.9 established the core feature set:
 - **3.3.0**: Android CI, release signing policy, Java 17 auto-detection
 - **3.2.x**: Public repo hardening (secrets scanning, policy tests, version sync gates), DNS server allowlist
 
-[Unreleased]: https://github.com/<owner>/dnschat/compare/v4.0.17...HEAD
+[Unreleased]: https://github.com/<owner>/dnschat/compare/v4.0.21...HEAD
+[4.0.21]: https://github.com/<owner>/dnschat/compare/v4.0.20...v4.0.21
+[4.0.20]: https://github.com/<owner>/dnschat/compare/v4.0.19...v4.0.20
+[4.0.19]: https://github.com/<owner>/dnschat/compare/v4.0.18...v4.0.19
+[4.0.18]: https://github.com/<owner>/dnschat/compare/v4.0.17...v4.0.18
 [4.0.17]: https://github.com/<owner>/dnschat/compare/v4.0.16...v4.0.17
 [4.0.16]: https://github.com/<owner>/dnschat/compare/v4.0.15...v4.0.16
 [4.0.15]: https://github.com/<owner>/dnschat/compare/v4.0.14...v4.0.15

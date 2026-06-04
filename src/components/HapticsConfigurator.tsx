@@ -2,7 +2,6 @@ import { useEffect, useRef } from "react";
 import { Platform } from "react-native";
 
 import { useSettings } from "../context/SettingsContext";
-import { useAccessibility } from "../context/AccessibilityContext";
 import { configureHaptics, preloadHaptics } from "../utils/haptics";
 import { devWarn } from "../utils/devLog";
 
@@ -11,7 +10,6 @@ import { devWarn } from "../utils/devLog";
  */
 export function HapticsConfigurator() {
   const { enableHaptics, loading: settingsLoading } = useSettings();
-  const { config } = useAccessibility();
   const hasPreloadedRef = useRef(false);
 
   // Effect: configure native haptics when settings/accessibility change and preload once.
@@ -22,7 +20,6 @@ export function HapticsConfigurator() {
 
     configureHaptics({
       userEnabled: enableHaptics,
-      reduceMotion: Boolean(config.reduceMotion),
     });
 
     if (!hasPreloadedRef.current) {
@@ -31,7 +28,7 @@ export function HapticsConfigurator() {
         devWarn("[HapticsConfigurator] Haptics preload failed", error);
       });
     }
-  }, [enableHaptics, config.reduceMotion, settingsLoading]);
+  }, [enableHaptics, settingsLoading]);
 
   return null;
 }

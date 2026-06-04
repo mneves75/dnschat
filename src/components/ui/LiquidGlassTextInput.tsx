@@ -18,12 +18,11 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
-  withSpring,
 } from "react-native-reanimated";
 import { useTypography } from "../../ui/hooks/useTypography";
 import { useImessagePalette } from "../../ui/theme/imessagePalette";
 import { LiquidGlassSpacing, getCornerRadius } from "../../ui/theme/liquidGlassSpacing";
-import { SpringConfig, TimingConfig } from "../../utils/animations";
+import { TimingConfig } from "../../utils/animations";
 import { HapticFeedback } from "../../utils/haptics";
 import { useTranslation } from "../../i18n";
 
@@ -88,7 +87,6 @@ export function LiquidGlassTextInput({
   const [isFocused, setIsFocused] = useState(false);
 
   const borderColor = useSharedValue(palette.border);
-  const borderWidth = useSharedValue(1);
 
   const hasError = !!errorText;
   const hasText = !!value && value.length > 0;
@@ -99,7 +97,6 @@ export function LiquidGlassTextInput({
   // Animated border for focus state
   const animatedBorderStyle = useAnimatedStyle(() => ({
     borderColor: borderColor.value,
-    borderWidth: borderWidth.value,
   }));
 
   const syncBorderState = React.useCallback((nextFocused: boolean, nextHasError: boolean) => {
@@ -108,11 +105,9 @@ export function LiquidGlassTextInput({
       : nextFocused
         ? palette.accentTint
         : palette.border;
-    const targetWidth = nextFocused ? 2 : 1;
 
     borderColor.value = withTiming(targetColor, TimingConfig.quick);
-    borderWidth.value = withSpring(targetWidth, SpringConfig.bouncy);
-  }, [borderColor, borderWidth, palette.accentTint, palette.border, palette.destructive]);
+  }, [borderColor, palette.accentTint, palette.border, palette.destructive]);
 
   // Handle focus
   const handleFocus = (e: FocusEvent) => {

@@ -40,6 +40,7 @@ import { useTranslation } from "../../i18n";
 import { useImessagePalette } from "../../ui/theme/imessagePalette";
 import { useTypography } from "../../ui/hooks/useTypography";
 import { HapticFeedback } from "../../utils/haptics";
+import { getDateFnsLocale } from "../../utils/dateLocale";
 import { useScreenEntrance } from "../../ui/hooks/useScreenEntrance";
 import { useStaggeredListValues, AnimatedListItem } from "../../ui/hooks/useStaggeredList";
 import { ChatListSkeleton } from "../../components/skeletons";
@@ -75,11 +76,15 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
   const palette = useImessagePalette();
   const typography = useTypography();
   const actionSheet = useGlassBottomSheet();
+  const { locale } = useSettings();
 
   const isDark = colorScheme === "dark";
   const lastMessage = chat.messages[chat.messages.length - 1];
   const messageCount = chat.messages.length;
-  const timeAgo = formatDistanceToNow(chat.createdAt, { addSuffix: true });
+  const timeAgo = formatDistanceToNow(chat.createdAt, {
+    addSuffix: true,
+    locale: getDateFnsLocale(locale),
+  });
   const messageBadgeLabel =
     messageCount === 1
       ? t("screen.glassChatList.badges.messageSingular", {
@@ -163,7 +168,7 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
               ]}
             >
               {lastMessage.content.length > 60
-                ? `${lastMessage.content.substring(0, 60)}...`
+                ? `${lastMessage.content.substring(0, 60)}…`
                 : lastMessage.content}
             </Text>
           )}

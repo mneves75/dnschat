@@ -6,14 +6,13 @@ import { createWithSuppressedWarnings } from "./utils/reactTestRenderer";
 /**
  * Behavioral regression guard for the 4.0.19 -> 4.0.20 reduce-motion crash.
  *
- * 4.0.19 derived `isReduceMotionEnabled` from an async `AccessibilityInfo`
- * probe that flips `false -> true` after mount. For users with iOS Reduce
- * Motion enabled, that runtime transition re-triggered motion-transition
- * effects across animated screens and drove "Maximum update depth exceeded".
+ * 4.0.19 derived `isReduceMotionEnabled` from an async OS probe while animated
+ * screens were already mounted. For users with iOS Reduce Motion enabled, that
+ * false -> true transition re-triggered transition effects and drove "Maximum
+ * update depth exceeded".
  *
- * The fix makes reduce motion a stable, in-app-only preference. These tests
- * render the provider (unlike the previous source-string assertions) so a
- * reintroduced async flip or OS subscription fails CI.
+ * The current contract honors the OS setting before children render, then
+ * listens to user-driven OS changes after startup.
  */
 
 type MockSettings = {
@@ -63,21 +62,20 @@ async function renderProbe() {
   return values;
 }
 
-describe("AccessibilityContext reduce-motion stability", () => {
+describe("AccessibilityContext reduce-motion behavior", () => {
   beforeEach(() => {
     currentSettings = baseSettings;
     jest.clearAllMocks();
+    (AccessibilityInfo.isReduceMotionEnabled as unknown) = jest.fn(async () => false);
   });
 
-  it("ignores the async OS probe and never flips reduce motion mid-session", async () => {
-    // OS reports Reduce Motion ON. The provider must NOT adopt it: that async
-    // false->true flip is exactly what regressed in 4.0.19.
+  it("honors the initial OS reduce-motion setting before children render", async () => {
     (AccessibilityInfo.isReduceMotionEnabled as unknown) = jest.fn(async () => true);
 
     const values = await renderProbe();
 
     expect(values.length).toBeGreaterThan(0);
-    expect(values.every((value) => value === false)).toBe(true);
+    expect(values.every((value) => value === true)).toBe(true);
   });
 
   it("reflects the in-app reduce-motion preference when enabled", async () => {
@@ -92,13 +90,13 @@ describe("AccessibilityContext reduce-motion stability", () => {
     expect(values.every((value) => value === true)).toBe(true);
   });
 
-  it("does not subscribe to OS reduceMotionChanged events", async () => {
+  it("subscribes to OS reduceMotionChanged events after startup", async () => {
     const addSpy = jest.spyOn(AccessibilityInfo, "addEventListener");
 
     await renderProbe();
 
     const subscribedEvents = addSpy.mock.calls.map((call) => call[0]);
-    expect(subscribedEvents).not.toContain("reduceMotionChanged");
+    expect(subscribedEvents).toContain("reduceMotionChanged");
 
     addSpy.mockRestore();
   });

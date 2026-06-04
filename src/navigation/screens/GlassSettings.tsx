@@ -580,7 +580,10 @@ export function GlassSettings() {
           </View>
 
           {lastTestResult && (
-            <View style={[styles.aboutCard, { backgroundColor: palette.highlight }]}>
+            <View
+              style={[styles.aboutCard, { backgroundColor: palette.highlight }]}
+              accessibilityLiveRegion="polite"
+            >
               <Text style={[styles.aboutText, { color: palette.textPrimary }]}>
                 {t("screen.glassSettings.results.label", {
                   value: lastTestResult,
@@ -589,7 +592,11 @@ export function GlassSettings() {
             </View>
           )}
           {lastTestError && (
-            <View style={[styles.aboutCard, { backgroundColor: palette.highlight }]}>
+            <View
+              style={[styles.aboutCard, { backgroundColor: palette.highlight }]}
+              accessibilityRole="alert"
+              accessibilityLiveRegion="assertive"
+            >
               <Text style={[styles.aboutText, { color: palette.textPrimary }]}>
                 {t("screen.glassSettings.results.error", {
                   value: lastTestError,

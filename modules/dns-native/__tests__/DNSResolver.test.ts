@@ -8,6 +8,7 @@ jest.mock("react-native", () => ({
     RNDNSModule: {
       queryTXT: jest.fn(),
       isAvailable: jest.fn(),
+      configureSanitizer: jest.fn().mockResolvedValue(true),
     },
   },
 }));

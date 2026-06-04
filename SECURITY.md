@@ -29,8 +29,9 @@ Please do not open public issues for security vulnerabilities.
 
 ## Current Security Baseline
 
-Last full source/security sweep: `2026-05-28`.
-Last iOS signed release archive/export: pending for `4.0.17` build `48`.
+Last full source/security sweep: `2026-06-03`.
+Last iOS signed release archive/export/upload: `4.0.20` build `54`; local
+release target `4.0.21` build `55` has not yet been uploaded.
 
 - Dependency audits pass on `2026-05-28` (`bun audit` reports
   `No vulnerabilities found`).
@@ -40,8 +41,8 @@ Last iOS signed release archive/export: pending for `4.0.17` build `48`.
   and push protection when available.
 - Xcode Debug simulator build, unsigned generic iOS Release build/archive,
   physical-device compiled-app install, signed App Store archive/export, and
-  TestFlight upload are part of the release gate; the current signed TestFlight
-  target is `4.0.17` build `48`.
+  TestFlight upload are part of the release gate; the current local release
+  target is `4.0.21` build `55`.
 - TestFlight validation must report `0` errors and `0` warnings before a build
   is described as distributed. App Store version validation is not applicable
   until a matching App Store version record exists in App Store Connect; App

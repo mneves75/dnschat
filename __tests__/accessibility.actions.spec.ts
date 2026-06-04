@@ -12,8 +12,9 @@ describe("accessibility action coverage", () => {
     expect(settings).toContain('testID="settings-haptics-switch"');
     expect(settings).toContain('accessibilityLabel={t("screen.settings.sections.appBehavior.enableHaptics.label")}');
 
-    expect(messageBubble).toContain("accessibilityActions={messageAccessibilityActions}");
-    expect(messageBubble).toContain("onAccessibilityAction={isLoading ? undefined : handleAccessibilityAction}");
+    expect(messageBubble).toContain("accessibilityActions: messageAccessibilityActions");
+    expect(messageBubble).toContain("onAccessibilityAction: isLoading ? undefined : handleAccessibilityAction");
+    expect(messageBubble).toContain("accessible={!exposesInteractiveMarkdown}");
 
     expect(chatList).toContain("accessibilityActions={chatAccessibilityActions}");
     expect(chatList).toContain("onAccessibilityAction={handleAccessibilityAction}");

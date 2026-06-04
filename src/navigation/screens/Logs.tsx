@@ -359,11 +359,9 @@ const LogQueryRow: React.FC<LogQueryRowProps> = ({
             </View>
             <View
               style={[styles.statusIndicator, { backgroundColor: statusColor }]}
-              accessible
-              accessibilityRole="image"
-              accessibilityLabel={
-                statusLabel
-              }
+              accessible={false}
+              accessibilityElementsHidden
+              importantForAccessibility="no-hide-descendants"
             >
               {isActive && (
                 <ActivityIndicator size="small" color={palette.bubbleTextOnBlue} />
