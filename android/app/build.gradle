@@ -108,8 +108,8 @@ android {
         applicationId 'org.mvneves.dnschat'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 56
-        versionName "4.0.22"
+        versionCode 57
+        versionName "4.0.23"
 
         buildConfigField "String", "REACT_NATIVE_RELEASE_LEVEL", "\"${findProperty('reactNativeReleaseLevel') ?: 'stable'}\""
     }

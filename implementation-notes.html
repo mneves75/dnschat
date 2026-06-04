@@ -42,6 +42,52 @@
   <p><strong>Stop condition:</strong> no known critical/high issues remain; medium findings are either fixed or explicitly justified; strongest local checks have fresh outcomes; browser/runtime evidence is captured for user-visible frontend changes when feasible.</p>
 
   <hr />
+  <h2>Release Pass &mdash; 2026-06-04 (4.0.23 build 57)</h2>
+  <p>
+    Scope locked to <code>&lt;REPO_ROOT&gt;</code> on branch <code>main</code>
+    at <code>47427c0</code> before the release bump. Initial worktree was clean.
+    Package manager: Bun. Goal: bump version, produce a signed release build,
+    deploy to TestFlight, renew App Store screenshots, submit the App Store
+    version through <code>asc</code>, update docs, commit, push, tag, and publish
+    a release.
+  </p>
+  <h3>Decisions / constraints</h3>
+  <ul>
+    <li><strong>Versioning:</strong> <code>package.json</code> was bumped from <code>4.0.22</code> to <code>4.0.23</code>, then <code>bun run sync-versions --bump-build</code> advanced native build metadata from <code>56</code> to <code>57</code>.</li>
+    <li><strong>App Store draft:</strong> App Store Connect already had one editable draft version, so the release reused that draft and updated it to <code>4.0.23</code> instead of creating a competing App Store version.</li>
+    <li><strong>Signing privacy:</strong> signed archive/export used local distribution credentials and a local App Store provisioning profile. Public docs record only sanitized command shapes and outcomes; exact App Store Connect IDs, tester group names, team IDs, profile names, certificate IDs, local paths, and device identifiers stay outside git.</li>
+    <li><strong>Submission validation boundary:</strong> pre-submit <code>asc validate</code> is the readiness gate. After submission, <code>asc validate</code> correctly reports the version as non-editable because App Store state is <code>WAITING_FOR_REVIEW</code>.</li>
+  </ul>
+  <h3>Validation evidence</h3>
+  <ul>
+    <li><code>bun run sync-versions --bump-build</code> &mdash; passed; metadata advanced from <code>4.0.22</code>/<code>56</code> to <code>4.0.23</code>/<code>57</code>.</li>
+    <li><code>asc screenshots validate</code> &mdash; passed for iPhone and iPad screenshot sets in <code>en-US</code> and <code>pt-BR</code> with <code>0</code> errors and <code>0</code> warnings.</li>
+    <li><code>bun run verify:all</code> &mdash; passed before release archive/export; included public redaction, Expo Doctor 20/20, SDK alignment, typed routes, typecheck, DNS resolver sync, iOS pods sync, React Compiler healthcheck 83/83, Android critical checks, lint, and full Jest (<code>110</code> suites passed, <code>1</code> skipped; <code>893</code> tests passed, <code>13</code> skipped).</li>
+    <li><code>gitleaks detect --source . --redact --no-banner --config .gitleaks.toml</code> &mdash; passed; <code>366</code> commits scanned, no leaks found.</li>
+    <li><code>asc doctor</code> &mdash; passed local health checks for the current <code>4.0.23</code>/<code>57</code> target.</li>
+    <li><code>xcodebuild clean archive</code> Release for generic iOS &mdash; passed with Apple Distribution signing for <code>4.0.23</code>/<code>57</code>.</li>
+    <li><code>xcodebuild -exportArchive</code> &mdash; passed; produced a signed App Store IPA for <code>4.0.23</code>/<code>57</code>.</li>
+    <li><code>asc publish testflight --wait</code> &mdash; passed; App Store Connect processing returned <code>VALID</code> for version <code>4.0.23</code> build <code>57</code>.</li>
+    <li><code>asc validate testflight --strict</code> &mdash; passed; <code>0</code> errors, <code>0</code> warnings, <code>0</code> blocking items.</li>
+    <li><code>asc versions update</code>, <code>asc versions attach-build</code>, and <code>asc localizations update</code> &mdash; passed; the App Store draft was updated to <code>4.0.23</code>, build <code>57</code> was attached, and <code>en-US</code>/<code>pt-BR</code> release notes were updated.</li>
+    <li><code>asc screenshots upload --replace</code> &mdash; passed; uploaded <code>8</code> iPhone screenshots per locale and <code>4</code> iPad screenshots per locale, all complete.</li>
+    <li><code>asc validate --app ... --version 4.0.23 --platform IOS --strict</code> before submission &mdash; passed with <code>0</code> errors, <code>0</code> warnings, and <code>0</code> blocking findings; one informational App Privacy publish-state check remains API-unverifiable by App Store Connect.</li>
+    <li><code>asc review submit --confirm</code> &mdash; passed; the App Store version was submitted for review on <code>2026-06-04</code>.</li>
+    <li><code>asc status --app ...</code> and <code>asc submit status --version-id ...</code> &mdash; passed after submission; App Store state is <code>WAITING_FOR_REVIEW</code> with no blocking issues reported.</li>
+    <li><code>bun run sync-versions:dry</code> &mdash; passed after docs; all version surfaces are synchronized at <code>4.0.23</code>/<code>57</code>.</li>
+    <li><code>cd modules/dns-native &amp;&amp; bun run test</code> &mdash; passed after docs; <code>7</code> suites passed, <code>1</code> skipped; <code>57</code> tests passed, <code>13</code> skipped.</li>
+    <li><code>bun audit</code> &mdash; passed after docs; no vulnerabilities found.</li>
+    <li><code>bun run verify:public-redaction</code>, stale-current release scan, private App Store Connect identifier scan, and <code>git diff --check</code> &mdash; passed after docs.</li>
+    <li><code>bun run verify:all</code> &mdash; passed after docs; included public redaction, Expo Doctor 20/20, SDK alignment, typed routes, typecheck, DNS resolver sync, iOS pods sync, React Compiler healthcheck 83/83, Android critical checks, lint, and full Jest (<code>110</code> suites passed, <code>1</code> skipped; <code>893</code> tests passed, <code>13</code> skipped).</li>
+    <li><code>gitleaks detect --source . --redact --no-banner --config .gitleaks.toml</code> &mdash; passed after docs; <code>366</code> commits scanned, no leaks found.</li>
+  </ul>
+  <h3>Open / not claimed</h3>
+  <ul>
+    <li>App Review approval is not claimed; the current App Store state is <code>WAITING_FOR_REVIEW</code>.</li>
+    <li>Full AXe feature flow and physical-device install were not rerun for build <code>57</code> because this release pass changed version metadata, docs, and App Store/TestFlight distribution state. The latest physical-device compiled-app proof remains build <code>56</code>.</li>
+  </ul>
+
+  <hr />
   <h2>Release Pass &mdash; 2026-06-04 (4.0.22 build 56)</h2>
   <p>
     Scope locked to <code>&lt;REPO_ROOT&gt;</code> on branch <code>main</code>

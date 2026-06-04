@@ -79,15 +79,15 @@ AI,chat,DNS,assistant,local,native,tech,innovation,queries,networking
 
 ---
 
-## What's New (Release Notes v4.0.22)
+## What's New (Release Notes v4.0.23)
 
-RELEASE DEVICE VALIDATION AND DOCS SYNC
+TESTFLIGHT AND APP STORE SUBMISSION REFRESH
 
-- Updated release metadata to version 4.0.22 build 56.
-- Refreshed physical-device Release build, install, metadata, and launch evidence.
-- Uploaded the signed App Store IPA to TestFlight and validated processing for build 56.
+- Updated release metadata to version 4.0.23 build 57.
+- Renewed App Store screenshots for iPhone and iPad in English and Portuguese.
+- Uploaded the signed App Store IPA to TestFlight, validated processing for build 57, and submitted the App Store version for review.
 
-## TestFlight What to Test (v4.0.22 build 56)
+## TestFlight What to Test (v4.0.23 build 57)
 
 - Complete onboarding from a fresh install and confirm the app lands on the chat list.
 - Open message/chat/log/settings menus and confirm actions remain reachable on supported native platforms and fall back cleanly elsewhere.
@@ -146,8 +146,8 @@ Validated screenshot sets currently available in App Store Connect:
 ### Bundle Information
 
 - **Bundle ID**: `<BUNDLE_ID>`
-- **Version**: `4.0.22`
-- **Build Number**: 56 (sync-versions)
+- **Version**: `4.0.23`
+- **Build Number**: 57 (sync-versions)
 - **App Store Connect internal IDs**: intentionally omitted from public docs; keep exact IDs in private release notes.
 - **Minimum iOS Version**: 16.4
 - **Device Support**: iPhone, iPad
@@ -281,9 +281,11 @@ No user account is required. The app does not require app-owned backend infrastr
 ### App Store Connect Configuration
 
 - [x] Historical IPA upload evidence exists for `4.0.13` build `43`
-- [x] Upload current release IPA build (`4.0.22` build `56`)
+- [x] Upload current release IPA build (`4.0.23` build `57`)
 - [x] Local ASC health checked with `asc doctor` (`2026-06-04`)
 - [x] Apply App Store Connect metadata for `en-US` and `pt-BR`
+- [x] Renew iPhone and iPad screenshot sets for `en-US` and `pt-BR`
+- [x] Submit App Store version for review (`WAITING_FOR_REVIEW`)
 - [ ] Configure pricing (Free)
 - [ ] Set availability (Worldwide)
 - [ ] Age rating questionnaire
@@ -299,14 +301,15 @@ No user account is required. The app does not require app-owned backend infrastr
 - [x] Signed archive/export passed for `4.0.13` build `43`
 - [x] Historical App Store Connect upload/submission check passed for build `43`
 - [x] Historical TestFlight validation passed (`0` errors, `0` warnings) for build `43`
-- [x] Current build `56` physical-device Release build/install/launch
-- [x] Current build `56` App Store Connect upload/processing check
-- [x] Current build `56` TestFlight validation (`0` errors, `0` warnings)
+- [x] Historical build `56` physical-device Release build/install/launch
+- [x] Current build `57` App Store Connect upload/processing check
+- [x] Current build `57` TestFlight validation (`0` errors, `0` warnings)
+- [x] Current build `57` App Store pre-submit validation (`0` errors, `0` warnings, `0` blocking)
+- [x] Submit for App Store Review
 - [ ] Final testing on TestFlight
 - [ ] Review guidelines compliance check
-- [ ] Submit for App Store Review
 - [ ] Monitor review status
 
 ---
 
-_Updated for DNS Chat v4.0.22 build 56 - release-device validation and docs sync_
+_Updated for DNS Chat v4.0.23 build 57 - TestFlight/App Store submission refresh_

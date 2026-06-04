@@ -7,7 +7,7 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 - JavaScript fallback transports (UDP/TCP) for constrained networks
 - An in-app Logs screen to inspect attempts, failures, and fallbacks
 
-[![Version](https://img.shields.io/badge/version-4.0.22-blue.svg)](.)
+[![Version](https://img.shields.io/badge/version-4.0.23-blue.svg)](.)
 [![React Native](https://img.shields.io/badge/React%20Native-0.85.3-blue.svg)](https://reactnative.dev/)
 [![Expo](https://img.shields.io/badge/Expo-56.0.8-black.svg)](https://expo.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0.x-blue.svg)](https://www.typescriptlang.org/)
@@ -31,7 +31,7 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 
 ## Tech stack
 
-- App version: `4.0.22` (build `56`)
+- App version: `4.0.23` (build `57`)
 - Expo workflow: Expo Router + EAS-compatible native config
 - Expo SDK: `56.0.8`
 - React: `19.2.3`
@@ -210,11 +210,11 @@ Last architecture/dependency verification: `2026-06-03`.
 Last full source/security sweep: `2026-06-03`.
 Last AXe simulator E2E feature pass: `2026-05-17` for version `4.0.13` build
 `43`.
-Last uploaded/processed TestFlight build: version `4.0.22` build `56`
+Last uploaded/processed TestFlight build: version `4.0.23` build `57`
 (`VALID` on `2026-06-04`, distributed through the internal all-builds tester
-track). Build `56` is the fresh release-device metadata bump for the 4.0.21
-production-readiness fixes, with a compiled Release build installed and launched
-on a physical iOS device before the signed App Store archive/export/upload lane.
+track). Build `57` is the current App Store submission build and keeps the
+4.0.21 production-readiness fixes plus the 4.0.22 release-device evidence in
+the shipped code line.
 
 - `npx react-doctor@latest --verbose .` reports `93 / 100` for `chat-dns` on
   `2026-06-03`. Confirmed fixes were applied for the user font-size hook and
@@ -234,7 +234,7 @@ on a physical iOS device before the signed App Store archive/export/upload lane.
   passed, `13` skipped. Targeted regression suites cover reduce motion,
   haptics, dynamic type, locale mapping, bottom-sheet accessibility, DNS
   fallback, sanitizer failure, and DNS harness defaults.
-- `gitleaks detect` on `2026-06-04` reports `no leaks found` across `364`
+- `gitleaks detect` on `2026-06-04` reports `no leaks found` across `366`
   scanned commits.
 - `bun audit` on `2026-06-04` reports `No vulnerabilities found`.
 - `xcodebuild clean build` passes for Debug on an iOS 26.5 simulator on
@@ -244,19 +244,18 @@ on a physical iOS device before the signed App Store archive/export/upload lane.
   `2026-06-03`.
 - Physical-device Release build, install, installed metadata check, and launch
   passed on `2026-06-04` for version `4.0.22` build `56`.
-- Last signed TestFlight build: `4.0.22` build `56`, archived with Apple
+- Last signed TestFlight build: `4.0.23` build `57`, archived with Apple
   Distribution signing, exported, uploaded, and processed to `VALID` in App Store
   Connect on `2026-06-04`; `asc validate testflight --strict` reports `0`
-  errors and `0` warnings with `en-US` test notes set. Build `56` carries the
-  reduce-motion startup fixes from builds `54` and `55` plus the current release
-  metadata. The release lane uses a signed App Store archive/export and App Store
-  Connect processing before the build is described as distributed. Internal App
-  Store Connect IDs and tester group names are intentionally omitted from public
-  docs.
-- Historical `asc validate testflight` evidence for build `54` on `2026-06-02`
-  is superseded by build `56` validation. App Store version validation is blocked
-  until a matching App Store version record exists for `4.0.22`; the remaining
-  App Store validation note is API-unverifiable App Privacy publish state.
+  errors and `0` warnings. App Store screenshots were renewed for iPhone and
+  iPad in `en-US` and `pt-BR`, pre-submit App Store validation reported `0`
+  errors, `0` warnings, and `0` blocking findings, and the App Store version is
+  now `WAITING_FOR_REVIEW`. Internal App Store Connect IDs and tester group
+  names are intentionally omitted from public docs.
+- Historical `asc validate testflight` evidence for builds `54` and `56` is
+  superseded by build `57` validation. After submission, `asc validate` reports
+  the App Store version is non-editable because it is already
+  `WAITING_FOR_REVIEW`; pre-submit validation is the relevant readiness gate.
 - `xcodebuild test` is not a native gate yet because the `DNSChat` scheme has no
   XCTest bundles.
 - DNS transport is observable. Public copy and tests intentionally avoid

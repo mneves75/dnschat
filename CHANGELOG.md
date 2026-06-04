@@ -6,6 +6,30 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+## [4.0.23] - 2026-06-04
+
+Build `56` -> `57`. TestFlight and App Store submission refresh.
+
+### Changed
+
+- Bumped app metadata to version `4.0.23` build `57` across Expo, iOS, and
+  Android via `bun run sync-versions --bump-build`.
+- Renewed App Store screenshot sets for iPhone and iPad in `en-US` and `pt-BR`.
+- Updated public release docs and implementation notes with sanitized
+  TestFlight, App Store validation, and App Review submission evidence.
+
+### Verified
+
+- `bun run verify:all`, native DNS module tests, `gitleaks detect`,
+  `bun audit`, and `asc doctor` passed for the 4.0.23 target.
+- Signed App Store archive/export/upload processed to `VALID` in App Store
+  Connect for build `57`.
+- `asc validate testflight --strict` reported `0` errors and `0` warnings for
+  build `57`.
+- Pre-submit App Store validation reported `0` errors, `0` warnings, and `0`
+  blocking findings; the App Store version is now submitted and
+  `WAITING_FOR_REVIEW`.
+
 ## [4.0.22] - 2026-06-04
 
 Build `55` -> `56`. Release-device metadata and documentation sync for the
@@ -780,7 +804,8 @@ Versions 3.2.0 through 3.8.9 established the core feature set:
 - **3.3.0**: Android CI, release signing policy, Java 17 auto-detection
 - **3.2.x**: Public repo hardening (secrets scanning, policy tests, version sync gates), DNS server allowlist
 
-[Unreleased]: https://github.com/<owner>/dnschat/compare/v4.0.22...HEAD
+[Unreleased]: https://github.com/<owner>/dnschat/compare/v4.0.23...HEAD
+[4.0.23]: https://github.com/<owner>/dnschat/compare/v4.0.22...v4.0.23
 [4.0.22]: https://github.com/<owner>/dnschat/compare/v4.0.21...v4.0.22
 [4.0.21]: https://github.com/<owner>/dnschat/compare/v4.0.20...v4.0.21
 [4.0.20]: https://github.com/<owner>/dnschat/compare/v4.0.19...v4.0.20

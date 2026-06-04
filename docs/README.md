@@ -30,8 +30,8 @@ Last architecture/dependency verification: `2026-06-03`.
 Last full source/security sweep: `2026-06-03`.
 Last AXe simulator E2E feature pass: `2026-05-17` for version `4.0.13` build
 `43`.
-Current release target: version `4.0.22` build `56`. Last uploaded and
-processed TestFlight build is version `4.0.22` build `56` (`VALID` on
+Current release target: version `4.0.23` build `57`. Last uploaded and
+processed TestFlight build is version `4.0.23` build `57` (`VALID` on
 `2026-06-04`).
 
 - `npx react-doctor@latest --verbose .` reports `93 / 100` for `chat-dns` on
@@ -44,10 +44,10 @@ processed TestFlight build is version `4.0.22` build `56` (`VALID` on
   `57` tests passed, `13` skipped).
 - AXe E2E baseline: 10 feature groups passed in one owned release-simulator
   run on `2026-05-17`.
-- Jest baseline for build `56` passed through the final full gate on
+- Jest baseline for build `57` passed through the final full gate on
   `2026-06-04`: `110` suites passed, `1` skipped; `893` tests passed, `13`
   skipped.
-- `gitleaks detect` on `2026-06-04` reports `no leaks found` across `364`
+- `gitleaks detect` on `2026-06-04` reports `no leaks found` across `366`
   scanned commits.
 - `bun audit` on `2026-06-04` reports `No vulnerabilities found`.
 - `xcodebuild clean build` passes for Debug on an iOS 26.5 simulator on
@@ -57,15 +57,17 @@ processed TestFlight build is version `4.0.22` build `56` (`VALID` on
   `2026-05-24`.
 - Physical-device Release build, install, installed metadata check, and launch
   passed on `2026-06-04` for version `4.0.22` build `56`.
-- Current target: `4.0.22` build `56`; last signed TestFlight build:
-  `4.0.22` build `56`. The release lane uses signed App Store archive/export,
+- Current target: `4.0.23` build `57`; last signed TestFlight build:
+  `4.0.23` build `57`. The release lane uses signed App Store archive/export,
   App Store Connect upload, processing, and validation before the build is
   described as distributed. Internal App Store Connect IDs are intentionally
   omitted from public docs.
-- `asc validate testflight --strict` for build `56` passes with `0` errors and
-  `0` warnings. App Store version validation is blocked until a matching App
-  Store version record exists for `4.0.22`; App Privacy publish-state still
-  needs browser confirmation because the API cannot verify it.
+- `asc validate testflight --strict` for build `57` passes with `0` errors and
+  `0` warnings. App Store screenshots were renewed for iPhone and iPad in
+  `en-US` and `pt-BR`; pre-submit App Store validation reported `0` errors,
+  `0` warnings, and `0` blocking findings; the App Store version is now
+  `WAITING_FOR_REVIEW`. App Privacy publish-state still needs browser
+  confirmation because the API cannot verify it.
 - `xcodebuild test` is not a native gate yet because the `DNSChat` scheme has no
   XCTest bundles.
 - Public docs and store copy must not claim that DNS prompts are private or
