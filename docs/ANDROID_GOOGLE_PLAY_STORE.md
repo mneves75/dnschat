@@ -4,7 +4,7 @@ Complete step-by-step guide for publishing DNSChat to the Google Play Store.
 
 **App**: DNSChat
 **Package**: `<ANDROID_PACKAGE>`
-**Current Version**: 4.0.21
+**Current Version**: 4.0.22
 
 ---
 
@@ -323,11 +323,10 @@ See [ANDROID_RELEASE.md](./ANDROID_RELEASE.md) for signing configuration.
    - **Upload** new AAB
 4. Add release notes:
    ```
-   What's new in v4.0.21:
-   - Restored OS Reduce Motion support without the startup animation-loop regression
-   - Improved dynamic type, localized timestamps, bottom-sheet accessibility, and markdown link semantics
-   - Hardened DNS fallback and native sanitizer failure handling
-   - Added regression coverage for the production-readiness review findings
+   What's new in v4.0.22:
+   - Release metadata updated to build 56 after the production-readiness fixes
+   - Physical-device Release build/install/launch evidence refreshed
+   - Public release docs and verification notes aligned with the current target
    ```
 5. Click **"Review release"**
 6. Set rollout percentage (start with 10-20% recommended)
@@ -437,6 +436,7 @@ Before submitting for review, verify:
 
 | Version | Date | Notes |
 |---------|------|-------|
+| 4.0.22 | 2026-06-04 | Release-device metadata bump, physical-device Release install/launch evidence, and docs sync |
 | 4.0.21 | 2026-06-03 | Production-readiness review, OS Reduce Motion recovery, dynamic type, localized dates, DNS fallback and sanitizer hardening |
 | 4.0.20 | 2026-06-02 | Reduce-motion launch-crash hotfix for build 54 |
 | 4.0.19 | 2026-06-01 | React Doctor 100/100 cleanup, retry UX, dependency alignment |

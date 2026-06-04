@@ -1,6 +1,6 @@
 # Installation
 
-This repo builds DNSChat `4.0.21` (React Native `0.85.x`, Expo SDK `56.0.8`).
+This repo builds DNSChat `4.0.22` (React Native `0.85.x`, Expo SDK `56.0.8`).
 
 Prereqs:
 
@@ -114,26 +114,28 @@ Physical-device build/install shape:
 xcodebuild clean build \
   -workspace ios/DNSChat.xcworkspace \
   -scheme DNSChat \
-  -configuration Debug \
+  -configuration Release \
   -destination 'platform=iOS,id=<DEVICE_ID>' \
   DEVELOPMENT_TEAM=<TEAM_ID> \
   CODE_SIGN_STYLE=Manual \
-  PROVISIONING_PROFILE_SPECIFIER='<DEVELOPMENT_PROFILE>'
+  PROVISIONING_PROFILE_SPECIFIER='<DEVELOPMENT_PROFILE>' \
+  CODE_SIGN_IDENTITY='Apple Development'
 
 xcrun devicectl device install app \
   --device <COREDEVICE_ID> \
-  <DERIVED_DATA>/Build/Products/Debug-iphoneos/DNSChat.app
+  <DERIVED_DATA>/Build/Products/Release-iphoneos/DNSChat.app
 ```
 
-Latest physical-device evidence: the compiled native app installed on a
-physical device for version `4.0.8` build `36`. A CLI launch can fail with
-`SBMainWorkspace` reason `Locked` when the device is locked; that is not an
-install failure.
+Latest physical-device evidence: a compiled native Release build installed on a
+physical device, reported version `4.0.22` build `56`, and launched successfully
+via `devicectl` on `2026-06-04`. A CLI launch can fail with `SBMainWorkspace`
+reason `Locked` when the device is locked; that is tracked separately from
+install proof.
 
 Latest AXe simulator release evidence: `2026-05-17`, version `4.0.13` build
 `43`, 10 feature groups passed in one owned release-simulator run.
 
-Current local release target: version `4.0.21` build `55`. Last uploaded and
+Current local release target: version `4.0.22` build `56`. Last uploaded and
 processed TestFlight build remains version `4.0.20` build `54`. The release
 lane archives, exports, uploads, waits for processing, and validates TestFlight
 before the build is described as distributed. App Store Connect identifiers,

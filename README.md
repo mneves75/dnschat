@@ -7,7 +7,7 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 - JavaScript fallback transports (UDP/TCP) for constrained networks
 - An in-app Logs screen to inspect attempts, failures, and fallbacks
 
-[![Version](https://img.shields.io/badge/version-4.0.21-blue.svg)](.)
+[![Version](https://img.shields.io/badge/version-4.0.22-blue.svg)](.)
 [![React Native](https://img.shields.io/badge/React%20Native-0.85.3-blue.svg)](https://reactnative.dev/)
 [![Expo](https://img.shields.io/badge/Expo-56.0.8-black.svg)](https://expo.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0.x-blue.svg)](https://www.typescriptlang.org/)
@@ -31,7 +31,7 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 
 ## Tech stack
 
-- App version: `4.0.21` (build `55`)
+- App version: `4.0.22` (build `56`)
 - Expo workflow: Expo Router + EAS-compatible native config
 - Expo SDK: `56.0.8`
 - React: `19.2.3`
@@ -212,39 +212,39 @@ Last AXe simulator E2E feature pass: `2026-05-17` for version `4.0.13` build
 `43`.
 Last uploaded/processed TestFlight build: version `4.0.20` build `54`
 (`VALID` on `2026-06-02`, distributed to the internal tester group). Current
-local release target: version `4.0.21` build `55`. Build `55` restores
-OS Reduce Motion support without the `4.0.19`/`53` startup false-to-true
-animation transition, localizes relative timestamps, hardens native sanitizer
-failure handling, skips automatic fallback to the known-offline `ch.at` service,
-and improves bottom-sheet/link accessibility.
+local release target: version `4.0.22` build `56`. Build `56` is the fresh
+release-device metadata bump for the 4.0.21 production-readiness fixes, with a
+compiled Release build installed and launched on a physical iOS device on
+`2026-06-04`. It has not been uploaded to TestFlight in this working tree.
 
 - `npx react-doctor@latest --verbose .` reports `93 / 100` for `chat-dns` on
   `2026-06-03`. Confirmed fixes were applied for the user font-size hook and
   an animated layout border; remaining diagnostics are advisory React Compiler
   optimization findings around Reanimated shared values, `try/finally`, refs,
   and existing manual memoization.
-- `bun run typecheck` passes on `2026-06-03`.
+- `bun run typecheck` passes through `bun run verify:all` on `2026-06-04`.
 - `bun run verify:expo-doctor` reports `20/20 checks passed, no issues` on
   `2026-06-03` after the Expo SDK patch alignment (expo `56.0.8`, expo-router
   `56.2.8`, expo-linking `56.0.13`, expo-build-properties `56.0.16`, @expo/ui
   `56.0.15`).
-- Native DNS module tests pass on `2026-06-03` (`7` suites passed, `1` skipped;
+- Native DNS module tests pass on `2026-06-04` (`7` suites passed, `1` skipped;
   `57` tests passed, `13` skipped).
 - AXe E2E baseline: 10 feature groups passed in one owned release-simulator
   run on `2026-05-17`.
-- Jest baseline on `2026-06-03`: `110` suites passed, `1` skipped; `893` tests
+- Jest baseline on `2026-06-04`: `110` suites passed, `1` skipped; `893` tests
   passed, `13` skipped. Targeted regression suites cover reduce motion,
   haptics, dynamic type, locale mapping, bottom-sheet accessibility, DNS
   fallback, sanitizer failure, and DNS harness defaults.
-- `gitleaks detect` on `2026-06-03` reports `no leaks found` across `363`
+- `gitleaks detect` on `2026-06-04` reports `no leaks found` across `364`
   scanned commits.
-- `bun audit` on `2026-06-03` reports `No vulnerabilities found`.
+- `bun audit` on `2026-06-04` reports `No vulnerabilities found`.
 - `xcodebuild clean build` passes for Debug on an iOS 26.5 simulator on
   `2026-06-03`.
 - `xcodebuild clean build` and `xcodebuild clean archive` pass for generic iOS
   Release when code signing is disabled (`CODE_SIGNING_ALLOWED=NO`) on
   `2026-06-03`.
-- Physical-device compiled app install passed.
+- Physical-device Release build, install, installed metadata check, and launch
+  passed on `2026-06-04` for version `4.0.22` build `56`.
 - Last signed TestFlight build: `4.0.20` build `54`, archived with Apple
   Distribution signing, exported, uploaded, and processed to `VALID` in App Store
   Connect on `2026-06-02` and distributed to the internal tester group;
@@ -254,7 +254,7 @@ and improves bottom-sheet/link accessibility.
   Store archive/export and App Store Connect processing before the build is
   described as distributed. Internal App Store Connect IDs and tester group names
   are intentionally omitted from public docs.
-- Build `55` has not yet been uploaded to TestFlight in this working tree; signed
+- Build `56` has not yet been uploaded to TestFlight in this working tree; signed
   archive/export/upload require local signing and App Store Connect credentials.
 - Historical `asc validate testflight` evidence for build `51` on `2026-05-28`
   is superseded by build `54` validation. App Store version validation is not

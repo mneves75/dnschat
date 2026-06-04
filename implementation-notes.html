@@ -42,6 +42,42 @@
   <p><strong>Stop condition:</strong> no known critical/high issues remain; medium findings are either fixed or explicitly justified; strongest local checks have fresh outcomes; browser/runtime evidence is captured for user-visible frontend changes when feasible.</p>
 
   <hr />
+  <h2>Release Pass &mdash; 2026-06-04 (4.0.22 build 56)</h2>
+  <p>
+    Scope locked to <code>&lt;REPO_ROOT&gt;</code> on branch <code>main</code>
+    at <code>0daa719</code> before the release bump. Initial worktree was clean.
+    Package manager: Bun. Goal: bump version, produce a Release build, install
+    and launch the compiled app on a physical iOS device, update public docs,
+    commit, push, tag, and create the release when credentials permit.
+  </p>
+  <h3>Decisions / constraints</h3>
+  <ul>
+    <li><strong>Versioning:</strong> <code>package.json</code> was bumped from <code>4.0.21</code> to <code>4.0.22</code>, then <code>bun run sync-versions --bump-build</code> advanced native build metadata from <code>55</code> to <code>56</code>.</li>
+    <li><strong>Signing privacy:</strong> physical-device signing used local Apple Development credentials and a local development provisioning profile. Public docs record only placeholder command shapes; exact device IDs, team IDs, profile names, certificate IDs, and local paths stay outside git.</li>
+    <li><strong>Distribution boundary:</strong> build <code>56</code> is a local physical-device Release build/install/launch proof. It is not described as uploaded to TestFlight because no signed App Store archive/export/upload/processing validation was run for this build.</li>
+  </ul>
+  <h3>Validation evidence</h3>
+  <ul>
+    <li><code>bun run verify:all</code> &mdash; passed before release-device build; included public redaction, Expo Doctor 20/20, SDK alignment, typed routes, typecheck, DNS resolver sync, iOS pods sync, React Compiler healthcheck 83/83, Android critical checks, lint, and full Jest (<code>110</code> suites passed, <code>1</code> skipped; <code>893</code> tests passed, <code>13</code> skipped).</li>
+    <li><code>cd modules/dns-native &amp;&amp; bun run test</code> &mdash; passed; <code>7</code> suites passed, <code>1</code> skipped; <code>57</code> tests passed, <code>13</code> skipped.</li>
+    <li><code>gitleaks detect --source . --redact --no-banner --config .gitleaks.toml</code> &mdash; passed; <code>364</code> commits scanned, no leaks found.</li>
+    <li><code>bun audit</code> &mdash; passed; no vulnerabilities found.</li>
+    <li><code>asc doctor</code> &mdash; passed local health checks for the current <code>4.0.22</code>/<code>56</code> target.</li>
+    <li><code>xcodebuild clean build</code> Release for a physical iOS device &mdash; passed with local development signing and sanitized placeholders for private signing values.</li>
+    <li><code>xcrun devicectl device install app</code> &mdash; passed; installed the compiled <code>DNSChat.app</code> bundle on the physical device.</li>
+    <li><code>xcrun devicectl device info apps --bundle-id org.mvneves.dnschat</code> &mdash; passed; installed app metadata reported version <code>4.0.22</code>, bundle version <code>56</code>.</li>
+    <li><code>xcrun devicectl device process launch org.mvneves.dnschat</code> &mdash; passed; the device accepted the launch request for the installed bundle.</li>
+    <li><strong>Release-diff review:</strong> Codex native code-reviewer found one high stale-doc issue: <code>docs/README.md</code> still carried a historical React Doctor <code>100 / 100</code> claim. The doc was corrected to the current <code>93 / 100</code> wording with advisory diagnostics.</li>
+    <li><code>bun run verify:all</code> &mdash; rerun after the release-diff review fix; passed again with the same full-gate scope and Jest counts.</li>
+    <li><code>git diff --check</code> and public-file identifier scan &mdash; passed; no whitespace errors or checked private device/signing identifiers in tracked release files.</li>
+  </ul>
+  <h3>Open / not claimed</h3>
+  <ul>
+    <li>Build <code>56</code> has not been uploaded to TestFlight, and App Store Connect validation was not run for build <code>56</code>. Last uploaded/processed TestFlight evidence remains <code>4.0.20</code> build <code>54</code>.</li>
+    <li>Full AXe feature flow was not rerun because this release pass only changed version metadata and public docs; the last full AXe feature pass remains the historical simulator baseline.</li>
+  </ul>
+
+  <hr />
   <h2>Review Pass &mdash; 2026-06-03 (active)</h2>
   <p>
     Scope locked to <code>&lt;REPO_ROOT&gt;</code> on branch

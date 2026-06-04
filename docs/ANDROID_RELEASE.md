@@ -54,7 +54,7 @@ For detailed Google Play Store publishing instructions, see:
 
 ## Notes
 
-- Latest local release target: `v4.0.21` build `55`.
+- Latest local release target: `v4.0.22` build `56`.
 - Release manifests intentionally avoid legacy storage and overlay permissions.
 - SecureStore is excluded from Android backup/device-transfer rules under
   `android/app/src/main/res/xml/`.
