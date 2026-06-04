@@ -79,16 +79,15 @@ AI,chat,DNS,assistant,local,native,tech,innovation,queries,networking
 
 ---
 
-## What's New (Release Notes v4.0.21)
+## What's New (Release Notes v4.0.22)
 
-PRODUCTION READINESS REVIEW AND ACCESSIBILITY HARDENING
+RELEASE DEVICE VALIDATION AND DOCS SYNC
 
-- Restored OS Reduce Motion support without the startup animation-loop regression.
-- Improved dynamic type, localized relative timestamps, markdown-link accessibility, and bottom-sheet keyboard focus behavior.
-- Hardened DNS fallback behavior and native sanitizer failure handling.
-- Added regression coverage for production-readiness review findings.
+- Updated release metadata to version 4.0.22 build 56.
+- Refreshed physical-device Release build, install, metadata, and launch evidence.
+- Aligned public release docs with the current target while keeping TestFlight upload claims tied to the last uploaded build.
 
-## TestFlight What to Test (v4.0.21 build 55)
+## TestFlight What to Test (v4.0.22 build 56)
 
 - Complete onboarding from a fresh install and confirm the app lands on the chat list.
 - Open message/chat/log/settings menus and confirm actions remain reachable on supported native platforms and fall back cleanly elsewhere.
@@ -147,8 +146,8 @@ Validated screenshot sets currently available in App Store Connect:
 ### Bundle Information
 
 - **Bundle ID**: `<BUNDLE_ID>`
-- **Version**: `4.0.21`
-- **Build Number**: 55 (sync-versions)
+- **Version**: `4.0.22`
+- **Build Number**: 56 (sync-versions)
 - **App Store Connect internal IDs**: intentionally omitted from public docs; keep exact IDs in private release notes.
 - **Minimum iOS Version**: 16.4
 - **Device Support**: iPhone, iPad
@@ -282,8 +281,8 @@ No user account is required. The app does not require app-owned backend infrastr
 ### App Store Connect Configuration
 
 - [x] Historical IPA upload evidence exists for `4.0.13` build `43`
-- [ ] Upload current release IPA build (`4.0.21` build `55`)
-- [x] Local ASC health checked with `asc doctor` (`2026-06-03`)
+- [ ] Upload current release IPA build (`4.0.22` build `56`)
+- [x] Local ASC health checked with `asc doctor` (`2026-06-04`)
 - [x] Apply App Store Connect metadata for `en-US` and `pt-BR`
 - [ ] Configure pricing (Free)
 - [ ] Set availability (Worldwide)
@@ -300,8 +299,9 @@ No user account is required. The app does not require app-owned backend infrastr
 - [x] Signed archive/export passed for `4.0.13` build `43`
 - [x] Historical App Store Connect upload/submission check passed for build `43`
 - [x] Historical TestFlight validation passed (`0` errors, `0` warnings) for build `43`
-- [ ] Current build `55` App Store Connect upload/submission check
-- [ ] Current build `55` TestFlight validation (`0` errors, `0` warnings)
+- [x] Current build `56` physical-device Release build/install/launch
+- [ ] Current build `56` App Store Connect upload/submission check
+- [ ] Current build `56` TestFlight validation (`0` errors, `0` warnings)
 - [ ] Final testing on TestFlight
 - [ ] Review guidelines compliance check
 - [ ] Submit for App Store Review
@@ -309,4 +309,4 @@ No user account is required. The app does not require app-owned backend infrastr
 
 ---
 
-_Updated for DNS Chat v4.0.21 build 55 - production-readiness and accessibility hardening_
+_Updated for DNS Chat v4.0.22 build 56 - release-device validation and docs sync_

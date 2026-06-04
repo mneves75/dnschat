@@ -6,6 +6,25 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+## [4.0.22] - 2026-06-04
+
+Build `55` -> `56`. Release-device metadata and documentation sync for the
+4.0.21 production-readiness fixes.
+
+### Changed
+
+- Bumped app metadata to version `4.0.22` build `56` across Expo, iOS, and
+  Android via `bun run sync-versions --bump-build`.
+- Updated public release docs and implementation notes with sanitized evidence
+  for the physical-device Release build/install/launch lane.
+
+### Verified
+
+- `bun run verify:all`, native DNS module tests, `gitleaks detect`, `bun audit`,
+  and `asc doctor` pass for the 4.0.22 target.
+- A compiled iOS Release build installed on a physical device, reported
+  `4.0.22` bundle version `56`, and launched successfully via `devicectl`.
+
 ## [4.0.21] - 2026-06-03
 
 Build `54` -> `55`. Production-readiness review pass after the 4.0.20
@@ -757,7 +776,8 @@ Versions 3.2.0 through 3.8.9 established the core feature set:
 - **3.3.0**: Android CI, release signing policy, Java 17 auto-detection
 - **3.2.x**: Public repo hardening (secrets scanning, policy tests, version sync gates), DNS server allowlist
 
-[Unreleased]: https://github.com/<owner>/dnschat/compare/v4.0.21...HEAD
+[Unreleased]: https://github.com/<owner>/dnschat/compare/v4.0.22...HEAD
+[4.0.22]: https://github.com/<owner>/dnschat/compare/v4.0.21...v4.0.22
 [4.0.21]: https://github.com/<owner>/dnschat/compare/v4.0.20...v4.0.21
 [4.0.20]: https://github.com/<owner>/dnschat/compare/v4.0.19...v4.0.20
 [4.0.19]: https://github.com/<owner>/dnschat/compare/v4.0.18...v4.0.19

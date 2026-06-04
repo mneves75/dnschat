@@ -110,24 +110,17 @@ xcodebuild clean archive \
 ```
 
 Latest fully signed/uploaded public evidence remains build `54`; current local
-release target is `4.0.21` build `55` (`2026-06-03`, SDK 56.0.8 baseline).
-Build `55` validation completed so far:
+release target is `4.0.22` build `56` (`2026-06-04`, SDK 56.0.8 baseline).
+Build `56` validation completed so far:
 
-- `bun run typecheck` passed after the review fixes.
-- Targeted Jest regression suites pass locally for reduce motion, haptics,
-  dynamic type, localized dates, bottom-sheet accessibility, DNS fallback,
-  sanitizer failure, and DNS harness defaults.
-- `bun run dns:harness -- --message "test message" --local-server --timeout 1000`
-  passed against the local UDP responder and the `llm.pieter.com` default zone.
 - `bun run verify:all`, full app Jest suite, native module full Jest suite,
-  secret scan, dependency audit, `asc doctor`, React Doctor, and Debug
-  simulator xcodebuild smoke have fresh build `55` evidence. Unsigned generic
-  Release build/archive also passed on `2026-06-03`; signed TestFlight upload
-  remains pending.
-- Physical-device Release install completed for `4.0.15` build `45`. A
-  `devicectl` relaunch can still be denied by iOS when the phone is locked; that
-  is tracked separately from install proof.
-- Current local target is `4.0.21` build `55`; last signed App Store
+  secret scan, dependency audit, and `asc doctor` have fresh build `56`
+  evidence.
+- Physical-device Release build/install completed for `4.0.22` build `56`;
+  `devicectl` reported installed metadata `4.0.22`/`56` and launched the app
+  successfully. A `devicectl` relaunch can still be denied by iOS when the phone
+  is locked; that is tracked separately from install proof.
+- Current local target is `4.0.22` build `56`; last signed App Store
   archive/export and TestFlight upload is `4.0.20` build `54`. Exact App Store
   Connect identifiers remain private.
 - Internal App Store Connect IDs, tester group names, device names, device identifiers, local paths, team IDs, profile names, and certificate IDs are intentionally omitted from public docs.
@@ -242,7 +235,7 @@ bun run ios -- --verbose
 - **App Store Connect** app record created
 - **Code signing** configured correctly
 - **Bundle ID** matches (`<BUNDLE_ID>`)
-- **Version numbers** consistent (v4.0.21 build 55)
+- **Version numbers** consistent (v4.0.22 build 56)
 - **Native DNS module** compiles successfully
 - **Xcode CLI smoke** passed:
   - Debug simulator build
@@ -270,9 +263,9 @@ eas build --platform ios --profile production
 
 ### TestFlight distribution
 
-Current v4.0.21 distribution target:
+Current v4.0.22 distribution target:
 
-- Version/build: `4.0.21` / `55`
+- Version/build: `4.0.22` / `56`
 - Processing state and TestFlight validation must be confirmed after the signed
   IPA upload for this build.
 - Tester groups: configured in App Store Connect; internal group names are intentionally omitted from public docs.
@@ -285,7 +278,7 @@ After upload:
 3. **Feedback**: Collect user feedback through TestFlight
 4. **Iterate**: Upload new builds for continuous testing
 
-### What to Test for v4.0.21 build 55
+### What to Test for v4.0.22 build 56
 
 - Complete onboarding from a fresh install and confirm the app lands on the chat list.
 - Open native menu actions and React Native modal sheet actions from chat, logs,
@@ -331,4 +324,4 @@ If you encounter issues during the upload process:
 
 ---
 
-_TestFlight upload guide for DNSChat v4.0.21 build 55 - Last updated: 2026-06-03_
+_TestFlight upload guide for DNSChat v4.0.22 build 56 - Last updated: 2026-06-04_
