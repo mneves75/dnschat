@@ -30,7 +30,7 @@ Please do not open public issues for security vulnerabilities.
 ## Current Security Baseline
 
 Last full source/security sweep: `2026-06-03`.
-Last iOS signed release archive/export/upload: `4.0.22` build `56`; App Store
+Last iOS signed release archive/export/upload: `4.0.23` build `57`; App Store
 Connect processing returned `VALID` on `2026-06-04`.
 
 - Dependency audits pass on `2026-06-04` (`bun audit` reports
@@ -43,14 +43,16 @@ Connect processing returned `VALID` on `2026-06-04`.
   physical-device compiled-app install, signed App Store archive/export, and
   TestFlight upload are part of the release gate; physical-device Release
   build/install, installed metadata check, signed archive/export/upload, and
-  TestFlight validation passed for `4.0.22` build `56` on `2026-06-04`.
+  TestFlight validation passed for `4.0.23` build `57` on `2026-06-04`.
 - TestFlight validation must report `0` errors and `0` warnings before a build
-  is described as distributed. App Store version validation is not applicable
-  until a matching App Store version record exists in App Store Connect; App
-  Privacy publish-state still requires browser confirmation because the public
-  API cannot verify it. Internal App Store Connect IDs, tester group names,
-  device names, local paths, and signing identifiers are intentionally omitted
-  from public docs.
+  is described as distributed. Pre-submit App Store validation for `4.0.23`
+  build `57` reported `0` errors, `0` warnings, and `0` blocking findings; after
+  submission the App Store version is `WAITING_FOR_REVIEW`, so validation
+  correctly reports that the version is no longer editable. App Privacy
+  publish-state still requires browser confirmation because the public API
+  cannot verify it. Internal App Store Connect IDs, tester group names, device
+  names, local paths, and signing identifiers are intentionally omitted from
+  public docs.
 - Local chat history is encrypted at rest with AES-GCM. Native builds store key
   material in SecureStore; Web preview uses same-origin browser storage for the
   local-only preview key because SecureStore is not available in browsers, so
