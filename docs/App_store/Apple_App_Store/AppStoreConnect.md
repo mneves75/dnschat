@@ -85,7 +85,7 @@ RELEASE DEVICE VALIDATION AND DOCS SYNC
 
 - Updated release metadata to version 4.0.22 build 56.
 - Refreshed physical-device Release build, install, metadata, and launch evidence.
-- Aligned public release docs with the current target while keeping TestFlight upload claims tied to the last uploaded build.
+- Uploaded the signed App Store IPA to TestFlight and validated processing for build 56.
 
 ## TestFlight What to Test (v4.0.22 build 56)
 
@@ -281,7 +281,7 @@ No user account is required. The app does not require app-owned backend infrastr
 ### App Store Connect Configuration
 
 - [x] Historical IPA upload evidence exists for `4.0.13` build `43`
-- [ ] Upload current release IPA build (`4.0.22` build `56`)
+- [x] Upload current release IPA build (`4.0.22` build `56`)
 - [x] Local ASC health checked with `asc doctor` (`2026-06-04`)
 - [x] Apply App Store Connect metadata for `en-US` and `pt-BR`
 - [ ] Configure pricing (Free)
@@ -300,8 +300,8 @@ No user account is required. The app does not require app-owned backend infrastr
 - [x] Historical App Store Connect upload/submission check passed for build `43`
 - [x] Historical TestFlight validation passed (`0` errors, `0` warnings) for build `43`
 - [x] Current build `56` physical-device Release build/install/launch
-- [ ] Current build `56` App Store Connect upload/submission check
-- [ ] Current build `56` TestFlight validation (`0` errors, `0` warnings)
+- [x] Current build `56` App Store Connect upload/processing check
+- [x] Current build `56` TestFlight validation (`0` errors, `0` warnings)
 - [ ] Final testing on TestFlight
 - [ ] Review guidelines compliance check
 - [ ] Submit for App Store Review

@@ -16,7 +16,8 @@ Build `55` -> `56`. Release-device metadata and documentation sync for the
 - Bumped app metadata to version `4.0.22` build `56` across Expo, iOS, and
   Android via `bun run sync-versions --bump-build`.
 - Updated public release docs and implementation notes with sanitized evidence
-  for the physical-device Release build/install/launch lane.
+  for the physical-device Release build/install/launch lane and TestFlight
+  deployment.
 
 ### Verified
 
@@ -24,6 +25,9 @@ Build `55` -> `56`. Release-device metadata and documentation sync for the
   and `asc doctor` pass for the 4.0.22 target.
 - A compiled iOS Release build installed on a physical device, reported
   `4.0.22` bundle version `56`, and launched successfully via `devicectl`.
+- Signed App Store archive/export/upload processed to `VALID` in App Store
+  Connect; `asc validate testflight --strict` reported `0` errors and `0`
+  warnings for build `56`.
 
 ## [4.0.21] - 2026-06-03
 

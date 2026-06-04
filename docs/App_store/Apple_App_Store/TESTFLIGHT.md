@@ -109,9 +109,8 @@ xcodebuild clean archive \
   CODE_SIGNING_ALLOWED=NO
 ```
 
-Latest fully signed/uploaded public evidence remains build `54`; current local
-release target is `4.0.22` build `56` (`2026-06-04`, SDK 56.0.8 baseline).
-Build `56` validation completed so far:
+Latest fully signed/uploaded public evidence is `4.0.22` build `56`
+(`2026-06-04`, SDK 56.0.8 baseline). Build `56` validation completed so far:
 
 - `bun run verify:all`, full app Jest suite, native module full Jest suite,
   secret scan, dependency audit, and `asc doctor` have fresh build `56`
@@ -120,9 +119,10 @@ Build `56` validation completed so far:
   `devicectl` reported installed metadata `4.0.22`/`56` and launched the app
   successfully. A `devicectl` relaunch can still be denied by iOS when the phone
   is locked; that is tracked separately from install proof.
-- Current local target is `4.0.22` build `56`; last signed App Store
-  archive/export and TestFlight upload is `4.0.20` build `54`. Exact App Store
-  Connect identifiers remain private.
+- Signed App Store archive/export and TestFlight upload passed for `4.0.22`
+  build `56`; App Store Connect processing returned `VALID`, and
+  `asc validate testflight --strict` reported `0` errors and `0` warnings. Exact
+  App Store Connect identifiers remain private.
 - Internal App Store Connect IDs, tester group names, device names, device identifiers, local paths, team IDs, profile names, and certificate IDs are intentionally omitted from public docs.
 
 Earlier 4.0.14 baseline evidence (`2026-05-22`, Xcode `26.5` / `17F42`, SDK 56 baseline):
@@ -266,8 +266,8 @@ eas build --platform ios --profile production
 Current v4.0.22 distribution target:
 
 - Version/build: `4.0.22` / `56`
-- Processing state and TestFlight validation must be confirmed after the signed
-  IPA upload for this build.
+- Processing state: `VALID`; strict TestFlight validation reports `0` errors and
+  `0` warnings.
 - Tester groups: configured in App Store Connect; internal group names are intentionally omitted from public docs.
 - Exact build IDs and App Store Connect version IDs belong in private release notes, not public runbooks.
 
