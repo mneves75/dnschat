@@ -12,7 +12,7 @@ import React, {
   useEffect,
 } from "react";
 import type { ReactNode } from "react";
-import { AccessibilityInfo, Platform } from "react-native";
+import { AccessibilityInfo } from "react-native";
 import { useSettings } from "./SettingsContext";
 import { devWarn } from "../utils/devLog";
 
@@ -51,6 +51,9 @@ interface AccessibilityProviderProps {
 export function AccessibilityProvider({ children }: AccessibilityProviderProps) {
   const settings = useSettings();
   const [screenReaderEnabled, setScreenReaderEnabled] = useState(false);
+  const [systemReduceMotionEnabled, setSystemReduceMotionEnabled] = useState<
+    boolean | null
+  >(null);
 
   // Single source of truth: derive config directly from persisted settings
   // instead of mirroring it into local state through an effect. Mirroring
@@ -97,6 +100,45 @@ export function AccessibilityProvider({ children }: AccessibilityProviderProps) 
     };
   }, []);
 
+  // Honor the OS Reduce Motion setting, but do not expose children until the
+  // first async probe completes. That avoids the 4.0.19 startup regression
+  // where animated screens observed a false -> true transition immediately
+  // after mount and retriggered transition effects.
+  useEffect(() => {
+    let mounted = true;
+
+    const commitSystemReduceMotion = (isEnabled: boolean) => {
+      if (!mounted) {
+        return;
+      }
+      setSystemReduceMotionEnabled((previous) =>
+        previous === isEnabled ? previous : isEnabled,
+      );
+    };
+
+    const checkReduceMotion = async () => {
+      try {
+        const isEnabled = await AccessibilityInfo.isReduceMotionEnabled();
+        commitSystemReduceMotion(isEnabled);
+      } catch (error) {
+        devWarn("[AccessibilityContext] Failed to check reduce-motion status", error);
+        commitSystemReduceMotion(false);
+      }
+    };
+
+    checkReduceMotion();
+
+    const subscription = AccessibilityInfo.addEventListener(
+      "reduceMotionChanged",
+      commitSystemReduceMotion,
+    );
+
+    return () => {
+      mounted = false;
+      subscription.remove();
+    };
+  }, []);
+
   const updateConfig = async (updates: Partial<AccessibilityConfig>) => {
     // Persist through settings; `config` re-derives from the updated settings,
     // so there is no separate local copy to keep in sync.
@@ -125,18 +167,15 @@ export function AccessibilityProvider({ children }: AccessibilityProviderProps) 
     updateConfig,
     announceToScreenReader,
     isScreenReaderEnabled: screenReaderEnabled || config.screenReader,
-    // Driven solely by the in-app preference so the value is stable for the whole
-    // session. Deriving it from an async OS probe (which flips false -> true after
-    // mount) re-triggered motion-transition effects in animated screens and could
-    // drive a render loop; see CHANGELOG 4.0.20.
-    isReduceMotionEnabled: config.reduceMotion,
+    isReduceMotionEnabled:
+      config.reduceMotion || systemReduceMotionEnabled === true,
     isHighContrastEnabled: config.highContrast,
     getFontSizeScale,
   };
 
   return (
     <AccessibilityContext value={contextValue}>
-      {children}
+      {systemReduceMotionEnabled === null ? null : children}
     </AccessibilityContext>
   );
 }

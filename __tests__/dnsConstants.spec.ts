@@ -23,18 +23,17 @@ describe('DNS constants', () => {
     expect(getServerPort('unknown.example')).toBe(53);
   });
 
-  it('returns LLM servers in priority order', () => {
+  it('returns currently online automatic LLM servers in priority order', () => {
     const servers = getLLMServers();
-    expect(servers[0]?.host).toBe('llm.pieter.com');
-    expect(servers[1]?.host).toBe('ch.at');
+    expect(servers.map(server => server.host)).toEqual(['llm.pieter.com']);
   });
 
   it('returns defensive copies of exported server lists', () => {
     const first = getLLMServers();
-    first.pop();
     first[0]!.host = 'mutated.example';
+    first.pop();
 
     const second = getLLMServers();
-    expect(second.map(server => server.host)).toEqual(['llm.pieter.com', 'ch.at']);
+    expect(second.map(server => server.host)).toEqual(['llm.pieter.com']);
   });
 });

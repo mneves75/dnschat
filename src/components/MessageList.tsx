@@ -20,6 +20,7 @@ import { LiquidGlassSpacing, getCornerRadius } from "../ui/theme/liquidGlassSpac
 import { LiquidGlassWrapper, useLiquidGlassCapabilities } from "./LiquidGlassWrapper";
 import { useTranslation } from "../i18n";
 import { devLog } from "../utils/devLog";
+import { useMotionReduction } from "../context/AccessibilityContext";
 
 interface MessageListProps {
   messages: Message[];
@@ -48,6 +49,7 @@ export function MessageList({
   const isNearBottomRef = useRef(true);
   const previousMessageCountRef = useRef(messages.length);
   const { supportsLiquidGlass } = useLiquidGlassCapabilities();
+  const { shouldReduceMotion } = useMotionReduction();
 
   // iOS 26 HIG: Semantic color palette that adapts to light/dark/high-contrast modes
   // Returns memoized object - only re-renders when colorScheme/accessibility settings change
@@ -76,6 +78,8 @@ export function MessageList({
   // Triggers when: new messages arrive, keyboard shows/hides, input grows
   // No complex logic, no timing assumptions, no conflicts
   useEffect(() => {
+    let outerFrameId: number | null = null;
+    let innerFrameId: number | null = null;
     const messageWasAdded = messages.length > previousMessageCountRef.current;
     previousMessageCountRef.current = messages.length;
     const shouldFollowConversation =
@@ -85,9 +89,9 @@ export function MessageList({
       // Double requestAnimationFrame guarantees FlatList layout is complete
       // First RAF: Browser schedules next paint
       // Second RAF: Layout has been calculated and committed
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          flatListRef.current?.scrollToEnd({ animated: true });
+      outerFrameId = requestAnimationFrame(() => {
+        innerFrameId = requestAnimationFrame(() => {
+          flatListRef.current?.scrollToEnd({ animated: !shouldReduceMotion });
           // Optional: Add logging for debugging
           devLog("[MessageList] Scrolled to bottom", {
             messageCount: messages.length,
@@ -97,7 +101,13 @@ export function MessageList({
         });
       });
     }
-  }, [messages.length, lastMessageKey, bottomInset, lastMessage?.role]);
+
+    return () => {
+      if (typeof cancelAnimationFrame !== "function") return;
+      if (outerFrameId !== null) cancelAnimationFrame(outerFrameId);
+      if (innerFrameId !== null) cancelAnimationFrame(innerFrameId);
+    };
+  }, [messages.length, lastMessageKey, bottomInset, lastMessage?.role, shouldReduceMotion]);
 
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;

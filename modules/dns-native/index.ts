@@ -1,4 +1,4 @@
-import { NativeModules } from "react-native";
+import { NativeModules, Platform } from "react-native";
 import { getNativeSanitizerConfig, getServerPort, DNS_CONSTANTS } from "./constants";
 import type { NativeSanitizerConfig } from "./constants";
 
@@ -124,6 +124,8 @@ export class NativeDNS implements NativeDNSModule {
   private readonly nativeModule: NativeDNSModule | null;
   private capabilities: DNSCapabilities | null = null;
   private capabilitiesTimestamp = 0;
+  private sanitizerConfigurationPromise: Promise<void> | null = null;
+  private sanitizerConfigurationError: Error | null = null;
   // RACE CONDITION FIX: Promise lock to prevent concurrent isAvailable() calls
   // from all bypassing the cache and making redundant native module calls.
   private capabilitiesPromise: Promise<DNSCapabilities> | null = null;
@@ -135,28 +137,61 @@ export class NativeDNS implements NativeDNSModule {
   private configureSanitizerIfNeeded(): void {
     if (!this.nativeModule) return;
     debugLog("[NativeDNS] RNDNSModule methods:", Object.keys(this.nativeModule));
+    if (typeof this.nativeModule.configureSanitizer !== "function") {
+      this.sanitizerConfigurationError = new Error(
+        "Native DNS module does not expose sanitizer configuration",
+      );
+      debugWarn("[NativeDNS] Failed to configure sanitizer:", this.sanitizerConfigurationError);
+      return;
+    }
+
     try {
-      const maybeResult = this.nativeModule.configureSanitizer?.(
+      const maybeResult = this.nativeModule.configureSanitizer(
         getNativeSanitizerConfig(),
       );
 
       if (maybeResult && typeof (maybeResult as Promise<unknown>).then === "function") {
-        (maybeResult as Promise<boolean>)
+        this.sanitizerConfigurationPromise = (maybeResult as Promise<boolean>)
           .then((didUpdate) => {
             if (didUpdate) {
               debugLog("[NativeDNS] Sanitizer configured via shared constants");
             } else {
               debugLog("[NativeDNS] Sanitizer already up to date; skipped reconfiguration");
             }
+            this.sanitizerConfigurationError = null;
           })
           .catch((error: unknown) => {
+            this.sanitizerConfigurationError =
+              error instanceof Error ? error : new Error(String(error));
             debugWarn("[NativeDNS] Failed to configure sanitizer:", error);
+          })
+          .then(() => {
+            this.sanitizerConfigurationPromise = null;
           });
       } else if (maybeResult !== undefined) {
+        this.sanitizerConfigurationError = null;
         debugLog("[NativeDNS] Sanitizer configured via shared constants");
+      } else {
+        this.sanitizerConfigurationError = null;
       }
     } catch (error) {
+      this.sanitizerConfigurationError =
+        error instanceof Error ? error : new Error(String(error));
       debugWarn("[NativeDNS] Failed to configure sanitizer:", error);
+    }
+  }
+
+  private async ensureSanitizerConfigured(): Promise<void> {
+    if (this.sanitizerConfigurationPromise) {
+      await this.sanitizerConfigurationPromise;
+    }
+
+    if (this.sanitizerConfigurationError) {
+      throw new DNSError(
+        DNSErrorType.PLATFORM_UNSUPPORTED,
+        "Native DNS sanitizer configuration failed",
+        this.sanitizerConfigurationError,
+      );
     }
   }
 
@@ -189,6 +224,8 @@ export class NativeDNS implements NativeDNSModule {
         "Native DNS module is not available on this platform",
       );
     }
+
+    await this.ensureSanitizerConfigured();
 
     const trimmedMessage = message?.trim();
     if (!trimmedMessage) {
@@ -310,6 +347,22 @@ export class NativeDNS implements NativeDNSModule {
       };
       this.capabilitiesTimestamp = now;
       return this.capabilities;
+    }
+
+    try {
+      await this.ensureSanitizerConfigured();
+    } catch (error) {
+      debugWarn("Failed to check DNS availability:", error);
+      const unavailableCapabilities: DNSCapabilities = {
+        available: false,
+        platform:
+          Platform.OS === "ios" || Platform.OS === "android" ? Platform.OS : "web",
+        supportsCustomServer: false,
+        supportsAsyncQuery: false,
+      };
+      this.capabilities = unavailableCapabilities;
+      this.capabilitiesTimestamp = now;
+      return unavailableCapabilities;
     }
 
     // RACE CONDITION FIX: Create promise lock before async operation

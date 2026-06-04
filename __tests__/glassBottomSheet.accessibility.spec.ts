@@ -11,6 +11,25 @@ describe("glass modal accessibility policy", () => {
     expect(bottomSheetSource).toContain("accessibilityViewIsModal");
   });
 
+  it("traps and restores web dialog focus", () => {
+    expect(bottomSheetSource).toContain('role: "dialog"');
+    expect(bottomSheetSource).toContain('"aria-modal": true');
+    expect(bottomSheetSource).toContain("restoreFocusRef");
+    expect(bottomSheetSource).toContain("onCloseRef.current = onClose");
+    expect(bottomSheetSource).toContain("onCloseRef.current()");
+    expect(bottomSheetSource).toContain('event.key === "Escape"');
+    expect(bottomSheetSource).toContain('event.key !== "Tab"');
+    expect(bottomSheetSource).toContain("document.addEventListener(\"keydown\", handleKeyDown)");
+    expect(bottomSheetSource).toContain("document.removeEventListener(\"keydown\", handleKeyDown)");
+    expect(bottomSheetSource).toContain("}, [visible]);");
+  });
+
+  it("keeps bottom-sheet control callbacks stable across parent rerenders", () => {
+    expect(bottomSheetSource).toContain("const show = React.useCallback");
+    expect(bottomSheetSource).toContain("const hide = React.useCallback");
+    expect(bottomSheetSource).toContain("const toggle = React.useCallback");
+  });
+
   it("does not mount Expo UI bottom sheets before a user opens a sheet", () => {
     expect(bottomSheetSource).not.toContain("@expo/ui/community/bottom-sheet");
     expect(bottomSheetSource).not.toContain("NativeBottomSheet");
@@ -24,6 +43,14 @@ describe("glass modal accessibility policy", () => {
     expect(bottomSheetSource).toContain('accessibilityRole="button"');
     expect(bottomSheetSource).toContain("accessibilityLabel={action.accessibilityLabel ?? action.title}");
     expect(bottomSheetSource).toContain("accessibilityState={{ disabled: action.disabled }}");
+  });
+
+  it("uses shared palette tokens for sheet text and action colors", () => {
+    expect(bottomSheetSource).toContain("useImessagePalette");
+    expect(bottomSheetSource).toContain("textPrimary: palette.textPrimary");
+    expect(bottomSheetSource).toContain("actionDefault: palette.userBubble");
+    expect(bottomSheetSource).not.toContain('actionDefault: "#007AFF"');
+    expect(bottomSheetSource).not.toContain('textPrimary: isDark ? "#F9FAFB"');
   });
 });
 
@@ -70,5 +97,27 @@ describe("shared interactive control accessibility policy", () => {
     const source = readSource("src/navigation/screens/GlassSettings.tsx");
     expect(source).toContain("transportTest.forceAccessibilityLabel");
     expect(source).toContain("transportTest.forceHint");
+  });
+
+  it("announces settings transport test results and errors", () => {
+    const source = readSource("src/navigation/screens/GlassSettings.tsx");
+    expect(source).toContain('accessibilityLiveRegion="polite"');
+    expect(source).toContain('accessibilityRole="alert"');
+    expect(source).toContain('accessibilityLiveRegion="assertive"');
+  });
+
+  it("hides log status pills after merging status into the row label", () => {
+    const source = readSource("src/navigation/screens/Logs.tsx");
+    expect(source).toContain("status: statusLabel");
+    expect(source).toContain("accessible={false}");
+    expect(source).toContain("importantForAccessibility=\"no-hide-descendants\"");
+    expect(source).not.toContain('accessibilityRole="image"');
+  });
+
+  it("marks web tab icons decorative because tab labels provide the names", () => {
+    const source = readSource("app/(tabs)/_layout.web.tsx");
+    expect(source).toContain("accessible={false}");
+    expect(source).toContain("accessibilityElementsHidden");
+    expect(source).toContain("importantForAccessibility=\"no-hide-descendants\"");
   });
 });

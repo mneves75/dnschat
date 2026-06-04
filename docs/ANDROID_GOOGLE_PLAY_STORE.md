@@ -4,7 +4,7 @@ Complete step-by-step guide for publishing DNSChat to the Google Play Store.
 
 **App**: DNSChat
 **Package**: `<ANDROID_PACKAGE>`
-**Current Version**: 4.0.17
+**Current Version**: 4.0.21
 
 ---
 
@@ -121,7 +121,7 @@ Full VoiceOver/TalkBack support with screen reader optimizations.
 
 TECHNICAL DETAILS:
 
-• Built with React Native 0.85.3 and Expo SDK 56.0.5
+• Built with React Native 0.85.3 and Expo SDK 56.0.8
 • React 19 with New Architecture enabled
 • Native DNS module for iOS and Android
 • Supports DNS servers: 1.1.1.1, 8.8.8.8, 9.9.9.9
@@ -323,11 +323,11 @@ See [ANDROID_RELEASE.md](./ANDROID_RELEASE.md) for signing configuration.
    - **Upload** new AAB
 4. Add release notes:
    ```
-   What's new in v4.0.17:
-   - Hardened startup after build 47 crash evidence
-   - Removed dev-client release resources and rolled sheets back to safer modals
-   - Fixed stale chat links, log persistence handling, and local-data cleanup
-   - Kept React Doctor 100/100 for app and native workspaces
+   What's new in v4.0.21:
+   - Restored OS Reduce Motion support without the startup animation-loop regression
+   - Improved dynamic type, localized timestamps, bottom-sheet accessibility, and markdown link semantics
+   - Hardened DNS fallback and native sanitizer failure handling
+   - Added regression coverage for the production-readiness review findings
    ```
 5. Click **"Review release"**
 6. Set rollout percentage (start with 10-20% recommended)
@@ -437,6 +437,10 @@ Before submitting for review, verify:
 
 | Version | Date | Notes |
 |---------|------|-------|
+| 4.0.21 | 2026-06-03 | Production-readiness review, OS Reduce Motion recovery, dynamic type, localized dates, DNS fallback and sanitizer hardening |
+| 4.0.20 | 2026-06-02 | Reduce-motion launch-crash hotfix for build 54 |
+| 4.0.19 | 2026-06-01 | React Doctor 100/100 cleanup, retry UX, dependency alignment |
+| 4.0.18 | 2026-05-28 | Theme picker, responsive layout, accessibility grouping, release hardening |
 | 4.0.17 | 2026-05-28 | Startup crash hardening, dev-client removal, bottom-sheet rollback, persistence and UI fixes |
 | 4.0.16 | 2026-05-27 | Expo UI adapter hardening, React Doctor 100/100, accessibility and DNS transport regression coverage |
 | 4.0.15 | 2026-05-24 | Main chat list scroll fix; encrypted-key, DNS logging, Liquid Glass, and release-policy regression coverage |

@@ -1,10 +1,12 @@
 import {
+  applyDynamicType,
   LiquidGlassType,
   Material3Type,
   Typography,
   getTypographyForPlatform,
 } from '../theme/liquidGlassTypography';
 import type { TypographyKey, TypographyScale, TypographyStyle } from '../theme/liquidGlassTypography';
+import { useFontSize } from '../../context/AccessibilityContext';
 
 /**
  * useTypography Hook
@@ -21,7 +23,18 @@ import type { TypographyKey, TypographyScale, TypographyStyle } from '../theme/l
  * - Android: Material3Type (Roboto scales)
  */
 export const useTypography = (): TypographyScale => {
-  return getTypographyForPlatform();
+  const { scale } = useFontSize();
+  const baseTypography = getTypographyForPlatform();
+  if (scale === 1) {
+    return baseTypography;
+  }
+
+  return Object.fromEntries(
+    Object.entries(baseTypography).map(([key, style]) => [
+      key,
+      applyDynamicType(style, scale),
+    ]),
+  ) as TypographyScale;
 };
 
 /**

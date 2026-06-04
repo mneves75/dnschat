@@ -26,22 +26,26 @@ Developer documentation for DNSChat. Code is the source of truth — these docs 
 
 ## Current verification baseline
 
-Last architecture/dependency verification: `2026-05-27`.
-Last full source/security sweep: `2026-05-27`.
+Last architecture/dependency verification: `2026-06-03`.
+Last full source/security sweep: `2026-06-03`.
 Last AXe simulator E2E feature pass: `2026-05-17` for version `4.0.13` build
 `43`.
-Current iOS/TestFlight release target: version `4.0.17` build `48`.
+Current local release target: version `4.0.21` build `55`. Last uploaded and
+processed TestFlight build remains version `4.0.20` build `54` (`VALID` on
+`2026-06-02`).
 
 - `npx react-doctor@latest` reports `100 / 100` for both `chat-dns` and
-  `@dnschat/dns-native` on `2026-05-27`.
-- `bun run typecheck` passes on `2026-05-27`.
+  `@dnschat/dns-native` on `2026-06-01`.
+- `bun run typecheck` passes on `2026-06-03`.
 - Native DNS module tests pass on `2026-05-27` (`7` suites passed, `1` skipped;
   `56` tests passed, `13` skipped).
 - AXe E2E baseline: 10 feature groups passed in one owned release-simulator
   run on `2026-05-17`.
-- Jest baseline on `2026-05-27`: 105 suites passed, 1 skipped; 860 tests
-  passed, 13 skipped.
-- `gitleaks detect` on `2026-05-24` reports `no leaks found` across `348`
+- Jest baseline for build `55` is pending the final full-gate rerun; targeted
+  review regression suites pass locally for reduce motion, haptics, dynamic
+  type, localized dates, bottom-sheet accessibility, DNS fallback, sanitizer
+  failure, and DNS harness defaults.
+- `gitleaks detect` on `2026-05-28` reports `no leaks found` across `354`
   scanned commits.
 - `bun audit` on `2026-05-24` reports `No vulnerabilities found`.
 - `xcodebuild clean build` passes for Debug on an iOS 26.5 simulator on
@@ -50,10 +54,11 @@ Current iOS/TestFlight release target: version `4.0.17` build `48`.
   Release when code signing is disabled (`CODE_SIGNING_ALLOWED=NO`) on
   `2026-05-24`.
 - Physical-device compiled app install passed.
-- Current signed TestFlight target: `4.0.17` build `48`. The release lane uses
-  signed App Store archive/export, App Store Connect upload, processing, and
-  validation before the build is described as distributed. Internal App Store
-  Connect IDs are intentionally omitted from public docs.
+- Current local target: `4.0.21` build `55`; last signed TestFlight build:
+  `4.0.20` build `54`. The release lane uses signed App Store archive/export,
+  App Store Connect upload, processing, and validation before the build is
+  described as distributed. Internal App Store Connect IDs are intentionally
+  omitted from public docs.
 - `asc validate testflight` passes with `0` errors and `0` warnings. App Store
   version validation is not applicable until a matching App Store version
   record exists; App Privacy publish-state still needs browser confirmation

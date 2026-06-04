@@ -34,10 +34,9 @@ describe("ChatInput Component - John Carmack Quality Standards", () => {
       );
     });
 
-    it("calculates ACCESSIBILITY_ALERT_THRESHOLD from constants", () => {
-      expect(source).toContain(
-        "Math.ceil(MESSAGE_CONSTANTS.MAX_MESSAGE_LENGTH * 0.92)"
-      );
+    it("announces only remaining-character milestones near the limit", () => {
+      expect(source).toContain("CHARACTER_ANNOUNCEMENT_REMAINING");
+      expect(source).toContain("new Set([10, 5, 0])");
     });
 
     it("uses LiquidGlassSpacing for all spacing values", () => {
@@ -186,9 +185,9 @@ describe("ChatInput Component - John Carmack Quality Standards", () => {
       expect(source).toContain("AccessibilityInfo.announceForAccessibility");
     });
 
-    it("announces at 92% threshold", () => {
-      expect(source).toContain("ACCESSIBILITY_ALERT_THRESHOLD");
-      expect(source).toContain("Math.ceil(MESSAGE_CONSTANTS.MAX_MESSAGE_LENGTH * 0.92)");
+    it("announces at remaining-character milestones", () => {
+      expect(source).toContain("CHARACTER_ANNOUNCEMENT_REMAINING.has(remaining)");
+      expect(source).toContain("MESSAGE_CONSTANTS.MAX_MESSAGE_LENGTH - message.length");
     });
 
     it("uses i18n for accessibility announcement", () => {

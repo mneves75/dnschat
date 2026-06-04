@@ -17,14 +17,9 @@ jest.mock("react-native", () => {
 });
 
 const mockUseSettings = jest.fn();
-const mockUseAccessibility = jest.fn();
 
 jest.mock("../src/context/SettingsContext", () => ({
   useSettings: () => mockUseSettings(),
-}));
-
-jest.mock("../src/context/AccessibilityContext", () => ({
-  useAccessibility: () => mockUseAccessibility(),
 }));
 
 const configureHaptics = jest.fn();
@@ -41,13 +36,11 @@ describe("HapticsConfigurator", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUseSettings.mockReset();
-    mockUseAccessibility.mockReset();
     Platform.OS = "ios";
   });
 
   it("does nothing while settings are loading", async () => {
     mockUseSettings.mockReturnValue({ enableHaptics: true, loading: true });
-    mockUseAccessibility.mockReturnValue({ config: { reduceMotion: false } });
 
     await act(async () => {
       createWithSuppressedWarnings(<HapticsConfigurator />);
@@ -60,7 +53,6 @@ describe("HapticsConfigurator", () => {
   it("does nothing on non-iOS platforms", async () => {
     Platform.OS = "android";
     mockUseSettings.mockReturnValue({ enableHaptics: true, loading: false });
-    mockUseAccessibility.mockReturnValue({ config: { reduceMotion: false } });
 
     await act(async () => {
       createWithSuppressedWarnings(<HapticsConfigurator />);
@@ -72,7 +64,6 @@ describe("HapticsConfigurator", () => {
 
   it("configures and preloads when settings are ready", async () => {
     mockUseSettings.mockReturnValue({ enableHaptics: true, loading: false });
-    mockUseAccessibility.mockReturnValue({ config: { reduceMotion: false } });
 
     await act(async () => {
       createWithSuppressedWarnings(<HapticsConfigurator />);
@@ -80,7 +71,6 @@ describe("HapticsConfigurator", () => {
 
     expect(configureHaptics).toHaveBeenCalledWith({
       userEnabled: true,
-      reduceMotion: false,
     });
     expect(preloadHaptics).toHaveBeenCalledTimes(1);
   });
@@ -89,7 +79,6 @@ describe("HapticsConfigurator", () => {
     mockUseSettings
       .mockReturnValueOnce({ enableHaptics: true, loading: false })
       .mockReturnValue({ enableHaptics: false, loading: false });
-    mockUseAccessibility.mockReturnValue({ config: { reduceMotion: false } });
 
     let renderer: TestRenderer.ReactTestRenderer;
     await act(async () => {
@@ -104,28 +93,13 @@ describe("HapticsConfigurator", () => {
     expect(preloadHaptics).toHaveBeenCalledTimes(1);
   });
 
-  it("propagates reduce-motion changes into the haptics configuration", async () => {
-    mockUseSettings.mockReturnValue({ enableHaptics: true, loading: false });
-    mockUseAccessibility
-      .mockReturnValueOnce({ config: { reduceMotion: false } })
-      .mockReturnValue({ config: { reduceMotion: true } });
+  it("does not consume reduce-motion state because haptics still fire", () => {
+    const source = require("fs").readFileSync(
+      require("path").join(__dirname, "../src/components/HapticsConfigurator.tsx"),
+      "utf8",
+    );
 
-    let renderer: TestRenderer.ReactTestRenderer;
-    await act(async () => {
-      renderer = createWithSuppressedWarnings(<HapticsConfigurator />);
-    });
-
-    await act(async () => {
-      renderer!.update(<HapticsConfigurator />);
-    });
-
-    expect(configureHaptics).toHaveBeenNthCalledWith(1, {
-      userEnabled: true,
-      reduceMotion: false,
-    });
-    expect(configureHaptics).toHaveBeenNthCalledWith(2, {
-      userEnabled: true,
-      reduceMotion: true,
-    });
+    expect(source).not.toContain("useAccessibility");
+    expect(source).not.toContain("reduceMotion");
   });
 });

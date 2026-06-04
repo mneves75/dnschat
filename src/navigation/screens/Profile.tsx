@@ -26,6 +26,8 @@ import { LiquidGlassWrapper, useLiquidGlassCapabilities } from "../../components
 import { useScreenEntrance } from "../../ui/hooks/useScreenEntrance";
 import { useChat } from "../../context/ChatContext";
 import { formatDistanceToNow } from "date-fns";
+import { useSettings } from "../../context/SettingsContext";
+import { getDateFnsLocale } from "../../utils/dateLocale";
 
 interface ProfileProps {
   user?: string;
@@ -38,6 +40,7 @@ export function Profile({ user }: ProfileProps) {
   const { animatedStyle } = useScreenEntrance();
   const { supportsLiquidGlass } = useLiquidGlassCapabilities();
   const { chats, clearAllChats } = useChat();
+  const { locale } = useSettings();
   const [isClearingData, setIsClearingData] = React.useState(false);
 
   // Calculate statistics
@@ -49,7 +52,10 @@ export function Profile({ user }: ProfileProps) {
       )
     : null;
   const firstChatDate = oldestChat
-    ? formatDistanceToNow(oldestChat.createdAt, { addSuffix: true })
+    ? formatDistanceToNow(oldestChat.createdAt, {
+        addSuffix: true,
+        locale: getDateFnsLocale(locale),
+      })
     : t("screen.profile.noChatsYet", { defaultValue: "No chats yet" });
 
   const averageMessagesPerChat = totalChats > 0

@@ -44,11 +44,11 @@ describe("dnsSmokeTestUtils", () => {
   });
 
   describe("resolveTargetFromArgs", () => {
-    it("defaults resolver + zone to ch.at", () => {
+    it("defaults resolver + zone to llm.pieter.com", () => {
       expect(resolveTargetFromArgs({ resolverArg: null, zoneArg: null, portArg: null })).toEqual({
-        resolverHost: "ch.at",
+        resolverHost: "llm.pieter.com",
         resolverPort: 53,
-        zone: "ch.at",
+        zone: "llm.pieter.com",
       });
     });
 
@@ -76,7 +76,7 @@ describe("dnsSmokeTestUtils", () => {
       expect(resolveTargetFromArgs({ resolverArg: "8.8.8.8", zoneArg: null, portArg: null })).toEqual({
         resolverHost: "8.8.8.8",
         resolverPort: 53,
-        zone: "ch.at",
+        zone: "llm.pieter.com",
       });
     });
 
@@ -85,7 +85,7 @@ describe("dnsSmokeTestUtils", () => {
         {
           resolverHost: "dns.example.com",
           resolverPort: 53,
-          zone: "ch.at",
+          zone: "llm.pieter.com",
         }
       );
     });

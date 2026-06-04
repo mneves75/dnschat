@@ -31,6 +31,10 @@ function RootLayoutContent() {
   // every useColorScheme() consumer (palette, navigation, system controls)
   // observes the override. RN 0.85 uses 'unspecified' to defer to the OS.
   React.useEffect(() => {
+    if (typeof Appearance.setColorScheme !== "function") {
+      return;
+    }
+
     Appearance.setColorScheme(
       themePreference === "system" ? "unspecified" : themePreference,
     );

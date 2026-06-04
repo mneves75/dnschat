@@ -17,7 +17,10 @@ import { PressableRipple } from "../../PressableRipple";
 import { DNSService } from "../../../services/dnsService";
 import { useImessagePalette } from "../../../ui/theme/imessagePalette";
 import { useTypography } from "../../../ui/hooks/useTypography";
-import { LiquidGlassSpacing } from "../../../ui/theme/liquidGlassSpacing";
+import {
+  LiquidGlassSpacing,
+  getMinimumTouchTarget,
+} from "../../../ui/theme/liquidGlassSpacing";
 import { useTranslation } from "../../../i18n";
 import { SendIcon } from "../../icons/SendIcon";
 import { MESSAGE_CONSTANTS } from "../../../constants/appConstants";
@@ -39,6 +42,7 @@ export function FirstChatScreen() {
   const isMountedRef = useRef(true);
   const messagesScrollRef = useRef<ScrollView>(null);
   const keyboardHeight = useKeyboardState((state) => state.height);
+  const minimumTouchTarget = getMinimumTouchTarget();
 
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -296,13 +300,16 @@ export function FirstChatScreen() {
                   !inputText.trim() || isLoading
                     ? palette.textTertiary
                     : palette.accentTint,
+                width: minimumTouchTarget,
+                height: minimumTouchTarget,
+                borderRadius: minimumTouchTarget / 2,
               },
             ]}
             onPress={sendMessage}
             disabled={!inputText.trim() || isLoading}
             variant="icon"
             borderless
-            rippleRadius={22}
+            rippleRadius={minimumTouchTarget / 2}
             pressedOpacity={0.7}
             accessibilityRole="button"
             accessibilityLabel={t(
@@ -317,7 +324,7 @@ export function FirstChatScreen() {
             }}
           >
             {isLoading ? (
-              <Text style={[typography.headline, { color: palette.solid }]}>...</Text>
+              <Text style={[typography.headline, { color: palette.solid }]}>…</Text>
             ) : (
               <SendIcon size={20} isActive={!!inputText.trim()} />
             )}
@@ -483,9 +490,6 @@ const styles = StyleSheet.create({
     maxHeight: 100,
   },
   sendButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
     alignItems: "center",
     justifyContent: "center",
     marginLeft: LiquidGlassSpacing.xs,

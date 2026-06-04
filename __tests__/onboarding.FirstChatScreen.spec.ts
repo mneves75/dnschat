@@ -242,6 +242,14 @@ describe("FirstChatScreen - iOS 26 HIG Compliance", () => {
       expect(sourceCode).toContain("sendButton");
       expect(sourceCode).toContain("onPress={sendMessage}");
     });
+
+    it("uses platform minimum touch target for the send button", () => {
+      expect(sourceCode).toContain("getMinimumTouchTarget");
+      expect(sourceCode).toContain("const minimumTouchTarget = getMinimumTouchTarget()");
+      expect(sourceCode).toContain("width: minimumTouchTarget");
+      expect(sourceCode).toContain("height: minimumTouchTarget");
+      expect(sourceCode).toContain("rippleRadius={minimumTouchTarget / 2}");
+    });
   });
 
   describe("Code Quality", () => {

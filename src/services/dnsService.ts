@@ -778,10 +778,12 @@ export class DNSService {
 
     // Build server fallback chain:
     // - If user specified a server, use only that server (no fallback)
-    // - Otherwise, use LLM servers in priority order (llm.pieter.com:53 → ch.at:53)
+    // - Otherwise, use currently online LLM servers in priority order.
+    //   ch.at stays allowlisted for explicit selection, but is skipped from
+    //   automatic fallback while it is known offline.
     const serversToTry: DNSServerConfig[] = dnsServer
       ? [{ host: validateDNSServer(dnsServer), port: getServerPort(dnsServer), priority: 1 }]
-      : getLLMServers();  // Returns [llm.pieter.com:53, ch.at:53]
+      : getLLMServers();
 
     if (this.isVerbose()) {
       this.vLog(`Server fallback chain: ${serversToTry.map(s => `${s.host}:${s.port}`).join(' → ')}`);

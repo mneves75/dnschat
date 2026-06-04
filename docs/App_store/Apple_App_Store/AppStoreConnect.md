@@ -79,16 +79,16 @@ AI,chat,DNS,assistant,local,native,tech,innovation,queries,networking
 
 ---
 
-## What's New (Release Notes v4.0.17)
+## What's New (Release Notes v4.0.21)
 
-STARTUP CRASH HARDENING AND TESTFLIGHT CLEANUP
+PRODUCTION READINESS REVIEW AND ACCESSIBILITY HARDENING
 
-- Removed dev-client release resources and rolled settings/chat sheets back to a safer modal implementation after build 47 startup-crash evidence.
-- Fixed startup recovery, stale chat links, log persistence failure handling, and local-data cleanup.
-- Improved desktop web width, dark-mode diagnostic text, language selection state, and onboarding copy.
-- Kept React Doctor at 100/100 for both app and native module workspaces.
+- Restored OS Reduce Motion support without the startup animation-loop regression.
+- Improved dynamic type, localized relative timestamps, markdown-link accessibility, and bottom-sheet keyboard focus behavior.
+- Hardened DNS fallback behavior and native sanitizer failure handling.
+- Added regression coverage for production-readiness review findings.
 
-## TestFlight What to Test (v4.0.17 build 48)
+## TestFlight What to Test (v4.0.21 build 55)
 
 - Complete onboarding from a fresh install and confirm the app lands on the chat list.
 - Open message/chat/log/settings menus and confirm actions remain reachable on supported native platforms and fall back cleanly elsewhere.
@@ -101,6 +101,9 @@ STARTUP CRASH HARDENING AND TESTFLIGHT CLEANUP
 - Open Logs and confirm DNS attempts, fallback methods, and failures are visible without exposing prompt text or TXT response contents.
 - Check Settings, About, Profile, and language/accessibility labels in English and Portuguese.
 - Exercise DNS server settings and confirm invalid or unsupported server choices fail closed.
+- Turn on system Reduce Motion before launch and confirm onboarding, chat, and settings render without startup loops or unexpected motion.
+- Increase the in-app font-size preference and confirm chat list, profile, and message surfaces scale without clipping.
+- In Portuguese, confirm chat-list and profile relative timestamps use Portuguese phrasing.
 
 ---
 
@@ -144,8 +147,8 @@ Validated screenshot sets currently available in App Store Connect:
 ### Bundle Information
 
 - **Bundle ID**: `<BUNDLE_ID>`
-- **Version**: `4.0.17`
-- **Build Number**: 47 (sync-versions)
+- **Version**: `4.0.21`
+- **Build Number**: 55 (sync-versions)
 - **App Store Connect internal IDs**: intentionally omitted from public docs; keep exact IDs in private release notes.
 - **Minimum iOS Version**: 16.4
 - **Device Support**: iPhone, iPad
@@ -278,8 +281,9 @@ No user account is required. The app does not require app-owned backend infrastr
 
 ### App Store Connect Configuration
 
-- [x] Upload final IPA build (`4.0.13` build `43`)
-- [x] Local ASC health checked with `asc doctor` (`2026-05-17`)
+- [x] Historical IPA upload evidence exists for `4.0.13` build `43`
+- [ ] Upload current release IPA build (`4.0.21` build `55`)
+- [x] Local ASC health checked with `asc doctor` (`2026-06-03`)
 - [x] Apply App Store Connect metadata for `en-US` and `pt-BR`
 - [ ] Configure pricing (Free)
 - [ ] Set availability (Worldwide)
@@ -289,13 +293,15 @@ No user account is required. The app does not require app-owned backend infrastr
 
 ### Review Submission
 
-- [x] Xcode Debug simulator build passed (`2026-05-14`, Xcode `26.5`)
+- [x] Xcode Debug simulator build passed (`2026-06-03`, Xcode `26.5`)
 - [x] AXe release simulator pass covered 10 feature groups (`2026-05-17`,
   version `4.0.13` build `43`)
-- [x] Xcode generic iOS Release build/archive passed unsigned (`2026-05-14`)
+- [x] Xcode generic iOS Release build/archive passed unsigned (`2026-06-03`)
 - [x] Signed archive/export passed for `4.0.13` build `43`
-- [x] App Store Connect upload/submission check with configured ASC credentials
-- [x] TestFlight validation passed (`0` errors, `0` warnings)
+- [x] Historical App Store Connect upload/submission check passed for build `43`
+- [x] Historical TestFlight validation passed (`0` errors, `0` warnings) for build `43`
+- [ ] Current build `55` App Store Connect upload/submission check
+- [ ] Current build `55` TestFlight validation (`0` errors, `0` warnings)
 - [ ] Final testing on TestFlight
 - [ ] Review guidelines compliance check
 - [ ] Submit for App Store Review
@@ -303,4 +309,4 @@ No user account is required. The app does not require app-owned backend infrastr
 
 ---
 
-_Updated for DNS Chat v4.0.17 build 48 - startup crash hardening and TestFlight cleanup_
+_Updated for DNS Chat v4.0.21 build 55 - production-readiness and accessibility hardening_

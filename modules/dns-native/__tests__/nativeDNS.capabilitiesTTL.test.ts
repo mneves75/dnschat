@@ -41,6 +41,7 @@ describe("NativeDNS capabilities TTL", () => {
     nativeModulesRecord["RNDNSModule"] = {
       queryTXT: jest.fn(),
       isAvailable: mockIsAvailable,
+      configureSanitizer: jest.fn().mockResolvedValue(true),
     };
   });
 

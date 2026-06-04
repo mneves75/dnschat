@@ -4,11 +4,9 @@ import { devLog, devWarn } from './devLog';
 
 type HapticConfiguration = {
   userEnabled?: boolean;
-  reduceMotion?: boolean;
 };
 
 let userEnabled = true;
-let reduceMotionEnabled = false;
 let hardwareSupported: boolean | null = null;
 let availabilityPromise: Promise<boolean> | null = null;
 
@@ -53,7 +51,7 @@ const ensureHardwareSupport = async (): Promise<boolean> => {
 };
 
 const shouldPlay = async (): Promise<boolean> => {
-  if (!userEnabled || reduceMotionEnabled) {
+  if (!userEnabled) {
     return false;
   }
   return ensureHardwareSupport();
@@ -90,9 +88,6 @@ const runSelection = (): Promise<void> =>
 export const configureHaptics = (config: HapticConfiguration = {}) => {
   if (typeof config.userEnabled === 'boolean') {
     userEnabled = config.userEnabled;
-  }
-  if (typeof config.reduceMotion === 'boolean') {
-    reduceMotionEnabled = config.reduceMotion;
   }
 };
 
@@ -351,7 +346,6 @@ export type { HapticConfiguration };
 export const __hapticsTestHooks = {
   getState: () => ({
     userEnabled,
-    reduceMotionEnabled,
     hardwareSupported,
   }),
   shouldPlayCheck: () => shouldPlay(),
