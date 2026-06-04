@@ -135,11 +135,11 @@ install proof.
 Latest AXe simulator release evidence: `2026-05-17`, version `4.0.13` build
 `43`, 10 feature groups passed in one owned release-simulator run.
 
-Current local release target: version `4.0.22` build `56`. Last uploaded and
-processed TestFlight build remains version `4.0.20` build `54`. The release
-lane archives, exports, uploads, waits for processing, and validates TestFlight
-before the build is described as distributed. App Store Connect identifiers,
-signing identifiers, tester group names, local paths, and device identifiers are
+Current release target: version `4.0.22` build `56`. Last uploaded and processed
+TestFlight build is version `4.0.22` build `56`. The release lane archives,
+exports, uploads, waits for processing, and validates TestFlight before the
+build is described as distributed. App Store Connect identifiers, signing
+identifiers, tester group names, local paths, and device identifiers are
 intentionally omitted from public docs.
 
 Signed TestFlight release shape:

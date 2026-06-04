@@ -48,13 +48,14 @@
     at <code>0daa719</code> before the release bump. Initial worktree was clean.
     Package manager: Bun. Goal: bump version, produce a Release build, install
     and launch the compiled app on a physical iOS device, update public docs,
-    commit, push, tag, and create the release when credentials permit.
+    commit, push, tag, create the release, and deploy to TestFlight when
+    credentials permit.
   </p>
   <h3>Decisions / constraints</h3>
   <ul>
     <li><strong>Versioning:</strong> <code>package.json</code> was bumped from <code>4.0.21</code> to <code>4.0.22</code>, then <code>bun run sync-versions --bump-build</code> advanced native build metadata from <code>55</code> to <code>56</code>.</li>
     <li><strong>Signing privacy:</strong> physical-device signing used local Apple Development credentials and a local development provisioning profile. Public docs record only placeholder command shapes; exact device IDs, team IDs, profile names, certificate IDs, and local paths stay outside git.</li>
-    <li><strong>Distribution boundary:</strong> build <code>56</code> is a local physical-device Release build/install/launch proof. It is not described as uploaded to TestFlight because no signed App Store archive/export/upload/processing validation was run for this build.</li>
+    <li><strong>Distribution boundary:</strong> build <code>56</code> now has both local physical-device Release build/install/launch proof and signed App Store archive/export/upload/processing proof. Public docs omit exact App Store Connect IDs, tester group names, signing identifiers, device IDs, and local artifact paths.</li>
   </ul>
   <h3>Validation evidence</h3>
   <ul>
@@ -67,13 +68,20 @@
     <li><code>xcrun devicectl device install app</code> &mdash; passed; installed the compiled <code>DNSChat.app</code> bundle on the physical device.</li>
     <li><code>xcrun devicectl device info apps --bundle-id org.mvneves.dnschat</code> &mdash; passed; installed app metadata reported version <code>4.0.22</code>, bundle version <code>56</code>.</li>
     <li><code>xcrun devicectl device process launch org.mvneves.dnschat</code> &mdash; passed; the device accepted the launch request for the installed bundle.</li>
+    <li><code>xcodebuild clean archive</code> Release for generic iOS &mdash; passed with Apple Distribution signing for <code>4.0.22</code>/<code>56</code>.</li>
+    <li><code>xcodebuild -exportArchive</code> &mdash; passed; produced a signed App Store IPA for <code>4.0.22</code>/<code>56</code>.</li>
+    <li><code>asc publish testflight --wait</code> &mdash; passed; App Store Connect processing returned <code>VALID</code> for version <code>4.0.22</code> build <code>56</code>.</li>
+    <li><code>asc validate testflight --strict</code> &mdash; passed; <code>0</code> errors, <code>0</code> warnings, <code>0</code> blocking items.</li>
+    <li><code>asc validate --app ... --version 4.0.22 --platform IOS</code> &mdash; blocked separately with <code>Error: validate: app store version not found for version &quot;4.0.22&quot; and platform &quot;IOS&quot;</code>. This is an App Store submission-readiness blocker, not a TestFlight processing blocker.</li>
+    <li><strong>Release-doc review:</strong> Codex native code-reviewer delegation for the TestFlight docs diff was attempted and blocked by <code>agent thread limit reached</code>; fallback local diff review, stale-claim search, public identifier scan, public redaction check, and full repo gate were used instead.</li>
     <li><strong>Release-diff review:</strong> Codex native code-reviewer found one high stale-doc issue: <code>docs/README.md</code> still carried a historical React Doctor <code>100 / 100</code> claim. The doc was corrected to the current <code>93 / 100</code> wording with advisory diagnostics.</li>
     <li><code>bun run verify:all</code> &mdash; rerun after the release-diff review fix; passed again with the same full-gate scope and Jest counts.</li>
+    <li><code>bun run verify:all</code> &mdash; rerun after the TestFlight docs update; passed with public redaction, Expo Doctor 20/20, SDK alignment, typed routes, typecheck, DNS resolver sync, iOS pods sync, React Compiler healthcheck 83/83, Android critical checks, lint, and full Jest (<code>110</code> suites passed, <code>1</code> skipped; <code>893</code> tests passed, <code>13</code> skipped).</li>
     <li><code>git diff --check</code> and public-file identifier scan &mdash; passed; no whitespace errors or checked private device/signing identifiers in tracked release files.</li>
   </ul>
   <h3>Open / not claimed</h3>
   <ul>
-    <li>Build <code>56</code> has not been uploaded to TestFlight, and App Store Connect validation was not run for build <code>56</code>. Last uploaded/processed TestFlight evidence remains <code>4.0.20</code> build <code>54</code>.</li>
+    <li>App Store version validation is blocked because App Store Connect has no App Store version record for <code>4.0.22</code>. Creating or attaching that record is a separate App Store submission-state change from the TestFlight deployment.</li>
     <li>Full AXe feature flow was not rerun because this release pass only changed version metadata and public docs; the last full AXe feature pass remains the historical simulator baseline.</li>
   </ul>
 

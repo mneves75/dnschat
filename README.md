@@ -210,12 +210,11 @@ Last architecture/dependency verification: `2026-06-03`.
 Last full source/security sweep: `2026-06-03`.
 Last AXe simulator E2E feature pass: `2026-05-17` for version `4.0.13` build
 `43`.
-Last uploaded/processed TestFlight build: version `4.0.20` build `54`
-(`VALID` on `2026-06-02`, distributed to the internal tester group). Current
-local release target: version `4.0.22` build `56`. Build `56` is the fresh
-release-device metadata bump for the 4.0.21 production-readiness fixes, with a
-compiled Release build installed and launched on a physical iOS device on
-`2026-06-04`. It has not been uploaded to TestFlight in this working tree.
+Last uploaded/processed TestFlight build: version `4.0.22` build `56`
+(`VALID` on `2026-06-04`, distributed through the internal all-builds tester
+track). Build `56` is the fresh release-device metadata bump for the 4.0.21
+production-readiness fixes, with a compiled Release build installed and launched
+on a physical iOS device before the signed App Store archive/export/upload lane.
 
 - `npx react-doctor@latest --verbose .` reports `93 / 100` for `chat-dns` on
   `2026-06-03`. Confirmed fixes were applied for the user font-size hook and
@@ -245,21 +244,19 @@ compiled Release build installed and launched on a physical iOS device on
   `2026-06-03`.
 - Physical-device Release build, install, installed metadata check, and launch
   passed on `2026-06-04` for version `4.0.22` build `56`.
-- Last signed TestFlight build: `4.0.20` build `54`, archived with Apple
+- Last signed TestFlight build: `4.0.22` build `56`, archived with Apple
   Distribution signing, exported, uploaded, and processed to `VALID` in App Store
-  Connect on `2026-06-02` and distributed to the internal tester group;
-  `asc validate testflight --strict` reports `0` errors and `0` warnings with
-  bilingual (`en-US`/`pt-BR`) test notes set. Build `54` is a hotfix over the
-  `4.0.19`/`53` reduce-motion launch crash. The release lane uses a signed App
-  Store archive/export and App Store Connect processing before the build is
-  described as distributed. Internal App Store Connect IDs and tester group names
-  are intentionally omitted from public docs.
-- Build `56` has not yet been uploaded to TestFlight in this working tree; signed
-  archive/export/upload require local signing and App Store Connect credentials.
-- Historical `asc validate testflight` evidence for build `51` on `2026-05-28`
-  is superseded by build `54` validation. App Store version validation is not
-  applicable until a matching App Store version record exists; the remaining App
-  Store validation note is API-unverifiable App Privacy publish state.
+  Connect on `2026-06-04`; `asc validate testflight --strict` reports `0`
+  errors and `0` warnings with `en-US` test notes set. Build `56` carries the
+  reduce-motion startup fixes from builds `54` and `55` plus the current release
+  metadata. The release lane uses a signed App Store archive/export and App Store
+  Connect processing before the build is described as distributed. Internal App
+  Store Connect IDs and tester group names are intentionally omitted from public
+  docs.
+- Historical `asc validate testflight` evidence for build `54` on `2026-06-02`
+  is superseded by build `56` validation. App Store version validation is blocked
+  until a matching App Store version record exists for `4.0.22`; the remaining
+  App Store validation note is API-unverifiable App Privacy publish state.
 - `xcodebuild test` is not a native gate yet because the `DNSChat` scheme has no
   XCTest bundles.
 - DNS transport is observable. Public copy and tests intentionally avoid
