@@ -53,6 +53,11 @@ Connect processing returned `VALID` on `2026-06-04`.
   cannot verify it. Internal App Store Connect IDs, tester group names, device
   names, local paths, and signing identifiers are intentionally omitted from
   public docs.
+- iOS sourcemap generation is enabled for release symbolication. Source maps
+  are private debugging artifacts: do not commit them, ship them inside IPA/AAB
+  binaries, or publish them to public storage. Upload them only to the intended
+  private crash-reporting/symbolication destination when that release lane is
+  explicitly configured.
 - Local chat history is encrypted at rest with AES-GCM. Native builds store key
   material in SecureStore; Web preview uses same-origin browser storage for the
   local-only preview key because SecureStore is not available in browsers, so

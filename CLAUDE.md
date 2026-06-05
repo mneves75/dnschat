@@ -85,6 +85,7 @@ bun run verify:android-16kb # Validate 16KB page size alignment after a native A
 bun run verify:typed-routes # Generate and validate Expo Router typed routes
 bun run verify:react-compiler # Run React Compiler healthcheck
 bun run verify:public-redaction # Ensure public docs do not expose local release identifiers
+bun run verify:security # Run dependency audit plus gitleaks secret scan
 bun run verify:all     # Run ALL verification gates (lint, test, pods, sdk alignment, etc.)
 
 # Version sync

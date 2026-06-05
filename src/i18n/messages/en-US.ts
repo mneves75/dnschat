@@ -290,6 +290,12 @@ export const enUS = {
         menuHint: "Long press to show copy and share options",
         messageListLabel: "Conversation messages",
       },
+      externalLink: {
+        title: "Open external link?",
+        message:
+          "This link came from a DNS response. Check the destination before leaving DNS Chat:\n\n{{url}}",
+        open: "Open Link",
+      },
     },
     chatInput: {
       placeholder: "Message...",
@@ -494,6 +500,7 @@ export const enUS = {
             light: "Light",
             dark: "Dark",
           },
+          optionHint: "Use {{theme}} appearance in DNS Chat",
           sheetTitle: "Choose theme",
           sheetSubtitle: "Override the system appearance for DNS Chat only.",
         },

@@ -18,6 +18,10 @@ jest.mock("../src/components/LiquidGlassWrapper", () => ({
   useLiquidGlassCapabilities: () => ({ supportsLiquidGlass: false }),
 }));
 
+jest.mock("../src/components/SkeletonMessage", () => ({
+  SkeletonMessage: () => React.createElement("skeleton-message", { testID: "message-skeleton" }),
+}));
+
 jest.mock("../src/i18n", () => ({
   useTranslation: () => ({
     t: (key: string) => key,

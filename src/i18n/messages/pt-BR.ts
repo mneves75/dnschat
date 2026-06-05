@@ -290,6 +290,12 @@ export const ptBR = {
         menuHint: "Pressione e segure para mostrar opções de copiar e compartilhar",
         messageListLabel: "Mensagens da conversa",
       },
+      externalLink: {
+        title: "Abrir link externo?",
+        message:
+          "Este link veio de uma resposta DNS. Confira o destino antes de sair do DNS Chat:\n\n{{url}}",
+        open: "Abrir link",
+      },
     },
     chatInput: {
       placeholder: "Mensagem...",
@@ -494,6 +500,7 @@ export const ptBR = {
             light: "Claro",
             dark: "Escuro",
           },
+          optionHint: "Usar aparência {{theme}} no DNS Chat",
           sheetTitle: "Escolher tema",
           sheetSubtitle: "Sobrescreve a aparência do sistema apenas no DNS Chat.",
         },

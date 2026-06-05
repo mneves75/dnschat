@@ -20,7 +20,6 @@ import {
   StyleSheet,
   Switch,
   Text,
-  TouchableOpacity,
   View,
   Alert,
   Platform,
@@ -52,6 +51,7 @@ import { HapticFeedback, persistHapticsPreference } from "../../utils/haptics";
 import { devLog, devWarn } from "../../utils/devLog";
 import { getAppVersionInfo } from "../../utils/appVersion";
 import { openExternalUrl } from "../../utils/externalLinks";
+import { PressableRipple } from "../../components/PressableRipple";
 
 const getErrorMessage = (error: unknown): string => {
   if (error instanceof Error) return error.message;
@@ -94,18 +94,31 @@ export function GlassSettings() {
   const supportSheet = useGlassBottomSheet();
   const themeSheet = useGlassBottomSheet();
 
-  const themeOptions: { value: "system" | "light" | "dark"; title: string }[] = [
+  const themeOptions: {
+    value: "system" | "light" | "dark";
+    title: string;
+    hint: string;
+  }[] = [
     {
       value: "system",
       title: t("screen.settings.sections.appearance.options.system"),
+      hint: t("screen.settings.sections.appearance.optionHint", {
+        theme: t("screen.settings.sections.appearance.options.system"),
+      }),
     },
     {
       value: "light",
       title: t("screen.settings.sections.appearance.options.light"),
+      hint: t("screen.settings.sections.appearance.optionHint", {
+        theme: t("screen.settings.sections.appearance.options.light"),
+      }),
     },
     {
       value: "dark",
       title: t("screen.settings.sections.appearance.options.dark"),
+      hint: t("screen.settings.sections.appearance.optionHint", {
+        theme: t("screen.settings.sections.appearance.options.dark"),
+      }),
     },
   ];
   const currentThemeTitle =
@@ -518,7 +531,7 @@ export function GlassSettings() {
             shape="capsule"
             style={{ marginVertical: 8, alignItems: "center", padding: 10 }}
           >
-            <TouchableOpacity
+            <PressableRipple
               testID="settings-transport-test"
               onPress={handleTestSelectedPreference}
               accessibilityRole="button"
@@ -539,7 +552,7 @@ export function GlassSettings() {
                   ? t("screen.settings.sections.transportTest.testingButton")
                   : t("screen.settings.sections.transportTest.testButton")}
               </Text>
-            </TouchableOpacity>
+            </PressableRipple>
           </LiquidGlassWrapper>
           <View
             style={{ flexDirection: "row", justifyContent: "space-around" }}
@@ -551,7 +564,7 @@ export function GlassSettings() {
                 shape="capsule"
                 style={{ paddingHorizontal: 12, paddingVertical: 6 }}
               >
-                <TouchableOpacity
+                <PressableRipple
                   testID={`settings-force-${transportKey}`}
                   onPress={() => handleForceTransport(transportKey)}
                   accessibilityRole="button"
@@ -570,7 +583,7 @@ export function GlassSettings() {
                   <Text style={{ color: palette.userBubble }}>
                     {transportLabelMap[transportKey]}
                   </Text>
-                </TouchableOpacity>
+                </PressableRipple>
               </LiquidGlassWrapper>
             ))}
           </View>
@@ -728,7 +741,7 @@ export function GlassSettings() {
       >
         <View style={styles.dnsOptionsContainer}>
           {dnsServerOptions.map((option) => (
-            <TouchableOpacity
+            <PressableRipple
               testID={`settings-dns-option-${option.value.replace(/[^a-z0-9]/gi, "-").toLowerCase()}`}
               key={option.value}
               onPress={() => handleDnsServerSelect(option.value)}
@@ -736,7 +749,7 @@ export function GlassSettings() {
               accessibilityLabel={option.label}
               accessibilityHint={option.description}
               accessibilityState={{ selected: dnsServer === option.value }}
-              activeOpacity={0.82}
+              pressedOpacity={0.82}
               style={[
                 styles.dnsOption,
                 { backgroundColor: palette.highlight },
@@ -763,7 +776,7 @@ export function GlassSettings() {
                   <Text style={[styles.selectedIndicator, { color: palette.userBubble }]}>•</Text>
                 )}
               </View>
-            </TouchableOpacity>
+            </PressableRipple>
           ))}
         </View>
       </GlassBottomSheet>
@@ -778,16 +791,17 @@ export function GlassSettings() {
       >
         <View style={styles.dnsOptionsContainer}>
           {themeOptions.map((option) => (
-            <TouchableOpacity
+            <PressableRipple
               testID={`settings-theme-option-${option.value}`}
               key={option.value}
               onPress={() => handleSelectTheme(option.value)}
               accessibilityRole="button"
               accessibilityLabel={option.title}
+              accessibilityHint={option.hint}
               accessibilityState={{
                 selected: themePreference === option.value,
               }}
-              activeOpacity={0.82}
+              pressedOpacity={0.82}
               style={[
                 styles.dnsOption,
                 { backgroundColor: palette.highlight },
@@ -818,7 +832,7 @@ export function GlassSettings() {
                   </Text>
                 )}
               </View>
-            </TouchableOpacity>
+            </PressableRipple>
           ))}
         </View>
       </GlassBottomSheet>

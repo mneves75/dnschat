@@ -289,6 +289,14 @@ describe("MessageList - iOS 26 HIG Compliance", () => {
     });
   });
 
+  describe("Loading State", () => {
+    it("uses the message skeleton instead of a spinner-only empty loading state", () => {
+      expect(sourceCode).toContain('import { SkeletonMessage } from "./SkeletonMessage"');
+      expect(sourceCode).toContain("<SkeletonMessage />");
+      expect(sourceCode).not.toContain("ActivityIndicator");
+    });
+  });
+
   describe("Accessibility", () => {
     it("sets keyboardShouldPersistTaps for better UX", () => {
       expect(sourceCode).toContain('keyboardShouldPersistTaps="handled"');
