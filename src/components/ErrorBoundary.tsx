@@ -3,10 +3,10 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
 } from "react-native";
 import { useImessagePalette } from "../ui/theme/imessagePalette";
 import { devWarn } from "../utils/devLog";
+import { PressableRipple } from "./PressableRipple";
 
 const FALLBACK_COPY = {
   title: "Something went wrong",
@@ -73,18 +73,19 @@ function ErrorFallback({ error, onRetry }: ErrorFallbackProps) {
       <Text style={[styles.message, { color: palette.textSecondary }]}>
         {error?.message || FALLBACK_COPY.unknownError}
       </Text>
-      <TouchableOpacity
+      <PressableRipple
         style={[styles.retryButton, { backgroundColor: palette.userBubble }]}
         onPress={onRetry}
         accessibilityRole="button"
         accessibilityLabel={FALLBACK_COPY.reset}
+        variant="primary"
       >
         <Text
           style={[styles.retryButtonText, { color: palette.bubbleTextOnBlue }]}
         >
           {FALLBACK_COPY.reset}
         </Text>
-      </TouchableOpacity>
+      </PressableRipple>
     </View>
   );
 }

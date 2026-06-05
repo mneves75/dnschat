@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { Alert, View, Text, StyleSheet } from "react-native";
 import type { StyleProp, TextStyle } from "react-native";
 import { format } from "date-fns";
 import Markdown from "react-native-markdown-display";
@@ -19,11 +19,6 @@ interface MessageContentProps {
   palette: IMessagePalette;
   typography: TypographyScale;
 }
-
-const handleMarkdownLinkPress = (url: string): boolean => {
-  void openExternalUrl(url);
-  return false;
-};
 
 const markdownRules: RenderRules = {
   image: () => null,
@@ -55,6 +50,22 @@ export function MessageContent({
   const isLoading = message.status === "sending";
   const hasError = message.status === "error";
   const markdownProps = markdownStyles ? { style: markdownStyles } : {};
+  const handleMarkdownLinkPress = (url: string): boolean => {
+    Alert.alert(
+      t("screen.chat.externalLink.title"),
+      t("screen.chat.externalLink.message", { url }),
+      [
+        { text: t("common.cancel"), style: "cancel" },
+        {
+          text: t("screen.chat.externalLink.open"),
+          onPress: () => {
+            void openExternalUrl(url);
+          },
+        },
+      ],
+    );
+    return false;
+  };
 
   return (
     <>

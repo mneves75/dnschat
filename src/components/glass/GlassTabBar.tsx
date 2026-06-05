@@ -12,7 +12,6 @@ import React from "react";
 import {
   View,
   Text,
-  TouchableOpacity,
   StyleSheet,
   useColorScheme,
   Platform,
@@ -20,6 +19,7 @@ import {
 import type { ViewStyle, TextStyle, StyleProp } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LiquidGlassWrapper } from "../LiquidGlassWrapper";
+import { PressableRipple } from "../PressableRipple";
 
 // ==================================================================================
 // TYPES AND INTERFACES
@@ -184,16 +184,17 @@ const GlassTabItem: React.FC<GlassTabItemProps> = ({
   };
 
   return (
-    <TouchableOpacity
+    <PressableRipple
       style={[styles.tabItem, itemStyle, style]}
       onPress={handlePress}
       onPressIn={() => setIsPressed(true)}
       onPressOut={() => setIsPressed(false)}
-      activeOpacity={1}
+      pressedOpacity={1}
       disabled={tab.disabled}
       accessibilityRole="tab"
       accessibilityLabel={tab.title}
       accessibilityState={{ selected: isActive, disabled: tab.disabled }}
+      variant="icon"
     >
       {/* Icon */}
       <View style={styles.tabIconContainer}>
@@ -238,7 +239,7 @@ const GlassTabItem: React.FC<GlassTabItemProps> = ({
       >
         {tab.title}
       </Text>
-    </TouchableOpacity>
+    </PressableRipple>
   );
 };
 

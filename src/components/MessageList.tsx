@@ -5,7 +5,6 @@ import {
   StyleSheet,
   Text,
   RefreshControl,
-  ActivityIndicator,
 } from "react-native";
 import type {
   ListRenderItemInfo,
@@ -21,6 +20,7 @@ import { LiquidGlassWrapper, useLiquidGlassCapabilities } from "./LiquidGlassWra
 import { useTranslation } from "../i18n";
 import { devLog } from "../utils/devLog";
 import { useMotionReduction } from "../context/AccessibilityContext";
+import { SkeletonMessage } from "./SkeletonMessage";
 
 interface MessageListProps {
   messages: Message[];
@@ -213,11 +213,8 @@ export function MessageList({
   );
 
   const renderLoadingComponent = () => (
-    <View style={styles.emptyContainer}>
-      <ActivityIndicator
-        color={palette.accentTint}
-        accessibilityLabel={t("screen.chat.accessibility.loadingHint")}
-      />
+    <View style={styles.loadingContainer}>
+      <SkeletonMessage />
     </View>
   );
 
@@ -290,6 +287,11 @@ const styles = StyleSheet.create({
     // Large horizontal padding for empty state provides comfortable reading width
     // Prevents text from spanning full screen width on larger devices
     paddingHorizontal: LiquidGlassSpacing.xl,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    paddingTop: LiquidGlassSpacing.xl,
   },
   // iOS 26 HIG: Glass card for empty state on iOS
   emptyGlassCard: {

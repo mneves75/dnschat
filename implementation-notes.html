@@ -42,6 +42,93 @@
   <p><strong>Stop condition:</strong> no known critical/high issues remain; medium findings are either fixed or explicitly justified; strongest local checks have fresh outcomes; browser/runtime evidence is captured for user-visible frontend changes when feasible.</p>
 
   <hr />
+  <h2>Review Pass &mdash; 2026-06-05 (premium polish, production trust gates, React Doctor 100/100)</h2>
+
+  <p><strong>Baseline:</strong> scope locked to <code>&lt;REPO_ROOT&gt;</code> on branch <code>react-compiler-100</code>. Package manager: Bun. Stack observed from <code>package.json</code>: Expo SDK <code>56.0.8</code>, React Native <code>0.85.3</code>, React <code>19.2.3</code>, TypeScript <code>~6.0.3</code>, Hermes/New Architecture, Expo Router typed routes, React Compiler enabled. Initial git status was clean before this pass. Repo guidance loaded from <code>AGENTS.md</code>, <code>CLAUDE.md</code>, <code>docs/technical/SPECIFICATION.md</code>, <code>SECURITY.md</code>, and this notes file.</p>
+
+  <h3>Premium UX score</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Dimension</th>
+        <th>Score</th>
+        <th>Evidence and decision</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Press states</td>
+        <td><strong>19 / 20</strong></td>
+        <td><code>PressableRipple</code> is now the app press primitive across production interactive surfaces; remaining raw <code>TouchableOpacity</code> imports/elements are blocked by <code>__tests__/uiDesignPolicy.spec.ts</code>. Kept local pressed overlays where they already carried tab affordance.</td>
+      </tr>
+      <tr>
+        <td>Subtle animations</td>
+        <td><strong>18 / 20</strong></td>
+        <td>Existing Reanimated surfaces and skeletons are purposeful and React Compiler-clean; chat loading now uses the existing <code>SkeletonMessage</code> instead of a spinner-only wait. No new decorative motion added.</td>
+      </tr>
+      <tr>
+        <td>Haptics</td>
+        <td><strong>17 / 20</strong></td>
+        <td><code>expo-haptics</code> is present and haptics are centralized in <code>src/utils/haptics.ts</code>. Decision: keep haptics for meaningful state changes and do not add noisy every-tap feedback.</td>
+      </tr>
+      <tr>
+        <td>Keyboard behavior</td>
+        <td><strong>18 / 20</strong></td>
+        <td><code>react-native-keyboard-controller</code> is installed and the app has keyboard-aware chat/input behavior. No keyboard regression found in static review or tests; full device keyboard pass remains future stronger evidence.</td>
+      </tr>
+      <tr>
+        <td>Loading / empty states</td>
+        <td><strong>18 / 20</strong></td>
+        <td>Existing empty/error states are broad; fixed the most visible gap by replacing chat list loading with <code>SkeletonMessage</code> and locking it in <code>MessageList.hig-compliance.spec.tsx</code>.</td>
+      </tr>
+    </tbody>
+  </table>
+  <p><strong>Premium score:</strong> <code>90 / 100</code>, tier <strong>World-class</strong>. This is not a claim of perfection: the score reflects strong local and native proof, with remaining risk around manual runtime gesture/keyboard feel that was not captured as screenshots in this pass.</p>
+
+  <h3>Review lanes and blockers</h3>
+  <ul>
+    <li>Codex design/UX subagent completed a static product review and scored the baseline <code>85 / 100</code> Premium, with medium findings around raw <code>TouchableOpacity</code>, theme option hints, and spinner-only chat loading. Those findings were fixed.</li>
+    <li>Codex security subagent found no critical/high issues. Medium findings around security gate coverage, assistant external-link trust, native logging policy, and source-map handling were fixed or documented.</li>
+    <li>Architecture review focus: the highest-leverage seam was assistant-rendered DNS TXT content as an untrusted external-response boundary; the shipped link-confirmation gate is the narrow implementation. Future deepening candidates are a centralized assistant-content trust policy and artifact inspection for release source maps.</li>
+    <li>Claude Code design review was attempted because <code>claude</code> is installed at <code>/Users/mneves/.local/bin/claude</code>. Blocker: <strong>Claude Code design-review command produced no output and exited with code 143 after the tool timeout.</strong></li>
+    <li>XcodeBuildMCP was checked first; <code>session_show_defaults</code> returned no configured project/scheme/simulator defaults, so validation fell back to documented <code>xcodebuild</code> commands.</li>
+  </ul>
+
+  <h3>Fixes applied</h3>
+  <ul>
+    <li><strong>Interaction polish:</strong> migrated remaining production <code>TouchableOpacity</code> usage to <code>PressableRipple</code> in <code>GlassSettings</code>, <code>GlassBottomSheet</code>, <code>GlassTabBar</code>, and <code>ErrorBoundary</code>, preserving existing visual intent while standardizing pressed feedback.</li>
+    <li><strong>Assistant trust boundary:</strong> markdown links in assistant/DNS responses now show a localized confirmation dialog before leaving the app. This treats DNS TXT response content as untrusted external content without blocking legitimate links.</li>
+    <li><strong>Loading quality:</strong> <code>MessageList</code> now renders the existing skeleton message loading component instead of a lone spinner.</li>
+    <li><strong>Accessibility:</strong> theme selection rows in settings now expose localized accessibility hints; policy tests lock the hint contract.</li>
+    <li><strong>Security verification:</strong> added <code>bun run verify:security</code> (<code>bun audit</code> plus <code>gitleaks</code>) and wired it into <code>bun run verify:all</code>.</li>
+    <li><strong>Native/security policy:</strong> added a native logging policy test that rejects sensitive DNS payload logging patterns in Android/iOS native runtime files, and documented iOS source-map handling in <code>SECURITY.md</code>.</li>
+  </ul>
+
+  <h3>Validation evidence</h3>
+  <ul>
+    <li><code>npx react-doctor@latest --project chat-dns</code>: <code>100 / 100</code>, "Great", no issues found. Informational note only: React Doctor is not installed in this project; no dependency was added because the repo uses scoped <code>npx</code>.</li>
+    <li><code>bun run typecheck</code>: passed.</li>
+    <li><code>bun run lint</code>: passed.</li>
+    <li><code>bun run test -- --runTestsByPath __tests__/uiDesignPolicy.spec.ts __tests__/messageContent.policy.spec.ts __tests__/MessageList.hig-compliance.spec.tsx __tests__/nativeLogging.policy.spec.ts __tests__/errorBoundary.policy.spec.ts __tests__/glassBottomSheet.accessibility.spec.ts</code>: passed, <code>6</code> suites and <code>90</code> tests.</li>
+    <li><code>bun run test</code>: passed, <code>114</code> suites passed, <code>1</code> skipped, <code>918</code> tests passed, <code>13</code> skipped.</li>
+    <li><code>bun run verify:security</code>: passed; <code>bun audit</code> reported no vulnerabilities and <code>gitleaks</code> scanned <code>371</code> commits with no leaks found.</li>
+    <li><code>cd modules/dns-native &amp;&amp; bun run test</code>: passed, <code>7</code> suites passed, <code>1</code> skipped, <code>57</code> tests passed, <code>13</code> skipped.</li>
+    <li><code>bun run verify:all</code>: passed. Notable gates: public redaction, security, Expo Doctor <code>20/20</code>, SDK alignment, typed routes, typecheck, DNS resolver sync, iOS pod sync, React Compiler <code>102/102</code>, Android critical checks, lint, and full Jest. Warnings only: no Android devices/emulators connected and no native <code>.so</code> artifacts for the 16KB check.</li>
+    <li><code>bun run e2e:axe:doctor</code>: passed; AXe <code>1.7.1</code> detected one booted iOS simulator.</li>
+    <li><code>xcodebuild clean build -workspace ios/DNSChat.xcworkspace -scheme DNSChat -configuration Debug -destination 'platform=iOS Simulator,name=iPhone 17'</code>: build succeeded. Warnings were third-party pod/compiler notes.</li>
+    <li><code>xcodebuild clean build -workspace ios/DNSChat.xcworkspace -scheme DNSChat -configuration Release -destination 'generic/platform=iOS' CODE_SIGNING_ALLOWED=NO</code>: build succeeded. Warnings were third-party pod/compiler and standard Hermes global warnings.</li>
+    <li><code>xcodebuild clean archive -workspace ios/DNSChat.xcworkspace -scheme DNSChat -configuration Release -destination 'generic/platform=iOS' -archivePath /tmp/DNSChat.xcarchive CODE_SIGNING_ALLOWED=NO</code>: archive succeeded. Warnings were third-party pod/compiler and standard Hermes global warnings.</li>
+  </ul>
+
+  <h3>Decisions and residual risk</h3>
+  <ul>
+    <li><strong>No new dependencies:</strong> every shipped fix used existing local primitives, existing packages, or policy tests.</li>
+    <li><strong>No version bump:</strong> this was a polish/hardening commit, not a release packaging step; package version remains the current <code>4.0.25</code> until a release workflow explicitly packages it.</li>
+    <li><strong>No push/deploy/TestFlight:</strong> no external-production, credentialed, or App Store lane was requested as an authorized action in this pass. Signed archive/export, TestFlight upload, App Store validation, and physical-device install were not run.</li>
+    <li><strong>Remaining medium risk:</strong> the strongest evidence is local/native build and test proof. Manual gesture/keyboard feel on physical devices and screenshot-based visual review were not captured in this pass.</li>
+  </ul>
+
+  <hr />
   <h2>Review Pass &mdash; 2026-06-05 (React Compiler cleanliness, react-doctor 100/100, 4.0.25 build 59)</h2>
 
   <p><strong>Goal:</strong> drive <code>npx react-doctor@latest</code> from <code>93 / 100</code> (84 errors, 1 warning) to <code>100 / 100</code> by fixing the underlying code rather than blanket-suppressing rules, while preserving behavior. The repo runs <code>experiments.reactCompiler</code>, so making components genuinely React Compiler-clean is a real quality improvement, not gaming the score.</p>

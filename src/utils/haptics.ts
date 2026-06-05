@@ -115,7 +115,7 @@ export class HapticFeedback {
    *
    * @example
    * ```typescript
-   * <TouchableOpacity onPress={() => {
+   * <PressableRipple onPress={() => {
    *   HapticFeedback.light();
    *   // ... handle press
    * }}>
