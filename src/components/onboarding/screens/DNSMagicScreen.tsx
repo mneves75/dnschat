@@ -87,18 +87,18 @@ export function DNSMagicScreen() {
   // Effect: start the Reanimated pulse animation on mount and cancel on unmount.
   useEffect(() => {
     if (shouldReduceMotion) {
-      pulseAnim.value = 1;
+      pulseAnim.set(1);
       return;
     }
 
-    pulseAnim.value = withRepeat(
+    pulseAnim.set(withRepeat(
       withSequence(
         withTiming(1.1, { duration: 1000 }),
         withTiming(1, { duration: 1000 }),
       ),
       -1,
       false,
-    );
+    ));
 
     return () => {
       cancelAnimation(pulseAnim);
@@ -106,7 +106,7 @@ export function DNSMagicScreen() {
   }, [shouldReduceMotion]);
 
   const pulseStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: pulseAnim.value }],
+    transform: [{ scale: pulseAnim.get() }],
   }));
 
   const runDNSDemo = async () => {
@@ -136,35 +136,36 @@ export function DNSMagicScreen() {
       );
     };
 
-    try {
-      for (const step of DNS_DEMO_STEPS) {
-        updateStep(step.id, "active", t(step.activeKey));
-        const queryStartedAt = Date.now();
+    let succeeded = false;
+    for (const step of DNS_DEMO_STEPS) {
+      updateStep(step.id, "active", t(step.activeKey));
+      const queryStartedAt = Date.now();
 
-        try {
-          const result = await DNSService.testTransport(
-            testMessage,
-            step.transport,
-          );
-          updateStep(
-            step.id,
-            "success",
-            t(step.successKey),
-            Date.now() - queryStartedAt,
-          );
-          setResponse(result || t("screen.onboarding.dnsMagic.demoResponse"));
-          return;
-        } catch (error) {
-          devWarn(`[DNSMagicScreen] ${step.transport.toUpperCase()} DNS demo failed`, error);
-          updateStep(step.id, "failed", t(step.failedKey));
-          await wait(350);
-        }
+      try {
+        const result = await DNSService.testTransport(
+          testMessage,
+          step.transport,
+        );
+        updateStep(
+          step.id,
+          "success",
+          t(step.successKey),
+          Date.now() - queryStartedAt,
+        );
+        setResponse(result || t("screen.onboarding.dnsMagic.demoResponse"));
+        succeeded = true;
+        break;
+      } catch (error) {
+        devWarn(`[DNSMagicScreen] ${step.transport.toUpperCase()} DNS demo failed`, error);
+        updateStep(step.id, "failed", t(step.failedKey));
+        await wait(350);
       }
-
-      setResponse(t("screen.onboarding.dnsMagic.demoFailure"));
-    } finally {
-      setIsRunning(false);
     }
+
+    if (!succeeded) {
+      setResponse(t("screen.onboarding.dnsMagic.demoFailure"));
+    }
+    setIsRunning(false);
   };
 
   return (

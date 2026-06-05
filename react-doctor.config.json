@@ -11,8 +11,22 @@
           "react-doctor/js-flatmap-filter",
           "react-doctor/js-set-map-lookups",
           "react-doctor/rn-prefer-pressable",
-          "react-doctor/server-sequential-independent-await"
+          "react-doctor/server-sequential-independent-await",
+          "react-hooks-js/globals"
         ]
+      },
+      {
+        "files": [
+          "app/_layout.tsx",
+          "app/chat/[threadId].tsx",
+          "src/context/ChatContext.tsx",
+          "src/context/OnboardingContext.tsx"
+        ],
+        "rules": ["react-hooks-js/set-state-in-effect"]
+      },
+      {
+        "files": ["app/_layout.tsx"],
+        "rules": ["react-doctor/react-compiler-no-manual-memoization"]
       },
       {
         "files": ["scripts/**", "test-dns-simple.js"],

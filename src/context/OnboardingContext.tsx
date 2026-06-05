@@ -91,11 +91,6 @@ export function OnboardingProvider({
   });
   const persistQueueRef = useRef<Promise<void>>(Promise.resolve());
 
-  // Effect: load persisted onboarding state once on mount.
-  useEffect(() => {
-    loadOnboardingState();
-  }, []);
-
   const applySnapshot = (snapshot: PersistedOnboardingState) => {
     onboardingStateRef.current = snapshot;
     setHasCompletedOnboarding(snapshot.completed);
@@ -109,18 +104,18 @@ export function OnboardingProvider({
   };
 
   const loadOnboardingState = async () => {
-    try {
-      // Skip onboarding in screenshot mode so snapshot tooling can capture main app screens.
-      if (isScreenshotMode()) {
-        applySnapshot({
-          completed: true,
-          stepIndex: ONBOARDING_STEPS.length - 1,
-          completedSteps: ONBOARDING_STEPS.map((step) => step.id),
-        });
-        setLoading(false);
-        return;
-      }
+    // Skip onboarding in screenshot mode so snapshot tooling can capture main app screens.
+    if (isScreenshotMode()) {
+      applySnapshot({
+        completed: true,
+        stepIndex: ONBOARDING_STEPS.length - 1,
+        completedSteps: ONBOARDING_STEPS.map((step) => step.id),
+      });
+      setLoading(false);
+      return;
+    }
 
+    try {
       const onboardingData = await AsyncStorage.getItem(ONBOARDING_STORAGE_KEY);
       if (onboardingData) {
         const { completed, stepIndex, completedSteps } =
@@ -133,10 +128,17 @@ export function OnboardingProvider({
       }
     } catch (error) {
       devWarn("[OnboardingContext] Error loading onboarding state", error);
-    } finally {
-      setLoading(false);
     }
+    // Runs after success or a handled error; the early screenshot-mode path
+    // clears loading itself. Avoiding `finally` keeps this React Compiler-clean.
+    setLoading(false);
   };
+
+  // Effect: load persisted onboarding state once on mount (declared after the
+  // functions it calls so they are not accessed before declaration).
+  useEffect(() => {
+    loadOnboardingState();
+  }, []);
 
   const persistSnapshot = async (
     snapshot: PersistedOnboardingState,

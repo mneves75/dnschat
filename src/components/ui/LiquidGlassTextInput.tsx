@@ -96,18 +96,18 @@ export function LiquidGlassTextInput({
 
   // Animated border for focus state
   const animatedBorderStyle = useAnimatedStyle(() => ({
-    borderColor: borderColor.value,
+    borderColor: borderColor.get(),
   }));
 
-  const syncBorderState = React.useCallback((nextFocused: boolean, nextHasError: boolean) => {
+  const syncBorderState = (nextFocused: boolean, nextHasError: boolean) => {
     const targetColor = nextHasError
       ? palette.destructive
       : nextFocused
         ? palette.accentTint
         : palette.border;
 
-    borderColor.value = withTiming(targetColor, TimingConfig.quick);
-  }, [borderColor, palette.accentTint, palette.border, palette.destructive]);
+    borderColor.set(withTiming(targetColor, TimingConfig.quick));
+  };
 
   // Handle focus
   const handleFocus = (e: FocusEvent) => {

@@ -294,7 +294,12 @@ export function GlassChatList() {
 
   // Track initial load for skeleton display
   const [hasLoadedOnce, setHasLoadedOnce] = React.useState(false);
-  const [visibleError, setVisibleError] = React.useState<string | null>(null);
+
+  // Surface the latest context error as a dismissable toast. Derived purely from
+  // state (no effect, no setState-in-render): once dismissed, the same error stays
+  // hidden until a different one arrives.
+  const [dismissedError, setDismissedError] = React.useState<string | null>(null);
+  const visibleError = error && error !== dismissedError ? error : null;
 
   // Effect: load chat list on first mount and mark first load completion.
   React.useEffect(() => {
@@ -309,16 +314,10 @@ export function GlassChatList() {
     };
   }, []);
 
-  // Effect: surface chat load errors via alert.
-  React.useEffect(() => {
-    if (!error) return;
-    setVisibleError(error);
-  }, [error]);
-
-  const handleDismissError = React.useCallback(() => {
-    setVisibleError(null);
+  const handleDismissError = () => {
+    setDismissedError(error);
     clearError();
-  }, [clearError]);
+  };
 
   const isDark = colorScheme === "dark";
   const [refreshing, setRefreshing] = React.useState(false);
@@ -367,11 +366,7 @@ export function GlassChatList() {
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    try {
-      await loadChats();
-    } finally {
-      setRefreshing(false);
-    }
+    await loadChats().finally(() => setRefreshing(false));
   };
 
   const handleShareChat = async (chat: Chat) => {
@@ -437,8 +432,8 @@ export function GlassChatList() {
               {chats.map((chat, index) => (
                 <AnimatedListItem
                   key={chat.id}
-                  opacity={opacities[index] ?? { value: 1 }}
-                  translateX={translates[index] ?? { value: 0 }}
+                  opacity={opacities[index]}
+                  translateX={translates[index]}
                 >
                   <GlassChatItem
                     chat={chat}

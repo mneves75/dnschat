@@ -124,10 +124,10 @@ function useSettingsContextValue(): SettingsContextValue {
           if (isMounted) {
             setSettings(next);
           }
-        } finally {
-          if (isMounted) {
-            setLoading(false);
-          }
+        }
+        // Replaces `finally`; the catch handles errors without rethrowing.
+        if (isMounted) {
+          setLoading(false);
         }
       });
     };

@@ -34,6 +34,7 @@ import { useTranslation } from "../../i18n";
 import { LOCALE_LABEL_KEYS } from "../../i18n/localeMeta";
 import { DEFAULT_DNS_SERVER } from "../../context/settingsStorage";
 import { DNSLogService } from "../../services/dnsLogService";
+import { DNSService } from "../../services/dnsService";
 import { StorageService } from "../../services/storageService";
 import { useImessagePalette } from "../../ui/theme/imessagePalette";
 import { getMinimumTouchTarget } from "../../ui/theme/liquidGlassSpacing";
@@ -311,7 +312,6 @@ export function GlassSettings() {
     setLastTestResult(null);
     setLastTestError(null);
     try {
-      const { DNSService } = await import("../../services/dnsService");
       const response = await DNSService.queryLLM(
         testMessage,
         dnsServer,
@@ -321,9 +321,8 @@ export function GlassSettings() {
       setLastTestResult(response);
     } catch (e: unknown) {
       setLastTestError(getErrorMessage(e));
-    } finally {
-      setTestRunning(false);
     }
+    setTestRunning(false);
   };
 
   const handleForceTransport = async (
@@ -341,7 +340,6 @@ export function GlassSettings() {
     setLastTestResult(null);
     setLastTestError(null);
     try {
-      const { DNSService } = await import("../../services/dnsService");
       const response = await DNSService.testTransport(
         testMessage,
         transport,
@@ -350,9 +348,8 @@ export function GlassSettings() {
       setLastTestResult(response);
     } catch (e: unknown) {
       setLastTestError(getErrorMessage(e));
-    } finally {
-      setTestRunning(false);
     }
+    setTestRunning(false);
   };
 
   const handleClearData = () => {
@@ -366,8 +363,8 @@ export function GlassSettings() {
           style: "destructive",
           onPress: async () => {
             if (clearingData) return;
+            setClearingData(true);
             try {
-              setClearingData(true);
               await StorageService.clearAllChats();
               await DNSLogService.clearLogs();
               await loadChats();
@@ -381,9 +378,8 @@ export function GlassSettings() {
                 t("common.errorTitle"),
                 t("screen.glassSettings.alerts.clearCacheErrorMessage"),
               );
-            } finally {
-              setClearingData(false);
             }
+            setClearingData(false);
           },
         },
       ],

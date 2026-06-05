@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -84,29 +84,35 @@ export function Toast({
   const [isMounted, setIsMounted] = useState(visible);
   const visibleRef = useRef(visible);
 
+  // Mount as soon as the toast becomes visible. Deriving this during render
+  // (instead of a setState-in-effect) keeps the component React Compiler-clean.
+  if (visible && !isMounted) {
+    setIsMounted(true);
+  }
+
   // Effect: keep the visibility ref in sync with the visible prop.
   useEffect(() => {
     visibleRef.current = visible;
   }, [visible]);
 
-  const finishHide = React.useCallback(() => {
+  const finishHide = () => {
     if (!visibleRef.current) {
       setIsMounted(false);
     }
-  }, []);
+  };
 
-  const handleDismiss = React.useCallback(() => {
+  const handleDismiss = () => {
     visibleRef.current = false;
     if (shouldReduceMotion) {
-      translateY.value = hiddenTranslateY;
-      opacity.value = 0;
+      translateY.set(hiddenTranslateY);
+      opacity.set(0);
       onDismiss();
       finishHide();
       HapticFeedback.light();
       return;
     }
 
-    translateY.value = withSpring(
+    translateY.set(withSpring(
       hiddenTranslateY,
       SpringConfig.stiff,
       (finished) => {
@@ -115,17 +121,10 @@ export function Toast({
           runOnJS(finishHide)();
         }
       }
-    );
-    opacity.value = withTiming(0, TimingConfig.quick);
+    ));
+    opacity.set(withTiming(0, TimingConfig.quick));
     HapticFeedback.light();
-  }, [
-    finishHide,
-    hiddenTranslateY,
-    onDismiss,
-    opacity,
-    shouldReduceMotion,
-    translateY,
-  ]);
+  };
 
   // Get variant-specific colors and icon. Pull from palette so dark mode
   // and high-contrast modes are respected.
@@ -173,7 +172,6 @@ export function Toast({
   useEffect(() => {
     if (visible) {
       visibleRef.current = true;
-      setIsMounted(true);
       // Trigger haptic feedback
       switch (variant) {
         case "success":
@@ -190,12 +188,12 @@ export function Toast({
       }
 
       if (shouldReduceMotion) {
-        translateY.value = 0;
-        opacity.value = 1;
+        translateY.set(0);
+        opacity.set(1);
       } else {
         // Slide in
-        translateY.value = withSpring(0, SpringConfig.bouncy);
-        opacity.value = withTiming(1, TimingConfig.quick);
+        translateY.set(withSpring(0, SpringConfig.bouncy));
+        opacity.set(withTiming(1, TimingConfig.quick));
       }
 
       // Auto-dismiss
@@ -209,14 +207,14 @@ export function Toast({
     } else {
       visibleRef.current = false;
       if (shouldReduceMotion) {
-        translateY.value = hiddenTranslateY;
-        opacity.value = 0;
+        translateY.set(hiddenTranslateY);
+        opacity.set(0);
         finishHide();
         return undefined;
       }
 
       // Slide out
-      translateY.value = withSpring(
+      translateY.set(withSpring(
         hiddenTranslateY,
         SpringConfig.stiff,
         (finished) => {
@@ -224,8 +222,8 @@ export function Toast({
             runOnJS(finishHide)();
           }
         }
-      );
-      opacity.value = withTiming(0, TimingConfig.quick);
+      ));
+      opacity.set(withTiming(0, TimingConfig.quick));
     }
     return undefined;
   }, [
@@ -249,8 +247,8 @@ export function Toast({
 
   // Animated style
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: translateY.value }],
-    opacity: opacity.value,
+    transform: [{ translateY: translateY.get() }],
+    opacity: opacity.get(),
   }));
 
   if (!isMounted) {

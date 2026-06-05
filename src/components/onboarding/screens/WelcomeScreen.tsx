@@ -32,18 +32,18 @@ export function WelcomeScreen() {
   // Effect: run welcome screen entrance animation on mount via Reanimated.
   React.useEffect(() => {
     if (shouldReduceMotion) {
-      fadeAnim.value = 1;
-      slideAnim.value = 0;
+      fadeAnim.set(1);
+      slideAnim.set(0);
       return;
     }
 
-    fadeAnim.value = withTiming(1, { duration: 800 });
-    slideAnim.value = withTiming(0, { duration: 800 });
+    fadeAnim.set(withTiming(1, { duration: 800 }));
+    slideAnim.set(withTiming(0, { duration: 800 }));
   }, [shouldReduceMotion]);
 
   const heroAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: fadeAnim.value,
-    transform: [{ translateY: slideAnim.value }],
+    opacity: fadeAnim.get(),
+    transform: [{ translateY: slideAnim.get() }],
   }));
 
   return (

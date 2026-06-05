@@ -31,10 +31,12 @@ describe("glass modal accessibility policy", () => {
     expect(bottomSheetSource).toContain("paddingBottom: 20");
   });
 
-  it("keeps bottom-sheet control callbacks stable across parent rerenders", () => {
-    expect(bottomSheetSource).toContain("const show = React.useCallback");
-    expect(bottomSheetSource).toContain("const hide = React.useCallback");
-    expect(bottomSheetSource).toContain("const toggle = React.useCallback");
+  it("keeps bottom-sheet control callbacks stable across parent rerenders (via React Compiler auto-memoization)", () => {
+    // The project runs the React Compiler (experiments.reactCompiler), which
+    // auto-memoizes these handlers, so manual useCallback is intentionally removed.
+    expect(bottomSheetSource).toContain("const show = () => setVisible(true);");
+    expect(bottomSheetSource).toContain("const hide = () => setVisible(false);");
+    expect(bottomSheetSource).toContain("const toggle = () => setVisible((prev) => !prev);");
   });
 
   it("does not mount Expo UI bottom sheets before a user opens a sheet", () => {

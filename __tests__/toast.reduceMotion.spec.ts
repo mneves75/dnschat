@@ -7,10 +7,10 @@ describe("Toast reduce-motion policy", () => {
     expect(source).toContain('useMotionReduction');
     expect(source).toContain('const { shouldReduceMotion } = useMotionReduction();');
     expect(source).toContain('if (shouldReduceMotion) {');
-    expect(source).toContain('translateY.value = hiddenTranslateY;');
-    expect(source).toContain('opacity.value = 0;');
-    expect(source).toContain('translateY.value = 0;');
-    expect(source).toContain('opacity.value = 1;');
+    expect(source).toContain('translateY.set(hiddenTranslateY);');
+    expect(source).toContain('opacity.set(0);');
+    expect(source).toContain('translateY.set(0);');
+    expect(source).toContain('opacity.set(1);');
   });
 
   it("keeps error toasts persistent and untruncated", () => {

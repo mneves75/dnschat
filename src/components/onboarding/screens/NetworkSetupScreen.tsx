@@ -55,7 +55,7 @@ export function NetworkSetupScreen() {
   ]);
   const isMountedRef = React.useRef(true);
 
-  const runNetworkOptimization = React.useCallback(async () => {
+  const runNetworkOptimization = async () => {
     setIsOptimizing(true);
 
     const updateTest = (index: number, updates: Partial<NetworkTest>) => {
@@ -92,12 +92,13 @@ export function NetworkSetupScreen() {
         t("screen.onboarding.networkSetup.alerts.errorTitle"),
         t("screen.onboarding.networkSetup.alerts.errorMessage"),
       );
-    } finally {
-      if (isMountedRef.current) {
-        setIsOptimizing(false);
-      }
     }
-  }, [t]);
+    // Replaces `finally`; mount-guarded so the early `!isMountedRef` returns
+    // (where this would be a no-op anyway) skip it harmlessly.
+    if (isMountedRef.current) {
+      setIsOptimizing(false);
+    }
+  };
 
   const applyRecommendedSettings = async () => {
     if (recommendedSetting !== null) {
@@ -110,10 +111,10 @@ export function NetworkSetupScreen() {
           t("screen.onboarding.networkSetup.alerts.errorTitle"),
           t("screen.onboarding.networkSetup.alerts.errorMessage"),
         );
-        return;
-      } finally {
         setIsApplyingSettings(false);
+        return;
       }
+      setIsApplyingSettings(false);
 
       Alert.alert(
         t("screen.onboarding.networkSetup.alerts.successTitle"),
