@@ -14,7 +14,17 @@ describe("MessageContent render policy", () => {
     expect(source).not.toContain("Linking.openURL");
     expect(source).toContain("{message.content}");
     expect(source).toContain('t("screen.chat.accessibility.errorIndicator")');
+    expect(source).toContain("maxFontSizeMultiplier={FIXED_GLYPH_MAX_FONT_SCALE}");
     expect(source).not.toContain("Error indicator");
+  });
+
+  it("uses an AA-contrast dark label on the destructive error badge", () => {
+    // White-on-red fails WCAG AA; textOnChroma (dark) restores contrast and
+    // matches the Toast error variant.
+    expect(source).toContain(
+      "backgroundColor: palette.destructive, color: palette.textOnChroma",
+    );
+    expect(source).not.toContain("color: palette.bubbleTextOnBlue }]}");
   });
 
   it("does not collapse assistant markdown links into one accessible bubble", () => {

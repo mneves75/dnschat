@@ -26,6 +26,10 @@ describe("FirstChatScreen - iOS 26 HIG Compliance", () => {
       expect(sourceCode).toContain("useTypography");
     });
 
+    it("imports useMotionReduction", () => {
+      expect(sourceCode).toContain("useMotionReduction");
+    });
+
     it("imports LiquidGlassSpacing", () => {
       expect(sourceCode).toContain("LiquidGlassSpacing");
     });
@@ -88,6 +92,11 @@ describe("FirstChatScreen - iOS 26 HIG Compliance", () => {
     it("includes loading state", () => {
       expect(sourceCode).toContain("isLoading");
       expect(sourceCode).toContain("setIsLoading");
+    });
+
+    it("honors Reduce Motion when auto-scrolling messages", () => {
+      expect(sourceCode).toContain("shouldReduceMotion");
+      expect(sourceCode).toContain("scrollToEnd({ animated: !shouldReduceMotion })");
     });
 
     it("includes hasTriedChat state", () => {

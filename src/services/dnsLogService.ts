@@ -54,6 +54,15 @@ export class DNSLogService {
   private static idCounter = 0;
   private static cleanupIntervalId: ReturnType<typeof setInterval> | null = null;
   private static persistenceQueue: Promise<void> = Promise.resolve();
+  /**
+   * Per-query set of raw, unredacted sensitive values (prompt text + chat title)
+   * used to scrub those exact strings out of log entry `details`/`error` text.
+   * Lifecycle: populated in `startQuery()`; dropped in `endQuery()` (success or
+   * failure), `deleteLog()`, and `clearLogs()`. `DNSService.queryLLM()` wraps its
+   * body in try/finally so an early throw still finalizes the query and clears
+   * this entry — these values must never outlive the query that produced them.
+   */
+  private static sensitiveValuesByQueryId: Map<string, Set<string>> = new Map();
   private static redactText(value: string): string {
     const hash = bytesToHex(sha256(utf8ToBytes(value)));
     return `sha256:${hash} len:${value.length}`;
@@ -61,6 +70,69 @@ export class DNSLogService {
 
   static redactTextForLog(value: string): string {
     return this.redactText(value);
+  }
+
+  private static redactInlineValue(value: string): string {
+    return `[redacted ${this.redactText(value)}]`;
+  }
+
+  private static escapeRegExp(value: string): string {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+
+  private static redactSensitiveValue(value: string, sensitiveValue: string): string {
+    const escaped = this.escapeRegExp(sensitiveValue);
+    const pattern = new RegExp(`(^|[^A-Za-z0-9-])(${escaped})(?=$|[^A-Za-z0-9-])`, "g");
+    return value.replace(
+      pattern,
+      (_match, prefix: string, matchedValue: string) =>
+        `${prefix}${this.redactInlineValue(matchedValue)}`,
+    );
+  }
+
+  private static redactKnownDnsQueries(value: string): string {
+    // Match a single RFC 1035 label (alphanumeric start/end, <=63 chars) joined
+    // to a known LLM zone. The leading boundary group + trailing negative class
+    // avoid over-redacting malformed fragments (e.g. "-foo.ch.at") and mirror
+    // the boundary handling in redactSensitiveValue() instead of relying on
+    // lookbehind, which is not guaranteed across Hermes versions.
+    return value.replace(
+      /(^|[^A-Za-z0-9-])([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.(?:llm\.pieter\.com|ch\.at))(?![A-Za-z0-9-])/gi,
+      (_match, prefix: string, query: string) =>
+        `${prefix}${this.redactInlineValue(query)}`,
+    );
+  }
+
+  private static redactMultipartTxtFragments(value: string): string {
+    return value.replace(
+      /\b(\d+\/\d+:)([^,\s]+)/g,
+      (_match, prefix: string, fragment: string) =>
+        `${prefix}${this.redactInlineValue(fragment)}`,
+    );
+  }
+
+  private static sanitizeEntryText(queryId: string, value: string): string {
+    let sanitized = value;
+    for (const sensitiveValue of this.sensitiveValuesByQueryId.get(queryId) ?? []) {
+      if (sensitiveValue) {
+        sanitized = this.redactSensitiveValue(sanitized, sensitiveValue);
+      }
+    }
+    sanitized = this.redactKnownDnsQueries(sanitized);
+    sanitized = this.redactMultipartTxtFragments(sanitized);
+    return sanitized;
+  }
+
+  private static sanitizeEntry(queryId: string, entry: DNSLogEntry): DNSLogEntry {
+    return {
+      ...entry,
+      ...(entry.details !== undefined
+        ? { details: this.sanitizeEntryText(queryId, entry.details) }
+        : {}),
+      ...(entry.error !== undefined
+        ? { error: this.sanitizeEntryText(queryId, entry.error) }
+        : {}),
+    };
   }
 
   private static async createCorruptionBackupPayload(
@@ -124,7 +196,7 @@ export class DNSLogService {
       // SCREENSHOT MODE: Load mock DNS logs for deterministic UI captures
       if (isScreenshotMode()) {
         devLog("[DNSLogService] Screenshot mode detected, loading mock DNS logs");
-        this.queryLogs = getMockDNSLogs("en-US"); // Default to English, will be overridden by locale
+        this.queryLogs = getMockDNSLogs(); // Locale resolved from the device (-AppleLanguages) at capture time
         this.notifyListeners();
         return;
       }
@@ -210,6 +282,10 @@ export class DNSLogService {
       entries: [],
     };
     this.activeQueryLogs.set(queryId, queryLog);
+    this.sensitiveValuesByQueryId.set(
+      queryId,
+      new Set([query, ...(rawChatTitle ? [rawChatTitle] : [])]),
+    );
     this.addLog(queryId, {
       id: this.generateUniqueId(`${queryId}-start`),
       timestamp: new Date(),
@@ -226,7 +302,7 @@ export class DNSLogService {
     const queryLog = this.activeQueryLogs.get(queryId);
     if (!queryLog) return;
 
-    queryLog.entries.push(entry);
+    queryLog.entries.push(this.sanitizeEntry(queryId, entry));
     this.notifyListeners();
   }
 
@@ -373,6 +449,7 @@ export class DNSLogService {
 
     await this.enqueuePersistentMutation(() => {
       this.activeQueryLogs.delete(queryId);
+      this.sensitiveValuesByQueryId.delete(queryId);
       this.queryLogs.unshift({ ...queryLog, entries: [...queryLog.entries] });
 
       if (this.queryLogs.length > MAX_LOGS) {
@@ -425,13 +502,19 @@ export class DNSLogService {
 
   static async deleteLog(logId: string) {
     const changed = await this.enqueuePersistentMutation(() => {
+      // Always drop in-memory lifecycle state for this id, regardless of which
+      // store currently holds the log, so sensitive values and active entries
+      // can never outlive a delete.
+      const deletedActive = this.activeQueryLogs.delete(logId);
+      const deletedSensitive = this.sensitiveValuesByQueryId.delete(logId);
+
       const nextLogs = this.queryLogs.filter((log) => log.id !== logId);
-      if (nextLogs.length === this.queryLogs.length) {
-        return this.activeQueryLogs.delete(logId);
+      if (nextLogs.length !== this.queryLogs.length) {
+        this.queryLogs = nextLogs;
+        return true;
       }
 
-      this.queryLogs = nextLogs;
-      return true;
+      return deletedActive || deletedSensitive;
     });
     if (changed) {
       this.notifyListeners();
@@ -460,8 +543,9 @@ export class DNSLogService {
       ]);
 
       const changed = this.queryLogs.length > 0 || this.activeQueryLogs.size > 0;
-        this.queryLogs = [];
-        this.activeQueryLogs.clear();
+      this.queryLogs = [];
+      this.activeQueryLogs.clear();
+      this.sensitiveValuesByQueryId.clear();
       return changed;
     });
 

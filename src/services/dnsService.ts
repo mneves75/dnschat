@@ -792,80 +792,92 @@ export class DNSService {
     // Start logging the query
     const queryId = DNSLogService.startQuery(message, logContext);
 
-    let lastError: Error | null = null;
+    try {
+      let lastError: Error | null = null;
 
-    // Try each server in the fallback chain
-    for (const serverConfig of serversToTry) {
-      const targetServer = serverConfig.host;
+      // Try each server in the fallback chain
+      for (const serverConfig of serversToTry) {
+        const targetServer = serverConfig.host;
 
-      // Prepare DNS query context for this server
-      const queryContext = this.createQueryContext(message, targetServer);
+        // Prepare DNS query context for this server
+        const queryContext = this.createQueryContext(message, targetServer);
 
-      DNSLogService.addLog(queryId, {
-        id: `${queryId}-server-${targetServer}`,
-        timestamp: new Date(),
-        message: `Trying server: ${targetServer}:${queryContext.targetPort}`,
-        method: 'native',
-        status: 'attempt',
-        details: `Query: ${DNSLogService.redactTextForLog(queryContext.queryName)}`,
-      });
+        DNSLogService.addLog(queryId, {
+          id: `${queryId}-server-${targetServer}`,
+          timestamp: new Date(),
+          message: `Trying server: ${targetServer}:${queryContext.targetPort}`,
+          method: 'native',
+          status: 'attempt',
+          details: `Query: ${DNSLogService.redactTextForLog(queryContext.queryName)}`,
+        });
 
-      try {
-        const result = await this.queryWithServer(
-          queryContext,
-          queryId,
-          enableMockDNS,
-          allowExperimentalTransports,
-        );
-
-        this.recordServerSuccess(targetServer, queryContext.targetPort);
         try {
-          await DNSLogService.endQuery(queryId, true, result.response, result.method);
-        } catch (logError) {
-          devLog("[DNSService] Failed to persist successful DNS query log", logError);
-        }
-        return result.response;
-      } catch (error) {
-        const message = getErrorMessage(error);
-        lastError = error instanceof Error ? error : new Error(message);
-        this.vLog(`Server ${targetServer}:${queryContext.targetPort} failed: ${message}`);
-        this.recordServerFailure(targetServer, queryContext.targetPort, message);
-
-        // Log server fallback if there's another server to try
-        const serverIndex = serversToTry.indexOf(serverConfig);
-        const nextServer = serversToTry[serverIndex + 1];
-        if (nextServer) {
-          DNSLogService.logServerFallback(
+          const result = await this.queryWithServer(
+            queryContext,
             queryId,
-            `${targetServer}:${queryContext.targetPort}`,
-            `${nextServer.host}:${nextServer.port}`,
+            enableMockDNS,
+            allowExperimentalTransports,
           );
-        }
 
-        // Continue to next server
-        continue;
+          this.recordServerSuccess(targetServer, queryContext.targetPort);
+          try {
+            await DNSLogService.endQuery(queryId, true, result.response, result.method);
+          } catch (logError) {
+            devLog("[DNSService] Failed to persist successful DNS query log", logError);
+          }
+          return result.response;
+        } catch (error) {
+          const message = getErrorMessage(error);
+          lastError = error instanceof Error ? error : new Error(message);
+          this.vLog(`Server ${targetServer}:${queryContext.targetPort} failed: ${message}`);
+          this.recordServerFailure(targetServer, queryContext.targetPort, message);
+
+          // Log server fallback if there's another server to try
+          const serverIndex = serversToTry.indexOf(serverConfig);
+          const nextServer = serversToTry[serverIndex + 1];
+          if (nextServer) {
+            DNSLogService.logServerFallback(
+              queryId,
+              `${targetServer}:${queryContext.targetPort}`,
+              `${nextServer.host}:${nextServer.port}`,
+            );
+          }
+
+          // Continue to next server
+          continue;
+        }
+      }
+
+      // All servers failed
+      try {
+        await DNSLogService.endQuery(queryId, false, undefined, undefined);
+      } catch (logError) {
+        devLog("[DNSService] Failed to persist failed DNS query log", logError);
+      }
+
+      // Provide comprehensive error guidance
+      const serverList = serversToTry.map(s => `${s.host}:${s.port}`).join(', ');
+      const troubleshootingSteps = [
+        '1. Check network connectivity and try a different network (WiFi <-> Cellular)',
+        `2. All LLM servers are unreachable: ${serverList}`,
+        '3. Check DNS logs in app Settings for detailed failure information',
+        '4. Network may be blocking DNS ports - contact network administrator',
+      ].join('\n');
+
+      throw new Error(
+        `DNS query failed after trying all servers (${serverList}).\n\nTroubleshooting steps:\n${troubleshootingSteps}`,
+      );
+    } finally {
+      // Guarantee query-lifecycle cleanup. endQuery() is a no-op once the query
+      // has already been finalized (success or all-servers-failed); this only
+      // fires when an unexpected early throw (e.g. createQueryContext) bypassed
+      // it, so abandoned queries never retain in-memory sensitive values.
+      try {
+        await DNSLogService.endQuery(queryId, false);
+      } catch (logError) {
+        devLog("[DNSService] Failed to finalize abandoned DNS query log", logError);
       }
     }
-
-    // All servers failed
-    try {
-      await DNSLogService.endQuery(queryId, false, undefined, undefined);
-    } catch (logError) {
-      devLog("[DNSService] Failed to persist failed DNS query log", logError);
-    }
-
-    // Provide comprehensive error guidance
-    const serverList = serversToTry.map(s => `${s.host}:${s.port}`).join(', ');
-    const troubleshootingSteps = [
-      '1. Check network connectivity and try a different network (WiFi <-> Cellular)',
-      `2. All LLM servers are unreachable: ${serverList}`,
-      '3. Check DNS logs in app Settings for detailed failure information',
-      '4. Network may be blocking DNS ports - contact network administrator',
-    ].join('\n');
-
-    throw new Error(
-      `DNS query failed after trying all servers (${serverList}).\n\nTroubleshooting steps:\n${troubleshootingSteps}`,
-    );
   }
 
   /**

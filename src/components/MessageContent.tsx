@@ -28,6 +28,7 @@ const handleMarkdownLinkPress = (url: string): boolean => {
 const markdownRules: RenderRules = {
   image: () => null,
 };
+const FIXED_GLYPH_MAX_FONT_SCALE = 1.2;
 
 /**
  * MessageContent Component
@@ -101,10 +102,11 @@ export function MessageContent({
 
         {hasError && (
           <Text
-            style={[styles.errorIndicator, { backgroundColor: palette.destructive, color: palette.bubbleTextOnBlue }]}
+            style={[styles.errorIndicator, { backgroundColor: palette.destructive, color: palette.textOnChroma }]}
             accessible={true}
             accessibilityLabel={t("screen.chat.accessibility.errorIndicator")}
             selectable={false}
+            maxFontSizeMultiplier={FIXED_GLYPH_MAX_FONT_SCALE}
           >
             !
           </Text>

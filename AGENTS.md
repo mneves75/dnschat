@@ -113,6 +113,16 @@ When asked for a broad review, "latest/best practices", "2026+", or a full sourc
 - Keep App Store Connect internal IDs, build IDs, tester group names, signing identities, profile names, team IDs, device identifiers, and local paths out of public docs and commit messages. Record exact identifiers only in private release notes outside git.
 - Do not describe a build as attached to an App Store version unless `asc` or App Store Connect evidence specifically proves that relationship. A processed `VALID` TestFlight build and an updated App Store version are separate claims.
 
+## Apple Platforms (Swift / iOS 26)
+
+Before writing or reviewing Swift / iOS 26 / iPadOS 26 code (native DNS module under `modules/dns-native/ios/`, Liquid Glass parity, or any platform-version-sensitive API), read Xcode's bundled iOS 26 docs instead of relying on training memory — these APIs post-date the model knowledge cutoff:
+
+```
+/Applications/Xcode.app/Contents/PlugIns/IDEIntelligenceChat.framework/Versions/A/Resources/AdditionalDocumentation/
+```
+
+Covers Liquid Glass (`SwiftUI-`/`UIKit-`/`AppKit-`/`WidgetKit-Implementing-Liquid-Glass-Design.md`), `Swift-Concurrency-Updates.md`, `FoundationModels-Using-on-device-LLM-in-your-app.md`, `SwiftData-Class-Inheritance.md`, `StoreKit-Updates.md`, and others. Read the specific file; do not guess at iOS 26 API shapes.
+
 ## Docs You Will Touch Often
 
 Architecture & spec:
