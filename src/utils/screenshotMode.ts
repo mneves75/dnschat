@@ -5,49 +5,53 @@
  * Screenshot mode is enabled when the app is launched with -SCREENSHOT_MODE 1 argument.
  */
 
-import { NativeModules, Platform } from "react-native";
-import type { Message } from "../types/chat";
+import { Platform, Settings } from "react-native";
+import * as Localization from "expo-localization";
 import type { DNSQueryLog } from "../services/dnsLogService";
-
-// Get reference to ScreenshotModeModule for iOS
-const ScreenshotModeModule = NativeModules["ScreenshotModeModule"];
 
 // Check if running in screenshot mode
 export function isScreenshotMode(): boolean {
   if (Platform.OS === "ios") {
-    // Method 1: Check custom ScreenshotModeModule (reads UserDefaults and ProcessInfo)
+    // The `-SCREENSHOT_MODE 1` launch argument is persisted to NSUserDefaults
+    // (argument domain) and surfaced synchronously by RN's Settings module.
+    // NSUserDefaults coerces the argument to 1, "1", or true.
     try {
-      if (ScreenshotModeModule?.isScreenshotMode !== undefined) {
-        return ScreenshotModeModule.isScreenshotMode === true;
+      const raw: unknown = Settings?.get?.("SCREENSHOT_MODE");
+      if (raw === 1 || raw === "1" || raw === true) {
+        return true;
       }
-    } catch (error) {
-      // Module not available, try fallback
-    }
-
-    // Method 2: Fallback to deprecated Settings module
-    try {
-      const Settings = NativeModules["Settings"];
-      if (Settings && Settings["get"]) {
-        const screenshotMode = Settings["get"]("SCREENSHOT_MODE");
-        return screenshotMode === "1" || screenshotMode === true;
-      }
-    } catch (error) {
-      // Settings module not available
+    } catch {
+      // Settings unavailable (e.g. unit tests) — fall through.
     }
   }
 
-  // Fallback: Check for __DEV__ and global flag
+  // Dev-only escape hatch for Metro / Jest where neither native signal exists.
   if (typeof __DEV__ !== "undefined" && __DEV__) {
     if (typeof globalThis === "undefined") return false;
     const record = globalThis as Record<string, unknown>;
-    return record["__SCREENSHOT_MODE__"] === true;
+    if (record["__SCREENSHOT_MODE__"] === true) {
+      return true;
+    }
   }
 
   return false;
 }
 
+// Resolve the locale used for screenshot mock content. Defaults to the device
+// locale (driven by -AppleLanguages during capture) so pt-BR screenshots render
+// Portuguese conversations and logs instead of English ones.
+function resolveScreenshotLocale(explicit?: string | null): string {
+  if (explicit) return explicit;
+  try {
+    return Localization.getLocales()[0]?.languageTag || "en-US";
+  } catch {
+    return "en-US";
+  }
+}
+
 // Mock conversations for screenshots
-export function getMockConversations(locale: string = "en-US") {
+export function getMockConversations(localeOverride?: string | null) {
+  const locale = resolveScreenshotLocale(localeOverride);
   const isPortuguese = locale.startsWith("pt");
 
   const now = Date.now();
@@ -177,7 +181,8 @@ export function getMockConversations(locale: string = "en-US") {
 }
 
 // Mock DNS logs for screenshots
-export function getMockDNSLogs(locale: string = "en-US"): DNSQueryLog[] {
+export function getMockDNSLogs(localeOverride?: string | null): DNSQueryLog[] {
+  const locale = resolveScreenshotLocale(localeOverride);
   const isPortuguese = locale.startsWith("pt");
 
   const now = Date.now();

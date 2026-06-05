@@ -47,7 +47,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
       // SCREENSHOT MODE: Load mock conversations for deterministic UI captures
       if (isScreenshotMode()) {
         devLog("[ChatContext] Screenshot mode detected, loading mock conversations");
-        const mockConversations = getMockConversations(settings.preferredLocale || "en-US");
+        const mockConversations = getMockConversations(settings.preferredLocale);
         setChats(mockConversations as Chat[]);
         const preferredChat = options?.preserveChatId
           ? (mockConversations.find((chat) => chat.id === options.preserveChatId) ?? null)
