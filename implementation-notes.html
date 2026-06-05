@@ -42,6 +42,48 @@
   <p><strong>Stop condition:</strong> no known critical/high issues remain; medium findings are either fixed or explicitly justified; strongest local checks have fresh outcomes; browser/runtime evidence is captured for user-visible frontend changes when feasible.</p>
 
   <hr />
+  <h2>Release Pass &mdash; 2026-06-05 (4.0.26 build 60, AXe E2E, TestFlight staging)</h2>
+
+  <p><strong>Goal:</strong> package the premium/react-doctor hardening line as a real mobile staging build: bump version, update release docs, run full E2E, validate the native build surfaces, attempt iMarcus install, and deploy to TestFlight if signing credentials permit.</p>
+
+  <h3>Release decisions</h3>
+  <ul>
+    <li><strong>Versioning:</strong> <code>package.json</code> was bumped from <code>4.0.25</code> to <code>4.0.26</code>, then <code>bun run sync-versions --bump-build</code> advanced native build metadata from <code>59</code> to <code>60</code>.</li>
+    <li><strong>AXe simulator profile:</strong> AXe <code>1.7.1</code> could not describe the visible app UI on the plain iPhone 17 simulator and returned <code>No translation object returned for simulator</code>. The same built app was AXe-readable on iPhone 17 Pro Max, so the release harness default now uses iPhone 17 Pro Max and has a regression test for that choice.</li>
+    <li><strong>TestFlight scope:</strong> this pass uploaded and validated a TestFlight staging build. It did not create a new App Store version record for <code>4.0.26</code>, so App Store submission validation correctly reports that no such version exists.</li>
+  </ul>
+
+  <h3>Fixes applied</h3>
+  <ul>
+    <li><strong>AXe harness reliability:</strong> allowed timed-out <code>simctl bootstatus</code> calls to be treated as allowed failures when the caller already marks them recoverable, and increased the bootstatus timeout to avoid aborting valid slow simulator boots.</li>
+    <li><strong>AXe device selection:</strong> changed the release E2E default from iPhone 17 to iPhone 17 Pro Max and added a Jest regression so future edits do not silently return to the AXe-unreadable profile.</li>
+    <li><strong>Release docs:</strong> changelog, README, docs index, install guide, security policy, Android release notes, App Store Connect notes, TestFlight guide, CLAUDE.md, and this file now point to <code>4.0.26</code> build <code>60</code> where that is the current evidence.</li>
+  </ul>
+
+  <h3>Validation evidence</h3>
+  <ul>
+    <li><code>npx react-doctor@latest --project chat-dns</code>: passed, <code>100 / 100</code>.</li>
+    <li><code>bun run e2e:axe:doctor</code>: passed; AXe <code>1.7.1</code> detected simulator support.</li>
+    <li><code>bun run e2e:axe:release</code>: passed 10 feature groups for <code>4.0.26</code> build <code>60</code>; success screenshot: <code>artifacts/axe-e2e/2026-06-05T14-48-37-808Z-axe-e2e-success.png</code>.</li>
+    <li><code>bun run verify:all</code>: passed after one public-redaction fix in this file. Notable gates: public redaction, <code>bun audit</code>, <code>gitleaks</code> (<code>372</code> commits, no leaks), Expo Doctor <code>20/20</code>, SDK alignment, typed routes, typecheck, DNS resolver sync, iOS pods sync, React Compiler <code>102/102</code>, Android critical checks, lint, and Jest (<code>114</code> suites passed, <code>1</code> skipped; <code>919</code> tests passed, <code>13</code> skipped).</li>
+    <li><code>cd modules/dns-native &amp;&amp; bun run test</code>: passed, <code>7</code> suites passed, <code>1</code> skipped; <code>57</code> tests passed, <code>13</code> skipped.</li>
+    <li><code>xcodebuild</code> Debug simulator build: passed on iPhone 17 Pro Max. Third-party pod/compiler warnings only.</li>
+    <li><code>xcodebuild</code> unsigned generic Release build and unsigned generic Release archive with <code>CODE_SIGNING_ALLOWED=NO</code>: both passed. Third-party pod/compiler warnings only.</li>
+    <li><code>asc doctor</code>: passed local ASC auth health checks.</li>
+    <li>Signed App Store archive with Apple Distribution signing: passed using a locally installed App Store profile for <code>org.mvneves.dnschat</code>.</li>
+    <li>Signed IPA export: passed; produced a TestFlight-ready IPA from the signed archive.</li>
+    <li><code>asc publish testflight --wait</code>: passed; uploaded <code>4.0.26</code> build <code>60</code>, App Store Connect processing state <code>VALID</code>. The internal TestFlight group already receives all builds.</li>
+    <li><code>asc validate testflight</code>: passed with <code>0</code> errors, <code>0</code> warnings, and <code>0</code> blocking findings after updating <code>en-US</code> What to Test notes for the build.</li>
+  </ul>
+
+  <h3>Blockers and residual risk</h3>
+  <ul>
+    <li><strong>Direct iMarcus install:</strong> blocked by local Xcode Development provisioning state. Exact Xcode blocker: <code>No Accounts: Add a new account in Accounts settings.</code> and <code>No profiles for 'org.mvneves.dnschat' were found: Xcode couldn't find any iOS App Development provisioning profiles matching 'org.mvneves.dnschat'.</code> TestFlight is the verified staging path for build <code>60</code>.</li>
+    <li><strong>App Store version validation:</strong> blocked because App Store Connect has no App Store version record for <code>4.0.26</code>. Exact command result: <code>Error: validate: app store version not found for version "4.0.26" and platform "IOS"</code>. This is not a TestFlight processing blocker.</li>
+    <li><strong>altool validation:</strong> blocked because <code>asc xcode validate</code> invokes <code>altool</code>, which requires separate JWT/app-password inputs. Exact blocker: <code>Either JWT (--api-issuer and --api-key) or username and app password (--username, --app-password and --provider-public-id) authentication is required.</code> The IPA was still accepted and processed by <code>asc publish testflight</code>.</li>
+  </ul>
+
+  <hr />
   <h2>Review Pass &mdash; 2026-06-05 (premium polish, production trust gates, React Doctor 100/100)</h2>
 
   <p><strong>Baseline:</strong> scope locked to <code>&lt;REPO_ROOT&gt;</code> on branch <code>react-compiler-100</code>. Package manager: Bun. Stack observed from <code>package.json</code>: Expo SDK <code>56.0.8</code>, React Native <code>0.85.3</code>, React <code>19.2.3</code>, TypeScript <code>~6.0.3</code>, Hermes/New Architecture, Expo Router typed routes, React Compiler enabled. Initial git status was clean before this pass. Repo guidance loaded from <code>AGENTS.md</code>, <code>CLAUDE.md</code>, <code>docs/technical/SPECIFICATION.md</code>, <code>SECURITY.md</code>, and this notes file.</p>
@@ -90,7 +132,7 @@
     <li>Codex design/UX subagent completed a static product review and scored the baseline <code>85 / 100</code> Premium, with medium findings around raw <code>TouchableOpacity</code>, theme option hints, and spinner-only chat loading. Those findings were fixed.</li>
     <li>Codex security subagent found no critical/high issues. Medium findings around security gate coverage, assistant external-link trust, native logging policy, and source-map handling were fixed or documented.</li>
     <li>Architecture review focus: the highest-leverage seam was assistant-rendered DNS TXT content as an untrusted external-response boundary; the shipped link-confirmation gate is the narrow implementation. Future deepening candidates are a centralized assistant-content trust policy and artifact inspection for release source maps.</li>
-    <li>Claude Code design review was attempted because <code>claude</code> is installed at <code>/Users/mneves/.local/bin/claude</code>. Blocker: <strong>Claude Code design-review command produced no output and exited with code 143 after the tool timeout.</strong></li>
+    <li>Claude Code design review was attempted because <code>claude</code> is installed on this machine. Blocker: <strong>Claude Code design-review command produced no output and exited with code 143 after the tool timeout.</strong></li>
     <li>XcodeBuildMCP was checked first; <code>session_show_defaults</code> returned no configured project/scheme/simulator defaults, so validation fell back to documented <code>xcodebuild</code> commands.</li>
   </ul>
 

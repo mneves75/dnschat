@@ -27,4 +27,13 @@ describe("AXe E2E screenshot artifact policy", () => {
       expect(packageJson.scripts?.[name]).not.toContain("bun scripts/e2e-axe.js");
     }
   });
+
+  it("uses an AXe-readable iPhone simulator profile by default", () => {
+    expect(source).toContain(
+      'deviceType: "com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro-Max"',
+    );
+    expect(source).not.toContain(
+      'deviceType: "com.apple.CoreSimulator.SimDeviceType.iPhone-17",',
+    );
+  });
 });

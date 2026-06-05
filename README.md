@@ -7,7 +7,7 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 - JavaScript fallback transports (UDP/TCP) for constrained networks
 - An in-app Logs screen to inspect attempts, failures, and fallbacks
 
-[![Version](https://img.shields.io/badge/version-4.0.23-blue.svg)](.)
+[![Version](https://img.shields.io/badge/version-4.0.26-blue.svg)](.)
 [![React Native](https://img.shields.io/badge/React%20Native-0.85.3-blue.svg)](https://reactnative.dev/)
 [![Expo](https://img.shields.io/badge/Expo-56.0.8-black.svg)](https://expo.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0.x-blue.svg)](https://www.typescriptlang.org/)
@@ -31,7 +31,7 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 
 ## Tech stack
 
-- App version: `4.0.23` (build `57`)
+- App version: `4.0.26` (build `60`)
 - Expo workflow: Expo Router + EAS-compatible native config
 - Expo SDK: `56.0.8`
 - React: `19.2.3`
@@ -206,56 +206,52 @@ Release:
 
 ## Current verification baseline
 
-Last architecture/dependency verification: `2026-06-03`.
-Last full source/security sweep: `2026-06-03`.
-Last AXe simulator E2E feature pass: `2026-05-17` for version `4.0.13` build
-`43`.
-Last uploaded/processed TestFlight build: version `4.0.23` build `57`
-(`VALID` on `2026-06-04`, distributed through the internal all-builds tester
-track). Build `57` is the current App Store submission build and keeps the
-4.0.21 production-readiness fixes plus the 4.0.22 release-device evidence in
-the shipped code line.
+Last architecture/dependency verification: `2026-06-05`.
+Last full source/security sweep: `2026-06-05`.
+Last AXe simulator E2E feature pass: `2026-06-05` for version `4.0.26` build
+`60`; 10 feature groups passed.
+Last uploaded/processed TestFlight build: version `4.0.26` build `60`
+(`VALID` on `2026-06-05`, distributed through the internal all-builds tester
+track). App Store Connect has no App Store version record for `4.0.26` yet, so
+App Store submission validation is not applicable for this TestFlight-only
+staging build.
 
-- `npx react-doctor@latest --verbose .` reports `93 / 100` for `chat-dns` on
-  `2026-06-03`. Confirmed fixes were applied for the user font-size hook and
-  an animated layout border; remaining diagnostics are advisory React Compiler
-  optimization findings around Reanimated shared values, `try/finally`, refs,
-  and existing manual memoization.
-- `bun run typecheck` passes through `bun run verify:all` on `2026-06-04`.
+- `npx react-doctor@latest --project chat-dns` reports `100 / 100` on
+  `2026-06-05`.
+- `bun run verify:all` passes on `2026-06-05`.
 - `bun run verify:expo-doctor` reports `20/20 checks passed, no issues` on
   `2026-06-03` after the Expo SDK patch alignment (expo `56.0.8`, expo-router
   `56.2.8`, expo-linking `56.0.13`, expo-build-properties `56.0.16`, @expo/ui
   `56.0.15`).
-- Native DNS module tests pass on `2026-06-04` (`7` suites passed, `1` skipped;
+- Native DNS module tests pass on `2026-06-05` (`7` suites passed, `1` skipped;
   `57` tests passed, `13` skipped).
 - AXe E2E baseline: 10 feature groups passed in one owned release-simulator
-  run on `2026-05-17`.
-- Jest baseline on `2026-06-04`: `110` suites passed, `1` skipped; `893` tests
+  run on `2026-06-05`.
+- Jest baseline on `2026-06-05`: `114` suites passed, `1` skipped; `919` tests
   passed, `13` skipped. Targeted regression suites cover reduce motion,
   haptics, dynamic type, locale mapping, bottom-sheet accessibility, DNS
   fallback, sanitizer failure, and DNS harness defaults.
-- `gitleaks detect` on `2026-06-04` reports `no leaks found` across `366`
+- `gitleaks detect` on `2026-06-05` reports `no leaks found` across `372`
   scanned commits.
-- `bun audit` on `2026-06-04` reports `No vulnerabilities found`.
+- `bun audit` on `2026-06-05` reports `No vulnerabilities found`.
 - `xcodebuild clean build` passes for Debug on an iOS 26.5 simulator on
-  `2026-06-03`.
+  `2026-06-05`.
 - `xcodebuild clean build` and `xcodebuild clean archive` pass for generic iOS
   Release when code signing is disabled (`CODE_SIGNING_ALLOWED=NO`) on
-  `2026-06-03`.
+  `2026-06-05`.
 - Physical-device Release build, install, installed metadata check, and launch
-  passed on `2026-06-04` for version `4.0.22` build `56`.
-- Last signed TestFlight build: `4.0.23` build `57`, archived with Apple
+  passed on `2026-06-04` for version `4.0.22` build `56`. Direct physical-device
+  install for `4.0.26` build `60` is blocked by local Xcode Development
+  provisioning state (`No Accounts` and no matching development profile);
+  TestFlight is the verified staging path for this build.
+- Last signed TestFlight build: `4.0.26` build `60`, archived with Apple
   Distribution signing, exported, uploaded, and processed to `VALID` in App Store
-  Connect on `2026-06-04`; `asc validate testflight --strict` reports `0`
-  errors and `0` warnings. App Store screenshots were renewed for iPhone and
-  iPad in `en-US` and `pt-BR`, pre-submit App Store validation reported `0`
-  errors, `0` warnings, and `0` blocking findings, and the App Store version is
-  now `WAITING_FOR_REVIEW`. Internal App Store Connect IDs and tester group
-  names are intentionally omitted from public docs.
-- Historical `asc validate testflight` evidence for builds `54` and `56` is
-  superseded by build `57` validation. After submission, `asc validate` reports
-  the App Store version is non-editable because it is already
-  `WAITING_FOR_REVIEW`; pre-submit validation is the relevant readiness gate.
+  Connect on `2026-06-05`; `asc validate testflight` reports `0` errors and
+  `0` warnings. Internal App Store Connect IDs and tester group names are
+  intentionally omitted from public docs.
+- Historical `asc validate testflight` evidence is superseded by build `60`
+  validation. App Store submission validation for `4.0.26` is not applicable
+  until a matching App Store version record exists.
 - `xcodebuild test` is not a native gate yet because the `DNSChat` scheme has no
   XCTest bundles.
 - DNS transport is observable. Public copy and tests intentionally avoid
