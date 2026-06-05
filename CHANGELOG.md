@@ -56,6 +56,16 @@ submission.
   `AGENTS.md` pointing at Xcode's bundled iOS 26 documentation for native
   module / Liquid Glass work, since those APIs post-date the model cutoff.
 
+### Verified
+
+- `bun run typecheck`, `bun run lint`, `bun run test` (full Jest: 914 passed,
+  13 skipped), `cd modules/dns-native && bun run test` (57 passed, 13 skipped),
+  `bun run verify:react-compiler` (83/83 components), `gitleaks detect`
+  (no leaks), and `bun run verify:public-redaction` all passed.
+- A compiled Debug build of the working tree (Apple Development signing) was
+  installed and launched successfully on a physical iOS device via `devicectl`,
+  validating the startup Reduce Motion path on-device.
+
 ## [4.0.23] - 2026-06-04
 
 Build `56` -> `57`. TestFlight and App Store submission refresh.
