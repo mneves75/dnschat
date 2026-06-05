@@ -27,6 +27,8 @@ export interface IMessagePalette {
   assistantBubble: string;
   bubbleTextOnBlue: string;
   bubbleTextOnGray: string;
+  /** Dark label for use on saturated chroma fills (warning/success/error/info chips). */
+  textOnChroma: string;
 }
 
 export const IMESSAGE_LIGHT: IMessagePalette = {
@@ -53,6 +55,7 @@ export const IMESSAGE_LIGHT: IMessagePalette = {
   assistantBubble: "#E5E5EA", // iOS systemGray5
   bubbleTextOnBlue: "#FFFFFF", // White text on blue/red bubbles
   bubbleTextOnGray: "#000000", // Dark text on light gray bubbles
+  textOnChroma: "#000000", // Dark label maximizes contrast on bright chroma fills
 };
 
 export const IMESSAGE_DARK: IMessagePalette = {
@@ -79,6 +82,7 @@ export const IMESSAGE_DARK: IMessagePalette = {
   assistantBubble: "#2C2C2E", // iOS systemGray6 dark mode
   bubbleTextOnBlue: "#FFFFFF", // White text on blue/red bubbles
   bubbleTextOnGray: "#FFFFFF", // White text on dark gray bubbles in dark mode
+  textOnChroma: "#000000", // Dark label maximizes contrast on bright chroma fills
 };
 
 export interface GetPaletteOptions {

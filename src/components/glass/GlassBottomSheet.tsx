@@ -14,6 +14,7 @@ import {
   Modal,
   Platform,
   StyleSheet,
+  ScrollView,
   Text,
   TouchableOpacity,
   TouchableWithoutFeedback,
@@ -27,6 +28,10 @@ import { useTranslation } from "../../i18n";
 import { useMotionReduction } from "../../context/AccessibilityContext";
 import { LiquidGlassWrapper } from "../LiquidGlassWrapper";
 import { useImessagePalette } from "../../ui/theme/imessagePalette";
+
+// Cap scaling for the fixed-size close glyph so Dynamic Type cannot distort the
+// 32x32 control (mirrors Toast.tsx / MessageContent.tsx).
+const FIXED_GLYPH_MAX_FONT_SCALE = 1.2;
 
 interface GlassBottomSheetProps {
   visible: boolean;
@@ -316,6 +321,7 @@ export const GlassBottomSheet: React.FC<GlassBottomSheetProps> = ({
                           styles.closeButtonText,
                           { color: colors.actionDefault },
                         ]}
+                        maxFontSizeMultiplier={FIXED_GLYPH_MAX_FONT_SCALE}
                       >
                         X
                       </Text>
@@ -326,9 +332,15 @@ export const GlassBottomSheet: React.FC<GlassBottomSheetProps> = ({
             </View>
           )}
 
-          <View testID={testID} style={styles.content}>
+          <ScrollView
+            testID={testID}
+            style={styles.content}
+            contentContainerStyle={styles.contentContainer}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
             {children}
-          </View>
+          </ScrollView>
           <View style={{ height: insets.bottom }} />
         </LiquidGlassWrapper>
       </Animated.View>
@@ -510,7 +522,10 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+  },
+  contentContainer: {
     paddingHorizontal: 20,
+    paddingBottom: 20,
   },
   actionsContainer: {
     paddingVertical: 8,

@@ -22,6 +22,7 @@ import {
   getMinimumTouchTarget,
 } from "../../../ui/theme/liquidGlassSpacing";
 import { useTranslation } from "../../../i18n";
+import { useMotionReduction } from "../../../context/AccessibilityContext";
 import { SendIcon } from "../../icons/SendIcon";
 import { MESSAGE_CONSTANTS } from "../../../constants/appConstants";
 import { devWarn } from "../../../utils/devLog";
@@ -42,6 +43,7 @@ export function FirstChatScreen() {
   const isMountedRef = useRef(true);
   const messagesScrollRef = useRef<ScrollView>(null);
   const keyboardHeight = useKeyboardState((state) => state.height);
+  const { shouldReduceMotion } = useMotionReduction();
   const minimumTouchTarget = getMinimumTouchTarget();
 
   const [messages, setMessages] = useState<Message[]>([
@@ -79,13 +81,13 @@ export function FirstChatScreen() {
     if (messages.length === 0) return;
 
     const frameId = requestAnimationFrame(() => {
-      messagesScrollRef.current?.scrollToEnd({ animated: true });
+      messagesScrollRef.current?.scrollToEnd({ animated: !shouldReduceMotion });
     });
 
     return () => {
       cancelAnimationFrame(frameId);
     };
-  }, [keyboardOverlayInset, messages.length, lastMessageKey]);
+  }, [keyboardOverlayInset, messages.length, lastMessageKey, shouldReduceMotion]);
 
   const handleNavigationLayout = (event: LayoutChangeEvent) => {
     const nextHeight = event.nativeEvent.layout.height;

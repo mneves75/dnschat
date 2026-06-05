@@ -11,12 +11,14 @@ import { useImessagePalette } from "../../ui/theme/imessagePalette";
 import { useTypography } from "../../ui/hooks/useTypography";
 import { LiquidGlassSpacing } from "../../ui/theme/liquidGlassSpacing";
 import { useTranslation } from "../../i18n";
+import { useMotionReduction } from "../../context/AccessibilityContext";
 
 export function OnboardingProgress() {
   const palette = useImessagePalette();
   const typography = useTypography();
   const { currentStep, steps } = useOnboarding();
   const { t } = useTranslation();
+  const { shouldReduceMotion } = useMotionReduction();
   const { width: screenWidth } = useWindowDimensions();
 
   const progress = (currentStep + 1) / steps.length;
@@ -25,12 +27,17 @@ export function OnboardingProgress() {
 
   // Effect: animate progress bar when onboarding step changes.
   React.useEffect(() => {
+    if (shouldReduceMotion) {
+      animatedWidth.setValue(progress);
+      return;
+    }
+
     Animated.timing(animatedWidth, {
       toValue: progress,
       duration: 300,
       useNativeDriver: false,
     }).start();
-  }, [progress]);
+  }, [animatedWidth, progress, shouldReduceMotion]);
 
   return (
     <View style={styles.container}>

@@ -24,6 +24,13 @@ describe("glass modal accessibility policy", () => {
     expect(bottomSheetSource).toContain("}, [visible]);");
   });
 
+  it("keeps constrained sheet content reachable by scrolling", () => {
+    expect(bottomSheetSource).toContain("ScrollView");
+    expect(bottomSheetSource).toContain('keyboardShouldPersistTaps="handled"');
+    expect(bottomSheetSource).toContain("contentContainerStyle={styles.contentContainer}");
+    expect(bottomSheetSource).toContain("paddingBottom: 20");
+  });
+
   it("keeps bottom-sheet control callbacks stable across parent rerenders", () => {
     expect(bottomSheetSource).toContain("const show = React.useCallback");
     expect(bottomSheetSource).toContain("const hide = React.useCallback");
@@ -43,6 +50,11 @@ describe("glass modal accessibility policy", () => {
     expect(bottomSheetSource).toContain('accessibilityRole="button"');
     expect(bottomSheetSource).toContain("accessibilityLabel={action.accessibilityLabel ?? action.title}");
     expect(bottomSheetSource).toContain("accessibilityState={{ disabled: action.disabled }}");
+  });
+
+  it("caps Dynamic Type scaling on the fixed-size close glyph", () => {
+    expect(bottomSheetSource).toContain("FIXED_GLYPH_MAX_FONT_SCALE = 1.2");
+    expect(bottomSheetSource).toContain("maxFontSizeMultiplier={FIXED_GLYPH_MAX_FONT_SCALE}");
   });
 
   it("uses shared palette tokens for sheet text and action colors", () => {

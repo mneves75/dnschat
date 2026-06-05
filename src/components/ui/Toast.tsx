@@ -23,6 +23,7 @@ import { useMotionReduction } from "../../context/AccessibilityContext";
 
 type ToastVariant = "success" | "warning" | "error" | "info";
 type ToastPosition = "top" | "bottom";
+const FIXED_GLYPH_MAX_FONT_SCALE = 1.2;
 
 export interface ToastProps {
   /** Toast message (required) */
@@ -37,7 +38,11 @@ export interface ToastProps {
   /** Position on screen */
   position?: ToastPosition;
 
-  /** Duration before auto-dismiss (ms), 0 to disable */
+  /**
+   * Duration before auto-dismiss (ms), 0 to disable. Ignored for the `error`
+   * variant, which intentionally persists until the user dismisses it so a
+   * critical failure is never auto-hidden before it can be read.
+   */
   duration?: number;
 
   /** Show toast */
@@ -130,32 +135,39 @@ export function Toast({
         return {
           backgroundColor: palette.success,
           icon: "OK",
-          textColor: palette.bubbleTextOnBlue,
+          textColor: palette.textOnChroma,
         };
       case "warning":
         return {
           backgroundColor: palette.warning,
           icon: "!",
-          textColor: palette.bubbleTextOnBlue,
+          textColor: palette.textOnChroma,
         };
       case "error":
         return {
           backgroundColor: palette.destructive,
           icon: "X",
-          textColor: palette.bubbleTextOnBlue,
+          textColor: palette.textOnChroma,
         };
       case "info":
       default:
         return {
           backgroundColor: palette.accentTint,
           icon: "i",
-          textColor: palette.bubbleTextOnBlue,
+          textColor: palette.textOnChroma,
         };
     }
   };
 
   const variantStyle = getVariantStyles();
   const liveRegion = variant === "error" ? "assertive" : "polite";
+  // Error toasts persist (no auto-dismiss) so a critical failure stays on screen
+  // until acknowledged; all other variants honour `duration`.
+  const autoDismissDuration = variant === "error" ? 0 : duration;
+  const titleTruncationProps =
+    variant === "error" ? {} : ({ numberOfLines: 1 } as const);
+  const messageTruncationProps =
+    variant === "error" ? {} : ({ numberOfLines: 2 } as const);
 
   // Effect: animate toast visibility and manage the auto-dismiss timer.
   useEffect(() => {
@@ -187,10 +199,10 @@ export function Toast({
       }
 
       // Auto-dismiss
-      if (duration > 0) {
+      if (autoDismissDuration > 0) {
         const timer = setTimeout(() => {
           handleDismiss();
-        }, duration);
+        }, autoDismissDuration);
 
         return () => clearTimeout(timer);
       }
@@ -219,7 +231,7 @@ export function Toast({
   }, [
     visible,
     variant,
-    duration,
+    autoDismissDuration,
     finishHide,
     handleDismiss,
     hiddenTranslateY,
@@ -268,7 +280,12 @@ export function Toast({
           accessibilityElementsHidden
           importantForAccessibility="no-hide-descendants"
         >
-          <Text style={styles.icon}>{variantStyle.icon}</Text>
+          <Text
+            style={styles.icon}
+            maxFontSizeMultiplier={FIXED_GLYPH_MAX_FONT_SCALE}
+          >
+            {variantStyle.icon}
+          </Text>
         </View>
 
         {/* Content */}
@@ -286,7 +303,7 @@ export function Toast({
                 typography.headline,
                 { color: variantStyle.textColor },
               ]}
-              numberOfLines={1}
+              {...titleTruncationProps}
             >
               {title}
             </Text>
@@ -297,7 +314,7 @@ export function Toast({
               typography.body,
               { color: variantStyle.textColor },
             ]}
-            numberOfLines={2}
+            {...messageTruncationProps}
           >
             {message}
           </Text>
@@ -334,7 +351,10 @@ export function Toast({
           accessibilityLabel={t("common.close")}
           hitSlop={8}
         >
-          <Text style={[styles.dismissText, { color: variantStyle.textColor }]}>
+          <Text
+            style={[styles.dismissText, { color: variantStyle.textColor }]}
+            maxFontSizeMultiplier={FIXED_GLYPH_MAX_FONT_SCALE}
+          >
             ×
           </Text>
         </Pressable>

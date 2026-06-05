@@ -143,6 +143,55 @@ describe("DNSLogService concurrent query isolation", () => {
     expect(serialized).not.toContain("different-secret");
   });
 
+  it("redacts sensitive failure details at the logging boundary", async () => {
+    const queryId = DNSLogService.startQuery("secret prompt", {
+      chatTitle: "private chat",
+    });
+
+    DNSLogService.logMethodAttempt(
+      queryId,
+      "udp",
+      "Query secret-prompt.llm.pieter.com for private chat",
+    );
+    DNSLogService.logMethodFailure(
+      queryId,
+      "udp",
+      "UDP failed for secret prompt with TXT 1/2:secret-fragment",
+      7,
+    );
+    await DNSLogService.endQuery(queryId, false, undefined, "udp");
+
+    const log = DNSLogService.getLogs().find((entry) => entry.id === queryId);
+    const serialized = JSON.stringify(log);
+
+    expect(serialized).toContain("sha256:");
+    expect(serialized).not.toContain("secret prompt");
+    expect(serialized).not.toContain("private chat");
+    expect(serialized).not.toContain("secret-prompt.llm.pieter.com");
+    expect(serialized).not.toContain("secret-fragment");
+  });
+
+  it("redacts well-formed known DNS queries without over-redacting malformed fragments", async () => {
+    const queryId = DNSLogService.startQuery("eta");
+
+    DNSLogService.logMethodFailure(
+      queryId,
+      "udp",
+      "resolve failed for hello-world.llm.pieter.com via fragment -broken.ch.at",
+      11,
+    );
+    await DNSLogService.endQuery(queryId, false, undefined, "udp");
+
+    const log = DNSLogService.getLogs().find((entry) => entry.id === queryId);
+    const serialized = JSON.stringify(log);
+
+    // A valid single-label query against a known zone is redacted.
+    expect(serialized).not.toContain("hello-world.llm.pieter.com");
+    // A malformed fragment (leading dash) is left intact so debug context is not
+    // silently destroyed by an over-broad word-boundary match.
+    expect(serialized).toContain("-broken.ch.at");
+  });
+
   it("sends the current log snapshot when subscribing after async initialization", () => {
     const queryId = DNSLogService.startQuery("delta");
     const listener = jest.fn();

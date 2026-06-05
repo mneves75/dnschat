@@ -6,6 +6,56 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+## [4.0.24] - 2026-06-04
+
+Build `57` -> `58`. Production-readiness hardening after the 4.0.23 App Store
+submission.
+
+### Fixed
+
+- Made shared bottom-sheet content scrollable so long localized copy, small
+  screens, web, and large text have a recovery path instead of clipping
+  unreachable actions.
+- Made onboarding progress and first-chat onboarding auto-scroll honor Reduce
+  Motion.
+- Moved DNS log redaction for active prompt/title values, composed DNS query
+  names, and multipart TXT fragments into `DNSLogService` before entries reach
+  memory or persistence.
+- Kept chat error toasts visible until dismissal or retry and allowed error
+  messages to wrap instead of truncating the only visible DNS failure details.
+- Bounded font scaling only for fixed-size glyph controls and the message error
+  badge while leaving normal message and toast text scalable.
+- Restored WCAG AA contrast on the chat message error badge and all toast
+  variants by drawing their label from a new `textOnChroma` palette token
+  instead of low-contrast white-on-chroma or a hardcoded `#000000` literal.
+- Capped Dynamic Type scaling on the bottom-sheet close glyph so the 32x32
+  control cannot distort at the largest text sizes.
+- Guaranteed DNS query-lifecycle cleanup: `queryLLM` now wraps its body in
+  try/finally so a query whose setup throws after logging started is still
+  finalized, dropping its raw prompt/title from the in-memory redaction map
+  instead of retaining it indefinitely.
+- Tightened the composed-DNS-query log redaction to RFC 1035 label bounds
+  (no lookbehind, Hermes-safe) so it no longer over-redacts malformed domain
+  fragments while still scrubbing well-formed queries.
+- Cleared the active-query and sensitive-value maps symmetrically on log
+  deletion so deleting any log can never strand in-memory state.
+
+### Added
+
+- Regression coverage for bottom-sheet scroll recovery, onboarding Reduce
+  Motion behavior, DNS log boundary redaction, persistent/untruncated error
+  toasts, and fixed-glyph font scaling.
+- Regression coverage for the query-lifecycle cleanup guard, redaction-regex
+  precision, error-badge contrast token, and close-glyph scaling cap.
+- `textOnChroma` palette token and a documented lifecycle contract for the
+  `sensitiveValuesByQueryId` redaction map.
+
+### Documentation
+
+- Added an "Apple Platforms (Swift / iOS 26)" section to `CLAUDE.md` and
+  `AGENTS.md` pointing at Xcode's bundled iOS 26 documentation for native
+  module / Liquid Glass work, since those APIs post-date the model cutoff.
+
 ## [4.0.23] - 2026-06-04
 
 Build `56` -> `57`. TestFlight and App Store submission refresh.
