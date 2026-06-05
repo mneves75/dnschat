@@ -25,7 +25,12 @@ This document inventories the data stored or processed by DNSChat and satisfies 
 - Contents: per-query log entries (hashed message text and chat title, raw local
   chat ID, status, method, timestamps, durations)
 - Storage location: AsyncStorage
-- Redaction: message content stored as `sha256:<hash> len:<length>`
+- Redaction: message content stored as `sha256:<hash> len:<length>`. Per-entry
+  `details`/`error` text is also scrubbed at the logging boundary (active-query
+  prompt/title values, composed DNS query names, and multipart TXT fragments are
+  replaced with redacted hashes before entries reach memory or storage). The raw
+  prompt/title values used for that scrub are held only for the query lifecycle
+  and dropped on completion, deletion, clear, or an early-throw finalize.
 - Encryption: AES-GCM via `encryptionService`; native key material is stored in
   SecureStore, while Web preview stores the local-only preview key in
   same-origin browser storage because SecureStore is not available in browsers.

@@ -145,6 +145,15 @@
       confirmed no correctness regressions (success path intact, finally cannot
       mask the original error, regex does not under-redact real queries,
       <code>deleteLog</code> return semantics correct).</li>
+    <li><code>bun run verify:react-compiler</code> &mdash; passed; <code>83/83</code>
+      components compiled (build-equivalent for these TS-only changes).</li>
+    <li>On-device install: a compiled Debug build of the <code>4.0.24</code>/<code>58</code>
+      working tree (Apple Development signing) was installed and launched on a
+      physical iOS device via <code>devicectl</code> on <code>2026-06-04</code>,
+      validating the startup Reduce Motion path on-device. The build reflected the
+      working tree (committed fixes plus uncommitted screenshot-mode changes), not
+      a clean-tree release artifact. Device, signing, and profile identifiers stay
+      in private notes per <code>docs/public-release-redaction.md</code>.</li>
   </ul>
   <h3>Residual risk</h3>
   <ul>
