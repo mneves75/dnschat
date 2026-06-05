@@ -4,7 +4,7 @@ Complete step-by-step guide for publishing DNSChat to the Google Play Store.
 
 **App**: DNSChat
 **Package**: `<ANDROID_PACKAGE>`
-**Current Version**: 4.0.23
+**Current Version**: 4.0.26
 
 ---
 
@@ -323,10 +323,10 @@ See [ANDROID_RELEASE.md](./ANDROID_RELEASE.md) for signing configuration.
    - **Upload** new AAB
 4. Add release notes:
    ```
-   What's new in v4.0.23:
-   - Release metadata updated to build 57
-   - TestFlight/App Store submission package refreshed and validated
-   - Public release docs and verification notes aligned with the current target
+   What's new in v4.0.26:
+   - Release metadata updated to build/code 60
+   - Premium polish, React Doctor 100/100, and AXe release E2E validation
+   - Public release docs and verification notes aligned with the TestFlight target
    ```
 5. Click **"Review release"**
 6. Set rollout percentage (start with 10-20% recommended)
@@ -436,6 +436,9 @@ Before submitting for review, verify:
 
 | Version | Date | Notes |
 |---------|------|-------|
+| 4.0.26 | 2026-06-05 | Premium/react-doctor hardening release packaging, AXe E2E, and TestFlight staging build 60 |
+| 4.0.25 | 2026-06-05 | React Compiler cleanliness pass and react-doctor 100/100 |
+| 4.0.24 | 2026-06-04 | Production-readiness hardening after App Store submission |
 | 4.0.23 | 2026-06-04 | TestFlight/App Store submission package, screenshot renewal, and docs sync |
 | 4.0.22 | 2026-06-04 | Release-device metadata bump, physical-device Release install/launch evidence, and docs sync |
 | 4.0.21 | 2026-06-03 | Production-readiness review, OS Reduce Motion recovery, dynamic type, localized dates, DNS fallback and sanitizer hardening |

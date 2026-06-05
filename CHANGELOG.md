@@ -6,6 +6,46 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+## [4.0.26] - 2026-06-05
+
+Build `59` -> `60`. Release packaging and TestFlight staging pass for the
+premium/react-doctor hardening line.
+
+### Changed
+
+- Bumped Expo, iOS, and Android version metadata to `4.0.26` build/code `60`
+  with `bun run sync-versions --bump-build`.
+- Updated public release docs, App Store/TestFlight runbooks, security baseline,
+  and implementation notes to reflect the fresh verification and deployment
+  evidence.
+- Switched the AXe release E2E default simulator profile to iPhone 17 Pro Max
+  after AXe 1.7.1 could not describe the visible UI on the plain iPhone 17
+  simulator.
+
+### Fixed
+
+- Made the AXe E2E harness tolerate an allowed `xcrun simctl bootstatus`
+  timeout instead of aborting before the app can be inspected on slower hosts.
+
+### Verified
+
+- `npx react-doctor@latest --project chat-dns` reports `100 / 100`.
+- `bun run e2e:axe:release` passed 10 feature groups for `4.0.26` build `60`.
+- `bun run verify:all` passed, including public redaction, security, Expo
+  Doctor `20/20`, React Compiler `102/102`, lint, and Jest (`114` suites
+  passed, `1` skipped; `919` tests passed, `13` skipped).
+- `cd modules/dns-native && bun run test` passed (`7` suites passed, `1`
+  skipped; `57` tests passed, `13` skipped).
+- Xcode Debug simulator build, unsigned generic Release build, unsigned generic
+  Release archive, signed App Store archive, and signed IPA export passed.
+- TestFlight upload/processing passed for `4.0.26` build `60`; App Store
+  Connect reported processing state `VALID`, and `asc validate testflight`
+  reported `0` errors and `0` warnings.
+- Direct physical-device install on iMarcus is blocked by local Xcode
+  Development provisioning state: `No Accounts: Add a new account in Accounts
+  settings` and no matching iOS App Development profile for
+  `org.mvneves.dnschat`. TestFlight remains the verified staging path.
+
 ## [4.0.25] - 2026-06-05
 
 Build `58` -> `59`. React Compiler cleanliness pass: drove `react-doctor` from
@@ -892,7 +932,10 @@ Versions 3.2.0 through 3.8.9 established the core feature set:
 - **3.3.0**: Android CI, release signing policy, Java 17 auto-detection
 - **3.2.x**: Public repo hardening (secrets scanning, policy tests, version sync gates), DNS server allowlist
 
-[Unreleased]: https://github.com/<owner>/dnschat/compare/v4.0.23...HEAD
+[Unreleased]: https://github.com/<owner>/dnschat/compare/v4.0.26...HEAD
+[4.0.26]: https://github.com/<owner>/dnschat/compare/v4.0.25...v4.0.26
+[4.0.25]: https://github.com/<owner>/dnschat/compare/v4.0.24...v4.0.25
+[4.0.24]: https://github.com/<owner>/dnschat/compare/v4.0.23...v4.0.24
 [4.0.23]: https://github.com/<owner>/dnschat/compare/v4.0.22...v4.0.23
 [4.0.22]: https://github.com/<owner>/dnschat/compare/v4.0.21...v4.0.22
 [4.0.21]: https://github.com/<owner>/dnschat/compare/v4.0.20...v4.0.21
