@@ -342,20 +342,20 @@ export function EmptyState({
     if (shouldReduceMotion) return;
 
     // Icon animates first
-    iconScale.value = withSpring(1, SpringConfig.bouncy);
+    iconScale.set(withSpring(1, SpringConfig.bouncy));
 
     // Content follows with delay
-    opacity.value = withDelay(100, withTiming(1, TimingConfig.normal));
-    scale.value = withDelay(100, withSpring(1, SpringConfig.gentle));
+    opacity.set(withDelay(100, withTiming(1, TimingConfig.normal)));
+    scale.set(withDelay(100, withSpring(1, SpringConfig.gentle)));
   }, [shouldReduceMotion, opacity, scale, iconScale]);
 
   const containerStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-    transform: [{ scale: scale.value }],
+    opacity: opacity.get(),
+    transform: [{ scale: scale.get() }],
   }));
 
   const iconContainerStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: iconScale.value }],
+    transform: [{ scale: iconScale.get() }],
   }));
 
   const IconComponent = iconComponents[iconType];

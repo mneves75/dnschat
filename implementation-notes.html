@@ -42,6 +42,44 @@
   <p><strong>Stop condition:</strong> no known critical/high issues remain; medium findings are either fixed or explicitly justified; strongest local checks have fresh outcomes; browser/runtime evidence is captured for user-visible frontend changes when feasible.</p>
 
   <hr />
+  <h2>Review Pass &mdash; 2026-06-05 (React Compiler cleanliness, react-doctor 100/100, 4.0.25 build 59)</h2>
+
+  <p><strong>Goal:</strong> drive <code>npx react-doctor@latest</code> from <code>93 / 100</code> (84 errors, 1 warning) to <code>100 / 100</code> by fixing the underlying code rather than blanket-suppressing rules, while preserving behavior. The repo runs <code>experiments.reactCompiler</code>, so making components genuinely React Compiler-clean is a real quality improvement, not gaming the score.</p>
+
+  <h3>Root-cause findings (workspace caveat)</h3>
+  <ul>
+    <li><code>chat-dns</code> sits inside a parent Bun workspace, so a bare <code>react-doctor</code> invocation can report the sibling <code>paquera-mobile</code> project. All measurements here used <code>--project chat-dns</code> to scope correctly.</li>
+    <li>The 85 findings clustered into clean rule families: Reanimated <code>.value</code> access (immutability &times;34), <code>try/finally</code> the compiler cannot lower (todo &times;18), refs read during render (&times;11), manual memoization with the compiler on (&times;11), synchronous <code>setState</code> in effects (&times;7), and module-global reassignment in test mocks (&times;3).</li>
+  </ul>
+
+  <h3>Real fixes applied (behavior-preserving)</h3>
+  <ul>
+    <li><strong>Reanimated:</strong> migrated every shared-value access to the React Compiler-compatible <code>.get()</code> / <code>.set()</code> accessors (Toast, ChatInput, EmptyState, LiquidGlassTextInput, Skeletons, WelcomeScreen, DNSMagicScreen, Chat, useScreenEntrance, useStaggeredList) per the official Reanimated guidance.</li>
+    <li><strong>try/finally:</strong> the compiler cannot lower a <code>finally</code> block (the "TryStatement without a catch clause" message is misleading). Converted single-await loaders to <code>Promise.prototype.finally()</code> and multi-statement loaders to <code>try/catch</code> plus a trailing cleanup statement, preserving the "cleanup always runs" guarantee on every exit path. ChatContext corruption-recovery now wraps its best-effort reload so a recovery failure still resets state and clears loading.</li>
+    <li><strong>refs during render:</strong> replaced "create once" <code>useRef(...).current</code> holders of <code>Animated.Value</code> / Reanimated mutables with <code>useState(() =&gt; ...)</code> initializers (OnboardingProgress, GlassBottomSheet, useStaggeredList), which are safe to read during render.</li>
+    <li><strong>manual memoization:</strong> removed redundant <code>useCallback</code>/<code>useMemo</code> the compiler now handles (GlassChatList, Toast, LiquidGlassTextInput, NativeMenu, GlassBottomSheet, NetworkSetupScreen, app/chat route).</li>
+    <li><strong>setState-in-effect:</strong> replaced prop-mirroring effects with pure render-time derivation for error toasts (GlassChatList, Chat); removed a redundant synchronous load flag in Logs (initial state already covers the first skeleton); short-circuited the non-iOS branch of the glass-capability effect (the <code>useState</code> initializers already produce the identical unsupported-platform state).</li>
+    <li><strong>dynamic import:</strong> GlassSettings now imports <code>DNSService</code> statically &mdash; the module is already eagerly loaded by the root ChatContext/SettingsContext providers, so the lazy <code>await import()</code> gave no deferral and only blocked compilation.</li>
+    <li><strong>hoisting:</strong> reordered load-on-mount helpers above the effects that call them (Logs, OnboardingContext) to remove access-before-declaration.</li>
+  </ul>
+
+  <h3>Documented exemptions (legitimate external-sync, in <code>react-doctor.config.json</code>)</h3>
+  <ul>
+    <li><code>react-hooks-js/set-state-in-effect</code> for <code>app/_layout.tsx</code> (one-shot splash-screen settle), <code>app/chat/[threadId].tsx</code> (route hydration), <code>src/context/ChatContext.tsx</code> (load-on-mount), and <code>src/context/OnboardingContext.tsx</code> (persisted onboarding load). These are genuine external-system synchronization effects where setState is the correct React pattern.</li>
+    <li><code>react-doctor/react-compiler-no-manual-memoization</code> for <code>app/_layout.tsx</code>: the navigation theme <code>useMemo</code> is load-bearing because that component intentionally keeps a bail-out effect, so the manual memo still prevents navigation-tree re-renders.</li>
+    <li><code>react-hooks-js/globals</code> for <code>__tests__/**</code>: module-level capture variables in jest mocks are a standard test instrumentation pattern.</li>
+  </ul>
+
+  <h3>Validation evidence</h3>
+  <ul>
+    <li><code>npx react-doctor@latest --project chat-dns</code>: <code>100 / 100</code>, "No issues found!" (was <code>93 / 100</code> with 84 errors + 1 warning).</li>
+    <li><code>bun run typecheck</code>: passed.</li>
+    <li><code>bun run lint</code> (ast-grep): passed.</li>
+    <li><code>bun run test</code>: <code>914</code> passed, <code>13</code> skipped, <code>0</code> failed (113 suites). Updated 6 suites whose mocks/assertions pinned the old <code>.value</code> / <code>useCallback</code> implementation: extended the inline Reanimated mocks with <code>.get()</code>/<code>.set()</code> (matching the real Reanimated 4 API) and re-pointed source-string assertions at the new code, preserving each test's original intent.</li>
+    <li><code>bun run verify:react-compiler</code>: "Successfully compiled <code>102</code> out of <code>102</code> components."</li>
+  </ul>
+
+  <hr />
   <h2>Review Pass &mdash; 2026-06-04 (continuation, 4.0.24 build 58 unbuilt)</h2>
   <p>
     Scope locked to <code>&lt;REPO_ROOT&gt;</code> on branch <code>main</code>.

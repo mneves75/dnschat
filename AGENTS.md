@@ -73,7 +73,7 @@ For any source-code sweep, map findings and fixes back to these requirements. Do
 - Native module tests: `cd modules/dns-native && bun run test`
 - DNS harness: `bun run dns:harness -- --message "test message"`; add `--local-server` for offline UDP/TCP verification.
 - Security scan: `gitleaks detect --source . --redact --no-banner --config .gitleaks.toml`
-- React Doctor: `npx react-doctor@latest`
+- React Doctor: `npx react-doctor@latest --project chat-dns` (scope to this project; a bare run can report the sibling `paquera-mobile` from the parent Bun workspace). Kept at `100/100`; see the React Compiler conventions in `CLAUDE.md` (Reanimated `.get()`/`.set()`, no `finally`, `useState` over `useRef` for create-once animated values).
 - Public redaction scan: `bun run verify:public-redaction`
 - iOS CLI build smoke: `xcodebuild clean build -workspace ios/DNSChat.xcworkspace -scheme DNSChat -configuration Debug -destination 'platform=iOS Simulator,name=iPhone 17'`
 - iOS unsigned release smoke: `xcodebuild clean build -workspace ios/DNSChat.xcworkspace -scheme DNSChat -configuration Release -destination 'generic/platform=iOS' CODE_SIGNING_ALLOWED=NO`

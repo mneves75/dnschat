@@ -65,11 +65,11 @@ export function SkeletonBox({
   // Effect: start or freeze shimmer animation based on reduced-motion setting.
   useEffect(() => {
     if (shouldReduceMotion) {
-      shimmer.value = 0.5; // Static mid-opacity for reduced motion
+      shimmer.set(0.5); // Static mid-opacity for reduced motion
       return;
     }
 
-    shimmer.value = withDelay(
+    shimmer.set(withDelay(
       delay,
       withRepeat(
         withTiming(1, {
@@ -79,11 +79,11 @@ export function SkeletonBox({
         -1,
         false
       )
-    );
+    ));
   }, [shouldReduceMotion, delay, shimmer]);
 
   const shimmerStyle = useAnimatedStyle(() => ({
-    opacity: shouldReduceMotion ? 0.5 : 0.3 + shimmer.value * 0.4,
+    opacity: shouldReduceMotion ? 0.5 : 0.3 + shimmer.get() * 0.4,
   }));
 
   const isDark = palette.textPrimary === '#FFFFFF';
@@ -208,15 +208,15 @@ export function SkeletonCard({ children, delay = 0, style }: SkeletonCardProps) 
   // Effect: fade in skeleton card unless reduced motion is enabled.
   useEffect(() => {
     if (shouldReduceMotion) {
-      opacity.value = 1;
+      opacity.set(1);
       return;
     }
 
-    opacity.value = withDelay(delay, withTiming(1, { duration: 200 }));
+    opacity.set(withDelay(delay, withTiming(1, { duration: 200 })));
   }, [shouldReduceMotion, delay, opacity]);
 
   const animatedStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
+    opacity: opacity.get(),
   }));
 
   return (

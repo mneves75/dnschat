@@ -41,23 +41,23 @@ export function ChatProvider({ children }: ChatProviderProps) {
     preserveError?: string | null;
     clearError?: boolean;
   }) => {
+    setIsLoading(true);
+
+    // SCREENSHOT MODE: Load mock conversations for deterministic UI captures
+    if (isScreenshotMode()) {
+      devLog("[ChatContext] Screenshot mode detected, loading mock conversations");
+      const mockConversations = getMockConversations(settings.preferredLocale);
+      setChats(mockConversations as Chat[]);
+      const preferredChat = options?.preserveChatId
+        ? (mockConversations.find((chat) => chat.id === options.preserveChatId) ?? null)
+        : null;
+      setCurrentChat((preferredChat ?? mockConversations[0] ?? null) as Chat | null);
+      setError(options?.clearError === false ? options?.preserveError ?? null : null);
+      setIsLoading(false);
+      return;
+    }
+
     try {
-      setIsLoading(true);
-
-      // SCREENSHOT MODE: Load mock conversations for deterministic UI captures
-      if (isScreenshotMode()) {
-        devLog("[ChatContext] Screenshot mode detected, loading mock conversations");
-        const mockConversations = getMockConversations(settings.preferredLocale);
-        setChats(mockConversations as Chat[]);
-        const preferredChat = options?.preserveChatId
-          ? (mockConversations.find((chat) => chat.id === options.preserveChatId) ?? null)
-          : null;
-        setCurrentChat((preferredChat ?? mockConversations[0] ?? null) as Chat | null);
-        setError(options?.clearError === false ? options?.preserveError ?? null : null);
-        setIsLoading(false);
-        return;
-      }
-
       // NORMAL MODE: Load chats from storage
       const loadedChats = await StorageService.loadChats({
         recoverOnCorruption: false,
@@ -70,7 +70,13 @@ export function ChatProvider({ children }: ChatProviderProps) {
       setError(options?.clearError === false ? options?.preserveError ?? null : null);
     } catch (err) {
       if (err instanceof StorageCorruptionError) {
-        await StorageService.loadChats();
+        // Best-effort recovery: a recovery failure must still reset state and
+        // clear loading below (it must not escape and skip cleanup).
+        try {
+          await StorageService.loadChats();
+        } catch {
+          // Intentionally swallowed; state is reset regardless.
+        }
         setChats([]);
         setCurrentChat(null);
         setError(
@@ -81,9 +87,9 @@ export function ChatProvider({ children }: ChatProviderProps) {
       } else {
         setError(err instanceof Error ? err.message : "Failed to load chats");
       }
-    } finally {
-      setIsLoading(false);
     }
+    // Replaces `finally`; the early screenshot-mode path clears loading itself.
+    setIsLoading(false);
   };
 
   // Effect: load chats on mount and when the locale changes.
@@ -401,10 +407,11 @@ export function ChatProvider({ children }: ChatProviderProps) {
           );
         }
       }
-    } finally {
-      sendInFlightRef.current = false;
-      setIsLoading(false);
     }
+    // Replaces `finally`; the catch handles send errors without rethrowing, so
+    // this cleanup runs on both the success and error paths.
+    sendInFlightRef.current = false;
+    setIsLoading(false);
   };
 
   const clearError = () => {

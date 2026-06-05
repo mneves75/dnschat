@@ -6,6 +6,34 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+## [4.0.25] - 2026-06-05
+
+Build `58` -> `59`. React Compiler cleanliness pass: drove `react-doctor` from
+`93/100` to `100/100` by fixing the underlying code rather than blanket
+suppression, with no intended behavior change.
+
+### Changed
+
+- Migrated every Reanimated shared-value access to the React Compiler-compatible
+  `.get()`/`.set()` accessors across animated components and hooks.
+- Replaced `finally` blocks the React Compiler cannot lower with
+  `Promise.prototype.finally()` or a trailing cleanup statement, keeping the
+  "cleanup always runs" guarantee on every exit path.
+- Replaced "create once" `useRef(...).current` holders of animated values with
+  `useState` initializers so they are safe to read during render.
+- Removed manual `useCallback`/`useMemo` that the React Compiler now memoizes.
+- Derived chat error toasts purely from state instead of mirroring them through
+  an effect, and trimmed redundant synchronous load flags.
+- Made `GlassSettings` import `DNSService` statically (the module is already
+  eagerly loaded by the root providers, so the lazy import only blocked
+  compilation).
+
+### Fixed
+
+- Chat-list corruption recovery now resets state and clears the loading flag
+  even if the best-effort reload itself fails, instead of leaking an unhandled
+  rejection.
+
 ## [4.0.24] - 2026-06-04
 
 Build `57` -> `58`. Production-readiness hardening after the 4.0.23 App Store

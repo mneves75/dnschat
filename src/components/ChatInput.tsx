@@ -175,7 +175,7 @@ export function ChatInput({
    */
   const animatedButtonPosition = useAnimatedStyle(() => ({
     // react-doctor-disable-next-line react-doctor/rn-animate-layout-property
-    top: (inputHeight.value - minimumTouchTarget) / 2,
+    top: (inputHeight.get() - minimumTouchTarget) / 2,
   }));
 
   /**
@@ -197,10 +197,10 @@ export function ChatInput({
   React.useEffect(() => {
     const target = canSend ? 1 : 0.4;
     if (shouldReduceMotion) {
-      opacity.value = target;
+      opacity.set(target);
       return;
     }
-    opacity.value = withTiming(target, { duration: ANIMATION_DURATION_MS });
+    opacity.set(withTiming(target, { duration: ANIMATION_DURATION_MS }));
   }, [canSend, opacity, shouldReduceMotion]);
 
   /**
@@ -227,15 +227,15 @@ export function ChatInput({
   React.useEffect(() => {
     if (message === "") {
       if (shouldReduceMotion) {
-        inputHeight.value = heightConstraints.min;
+        inputHeight.set(heightConstraints.min);
         return;
       }
-      inputHeight.value = withSpring(heightConstraints.min, SpringConfig.bouncy);
+      inputHeight.set(withSpring(heightConstraints.min, SpringConfig.bouncy));
     }
   }, [message, inputHeight, heightConstraints.min, shouldReduceMotion]);
 
   useAnimatedReaction(
-    () => inputHeight.value,
+    () => inputHeight.get(),
     (value, previousValue) => {
       const rounded = Math.round(value);
       const previousRounded =
@@ -255,8 +255,8 @@ export function ChatInput({
    * Both animations run on UI thread for 60fps performance.
    */
   const animatedButtonStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-    opacity: opacity.value,
+    transform: [{ scale: scale.get() }],
+    opacity: opacity.get(),
   }));
 
   /**
@@ -267,7 +267,7 @@ export function ChatInput({
    */
   const animatedInputStyle = useAnimatedStyle(() => ({
     // react-doctor-disable-next-line react-doctor/rn-animate-layout-property
-    height: inputHeight.value,
+    height: inputHeight.get(),
   }));
 
   /**
@@ -288,10 +288,10 @@ export function ChatInput({
     );
 
     if (shouldReduceMotion) {
-      inputHeight.value = constrainedHeight;
+      inputHeight.set(constrainedHeight);
       return;
     }
-    inputHeight.value = withSpring(constrainedHeight, SpringConfig.bouncy);
+    inputHeight.set(withSpring(constrainedHeight, SpringConfig.bouncy));
   };
 
   /**
@@ -333,9 +333,9 @@ export function ChatInput({
     if (canSend) {
       HapticFeedback.light();
       // Non-bouncy spring to prevent overshoot above 1.0; skip when reducing motion.
-      scale.value = shouldReduceMotion
+      scale.set(shouldReduceMotion
         ? buttonPressScale
-        : withSpring(buttonPressScale, { damping: 20, stiffness: 300, mass: 1 });
+        : withSpring(buttonPressScale, { damping: 20, stiffness: 300, mass: 1 }));
     }
   };
 
@@ -347,11 +347,11 @@ export function ChatInput({
    */
   const handlePressOut = () => {
     if (shouldReduceMotion) {
-      scale.value = 1;
+      scale.set(1);
       return;
     }
     // Non-bouncy spring to prevent overshoot above 1.0
-    scale.value = withSpring(1, { damping: 20, stiffness: 300, mass: 1 });
+    scale.set(withSpring(1, { damping: 20, stiffness: 300, mass: 1 }));
   };
 
   /**

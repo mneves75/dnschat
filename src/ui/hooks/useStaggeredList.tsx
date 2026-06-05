@@ -29,7 +29,7 @@
  * @see DESIGN-UI-UX-GUIDELINES.md - Stagger delay 50-100ms per item
  */
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import Animated, {
   useSharedValue,
@@ -112,16 +112,17 @@ export function useStaggeredList(
 
   const { shouldReduceMotion } = useMotionReduction();
 
-  // Create shared values for each possible item (capped at MAX_ITEMS)
-  const opacities = useRef(
+  // Create shared values for each possible item (capped at MAX_ITEMS).
+  // useState initializer runs once and is safe to read during render (unlike a ref).
+  const [opacities] = useState(() =>
     Array.from({ length: MAX_ITEMS }, () => makeMutable(shouldReduceMotion ? 1 : 0))
-  ).current;
+  );
 
-  const translates = useRef(
+  const [translates] = useState(() =>
     Array.from({ length: MAX_ITEMS }, () =>
       makeMutable(shouldReduceMotion ? 0 : (direction === 'left' ? -initialOffset : initialOffset))
     )
-  ).current;
+  );
 
   const completedCount = useSharedValue(0);
 
@@ -129,8 +130,8 @@ export function useStaggeredList(
     if (shouldReduceMotion) {
       // Instant transition for reduced motion
       for (let i = 0; i < Math.min(itemCount, MAX_ITEMS); i++) {
-        opacities[i]!.value = 1;
-        translates[i]!.value = 0;
+        opacities[i]!.set(1);
+        translates[i]!.set(0);
       }
       if (onComplete) {
         onComplete();
@@ -138,7 +139,7 @@ export function useStaggeredList(
       return;
     }
 
-    completedCount.value = 0;
+    completedCount.set(0);
     const effectiveCount = Math.min(itemCount, MAX_ITEMS);
 
     for (let i = 0; i < effectiveCount; i++) {
@@ -147,32 +148,32 @@ export function useStaggeredList(
       const batchIndex = Math.floor(i / maxConcurrent);
       const delay = (i % maxConcurrent) * delayPerItem + batchIndex * (delayPerItem * maxConcurrent);
 
-      opacities[i]!.value = withDelay(
+      opacities[i]!.set(withDelay(
         delay,
         withTiming(1, TimingConfig.normal, (finished) => {
           if (finished) {
-            completedCount.value += 1;
-            if (completedCount.value === effectiveCount && onComplete) {
+            completedCount.set(completedCount.get() + 1);
+            if (completedCount.get() === effectiveCount && onComplete) {
               runOnJS(onComplete)();
             }
           }
         })
-      );
+      ));
 
-      translates[i]!.value = withDelay(
+      translates[i]!.set(withDelay(
         delay,
         withSpring(0, SpringConfig.gentle)
-      );
+      ));
     }
   };
 
   const reset = () => {
     const offset = direction === 'left' ? -initialOffset : initialOffset;
     for (let i = 0; i < Math.min(itemCount, MAX_ITEMS); i++) {
-      opacities[i]!.value = shouldReduceMotion ? 1 : 0;
-      translates[i]!.value = shouldReduceMotion ? 0 : offset;
+      opacities[i]!.set(shouldReduceMotion ? 1 : 0);
+      translates[i]!.set(shouldReduceMotion ? 0 : offset);
     }
-    completedCount.value = 0;
+    completedCount.set(0);
   };
 
   // Trigger animation on mount if enabled
@@ -213,8 +214,8 @@ export function useStaggeredList(
  */
 interface AnimatedListItemProps {
   children: ReactNode;
-  opacity: Pick<SharedValue<number>, 'value'>;
-  translateX: Pick<SharedValue<number>, 'value'>;
+  opacity?: SharedValue<number> | undefined;
+  translateX?: SharedValue<number> | undefined;
   style?: ViewStyle;
 }
 
@@ -225,8 +226,8 @@ export function AnimatedListItem({
   style,
 }: AnimatedListItemProps) {
   const animatedStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-    transform: [{ translateX: translateX.value }],
+    opacity: opacity?.get() ?? 1,
+    transform: [{ translateX: translateX?.get() ?? 0 }],
   }));
 
   return (
@@ -257,24 +258,24 @@ export function useStaggeredListValues(
   const { shouldReduceMotion } = useMotionReduction();
   const effectiveCount = Math.min(itemCount, MAX_ITEMS);
 
-  // Create shared values
-  const opacities = useRef(
+  // Create shared values once; useState initializer is safe to read during render.
+  const [opacities] = useState(() =>
     Array.from({ length: MAX_ITEMS }, () => makeMutable(shouldReduceMotion ? 1 : 0))
-  ).current;
+  );
 
-  const translates = useRef(
+  const [translates] = useState(() =>
     Array.from({ length: MAX_ITEMS }, () =>
       makeMutable(shouldReduceMotion ? 0 : (direction === 'left' ? -initialOffset : initialOffset))
     )
-  ).current;
+  );
 
   const completedCount = useSharedValue(0);
 
   const triggerAnimation = () => {
     if (shouldReduceMotion) {
       for (let i = 0; i < effectiveCount; i++) {
-        opacities[i]!.value = 1;
-        translates[i]!.value = 0;
+        opacities[i]!.set(1);
+        translates[i]!.set(0);
       }
       if (onComplete) {
         onComplete();
@@ -282,35 +283,35 @@ export function useStaggeredListValues(
       return;
     }
 
-    completedCount.value = 0;
+    completedCount.set(0);
 
     for (let i = 0; i < effectiveCount; i++) {
       const batchIndex = Math.floor(i / maxConcurrent);
       const delay = (i % maxConcurrent) * delayPerItem + batchIndex * (delayPerItem * maxConcurrent);
 
-      opacities[i]!.value = withDelay(
+      opacities[i]!.set(withDelay(
         delay,
         withTiming(1, TimingConfig.normal, (finished) => {
           if (finished) {
-            completedCount.value += 1;
-            if (completedCount.value === effectiveCount && onComplete) {
+            completedCount.set(completedCount.get() + 1);
+            if (completedCount.get() === effectiveCount && onComplete) {
               runOnJS(onComplete)();
             }
           }
         })
-      );
+      ));
 
-      translates[i]!.value = withDelay(delay, withSpring(0, SpringConfig.gentle));
+      translates[i]!.set(withDelay(delay, withSpring(0, SpringConfig.gentle)));
     }
   };
 
   const reset = () => {
     const offset = direction === 'left' ? -initialOffset : initialOffset;
     for (let i = 0; i < effectiveCount; i++) {
-      opacities[i]!.value = shouldReduceMotion ? 1 : 0;
-      translates[i]!.value = shouldReduceMotion ? 0 : offset;
+      opacities[i]!.set(shouldReduceMotion ? 1 : 0);
+      translates[i]!.set(shouldReduceMotion ? 0 : offset);
     }
-    completedCount.value = 0;
+    completedCount.set(0);
   };
 
   useEffect(() => {

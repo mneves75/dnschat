@@ -153,10 +153,11 @@ export function FirstChatScreen() {
             : msg,
         ),
       );
-    } finally {
-      if (isMountedRef.current) {
-        setIsLoading(false);
-      }
+    }
+    // Replaces `finally`; mount-guarded so the early `!isMountedRef` returns
+    // (where this is a no-op) skip it harmlessly.
+    if (isMountedRef.current) {
+      setIsLoading(false);
     }
   };
 

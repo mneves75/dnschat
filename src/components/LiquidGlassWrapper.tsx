@@ -421,12 +421,10 @@ export const useLiquidGlassCapabilities = () => {
   // react-doctor-disable-next-line react-doctor/effect-needs-cleanup
   useEffect(() => {
     if (Platform.OS !== "ios") {
-      setAvailability({
-        available: false,
-        reason: "unsupported-platform",
-        iosMajorVersion: null,
-      });
-      setLoading(false);
+      // Non-iOS state is already fully determined by the useState initializers
+      // (computeGlassAvailability() returns the identical unsupported-platform
+      // object and `loading` starts false), so no synchronous state write is
+      // needed here — which also keeps the effect React Compiler-clean.
       return;
     }
 

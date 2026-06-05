@@ -102,6 +102,13 @@ This app uses **Expo Router** (file-based routing under `app/`), not React Navig
 
 `experiments.reactCompiler: true` and `experiments.typedRoutes: true` are enabled in `app.json`. Manual `useMemo`/`useCallback` should be removed (the compiler handles memoization). Run `bun run verify:typed-routes` after adding/renaming routes.
 
+**React Compiler conventions** (keeps `react-doctor` at 100/100 — see `implementation-notes.html`):
+- Reanimated shared values must use the `.get()`/`.set()` accessors, never `.value` (the compiler cannot optimize `.value`).
+- Hold "create once" animated values (`Animated.Value`, `makeMutable`) in a `useState(() => …)` initializer, not `useRef(...).current` — refs cannot be read during render.
+- Do not use a `finally` block (the compiler cannot lower it); use `Promise.prototype.finally()` or a trailing cleanup statement after `try/catch`.
+- Legitimate external-sync `setState`-in-effect cases (splash settle, route hydration, load-on-mount) are exempted per-file in `react-doctor.config.json`, not in code.
+- `react-doctor` must be scoped with `--project chat-dns`; a bare run can report the sibling `paquera-mobile` project from the parent Bun workspace.
+
 ### DNS Server Fallback Chain
 
 **Server selection** (search `getLLMServers` in `src/services/dnsService.ts` — currently around line 775):

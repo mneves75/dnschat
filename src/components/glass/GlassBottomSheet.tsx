@@ -87,9 +87,11 @@ export const GlassBottomSheet: React.FC<GlassBottomSheetProps> = ({
   const { height: screenHeight } = useWindowDimensions();
   const { t } = useTranslation();
   const { shouldReduceMotion } = useMotionReduction();
-  const translateY = React.useRef(new Animated.Value(1000)).current;
-  const animatedBackdropOpacity = React.useRef(new Animated.Value(0)).current;
-  const scale = React.useRef(new Animated.Value(0.96)).current;
+  // useState initializers create each animated value once and are safe to read
+  // during render (a ref's `.current` cannot be accessed while rendering).
+  const [translateY] = React.useState(() => new Animated.Value(1000));
+  const [animatedBackdropOpacity] = React.useState(() => new Animated.Value(0));
+  const [scale] = React.useState(() => new Animated.Value(0.96));
   const sheetRef = React.useRef<View>(null);
   const restoreFocusRef = React.useRef<HTMLElement | null>(null);
   const onCloseRef = React.useRef(onClose);
@@ -426,9 +428,9 @@ export const GlassActionSheet: React.FC<GlassActionSheetProps> = ({
 export const useGlassBottomSheet = () => {
   const [visible, setVisible] = React.useState(false);
 
-  const show = React.useCallback(() => setVisible(true), []);
-  const hide = React.useCallback(() => setVisible(false), []);
-  const toggle = React.useCallback(() => setVisible((prev) => !prev), []);
+  const show = () => setVisible(true);
+  const hide = () => setVisible(false);
+  const toggle = () => setVisible((prev) => !prev);
 
   return { visible, show, hide, toggle };
 };

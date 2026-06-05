@@ -10,7 +10,16 @@ jest.mock("react-native-reanimated", () => {
   const AnimatedMock = {
     View,
     createAnimatedComponent: <P,>(Component: React.ComponentType<P>) => Component,
-    useSharedValue: (value: unknown) => ({ value }),
+    useSharedValue: (value: unknown) => {
+      const sv = {
+        value,
+        get: () => sv.value,
+        set: (next: unknown) => {
+          sv.value = next;
+        },
+      };
+      return sv;
+    },
     useAnimatedStyle: (fn: () => Record<string, unknown>) =>
       new Proxy(
         {},
