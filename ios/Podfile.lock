@@ -2,9 +2,9 @@ PODS:
   - CocoaAsyncSocket (7.6.5)
   - DNSNative (1.5.0):
     - React-Core
-  - EXConstants (56.0.16):
+  - EXConstants (56.0.17):
     - ExpoModulesCore
-  - Expo (56.0.8):
+  - Expo (56.0.9):
     - ExpoModulesCore
     - ExpoModulesJSI
     - hermes-engine
@@ -30,7 +30,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - ExpoAsset (56.0.15):
+  - ExpoAsset (56.0.16):
     - ExpoModulesCore
   - ExpoCrypto (56.0.4):
     - ExpoModulesCore
@@ -52,7 +52,7 @@ PODS:
     - ExpoModulesCore
   - ExpoLogBox (56.0.12):
     - React-Core
-  - ExpoModulesCore (56.0.14):
+  - ExpoModulesCore (56.0.15):
     - ExpoModulesJSI
     - hermes-engine
     - RCTRequired
@@ -76,29 +76,29 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - ExpoModulesJSI (56.0.7):
+  - ExpoModulesJSI (56.0.8):
     - React-Core
     - ReactCommon
-  - ExpoModulesWorklets (56.0.14):
+  - ExpoModulesWorklets (56.0.15):
     - ExpoModulesCore
     - ExpoModulesJSI
-  - ExpoModulesWorkletsAdapter (56.0.14):
+  - ExpoModulesWorkletsAdapter (56.0.15):
     - ExpoModulesCore
     - ExpoModulesJSI
     - ExpoModulesWorklets
     - RNWorklets
-  - ExpoRouter (56.2.8):
+  - ExpoRouter (56.2.9):
     - ExpoModulesCore
     - RNScreens
   - ExpoSecureStore (56.0.4):
     - ExpoModulesCore
   - ExpoSplashScreen (56.0.10):
     - ExpoModulesCore
-  - ExpoSymbols (56.0.5):
+  - ExpoSymbols (56.0.6):
     - ExpoModulesCore
   - ExpoSystemUI (56.0.5):
     - ExpoModulesCore
-  - ExpoUI (56.0.15):
+  - ExpoUI (56.0.16):
     - ExpoModulesCore
     - ExpoModulesWorklets
     - React-RCTFabric
@@ -2685,9 +2685,9 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   CocoaAsyncSocket: 065fd1e645c7abab64f7a6a2007a48038fdc6a99
   DNSNative: e1654d7333a1747c724a008c144aca102b26539d
-  EXConstants: 1c400bb9969f4c9e5ab324553138b74ae47b9efe
-  Expo: c82930e1c8b6f2e26308e364499773d3de12d55d
-  ExpoAsset: c2e7b5ba1fe75be683282d6264e38fd7cd8defbb
+  EXConstants: 659c2e5593243436fd8ed4ba6225d2ebd045d84a
+  Expo: 9ca20ca4a888b3de7c1a99f93e094c486dfe5b36
+  ExpoAsset: c3045ed094105f5f2bf332e36ef1bd63401c948f
   ExpoCrypto: b54a97c4357d46d7f8de079e69fa89029572244b
   ExpoDomWebView: 27205be8754f9992913b8a9a08e65019f2207075
   ExpoFileSystem: d730a1cb33f2c91dec01561f0d710054fda32ae9
@@ -2698,16 +2698,16 @@ SPEC CHECKSUMS:
   ExpoLinking: 49cc5ddd93b68506c588aa1985c27b795e6d69d6
   ExpoLocalization: cf50efc436b2ec313510131c1ee0e778366d64b0
   ExpoLogBox: 7aa03244fe5eeced5129e4ec7ad5bd9a3994378e
-  ExpoModulesCore: 787e3ac2a8f8798c9837be2a1b5abb719bab6342
-  ExpoModulesJSI: f25a013ea9a79904bdd535e4bea0872e155cde09
-  ExpoModulesWorklets: 3f847eb6ba544bd4b55d585f89b3b18f8cd73a72
-  ExpoModulesWorkletsAdapter: a538403990508224d8401ff2ac544ca83df52eb6
-  ExpoRouter: 806ab2bc2124594c624ffe6fde15c28e4c4f0b03
+  ExpoModulesCore: 3c76b58994a4b749d9a8353663d563f1ea18d5e9
+  ExpoModulesJSI: 8028268310770bed2f3f3aec6e7bf150714841b1
+  ExpoModulesWorklets: 3a5a7126f22ccacf3189bdf0be37022efd5e4578
+  ExpoModulesWorkletsAdapter: 55b4c82542c105f4e8feaec832832487e6c674c0
+  ExpoRouter: ed3d4e1815fd19856f3a7fbc68ad8565d9eb355d
   ExpoSecureStore: f1bd083c1b7b8d4142013ffcc0082d377d9f49f4
   ExpoSplashScreen: 3fe3a57d56d7242a9109d9714a6f9fa1e256538b
-  ExpoSymbols: f83c91f2897d37102b98b9224c603095630be9d0
+  ExpoSymbols: 377747de25bcb1ab68ec68f23d81fb81d43eae83
   ExpoSystemUI: 8f4fb641c6a6ebe2a01dda0fbd3fdd952ab5823a
-  ExpoUI: b298305aee92ad48ca29db29b9fa9265008b218a
+  ExpoUI: 87bfd96f91fce59e1cfc1ed166dd7a6331aff2f9
   FBLazyVector: 24e62c765683b8d89006a88a2c8f5cf019f0074d
   hermes-engine: 8c0a448a44dddb82c8756172a5d825042578149e
   RCTDeprecation: a4c521821fab57cbb125b36effe84d897d0dfa12
@@ -2718,7 +2718,7 @@ SPEC CHECKSUMS:
   React: e2dc35338068bbd299c66f043ae0d7f25de8499e
   React-callinvoker: 28b25d21b124c26cebaea713ba7d801b9351dc48
   React-Core: 02ed7d2ffb70437bdf2aba074a13078a7b0b9ff0
-  React-Core-prebuilt: 9c84e8a96dfa876f1d9e5f0bf196f6b3f468e20e
+  React-Core-prebuilt: 4816c29e1c3d1e2fcccfbddb8dd2f93f68b041c8
   React-CoreModules: b3a5a42dadcde3b5d47b325bd912eb2ced89e146
   React-cxxreact: fe8f88dda044e5905e99a00f41b7a874c3908716
   React-debug: 92944dc4d89f56d640e75498266cbde557a48189

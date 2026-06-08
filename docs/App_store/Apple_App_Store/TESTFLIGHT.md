@@ -109,22 +109,23 @@ xcodebuild clean archive \
   CODE_SIGNING_ALLOWED=NO
 ```
 
-Latest fully signed/uploaded public evidence is `4.0.26` build `60`
-(`2026-06-05`, SDK 56.0.8 baseline). Build `60` validation completed so far:
+Current TestFlight release target is `4.0.27` build `61`
+(`2026-06-08`, SDK 56.0.9 baseline). Build `61` validation must complete after
+the final source/docs state is verified and pushed:
 
-- `bun run verify:all`, secret scan, and `asc doctor` have fresh build `60`
+- `bun run verify:all`, secret scan, and `asc doctor` must have fresh build `61`
   evidence.
 - Physical-device Release build/install completed for `4.0.22` build `56`;
   `devicectl` reported installed metadata `4.0.22`/`56` and launched the app
   successfully. A `devicectl` relaunch can still be denied by iOS when the phone
   is locked; that is tracked separately from install proof. Direct install for
-  `4.0.26` build `60` is blocked by local Xcode Development provisioning state
+  `4.0.27` build `61` is blocked by local Xcode Development provisioning state
   (`No Accounts` and no matching development profile).
-- Signed App Store archive/export and TestFlight upload passed for `4.0.26`
-  build `60`; App Store Connect processing returned `VALID`, and
-  `asc validate testflight` reported `0` errors and `0` warnings. Exact App
+- Signed App Store archive/export and TestFlight upload are required for
+  `4.0.27` build `61`; App Store Connect processing must return `VALID`, and
+  `asc validate testflight` must report `0` errors and `0` warnings. Exact App
   Store Connect identifiers remain private.
-- App Store Connect has no App Store version record for `4.0.26`; this is a
+- App Store Connect has no App Store version record for `4.0.27`; this is a
   TestFlight-only staging build, not an App Store submission.
 - Internal App Store Connect IDs, tester group names, device names, device identifiers, local paths, team IDs, profile names, and certificate IDs are intentionally omitted from public docs.
 
@@ -238,7 +239,7 @@ bun run ios -- --verbose
 - **App Store Connect** app record created
 - **Code signing** configured correctly
 - **Bundle ID** matches (`<BUNDLE_ID>`)
-- **Version numbers** consistent (v4.0.26 build 60)
+- **Version numbers** consistent (v4.0.27 build 61)
 - **Native DNS module** compiles successfully
 - **Xcode CLI smoke** passed:
   - Debug simulator build
@@ -266,12 +267,12 @@ eas build --platform ios --profile production
 
 ### TestFlight distribution
 
-Current v4.0.26 distribution target:
+Current v4.0.27 distribution target:
 
-- Version/build: `4.0.26` / `60`
-- Processing state: `VALID`; TestFlight validation reports `0` errors and `0`
-  warnings.
-- App Store state: no App Store version record exists for `4.0.26`; create or
+- Version/build: `4.0.27` / `61`
+- Processing state: pending signed archive/export/upload; TestFlight validation
+  must report `0` errors and `0` warnings before distribution is claimed.
+- App Store state: no App Store version record exists for `4.0.27`; create or
   update an App Store version only when preparing an App Store submission.
 - Tester groups: configured in App Store Connect; internal group names are intentionally omitted from public docs.
 - Exact build IDs and App Store Connect version IDs belong in private release notes, not public runbooks.
@@ -283,13 +284,14 @@ After upload:
 3. **Feedback**: Collect user feedback through TestFlight
 4. **Iterate**: Upload new builds for continuous testing
 
-### What to Test for v4.0.26 build 60
+### What to Test for v4.0.27 build 61
 
 - Complete onboarding from a fresh install and confirm the app lands on the chat list.
 - Open native menu actions and React Native modal sheet actions from chat, logs,
   messages, and settings; confirm they remain accessible and dismiss cleanly.
 - Open a stale chat deep link and confirm the conversation-not-found state
   appears instead of a blank chat.
+- Confirm settings/About version metadata reports `4.0.27` build `61`.
 - Send short prompts through the default DNS service and confirm responses render.
 - Confirm DNS failures, invalid settings, and unsupported server choices fail
   closed without exposing prompt text or TXT responses.
@@ -329,4 +331,4 @@ If you encounter issues during the upload process:
 
 ---
 
-_TestFlight upload guide for DNSChat v4.0.26 build 60 - Last updated: 2026-06-05_
+_TestFlight upload guide for DNSChat v4.0.27 build 61 - Last updated: 2026-06-08_

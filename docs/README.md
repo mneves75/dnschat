@@ -26,45 +26,46 @@ Developer documentation for DNSChat. Code is the source of truth — these docs 
 
 ## Current verification baseline
 
-Last architecture/dependency verification: `2026-06-05`.
-Last full source/security sweep: `2026-06-05`.
+Last architecture/dependency verification: `2026-06-08`.
+Last full source/security sweep: `2026-06-08`.
 Last AXe simulator E2E feature pass: `2026-06-05` for version `4.0.26` build
 `60`; 10 feature groups passed.
-Current release target: version `4.0.26` build `60`. Last uploaded and
-processed TestFlight build is version `4.0.26` build `60` (`VALID` on
-`2026-06-05`). App Store Connect has no App Store version record for `4.0.26`
-yet; this is a TestFlight-only staging build.
+Current release target: version `4.0.27` build `61`. This release lane carries
+Expo SDK 56 patch alignment and iOS pod lock refresh only. Signed archive/export,
+TestFlight upload, processing, and validation run after the final source/docs
+state is verified and pushed. The latest uploaded TestFlight build before this
+lane is version `4.0.26` build `60` (`VALID` on `2026-06-05`). App Store Connect
+has no App Store version record for `4.0.27` yet; this is a TestFlight-only
+staging build.
 
 - `npx react-doctor@latest --project chat-dns` reports `100 / 100` for
-  `chat-dns` on `2026-06-05`.
-- `bun run verify:all` passes on `2026-06-05`.
-- Native DNS module tests pass on `2026-06-05` (`7` suites passed, `1` skipped;
+  `chat-dns` on `2026-06-08`.
+- `bun run verify:all` passes on `2026-06-08`.
+- Native DNS module tests pass on `2026-06-08` (`7` suites passed, `1` skipped;
   `57` tests passed, `13` skipped).
 - AXe E2E baseline: 10 feature groups passed in one owned release-simulator
   run on `2026-06-05`.
-- Jest baseline for build `60` passed through the final full gate on
-  `2026-06-05`: `114` suites passed, `1` skipped; `919` tests passed, `13`
+- Jest baseline for build `61` passed through the final full gate on
+  `2026-06-08`: `114` suites passed, `1` skipped; `919` tests passed, `13`
   skipped.
-- `gitleaks detect` on `2026-06-05` reports `no leaks found` across `372`
-  scanned commits.
-- `bun audit` on `2026-06-05` reports `No vulnerabilities found`.
+- `gitleaks detect` on `2026-06-08` reports `no leaks found`.
+- `bun audit` on `2026-06-08` reports `No vulnerabilities found`.
 - `xcodebuild clean build` passes for Debug on an iOS 26.5 simulator on
-  `2026-06-05`.
+  `2026-06-08`.
 - `xcodebuild clean build` and `xcodebuild clean archive` pass for generic iOS
   Release when code signing is disabled (`CODE_SIGNING_ALLOWED=NO`) on
-  `2026-06-05`.
+  `2026-06-08`.
 - Physical-device Release build, install, installed metadata check, and launch
   passed on `2026-06-04` for version `4.0.22` build `56`. Direct physical-device
-  install for `4.0.26` build `60` is blocked by local Xcode Development
+  install for `4.0.27` build `61` is blocked by local Xcode Development
   provisioning state (`No Accounts` and no matching development profile).
-- Current target: `4.0.26` build `60`; last signed TestFlight build:
-  `4.0.26` build `60`. The release lane uses signed App Store archive/export,
-  App Store Connect upload, processing, and validation before the build is
-  described as distributed. Internal App Store Connect IDs are intentionally
-  omitted from public docs.
-- `asc validate testflight` for build `60` passes with `0` errors and `0`
-  warnings. App Store version validation for `4.0.26` is not applicable until a
-  matching App Store version record exists.
+- Current target: `4.0.27` build `61`. The release lane uses signed App Store
+  archive/export, App Store Connect upload, processing, and validation before
+  the build is described as distributed. Internal App Store Connect IDs are
+  intentionally omitted from public docs.
+- `asc validate testflight` must pass with `0` errors and `0` warnings before
+  build `61` is described as distributed. App Store version validation for
+  `4.0.27` is not applicable until a matching App Store version record exists.
 - `xcodebuild test` is not a native gate yet because the `DNSChat` scheme has no
   XCTest bundles.
 - Public docs and store copy must not claim that DNS prompts are private or

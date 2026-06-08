@@ -1,6 +1,6 @@
 {
   "name": "chat-dns",
-  "version": "4.0.26",
+  "version": "4.0.27",
   "description": "DNSChat - A React Native chat app using DNS TXT queries",
   "main": "entry.tsx",
   "author": "DNSChat contributors",
@@ -56,8 +56,8 @@
     "postinstall": "node scripts/postinstall-ios-pods.js"
   },
   "dependencies": {
-    "@expo/metro-runtime": "~56.0.13",
-    "@expo/ui": "~56.0.15",
+    "@expo/metro-runtime": "~56.0.14",
+    "@expo/ui": "~56.0.16",
     "@noble/ciphers": "^2.1.1",
     "@noble/hashes": "^2.0.1",
     "@react-native-async-storage/async-storage": "2.2.0",
@@ -65,16 +65,16 @@
     "@types/dns-packet": "^5.6.5",
     "date-fns": "^4.1.0",
     "dns-packet": "^5.6.1",
-    "expo": "~56.0.8",
-    "expo-asset": "~56.0.15",
-    "expo-build-properties": "~56.0.16",
-    "expo-constants": "56.0.16",
+    "expo": "~56.0.9",
+    "expo-asset": "~56.0.16",
+    "expo-build-properties": "~56.0.17",
+    "expo-constants": "~56.0.17",
     "expo-crypto": "~56.0.4",
     "expo-glass-effect": "~56.0.4",
     "expo-haptics": "~56.0.3",
     "expo-linking": "~56.0.13",
     "expo-localization": "~56.0.6",
-    "expo-router": "~56.2.8",
+    "expo-router": "~56.2.9",
     "expo-secure-store": "~56.0.4",
     "expo-splash-screen": "~56.0.10",
     "expo-status-bar": "~56.0.4",
@@ -110,7 +110,6 @@
     "typescript": "~6.0.3"
   },
   "overrides": {
-    "expo-constants": "56.0.16",
     "@xmldom/xmldom": ">=0.8.13",
     "brace-expansion": "5.0.6",
     "handlebars": ">=4.7.9",

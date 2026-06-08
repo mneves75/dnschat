@@ -42,6 +42,39 @@
   <p><strong>Stop condition:</strong> no known critical/high issues remain; medium findings are either fixed or explicitly justified; strongest local checks have fresh outcomes; browser/runtime evidence is captured for user-visible frontend changes when feasible.</p>
 
   <hr />
+  <h2>Release Pass &mdash; 2026-06-08 (4.0.27 build 61, SDK patch alignment, TestFlight target)</h2>
+
+  <p><strong>Goal:</strong> package the security-review dependency and pod alignment as a real TestFlight staging build: bump version, update public release docs, verify the final source/docs state, commit, push, archive/export, upload to TestFlight, and validate processing.</p>
+
+  <h3>Release decisions</h3>
+  <ul>
+    <li><strong>Versioning:</strong> <code>package.json</code> was bumped from <code>4.0.26</code> to <code>4.0.27</code>, then <code>bun run sync-versions --bump-build</code> advanced native build metadata from <code>60</code> to <code>61</code>.</li>
+    <li><strong>Scope:</strong> this release carries Expo SDK 56 patch alignment and matching iOS pod lock refresh only. No application behavior, route, UI, DNS transport, storage, or logging source files changed.</li>
+    <li><strong>Archive order:</strong> public release docs are updated before the signed archive so the uploaded TestFlight binary is built from the final source/dependency/pod/version/docs state.</li>
+    <li><strong>TestFlight scope:</strong> this pass targets TestFlight staging. It does not create a new App Store version record for <code>4.0.27</code>; App Store submission validation remains a separate App Store Connect state check.</li>
+  </ul>
+
+  <h3>Changes applied</h3>
+  <ul>
+    <li><strong>SDK patch alignment:</strong> updated Expo SDK 56 patch packages, including <code>expo</code>, <code>expo-router</code>, <code>expo-asset</code>, <code>expo-build-properties</code>, <code>expo-constants</code>, <code>@expo/metro-runtime</code>, and <code>@expo/ui</code>, and removed the stale <code>expo-constants</code> override.</li>
+    <li><strong>Native pod alignment:</strong> refreshed <code>ios/Podfile.lock</code> so Expo native pods and the React prebuilt dependency lock match the JS dependency set.</li>
+    <li><strong>Release docs:</strong> changelog, README, docs index, install guide, security policy, Android release notes, App Store Connect notes, TestFlight guide, CLAUDE.md, and this file now point to the <code>4.0.27</code> build <code>61</code> release target where current evidence is expected.</li>
+  </ul>
+
+  <h3>Validation evidence</h3>
+  <ul>
+    <li><code>bun run sync-versions --bump-build</code>: passed; metadata advanced from <code>4.0.26</code>/<code>60</code> to <code>4.0.27</code>/<code>61</code>.</li>
+    <li><code>bun run verify:all</code>, module-local native DNS tests, <code>asc doctor</code>, signed archive/export, TestFlight upload, and TestFlight validation are the required closeout gates for this release lane.</li>
+    <li><strong>No AXe rerun required by change scope:</strong> this pass does not change UI, navigation, accessibility, localization, or browser-visible code. The latest AXe release E2E evidence remains the <code>4.0.26</code> build <code>60</code> run from <code>2026-06-05</code>.</li>
+  </ul>
+
+  <h3>Open validation / release gates</h3>
+  <ul>
+    <li>Signed TestFlight upload and ASC validation must complete after this final docs/source state is verified, committed, and pushed.</li>
+    <li>App Store version validation is expected to remain not applicable until a matching App Store version record exists for <code>4.0.27</code>. That is not a TestFlight processing blocker.</li>
+  </ul>
+
+  <hr />
   <h2>Release Pass &mdash; 2026-06-05 (4.0.26 build 60, AXe E2E, TestFlight staging)</h2>
 
   <p><strong>Goal:</strong> package the premium/react-doctor hardening line as a real mobile staging build: bump version, update release docs, run full E2E, validate the native build surfaces, attempt iMarcus install, and deploy to TestFlight if signing credentials permit.</p>
