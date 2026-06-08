@@ -1,6 +1,6 @@
 # Installation
 
-This repo builds DNSChat `4.0.26` (React Native `0.85.x`, Expo SDK `56.0.8`).
+This repo builds DNSChat `4.0.27` (React Native `0.85.x`, Expo SDK `56.0.9`).
 
 Prereqs:
 
@@ -128,21 +128,21 @@ xcrun devicectl device install app \
 
 Latest physical-device evidence: a compiled native Release build installed on a
 physical device, reported version `4.0.22` build `56`, and launched successfully
-via `devicectl` on `2026-06-04`. A direct physical-device install for `4.0.26`
-build `60` is blocked by local Xcode Development provisioning state (`No
+via `devicectl` on `2026-06-04`. A direct physical-device install for `4.0.27`
+build `61` is blocked by local Xcode Development provisioning state (`No
 Accounts` and no matching development profile); TestFlight is the verified
-staging path for build `60`.
+staging path for build `61`.
 
 Latest AXe simulator release evidence: `2026-06-05`, version `4.0.26` build
 `60`, 10 feature groups passed in one owned release-simulator run.
 
-Current release target: version `4.0.26` build `60`. Last uploaded and processed
-TestFlight build is version `4.0.26` build `60`. The release lane archives,
-exports, uploads, waits for processing, and validates TestFlight before the
-build is described as distributed. App Store Connect has no App Store version
-record for `4.0.26` yet, so App Store submission validation is not applicable
-for this TestFlight-only staging build. App Store Connect identifiers, signing
-identifiers, tester group names, local paths, and device identifiers are
+Current release target: version `4.0.27` build `61`. The latest uploaded
+TestFlight build before this lane is version `4.0.26` build `60`. The release
+lane archives, exports, uploads, waits for processing, and validates TestFlight
+before the build is described as distributed. App Store Connect has no App Store
+version record for `4.0.27` yet, so App Store submission validation is not
+applicable for this TestFlight-only staging build. App Store Connect identifiers,
+signing identifiers, tester group names, local paths, and device identifiers are
 intentionally omitted from public docs.
 
 Signed TestFlight release shape:

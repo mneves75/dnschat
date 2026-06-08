@@ -6,6 +6,35 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+## [4.0.27] - 2026-06-08
+
+Build `60` -> `61`. Expo SDK 56 patch alignment and TestFlight staging refresh
+after the security review.
+
+### Changed
+
+- Bumped Expo, iOS, and Android version metadata to `4.0.27` build/code `61`
+  with `bun run sync-versions --bump-build`.
+- Aligned Expo SDK 56 patch packages and regenerated the Bun and CocoaPods lock
+  state so Expo Doctor, JS dependencies, and native pods agree before the signed
+  archive.
+- Updated public release docs, App Store/TestFlight runbooks, security baseline,
+  and implementation notes for the 4.0.27 TestFlight lane.
+
+### Verified
+
+- `bun run verify:all` passed, including public redaction, security, Expo
+  Doctor `20/20`, SDK alignment, typed routes, typecheck, DNS resolver sync,
+  iOS pods sync, React Compiler healthcheck, Android setup checks, lint, and
+  Jest.
+- `cd modules/dns-native && bun run test` passed.
+- `asc doctor` passed.
+- Xcode Debug simulator build passed after the pod refresh.
+- Signed App Store archive/export and TestFlight upload/validation are the
+  required distribution gates for this build. App Store version validation is a
+  separate App Store-submission state check and remains not applicable until a
+  matching App Store version record exists.
+
 ## [4.0.26] - 2026-06-05
 
 Build `59` -> `60`. Release packaging and TestFlight staging pass for the
@@ -932,7 +961,8 @@ Versions 3.2.0 through 3.8.9 established the core feature set:
 - **3.3.0**: Android CI, release signing policy, Java 17 auto-detection
 - **3.2.x**: Public repo hardening (secrets scanning, policy tests, version sync gates), DNS server allowlist
 
-[Unreleased]: https://github.com/<owner>/dnschat/compare/v4.0.26...HEAD
+[Unreleased]: https://github.com/<owner>/dnschat/compare/v4.0.27...HEAD
+[4.0.27]: https://github.com/<owner>/dnschat/compare/v4.0.26...v4.0.27
 [4.0.26]: https://github.com/<owner>/dnschat/compare/v4.0.25...v4.0.26
 [4.0.25]: https://github.com/<owner>/dnschat/compare/v4.0.24...v4.0.25
 [4.0.24]: https://github.com/<owner>/dnschat/compare/v4.0.23...v4.0.24

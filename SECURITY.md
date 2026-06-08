@@ -29,11 +29,12 @@ Please do not open public issues for security vulnerabilities.
 
 ## Current Security Baseline
 
-Last full source/security sweep: `2026-06-05`.
-Last iOS signed release archive/export/upload: `4.0.26` build `60`; App Store
+Last full source/security sweep: `2026-06-08`.
+Current iOS TestFlight release target: `4.0.27` build `61`. The latest
+uploaded TestFlight build before this lane is `4.0.26` build `60`; App Store
 Connect processing returned `VALID` on `2026-06-05`.
 
-- Dependency audits pass on `2026-06-05` (`bun audit` reports
+- Dependency audits pass on `2026-06-08` (`bun audit` reports
   `No vulnerabilities found`).
 - Secret scanning passes with `gitleaks detect --source . --redact --no-banner --config .gitleaks.toml`.
 - Public-repo leak prevention uses defense in depth: local `gitleaks`,
@@ -41,18 +42,16 @@ Connect processing returned `VALID` on `2026-06-05`.
   and push protection when available.
 - Xcode Debug simulator build, unsigned generic iOS Release build/archive,
   physical-device compiled-app install, signed App Store archive/export, and
-  TestFlight upload are part of the release gate. For `4.0.26` build `60`,
-  simulator build, unsigned Release build/archive, signed App Store
-  archive/export/upload, and TestFlight validation passed on `2026-06-05`.
+  TestFlight upload are part of the release gate. For `4.0.27` build `61`,
+  simulator build, local verification, signed App Store archive/export/upload,
+  and TestFlight validation must pass before distribution is claimed.
   Direct physical-device install is blocked by local Xcode Development
   provisioning state (`No Accounts` and no matching development profile).
 - TestFlight validation must report `0` errors and `0` warnings before a build
-  is described as distributed. `asc validate testflight` for `4.0.26` build
-  `60` reports `0` errors and `0` warnings. App Store version validation for
-  `4.0.26` is not applicable yet because App Store Connect has no matching App
-  Store version record. Internal App Store Connect IDs, tester group names,
-  device names, local paths, and signing identifiers are intentionally omitted
-  from public docs.
+  is described as distributed. App Store version validation for `4.0.27` is not
+  applicable until App Store Connect has a matching App Store version record.
+  Internal App Store Connect IDs, tester group names, device names, local paths,
+  and signing identifiers are intentionally omitted from public docs.
 - iOS sourcemap generation is enabled for release symbolication. Source maps
   are private debugging artifacts: do not commit them, ship them inside IPA/AAB
   binaries, or publish them to public storage. Upload them only to the intended
