@@ -34,7 +34,7 @@ architecture, and performance review with fixes: dnsjava `3.6.2`
 (CVE-2024-25638), subset-only native allowlist narrowing, UDP datagram
 re-arm validation, inbound TXT control/bidi sanitization, `shell-quote`
 override (GHSA-w7jw-789q-3m8p), additional Clang security diagnostics).
-Current iOS TestFlight release target: `4.0.29` build `63`. The latest
+Current iOS TestFlight release target: `4.0.30` build `64`. The latest
 uploaded TestFlight build before this lane is `4.0.26` build `60`; App Store
 Connect processing returned `VALID` on `2026-06-05`.
 
@@ -46,13 +46,13 @@ Connect processing returned `VALID` on `2026-06-05`.
   and push protection when available.
 - Xcode Debug simulator build, unsigned generic iOS Release build/archive,
   physical-device compiled-app install, signed App Store archive/export, and
-  TestFlight upload are part of the release gate. For `4.0.29` build `63`,
+  TestFlight upload are part of the release gate. For `4.0.30` build `64`,
   simulator build, local verification, signed App Store archive/export/upload,
   and TestFlight validation must pass before distribution is claimed.
   Direct physical-device install is blocked by local Xcode Development
   provisioning state (`No Accounts` and no matching development profile).
 - TestFlight validation must report `0` errors and `0` warnings before a build
-  is described as distributed. App Store version validation for `4.0.29` is not
+  is described as distributed. App Store version validation for `4.0.30` is not
   applicable until App Store Connect has a matching App Store version record.
   Internal App Store Connect IDs, tester group names, device names, local paths,
   and signing identifiers are intentionally omitted from public docs.

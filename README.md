@@ -7,7 +7,7 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 - JavaScript fallback transports (UDP/TCP) for constrained networks
 - An in-app Logs screen to inspect attempts, failures, and fallbacks
 
-[![Version](https://img.shields.io/badge/version-4.0.29-blue.svg)](.)
+[![Version](https://img.shields.io/badge/version-4.0.30-blue.svg)](.)
 [![React Native](https://img.shields.io/badge/React%20Native-0.85.3-blue.svg)](https://reactnative.dev/)
 [![Expo](https://img.shields.io/badge/Expo-56.0.9-black.svg)](https://expo.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0.x-blue.svg)](https://www.typescriptlang.org/)
@@ -31,7 +31,7 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 
 ## Tech stack
 
-- App version: `4.0.29` (build `63`)
+- App version: `4.0.30` (build `64`)
 - Expo workflow: Expo Router + EAS-compatible native config
 - Expo SDK: `56.0.9`
 - React: `19.2.3`
@@ -213,7 +213,7 @@ layer, storage, and UI — see `CHANGELOG.md` `4.0.29`).
 Last AXe simulator E2E feature pass: `2026-06-05` for version `4.0.26` build
 `60`; 10 feature groups passed (historical; Argent MCP is the current
 verification surface).
-Current release target: version `4.0.29` build `63`. This release lane carries
+Current release target: version `4.0.30` build `64`. This release lane carries
 the 4.0.28 chat-error presentation fix plus the full review hardening
 (dnsjava CVE fix, subset-only native allowlist, UDP datagram re-arm,
 inbound response sanitization, storage mutation cache, splash off the
@@ -221,7 +221,7 @@ log-decrypt path, single shared chat-list action sheet). Signed
 archive/export, TestFlight upload, processing, and validation run after the
 final source/docs state is verified and pushed. The latest already-uploaded
 TestFlight build before this lane is version `4.0.26` build `60` (`VALID` on
-`2026-06-05`). App Store Connect has no App Store version record for `4.0.29`,
+`2026-06-05`). App Store Connect has no App Store version record for `4.0.30`,
 so App Store submission validation is not applicable for this TestFlight-only
 staging build.
 
@@ -258,12 +258,12 @@ staging build.
   physical-device install remains blocked by local Xcode Development
   provisioning state (`No Accounts` and no matching development profile);
   TestFlight is the verified staging path for this build.
-- Current target: `4.0.29` build `63`; the release lane uses signed App Store
+- Current target: `4.0.30` build `64`; the release lane uses signed App Store
   archive/export, App Store Connect upload, processing, and validation before
   the build is described as distributed. Internal App Store Connect IDs and
   tester group names are intentionally omitted from public docs.
 - Historical `asc validate testflight` evidence is superseded by each uploaded
-  build validation. App Store submission validation for `4.0.29` is not
+  build validation. App Store submission validation for `4.0.30` is not
   applicable until a matching App Store version record exists.
 - `xcodebuild test` is not a native gate yet because the `DNSChat` scheme has no
   XCTest bundles.
