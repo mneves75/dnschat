@@ -108,8 +108,8 @@ android {
         applicationId 'org.mvneves.dnschat'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 61
-        versionName "4.0.27"
+        versionCode 63
+        versionName "4.0.29"
 
         buildConfigField "String", "REACT_NATIVE_RELEASE_LEVEL", "\"${findProperty('reactNativeReleaseLevel') ?: 'stable'}\""
     }
@@ -180,7 +180,8 @@ android {
 
 dependencies {
     // DNS Java library for legacy DNS support (API < 29)
-    implementation("dnsjava:dnsjava:3.5.2")
+    // 3.6.2+ fixes CVE-2024-25638 (improper DNS response validation)
+    implementation("dnsjava:dnsjava:3.6.2")
 
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")

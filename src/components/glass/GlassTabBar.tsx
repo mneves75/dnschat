@@ -107,34 +107,34 @@ const useGlassTabColors = () => {
 // SF SYMBOL FALLBACK SYSTEM
 // ==================================================================================
 
+// Non-emoji fallback glyphs for platforms without SF Symbols.
+const SF_SYMBOL_FALLBACK_MAP: Record<string, string> = {
+  house: "H",
+  "house.fill": "H",
+  magnifyingglass: "S",
+  person: "P",
+  "person.fill": "P",
+  gear: "G",
+  message: "C",
+  "message.fill": "C",
+  "list.bullet": "L",
+  "info.circle": "i",
+  "info.circle.fill": "i",
+  bell: "N",
+  "bell.fill": "N",
+  bookmark: "B",
+  "bookmark.fill": "B",
+  star: "*",
+  "star.fill": "*",
+};
+
 const SFSymbolFallback: React.FC<{
   symbol: string;
   size?: number;
   color?: string;
   isActive?: boolean;
 }> = ({ symbol, size = 22, color = "#8E8E93", isActive = false }) => {
-  // Non-emoji fallback glyphs for platforms without SF Symbols
-  const symbolMap: { [key: string]: string } = {
-    house: "H",
-    "house.fill": "H",
-    magnifyingglass: "S",
-    person: "P",
-    "person.fill": "P",
-    gear: "G",
-    message: "C",
-    "message.fill": "C",
-    "list.bullet": "L",
-    "info.circle": "i",
-    "info.circle.fill": "i",
-    bell: "N",
-    "bell.fill": "N",
-    bookmark: "B",
-    "bookmark.fill": "B",
-    star: "*",
-    "star.fill": "*",
-  };
-
-  const fallbackIcon = symbolMap[symbol] || "•";
+  const fallbackIcon = SF_SYMBOL_FALLBACK_MAP[symbol] || "•";
 
   return (
     <Text

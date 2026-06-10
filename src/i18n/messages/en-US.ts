@@ -265,6 +265,7 @@ export const enUS = {
       errorAlertTitle: "Error",
       errorAlertDismiss: "OK",
       errorRetry: "Retry",
+      errorMessage: "DNS request failed. Try again or check DNS logs in Settings.",
       placeholder: "Ask me anything...",
       emptyState: {
         title: "Start a conversation!",

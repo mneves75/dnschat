@@ -34,6 +34,8 @@ jest.mock("../modules/dns-native", () => ({
   nativeDNS: { queryTXT: jest.fn() },
   DNSError: class extends Error {},
   DNSErrorType: {},
+  parseMultiPartTXTResponse: (records: string[]) => records.join(""),
+  sanitizeLLMResponseText: (text: string) => text,
 }));
 
 // Import after mocking

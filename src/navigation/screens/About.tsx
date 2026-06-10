@@ -23,7 +23,7 @@ import { LiquidGlassSpacing, getCornerRadius } from "../../ui/theme/liquidGlassS
 import { useScreenEntrance } from "../../ui/hooks/useScreenEntrance";
 import { devLog } from "../../utils/devLog";
 import { getAppVersionInfo } from "../../utils/appVersion";
-import { openExternalUrl } from "../../utils/externalLinks";
+import { openExternalLink } from "../../utils/externalLinks";
 
 const AppIcon = require("../../assets/dnschat_ios26.png");
 
@@ -34,10 +34,6 @@ export function About() {
   const typography = useTypography();
   const { animatedStyle } = useScreenEntrance();
   const [iconError, setIconError] = useState(false);
-
-  const openLink = (url: string) => {
-    void openExternalUrl(url);
-  };
 
   const credits = [
     {
@@ -162,7 +158,7 @@ export function About() {
             "screen.about.sections.inspiration.items.arxivTweet.subtitle",
           )}
           onPress={() =>
-            openLink("https://x.com/Arxiv_Daily/status/1952452878716805172")
+            openExternalLink("https://x.com/Arxiv_Daily/status/1952452878716805172")
           }
         />
         <Form.Link
@@ -170,14 +166,14 @@ export function About() {
           subtitle={t(
             "screen.about.sections.inspiration.items.chatProject.subtitle",
           )}
-          onPress={() => openLink("https://github.com/Deep-ai-inc/ch.at")}
+          onPress={() => openExternalLink("https://github.com/Deep-ai-inc/ch.at")}
         />
         <Form.Link
           title={t("screen.about.sections.inspiration.items.levelsio.title")}
           subtitle={t(
             "screen.about.sections.inspiration.items.levelsio.subtitle",
           )}
-          onPress={() => openLink("https://x.com/levelsio")}
+          onPress={() => openExternalLink("https://x.com/levelsio")}
         />
       </Form.Section>
 
@@ -187,21 +183,21 @@ export function About() {
           subtitle={t(
             "screen.about.sections.project.items.github.subtitle",
           )}
-          onPress={() => openLink("https://github.com/mneves75/dnschat")}
+          onPress={() => openExternalLink("https://github.com/mneves75/dnschat")}
         />
         <Form.Link
           title={t("screen.about.sections.project.items.issues.title")}
           subtitle={t(
             "screen.about.sections.project.items.issues.subtitle",
           )}
-          onPress={() => openLink("https://github.com/mneves75/dnschat/issues")}
+          onPress={() => openExternalLink("https://github.com/mneves75/dnschat/issues")}
         />
         <Form.Link
           title={t("screen.about.sections.project.items.updates.title")}
           subtitle={t(
             "screen.about.sections.project.items.updates.subtitle",
           )}
-          onPress={() => openLink("https://x.com/dnschat")}
+          onPress={() => openExternalLink("https://x.com/dnschat")}
         />
         <Form.Item
           testID="about-project-settings-link"
@@ -239,7 +235,7 @@ export function About() {
             key={credit.name}
             title={credit.name}
             subtitle={credit.description}
-            onPress={() => openLink(credit.url)}
+            onPress={() => openExternalLink(credit.url)}
           />
         ))}
       </Form.Section>

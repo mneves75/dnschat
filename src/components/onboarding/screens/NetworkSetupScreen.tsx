@@ -15,6 +15,7 @@ import { useTypography } from "../../../ui/hooks/useTypography";
 import { LiquidGlassSpacing } from "../../../ui/theme/liquidGlassSpacing";
 import { useTranslation } from "../../../i18n";
 import { devWarn } from "../../../utils/devLog";
+import { wait } from "../../../utils/wait";
 
 interface NetworkTest {
   method: string;
@@ -55,51 +56,6 @@ export function NetworkSetupScreen() {
   ]);
   const isMountedRef = React.useRef(true);
 
-  const runNetworkOptimization = async () => {
-    setIsOptimizing(true);
-
-    const updateTest = (index: number, updates: Partial<NetworkTest>) => {
-      setNetworkTests((prev) =>
-        prev.map((test, i) => (i === index ? { ...test, ...updates } : test)),
-      );
-    };
-
-    try {
-      // Visual configuration progression; this applies the transport order
-      // without pretending to measure live network success.
-      updateTest(0, { status: "configuring" });
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      if (!isMountedRef.current) return;
-      updateTest(0, { status: "configured" });
-
-      updateTest(1, { status: "configuring" });
-      await new Promise((resolve) => setTimeout(resolve, 800));
-      if (!isMountedRef.current) return;
-      updateTest(1, { status: "configured" });
-
-      updateTest(2, { status: "configuring" });
-      await new Promise((resolve) => setTimeout(resolve, 600));
-      if (!isMountedRef.current) return;
-      updateTest(2, { status: "configured" });
-
-      // Default to automatic fallback chain (no probing yet).
-      setRecommendedSetting(true);
-
-      setOptimizationComplete(true);
-    } catch (error) {
-      devWarn("[NetworkSetupScreen] Network configuration failed", error);
-      Alert.alert(
-        t("screen.onboarding.networkSetup.alerts.errorTitle"),
-        t("screen.onboarding.networkSetup.alerts.errorMessage"),
-      );
-    }
-    // Replaces `finally`; mount-guarded so the early `!isMountedRef` returns
-    // (where this would be a no-op anyway) skip it harmlessly.
-    if (isMountedRef.current) {
-      setIsOptimizing(false);
-    }
-  };
-
   const applyRecommendedSettings = async () => {
     if (recommendedSetting !== null) {
       setIsApplyingSettings(true);
@@ -127,6 +83,44 @@ export function NetworkSetupScreen() {
   // Effect: defer network optimization to allow initial UI paint.
   useEffect(() => {
     isMountedRef.current = true;
+    const updateTest = (index: number, updates: Partial<NetworkTest>) => {
+      setNetworkTests((prev) =>
+        prev.map((test, i) => (i === index ? { ...test, ...updates } : test)),
+      );
+    };
+
+    const runNetworkOptimization = async () => {
+      setIsOptimizing(true);
+
+      try {
+        // Visual configuration progression; this applies the transport order
+        // without pretending to measure live network success.
+        const stageDelaysMs = [1000, 800, 600];
+        for (const [index, delayMs] of stageDelaysMs.entries()) {
+          updateTest(index, { status: "configuring" });
+          await wait(delayMs);
+          if (!isMountedRef.current) return;
+          updateTest(index, { status: "configured" });
+        }
+
+        // Default to automatic fallback chain (no probing yet).
+        setRecommendedSetting(true);
+
+        setOptimizationComplete(true);
+      } catch (error) {
+        devWarn("[NetworkSetupScreen] Network configuration failed", error);
+        Alert.alert(
+          t("screen.onboarding.networkSetup.alerts.errorTitle"),
+          t("screen.onboarding.networkSetup.alerts.errorMessage"),
+        );
+      }
+      // Replaces `finally`; mount-guarded so the early `!isMountedRef` returns
+      // (where this would be a no-op anyway) skip it harmlessly.
+      if (isMountedRef.current) {
+        setIsOptimizing(false);
+      }
+    };
+
     const timer = setTimeout(() => {
       runNetworkOptimization();
     }, 1000);
@@ -135,7 +129,7 @@ export function NetworkSetupScreen() {
       isMountedRef.current = false;
       clearTimeout(timer);
     };
-  }, [t, runNetworkOptimization]);
+  }, [t]);
 
   return (
     <View testID="onboarding-network-setup" style={styles.container}>

@@ -1183,6 +1183,16 @@ public class DNSResolver {
                     "allowedServers must contain at least one entry"
                 );
             }
+            // Subset-only narrowing: the supplied list may only narrow the
+            // compiled-in default allowlist, never extend it. This hardens the
+            // native layer against a hijacked JS bundle injecting rogue servers.
+            normalized.retainAll(DEFAULT_ALLOWED_SERVERS);
+            if (normalized.isEmpty()) {
+                throw SanitizerConfigException.of(
+                    CODE_INVALID_RANGE,
+                    "allowedServers must be a subset of the built-in allowlist"
+                );
+            }
             return Collections.unmodifiableSet(normalized);
         }
 

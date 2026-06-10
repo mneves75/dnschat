@@ -24,6 +24,11 @@ export function isAllowedExternalUrl(url: string): boolean {
   }
 }
 
+/** Fire-and-forget form for press handlers that don't care about the result. */
+export function openExternalLink(url: string): void {
+  void openExternalUrl(url);
+}
+
 export async function openExternalUrl(url: string): Promise<boolean> {
   if (!isAllowedExternalUrl(url)) {
     devWarn("[ExternalLinks] Blocked unsupported external URL", {

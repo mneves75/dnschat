@@ -55,14 +55,17 @@ export class DNSLogService {
   private static cleanupIntervalId: ReturnType<typeof setInterval> | null = null;
   private static persistenceQueue: Promise<void> = Promise.resolve();
   /**
-   * Per-query set of raw, unredacted sensitive values (prompt text + chat title)
-   * used to scrub those exact strings out of log entry `details`/`error` text.
+   * Per-query map of raw, unredacted sensitive values (prompt text + chat title)
+   * to their pre-compiled redaction regexes, used to scrub those exact strings
+   * out of log entry `details`/`error` text. The patterns are compiled once per
+   * query in `startQuery()` (PERFORMANCE: previously a `new RegExp` was built
+   * per sensitive value per entry in `sanitizeEntry`).
    * Lifecycle: populated in `startQuery()`; dropped in `endQuery()` (success or
    * failure), `deleteLog()`, and `clearLogs()`. `DNSService.queryLLM()` wraps its
    * body in try/finally so an early throw still finalizes the query and clears
    * this entry — these values must never outlive the query that produced them.
    */
-  private static sensitiveValuesByQueryId: Map<string, Set<string>> = new Map();
+  private static sensitiveValuesByQueryId: Map<string, RegExp[]> = new Map();
   private static redactText(value: string): string {
     const hash = bytesToHex(sha256(utf8ToBytes(value)));
     return `sha256:${hash} len:${value.length}`;
@@ -80,9 +83,14 @@ export class DNSLogService {
     return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   }
 
-  private static redactSensitiveValue(value: string, sensitiveValue: string): string {
+  private static buildSensitiveValuePattern(sensitiveValue: string): RegExp {
     const escaped = this.escapeRegExp(sensitiveValue);
-    const pattern = new RegExp(`(^|[^A-Za-z0-9-])(${escaped})(?=$|[^A-Za-z0-9-])`, "g");
+    return new RegExp(`(^|[^A-Za-z0-9-])(${escaped})(?=$|[^A-Za-z0-9-])`, "g");
+  }
+
+  private static redactSensitiveValue(value: string, pattern: RegExp): string {
+    // Safe to reuse a /g pattern: String.prototype.replace resets lastIndex
+    // for global regexes before and after matching.
     return value.replace(
       pattern,
       (_match, prefix: string, matchedValue: string) =>
@@ -113,9 +121,10 @@ export class DNSLogService {
 
   private static sanitizeEntryText(queryId: string, value: string): string {
     let sanitized = value;
-    for (const sensitiveValue of this.sensitiveValuesByQueryId.get(queryId) ?? []) {
-      if (sensitiveValue) {
-        sanitized = this.redactSensitiveValue(sanitized, sensitiveValue);
+    const patterns = this.sensitiveValuesByQueryId.get(queryId);
+    if (patterns) {
+      for (const pattern of patterns) {
+        sanitized = this.redactSensitiveValue(sanitized, pattern);
       }
     }
     sanitized = this.redactKnownDnsQueries(sanitized);
@@ -282,10 +291,13 @@ export class DNSLogService {
       entries: [],
     };
     this.activeQueryLogs.set(queryId, queryLog);
-    this.sensitiveValuesByQueryId.set(
-      queryId,
-      new Set([query, ...(rawChatTitle ? [rawChatTitle] : [])]),
+    // Compile each sensitive-value redaction pattern once per query; the Set
+    // dedupes raw values (e.g. title === query) before compilation.
+    const sensitivePatterns = Array.from(
+      new Set([query, rawChatTitle].filter((value): value is string => !!value)),
+      (value) => this.buildSensitiveValuePattern(value),
     );
+    this.sensitiveValuesByQueryId.set(queryId, sensitivePatterns);
     this.addLog(queryId, {
       id: this.generateUniqueId(`${queryId}-start`),
       timestamp: new Date(),
@@ -691,6 +703,11 @@ export class DNSLogService {
   }
 
   private static notifyListeners() {
+    // PERFORMANCE: getLogs() sorts and shallow-clones up to MAX_LOGS query
+    // logs on every addLog(); skip that entirely when nobody is subscribed.
+    // Persistence is handled by the callers (enqueuePersistentMutation) and
+    // is unaffected by this early return.
+    if (this.listeners.size === 0) return;
     const logs = this.getLogs();
     this.listeners.forEach((listener) => listener(logs));
   }

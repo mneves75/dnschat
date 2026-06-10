@@ -22,6 +22,7 @@ import { useTypography } from "../../../ui/hooks/useTypography";
 import { LiquidGlassSpacing } from "../../../ui/theme/liquidGlassSpacing";
 import { useTranslation } from "../../../i18n";
 import { devWarn } from "../../../utils/devLog";
+import { wait } from "../../../utils/wait";
 
 interface DNSStep {
   id: string;
@@ -60,9 +61,6 @@ const DNS_DEMO_STEPS = [
     failedKey: "screen.onboarding.dnsMagic.fallbackMethods.tcp.failed",
   },
 ] as const;
-
-const wait = (ms: number): Promise<void> =>
-  new Promise((resolve) => setTimeout(resolve, ms));
 
 export function DNSMagicScreen() {
   const palette = useImessagePalette();

@@ -74,6 +74,13 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
   },
 ];
 
+const INITIAL_ONBOARDING_STATE: PersistedOnboardingState = {
+  completed: false,
+  stepIndex: 0,
+  completedSteps: [],
+};
+const INITIAL_ONBOARDING_PERSIST_QUEUE = Promise.resolve();
+
 export function OnboardingProvider({
   children,
 }: {
@@ -84,12 +91,12 @@ export function OnboardingProvider({
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [steps, setSteps] = useState<OnboardingStep[]>(ONBOARDING_STEPS);
   const [loading, setLoading] = useState(true);
-  const onboardingStateRef = useRef<PersistedOnboardingState>({
-    completed: false,
-    stepIndex: 0,
-    completedSteps: [],
-  });
-  const persistQueueRef = useRef<Promise<void>>(Promise.resolve());
+  const onboardingStateRef = useRef<PersistedOnboardingState>(
+    INITIAL_ONBOARDING_STATE,
+  );
+  const persistQueueRef = useRef<Promise<void>>(
+    INITIAL_ONBOARDING_PERSIST_QUEUE,
+  );
 
   const applySnapshot = (snapshot: PersistedOnboardingState) => {
     onboardingStateRef.current = snapshot;

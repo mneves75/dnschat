@@ -1,9 +1,16 @@
 {
   "ignore": {
-    "rules": ["knip/*", "knip/files", "knip/exports", "knip/dependencies"],
+    "rules": [
+      "knip/*",
+      "knip/files",
+      "knip/exports",
+      "knip/dependencies"
+    ],
     "overrides": [
       {
-        "files": ["__tests__/**"],
+        "files": [
+          "__tests__/**"
+        ],
         "rules": [
           "react-doctor/async-defer-await",
           "react-doctor/async-await-in-loop",
@@ -22,14 +29,47 @@
           "src/context/ChatContext.tsx",
           "src/context/OnboardingContext.tsx"
         ],
-        "rules": ["react-hooks-js/set-state-in-effect"]
+        "rules": [
+          "react-hooks-js/set-state-in-effect"
+        ]
       },
       {
-        "files": ["app/_layout.tsx"],
-        "rules": ["react-doctor/react-compiler-no-manual-memoization"]
+        "files": [
+          "src/context/OnboardingContext.tsx"
+        ],
+        "rules": [
+          "react-doctor/jsx-no-constructed-context-values"
+        ]
       },
       {
-        "files": ["scripts/**", "test-dns-simple.js"],
+        "files": [
+          "package.json"
+        ],
+        "rules": [
+          "react-doctor/expo-lockfile"
+        ]
+      },
+      {
+        "files": [
+          "src/components/MessageBubble.tsx"
+        ],
+        "rules": [
+          "react-doctor/react-compiler-no-manual-memoization"
+        ]
+      },
+      {
+        "files": [
+          "src/ui/hooks/useStaggeredList.tsx"
+        ],
+        "rules": [
+          "react-doctor/no-derived-state"
+        ]
+      },
+      {
+        "files": [
+          "scripts/**",
+          "test-dns-simple.js"
+        ],
         "rules": [
           "react-doctor/async-await-in-loop",
           "react-doctor/js-combine-iterations",
@@ -40,7 +80,10 @@
         ]
       },
       {
-        "files": ["modules/dns-native/**", "plugins/**"],
+        "files": [
+          "modules/dns-native/**",
+          "plugins/**"
+        ],
         "rules": [
           "react-doctor/async-await-in-loop",
           "react-doctor/js-tosorted-immutable",
@@ -48,7 +91,10 @@
         ]
       },
       {
-        "files": ["app/_layout.tsx", "app/chat/[threadId].tsx"],
+        "files": [
+          "app/_layout.tsx",
+          "app/chat/[threadId].tsx"
+        ],
         "rules": [
           "react-doctor/no-cascading-set-state",
           "react-doctor/rerender-state-only-in-handlers"
@@ -70,22 +116,22 @@
       {
         "files": [
           "src/components/ChatInput.tsx",
-          "src/components/onboarding/OnboardingContainer.tsx",
-          "src/components/ui/LiquidGlassButton.tsx"
+          "src/components/onboarding/OnboardingContainer.tsx"
         ],
-        "rules": ["react-doctor/no-render-in-render"]
+        "rules": [
+          "react-doctor/no-render-in-render"
+        ]
       },
       {
         "files": [
-          "src/components/ChatListItem.tsx",
           "src/components/ErrorBoundary.tsx",
           "src/components/glass/GlassBottomSheet.tsx",
           "src/components/glass/GlassTabBar.tsx",
-          "src/components/platform/NativeBottomSheet.tsx",
-          "src/components/ui/LiquidGlassButton.tsx",
           "src/navigation/screens/GlassSettings.tsx"
         ],
-        "rules": ["react-doctor/rn-prefer-pressable"]
+        "rules": [
+          "react-doctor/rn-prefer-pressable"
+        ]
       },
       {
         "files": [
@@ -93,32 +139,40 @@
           "src/components/glass/GlassForm.tsx",
           "src/components/onboarding/OnboardingProgress.tsx"
         ],
-        "rules": ["react-doctor/no-array-index-as-key"]
+        "rules": [
+          "react-doctor/no-array-index-as-key"
+        ]
       },
       {
         "files": [
           "src/components/DNSLogViewer.tsx",
-          "src/components/ui/LiquidGlassButton.tsx",
           "src/components/ui/LiquidGlassTextInput.tsx",
           "src/navigation/screens/GlassChatList.tsx",
           "src/navigation/screens/GlassSettings.tsx",
           "src/navigation/screens/Logs.tsx"
         ],
-        "rules": ["react-doctor/rerender-state-only-in-handlers"]
+        "rules": [
+          "react-doctor/rerender-state-only-in-handlers"
+        ]
       },
       {
         "files": [
           "src/components/LiquidGlassWrapper.tsx",
           "src/context/SettingsContext.tsx"
         ],
-        "rules": ["react-doctor/no-cascading-set-state"]
+        "rules": [
+          "react-doctor/no-cascading-set-state"
+        ]
       },
       {
         "files": [
           "src/components/onboarding/screens/DNSMagicScreen.tsx",
+          "src/components/onboarding/screens/NetworkSetupScreen.tsx",
           "src/services/dnsService.ts"
         ],
-        "rules": ["react-doctor/async-await-in-loop"]
+        "rules": [
+          "react-doctor/async-await-in-loop"
+        ]
       },
       {
         "files": [
@@ -126,77 +180,118 @@
           "src/components/onboarding/screens/NetworkSetupScreen.tsx",
           "src/services/dnsLogService.ts"
         ],
-        "rules": ["react-doctor/async-defer-await"]
+        "rules": [
+          "react-doctor/async-defer-await"
+        ]
       },
       {
         "files": [
           "src/navigation/screens/GlassSettings.tsx",
           "src/services/dnsLogService.ts"
         ],
-        "rules": ["react-doctor/async-parallel"]
+        "rules": [
+          "react-doctor/async-parallel"
+        ]
       },
       {
         "files": [
           "src/services/dnsService.ts",
           "src/services/storageService.ts"
         ],
-        "rules": ["react-doctor/js-set-map-lookups"]
+        "rules": [
+          "react-doctor/js-set-map-lookups"
+        ]
       },
       {
         "files": [
           "src/services/dnsWire.ts",
           "src/utils/androidStartupDiagnostics.ts"
         ],
-        "rules": ["react-doctor/js-combine-iterations"]
+        "rules": [
+          "react-doctor/js-combine-iterations"
+        ]
       },
       {
         "files": [
-          "src/components/ChatListItem.tsx",
           "src/services/ShareService.ts"
         ],
-        "rules": ["react-doctor/js-hoist-intl"]
+        "rules": [
+          "react-doctor/js-hoist-intl"
+        ]
       },
       {
         "files": [
           "src/components/onboarding/screens/NetworkSetupScreen.tsx",
           "src/components/ui/Toast.tsx"
         ],
-        "rules": ["react-doctor/prefer-use-effect-event"]
+        "rules": [
+          "react-doctor/prefer-use-effect-event"
+        ]
       },
       {
-        "files": ["src/components/onboarding/screens/NetworkSetupScreen.tsx"],
-        "rules": ["react-doctor/prefer-useReducer"]
+        "files": [
+          "src/components/onboarding/screens/NetworkSetupScreen.tsx"
+        ],
+        "rules": [
+          "react-doctor/prefer-useReducer"
+        ]
       },
       {
-        "files": ["src/components/onboarding/screens/WelcomeScreen.tsx"],
-        "rules": ["react-doctor/rn-prefer-expo-image"]
+        "files": [
+          "src/components/onboarding/screens/WelcomeScreen.tsx"
+        ],
+        "rules": [
+          "react-doctor/rn-prefer-expo-image"
+        ]
       },
       {
-        "files": ["src/components/glass/GlassForm.tsx"],
-        "rules": ["react-doctor/rn-prefer-content-inset-adjustment"]
+        "files": [
+          "src/components/glass/GlassForm.tsx"
+        ],
+        "rules": [
+          "react-doctor/rn-prefer-content-inset-adjustment"
+        ]
       },
       {
-        "files": ["src/components/onboarding/screens/FirstChatScreen.tsx"],
-        "rules": ["react-doctor/rn-no-scrollview-mapped-list"]
+        "files": [
+          "src/components/onboarding/screens/FirstChatScreen.tsx"
+        ],
+        "rules": [
+          "react-doctor/rn-no-scrollview-mapped-list"
+        ]
       },
       {
-        "files": ["src/components/onboarding/OnboardingProgress.tsx"],
-        "rules": ["react-doctor/rn-prefer-reanimated"]
+        "files": [
+          "src/components/onboarding/OnboardingProgress.tsx"
+        ],
+        "rules": [
+          "react-doctor/rn-prefer-reanimated"
+        ]
       },
       {
-        "files": ["src/components/PressableRipple.tsx"],
-        "rules": ["react-doctor/no-react19-deprecated-apis"]
+        "files": [
+          "src/components/PressableRipple.tsx"
+        ],
+        "rules": [
+          "react-doctor/no-react19-deprecated-apis"
+        ]
       },
       {
-        "files": ["src/components/ui/Toast.tsx"],
+        "files": [
+          "src/components/ui/Toast.tsx"
+        ],
         "rules": [
           "react-doctor/no-derived-useState",
           "react-doctor/no-z-index-9999"
         ]
       },
       {
-        "files": ["src/components/ui/LiquidGlassTextInput.tsx"],
-        "rules": ["react-doctor/no-generic-handler-names"]
+        "files": [
+          "src/components/ui/LiquidGlassTextInput.tsx"
+        ],
+        "rules": [
+          "react-doctor/no-generic-handler-names"
+        ]
       },
       {
         "files": [
@@ -204,10 +299,14 @@
           "src/navigation/screens/GlassSettings.tsx",
           "src/navigation/screens/Logs.tsx"
         ],
-        "rules": ["react-doctor/no-barrel-import"]
+        "rules": [
+          "react-doctor/no-barrel-import"
+        ]
       },
       {
-        "files": [".omc/**"],
+        "files": [
+          ".omc/**"
+        ],
         "rules": [
           "deslop/unused-file",
           "deslop/unused-export",

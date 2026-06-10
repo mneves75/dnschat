@@ -42,6 +42,56 @@
   <p><strong>Stop condition:</strong> no known critical/high issues remain; medium findings are either fixed or explicitly justified; strongest local checks have fresh outcomes; browser/runtime evidence is captured for user-visible frontend changes when feasible.</p>
 
   <hr />
+  <h2>Review + Release Pass &mdash; 2026-06-10 (4.0.29 build 63, full security/architecture/performance review)</h2>
+
+  <p><strong>Goal:</strong> run a full-codebase three-track review (security, architecture, performance), fix all confirmed findings, run a four-angle simplify pass over the resulting diff, verify every gate, and stage 4.0.29 build 63.</p>
+
+  <ul>
+    <li><strong>Security fixes:</strong> dnsjava 3.5.2 &rarr; 3.6.2 in both Gradle files (CVE-2024-25638); subset-only native allowlist narrowing on iOS/Android (configureSanitizer can narrow, never widen, the compiled-in list) with a new set-equality parity test across TS/Swift/Java; JS UDP fallback re-arms its listener and drops invalid datagrams instead of failing the query on first bad packet; inbound TXT responses stripped of C0/C1 and bidi-override controls at the parser and at <code>queryLLM</code> (mock path included); <code>toUint8Array</code> respects typed-array view bounds; multipart responses capped at <code>MAX_TXT_PARTS = 64</code>; <code>shell-quote &gt;= 1.8.4</code> override (critical GHSA-w7jw-789q-3m8p); unmaintained UDP/TCP transports pinned exact; five Clang security diagnostics enabled in both Xcode configs; personal device name removed from public docs and a denylist rule added to <code>verify:public-redaction</code>. Enhanced Security (pointer auth et al.) deliberately skipped: the app links binary dependencies (Hermes, prebuilt pods) that the audit skill itself flags as incompatible with arm64e enablement.</li>
+    <li><strong>Performance fixes:</strong> splash dismissal no longer gated on decrypting the whole DNS-log store; storage mutations reuse a validated in-memory cache inside the serialized operation queue (one <code>sendMessage</code> went from 6 full-history crypto passes to at most 1 load + 3 saves); chat-list rows share one hoisted action sheet instead of mounting a hidden Modal each; <code>MessageBubble</code> memoized across the FlatList boundary (documented exception); DNSLogService skips fan-out with zero listeners and precompiles redaction regexes; ChatContext reads settings via a ref at call time; staggered-list pool allocates per item count; assorted dead allocations and the redundant rate-limit interval removed; expensive log arguments deferred via new <code>devLogLazy</code>/<code>devWarnLazy</code>.</li>
+    <li><strong>Architecture fixes:</strong> single canonical multipart parser in <code>modules/dns-native</code>; <code>dnsServerValidation.ts</code> extraction so settings storage stops pulling the socket stack at module load; default server derived from <code>getDefaultServer()</code>; one <code>AccessibilityConfig</code> definition; TCP frame encoder reuses <code>encodeTxtDnsQuery</code>; dead <code>dnsErrors.ts</code>/archive spec/npm lockfile removed; <code>doctor.config.json</code> committed with a policy spec that rejects orphaned exemption paths (it caught three).</li>
+    <li><strong>Simplify pass (4 angles):</strong> storage mutations consolidated into one <code>mutateChats</code> helper carrying the cache contract; shared <code>openExternalLink</code>/<code>wait</code> helpers replacing per-screen copies; LiquidGlassTextInput border-sync deduplicated; Toast auto-dismiss reuses <code>handleDismiss</code>; redundant re-export and unreachable defensive catch removed. Skipped with justification: Toast truncation constants (pinned by policy spec), Toast subcomponent split (defensible), double sanitization (deliberate defense-in-depth; mock path needs the outer pass), OnboardingContext context-value exemption (needs its own investigation).</li>
+    <li><strong>Toolchain finding:</strong> the globally selected Xcode 27 beta cannot compile <code>expo-modules-jsi</code> (C function pointer diagnostic) and rejects pod deployment targets below 15.0. Fixed durably by clamping pod targets to 16.4 in the Podfile post_install; simulator Release builds use <code>DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer</code> until the beta toolchain is compatible.</li>
+    <li><strong>Evidence:</strong> typecheck, lint, expo-doctor 20/20, react-doctor 100/100 (root and module), react-compiler 107/107, Jest 117 suites / 941 tests green, dns-native 8 suites / 65 tests green, gitleaks clean, bun audit clean, public-redaction clean. Argent simulator evidence captured for the release-facing chat-list/action-sheet change.</li>
+  </ul>
+
+  <hr />
+  <h2>Release Pass &mdash; 2026-06-08 (4.0.28 build 62, TestFlight chat-error fix)</h2>
+
+  <p><strong>Goal:</strong> fix the TestFlight DNS-failure UI regression shown in supplied screenshots, complete a broad Expo/source review pass, bump the build, verify the final source/docs state, and deploy a fresh TestFlight build when signing and App Store Connect credentials permit.</p>
+
+  <h3>Root-cause findings</h3>
+  <ul>
+    <li><strong>Error overlay:</strong> DNS failures were displayed twice: a persistent top error toast rendered the full multiline DNS diagnostic, and the failed assistant bubble also rendered raw troubleshooting text. On narrow iPhone screens this created an oversized red overlay with overlapping controls and mixed localized/English copy.</li>
+    <li><strong>React Doctor drift:</strong> current React Doctor ignores <code>react-doctor.config.json</code>; both root and native-module configs were renamed to <code>doctor.config.json</code>.</li>
+    <li><strong>Workspace lockfile warning:</strong> React Doctor detected parent/sibling lockfiles outside this repo. This checkout itself tracks only <code>bun.lock</code>, so the root config now scopes that warning as a workspace false positive.</li>
+  </ul>
+
+  <h3>Fixes applied</h3>
+  <ul>
+    <li><strong>Chat error presentation:</strong> failed assistant messages now render compact localized text instead of raw DNS diagnostics, and the chat error toast uses the same localized summary.</li>
+    <li><strong>Toast layout:</strong> error toasts remain persistent but are visually bounded, truncate to three message lines, keep the retry action from colliding with the close button, and preserve accessibility live-region behavior.</li>
+    <li><strong>React Compiler cleanup:</strong> removed React Doctor fail-level effect dependency churn in <code>Toast</code>, <code>LiquidGlassTextInput</code>, and onboarding network setup, and moved small pure helpers/static data to module scope.</li>
+    <li><strong>Versioning:</strong> <code>package.json</code> was bumped from <code>4.0.27</code> to <code>4.0.28</code>, then <code>bun run sync-versions --bump-build</code> advanced native build metadata from <code>61</code> to <code>62</code>.</li>
+  </ul>
+
+  <h3>Validation evidence</h3>
+  <ul>
+    <li><code>bun run sync-versions --bump-build</code>: passed; metadata advanced to <code>4.0.28</code>/<code>62</code>.</li>
+    <li><code>npx react-doctor@latest --project chat-dns</code>: passed, <code>100 / 100</code>.</li>
+    <li><code>cd modules/dns-native &amp;&amp; npx react-doctor@latest --verbose</code>: passed, <code>100 / 100</code>.</li>
+    <li>Targeted Jest suites passed for chat retry toast, message content policy, toast reduce-motion/layout policy, bottom-sheet accessibility, text input state sync, settings persistence, and message-list behavior.</li>
+    <li><code>cd modules/dns-native &amp;&amp; bun run test</code>: passed, <code>7</code> suites passed, <code>1</code> skipped; <code>57</code> tests passed, <code>13</code> skipped.</li>
+    <li><code>bun run verify:all</code>, <code>asc doctor</code>, signed archive/export, TestFlight upload, and TestFlight validation are still required before this build is described as distributed.</li>
+  </ul>
+
+  <h3>Release boundary</h3>
+  <ul>
+    <li>App Store version validation is expected to remain not applicable until App Store Connect has a matching App Store version record for <code>4.0.28</code>. This is separate from TestFlight processing.</li>
+    <li>Direct physical-device install remains blocked by local Xcode Development provisioning state unless local development signing credentials are restored; TestFlight is the requested staging path for this build.</li>
+  </ul>
+
+  <hr />
   <h2>Release Pass &mdash; 2026-06-08 (4.0.27 build 61, SDK patch alignment, TestFlight target)</h2>
 
   <p><strong>Goal:</strong> package the security-review dependency and pod alignment as a real TestFlight staging build: bump version, update public release docs, verify the final source/docs state, commit, push, archive/export, upload to TestFlight, and validate processing.</p>
@@ -77,7 +127,7 @@
   <hr />
   <h2>Release Pass &mdash; 2026-06-05 (4.0.26 build 60, AXe E2E, TestFlight staging)</h2>
 
-  <p><strong>Goal:</strong> package the premium/react-doctor hardening line as a real mobile staging build: bump version, update release docs, run full E2E, validate the native build surfaces, attempt iMarcus install, and deploy to TestFlight if signing credentials permit.</p>
+  <p><strong>Goal:</strong> package the premium/react-doctor hardening line as a real mobile staging build: bump version, update release docs, run full E2E, validate the native build surfaces, attempt personal-device install, and deploy to TestFlight if signing credentials permit.</p>
 
   <h3>Release decisions</h3>
   <ul>
@@ -111,7 +161,7 @@
 
   <h3>Blockers and residual risk</h3>
   <ul>
-    <li><strong>Direct iMarcus install:</strong> blocked by local Xcode Development provisioning state. Exact Xcode blocker: <code>No Accounts: Add a new account in Accounts settings.</code> and <code>No profiles for 'org.mvneves.dnschat' were found: Xcode couldn't find any iOS App Development provisioning profiles matching 'org.mvneves.dnschat'.</code> TestFlight is the verified staging path for build <code>60</code>.</li>
+    <li><strong>Direct personal-device install:</strong> blocked by local Xcode Development provisioning state. Exact Xcode blocker: <code>No Accounts: Add a new account in Accounts settings.</code> and <code>No profiles for 'org.mvneves.dnschat' were found: Xcode couldn't find any iOS App Development provisioning profiles matching 'org.mvneves.dnschat'.</code> TestFlight is the verified staging path for build <code>60</code>.</li>
     <li><strong>App Store version validation:</strong> blocked because App Store Connect has no App Store version record for <code>4.0.26</code>. Exact command result: <code>Error: validate: app store version not found for version "4.0.26" and platform "IOS"</code>. This is not a TestFlight processing blocker.</li>
     <li><strong>altool validation:</strong> blocked because <code>asc xcode validate</code> invokes <code>altool</code>, which requires separate JWT/app-password inputs. Exact blocker: <code>Either JWT (--api-issuer and --api-key) or username and app password (--username, --app-password and --provider-public-id) authentication is required.</code> The IPA was still accepted and processed by <code>asc publish testflight</code>.</li>
   </ul>
@@ -225,7 +275,7 @@
     <li><strong>hoisting:</strong> reordered load-on-mount helpers above the effects that call them (Logs, OnboardingContext) to remove access-before-declaration.</li>
   </ul>
 
-  <h3>Documented exemptions (legitimate external-sync, in <code>react-doctor.config.json</code>)</h3>
+  <h3>Documented exemptions (legitimate external-sync, in <code>doctor.config.json</code>)</h3>
   <ul>
     <li><code>react-hooks-js/set-state-in-effect</code> for <code>app/_layout.tsx</code> (one-shot splash-screen settle), <code>app/chat/[threadId].tsx</code> (route hydration), <code>src/context/ChatContext.tsx</code> (load-on-mount), and <code>src/context/OnboardingContext.tsx</code> (persisted onboarding load). These are genuine external-system synchronization effects where setState is the correct React pattern.</li>
     <li><code>react-doctor/react-compiler-no-manual-memoization</code> for <code>app/_layout.tsx</code>: the navigation theme <code>useMemo</code> is load-bearing because that component intentionally keeps a bail-out effect, so the manual memo still prevents navigation-tree re-renders.</li>

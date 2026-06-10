@@ -31,7 +31,7 @@ describe("FeaturesScreen - iOS 26 HIG Compliance", () => {
     });
 
     it("imports the shared external URL opener for GitHub action", () => {
-      expect(sourceCode).toContain("openExternalUrl");
+      expect(sourceCode).toContain("openExternalLink");
     });
   });
 
@@ -309,7 +309,7 @@ describe("FeaturesScreen - iOS 26 HIG Compliance", () => {
     });
 
     it("handles GitHub link through the shared external URL opener", () => {
-      expect(sourceCode).toContain("openExternalUrl");
+      expect(sourceCode).toContain("openExternalLink");
       expect(sourceCode).not.toContain("Linking.openURL");
     });
   });
