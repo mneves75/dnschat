@@ -17,6 +17,16 @@ hardening; no source changes beyond version metadata.
   with `bun run sync-versions` so the signed TestFlight archive is built from
   the verified post-review source state.
 
+### Release status
+
+- Signed App Store archive and IPA export succeeded for `4.0.30` build `64`.
+- TestFlight upload committed, but App Store Connect processing rejected the
+  binary with `ITMS-90534` (Invalid Toolchain): the machine's stable Xcode
+  slot was updated to the `26.6` beta seed on `2026-06-02`, and the only
+  other toolchain (Xcode 27 beta) cannot compile `expo-modules-jsi`. The
+  upload will be retried from a GM toolchain (Xcode 26.5 reinstall or the
+  26.6 GM when released); the next attempt should bump the build number.
+
 ## [4.0.29] - 2026-06-10
 
 Build `62` -> `63`. Full security, architecture, and performance review of the

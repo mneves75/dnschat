@@ -258,6 +258,11 @@ staging build.
   physical-device install remains blocked by local Xcode Development
   provisioning state (`No Accounts` and no matching development profile);
   TestFlight is the verified staging path for this build.
+- TestFlight upload attempt for `4.0.30` build `64` on `2026-06-10`: signed
+  archive and IPA export succeeded; App Store Connect processing rejected the
+  binary with `ITMS-90534` (Invalid Toolchain) because the local stable Xcode
+  slot now carries the `26.6` beta seed. Retry requires a GM toolchain and a
+  fresh build number.
 - Current target: `4.0.30` build `64`; the release lane uses signed App Store
   archive/export, App Store Connect upload, processing, and validation before
   the build is described as distributed. Internal App Store Connect IDs and
