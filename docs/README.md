@@ -31,13 +31,13 @@ Last full source/security sweep: `2026-06-10` (three-track review with fixes —
 see `CHANGELOG.md` `4.0.29`).
 Last AXe simulator E2E feature pass: `2026-06-05` for version `4.0.26` build
 `60`; 10 feature groups passed.
-Current release target: version `4.0.29` build `63`. This release lane carries
+Current release target: version `4.0.30` build `64`. This release lane carries
 the chat-error presentation fix plus the full security/architecture/performance
 review hardening. Signed archive/export,
 TestFlight upload, processing, and validation run after the final source/docs
 state is verified and pushed. The latest uploaded TestFlight build before this
 lane is version `4.0.26` build `60` (`VALID` on `2026-06-05`). App Store Connect
-has no App Store version record for `4.0.29` yet; this is a TestFlight-only
+has no App Store version record for `4.0.30` yet; this is a TestFlight-only
 staging build.
 
 - `npx react-doctor@latest --project chat-dns` reports `100 / 100` for

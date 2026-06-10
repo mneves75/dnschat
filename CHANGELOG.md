@@ -6,6 +6,17 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+## [4.0.30] - 2026-06-10
+
+Build `63` -> `64`. TestFlight staging release of the 4.0.29 review
+hardening; no source changes beyond version metadata.
+
+### Changed
+
+- Bumped Expo, iOS, and Android version metadata to `4.0.30` build/code `64`
+  with `bun run sync-versions` so the signed TestFlight archive is built from
+  the verified post-review source state.
+
 ## [4.0.29] - 2026-06-10
 
 Build `62` -> `63`. Full security, architecture, and performance review of the
