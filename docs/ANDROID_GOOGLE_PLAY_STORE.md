@@ -4,7 +4,7 @@ Complete step-by-step guide for publishing DNSChat to the Google Play Store.
 
 **App**: DNSChat
 **Package**: `<ANDROID_PACKAGE>`
-**Current Version**: 4.0.27
+**Current Version**: 4.0.28
 
 ---
 
@@ -323,7 +323,7 @@ See [ANDROID_RELEASE.md](./ANDROID_RELEASE.md) for signing configuration.
    - **Upload** new AAB
 4. Add release notes:
    ```
-   What's new in v4.0.27:
+   What's new in v4.0.28:
    - Release metadata updated to build/code 61
    - Expo SDK 56 patch packages and iOS pod lock state aligned
    - Public release docs and verification notes aligned with the TestFlight target
@@ -436,7 +436,7 @@ Before submitting for review, verify:
 
 | Version | Date | Notes |
 |---------|------|-------|
-| 4.0.27 | 2026-06-08 | Expo SDK patch alignment, iOS pod lock refresh, and TestFlight staging target build 61 |
+| 4.0.28 | 2026-06-08 | TestFlight chat-error presentation fix, React Doctor config alignment, and staging target build 62 |
 | 4.0.26 | 2026-06-05 | Premium/react-doctor hardening release packaging, AXe E2E, and TestFlight staging build 60 |
 | 4.0.25 | 2026-06-05 | React Compiler cleanliness pass and react-doctor 100/100 |
 | 4.0.24 | 2026-06-04 | Production-readiness hardening after App Store submission |

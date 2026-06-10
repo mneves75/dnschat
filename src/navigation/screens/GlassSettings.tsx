@@ -50,7 +50,7 @@ import { useTransportTestThrottle } from "../../ui/hooks/useTransportTestThrottl
 import { HapticFeedback, persistHapticsPreference } from "../../utils/haptics";
 import { devLog, devWarn } from "../../utils/devLog";
 import { getAppVersionInfo } from "../../utils/appVersion";
-import { openExternalUrl } from "../../utils/externalLinks";
+import { openExternalLink } from "../../utils/externalLinks";
 import { PressableRipple } from "../../components/PressableRipple";
 
 const getErrorMessage = (error: unknown): string => {
@@ -58,6 +58,7 @@ const getErrorMessage = (error: unknown): string => {
   if (typeof error === "string") return error;
   return String(error);
 };
+const ABOUT_FEATURE_KEYS = ["line1", "line2", "line3", "line4", "line5"] as const;
 
 // ==================================================================================
 // GLASS SETTINGS SCREEN COMPONENT
@@ -141,6 +142,10 @@ export function GlassSettings() {
   };
 
   // DNS Service options - llm.pieter.com is now the default (ch.at is offline)
+  // NOTE: intentionally NOT derived from getLLMServers(): that helper only
+  // returns the currently-online automatic-fallback servers (llm.pieter.com),
+  // while this picker deliberately keeps ch.at selectable, and each entry maps
+  // to a dedicated i18n key. Deriving would change the visible options/order.
   const dnsServerOptions = [
     {
       value: "llm.pieter.com",
@@ -195,7 +200,6 @@ export function GlassSettings() {
     tcp: t("screen.settings.sections.transportTest.transports.tcp"),
   };
   const appVersion: string = getAppVersionInfo().displayVersion;
-  const aboutFeatureKeys = ["line1", "line2", "line3", "line4", "line5"] as const;
 
   // Action handlers
   const handleDnsServerSelect = async (server: string) => {
@@ -219,9 +223,6 @@ export function GlassSettings() {
     }
   };
 
-  const handleOpenGitHub = () => {
-    void openExternalUrl("https://github.com/mneves75/dnschat");
-  };
 
   const handleResetSettings = () => {
     Alert.alert(
@@ -656,7 +657,7 @@ export function GlassSettings() {
             subtitle={t(
               "screen.glassSettings.sections.about.githubSubtitle",
             )}
-            onPress={handleOpenGitHub}
+            onPress={() => openExternalLink("https://github.com/mneves75/dnschat")}
           />
 
           <Form.Item
@@ -709,7 +710,7 @@ export function GlassSettings() {
             title={t("screen.glassSettings.sections.support.bugTitle")}
             subtitle={t("screen.glassSettings.sections.support.bugSubtitle")}
             onPress={() => {
-              void openExternalUrl("https://github.com/mneves75/dnschat/issues");
+              openExternalLink("https://github.com/mneves75/dnschat/issues");
             }}
             showChevron
           />
@@ -865,7 +866,7 @@ export function GlassSettings() {
             >
               {t("screen.glassSettings.aboutSheet.featuresTitle")}
             </Text>
-            {aboutFeatureKeys.map((featureKey) => (
+            {ABOUT_FEATURE_KEYS.map((featureKey) => (
               <Text
                 key={featureKey}
                 style={[styles.featureItem, { color: palette.textSecondary }]}
@@ -889,7 +890,7 @@ export function GlassSettings() {
           {
             title: t("screen.glassSettings.supportSheet.docs"),
             onPress: () => {
-              void openExternalUrl(
+              openExternalLink(
                 "https://github.com/mneves75/dnschat/blob/main/README.md",
               );
             },
@@ -897,7 +898,7 @@ export function GlassSettings() {
           {
             title: t("screen.glassSettings.supportSheet.community"),
             onPress: () => {
-              void openExternalUrl(
+              openExternalLink(
                 "https://github.com/mneves75/dnschat/discussions",
               );
             },
@@ -905,7 +906,7 @@ export function GlassSettings() {
           {
             title: t("screen.glassSettings.supportSheet.email"),
             onPress: () => {
-              void openExternalUrl(
+              openExternalLink(
                 "mailto:support@dnschat.app?subject=DNSChat%20Support",
               );
             },

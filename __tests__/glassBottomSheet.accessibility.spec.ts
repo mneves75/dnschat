@@ -104,6 +104,9 @@ describe("shared interactive control accessibility policy", () => {
     expect(source).toContain("accessibilityRole={variant === \"error\" ? \"alert\" : undefined}");
     expect(source).toContain("accessibilityLiveRegion={liveRegion}");
     expect(source).toContain("importantForAccessibility=\"no-hide-descendants\"");
+    expect(source).toContain("numberOfLines: variant === \"error\" ? 3 : 2");
+    expect(source).toContain("maxHeight: 168");
+    expect(source).toContain("flexShrink: 1");
     expect(source).not.toContain('accessibilityLiveRegion="assertive"');
   });
 

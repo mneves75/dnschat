@@ -59,6 +59,13 @@ interface ChatItemProps {
   onPress: () => void;
   onDelete: () => void;
   onShare?: () => void;
+  /**
+   * Opens the screen-level shared action sheet for this chat. Rows do NOT
+   * mount their own GlassActionSheet: one hidden Modal per row (plus its
+   * Animated.Values) multiplies startup surface — see the build-47 note in
+   * GlassBottomSheet.tsx.
+   */
+  onShowActions: () => void;
 }
 
 // ==================================================================================
@@ -70,12 +77,12 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
   onPress,
   onDelete,
   onShare,
+  onShowActions,
 }) => {
   const colorScheme = useColorScheme();
   const { t } = useTranslation();
   const palette = useImessagePalette();
   const typography = useTypography();
-  const actionSheet = useGlassBottomSheet();
   const { locale } = useSettings();
 
   const isDark = colorScheme === "dark";
@@ -107,7 +114,7 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
     if (Platform.OS === "ios") {
       HapticFeedback.medium();
     }
-    actionSheet.show();
+    onShowActions();
   };
   const chatAccessibilityActions = [
     { name: "activate", label: t("screen.glassChatList.actionSheet.openChat") },
@@ -214,58 +221,23 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
   );
 
   return (
-    <>
-      <PressableRipple
-        testID={`chat-list-item-${chat.id}`}
-        onPress={onPress}
-        onLongPress={handleLongPress}
-        variant="surface"
-        rippleColor={palette.highlight}
-        pressedOpacity={0.95}
-        style={styles.chatItemWrapper}
-        accessible
-        accessibilityRole="link"
-        accessibilityLabel={itemAccessibilityLabel}
-        accessibilityHint={t("screen.glassChatList.itemAccessibilityHint")}
-        accessibilityActions={chatAccessibilityActions}
-        onAccessibilityAction={handleAccessibilityAction}
-      >
-        {({ pressed }) => renderChatContent(pressed)}
-      </PressableRipple>
-
-      {/* Chat Action Sheet */}
-      <GlassActionSheet
-        visible={actionSheet.visible}
-        onClose={actionSheet.hide}
-        title={chat.title}
-        message={t("screen.glassChatList.actionSheet.message")}
-        actions={[
-          {
-            title: t("screen.glassChatList.actionSheet.openChat"),
-            onPress: onPress,
-          },
-          ...(onShare
-            ? [
-                {
-                  title: t("screen.glassChatList.actionSheet.shareChat"),
-                  onPress: onShare,
-                },
-              ]
-            : []),
-          {
-            title: t("screen.glassChatList.actionSheet.deleteChat"),
-            onPress: onDelete,
-            style: "destructive" as const,
-            icon: <TrashIcon size={20} color="#FF453A" />,
-          },
-          {
-            title: t("screen.glassChatList.actionSheet.cancel"),
-            onPress: () => {},
-            style: "cancel" as const,
-          },
-        ]}
-      />
-    </>
+    <PressableRipple
+      testID={`chat-list-item-${chat.id}`}
+      onPress={onPress}
+      onLongPress={handleLongPress}
+      variant="surface"
+      rippleColor={palette.highlight}
+      pressedOpacity={0.95}
+      style={styles.chatItemWrapper}
+      accessible
+      accessibilityRole="link"
+      accessibilityLabel={itemAccessibilityLabel}
+      accessibilityHint={t("screen.glassChatList.itemAccessibilityHint")}
+      accessibilityActions={chatAccessibilityActions}
+      onAccessibilityAction={handleAccessibilityAction}
+    >
+      {({ pressed }) => renderChatContent(pressed)}
+    </PressableRipple>
   );
 };
 
@@ -294,6 +266,20 @@ export function GlassChatList() {
 
   // Track initial load for skeleton display
   const [hasLoadedOnce, setHasLoadedOnce] = React.useState(false);
+
+  // ONE shared action sheet for the whole list, keyed by the selected chat.
+  // Per-row GlassActionSheet instances each mount a hidden <Modal> plus three
+  // Animated.Values (50 chats -> 50 hidden Modals) and were implicated in the
+  // build-47 startup crash surface (see GlassBottomSheet.tsx header).
+  // `selectedChat` is kept after hide so the title stays rendered during the
+  // close animation.
+  const chatActionSheet = useGlassBottomSheet();
+  const [selectedChat, setSelectedChat] = React.useState<Chat | null>(null);
+
+  const handleShowChatActions = (chat: Chat) => {
+    setSelectedChat(chat);
+    chatActionSheet.show();
+  };
 
   // Surface the latest context error as a dismissable toast. Derived purely from
   // state (no effect, no setState-in-render): once dismissed, the same error stays
@@ -440,6 +426,7 @@ export function GlassChatList() {
                     onPress={() => handleChatPress(chat)}
                     onDelete={() => handleDeleteChat(chat.id, chat.title)}
                     onShare={() => handleShareChat(chat)}
+                    onShowActions={() => handleShowChatActions(chat)}
                   />
                 </AnimatedListItem>
               ))}
@@ -490,6 +477,39 @@ export function GlassChatList() {
         )}
         </Animated.View>
       </Form.List>
+      {/* Shared Chat Action Sheet (one instance for every row) */}
+      <GlassActionSheet
+        visible={chatActionSheet.visible}
+        onClose={chatActionSheet.hide}
+        title={selectedChat?.title ?? ""}
+        message={t("screen.glassChatList.actionSheet.message")}
+        actions={
+          selectedChat
+            ? [
+                {
+                  title: t("screen.glassChatList.actionSheet.openChat"),
+                  onPress: () => handleChatPress(selectedChat),
+                },
+                {
+                  title: t("screen.glassChatList.actionSheet.shareChat"),
+                  onPress: () => handleShareChat(selectedChat),
+                },
+                {
+                  title: t("screen.glassChatList.actionSheet.deleteChat"),
+                  onPress: () =>
+                    handleDeleteChat(selectedChat.id, selectedChat.title),
+                  style: "destructive" as const,
+                  icon: <TrashIcon size={20} color="#FF453A" />,
+                },
+                {
+                  title: t("screen.glassChatList.actionSheet.cancel"),
+                  onPress: () => {},
+                  style: "cancel" as const,
+                },
+              ]
+            : []
+        }
+      />
       <Toast
         visible={Boolean(visibleError)}
         variant="error"

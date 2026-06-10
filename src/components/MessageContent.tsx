@@ -9,7 +9,7 @@ import type { IMessagePalette } from "../ui/theme/imessagePalette";
 import type { TypographyScale } from "../ui/theme/liquidGlassTypography";
 import { LiquidGlassSpacing } from "../ui/theme/liquidGlassSpacing";
 import { useTranslation } from "../i18n";
-import { openExternalUrl } from "../utils/externalLinks";
+import { openExternalLink } from "../utils/externalLinks";
 
 interface MessageContentProps {
   message: Message;
@@ -49,6 +49,9 @@ export function MessageContent({
   const isUser = message.role === "user";
   const isLoading = message.status === "sending";
   const hasError = message.status === "error";
+  const displayContent = hasError
+    ? t("screen.chat.errorMessage")
+    : message.content;
   const markdownProps = markdownStyles ? { style: markdownStyles } : {};
   const handleMarkdownLinkPress = (url: string): boolean => {
     Alert.alert(
@@ -59,7 +62,7 @@ export function MessageContent({
         {
           text: t("screen.chat.externalLink.open"),
           onPress: () => {
-            void openExternalUrl(url);
+            openExternalLink(url);
           },
         },
       ],
@@ -70,15 +73,15 @@ export function MessageContent({
   return (
     <>
       {/* Message text content */}
-      {isUser ? (
-        <Text style={[textStyles, typography.body]} selectable={false}>{message.content}</Text>
+      {isUser || hasError ? (
+        <Text style={[textStyles, typography.body]} selectable={false}>{displayContent}</Text>
       ) : (
         <Markdown
           {...markdownProps}
           onLinkPress={handleMarkdownLinkPress}
           rules={markdownRules}
         >
-          {message.content}
+          {displayContent}
         </Markdown>
       )}
 

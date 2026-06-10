@@ -265,6 +265,7 @@ export const ptBR = {
       errorAlertTitle: "Erro",
       errorAlertDismiss: "OK",
       errorRetry: "Tentar de novo",
+      errorMessage: "A consulta DNS falhou. Tente de novo ou veja os logs DNS em Ajustes.",
       placeholder: "Pergunte qualquer coisa...",
       emptyState: {
         title: "Comece uma conversa!",

@@ -189,7 +189,7 @@ export function Chat() {
         visible={Boolean(visibleError)}
         variant="error"
         title={t("screen.chat.errorAlertTitle")}
-        message={visibleError ?? ""}
+        message={visibleError ? t("screen.chat.errorMessage") : ""}
         duration={6000}
         onDismiss={handleDismissError}
         {...(retryablePrompt

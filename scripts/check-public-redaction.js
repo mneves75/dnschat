@@ -64,6 +64,11 @@ const rules = [
     pattern: /\b[A-Za-z][A-Za-z0-9_-]{2,}'s\s+(iPhone|iPad)\b/g,
   },
   {
+    id: "personal-device-name-denylist",
+    description: "Known personal device names must not be published.",
+    pattern: /\biMarcus\b/g,
+  },
+  {
     id: "personal-funding-link",
     description: "Personal funding links must not appear in public docs or UI.",
     pattern: /paypal\.me\/[A-Za-z0-9_]+/gi,

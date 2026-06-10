@@ -61,5 +61,17 @@ target 'DNSChat' do
       :mac_catalyst_enabled => false,
       :ccache_enabled => ccache_enabled?(podfile_properties),
     )
+
+    # Newer Xcode toolchains reject pod targets whose IPHONEOS_DEPLOYMENT_TARGET
+    # sits below the supported range (resource-bundle targets ship pinned at
+    # 9.0/12.4/13.4). Clamp every pod target to the app minimum.
+    installer.pods_project.targets.each do |target|
+      target.build_configurations.each do |build_configuration|
+        deployment_target = build_configuration.build_settings['IPHONEOS_DEPLOYMENT_TARGET']
+        if deployment_target && deployment_target.to_f < 16.4
+          build_configuration.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '16.4'
+        end
+      end
+    end
   end
 end

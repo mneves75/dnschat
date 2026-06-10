@@ -43,30 +43,19 @@ function RootLayoutContent() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
   const palette = useImessagePalette();
-  const navigationTheme = React.useMemo(
-    () => createNavigationTheme(palette, isDark),
-    [
-      isDark,
-      palette.background,
-      palette.backgroundSecondary,
-      palette.destructive,
-      palette.separator,
-      palette.textPrimary,
-      palette.userBubble,
-    ],
-  );
+  const navigationTheme = createNavigationTheme(palette, isDark);
   const [hasSettledInitialRoute, setHasSettledInitialRoute] = React.useState(false);
-  const [hasInitializedLogs, setHasInitializedLogs] = React.useState(false);
   const routeMatchesExpectation =
     (!hasCompletedOnboarding && segments[0] === "onboarding") ||
     (hasCompletedOnboarding && segments[0] !== "onboarding");
 
   // Effect: keep the splash screen visible until the initial onboarding route is settled.
+  // DNS log initialization deliberately does NOT gate the splash: it decrypts the
+  // entire log store (AES-GCM in JS) and nothing on the first screen depends on it.
   React.useEffect(() => {
     if (
       !hasSettledInitialRoute &&
       !loading &&
-      hasInitializedLogs &&
       rootNavigationState?.key &&
       routeMatchesExpectation
     ) {
@@ -74,7 +63,6 @@ function RootLayoutContent() {
       SplashScreen.hideAsync().catch(() => {});
     }
   }, [
-    hasInitializedLogs,
     hasSettledInitialRoute,
     loading,
     rootNavigationState?.key,
@@ -99,12 +87,10 @@ function RootLayoutContent() {
     }
   }, [hasCompletedOnboarding, loading, rootNavigationState?.key, replace, segments]);
 
-  // Effect: initialize DNS log storage once on mount.
+  // Effect: initialize DNS log storage once on mount (off the splash critical path).
   React.useEffect(() => {
     DNSLogService.initialize().catch(() => {
       // Non-fatal: logs viewer will still function in-memory
-    }).finally(() => {
-      setHasInitializedLogs(true);
     });
   }, []);
 

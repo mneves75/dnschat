@@ -45,6 +45,26 @@ export function devLog(message: string, data?: DevLogValue): void {
   console.log(message, data);
 }
 
+/**
+ * Lazy variant: the data factory only runs in a dev runtime, so expensive
+ * argument construction (JSON.stringify, .map, Object.keys) is skipped in
+ * release builds even though `transform-remove-console` cannot strip it.
+ */
+export function devLogLazy(message: string, data: () => DevLogValue): void {
+  if (!isDevRuntime()) return;
+  if (isJestRuntime()) return;
+  // eslint-disable-next-line no-console
+  console.log(message, data());
+}
+
+/** Lazy variant of devWarn — see devLogLazy. */
+export function devWarnLazy(message: string, data: () => DevLogValue): void {
+  if (!isDevRuntime()) return;
+  if (isJestRuntime()) return;
+  // eslint-disable-next-line no-console
+  console.warn(message, data());
+}
+
 export function devLogArgs(...args: unknown[]): void {
   if (!isDevRuntime()) return;
   if (isJestRuntime()) return;
