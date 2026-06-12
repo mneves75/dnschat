@@ -20,7 +20,6 @@
     "expo-env.d.ts"
   ],
   "exclude": [
-    "node_modules",
-    "docs/GUIDELINES-REF"
+    "node_modules"
   ]
 }

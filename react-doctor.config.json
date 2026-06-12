@@ -207,7 +207,6 @@
       },
       {
         "files": [
-          "docs/GUIDELINES-REF/**",
           "plugins/**",
           "test-dns-simple.js"
         ],

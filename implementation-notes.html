@@ -431,8 +431,7 @@
     <li><strong>Config namespace corrected (false positives / out-of-scope kept):</strong> added the
       real <code>deslop/unused-file</code>, <code>deslop/unused-export</code>,
       <code>deslop/unused-dev-dependency</code> IDs alongside the legacy IDs in the existing per-directory
-      overrides (<code>docs/GUIDELINES-REF/**</code> vendored subtree, <code>plugins/**</code>,
-      <code>test-dns-simple.js</code>, <code>app/** + src/**</code> design-token/util export surfaces,
+      overrides (<code>plugins/**</code>, <code>test-dns-simple.js</code>, <code>app/** + src/**</code> design-token/util export surfaces,
       <code>package.json</code>'s <code>@ast-grep/cli</code> dev dep which IS used by the lint script,
       <code>.omc/**</code>, and the dns-native <code>constants.ts</code>). No detection rule was disabled
       globally; per-directory granularity is preserved.</li>
