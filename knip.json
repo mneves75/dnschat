@@ -1,7 +1,6 @@
 {
   "$schema": "https://unpkg.com/knip@latest/schema.json",
   "ignore": [
-    "docs/GUIDELINES-REF/**",
     "plugins/**",
     "test-dns-simple.js"
   ],
