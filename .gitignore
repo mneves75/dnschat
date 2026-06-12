@@ -134,5 +134,3 @@ app-example
 # pnpm lock file (using bun)
 pnpm-lock.yaml
 
-# Guidelines reference (keep local only)
-/docs/GUIDELINES-REF/
