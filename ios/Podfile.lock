@@ -2,9 +2,9 @@ PODS:
   - CocoaAsyncSocket (7.6.5)
   - DNSNative (1.5.0):
     - React-Core
-  - EXConstants (56.0.17):
+  - EXConstants (56.0.18):
     - ExpoModulesCore
-  - Expo (56.0.9):
+  - Expo (56.0.11):
     - ExpoModulesCore
     - ExpoModulesJSI
     - hermes-engine
@@ -30,15 +30,15 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - ExpoAsset (56.0.16):
+  - ExpoAsset (56.0.17):
     - ExpoModulesCore
   - ExpoCrypto (56.0.4):
     - ExpoModulesCore
   - ExpoDomWebView (56.0.5):
     - ExpoModulesCore
-  - ExpoFileSystem (56.0.7):
+  - ExpoFileSystem (56.0.8):
     - ExpoModulesCore
-  - ExpoFont (56.0.5):
+  - ExpoFont (56.0.6):
     - ExpoModulesCore
   - ExpoGlassEffect (56.0.4):
     - ExpoModulesCore
@@ -46,13 +46,13 @@ PODS:
     - ExpoModulesCore
   - ExpoKeepAwake (56.0.3):
     - ExpoModulesCore
-  - ExpoLinking (56.0.13):
+  - ExpoLinking (56.0.14):
     - ExpoModulesCore
   - ExpoLocalization (56.0.6):
     - ExpoModulesCore
-  - ExpoLogBox (56.0.12):
+  - ExpoLogBox (56.0.13):
     - React-Core
-  - ExpoModulesCore (56.0.15):
+  - ExpoModulesCore (56.0.16):
     - ExpoModulesJSI
     - hermes-engine
     - RCTRequired
@@ -76,18 +76,18 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - ExpoModulesJSI (56.0.8):
+  - ExpoModulesJSI (56.0.9):
     - React-Core
     - ReactCommon
-  - ExpoModulesWorklets (56.0.15):
+  - ExpoModulesWorklets (56.0.16):
     - ExpoModulesCore
     - ExpoModulesJSI
-  - ExpoModulesWorkletsAdapter (56.0.15):
+  - ExpoModulesWorkletsAdapter (56.0.16):
     - ExpoModulesCore
     - ExpoModulesJSI
     - ExpoModulesWorklets
     - RNWorklets
-  - ExpoRouter (56.2.9):
+  - ExpoRouter (56.2.10):
     - ExpoModulesCore
     - RNScreens
   - ExpoSecureStore (56.0.4):
@@ -98,7 +98,7 @@ PODS:
     - ExpoModulesCore
   - ExpoSystemUI (56.0.5):
     - ExpoModulesCore
-  - ExpoUI (56.0.16):
+  - ExpoUI (56.0.17):
     - ExpoModulesCore
     - ExpoModulesWorklets
     - React-RCTFabric
@@ -2685,29 +2685,29 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   CocoaAsyncSocket: 065fd1e645c7abab64f7a6a2007a48038fdc6a99
   DNSNative: e1654d7333a1747c724a008c144aca102b26539d
-  EXConstants: 659c2e5593243436fd8ed4ba6225d2ebd045d84a
-  Expo: 9ca20ca4a888b3de7c1a99f93e094c486dfe5b36
-  ExpoAsset: c3045ed094105f5f2bf332e36ef1bd63401c948f
+  EXConstants: e836b478e4f5c835f3c77921d8162e1918e2c06e
+  Expo: 50a23d901aeb3a7681809bad2f9ada021442aaa4
+  ExpoAsset: 1e436e9aee7015d5c6d203c1ddfe1adbb521a623
   ExpoCrypto: b54a97c4357d46d7f8de079e69fa89029572244b
   ExpoDomWebView: 27205be8754f9992913b8a9a08e65019f2207075
-  ExpoFileSystem: d730a1cb33f2c91dec01561f0d710054fda32ae9
-  ExpoFont: 6fe496f2be617ed4367f159f215dcc4ba27d37d6
+  ExpoFileSystem: 9dc04ec1e11bc3c7b965d7feb2de12c789755c7b
+  ExpoFont: 3a9fd9690216be709f109d2bd67d80e1beefdbee
   ExpoGlassEffect: 7d4233dc0727ee2b28dd757eda70e1b6abf662fd
   ExpoHaptics: 89364cf3c3ca2cfd54cafed42f3be3169bab6d42
   ExpoKeepAwake: 359c47a1d9ccc3a3c519bca6e39562cce230c5bb
-  ExpoLinking: 49cc5ddd93b68506c588aa1985c27b795e6d69d6
+  ExpoLinking: f3d1883179d784e3d74c0eaf6ae8b03ec3571da3
   ExpoLocalization: cf50efc436b2ec313510131c1ee0e778366d64b0
-  ExpoLogBox: 7aa03244fe5eeced5129e4ec7ad5bd9a3994378e
-  ExpoModulesCore: 3c76b58994a4b749d9a8353663d563f1ea18d5e9
-  ExpoModulesJSI: 8028268310770bed2f3f3aec6e7bf150714841b1
-  ExpoModulesWorklets: 3a5a7126f22ccacf3189bdf0be37022efd5e4578
-  ExpoModulesWorkletsAdapter: 55b4c82542c105f4e8feaec832832487e6c674c0
-  ExpoRouter: ed3d4e1815fd19856f3a7fbc68ad8565d9eb355d
+  ExpoLogBox: 63977cf56b04547c713535d2d4e9bbf2f012e3c6
+  ExpoModulesCore: 9210a937772ff431901bf6e1d94350645c392f93
+  ExpoModulesJSI: 49e5d86ad1a81cd696f07ca9d583b7848baa75cb
+  ExpoModulesWorklets: 111c11b9ab7fe23ce3e52bba7bbfcf5ef730139f
+  ExpoModulesWorkletsAdapter: 59a69740bd200ff5f983cd97d49c086d47b802f4
+  ExpoRouter: abac86e050a6cb4f7f11dd9e79e11f7986d2be03
   ExpoSecureStore: f1bd083c1b7b8d4142013ffcc0082d377d9f49f4
   ExpoSplashScreen: 3fe3a57d56d7242a9109d9714a6f9fa1e256538b
   ExpoSymbols: 377747de25bcb1ab68ec68f23d81fb81d43eae83
   ExpoSystemUI: 8f4fb641c6a6ebe2a01dda0fbd3fdd952ab5823a
-  ExpoUI: 87bfd96f91fce59e1cfc1ed166dd7a6331aff2f9
+  ExpoUI: 0a0f76982e5254376b7577e09a45ff39cb362414
   FBLazyVector: 24e62c765683b8d89006a88a2c8f5cf019f0074d
   hermes-engine: 8c0a448a44dddb82c8756172a5d825042578149e
   RCTDeprecation: a4c521821fab57cbb125b36effe84d897d0dfa12
