@@ -55,10 +55,17 @@ release prep that had only lived on the working branch.
 
 - All four CI jobs (`dns-native`, `test`, `android`, `sbom`) green on
   `2026-06-13`; `bun run verify:expo-doctor` reports `20/20`.
-- TestFlight/App Store upload remains blocked: the stable Xcode slot still
-  carries the `26.6` beta seed, which App Store Connect rejects with
-  `ITMS-90534`. This build cannot be uploaded until a GM Xcode toolchain is
-  installed; the build number is already advanced for that retry.
+- Uploaded to TestFlight on `2026-06-13`: build `65` processed as `VALID`
+  and was distributed to the internal tester group, with `What to Test`
+  notes set for `en-US` and `pt-BR`. `ITMS-90534` did **not** recur — the
+  stable Xcode slot (`26.6`, build `17F109`) is GM-licensed, so App Store
+  Connect accepted the binary. The earlier "beta seed" diagnosis was
+  incorrect; the archive failures during the retry were self-inflicted by an
+  invalid `DEVELOPER_DIR` override pointing at a non-existent toolchain, not
+  by the toolchain in the stable slot. The proven lane uses the default
+  `xcode-select` Xcode (no `DEVELOPER_DIR` override) and, under host
+  overload, an incremental archive with limited concurrency (`-jobs 3`,
+  `nice`) to avoid fork-storm `SIGKILL`s.
 
 ## [4.0.30] - 2026-06-10
 
