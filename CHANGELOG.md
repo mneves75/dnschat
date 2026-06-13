@@ -6,6 +6,60 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+## [4.0.31] - 2026-06-13
+
+Build `64` -> `65`. Security and CI hardening release. Resolves all open
+Dependabot advisories, repairs the three failing CI jobs, aligns the Expo
+SDK 56 packages, and reconciles the default branch with the 4.0.25-4.0.30
+release prep that had only lived on the working branch.
+
+### Security
+
+- Resolved all 8 open Dependabot advisories:
+  - `shell-quote` 1.8.3 -> 1.8.4 (GHSA-w7jw-789q-3m8p, critical) in the
+    dns-native module lockfile.
+  - `addressable` 2.8.8 -> 2.9.0 (GHSA-h27x-rffw-24p4) in `ios/Gemfile.lock`.
+  - `activesupport` 7.2.3 -> 7.2.3.1 (GHSA-2j26-frm8-cmj9,
+    GHSA-89vf-4333-qx8v, GHSA-cg4j-q9v8-6v38).
+  - `aws-sdk-s3` 1.205.0 -> 1.225.1 (GHSA-2xgq-q749-89fq).
+  - `faraday` 1.10.4 -> 1.10.5 (GHSA-33mh-2634-fwr2, SSRF).
+  - `json` 2.16.0 -> 2.19.9 (GHSA-3m6g-2423-7cp3, format string injection).
+
+### Fixed
+
+- Android `assembleDebug` compile error: removed a redundant `executor`
+  argument from three `supplyDnsAsync` call sites in both copies of
+  `DNSResolver.java`. The wrapper takes a single `Supplier<T>` and binds
+  the shared executor internally; the extra argument had failed `javac`
+  since the wrapper was introduced.
+- dns-native CI install: restored `modules/dns-native/package-lock.json`
+  (CI runs `npm ci` there) and bumped its `typescript` to `~6.0.3` and
+  `ts-jest` to `^29.4.9` so the `ignoreDeprecations "6.0"` tsconfig
+  compiles under Node.
+- `bun.lock` regenerated at `lockfileVersion 1` so the CI-pinned bun
+  `1.3.9` can parse it (the dev machine's bun 1.4.0 emits v2).
+
+### Changed
+
+- Aligned 8 Expo SDK 56 packages to the expo-doctor expected patches
+  (`expo` 56.0.11, `expo-router` 56.2.10, `expo-constants` 56.0.18,
+  `expo-asset` 56.0.17, `expo-linking` 56.0.14, `expo-build-properties`
+  56.0.18, `@expo/ui` 56.0.17, `@expo/metro-runtime` 56.0.15) and removed
+  a stale `overrides["expo-constants"]` pin that had capped the tree.
+- Removed stale `docs/GUIDELINES-REF` references from repo config
+  (`.gitignore`, `knip.json`, `tsconfig.json`, doctor configs).
+- Bumped version metadata to `4.0.31` build/code `65` with
+  `bun run sync-versions`.
+
+### Release status
+
+- All four CI jobs (`dns-native`, `test`, `android`, `sbom`) green on
+  `2026-06-13`; `bun run verify:expo-doctor` reports `20/20`.
+- TestFlight/App Store upload remains blocked: the stable Xcode slot still
+  carries the `26.6` beta seed, which App Store Connect rejects with
+  `ITMS-90534`. This build cannot be uploaded until a GM Xcode toolchain is
+  installed; the build number is already advanced for that retry.
+
 ## [4.0.30] - 2026-06-10
 
 Build `63` -> `64`. TestFlight staging release of the 4.0.29 review
