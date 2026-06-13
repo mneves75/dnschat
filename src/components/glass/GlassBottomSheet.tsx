@@ -16,7 +16,6 @@ import {
   StyleSheet,
   ScrollView,
   Text,
-  TouchableOpacity,
   TouchableWithoutFeedback,
   View,
   useColorScheme,
@@ -28,6 +27,7 @@ import { useTranslation } from "../../i18n";
 import { useMotionReduction } from "../../context/AccessibilityContext";
 import { LiquidGlassWrapper } from "../LiquidGlassWrapper";
 import { useImessagePalette } from "../../ui/theme/imessagePalette";
+import { PressableRipple } from "../PressableRipple";
 
 // Cap scaling for the fixed-size close glyph so Dynamic Type cannot distort the
 // 32x32 control (mirrors Toast.tsx / MessageContent.tsx).
@@ -87,9 +87,11 @@ export const GlassBottomSheet: React.FC<GlassBottomSheetProps> = ({
   const { height: screenHeight } = useWindowDimensions();
   const { t } = useTranslation();
   const { shouldReduceMotion } = useMotionReduction();
-  const translateY = React.useRef(new Animated.Value(1000)).current;
-  const animatedBackdropOpacity = React.useRef(new Animated.Value(0)).current;
-  const scale = React.useRef(new Animated.Value(0.96)).current;
+  // useState initializers create each animated value once and are safe to read
+  // during render (a ref's `.current` cannot be accessed while rendering).
+  const [translateY] = React.useState(() => new Animated.Value(1000));
+  const [animatedBackdropOpacity] = React.useState(() => new Animated.Value(0));
+  const [scale] = React.useState(() => new Animated.Value(0.96));
   const sheetRef = React.useRef<View>(null);
   const restoreFocusRef = React.useRef<HTMLElement | null>(null);
   const onCloseRef = React.useRef(onClose);
@@ -306,7 +308,7 @@ export const GlassBottomSheet: React.FC<GlassBottomSheetProps> = ({
                   </View>
 
                   {showCloseButton && (
-                    <TouchableOpacity
+                    <PressableRipple
                       style={[
                         styles.closeButton,
                         { backgroundColor: colors.closeButtonBackground },
@@ -315,6 +317,9 @@ export const GlassBottomSheet: React.FC<GlassBottomSheetProps> = ({
                       accessibilityRole="button"
                       accessibilityLabel={t("common.close")}
                       hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      variant="icon"
+                      borderless
+                      rippleRadius={20}
                     >
                       <Text
                         style={[
@@ -325,7 +330,7 @@ export const GlassBottomSheet: React.FC<GlassBottomSheetProps> = ({
                       >
                         X
                       </Text>
-                    </TouchableOpacity>
+                    </PressableRipple>
                   )}
                 </>
               )}
@@ -367,7 +372,7 @@ export const GlassActionSheet: React.FC<GlassActionSheetProps> = ({
       <View style={styles.actionsContainer}>
         {actions.map((action, index) => (
           <React.Fragment key={`${action.title}-${index}`}>
-            <TouchableOpacity
+            <PressableRipple
               style={[
                 styles.actionItem,
                 action.disabled && styles.actionDisabled,
@@ -383,6 +388,7 @@ export const GlassActionSheet: React.FC<GlassActionSheetProps> = ({
               accessibilityLabel={action.accessibilityLabel ?? action.title}
               accessibilityHint={action.accessibilityHint}
               accessibilityState={{ disabled: action.disabled }}
+              variant={action.style === "destructive" ? "destructive" : "surface"}
             >
               <View style={styles.actionContent}>
                 {Boolean(action.icon) && (
@@ -406,7 +412,7 @@ export const GlassActionSheet: React.FC<GlassActionSheetProps> = ({
                   {action.title}
                 </Text>
               </View>
-            </TouchableOpacity>
+            </PressableRipple>
 
             {index < actions.length - 1 && (
               <View
@@ -426,9 +432,9 @@ export const GlassActionSheet: React.FC<GlassActionSheetProps> = ({
 export const useGlassBottomSheet = () => {
   const [visible, setVisible] = React.useState(false);
 
-  const show = React.useCallback(() => setVisible(true), []);
-  const hide = React.useCallback(() => setVisible(false), []);
-  const toggle = React.useCallback(() => setVisible((prev) => !prev), []);
+  const show = () => setVisible(true);
+  const hide = () => setVisible(false);
+  const toggle = () => setVisible((prev) => !prev);
 
   return { visible, show, hide, toggle };
 };

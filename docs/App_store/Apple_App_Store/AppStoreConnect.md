@@ -79,21 +79,22 @@ AI,chat,DNS,assistant,local,native,tech,innovation,queries,networking
 
 ---
 
-## What's New (Release Notes v4.0.23)
+## What's New (Release Notes v4.0.28)
 
-TESTFLIGHT AND APP STORE SUBMISSION REFRESH
+TESTFLIGHT STAGING REFRESH
 
-- Updated release metadata to version 4.0.23 build 57.
-- Renewed App Store screenshots for iPhone and iPad in English and Portuguese.
-- Uploaded the signed App Store IPA to TestFlight, validated processing for build 57, and submitted the App Store version for review.
+- Updated release metadata to version 4.0.28 build 62 and fixed the chat error overlay reported from TestFlight.
+- Aligned React Doctor config filenames for the current CLI and kept root/native scans at 100/100.
+- Verify localized chat error copy, bounded retry toast behavior, React Doctor 100/100, full local gate, native DNS tests, signed iOS archive/export, and TestFlight processing before distribution. No App Store version record exists for 4.0.28 yet.
 
-## TestFlight What to Test (v4.0.23 build 57)
+## TestFlight What to Test (v4.0.28 build 62)
 
 - Complete onboarding from a fresh install and confirm the app lands on the chat list.
 - Open message/chat/log/settings menus and confirm actions remain reachable on supported native platforms and fall back cleanly elsewhere.
 - Open settings and chat sheets and confirm React Native modal dismissal, accessibility labels, and hit targets behave correctly.
 - Open a stale chat deep link and confirm the conversation-not-found state appears instead of a blank chat.
 - Send short prompts over the default DNS service and confirm responses render without transport errors.
+- Confirm settings/About version metadata reports 4.0.28 build 62 and DNS failures show a compact localized retry prompt instead of an oversized diagnostic overlay.
 - Confirm DNS failures, invalid settings, and unsupported server choices fail closed without exposing prompt text or TXT response contents.
 - Type in a long chat thread and confirm new messages follow the bottom while manual scrollback is not forced down by background updates.
 - Open onboarding/help, Settings, and About external links and confirm allowed HTTPS and email destinations open normally.
@@ -146,8 +147,8 @@ Validated screenshot sets currently available in App Store Connect:
 ### Bundle Information
 
 - **Bundle ID**: `<BUNDLE_ID>`
-- **Version**: `4.0.23`
-- **Build Number**: 57 (sync-versions)
+- **Version**: `4.0.28`
+- **Build Number**: 61 (sync-versions)
 - **App Store Connect internal IDs**: intentionally omitted from public docs; keep exact IDs in private release notes.
 - **Minimum iOS Version**: 16.4
 - **Device Support**: iPhone, iPad
@@ -281,11 +282,11 @@ No user account is required. The app does not require app-owned backend infrastr
 ### App Store Connect Configuration
 
 - [x] Historical IPA upload evidence exists for `4.0.13` build `43`
-- [x] Upload current release IPA build (`4.0.23` build `57`)
-- [x] Local ASC health checked with `asc doctor` (`2026-06-04`)
+- [ ] Upload current release IPA build (`4.0.28` build `62`)
+- [x] Local ASC health checked with `asc doctor` (`2026-06-08`)
 - [x] Apply App Store Connect metadata for `en-US` and `pt-BR`
 - [x] Renew iPhone and iPad screenshot sets for `en-US` and `pt-BR`
-- [x] Submit App Store version for review (`WAITING_FOR_REVIEW`)
+- [ ] Create or update an App Store version for `4.0.28` when preparing App Store submission
 - [ ] Configure pricing (Free)
 - [ ] Set availability (Worldwide)
 - [ ] Age rating questionnaire
@@ -294,22 +295,23 @@ No user account is required. The app does not require app-owned backend infrastr
 
 ### Review Submission
 
-- [x] Xcode Debug simulator build passed (`2026-06-03`, Xcode `26.5`)
-- [x] AXe release simulator pass covered 10 feature groups (`2026-05-17`,
-  version `4.0.13` build `43`)
-- [x] Xcode generic iOS Release build/archive passed unsigned (`2026-06-03`)
+- [x] Xcode Debug simulator build passed (`2026-06-08`, Xcode `26.5`)
+- [x] AXe release simulator pass covered 10 feature groups (`2026-06-05`,
+  version `4.0.26` build `60`)
+- [x] Xcode generic iOS Release build/archive passed unsigned (`2026-06-08`)
 - [x] Signed archive/export passed for `4.0.13` build `43`
 - [x] Historical App Store Connect upload/submission check passed for build `43`
 - [x] Historical TestFlight validation passed (`0` errors, `0` warnings) for build `43`
 - [x] Historical build `56` physical-device Release build/install/launch
-- [x] Current build `57` App Store Connect upload/processing check
-- [x] Current build `57` TestFlight validation (`0` errors, `0` warnings)
-- [x] Current build `57` App Store pre-submit validation (`0` errors, `0` warnings, `0` blocking)
-- [x] Submit for App Store Review
+- [ ] Current build `62` signed archive/export
+- [ ] Current build `62` App Store Connect upload/processing check (`VALID`)
+- [ ] Current build `62` TestFlight validation (`0` errors, `0` warnings)
+- [ ] Current build `62` App Store pre-submit validation (blocked until App Store version record exists)
+- [ ] Submit for App Store Review
 - [ ] Final testing on TestFlight
 - [ ] Review guidelines compliance check
 - [ ] Monitor review status
 
 ---
 
-_Updated for DNS Chat v4.0.23 build 57 - TestFlight/App Store submission refresh_
+_Updated for DNS Chat v4.0.28 build 62 - TestFlight staging refresh_

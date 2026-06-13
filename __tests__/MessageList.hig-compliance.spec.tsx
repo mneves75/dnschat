@@ -158,8 +158,11 @@ describe("MessageList - iOS 26 HIG Compliance", () => {
     it("uses LiquidGlassSpacing.xs for bottom spacing via ListFooterComponent", () => {
       // UPDATED: Changed from paddingBottom to ListFooterComponent for scrollToEnd() compatibility
       // FlatList.scrollToEnd() ignores contentContainerStyle.paddingBottom, so footer is used instead
+      // UPDATED: footer/empty are passed as ELEMENTS (not render functions) so a
+      // bottomInset change re-renders them in place instead of remounting them
       expect(sourceCode).toContain("height: LiquidGlassSpacing.xs + bottomInset");
-      expect(sourceCode).toContain("ListFooterComponent={renderFooter}");
+      expect(sourceCode).toContain("ListFooterComponent={listFooter}");
+      expect(sourceCode).toContain("ListEmptyComponent={listEmptyContent}");
     });
 
     it("uses LiquidGlassSpacing.xl for horizontal padding", () => {
@@ -286,6 +289,14 @@ describe("MessageList - iOS 26 HIG Compliance", () => {
 
     it("documents RefreshControl color rationale", () => {
       expect(sourceCode).toContain("RefreshControl tint uses accentTint");
+    });
+  });
+
+  describe("Loading State", () => {
+    it("uses the message skeleton instead of a spinner-only empty loading state", () => {
+      expect(sourceCode).toContain('import { SkeletonMessage } from "./SkeletonMessage"');
+      expect(sourceCode).toContain("<SkeletonMessage />");
+      expect(sourceCode).not.toContain("ActivityIndicator");
     });
   });
 

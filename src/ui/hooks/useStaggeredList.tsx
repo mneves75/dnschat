@@ -29,7 +29,7 @@
  * @see DESIGN-UI-UX-GUIDELINES.md - Stagger delay 50-100ms per item
  */
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import Animated, {
   useSharedValue,
@@ -97,6 +97,62 @@ interface UseStaggeredListResult {
 // Maximum items we'll create shared values for
 const MAX_ITEMS = 50;
 
+interface StaggeredSharedValuePool {
+  opacities: SharedValue<number>[];
+  translates: SharedValue<number>[];
+}
+
+const allocatePool = (
+  count: number,
+  hiddenOpacity: number,
+  hiddenTranslate: number,
+): StaggeredSharedValuePool => ({
+  opacities: Array.from({ length: count }, () => makeMutable(hiddenOpacity)),
+  translates: Array.from({ length: count }, () => makeMutable(hiddenTranslate)),
+});
+
+const growPool = (
+  pool: StaggeredSharedValuePool,
+  count: number,
+  hiddenOpacity: number,
+  hiddenTranslate: number,
+): StaggeredSharedValuePool => {
+  const missing = count - pool.opacities.length;
+  if (missing <= 0) {
+    return pool;
+  }
+  const extra = allocatePool(missing, hiddenOpacity, hiddenTranslate);
+  return {
+    opacities: [...pool.opacities, ...extra.opacities],
+    translates: [...pool.translates, ...extra.translates],
+  };
+};
+
+/**
+ * Lazily allocate shared values for `Math.min(itemCount, MAX_ITEMS)` items
+ * instead of MAX_ITEMS upfront (2 x 50 makeMutable per mount regardless of list
+ * size). The pool only ever grows; each shared value is created exactly once.
+ * Growth uses a render-phase state update so new rows have their hidden initial
+ * values before commit (no visible flash), mirroring the Toast.tsx
+ * derive-during-render pattern that keeps the React Compiler happy.
+ * "Create once" values live in a useState initializer per repo convention.
+ */
+function useStaggeredSharedValuePool(
+  effectiveCount: number,
+  hiddenOpacity: number,
+  hiddenTranslate: number,
+): StaggeredSharedValuePool {
+  const [pool, setPool] = useState(() =>
+    allocatePool(effectiveCount, hiddenOpacity, hiddenTranslate),
+  );
+
+  if (pool.opacities.length < effectiveCount) {
+    setPool((prev) => growPool(prev, effectiveCount, hiddenOpacity, hiddenTranslate));
+  }
+
+  return pool;
+}
+
 export function useStaggeredList(
   itemCount: number,
   options: UseStaggeredListOptions = {}
@@ -111,26 +167,24 @@ export function useStaggeredList(
   } = options;
 
   const { shouldReduceMotion } = useMotionReduction();
+  const effectiveCount = Math.min(itemCount, MAX_ITEMS);
 
-  // Create shared values for each possible item (capped at MAX_ITEMS)
-  const opacities = useRef(
-    Array.from({ length: MAX_ITEMS }, () => makeMutable(shouldReduceMotion ? 1 : 0))
-  ).current;
-
-  const translates = useRef(
-    Array.from({ length: MAX_ITEMS }, () =>
-      makeMutable(shouldReduceMotion ? 0 : (direction === 'left' ? -initialOffset : initialOffset))
-    )
-  ).current;
+  // Shared values allocated lazily for the items actually rendered (capped at
+  // MAX_ITEMS); the pool grows when the list grows and values are created once.
+  const { opacities, translates } = useStaggeredSharedValuePool(
+    effectiveCount,
+    shouldReduceMotion ? 1 : 0,
+    shouldReduceMotion ? 0 : (direction === 'left' ? -initialOffset : initialOffset),
+  );
 
   const completedCount = useSharedValue(0);
 
   const triggerAnimation = () => {
     if (shouldReduceMotion) {
       // Instant transition for reduced motion
-      for (let i = 0; i < Math.min(itemCount, MAX_ITEMS); i++) {
-        opacities[i]!.value = 1;
-        translates[i]!.value = 0;
+      for (let i = 0; i < effectiveCount; i++) {
+        opacities[i]?.set(1);
+        translates[i]?.set(0);
       }
       if (onComplete) {
         onComplete();
@@ -138,8 +192,7 @@ export function useStaggeredList(
       return;
     }
 
-    completedCount.value = 0;
-    const effectiveCount = Math.min(itemCount, MAX_ITEMS);
+    completedCount.set(0);
 
     for (let i = 0; i < effectiveCount; i++) {
       // Calculate delay with max concurrent limit
@@ -147,32 +200,32 @@ export function useStaggeredList(
       const batchIndex = Math.floor(i / maxConcurrent);
       const delay = (i % maxConcurrent) * delayPerItem + batchIndex * (delayPerItem * maxConcurrent);
 
-      opacities[i]!.value = withDelay(
+      opacities[i]?.set(withDelay(
         delay,
         withTiming(1, TimingConfig.normal, (finished) => {
           if (finished) {
-            completedCount.value += 1;
-            if (completedCount.value === effectiveCount && onComplete) {
+            completedCount.set(completedCount.get() + 1);
+            if (completedCount.get() === effectiveCount && onComplete) {
               runOnJS(onComplete)();
             }
           }
         })
-      );
+      ));
 
-      translates[i]!.value = withDelay(
+      translates[i]?.set(withDelay(
         delay,
         withSpring(0, SpringConfig.gentle)
-      );
+      ));
     }
   };
 
   const reset = () => {
     const offset = direction === 'left' ? -initialOffset : initialOffset;
-    for (let i = 0; i < Math.min(itemCount, MAX_ITEMS); i++) {
-      opacities[i]!.value = shouldReduceMotion ? 1 : 0;
-      translates[i]!.value = shouldReduceMotion ? 0 : offset;
+    for (let i = 0; i < effectiveCount; i++) {
+      opacities[i]?.set(shouldReduceMotion ? 1 : 0);
+      translates[i]?.set(shouldReduceMotion ? 0 : offset);
     }
-    completedCount.value = 0;
+    completedCount.set(0);
   };
 
   // Trigger animation on mount if enabled
@@ -213,8 +266,8 @@ export function useStaggeredList(
  */
 interface AnimatedListItemProps {
   children: ReactNode;
-  opacity: Pick<SharedValue<number>, 'value'>;
-  translateX: Pick<SharedValue<number>, 'value'>;
+  opacity?: SharedValue<number> | undefined;
+  translateX?: SharedValue<number> | undefined;
   style?: ViewStyle;
 }
 
@@ -225,8 +278,8 @@ export function AnimatedListItem({
   style,
 }: AnimatedListItemProps) {
   const animatedStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-    transform: [{ translateX: translateX.value }],
+    opacity: opacity?.get() ?? 1,
+    transform: [{ translateX: translateX?.get() ?? 0 }],
   }));
 
   return (
@@ -257,24 +310,21 @@ export function useStaggeredListValues(
   const { shouldReduceMotion } = useMotionReduction();
   const effectiveCount = Math.min(itemCount, MAX_ITEMS);
 
-  // Create shared values
-  const opacities = useRef(
-    Array.from({ length: MAX_ITEMS }, () => makeMutable(shouldReduceMotion ? 1 : 0))
-  ).current;
-
-  const translates = useRef(
-    Array.from({ length: MAX_ITEMS }, () =>
-      makeMutable(shouldReduceMotion ? 0 : (direction === 'left' ? -initialOffset : initialOffset))
-    )
-  ).current;
+  // Shared values allocated lazily for the items actually rendered (capped at
+  // MAX_ITEMS); the pool grows when the list grows and values are created once.
+  const { opacities, translates } = useStaggeredSharedValuePool(
+    effectiveCount,
+    shouldReduceMotion ? 1 : 0,
+    shouldReduceMotion ? 0 : (direction === 'left' ? -initialOffset : initialOffset),
+  );
 
   const completedCount = useSharedValue(0);
 
   const triggerAnimation = () => {
     if (shouldReduceMotion) {
       for (let i = 0; i < effectiveCount; i++) {
-        opacities[i]!.value = 1;
-        translates[i]!.value = 0;
+        opacities[i]?.set(1);
+        translates[i]?.set(0);
       }
       if (onComplete) {
         onComplete();
@@ -282,35 +332,35 @@ export function useStaggeredListValues(
       return;
     }
 
-    completedCount.value = 0;
+    completedCount.set(0);
 
     for (let i = 0; i < effectiveCount; i++) {
       const batchIndex = Math.floor(i / maxConcurrent);
       const delay = (i % maxConcurrent) * delayPerItem + batchIndex * (delayPerItem * maxConcurrent);
 
-      opacities[i]!.value = withDelay(
+      opacities[i]?.set(withDelay(
         delay,
         withTiming(1, TimingConfig.normal, (finished) => {
           if (finished) {
-            completedCount.value += 1;
-            if (completedCount.value === effectiveCount && onComplete) {
+            completedCount.set(completedCount.get() + 1);
+            if (completedCount.get() === effectiveCount && onComplete) {
               runOnJS(onComplete)();
             }
           }
         })
-      );
+      ));
 
-      translates[i]!.value = withDelay(delay, withSpring(0, SpringConfig.gentle));
+      translates[i]?.set(withDelay(delay, withSpring(0, SpringConfig.gentle)));
     }
   };
 
   const reset = () => {
     const offset = direction === 'left' ? -initialOffset : initialOffset;
     for (let i = 0; i < effectiveCount; i++) {
-      opacities[i]!.value = shouldReduceMotion ? 1 : 0;
-      translates[i]!.value = shouldReduceMotion ? 0 : offset;
+      opacities[i]?.set(shouldReduceMotion ? 1 : 0);
+      translates[i]?.set(shouldReduceMotion ? 0 : offset);
     }
-    completedCount.value = 0;
+    completedCount.set(0);
   };
 
   useEffect(() => {
@@ -321,6 +371,8 @@ export function useStaggeredListValues(
   }, [itemCount]);
 
   return {
+    // The pool can be one render ahead of a shrinking list; slice keeps the
+    // exposed arrays in lockstep with the rendered item count.
     opacities: opacities.slice(0, effectiveCount),
     translates: translates.slice(0, effectiveCount),
     triggerAnimation,

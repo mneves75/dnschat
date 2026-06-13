@@ -135,6 +135,11 @@ export const DNS_CONSTANTS = {
   // Message limits
   MAX_MESSAGE_LENGTH: 120,      // Enforce limit before sanitization to avoid silent truncation
   MAX_DNS_LABEL_LENGTH: 63,     // DNS RFC 1035 single label limit
+  // SECURITY: Upper bound for "n/N:" multipart TXT responses. A malicious server
+  // declaring e.g. "1/999999999999999:" must fail fast instead of relying on
+  // incidental allocation errors. 64 parts * 255 bytes/TXT string is far beyond
+  // any legitimate LLM-over-DNS answer.
+  MAX_TXT_PARTS: 64,
 
   // Character replacements
   SPACE_REPLACEMENT: '-',       // Replace spaces with dashes
@@ -156,6 +161,15 @@ export const DNS_CONSTANTS = {
   ],
 
   // DNS server whitelist (derived from DNS_SERVERS for backward compatibility)
+  //
+  // CONTRACT (subset-only narrowing): iOS and Android each compile in this same
+  // list (DNSResolver.swift `defaultAllowedServers`, DNSResolver.java
+  // `DEFAULT_ALLOWED_SERVERS`) and INTERSECT any allowlist supplied via
+  // configureSanitizer with their compiled-in copy. JS can narrow but never
+  // widen the native allowlist — adding a server here only takes effect after
+  // the native lists are updated in the same change (a hijacked JS bundle must
+  // not be able to redirect queries). nativeSecurityPolicy.test.ts asserts the
+  // three lists stay set-equal.
   ALLOWED_DNS_SERVERS: ['llm.pieter.com', 'ch.at', '8.8.8.8', '8.8.4.4', '1.1.1.1', '1.0.0.1'],
 
   // Network configuration
@@ -164,7 +178,18 @@ export const DNS_CONSTANTS = {
   DEFAULT_DNS_PORT: getDefaultServer().port,  // Matches the current default DNS server port
   DNS_PORT: 53,                 // Standard DNS port (for fallback servers)
   QUERY_TIMEOUT_MS: 10000,      // 10 seconds
-  MAX_RETRIES: 3,               // Maximum retry attempts
+  // Maximum retry attempts.
+  //
+  // CONTRACT (multiplicative retries): this value is consumed by TWO independent
+  // retry loops, so the totals multiply:
+  //   1. JS layer (DNSService.queryWithServer) retries the full transport chain
+  //      (native -> UDP -> TCP) up to MAX_RETRIES times per server.
+  //   2. The native iOS/Android resolvers independently retry their own query up
+  //      to MAX_RETRIES times per invocation.
+  // Worst case per server: MAX_RETRIES (JS) x MAX_RETRIES (native) = 9 native
+  // attempts, plus the UDP/TCP fallback attempts in each JS pass. Keep this in
+  // mind before raising the value.
+  MAX_RETRIES: 3,
   RETRY_DELAY_MS: 200,          // 200ms between retries (exponential backoff applied natively)
 
   // Thread pool configuration (Android)

@@ -30,10 +30,7 @@ export default function ChatRoute() {
   const [isRouteHydrating, setIsRouteHydrating] = React.useState(false);
   const [hasAttemptedRouteLoad, setHasAttemptedRouteLoad] = React.useState(false);
   const lastAttemptedRef = React.useRef<string | null>(null);
-  const routeChat = React.useMemo(
-    () => resolveRouteChat(chats, currentChat, normalizedThreadId),
-    [chats, currentChat, normalizedThreadId],
-  );
+  const routeChat = resolveRouteChat(chats, currentChat, normalizedThreadId);
   const isMissingRouteChat = Boolean(
     normalizedThreadId &&
       !isLoading &&

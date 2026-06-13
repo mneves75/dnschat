@@ -12,7 +12,6 @@ import React from "react";
 import {
   View,
   Text,
-  TouchableOpacity,
   StyleSheet,
   useColorScheme,
   Platform,
@@ -20,6 +19,7 @@ import {
 import type { ViewStyle, TextStyle, StyleProp } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LiquidGlassWrapper } from "../LiquidGlassWrapper";
+import { PressableRipple } from "../PressableRipple";
 
 // ==================================================================================
 // TYPES AND INTERFACES
@@ -107,34 +107,34 @@ const useGlassTabColors = () => {
 // SF SYMBOL FALLBACK SYSTEM
 // ==================================================================================
 
+// Non-emoji fallback glyphs for platforms without SF Symbols.
+const SF_SYMBOL_FALLBACK_MAP: Record<string, string> = {
+  house: "H",
+  "house.fill": "H",
+  magnifyingglass: "S",
+  person: "P",
+  "person.fill": "P",
+  gear: "G",
+  message: "C",
+  "message.fill": "C",
+  "list.bullet": "L",
+  "info.circle": "i",
+  "info.circle.fill": "i",
+  bell: "N",
+  "bell.fill": "N",
+  bookmark: "B",
+  "bookmark.fill": "B",
+  star: "*",
+  "star.fill": "*",
+};
+
 const SFSymbolFallback: React.FC<{
   symbol: string;
   size?: number;
   color?: string;
   isActive?: boolean;
 }> = ({ symbol, size = 22, color = "#8E8E93", isActive = false }) => {
-  // Non-emoji fallback glyphs for platforms without SF Symbols
-  const symbolMap: { [key: string]: string } = {
-    house: "H",
-    "house.fill": "H",
-    magnifyingglass: "S",
-    person: "P",
-    "person.fill": "P",
-    gear: "G",
-    message: "C",
-    "message.fill": "C",
-    "list.bullet": "L",
-    "info.circle": "i",
-    "info.circle.fill": "i",
-    bell: "N",
-    "bell.fill": "N",
-    bookmark: "B",
-    "bookmark.fill": "B",
-    star: "*",
-    "star.fill": "*",
-  };
-
-  const fallbackIcon = symbolMap[symbol] || "•";
+  const fallbackIcon = SF_SYMBOL_FALLBACK_MAP[symbol] || "•";
 
   return (
     <Text
@@ -184,16 +184,17 @@ const GlassTabItem: React.FC<GlassTabItemProps> = ({
   };
 
   return (
-    <TouchableOpacity
+    <PressableRipple
       style={[styles.tabItem, itemStyle, style]}
       onPress={handlePress}
       onPressIn={() => setIsPressed(true)}
       onPressOut={() => setIsPressed(false)}
-      activeOpacity={1}
+      pressedOpacity={1}
       disabled={tab.disabled}
       accessibilityRole="tab"
       accessibilityLabel={tab.title}
       accessibilityState={{ selected: isActive, disabled: tab.disabled }}
+      variant="icon"
     >
       {/* Icon */}
       <View style={styles.tabIconContainer}>
@@ -238,7 +239,7 @@ const GlassTabItem: React.FC<GlassTabItemProps> = ({
       >
         {tab.title}
       </Text>
-    </TouchableOpacity>
+    </PressableRipple>
   );
 };
 

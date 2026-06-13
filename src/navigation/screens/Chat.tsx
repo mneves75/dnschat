@@ -72,7 +72,7 @@ export function Chat() {
     minimumTouchTarget,
   );
   const [inputHeight, setInputHeight] = useState(minimumInputHeight);
-  const [visibleError, setVisibleError] = useState<string | null>(null);
+  const [dismissedError, setDismissedError] = useState<string | null>(null);
   const retryablePrompt = getRetryableFailedPrompt(currentChat?.messages ?? []);
   const handleInputHeightChange = (height: number) => {
     setInputHeight((previous) =>
@@ -85,12 +85,12 @@ export function Chat() {
   // Effect: animate screen opacity on mount unless reduced motion is enabled.
   useEffect(() => {
     if (!shouldReduceMotion) {
-      opacity.value = withTiming(1, { duration: 200 });
+      opacity.set(withTiming(1, { duration: 200 }));
     }
   }, [shouldReduceMotion]);
 
   const animatedStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
+    opacity: opacity.get(),
   }));
 
   // Track keyboard height for proper message list layout
@@ -124,16 +124,19 @@ export function Chat() {
     });
   }, [currentChat?.messages]);
 
-  // Effect: present an alert when the chat error state changes.
+  // Surface the latest context error as a dismissable toast. Derived purely from
+  // state: once dismissed, the same error stays hidden until a different arrives.
+  const visibleError = error && error !== dismissedError ? error : null;
+
+  // Effect: log error transitions for diagnostics (no state writes here).
   useEffect(() => {
     if (error) {
       devWarn("[Chat] Error occurred", error);
-      setVisibleError(error);
     }
   }, [error]);
 
   const handleDismissError = () => {
-    setVisibleError(null);
+    setDismissedError(error);
     clearError();
   };
 
@@ -151,7 +154,6 @@ export function Chat() {
       return;
     }
 
-    setVisibleError(null);
     clearError();
     await handleSendMessage(retryablePrompt);
   };
@@ -187,7 +189,7 @@ export function Chat() {
         visible={Boolean(visibleError)}
         variant="error"
         title={t("screen.chat.errorAlertTitle")}
-        message={visibleError ?? ""}
+        message={visibleError ? t("screen.chat.errorMessage") : ""}
         duration={6000}
         onDismiss={handleDismissError}
         {...(retryablePrompt

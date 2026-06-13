@@ -265,6 +265,7 @@ export const ptBR = {
       errorAlertTitle: "Erro",
       errorAlertDismiss: "OK",
       errorRetry: "Tentar de novo",
+      errorMessage: "A consulta DNS falhou. Tente de novo ou veja os logs DNS em Ajustes.",
       placeholder: "Pergunte qualquer coisa...",
       emptyState: {
         title: "Comece uma conversa!",
@@ -289,6 +290,12 @@ export const ptBR = {
         errorIndicator: "Falha ao enviar mensagem",
         menuHint: "Pressione e segure para mostrar opções de copiar e compartilhar",
         messageListLabel: "Mensagens da conversa",
+      },
+      externalLink: {
+        title: "Abrir link externo?",
+        message:
+          "Este link veio de uma resposta DNS. Confira o destino antes de sair do DNS Chat:\n\n{{url}}",
+        open: "Abrir link",
       },
     },
     chatInput: {
@@ -494,6 +501,7 @@ export const ptBR = {
             light: "Claro",
             dark: "Escuro",
           },
+          optionHint: "Usar aparência {{theme}} no DNS Chat",
           sheetTitle: "Escolher tema",
           sheetSubtitle: "Sobrescreve a aparência do sistema apenas no DNS Chat.",
         },

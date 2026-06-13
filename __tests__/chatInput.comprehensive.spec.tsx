@@ -78,20 +78,20 @@ describe("ChatInput Component - John Carmack Quality Standards", () => {
 
     it("uses useAnimatedStyle for button position (NOT useMemo)", () => {
       expect(source).toContain("const animatedButtonPosition = useAnimatedStyle");
-      expect(source).toContain("top: (inputHeight.value - minimumTouchTarget) / 2");
+      expect(source).toContain("top: (inputHeight.get() - minimumTouchTarget) / 2");
       // Verify NOT using useMemo for this
       expect(source).not.toContain("const buttonPosition = useMemo");
     });
 
     it("uses useAnimatedStyle for button style animations", () => {
       expect(source).toContain("const animatedButtonStyle = useAnimatedStyle");
-      expect(source).toContain("transform: [{ scale: scale.value }]");
-      expect(source).toContain("opacity: opacity.value");
+      expect(source).toContain("transform: [{ scale: scale.get() }]");
+      expect(source).toContain("opacity: opacity.get()");
     });
 
     it("uses useAnimatedStyle for input height animation", () => {
       expect(source).toContain("const animatedInputStyle = useAnimatedStyle");
-      expect(source).toContain("height: inputHeight.value");
+      expect(source).toContain("height: inputHeight.get()");
     });
 
     it("uses withSpring for bouncy animations", () => {
@@ -218,7 +218,7 @@ describe("ChatInput Component - John Carmack Quality Standards", () => {
         source.indexOf("Reset Input Height on Message Clear") + 500
       );
       expect(resetEffect).toContain('if (message === "")');
-      expect(resetEffect).toContain("inputHeight.value = withSpring(heightConstraints.min");
+      expect(resetEffect).toContain("inputHeight.set(withSpring(heightConstraints.min");
     });
 
     it("has JSDoc comment explaining reset behavior", () => {
@@ -299,7 +299,7 @@ describe("ChatInput Component - John Carmack Quality Standards", () => {
 
     it("calculates button top position dynamically", () => {
       expect(source).toContain("animatedButtonPosition");
-      expect(source).toContain("top: (inputHeight.value - minimumTouchTarget) / 2");
+      expect(source).toContain("top: (inputHeight.get() - minimumTouchTarget) / 2");
     });
 
     it("applies animatedButtonPosition to button style", () => {

@@ -5,7 +5,6 @@ import {
   StyleSheet,
   Text,
   RefreshControl,
-  ActivityIndicator,
 } from "react-native";
 import type {
   ListRenderItemInfo,
@@ -21,6 +20,7 @@ import { LiquidGlassWrapper, useLiquidGlassCapabilities } from "./LiquidGlassWra
 import { useTranslation } from "../i18n";
 import { devLog } from "../utils/devLog";
 import { useMotionReduction } from "../context/AccessibilityContext";
+import { SkeletonMessage } from "./SkeletonMessage";
 
 interface MessageListProps {
   messages: Message[];
@@ -36,6 +36,12 @@ interface MessageListProps {
   /** Test ID for e2e testing */
   testID?: string;
 }
+
+const renderMessage = ({ item: message }: ListRenderItemInfo<Message>) => {
+  return <MessageBubble message={message} />;
+};
+
+const keyExtractor = (item: Message) => item.id;
 
 export function MessageList({
   messages,
@@ -116,14 +122,6 @@ export function MessageList({
     isNearBottomRef.current = distanceFromBottom < 160;
   };
 
-  // iOS 26 HIG: Render individual message bubble with solid backgrounds
-  // MessageBubble uses solid colors (content layer) NOT glass (control layer)
-  const renderMessage = ({ item: message }: ListRenderItemInfo<Message>) => {
-    return <MessageBubble message={message} />;
-  };
-
-  const keyExtractor = (item: Message) => item.id;
-
   const contentContainerStyle = styles.contentContainer;
 
   // CRITICAL FIX: FlatList.scrollToEnd() ignores contentContainerStyle.paddingBottom
@@ -132,7 +130,11 @@ export function MessageList({
   // Height = LiquidGlassSpacing.xs (8px) + bottomInset (inputHeight + safeArea + spacing + keyboardHeight)
   // This ensures last message is fully visible above keyboard with iOS HIG-compliant 8px spacing
   // testID enables integration testing, accessibilityElementsHidden prevents screen reader focus on invisible spacer
-  const renderFooter = () => (
+  // PERFORMANCE: pass ELEMENTS (not inline render functions) to ListFooterComponent /
+  // ListEmptyComponent. A function prop gets a new identity whenever bottomInset (or any
+  // state) changes, which FlatList treats as a new component type -> unmount/remount churn.
+  // Elements just re-render in place.
+  const listFooter = (
     <View
       style={{ height: LiquidGlassSpacing.xs + bottomInset }}
       testID="message-list-footer"
@@ -140,7 +142,11 @@ export function MessageList({
     />
   );
 
-  const renderEmptyComponent = () => (
+  const listEmptyContent = isLoading ? (
+    <View style={styles.loadingContainer}>
+      <SkeletonMessage />
+    </View>
+  ) : (
     <View style={styles.emptyContainer}>
       {/* iOS 26+ HIG: Empty state in glass card when glass is available */}
       {supportsLiquidGlass ? (
@@ -212,15 +218,6 @@ export function MessageList({
     </View>
   );
 
-  const renderLoadingComponent = () => (
-    <View style={styles.emptyContainer}>
-      <ActivityIndicator
-        color={palette.accentTint}
-        accessibilityLabel={t("screen.chat.accessibility.loadingHint")}
-      />
-    </View>
-  );
-
   const refreshControl = onRefresh ? (
     // iOS 26 HIG: RefreshControl tint uses accentTint (semantic blue)
     // Replaces hardcoded "#000000" / "#FFFFFF" for proper theme adaptation
@@ -249,8 +246,8 @@ export function MessageList({
       scrollEventThrottle={120}
       // REMOVED: onContentSizeChange scroll handler - conflicts with useEffect scroll
       // Our scrollToBottom with double RAF handles all scenarios reliably
-      ListEmptyComponent={isLoading ? renderLoadingComponent : renderEmptyComponent}
-      ListFooterComponent={renderFooter}
+      ListEmptyComponent={listEmptyContent}
+      ListFooterComponent={listFooter}
       refreshControl={refreshControl}
       keyboardShouldPersistTaps="handled"
       // PERFORMANCE: FlatList optimizations for smooth 60fps scrolling
@@ -290,6 +287,11 @@ const styles = StyleSheet.create({
     // Large horizontal padding for empty state provides comfortable reading width
     // Prevents text from spanning full screen width on larger devices
     paddingHorizontal: LiquidGlassSpacing.xl,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    paddingTop: LiquidGlassSpacing.xl,
   },
   // iOS 26 HIG: Glass card for empty state on iOS
   emptyGlassCard: {

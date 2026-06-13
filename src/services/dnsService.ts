@@ -1,12 +1,16 @@
 import { Platform, AppState } from 'react-native';
-import { nativeDNS, DNSError, DNSErrorType } from '../../modules/dns-native';
-export { DNSError, DNSErrorType } from '../../modules/dns-native';
+import {
+  nativeDNS,
+  DNSError,
+  DNSErrorType,
+  parseMultiPartTXTResponse,
+  sanitizeLLMResponseText,
+} from '../../modules/dns-native';
+export { DNSError, DNSErrorType, sanitizeLLMResponseText } from '../../modules/dns-native';
 import {
   DNS_CONSTANTS,
   sanitizeDNSMessageReference,
   getServerPort,
-  getServersByPriority,
-  getDefaultServer,
   getLLMServers,
   type DNSServerConfig,
 } from '../../modules/dns-native/constants';
@@ -22,19 +26,15 @@ import {
   type BufferLike,
 } from './dnsWire';
 export { validateDecodedDnsResponseForTxt } from './dnsWire';
-import { ERROR_MESSAGES } from '../constants/appConstants';
-import { devLog, devLogArgs } from '../utils/devLog';
+import { devLog, devLogArgs, devLogLazy } from '../utils/devLog';
 
 const DEFAULT_DNS_ZONE = DNS_CONSTANTS.DEFAULT_DNS_SERVER;
 
-function normalizeDNSServerInput(server: string): string {
-  const normalized = server.trim().toLowerCase();
-  return normalized.endsWith('.') ? normalized.replace(/\.+$/g, '') : normalized;
-}
-
-const ALLOWED_DNS_SERVER_SET = new Set(
-  DNS_CONSTANTS.ALLOWED_DNS_SERVERS,
-);
+// DNS server validation lives in dnsServerValidation.ts so lightweight modules
+// (settings storage) can use it without loading this transport-heavy module.
+// Re-exported here for backwards compatibility with existing imports.
+import { validateDNSServer } from './dnsServerValidation';
+export { validateDNSServer } from './dnsServerValidation';
 
 export function composeDNSQueryName(label: string, dnsServer: string): string {
   const trimmedLabel = label.endsWith('.') ? label.replace(/\.+$/g, '').trim() : label.trim();
@@ -61,6 +61,10 @@ type DNSQueryContext = {
 
 type UDPSocket = {
   on(event: 'error', handler: (error: unknown) => void): void;
+  on(
+    event: 'message',
+    handler: (message: Uint8Array, rinfo: { address: string; port: number }) => void,
+  ): void;
   once(event: 'error', handler: (error: unknown) => void): void;
   once(
     event: 'message',
@@ -224,7 +228,7 @@ try {
   const tcpModule = resolveModuleCandidate(tcpCandidate, isTcpSocketModule);
   if (tcpModule) {
     TcpSocket = tcpModule;
-    devLog('[DNSService] TCP Socket library structure:', Object.keys(tcpModule));
+    devLogLazy('[DNSService] TCP Socket library structure:', () => Object.keys(tcpModule));
     devLog('[DNSService] TCP Socket library loaded successfully:', !!TcpSocket?.Socket);
   } else {
     devLog('[DNSService] TCP Socket library missing Socket constructor');
@@ -388,167 +392,22 @@ export function sanitizeDNSMessage(message: string): string {
 }
 
 /**
- * Validate DNS server to prevent redirection attacks
- * SECURITY: Only allow known-safe DNS servers
- */
-export function validateDNSServer(server: string): string {
-  if (!server || typeof server !== 'string' || server.trim().length === 0) {
-    throw new Error(ERROR_MESSAGES.DNS_SERVER_INVALID);
-  }
-
-  const normalizedServer = normalizeDNSServerInput(server);
-  if (ALLOWED_DNS_SERVER_SET.has(normalizedServer)) {
-    return normalizedServer;
-  }
-
-  // Disallow ports in the DNS server field.
-  //
-  // Rationale:
-  // - App logic is explicitly defined around DNS port 53 (UDP/TCP).
-  // - Allowing arbitrary ports is unnecessary and complicates validation, logging, and security review.
-  // - Keeping this strict prevents accidental input like "1.1.1.1:53" which would otherwise
-  //   propagate to socket calls as an invalid host string.
-  let colonCount = 0; for (let i = 0; i < normalizedServer.length; i++) if (normalizedServer.charCodeAt(i) === 58) colonCount++;
-  if (normalizedServer.includes('[') || normalizedServer.includes(']')) {
-    throw new Error(ERROR_MESSAGES.DNS_SERVER_INVALID);
-  }
-  if (colonCount === 1 && /:\d+$/.test(normalizedServer)) {
-    throw new Error(ERROR_MESSAGES.DNS_SERVER_INVALID);
-  }
-
-  const ipv4Pattern = /^(25[0-5]|2[0-4]\d|1?\d?\d)(\.(25[0-5]|2[0-4]\d|1?\d?\d)){3}$/;
-  const ipv6Pattern = /^([0-9a-f]{1,4}:){2,7}[0-9a-f]{1,4}$/i;
-  const hostnamePattern = /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)(?:\.(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?))*$/;
-
-  const isIPAddress = ipv4Pattern.test(normalizedServer) || ipv6Pattern.test(normalizedServer);
-  const isHostname = hostnamePattern.test(normalizedServer);
-
-  if (!isIPAddress && !isHostname) {
-    throw new Error(`DNS server '${server}' is not a valid hostname or IP address`);
-  }
-
-  if (isHostname) {
-    const labels = normalizedServer.split('.');
-    if (
-      labels.some(
-        (label) =>
-          label.length === 0 ||
-          label.length > DNS_CONSTANTS.MAX_DNS_LABEL_LENGTH,
-      )
-    ) {
-      throw new Error(
-        `DNS server '${server}' contains label exceeding ${DNS_CONSTANTS.MAX_DNS_LABEL_LENGTH} characters`,
-      );
-    }
-  }
-
-  // SECURITY: Allowlist only known-safe resolvers/endpoints.
-  throw new Error(ERROR_MESSAGES.DNS_SERVER_NOT_ALLOWED);
-}
-
-/**
  * Parse TXT records returned by DNS into a single response string.
- * Behavior mirrors native module semantics:
- * - If any record is plain (no n/n: prefix), concatenate plain records in order and return
- * - If multipart records are present, require a complete set [1..N] and join in order
- * - Throw on empty input or incomplete multipart sequences
+ * Delegates to the single canonical multipart parser in modules/dns-native
+ * (parseMultiPartTXTResponse) and converts DNSError into plain Error at this
+ * boundary, which is what existing dnsService callers/tests expect.
  */
 export function parseTXTResponse(txtRecords: string[]): string {
   if (!Array.isArray(txtRecords) || txtRecords.length === 0) {
     throw new Error('No TXT records to parse');
   }
-  if (txtRecords.length === 1) {
-    const rawValue = String(txtRecords[0] ?? '');
-    const first = rawValue.charCodeAt(0);
-    if ((first < 48 || first > 57) && first > 32) return rawValue;
-    if (!rawValue.trim()) throw new Error('Received empty response');
-    if (!/^\s*\d+\/\d+:/.test(rawValue)) return rawValue;
+  try {
+    return parseMultiPartTXTResponse(txtRecords);
+  } catch (error) {
+    // parseMultiPartTXTResponse only throws DNSError; unwrap to plain Error
+    // at this boundary, pass anything else through untouched.
+    throw error instanceof DNSError ? new Error(error.message) : error;
   }
-
-  type Part = { partNumber: number; totalParts: number; content: string };
-  const parts: Part[] = [];
-  let plainResponse = '';
-  let hasPlainResponse = false;
-
-  for (const record of txtRecords) {
-    const rawValue = String(record ?? '');
-    const first = rawValue.charCodeAt(0); if ((first < 48 || first > 57) && first > 32) { plainResponse += rawValue; hasPlainResponse = true; continue; }
-    const trimmedValue = rawValue.trim();
-    if (!trimmedValue) {
-      continue;
-    }
-
-    const match = rawValue.match(/^\s*(\d+)\/(\d+):(.*)$/);
-    if (match && match[1] && match[2] && match[3] !== undefined) {
-      parts.push({
-        partNumber: parseInt(match[1], 10),
-        totalParts: parseInt(match[2], 10),
-        content: match[3],
-      });
-    } else {
-      plainResponse += rawValue; hasPlainResponse = true;
-    }
-  }
-
-  if (hasPlainResponse) {
-    if (!plainResponse.trim()) {
-      throw new Error('Received empty response');
-    }
-    return plainResponse;
-  }
-
-  if (parts.length === 0) {
-    throw new Error('No TXT records to parse');
-  }
-
-  const firstPart = parts[0];
-  if (!firstPart) {
-    throw new Error('No TXT records to parse');
-  }
-  const expectedTotal = firstPart.totalParts;
-  const byPart = new Array<string | undefined>(expectedTotal);
-  let receivedParts = 0;
-
-  for (const part of parts) {
-    if (part.totalParts !== expectedTotal) {
-      throw new Error(
-        `Inconsistent multi-part response: expected ${expectedTotal} total parts but received ${part.totalParts} for part ${part.partNumber}`,
-      );
-    }
-
-    const index = part.partNumber - 1;
-    const existing = byPart[index];
-    if (existing !== undefined) {
-      if (existing === part.content) {
-        continue;
-      }
-      throw new Error(
-        `Conflicting content for part ${part.partNumber}: duplicate part payload differs`,
-      );
-    }
-    byPart[index] = part.content;
-    receivedParts++;
-  }
-
-  if (expectedTotal <= 0 || receivedParts !== expectedTotal) {
-    throw new Error(
-      `Incomplete multi-part response: got ${receivedParts} parts, expected ${expectedTotal}`,
-    );
-  }
-
-  let fullResponse = '';
-  for (let i = 1; i <= expectedTotal; i++) {
-    const content = byPart[i - 1];
-    if (typeof content !== 'string') {
-      throw new Error(`Incomplete multi-part response: missing part ${i}`);
-    }
-    fullResponse += content;
-  }
-
-  if (!fullResponse.trim()) {
-    throw new Error('Received empty response');
-  }
-  return fullResponse;
 }
 
 type ServerHealthState = {
@@ -572,14 +431,13 @@ export class DNSService {
   // A malicious server could send unlimited data without this guard.
   private static readonly MAX_DNS_RESPONSE_SIZE = 65535;
   // MEMORY LEAK FIX: Maximum request history entries to prevent unbounded growth.
-  // Previous implementation only cleaned old entries when new requests arrived,
-  // causing memory accumulation in long-running apps with intermittent queries.
+  // requestHistory is cleaned on demand by checkRateLimit()/cleanupRequestHistory();
+  // no periodic timer is needed (a previous always-on 60s setInterval was removed
+  // as it only burned battery without adding correctness).
   private static readonly MAX_REQUEST_HISTORY_SIZE = 100;
-  private static readonly CLEANUP_INTERVAL_MS = 60000; // 1 minute
   private static isAppInBackground = false;
   private static backgroundListenerInitialized = false;
   private static requestHistory: number[] = [];
-  private static cleanupIntervalId: ReturnType<typeof setInterval> | null = null;
   private static appStateSubscription: { remove: () => void } | null = null;
   private static serverHealth = new Map<string, ServerHealthState>();
 
@@ -620,20 +478,12 @@ export class DNSService {
       }
     });
 
-    // MEMORY LEAK FIX: Start periodic cleanup of requestHistory to prevent
-    // unbounded growth in long-running apps with intermittent queries.
-    if (!this.cleanupIntervalId) {
-      this.cleanupIntervalId = setInterval(() => {
-        this.cleanupRequestHistory();
-      }, this.CLEANUP_INTERVAL_MS);
-    }
-
     this.backgroundListenerInitialized = true;
   }
 
   /**
-   * Periodic cleanup of stale request history entries.
-   * Called automatically via interval and also on each rate limit check.
+   * Cleanup of stale request history entries, performed on demand by each
+   * rate limit check (no background timer required).
    */
   private static cleanupRequestHistory(): void {
     const now = Date.now();
@@ -711,11 +561,6 @@ export class DNSService {
       } catch {}
       this.appStateSubscription = null;
       this.backgroundListenerInitialized = false;
-    }
-    // MEMORY LEAK FIX: Clean up interval on teardown
-    if (this.cleanupIntervalId) {
-      clearInterval(this.cleanupIntervalId);
-      this.cleanupIntervalId = null;
     }
     // Clear request history on teardown
     this.requestHistory = [];
@@ -819,13 +664,18 @@ export class DNSService {
             allowExperimentalTransports,
           );
 
+          // SECURITY: Final response sanitization choke point. The multipart
+          // parser already strips control/bidi characters, but applying it to
+          // the final response covers every transport (native, UDP, TCP, mock).
+          const safeResponse = sanitizeLLMResponseText(result.response);
+
           this.recordServerSuccess(targetServer, queryContext.targetPort);
           try {
-            await DNSLogService.endQuery(queryId, true, result.response, result.method);
+            await DNSLogService.endQuery(queryId, true, safeResponse, result.method);
           } catch (logError) {
             devLog("[DNSService] Failed to persist successful DNS query log", logError);
           }
-          return result.response;
+          return safeResponse;
         } catch (error) {
           const message = getErrorMessage(error);
           lastError = error instanceof Error ? error : new Error(message);
@@ -1056,7 +906,21 @@ export class DNSService {
 
         socket.once('error', onError);
 
-        socket.once('message', (response: Uint8Array, rinfo: { address: string; port: number }) => {
+        // SECURITY (anti-spoofing): use a persistent 'message' listener instead of
+        // 'once'. An off-path attacker can race the legitimate server with forged
+        // datagrams; with 'once', the first forged packet that fails validation
+        // would kill the whole query. Instead, drop invalid datagrams and keep
+        // listening until a response passes the transaction-ID/port/question
+        // checks (validateDecodedDnsResponseForTxt) or the timeout fires.
+        //
+        // KNOWN LIMITATION: the source-address check inside
+        // validateDecodedDnsResponseForTxt only applies when the configured server
+        // is an IPv4 literal. For hostname servers (e.g. llm.pieter.com) React
+        // Native gives us no cheap way to learn the OS-resolved address before
+        // sending, so rinfo.address cannot be compared; the transaction ID,
+        // source port, and question-echo checks remain the spoofing defenses.
+        socket.on('message', (response: Uint8Array, rinfo: { address: string; port: number }) => {
+          if (settled) return;
           try {
             const decoded = decodeDnsPacket(response, Buffer);
             const txtRecords = extractTxtRecordsFromDecodedResponse(decoded, {
@@ -1070,8 +934,12 @@ export class DNSService {
 
             cleanup();
             resolve(txtRecords);
-          } catch (e) {
-            onError(e);
+          } catch (validationError) {
+            // Drop the datagram and keep waiting for a valid response.
+            this.vLog(
+              'UDP: Dropped datagram failing DNS response validation:',
+              getErrorMessage(validationError),
+            );
           }
         });
 
@@ -1471,10 +1339,14 @@ export class DNSService {
             try {
               capabilities = await nativeDNS.isAvailable();
               this.vLog('NATIVE: Capabilities check completed');
-              this.vLog(
-                'NATIVE: Capabilities details:',
-                JSON.stringify(capabilities, null, 2),
-              );
+              // PERF: JSON.stringify argument evaluation would survive the
+              // production transform-remove-console pass; gate it on dev.
+              if (this.isVerbose()) {
+                this.vLog(
+                  'NATIVE: Capabilities details:',
+                  JSON.stringify(capabilities, null, 2),
+                );
+              }
               this.vLog('NATIVE: Available:', capabilities.available);
               this.vLog('NATIVE: Platform:', capabilities.platform);
               this.vLog('NATIVE: Supports custom server:', capabilities.supportsCustomServer);
@@ -1716,7 +1588,11 @@ export class DNSService {
           const result = await this.handleBackgroundSuspension(async () => {
             this.vLog('NATIVE TEST: Checking capabilities for forced test...');
             const capabilities = await nativeDNS.isAvailable();
-            this.vLog('NATIVE TEST: Capabilities:', JSON.stringify(capabilities, null, 2));
+            // PERF: JSON.stringify argument evaluation would survive the
+            // production transform-remove-console pass; gate it on dev.
+            if (this.isVerbose()) {
+              this.vLog('NATIVE TEST: Capabilities:', JSON.stringify(capabilities, null, 2));
+            }
 
             if (capabilities.available && capabilities.supportsCustomServer) {
               this.vLog('NATIVE TEST: Native DNS available for forced test');

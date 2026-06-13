@@ -37,24 +37,24 @@ export function SkeletonMessage({ isUser = false }: SkeletonMessageProps) {
   // Start shimmer animation on mount
   useEffect(() => {
     if (shouldReduceMotion) {
-      shimmer.value = 0;
+      shimmer.set(0);
       return;
     }
 
-    shimmer.value = withRepeat(
+    shimmer.set(withRepeat(
       withTiming(1, {
         duration: shimmerDuration,
         easing: Easing.linear,
       }),
       -1, // Infinite loop
       false // Don't reverse
-    );
+    ));
   }, [shouldReduceMotion, shimmer]);
 
   // Animated shimmer style
   const shimmerStyle = useAnimatedStyle(() => {
     return {
-      opacity: 0.3 + shimmer.value * 0.4, // Animate opacity from 0.3 to 0.7
+      opacity: 0.3 + shimmer.get() * 0.4, // Animate opacity from 0.3 to 0.7
     };
   });
 

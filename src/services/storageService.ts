@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { Chat, Message } from "../types/chat";
 import uuid from "react-native-uuid";
-import { devLog, devWarn } from "../utils/devLog";
+import { devLog, devLogLazy, devWarn, devWarnLazy } from "../utils/devLog";
 import { decryptIfEncrypted, encryptString, isEncryptedPayload } from "./encryptionService";
 import { STORAGE_CONSTANTS } from "../constants/appConstants";
 
@@ -35,6 +35,80 @@ export class StorageService {
    *   Call B: push(msg2), saveChats([chat1 with msg2]) → msg1 LOST!
    */
   private static operationQueue: Promise<void> = Promise.resolve();
+
+  /**
+   * PERFORMANCE: In-memory cache of the last known-good chats array.
+   *
+   * Every mutation used to do loadChats() → full AsyncStorage read → AES-GCM
+   * decrypt → JSON.parse → full validation, so one sendMessage (3 mutations)
+   * cost 6 full-history crypto passes. The cache lives strictly inside the
+   * operation queue (which already serializes all read-modify-write access,
+   * so the cache cannot race): the first mutation loads + caches, subsequent
+   * mutations reuse the cache, and each successful save re-points the cache
+   * at the persisted array.
+   *
+   * Invariants:
+   * - Only assigned after a successful saveChats() inside a queued mutation
+   *   (never from a failed/partial load, so decrypt errors can't poison it).
+   * - Invalidated whenever storage may have diverged: mutation failure
+   *   (in-place edits may have dirtied the cached array), clearAllChats(),
+   *   and corruption recovery inside loadChats().
+   * - Public loadChats() never reads or writes the cache — it runs outside
+   *   the queue, and populating the cache there could race a queued mutation.
+   */
+  private static cachedChats: Chat[] | null = null;
+
+  /**
+   * Drops the in-memory chats cache so the next mutation re-reads
+   * AsyncStorage. Call after any external write/clear/import of the chats
+   * key that bypasses the mutation helpers (also used by tests to isolate
+   * static state between cases).
+   */
+  static invalidateChatCache(): void {
+    this.cachedChats = null;
+  }
+
+  /**
+   * Returns the chats array for a queued mutation: the warm cache when
+   * available, otherwise a fresh validated load. MUST only be called from
+   * inside queueOperation() — the queue is what makes cache access safe.
+   */
+  private static async getChatsForMutation(): Promise<Chat[]> {
+    if (this.cachedChats) {
+      return this.cachedChats;
+    }
+    // Note: if this load throws (decrypt/parse failure), nothing is cached.
+    return this.loadChats({ migratePlaintext: false });
+  }
+
+  /**
+   * Single choke point for every read-modify-write on the chats array.
+   * Applies the cache contract in one place: warm load, caller mutation,
+   * save, cache commit on success, cache invalidation on any failure
+   * (in-place edits may have dirtied the cached array before a failed save).
+   */
+  private static mutateChats<T>(
+    label: string,
+    mutate: (chats: Chat[]) => { chats: Chat[]; result: T },
+  ): Promise<T> {
+    return this.queueOperation(async () => {
+      const startTime = Date.now();
+      try {
+        const loaded = await this.getChatsForMutation();
+        const { chats, result } = mutate(loaded);
+        await this.saveChats(chats);
+        this.cachedChats = chats;
+        devLogLazy(`[StorageService] ${label} completed`, () => ({
+          duration: `${Date.now() - startTime}ms`,
+        }));
+        return result;
+      } catch (error) {
+        this.invalidateChatCache();
+        devWarn(`[StorageService] ${label} failed`, error);
+        throw error;
+      }
+    });
+  }
 
   /**
    * Queues an operation to run after all previous operations complete.
@@ -98,10 +172,10 @@ export class StorageService {
 
   static async saveChats(chats: Chat[]): Promise<void> {
     const startTime = Date.now();
-    devLog("[StorageService] saveChats called", {
+    devLogLazy("[StorageService] saveChats called", () => ({
       chatCount: chats.length,
       chatIds: chats.map((c) => c.id),
-    });
+    }));
 
     try {
       const serializedChats = this.serializeChats(chats);
@@ -304,6 +378,8 @@ export class StorageService {
           } catch (clearError) {
             devWarn("[StorageService] Failed to clear corrupted storage", clearError);
           }
+          // Storage content just changed underneath any warm mutation cache.
+          this.invalidateChatCache();
           return [];
         }
         throw error;
@@ -315,7 +391,7 @@ export class StorageService {
   }
 
   static async createChat(title?: string): Promise<Chat> {
-    return this.queueOperation(async () => {
+    return this.mutateChats("createChat", (chats) => {
       const newChat: Chat = {
         id: uuid.v4() as string,
         title: title || "New Chat",
@@ -323,16 +399,8 @@ export class StorageService {
         updatedAt: new Date(),
         messages: [],
       };
-
-      try {
-        const chats = await this.loadChats({ migratePlaintext: false });
-        chats.unshift(newChat);
-        await this.saveChats(chats);
-        return newChat;
-      } catch (error) {
-        devWarn("[StorageService] Error creating chat", error);
-        throw error;
-      }
+      chats.unshift(newChat);
+      return { chats, result: newChat };
     });
   }
 
@@ -340,117 +408,65 @@ export class StorageService {
     chatId: string,
     updates: Partial<Chat>,
   ): Promise<void> {
-    return this.queueOperation(async () => {
-      try {
-        const chats = await this.loadChats({ migratePlaintext: false });
-        const chatIndex = chats.findIndex((chat) => chat.id === chatId);
-
-        if (chatIndex === -1) {
-          throw new Error("Chat not found");
-        }
-
-        const existingChat = chats[chatIndex];
-        if (!existingChat) {
-          throw new Error("Chat not found");
-        }
-
-        const updatedChat: Chat = {
-          ...existingChat,
-          ...updates,
-          id: existingChat.id,
-          createdAt: existingChat.createdAt,
-          messages: updates.messages ?? existingChat.messages,
-          title: updates.title ?? existingChat.title,
-          updatedAt: new Date(),
-        };
-
-        chats[chatIndex] = updatedChat;
-
-        await this.saveChats(chats);
-      } catch (error) {
-        devWarn("[StorageService] Error updating chat", error);
-        throw error;
+    return this.mutateChats("updateChat", (chats) => {
+      const chatIndex = chats.findIndex((chat) => chat.id === chatId);
+      const existingChat = chatIndex === -1 ? undefined : chats[chatIndex];
+      if (!existingChat) {
+        throw new Error("Chat not found");
       }
+
+      const updatedChat: Chat = {
+        ...existingChat,
+        ...updates,
+        id: existingChat.id,
+        createdAt: existingChat.createdAt,
+        messages: updates.messages ?? existingChat.messages,
+        title: updates.title ?? existingChat.title,
+        updatedAt: new Date(),
+      };
+
+      chats[chatIndex] = updatedChat;
+      return { chats, result: undefined };
     });
   }
 
   static async deleteChat(chatId: string): Promise<void> {
-    return this.queueOperation(async () => {
-      try {
-        const chats = await this.loadChats({ migratePlaintext: false });
-        const filteredChats = chats.filter((chat) => chat.id !== chatId);
-        await this.saveChats(filteredChats);
-      } catch (error) {
-        devWarn("[StorageService] Error deleting chat", error);
-        throw error;
-      }
-    });
+    return this.mutateChats("deleteChat", (chats) => ({
+      chats: chats.filter((chat) => chat.id !== chatId),
+      result: undefined,
+    }));
   }
 
   static async addMessage(chatId: string, message: Message): Promise<void> {
-    return this.queueOperation(async () => {
-      const startTime = Date.now();
-      devLog("[StorageService] addMessage called", {
-        chatId,
-        messageId: message.id,
-        messageRole: message.role,
-        contentLength: message.content.length,
-        status: message.status,
-      });
+    devLog("[StorageService] addMessage called", {
+      chatId,
+      messageId: message.id,
+      messageRole: message.role,
+      contentLength: message.content.length,
+      status: message.status,
+    });
 
-      try {
-        devLog("[StorageService] Loading chats for addMessage...");
-        const chats = await this.loadChats({ migratePlaintext: false });
-
-        const chatIndex = chats.findIndex((chat) => chat.id === chatId);
-
-        if (chatIndex === -1) {
-          devWarn("[StorageService] Chat not found", { chatId });
-          throw new Error("Chat not found");
-        }
-
-        const chat = chats[chatIndex];
-        if (!chat) {
-          devWarn("[StorageService] Chat missing after lookup", { chatId });
-          throw new Error("Chat not found");
-        }
-
-        devLog("[StorageService] Found chat", {
-          chatIndex,
-          existingMessageCount: chat.messages.length,
-        });
-
-        chat.messages.push(message);
-        chat.updatedAt = new Date();
-
-        devLog("[StorageService] Message added to chat array", {
-          newMessageCount: chat.messages.length,
-        });
-
-        // Generate title from first message if it's still "New Chat"
-        if (chat.title === "New Chat" && chat.messages.length === 1) {
-          const firstMessage = chat.messages[0];
-          if (firstMessage && firstMessage.role === "user") {
-            chat.title =
-              firstMessage.content.slice(0, 50) +
-              (firstMessage.content.length > 50 ? "..." : "");
-            devLog("[StorageService] Updated chat title", {
-              newTitle: chat.title,
-            });
-          }
-        }
-
-        devLog("[StorageService] Saving chats with new message...");
-        await this.saveChats(chats);
-
-        const duration = Date.now() - startTime;
-        devLog("[StorageService] addMessage completed", {
-          duration: `${duration}ms`,
-        });
-      } catch (error) {
-        devWarn("[StorageService] Error adding message", error);
-        throw error;
+    return this.mutateChats("addMessage", (chats) => {
+      const chat = chats.find((candidate) => candidate.id === chatId);
+      if (!chat) {
+        devWarn("[StorageService] Chat not found", { chatId });
+        throw new Error("Chat not found");
       }
+
+      chat.messages.push(message);
+      chat.updatedAt = new Date();
+
+      // Generate title from first message if it's still "New Chat"
+      if (chat.title === "New Chat" && chat.messages.length === 1) {
+        const firstMessage = chat.messages[0];
+        if (firstMessage && firstMessage.role === "user") {
+          chat.title =
+            firstMessage.content.slice(0, 50) +
+            (firstMessage.content.length > 50 ? "..." : "");
+        }
+      }
+
+      return { chats, result: undefined };
     });
   }
 
@@ -459,88 +475,50 @@ export class StorageService {
     messageId: string,
     updates: Partial<Message>,
   ): Promise<void> {
-    return this.queueOperation(async () => {
-      const startTime = Date.now();
-      devLog("[StorageService] updateMessage called", {
-        chatId,
-        messageId,
-        updates: {
-          hasContent: !!updates.content,
-          contentLength: updates.content?.length || 0,
-          status: updates.status,
-        },
-      });
+    devLog("[StorageService] updateMessage called", {
+      chatId,
+      messageId,
+      updates: {
+        hasContent: !!updates.content,
+        contentLength: updates.content?.length || 0,
+        status: updates.status,
+      },
+    });
 
-      try {
-        devLog("[StorageService] Loading chats for updateMessage...");
-        const chats = await this.loadChats({ migratePlaintext: false });
-
-        const chatIndex = chats.findIndex((chat) => chat.id === chatId);
-
-        if (chatIndex === -1) {
-          devWarn("[StorageService] Chat not found", { chatId });
-          throw new Error("Chat not found");
-        }
-
-        const chat = chats[chatIndex];
-        if (!chat) {
-          devWarn("[StorageService] Chat missing after lookup", { chatId });
-          throw new Error("Chat not found");
-        }
-
-        const messageIndex = chat.messages.findIndex((msg) => msg.id === messageId);
-
-        if (messageIndex === -1) {
-          devWarn("[StorageService] Message not found", {
-            chatId,
-            messageId,
-            availableMessageIds: chat.messages.map((m) => m.id),
-          });
-          throw new Error("Message not found");
-        }
-
-        devLog("[StorageService] Found message to update", {
-          chatIndex,
-          messageIndex,
-          currentStatus: chat.messages[messageIndex]?.status,
-        });
-
-        const existingMessage = chat.messages[messageIndex];
-        if (!existingMessage) {
-          devWarn("[StorageService] Message missing after lookup", { chatId, messageId });
-          throw new Error("Message not found");
-        }
-
-        const updatedMessage: Message = {
-          ...existingMessage,
-          ...updates,
-          id: existingMessage.id,
-          role: existingMessage.role,
-          content: updates.content ?? existingMessage.content,
-          timestamp: existingMessage.timestamp,
-          status: updates.status ?? existingMessage.status,
-        };
-
-        chat.messages[messageIndex] = updatedMessage;
-
-        chat.updatedAt = new Date();
-
-        devLog("[StorageService] Message updated in array", {
-          contentLength: updatedMessage.content.length,
-          newStatus: updatedMessage.status,
-        });
-
-        devLog("[StorageService] Saving chats with updated message...");
-        await this.saveChats(chats);
-
-        const duration = Date.now() - startTime;
-        devLog("[StorageService] updateMessage completed", {
-          duration: `${duration}ms`,
-        });
-      } catch (error) {
-        devWarn("[StorageService] Error updating message", error);
-        throw error;
+    return this.mutateChats("updateMessage", (chats) => {
+      const chat = chats.find((candidate) => candidate.id === chatId);
+      if (!chat) {
+        devWarn("[StorageService] Chat not found", { chatId });
+        throw new Error("Chat not found");
       }
+
+      const messageIndex = chat.messages.findIndex((msg) => msg.id === messageId);
+      const existingMessage =
+        messageIndex === -1 ? undefined : chat.messages[messageIndex];
+
+      if (!existingMessage) {
+        devWarnLazy("[StorageService] Message not found", () => ({
+          chatId,
+          messageId,
+          availableMessageIds: chat.messages.map((m) => m.id),
+        }));
+        throw new Error("Message not found");
+      }
+
+      const updatedMessage: Message = {
+        ...existingMessage,
+        ...updates,
+        id: existingMessage.id,
+        role: existingMessage.role,
+        content: updates.content ?? existingMessage.content,
+        timestamp: existingMessage.timestamp,
+        status: updates.status ?? existingMessage.status,
+      };
+
+      chat.messages[messageIndex] = updatedMessage;
+      chat.updatedAt = new Date();
+
+      return { chats, result: undefined };
     });
   }
 
@@ -548,6 +526,9 @@ export class StorageService {
     // Queue this even though it's write-only to ensure consistency
     // if clear happens while another operation is in progress
     return this.queueOperation(async () => {
+      // Invalidate up front: even a partially failed clear means the cache
+      // can no longer be trusted to mirror storage.
+      this.invalidateChatCache();
       try {
         await Promise.all([
           AsyncStorage.removeItem(CHATS_KEY),

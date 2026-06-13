@@ -7,17 +7,18 @@ describe("Toast reduce-motion policy", () => {
     expect(source).toContain('useMotionReduction');
     expect(source).toContain('const { shouldReduceMotion } = useMotionReduction();');
     expect(source).toContain('if (shouldReduceMotion) {');
-    expect(source).toContain('translateY.value = hiddenTranslateY;');
-    expect(source).toContain('opacity.value = 0;');
-    expect(source).toContain('translateY.value = 0;');
-    expect(source).toContain('opacity.value = 1;');
+    expect(source).toContain('translateY.set(hiddenTranslateY);');
+    expect(source).toContain('opacity.set(0);');
+    expect(source).toContain('translateY.set(0);');
+    expect(source).toContain('opacity.set(1);');
   });
 
-  it("keeps error toasts persistent and untruncated", () => {
+  it("keeps error toasts persistent and visually bounded", () => {
     expect(source).toContain('const autoDismissDuration = variant === "error" ? 0 : duration;');
-    expect(source).toContain('variant === "error" ? {} : ({ numberOfLines: 1 } as const)');
-    expect(source).toContain('variant === "error" ? {} : ({ numberOfLines: 2 } as const)');
-    expect(source).toContain("{...titleTruncationProps}");
+    expect(source).toContain("const TITLE_TRUNCATION_PROPS = { numberOfLines: 1 } as const;");
+    expect(source).toContain('numberOfLines: variant === "error" ? 3 : 2');
+    expect(source).toContain("maxHeight: 168");
+    expect(source).toContain("{...TITLE_TRUNCATION_PROPS}");
     expect(source).toContain("{...messageTruncationProps}");
   });
 

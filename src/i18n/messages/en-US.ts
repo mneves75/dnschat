@@ -265,6 +265,7 @@ export const enUS = {
       errorAlertTitle: "Error",
       errorAlertDismiss: "OK",
       errorRetry: "Retry",
+      errorMessage: "DNS request failed. Try again or check DNS logs in Settings.",
       placeholder: "Ask me anything...",
       emptyState: {
         title: "Start a conversation!",
@@ -289,6 +290,12 @@ export const enUS = {
         errorIndicator: "Message failed to send",
         menuHint: "Long press to show copy and share options",
         messageListLabel: "Conversation messages",
+      },
+      externalLink: {
+        title: "Open external link?",
+        message:
+          "This link came from a DNS response. Check the destination before leaving DNS Chat:\n\n{{url}}",
+        open: "Open Link",
       },
     },
     chatInput: {
@@ -494,6 +501,7 @@ export const enUS = {
             light: "Light",
             dark: "Dark",
           },
+          optionHint: "Use {{theme}} appearance in DNS Chat",
           sheetTitle: "Choose theme",
           sheetSubtitle: "Override the system appearance for DNS Chat only.",
         },

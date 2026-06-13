@@ -20,7 +20,6 @@ import {
   StyleSheet,
   Switch,
   Text,
-  TouchableOpacity,
   View,
   Alert,
   Platform,
@@ -34,6 +33,7 @@ import { useTranslation } from "../../i18n";
 import { LOCALE_LABEL_KEYS } from "../../i18n/localeMeta";
 import { DEFAULT_DNS_SERVER } from "../../context/settingsStorage";
 import { DNSLogService } from "../../services/dnsLogService";
+import { DNSService } from "../../services/dnsService";
 import { StorageService } from "../../services/storageService";
 import { useImessagePalette } from "../../ui/theme/imessagePalette";
 import { getMinimumTouchTarget } from "../../ui/theme/liquidGlassSpacing";
@@ -50,13 +50,15 @@ import { useTransportTestThrottle } from "../../ui/hooks/useTransportTestThrottl
 import { HapticFeedback, persistHapticsPreference } from "../../utils/haptics";
 import { devLog, devWarn } from "../../utils/devLog";
 import { getAppVersionInfo } from "../../utils/appVersion";
-import { openExternalUrl } from "../../utils/externalLinks";
+import { openExternalLink } from "../../utils/externalLinks";
+import { PressableRipple } from "../../components/PressableRipple";
 
 const getErrorMessage = (error: unknown): string => {
   if (error instanceof Error) return error.message;
   if (typeof error === "string") return error;
   return String(error);
 };
+const ABOUT_FEATURE_KEYS = ["line1", "line2", "line3", "line4", "line5"] as const;
 
 // ==================================================================================
 // GLASS SETTINGS SCREEN COMPONENT
@@ -93,18 +95,31 @@ export function GlassSettings() {
   const supportSheet = useGlassBottomSheet();
   const themeSheet = useGlassBottomSheet();
 
-  const themeOptions: { value: "system" | "light" | "dark"; title: string }[] = [
+  const themeOptions: {
+    value: "system" | "light" | "dark";
+    title: string;
+    hint: string;
+  }[] = [
     {
       value: "system",
       title: t("screen.settings.sections.appearance.options.system"),
+      hint: t("screen.settings.sections.appearance.optionHint", {
+        theme: t("screen.settings.sections.appearance.options.system"),
+      }),
     },
     {
       value: "light",
       title: t("screen.settings.sections.appearance.options.light"),
+      hint: t("screen.settings.sections.appearance.optionHint", {
+        theme: t("screen.settings.sections.appearance.options.light"),
+      }),
     },
     {
       value: "dark",
       title: t("screen.settings.sections.appearance.options.dark"),
+      hint: t("screen.settings.sections.appearance.optionHint", {
+        theme: t("screen.settings.sections.appearance.options.dark"),
+      }),
     },
   ];
   const currentThemeTitle =
@@ -127,6 +142,10 @@ export function GlassSettings() {
   };
 
   // DNS Service options - llm.pieter.com is now the default (ch.at is offline)
+  // NOTE: intentionally NOT derived from getLLMServers(): that helper only
+  // returns the currently-online automatic-fallback servers (llm.pieter.com),
+  // while this picker deliberately keeps ch.at selectable, and each entry maps
+  // to a dedicated i18n key. Deriving would change the visible options/order.
   const dnsServerOptions = [
     {
       value: "llm.pieter.com",
@@ -181,7 +200,6 @@ export function GlassSettings() {
     tcp: t("screen.settings.sections.transportTest.transports.tcp"),
   };
   const appVersion: string = getAppVersionInfo().displayVersion;
-  const aboutFeatureKeys = ["line1", "line2", "line3", "line4", "line5"] as const;
 
   // Action handlers
   const handleDnsServerSelect = async (server: string) => {
@@ -205,9 +223,6 @@ export function GlassSettings() {
     }
   };
 
-  const handleOpenGitHub = () => {
-    void openExternalUrl("https://github.com/mneves75/dnschat");
-  };
 
   const handleResetSettings = () => {
     Alert.alert(
@@ -311,7 +326,6 @@ export function GlassSettings() {
     setLastTestResult(null);
     setLastTestError(null);
     try {
-      const { DNSService } = await import("../../services/dnsService");
       const response = await DNSService.queryLLM(
         testMessage,
         dnsServer,
@@ -321,9 +335,8 @@ export function GlassSettings() {
       setLastTestResult(response);
     } catch (e: unknown) {
       setLastTestError(getErrorMessage(e));
-    } finally {
-      setTestRunning(false);
     }
+    setTestRunning(false);
   };
 
   const handleForceTransport = async (
@@ -341,7 +354,6 @@ export function GlassSettings() {
     setLastTestResult(null);
     setLastTestError(null);
     try {
-      const { DNSService } = await import("../../services/dnsService");
       const response = await DNSService.testTransport(
         testMessage,
         transport,
@@ -350,9 +362,8 @@ export function GlassSettings() {
       setLastTestResult(response);
     } catch (e: unknown) {
       setLastTestError(getErrorMessage(e));
-    } finally {
-      setTestRunning(false);
     }
+    setTestRunning(false);
   };
 
   const handleClearData = () => {
@@ -366,8 +377,8 @@ export function GlassSettings() {
           style: "destructive",
           onPress: async () => {
             if (clearingData) return;
+            setClearingData(true);
             try {
-              setClearingData(true);
               await StorageService.clearAllChats();
               await DNSLogService.clearLogs();
               await loadChats();
@@ -381,9 +392,8 @@ export function GlassSettings() {
                 t("common.errorTitle"),
                 t("screen.glassSettings.alerts.clearCacheErrorMessage"),
               );
-            } finally {
-              setClearingData(false);
             }
+            setClearingData(false);
           },
         },
       ],
@@ -522,7 +532,7 @@ export function GlassSettings() {
             shape="capsule"
             style={{ marginVertical: 8, alignItems: "center", padding: 10 }}
           >
-            <TouchableOpacity
+            <PressableRipple
               testID="settings-transport-test"
               onPress={handleTestSelectedPreference}
               accessibilityRole="button"
@@ -543,7 +553,7 @@ export function GlassSettings() {
                   ? t("screen.settings.sections.transportTest.testingButton")
                   : t("screen.settings.sections.transportTest.testButton")}
               </Text>
-            </TouchableOpacity>
+            </PressableRipple>
           </LiquidGlassWrapper>
           <View
             style={{ flexDirection: "row", justifyContent: "space-around" }}
@@ -555,7 +565,7 @@ export function GlassSettings() {
                 shape="capsule"
                 style={{ paddingHorizontal: 12, paddingVertical: 6 }}
               >
-                <TouchableOpacity
+                <PressableRipple
                   testID={`settings-force-${transportKey}`}
                   onPress={() => handleForceTransport(transportKey)}
                   accessibilityRole="button"
@@ -574,7 +584,7 @@ export function GlassSettings() {
                   <Text style={{ color: palette.userBubble }}>
                     {transportLabelMap[transportKey]}
                   </Text>
-                </TouchableOpacity>
+                </PressableRipple>
               </LiquidGlassWrapper>
             ))}
           </View>
@@ -647,7 +657,7 @@ export function GlassSettings() {
             subtitle={t(
               "screen.glassSettings.sections.about.githubSubtitle",
             )}
-            onPress={handleOpenGitHub}
+            onPress={() => openExternalLink("https://github.com/mneves75/dnschat")}
           />
 
           <Form.Item
@@ -700,7 +710,7 @@ export function GlassSettings() {
             title={t("screen.glassSettings.sections.support.bugTitle")}
             subtitle={t("screen.glassSettings.sections.support.bugSubtitle")}
             onPress={() => {
-              void openExternalUrl("https://github.com/mneves75/dnschat/issues");
+              openExternalLink("https://github.com/mneves75/dnschat/issues");
             }}
             showChevron
           />
@@ -732,7 +742,7 @@ export function GlassSettings() {
       >
         <View style={styles.dnsOptionsContainer}>
           {dnsServerOptions.map((option) => (
-            <TouchableOpacity
+            <PressableRipple
               testID={`settings-dns-option-${option.value.replace(/[^a-z0-9]/gi, "-").toLowerCase()}`}
               key={option.value}
               onPress={() => handleDnsServerSelect(option.value)}
@@ -740,7 +750,7 @@ export function GlassSettings() {
               accessibilityLabel={option.label}
               accessibilityHint={option.description}
               accessibilityState={{ selected: dnsServer === option.value }}
-              activeOpacity={0.82}
+              pressedOpacity={0.82}
               style={[
                 styles.dnsOption,
                 { backgroundColor: palette.highlight },
@@ -767,7 +777,7 @@ export function GlassSettings() {
                   <Text style={[styles.selectedIndicator, { color: palette.userBubble }]}>•</Text>
                 )}
               </View>
-            </TouchableOpacity>
+            </PressableRipple>
           ))}
         </View>
       </GlassBottomSheet>
@@ -782,16 +792,17 @@ export function GlassSettings() {
       >
         <View style={styles.dnsOptionsContainer}>
           {themeOptions.map((option) => (
-            <TouchableOpacity
+            <PressableRipple
               testID={`settings-theme-option-${option.value}`}
               key={option.value}
               onPress={() => handleSelectTheme(option.value)}
               accessibilityRole="button"
               accessibilityLabel={option.title}
+              accessibilityHint={option.hint}
               accessibilityState={{
                 selected: themePreference === option.value,
               }}
-              activeOpacity={0.82}
+              pressedOpacity={0.82}
               style={[
                 styles.dnsOption,
                 { backgroundColor: palette.highlight },
@@ -822,7 +833,7 @@ export function GlassSettings() {
                   </Text>
                 )}
               </View>
-            </TouchableOpacity>
+            </PressableRipple>
           ))}
         </View>
       </GlassBottomSheet>
@@ -855,7 +866,7 @@ export function GlassSettings() {
             >
               {t("screen.glassSettings.aboutSheet.featuresTitle")}
             </Text>
-            {aboutFeatureKeys.map((featureKey) => (
+            {ABOUT_FEATURE_KEYS.map((featureKey) => (
               <Text
                 key={featureKey}
                 style={[styles.featureItem, { color: palette.textSecondary }]}
@@ -879,7 +890,7 @@ export function GlassSettings() {
           {
             title: t("screen.glassSettings.supportSheet.docs"),
             onPress: () => {
-              void openExternalUrl(
+              openExternalLink(
                 "https://github.com/mneves75/dnschat/blob/main/README.md",
               );
             },
@@ -887,7 +898,7 @@ export function GlassSettings() {
           {
             title: t("screen.glassSettings.supportSheet.community"),
             onPress: () => {
-              void openExternalUrl(
+              openExternalLink(
                 "https://github.com/mneves75/dnschat/discussions",
               );
             },
@@ -895,7 +906,7 @@ export function GlassSettings() {
           {
             title: t("screen.glassSettings.supportSheet.email"),
             onPress: () => {
-              void openExternalUrl(
+              openExternalLink(
                 "mailto:support@dnschat.app?subject=DNSChat%20Support",
               );
             },

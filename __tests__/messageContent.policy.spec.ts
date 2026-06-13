@@ -9,10 +9,14 @@ describe("MessageContent render policy", () => {
     expect(source).toContain("<Markdown");
     expect(source).toContain('image: () => null');
     expect(source).toContain("onLinkPress={handleMarkdownLinkPress}");
-    expect(source).toContain("openExternalUrl(url)");
+    expect(source).toContain("Alert.alert");
+    expect(source).toContain('t("screen.chat.externalLink.message", { url })');
+    expect(source).toContain("openExternalLink(url)");
     expect(source).toContain("return false");
     expect(source).not.toContain("Linking.openURL");
-    expect(source).toContain("{message.content}");
+    expect(source).toContain('t("screen.chat.errorMessage")');
+    expect(source).toContain("hasError ? (");
+    expect(source).toContain("{displayContent}");
     expect(source).toContain('t("screen.chat.accessibility.errorIndicator")');
     expect(source).toContain("maxFontSizeMultiplier={FIXED_GLYPH_MAX_FONT_SCALE}");
     expect(source).not.toContain("Error indicator");

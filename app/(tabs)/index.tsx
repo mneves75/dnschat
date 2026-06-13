@@ -30,9 +30,8 @@ export default function ChatListRoute() {
           ? error.message
           : t("screen.chatList.createErrorMessage");
       Alert.alert(t("screen.chatList.createErrorTitle"), message);
-    } finally {
-      setIsCreatingChat(false);
     }
+    setIsCreatingChat(false);
   };
 
   return (
