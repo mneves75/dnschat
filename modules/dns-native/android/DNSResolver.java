@@ -430,7 +430,7 @@ public class DNSResolver {
             throw lastError != null
                 ? lastError
                 : new DNSError(DNSError.Type.NO_RECORDS_FOUND, "No TXT records found in legacy query");
-        }, executor);
+        });
     }
 
     private static boolean isExpectedLegacyTxtRecord(org.xbill.DNS.Record record, String queryName) {
@@ -509,7 +509,7 @@ public class DNSResolver {
             throw lastError != null
                 ? lastError
                 : new DNSError(DNSError.Type.NO_RECORDS_FOUND, "No TXT records found in UDP response");
-        }, executor);
+        });
     }
 
     private DnsQuery buildDnsQuery(String queryName) throws DNSError {
@@ -875,7 +875,7 @@ public class DNSResolver {
             } catch (Exception e) {
                 throw new DNSError(DNSError.Type.QUERY_FAILED, "DNS-over-HTTPS query failed: " + e.getMessage(), e);
             }
-        }, executor);
+        });
     }
 
 
