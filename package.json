@@ -96,7 +96,7 @@
     "react-native-worklets": "0.8.3"
   },
   "devDependencies": {
-    "@ast-grep/cli": "^0.40.3",
+    "@ast-grep/cli": "^0.43.0",
     "@types/dns-packet": "^5.6.5",
     "@types/jest": "^29.5.12",
     "@types/react": "~19.2.10",
