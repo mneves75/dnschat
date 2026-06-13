@@ -59,10 +59,9 @@ export function OnboardingNavigation({
           ? error.message
           : t("common.unknownError");
       Alert.alert(t("common.errorTitle"), message);
-    } finally {
-      isSubmittingRef.current = false;
-      setIsSubmitting(false);
     }
+    isSubmittingRef.current = false;
+    setIsSubmitting(false);
   };
 
   const handleNext = () => {

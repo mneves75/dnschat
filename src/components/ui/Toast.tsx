@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   Pressable,
   Platform,
 } from "react-native";
+import type { StyleProp, TextStyle } from "react-native";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -24,6 +25,7 @@ import { useMotionReduction } from "../../context/AccessibilityContext";
 type ToastVariant = "success" | "warning" | "error" | "info";
 type ToastPosition = "top" | "bottom";
 const FIXED_GLYPH_MAX_FONT_SCALE = 1.2;
+const TITLE_TRUNCATION_PROPS = { numberOfLines: 1 } as const;
 
 export interface ToastProps {
   /** Toast message (required) */
@@ -61,6 +63,125 @@ export interface ToastProps {
   testID?: string;
 }
 
+function ToastIcon({ icon }: { icon: string }) {
+  return (
+    <View
+      style={styles.iconContainer}
+      accessible={false}
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+    >
+      <Text
+        style={styles.icon}
+        maxFontSizeMultiplier={FIXED_GLYPH_MAX_FONT_SCALE}
+      >
+        {icon}
+      </Text>
+    </View>
+  );
+}
+
+function ToastContent({
+  title,
+  message,
+  titleStyle,
+  messageStyle,
+  variant,
+  liveRegion,
+}: {
+  title?: string;
+  message: string;
+  titleStyle: StyleProp<TextStyle>;
+  messageStyle: StyleProp<TextStyle>;
+  variant: ToastVariant;
+  liveRegion: "assertive" | "polite";
+}) {
+  const messageTruncationProps = {
+    numberOfLines: variant === "error" ? 3 : 2,
+  } as const;
+
+  return (
+    <View
+      style={styles.content}
+      accessible={true}
+      accessibilityRole={variant === "error" ? "alert" : undefined}
+      accessibilityLiveRegion={liveRegion}
+      accessibilityLabel={`${title ? `${title} ` : ""}${message}`}
+    >
+      {Boolean(title) && (
+        <Text
+          style={titleStyle}
+          {...TITLE_TRUNCATION_PROPS}
+        >
+          {title}
+        </Text>
+      )}
+      <Text
+        style={messageStyle}
+        {...messageTruncationProps}
+      >
+        {message}
+      </Text>
+    </View>
+  );
+}
+
+function ToastActionButton({
+  actionLabel,
+  actionTextStyle,
+  onPress,
+}: {
+  actionLabel: string;
+  actionTextStyle: StyleProp<TextStyle>;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={styles.actionButton}
+      accessible={true}
+      accessibilityRole="button"
+      accessibilityLabel={actionLabel}
+      hitSlop={8}
+    >
+      <Text
+        style={actionTextStyle}
+        numberOfLines={1}
+      >
+        {actionLabel}
+      </Text>
+    </Pressable>
+  );
+}
+
+function ToastDismissButton({
+  color,
+  label,
+  onPress,
+}: {
+  color: string;
+  label: string;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={styles.dismissButton}
+      accessible={true}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      hitSlop={8}
+    >
+      <Text
+        style={[styles.dismissText, { color }]}
+        maxFontSizeMultiplier={FIXED_GLYPH_MAX_FONT_SCALE}
+      >
+        ×
+      </Text>
+    </Pressable>
+  );
+}
+
 export function Toast({
   message,
   title,
@@ -84,48 +205,59 @@ export function Toast({
   const [isMounted, setIsMounted] = useState(visible);
   const visibleRef = useRef(visible);
 
+  // Mount as soon as the toast becomes visible. Deriving this during render
+  // (instead of a setState-in-effect) keeps the component React Compiler-clean.
+  if (visible && !isMounted) {
+    setIsMounted(true);
+  }
+
   // Effect: keep the visibility ref in sync with the visible prop.
   useEffect(() => {
     visibleRef.current = visible;
   }, [visible]);
 
-  const finishHide = React.useCallback(() => {
+  const finishHide = () => {
     if (!visibleRef.current) {
       setIsMounted(false);
     }
-  }, []);
+  };
 
-  const handleDismiss = React.useCallback(() => {
+  // Single hide path shared by manual dismiss, auto-dismiss, and the
+  // `visible` prop turning false. Reduce-motion short-circuits straight to the
+  // end state; otherwise the spring/timing pair runs and notifies on the JS
+  // thread once finished. `notifyDismiss` controls whether onDismiss fires
+  // (the visible->false path must not re-notify the owner).
+  const hideToast = (notifyDismiss: boolean) => {
     visibleRef.current = false;
     if (shouldReduceMotion) {
-      translateY.value = hiddenTranslateY;
-      opacity.value = 0;
-      onDismiss();
+      translateY.set(hiddenTranslateY);
+      opacity.set(0);
+      if (notifyDismiss) {
+        onDismiss();
+      }
       finishHide();
-      HapticFeedback.light();
       return;
     }
 
-    translateY.value = withSpring(
+    translateY.set(withSpring(
       hiddenTranslateY,
       SpringConfig.stiff,
       (finished) => {
         if (finished) {
-          runOnJS(onDismiss)();
+          if (notifyDismiss) {
+            runOnJS(onDismiss)();
+          }
           runOnJS(finishHide)();
         }
       }
-    );
-    opacity.value = withTiming(0, TimingConfig.quick);
+    ));
+    opacity.set(withTiming(0, TimingConfig.quick));
+  };
+
+  const handleDismiss = () => {
+    hideToast(true);
     HapticFeedback.light();
-  }, [
-    finishHide,
-    hiddenTranslateY,
-    onDismiss,
-    opacity,
-    shouldReduceMotion,
-    translateY,
-  ]);
+  };
 
   // Get variant-specific colors and icon. Pull from palette so dark mode
   // and high-contrast modes are respected.
@@ -164,16 +296,11 @@ export function Toast({
   // Error toasts persist (no auto-dismiss) so a critical failure stays on screen
   // until acknowledged; all other variants honour `duration`.
   const autoDismissDuration = variant === "error" ? 0 : duration;
-  const titleTruncationProps =
-    variant === "error" ? {} : ({ numberOfLines: 1 } as const);
-  const messageTruncationProps =
-    variant === "error" ? {} : ({ numberOfLines: 2 } as const);
 
   // Effect: animate toast visibility and manage the auto-dismiss timer.
   useEffect(() => {
     if (visible) {
       visibleRef.current = true;
-      setIsMounted(true);
       // Trigger haptic feedback
       switch (variant) {
         case "success":
@@ -190,51 +317,32 @@ export function Toast({
       }
 
       if (shouldReduceMotion) {
-        translateY.value = 0;
-        opacity.value = 1;
+        translateY.set(0);
+        opacity.set(1);
       } else {
         // Slide in
-        translateY.value = withSpring(0, SpringConfig.bouncy);
-        opacity.value = withTiming(1, TimingConfig.quick);
+        translateY.set(withSpring(0, SpringConfig.bouncy));
+        opacity.set(withTiming(1, TimingConfig.quick));
       }
 
-      // Auto-dismiss
+      // Auto-dismiss behaves exactly like a manual dismiss
       if (autoDismissDuration > 0) {
-        const timer = setTimeout(() => {
-          handleDismiss();
-        }, autoDismissDuration);
+        const timer = setTimeout(handleDismiss, autoDismissDuration);
 
         return () => clearTimeout(timer);
       }
     } else {
-      visibleRef.current = false;
-      if (shouldReduceMotion) {
-        translateY.value = hiddenTranslateY;
-        opacity.value = 0;
-        finishHide();
-        return undefined;
-      }
-
-      // Slide out
-      translateY.value = withSpring(
-        hiddenTranslateY,
-        SpringConfig.stiff,
-        (finished) => {
-          if (finished) {
-            runOnJS(finishHide)();
-          }
-        }
-      );
-      opacity.value = withTiming(0, TimingConfig.quick);
+      // Slide out (or jump to end state under reduce motion); the owner
+      // already knows the toast is hidden, so do not re-notify onDismiss.
+      hideToast(false);
     }
     return undefined;
   }, [
     visible,
     variant,
     autoDismissDuration,
-    finishHide,
-    handleDismiss,
     hiddenTranslateY,
+    onDismiss,
     opacity,
     shouldReduceMotion,
     translateY,
@@ -249,8 +357,8 @@ export function Toast({
 
   // Animated style
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: translateY.value }],
-    opacity: opacity.value,
+    transform: [{ translateY: translateY.get() }],
+    opacity: opacity.get(),
   }));
 
   if (!isMounted) {
@@ -273,91 +381,42 @@ export function Toast({
         ]}
         accessible={false}
       >
-        {/* Icon */}
-        <View
-          style={styles.iconContainer}
-          accessible={false}
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
-        >
-          <Text
-            style={styles.icon}
-            maxFontSizeMultiplier={FIXED_GLYPH_MAX_FONT_SCALE}
-          >
-            {variantStyle.icon}
-          </Text>
-        </View>
+        <ToastIcon icon={variantStyle.icon} />
 
-        {/* Content */}
-        <View
-          style={styles.content}
-          accessible={true}
-          accessibilityRole={variant === "error" ? "alert" : undefined}
-          accessibilityLiveRegion={liveRegion}
-          accessibilityLabel={`${title ? `${title} ` : ""}${message}`}
-        >
-          {Boolean(title) && (
-            <Text
-              style={[
-                styles.title,
-                typography.headline,
-                { color: variantStyle.textColor },
-              ]}
-              {...titleTruncationProps}
-            >
-              {title}
-            </Text>
-          )}
-          <Text
-            style={[
-              styles.message,
-              typography.body,
+        <ToastContent
+          {...(title ? { title } : {})}
+          message={message}
+          titleStyle={[
+            styles.title,
+            typography.headline,
+            { color: variantStyle.textColor },
+          ]}
+          messageStyle={[
+            styles.message,
+            typography.body,
+            { color: variantStyle.textColor },
+          ]}
+          variant={variant}
+          liveRegion={liveRegion}
+        />
+
+        {Boolean(actionLabel) && onAction && (
+          <ToastActionButton
+            actionLabel={actionLabel ?? ""}
+            actionTextStyle={[
+              styles.actionText,
+              typography.callout,
               { color: variantStyle.textColor },
             ]}
-            {...messageTruncationProps}
-          >
-            {message}
-          </Text>
-        </View>
-
-        {/* Action Button */}
-        {Boolean(actionLabel) && onAction && (
-          <Pressable
             onPress={handleAction}
-            style={styles.actionButton}
-            accessible={true}
-            accessibilityRole="button"
-            accessibilityLabel={actionLabel}
-            hitSlop={8}
-          >
-            <Text
-              style={[
-                styles.actionText,
-                typography.callout,
-                { color: variantStyle.textColor },
-              ]}
-            >
-              {actionLabel}
-            </Text>
-          </Pressable>
+          />
         )}
 
-        {/* Dismiss Button */}
-        <Pressable
+        <ToastDismissButton
+          color={variantStyle.textColor}
+          label={t("common.close")}
           onPress={handleDismiss}
-          style={styles.dismissButton}
-          accessible={true}
-          accessibilityRole="button"
-          accessibilityLabel={t("common.close")}
-          hitSlop={8}
-        >
-          <Text
-            style={[styles.dismissText, { color: variantStyle.textColor }]}
-            maxFontSizeMultiplier={FIXED_GLYPH_MAX_FONT_SCALE}
-          >
-            ×
-          </Text>
-        </Pressable>
+        />
       </View>
     </Animated.View>
   );
@@ -378,10 +437,11 @@ const styles = StyleSheet.create({
   },
   toast: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     paddingHorizontal: LiquidGlassSpacing.md,
     paddingVertical: LiquidGlassSpacing.sm,
     borderRadius: getCornerRadius("button"),
+    maxHeight: 168,
     ...(Platform.OS === "web"
       ? { boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.3)" }
       : {
@@ -400,6 +460,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginRight: LiquidGlassSpacing.sm,
+    marginTop: 1,
   },
   icon: {
     fontSize: 16,
@@ -408,6 +469,7 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+    minWidth: 0,
     marginRight: LiquidGlassSpacing.xs,
   },
   title: {
@@ -423,6 +485,8 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255, 255, 255, 0.2)",
     borderRadius: getCornerRadius("button"),
     marginRight: LiquidGlassSpacing.xs,
+    maxWidth: 150,
+    flexShrink: 1,
   },
   actionText: {
     fontWeight: "600",

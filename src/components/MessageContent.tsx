@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { Alert, View, Text, StyleSheet } from "react-native";
 import type { StyleProp, TextStyle } from "react-native";
 import { format } from "date-fns";
 import Markdown from "react-native-markdown-display";
@@ -9,7 +9,7 @@ import type { IMessagePalette } from "../ui/theme/imessagePalette";
 import type { TypographyScale } from "../ui/theme/liquidGlassTypography";
 import { LiquidGlassSpacing } from "../ui/theme/liquidGlassSpacing";
 import { useTranslation } from "../i18n";
-import { openExternalUrl } from "../utils/externalLinks";
+import { openExternalLink } from "../utils/externalLinks";
 
 interface MessageContentProps {
   message: Message;
@@ -19,11 +19,6 @@ interface MessageContentProps {
   palette: IMessagePalette;
   typography: TypographyScale;
 }
-
-const handleMarkdownLinkPress = (url: string): boolean => {
-  void openExternalUrl(url);
-  return false;
-};
 
 const markdownRules: RenderRules = {
   image: () => null,
@@ -54,20 +49,39 @@ export function MessageContent({
   const isUser = message.role === "user";
   const isLoading = message.status === "sending";
   const hasError = message.status === "error";
+  const displayContent = hasError
+    ? t("screen.chat.errorMessage")
+    : message.content;
   const markdownProps = markdownStyles ? { style: markdownStyles } : {};
+  const handleMarkdownLinkPress = (url: string): boolean => {
+    Alert.alert(
+      t("screen.chat.externalLink.title"),
+      t("screen.chat.externalLink.message", { url }),
+      [
+        { text: t("common.cancel"), style: "cancel" },
+        {
+          text: t("screen.chat.externalLink.open"),
+          onPress: () => {
+            openExternalLink(url);
+          },
+        },
+      ],
+    );
+    return false;
+  };
 
   return (
     <>
       {/* Message text content */}
-      {isUser ? (
-        <Text style={[textStyles, typography.body]} selectable={false}>{message.content}</Text>
+      {isUser || hasError ? (
+        <Text style={[textStyles, typography.body]} selectable={false}>{displayContent}</Text>
       ) : (
         <Markdown
           {...markdownProps}
           onLinkPress={handleMarkdownLinkPress}
           rules={markdownRules}
         >
-          {message.content}
+          {displayContent}
         </Markdown>
       )}
 

@@ -26,6 +26,18 @@ import { TimingConfig } from "../../utils/animations";
 import { HapticFeedback } from "../../utils/haptics";
 import { useTranslation } from "../../i18n";
 
+const getInputBorderColor = (
+  isFocused: boolean,
+  hasError: boolean,
+  palette: { accentTint: string; border: string; destructive: string },
+) => {
+  if (hasError) {
+    return palette.destructive;
+  }
+
+  return isFocused ? palette.accentTint : palette.border;
+};
+
 export interface LiquidGlassTextInputProps extends Omit<TextInputProps, "style"> {
   /** Input label */
   label?: string;
@@ -96,18 +108,13 @@ export function LiquidGlassTextInput({
 
   // Animated border for focus state
   const animatedBorderStyle = useAnimatedStyle(() => ({
-    borderColor: borderColor.value,
+    borderColor: borderColor.get(),
   }));
 
-  const syncBorderState = React.useCallback((nextFocused: boolean, nextHasError: boolean) => {
-    const targetColor = nextHasError
-      ? palette.destructive
-      : nextFocused
-        ? palette.accentTint
-        : palette.border;
-
-    borderColor.value = withTiming(targetColor, TimingConfig.quick);
-  }, [borderColor, palette.accentTint, palette.border, palette.destructive]);
+  const syncBorderState = (nextFocused: boolean, nextHasError: boolean) => {
+    const targetColor = getInputBorderColor(nextFocused, nextHasError, palette);
+    borderColor.set(withTiming(targetColor, TimingConfig.quick));
+  };
 
   // Handle focus
   const handleFocus = (e: FocusEvent) => {
@@ -124,10 +131,12 @@ export function LiquidGlassTextInput({
     textInputProps.onBlur?.(e);
   };
 
-  // Keep border visuals in sync when palette or error state changes while blurred
+  // Keep border visuals in sync when palette or error state changes while blurred.
+  // syncBorderState is render-scoped, so it always reads the fresh palette;
+  // depend on its simple inputs rather than the (per-render) function itself.
   React.useEffect(() => {
     syncBorderState(isFocused, hasError);
-  }, [hasError, isFocused, syncBorderState]);
+  }, [hasError, isFocused, palette]);
 
   // Handle clear button
   const handleClear = () => {

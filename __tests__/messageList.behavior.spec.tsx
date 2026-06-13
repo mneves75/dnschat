@@ -18,6 +18,10 @@ jest.mock("../src/components/LiquidGlassWrapper", () => ({
   useLiquidGlassCapabilities: () => ({ supportsLiquidGlass: false }),
 }));
 
+jest.mock("../src/components/SkeletonMessage", () => ({
+  SkeletonMessage: () => React.createElement("skeleton-message", { testID: "message-skeleton" }),
+}));
+
 jest.mock("../src/i18n", () => ({
   useTranslation: () => ({
     t: (key: string) => key,
@@ -113,7 +117,9 @@ describe("MessageList behavior", () => {
       (node: { type: unknown; props: Record<string, unknown> }) =>
         node.type === "FlatList" && node.props["testID"] === "messages",
     );
-    const footer = (flatList.props["ListFooterComponent"] as () => React.ReactElement)();
+    // ListFooterComponent is an element (not a render function) so bottomInset
+    // changes re-render the footer in place instead of remounting it.
+    const footer = flatList.props["ListFooterComponent"] as React.ReactElement;
     const footerProps = footer.props as Record<string, unknown>;
 
     expect(footerProps["testID"]).toBe("message-list-footer");

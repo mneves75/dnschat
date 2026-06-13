@@ -36,7 +36,7 @@ function parseArgs(argv) {
     artifactsDir: process.env.AXE_ARTIFACTS_DIR || DEFAULT_ARTIFACTS,
     scheme: "dnschat",
     simulatorName: "DNSChat AXe E2E",
-    deviceType: "com.apple.CoreSimulator.SimDeviceType.iPhone-17",
+    deviceType: "com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro-Max",
     runtime: process.env.AXE_RUNTIME || "",
   };
 
@@ -111,6 +111,18 @@ function run(command, args, options = {}) {
     maxBuffer: options.maxBuffer || 64 * 1024 * 1024,
     input: options.input,
   });
+
+  if (
+    result.error &&
+    options.allowFailure &&
+    result.error.code === "ETIMEDOUT"
+  ) {
+    return {
+      stdout: result.stdout || "",
+      stderr: result.stderr || result.error.message,
+      status: 124,
+    };
+  }
 
   if (result.error) {
     throw new Error(`${command} ${args.join(" ")} failed: ${result.error.message}`);
@@ -254,7 +266,7 @@ function bootSimulator(options) {
   }
 
   const bootstatus = run("xcrun", ["simctl", "bootstatus", options.udid, "-b"], {
-    timeout: 120000,
+    timeout: 240000,
     allowFailure: true,
   });
   if (bootstatus.status !== 0) {

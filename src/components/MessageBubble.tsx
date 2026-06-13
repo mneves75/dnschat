@@ -227,7 +227,13 @@ function MessageBubbleComponent({ message }: MessageBubbleProps) {
   );
 }
 
-export { MessageBubbleComponent as MessageBubble };
+// Virtualized-list exception to the repo's no-manual-memoization rule:
+// React Compiler memoization does not cross the FlatList/VirtualizedList
+// boundary, so without React.memo every chat state update re-renders all
+// mounted bubbles (and re-parses markdown). ChatContext preserves message
+// object identities, so this memo bails out correctly for unchanged rows.
+// Exempted in doctor.config.json (react-compiler-no-manual-memoization).
+export const MessageBubble = React.memo(MessageBubbleComponent);
 
 const styles = StyleSheet.create({
   container: {

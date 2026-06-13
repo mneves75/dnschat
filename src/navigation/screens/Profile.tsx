@@ -98,9 +98,8 @@ export function Profile({ user }: ProfileProps) {
                 t("screen.profile.alerts.clearDataErrorMessage"),
                 [{ text: t("common.ok") }],
               );
-            } finally {
-              setIsClearingData(false);
             }
+            setIsClearingData(false);
           },
         },
       ]

@@ -106,24 +106,24 @@ export function useScreenEntrance(
 
     if (shouldReduceMotion) {
       // Instant transition for reduced motion
-      opacity.value = 1;
-      translateY.value = 0;
+      opacity.set(1);
+      translateY.set(0);
       runOnJS(markReady)();
       return;
     }
 
     // Opacity: timing animation (0.3s)
-    opacity.value = withTiming(1, TimingConfig.normal, (finished) => {
+    opacity.set(withTiming(1, TimingConfig.normal, (finished) => {
       if (finished) {
         runOnJS(markReady)();
       }
-    });
+    }));
 
     // TranslateY: spring or timing based on preference
     if (useSpringAnimation) {
-      translateY.value = withSpring(0, SpringConfig.gentle);
+      translateY.set(withSpring(0, SpringConfig.gentle));
     } else {
-      translateY.value = withTiming(0, TimingConfig.normal);
+      translateY.set(withTiming(0, TimingConfig.normal));
     }
   };
 
@@ -139,8 +139,8 @@ export function useScreenEntrance(
 
   const animatedStyle = useAnimatedStyle<ViewStyle>(() => {
     return {
-      opacity: opacity.value,
-      transform: [{ translateY: translateY.value }],
+      opacity: opacity.get(),
+      transform: [{ translateY: translateY.get() }],
     };
   });
 

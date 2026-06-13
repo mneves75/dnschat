@@ -6,6 +6,261 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+## [4.0.30] - 2026-06-10
+
+Build `63` -> `64`. TestFlight staging release of the 4.0.29 review
+hardening; no source changes beyond version metadata.
+
+### Changed
+
+- Bumped Expo, iOS, and Android version metadata to `4.0.30` build/code `64`
+  with `bun run sync-versions` so the signed TestFlight archive is built from
+  the verified post-review source state.
+
+### Release status
+
+- Signed App Store archive and IPA export succeeded for `4.0.30` build `64`.
+- TestFlight upload committed, but App Store Connect processing rejected the
+  binary with `ITMS-90534` (Invalid Toolchain): the machine's stable Xcode
+  slot was updated to the `26.6` beta seed on `2026-06-02`, and the only
+  other toolchain (Xcode 27 beta) cannot compile `expo-modules-jsi`. The
+  upload will be retried from a GM toolchain (Xcode 26.5 reinstall or the
+  26.6 GM when released); the next attempt should bump the build number.
+
+## [4.0.29] - 2026-06-10
+
+Build `62` -> `63`. Full security, architecture, and performance review of the
+codebase with fixes applied across the DNS pipeline, native layer, storage,
+and UI.
+
+### Security
+
+- Bumped `dnsjava` from 3.5.2 to 3.6.2 in both Android Gradle files
+  (CVE-2024-25638, improper DNS response validation in the legacy fallback).
+- Native server allowlist updates from JS are now subset-only on iOS and
+  Android: `configureSanitizer` can narrow but never widen the compiled-in
+  allowlist (hardens against a hijacked JS bundle).
+- JS UDP fallback no longer fails the whole query on the first invalid
+  datagram: the listener re-arms and keeps waiting for a valid, ID-matched
+  response until timeout (anti-spoofing resilience).
+- Inbound TXT responses are sanitized before persistence/rendering: C0/C1
+  control characters and Unicode bidi override controls are stripped
+  (display-spoofing defense for untrusted DNS servers).
+- `toUint8Array` in the DNS wire decoder now respects typed-array view
+  bounds (`byteOffset`/`byteLength`).
+- Multipart TXT responses are capped at an explicit part limit instead of
+  relying on a caught `RangeError` for absurd `n/N:` headers.
+- Pinned the unmaintained fallback transports `react-native-udp` and
+  `react-native-tcp-socket` to exact versions; forced `shell-quote >= 1.8.4`
+  via overrides (GHSA-w7jw-789q-3m8p, critical).
+- Enabled additional Clang security diagnostics in the Xcode project
+  (`CLANG_ANALYZER_SECURITY_*`, `CLANG_WARN_IMPLICIT_FALLTHROUGH`,
+  `GCC_TREAT_IMPLICIT_FUNCTION_DECLARATIONS_AS_ERRORS`).
+- Replaced a personal device name in public docs with a neutral placeholder
+  and extended `verify:public-redaction` with a device-name denylist rule.
+
+### Performance
+
+- Splash screen dismissal no longer waits for full DNS-log store decryption;
+  log initialization happens off the critical startup path.
+- Chat storage keeps a validated in-memory cache inside the serialized
+  operation queue: message sends no longer re-read, re-decrypt, and
+  re-validate the entire history for every mutation.
+- Chat list rows no longer mount one hidden Modal action sheet each; a single
+  shared action sheet serves the whole list.
+- `MessageBubble` is memoized across the FlatList boundary (documented
+  exception to the no-manual-memoization rule), eliminating markdown
+  re-parses of all visible bubbles on every chat state update.
+- `DNSLogService` skips log fan-out entirely when no listener is subscribed
+  and caches compiled redaction regexes per query.
+- ChatContext no longer recreates its value on unrelated settings changes
+  (settings are read at call time via a ref), and the chat-title expression
+  is computed once.
+- Removed the manual `useMemo` in the root layout, the redundant rate-limit
+  cleanup interval, per-render `Localization.getLocales()` calls, dead
+  allocations in `Toast`, and eager allocation of 100 staggered-list animated
+  values regardless of item count.
+- Expensive `devLog` argument construction is now gated behind `__DEV__` at
+  hot call sites so release builds skip it.
+
+### Changed
+
+- Consolidated the duplicated multipart TXT parser into a single
+  implementation in `modules/dns-native`; `dnsService` delegates and wraps
+  errors at the boundary.
+- Extracted `validateDNSServer`/`normalizeDNSServerInput` into
+  `src/services/dnsServerValidation.ts` so settings storage no longer pulls
+  the full DNS transport stack (and its socket libraries) at module load.
+- The default DNS server is derived from `getDefaultServer()` instead of
+  being hardcoded in three places.
+- Unified the duplicated `AccessibilityConfig` type into
+  `settingsStorage.ts`; removed the TCP frame encoder duplication in
+  `dnsWire.ts`.
+- Bumped Expo, iOS, and Android version metadata to `4.0.29` build/code `63`
+  with `bun run sync-versions`.
+
+### Removed
+
+- Dead `src/utils/dnsErrors.ts` (hardcoded pt-BR strings outside i18n) and
+  its orphaned spec, the stale `__tests__/archive/` artifact, and the unused
+  npm `package-lock.json` in `modules/dns-native`.
+
+### Fixed
+
+- Podfile now clamps every pod target to `IPHONEOS_DEPLOYMENT_TARGET >= 16.4`;
+  newer Xcode toolchains reject the 9.0/12.4/13.4 values shipped by
+  resource-bundle pod targets, which broke simulator Release builds.
+- Cleared a local signing team identifier that had leaked into the Xcode
+  project file (repo policy: `DEVELOPMENT_TEAM` stays empty for portability).
+- Orphaned `doctor.config.json` exemptions for deleted components are now
+  caught by a new policy spec that validates every listed path exists.
+
+### Verified
+
+- `npx react-doctor@latest --project chat-dns` reports `100 / 100`; the
+  dns-native module reports `100 / 100`.
+- React Compiler healthcheck compiles `107 / 107` components.
+- Jest: `117` suites passed (`1` skipped), `941` tests passed (`13` skipped).
+- dns-native workspace: `8` suites passed (`1` skipped), `65` tests passed.
+- `bun run verify:expo-doctor` `20/20`; typecheck and lint clean;
+  `gitleaks` no leaks; `bun audit` no vulnerabilities;
+  `verify:public-redaction` clean.
+- Simulator Release build succeeds with the stable Xcode toolchain
+  (`DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer`); the Xcode 27
+  beta toolchain cannot compile `expo-modules-jsi` yet.
+- Compiled Release app verified on the iOS Simulator: clean launch and
+  relaunch, storage corruption recovery, and a normal launch with Reduce
+  Motion enabled (simctl screenshot evidence; Argent MCP simulator-server
+  was unavailable this session — version mismatch fallback recorded).
+
+## [4.0.28] - 2026-06-08
+
+Build `61` -> `62`. TestFlight chat-error presentation repair and React Doctor
+tooling drift cleanup.
+
+### Fixed
+
+- Replaced the oversized DNS failure toast shown in TestFlight with compact
+  localized error copy, bounded toast layout, and a reachable retry action.
+- Render failed assistant messages as concise localized text instead of showing
+  raw DNS troubleshooting diagnostics in the chat bubble.
+- Renamed root and native-module React Doctor configs to `doctor.config.json`
+  so the current CLI reads the intended scoped rules.
+- Removed React Doctor fail-level dependency churn in toast, onboarding, and
+  text-input effects while keeping React Compiler conventions intact.
+
+### Changed
+
+- Bumped Expo, iOS, and Android version metadata to `4.0.28` build/code `62`
+  with `bun run sync-versions --bump-build`.
+
+### Verified
+
+- `npx react-doctor@latest --project chat-dns` reports `100 / 100`.
+- `cd modules/dns-native && npx react-doctor@latest --verbose` reports
+  `100 / 100`.
+- Targeted regression suites for toast, chat retry, message content,
+  bottom-sheet accessibility, text input state sync, settings persistence, and
+  message-list behavior passed.
+- `cd modules/dns-native && bun run test` passed.
+
+## [4.0.27] - 2026-06-08
+
+Build `60` -> `61`. Expo SDK 56 patch alignment and TestFlight staging refresh
+after the security review.
+
+### Changed
+
+- Bumped Expo, iOS, and Android version metadata to `4.0.27` build/code `61`
+  with `bun run sync-versions --bump-build`.
+- Aligned Expo SDK 56 patch packages and regenerated the Bun and CocoaPods lock
+  state so Expo Doctor, JS dependencies, and native pods agree before the signed
+  archive.
+- Updated public release docs, App Store/TestFlight runbooks, security baseline,
+  and implementation notes for the 4.0.27 TestFlight lane.
+
+### Verified
+
+- `bun run verify:all` passed, including public redaction, security, Expo
+  Doctor `20/20`, SDK alignment, typed routes, typecheck, DNS resolver sync,
+  iOS pods sync, React Compiler healthcheck, Android setup checks, lint, and
+  Jest.
+- `cd modules/dns-native && bun run test` passed.
+- `asc doctor` passed.
+- Xcode Debug simulator build passed after the pod refresh.
+- Signed App Store archive/export and TestFlight upload/validation are the
+  required distribution gates for this build. App Store version validation is a
+  separate App Store-submission state check and remains not applicable until a
+  matching App Store version record exists.
+
+## [4.0.26] - 2026-06-05
+
+Build `59` -> `60`. Release packaging and TestFlight staging pass for the
+premium/react-doctor hardening line.
+
+### Changed
+
+- Bumped Expo, iOS, and Android version metadata to `4.0.26` build/code `60`
+  with `bun run sync-versions --bump-build`.
+- Updated public release docs, App Store/TestFlight runbooks, security baseline,
+  and implementation notes to reflect the fresh verification and deployment
+  evidence.
+- Switched the AXe release E2E default simulator profile to iPhone 17 Pro Max
+  after AXe 1.7.1 could not describe the visible UI on the plain iPhone 17
+  simulator.
+
+### Fixed
+
+- Made the AXe E2E harness tolerate an allowed `xcrun simctl bootstatus`
+  timeout instead of aborting before the app can be inspected on slower hosts.
+
+### Verified
+
+- `npx react-doctor@latest --project chat-dns` reports `100 / 100`.
+- `bun run e2e:axe:release` passed 10 feature groups for `4.0.26` build `60`.
+- `bun run verify:all` passed, including public redaction, security, Expo
+  Doctor `20/20`, React Compiler `102/102`, lint, and Jest (`114` suites
+  passed, `1` skipped; `919` tests passed, `13` skipped).
+- `cd modules/dns-native && bun run test` passed (`7` suites passed, `1`
+  skipped; `57` tests passed, `13` skipped).
+- Xcode Debug simulator build, unsigned generic Release build, unsigned generic
+  Release archive, signed App Store archive, and signed IPA export passed.
+- TestFlight upload/processing passed for `4.0.26` build `60`; App Store
+  Connect reported processing state `VALID`, and `asc validate testflight`
+  reported `0` errors and `0` warnings.
+- Direct physical-device install on the personal test device is blocked by local Xcode
+  Development provisioning state: `No Accounts: Add a new account in Accounts
+  settings` and no matching iOS App Development profile for
+  `org.mvneves.dnschat`. TestFlight remains the verified staging path.
+
+## [4.0.25] - 2026-06-05
+
+Build `58` -> `59`. React Compiler cleanliness pass: drove `react-doctor` from
+`93/100` to `100/100` by fixing the underlying code rather than blanket
+suppression, with no intended behavior change.
+
+### Changed
+
+- Migrated every Reanimated shared-value access to the React Compiler-compatible
+  `.get()`/`.set()` accessors across animated components and hooks.
+- Replaced `finally` blocks the React Compiler cannot lower with
+  `Promise.prototype.finally()` or a trailing cleanup statement, keeping the
+  "cleanup always runs" guarantee on every exit path.
+- Replaced "create once" `useRef(...).current` holders of animated values with
+  `useState` initializers so they are safe to read during render.
+- Removed manual `useCallback`/`useMemo` that the React Compiler now memoizes.
+- Derived chat error toasts purely from state instead of mirroring them through
+  an effect, and trimmed redundant synchronous load flags.
+- Made `GlassSettings` import `DNSService` statically (the module is already
+  eagerly loaded by the root providers, so the lazy import only blocked
+  compilation).
+
+### Fixed
+
+- Chat-list corruption recovery now resets state and clears the loading flag
+  even if the best-effort reload itself fails, instead of leaking an unhandled
+  rejection.
+
 ## [4.0.24] - 2026-06-04
 
 Build `57` -> `58`. Production-readiness hardening after the 4.0.23 App Store
@@ -864,7 +1119,12 @@ Versions 3.2.0 through 3.8.9 established the core feature set:
 - **3.3.0**: Android CI, release signing policy, Java 17 auto-detection
 - **3.2.x**: Public repo hardening (secrets scanning, policy tests, version sync gates), DNS server allowlist
 
-[Unreleased]: https://github.com/<owner>/dnschat/compare/v4.0.23...HEAD
+[Unreleased]: https://github.com/<owner>/dnschat/compare/v4.0.28...HEAD
+[4.0.28]: https://github.com/<owner>/dnschat/compare/v4.0.27...v4.0.28
+[4.0.27]: https://github.com/<owner>/dnschat/compare/v4.0.26...v4.0.27
+[4.0.26]: https://github.com/<owner>/dnschat/compare/v4.0.25...v4.0.26
+[4.0.25]: https://github.com/<owner>/dnschat/compare/v4.0.24...v4.0.25
+[4.0.24]: https://github.com/<owner>/dnschat/compare/v4.0.23...v4.0.24
 [4.0.23]: https://github.com/<owner>/dnschat/compare/v4.0.22...v4.0.23
 [4.0.22]: https://github.com/<owner>/dnschat/compare/v4.0.21...v4.0.22
 [4.0.21]: https://github.com/<owner>/dnschat/compare/v4.0.20...v4.0.21

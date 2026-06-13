@@ -1,6 +1,10 @@
 import { SUPPORTED_LOCALE_OPTIONS, resolveLocale } from "../i18n/translations";
 import type { SupportedLocale } from "../i18n/translations";
-import { validateDNSServer } from "../services/dnsService";
+// Import from the lightweight validation module, NOT dnsService: dnsService
+// require()'s react-native-udp / react-native-tcp-socket at module load, which
+// settings storage must not drag in.
+import { validateDNSServer } from "../services/dnsServerValidation";
+import { getDefaultServer } from "../../modules/dns-native/constants";
 
 export { SUPPORTED_LOCALE_OPTIONS, resolveLocale } from "../i18n/translations";
 export type { SupportedLocaleOption } from "../i18n/translations";
@@ -43,7 +47,9 @@ export interface LegacySettingsV1 {
   enableMockDNS?: boolean;
 }
 
-export const DEFAULT_DNS_SERVER = "llm.pieter.com";
+// Single source of truth for the default server is the DNS server registry in
+// modules/dns-native/constants.ts (was previously hardcoded here as well).
+export const DEFAULT_DNS_SERVER = getDefaultServer().host;
 export const SETTINGS_STORAGE_KEY = "@chat_dns_settings";
 export const SETTINGS_VERSION = 5;
 

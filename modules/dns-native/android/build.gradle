@@ -36,7 +36,8 @@ dependencies {
     implementation "com.facebook.react:react-android"
     
     // dnsjava for DNS operations on older Android versions
-    implementation "dnsjava:dnsjava:3.5.2"
+    // 3.6.2+ fixes CVE-2024-25638 (improper DNS response validation)
+    implementation "dnsjava:dnsjava:3.6.2"
     
     // For modern Android DNS resolver (API 29+)
     if (project.android.compileSdkVersion >= 29) {

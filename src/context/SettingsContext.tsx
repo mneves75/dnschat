@@ -59,6 +59,7 @@ interface SettingsContextValue {
 const SettingsContext = createContext<SettingsContextValue | undefined>(
   undefined,
 );
+const INITIAL_PERSIST_QUEUE = Promise.resolve();
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const contextValue = useSettingsContextValue();
@@ -71,18 +72,20 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 }
 
 function useSettingsContextValue(): SettingsContextValue {
-  const localizationLocales = Localization.getLocales();
-  const defaultSystemLocale = resolveLocale(
-    localizationLocales[0]?.languageTag ?? localizationLocales[0]?.languageCode,
-  );
-
-  const [systemLocale] = useState<SupportedLocale>(defaultSystemLocale);
+  // Localization.getLocales() is a synchronous native call — keep it inside the
+  // useState initializer so it runs once, not on every provider render.
+  const [systemLocale] = useState<SupportedLocale>(() => {
+    const localizationLocales = Localization.getLocales();
+    return resolveLocale(
+      localizationLocales[0]?.languageTag ?? localizationLocales[0]?.languageCode,
+    );
+  });
   const [settings, setSettings] = useState<PersistedSettings>(
     () => DEFAULT_SETTINGS,
   );
   const [loading, setLoading] = useState(true);
   const settingsRef = useRef<PersistedSettings>(DEFAULT_SETTINGS);
-  const persistQueueRef = useRef<Promise<void>>(Promise.resolve());
+  const persistQueueRef = useRef<Promise<void>>(INITIAL_PERSIST_QUEUE);
 
   // Effect: load persisted settings on mount and migrate if needed.
   useEffect(() => {
@@ -124,10 +127,10 @@ function useSettingsContextValue(): SettingsContextValue {
           if (isMounted) {
             setSettings(next);
           }
-        } finally {
-          if (isMounted) {
-            setLoading(false);
-          }
+        }
+        // Replaces `finally`; the catch handles errors without rethrowing.
+        if (isMounted) {
+          setLoading(false);
         }
       });
     };

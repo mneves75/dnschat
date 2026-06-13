@@ -23,7 +23,9 @@ export function OnboardingProgress() {
 
   const progress = (currentStep + 1) / steps.length;
   const progressWidth = Math.max(0, screenWidth - (LiquidGlassSpacing.md * 2));
-  const animatedWidth = React.useRef(new Animated.Value(0)).current;
+  // useState initializer creates the value once and is safe to read during
+  // render (unlike a ref, whose `.current` cannot be accessed while rendering).
+  const [animatedWidth] = React.useState(() => new Animated.Value(0));
 
   // Effect: animate progress bar when onboarding step changes.
   React.useEffect(() => {

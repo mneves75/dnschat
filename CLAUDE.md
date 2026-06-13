@@ -43,8 +43,10 @@ bun run web         # Web preview (uses Mock DNS)
 # Testing
 bun run test        # Run all unit tests (jest --runInBand)
 bun run test -- --testPathPattern=<pattern>  # Run specific test file
-bun run e2e:axe:doctor  # Check AXe binary and simulator host state
-bun run e2e:axe:release # Build/install/run AXe simulator E2E feature pass
+# Runtime UI verification: use Argent MCP by default for simulator discovery,
+# screenshots, component-tree/debugger inspection, and tap/type flows.
+# Do not run AXe by default; use bun run e2e:axe:* only by explicit request or
+# documented Argent unavailability.
 
 # Linting
 bun run lint        # ast-grep rules (blocks legacy liquid glass imports)
@@ -85,6 +87,7 @@ bun run verify:android-16kb # Validate 16KB page size alignment after a native A
 bun run verify:typed-routes # Generate and validate Expo Router typed routes
 bun run verify:react-compiler # Run React Compiler healthcheck
 bun run verify:public-redaction # Ensure public docs do not expose local release identifiers
+bun run verify:security # Run dependency audit plus gitleaks secret scan
 bun run verify:all     # Run ALL verification gates (lint, test, pods, sdk alignment, etc.)
 
 # Version sync
@@ -101,6 +104,27 @@ This app uses **Expo Router** (file-based routing under `app/`), not React Navig
 `src/navigation/screens/` contains screen components consumed by Expo Router routes — they are not routes themselves. Don't add new files there expecting routing to pick them up; add a route in `app/` and import the screen.
 
 `experiments.reactCompiler: true` and `experiments.typedRoutes: true` are enabled in `app.json`. Manual `useMemo`/`useCallback` should be removed (the compiler handles memoization). Run `bun run verify:typed-routes` after adding/renaming routes.
+
+**React Compiler conventions** (keeps `react-doctor` at 100/100 — see `implementation-notes.html`):
+- Reanimated shared values must use the `.get()`/`.set()` accessors, never `.value` (the compiler cannot optimize `.value`).
+- Hold "create once" animated values (`Animated.Value`, `makeMutable`) in a `useState(() => …)` initializer, not `useRef(...).current` — refs cannot be read during render.
+- Do not use a `finally` block (the compiler cannot lower it); use `Promise.prototype.finally()` or a trailing cleanup statement after `try/catch`.
+- Legitimate external-sync `setState`-in-effect cases (splash settle, route hydration, load-on-mount) are exempted per-file in `doctor.config.json`, not in code.
+- `react-doctor` must be scoped with `--project chat-dns`; a bare run can report the sibling `paquera-mobile` project from the parent Bun workspace.
+
+### Argent MCP Runtime Verification
+
+Use Argent MCP as the default native simulator proof surface for UI/runtime
+work. Before tapping or typing, run discovery first: `describe`,
+`debugger-component-tree`, or screenshot. Never guess coordinates. For
+release-facing UI, navigation, accessibility, or localization changes, exercise
+the compiled native app with Argent screenshots/component-tree evidence after
+`bun run verify:all` and before claiming release readiness. At session end, call
+Argent `stop-all-simulator-servers` and clean up temporary simulator state.
+
+AXe is not the default verification surface in this repo. Use AXe only when the
+user explicitly asks for AXe or Argent MCP is unavailable for the required
+inspection, and record the exact fallback reason.
 
 ### DNS Server Fallback Chain
 
@@ -233,7 +257,7 @@ GitHub Actions (`.github/workflows/ci.yml`) runs on push to main and PRs:
 
 ## Platform Notes
 
-**iOS**: Requires Xcode 26.4+, iOS 16.4+ target. Device builds need a local signing team/profile, but the repo keeps `DEVELOPMENT_TEAM` empty for public portability. The last uploaded/processed TestFlight build is version `4.0.23` build `57` (`VALID` on `2026-06-04`, signed with Apple Distribution, archived/exported/uploaded via `asc`, and `asc validate testflight --strict` clean). App Store screenshots were renewed for iPhone and iPad in `en-US` and `pt-BR`, pre-submit App Store validation reported `0` errors, `0` warnings, and `0` blocking findings, and `4.0.23` is now `READY_FOR_SALE` on the App Store. A `4.0.24` iOS version was later created in `PREPARE_FOR_SUBMISSION` to refresh App Store metadata/screenshots; App Store Connect carried the `4.0.23` screenshot sets forward unchanged (12 per locale: 8 `APP_IPHONE_65` + 4 `APP_IPAD_PRO_3GEN_129`, `en-US` + `pt-BR`, byte-for-byte identical to `ios/fastlane/screenshots/`). A compiled Release build installed on a physical iOS device, reported `4.0.22`/`56`, and launched successfully via `devicectl` on `2026-06-04`. A compiled Debug build of the `4.0.24`/`58` working tree (Apple Development signing) was later installed and launched successfully on a physical iOS device via `devicectl` on `2026-06-04`, validating the startup Reduce Motion path on-device; that build reflected the working tree (committed accessibility/contrast/DNS-log-lifecycle fixes plus uncommitted screenshot-mode changes), not a clean-tree release artifact. Build `54` hotfixed a launch crash in `4.0.19`/`53`: deriving `isReduceMotionEnabled` from an async `AccessibilityInfo` probe flipped it `false -> true` after mount and drove "Maximum update depth exceeded" for users with iOS Reduce Motion on. Build `55` restored OS Reduce Motion support by resolving the initial OS value before rendering children, then subscribing to later `reduceMotionChanged` events; build `57` is the App Store submission build for that verified fix set. Do not change the startup motion contract without verifying animated screens on-device/simulator with Reduce Motion enabled. Internal App Store Connect IDs, tester group names, device names, and local artifact paths belong in private release notes, not public docs. `xcodebuild test` is not a gate yet because the `DNSChat` scheme has no XCTest bundles.
+**iOS**: Requires Xcode 26.4+, iOS 16.4+ target. Device builds need a local signing team/profile, but the repo keeps `DEVELOPMENT_TEAM` empty for public portability. The current TestFlight release target is version `4.0.30` build `64`; the last uploaded/processed TestFlight build before this lane is version `4.0.26` build `60` (`VALID` on `2026-06-05`, signed with Apple Distribution, archived/exported/uploaded via `asc`, and `asc validate testflight` clean with `0` errors and `0` warnings). App Store Connect has no App Store version record for `4.0.30` yet, so App Store submission validation is not applicable for this TestFlight-only staging build. The Podfile clamps every pod target to `IPHONEOS_DEPLOYMENT_TARGET >= 16.4` — newer Xcode toolchains reject the 9.0/12.4/13.4 values pinned by resource-bundle pod targets. TestFlight/App Store uploads require a GM Xcode: as of `2026-06-10` the machine's `/Applications/Xcode.app` carries the `26.6` beta seed (App Store Connect rejects its binaries with `ITMS-90534`) and the Xcode 27 beta cannot compile `expo-modules-jsi`; archive uploads are blocked until a GM toolchain (Xcode 26.5 reinstall or 26.6 GM) is installed, and the retry must bump the build number. Runtime UI verification defaults to Argent MCP; historical AXe evidence exists for older builds only and AXe should not be used unless explicitly requested or Argent is unavailable. Direct physical-device install remains blocked by local Xcode Development provisioning state (`No Accounts` and no matching development profile); the latest direct physical-device proof remains the prior compiled Release install/launch for `4.0.22` build `56`. Do not change the startup motion contract without verifying animated screens on-device/simulator with Reduce Motion enabled. Internal App Store Connect IDs, tester group names, device names, and local artifact paths belong in private release notes, not public docs. `xcodebuild test` is not a gate yet because the `DNSChat` scheme has no XCTest bundles.
 
 If a freshly imported distribution certificate makes `codesign` hang during `[CP] Embed Pods Frameworks`, isolate signing in a temporary or local build keychain, unlock it, set its key partition list, put it first in `security list-keychains`, and pass `OTHER_CODE_SIGN_FLAGS='--keychain <keychain path>'` to `xcodebuild archive`. Do not commit certificates, private keys, `.p12` files, provisioning profiles, or App Store Connect keys. Keep exact device, signing, tester-group, local-path, and App Store Connect evidence in private notes outside git; public docs must follow `docs/public-release-redaction.md`.
 

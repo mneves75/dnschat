@@ -9,10 +9,11 @@ describe("root layout routing policy", () => {
     expect(source).toContain('<Stack.Screen name="chat/[threadId]"');
   });
 
-  it("keeps the splash screen visible until DNS log storage initialization settles", () => {
-    expect(source).toContain("hasInitializedLogs");
+  it("initializes DNS log storage without gating the splash screen on it", () => {
+    // Log initialization decrypts the whole log store in JS; it must run on
+    // mount but never hold the first frame hostage (4.0.29 startup fix).
     expect(source).toContain("DNSLogService.initialize()");
-    expect(source).toContain("setHasInitializedLogs(true)");
+    expect(source).not.toContain("hasInitializedLogs");
   });
 
   it("guards Appearance.setColorScheme for web runtimes that do not expose it", () => {

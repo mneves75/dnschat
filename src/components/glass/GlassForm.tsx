@@ -26,7 +26,7 @@ import { LiquidGlassWrapper } from "../LiquidGlassWrapper";
 import { PressableRipple } from "../PressableRipple";
 import { useImessagePalette } from "../../ui/theme/imessagePalette";
 import { HapticFeedback } from "../../utils/haptics";
-import { openExternalUrl } from "../../utils/externalLinks";
+import { openExternalLink } from "../../utils/externalLinks";
 
 // ==================================================================================
 // TYPES AND INTERFACES
@@ -120,15 +120,15 @@ const useGlassColors = () => {
 // HAPTIC FEEDBACK SYSTEM
 // ==================================================================================
 
+const triggerSelectionFeedback = () => {
+  HapticFeedback.light();
+};
+
+const triggerImpactFeedback = () => {
+  HapticFeedback.medium();
+};
+
 const useHapticFeedback = () => {
-  const triggerSelectionFeedback = () => {
-    HapticFeedback.light();
-  };
-
-  const triggerImpactFeedback = () => {
-    HapticFeedback.medium();
-  };
-
   return { triggerSelectionFeedback, triggerImpactFeedback };
 };
 
@@ -353,7 +353,7 @@ export const GlassFormLink: React.FC<GlassFormLinkProps> = ({
     if (href) {
       push(href as Parameters<typeof push>[0]);
     } else if (url) {
-      void openExternalUrl(url);
+      openExternalLink(url);
     }
     props.onPress?.();
   };

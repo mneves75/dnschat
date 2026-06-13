@@ -15,13 +15,10 @@ import type { ReactNode } from "react";
 import { AccessibilityInfo } from "react-native";
 import { useSettings } from "./SettingsContext";
 import { devWarn } from "../utils/devLog";
+import type { AccessibilityConfig } from "./settingsStorage";
 
-export interface AccessibilityConfig {
-  fontSize: 'small' | 'medium' | 'large' | 'extra-large';
-  highContrast: boolean;
-  reduceMotion: boolean;
-  screenReader: boolean;
-}
+// Single source of truth for the shape lives in settingsStorage (persisted form).
+export type { AccessibilityConfig } from "./settingsStorage";
 
 const DEFAULT_ACCESSIBILITY_CONFIG: AccessibilityConfig = {
   fontSize: 'medium',

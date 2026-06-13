@@ -58,6 +58,21 @@ export function Logs() {
   // Track skeleton display
   const showSkeleton = isLoading && !hasLoadedOnce && logs.length === 0;
 
+  // Declared before the effect that calls it (avoids access-before-declaration).
+  // No synchronous setIsLoading(true): isLoading already starts true for the
+  // initial skeleton, and pull-to-refresh uses its own `refreshing` flag — so
+  // the mount effect performs no synchronous state write.
+  const loadLogs = async () => {
+    await DNSLogService.initialize()
+      .then(() => setLogs(DNSLogService.getLogs()))
+      .finally(() => {
+        setIsLoading(false);
+        if (!hasLoadedOnce) {
+          setHasLoadedOnce(true);
+        }
+      });
+  };
+
   // Effect: load logs on mount and subscribe to updates.
   useEffect(() => {
     loadLogs();
@@ -70,19 +85,6 @@ export function Logs() {
     // Wrap cleanup to ensure void return type (unsubscribe may return boolean)
     return () => { unsubscribe(); };
   }, []);
-
-  const loadLogs = async () => {
-    setIsLoading(true);
-    try {
-      await DNSLogService.initialize();
-      setLogs(DNSLogService.getLogs());
-    } finally {
-      setIsLoading(false);
-      if (!hasLoadedOnce) {
-        setHasLoadedOnce(true);
-      }
-    }
-  };
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -170,8 +172,8 @@ export function Logs() {
                   t={t}
                   isExpanded={expandedLogs.has(item.id)}
                   toggleExpanded={toggleExpanded}
-                  opacity={opacities[index] ?? { value: 1 }}
-                  translateX={translates[index] ?? { value: 0 }}
+                  opacity={opacities[index]}
+                  translateX={translates[index]}
                 />
               ))}
             </View>
@@ -257,8 +259,8 @@ interface LogQueryRowProps {
   t: TFn;
   isExpanded: boolean;
   toggleExpanded: (id: string) => void;
-  opacity: Pick<SharedValue<number>, "value">;
-  translateX: Pick<SharedValue<number>, "value">;
+  opacity: SharedValue<number> | undefined;
+  translateX: SharedValue<number> | undefined;
 }
 
 const LogQueryRow: React.FC<LogQueryRowProps> = ({

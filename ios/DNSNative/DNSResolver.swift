@@ -621,7 +621,13 @@ final class DNSResolver: NSObject {
         guard !filtered.isEmpty else {
             throw DNSError.queryFailed("Allowed DNS server list cannot be empty")
         }
-        let updated = Set(filtered)
+        // Subset-only narrowing: the supplied list may only narrow the
+        // compiled-in default allowlist, never extend it. This hardens the
+        // native layer against a hijacked JS bundle injecting rogue servers.
+        let updated = Set(filtered).intersection(defaultAllowedServers)
+        guard !updated.isEmpty else {
+            throw DNSError.queryFailed("Allowed DNS servers must be a subset of the built-in allowlist")
+        }
         if updated == allowedServers {
             return false
         }

@@ -29,6 +29,20 @@ export function ChatProvider({ children }: ChatProviderProps) {
   const [error, setError] = useState<string | null>(null);
   const sendInFlightRef = useRef(false);
 
+  // PERFORMANCE: mirror settings into a ref so sendMessage/loadChats read them
+  // at call time instead of closing over the settings object. Without this,
+  // any settings change (theme, haptics, …) gave those functions a new
+  // identity, recreating contextValue and re-rendering every useChat()
+  // consumer. Behavior note: reading settingsRef.current at call time is
+  // equivalent-or-fresher than closure capture — the value is at least as new
+  // as the one the closure would have seen.
+  // React Compiler: the ref is written only inside an effect (never during
+  // render) and read only inside event handlers / async functions.
+  const settingsRef = useRef(settings);
+  useEffect(() => {
+    settingsRef.current = settings;
+  }, [settings]);
+
   const replaceChatInState = (chatId: string, replacement: Chat) => {
     setChats((prevChats) =>
       prevChats.map((chat) => (chat.id === chatId ? replacement : chat)),
@@ -41,23 +55,23 @@ export function ChatProvider({ children }: ChatProviderProps) {
     preserveError?: string | null;
     clearError?: boolean;
   }) => {
+    setIsLoading(true);
+
+    // SCREENSHOT MODE: Load mock conversations for deterministic UI captures
+    if (isScreenshotMode()) {
+      devLog("[ChatContext] Screenshot mode detected, loading mock conversations");
+      const mockConversations = getMockConversations(settingsRef.current.preferredLocale);
+      setChats(mockConversations as Chat[]);
+      const preferredChat = options?.preserveChatId
+        ? (mockConversations.find((chat) => chat.id === options.preserveChatId) ?? null)
+        : null;
+      setCurrentChat((preferredChat ?? mockConversations[0] ?? null) as Chat | null);
+      setError(options?.clearError === false ? options?.preserveError ?? null : null);
+      setIsLoading(false);
+      return;
+    }
+
     try {
-      setIsLoading(true);
-
-      // SCREENSHOT MODE: Load mock conversations for deterministic UI captures
-      if (isScreenshotMode()) {
-        devLog("[ChatContext] Screenshot mode detected, loading mock conversations");
-        const mockConversations = getMockConversations(settings.preferredLocale);
-        setChats(mockConversations as Chat[]);
-        const preferredChat = options?.preserveChatId
-          ? (mockConversations.find((chat) => chat.id === options.preserveChatId) ?? null)
-          : null;
-        setCurrentChat((preferredChat ?? mockConversations[0] ?? null) as Chat | null);
-        setError(options?.clearError === false ? options?.preserveError ?? null : null);
-        setIsLoading(false);
-        return;
-      }
-
       // NORMAL MODE: Load chats from storage
       const loadedChats = await StorageService.loadChats({
         recoverOnCorruption: false,
@@ -70,7 +84,13 @@ export function ChatProvider({ children }: ChatProviderProps) {
       setError(options?.clearError === false ? options?.preserveError ?? null : null);
     } catch (err) {
       if (err instanceof StorageCorruptionError) {
-        await StorageService.loadChats();
+        // Best-effort recovery: a recovery failure must still reset state and
+        // clear loading below (it must not escape and skip cleanup).
+        try {
+          await StorageService.loadChats();
+        } catch {
+          // Intentionally swallowed; state is reset regardless.
+        }
         setChats([]);
         setCurrentChat(null);
         setError(
@@ -81,14 +101,21 @@ export function ChatProvider({ children }: ChatProviderProps) {
       } else {
         setError(err instanceof Error ? err.message : "Failed to load chats");
       }
-    } finally {
-      setIsLoading(false);
     }
+    // Replaces `finally`; the early screenshot-mode path clears loading itself.
+    setIsLoading(false);
   };
 
-  // Effect: load chats on mount and when the locale changes.
+  // Effect: load chats on mount. Only the screenshot-mode mock-conversation
+  // path consumes the locale (getMockConversations above), so a locale change
+  // only triggers a reload while screenshot mode is active — normal storage
+  // loads are locale-independent and would be redundant full decrypt passes.
+  const hasHydratedChatsRef = useRef(false);
   useEffect(() => {
-    loadChats();
+    if (!hasHydratedChatsRef.current || isScreenshotMode()) {
+      hasHydratedChatsRef.current = true;
+      loadChats();
+    }
   }, [settings.preferredLocale]);
 
   const createChat = async (title?: string): Promise<Chat> => {
@@ -174,13 +201,10 @@ export function ChatProvider({ children }: ChatProviderProps) {
     // If user switches chats during async operations, error handling should
     // still update the correct chat, not the newly selected one.
     const chatIdAtSend = currentChat.id;
+    // Single derived title, used both for the optimistic UI update and as the
+    // chatTitle DNS-log context (the previous chatTitleForLog duplicate was
+    // the identical expression).
     const chatTitleAtSend =
-      currentChat.title === "New Chat" && currentChat.messages.length === 0
-        ? `${content.slice(0, MESSAGE_CONSTANTS.TITLE_MAX_LENGTH)}${
-            content.length > MESSAGE_CONSTANTS.TITLE_MAX_LENGTH ? "..." : ""
-          }`
-        : currentChat.title;
-    const chatTitleForLog =
       currentChat.title === "New Chat" && currentChat.messages.length === 0
         ? `${content.slice(0, MESSAGE_CONSTANTS.TITLE_MAX_LENGTH)}${
             content.length > MESSAGE_CONSTANTS.TITLE_MAX_LENGTH ? "..." : ""
@@ -285,21 +309,24 @@ export function ChatProvider({ children }: ChatProviderProps) {
       replaceChatInState(chatWithAssistantPlaceholder.id, chatWithAssistantPlaceholder);
       devLog("[ChatContext] State updated with assistant placeholder");
 
-      // Get AI response using DNS service (respects enableMockDNS setting)
+      // Get AI response using DNS service (respects enableMockDNS setting).
+      // Settings are read from the ref at call time (see settingsRef above).
+      const { dnsServer, enableMockDNS, allowExperimentalTransports } =
+        settingsRef.current;
       setIsLoading(true);
       devLog("[ChatContext] Starting DNS query...", {
-        server: settings.dnsServer,
-        enableMockDNS: settings.enableMockDNS,
+        server: dnsServer,
+        enableMockDNS,
       });
 
       const response = await DNSService.queryLLM(
         content,
-        settings.dnsServer,
-        settings.enableMockDNS,
-        settings.allowExperimentalTransports,
+        dnsServer,
+        enableMockDNS,
+        allowExperimentalTransports,
         {
           chatId: chatIdAtSend,
-          chatTitle: chatTitleForLog,
+          chatTitle: chatTitleAtSend,
         },
       );
 
@@ -387,6 +414,12 @@ export function ChatProvider({ children }: ChatProviderProps) {
           }
 
           // Reload chats to reflect error state while preserving the selected thread.
+          // DECISION (perf review): keep this full reload rather than patching
+          // local state. The failure may have happened at any of several
+          // persistence points (user write, placeholder write, response
+          // update), so storage is the only authoritative record of what was
+          // actually persisted — and this is a rare error path where the extra
+          // read is an acceptable price for guaranteed state/storage agreement.
           devLog("[ChatContext] Reloading chats after error...");
           await loadChats({
             preserveChatId: chatIdAtSend,
@@ -401,10 +434,11 @@ export function ChatProvider({ children }: ChatProviderProps) {
           );
         }
       }
-    } finally {
-      sendInFlightRef.current = false;
-      setIsLoading(false);
     }
+    // Replaces `finally`; the catch handles send errors without rethrowing, so
+    // this cleanup runs on both the success and error paths.
+    sendInFlightRef.current = false;
+    setIsLoading(false);
   };
 
   const clearError = () => {

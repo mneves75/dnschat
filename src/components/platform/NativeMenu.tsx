@@ -89,10 +89,7 @@ function WebMenuFallback({
   const { t } = useTranslation();
   const palette = useImessagePalette();
   const [visible, setVisible] = React.useState(false);
-  const visibleActions = React.useMemo(
-    () => actions.filter((action) => !action.attributes?.hidden),
-    [actions],
-  );
+  const visibleActions = actions.filter((action) => !action.attributes?.hidden);
 
   const open = () => setVisible(true);
   const close = () => setVisible(false);

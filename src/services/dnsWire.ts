@@ -51,7 +51,9 @@ const toUint8Array = (value: unknown): Uint8Array | null => {
   if (value instanceof Uint8Array) return value;
   if (value instanceof ArrayBuffer) return new Uint8Array(value);
   if (ArrayBuffer.isView(value) && value.buffer) {
-    return new Uint8Array(value.buffer);
+    // SECURITY: Respect the view's bounds. Copying the whole backing buffer
+    // could expose unrelated bytes (or wrong data) when the view is a slice.
+    return new Uint8Array(value.buffer, value.byteOffset, value.byteLength);
   }
   if (value && typeof value === 'object' && 'length' in value) {
     const arrayLike = value as ArrayLike<number>;
@@ -138,22 +140,14 @@ export function createTcpTxtDnsQueryFrame(
   queryId: number,
   bufferFactory: BufferFactory,
 ): BufferLike {
-  const queryLength = queryName.length + 18;
-  const frame = bufferFactory.alloc(queryLength + 2);
-
-  frame[0] = (queryLength >> 8) & 0xff;
-  frame[1] = queryLength & 0xff;
-  frame[2] = (queryId >> 8) & 0xff; frame[3] = queryId & 0xff; frame[4] = 0x01; frame[7] = 0x01;
-  let offset = 15;
-  let labelOffset = 14;
-  for (let i = 0; i < queryName.length; i++) {
-    const code = queryName.charCodeAt(i);
-    if (code === 46) {
-      frame[labelOffset] = offset - labelOffset - 1; labelOffset = offset++;
-    } else frame[offset++] = code;
-  }
-  frame[labelOffset] = offset - labelOffset - 1;
-  frame[offset + 2] = 0x10; frame[offset + 4] = 0x01;
+  // RFC 1035 4.2.2: a TCP DNS message is the UDP wire format prefixed with a
+  // 2-byte big-endian length. Reuse encodeTxtDnsQuery instead of duplicating
+  // the label-encoding loop with shifted offsets.
+  const query = encodeTxtDnsQuery(queryName, queryId);
+  const frame = bufferFactory.alloc(query.length + 2);
+  frame[0] = (query.length >> 8) & 0xff;
+  frame[1] = query.length & 0xff;
+  frame.set(query, 2);
   return frame;
 }
 

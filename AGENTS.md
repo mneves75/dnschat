@@ -69,13 +69,21 @@ For any source-code sweep, map findings and fixes back to these requirements. Do
 - Dev: `bun run start`, `bun run ios`, `bun run android`, `bun run web`
 - Lint: `bun run lint`
 - Tests: `bun run test`
-- AXe E2E: `bun run e2e:axe:doctor`, `bun run e2e:axe:release`
+- Runtime UI verification: use Argent MCP by default for iOS simulator app
+  launch, screenshots, accessibility/component-tree inspection, and tap/type
+  flows. Always run Argent discovery first (`describe`, screenshot, or
+  debugger-component-tree) before any tap; never guess coordinates. At the end
+  of an Argent session, call `stop-all-simulator-servers` and clean up temporary
+  simulators/processes.
+- AXe E2E: do not use `bun run e2e:axe:*` by default. Run AXe only when the
+  user explicitly asks for AXe or Argent MCP is unavailable for the required
+  check; preserve the exact blocker/fallback reason in notes.
 - Native module tests: `cd modules/dns-native && bun run test`
 - DNS harness: `bun run dns:harness -- --message "test message"`; add `--local-server` for offline UDP/TCP verification.
 - Security scan: `gitleaks detect --source . --redact --no-banner --config .gitleaks.toml`
-- React Doctor: `npx react-doctor@latest`
+- React Doctor: `npx react-doctor@latest --project chat-dns` (scope to this project; a bare run can report the sibling `paquera-mobile` from the parent Bun workspace). Kept at `100/100`; see the React Compiler conventions in `CLAUDE.md` (Reanimated `.get()`/`.set()`, no `finally`, `useState` over `useRef` for create-once animated values).
 - Public redaction scan: `bun run verify:public-redaction`
-- iOS CLI build smoke: `xcodebuild clean build -workspace ios/DNSChat.xcworkspace -scheme DNSChat -configuration Debug -destination 'platform=iOS Simulator,name=iPhone 17'`
+- iOS CLI build smoke: `xcodebuild clean build -workspace ios/DNSChat.xcworkspace -scheme DNSChat -configuration Debug -destination 'platform=iOS Simulator,name=iPhone 17'`. If the Xcode 27 beta is globally selected (`xcode-select -p` → `Xcode-beta.app`), prefix builds with `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer` — the beta toolchain cannot compile `expo-modules-jsi` yet. The Podfile clamps pod targets to `IPHONEOS_DEPLOYMENT_TARGET >= 16.4` for newer toolchains.
 - iOS unsigned release smoke: `xcodebuild clean build -workspace ios/DNSChat.xcworkspace -scheme DNSChat -configuration Release -destination 'generic/platform=iOS' CODE_SIGNING_ALLOWED=NO`
 - iOS unsigned archive smoke: `xcodebuild clean archive -workspace ios/DNSChat.xcworkspace -scheme DNSChat -configuration Release -destination 'generic/platform=iOS' -archivePath /tmp/DNSChat.xcarchive CODE_SIGNING_ALLOWED=NO`
 - ASC local health: `asc doctor` (upload/submission checks require local ASC credentials)
@@ -83,7 +91,7 @@ For any source-code sweep, map findings and fixes back to these requirements. Do
 - TestFlight release: after signed archive/export, use `asc publish testflight --app <APP_ID> --ipa <IPA> --version <VERSION> --build-number <BUILD> --group <GROUPS> --wait`, then verify with `asc validate testflight` and `asc validate --app <APP_ID> --version <VERSION> --platform IOS`.
 - Version sync: `bun run sync-versions` (source = `package.json`); preview with `bun run sync-versions:dry`.
 - Individual verifies: `bun run verify:ios-pods`, `verify:android`, `verify:android-16kb`, `verify:typed-routes`, `verify:react-compiler`, `verify:sdk-alignment`, `verify:dnsresolver-sync`, `verify:expo-doctor`.
-- Verify (full gate): `bun run verify:all` runs all of the above plus public redaction, lint, and tests. Release-facing UI/runtime work should also run the AXe E2E feature pass when simulator automation is available.
+- Verify (full gate): `bun run verify:all` runs all of the above plus public redaction, lint, and tests. Release-facing UI/runtime work should also run an Argent MCP simulator smoke/inspection pass when simulator automation is available; do not default to AXe.
 
 ## Review / Security Sweep Protocol
 
@@ -108,8 +116,8 @@ When asked for a broad review, "latest/best practices", "2026+", or a full sourc
 
 - Treat the uploaded TestFlight binary as evidence only if it was archived after the final source, dependency, pod, version, and docs state was verified. If any release-affecting file changes after upload, bump the build number with `bun run sync-versions --bump-build`, rebuild, export, upload, and validate a new build.
 - Run `bun run verify:all` before signed archive/export. If `expo-doctor` requires an SDK patch package that Bun blocks through `minimumReleaseAge`, do not weaken the global policy; use a one-command override only for the required package, update `package.json` and `bun.lock`, run `pod install` when native pods change, then rerun `verify:all`.
-- For TestFlight releases, require this evidence chain before claiming completion: signed archive succeeded, IPA export succeeded, `asc publish testflight --wait` returned `VALID`, `asc validate testflight` has `0` errors and `0` warnings, and `asc validate --app <APP_ID> --version <VERSION> --platform IOS` has no blocking findings.
-- Run AXe after release-facing UI, navigation, accessibility, or localization changes. The AXe harness must handle iOS deep-link confirmation prompts and bilingual labels (`en-US` and `pt-BR`); fix the harness if the app visibly satisfies the assertion but AXe waits on English-only copy.
+- For TestFlight releases, require this evidence chain before claiming completion: signed archive succeeded, IPA export succeeded, `asc publish testflight --wait` returned `VALID`, and `asc validate testflight` has `0` errors and `0` warnings. If a matching App Store version record exists, `asc validate --app <APP_ID> --version <VERSION> --platform IOS` must have no blocking findings; if no matching App Store version record exists, document the exact blocker and treat it as App Store-submission state, not TestFlight processing state.
+- Run Argent MCP after release-facing UI, navigation, accessibility, or localization changes. Use Argent screenshot and component-tree/debugger discovery before interactions, then exercise the changed flow on the compiled native app. AXe is opt-in/fallback only and must not replace Argent as the default runtime proof surface.
 - Keep App Store Connect internal IDs, build IDs, tester group names, signing identities, profile names, team IDs, device identifiers, and local paths out of public docs and commit messages. Record exact identifiers only in private release notes outside git.
 - Do not describe a build as attached to an App Store version unless `asc` or App Store Connect evidence specifically proves that relationship. A processed `VALID` TestFlight build and an updated App Store version are separate claims.
 
