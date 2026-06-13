@@ -7,9 +7,9 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 - JavaScript fallback transports (UDP/TCP) for constrained networks
 - An in-app Logs screen to inspect attempts, failures, and fallbacks
 
-[![Version](https://img.shields.io/badge/version-4.0.30-blue.svg)](.)
+[![Version](https://img.shields.io/badge/version-4.0.31-blue.svg)](.)
 [![React Native](https://img.shields.io/badge/React%20Native-0.85.3-blue.svg)](https://reactnative.dev/)
-[![Expo](https://img.shields.io/badge/Expo-56.0.9-black.svg)](https://expo.dev/)
+[![Expo](https://img.shields.io/badge/Expo-56.0.11-black.svg)](https://expo.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0.x-blue.svg)](https://www.typescriptlang.org/)
 [![iOS](https://img.shields.io/badge/iOS-16.4%2B-lightgrey.svg)](https://developer.apple.com/ios/)
 [![Android](https://img.shields.io/badge/Android-API%2024%2B-green.svg)](https://developer.android.com/)
@@ -31,7 +31,7 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 
 ## Tech stack
 
-- App version: `4.0.30` (build `64`)
+- App version: `4.0.31` (build `65`)
 - Expo workflow: Expo Router + EAS-compatible native config
 - Expo SDK: `56.0.9`
 - React: `19.2.3`
@@ -213,23 +213,34 @@ layer, storage, and UI — see `CHANGELOG.md` `4.0.29`).
 Last AXe simulator E2E feature pass: `2026-06-05` for version `4.0.26` build
 `60`; 10 feature groups passed (historical; Argent MCP is the current
 verification surface).
-Current release target: version `4.0.30` build `64`. This release lane carries
-the 4.0.28 chat-error presentation fix plus the full review hardening
-(dnsjava CVE fix, subset-only native allowlist, UDP datagram re-arm,
-inbound response sanitization, storage mutation cache, splash off the
-log-decrypt path, single shared chat-list action sheet). Signed
+Current release target: version `4.0.31` build `65`. This release lane carries
+everything in the 4.0.30 lane (the 4.0.28 chat-error presentation fix plus the
+full review hardening: dnsjava CVE fix, subset-only native allowlist, UDP
+datagram re-arm, inbound response sanitization, storage mutation cache, splash
+off the log-decrypt path, single shared chat-list action sheet) plus the
+4.0.31 security and CI hardening (all 8 Dependabot advisories resolved, the
+three failing CI jobs repaired, Expo SDK 56 packages aligned). Signed
 archive/export, TestFlight upload, processing, and validation run after the
 final source/docs state is verified and pushed. The latest already-uploaded
 TestFlight build before this lane is version `4.0.26` build `60` (`VALID` on
-`2026-06-05`). App Store Connect has no App Store version record for `4.0.30`,
+`2026-06-05`); the `4.0.30` build `64` upload was rejected with `ITMS-90534`
+(see below). App Store Connect has no App Store version record for `4.0.31`,
 so App Store submission validation is not applicable for this TestFlight-only
 staging build.
 
 - `npx react-doctor@latest --project chat-dns` reports `100 / 100` on
   `2026-06-10`; the dns-native module also reports `100 / 100`.
 - `bun run verify:expo-doctor` reports `20/20 checks passed, no issues` on
-  `2026-06-10` (expo `56.0.9`, expo-router `56.2.9`, expo-linking `56.0.13`,
-  expo-build-properties `56.0.17`, @expo/ui `56.0.16`).
+  `2026-06-13` (expo `56.0.11`, expo-router `56.2.10`, expo-constants
+  `56.0.18`, expo-asset `56.0.17`, expo-linking `56.0.14`,
+  expo-build-properties `56.0.18`, @expo/ui `56.0.17`).
+- All four CI jobs (`dns-native`, `test`, `android`, `sbom`) green on
+  `2026-06-13` after restoring the dns-native `package-lock.json`, fixing the
+  Android `DNSResolver` compile error, aligning the Expo packages, and pinning
+  `bun.lock` to `lockfileVersion 1` for the CI-pinned bun `1.3.9`.
+- All 8 open Dependabot advisories resolved on `2026-06-13` (`shell-quote`,
+  `addressable`, `activesupport`, `aws-sdk-s3`, `faraday`, `json`); `gh api`
+  reports `0` open alerts.
 - Native DNS module tests pass on `2026-06-10` (`8` suites passed, `1`
   skipped; `65` tests passed, `13` skipped), including the new
   `nativeSecurityPolicy` suite asserting dnsjava `>= 3.6.2` and allowlist
@@ -263,12 +274,14 @@ staging build.
   binary with `ITMS-90534` (Invalid Toolchain) because the local stable Xcode
   slot now carries the `26.6` beta seed. Retry requires a GM toolchain and a
   fresh build number.
-- Current target: `4.0.30` build `64`; the release lane uses signed App Store
-  archive/export, App Store Connect upload, processing, and validation before
-  the build is described as distributed. Internal App Store Connect IDs and
-  tester group names are intentionally omitted from public docs.
+- Current target: `4.0.31` build `65`; the build number is advanced from the
+  rejected `4.0.30` build `64` for the toolchain retry. The signed archive,
+  TestFlight upload, processing, and validation are **not yet run for this
+  build** and remain blocked until a GM Xcode toolchain replaces the `26.6`
+  beta seed (see the `ITMS-90534` note above). Internal App Store Connect IDs
+  and tester group names are intentionally omitted from public docs.
 - Historical `asc validate testflight` evidence is superseded by each uploaded
-  build validation. App Store submission validation for `4.0.30` is not
+  build validation. App Store submission validation for `4.0.31` is not
   applicable until a matching App Store version record exists.
 - `xcodebuild test` is not a native gate yet because the `DNSChat` scheme has no
   XCTest bundles.
