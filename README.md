@@ -7,7 +7,7 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 - JavaScript fallback transports (UDP/TCP) for constrained networks
 - An in-app Logs screen to inspect attempts, failures, and fallbacks
 
-[![Version](https://img.shields.io/badge/version-4.1.2-blue.svg)](.)
+[![Version](https://img.shields.io/badge/version-4.1.3-blue.svg)](.)
 [![React Native](https://img.shields.io/badge/React%20Native-0.85.3-blue.svg)](https://reactnative.dev/)
 [![Expo](https://img.shields.io/badge/Expo-56.0.12-black.svg)](https://expo.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0.x-blue.svg)](https://www.typescriptlang.org/)
@@ -31,7 +31,7 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 
 ## Tech stack
 
-- App version: `4.1.2` (build `69`)
+- App version: `4.1.3` (build `70`)
 - Expo workflow: Expo Router + EAS-compatible native config
 - Expo SDK: `56.0.12`
 - React: `19.2.3`
@@ -213,26 +213,28 @@ layer, storage, and UI — see `CHANGELOG.md` `4.0.29`).
 Last AXe simulator E2E feature pass: `2026-06-05` for version `4.0.26` build
 `60`; 10 feature groups passed (historical; Argent MCP is the current
 verification surface).
-Current release target: version `4.1.0` build `67` (staging). This minor
-promotes the iOS New-Architecture DNS transport repair (native/UDP/TCP) to a
-tagged minor and adds a native `NWConnection` TCP-fallback leak fix, the Apple
-iOS 26+ adaptive launcher icon (light/dark/tinted), and dependency security
-updates (`concurrent-ruby`, `ws`, `@babel/core`, `js-yaml`). Release builds use
-the proven `xcodebuild archive` -> `-exportArchive` -> `asc publish testflight`
-lane with bilingual `What to Test` notes (`en-US` and `pt-BR`). `4.1.0` build
-`67` was uploaded to the internal TestFlight tester group and processed `VALID`
-on `2026-06-22` (advanced from build `66`, also `VALID`). App Store Connect has
-no App Store version record for this line, so App Store submission validation is
-not applicable for this TestFlight-only staging build.
+The latest `VALID` TestFlight build is version `4.1.1` build `68`, uploaded to the
+internal tester group and processed `VALID` on `2026-06-22` (advanced from `4.1.0`
+build `67`, also `VALID`). Release builds use the proven `xcodebuild archive` ->
+`-exportArchive` -> `asc publish testflight` lane with bilingual `What to Test`
+notes (`en-US` and `pt-BR`). App Store Connect has no App Store version record for
+this line, so App Store submission validation is not applicable for these
+TestFlight-only staging builds.
 
-The working tree is now at version `4.1.2` build `69`: a source-only
-premium-feel audit follow-up (loading-skeleton tint now uses a semantic
-`palette.isDark` signal instead of a hard-coded-hex check, a new `isDark` palette
-flag, removal of unused `errorShake` dead code, and Expo SDK 56 dependency patch
-alignment). It is not yet built or uploaded — the last `VALID` TestFlight build
-is `4.1.1` (`68`); the build number is advanced for version consistency.
+Version `4.1.2` build `69` is a premium-feel pass on top of `4.1.1`: a semantic
+`palette.isDark` signal for the loading-skeleton tint (replacing a hard-coded-hex
+check), a new `isDark` palette flag, removal of unused `errorShake` dead code, Expo
+SDK 56 dependency patch alignment, plus interactive keyboard drag-to-dismiss on the
+chat list, a calmer (no-overshoot) input auto-grow spring, and deletion of the dead
+`GlassTabBar` component. It was built into a Development-signed binary that installed
+and launched cleanly on a physical iOS device; it was not uploaded to TestFlight.
 
-- `4.1.2` quality gates on `2026-06-22`: full Jest suite `122` suites / `958`
+The working tree is now at version `4.1.3` build `70`: a release-readiness and
+documentation-integrity pass (a structured-review-flagged changelog release-state
+correction and a keyboard drag-to-dismiss regression test). No app-behavior change
+versus `4.1.2`.
+
+- `4.1.3` quality gates on `2026-06-22`: full Jest suite `122` suites / `959`
   passed / `13` skipped; `typecheck`, ast-grep `lint`, `verify:typed-routes`,
   `verify:react-compiler`, and `npx react-doctor@latest` `100 / 100` green;
   `expo-doctor` `19 / 20` (the one failure is a false positive — the tracked
@@ -283,7 +285,8 @@ is `4.1.1` (`68`); the build number is advanced for version consistency.
   binary with `ITMS-90534` (Invalid Toolchain) because the local stable Xcode
   slot now carries the `26.6` beta seed. Retry requires a GM toolchain and a
   fresh build number.
-- Current target: `4.1.0` build `67` (staging); the build number is advanced
+- `4.1.0` build `67` (a staging milestone; later superseded by `4.1.1` build
+  `68` as the latest `VALID` TestFlight build); the build number was advanced
   from `4.0.32` build `66`. Build `67` completed `VALID` on `2026-06-22` using
   the GM Xcode `26.6` (`17F109`) toolchain via the archive -> export ->
   `asc publish testflight` lane (build `66` was also `VALID`). Internal App

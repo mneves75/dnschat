@@ -6,6 +6,36 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+## [4.1.3] - 2026-06-22
+
+Build `69` -> `70`. Release-readiness and documentation-integrity pass on top of
+the 4.1.2 premium-feel work (which was built into a Development-signed binary and
+verified launching on a physical iOS device). No app-behavior change versus 4.1.2;
+the substantive UX changes (keyboard drag-to-dismiss, calmer input spring, dead-code
+removal) shipped under 4.1.2 and are carried forward here.
+
+### Added
+
+- Regression test locking the chat list's keyboard drag-to-dismiss contract
+  (`__tests__/messageList.keyboardInset.spec.ts`): asserts `keyboardDismissMode`
+  is `interactive` on iOS and `on-drag` on Android.
+
+### Fixed
+
+- Corrected contradictory release-state across changelog entries (flagged by a
+  structured code review): the 4.1.1 entry now reflects that build `68` was built,
+  uploaded to TestFlight, and processed `VALID` this cycle, and the 4.1.2 entry no
+  longer claims to be source-only now that it was built and device-installed. This
+  matters because the repo uses changelog entries as release-state evidence for
+  future build/TestFlight decisions.
+
+### Verified
+
+- `tsc --noEmit`, `lint` (ast-grep), `verify:react-compiler`, `react-doctor`
+  (100/100), full Jest suite, `verify:public-redaction`, and `verify:ios-pods` pass.
+  `bun.lock` stays at lockfile v1 (CI-compatible). Latest `VALID` TestFlight build
+  remains `4.1.1` (`68`); no TestFlight upload performed for this line.
+
 ## [4.1.2] - 2026-06-22
 
 Build `68` -> `69`. Patch release: premium-feel audit follow-up and SDK
@@ -57,15 +87,16 @@ number for version consistency.
   `dns-native`: 8 suites, 64 passed / 13 skipped. `bun install` kept `bun.lock` at
   lockfile v1 (CI-compatible); `pod install` re-synced `ios/Podfile.lock` for the
   bumped Expo pods (`verify:ios-pods` OK). The motion/keyboard changes are covered
-  by the component unit suites (including the Reduce-Motion specs); on-device /
-  simulator sign-off is deferred to the release-build step, since this entry is
-  source-only.
+  by the component unit suites (including the Reduce-Motion specs) and were
+  subsequently built into a Development-signed binary that installed and launched
+  cleanly on a physical iOS device (TestFlight upload not performed for this line).
 
 ## [4.1.1] - 2026-06-22
 
 Build `67` -> `68`. Patch release: premium-feel and production-quality polish.
-Source-only quality pass — not yet built or uploaded; the last TestFlight build
-remains `4.1.0` (`67`). The build number is advanced for version consistency.
+Built and uploaded to TestFlight this cycle and processed `VALID` for internal
+testers — this is now the latest `VALID` TestFlight build, advancing from `4.1.0`
+(`67`).
 
 ### Added
 

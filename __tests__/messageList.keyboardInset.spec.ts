@@ -11,4 +11,14 @@ describe("MessageList keyboard inset behavior", () => {
     expect(source).toContain("messageWasAdded");
     expect(source).toContain("animated: !shouldReduceMotion");
   });
+
+  it("enables drag-to-dismiss of the keyboard (interactive on iOS, on-drag on Android)", () => {
+    const sourcePath = path.resolve(__dirname, "../src/components/MessageList.tsx");
+    const source = fs.readFileSync(sourcePath, "utf8");
+
+    // The list owns the keyboard-dismiss gesture; KeyboardStickyView + the
+    // keyboardHeight-aware bottomInset track the keyboard down during the drag.
+    expect(source).toContain("keyboardDismissMode");
+    expect(source).toContain('Platform.OS === "ios" ? "interactive" : "on-drag"');
+  });
 });
