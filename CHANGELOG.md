@@ -33,8 +33,12 @@ removal) shipped under 4.1.2 and are carried forward here.
 
 - `tsc --noEmit`, `lint` (ast-grep), `verify:react-compiler`, `react-doctor`
   (100/100), full Jest suite, `verify:public-redaction`, and `verify:ios-pods` pass.
-  `bun.lock` stays at lockfile v1 (CI-compatible). Latest `VALID` TestFlight build
-  remains `4.1.1` (`68`); no TestFlight upload performed for this line.
+  `bun.lock` stays at lockfile v1 (CI-compatible). Built, signed (Apple
+  Distribution), and uploaded to TestFlight; processed `VALID` for internal testers
+  on `2026-06-22` with bilingual `What to Test` notes (`en-US`, `pt-BR`) — now the
+  latest `VALID` TestFlight build, advancing from `4.1.1` (`68`). This carries the
+  4.1.2 premium-feel work (keyboard drag-to-dismiss, calmer input spring, dead-code
+  removal) to TestFlight, since 4.1.2 was only Development-signed onto a device.
 
 ## [4.1.2] - 2026-06-22
 
