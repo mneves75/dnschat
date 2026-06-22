@@ -25,6 +25,8 @@ import Animated, {
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { KeyboardStickyView, useKeyboardState } from "react-native-keyboard-controller";
 import { MessageList } from "../../components/MessageList";
+import { ErrorBoundary } from "../../components/ErrorBoundary";
+import { MessageListErrorFallback } from "../../components/MessageListErrorFallback";
 import { ChatInput } from "../../components/ChatInput";
 import { useChat } from "../../context/ChatContext";
 import { useImessagePalette } from "../../ui/theme/imessagePalette";
@@ -177,12 +179,21 @@ export function Chat() {
           animatedStyle,
         ]}
       >
-        <MessageList
-          testID="message-list"
-          messages={currentChat?.messages || []}
-          isLoading={isLoading}
-          bottomInset={messageListBottomInset}
-        />
+        <ErrorBoundary
+          // Key by chat id so a fallback in one thread does not persist when the
+          // user navigates to a different conversation (boundary remounts fresh).
+          key={currentChat?.id ?? "no-chat"}
+          fallback={(_error, retry) => (
+            <MessageListErrorFallback onRetry={retry} />
+          )}
+        >
+          <MessageList
+            testID="message-list"
+            messages={currentChat?.messages || []}
+            isLoading={isLoading}
+            bottomInset={messageListBottomInset}
+          />
+        </ErrorBoundary>
       </Animated.View>
 
       <Toast

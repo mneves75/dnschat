@@ -6,6 +6,43 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+## [4.1.1] - 2026-06-22
+
+Build `67` -> `68`. Patch release: premium-feel and production-quality polish.
+Source-only quality pass — not yet built or uploaded; the last TestFlight build
+remains `4.1.0` (`67`). The build number is advanced for version consistency.
+
+### Added
+
+- Localized error boundary around the chat message list
+  (`src/components/MessageListErrorFallback.tsx`). `ErrorBoundary` now accepts an
+  optional `fallback` render-prop and `onError` callback; `Chat` wraps the list
+  in a boundary keyed by chat id, so a render failure in one conversation shows a
+  contained, retryable fallback (with `en-US` / `pt-BR` copy) instead of blanking
+  the whole app via the root boundary, and never persists across thread switches.
+
+### Fixed
+
+- `LiquidGlassTextInput` focus / blur / error border now honors Reduce Motion —
+  it snaps to the target color instead of animating, matching every other
+  animated surface in the app (`src/components/ui/LiquidGlassTextInput.tsx`).
+
+### Changed
+
+- Tokenized hard-coded values with byte-identical rendered output: Android
+  Liquid Glass fallback colors moved into the palette
+  (`getAndroidGlassFallback`), and GlassTabBar height / item touch target / badge
+  size moved into `GlassTabBarMetrics`.
+- Renamed the deprecated React Doctor `failOn` config key to `blocking`
+  (`doctor.config.json`), removing the per-run deprecation warning.
+
+### Verified
+
+- Full Jest suite: 121 suites / 955 passed / 13 skipped. `typecheck`, ast-grep
+  `lint`, and React Doctor `100/100` green. Codex autoreview returned no
+  actionable findings (patch correct). New specs:
+  `errorBoundary.fallback.spec.tsx`, `liquidGlassTextInput.reduceMotion.spec.tsx`.
+
 ## [4.1.0] - 2026-06-22
 
 Build `66` -> `67`. Minor release that promotes the New-Architecture DNS

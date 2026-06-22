@@ -20,6 +20,7 @@ import type { ViewStyle, TextStyle, StyleProp } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LiquidGlassWrapper } from "../LiquidGlassWrapper";
 import { PressableRipple } from "../PressableRipple";
+import { GlassTabBarMetrics } from "../../ui/theme/liquidGlassSpacing";
 
 // ==================================================================================
 // TYPES AND INTERFACES
@@ -365,7 +366,7 @@ const styles = StyleSheet.create({
   },
   tabBarContent: {
     flexDirection: "row",
-    height: 49, // iOS standard tab bar height
+    height: GlassTabBarMetrics.height,
     alignItems: "center",
     justifyContent: "space-around",
     paddingHorizontal: 4,
@@ -377,7 +378,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     paddingHorizontal: 2,
     borderRadius: 8,
-    minHeight: 44,
+    minHeight: GlassTabBarMetrics.itemMinHeight,
   },
   tabIconContainer: {
     position: "relative",
@@ -395,9 +396,9 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: -4,
     right: -8,
-    minWidth: 16,
-    height: 16,
-    borderRadius: 8,
+    minWidth: GlassTabBarMetrics.badgeSize,
+    height: GlassTabBarMetrics.badgeSize,
+    borderRadius: GlassTabBarMetrics.badgeSize / 2,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 4,

@@ -7,7 +7,7 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 - JavaScript fallback transports (UDP/TCP) for constrained networks
 - An in-app Logs screen to inspect attempts, failures, and fallbacks
 
-[![Version](https://img.shields.io/badge/version-4.1.0-blue.svg)](.)
+[![Version](https://img.shields.io/badge/version-4.1.1-blue.svg)](.)
 [![React Native](https://img.shields.io/badge/React%20Native-0.85.3-blue.svg)](https://reactnative.dev/)
 [![Expo](https://img.shields.io/badge/Expo-56.0.11-black.svg)](https://expo.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0.x-blue.svg)](https://www.typescriptlang.org/)
@@ -31,7 +31,7 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 
 ## Tech stack
 
-- App version: `4.1.0` (build `67`)
+- App version: `4.1.1` (build `68`)
 - Expo workflow: Expo Router + EAS-compatible native config
 - Expo SDK: `56.0.9`
 - React: `19.2.3`
@@ -225,6 +225,17 @@ on `2026-06-22` (advanced from build `66`, also `VALID`). App Store Connect has
 no App Store version record for this line, so App Store submission validation is
 not applicable for this TestFlight-only staging build.
 
+The working tree is now at version `4.1.1` build `68`: a source-only
+premium-feel / production-quality patch (Reduce-Motion fix for the glass text
+input, a localized chat message-list error boundary, color/metric tokenization,
+and a React Doctor config-key migration). It is not yet built or uploaded — the
+last `VALID` TestFlight build remains `4.1.0` (`67`); the build number is
+advanced for version consistency.
+
+- `4.1.1` quality gates on `2026-06-22`: full Jest suite `121` suites / `955`
+  passed / `13` skipped; `typecheck`, ast-grep `lint`, and `npx
+  react-doctor@latest` `100 / 100` green; Codex autoreview returned no
+  actionable findings (patch correct).
 - `npx react-doctor@latest --project chat-dns` reports `100 / 100` on
   `2026-06-10`; the dns-native module also reports `100 / 100`.
 - `bun run verify:expo-doctor` reports `20/20 checks passed, no issues` on

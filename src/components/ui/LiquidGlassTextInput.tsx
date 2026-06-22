@@ -24,6 +24,7 @@ import { useImessagePalette } from "../../ui/theme/imessagePalette";
 import { LiquidGlassSpacing, getCornerRadius } from "../../ui/theme/liquidGlassSpacing";
 import { TimingConfig } from "../../utils/animations";
 import { HapticFeedback } from "../../utils/haptics";
+import { useMotionReduction } from "../../context/AccessibilityContext";
 import { useTranslation } from "../../i18n";
 
 const getInputBorderColor = (
@@ -96,6 +97,7 @@ export function LiquidGlassTextInput({
   const typography = useTypography();
   const palette = useImessagePalette();
   const { t } = useTranslation();
+  const { shouldReduceMotion } = useMotionReduction();
   const [isFocused, setIsFocused] = useState(false);
 
   const borderColor = useSharedValue(palette.border);
@@ -113,6 +115,11 @@ export function LiquidGlassTextInput({
 
   const syncBorderState = (nextFocused: boolean, nextHasError: boolean) => {
     const targetColor = getInputBorderColor(nextFocused, nextHasError, palette);
+    // Respect Reduce Motion: snap to the end color instead of animating.
+    if (shouldReduceMotion) {
+      borderColor.set(targetColor);
+      return;
+    }
     borderColor.set(withTiming(targetColor, TimingConfig.quick));
   };
 
@@ -136,7 +143,7 @@ export function LiquidGlassTextInput({
   // depend on its simple inputs rather than the (per-render) function itself.
   React.useEffect(() => {
     syncBorderState(isFocused, hasError);
-  }, [hasError, isFocused, palette]);
+  }, [hasError, isFocused, palette, shouldReduceMotion]);
 
   // Handle clear button
   const handleClear = () => {

@@ -134,3 +134,6 @@ app-example
 # pnpm lock file (using bun)
 pnpm-lock.yaml
 
+# codebase-memory tooling cache (re-indexed locally, not source)
+.codebase-memory/
+

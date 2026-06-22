@@ -279,6 +279,11 @@ export const ptBR = {
         startNew: "Nova conversa",
         backToChats: "Voltar para conversas",
       },
+      listError: {
+        title: "Não foi possível exibir as mensagens",
+        description: "Algo deu errado ao mostrar esta conversa.",
+        retry: "Recarregar",
+      },
       messageActions: {
         copy: "Copiar",
         share: "Compartilhar",

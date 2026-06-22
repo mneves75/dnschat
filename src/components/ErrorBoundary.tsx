@@ -16,6 +16,15 @@ const FALLBACK_COPY = {
 
 interface Props {
   children: React.ReactNode;
+  /**
+   * Optional custom fallback. When provided it replaces the default full-screen
+   * fallback — use it to scope recovery to a subtree (e.g. the message list) so a
+   * single failing child cannot blank the whole app. `retry` clears the error and
+   * re-mounts `children`.
+   */
+  fallback?: (error: Error | undefined, retry: () => void) => React.ReactNode;
+  /** Called when the boundary catches an error (in addition to dev logging). */
+  onError?: (error: Error, errorInfo: React.ErrorInfo) => void;
 }
 
 interface State {
@@ -38,15 +47,21 @@ export class ErrorBoundary extends React.Component<Props, State> {
       error: error.message,
       componentStack: errorInfo.componentStack,
     });
+    this.props.onError?.(error, errorInfo);
   }
+
+  private readonly handleRetry = () => this.setState({ hasError: false });
 
   override render() {
     if (this.state.hasError) {
       const error = this.state.error;
+      if (this.props.fallback) {
+        return this.props.fallback(error, this.handleRetry);
+      }
       return (
         <ErrorFallback
           {...(error ? { error } : {})}
-          onRetry={() => this.setState({ hasError: false })}
+          onRetry={this.handleRetry}
         />
       );
     }

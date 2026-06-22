@@ -279,6 +279,11 @@ export const enUS = {
         startNew: "Start New Chat",
         backToChats: "Back to Chats",
       },
+      listError: {
+        title: "Couldn't display messages",
+        description: "Something went wrong while showing this conversation.",
+        retry: "Reload",
+      },
       messageActions: {
         copy: "Copy",
         share: "Share",
