@@ -213,13 +213,13 @@ layer, storage, and UI — see `CHANGELOG.md` `4.0.29`).
 Last AXe simulator E2E feature pass: `2026-06-05` for version `4.0.26` build
 `60`; 10 feature groups passed (historical; Argent MCP is the current
 verification surface).
-The latest `VALID` TestFlight build is version `4.1.1` build `68`, uploaded to the
-internal tester group and processed `VALID` on `2026-06-22` (advanced from `4.1.0`
-build `67`, also `VALID`). Release builds use the proven `xcodebuild archive` ->
-`-exportArchive` -> `asc publish testflight` lane with bilingual `What to Test`
-notes (`en-US` and `pt-BR`). App Store Connect has no App Store version record for
-this line, so App Store submission validation is not applicable for these
-TestFlight-only staging builds.
+The latest `VALID` TestFlight build is version `4.1.3` build `70`, signed with the
+Apple Distribution identity, uploaded to the internal tester group, and processed
+`VALID` on `2026-06-22` (advancing from `4.1.1` build `68`, also `VALID`). Release
+builds use the proven `xcodebuild archive` -> `-exportArchive` -> `asc publish
+testflight` lane with bilingual `What to Test` notes (`en-US` and `pt-BR`). App
+Store Connect has no App Store version record for this line, so App Store submission
+validation is not applicable for these TestFlight-only staging builds.
 
 Version `4.1.2` build `69` is a premium-feel pass on top of `4.1.1`: a semantic
 `palette.isDark` signal for the loading-skeleton tint (replacing a hard-coded-hex
@@ -229,10 +229,11 @@ chat list, a calmer (no-overshoot) input auto-grow spring, and deletion of the d
 `GlassTabBar` component. It was built into a Development-signed binary that installed
 and launched cleanly on a physical iOS device; it was not uploaded to TestFlight.
 
-The working tree is now at version `4.1.3` build `70`: a release-readiness and
-documentation-integrity pass (a structured-review-flagged changelog release-state
-correction and a keyboard drag-to-dismiss regression test). No app-behavior change
-versus `4.1.2`.
+Version `4.1.3` build `70` is a release-readiness and documentation-integrity pass
+on top of `4.1.2` (a structured-review-flagged changelog release-state correction
+and a keyboard drag-to-dismiss regression test; no app-behavior change versus
+`4.1.2`). It carries all of the `4.1.2` premium-feel work to TestFlight, since
+`4.1.2` itself was only Development-signed onto a device and never uploaded.
 
 - `4.1.3` quality gates on `2026-06-22`: full Jest suite `122` suites / `959`
   passed / `13` skipped; `typecheck`, ast-grep `lint`, `verify:typed-routes`,
