@@ -23,6 +23,8 @@ jest.mock('../modules/dns-native', () => {
     ...actual,
     nativeDNS: {
       queryTXT: jest.fn(),
+      queryTXTUDP: jest.fn(),
+      queryTXTTCP: jest.fn(),
       parseMultiPartResponse: jest.fn((records: string[]) => records.join('')),
       isAvailable: jest.fn().mockResolvedValue({
         available: true,
@@ -60,8 +62,8 @@ describe('DNSService native retry integration', () => {
 
   it('falls back to UDP when native DNS reports missing TXT records', async () => {
     mockedNativeDNS.queryTXT
-      .mockRejectedValueOnce(new DNSError(DNSErrorType.INVALID_RESPONSE, 'No TXT records found'))
-      .mockResolvedValueOnce(['Ignored']);
+      .mockRejectedValueOnce(new DNSError(DNSErrorType.INVALID_RESPONSE, 'No TXT records found'));
+    mockedNativeDNS.queryTXTUDP.mockResolvedValueOnce(['Hello from UDP']);
 
     const udpSpy = jest
       .spyOn(dnsServiceInternals, "performNativeUDPQuery")
@@ -75,7 +77,8 @@ describe('DNSService native retry integration', () => {
     );
 
     expect(mockedNativeDNS.queryTXT).toHaveBeenCalledTimes(1);
-    expect(udpSpy).toHaveBeenCalledTimes(1);
+    expect(mockedNativeDNS.queryTXTUDP).toHaveBeenCalledTimes(1);
+    expect(udpSpy).not.toHaveBeenCalled();
     expect(result).toBe('Hello from UDP');
   });
 

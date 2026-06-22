@@ -15,4 +15,15 @@ describe("iOS DNSResolver native policy", () => {
     expect(source).toContain("let answerClass = Int(bytes[offset]) << 8 | Int(bytes[offset + 1])");
     expect(source).toContain("answerClass == 1 && answerName == expectedQueryName");
   });
+
+  it("keeps native iOS DNS resilient with UDP-only, TCP-only, and UDP-then-TCP fallback paths", () => {
+    expect(source).toContain("enum NativeTransport");
+    expect(source).toContain("case udpOnly");
+    expect(source).toContain("case tcpOnly");
+    expect(source).toContain("case udpThenTCP");
+    expect(source).toContain("performTCPQuery(server: server, queryName: queryName, port: port)");
+    expect(source).toContain("withTimeout(seconds: Self.udpAttemptTimeout)");
+    expect(source).toContain("withTimeout(seconds: Self.tcpAttemptTimeout)");
+    expect(source).toContain("Native UDP blocked or timed out");
+  });
 });

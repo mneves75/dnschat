@@ -127,6 +127,34 @@ describe("Native DNS Module", () => {
       );
     });
 
+    it("calls the native UDP-only bridge method for forced UDP queries", async () => {
+      const mockResponse = ["hello udp"];
+      mockNativeModule.queryTXTUDP = jest.fn().mockResolvedValue(mockResponse);
+
+      const result = await testDNS.queryTXTUDP("llm.pieter.com", "test.llm.pieter.com", 53);
+
+      expect(result).toEqual(mockResponse);
+      expect(mockNativeModule.queryTXTUDP).toHaveBeenCalledWith(
+        "llm.pieter.com",
+        "test.llm.pieter.com",
+        53,
+      );
+    });
+
+    it("calls the native TCP-only bridge method for forced TCP queries", async () => {
+      const mockResponse = ["hello tcp"];
+      mockNativeModule.queryTXTTCP = jest.fn().mockResolvedValue(mockResponse);
+
+      const result = await testDNS.queryTXTTCP("llm.pieter.com", "test.llm.pieter.com", 53);
+
+      expect(result).toEqual(mockResponse);
+      expect(mockNativeModule.queryTXTTCP).toHaveBeenCalledWith(
+        "llm.pieter.com",
+        "test.llm.pieter.com",
+        53,
+      );
+    });
+
     it("should reject empty messages", async () => {
       await expect(testDNS.queryTXT("ch.at", "")).rejects.toThrow(DNSError);
       await expect(testDNS.queryTXT("ch.at", "   ")).rejects.toThrow(DNSError);

@@ -31,6 +31,12 @@ const nativeDNS = {
   async queryTXT(_domain, _message) {
     return ['mock'];
   },
+  async queryTXTUDP(_domain, _message) {
+    return ['mock'];
+  },
+  async queryTXTTCP(_domain, _message) {
+    return ['mock'];
+  },
   parseMultiPartResponse(txtRecords) {
     if (!Array.isArray(txtRecords) || txtRecords.length === 0) {
       throw new DNSError(DNSErrorType.INVALID_RESPONSE, 'No TXT records to parse');
@@ -63,4 +69,3 @@ module.exports = {
   DNSErrorType,
   DNS_CONSTANTS,
 };
-

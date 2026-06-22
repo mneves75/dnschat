@@ -7,7 +7,7 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 - JavaScript fallback transports (UDP/TCP) for constrained networks
 - An in-app Logs screen to inspect attempts, failures, and fallbacks
 
-[![Version](https://img.shields.io/badge/version-4.0.31-blue.svg)](.)
+[![Version](https://img.shields.io/badge/version-4.0.32-blue.svg)](.)
 [![React Native](https://img.shields.io/badge/React%20Native-0.85.3-blue.svg)](https://reactnative.dev/)
 [![Expo](https://img.shields.io/badge/Expo-56.0.11-black.svg)](https://expo.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0.x-blue.svg)](https://www.typescriptlang.org/)
@@ -31,7 +31,7 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 
 ## Tech stack
 
-- App version: `4.0.31` (build `65`)
+- App version: `4.0.32` (build `66`)
 - Expo workflow: Expo Router + EAS-compatible native config
 - Expo SDK: `56.0.9`
 - React: `19.2.3`
@@ -213,20 +213,17 @@ layer, storage, and UI — see `CHANGELOG.md` `4.0.29`).
 Last AXe simulator E2E feature pass: `2026-06-05` for version `4.0.26` build
 `60`; 10 feature groups passed (historical; Argent MCP is the current
 verification surface).
-Current release target: version `4.0.31` build `65`. This release lane carries
-everything in the 4.0.30 lane (the 4.0.28 chat-error presentation fix plus the
-full review hardening: dnsjava CVE fix, subset-only native allowlist, UDP
-datagram re-arm, inbound response sanitization, storage mutation cache, splash
-off the log-decrypt path, single shared chat-list action sheet) plus the
-4.0.31 security and CI hardening (all 8 Dependabot advisories resolved, the
-three failing CI jobs repaired, Expo SDK 56 packages aligned). Signed
-archive/export, TestFlight upload, processing, and validation run after the
-final source/docs state is verified and pushed. The latest already-uploaded
-TestFlight build before this lane is version `4.0.26` build `60` (`VALID` on
-`2026-06-05`); the `4.0.30` build `64` upload was rejected with `ITMS-90534`
-(see below). App Store Connect has no App Store version record for `4.0.31`,
-so App Store submission validation is not applicable for this TestFlight-only
-staging build.
+Current release target: version `4.0.32` build `66`, uploaded to the internal
+TestFlight tester group and processed `VALID` on `2026-06-22`. This bug-fix lane
+repairs the iOS New-Architecture DNS transport (native/UDP/TCP) and an illegible
+Settings control, on top of the `4.0.31` security and CI hardening lane (all 8
+Dependabot advisories resolved, the three failing CI jobs repaired, Expo SDK 56
+packages aligned). Signed archive/export, TestFlight upload, processing, and
+strict validation completed via the proven `xcodebuild archive` ->
+`-exportArchive` -> `asc publish testflight` lane, with `What to Test` notes set
+for `en-US` and `pt-BR`. App Store Connect has no App Store version record for
+`4.0.32`, so App Store submission validation is not applicable for this
+TestFlight-only staging build.
 
 - `npx react-doctor@latest --project chat-dns` reports `100 / 100` on
   `2026-06-10`; the dns-native module also reports `100 / 100`.
@@ -264,24 +261,23 @@ staging build.
   screenshots because the Argent MCP simulator-server could not start in
   this session (0.7.0 server / 0.10.0 CLI mismatch after a mid-session CLI
   update) — recorded as the documented Argent-unavailable fallback.
-- Physical-device Release build, install, installed metadata check, and launch
-  passed on `2026-06-04` for version `4.0.22` build `56`. Direct
-  physical-device install remains blocked by local Xcode Development
-  provisioning state (`No Accounts` and no matching development profile);
-  TestFlight is the verified staging path for this build.
+- Physical-device Release build, install, and launch verified on `2026-06-22`
+  for version `4.0.32` build `66` (and earlier on `2026-06-04` for `4.0.22`
+  build `56`). Direct physical-device install works via an `asc`-minted
+  Development provisioning profile; the earlier `No Accounts`/no-profile note
+  was stale. TestFlight remains the primary staging path.
 - TestFlight upload attempt for `4.0.30` build `64` on `2026-06-10`: signed
   archive and IPA export succeeded; App Store Connect processing rejected the
   binary with `ITMS-90534` (Invalid Toolchain) because the local stable Xcode
   slot now carries the `26.6` beta seed. Retry requires a GM toolchain and a
   fresh build number.
-- Current target: `4.0.31` build `65`; the build number is advanced from the
-  rejected `4.0.30` build `64` for the toolchain retry. The signed archive,
-  TestFlight upload, processing, and validation are **not yet run for this
-  build** and remain blocked until a GM Xcode toolchain replaces the `26.6`
-  beta seed (see the `ITMS-90534` note above). Internal App Store Connect IDs
-  and tester group names are intentionally omitted from public docs.
+- Current target: `4.0.32` build `66`; the build number is advanced from
+  `4.0.31` build `65`. The signed archive, TestFlight upload, processing, and
+  strict validation **completed `VALID`** on `2026-06-22` using the GM Xcode
+  `26.6` (`17F109`) toolchain. Internal App Store Connect IDs and tester group
+  names are intentionally omitted from public docs.
 - Historical `asc validate testflight` evidence is superseded by each uploaded
-  build validation. App Store submission validation for `4.0.31` is not
+  build validation. App Store submission validation for `4.0.32` is not
   applicable until a matching App Store version record exists.
 - `xcodebuild test` is not a native gate yet because the `DNSChat` scheme has no
   XCTest bundles.

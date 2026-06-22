@@ -89,6 +89,8 @@ export interface NativeDNSModule {
    * @returns Promise resolving to array of TXT record strings
    */
   queryTXT(domain: string, message: string, port: number): Promise<string[]>;
+  queryTXTUDP?(domain: string, message: string, port: number): Promise<string[]>;
+  queryTXTTCP?(domain: string, message: string, port: number): Promise<string[]>;
 
   /**
    * Check if native DNS functionality is available on this platform
@@ -98,6 +100,8 @@ export interface NativeDNSModule {
   configureSanitizer?(config: NativeSanitizerConfig): void | Promise<boolean>;
   debugSanitizeLabel?(label: string): Promise<string>;
 }
+
+type NativeDNSQueryMethod = "queryTXT" | "queryTXTUDP" | "queryTXTTCP";
 
 export enum DNSErrorType {
   PLATFORM_UNSUPPORTED = "PLATFORM_UNSUPPORTED",
@@ -379,7 +383,12 @@ export class NativeDNS implements NativeDNSModule {
     }
   }
 
-  async queryTXT(domain: string, message: string, port?: number): Promise<string[]> {
+  private async queryWithNativeMethod(
+    method: NativeDNSQueryMethod,
+    domain: string,
+    message: string,
+    port?: number,
+  ): Promise<string[]> {
     if (!this.nativeModule) {
       throw new DNSError(
         DNSErrorType.PLATFORM_UNSUPPORTED,
@@ -409,13 +418,19 @@ export class NativeDNS implements NativeDNSModule {
       );
     }
 
-    debugLog(
-      `[NativeDNS] queryTXT: ${domain}:${dnsPort}`,
-      { queryNameLength: trimmedMessage.length },
-    );
+    debugLog(`[NativeDNS] ${method}: ${domain}:${dnsPort}`, {
+      queryNameLength: trimmedMessage.length,
+    });
 
     try {
-      const result = await this.nativeModule.queryTXT(domain, trimmedMessage, dnsPort);
+      const nativeQuery = this.nativeModule[method];
+      if (typeof nativeQuery !== "function") {
+        throw new DNSError(
+          DNSErrorType.PLATFORM_UNSUPPORTED,
+          `Native DNS module does not expose ${method}`,
+        );
+      }
+      const result = await nativeQuery(domain, trimmedMessage, dnsPort);
 
       if (!Array.isArray(result) || result.length === 0) {
         throw new DNSError(
@@ -480,6 +495,18 @@ export class NativeDNS implements NativeDNSModule {
         cause,
       );
     }
+  }
+
+  async queryTXT(domain: string, message: string, port?: number): Promise<string[]> {
+    return this.queryWithNativeMethod("queryTXT", domain, message, port);
+  }
+
+  async queryTXTUDP(domain: string, message: string, port?: number): Promise<string[]> {
+    return this.queryWithNativeMethod("queryTXTUDP", domain, message, port);
+  }
+
+  async queryTXTTCP(domain: string, message: string, port?: number): Promise<string[]> {
+    return this.queryWithNativeMethod("queryTXTTCP", domain, message, port);
   }
 
   async isAvailable(): Promise<DNSCapabilities> {

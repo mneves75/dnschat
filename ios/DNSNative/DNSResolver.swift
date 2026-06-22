@@ -9,7 +9,9 @@ final class DNSResolver: NSObject {
     // MARK: - Configuration
     // NOTE: Port is now dynamic - passed as parameter to support non-standard ports.
     private static let defaultDnsPort: UInt16 = 53
-    private static let queryTimeout: TimeInterval = 10.0
+    private static let queryTimeout: TimeInterval = 8.0
+    private static let udpAttemptTimeout: TimeInterval = 4.0
+    private static let tcpAttemptTimeout: TimeInterval = 6.0
     private static let maxNativeAttempts: Int = 3
     private static let maxLabelLength: Int = 63
     private static let maxQNameLength: Int = 255
@@ -49,6 +51,12 @@ final class DNSResolver: NSObject {
         let transactionId: UInt16
         let normalizedName: String
     }
+
+    private enum NativeTransport: String {
+        case udpOnly
+        case tcpOnly
+        case udpThenTCP
+    }
     
     // MARK: - Public Interface
     
@@ -65,6 +73,58 @@ final class DNSResolver: NSObject {
         domain: String,
         message: String,
         port: NSNumber,
+        resolver: @escaping RCTPromiseResolveBlock,
+        rejecter: @escaping RCTPromiseRejectBlock
+    ) {
+        queryTXT(
+            domain: domain,
+            message: message,
+            port: port,
+            transport: .udpThenTCP,
+            resolver: resolver,
+            rejecter: rejecter
+        )
+    }
+
+    @objc func queryTXTUDP(
+        domain: String,
+        message: String,
+        port: NSNumber,
+        resolver: @escaping RCTPromiseResolveBlock,
+        rejecter: @escaping RCTPromiseRejectBlock
+    ) {
+        queryTXT(
+            domain: domain,
+            message: message,
+            port: port,
+            transport: .udpOnly,
+            resolver: resolver,
+            rejecter: rejecter
+        )
+    }
+
+    @objc func queryTXTTCP(
+        domain: String,
+        message: String,
+        port: NSNumber,
+        resolver: @escaping RCTPromiseResolveBlock,
+        rejecter: @escaping RCTPromiseRejectBlock
+    ) {
+        queryTXT(
+            domain: domain,
+            message: message,
+            port: port,
+            transport: .tcpOnly,
+            resolver: resolver,
+            rejecter: rejecter
+        )
+    }
+
+    private func queryTXT(
+        domain: String,
+        message: String,
+        port: NSNumber,
+        transport: NativeTransport,
         resolver: @escaping RCTPromiseResolveBlock,
         rejecter: @escaping RCTPromiseRejectBlock
     ) {
@@ -105,29 +165,35 @@ final class DNSResolver: NSObject {
             }
 
             let queryId = "\(normalizedDomain):\(dnsPort)-\(queryName)"
+            let cacheKey = "\(transport.rawValue)-\(queryId)"
 
             do {
                 // Check for existing query (already on MainActor)
-                if let existingQuery = self.activeQueries[queryId] {
+                if let existingQuery = self.activeQueries[cacheKey] {
                     let result = try await existingQuery.value
                     resolver(result)
                     return
                 }
 
                 // Create new query with dynamic port
-                let queryTask = self.createQueryTask(server: normalizedDomain, queryName: queryName, port: dnsPort)
-                self.activeQueries[queryId] = queryTask
+                let queryTask = self.createQueryTask(
+                    server: normalizedDomain,
+                    queryName: queryName,
+                    port: dnsPort,
+                    transport: transport
+                )
+                self.activeQueries[cacheKey] = queryTask
 
                 let result = try await queryTask.value
 
                 // Clean up (already on MainActor)
-                self.activeQueries.removeValue(forKey: queryId)
+                self.activeQueries.removeValue(forKey: cacheKey)
 
                 resolver(result)
 
             } catch {
                 // Clean up on error (already on MainActor)
-                self.activeQueries.removeValue(forKey: queryId)
+                self.activeQueries.removeValue(forKey: cacheKey)
 
                 rejecter("DNS_QUERY_FAILED", error.localizedDescription, error)
             }
@@ -139,7 +205,12 @@ final class DNSResolver: NSObject {
     /// Creates an async task to perform the DNS query with retry logic.
     /// - Note: Requires iOS 16.0+ for Network.framework and Task.sleep(for:) APIs.
     @available(iOS 16.0, *)
-    private func createQueryTask(server: String, queryName: String, port: UInt16) -> Task<[String], Error> {
+    private func createQueryTask(
+        server: String,
+        queryName: String,
+        port: UInt16,
+        transport: NativeTransport
+    ) -> Task<[String], Error> {
         Task {
             do {
                 return try await withTimeout(seconds: Self.queryTimeout) {
@@ -148,7 +219,12 @@ final class DNSResolver: NSObject {
                         try Task.checkCancellation()
 
                         do {
-                            return try await self.performUDPQuery(server: server, queryName: queryName, port: port)
+                            return try await self.performQuery(
+                                server: server,
+                                queryName: queryName,
+                                port: port,
+                                transport: transport
+                            )
                         } catch let error as DNSError {
                             if case .noRecordsFound = error, attempt < Self.maxNativeAttempts - 1 {
                                 // Check cancellation before sleeping
@@ -164,6 +240,42 @@ final class DNSResolver: NSObject {
             } catch is CancellationError {
                 // Convert Swift's CancellationError to our DNSError.cancelled for consistent error handling
                 throw DNSError.cancelled
+            }
+        }
+    }
+
+    @available(iOS 16.0, *)
+    nonisolated private func performQuery(
+        server: String,
+        queryName: String,
+        port: UInt16,
+        transport: NativeTransport
+    ) async throws -> [String] {
+        switch transport {
+        case .udpOnly:
+            return try await withTimeout(seconds: Self.udpAttemptTimeout) {
+                try await self.performUDPQuery(server: server, queryName: queryName, port: port)
+            }
+        case .tcpOnly:
+            return try await withTimeout(seconds: Self.tcpAttemptTimeout) {
+                try await self.performTCPQuery(server: server, queryName: queryName, port: port)
+            }
+        case .udpThenTCP:
+            do {
+                return try await withTimeout(seconds: Self.udpAttemptTimeout) {
+                    try await self.performUDPQuery(server: server, queryName: queryName, port: port)
+                }
+            } catch {
+                let udpFailure = error.localizedDescription
+                do {
+                    return try await withTimeout(seconds: Self.tcpAttemptTimeout) {
+                        try await self.performTCPQuery(server: server, queryName: queryName, port: port)
+                    }
+                } catch {
+                    throw DNSError.queryFailed(
+                        "Native UDP blocked or timed out; TCP fallback failed: \(error.localizedDescription). UDP failure: \(udpFailure)"
+                    )
+                }
             }
         }
     }
@@ -205,6 +317,32 @@ final class DNSResolver: NSObject {
         }
     }
 
+    @available(iOS 16.0, *)
+    nonisolated private func performTCPQuery(server: String, queryName: String, port: UInt16) async throws -> [String] {
+        let query = try createDNSQuery(queryName: queryName)
+        var framedQuery = Data()
+        let frameLength = UInt16(query.payload.count)
+        framedQuery.append(contentsOf: frameLength.bigEndianBytes)
+        framedQuery.append(query.payload)
+
+        let host = NWEndpoint.Host(server)
+        let dnsPort = NWEndpoint.Port(integerLiteral: port)
+        let connection = NWConnection(host: host, port: dnsPort, using: .tcp)
+        let connectionQueue = DispatchQueue(label: "com.dnschat.dns.tcp.connection", qos: .userInitiated)
+
+        return try await withTaskCancellationHandler {
+            try await performTCPQueryInternal(
+                connection: connection,
+                framedQuery: framedQuery,
+                query: query,
+                queue: connectionQueue
+            )
+        } onCancel: {
+            connection.stateUpdateHandler = nil
+            connection.cancel()
+        }
+    }
+
     /// Internal implementation of UDP query, separated for proper cancellation handling.
     @available(iOS 16.0, *)
     nonisolated private func performUDPQueryInternal(
@@ -241,18 +379,18 @@ final class DNSResolver: NSObject {
                     // eventually hit .failed or timeout.
                     // For transient network issues, we want to give the connection a chance.
                     // However, if this is a definitive error (e.g., no route), fail fast.
-                    if case .posix(let code) = error, code == .ENETUNREACH || code == .EHOSTUNREACH {
+                    if Self.isBlockedNetworkError(error) {
                         gate.tryResume {
                             connection.stateUpdateHandler = nil
                             connection.cancel()
-                            cont.resume(throwing: DNSError.resolverFailed("Network unreachable: \(error.localizedDescription)"))
+                            cont.resume(throwing: Self.classifyNetworkError(error))
                         }
                     }
                     // Otherwise, let it retry or timeout naturally
                 case .failed(let error):
                     gate.tryResume {
                         connection.stateUpdateHandler = nil
-                        cont.resume(throwing: DNSError.resolverFailed(error.localizedDescription))
+                        cont.resume(throwing: Self.classifyNetworkError(error))
                     }
                 case .cancelled:
                     gate.tryResume {
@@ -324,6 +462,153 @@ final class DNSResolver: NSObject {
         )
         if txt.isEmpty { throw DNSError.noRecordsFound }
         return txt
+    }
+
+    @available(iOS 16.0, *)
+    nonisolated private func performTCPQueryInternal(
+        connection: NWConnection,
+        framedQuery: Data,
+        query: DnsQuery,
+        queue: DispatchQueue
+    ) async throws -> [String] {
+        try await waitForConnectionReady(connection: connection, queue: queue)
+        try await sendTCPQuery(connection: connection, framedQuery: framedQuery)
+        let responseData = try await receiveTCPResponse(connection: connection)
+        connection.cancel()
+
+        let txt = try parseDnsTxtResponse(
+            responseData,
+            expectedTransactionId: query.transactionId,
+            expectedQueryName: query.normalizedName
+        )
+        if txt.isEmpty { throw DNSError.noRecordsFound }
+        return txt
+    }
+
+    @available(iOS 16.0, *)
+    nonisolated private func waitForConnectionReady(connection: NWConnection, queue: DispatchQueue) async throws {
+        try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, Error>) in
+            let gate = ResumeGate()
+
+            connection.stateUpdateHandler = { state in
+                switch state {
+                case .ready:
+                    gate.tryResume {
+                        connection.stateUpdateHandler = nil
+                        cont.resume()
+                    }
+                case .waiting(let error):
+                    if Self.isBlockedNetworkError(error) {
+                        gate.tryResume {
+                            connection.stateUpdateHandler = nil
+                            connection.cancel()
+                            cont.resume(throwing: Self.classifyNetworkError(error))
+                        }
+                    }
+                case .failed(let error):
+                    gate.tryResume {
+                        connection.stateUpdateHandler = nil
+                        cont.resume(throwing: Self.classifyNetworkError(error))
+                    }
+                case .cancelled:
+                    gate.tryResume {
+                        connection.stateUpdateHandler = nil
+                        cont.resume(throwing: DNSError.cancelled)
+                    }
+                default:
+                    break
+                }
+            }
+            connection.start(queue: queue)
+        }
+    }
+
+    @available(iOS 16.0, *)
+    nonisolated private func sendTCPQuery(connection: NWConnection, framedQuery: Data) async throws {
+        try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, Error>) in
+            let gate = ResumeGate()
+
+            connection.send(content: framedQuery, completion: .contentProcessed { error in
+                gate.tryResume {
+                    if let error = error {
+                        cont.resume(throwing: DNSError.queryFailed(error.localizedDescription))
+                    } else {
+                        cont.resume()
+                    }
+                }
+            })
+        }
+    }
+
+    @available(iOS 16.0, *)
+    nonisolated private func receiveTCPResponse(connection: NWConnection) async throws -> Data {
+        let lengthBytes = try await receiveTCPChunk(connection: connection, minimumLength: 2, maximumLength: 2)
+        let bytes = [UInt8](lengthBytes)
+        guard bytes.count == 2 else {
+            throw DNSError.queryFailed("DNS TCP response length prefix truncated")
+        }
+        let expectedLength = Int(UInt16(bytes[0]) << 8 | UInt16(bytes[1]))
+        guard expectedLength >= 12 else {
+            throw DNSError.queryFailed("DNS TCP response length invalid: \(expectedLength)")
+        }
+
+        var response = Data()
+        while response.count < expectedLength {
+            let remaining = expectedLength - response.count
+            let chunk = try await receiveTCPChunk(
+                connection: connection,
+                minimumLength: 1,
+                maximumLength: remaining
+            )
+            response.append(chunk)
+        }
+        return response.prefix(expectedLength)
+    }
+
+    @available(iOS 16.0, *)
+    nonisolated private func receiveTCPChunk(
+        connection: NWConnection,
+        minimumLength: Int,
+        maximumLength: Int
+    ) async throws -> Data {
+        try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Data, Error>) in
+            let gate = ResumeGate()
+
+            connection.receive(
+                minimumIncompleteLength: minimumLength,
+                maximumLength: maximumLength
+            ) { data, _, isComplete, error in
+                gate.tryResume {
+                    if let error = error {
+                        cont.resume(throwing: DNSError.queryFailed(error.localizedDescription))
+                        return
+                    }
+                    guard let data = data, !data.isEmpty else {
+                        if isComplete {
+                            cont.resume(throwing: DNSError.queryFailed("DNS TCP connection closed before complete response"))
+                        } else {
+                            cont.resume(throwing: DNSError.noRecordsFound)
+                        }
+                        return
+                    }
+                    cont.resume(returning: data)
+                }
+            }
+        }
+    }
+
+    private static func isBlockedNetworkError(_ error: NWError) -> Bool {
+        if case .posix(let code) = error {
+            return code == .ENETUNREACH || code == .EHOSTUNREACH || code == .ECONNREFUSED
+        }
+        return false
+    }
+
+    private static func classifyNetworkError(_ error: NWError) -> DNSError {
+        if isBlockedNetworkError(error) {
+            return .resolverFailed("Blocked/no route: \(error.localizedDescription)")
+        }
+        return .resolverFailed(error.localizedDescription)
     }
 
     private func createDNSQuery(queryName: String) throws -> DnsQuery {
@@ -777,6 +1062,38 @@ final class RNDNSModule: NSObject, RCTInvalidating {
         rejecter: @escaping RCTPromiseRejectBlock
     ) {
         self.resolver.queryTXT(
+            domain: domain,
+            message: message,
+            port: port,
+            resolver: resolver,
+            rejecter: rejecter
+        )
+    }
+
+    @objc func queryTXTUDP(
+        _ domain: String,
+        message: String,
+        port: NSNumber,
+        resolver: @escaping RCTPromiseResolveBlock,
+        rejecter: @escaping RCTPromiseRejectBlock
+    ) {
+        self.resolver.queryTXTUDP(
+            domain: domain,
+            message: message,
+            port: port,
+            resolver: resolver,
+            rejecter: rejecter
+        )
+    }
+
+    @objc func queryTXTTCP(
+        _ domain: String,
+        message: String,
+        port: NSNumber,
+        resolver: @escaping RCTPromiseResolveBlock,
+        rejecter: @escaping RCTPromiseRejectBlock
+    ) {
+        self.resolver.queryTXTTCP(
             domain: domain,
             message: message,
             port: port,

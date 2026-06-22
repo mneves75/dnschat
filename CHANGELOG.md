@@ -6,6 +6,41 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+## [4.0.32] - 2026-06-22
+
+Build `65` -> `66`. Bug-fix beta shipped to internal TestFlight (`VALID`).
+Repairs DNS transport on the New Architecture and an illegible Settings control.
+
+### Fixed
+
+- **DNS transport (iOS New Architecture).** All three client transports were
+  failing client-side: the native `NWConnection` UDP/53 query timed out, the
+  `react-native-udp` fallback reported the module was not loaded, and the
+  `react-native-tcp-socket` fallback failed hostname resolution (`EAI_NONAME`).
+  Hardened transport selection/guards and added a native
+  TCP-over-`NWConnection` fallback so a working transport is reached
+  (`src/services/dnsService.ts`, `modules/dns-native/ios/DNSResolver.swift`,
+  `modules/dns-native/index.ts`).
+- **Settings transport controls were illegible.** The "Test Selected
+  Preference" button and the Native/UDP/TCP force pills rendered their labels
+  in systemBlue on the systemBlue interactive fill (blue-on-blue). Switched to
+  the white `bubbleTextOnBlue` token
+  (`src/navigation/screens/GlassSettings.tsx`).
+
+### Added
+
+- Apple iOS 26+ adaptive launcher icon variants (light / dark / tinted) wired
+  via `ios.icon`, plus a refreshed Android adaptive foreground. The new icon
+  renders after the next native asset-catalog regeneration; build 66 still
+  carries the prior icon.
+- Regression and transport tests: `settings.transport-contrast.spec.ts`,
+  `dnsService.iosNativeTransports.spec.ts`.
+
+### Notes
+
+- DNS fix is code-verified (lint + typecheck + unit/native suites green);
+  on-device runtime validation is pending via this TestFlight build.
+
 ## [4.0.31] - 2026-06-13
 
 Build `64` -> `65`. Security and CI hardening release. Resolves all open
