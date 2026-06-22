@@ -6,6 +6,43 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+## [4.1.2] - 2026-06-22
+
+Build `68` -> `69`. Patch release: premium-feel audit follow-up and SDK
+maintenance. Source-only — not yet built or uploaded. The last TestFlight build
+is `4.1.1` (`68`), uploaded and processed `VALID`; `4.1.2` advances the build
+number for version consistency.
+
+### Fixed
+
+- The chat loading placeholder (`src/components/SkeletonMessage.tsx`) now derives
+  its shimmer/timestamp tints from a semantic `palette.isDark` signal instead of
+  comparing `textPrimary` to a hard-coded `#FFFFFF`. The old hex comparison could
+  silently pick the wrong tint under high-contrast palettes.
+
+### Changed
+
+- Aligned four Expo SDK 56 dependencies to the patch versions required by the
+  installed SDK: `expo` `56.0.12`, `@expo/ui` `56.0.18`, `expo-build-properties`
+  `56.0.19`, `expo-router` `56.2.11`. The `expo-doctor` version-match check now
+  passes (18/20 -> 19/20; the remaining failure is a false positive — the local
+  module's tracked `ios`/`android` dirs are misreported as gitignored).
+- Exposed a semantic `isDark: boolean` on the iMessage palette
+  (`src/ui/theme/imessagePalette.ts`) so consumers can make light/dark decisions
+  without fragile hex string comparisons.
+
+### Removed
+
+- Unused `errorShake` haptic helper (`src/utils/haptics.ts`) — uncancelable
+  `setTimeout`-based dead code with no callers.
+
+### Verified
+
+- `tsc --noEmit`, `lint` (ast-grep), `verify:typed-routes`, `verify:react-compiler`,
+  and `react-doctor` (100/100) all pass. Jest: 122 suites, 958 passed / 13 skipped.
+  `dns-native`: 8 suites, 64 passed / 13 skipped. `bun install` kept `bun.lock` at
+  lockfile v1 (CI-compatible).
+
 ## [4.1.1] - 2026-06-22
 
 Build `67` -> `68`. Patch release: premium-feel and production-quality polish.

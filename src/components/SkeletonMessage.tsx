@@ -27,10 +27,13 @@ export function SkeletonMessage({ isUser = false }: SkeletonMessageProps) {
   const { t } = useTranslation();
   const { shouldReduceMotion } = useMotionReduction();
   const shimmer = useSharedValue(0);
-  const lineColor = palette.textPrimary === "#FFFFFF"
+  // Derive placeholder tints from the palette's semantic light/dark signal rather
+  // than comparing textPrimary to a hard-coded hex (which silently breaks under
+  // high-contrast palettes where textPrimary may differ).
+  const lineColor = palette.isDark
     ? "rgba(255, 255, 255, 0.2)"
     : "rgba(0, 0, 0, 0.1)";
-  const timestampColor = palette.textPrimary === "#FFFFFF"
+  const timestampColor = palette.isDark
     ? "rgba(255, 255, 255, 0.15)"
     : "rgba(0, 0, 0, 0.08)";
 

@@ -29,6 +29,9 @@ export interface IMessagePalette {
   bubbleTextOnGray: string;
   /** Dark label for use on saturated chroma fills (warning/success/error/info chips). */
   textOnChroma: string;
+  /** Whether this palette resolves to the dark color scheme. Semantic signal for
+   * consumers that need a light/dark decision without comparing hex strings. */
+  isDark: boolean;
 }
 
 export const IMESSAGE_LIGHT: IMessagePalette = {
@@ -56,6 +59,7 @@ export const IMESSAGE_LIGHT: IMessagePalette = {
   bubbleTextOnBlue: "#FFFFFF", // White text on blue/red bubbles
   bubbleTextOnGray: "#000000", // Dark text on light gray bubbles
   textOnChroma: "#000000", // Dark label maximizes contrast on bright chroma fills
+  isDark: false,
 };
 
 export const IMESSAGE_DARK: IMessagePalette = {
@@ -83,6 +87,7 @@ export const IMESSAGE_DARK: IMessagePalette = {
   bubbleTextOnBlue: "#FFFFFF", // White text on blue/red bubbles
   bubbleTextOnGray: "#FFFFFF", // White text on dark gray bubbles in dark mode
   textOnChroma: "#000000", // Dark label maximizes contrast on bright chroma fills
+  isDark: true,
 };
 
 /**
