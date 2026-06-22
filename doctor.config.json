@@ -377,5 +377,5 @@
       }
     ]
   },
-  "failOn": "error"
+  "blocking": "error"
 }

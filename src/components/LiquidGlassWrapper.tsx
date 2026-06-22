@@ -11,7 +11,7 @@ import {
   GlassContainer,
   isLiquidGlassAvailable as expoIsLiquidGlassAvailable,
 } from "expo-glass-effect";
-import { getImessagePalette } from "../ui/theme/imessagePalette";
+import { getImessagePalette, getAndroidGlassFallback } from "../ui/theme/imessagePalette";
 import { splitGlassStyles } from "./glass/glassStyleUtils";
 
 type GlassVariant = "regular" | "prominent" | "interactive";
@@ -153,13 +153,14 @@ export const buildFallbackStyle = (
   // On Android, always use opaque colors since there's no glass blur effect
   // Semi-transparent colors without blur just look like gray boxes
   const forceOpaque = options.forceOpaque ?? Platform.OS === "android";
+  const androidGlass = getAndroidGlassFallback(isDark);
 
   // Use solid colors on Android for better appearance without glass effects
   const getBackgroundColor = () => {
     if (Platform.OS === "android") {
       // Android: use solid background colors
       if (variant === "interactive" || variant === "prominent") {
-        return isDark ? "#1A3A5C" : "#E3F0FF"; // Solid accent surface
+        return androidGlass.accentSurface;
       }
       return palette.solid; // Solid surface (white or dark gray)
     }
@@ -172,9 +173,9 @@ export const buildFallbackStyle = (
   const getBorderColor = () => {
     if (Platform.OS === "android") {
       if (variant === "interactive" || variant === "prominent") {
-        return isDark ? "#3A8FFF" : "#007AFF"; // Solid accent border
+        return androidGlass.accentBorder;
       }
-      return isDark ? "#3A3A3C" : "#C6C6C8"; // Solid border
+      return androidGlass.border;
     }
     return variant === "interactive" || variant === "prominent"
       ? palette.accentBorder

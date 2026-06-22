@@ -85,6 +85,37 @@ export const IMESSAGE_DARK: IMessagePalette = {
   textOnChroma: "#000000", // Dark label maximizes contrast on bright chroma fills
 };
 
+/**
+ * Android Liquid Glass fallback colors.
+ *
+ * Android has no glass blur, so semi-transparent iOS accent surfaces/borders read
+ * as flat gray boxes there. These are the solid/opaque equivalents used by
+ * LiquidGlassWrapper on Android. Kept platform-specific and high-contrast-agnostic
+ * on purpose, to preserve the exact appearance the app shipped with.
+ */
+export interface AndroidGlassFallback {
+  accentSurface: string;
+  accentBorder: string;
+  border: string;
+}
+
+export const ANDROID_GLASS_FALLBACK_LIGHT: AndroidGlassFallback = {
+  accentSurface: "#E3F0FF", // Solid accent surface (light)
+  accentBorder: "#007AFF", // Solid accent border (light)
+  border: "#C6C6C8", // Solid border (light)
+};
+
+export const ANDROID_GLASS_FALLBACK_DARK: AndroidGlassFallback = {
+  accentSurface: "#1A3A5C", // Solid accent surface (dark)
+  accentBorder: "#3A8FFF", // Solid accent border (dark)
+  border: "#3A3A3C", // Solid border (dark)
+};
+
+export const getAndroidGlassFallback = (
+  isDark: boolean,
+): AndroidGlassFallback =>
+  isDark ? ANDROID_GLASS_FALLBACK_DARK : ANDROID_GLASS_FALLBACK_LIGHT;
+
 export interface GetPaletteOptions {
   highContrast?: boolean;
 }
