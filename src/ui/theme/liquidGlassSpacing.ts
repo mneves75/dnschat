@@ -75,18 +75,6 @@ export const TouchTargets = {
 } as const;
 
 /**
- * GlassTabBar layout metrics.
- * iOS-standard tab bar dimensions, applied across platforms for a consistent
- * bottom bar. Centralized so the bar height, item touch target, and badge size
- * are not scattered as magic numbers in the component StyleSheet.
- */
-export const GlassTabBarMetrics = {
-  height: 49,        // iOS standard tab bar height
-  itemMinHeight: 44, // iOS HIG minimum touch target
-  badgeSize: 16,     // notification badge diameter
-} as const;
-
-/**
  * Get platform-appropriate touch target size
  */
 export const getMinimumTouchTarget = (): number => {

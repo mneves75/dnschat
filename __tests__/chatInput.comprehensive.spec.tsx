@@ -94,9 +94,11 @@ describe("ChatInput Component - John Carmack Quality Standards", () => {
       expect(source).toContain("height: inputHeight.get()");
     });
 
-    it("uses withSpring for bouncy animations", () => {
+    it("uses withSpring with a calm, no-overshoot config for height", () => {
       expect(source).toContain("withSpring");
-      expect(source).toContain("SpringConfig.bouncy");
+      // Input auto-grow uses the stiff (damping 20 / no-overshoot) preset rather
+      // than a bouncy spring — a text field that overshoots reads as toy-like.
+      expect(source).toContain("SpringConfig.stiff");
     });
 
     it("uses withTiming for opacity transitions", () => {
