@@ -471,10 +471,14 @@ final class DNSResolver: NSObject {
         query: DnsQuery,
         queue: DispatchQueue
     ) async throws -> [String] {
+        defer {
+            connection.stateUpdateHandler = nil
+            connection.cancel()
+        }
+
         try await waitForConnectionReady(connection: connection, queue: queue)
         try await sendTCPQuery(connection: connection, framedQuery: framedQuery)
         let responseData = try await receiveTCPResponse(connection: connection)
-        connection.cancel()
 
         let txt = try parseDnsTxtResponse(
             responseData,
