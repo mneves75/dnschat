@@ -26,4 +26,14 @@ describe("iOS DNSResolver native policy", () => {
     expect(source).toContain("withTimeout(seconds: Self.tcpAttemptTimeout)");
     expect(source).toContain("Native UDP blocked or timed out");
   });
+
+  it("cleans up native TCP connections on every success and error path", () => {
+    const functionStart = source.indexOf("nonisolated private func performTCPQueryInternal");
+    const functionEnd = source.indexOf("@available(iOS 16.0, *)", functionStart + 1);
+    const functionBody = source.slice(functionStart, functionEnd);
+
+    expect(functionBody).toContain("defer {");
+    expect(functionBody).toContain("connection.stateUpdateHandler = nil");
+    expect(functionBody).toContain("connection.cancel()");
+  });
 });
