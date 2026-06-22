@@ -13,6 +13,12 @@ maintenance. Source-only — not yet built or uploaded. The last TestFlight buil
 is `4.1.1` (`68`), uploaded and processed `VALID`; `4.1.2` advances the build
 number for version consistency.
 
+### Added
+
+- Interactive drag-to-dismiss keyboard on the chat message list
+  (`src/components/MessageList.tsx`): iOS tracks the keyboard with the scroll
+  gesture (`keyboardDismissMode="interactive"`); Android dismisses on drag.
+
 ### Fixed
 
 - The chat loading placeholder (`src/components/SkeletonMessage.tsx`) now derives
@@ -30,18 +36,30 @@ number for version consistency.
 - Exposed a semantic `isDark: boolean` on the iMessage palette
   (`src/ui/theme/imessagePalette.ts`) so consumers can make light/dark decisions
   without fragile hex string comparisons.
+- Calmed the chat input auto-grow animation (`src/components/ChatInput.tsx`): the
+  text field now uses the `stiff` (no-overshoot) spring preset instead of
+  `bouncy`, so growing and collapsing no longer reads as toy-like. The
+  Reduce-Motion path still snaps instantly.
 
 ### Removed
 
 - Unused `errorShake` haptic helper (`src/utils/haptics.ts`) — uncancelable
   `setTimeout`-based dead code with no callers.
+- Dead `GlassTabBar` component (~419 LOC, `src/components/glass/GlassTabBar.tsx`)
+  plus its orphaned `GlassTabBarMetrics` token and barrel re-exports. The live app
+  renders `NativeTabs`; this also deletes hard-coded hex that existed only in the
+  unmounted component.
 
 ### Verified
 
 - `tsc --noEmit`, `lint` (ast-grep), `verify:typed-routes`, `verify:react-compiler`,
   and `react-doctor` (100/100) all pass. Jest: 122 suites, 958 passed / 13 skipped.
   `dns-native`: 8 suites, 64 passed / 13 skipped. `bun install` kept `bun.lock` at
-  lockfile v1 (CI-compatible).
+  lockfile v1 (CI-compatible); `pod install` re-synced `ios/Podfile.lock` for the
+  bumped Expo pods (`verify:ios-pods` OK). The motion/keyboard changes are covered
+  by the component unit suites (including the Reduce-Motion specs); on-device /
+  simulator sign-off is deferred to the release-build step, since this entry is
+  source-only.
 
 ## [4.1.1] - 2026-06-22
 

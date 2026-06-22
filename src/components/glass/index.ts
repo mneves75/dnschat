@@ -17,15 +17,6 @@ export {
   Form, // Namespace export
 } from "./GlassForm";
 
-// Tab Bar Components
-export {
-  GlassTabBar,
-  FloatingGlassTabBar,
-  SegmentedGlassTabBar,
-  type GlassTab,
-  type GlassTabBarProps,
-} from "./GlassTabBar";
-
 // Bottom Sheet Components
 export {
   GlassBottomSheet,
@@ -49,5 +40,4 @@ export type { LiquidGlassProps } from "../LiquidGlassWrapper";
 
 // Glass Component Namespace (alternative import style)
 export * as Glass from "./GlassForm";
-export * as GlassTabs from "./GlassTabBar";
 export * as GlassSheets from "./GlassBottomSheet";

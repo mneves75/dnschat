@@ -5,6 +5,7 @@ import {
   StyleSheet,
   Text,
   RefreshControl,
+  Platform,
 } from "react-native";
 import type {
   ListRenderItemInfo,
@@ -250,6 +251,9 @@ export function MessageList({
       ListFooterComponent={listFooter}
       refreshControl={refreshControl}
       keyboardShouldPersistTaps="handled"
+      // Drag-to-dismiss the keyboard: iOS tracks the finger interactively;
+      // Android dismisses as soon as the drag begins.
+      keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
       // PERFORMANCE: FlatList optimizations for smooth 60fps scrolling
       // removeClippedSubviews: Unmounts off-screen items (iOS memory optimization)
       // maxToRenderPerBatch: Limits items per render cycle to prevent frame drops

@@ -230,7 +230,7 @@ export function ChatInput({
         inputHeight.set(heightConstraints.min);
         return;
       }
-      inputHeight.set(withSpring(heightConstraints.min, SpringConfig.bouncy));
+      inputHeight.set(withSpring(heightConstraints.min, SpringConfig.stiff));
     }
   }, [message, inputHeight, heightConstraints.min, shouldReduceMotion]);
 
@@ -291,7 +291,7 @@ export function ChatInput({
       inputHeight.set(constrainedHeight);
       return;
     }
-    inputHeight.set(withSpring(constrainedHeight, SpringConfig.bouncy));
+    inputHeight.set(withSpring(constrainedHeight, SpringConfig.stiff));
   };
 
   /**

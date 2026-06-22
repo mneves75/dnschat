@@ -126,7 +126,6 @@
         "files": [
           "src/components/ErrorBoundary.tsx",
           "src/components/glass/GlassBottomSheet.tsx",
-          "src/components/glass/GlassTabBar.tsx",
           "src/navigation/screens/GlassSettings.tsx"
         ],
         "rules": [
