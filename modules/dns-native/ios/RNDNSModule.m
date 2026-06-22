@@ -8,6 +8,18 @@ RCT_EXTERN_METHOD(queryTXT:(NSString *)domain
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 
+RCT_EXTERN_METHOD(queryTXTUDP:(NSString *)domain
+                  message:(NSString *)message
+                  port:(nonnull NSNumber *)port
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+
+RCT_EXTERN_METHOD(queryTXTTCP:(NSString *)domain
+                  message:(NSString *)message
+                  port:(nonnull NSNumber *)port
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+
 RCT_EXTERN_METHOD(isAvailable:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 

@@ -548,7 +548,12 @@ export function GlassSettings() {
                 { minHeight: minimumTouchTarget, minWidth: minimumTouchTarget },
               ]}
             >
-              <Text style={{ color: palette.userBubble }}>
+              <Text
+                style={[
+                  styles.transportTestButtonText,
+                  { color: palette.bubbleTextOnBlue },
+                ]}
+              >
                 {testRunning
                   ? t("screen.settings.sections.transportTest.testingButton")
                   : t("screen.settings.sections.transportTest.testButton")}
@@ -581,7 +586,12 @@ export function GlassSettings() {
                     { minHeight: minimumTouchTarget, minWidth: minimumTouchTarget },
                   ]}
                 >
-                  <Text style={{ color: palette.userBubble }}>
+                  <Text
+                    style={[
+                      styles.transportForceButtonText,
+                      { color: palette.bubbleTextOnBlue },
+                    ]}
+                  >
                     {transportLabelMap[transportKey]}
                   </Text>
                 </PressableRipple>
@@ -936,10 +946,22 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingHorizontal: 12,
   },
+  transportTestButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+    letterSpacing: 0.2,
+    textAlign: "center",
+  },
   transportForceButton: {
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 8,
+  },
+  transportForceButtonText: {
+    fontSize: 14,
+    fontWeight: "600",
+    letterSpacing: 0.2,
+    textAlign: "center",
   },
   versionBadge: {
     paddingHorizontal: 8,

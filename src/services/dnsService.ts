@@ -1474,6 +1474,12 @@ export class DNSService {
               `UDP DNS transport not supported on web platform - use native DNS instead`,
             );
           }
+          if (Platform.OS === 'ios') {
+            txtRecords = await this.handleBackgroundSuspension(() =>
+              nativeDNS.queryTXTUDP(targetServer, queryName, targetPort),
+            );
+            break;
+          }
           if (!dgram) {
             throw new Error(
               `UDP DNS transport unavailable - react-native-udp library not loaded (platform: ${Platform.OS})`,
@@ -1490,6 +1496,12 @@ export class DNSService {
             throw new Error(
               `TCP DNS transport not supported on web platform`,
             );
+          }
+          if (Platform.OS === 'ios') {
+            txtRecords = await this.handleBackgroundSuspension(() =>
+              nativeDNS.queryTXTTCP(targetServer, queryName, targetPort),
+            );
+            break;
           }
           if (!TcpSocket) {
             throw new Error(
@@ -1638,6 +1650,12 @@ export class DNSService {
               `UDP forced test not supported on web platform`,
             );
           }
+          if (Platform.OS === 'ios') {
+            txtRecords = await this.handleBackgroundSuspension(() =>
+              nativeDNS.queryTXTUDP(targetServer, context.queryName, context.targetPort),
+            );
+            break;
+          }
           if (!dgram) {
             throw new Error(
               `UDP forced test unavailable - react-native-udp library not loaded (platform: ${Platform.OS})`,
@@ -1654,6 +1672,12 @@ export class DNSService {
             throw new Error(
               `TCP forced test not supported on web platform`,
             );
+          }
+          if (Platform.OS === 'ios') {
+            txtRecords = await this.handleBackgroundSuspension(() =>
+              nativeDNS.queryTXTTCP(targetServer, context.queryName, context.targetPort),
+            );
+            break;
           }
           if (!TcpSocket) {
             throw new Error(

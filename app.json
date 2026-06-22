@@ -2,9 +2,9 @@
   "expo": {
     "name": "DNS Chat",
     "slug": "chat-dns",
-    "version": "4.0.31",
+    "version": "4.0.32",
     "orientation": "default",
-    "icon": "./icons/dnschat_ios26.png",
+    "icon": "./icons/dnschat-icon-light.png",
     "userInterfaceStyle": "automatic",
     "experiments": {
       "reactCompiler": true,
@@ -12,9 +12,14 @@
     },
     "scheme": "dnschat",
     "ios": {
+      "icon": {
+        "light": "./icons/dnschat-icon-light.png",
+        "dark": "./icons/dnschat-icon-dark.png",
+        "tinted": "./icons/dnschat-icon-tinted.png"
+      },
       "supportsTablet": true,
       "deploymentTarget": "16.4",
-      "buildNumber": "65",
+      "buildNumber": "66",
       "bundleIdentifier": "org.mvneves.dnschat",
       "config": {
         "usesNonExemptEncryption": false
@@ -22,10 +27,10 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./icons/dnschat_ios26.png",
+        "foregroundImage": "./icons/dnschat-adaptive-foreground.png",
         "backgroundColor": "#0D7377"
       },
-      "versionCode": 65,
+      "versionCode": 66,
       "predictiveBackGestureEnabled": true,
       "package": "org.mvneves.dnschat"
     },
