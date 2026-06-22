@@ -6,6 +6,45 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+## [4.1.0] - 2026-06-22
+
+Build `66` -> `67`. Minor release that promotes the New-Architecture DNS
+transport repair to a tagged minor, and adds a native connection-leak fix, the
+new adaptive app icon, and dependency security updates.
+
+### Added
+
+- Apple iOS 26+ adaptive launcher icon with light / dark / tinted appearance
+  variants (iOS asset catalog: App-Icon-Dark / App-Icon-Tinted) and a refreshed
+  Android adaptive foreground. Single-glyph terminal-in-a-chat-bubble mark, no
+  text, identical silhouette across appearance modes per Apple's HIG.
+
+### Fixed
+
+- Native DNS TCP fallback leaked its `NWConnection` (and its retained
+  `stateUpdateHandler`) on connect-ready / send / receive failure paths —
+  teardown only ran after a successful receive. Cleanup now runs via `defer`
+  at function entry, on every exit path
+  (`modules/dns-native/ios/DNSResolver.swift`).
+
+### Security
+
+- Dependabot advisories resolved: `concurrent-ruby` -> `1.3.7`
+  (`ios/Gemfile.lock`; 3 advisories incl. 1 high), `ws` -> `7.5.11` (high),
+  `@babel/core` -> `7.29.7`, `js-yaml` 4.x -> `4.2.0` (dns-native lockfile).
+- `faraday` remains on `1.10.x`: it is pinned to `~> 1.0` by the Ruby build
+  tooling and the advisory's patch is in the `2.x` line; it is local
+  build-only tooling (never shipped, no untrusted input), so it is tracked
+  rather than force-upgraded through a breaking bump.
+
+### Verified
+
+- Real end-to-end DNS query returns an answer via the harness
+  (`llm.pieter.com:53`, UDP). Full Jest suite 119 suites / 950 passed / 13
+  skipped; lint, typecheck, react-compiler (107/107), dns-native (64) green.
+- `4.0.32` build `66` shipped to internal TestFlight (`VALID`) prior to this
+  minor; `4.1.0` build `67` is the staging build for this release.
+
 ## [4.0.32] - 2026-06-22
 
 Build `65` -> `66`. Bug-fix beta shipped to internal TestFlight (`VALID`).

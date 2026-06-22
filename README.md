@@ -7,7 +7,7 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 - JavaScript fallback transports (UDP/TCP) for constrained networks
 - An in-app Logs screen to inspect attempts, failures, and fallbacks
 
-[![Version](https://img.shields.io/badge/version-4.0.32-blue.svg)](.)
+[![Version](https://img.shields.io/badge/version-4.1.0-blue.svg)](.)
 [![React Native](https://img.shields.io/badge/React%20Native-0.85.3-blue.svg)](https://reactnative.dev/)
 [![Expo](https://img.shields.io/badge/Expo-56.0.11-black.svg)](https://expo.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0.x-blue.svg)](https://www.typescriptlang.org/)
@@ -31,7 +31,7 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 
 ## Tech stack
 
-- App version: `4.0.32` (build `66`)
+- App version: `4.1.0` (build `67`)
 - Expo workflow: Expo Router + EAS-compatible native config
 - Expo SDK: `56.0.9`
 - React: `19.2.3`
@@ -213,17 +213,17 @@ layer, storage, and UI — see `CHANGELOG.md` `4.0.29`).
 Last AXe simulator E2E feature pass: `2026-06-05` for version `4.0.26` build
 `60`; 10 feature groups passed (historical; Argent MCP is the current
 verification surface).
-Current release target: version `4.0.32` build `66`, uploaded to the internal
-TestFlight tester group and processed `VALID` on `2026-06-22`. This bug-fix lane
-repairs the iOS New-Architecture DNS transport (native/UDP/TCP) and an illegible
-Settings control, on top of the `4.0.31` security and CI hardening lane (all 8
-Dependabot advisories resolved, the three failing CI jobs repaired, Expo SDK 56
-packages aligned). Signed archive/export, TestFlight upload, processing, and
-strict validation completed via the proven `xcodebuild archive` ->
-`-exportArchive` -> `asc publish testflight` lane, with `What to Test` notes set
-for `en-US` and `pt-BR`. App Store Connect has no App Store version record for
-`4.0.32`, so App Store submission validation is not applicable for this
-TestFlight-only staging build.
+Current release target: version `4.1.0` build `67` (staging). This minor
+promotes the iOS New-Architecture DNS transport repair (native/UDP/TCP) to a
+tagged minor and adds a native `NWConnection` TCP-fallback leak fix, the Apple
+iOS 26+ adaptive launcher icon (light/dark/tinted), and dependency security
+updates (`concurrent-ruby`, `ws`, `@babel/core`, `js-yaml`). Release builds use
+the proven `xcodebuild archive` -> `-exportArchive` -> `asc publish testflight`
+lane with bilingual `What to Test` notes (`en-US` and `pt-BR`). The last build
+accepted `VALID` by App Store Connect is `4.0.32` build `66` (`2026-06-22`);
+`4.1.0` build `67` is the staging build for this minor. App Store Connect has no
+App Store version record for this line, so App Store submission validation is
+not applicable for this TestFlight-only staging build.
 
 - `npx react-doctor@latest --project chat-dns` reports `100 / 100` on
   `2026-06-10`; the dns-native module also reports `100 / 100`.
@@ -271,14 +271,15 @@ TestFlight-only staging build.
   binary with `ITMS-90534` (Invalid Toolchain) because the local stable Xcode
   slot now carries the `26.6` beta seed. Retry requires a GM toolchain and a
   fresh build number.
-- Current target: `4.0.32` build `66`; the build number is advanced from
-  `4.0.31` build `65`. The signed archive, TestFlight upload, processing, and
-  strict validation **completed `VALID`** on `2026-06-22` using the GM Xcode
-  `26.6` (`17F109`) toolchain. Internal App Store Connect IDs and tester group
-  names are intentionally omitted from public docs.
+- Current target: `4.1.0` build `67` (staging); the build number is advanced
+  from `4.0.32` build `66`. Build `66` completed `VALID` on `2026-06-22` using
+  the GM Xcode `26.6` (`17F109`) toolchain; `4.1.0` build `67` rides the same
+  archive -> export -> `asc publish testflight` lane for this minor. Internal
+  App Store Connect IDs and tester group names are intentionally omitted from
+  public docs.
 - Historical `asc validate testflight` evidence is superseded by each uploaded
-  build validation. App Store submission validation for `4.0.32` is not
-  applicable until a matching App Store version record exists.
+  build validation. App Store submission validation is not applicable until a
+  matching App Store version record exists.
 - `xcodebuild test` is not a native gate yet because the `DNSChat` scheme has no
   XCTest bundles.
 - DNS transport is observable. Public copy and tests intentionally avoid
