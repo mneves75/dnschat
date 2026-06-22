@@ -294,17 +294,6 @@ export const navigation = () => HapticFeedback.soft();
  */
 export const longPress = () => HapticFeedback.medium();
 
-/**
- * Error shake haptic pattern
- * Multiple impacts to simulate shake feedback
- */
-export const errorShake = async () => {
-  await HapticFeedback.error();
-  // Add additional impacts for shake feel
-  setTimeout(() => HapticFeedback.light(), 100);
-  setTimeout(() => HapticFeedback.light(), 200);
-};
-
 export interface HapticsPreferencePersistenceOptions {
   loading: boolean;
   setSaving?: (saving: boolean) => void;
