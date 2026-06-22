@@ -219,10 +219,10 @@ tagged minor and adds a native `NWConnection` TCP-fallback leak fix, the Apple
 iOS 26+ adaptive launcher icon (light/dark/tinted), and dependency security
 updates (`concurrent-ruby`, `ws`, `@babel/core`, `js-yaml`). Release builds use
 the proven `xcodebuild archive` -> `-exportArchive` -> `asc publish testflight`
-lane with bilingual `What to Test` notes (`en-US` and `pt-BR`). The last build
-accepted `VALID` by App Store Connect is `4.0.32` build `66` (`2026-06-22`);
-`4.1.0` build `67` is the staging build for this minor. App Store Connect has no
-App Store version record for this line, so App Store submission validation is
+lane with bilingual `What to Test` notes (`en-US` and `pt-BR`). `4.1.0` build
+`67` was uploaded to the internal TestFlight tester group and processed `VALID`
+on `2026-06-22` (advanced from build `66`, also `VALID`). App Store Connect has
+no App Store version record for this line, so App Store submission validation is
 not applicable for this TestFlight-only staging build.
 
 - `npx react-doctor@latest --project chat-dns` reports `100 / 100` on
@@ -272,11 +272,19 @@ not applicable for this TestFlight-only staging build.
   slot now carries the `26.6` beta seed. Retry requires a GM toolchain and a
   fresh build number.
 - Current target: `4.1.0` build `67` (staging); the build number is advanced
-  from `4.0.32` build `66`. Build `66` completed `VALID` on `2026-06-22` using
-  the GM Xcode `26.6` (`17F109`) toolchain; `4.1.0` build `67` rides the same
-  archive -> export -> `asc publish testflight` lane for this minor. Internal
-  App Store Connect IDs and tester group names are intentionally omitted from
+  from `4.0.32` build `66`. Build `67` completed `VALID` on `2026-06-22` using
+  the GM Xcode `26.6` (`17F109`) toolchain via the archive -> export ->
+  `asc publish testflight` lane (build `66` was also `VALID`). Internal App
+  Store Connect IDs and tester group names are intentionally omitted from
   public docs.
+- Compiled Release simulator runtime evidence on `2026-06-22` for `4.1.0` build
+  `67`: the app launches cleanly (no `ErrorBoundary`) and the new adaptive
+  launcher icon renders on the Home Screen, verified via Argent MCP (`describe`
+  + `gesture-tap` + Home-screen capture). The in-app DNS-message path was not
+  exercised on this build because it was compiled unsigned
+  (`CODE_SIGNING_ALLOWED=NO`), which makes `expo-secure-store`'s keychain
+  unavailable ("Encryption key is unavailable"); DNS end-to-end is covered by
+  the Node harness (real TXT answer) and by the TestFlight device build.
 - Historical `asc validate testflight` evidence is superseded by each uploaded
   build validation. App Store submission validation is not applicable until a
   matching App Store version record exists.
