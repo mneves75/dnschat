@@ -84,14 +84,8 @@ jest.mock("../src/ui/hooks/useScreenEntrance", () => ({
   useScreenEntrance: () => ({ animatedStyle: {} }),
 }));
 
-jest.mock("react-native-reanimated", () => {
-  const { View } = require("react-native");
-  return {
-    __esModule: true,
-    default: { View },
-    View,
-  };
-});
+// react-native-reanimated is mapped to a shared, complete mock via
+// jest.config.js `moduleNameMapper` — no per-suite stub needed.
 
 jest.mock("../src/i18n", () => ({
   useTranslation: () => ({

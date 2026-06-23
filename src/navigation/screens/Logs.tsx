@@ -468,6 +468,8 @@ const styles = StyleSheet.create({
   },
   timestamp: {
     fontSize: 14,
+    // Clock times line up column-straight down the log list.
+    fontVariant: ["tabular-nums"],
   },
   methodBadge: {
     paddingHorizontal: 8,
@@ -479,6 +481,8 @@ const styles = StyleSheet.create({
   },
   duration: {
     fontSize: 14,
+    // Latency figures (e.g. "123ms"/"1.2s") stay width-stable across rows.
+    fontVariant: ["tabular-nums"],
   },
   statusIndicator: {
     width: 32,

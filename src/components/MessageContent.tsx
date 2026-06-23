@@ -147,6 +147,8 @@ const styles = StyleSheet.create({
   },
   timestamp: {
     marginTop: 2,
+    // Tabular figures align the HH:mm digits vertically across stacked bubbles.
+    fontVariant: ["tabular-nums"],
     // Color and opacity applied inline from palette
   },
   errorIndicator: {

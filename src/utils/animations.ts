@@ -96,6 +96,20 @@ export const SpringConfig = {
     mass: 1.2,
     overshootClamping: false,
   } as WithSpringConfig,
+
+  /**
+   * Press spring - Tactile, no overshoot
+   * Use for: scale-on-press feedback (buttons, icon buttons)
+   *
+   * Critically damped with overshootClamping so the scale never springs
+   * back above 1.0 (the "bounce must be 0" rule for press/icon feedback).
+   */
+  press: {
+    damping: 20,
+    stiffness: 300,
+    mass: 1,
+    overshootClamping: true,
+  } as WithSpringConfig,
 };
 
 /**
@@ -150,24 +164,19 @@ export const TimingConfig = {
 
 /**
  * Button Press Animation
- * Scale down to 0.95 with bouncy spring
+ * Scale down to 0.96 with bouncy spring.
+ *
+ * 0.96 is the canonical tactile-press value: large enough to read as a press,
+ * small enough not to feel exaggerated (anything below 0.95 over-shrinks).
  *
  * @example
  * ```typescript
  * const animatedStyle = useAnimatedStyle(() => ({
- *   transform: [{ scale: withSpring(pressed ? 0.95 : 1, SpringConfig.bouncy) }]
+ *   transform: [{ scale: withSpring(pressed ? 0.96 : 1, SpringConfig.bouncy) }]
  * }));
  * ```
  */
-export const buttonPressScale = 0.95;
-
-/**
- * Create button press animation
- */
-export const createButtonPressAnimation = (pressed: boolean) => {
-  'worklet';
-  return withSpring(pressed ? buttonPressScale : 1, SpringConfig.bouncy);
-};
+export const buttonPressScale = 0.96;
 
 /**
  * Modal Presentation Animation
@@ -340,10 +349,10 @@ export const AnimationConstants = {
 
   // Scales
   scale: {
-    pressed: 0.95,
+    pressed: 0.96, // canonical tactile-press value (see buttonPressScale)
     hover: 1.02,
     active: 0.98,
-    disabled: 0.95,
+    disabled: 0.95, // static disabled-state shrink — not press feedback
   },
 
   // Opacities
@@ -366,7 +375,6 @@ export default {
   SpringConfig,
   TimingConfig,
   AnimationConstants,
-  createButtonPressAnimation,
   createModalAnimation,
   createToastAnimation,
   createFadeAnimation,

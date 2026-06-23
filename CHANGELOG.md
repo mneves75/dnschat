@@ -6,6 +6,54 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+## [4.1.4] - 2026-06-23
+
+Build `70` -> `71`. UI-polish pass applying the `make-interfaces-feel-better`
+micro-detail principles and the Expo "professional design principles" article to
+existing surfaces. JS/TS only — no native, transport, or behavior changes.
+
+### Added
+
+- Variant-gated tactile scale-on-press for iOS in `PressableRipple`: button-like
+  variants (`primary` / `icon` / `destructive`) scale to `0.96` on press via a
+  shared, critically-damped `SpringConfig.press` (no overshoot above `1.0`);
+  surface variants (rows, cards, list items) keep the opacity dim — scaling a
+  full-width row reads as cheap. A `pressScale` prop overrides the per-variant
+  default; Reduce Motion and Android fall back to opacity feedback.
+- Shared Jest mock for `react-native-reanimated`
+  (`__tests__/mocks/react-native-reanimated.js`, wired via `moduleNameMapper`) so
+  any suite that renders a reanimated-backed component gets a complete, working
+  stub instead of hand-rolling a partial one.
+
+### Changed
+
+- Dynamic numeric text now uses tabular figures (`fontVariant: ["tabular-nums"]`)
+  so widths stay stable as digits change: the chat input character counter, chat
+  message timestamps (`HH:mm`), and the Logs screen clock times and latency
+  durations.
+- Canonical tactile press scale standardized to `0.96` (`buttonPressScale` and
+  `AnimationConstants.scale.pressed`); the ChatInput send button's two inline
+  press springs now reuse `SpringConfig.press`, and the button opts out of
+  `PressableRipple`'s built-in scale (`pressScale={false}`) since it animates its
+  own scale.
+
+### Removed
+
+- Dead `createButtonPressAnimation` helper (zero call sites) from
+  `src/utils/animations.ts`.
+
+### Verified
+
+- `tsc --noEmit`, `lint` (ast-grep), and the full Jest suite pass (959 passing /
+  13 skipped across 122 suites; the 4 rendering suites that exercised the new
+  reanimated dependency were brought green by the shared mock). Codex structured
+  review (`autoreview`) returned no accepted/actionable findings. The app was
+  launched on an iOS 26.5 simulator and renders cleanly; the simulator instance
+  served the previously-embedded bundle, so the static-style and interactive
+  press deltas are verified by the test suite and review rather than
+  pixel-confirmed at runtime. Not built for TestFlight; the latest `VALID`
+  TestFlight build remains `4.1.3` build `70`.
+
 ## [4.1.3] - 2026-06-22
 
 Build `69` -> `70`. Release-readiness and documentation-integrity pass on top of
