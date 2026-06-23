@@ -12,6 +12,8 @@ module.exports = {
   },
   moduleNameMapper: {
     "^react-native$": "<rootDir>/__tests__/mocks/react-native.js",
+    "^react-native-reanimated$":
+      "<rootDir>/__tests__/mocks/react-native-reanimated.js",
     "^react-native-safe-area-context$":
       "<rootDir>/__tests__/mocks/react-native-safe-area-context.js",
     "^@expo/ui/community/menu$":

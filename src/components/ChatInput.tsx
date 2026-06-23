@@ -324,7 +324,7 @@ export function ChatInput({
    * Handle Press In
    *
    * Provides immediate tactile feedback:
-   * - Scale animation (0.95x)
+   * - Scale animation (0.96x — canonical press value)
    * - Light haptic feedback
    *
    * Only triggers when send is enabled (canSend).
@@ -335,7 +335,7 @@ export function ChatInput({
       // Non-bouncy spring to prevent overshoot above 1.0; skip when reducing motion.
       scale.set(shouldReduceMotion
         ? buttonPressScale
-        : withSpring(buttonPressScale, { damping: 20, stiffness: 300, mass: 1 }));
+        : withSpring(buttonPressScale, SpringConfig.press));
     }
   };
 
@@ -351,7 +351,7 @@ export function ChatInput({
       return;
     }
     // Non-bouncy spring to prevent overshoot above 1.0
-    scale.set(withSpring(1, { damping: 20, stiffness: 300, mass: 1 }));
+    scale.set(withSpring(1, SpringConfig.press));
   };
 
   /**
@@ -438,6 +438,9 @@ export function ChatInput({
       onPressOut={handlePressOut}
       disabled={!canSend}
       variant="icon"
+      // The send button animates its own scale (animatedButtonStyle); disable
+      // PressableRipple's built-in scale so the transform isn't applied twice.
+      pressScale={false}
       borderless
       rippleRadius={minimumTouchTarget / 2}
       pressedOpacity={0.85}
@@ -633,5 +636,8 @@ const styles = StyleSheet.create({
     fontSize: 12, // typography.caption.fontSize
     marginTop: BUTTON_SPACING,
     marginLeft: LiquidGlassSpacing.md,
+    // Live counter updates every keystroke; tabular figures keep the "n/120"
+    // width fixed so the glyph never reflows as digit widths change.
+    fontVariant: ["tabular-nums"],
   },
 });
