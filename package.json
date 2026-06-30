@@ -89,7 +89,7 @@
     "react-native-reanimated": "4.5.0",
     "react-native-safe-area-context": "~5.7.0",
     "react-native-screens": "4.25.2",
-    "react-native-svg": "15.15.4",
+    "react-native-svg": "15.15.5",
     "react-native-tcp-socket": "6.4.1",
     "react-native-udp": "4.1.7",
     "react-native-uuid": "^2.0.3",
