@@ -7,9 +7,9 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 - JavaScript fallback transports (UDP/TCP) for constrained networks
 - An in-app Logs screen to inspect attempts, failures, and fallbacks
 
-[![Version](https://img.shields.io/badge/version-4.1.4-blue.svg)](.)
-[![React Native](https://img.shields.io/badge/React%20Native-0.85.3-blue.svg)](https://reactnative.dev/)
-[![Expo](https://img.shields.io/badge/Expo-56.0.12-black.svg)](https://expo.dev/)
+[![Version](https://img.shields.io/badge/version-4.1.5-blue.svg)](.)
+[![React Native](https://img.shields.io/badge/React%20Native-0.86.0-blue.svg)](https://reactnative.dev/)
+[![Expo](https://img.shields.io/badge/Expo-57.0.x-black.svg)](https://expo.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0.x-blue.svg)](https://www.typescriptlang.org/)
 [![iOS](https://img.shields.io/badge/iOS-16.4%2B-lightgrey.svg)](https://developer.apple.com/ios/)
 [![Android](https://img.shields.io/badge/Android-API%2024%2B-green.svg)](https://developer.android.com/)
@@ -31,14 +31,14 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 
 ## Tech stack
 
-- App version: `4.1.4` (build `71`)
+- App version: `4.1.5` (build `72`)
 - Expo workflow: Expo Router + EAS-compatible native config
-- Expo SDK: `56.0.12`
+- Expo SDK: `57.0.x`
 - React: `19.2.3`
-- React Native: `0.85.3`
+- React Native: `0.86.0`
 - TypeScript: `6.0.x`
 - Hermes: enabled
-- New Architecture: enabled by default on SDK 56
+- New Architecture: enabled by default on SDK 57
 - React Compiler: enabled (`experiments.reactCompiler: true`)
 - Typed routes: enabled (`experiments.typedRoutes: true`)
 
@@ -235,57 +235,25 @@ and a keyboard drag-to-dismiss regression test; no app-behavior change versus
 `4.1.2`). It carries all of the `4.1.2` premium-feel work to TestFlight, since
 `4.1.2` itself was only Development-signed onto a device and never uploaded.
 
-- `4.1.3` quality gates on `2026-06-22`: full Jest suite `122` suites / `959`
-  passed / `13` skipped; `typecheck`, ast-grep `lint`, `verify:typed-routes`,
-  `verify:react-compiler`, and `npx react-doctor@latest` `100 / 100` green;
-  `expo-doctor` `19 / 20` (the one failure is a false positive — the tracked
-  local-module native dirs are misreported as gitignored).
-- `npx react-doctor@latest --project chat-dns` reports `100 / 100` on
-  `2026-06-10`; the dns-native module also reports `100 / 100`.
-- `bun run verify:expo-doctor` reports `20/20 checks passed, no issues` on
-  `2026-06-13` (expo `56.0.11`, expo-router `56.2.10`, expo-constants
-  `56.0.18`, expo-asset `56.0.17`, expo-linking `56.0.14`,
-  expo-build-properties `56.0.18`, @expo/ui `56.0.17`).
-- All four CI jobs (`dns-native`, `test`, `android`, `sbom`) green on
-  `2026-06-13` after restoring the dns-native `package-lock.json`, fixing the
-  Android `DNSResolver` compile error, aligning the Expo packages, and pinning
-  `bun.lock` to `lockfileVersion 1` for the CI-pinned bun `1.3.9`.
-- All 8 open Dependabot advisories resolved on `2026-06-13` (`shell-quote`,
-  `addressable`, `activesupport`, `aws-sdk-s3`, `faraday`, `json`); `gh api`
-  reports `0` open alerts.
-- Native DNS module tests pass on `2026-06-10` (`8` suites passed, `1`
-  skipped; `65` tests passed, `13` skipped), including the new
-  `nativeSecurityPolicy` suite asserting dnsjava `>= 3.6.2` and allowlist
-  set-equality across TS/Swift/Java.
-- Jest baseline on `2026-06-10`: `117` suites passed, `1` skipped; `941` tests
-  passed, `13` skipped. New suites cover inbound response sanitization, the
-  multipart part-count cap, the storage mutation cache, and doctor.config
-  exemption path validity.
-- `gitleaks detect` on `2026-06-10` reports `no leaks found`.
-- `bun audit` on `2026-06-10` reports `No vulnerabilities found` (after
-  forcing `shell-quote >= 1.8.4`, GHSA-w7jw-789q-3m8p).
-- `xcodebuild build` passes for Release on the iOS Simulator with the stable
-  Xcode toolchain on `2026-06-10` after clamping pod deployment targets to
-  `16.4` (the Xcode 27 beta toolchain cannot compile `expo-modules-jsi` yet —
-  use `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer` when the
-  beta is globally selected).
-- Compiled Release simulator runtime evidence on `2026-06-10`: first launch
-  surfaces the storage corruption-recovery toast for a stale store and
-  resets safely; relaunch is clean; launch with system Reduce Motion
-  enabled renders normally (no ErrorBoundary). Captured via `simctl`
-  screenshots because the Argent MCP simulator-server could not start in
-  this session (0.7.0 server / 0.10.0 CLI mismatch after a mid-session CLI
-  update) — recorded as the documented Argent-unavailable fallback.
-- Physical-device Release build, install, and launch verified on `2026-06-22`
-  for version `4.0.32` build `66` (and earlier on `2026-06-04` for `4.0.22`
-  build `56`). Direct physical-device install works via an `asc`-minted
-  Development provisioning profile; the earlier `No Accounts`/no-profile note
-  was stale. TestFlight remains the primary staging path.
-- TestFlight upload attempt for `4.0.30` build `64` on `2026-06-10`: signed
-  archive and IPA export succeeded; App Store Connect processing rejected the
-  binary with `ITMS-90534` (Invalid Toolchain) because the local stable Xcode
-  slot now carries the `26.6` beta seed. Retry requires a GM toolchain and a
-  fresh build number.
+- `4.1.5` build `72` SDK 57 gates on `2026-06-30`: `bun run verify:all`
+  passed; Expo Doctor reported `19/19`; `bun audit` reported
+  `No vulnerabilities found`; `gitleaks detect` reported `no leaks found`;
+  Jest reported `122` suites passed, `1` skipped, `959` tests passed, and
+  `13` skipped.
+- Native DNS module tests pass on `2026-06-30` (`8` suites passed, `1` skipped;
+  `64` tests passed, `13` skipped).
+- Xcode `26.6` (`17F113`) local iOS evidence on `2026-06-30`: Debug simulator
+  build passed, unsigned generic Release build passed, and unsigned generic
+  Release archive passed.
+- Runtime smoke on `2026-06-30`: the compiled simulator app installed and
+  launched with Argent after clearing a stale Metro process from another repo;
+  accessibility and React component discovery showed the DNSChat onboarding
+  screen. Argent screenshot/gesture backend failed with
+  `simulator-server exited with code before becoming ready`; that is a tooling
+  gap, not an app launch failure.
+- TestFlight, App Store version attachment, and physical-device install remain
+  separate evidence claims for `4.1.5` build `72` and must not be inferred from
+  the local simulator/archive checks.
 - `4.1.0` build `67` (a staging milestone; later superseded by `4.1.1` build
   `68` as the latest `VALID` TestFlight build); the build number was advanced
   from `4.0.32` build `66`. Build `67` completed `VALID` on `2026-06-22` using

@@ -1,6 +1,6 @@
 # Installation
 
-This repo builds DNSChat `4.0.30` (React Native `0.85.x`, Expo SDK `56.0.9`).
+This repo builds DNSChat `4.1.5` build `72` (React Native `0.86.0`, Expo SDK `57`, React `19.2.3`).
 
 Prereqs:
 
@@ -53,7 +53,7 @@ bun run web
 - Keep device names, device identifiers, local user paths, profile names,
   certificate IDs, team IDs, and tester group names out of public docs. Use
   placeholders in runbooks and keep exact release evidence in private notes.
-- Last verified CLI environment: Xcode `26.5` (`17F42`) on `2026-05-14`.
+- Last verified CLI environment: Xcode `26.6` (`17F113`) on `2026-06-30`.
 
 If pods are broken:
 
@@ -126,24 +126,20 @@ xcrun devicectl device install app \
   <DERIVED_DATA>/Build/Products/Release-iphoneos/DNSChat.app
 ```
 
-Latest physical-device evidence: a compiled native Release build installed on a
-physical device, reported version `4.0.22` build `56`, and launched successfully
-via `devicectl` on `2026-06-04`. A direct physical-device install for `4.0.30`
-build `64` is blocked by local Xcode Development provisioning state (`No
-Accounts` and no matching development profile); TestFlight is the verified
-staging path for build `64`.
+Current release target: version `4.1.5` build `72`. Local SDK 57 evidence on
+`2026-06-30` covers a compiled iOS simulator Debug build, an unsigned generic
+Release build, and an unsigned generic Release archive with Xcode `26.6`
+(`17F113`). This is local build/archive evidence only; do not describe this
+build as uploaded to TestFlight, installed on a physical device, or attached to
+an App Store version unless `asc`, App Store Connect, or device-install evidence
+proves that separate claim.
 
-Latest AXe simulator release evidence: `2026-06-05`, version `4.0.26` build
-`60`, 10 feature groups passed in one owned release-simulator run.
-
-Current release target: version `4.0.30` build `64`. The latest uploaded
-TestFlight build before this lane is version `4.0.26` build `60`. The release
-lane archives, exports, uploads, waits for processing, and validates TestFlight
-before the build is described as distributed. App Store Connect has no App Store
-version record for `4.0.30` yet, so App Store submission validation is not
-applicable for this TestFlight-only staging build. App Store Connect identifiers,
-signing identifiers, tester group names, local paths, and device identifiers are
-intentionally omitted from public docs.
+The latest uploaded TestFlight evidence in repo notes before this SDK 57 lane is
+version `4.1.3` build `70`. The release lane archives, exports, uploads, waits
+for processing, and validates TestFlight before the build is described as
+distributed. App Store Connect identifiers, signing identifiers, tester group
+names, local paths, and device identifiers are intentionally omitted from public
+docs.
 
 Signed TestFlight release shape:
 

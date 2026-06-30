@@ -109,24 +109,23 @@ xcodebuild clean archive \
   CODE_SIGNING_ALLOWED=NO
 ```
 
-Current TestFlight release target is `4.0.28` build `62`
-(`2026-06-08`, SDK 56.0.9 baseline). Build `61` validation must complete after
-the final source/docs state is verified and pushed:
+Current TestFlight release target is `4.1.5` build `72`
+(`2026-06-30`, Expo SDK 57 / React Native 0.86 baseline). Signed upload
+validation must complete after the final source/docs state is verified and
+pushed:
 
-- `bun run verify:all`, secret scan, and `asc doctor` must have fresh build `62`
+- `bun run verify:all`, secret scan, and `asc doctor` must have fresh build `72`
   evidence.
-- Physical-device Release build/install completed for `4.0.22` build `56`;
-  `devicectl` reported installed metadata `4.0.22`/`56` and launched the app
-  successfully. A `devicectl` relaunch can still be denied by iOS when the phone
-  is locked; that is tracked separately from install proof. Direct install for
-  `4.0.28` build `62` is blocked by local Xcode Development provisioning state
-  (`No Accounts` and no matching development profile).
+- Local SDK 57 evidence for `4.1.5` build `72` includes an iOS Debug simulator
+  build, unsigned generic Release build, unsigned generic Release archive, and
+  Argent launch/inspection on the compiled simulator app. Physical-device
+  install is a separate evidence claim and is not implied by those checks.
 - Signed App Store archive/export and TestFlight upload are required for
-  `4.0.28` build `62`; App Store Connect processing must return `VALID`, and
+  `4.1.5` build `72`; App Store Connect processing must return `VALID`, and
   `asc validate testflight` must report `0` errors and `0` warnings. Exact App
   Store Connect identifiers remain private.
-- App Store Connect has no App Store version record for `4.0.28`; this is a
-  TestFlight-only staging build, not an App Store submission.
+- Do not describe `4.1.5` build `72` as attached to an App Store version unless
+  App Store Connect evidence proves that relationship.
 - Internal App Store Connect IDs, tester group names, device names, device identifiers, local paths, team IDs, profile names, and certificate IDs are intentionally omitted from public docs.
 
 Earlier 4.0.14 baseline evidence (`2026-05-22`, Xcode `26.5` / `17F42`, SDK 56 baseline):
@@ -239,7 +238,7 @@ bun run ios -- --verbose
 - **App Store Connect** app record created
 - **Code signing** configured correctly
 - **Bundle ID** matches (`<BUNDLE_ID>`)
-- **Version numbers** consistent (v4.0.28 build 62)
+- **Version numbers** consistent (v4.1.5 build 72)
 - **Native DNS module** compiles successfully
 - **Xcode CLI smoke** passed:
   - Debug simulator build
@@ -267,13 +266,14 @@ eas build --platform ios --profile production
 
 ### TestFlight distribution
 
-Current v4.0.28 distribution target:
+Current v4.1.5 distribution target:
 
-- Version/build: `4.0.28` / `62`
+- Version/build: `4.1.5` / `72`
 - Processing state: pending signed archive/export/upload; TestFlight validation
   must report `0` errors and `0` warnings before distribution is claimed.
-- App Store state: no App Store version record exists for `4.0.28`; create or
-  update an App Store version only when preparing an App Store submission.
+- App Store state: create or update an App Store version only when preparing an
+  App Store submission; do not infer this relationship from TestFlight
+  processing alone.
 - Tester groups: configured in App Store Connect; internal group names are intentionally omitted from public docs.
 - Exact build IDs and App Store Connect version IDs belong in private release notes, not public runbooks.
 
@@ -284,14 +284,14 @@ After upload:
 3. **Feedback**: Collect user feedback through TestFlight
 4. **Iterate**: Upload new builds for continuous testing
 
-### What to Test for v4.0.28 build 62
+### What to Test for v4.1.5 build 72
 
 - Complete onboarding from a fresh install and confirm the app lands on the chat list.
 - Open native menu actions and React Native modal sheet actions from chat, logs,
   messages, and settings; confirm they remain accessible and dismiss cleanly.
 - Open a stale chat deep link and confirm the conversation-not-found state
   appears instead of a blank chat.
-- Confirm settings/About version metadata reports `4.0.28` build `62`.
+- Confirm settings/About version metadata reports `4.1.5` build `72`.
 - Send short prompts through the default DNS service and confirm responses render.
 - Force or observe a DNS failure and confirm the chat shows a compact localized
   retry prompt instead of an oversized diagnostic overlay.
@@ -333,4 +333,4 @@ If you encounter issues during the upload process:
 
 ---
 
-_TestFlight upload guide for DNSChat v4.0.28 build 62 - Last updated: 2026-06-08_
+_TestFlight upload guide for DNSChat v4.1.5 build 72 - Last updated: 2026-06-30_

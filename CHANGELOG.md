@@ -6,6 +6,32 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+## [4.1.5] - 2026-06-30
+
+Build `71` -> `72`. SDK 57 staging target: Expo SDK 57 / React Native 0.86
+upgrade, iOS CocoaPods refresh, release-doc sync, and app metadata bump for the
+next TestFlight staging deployment.
+
+### Changed
+
+- Upgraded the app to Expo SDK 57 / React Native 0.86 using the stable Expo SDK
+  57 release path, refreshed the iOS CocoaPods graph, and kept React pinned to
+  19.2.3 per the SDK 57 release notes.
+- Bumped Expo, iOS, and Android version metadata to `4.1.5` build/code `72`
+  with `bun run sync-versions --bump-build`.
+
+### Fixed
+
+- Added the explicit React Native `PressableStateCallbackType` annotation needed
+  by the SDK 57 / React Native 0.86 type surface in `PressableRipple`.
+
+### Release status
+
+- Staging/TestFlight deployment requires a fresh signed App Store archive/export,
+  `asc publish testflight --wait` returning `VALID`, and `asc validate
+  testflight` reporting `0` errors and `0` warnings after this final source/docs
+  state is verified and pushed.
+
 ## [4.1.4] - 2026-06-23
 
 Build `70` -> `71`. UI-polish pass applying the `make-interfaces-feel-better`

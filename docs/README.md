@@ -26,49 +26,46 @@ Developer documentation for DNSChat. Code is the source of truth — these docs 
 
 ## Current verification baseline
 
-Last architecture/dependency verification: `2026-06-10`.
+Last architecture/dependency verification: `2026-06-30`.
 Last full source/security sweep: `2026-06-10` (three-track review with fixes —
 see `CHANGELOG.md` `4.0.29`).
 Last AXe simulator E2E feature pass: `2026-06-05` for version `4.0.26` build
-`60`; 10 feature groups passed.
-Current release target: version `4.0.30` build `64`. This release lane carries
-the chat-error presentation fix plus the full security/architecture/performance
-review hardening. Signed archive/export,
-TestFlight upload, processing, and validation run after the final source/docs
-state is verified and pushed. The latest uploaded TestFlight build before this
-lane is version `4.0.26` build `60` (`VALID` on `2026-06-05`). App Store Connect
-has no App Store version record for `4.0.30` yet; this is a TestFlight-only
-staging build.
+`60`; 10 feature groups passed. Runtime UI verification now defaults to Argent.
+Current release target: version `4.1.5` build `72`. This SDK 57 lane carries
+the Expo SDK 57 / React Native 0.86 dependency and native pod refresh. Signed
+archive/export, TestFlight upload, processing, and validation run after the
+final source/docs state is verified and pushed. The latest uploaded TestFlight
+build before this lane is version `4.1.3` build `70` (`VALID` on
+`2026-06-22`). Do not describe `4.1.5` build `72` as uploaded, distributed, or
+attached to an App Store version until separate `asc` or App Store Connect
+evidence proves it.
 
 - `npx react-doctor@latest --project chat-dns` reports `100 / 100` for
   `chat-dns` on `2026-06-10` (module also `100 / 100`).
-- Jest baseline on `2026-06-10`: `117` suites passed, `1` skipped; `941` tests
+- Jest baseline on `2026-06-30`: `122` suites passed, `1` skipped; `959` tests
   passed, `13` skipped.
-- Native DNS module tests pass on `2026-06-10` (`8` suites passed, `1` skipped;
-  `65` tests passed, `13` skipped).
+- Native DNS module tests pass on `2026-06-30` (`8` suites passed, `1` skipped;
+  `64` tests passed, `13` skipped).
 - AXe E2E baseline: 10 feature groups passed in one owned release-simulator
   run on `2026-06-05`.
-- Jest baseline for build `62` passed through the final full gate on
-  `2026-06-08`: `114` suites passed, `1` skipped; `919` tests passed, `13`
-  skipped.
-- `gitleaks detect` on `2026-06-08` reports `no leaks found`.
-- `bun audit` on `2026-06-08` reports `No vulnerabilities found`.
+- `bun run verify:all` passed on `2026-06-30` for build `72`.
+- `gitleaks detect` on `2026-06-30` reports `no leaks found`.
+- `bun audit` on `2026-06-30` reports `No vulnerabilities found`.
 - `xcodebuild clean build` passes for Debug on an iOS 26.5 simulator on
-  `2026-06-08`.
+  `2026-06-30`.
 - `xcodebuild clean build` and `xcodebuild clean archive` pass for generic iOS
   Release when code signing is disabled (`CODE_SIGNING_ALLOWED=NO`) on
-  `2026-06-08`.
+  `2026-06-30`.
 - Physical-device Release build, install, installed metadata check, and launch
-  passed on `2026-06-04` for version `4.0.22` build `56`. Direct physical-device
-  install for `4.0.28` build `62` is blocked by local Xcode Development
-  provisioning state (`No Accounts` and no matching development profile).
-- Current target: `4.0.28` build `62`. The release lane uses signed App Store
+  are separate evidence claims and are not implied by the local SDK 57 simulator
+  and unsigned archive checks.
+- Current target: `4.1.5` build `72`. The release lane uses signed App Store
   archive/export, App Store Connect upload, processing, and validation before
   the build is described as distributed. Internal App Store Connect IDs are
   intentionally omitted from public docs.
 - `asc validate testflight` must pass with `0` errors and `0` warnings before
-  build `62` is described as distributed. App Store version validation for
-  `4.0.28` is not applicable until a matching App Store version record exists.
+  build `72` is described as distributed. App Store version validation for
+  `4.1.5` is not applicable until a matching App Store version record exists.
 - `xcodebuild test` is not a native gate yet because the `DNSChat` scheme has no
   XCTest bundles.
 - Public docs and store copy must not claim that DNS prompts are private or
