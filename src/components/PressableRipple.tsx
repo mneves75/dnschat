@@ -25,7 +25,12 @@
 
 import React, { forwardRef } from "react";
 import { Platform, Pressable } from "react-native";
-import type { GestureResponderEvent, PressableProps, View } from "react-native";
+import type {
+  GestureResponderEvent,
+  PressableProps,
+  PressableStateCallbackType,
+  View,
+} from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -135,7 +140,7 @@ export const PressableRipple = forwardRef<View, PressableRippleProps>(
         }
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
-        style={(state) => {
+        style={(state: PressableStateCallbackType) => {
           const resolvedStyle =
             typeof style === "function" ? style(state) : style;
           // iOS opacity dim only carries feedback when scale isn't.

@@ -57,8 +57,9 @@ describe("repo policy: dependency hygiene", () => {
     expect(pkg.overrides).toEqual(
       expect.objectContaining({
         "brace-expansion": "5.0.6",
+        "js-yaml": "4.2.0",
         uuid: "11.1.1",
-        ws: "8.20.1",
+        ws: "8.21.0",
       }),
     );
     expect(nativePkg.overrides).toEqual(
@@ -66,6 +67,8 @@ describe("repo policy: dependency hygiene", () => {
         "brace-expansion": "5.0.6",
       }),
     );
+    expect(pkg.overrides?.["js-yaml"]).toBe("4.2.0");
+    expect(pkg.overrides?.["ws"]).toBe("8.21.0");
     expect(pkg.overrides?.["uuid"]).toBe("11.1.1");
     expect(uuidPackage.version).toBe("11.1.1");
     expect(typeof uuid.v4).toBe("function");

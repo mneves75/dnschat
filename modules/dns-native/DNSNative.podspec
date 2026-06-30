@@ -26,6 +26,6 @@ Pod::Spec.new do |s|
   # Network framework
   s.frameworks = "Network"
 
-  # Deployment target aligned with Expo SDK 56 (16.4+)
+  # Deployment target aligned with the project iOS 16.4 minimum.
   s.ios.deployment_target = "16.4"
 end
