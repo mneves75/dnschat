@@ -306,3 +306,17 @@ Topics available there include Liquid Glass design (`SwiftUI-`, `UIKit-`, `AppKi
 | `Provisioning profile … doesn't include signing certificate` during archive | Pull the matching profile via `asc profiles download` (see "Platform Notes / iOS"). |
 | `Build input file cannot be found: …ReactCodegen/*-generated.mm` during device/Release build | New-Arch codegen is partially materialized under `ios/build/generated`. Run `bundle exec pod install` to regenerate the full codegen set — `xcodebuild build` alone never regenerates it. Under host overload also drop to `-jobs 2` + `nice` (the `ExpoModulesJSI` xcframework script phase fork-storms). |
 | Theme override doesn't apply | `Appearance.setColorScheme()` accepts `'unspecified' \| 'light' \| 'dark'` on RN 0.85, not `null` or `undefined`. |
+
+## Agent skills
+
+### Issue tracker
+
+Issues and PRDs live as GitHub issues in `mneves75/dnschat` (via the `gh` CLI). External PRs are **not** a triage surface. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Canonical vocabulary — label strings equal the five role names (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context layout — one `CONTEXT.md` + `docs/adr/` at the repo root (created lazily by `/domain-modeling`). See `docs/agents/domain.md`.
