@@ -7,7 +7,7 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 - JavaScript fallback transports (UDP/TCP) for constrained networks
 - An in-app Logs screen to inspect attempts, failures, and fallbacks
 
-[![Version](https://img.shields.io/badge/version-4.2.0-blue.svg)](.)
+[![Version](https://img.shields.io/badge/version-4.2.1-blue.svg)](.)
 [![React Native](https://img.shields.io/badge/React%20Native-0.86.0-blue.svg)](https://reactnative.dev/)
 [![Expo](https://img.shields.io/badge/Expo-57.0.x-black.svg)](https://expo.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0.x-blue.svg)](https://www.typescriptlang.org/)
@@ -31,7 +31,7 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 
 ## Tech stack
 
-- App version: `4.2.0` (build `73`)
+- App version: `4.2.1` (build `74`, dev); last shipped `4.2.0` (build `73`, TestFlight `VALID`)
 - Expo workflow: Expo Router + EAS-compatible native config
 - Expo SDK: `57.0.x`
 - React: `19.2.3`
@@ -235,7 +235,10 @@ and a keyboard drag-to-dismiss regression test; no app-behavior change versus
 `4.1.2`). It carries all of the `4.1.2` premium-feel work to TestFlight, since
 `4.1.2` itself was only Development-signed onto a device and never uploaded.
 
-- `4.2.0` build `73` gates on `2026-07-04` (iOS 26 HIG redesign + DNS
+- `4.2.0` build `73` **SHIPPED to TestFlight — `VALID` on `2026-07-04`**
+  (bilingual "What to Test" notes, `asc validate testflight --strict` `0/0/0`);
+  supersedes `4.1.3` build `70`. Local gates
+  before archive on `2026-07-04` (iOS 26 HIG redesign + DNS
   correctness hardening + SDK 57 patch alignment): typecheck, ast-grep lint,
   react-compiler healthcheck (`103/103`), Jest (`121` suites passed, `1`
   skipped, `964` tests passed, `13` skipped), dns-native workspace tests (`8`
