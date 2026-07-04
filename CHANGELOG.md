@@ -6,6 +6,8 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+Working version `4.2.1` build `74` (post-release dev bump; no shipped build yet).
+
 ## [4.2.0] - 2026-07-04
 
 Build `72` -> `73`. iOS 26 HIG redesign pass across every screen, DNS transport
@@ -69,12 +71,18 @@ frontend/visual redesign was authored in the main session. React kept at
 
 ### Release status
 
-- Local gates green on `2026-07-04`: typecheck, ast-grep lint, react-compiler
-  healthcheck (103/103), Jest (964 passing), dns-native workspace tests,
-  DNSResolver sync, iOS pods sync, SDK alignment, `expo-doctor` (19/19),
-  typed-routes, public-redaction, and security (`bun audit` + gitleaks). Native
-  device/simulator runtime verification, Android native gates, and any
-  TestFlight upload remain separate claims not covered by this run.
+- **SHIPPED to TestFlight — `VALID` on `2026-07-04`.** Bilingual "What to Test"
+  notes (en-US + pt-BR) attached, and `asc validate testflight --strict`
+  reporting `errors:0, warnings:0, blocking:0`. Signed with the Apple
+  Distribution identity + App Store profile. This supersedes `4.1.3` build `70`
+  as the latest `VALID` TestFlight build. (Build id, tester group, and signing
+  identifiers are kept in private release notes per the redaction policy.)
+- Local gates green before archive on `2026-07-04`: typecheck, ast-grep lint,
+  react-compiler healthcheck (103/103), Jest (964 passing), dns-native workspace
+  tests, DNSResolver sync, iOS pods sync, SDK alignment, `expo-doctor` (19/19),
+  typed-routes, public-redaction, and security (`bun audit` + gitleaks).
+- Direct install on the paired physical device and any App Store (production)
+  submission remain separate claims not covered by this release.
 
 ## [4.1.5] - 2026-06-30
 
