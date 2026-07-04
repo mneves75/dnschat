@@ -16,6 +16,7 @@ module.exports = {
       "<rootDir>/__tests__/mocks/react-native-reanimated.js",
     "^react-native-safe-area-context$":
       "<rootDir>/__tests__/mocks/react-native-safe-area-context.js",
+    "^react-native-svg$": "<rootDir>/__tests__/mocks/react-native-svg.js",
     "^@expo/ui/community/menu$":
       "<rootDir>/__tests__/mocks/expo-ui-community-menu.js",
     "^@expo/ui/community/bottom-sheet$":

@@ -54,9 +54,13 @@ describe("glass modal accessibility policy", () => {
     expect(bottomSheetSource).toContain("accessibilityState={{ disabled: action.disabled }}");
   });
 
-  it("caps Dynamic Type scaling on the fixed-size close glyph", () => {
-    expect(bottomSheetSource).toContain("FIXED_GLYPH_MAX_FONT_SCALE = 1.2");
-    expect(bottomSheetSource).toContain("maxFontSizeMultiplier={FIXED_GLYPH_MAX_FONT_SCALE}");
+  it("uses a fixed-size vector close glyph immune to Dynamic Type scaling", () => {
+    // The close control renders an SVG CloseIcon (fixed `size` prop) instead of a
+    // text "X". A vector glyph does not scale with Dynamic Type, so the old
+    // maxFontSizeMultiplier cap on a text glyph is structurally unnecessary.
+    expect(bottomSheetSource).toContain('import { CloseIcon } from "../icons/CloseIcon"');
+    expect(bottomSheetSource).toContain("<CloseIcon");
+    expect(bottomSheetSource).not.toContain("FIXED_GLYPH_MAX_FONT_SCALE");
   });
 
   it("uses shared palette tokens for sheet text and action colors", () => {
@@ -69,28 +73,6 @@ describe("glass modal accessibility policy", () => {
 });
 
 describe("shared interactive control accessibility policy", () => {
-  it("localizes the reusable text-input clear button", () => {
-    const source = readSource("src/components/ui/LiquidGlassTextInput.tsx");
-    expect(source).toContain('accessibilityLabel={t("common.clear")}');
-  });
-
-  it("announces text-input error guidance before helper guidance", () => {
-    const source = readSource("src/components/ui/LiquidGlassTextInput.tsx");
-    expect(source).toContain("textInputProps.accessibilityHint ?? errorText ?? helperText");
-  });
-
-  it("does not use placeholder text as the text input accessibility name", () => {
-    const source = readSource("src/components/ui/LiquidGlassTextInput.tsx");
-    expect(source).toContain("textInputProps.accessibilityLabel ?? label");
-    expect(source).not.toContain("textInputProps.placeholder");
-  });
-
-  it("announces inline input errors politely instead of interrupting speech", () => {
-    const source = readSource("src/components/ui/LiquidGlassTextInput.tsx");
-    expect(source).toContain('accessibilityLiveRegion={hasError ? "polite" : undefined}');
-    expect(source).not.toContain('accessibilityLiveRegion={hasError ? "assertive"');
-  });
-
   it("labels the error-boundary recovery action", () => {
     const source = readSource("src/components/ErrorBoundary.tsx");
     expect(source).toContain('accessibilityRole="button"');

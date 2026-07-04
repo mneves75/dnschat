@@ -31,12 +31,17 @@ jest.mock("../src/utils/haptics", () => ({
 }));
 
 const { HapticsConfigurator } = require("../src/components/HapticsConfigurator");
+const originalPlatformOS = Platform.OS;
 
 describe("HapticsConfigurator", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUseSettings.mockReset();
     Platform.OS = "ios";
+  });
+
+  afterEach(() => {
+    Platform.OS = originalPlatformOS;
   });
 
   it("does nothing while settings are loading", async () => {

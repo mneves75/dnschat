@@ -15,7 +15,11 @@ function trackedSourceFiles(): string[] {
   return execSync("git ls-files app src", { encoding: "utf8" })
     .split("\n")
     .map((line) => line.trim())
-    .filter((path) => path.endsWith(".ts") || path.endsWith(".tsx"));
+    .filter(
+      (path) =>
+        (path.endsWith(".ts") || path.endsWith(".tsx")) &&
+        fs.existsSync(path),
+    );
 }
 
 describe("repo policy: dependency hygiene", () => {

@@ -6,6 +6,12 @@ describe('parseTXTResponse', () => {
     expect(result).toBe('Hello world');
   });
 
+  it('rejects mixed plain and multipart records', () => {
+    expect(() => parseTXTResponse(['Hello world', '1/1:ignored'])).toThrow(
+      'Mixed plain and multipart TXT records',
+    );
+  });
+
   it('reassembles multipart responses in order', () => {
     const records = ['1/3:Hel', '2/3:lo ', '3/3:DNS'];
     const result = parseTXTResponse(records);

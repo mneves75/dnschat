@@ -1,6 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { Chat, Message } from "../types/chat";
-import uuid from "react-native-uuid";
+import * as Crypto from "expo-crypto";
 import { devLog, devLogLazy, devWarn, devWarnLazy } from "../utils/devLog";
 import { decryptIfEncrypted, encryptString, isEncryptedPayload } from "./encryptionService";
 import { STORAGE_CONSTANTS } from "../constants/appConstants";
@@ -393,7 +393,7 @@ export class StorageService {
   static async createChat(title?: string): Promise<Chat> {
     return this.mutateChats("createChat", (chats) => {
       const newChat: Chat = {
-        id: uuid.v4() as string,
+        id: Crypto.randomUUID(),
         title: title || "New Chat",
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -467,6 +467,29 @@ export class StorageService {
       }
 
       return { chats, result: undefined };
+    });
+  }
+
+  static async appendAndUpdateMessages(
+    chatId: string,
+    ops: (chat: Chat) => void,
+  ): Promise<Chat> {
+    return this.mutateChats("appendAndUpdateMessages", (chats) => {
+      const chat = chats.find((candidate) => candidate.id === chatId);
+      if (!chat) {
+        devWarn("[StorageService] Chat not found", { chatId });
+        throw new Error("Chat not found");
+      }
+
+      ops(chat);
+      chat.updatedAt = new Date();
+      return {
+        chats,
+        result: {
+          ...chat,
+          messages: [...chat.messages],
+        },
+      };
     });
   }
 

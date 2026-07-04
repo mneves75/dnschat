@@ -176,6 +176,13 @@ describe("Native DNS Module", () => {
       expect(result).toBe("Hello from DNS. Enjoy!");
     });
 
+    it("rejects mixed plain and numbered TXT responses", () => {
+      const dns = new NativeDNS();
+      expect(() =>
+        dns.parseMultiPartResponse(["Regular response", "1/1:ignored"]),
+      ).toThrow("Mixed plain and multipart TXT records");
+    });
+
     it("throws on duplicate numbered parts", () => {
       const dns = new NativeDNS();
       expect(() =>

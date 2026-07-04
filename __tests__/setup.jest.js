@@ -19,6 +19,7 @@ jest.mock('expo-secure-store', () => {
   };
 });
 
+let expoCryptoUuidCounter = 0;
 jest.mock('expo-crypto', () => ({
   getRandomBytesAsync: jest.fn((size) =>
     Promise.resolve(Uint8Array.from({ length: size }, (_, i) => (i + 1) % 256)),
@@ -28,6 +29,10 @@ jest.mock('expo-crypto', () => ({
       array[i] = (i + 1) % 256;
     }
     return array;
+  }),
+  randomUUID: jest.fn(() => {
+    expoCryptoUuidCounter += 1;
+    return `00000000-0000-4000-8000-${String(expoCryptoUuidCounter).padStart(12, '0')}`;
   }),
 }));
 

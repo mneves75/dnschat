@@ -35,6 +35,8 @@ import { useScreenEntrance } from "../../ui/hooks/useScreenEntrance";
 import { useStaggeredListValues, AnimatedListItem } from "../../ui/hooks/useStaggeredList";
 import { LogsSkeleton } from "../../components/skeletons";
 import { EmptyState } from "../../components/EmptyState";
+import { CheckmarkIcon } from "../../components/icons/CheckmarkIcon";
+import { CloseIcon } from "../../components/icons/CloseIcon";
 
 type TFn = (key: MessageKey, params?: TranslationParams) => string;
 
@@ -135,6 +137,8 @@ export function Logs() {
       testID="logs-screen"
       navigationTitle={t("screen.logs.navigationTitle")}
       nestedScrollEnabled
+      refreshing={refreshing}
+      onRefresh={handleRefresh}
     >
       <Animated.View style={animatedStyle}>
         {/* Loading Skeleton */}
@@ -335,7 +339,7 @@ const LogQueryRow: React.FC<LogQueryRowProps> = ({
                 {t("screen.logs.labels.redactedQuery")}
               </Text>
               <View style={styles.logMeta}>
-                <Text style={[styles.timestamp, { color: palette.textTertiary }]}>
+                <Text style={[styles.timestamp, { color: palette.textSecondary }]}>
                   {timeLabel}
                 </Text>
                 {Boolean(item.finalMethod) && (
@@ -353,7 +357,7 @@ const LogQueryRow: React.FC<LogQueryRowProps> = ({
                   </LiquidGlassWrapper>
                 )}
                 {item.totalDuration !== undefined && (
-                  <Text style={[styles.duration, { color: palette.textTertiary }]}>
+                  <Text style={[styles.duration, { color: palette.textSecondary }]}>
                     {DNSLogService.formatDuration(item.totalDuration)}
                   </Text>
                 )}
@@ -368,19 +372,23 @@ const LogQueryRow: React.FC<LogQueryRowProps> = ({
               {isActive && (
                 <ActivityIndicator size="small" color={palette.bubbleTextOnBlue} />
               )}
-              {!isActive && (
-                <Text
-                  style={[styles.statusText, { color: palette.bubbleTextOnBlue }]}
-                  accessibilityElementsHidden
-                  importantForAccessibility="no-hide-descendants"
-                >
-                  {item.finalStatus === "success"
-                    ? "OK"
-                    : item.finalStatus === "failure"
-                      ? "X"
-                      : "?"}
-                </Text>
+              {!isActive && item.finalStatus === "success" && (
+                <CheckmarkIcon size={16} color={palette.bubbleTextOnBlue} />
               )}
+              {!isActive && item.finalStatus === "failure" && (
+                <CloseIcon size={14} color={palette.bubbleTextOnBlue} />
+              )}
+              {!isActive &&
+                item.finalStatus !== "success" &&
+                item.finalStatus !== "failure" && (
+                  <Text
+                    style={[styles.statusText, { color: palette.bubbleTextOnBlue }]}
+                    accessibilityElementsHidden
+                    importantForAccessibility="no-hide-descendants"
+                  >
+                    ?
+                  </Text>
+                )}
             </View>
           </View>
 

@@ -26,10 +26,6 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
   removeItem: jest.fn(),
 }));
 
-jest.mock('react-native-uuid', () => ({
-  v4: jest.fn(() => 'test-uuid-' + Math.random().toString(36).substr(2, 9)),
-}));
-
 const mockAsyncStorage = AsyncStorage as jest.Mocked<typeof AsyncStorage>;
 
 describe('StorageService in-memory chats cache', () => {
