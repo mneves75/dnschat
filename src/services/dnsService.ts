@@ -29,6 +29,9 @@ export { validateDecodedDnsResponseForTxt } from './dnsWire';
 import { devLog, devLogArgs, devLogLazy } from '../utils/devLog';
 
 const DEFAULT_DNS_ZONE = DNS_CONSTANTS.DEFAULT_DNS_SERVER;
+// Invariant: total elapsed time for one queryLLM call across all servers,
+// retries, and transports must not exceed this budget.
+export const TOTAL_QUERY_BUDGET_MS = 20000;
 
 // DNS server validation lives in dnsServerValidation.ts so lightweight modules
 // (settings storage) can use it without loading this transport-heavy module.
@@ -621,6 +624,8 @@ export class DNSService {
       throw new Error('Rate limit exceeded. Please wait before making another request.');
     }
 
+    const deadline = Date.now() + TOTAL_QUERY_BUDGET_MS;
+
     // Build server fallback chain:
     // - If user specified a server, use only that server (no fallback)
     // - Otherwise, use currently online LLM servers in priority order.
@@ -662,6 +667,7 @@ export class DNSService {
             queryId,
             enableMockDNS,
             allowExperimentalTransports,
+            deadline,
           );
 
           // SECURITY: Final response sanitization choke point. The multipart
@@ -677,6 +683,9 @@ export class DNSService {
           }
           return safeResponse;
         } catch (error) {
+          if (this.isQueryBudgetError(error)) {
+            throw error;
+          }
           const message = getErrorMessage(error);
           lastError = error instanceof Error ? error : new Error(message);
           this.vLog(`Server ${targetServer}:${queryContext.targetPort} failed: ${message}`);
@@ -738,10 +747,12 @@ export class DNSService {
     queryId: string,
     enableMockDNS?: boolean,
     allowExperimentalTransports: boolean = true,
+    deadline: number = Date.now() + TOTAL_QUERY_BUDGET_MS,
   ): Promise<{ response: string; method: 'native' | 'udp' | 'tcp' | 'mock' }> {
     const { targetServer, targetPort } = queryContext;
 
     for (let attempt = 0; attempt < this.MAX_RETRIES; attempt++) {
+      this.assertWithinQueryBudget(deadline);
       const methodOrder = this.getMethodOrder(
         enableMockDNS,
         allowExperimentalTransports,
@@ -760,12 +771,20 @@ export class DNSService {
         });
 
         for (const method of methodOrder) {
+          const remainingBudgetMs = this.assertWithinQueryBudget(deadline);
           try {
-            const result = await this.tryMethod(queryId, method, queryContext);
+            const result = await this.withTimeout(
+              this.tryMethod(queryId, method, queryContext),
+              Math.min(this.TIMEOUT, remainingBudgetMs),
+              () => this.createQueryBudgetError(),
+            );
             if (result) {
               return result;
             }
           } catch (methodError) {
+            if (this.isQueryBudgetError(methodError)) {
+              throw methodError;
+            }
             // Log fallback to next method if available
             const nextMethodIndex = methodOrder.indexOf(method) + 1;
             const nextMethod = methodOrder[nextMethodIndex];
@@ -798,21 +817,26 @@ export class DNSService {
           `All ${methodCount} DNS transports failed for ${targetServer}:${targetPort} (attempted: ${availableMethods}).${guidance}`,
         );
       } catch (error) {
+        if (this.isQueryBudgetError(error)) {
+          throw error;
+        }
         if (attempt === this.MAX_RETRIES - 1) {
           throw error instanceof Error ? error : new Error(getErrorMessage(error));
         }
 
+        const retryDelay = this.RETRY_DELAY * Math.pow(2, attempt);
+        const remainingBudgetMs = this.assertWithinQueryBudget(deadline);
         DNSLogService.addLog(queryId, {
           id: `retry-${Date.now()}`,
           timestamp: new Date(),
           message: `Retrying ${targetServer}:${targetPort} (attempt ${attempt + 2}/${this.MAX_RETRIES})`,
           method: methodOrder[methodOrder.length - 1] ?? 'native',
           status: 'attempt',
-          details: `Waiting ${this.RETRY_DELAY * Math.pow(2, attempt)}ms`,
+          details: `Waiting ${Math.min(retryDelay, remainingBudgetMs)}ms`,
         });
 
         // Exponential backoff
-        await this.sleep(this.RETRY_DELAY * Math.pow(2, attempt));
+        await this.sleep(Math.min(retryDelay, remainingBudgetMs));
       }
     }
 
@@ -994,6 +1018,7 @@ export class DNSService {
       let timeoutId: ReturnType<typeof setTimeout> | null = null;
       let responseBuffer = Buffer.alloc(0);
       let expectedLength = 0;
+      let prefixConsumed = false;
       let settled = false;
 
       // SECURITY: Robust cleanup ensures socket is always destroyed.
@@ -1146,9 +1171,20 @@ export class DNSService {
           responseBuffer = responseBuffer.length === 0 ? data : Buffer.concat([responseBuffer, data]);
 
           // Read the length prefix if we haven't yet
-          if (expectedLength === 0 && responseBuffer.length >= 2) {
+          if (!prefixConsumed && responseBuffer.length >= 2) {
             expectedLength = readTcpFrameLength(responseBuffer);
             responseBuffer = responseBuffer.subarray(2); // Remove length prefix
+            prefixConsumed = true;
+            if (expectedLength < 12) {
+              cleanup();
+              reject(
+                new DNSError(
+                  DNSErrorType.INVALID_RESPONSE,
+                  `Invalid TCP frame length: ${expectedLength}`,
+                ),
+              );
+              return;
+            }
           }
 
           // Check if we have received the complete response
@@ -1173,7 +1209,7 @@ export class DNSService {
         this.vLog('TCP: Setting up close handler...');
         socket.on('close', () => {
           this.vLog('TCP: Socket closed');
-          if (expectedLength === 0 || responseBuffer.length < expectedLength) {
+          if (!prefixConsumed || responseBuffer.length < expectedLength) {
             this.vLog('TCP: Connection closed prematurely');
             onError(new Error('Connection closed before receiving complete response'));
           }
@@ -1270,12 +1306,12 @@ export class DNSService {
   private static async withTimeout<T>(
     promise: Promise<T>,
     timeoutMs: number,
-    timeoutMessage: string,
+    timeoutMessage: string | (() => Error),
   ): Promise<T> {
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
     const timeoutPromise = new Promise<T>((_, reject) => {
       timeoutId = setTimeout(() => {
-        reject(new Error(timeoutMessage));
+        reject(typeof timeoutMessage === 'function' ? timeoutMessage() : new Error(timeoutMessage));
       }, timeoutMs);
     });
 
@@ -1284,6 +1320,24 @@ export class DNSService {
     } finally {
       if (timeoutId) clearTimeout(timeoutId);
     }
+  }
+
+  private static createQueryBudgetError(): DNSError {
+    return new DNSError(DNSErrorType.TIMEOUT, 'DNS query budget exhausted');
+  }
+
+  private static isQueryBudgetError(error: unknown): boolean {
+    return error instanceof DNSError &&
+      error.type === DNSErrorType.TIMEOUT &&
+      error.message === 'DNS query budget exhausted';
+  }
+
+  private static assertWithinQueryBudget(deadline: number): number {
+    const remainingBudgetMs = deadline - Date.now();
+    if (remainingBudgetMs <= 0) {
+      throw this.createQueryBudgetError();
+    }
+    return remainingBudgetMs;
   }
 
   private static getMethodOrder(

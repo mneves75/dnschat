@@ -17,6 +17,7 @@ import {
   composeDNSQueryName,
   generateSecureDNSId,
   validateDecodedDnsResponseForTxt,
+  DNSErrorType,
 } from "../src/services/dnsService";
 import { DNSLogService } from "../src/services/dnsLogService";
 import { sanitizeDNSMessageReference } from "../modules/dns-native/constants";
@@ -80,10 +81,11 @@ describe("DNS Service helpers", () => {
       );
     });
 
-    it("prefers plain record when mixed with multipart", () => {
+    it("rejects mixed plain and multipart records", () => {
       const input = ["Regular response without part format", "2/2:ignored"];
-      const result = parseTXTResponse(input);
-      expect(result).toBe("Regular response without part format");
+      expect(() => parseTXTResponse(input)).toThrow(
+        "Mixed plain and multipart TXT records",
+      );
     });
 
     it("concatenates plain TXT segments in order", () => {
@@ -623,6 +625,58 @@ describe("DNS Service helpers", () => {
 
       expect(retryEntries).toHaveLength(2);
       expect(retryEntries.every((entry) => entry.method === "native")).toBe(true);
+    });
+  });
+
+  describe("query wall-clock budget", () => {
+    beforeEach(() => {
+      jest.useFakeTimers();
+      jest.clearAllMocks();
+      jest.spyOn(DNSLogService, "startQuery").mockReturnValue("query-budget");
+      jest.spyOn(DNSLogService, "addLog").mockImplementation(() => undefined);
+      jest.spyOn(DNSLogService, "logMethodAttempt").mockImplementation(() => undefined);
+      jest.spyOn(DNSLogService, "logMethodFailure").mockImplementation(() => undefined);
+      jest.spyOn(DNSLogService, "logFallback").mockImplementation(() => undefined);
+      jest.spyOn(DNSLogService, "endQuery").mockResolvedValue(undefined);
+      dnsServiceInternals.resetServerHealthForTests?.();
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+      DNSService.destroyBackgroundListener();
+      jest.restoreAllMocks();
+    });
+
+    it("rejects hanging transports when the query budget is exhausted", async () => {
+      jest.spyOn(dnsServiceInternals, "tryMethod").mockImplementation(
+        () => new Promise(() => undefined),
+      );
+
+      const query = DNSService.queryLLM(
+        "budget timeout",
+        "llm.pieter.com",
+        false,
+        true,
+      );
+      const assertion = expect(query).rejects.toMatchObject({
+        type: DNSErrorType.TIMEOUT,
+        message: "DNS query budget exhausted",
+      });
+
+      await jest.advanceTimersByTimeAsync(20000);
+
+      await assertion;
+    });
+
+    it("keeps fast successful responses on the same success path", async () => {
+      jest.spyOn(dnsServiceInternals, "tryMethod").mockResolvedValueOnce({
+        response: "fast ok",
+        method: "native",
+      });
+
+      await expect(
+        DNSService.queryLLM("fast response", "llm.pieter.com", false, true),
+      ).resolves.toBe("fast ok");
     });
   });
 });

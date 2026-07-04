@@ -145,7 +145,6 @@
       {
         "files": [
           "src/components/DNSLogViewer.tsx",
-          "src/components/ui/LiquidGlassTextInput.tsx",
           "src/navigation/screens/GlassChatList.tsx",
           "src/navigation/screens/GlassSettings.tsx",
           "src/navigation/screens/Logs.tsx"
@@ -282,14 +281,6 @@
         "rules": [
           "react-doctor/no-derived-useState",
           "react-doctor/no-z-index-9999"
-        ]
-      },
-      {
-        "files": [
-          "src/components/ui/LiquidGlassTextInput.tsx"
-        ],
-        "rules": [
-          "react-doctor/no-generic-handler-names"
         ]
       },
       {

@@ -350,6 +350,11 @@ final class DNSResolver: NSObject {
         query: DnsQuery,
         queue: DispatchQueue
     ) async throws -> [String] {
+        defer {
+            connection.stateUpdateHandler = nil
+            connection.cancel()
+        }
+
         // CRITICAL: Wait for connection ready state
         //
         // Race Condition: Network.framework's stateUpdateHandler can fire multiple times:

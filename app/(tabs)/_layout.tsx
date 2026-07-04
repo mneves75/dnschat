@@ -1,16 +1,15 @@
 import { NativeTabs } from "expo-router/unstable-native-tabs";
-import { DynamicColorIOS, Platform } from "react-native";
 import { useTranslation } from "../../src/i18n";
 
 export default function TabsLayout() {
   const { t } = useTranslation();
 
+  // No labelStyle color override: iOS applies the accent tint to the selected
+  // tab and the secondary (gray) color to unselected tabs automatically. Forcing
+  // a single gray color defeated the selected-state accent, hiding which tab is
+  // active (HIG "recognition over recall").
   return (
-    <NativeTabs
-      labelStyle={Platform.OS === "ios" ? {
-        color: DynamicColorIOS({ dark: "#EBEBF599", light: "#8E8E93" }),
-      } : undefined}
-    >
+    <NativeTabs>
       <NativeTabs.Trigger name="index">
         <NativeTabs.Trigger.Icon sf="bubble.left.and.bubble.right.fill" md="forum" />
         <NativeTabs.Trigger.Label>{t("navigation.tabs.chat")}</NativeTabs.Trigger.Label>

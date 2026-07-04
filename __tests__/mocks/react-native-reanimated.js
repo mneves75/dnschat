@@ -12,8 +12,8 @@
  * - Animation helpers (withTiming/withSpring/...) resolve SYNCHRONOUSLY to their
  *   target value, so `sharedValue.set(withSpring(x))` lands on `x` and
  *   `useAnimatedStyle` reads the final state in a single render pass.
- * - Shared values expose both `.value` and the `.get()/.set()/.modify()`
- *   accessors the codebase uses (React Compiler convention).
+ * - Shared values expose the `.get()/.set()/.modify()` accessors the codebase
+ *   uses (React Compiler convention).
  *
  * Covers exactly the API surface used in src/ (verified by grep): useSharedValue,
  * useAnimatedStyle, useAnimatedReaction, withTiming/Spring/Delay/Repeat/Sequence,
@@ -43,16 +43,16 @@ const AnimatedScrollView = createAnimatedComponent(ScrollView);
 const AnimatedImage = createAnimatedComponent(Image);
 
 function makeMutable(initial) {
+  let current = initial;
   return {
-    value: initial,
     get() {
-      return this.value;
+      return current;
     },
     set(next) {
-      this.value = typeof next === "function" ? next(this.value) : next;
+      current = typeof next === "function" ? next(current) : next;
     },
     modify(modifier) {
-      this.value = modifier ? modifier(this.value) : this.value;
+      current = modifier ? modifier(current) : current;
     },
     addListener() {},
     removeListener() {},

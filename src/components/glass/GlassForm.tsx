@@ -14,6 +14,7 @@ import {
   Text,
   StyleSheet,
   ScrollView,
+  RefreshControl,
   Platform,
 } from "react-native";
 import { useRouter } from "expo-router";
@@ -24,6 +25,7 @@ import {
 } from "react-native-safe-area-context";
 import { LiquidGlassWrapper } from "../LiquidGlassWrapper";
 import { PressableRipple } from "../PressableRipple";
+import { ChevronIcon } from "../icons/ChevronIcon";
 import { useImessagePalette } from "../../ui/theme/imessagePalette";
 import { HapticFeedback } from "../../utils/haptics";
 import { openExternalLink } from "../../utils/externalLinks";
@@ -43,6 +45,11 @@ interface GlassFormProps {
   contentContainerStyle?: StyleProp<ViewStyle>;
   /** Enable nested scrolling on Android */
   nestedScrollEnabled?: boolean;
+  /** Pull-to-refresh active state. When provided (with onRefresh), a native
+   * RefreshControl is attached to the scroll view. */
+  refreshing?: boolean;
+  /** Pull-to-refresh handler. Required to enable the RefreshControl. */
+  onRefresh?: () => void;
   /** Test ID for UI testing */
   testID?: string;
 }
@@ -145,6 +152,8 @@ export const GlassForm: React.FC<GlassFormProps> = ({
   style,
   contentContainerStyle,
   nestedScrollEnabled = false,
+  refreshing,
+  onRefresh,
   testID,
 }) => {
   const colors = useGlassColors();
@@ -170,10 +179,22 @@ export const GlassForm: React.FC<GlassFormProps> = ({
         showsVerticalScrollIndicator={Platform.OS === "web"}
         contentContainerStyle={contentStyle}
         nestedScrollEnabled={nestedScrollEnabled}
+        refreshControl={
+          onRefresh
+            ? (
+                <RefreshControl
+                  refreshing={refreshing ?? false}
+                  onRefresh={onRefresh}
+                  tintColor={colors.textSecondary}
+                />
+              )
+            : undefined
+        }
       >
         {navigationTitle && (
           <View style={styles.titleContainer}>
             <Text
+              accessibilityRole="header"
               style={[styles.navigationTitle, { color: colors.textPrimary }]}
             >
               {navigationTitle}
@@ -201,7 +222,10 @@ export const GlassFormSection: React.FC<GlassFormSectionProps> = ({
     <View style={[styles.sectionContainer, style]}>
       {Boolean(title) && (
         <View style={styles.sectionHeaderContainer}>
-          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
+          <Text
+            accessibilityRole="header"
+            style={[styles.sectionTitle, { color: colors.textSecondary }]}
+          >
             {title}
           </Text>
         </View>
@@ -230,7 +254,7 @@ export const GlassFormSection: React.FC<GlassFormSectionProps> = ({
 
       {Boolean(footer) && (
         <View style={styles.sectionFooterContainer}>
-          <Text style={[styles.sectionFooter, { color: colors.textTertiary }]}>
+          <Text style={[styles.sectionFooter, { color: colors.textSecondary }]}>
             {footer}
           </Text>
         </View>
@@ -302,9 +326,7 @@ export const GlassFormItem: React.FC<GlassFormItemProps> = ({
       <View style={styles.itemContentRight}>
         {rightContent}
         {showChevron && (
-          <Text style={[styles.chevron, { color: colors.textTertiary }]}>
-            ›
-          </Text>
+          <ChevronIcon size={16} color={colors.textTertiary} />
         )}
       </View>
     </View>
@@ -459,9 +481,5 @@ const styles = StyleSheet.create({
     fontWeight: "400",
     letterSpacing: -0.24,
     marginTop: 2,
-  },
-  chevron: {
-    fontSize: 17,
-    fontWeight: "600",
   },
 });

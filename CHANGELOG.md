@@ -6,6 +6,76 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+## [4.2.0] - 2026-07-04
+
+Build `72` -> `73`. iOS 26 HIG redesign pass across every screen, DNS transport
+correctness hardening, storage write-amplification cleanup, dead-code removal,
+and Expo SDK 57 patch alignment. The heavy backend/transport work was specified
+as self-contained plans (`plans/001`-`004`) and implemented via a dispatched
+`codex` (gpt-5.5) run, then reviewed and reconciled in the main session; the
+frontend/visual redesign was authored in the main session. React kept at
+19.2.3; migrations additive only.
+
+### Added
+
+- Shared SVG glyph components matching SF Symbol proportions — `ChevronIcon`,
+  `CheckmarkIcon`, `CloseIcon` — replacing literal text glyphs (`›`, `•`, `X`)
+  for correct optical centering and consistent stroke weight.
+- Native pull-to-refresh (`RefreshControl`) support on `GlassForm`, wired into
+  the chat list and the logs screen (the logs refresh handler was previously
+  dead).
+- Global wall-clock query budget (`TOTAL_QUERY_BUDGET_MS = 20000`) threaded
+  through the DNS transport chain so a single `queryLLM` call cannot exceed 20s
+  across all servers, retries, and transports.
+- `StorageService.appendAndUpdateMessages` batched mutation entry point that
+  coalesces the per-message encrypt+write cycles (write-amplification fix; the
+  send path now performs at most two `setItem` writes per message).
+- Anti-spoofing and framing test coverage: mixed plain/multipart rejection,
+  TCP frame-length validation, DNS label boundary checks.
+
+### Changed
+
+- iOS 26 HIG redesign of every screen: flat iMessage-style message bubbles (drop
+  shadows / Android elevation removed), `accessibilityRole="header"` on section
+  and navigation titles, higher-contrast secondary text (tertiary -> secondary
+  where it carried meaning), a 44pt bottom-sheet close target, an accent-locked
+  "Latest" badge, success feedback moved from blocking alerts to a toast, a
+  loading spinner in place of the send-button ellipsis, log status shown as
+  vector check/close glyphs, and a decorative About logo hidden from VoiceOver.
+- Tab bar no longer forces a single gray label color, restoring the native
+  selected-tab accent tint (HIG "recognition over recall").
+- Aligned Expo SDK 57 patch versions (`@expo/metro-runtime`, `@expo/ui`, `expo`,
+  `expo-asset`, `expo-build-properties`, `expo-constants`, `expo-router`,
+  `expo-splash-screen`) and refreshed the iOS CocoaPods graph so `expo-doctor`
+  reports 19/19 checks passing.
+- Replaced the `react-native-uuid` dependency with `expo-crypto` `randomUUID`.
+
+### Fixed
+
+- DNS UDP path on iOS now mirrors the TCP `defer`-based connection teardown
+  (state handler cleared and connection cancelled), closing a native connection
+  leak.
+- TCP response framing now tracks whether the 2-byte length prefix was consumed
+  (instead of overloading `expectedLength === 0`) and rejects frames shorter
+  than the 12-byte DNS header.
+- Mixed plain-and-multipart TXT record sets are rejected as invalid instead of
+  being silently mis-reassembled.
+
+### Removed
+
+- Dead modules `src/components/layout/Screen.tsx` and
+  `src/components/ui/LiquidGlassTextInput.tsx` (and their orphaned tests and
+  `doctor.config.json` exemptions).
+
+### Release status
+
+- Local gates green on `2026-07-04`: typecheck, ast-grep lint, react-compiler
+  healthcheck (103/103), Jest (964 passing), dns-native workspace tests,
+  DNSResolver sync, iOS pods sync, SDK alignment, `expo-doctor` (19/19),
+  typed-routes, public-redaction, and security (`bun audit` + gitleaks). Native
+  device/simulator runtime verification, Android native gates, and any
+  TestFlight upload remain separate claims not covered by this run.
+
 ## [4.1.5] - 2026-06-30
 
 Build `71` -> `72`. SDK 57 staging target: Expo SDK 57 / React Native 0.86

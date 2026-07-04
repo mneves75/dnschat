@@ -35,6 +35,7 @@ import { LiquidGlassWrapper } from "../../components/LiquidGlassWrapper";
 import { PressableRipple } from "../../components/PressableRipple";
 import { TrashIcon } from "../../components/icons/TrashIcon";
 import { PlusIcon } from "../../components/icons/PlusIcon";
+import { ChevronIcon } from "../../components/icons/ChevronIcon";
 import { formatDistanceToNow } from "date-fns";
 import { useTranslation } from "../../i18n";
 import { useImessagePalette } from "../../ui/theme/imessagePalette";
@@ -185,7 +186,7 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
               style={[
                 styles.chatTime,
                 typography.caption1,
-                { color: palette.textTertiary },
+                { color: palette.textSecondary },
               ]}
             >
               {timeAgo}
@@ -208,13 +209,9 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
           </View>
         </View>
 
-        {/* Action Button */}
+        {/* Disclosure indicator */}
         <View style={styles.chatActions}>
-          <Text
-            style={[styles.chevron, { color: palette.textTertiary }]}
-          >
-            ›
-          </Text>
+          <ChevronIcon size={16} color={palette.textTertiary} />
         </View>
       </View>
     </View>
@@ -230,7 +227,7 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
       pressedOpacity={0.95}
       style={styles.chatItemWrapper}
       accessible
-      accessibilityRole="link"
+      accessibilityRole="button"
       accessibilityLabel={itemAccessibilityLabel}
       accessibilityHint={t("screen.glassChatList.itemAccessibilityHint")}
       accessibilityActions={chatAccessibilityActions}
@@ -373,6 +370,8 @@ export function GlassChatList() {
         navigationTitle={t("screen.glassChatList.navigationTitle")}
         style={styles.container}
         contentContainerStyle={styles.scrollContent}
+        refreshing={refreshing}
+        onRefresh={handleRefresh}
       >
       <Animated.View style={animatedStyle}>
         {/* New Chat Section */}
@@ -605,10 +604,6 @@ const styles = StyleSheet.create({
   },
   chatActions: {
     marginLeft: 12,
-  },
-  chevron: {
-    fontSize: 18,
-    fontWeight: "600",
   },
   statValue: {
     fontSize: 17,

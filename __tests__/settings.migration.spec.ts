@@ -139,6 +139,26 @@ describe('SettingsContext migrateSettings', () => {
     expect(migrateSettings(invalidPayload).themePreference).toBe('system');
   });
 
+  it('backfills system themePreference when migrating v4 payloads without it', () => {
+    const payload = {
+      version: 4,
+      dnsServer: 'llm.pieter.com',
+      enableMockDNS: false,
+      allowExperimentalTransports: true,
+      enableHaptics: true,
+      preferredLocale: 'pt-BR',
+      accessibility: DEFAULT_SETTINGS.accessibility,
+    };
+
+    const result = migrateSettings(payload);
+
+    expect(result).toEqual({
+      ...payload,
+      version: SETTINGS_VERSION,
+      themePreference: 'system',
+    });
+  });
+
   it('falls back to default dnsServer when payload is not allowlisted', () => {
     const payload = {
       version: 3,

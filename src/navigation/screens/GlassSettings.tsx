@@ -16,7 +16,6 @@
 
 import React from "react";
 import {
-  DynamicColorIOS,
   StyleSheet,
   Switch,
   Text,
@@ -52,6 +51,8 @@ import { devLog, devWarn } from "../../utils/devLog";
 import { getAppVersionInfo } from "../../utils/appVersion";
 import { openExternalLink } from "../../utils/externalLinks";
 import { PressableRipple } from "../../components/PressableRipple";
+import { CheckmarkIcon } from "../../components/icons/CheckmarkIcon";
+import { Toast } from "../../components/ui/Toast";
 
 const getErrorMessage = (error: unknown): string => {
   if (error instanceof Error) return error.message;
@@ -237,9 +238,9 @@ export function GlassSettings() {
             await updateDnsServer(DEFAULT_DNS_SERVER);
             await updateEnableMockDNS(false);
             await updateEnableHaptics(true);
-            Alert.alert(
+            showSuccess(
               t("screen.glassSettings.alerts.resetTitle"),
-              t("screen.glassSettings.alerts.resetMessage"),
+              t("screen.settings.alerts.saveSuccessMessage"),
             );
           },
         },
@@ -258,7 +259,7 @@ export function GlassSettings() {
           style: "destructive",
           onPress: async () => {
             await resetOnboarding();
-            Alert.alert(
+            showSuccess(
               t("screen.settings.alerts.onboardingResetTitle"),
               t("screen.settings.alerts.onboardingResetMessage"),
             );
@@ -276,6 +277,16 @@ export function GlassSettings() {
   );
   const [lastTestError, setLastTestError] = React.useState<string | null>(null);
   const [clearingData, setClearingData] = React.useState(false);
+  // Success feedback surfaces as a non-blocking toast (HIG: Alerts are for
+  // critical decisions, not success confirmations). The confirmation prompts
+  // below stay as Alerts because they are destructive decisions.
+  const [successToast, setSuccessToast] = React.useState<{
+    title: string;
+    message: string;
+  } | null>(null);
+  const showSuccess = (title: string, message: string) => {
+    setSuccessToast({ title, message });
+  };
 
   // Shared throttle keeps diagnostics aligned with docs/SETTINGS.md guidance.
   const {
@@ -382,7 +393,7 @@ export function GlassSettings() {
               await StorageService.clearAllChats();
               await DNSLogService.clearLogs();
               await loadChats();
-              Alert.alert(
+              showSuccess(
                 t("screen.glassSettings.alerts.clearCacheSuccessTitle"),
                 t("screen.glassSettings.alerts.clearCacheSuccessMessage"),
               );
@@ -417,7 +428,7 @@ export function GlassSettings() {
             title={t("screen.settings.sections.dnsConfig.dnsServerLabel")}
             subtitle={currentDnsOption.label}
             rightContent={
-              <Text style={[styles.valueText, { color: palette.textTertiary }]}>
+              <Text style={[styles.valueText, { color: palette.textSecondary }]}>
                 {dnsServer}
               </Text>
             }
@@ -503,7 +514,7 @@ export function GlassSettings() {
               subtitle={option.subtitle}
               rightContent={
                 activeLocaleSelection === option.value && (
-                  <Text style={[styles.selectedIndicator, { color: palette.userBubble }]}>•</Text>
+                  <CheckmarkIcon size={18} color={palette.userBubble} />
                 )
               }
               onPress={() => handleSelectLocale(option.value)}
@@ -522,7 +533,7 @@ export function GlassSettings() {
             title={t("screen.settings.sections.transportTest.messageLabel")}
             subtitle={testMessage}
             rightContent={
-              <Text style={[styles.valueText, { color: palette.textTertiary }]}>
+              <Text style={[styles.valueText, { color: palette.textSecondary }]}>
                 {testMessage}
               </Text>
             }
@@ -645,14 +656,7 @@ export function GlassSettings() {
                 ]}
               >
                 <Text
-                  style={[
-                    styles.versionText,
-                    {
-                      color: Platform.OS === "ios"
-                        ? DynamicColorIOS({ light: "#FF6B35", dark: "#FF8C5A" })
-                        : "#FF6B35",
-                    },
-                  ]}
+                  style={[styles.versionText, { color: palette.userBubble }]}
                 >
                   {t("screen.glassSettings.sections.about.latestBadge")}
                 </Text>
@@ -784,7 +788,7 @@ export function GlassSettings() {
                   </Text>
                 </View>
                 {dnsServer === option.value && (
-                  <Text style={[styles.selectedIndicator, { color: palette.userBubble }]}>•</Text>
+                  <CheckmarkIcon size={18} color={palette.userBubble} />
                 )}
               </View>
             </PressableRipple>
@@ -833,14 +837,7 @@ export function GlassSettings() {
                   </Text>
                 </View>
                 {themePreference === option.value && (
-                  <Text
-                    style={[
-                      styles.selectedIndicator,
-                      { color: palette.userBubble },
-                    ]}
-                  >
-                    •
-                  </Text>
+                  <CheckmarkIcon size={18} color={palette.userBubble} />
                 )}
               </View>
             </PressableRipple>
@@ -928,6 +925,16 @@ export function GlassSettings() {
           },
         ]}
       />
+
+      <Toast
+        visible={Boolean(successToast)}
+        variant="success"
+        title={successToast?.title ?? ""}
+        message={successToast?.message ?? ""}
+        duration={3000}
+        onDismiss={() => setSuccessToast(null)}
+        testID="settings-success-toast"
+      />
     </>
   );
 }
@@ -970,7 +977,7 @@ const styles = StyleSheet.create({
   versionText: {
     fontSize: 12,
     fontWeight: "600",
-    // color applied inline via DynamicColorIOS for theme awareness
+    // color applied inline via palette.userBubble (single accent lock)
   },
   dnsOptionsContainer: {
     paddingTop: 8,
@@ -998,10 +1005,6 @@ const styles = StyleSheet.create({
     fontWeight: "400",
     letterSpacing: 0,
     marginTop: 2,
-  },
-  selectedIndicator: {
-    fontSize: 16,
-    fontWeight: "600",
   },
   aboutContent: {
     paddingTop: 16,

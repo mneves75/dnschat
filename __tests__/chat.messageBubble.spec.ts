@@ -78,32 +78,18 @@ describe("MessageBubble - iOS 26 HIG Compliance", () => {
     });
   });
 
-  describe("iOS 26 HIG: Standard Materials (Shadows for Depth)", () => {
-    it("uses standard iOS shadows (not glass) for depth", () => {
-      expect(sourceCode).toContain("shadowColor");
-      expect(sourceCode).toContain("shadowOffset");
-      expect(sourceCode).toContain("shadowOpacity");
-      expect(sourceCode).toContain("shadowRadius");
-    });
-
-    it("has prominent shadow style for user/error messages", () => {
-      expect(sourceCode).toContain("prominentShadow");
-      const prominentSection = sourceCode.substring(
-        sourceCode.indexOf("prominentShadow:"),
-        sourceCode.indexOf("prominentShadow:") + 300
-      );
-      expect(prominentSection).toContain("shadowOpacity: 0.15");
-      expect(prominentSection).toContain("shadowRadius: 4");
-    });
-
-    it("has subtle shadow style for assistant messages", () => {
-      expect(sourceCode).toContain("subtleShadow");
-      const subtleSection = sourceCode.substring(
-        sourceCode.indexOf("subtleShadow:"),
-        sourceCode.indexOf("subtleShadow:") + 300
-      );
-      expect(subtleSection).toContain("shadowOpacity: 0.08");
-      expect(subtleSection).toContain("shadowRadius: 2");
+  describe("iOS 26 HIG: Flat Materials (no drop shadows)", () => {
+    // Authentic iMessage bubbles are flat filled shapes — separation comes from
+    // the fill color (blue/gray) against the background, not from elevation.
+    // Drop shadows (shadowColor / elevation) were removed in the iOS 26 redesign
+    // because they read as Android Material depth, not native iOS.
+    it("does not apply drop shadows or Android elevation to bubbles", () => {
+      expect(sourceCode).not.toContain("shadowColor");
+      expect(sourceCode).not.toContain("shadowOpacity");
+      expect(sourceCode).not.toContain("shadowRadius");
+      expect(sourceCode).not.toContain("elevation:");
+      expect(sourceCode).not.toContain("prominentShadow");
+      expect(sourceCode).not.toContain("subtleShadow");
     });
   });
 

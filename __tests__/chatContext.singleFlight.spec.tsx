@@ -24,6 +24,13 @@ jest.mock("../src/services/storageService", () => ({
       messages: [],
     })),
     addMessage: jest.fn(async () => undefined),
+    appendAndUpdateMessages: jest.fn(async () => ({
+      id: "chat-1",
+      title: "Test Chat",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      messages: [],
+    })),
     updateMessage: jest.fn(async () => undefined),
     deleteChat: jest.fn(async () => undefined),
   },
@@ -47,6 +54,7 @@ const { StorageService: mockStorageService } = jest.requireMock("../src/services
     loadChats: jest.Mock;
     createChat: jest.Mock;
     addMessage: jest.Mock;
+    appendAndUpdateMessages: jest.Mock;
     updateMessage: jest.Mock;
     deleteChat: jest.Mock;
   };
@@ -126,6 +134,7 @@ describe("ChatContext single-flight send protection", () => {
       await secondSend;
     });
 
-    expect(mockStorageService.addMessage).toHaveBeenCalledTimes(2);
+    expect(mockStorageService.appendAndUpdateMessages).toHaveBeenCalledTimes(1);
+    expect(mockStorageService.addMessage).not.toHaveBeenCalled();
   });
 });

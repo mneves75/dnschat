@@ -29,6 +29,11 @@ type MatchingTxtAnswer = DecodedAnswer & {
   type: 'TXT';
   class: 'IN';
 };
+type DecodedPacketFlagFields = DecodedPacket & {
+  flag_qr?: unknown;
+  flag_tc?: unknown;
+  opcode?: unknown;
+};
 
 const DNS_FLAG_QR = 0x8000;
 const DNS_FLAG_TC = 0x0200;
@@ -122,13 +127,21 @@ export function encodeTxtDnsQuery(queryName: string, queryId: number): Uint8Arra
   for (let i = 0; i < queryName.length; i++) {
     const code = queryName.charCodeAt(i);
     if (code === 46) {
-      query[labelOffset] = offset - labelOffset - 1;
+      const labelLength = offset - labelOffset - 1;
+      if (labelLength > 63) {
+        throw new Error(`DNS label exceeds 63 bytes: ${labelLength}`);
+      }
+      query[labelOffset] = labelLength;
       labelOffset = offset++;
     } else {
       query[offset++] = code;
     }
   }
-  query[labelOffset] = offset - labelOffset - 1;
+  const labelLength = offset - labelOffset - 1;
+  if (labelLength > 63) {
+    throw new Error(`DNS label exceeds 63 bytes: ${labelLength}`);
+  }
+  query[labelOffset] = labelLength;
   query[offset + 1] = 0x00;
   query[offset + 2] = 0x10;
   query[offset + 4] = 0x01;
@@ -168,17 +181,25 @@ export function validateDecodedDnsResponseForTxt(
     );
   }
 
+  const decodedFlags = decoded as DecodedPacketFlagFields;
   const flags = typeof decoded.flags === 'number' ? decoded.flags : 0;
-  if ((flags & DNS_FLAG_QR) === 0) {
+  const hasQrFlag =
+    (flags & DNS_FLAG_QR) !== 0 ||
+    decoded.type === 'response' ||
+    decodedFlags.flag_qr === true;
+  if (!hasQrFlag) {
     throw new Error('DNS response missing QR flag');
   }
 
-  const opcode = (flags & DNS_OPCODE_MASK) >>> 11;
-  if (opcode !== 0) {
+  const opcode =
+    typeof decodedFlags.opcode === 'string'
+      ? decodedFlags.opcode
+      : (flags & DNS_OPCODE_MASK) >>> 11;
+  if (opcode !== 0 && opcode !== 'QUERY') {
     throw new Error('DNS response opcode not standard query');
   }
 
-  if ((flags & DNS_FLAG_TC) !== 0) {
+  if ((flags & DNS_FLAG_TC) !== 0 || decodedFlags.flag_tc === true) {
     throw new Error('DNS response truncated (TC=1)');
   }
 

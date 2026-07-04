@@ -28,10 +28,8 @@ import { useMotionReduction } from "../../context/AccessibilityContext";
 import { LiquidGlassWrapper } from "../LiquidGlassWrapper";
 import { useImessagePalette } from "../../ui/theme/imessagePalette";
 import { PressableRipple } from "../PressableRipple";
+import { CloseIcon } from "../icons/CloseIcon";
 
-// Cap scaling for the fixed-size close glyph so Dynamic Type cannot distort the
-// 32x32 control (mirrors Toast.tsx / MessageContent.tsx).
-const FIXED_GLYPH_MAX_FONT_SCALE = 1.2;
 
 interface GlassBottomSheetProps {
   visible: boolean;
@@ -290,6 +288,7 @@ export const GlassBottomSheet: React.FC<GlassBottomSheetProps> = ({
                   <View style={styles.headerText}>
                     {Boolean(title) && (
                       <Text
+                        accessibilityRole="header"
                         style={[styles.title, { color: colors.textPrimary }]}
                       >
                         {title}
@@ -319,17 +318,9 @@ export const GlassBottomSheet: React.FC<GlassBottomSheetProps> = ({
                       hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                       variant="icon"
                       borderless
-                      rippleRadius={20}
+                      rippleRadius={22}
                     >
-                      <Text
-                        style={[
-                          styles.closeButtonText,
-                          { color: colors.actionDefault },
-                        ]}
-                        maxFontSizeMultiplier={FIXED_GLYPH_MAX_FONT_SCALE}
-                      >
-                        X
-                      </Text>
+                      <CloseIcon size={16} color={colors.actionDefault} />
                     </PressableRipple>
                   )}
                 </>
@@ -516,15 +507,11 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   closeButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: "center",
     justifyContent: "center",
-  },
-  closeButtonText: {
-    fontSize: 18,
-    fontWeight: "400",
   },
   content: {
     flex: 1,

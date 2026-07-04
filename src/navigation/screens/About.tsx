@@ -78,7 +78,12 @@ export function About() {
         <Form.Section>
         <View style={[styles.headerContainer, { backgroundColor: palette.surface }]}>
           <View style={styles.header}>
-            <View style={styles.logoContainer}>
+            <View
+              style={styles.logoContainer}
+              accessible={false}
+              accessibilityElementsHidden
+              importantForAccessibility="no-hide-descendants"
+            >
               {!iconError ? (
                 <Image
                   source={AppIcon}

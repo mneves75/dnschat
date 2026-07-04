@@ -56,18 +56,69 @@ interface SettingsContextValue {
   loading: boolean;
 }
 
+type SettingsStateContextValue = Pick<
+  SettingsContextValue,
+  | "dnsServer"
+  | "enableMockDNS"
+  | "allowExperimentalTransports"
+  | "enableHaptics"
+  | "locale"
+  | "systemLocale"
+  | "preferredLocale"
+  | "availableLocales"
+  | "themePreference"
+  | "accessibility"
+  | "loading"
+>;
+type SettingsActionsContextValue = Omit<
+  SettingsContextValue,
+  keyof SettingsStateContextValue
+>;
+
 const SettingsContext = createContext<SettingsContextValue | undefined>(
   undefined,
 );
+const SettingsStateContext = createContext<SettingsStateContextValue | undefined>(undefined);
+const SettingsActionsContext = createContext<SettingsActionsContextValue | undefined>(undefined);
+const LocaleContext = createContext<SupportedLocale | undefined>(undefined);
 const INITIAL_PERSIST_QUEUE = Promise.resolve();
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const contextValue = useSettingsContextValue();
+  const stateValue: SettingsStateContextValue = {
+    dnsServer: contextValue.dnsServer,
+    enableMockDNS: contextValue.enableMockDNS,
+    allowExperimentalTransports: contextValue.allowExperimentalTransports,
+    enableHaptics: contextValue.enableHaptics,
+    locale: contextValue.locale,
+    systemLocale: contextValue.systemLocale,
+    preferredLocale: contextValue.preferredLocale,
+    availableLocales: contextValue.availableLocales,
+    themePreference: contextValue.themePreference,
+    accessibility: contextValue.accessibility,
+    loading: contextValue.loading,
+  };
+  const actionsValue: SettingsActionsContextValue = {
+    updateDnsServer: contextValue.updateDnsServer,
+    updateEnableMockDNS: contextValue.updateEnableMockDNS,
+    updateAllowExperimentalTransports: contextValue.updateAllowExperimentalTransports,
+    applyRecommendedNetworkSettings: contextValue.applyRecommendedNetworkSettings,
+    updateEnableHaptics: contextValue.updateEnableHaptics,
+    updateLocale: contextValue.updateLocale,
+    updateThemePreference: contextValue.updateThemePreference,
+    updateAccessibility: contextValue.updateAccessibility,
+  };
 
   return (
-    <SettingsContext value={contextValue}>
-      {children}
-    </SettingsContext>
+    <SettingsStateContext value={stateValue}>
+      <SettingsActionsContext value={actionsValue}>
+        <LocaleContext value={contextValue.locale}>
+          <SettingsContext value={contextValue}>
+            {children}
+          </SettingsContext>
+        </LocaleContext>
+      </SettingsActionsContext>
+    </SettingsStateContext>
   );
 }
 
@@ -389,6 +440,30 @@ export function useSettings() {
   const context = use(SettingsContext);
   if (context === undefined) {
     throw new Error("useSettings must be used within a SettingsProvider");
+  }
+  return context;
+}
+
+export function useLocale() {
+  const context = use(LocaleContext);
+  if (context === undefined) {
+    throw new Error("useLocale must be used within a SettingsProvider");
+  }
+  return context;
+}
+
+export function useSettingsActions() {
+  const context = use(SettingsActionsContext);
+  if (context === undefined) {
+    throw new Error("useSettingsActions must be used within a SettingsProvider");
+  }
+  return context;
+}
+
+export function useSettingsState() {
+  const context = use(SettingsStateContext);
+  if (context === undefined) {
+    throw new Error("useSettingsState must be used within a SettingsProvider");
   }
   return context;
 }

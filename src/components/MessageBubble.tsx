@@ -16,7 +16,7 @@ import { ClipboardService } from "../services/ClipboardService";
 import { ShareService } from "../services/ShareService";
 import { MessageContent } from "./MessageContent";
 import { useTranslation } from "../i18n";
-import { useSettings } from "../context/SettingsContext";
+import { useLocale } from "../context/SettingsContext";
 import { NativeMenu } from "./platform/NativeMenu";
 import type { NativeMenuAction, NativeMenuActionEvent } from "./platform/NativeMenu";
 
@@ -44,7 +44,7 @@ function MessageBubbleComponent({ message }: MessageBubbleProps) {
   const palette = useImessagePalette();
   const { messageMaxWidth } = useResponsiveLayout();
   const { t } = useTranslation();
-  const { locale } = useSettings();
+  const locale = useLocale();
 
   const isUser = message.role === "user";
   const isLoading = message.status === "sending";
@@ -95,8 +95,6 @@ function MessageBubbleComponent({ message }: MessageBubbleProps) {
       borderBottomRightRadius: isUser ? 6 : messageCornerRadius,
       borderBottomLeftRadius: isUser ? messageCornerRadius : 6,
     },
-    // iOS standard material: shadows for depth (not glass)
-    isUser || hasError ? styles.prominentShadow : styles.subtleShadow,
   ];
 
   // Text color: white on blue/red, dark/light on gray depending on mode
@@ -253,30 +251,6 @@ const styles = StyleSheet.create({
       borderRadius: getCornerRadius('message'),
       minWidth: 60,
     },
-  // iOS standard material: prominent shadow for user/error bubbles
-  prominentShadow: {
-    ...(Platform.OS === "web"
-      ? { boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.15)" }
-      : {
-          shadowColor: "#111827",
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.15,
-          shadowRadius: 4,
-          elevation: Platform.OS === "android" ? 4 : undefined,
-        }),
-  },
-  // iOS standard material: subtle shadow for assistant bubbles
-  subtleShadow: {
-    ...(Platform.OS === "web"
-      ? { boxShadow: "0px 1px 2px rgba(0, 0, 0, 0.08)" }
-      : {
-          shadowColor: "#111827",
-          shadowOffset: { width: 0, height: 1 },
-          shadowOpacity: 0.08,
-          shadowRadius: 2,
-          elevation: Platform.OS === "android" ? 2 : undefined,
-        }),
-  },
   text: {
     // Typography and color applied inline from palette
   },

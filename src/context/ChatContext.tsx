@@ -6,7 +6,7 @@ import React, {
   useState,
 } from "react";
 import type { ReactNode } from "react";
-import uuid from "react-native-uuid";
+import * as Crypto from "expo-crypto";
 import type { Chat, Message, ChatContextType } from "../types/chat";
 import { StorageService, StorageCorruptionError } from "../services/storageService";
 import { DNSService, sanitizeDNSMessage } from "../services/dnsService";
@@ -15,7 +15,18 @@ import { isScreenshotMode, getMockConversations } from "../utils/screenshotMode"
 import { MESSAGE_CONSTANTS } from "../constants/appConstants";
 import { devLog, devWarn } from "../utils/devLog";
 
+type ChatStateContextValue = Pick<
+  ChatContextType,
+  "chats" | "currentChat" | "isLoading" | "error"
+>;
+type ChatActionsContextValue = Omit<
+  ChatContextType,
+  "chats" | "currentChat" | "isLoading" | "error"
+>;
+
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
+const ChatStateContext = createContext<ChatStateContextValue | undefined>(undefined);
+const ChatActionsContext = createContext<ChatActionsContextValue | undefined>(undefined);
 
 interface ChatProviderProps {
   children: ReactNode;
@@ -237,9 +248,8 @@ export function ChatProvider({ children }: ChatProviderProps) {
 
     sendInFlightRef.current = true;
 
-    // Create user message
     const userMessage: Message = {
-      id: uuid.v4() as string,
+      id: Crypto.randomUUID(),
       role: "user",
       content,
       timestamp: new Date(),
@@ -252,13 +262,6 @@ export function ChatProvider({ children }: ChatProviderProps) {
     });
 
     try {
-      // Add user message to storage and state
-      devLog("[ChatContext] Adding user message to storage...");
-      await StorageService.addMessage(chatIdAtSend, userMessage);
-      userMessagePersisted = true;
-      devLog("[ChatContext] User message added to storage");
-
-      // Update current chat with user message
       const updatedChat: Chat = {
         ...currentChat,
         title: chatTitleAtSend,
@@ -266,16 +269,8 @@ export function ChatProvider({ children }: ChatProviderProps) {
         updatedAt: new Date(),
       };
 
-      devLog("[ChatContext] Updating currentChat state with user message", {
-        chatId: updatedChat.id,
-        messageCount: updatedChat.messages.length,
-      });
-      replaceChatInState(updatedChat.id, updatedChat);
-      devLog("[ChatContext] State updated with user message");
-
-      // Create assistant message with loading state
       assistantMessage = {
-        id: uuid.v4() as string,
+        id: Crypto.randomUUID(),
         role: "assistant",
         content: "",
         timestamp: new Date(),
@@ -284,6 +279,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
 
       // SECURITY: Capture message ID for error handling (see declaration above try block)
       assistantMessageId = assistantMessage.id;
+      const assistantPlaceholder = assistantMessage;
 
       devLog("[ChatContext] Created assistant placeholder", {
         messageId: assistantMessage.id,
@@ -291,15 +287,9 @@ export function ChatProvider({ children }: ChatProviderProps) {
         status: assistantMessage.status,
       });
 
-      // Add assistant message placeholder
-      devLog("[ChatContext] Adding assistant placeholder to storage...");
-      await StorageService.addMessage(chatIdAtSend, assistantMessage);
-      assistantMessagePersisted = true;
-      devLog("[ChatContext] Assistant placeholder added to storage");
-
       const chatWithAssistantPlaceholder: Chat = {
         ...updatedChat,
-        messages: [...updatedChat.messages, assistantMessage],
+        messages: [...updatedChat.messages, assistantPlaceholder],
         updatedAt: new Date(),
       };
 
@@ -308,6 +298,20 @@ export function ChatProvider({ children }: ChatProviderProps) {
       });
       replaceChatInState(chatWithAssistantPlaceholder.id, chatWithAssistantPlaceholder);
       devLog("[ChatContext] State updated with assistant placeholder");
+
+      devLog("[ChatContext] Persisting user message and assistant placeholder...");
+      await StorageService.appendAndUpdateMessages(chatIdAtSend, (chat) => {
+        chat.messages.push(userMessage);
+        if (chat.title === "New Chat" && chat.messages.length === 1) {
+          chat.title =
+            userMessage.content.slice(0, 50) +
+            (userMessage.content.length > 50 ? "..." : "");
+        }
+        chat.messages.push(assistantPlaceholder);
+      });
+      userMessagePersisted = true;
+      assistantMessagePersisted = true;
+      devLog("[ChatContext] User message and assistant placeholder persisted");
 
       // Get AI response using DNS service (respects enableMockDNS setting).
       // Settings are read from the ref at call time (see settingsRef above).
@@ -433,6 +437,16 @@ export function ChatProvider({ children }: ChatProviderProps) {
             updateErr,
           );
         }
+      } else {
+        try {
+          await loadChats({
+            preserveChatId: chatIdAtSend,
+            preserveError: errorMessage,
+            clearError: false,
+          });
+        } catch (reloadErr) {
+          devWarn("[ChatContext] Failed to reload chats after send persistence error", reloadErr);
+        }
       }
     }
     // Replaces `finally`; the catch handles send errors without rethrowing, so
@@ -450,11 +464,14 @@ export function ChatProvider({ children }: ChatProviderProps) {
     setCurrentChat(newChat);
   };
 
-  const contextValue: ChatContextType = {
+  const stateValue: ChatStateContextValue = {
     chats,
     currentChat,
     isLoading,
     error,
+  };
+
+  const actionsValue: ChatActionsContextValue = {
     createChat,
     deleteChat,
     clearAllChats,
@@ -465,8 +482,17 @@ export function ChatProvider({ children }: ChatProviderProps) {
     createAndNavigateToChat,
   };
 
+  const contextValue: ChatContextType = {
+    ...stateValue,
+    ...actionsValue,
+  };
+
   return (
-    <ChatContext value={contextValue}>{children}</ChatContext>
+    <ChatStateContext value={stateValue}>
+      <ChatActionsContext value={actionsValue}>
+        <ChatContext value={contextValue}>{children}</ChatContext>
+      </ChatActionsContext>
+    </ChatStateContext>
   );
 }
 
@@ -474,6 +500,22 @@ export function useChat() {
   const context = use(ChatContext);
   if (context === undefined) {
     throw new Error("useChat must be used within a ChatProvider");
+  }
+  return context;
+}
+
+export function useChatActions() {
+  const context = use(ChatActionsContext);
+  if (context === undefined) {
+    throw new Error("useChatActions must be used within a ChatProvider");
+  }
+  return context;
+}
+
+export function useChatState() {
+  const context = use(ChatStateContext);
+  if (context === undefined) {
+    throw new Error("useChatState must be used within a ChatProvider");
   }
   return context;
 }

@@ -202,6 +202,12 @@ export function parseMultiPartTXTResponse(txtRecords: string[]): string {
   }
 
   if (hasPlainResponse) {
+    if (parts.length > 0) {
+      throw new DNSError(
+        DNSErrorType.INVALID_RESPONSE,
+        "Mixed plain and multipart TXT records",
+      );
+    }
     if (!plainResponse.trim()) {
       throw new DNSError(DNSErrorType.INVALID_RESPONSE, "Received empty response");
     }

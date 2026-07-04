@@ -33,6 +33,7 @@ import {
   useColorScheme,
   Text,
   Platform,
+  ActivityIndicator,
   AccessibilityInfo,
   InteractionManager,
 } from "react-native";
@@ -455,7 +456,7 @@ export function ChatInput({
       accessibilityState={{ disabled: !canSend }}
     >
       {isLoading ? (
-        <Text style={[styles.sendButtonText, { color: palette.textPrimary }]}>…</Text>
+        <ActivityIndicator size="small" color={palette.userBubble} />
       ) : (
         <SendIcon size={20} isActive={canSend} />
       )}
@@ -621,10 +622,6 @@ const styles = StyleSheet.create({
     right: BUTTON_SPACING,
     alignItems: "center",
     justifyContent: "center",
-  },
-  sendButtonText: {
-    fontSize: 18,
-    fontWeight: "bold" as const,
   },
   /**
    * Character Counter
