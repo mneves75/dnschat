@@ -1,6 +1,6 @@
 # Installation
 
-This repo builds DNSChat `4.1.5` build `72` (React Native `0.86.0`, Expo SDK `57`, React `19.2.3`).
+This repo builds DNSChat `4.2.3` build `77` (React Native `0.86.0`, Expo SDK `57`, React `19.2.3`).
 
 Prereqs:
 
@@ -126,16 +126,15 @@ xcrun devicectl device install app \
   <DERIVED_DATA>/Build/Products/Release-iphoneos/DNSChat.app
 ```
 
-Current release target: version `4.1.5` build `72`. Local SDK 57 evidence on
-`2026-06-30` covers a compiled iOS simulator Debug build, an unsigned generic
-Release build, and an unsigned generic Release archive with Xcode `26.6`
-(`17F113`). This is local build/archive evidence only; do not describe this
-build as uploaded to TestFlight, installed on a physical device, or attached to
-an App Store version unless `asc`, App Store Connect, or device-install evidence
-proves that separate claim.
+Current release target: version `4.2.3` build `77`. Physical-device evidence on
+`2026-07-10` covers build `76`, which sustained normal, cold `dnschat://`, and
+foreground `dnschat://` launches after the iOS 27 `UIScene` repair. Build `77`
+must complete its own signed archive, IPA export, TestFlight upload, processing,
+and validation before it is described as distributed or attached to an App
+Store version.
 
-The latest uploaded TestFlight evidence in repo notes before this SDK 57 lane is
-version `4.1.3` build `70`. The release lane archives, exports, uploads, waits
+The latest uploaded TestFlight evidence before this release target is version
+`4.2.0` build `73`. The release lane archives, exports, uploads, waits
 for processing, and validates TestFlight before the build is described as
 distributed. App Store Connect identifiers, signing identifiers, tester group
 names, local paths, and device identifiers are intentionally omitted from public
