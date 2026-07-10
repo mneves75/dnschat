@@ -109,22 +109,21 @@ xcodebuild clean archive \
   CODE_SIGNING_ALLOWED=NO
 ```
 
-Current TestFlight release target is `4.1.5` build `72`
-(`2026-06-30`, Expo SDK 57 / React Native 0.86 baseline). Signed upload
+Current TestFlight release target is `4.2.3` build `77`
+(`2026-07-10`, Expo SDK 57 / React Native 0.86, iOS 27 scene lifecycle). Signed upload
 validation must complete after the final source/docs state is verified and
 pushed:
 
-- `bun run verify:all`, secret scan, and `asc doctor` must have fresh build `72`
-  evidence.
-- Local SDK 57 evidence for `4.1.5` build `72` includes an iOS Debug simulator
-  build, unsigned generic Release build, unsigned generic Release archive, and
-  Argent launch/inspection on the compiled simulator app. Physical-device
-  install is a separate evidence claim and is not implied by those checks.
+- `bun run verify:all`, native DNS tests, secret scan, version sync, and `asc
+  doctor` passed with fresh build `77` evidence on `2026-07-10`.
+- Physical-device launch evidence belongs to build `76`, the immediate
+  predecessor carrying the same `UIScene` repair. It does not replace build
+  `77` signed archive/export/upload/validation evidence.
 - Signed App Store archive/export and TestFlight upload are required for
-  `4.1.5` build `72`; App Store Connect processing must return `VALID`, and
+  `4.2.3` build `77`; App Store Connect processing must return `VALID`, and
   `asc validate testflight` must report `0` errors and `0` warnings. Exact App
   Store Connect identifiers remain private.
-- Do not describe `4.1.5` build `72` as attached to an App Store version unless
+- Do not describe `4.2.3` build `77` as attached to an App Store version unless
   App Store Connect evidence proves that relationship.
 - Internal App Store Connect IDs, tester group names, device names, device identifiers, local paths, team IDs, profile names, and certificate IDs are intentionally omitted from public docs.
 
@@ -238,7 +237,7 @@ bun run ios -- --verbose
 - **App Store Connect** app record created
 - **Code signing** configured correctly
 - **Bundle ID** matches (`<BUNDLE_ID>`)
-- **Version numbers** consistent (v4.1.5 build 72)
+- **Version numbers** consistent (v4.2.3 build 77)
 - **Native DNS module** compiles successfully
 - **Xcode CLI smoke** passed:
   - Debug simulator build
@@ -266,9 +265,9 @@ eas build --platform ios --profile production
 
 ### TestFlight distribution
 
-Current v4.1.5 distribution target:
+Current v4.2.3 distribution target:
 
-- Version/build: `4.1.5` / `72`
+- Version/build: `4.2.3` / `77`
 - Processing state: pending signed archive/export/upload; TestFlight validation
   must report `0` errors and `0` warnings before distribution is claimed.
 - App Store state: create or update an App Store version only when preparing an
@@ -284,14 +283,18 @@ After upload:
 3. **Feedback**: Collect user feedback through TestFlight
 4. **Iterate**: Upload new builds for continuous testing
 
-### What to Test for v4.1.5 build 72
+### What to Test for v4.2.3 build 77
 
+- Launch the app on iOS 27 and confirm it remains open instead of returning to
+  the Home Screen.
+- Cold-start the app from a `dnschat://` link, then open another `dnschat://`
+  link while the app is already running.
 - Complete onboarding from a fresh install and confirm the app lands on the chat list.
 - Open native menu actions and React Native modal sheet actions from chat, logs,
   messages, and settings; confirm they remain accessible and dismiss cleanly.
 - Open a stale chat deep link and confirm the conversation-not-found state
   appears instead of a blank chat.
-- Confirm settings/About version metadata reports `4.1.5` build `72`.
+- Confirm settings/About version metadata reports `4.2.3` build `77`.
 - Send short prompts through the default DNS service and confirm responses render.
 - Force or observe a DNS failure and confirm the chat shows a compact localized
   retry prompt instead of an oversized diagnostic overlay.
@@ -333,4 +336,4 @@ If you encounter issues during the upload process:
 
 ---
 
-_TestFlight upload guide for DNSChat v4.1.5 build 72 - Last updated: 2026-06-30_
+_TestFlight upload guide for DNSChat v4.2.3 build 77 - Last updated: 2026-07-10_

@@ -6,7 +6,32 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
-Nothing yet beyond `4.2.2`.
+Nothing yet beyond `4.2.3`.
+
+## [4.2.3] - 2026-07-10
+
+Build `76` -> `77`. iOS 27 startup-crash recovery and TestFlight staging
+release.
+
+### Fixed
+
+- iOS 27 launch crash for binaries linked with the Xcode 27 SDK. The app now
+  adopts the required `UIScene` lifecycle, creates the React Native window from
+  `SceneDelegate`, forwards Expo lifecycle events, and preserves cold-start and
+  foreground deep-link routing. A repository contract test guards the native
+  scene manifest and bootstrap wiring.
+
+### Verification
+
+- Build `76` was installed on a physical iOS 27 device and remained alive
+  through normal, cold `dnschat://`, and foreground `dnschat://` launches.
+- Final build `77` pre-archive gates passed on `2026-07-10`: `bun run
+  verify:all` (125 suites and 983 tests passed; 1 suite and 13 tests skipped),
+  native DNS module tests (8 suites and 65 tests passed), React Compiler
+  healthcheck (101/101), Expo Doctor (19/19), `bun audit`, gitleaks, version
+  synchronization, and `asc doctor`.
+- Build `77` is the signed TestFlight release target. Archive, upload,
+  processing, and validation remain separate evidence until completed.
 
 ## [4.2.2] - 2026-07-10
 

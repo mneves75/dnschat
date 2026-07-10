@@ -35,6 +35,35 @@ node -v
 
 ## iOS
 
+### App exits immediately on iOS 27 after a successful device launch command
+
+Symptom:
+
+- `devicectl` reports that the application launched, but it immediately returns
+  to the Home Screen.
+- The device crash report ends in
+  `___UIApplicationEvaluateRuntimeIssueForNoSceneLifecycleAdoption_block_invoke`
+  with `EXC_BREAKPOINT` / `SIGTRAP`.
+
+Cause:
+
+- iOS 27 requires apps linked with the iOS 27 SDK to adopt the scene-based
+  lifecycle. Expo SDK 57.0.4 still ships the earlier app-delegate bootstrap, so
+  DNSChat carries the required scene bridge locally until that support reaches
+  its Expo release line.
+
+Fix:
+
+- Keep `UIApplicationSceneManifest` and `SceneDelegate` in sync across
+  `ios/DNSChat/Info.plist` and `ios/DNSChat/AppDelegate.swift`.
+- Do not run `expo prebuild --clean` until the installed Expo release carries
+  equivalent scene support; it regenerates native bootstrap files and can
+  remove this local bridge. The `iosSceneLifecycle` contract test detects that
+  drift.
+- A successful launch command is not sufficient evidence. Use `--console`,
+  verify that the process remains alive, and inspect `systemCrashLogs` when it
+  exits.
+
 ### CocoaPods drift / Swift type missing
 
 Symptom:
