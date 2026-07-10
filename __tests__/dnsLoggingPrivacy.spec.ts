@@ -1,5 +1,19 @@
 import fs from "node:fs";
 
+import { DNSLogService } from "../src/services/dnsLogService";
+
+jest.mock("@react-native-async-storage/async-storage", () => ({
+  getItem: jest.fn(),
+  setItem: jest.fn(),
+  removeItem: jest.fn(),
+}));
+
+jest.mock("../src/services/encryptionService", () => ({
+  decryptIfEncrypted: jest.fn(),
+  encryptString: jest.fn(async (payload: string) => payload),
+  isEncryptedPayload: jest.fn((payload: string) => payload.startsWith("enc:v1:")),
+}));
+
 function readSource(path: string): string {
   return fs.readFileSync(path, "utf8");
 }
@@ -22,5 +36,41 @@ describe("DNS logging privacy", () => {
 
     expect(source).not.toContain("- ${message.trim()}");
     expect(source).toContain("queryNameLength");
+  });
+});
+
+describe("DNS logging redaction — sanitized label", () => {
+  const internals = DNSLogService as unknown as {
+    currentQueryLog: unknown;
+    activeQueryLogs: Map<string, { entries: Array<{ error?: string }> }>;
+    queryLogs: unknown[];
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    internals.currentQueryLog = null;
+    internals.activeQueryLogs = new Map();
+    internals.queryLogs = [];
+  });
+
+  afterEach(() => {
+    DNSLogService.stopCleanupScheduler();
+  });
+
+  it("redacts a bare sanitized label embedded in a method-failure error", () => {
+    const sanitizedLabel = "secret-prompt-here";
+    const queryId = DNSLogService.startQuery("secret prompt here");
+    DNSLogService.registerSensitiveValues(queryId, [sanitizedLabel]);
+
+    DNSLogService.logMethodFailure(
+      queryId,
+      "native",
+      `DNS label exceeds 63 bytes: ${sanitizedLabel}`,
+    );
+
+    const entries = internals.activeQueryLogs.get(queryId)?.entries ?? [];
+    const failure = entries.find((entry) => entry.error !== undefined);
+    expect(failure).toBeDefined();
+    expect(failure?.error).not.toContain(sanitizedLabel);
   });
 });

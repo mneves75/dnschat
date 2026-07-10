@@ -1,4 +1,87 @@
-# Implementation Plans — DNSChat iOS 26 redesign + hardening
+# Implementation Plans — DNSChat
+
+## Cycle 2 — deep audit 2026-07-10 (planned against commit `2739cf2`)
+
+Deep audit (8 categories, all findings vetted against the live code by the
+advisor before planning). Non-interactive run: per the improve skill's
+default, plans were written for the top findings by leverage; everything else
+is recorded in the backlog below. Executor: codex (batch 005–010), reviewed
+in the main session.
+
+### Execution order & status (cycle 2)
+
+| Plan | Title | Priority | Effort | Depends on | Status |
+|------|-------|----------|--------|------------|--------|
+| 005 | UI error-path hardening (Logs spinner, new-chat guard, mount-load catch, auto-create retry, dismissed-error re-notify, stats reduce) | P1 | S–M | — | DONE (2026-07-10; no new i18n — surfacing reuses ChatContext error→visibleError toast, no local error state; hermetic `__tests__/uiErrorPaths.contract.spec.ts` added; typecheck/lint/react-compiler 101/101 clean, `bun run test` 971 passed / 13 skipped / 984 total) |
+| 006 | iOS native timeout budget + native→JS error-classification parity (+ Android empty-label parity) | P1 | M | — | DONE (2026-07-10, Opus executor + main-session completion: executor hit session limit after all code changes; advisor ran final gates and updated the stale `iosDnsResolver.policy.spec.ts` assertion to the new composed message; sync gate + 972 root / 65 module tests green) |
+| 007 | Sanitized-label leak: Android error text + Logs-store redaction | P1 | S | 006 (soft — same file region) | DONE (2026-07-10, same run: label removed from Android error text, `registerSensitiveValues` defense-in-depth in dnsLogService + dnsService, redaction regression test added) |
+| 008 | Behavioral tests: ChatContext error recovery + UDP anti-spoofing datagram drop | P1 | M | run after 005–007 | DONE (2026-07-10; codex created both specs and correctly STOPped on a failing case; advisor adjudicated: NOT a production bug — the plan's Case B expectation was stale. Since the 4.2.0 coalescing, user+placeholder persist atomically in ONE `appendAndUpdateMessages` call, so a rejection means nothing persisted and reload-only recovery is correct; writing an assistant error would orphan a bubble with no question. Test rewritten to assert the atomic contract; udpDatagram spec 3/3, errorRecovery 3/3, full suite 978 passed) |
+| 009 | Deps hygiene: remove react-native-device-info, dns-native @types/react-native, expo-constants override | P2 | S | — | DONE (2026-07-10, main session — codex quota-blocked; note: dns-native `tsc --noEmit` fails pre-existing with 340 jest-globals errors, no tsc gate exists there; expo-constants re-resolve needed `--minimum-release-age=0`) |
+| 010 | DX/docs truth: release ledger, CI typecheck, verify:fast, env example, knip.json, dead glass exports | P2 | S–M | — | DONE (2026-07-10, main session; correction: `shouldUseGlassEffect` is NOT dead — used internally + by `__tests__/liquidGlassWrapper.helpers.spec.ts` — kept exported; only LiquidGlassCard/NavBar removed) |
+
+### Backlog — vetted findings NOT planned this cycle (with one-line reason)
+
+- **ARCH-01** Triple-maintained native DNS source (module + committed prebuild
+  copies + 3 podspecs; `ios/DNSNative/` copy not even compiled — 0 pbxproj
+  refs): M effort, MED risk on the Android compile path; needs a careful
+  prebuild-regeneration validation lane — schedule as its own cycle.
+- **ARCH-02/03/04/07** God-module splits (dnsService 1798L, dnsLogService 749L
+  — redaction-engine extraction is the cheapest first slice, GlassSettings
+  1034L, OnboardingScreenLayout): still deferred pending characterization
+  tests; plan 008 builds part of that base.
+- **ARCH-05** ToastProvider/useToast unification (3 per-screen Toast wirings +
+  20 Alert.alert): M, LOW risk — good next-cycle candidate.
+- **ARCH-06** `allowExperimentalTransports` flag is 100% rolled out but still
+  branches through 3 layers (dead branch dnsService.ts:811; zero UI callers):
+  S — bundle with the next settings-touching change (SETTINGS_VERSION bump).
+- **ARCH-09** Two parallel DNS-log UIs (Logs.tsx vs DNSLogViewer/DevLogs): S–M,
+  needs a product call on keeping the dev route.
+- **PERF-01/02** Virtualize chat list + Logs screen (ScrollView `.map` today;
+  full re-render per log entry during active queries): M each, MED risk —
+  REQUIRES simulator visual verification (stagger animation, Form.Section
+  layout); do NOT execute blind. PERF-04 (i18n lookup caching) rides along.
+- **TEST-03** Policy-spec → behavioral conversion triage (59 readFileSync
+  specs; rule: source-grep only where no runtime harness exists).
+- **TEST-04** ClipboardService unit test: opportunistic.
+- **CORRECTNESS-08** Android JS socket lingers past outer budget timeout
+  (needs AbortSignal plumbing through tryMethod): M, MED risk.
+- **CORRECTNESS-09** iOS continuation leak on cancel-during-connect (NWConnection
+  handler nil'd before cancel): M, MED risk — pair with a Swift-focused pass.
+- **CORRECTNESS-12** Android lacks native queryTXTUDP/TCP (latent interface
+  asymmetry, zero runtime impact today).
+- **CORRECTNESS-13 (new, found by plan 008)** The `!assistantMessagePersisted`
+  → `addMessage` branch in ChatContext's sendMessage catch (~line 392) is
+  defensive dead code since the 4.2.0 atomic-coalescing change (both persisted
+  flags are set together after the single `appendAndUpdateMessages` write).
+  Harmless; remove during the next ChatContext-touching change.
+- **DEPS-03** dns-native ESLint 8 EOL → flat-config migration or lint removal.
+- **DEPS-04** `react-native-markdown-display` unmaintained (2023) on the
+  message-render path — watch item, no action.
+- **DX-03** Pre-commit runs the full 964-test suite; narrowing to
+  `--findRelatedTests` is an operator decision (trades safety for speed).
+- **DIR-01** Chat-history search (README already promises it; zero search UI
+  or i18n keys) — design/spike: search over decrypted in-memory chats.
+- **DIR-02** Finish "Export Data" (Profile row is a stub Alert; serializeChats
+  + Share already exist) — S build once format/PII decisions are made.
+- **DIR-03** Custom DNS server entry (validation layer + 6-host allowlist
+  exist; picker hardcodes 2; native `supportsCustomServer` still false) —
+  M–L design/spike, security-sensitive.
+
+### Vetted and rejected this cycle (do not re-audit)
+
+- SEC-02 web localStorage AES key: by-design, documented in code +
+  SECURITY.md/data-inventory (web uses Mock DNS).
+- bun audit + dns-native npm audit: clean. CI actions all SHA-pinned.
+- react-native-udp / tcp-socket abandonment: refuted (releases 2025-10 /
+  2026-01).
+- docs/architecture/SYSTEM-ARCHITECTURE.md version claims: accurate (checked).
+- CHANGELOG.md currency: accurate.
+- Haptics/glass-surface/layering/utils/screens-vs-app split: audited clean.
+- Modal-per-row in GlassChatList: already fixed (shared action sheet).
+
+---
+
+## Cycle 1 — iOS 26 redesign + hardening (2026-07-04)
 
 Generated by the improve skill on 2026-07-04, planned against commit `b69b6ab`.
 Two execution tracks run in parallel in this worktree:

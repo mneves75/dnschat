@@ -310,6 +310,29 @@ export class DNSLogService {
     return queryId;
   }
 
+  /**
+   * Register additional per-query sensitive values (e.g. the sanitized DNS label
+   * and the composed query name) so any log/error text embedding them is redacted.
+   * Defense-in-depth: the sanitized label is a lossy-but-readable form of the raw
+   * prompt that neither the raw-prompt pattern nor the FQDN-with-known-zone matcher
+   * covers on its own. Idempotent — re-registering the same value is harmless.
+   */
+  static registerSensitiveValues(queryId: string, values: string[]): void {
+    const existing = this.sensitiveValuesByQueryId.get(queryId);
+    if (!existing) {
+      // No active query registered for this id (e.g. logging already ended);
+      // nothing to attach the patterns to.
+      return;
+    }
+    const additionalPatterns = Array.from(
+      new Set(values.filter((value): value is string => !!value)),
+      (value) => this.buildSensitiveValuePattern(value),
+    );
+    if (additionalPatterns.length > 0) {
+      existing.push(...additionalPatterns);
+    }
+  }
+
   static addLog(queryId: string, entry: DNSLogEntry) {
     const queryLog = this.activeQueryLogs.get(queryId);
     if (!queryLog) return;

@@ -31,8 +31,6 @@ export {
 export {
   LiquidGlassWrapper,
   LiquidGlassButton,
-  LiquidGlassCard,
-  LiquidGlassNavBar,
   useLiquidGlassCapabilities,
 } from "../LiquidGlassWrapper";
 

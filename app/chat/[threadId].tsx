@@ -10,6 +10,10 @@ import { resolveRouteChat } from "../../src/utils/chatRoute";
 import { normalizeRouteParam } from "../../src/utils/routeParams";
 import { devWarn } from "../../src/utils/devLog";
 
+// Auto-create retry ceiling: one transient storage failure recovers, but a
+// persistent failure stops retrying instead of looping create/fail forever.
+const MAX_AUTO_CREATE_ATTEMPTS = 3;
+
 export default function ChatRoute() {
   const { threadId } = useLocalSearchParams<{
     threadId?: string | string[];
@@ -30,6 +34,7 @@ export default function ChatRoute() {
   const [isRouteHydrating, setIsRouteHydrating] = React.useState(false);
   const [hasAttemptedRouteLoad, setHasAttemptedRouteLoad] = React.useState(false);
   const lastAttemptedRef = React.useRef<string | null>(null);
+  const createAttemptsRef = React.useRef(0);
   const routeChat = resolveRouteChat(chats, currentChat, normalizedThreadId);
   const isMissingRouteChat = Boolean(
     normalizedThreadId &&
@@ -38,6 +43,17 @@ export default function ChatRoute() {
       !routeChat &&
       (hasAttemptedRouteLoad || chats.length > 0),
   );
+
+  // Effect: a new route target is a new visit — give it a fresh auto-create
+  // budget. Without this, three failed attempts exhaust the guards forever
+  // (they otherwise reset only on success), leaving later parameterless
+  // visits permanently stuck even after storage recovers. The retry cap
+  // still holds within a single visit: this only fires when the normalized
+  // target actually changes, not when the resolve effect re-runs.
+  React.useEffect(() => {
+    lastAttemptedRef.current = null;
+    createAttemptsRef.current = 0;
+  }, [normalizedThreadId]);
 
   // Effect: load chats lazily when a thread route is hit without cached data.
   React.useEffect(() => {
@@ -77,6 +93,12 @@ export default function ChatRoute() {
         setIsResolving(true);
         createChat()
           .then((chat) => {
+            // Reset the guards on success: Expo Router reuses this component
+            // instance across param changes, so stale refs would block a later
+            // parameterless visit from auto-creating (and old transient
+            // failures would keep consuming the retry budget).
+            lastAttemptedRef.current = null;
+            createAttemptsRef.current = 0;
             setCurrentChat(chat);
             replace({
               pathname: "/chat/[threadId]",
@@ -84,6 +106,15 @@ export default function ChatRoute() {
             });
           })
           .catch((error) => {
+            // Bounded retry: re-arm the guard so the next effect run can retry
+            // the auto-create (leaving it as "new" would strand the route with
+            // no active thread forever), but cap the attempts — this effect
+            // re-fires when isResolving settles, so an unconditional reset
+            // would loop create/fail unboundedly while storage stays down.
+            createAttemptsRef.current += 1;
+            if (createAttemptsRef.current < MAX_AUTO_CREATE_ATTEMPTS) {
+              lastAttemptedRef.current = null;
+            }
             devWarn("[ChatRoute] Failed to create chat", error);
           })
           .finally(() => setIsResolving(false));
@@ -146,6 +177,10 @@ export default function ChatRoute() {
     setIsResolving(true);
     createChat()
       .then((chat) => {
+        // A successful manual create also proves storage recovered — clear the
+        // auto-create guards so future effect-driven cycles start fresh.
+        lastAttemptedRef.current = null;
+        createAttemptsRef.current = 0;
         setCurrentChat(chat);
         replace({
           pathname: "/chat/[threadId]",

@@ -143,6 +143,8 @@ export function Chat() {
   };
 
   const handleSendMessage = async (message: string) => {
+    // Re-arm the toast so a recurring identical error re-notifies after dismissal.
+    setDismissedError(null);
     try {
       await sendMessage(message);
     } catch (err) {

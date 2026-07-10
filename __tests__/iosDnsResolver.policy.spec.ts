@@ -24,7 +24,9 @@ describe("iOS DNSResolver native policy", () => {
     expect(source).toContain("performTCPQuery(server: server, queryName: queryName, port: port)");
     expect(source).toContain("withTimeout(seconds: Self.udpAttemptTimeout)");
     expect(source).toContain("withTimeout(seconds: Self.tcpAttemptTimeout)");
-    expect(source).toContain("Native UDP blocked or timed out");
+    // Composed from the real UDP/TCP causes — must NOT hardcode "timed out",
+    // which would force a wrong TIMEOUT classification in the JS error mapper.
+    expect(source).toContain("Native UDP failed (\\(udpFailure)); TCP fallback failed:");
   });
 
   it("cleans up native TCP connections on every success and error path", () => {

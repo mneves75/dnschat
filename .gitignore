@@ -137,3 +137,6 @@ pnpm-lock.yaml
 # codebase-memory tooling cache (re-indexed locally, not source)
 .codebase-memory/
 
+
+# firecrawl scrape cache (transient research artifacts, never source)
+.firecrawl/

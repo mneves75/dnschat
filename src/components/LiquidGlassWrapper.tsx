@@ -381,35 +381,6 @@ export const LiquidGlassButton: React.FC<LiquidGlassProps> = ({
   />
 );
 
-export const LiquidGlassCard: React.FC<LiquidGlassProps> = ({
-  variant = "regular",
-  shape = "roundedRect",
-  cornerRadius = 16,
-  enableContainer = true,
-  ...rest
-}) => (
-  <LiquidGlassWrapper
-    variant={variant}
-    shape={shape}
-    cornerRadius={cornerRadius}
-    enableContainer={enableContainer}
-    {...rest}
-  />
-);
-
-export const LiquidGlassNavBar: React.FC<LiquidGlassProps> = ({
-  variant = "prominent",
-  shape = "rect",
-  ...rest
-}) => (
-  <LiquidGlassWrapper
-    variant={variant}
-    shape={shape}
-    enableContainer={true}
-    containerSpacing={8}
-    {...rest}
-  />
-);
 
 export const useLiquidGlassCapabilities = () => {
   const [availability, setAvailability] = useState<GlassAvailability>(

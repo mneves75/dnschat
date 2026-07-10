@@ -652,6 +652,14 @@ export class DNSService {
         // Prepare DNS query context for this server
         const queryContext = this.createQueryContext(message, targetServer);
 
+        // Defense-in-depth: register the sanitized label and composed query name
+        // as sensitive values so any transport/native error text embedding them
+        // is redacted before it reaches the persisted Logs store.
+        DNSLogService.registerSensitiveValues(queryId, [
+          queryContext.label,
+          queryContext.queryName,
+        ]);
+
         DNSLogService.addLog(queryId, {
           id: `${queryId}-server-${targetServer}`,
           timestamp: new Date(),

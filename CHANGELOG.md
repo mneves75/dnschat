@@ -6,7 +6,82 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
-Working version `4.2.1` build `74` (post-release dev bump; no shipped build yet).
+Nothing yet beyond `4.2.2`.
+
+## [4.2.2] - 2026-07-10
+
+Build `74` -> `75` (absorbs the unshipped `4.2.1` dev bump). Deep-audit
+hardening lane: Expo SDK 57 patch re-alignment (`expo` 57.0.4 line), a full
+8-category advisor audit (plans `005`-`010`, all executed and reviewed), and
+eight autoreview iterations whose accepted findings were fixed with regression
+tests. Executors mixed per the orchestration policy (main session, Opus
+subagents, codex); every diff reviewed in the main session.
+
+### Added
+
+- `verify:fast` script (typecheck + lint + test) for quick inner-loop gating.
+- CI: `Typecheck` and `bun audit` steps in the test job.
+- `dnsLogService.registerSensitiveValues()` — the sanitized DNS label and full
+  query name are registered as redaction patterns before transport dispatch,
+  with a regression spec in `dnsLoggingPrivacy.spec.ts`.
+- New suites: `uiErrorPaths.contract.spec.ts`, `dnsService.udpDatagram.spec.ts`
+  (incl. dropping a forged datagram then accepting the valid one),
+  `chatContext.errorRecovery.spec.tsx`.
+
+### Changed
+
+- Expo SDK 57 patch alignment: `expo ~57.0.4`, `@expo/ui ~57.0.4`,
+  `expo-router ~57.0.4`, `expo-linking ~57.0.2`; dropped the stale
+  `overrides["expo-constants"]` pin; iOS pods refreshed.
+- iOS native timeout budgets rebalanced to fit strictly inside the JS 10s
+  `DNSService.TIMEOUT`: UDP 3.0s + TCP 6.0s, outer native `queryTimeout` 9.5s.
+  The native side now always settles (and cleans up sockets) before the JS
+  `Promise.race` abandons it, the TCP window keeps its original 6s (a TCP
+  timeout is terminal; a UDP timeout falls through to TCP), and the old 8s
+  outer budget no longer truncates a valid slow TCP fallback mid-flight.
+- Native error classification (TS bridge): substring mapping now runs before
+  the generic `DNS_QUERY_FAILED` code catch-all, ordered
+  permission -> timeout -> network, so composed native messages carrying
+  multiple indicators resolve to the actionable classification.
+- iOS resolver: the composed UDP+TCP failure message preserves both causes
+  instead of a hardcoded "timed out".
+- Android resolver: label value no longer echoed in the byte-length error;
+  empty-token filter after label split (iOS parity).
+- `verify:all` reordered (fast static gates first).
+
+### Fixed
+
+- Chat route auto-create: bounded retry (`MAX_AUTO_CREATE_ATTEMPTS = 3`) so a
+  persistent storage failure stops looping; guards reset on every successful
+  creation and whenever the route target changes, so route-component reuse
+  cannot strand a later visit after a failed burst.
+- Chat list: double-tap "new chat" race guard; a mount load failure no longer
+  leaves the skeleton up forever; the dismissed-error latch re-arms on both
+  the chat-list and chat send paths.
+- Logs pull-to-refresh no longer leaves the spinner stuck if `loadLogs`
+  rejects.
+
+### Removed
+
+- `react-native-device-info` dependency (unused), `@types/react-native` from
+  the dns-native workspace, dead `LiquidGlassCard`/`LiquidGlassNavBar`
+  exports, orphaned `knip.json`.
+
+### Docs / plans
+
+- New self-contained plans `005`-`010` plus a refreshed `plans/README.md`
+  (cycle-2 audit index, backlog, vetted-and-rejected findings).
+- Release ledger corrected in `README.md`/`docs/README.md` (`4.2.0` build `73`
+  is the latest `VALID` TestFlight build); `.env.development.example`
+  rewritten (the app reads no custom env vars); `.firecrawl/` scrape cache
+  gitignored.
+
+### Release status
+
+- Working version — NOT shipped to TestFlight and NOT built for device. Local
+  gates green on `2026-07-10`: full `verify:all` (13 gates), dns-native
+  workspace tests, and an 8-round codex autoreview loop converging on "no
+  actionable findings".
 
 ## [4.2.0] - 2026-07-04
 

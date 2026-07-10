@@ -552,7 +552,7 @@ public class DNSResolver {
             if (bytes.length > config.maxLabelLength) {
                 throw new DNSError(
                     DNSError.Type.QUERY_FAILED,
-                    "DNS label exceeds " + config.maxLabelLength + " bytes: " + label
+                    "DNS label exceeds " + config.maxLabelLength + " bytes"
                 );
             }
 
@@ -591,6 +591,11 @@ public class DNSResolver {
         int totalLength = 1; // null terminator
         StringBuilder normalized = new StringBuilder();
         for (int i = 0; i < labels.length; i++) {
+            // Drop empty tokens (leading/trailing/consecutive dots) to match iOS
+            // split(separator: ".", omittingEmptySubsequences: true); sanitizeLabel("") throws.
+            if (labels[i].isEmpty()) {
+                continue;
+            }
             String sanitized = sanitizeLabel(labels[i]);
 
             if (normalized.length() > 0) {

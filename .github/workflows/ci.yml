@@ -34,6 +34,12 @@ jobs:
       - name: Install
         run: bun ci
 
+      - name: Typecheck
+        run: bun run typecheck
+
+      - name: Audit dependencies
+        run: bun audit
+
       - name: Verify iOS pods lockfile sync
         run: bun run verify:ios-pods
 

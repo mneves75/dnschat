@@ -456,11 +456,22 @@ export class NativeDNS implements NativeDNSModule {
       const messageLower = details.message.toLowerCase();
       const cause = error instanceof Error ? error : undefined;
 
-      // Map native errors to our error types
-      if (details.code === "DNS_QUERY_FAILED") {
+      // Map native errors to our error types.
+      // Substring classification runs BEFORE the generic DNS_QUERY_FAILED code
+      // catch-all: native reject sites all use code "DNS_QUERY_FAILED", so
+      // keying on the code first would collapse real timeouts/network/permission
+      // failures into the generic type and make these branches unreachable.
+      // Permission first: a composed native message (e.g. the iOS
+      // "UDP failed (…); TCP fallback failed: …" form) can carry a permission
+      // indicator alongside timeout/network wording, and the permission
+      // problem is the actionable one — retrying a denied query never helps.
+      if (
+        messageLower.includes("permission") ||
+        messageLower.includes("denied")
+      ) {
         throw new DNSError(
-          DNSErrorType.DNS_QUERY_FAILED,
-          details.message || "DNS query failed",
+          DNSErrorType.PERMISSION_DENIED,
+          "DNS query permission denied",
           cause,
         );
       }
@@ -483,13 +494,10 @@ export class NativeDNS implements NativeDNSModule {
         );
       }
 
-      if (
-        messageLower.includes("permission") ||
-        messageLower.includes("denied")
-      ) {
+      if (details.code === "DNS_QUERY_FAILED") {
         throw new DNSError(
-          DNSErrorType.PERMISSION_DENIED,
-          "DNS query permission denied",
+          DNSErrorType.DNS_QUERY_FAILED,
+          details.message || "DNS query failed",
           cause,
         );
       }
