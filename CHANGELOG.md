@@ -30,8 +30,14 @@ release.
   native DNS module tests (8 suites and 65 tests passed), React Compiler
   healthcheck (101/101), Expo Doctor (19/19), `bun audit`, gitleaks, version
   synchronization, and `asc doctor`.
-- Build `77` is the signed TestFlight release target. Archive, upload,
-  processing, and validation remain separate evidence until completed.
+- Build `77` completed a signed App Store archive and IPA export, then uploaded
+  to TestFlight and processed `VALID` on `2026-07-10`. Strict TestFlight
+  validation reported `0` errors and `0` warnings; bilingual `What to Test`
+  notes are present, the existing internal group receives the build, and
+  non-exempt encryption is `false`.
+- App Store submission remains separate: `asc validate` reported `app store
+  version not found for version "4.2.3" and platform "IOS"`. No App Store
+  version attachment or production submission is claimed.
 
 ## [4.2.2] - 2026-07-10
 

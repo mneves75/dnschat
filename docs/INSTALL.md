@@ -126,19 +126,19 @@ xcrun devicectl device install app \
   <DERIVED_DATA>/Build/Products/Release-iphoneos/DNSChat.app
 ```
 
-Current release target: version `4.2.3` build `77`. Physical-device evidence on
+Current release: version `4.2.3` build `77`. Physical-device evidence on
 `2026-07-10` covers build `76`, which sustained normal, cold `dnschat://`, and
 foreground `dnschat://` launches after the iOS 27 `UIScene` repair. Build `77`
-must complete its own signed archive, IPA export, TestFlight upload, processing,
-and validation before it is described as distributed or attached to an App
-Store version.
+completed its signed archive, IPA export, TestFlight upload, `VALID` processing,
+and strict validation with `0` errors and `0` warnings. It was not separately
+installed on the physical device and is not attached to an App Store version.
 
-The latest uploaded TestFlight evidence before this release target is version
-`4.2.0` build `73`. The release lane archives, exports, uploads, waits
-for processing, and validates TestFlight before the build is described as
-distributed. App Store Connect identifiers, signing identifiers, tester group
-names, local paths, and device identifiers are intentionally omitted from public
-docs.
+The latest uploaded TestFlight evidence is version `4.2.3` build `77`, processed
+`VALID` on `2026-07-10` with bilingual test notes and non-exempt encryption set
+to `false`. App Store version validation is blocked because no `4.2.3` iOS
+version record exists. App Store Connect identifiers, signing identifiers,
+tester group names, local paths, and device identifiers are intentionally
+omitted from public docs.
 
 Signed TestFlight release shape:
 

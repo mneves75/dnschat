@@ -284,7 +284,7 @@ No user account is required. The app does not require app-owned backend infrastr
 ### App Store Connect Configuration
 
 - [x] Historical IPA upload evidence exists for `4.0.13` build `43`
-- [ ] Upload current release IPA build (`4.2.3` build `77`)
+- [x] Upload current release IPA build (`4.2.3` build `77`)
 - [x] Local ASC health checked with `asc doctor` (`2026-07-10`)
 - [x] Apply App Store Connect metadata for `en-US` and `pt-BR`
 - [x] Renew iPhone and iPad screenshot sets for `en-US` and `pt-BR`
@@ -305,10 +305,10 @@ No user account is required. The app does not require app-owned backend infrastr
 - [x] Historical App Store Connect upload/submission check passed for build `43`
 - [x] Historical TestFlight validation passed (`0` errors, `0` warnings) for build `43`
 - [x] Historical build `56` physical-device Release build/install/launch
-- [ ] Current build `77` signed archive/export
-- [ ] Current build `77` App Store Connect upload/processing check (`VALID`)
-- [ ] Current build `77` TestFlight validation (`0` errors, `0` warnings)
-- [ ] Current build `77` App Store pre-submit validation (blocked until App Store version record exists)
+- [x] Current build `77` signed archive/export
+- [x] Current build `77` App Store Connect upload/processing check (`VALID`)
+- [x] Current build `77` TestFlight validation (`0` errors, `0` warnings)
+- [ ] Current build `77` App Store pre-submit validation (`app store version not found for version "4.2.3" and platform "IOS"`)
 - [ ] Submit for App Store Review
 - [ ] Final testing on TestFlight
 - [ ] Review guidelines compliance check

@@ -31,18 +31,18 @@ Last full source/security sweep: `2026-06-10` (three-track review with fixes —
 see `CHANGELOG.md` `4.0.29`).
 Last AXe simulator E2E feature pass: `2026-06-05` for version `4.0.26` build
 `60`; 10 feature groups passed. Runtime UI verification now defaults to Argent.
-Current working version: `4.2.3` build `77` (signed TestFlight release target
-for the iOS 27 scene-lifecycle recovery; not uploaded yet). Build `76` was
+Current working and latest shipped version: `4.2.3` build `77` (TestFlight
+`VALID` on `2026-07-10`, with strict validation clean and bilingual test
+notes). Build `76` was
 installed and sustained through normal, cold `dnschat://`, and foreground
 `dnschat://` launches on a physical device. Build `75` was installed but
-but exited immediately because its Xcode 27-linked binary still used the legacy
-application lifecycle. The latest shipped release is version `4.2.0` build
-`73`, uploaded to TestFlight and processed `VALID` on `2026-07-04` (bilingual
-"What to Test" notes attached; strict validation clean). It supersedes
-`4.1.3` build `70` (`VALID` on `2026-06-22`). Do not describe any newer
-version as uploaded, distributed, or attached to an App Store version until
-separate `asc` or App Store Connect evidence proves it. App Store (production)
-submission has not happened for any build in this line.
+exited immediately because its Xcode 27-linked binary still used the legacy
+application lifecycle. Build `77` supersedes version `4.2.0` build `73`
+(`VALID` on `2026-07-04`). Its signed archive/export, TestFlight processing,
+group relationship, bilingual notes, and `0` error / `0` warning validation are
+verified; physical-device launch proof remains scoped to build `76`. No App
+Store version record exists for `4.2.3`, and App Store production submission
+has not happened for this line.
 
 - `npx react-doctor@latest --project chat-dns` reports `100 / 100` for
   `chat-dns` on `2026-06-10` (module also `100 / 100`).
@@ -67,13 +67,13 @@ submission has not happened for any build in this line.
 - Physical-device Release build, install, installed metadata check, and launch
   are separate evidence claims and are not implied by the local SDK 57 simulator
   and unsigned archive checks.
-- Current target: `4.2.3` build `77`. The release lane uses signed App Store
-  archive/export, App Store Connect upload, processing, and validation before
-  the build is described as distributed. Internal App Store Connect IDs are
-  intentionally omitted from public docs.
-- `asc validate testflight` must pass with `0` errors and `0` warnings before
-  build `77` is described as distributed. App Store version validation for
-  `4.2.3` is not applicable until a matching App Store version record exists.
+- Current release: `4.2.3` build `77`. Signed App Store archive/export passed,
+  TestFlight processing returned `VALID`, and strict validation reported `0`
+  errors and `0` warnings. Internal App Store Connect IDs are intentionally
+  omitted from public docs.
+- App Store version validation for `4.2.3` is blocked because no matching App
+  Store version record exists. This is App Store-submission state, not a
+  TestFlight processing failure.
 - `xcodebuild test` is not a native gate yet because the `DNSChat` scheme has no
   XCTest bundles.
 - Public docs and store copy must not claim that DNS prompts are private or
