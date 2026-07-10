@@ -109,22 +109,19 @@ xcodebuild clean archive \
   CODE_SIGNING_ALLOWED=NO
 ```
 
-Current TestFlight release target is `4.2.3` build `77`
-(`2026-07-10`, Expo SDK 57 / React Native 0.86, iOS 27 scene lifecycle). Signed upload
-validation must complete after the final source/docs state is verified and
-pushed:
+Current TestFlight release is `4.2.3` build `77` (`2026-07-10`, Expo SDK 57 /
+React Native 0.86, iOS 27 scene lifecycle):
 
 - `bun run verify:all`, native DNS tests, secret scan, version sync, and `asc
   doctor` passed with fresh build `77` evidence on `2026-07-10`.
 - Physical-device launch evidence belongs to build `76`, the immediate
-  predecessor carrying the same `UIScene` repair. It does not replace build
-  `77` signed archive/export/upload/validation evidence.
-- Signed App Store archive/export and TestFlight upload are required for
-  `4.2.3` build `77`; App Store Connect processing must return `VALID`, and
-  `asc validate testflight` must report `0` errors and `0` warnings. Exact App
-  Store Connect identifiers remain private.
-- Do not describe `4.2.3` build `77` as attached to an App Store version unless
-  App Store Connect evidence proves that relationship.
+  predecessor carrying the same `UIScene` repair. Build `77` was not separately
+  installed locally.
+- Signed App Store archive/export succeeded. TestFlight upload processed
+  `VALID`; strict validation reported `0` errors and `0` warnings, bilingual
+  test notes are present, and non-exempt encryption is `false`.
+- `4.2.3` build `77` is not attached to an App Store version. Validation reports
+  `app store version not found for version "4.2.3" and platform "IOS"`.
 - Internal App Store Connect IDs, tester group names, device names, device identifiers, local paths, team IDs, profile names, and certificate IDs are intentionally omitted from public docs.
 
 Earlier 4.0.14 baseline evidence (`2026-05-22`, Xcode `26.5` / `17F42`, SDK 56 baseline):
@@ -265,14 +262,14 @@ eas build --platform ios --profile production
 
 ### TestFlight distribution
 
-Current v4.2.3 distribution target:
+Current v4.2.3 distribution:
 
 - Version/build: `4.2.3` / `77`
-- Processing state: pending signed archive/export/upload; TestFlight validation
-  must report `0` errors and `0` warnings before distribution is claimed.
-- App Store state: create or update an App Store version only when preparing an
-  App Store submission; do not infer this relationship from TestFlight
-  processing alone.
+- Processing state: `VALID`; signed archive/export and upload succeeded, and
+  strict TestFlight validation reports `0` errors and `0` warnings.
+- App Store state: no iOS `4.2.3` version record exists. Create it only when
+  preparing an App Store submission; TestFlight processing does not imply that
+  relationship.
 - Tester groups: configured in App Store Connect; internal group names are intentionally omitted from public docs.
 - Exact build IDs and App Store Connect version IDs belong in private release notes, not public runbooks.
 

@@ -31,7 +31,7 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 
 ## Tech stack
 
-- App version: `4.2.3` (build `77`, TestFlight release target); last shipped `4.2.0` (build `73`, TestFlight `VALID`)
+- App version: `4.2.3` (build `77`, TestFlight `VALID`)
 - Expo workflow: Expo Router + EAS-compatible native config
 - Expo SDK: `57.0.x`
 - React: `19.2.3`
@@ -213,21 +213,22 @@ layer, storage, and UI — see `CHANGELOG.md` `4.0.29`).
 Last AXe simulator E2E feature pass: `2026-06-05` for version `4.0.26` build
 `60`; 10 feature groups passed (historical; Argent MCP is the current
 verification surface).
-The latest `VALID` TestFlight build is version `4.2.0` build `73`, processed
-`VALID` on `2026-07-04` with bilingual `What to Test` notes (`en-US` and
-`pt-BR`) and strict validation clean — see the release history below. It
-supersedes `4.1.3` build `70` (`VALID` on `2026-06-22`). Release builds use
+The latest `VALID` TestFlight build is version `4.2.3` build `77`, processed
+`VALID` on `2026-07-10` with bilingual `What to Test` notes (`en-US` and
+`pt-BR`) and strict validation reporting `0` errors and `0` warnings. It
+supersedes `4.2.0` build `73` (`VALID` on `2026-07-04`). Release builds use
 the proven `xcodebuild archive` -> `-exportArchive` -> `asc publish
 testflight` lane. App Store Connect has no App Store version record for this
 line, so App Store submission validation is not applicable for these
 TestFlight-only staging builds. The paragraphs below are release history.
 
-Version `4.2.3` build `77` is the current TestFlight release target. It carries
+Version `4.2.3` build `77` is the current TestFlight release. It carries
 the iOS 27 `UIScene` startup fix proven on a physical device in build `76`;
 final pre-archive gates passed on `2026-07-10` (Jest 983, native DNS 65, React
-Compiler 101/101, Expo Doctor 19/19, audit and secret scan clean). Signed
-archive/export, upload, processing, and TestFlight validation remain separate
-claims until the release lane completes.
+Compiler 101/101, Expo Doctor 19/19, audit and secret scan clean). Its signed
+archive and IPA export succeeded, App Store Connect processed it `VALID`, and
+strict TestFlight validation completed cleanly. Physical-device launch evidence
+remains scoped to build `76`; build `77` was not separately installed locally.
 
 Version `4.1.2` build `69` is a premium-feel pass on top of `4.1.1`: a semantic
 `palette.isDark` signal for the loading-skeleton tint (replacing a hard-coded-hex
@@ -243,9 +244,11 @@ and a keyboard drag-to-dismiss regression test; no app-behavior change versus
 `4.1.2`). It carries all of the `4.1.2` premium-feel work to TestFlight, since
 `4.1.2` itself was only Development-signed onto a device and never uploaded.
 
-- `4.2.3` build `77` is the current signed TestFlight release target for the
-  iOS 27 scene-lifecycle startup fix. Build `76` supplied physical-device launch
-  proof; build `77` must complete archive/export/upload/validation separately.
+- `4.2.3` build `77` **SHIPPED to TestFlight — `VALID` on `2026-07-10`**
+  for the iOS 27 scene-lifecycle startup fix. Signed archive/export succeeded,
+  bilingual test notes are present, and strict validation reported `0` errors
+  and `0` warnings. Build `76` supplied the separate physical-device launch
+  proof; build `77` was not separately installed locally.
 - `4.2.0` build `73` **SHIPPED to TestFlight — `VALID` on `2026-07-04`**
   (bilingual "What to Test" notes, `asc validate testflight --strict` `0/0/0`);
   supersedes `4.1.3` build `70`. Local gates
