@@ -31,14 +31,14 @@ Last full source/security sweep: `2026-06-10` (three-track review with fixes —
 see `CHANGELOG.md` `4.0.29`).
 Last AXe simulator E2E feature pass: `2026-06-05` for version `4.0.26` build
 `60`; 10 feature groups passed. Runtime UI verification now defaults to Argent.
-Current release target: version `4.1.5` build `72`. This SDK 57 lane carries
-the Expo SDK 57 / React Native 0.86 dependency and native pod refresh. Signed
-archive/export, TestFlight upload, processing, and validation run after the
-final source/docs state is verified and pushed. The latest uploaded TestFlight
-build before this lane is version `4.1.3` build `70` (`VALID` on
-`2026-06-22`). Do not describe `4.1.5` build `72` as uploaded, distributed, or
-attached to an App Store version until separate `asc` or App Store Connect
-evidence proves it.
+Current working version: `4.2.2` build `75` (2026-07-10 deep-audit hardening
+lane, not built or uploaded; absorbs the unshipped `4.2.1` dev bump). The latest shipped release is version `4.2.0` build
+`73`, uploaded to TestFlight and processed `VALID` on `2026-07-04` (bilingual
+"What to Test" notes attached; strict validation clean). It supersedes
+`4.1.3` build `70` (`VALID` on `2026-06-22`). Do not describe any newer
+version as uploaded, distributed, or attached to an App Store version until
+separate `asc` or App Store Connect evidence proves it. App Store (production)
+submission has not happened for any build in this line.
 
 - `npx react-doctor@latest --project chat-dns` reports `100 / 100` for
   `chat-dns` on `2026-06-10` (module also `100 / 100`).

@@ -88,10 +88,14 @@ export function Logs() {
     return () => { unsubscribe(); };
   }, []);
 
-  const handleRefresh = async () => {
+  const handleRefresh = () => {
     setRefreshing(true);
-    await loadLogs();
-    setRefreshing(false);
+    // Promise form (not try/finally block) per the React Compiler convention.
+    // loadLogs already swallows its own failure, but the .catch keeps a future
+    // rejection from leaving the pull-to-refresh spinner locked on.
+    loadLogs()
+      .catch(() => {})
+      .finally(() => setRefreshing(false));
   };
 
   const toggleExpanded = (logId: string) => {

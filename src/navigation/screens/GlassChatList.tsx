@@ -41,6 +41,7 @@ import { useTranslation } from "../../i18n";
 import { useImessagePalette } from "../../ui/theme/imessagePalette";
 import { useTypography } from "../../ui/hooks/useTypography";
 import { HapticFeedback } from "../../utils/haptics";
+import { devWarn } from "../../utils/devLog";
 import { getDateFnsLocale } from "../../utils/dateLocale";
 import { useScreenEntrance } from "../../ui/hooks/useScreenEntrance";
 import { useStaggeredListValues, AnimatedListItem } from "../../ui/hooks/useStaggeredList";
@@ -284,14 +285,25 @@ export function GlassChatList() {
   const [dismissedError, setDismissedError] = React.useState<string | null>(null);
   const visibleError = error && error !== dismissedError ? error : null;
 
+  // Guards against a double-fired "New chat" (the toolbar button and the empty
+  // state both call handleNewChat). A ref, not state: it never affects render.
+  const isCreatingChatRef = React.useRef(false);
+
   // Effect: load chat list on first mount and mark first load completion.
+  // loadChats surfaces its own failures through the context error (visibleError
+  // toast); the .finally still marks hasLoadedOnce so the skeleton always yields
+  // to the empty/error state even if loadChats ever begins to reject.
   React.useEffect(() => {
     let isMounted = true;
-    loadChats().then(() => {
-      if (isMounted && !hasLoadedOnce) {
-        setHasLoadedOnce(true);
-      }
-    });
+    loadChats()
+      .catch((loadError) => {
+        devWarn("[GlassChatList] Failed to load chats", loadError);
+      })
+      .finally(() => {
+        if (isMounted && !hasLoadedOnce) {
+          setHasLoadedOnce(true);
+        }
+      });
     return () => {
       isMounted = false;
     };
@@ -307,17 +319,31 @@ export function GlassChatList() {
   const showSkeleton = isLoading && !hasLoadedOnce && chats.length === 0;
 
   const handleNewChat = async () => {
-    const newChat = await createChat();
-    setCurrentChat(newChat);
-    push({
-      pathname: "/chat/[threadId]",
-      params: { threadId: newChat.id },
-    });
-
-    // Haptic feedback
-    if (Platform.OS === "ios") {
-      HapticFeedback.medium();
+    if (isCreatingChatRef.current) {
+      return;
     }
+    isCreatingChatRef.current = true;
+    // Re-arm the toast so a recurring identical error re-notifies after dismissal.
+    setDismissedError(null);
+    try {
+      const newChat = await createChat();
+      setCurrentChat(newChat);
+      push({
+        pathname: "/chat/[threadId]",
+        params: { threadId: newChat.id },
+      });
+
+      // Haptic feedback
+      if (Platform.OS === "ios") {
+        HapticFeedback.medium();
+      }
+    } catch (err) {
+      // createChat already sets the context error, which surfaces through the
+      // dismissable toast (visibleError). Swallow the rethrow here so it does
+      // not become an unhandled rejection.
+      devWarn("[GlassChatList] Failed to create chat", err);
+    }
+    isCreatingChatRef.current = false;
   };
 
   const handleChatPress = (chat: Chat) => {
@@ -349,7 +375,13 @@ export function GlassChatList() {
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await loadChats().finally(() => setRefreshing(false));
+    // Re-arm the toast so a recurring identical error re-notifies after dismissal.
+    setDismissedError(null);
+    await loadChats()
+      .catch((refreshError) => {
+        devWarn("[GlassChatList] Failed to refresh chats", refreshError);
+      })
+      .finally(() => setRefreshing(false));
   };
 
   const handleShareChat = async (chat: Chat) => {
@@ -362,6 +394,12 @@ export function GlassChatList() {
   const recentFooter = chats.length === 1
     ? t("screen.glassChatList.recent.footerSingle", { count: chats.length })
     : t("screen.glassChatList.recent.footerMultiple", { count: chats.length });
+
+  // Computed once for both the total and the average stat (was reduced twice in JSX).
+  const totalMessages = chats.reduce(
+    (total, chat) => total + chat.messages.length,
+    0,
+  );
 
   return (
     <>
@@ -453,7 +491,7 @@ export function GlassChatList() {
               subtitle={t("screen.glassChatList.stats.totalMessagesSubtitle")}
               rightContent={
                 <Text style={[styles.statValue, { color: palette.userBubble }]}>
-                  {chats.reduce((total, chat) => total + chat.messages.length, 0)}
+                  {totalMessages}
                 </Text>
               }
             />
@@ -463,12 +501,7 @@ export function GlassChatList() {
               subtitle={t("screen.glassChatList.stats.averageSubtitle")}
               rightContent={
                 <Text style={[styles.statValue, { color: palette.userBubble }]}>
-                  {Math.round(
-                    chats.reduce(
-                      (total, chat) => total + chat.messages.length,
-                      0,
-                    ) / chats.length,
-                  )}
+                  {Math.round(totalMessages / chats.length)}
                 </Text>
               }
             />

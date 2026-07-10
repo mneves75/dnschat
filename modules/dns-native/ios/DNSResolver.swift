@@ -9,9 +9,19 @@ final class DNSResolver: NSObject {
     // MARK: - Configuration
     // NOTE: Port is now dynamic - passed as parameter to support non-standard ports.
     private static let defaultDnsPort: UInt16 = 53
-    private static let queryTimeout: TimeInterval = 8.0
-    private static let udpAttemptTimeout: TimeInterval = 4.0
+    private static let udpAttemptTimeout: TimeInterval = 3.0
     private static let tcpAttemptTimeout: TimeInterval = 6.0
+    // A UDP timeout is non-terminal (udpThenTCP falls through to TCP), so the sub-10s
+    // budget takes its slack from UDP and preserves the original 6s TCP window — a TCP
+    // timeout IS terminal. Two invariants:
+    // 1. queryTimeout > udpAttemptTimeout + tcpAttemptTimeout, so the outer budget can
+    //    accommodate one full udpThenTCP attempt (UDP then TCP fallback) plus slack —
+    //    the pre-2026-07 8s budget truncated a valid slow TCP fallback mid-flight.
+    // 2. queryTimeout < the JS caller's 10s DNSService.TIMEOUT, so the native side always
+    //    settles (and cleans up its sockets) BEFORE the JS Promise.race abandons it —
+    //    Promise.race cannot cancel native work, and a native-side timeout is classified
+    //    correctly (TIMEOUT) by the JS error mapper, unlike a generic JS-side cutoff.
+    private static let queryTimeout: TimeInterval = udpAttemptTimeout + tcpAttemptTimeout + 0.5  // 9.5s
     private static let maxNativeAttempts: Int = 3
     private static let maxLabelLength: Int = 63
     private static let maxQNameLength: Int = 255
@@ -273,7 +283,7 @@ final class DNSResolver: NSObject {
                     }
                 } catch {
                     throw DNSError.queryFailed(
-                        "Native UDP blocked or timed out; TCP fallback failed: \(error.localizedDescription). UDP failure: \(udpFailure)"
+                        "Native UDP failed (\(udpFailure)); TCP fallback failed: \(error.localizedDescription)"
                     )
                 }
             }

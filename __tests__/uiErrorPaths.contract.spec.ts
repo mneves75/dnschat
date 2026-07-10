@@ -1,0 +1,133 @@
+import fs from "node:fs";
+
+/**
+ * Source-policy guards for plan 005 (UI error-path hardening). These flows are
+ * not covered by a render harness in this repo; the specs pin the structural
+ * contract so a regression re-introduces a swallowed rejection or a locked
+ * spinner loudly instead of silently.
+ */
+describe("UI error-path hardening", () => {
+  const logsSource = fs.readFileSync(
+    "src/navigation/screens/Logs.tsx",
+    "utf8",
+  );
+  const chatListSource = fs.readFileSync(
+    "src/navigation/screens/GlassChatList.tsx",
+    "utf8",
+  );
+  const chatSource = fs.readFileSync(
+    "src/navigation/screens/Chat.tsx",
+    "utf8",
+  );
+  const chatRouteSource = fs.readFileSync(
+    "app/chat/[threadId].tsx",
+    "utf8",
+  );
+
+  it("Logs pull-to-refresh clears the spinner through .finally even on failure", () => {
+    expect(logsSource).toContain(".finally(() => setRefreshing(false))");
+    // The old unguarded shape (await then a bare setRefreshing(false)) is gone.
+    expect(logsSource).not.toContain("await loadLogs();\n    setRefreshing(false);");
+    // React Compiler convention: no try/finally block in the refresh path.
+    expect(logsSource).not.toContain("} finally {");
+  });
+
+  it("GlassChatList guards New Chat against a double fire", () => {
+    expect(chatListSource).toContain("const isCreatingChatRef = React.useRef(false)");
+    expect(chatListSource).toContain("if (isCreatingChatRef.current) {");
+    expect(chatListSource).toContain("isCreatingChatRef.current = true;");
+    expect(chatListSource).toContain("isCreatingChatRef.current = false;");
+    // The create + navigate is wrapped so the rethrow cannot escape.
+    expect(chatListSource).toContain("const newChat = await createChat();");
+    expect(chatListSource).toContain('devWarn("[GlassChatList] Failed to create chat"');
+  });
+
+  it("GlassChatList mount load never locks the skeleton on rejection", () => {
+    expect(chatListSource).toContain('devWarn("[GlassChatList] Failed to load chats"');
+    // hasLoadedOnce is set from .finally, not only from the old success-only .then.
+    expect(chatListSource).not.toContain("loadChats().then(");
+    const mountBlock = chatListSource.slice(
+      chatListSource.indexOf("let isMounted = true;"),
+      chatListSource.indexOf("isMounted = false;"),
+    );
+    expect(mountBlock).toContain(".catch((loadError)");
+    expect(mountBlock).toContain(".finally(");
+    expect(mountBlock).toContain("if (isMounted && !hasLoadedOnce) {");
+  });
+
+  it("GlassChatList re-arms dismissed errors on a new action", () => {
+    // Both the create and refresh entry points reset the dismissed-error latch.
+    const dismissedResets = chatListSource.match(/setDismissedError\(null\)/g) ?? [];
+    expect(dismissedResets.length).toBeGreaterThanOrEqual(2);
+    expect(chatListSource).toContain('devWarn("[GlassChatList] Failed to refresh chats"');
+  });
+
+  it("GlassChatList computes the message total once for both stats", () => {
+    const reduceCount = chatListSource.match(/chats\.reduce\(/g) ?? [];
+    expect(reduceCount.length).toBe(1);
+    expect(chatListSource).toContain("const totalMessages = chats.reduce(");
+    expect(chatListSource).toContain("{totalMessages}");
+    expect(chatListSource).toContain("Math.round(totalMessages / chats.length)");
+  });
+
+  it("Chat send flow re-arms the dismissed error latch", () => {
+    expect(chatSource).toContain("setDismissedError(null)");
+    // The reset happens inside the send entry point, before sendMessage.
+    const sendBlock = chatSource.slice(
+      chatSource.indexOf("const handleSendMessage"),
+      chatSource.indexOf("const handleRetryLastFailedMessage"),
+    );
+    expect(sendBlock).toContain("setDismissedError(null)");
+    expect(sendBlock).toContain("await sendMessage(message)");
+  });
+
+  it("chat route retries the auto-create on failure, but with a bounded cap", () => {
+    const createBlock = chatRouteSource.slice(
+      chatRouteSource.indexOf('lastAttemptedRef.current = "new"'),
+      chatRouteSource.indexOf(".finally(() => setIsResolving(false))"),
+    );
+    // Re-arms the guard so a transient failure recovers…
+    expect(createBlock).toContain("lastAttemptedRef.current = null;");
+    // …but only under an attempts cap: this effect re-fires when isResolving
+    // settles, so an unconditional reset would loop create/fail unboundedly.
+    expect(createBlock).toContain(
+      "createAttemptsRef.current < MAX_AUTO_CREATE_ATTEMPTS",
+    );
+    expect(chatRouteSource).toContain("const MAX_AUTO_CREATE_ATTEMPTS = 3");
+    expect(createBlock).toContain('devWarn("[ChatRoute] Failed to create chat"');
+  });
+
+  it("chat route clears the auto-create guards after a successful creation", () => {
+    // Expo Router reuses the route component across param changes, so stale
+    // refs would block a later parameterless visit from auto-creating and old
+    // transient failures would permanently consume the retry budget. Both
+    // success paths (effect-driven auto-create and the manual "start new
+    // chat" action) must reset the guards.
+    const marker = ".then((chat) => {";
+    const successBlocks: string[] = [];
+    let cursor = chatRouteSource.indexOf(marker);
+    while (cursor !== -1) {
+      const end = chatRouteSource.indexOf("setCurrentChat(chat)", cursor);
+      successBlocks.push(chatRouteSource.slice(cursor, end));
+      cursor = chatRouteSource.indexOf(marker, cursor + marker.length);
+    }
+    expect(successBlocks.length).toBe(2);
+    for (const block of successBlocks) {
+      expect(block).toContain("lastAttemptedRef.current = null;");
+      expect(block).toContain("createAttemptsRef.current = 0;");
+    }
+  });
+
+  it("chat route grants a fresh auto-create budget when the route target changes", () => {
+    // A failed burst must not exhaust the guards forever: a NEW visit
+    // (normalized target change) resets both refs so storage recovery is
+    // reachable, while the attempts cap still bounds a single visit.
+    const resetEffect = chatRouteSource.slice(
+      chatRouteSource.indexOf("a new route target is a new visit"),
+      chatRouteSource.indexOf("[normalizedThreadId]"),
+    );
+    expect(resetEffect).toContain("lastAttemptedRef.current = null;");
+    expect(resetEffect).toContain("createAttemptsRef.current = 0;");
+    expect(chatRouteSource).toContain("}, [normalizedThreadId]);");
+  });
+});

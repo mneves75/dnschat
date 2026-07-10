@@ -227,6 +227,50 @@ describe("Native DNS Module", () => {
           nativeError: new Error("Permission denied for DNS query"),
           expectedType: DNSErrorType.PERMISSION_DENIED,
         },
+        // Native reject sites always carry code "DNS_QUERY_FAILED"; substring
+        // classification must still win so real timeouts/network failures are
+        // typed correctly instead of collapsing into DNS_QUERY_FAILED.
+        {
+          nativeError: {
+            code: "DNS_QUERY_FAILED",
+            message: "DNS query timed out",
+          },
+          expectedType: DNSErrorType.TIMEOUT,
+        },
+        {
+          nativeError: {
+            code: "DNS_QUERY_FAILED",
+            message:
+              "Native UDP failed (blocked); TCP fallback failed: Receive timed out",
+          },
+          expectedType: DNSErrorType.TIMEOUT,
+        },
+        {
+          nativeError: {
+            code: "DNS_QUERY_FAILED",
+            message: "network unavailable",
+          },
+          expectedType: DNSErrorType.NETWORK_UNAVAILABLE,
+        },
+        // Composed messages can carry BOTH network and permission indicators;
+        // permission is the actionable classification and must win.
+        {
+          nativeError: {
+            code: "DNS_QUERY_FAILED",
+            message:
+              "Native UDP failed (network unavailable); TCP fallback failed: Permission denied",
+          },
+          expectedType: DNSErrorType.PERMISSION_DENIED,
+        },
+        // Same rule against timeout wording: permission beats timeout too.
+        {
+          nativeError: {
+            code: "DNS_QUERY_FAILED",
+            message:
+              "Native UDP failed (timed out); TCP fallback failed: Permission denied",
+          },
+          expectedType: DNSErrorType.PERMISSION_DENIED,
+        },
       ];
 
       for (const testCase of testCases) {

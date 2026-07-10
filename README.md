@@ -7,7 +7,7 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 - JavaScript fallback transports (UDP/TCP) for constrained networks
 - An in-app Logs screen to inspect attempts, failures, and fallbacks
 
-[![Version](https://img.shields.io/badge/version-4.2.1-blue.svg)](.)
+[![Version](https://img.shields.io/badge/version-4.2.2-blue.svg)](.)
 [![React Native](https://img.shields.io/badge/React%20Native-0.86.0-blue.svg)](https://reactnative.dev/)
 [![Expo](https://img.shields.io/badge/Expo-57.0.x-black.svg)](https://expo.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0.x-blue.svg)](https://www.typescriptlang.org/)
@@ -31,7 +31,7 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 
 ## Tech stack
 
-- App version: `4.2.1` (build `74`, dev); last shipped `4.2.0` (build `73`, TestFlight `VALID`)
+- App version: `4.2.2` (build `75`, dev); last shipped `4.2.0` (build `73`, TestFlight `VALID`)
 - Expo workflow: Expo Router + EAS-compatible native config
 - Expo SDK: `57.0.x`
 - React: `19.2.3`
@@ -206,20 +206,21 @@ Release:
 
 ## Current verification baseline
 
-Last architecture/dependency verification: `2026-06-10`.
+Last architecture/dependency verification: `2026-06-30`.
 Last full source/security sweep: `2026-06-10` (three-track review: security,
 architecture, performance; fixes applied across the DNS pipeline, native
 layer, storage, and UI — see `CHANGELOG.md` `4.0.29`).
 Last AXe simulator E2E feature pass: `2026-06-05` for version `4.0.26` build
 `60`; 10 feature groups passed (historical; Argent MCP is the current
 verification surface).
-The latest `VALID` TestFlight build is version `4.1.3` build `70`, signed with the
-Apple Distribution identity, uploaded to the internal tester group, and processed
-`VALID` on `2026-06-22` (advancing from `4.1.1` build `68`, also `VALID`). Release
-builds use the proven `xcodebuild archive` -> `-exportArchive` -> `asc publish
-testflight` lane with bilingual `What to Test` notes (`en-US` and `pt-BR`). App
-Store Connect has no App Store version record for this line, so App Store submission
-validation is not applicable for these TestFlight-only staging builds.
+The latest `VALID` TestFlight build is version `4.2.0` build `73`, processed
+`VALID` on `2026-07-04` with bilingual `What to Test` notes (`en-US` and
+`pt-BR`) and strict validation clean — see the release history below. It
+supersedes `4.1.3` build `70` (`VALID` on `2026-06-22`). Release builds use
+the proven `xcodebuild archive` -> `-exportArchive` -> `asc publish
+testflight` lane. App Store Connect has no App Store version record for this
+line, so App Store submission validation is not applicable for these
+TestFlight-only staging builds. The paragraphs below are release history.
 
 Version `4.1.2` build `69` is a premium-feel pass on top of `4.1.1`: a semantic
 `palette.isDark` signal for the loading-skeleton tint (replacing a hard-coded-hex
