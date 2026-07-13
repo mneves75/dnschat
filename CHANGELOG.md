@@ -4,9 +4,49 @@ All notable changes to DNSChat will be documented in this file.
 
 The format is based on Keep a Changelog, and this project follows Semantic Versioning.
 
-## [Unreleased]
+## [4.3.0] - 2026-07-13
 
-Nothing yet beyond `4.2.3`.
+Build `77` -> `78`. Home-screen "Signal Path" redesign, cross-platform web
+parity (working alerts and theme on web), plain-language copy, and resilient
+chat-storage corruption handling. Working version on `main`; not a TestFlight
+release.
+
+### Added
+
+- A clearer home-screen signal path from device to DNS resolver to TXT
+  response, with an explicit reminder that DNS traffic is observable and must
+  not carry sensitive data.
+- Product and design contracts for the restrained, native-first visual system.
+- A platform-aware alert wrapper so confirmation and destructive dialogs render
+  on web (via native browser dialogs) instead of silently doing nothing.
+- Shared color-scheme resolution so the theme preference (System/Light/Dark)
+  is honored on web, where `Appearance.setColorScheme` has no effect.
+
+### Changed
+
+- The primary new-conversation action now has stronger hierarchy and consistent
+  contrast-safe labeling and press feedback while preserving reduced-motion
+  behavior; opaque Android controls use foreground ripples.
+- Settings validation imports its narrow validation module directly instead of
+  loading the DNS transport stack during provider initialization.
+- User-facing copy was rewritten in plain language, removing promotional
+  hyperbole in favor of factual descriptions of what the app does.
+
+### Fixed
+
+- Corruption handling in chat storage now quarantines individual malformed
+  records instead of discarding the entire history: well-formed conversations
+  survive when a single legacy or corrupt chat/message is present, the offending
+  records are dropped (or repaired), and the original payload is backed up.
+  Genuinely unparseable payloads still fail safe.
+- Corrupt or structurally invalid encrypted chat records are rejected safely;
+  supported legacy records receive normalized titles and message status.
+- Invalid persisted onboarding progress is removed and reset instead of leaving
+  the app on an impossible or blank step.
+- Alert dialogs with no explicit buttons now stay dismissable on Android
+  (the wrapper forwards the platform default instead of an empty action list).
+- React Compiler/Doctor issues in keyed spreads, skeleton keys, Reanimated test
+  state, and the oversized chat-list component. React Doctor is 100/100.
 
 ## [4.2.3] - 2026-07-10
 

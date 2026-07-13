@@ -62,12 +62,10 @@ describe("UI error-path hardening", () => {
     expect(chatListSource).toContain('devWarn("[GlassChatList] Failed to refresh chats"');
   });
 
-  it("GlassChatList computes the message total once for both stats", () => {
-    const reduceCount = chatListSource.match(/chats\.reduce\(/g) ?? [];
-    expect(reduceCount.length).toBe(1);
-    expect(chatListSource).toContain("const totalMessages = chats.reduce(");
-    expect(chatListSource).toContain("{totalMessages}");
-    expect(chatListSource).toContain("Math.round(totalMessages / chats.length)");
+  it("GlassChatList keeps low-value aggregate statistics out of the primary path", () => {
+    expect(chatListSource).not.toContain('testID="chat-list-total-messages"');
+    expect(chatListSource).not.toContain('testID="chat-list-average-messages"');
+    expect(chatListSource).not.toContain("chats.reduce(");
   });
 
   it("Chat send flow re-arms the dismissed error latch", () => {

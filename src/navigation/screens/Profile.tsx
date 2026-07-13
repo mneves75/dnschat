@@ -13,7 +13,6 @@ import {
   StyleSheet,
   Text,
   View,
-  Alert,
   Platform,
 } from "react-native";
 import Animated from "react-native-reanimated";
@@ -28,6 +27,7 @@ import { useChat } from "../../context/ChatContext";
 import { formatDistanceToNow } from "date-fns";
 import { useSettings } from "../../context/SettingsContext";
 import { getDateFnsLocale } from "../../utils/dateLocale";
+import { appAlert } from "../../utils/appAlert";
 
 interface ProfileProps {
   user?: string;
@@ -70,7 +70,7 @@ export function Profile({ user }: ProfileProps) {
       return;
     }
 
-    Alert.alert(
+    appAlert(
       t("screen.profile.alerts.clearDataTitle", { defaultValue: "Clear All Data" }),
       t("screen.profile.alerts.clearDataMessage", {
         defaultValue: "This will delete all your chats and messages. This action cannot be undone.",
@@ -87,13 +87,13 @@ export function Profile({ user }: ProfileProps) {
             setIsClearingData(true);
             try {
               await clearAllChats?.();
-              Alert.alert(
+              appAlert(
                 t("screen.profile.alerts.clearDataSuccessTitle"),
                 t("screen.profile.alerts.clearDataSuccessMessage"),
                 [{ text: t("common.ok") }],
               );
             } catch {
-              Alert.alert(
+              appAlert(
                 t("common.errorTitle"),
                 t("screen.profile.alerts.clearDataErrorMessage"),
                 [{ text: t("common.ok") }],
@@ -107,7 +107,7 @@ export function Profile({ user }: ProfileProps) {
   };
 
   const handleExportData = () => {
-    Alert.alert(
+    appAlert(
       t("screen.profile.alerts.exportTitle", { defaultValue: "Export Data" }),
       t("screen.profile.alerts.exportMessage", {
         defaultValue: "Data export will be available in a future update.",

@@ -18,7 +18,6 @@ import {
   Text,
   TouchableWithoutFeedback,
   View,
-  useColorScheme,
   useWindowDimensions,
 } from "react-native";
 import type { StyleProp, ViewStyle } from "react-native";
@@ -29,6 +28,7 @@ import { LiquidGlassWrapper } from "../LiquidGlassWrapper";
 import { useImessagePalette } from "../../ui/theme/imessagePalette";
 import { PressableRipple } from "../PressableRipple";
 import { CloseIcon } from "../icons/CloseIcon";
+import { useResolvedColorScheme } from "../../ui/theme/resolvedColorScheme";
 
 
 interface GlassBottomSheetProps {
@@ -431,7 +431,7 @@ export const useGlassBottomSheet = () => {
 };
 
 function useGlassSheetColors() {
-  const isDark = useColorScheme() === "dark";
+  const isDark = useResolvedColorScheme() === "dark";
   const palette = useImessagePalette();
 
   return {

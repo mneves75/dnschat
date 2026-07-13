@@ -38,6 +38,61 @@
 </head>
 <body>
   <h1>DNSChat Implementation Notes</h1>
+  <section id="premium-audit-2026-07-11">
+    <h2>Premium and Production Audit &mdash; 2026-07-11 (4.2.3 build 77)</h2>
+    <p><strong>Scope:</strong> evidence-first React Native UX, architecture, correctness, security, dependency, and production-readiness pass. Existing unrelated work was preserved. No release, deployment, commit, or version bump was authorized.</p>
+    <p><strong>Baseline:</strong> repository root <code>chat-dns</code>, branch <code>main</code>, Bun 1.4.0, Expo Router, strict TypeScript, React Compiler, Hermes, and New Architecture. Initial dirty state was limited to <code>AGENTS.md</code>. React Doctor began at <strong>67/100</strong> with three errors and one large-component warning.</p>
+
+    <h3>Five-dimension baseline</h3>
+    <table>
+      <thead><tr><th>Dimension</th><th>Score</th><th>Evidence</th><th>Fix or keep</th></tr></thead>
+      <tbody>
+        <tr><td>Press states</td><td>17/20</td><td><code>PressableRipple.tsx</code> centralizes iOS scale/opacity, Android ripple, disabled state, and reduced-motion behavior; raw pressables remain in toast and web-menu internals.</td><td>Kept the shared primitive and used it for the new primary compose action.</td></tr>
+        <tr><td>Subtle animations</td><td>14/20</td><td><code>useScreenEntrance.ts</code>, <code>useStaggeredList.tsx</code>, and skeletons respect reduced motion, but onboarding entrances and large stagger pools are longer than the 150&ndash;300ms target.</td><td>Keep causal motion; future work should remove ambient utility-screen entrances.</td></tr>
+        <tr><td>Haptics</td><td>11/20</td><td><code>expo-haptics</code> 57 is preference-gated and semantic, but current hardware availability logic is iOS-only while Android exposes the preference.</td><td>Documented as a platform-parity risk; no speculative hardware change was made without device proof.</td></tr>
+        <tr><td>Keyboard behavior</td><td>19/20</td><td><code>react-native-keyboard-controller</code> 1.21.9, <code>KeyboardStickyView</code>, dynamic insets, multiline submit handling, and interactive/on-drag dismissal are present.</td><td>Keep; validate large text and Android resize in runtime QA.</td></tr>
+        <tr><td>Loading, empty, error</td><td>16/20</td><td>Chat and logs use skeletons and actionable empty/error states; settings has a skeleton but still exposes defaults during hydration.</td><td>Keep the shared state components; settings hydration remains a medium finding.</td></tr>
+      </tbody>
+    </table>
+    <p><strong>Baseline premium score:</strong> 77/100, Premium.</p>
+    <p><strong>Final premium score:</strong> 80/100, Premium (press states 18, subtle animations 14, haptics 11, keyboard behavior 19, loading/empty/error recovery 18). The increase reflects the verified primary-action feedback and contrast plus resilient corrupt-state recovery; unresolved motion, haptic parity, and list-virtualization work prevents a higher claim.</p>
+
+    <h3>Facts and decisions</h3>
+    <ul>
+      <li><strong>Expo:</strong> SDK 57 is the latest stable release as of this pass. The repo was already aligned at Expo 57.0.4, React Native 0.86.0, React 19.2.3, Reanimated 4.5.0, and Worklets 0.10.0. <code>npx expo install --check</code> reported dependencies up to date, so no dependency churn or native regeneration was justified.</li>
+      <li><strong>Visual direction:</strong> Image generation explored all core screens in a restrained &ldquo;Signal Path&rdquo; system. The home surface now shows a factual device-to-DNS-to-response path, a clear primary compose control, explicit observable-DNS disclosure, and no low-value statistics block. <code>PRODUCT.md</code> and <code>DESIGN.md</code> capture the product and visual contracts.</li>
+      <li><strong>Correctness:</strong> encrypted chat hydration now requires valid titles and timestamps, validates message status, and normalizes the known legacy missing-status shape. Invalid onboarding snapshots are removed and reset rather than stranding users on a blank step.</li>
+      <li><strong>Architecture:</strong> settings validation imports the narrow <code>dnsServerValidation</code> seam directly instead of evaluating the 1,806-line transport module and socket adapters during provider startup.</li>
+      <li><strong>React Doctor:</strong> moved JSX keys after prop spreads, replaced render-time ref access in the Reanimated mock with create-once state, and split the large chat-list component into focused sections. Result: <strong>100/100</strong>, zero findings.</li>
+      <li><strong>Security:</strong> no critical/high finding. Raw DNS remains observable and unauthenticated by design; transaction/source/question checks do not protect against an on-path resolver. The app must continue disclosing this boundary. A declared 10 MiB storage limit is not yet enforced and remains a medium risk.</li>
+      <li><strong>Claude Code:</strong> version 2.1.207 was installed and a minimal probe succeeded. Two read-only repository critiques stalled without output and were interrupted, so no Claude design claim is included.</li>
+      <li><strong>Runtime QA:</strong> the first native screenshot exposed a transparent primary button, and auto-review then caught insufficient label contrast plus a hidden Android background ripple. The final control uses a clipped opaque fill, contrast-safe on-chroma content, and a foreground Android ripple.</li>
+    </ul>
+
+    <h3>Validation evidence</h3>
+    <ul>
+      <li><code>npx react-doctor@latest --project chat-dns --verbose</code>: 100/100, no findings.</li>
+      <li><code>bun run typecheck</code>: pass after focused fixes.</li>
+      <li>Focused persistence regression tests: 2 suites, 29 tests passed.</li>
+      <li><code>npx expo install --check</code>: dependencies up to date.</li>
+      <li>Security review evidence: <code>bun audit</code> clean, gitleaks full-history scan clean, targeted app/native security suites passed, public redaction passed.</li>
+      <li><code>bun run verify:all</code>: pass on the final diff; 125 Jest suites passed, 997 tests passed, 13 skipped, and all typecheck, lint, route, React Compiler, SDK, native-config, public-redaction, dependency, secret-scan, and Expo Doctor gates passed.</li>
+      <li><code>cd modules/dns-native &amp;&amp; bun run test</code>: 8 suites passed, 65 tests passed, 13 skipped.</li>
+      <li><code>asc doctor</code>: local App Store Connect configuration healthy; no upload or release action was performed.</li>
+      <li>Xcode 27 beta Debug simulator build: succeeded. The compiled app bundled, rendered the final home surface in deterministic screenshot mode, and remained alive after capture.</li>
+      <li>Final local <code>autoreview</code>: clean, with no accepted or actionable findings after storage, onboarding, contrast, and Android ripple findings were fixed and regression-tested.</li>
+    </ul>
+
+    <h3>Remaining risks and deviations</h3>
+    <ul>
+      <li>Chat history still uses a non-virtualized grouped form list; long-lived histories can create mount/render cost. A FlatList conversion is the highest remaining UX/performance change, but it changes the screen container and requires simulator proof.</li>
+      <li>SDK 57 documents a Hermes V1/Reanimated memory regression. Worklets bundle mode was not enabled without profiling evidence.</li>
+      <li>Argent MCP was unavailable in this session, so the native simulator build/launch and screenshot path was used as the next-best runtime check. AXe was not used because it was neither requested nor the preferred project runtime surface.</li>
+      <li>No version bump: the work is unreleased source/design hardening, not release packaging.</li>
+    </ul>
+  </section>
+
+  <hr />
   <p><strong>Scope:</strong> full frontend UI/UX and source-code review for this DNSChat repo, followed by justified fixes, tests, verification, commit, and push when available.</p>
   <p><strong>Stop condition:</strong> no known critical/high issues remain; medium findings are either fixed or explicitly justified; strongest local checks have fresh outcomes; browser/runtime evidence is captured for user-visible frontend changes when feasible.</p>
 

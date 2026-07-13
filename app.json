@@ -2,7 +2,7 @@
   "expo": {
     "name": "DNS Chat",
     "slug": "chat-dns",
-    "version": "4.2.3",
+    "version": "4.3.0",
     "orientation": "default",
     "icon": "./icons/dnschat-icon-light.png",
     "userInterfaceStyle": "automatic",
@@ -19,7 +19,7 @@
       },
       "supportsTablet": true,
       "deploymentTarget": "16.4",
-      "buildNumber": "77",
+      "buildNumber": "78",
       "bundleIdentifier": "org.mvneves.dnschat",
       "config": {
         "usesNonExemptEncryption": false
@@ -30,7 +30,7 @@
         "foregroundImage": "./icons/dnschat-adaptive-foreground.png",
         "backgroundColor": "#0D7377"
       },
-      "versionCode": 77,
+      "versionCode": 78,
       "predictiveBackGestureEnabled": true,
       "package": "org.mvneves.dnschat"
     },

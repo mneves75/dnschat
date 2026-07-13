@@ -7,9 +7,13 @@ import { createWithSuppressedWarnings } from "./utils/reactTestRenderer";
 
 const mockUseSettings = jest.fn();
 
-jest.mock("../src/context/SettingsContext", () => ({
-  useSettings: () => mockUseSettings(),
-}));
+jest.mock("../src/context/SettingsContext", () => {
+  const ReactModule = jest.requireActual<typeof import("react")>("react");
+  return {
+    SettingsContext: ReactModule.createContext(undefined),
+    useSettings: () => mockUseSettings(),
+  };
+});
 
 jest.mock("../src/context/OnboardingContext", () => ({
   useOnboarding: () => ({ resetOnboarding: jest.fn() }),

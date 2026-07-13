@@ -2,7 +2,6 @@ import React from "react";
 import {
   View,
   StyleSheet,
-  useColorScheme,
   Platform,
 } from "react-native";
 import type { AccessibilityActionEvent } from "react-native";
@@ -19,6 +18,7 @@ import { useTranslation } from "../i18n";
 import { useLocale } from "../context/SettingsContext";
 import { NativeMenu } from "./platform/NativeMenu";
 import type { NativeMenuAction, NativeMenuActionEvent } from "./platform/NativeMenu";
+import { useResolvedColorScheme } from "../ui/theme/resolvedColorScheme";
 
 const androidCopyIcon = require("../assets/icons/menu-content-copy.xml");
 const androidShareIcon = require("../assets/icons/menu-share.xml");
@@ -38,7 +38,7 @@ interface MessageBubbleProps {
 }
 
 function MessageBubbleComponent({ message }: MessageBubbleProps) {
-  const colorScheme = useColorScheme();
+  const colorScheme = useResolvedColorScheme();
   const isDark = colorScheme === "dark";
   const typography = useTypography();
   const palette = useImessagePalette();

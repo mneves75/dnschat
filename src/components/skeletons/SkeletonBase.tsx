@@ -170,11 +170,11 @@ export function SkeletonText({
 
         return (
           <SkeletonBox
-            key={index}
             width={lineWidth}
             height={lineHeight}
             delay={index * staggerDelay}
             {...boxProps}
+            key={`skeleton-line-${index}`}
           />
         );
       })}

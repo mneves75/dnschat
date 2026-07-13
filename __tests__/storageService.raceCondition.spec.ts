@@ -244,6 +244,25 @@ describe('StorageService Race Condition Prevention', () => {
       expect(chats[1].id).toBe('existing');
     });
 
+    it('normalizes titles before persisting them', async () => {
+      let currentStorage: string | null = null;
+      mockAsyncStorage.getItem.mockImplementation(async () => currentStorage);
+      mockAsyncStorage.setItem.mockImplementation(async (_key, value) => {
+        currentStorage = value;
+      });
+
+      const created = await StorageService.createChat('   ');
+      expect(created.title).toBe('New Chat');
+
+      await StorageService.updateChat(created.id, { title: '  Renamed  ' });
+      const renamed = await parseStoredChats(currentStorage!);
+      expect(renamed[0]?.title).toBe('Renamed');
+
+      await StorageService.updateChat(created.id, { title: '   ' });
+      const preserved = await parseStoredChats(currentStorage!);
+      expect(preserved[0]?.title).toBe('Renamed');
+    });
+
     it('updateMessage preserves other messages', async () => {
       const chatId = 'chat-1';
       const chat = {

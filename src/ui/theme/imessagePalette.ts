@@ -1,7 +1,7 @@
-import { useColorScheme } from "react-native";
 import type { ColorValue } from "react-native";
 import { useHighContrast } from "../../context/AccessibilityContext";
 import { systemColors } from "./platformColors";
+import { useResolvedColorScheme } from "./resolvedColorScheme";
 
 export interface IMessagePalette {
   background: string;
@@ -154,7 +154,7 @@ export const getImessagePalette = (
 };
 
 export const useImessagePalette = () => {
-  const colorScheme = useColorScheme();
+  const colorScheme = useResolvedColorScheme();
   // useHighContrast is provider-resilient: tests that mount components without
   // AccessibilityProvider still get the standard palette.
   const { isHighContrast } = useHighContrast();

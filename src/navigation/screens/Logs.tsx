@@ -16,7 +16,6 @@ import {
   View,
   Text,
   StyleSheet,
-  Alert,
   ActivityIndicator,
   Platform,
 } from "react-native";
@@ -37,6 +36,7 @@ import { LogsSkeleton } from "../../components/skeletons";
 import { EmptyState } from "../../components/EmptyState";
 import { CheckmarkIcon } from "../../components/icons/CheckmarkIcon";
 import { CloseIcon } from "../../components/icons/CloseIcon";
+import { appAlert } from "../../utils/appAlert";
 
 type TFn = (key: MessageKey, params?: TranslationParams) => string;
 
@@ -111,7 +111,7 @@ export function Logs() {
   };
 
   const clearLogs = () => {
-    Alert.alert(
+    appAlert(
       t("screen.logs.alerts.clearTitle"),
       t("screen.logs.alerts.clearMessage"),
       [
@@ -124,7 +124,7 @@ export function Logs() {
               await DNSLogService.clearLogs();
               setLogs([]);
             } catch {
-              Alert.alert(
+              appAlert(
                 t("screen.logs.alerts.clearErrorTitle"),
                 t("screen.logs.alerts.clearErrorMessage"),
               );

@@ -54,12 +54,12 @@ export const enUS = {
       },
       welcome: {
         title: "Welcome to DNS Chat",
-        subtitle: "The world's first chat app that uses DNS queries to communicate with AI",
+        subtitle: "Send prompts as DNS TXT queries and receive responses in TXT records",
         appIconLabel: "DNS Chat app icon",
         features: {
           revolutionary: {
-            label: "Revolutionary",
-            title: "Revolutionary Technology",
+            label: "DNS TXT",
+            title: "DNS-Based Transport",
             description: "Chat through DNS TXT records - no traditional APIs needed",
           },
           private: {
@@ -78,8 +78,8 @@ export const enUS = {
         label: "Chat",
         title: "Try Your First Chat",
         subtitle: "Send a message and watch it travel through DNS",
-        welcomeMessage: "Hi! I'm your AI assistant. Try sending me a message to see how DNS magic works!",
-        successMessage: "Great! You've successfully sent your first DNS message. In a real scenario, this would return an AI response via DNS TXT records. The magic is that your message traveled through the DNS infrastructure!",
+        welcomeMessage: "Send a short prompt. The app carries it in a DNS TXT query.",
+        successMessage: "Your prompt was sent as a DNS TXT query. When the server replies, the response returns in DNS TXT records.",
         failureMessage: "The DNS message could not be delivered. Check your network settings or try again later.",
         suggestions: {
           title: "Try one of these:",
@@ -95,7 +95,7 @@ export const enUS = {
           sendingVia: "Sending via DNS…",
         },
         navigation: {
-          continue: "Amazing! Continue",
+          continue: "Continue",
           skip: "Skip Tutorial",
         },
         accessibility: {
@@ -110,7 +110,7 @@ export const enUS = {
       },
       dnsMagic: {
         label: "DNS",
-        title: "DNS Magic in Action",
+        title: "DNS Transport in Action",
         subtitle: "Watch as your message travels through multiple DNS fallback methods",
         demoButton: "Start DNS Demo",
         demoButtonRunning: "DNS Query in Progress...",
@@ -330,9 +330,9 @@ export const enUS = {
       navigationTitle: "DNS Chat",
       newConversation: {
         title: "Start New Conversation",
-        subtitle: "Spin up a fresh thread with DNS AI",
         button: "New Chat",
-        description: "Start a new conversation with DNS AI",
+        description: "Send a short prompt through a DNS TXT request.",
+        observableNotice: "DNS traffic is observable on the network and is not private.",
       },
       recent: {
         title: "Recent Conversations",

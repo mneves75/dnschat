@@ -80,6 +80,45 @@ const INITIAL_ONBOARDING_STATE: PersistedOnboardingState = {
   completedSteps: [],
 };
 const INITIAL_ONBOARDING_PERSIST_QUEUE = Promise.resolve();
+const ONBOARDING_STEP_IDS = ONBOARDING_STEPS.map((step) => step.id);
+
+const isPersistedOnboardingState = (
+  value: unknown,
+): value is PersistedOnboardingState => {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const candidate = value as Record<string, unknown>;
+  const completedSteps = candidate["completedSteps"];
+  const knownStepIds = new Set(ONBOARDING_STEP_IDS);
+  const fieldsAreValid = (
+    typeof candidate["completed"] === "boolean" &&
+    Number.isInteger(candidate["stepIndex"]) &&
+    Number(candidate["stepIndex"]) >= 0 &&
+    Number(candidate["stepIndex"]) < ONBOARDING_STEPS.length &&
+    Array.isArray(completedSteps) &&
+    completedSteps.every(
+      (stepId) => typeof stepId === "string" && knownStepIds.has(stepId),
+    )
+  );
+  if (!fieldsAreValid) {
+    return false;
+  }
+
+  const completed = candidate["completed"] as boolean;
+  const stepIndex = candidate["stepIndex"] as number;
+  const persistedStepIds = completedSteps as string[];
+  const expectedStepIds = completed
+    ? ONBOARDING_STEP_IDS
+    : ONBOARDING_STEP_IDS.slice(0, stepIndex);
+
+  return (
+    (!completed || stepIndex === ONBOARDING_STEPS.length - 1) &&
+    persistedStepIds.length === expectedStepIds.length &&
+    persistedStepIds.every((stepId, index) => stepId === expectedStepIds[index])
+  );
+};
 
 export function OnboardingProvider({
   children,
@@ -125,13 +164,22 @@ export function OnboardingProvider({
     try {
       const onboardingData = await AsyncStorage.getItem(ONBOARDING_STORAGE_KEY);
       if (onboardingData) {
-        const { completed, stepIndex, completedSteps } =
-          JSON.parse(onboardingData);
-        applySnapshot({
-          completed: completed || false,
-          stepIndex: stepIndex || 0,
-          completedSteps: Array.isArray(completedSteps) ? completedSteps : [],
-        });
+        let parsed: unknown;
+        try {
+          parsed = JSON.parse(onboardingData);
+        } catch (error) {
+          devWarn(
+            "[OnboardingContext] Failed to parse persisted onboarding state",
+            error,
+          );
+        }
+        if (isPersistedOnboardingState(parsed)) {
+          applySnapshot(parsed);
+        } else {
+          await AsyncStorage.removeItem(ONBOARDING_STORAGE_KEY);
+          applySnapshot(INITIAL_ONBOARDING_STATE);
+          devWarn("[OnboardingContext] Reset invalid persisted onboarding state");
+        }
       }
     } catch (error) {
       devWarn("[OnboardingContext] Error loading onboarding state", error);

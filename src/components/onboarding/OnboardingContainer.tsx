@@ -3,7 +3,6 @@ import {
   View,
   StyleSheet,
   StatusBar,
-  useColorScheme,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useOnboarding } from "../../context/OnboardingContext";
@@ -14,10 +13,11 @@ import { DNSMagicScreen } from "./screens/DNSMagicScreen";
 import { NetworkSetupScreen } from "./screens/NetworkSetupScreen";
 import { FirstChatScreen } from "./screens/FirstChatScreen";
 import { FeaturesScreen } from "./screens/FeaturesScreen";
+import { useResolvedColorScheme } from "../../ui/theme/resolvedColorScheme";
 
 export function OnboardingContainer() {
   const palette = useImessagePalette();
-  const colorScheme = useColorScheme();
+  const colorScheme = useResolvedColorScheme();
   const isDark = colorScheme === "dark";
   const { currentStep, steps } = useOnboarding();
 

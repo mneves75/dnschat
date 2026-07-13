@@ -11,18 +11,19 @@ describe("web runtime policy", () => {
     expect(source).not.toContain("style={{ width: 22, height: 22, tintColor: color }}");
   });
 
-  it("does not make the decorative new-chat badge a nested web button", () => {
+  it("renders the new-chat icon inside one accessible primary control", () => {
     const source = readSource("src/navigation/screens/GlassChatList.tsx");
-    const badgeStart = source.indexOf('style={styles.newChatBadge}');
-    const badgeEnd = source.indexOf("<PlusIcon", badgeStart);
+    const controlStart = source.indexOf('<PressableRipple\n          testID="chat-list-new-chat"');
+    const controlEnd = source.indexOf("</PressableRipple>", controlStart);
 
-    expect(badgeStart).toBeGreaterThan(-1);
-    expect(badgeEnd).toBeGreaterThan(badgeStart);
+    expect(controlStart).toBeGreaterThan(-1);
+    expect(controlEnd).toBeGreaterThan(controlStart);
 
-    const badgeProps = source.slice(badgeStart, badgeEnd);
-    expect(badgeProps).not.toContain("accessibilityRole");
-    expect(badgeProps).not.toContain("accessibilityLabel");
-    expect(badgeProps).not.toContain("accessibilityHint");
+    const control = source.slice(controlStart, controlEnd);
+    expect(control).toContain('<PlusIcon size={18} color={palette.textOnChroma} />');
+    expect(control).toContain("{ color: palette.textOnChroma }");
+    expect(control).toContain('accessibilityRole="button"');
+    expect(control).not.toContain("<Form.Item");
   });
 
   it("uses style.pointerEvents instead of the deprecated web pointerEvents prop", () => {

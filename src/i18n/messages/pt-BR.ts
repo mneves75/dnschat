@@ -54,12 +54,12 @@ export const ptBR = {
       },
       welcome: {
         title: "Bem-vindo ao DNS Chat",
-        subtitle: "O primeiro aplicativo de chat do mundo que usa consultas DNS para se comunicar com IA",
+        subtitle: "Envie mensagens como consultas DNS TXT e receba respostas em registros TXT",
         appIconLabel: "Ícone do aplicativo DNS Chat",
         features: {
           revolutionary: {
-            label: "Revolucionário",
-            title: "Tecnologia Revolucionária",
+            label: "DNS TXT",
+            title: "Transporte por DNS",
             description: "Converse através de registros DNS TXT - sem APIs tradicionais",
           },
           private: {
@@ -78,8 +78,8 @@ export const ptBR = {
         label: "Chat",
         title: "Experimente Seu Primeiro Chat",
         subtitle: "Envie uma mensagem e veja ela viajar pelo DNS",
-        welcomeMessage: "Oi! Sou seu assistente de IA. Tente me enviar uma mensagem para ver como a magia do DNS funciona!",
-        successMessage: "Ótimo! Você enviou com sucesso sua primeira mensagem DNS. Em um cenário real, isso retornaria uma resposta de IA via registros DNS TXT. A magia é que sua mensagem viajou pela infraestrutura DNS!",
+        welcomeMessage: "Envie uma mensagem curta. O aplicativo a transporta em uma consulta DNS TXT.",
+        successMessage: "Sua mensagem foi enviada como uma consulta DNS TXT. Quando o servidor responde, a resposta retorna em registros DNS TXT.",
         failureMessage: "A mensagem DNS não pôde ser entregue. Verifique as configurações de rede ou tente novamente mais tarde.",
         suggestions: {
           title: "Experimente uma destas:",
@@ -95,7 +95,7 @@ export const ptBR = {
           sendingVia: "Enviando via DNS…",
         },
         navigation: {
-          continue: "Incrível! Continuar",
+          continue: "Continuar",
           skip: "Pular Tutorial",
         },
         accessibility: {
@@ -110,7 +110,7 @@ export const ptBR = {
       },
       dnsMagic: {
         label: "DNS",
-        title: "Magia DNS em Ação",
+        title: "Transporte DNS em ação",
         subtitle: "Veja sua mensagem viajar por múltiplos métodos de fallback DNS",
         demoButton: "Iniciar Demo DNS",
         demoButtonRunning: "Consulta DNS em Progresso...",
@@ -330,9 +330,9 @@ export const ptBR = {
       navigationTitle: "DNS Chat",
       newConversation: {
         title: "Iniciar nova conversa",
-        subtitle: "Abra um novo tópico com a IA DNS",
         button: "Nova conversa",
-        description: "Comece uma nova conversa com a IA DNS",
+        description: "Envie uma mensagem curta por uma consulta DNS TXT.",
+        observableNotice: "O tráfego DNS pode ser observado na rede e não é privado.",
       },
       recent: {
         title: "Conversas recentes",

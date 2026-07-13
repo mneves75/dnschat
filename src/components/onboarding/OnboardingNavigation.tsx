@@ -1,6 +1,5 @@
 import React from "react";
 import {
-  Alert,
   BackHandler,
   Platform,
   View,
@@ -13,6 +12,7 @@ import { useImessagePalette } from "../../ui/theme/imessagePalette";
 import { useTypography } from "../../ui/hooks/useTypography";
 import { LiquidGlassSpacing } from "../../ui/theme/liquidGlassSpacing";
 import { useTranslation } from "../../i18n";
+import { appAlert } from "../../utils/appAlert";
 
 interface OnboardingNavigationProps {
   showSkip?: boolean;
@@ -58,7 +58,7 @@ export function OnboardingNavigation({
         error instanceof Error && error.message
           ? error.message
           : t("common.unknownError");
-      Alert.alert(t("common.errorTitle"), message);
+      appAlert(t("common.errorTitle"), message);
     }
     isSubmittingRef.current = false;
     setIsSubmitting(false);

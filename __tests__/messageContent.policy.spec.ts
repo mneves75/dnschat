@@ -9,7 +9,7 @@ describe("MessageContent render policy", () => {
     expect(source).toContain("<Markdown");
     expect(source).toContain('image: () => null');
     expect(source).toContain("onLinkPress={handleMarkdownLinkPress}");
-    expect(source).toContain("Alert.alert");
+    expect(source).toContain("appAlert(");
     expect(source).toContain('t("screen.chat.externalLink.message", { url })');
     expect(source).toContain("openExternalLink(url)");
     expect(source).toContain("return false");

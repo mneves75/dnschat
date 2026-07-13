@@ -3,7 +3,6 @@ import {
   AccessibilityInfo,
   Platform,
   View,
-  useColorScheme,
 } from "react-native";
 import type { ViewProps } from "react-native";
 import {
@@ -13,6 +12,7 @@ import {
 } from "expo-glass-effect";
 import { getImessagePalette, getAndroidGlassFallback } from "../ui/theme/imessagePalette";
 import { splitGlassStyles } from "./glass/glassStyleUtils";
+import { useResolvedColorScheme } from "../ui/theme/resolvedColorScheme";
 
 type GlassVariant = "regular" | "prominent" | "interactive";
 
@@ -279,7 +279,7 @@ export const LiquidGlassWrapper: React.FC<LiquidGlassProps> = ({
   children,
   ...rest
 }) => {
-  const colorScheme = useColorScheme();
+  const colorScheme = useResolvedColorScheme();
   const isDark = colorScheme === "dark";
   const [reduceTransparency, setReduceTransparency] = useState(Platform.OS === "ios");
 
@@ -340,12 +340,12 @@ export const LiquidGlassWrapper: React.FC<LiquidGlassProps> = ({
 
   const glassContent = (
     <GlassView
-      key={glassKey}
       glassEffectStyle={glassEffect}
       isInteractive={isInteractive}
       tintColor={tint}
       style={glassStyles}
       {...rest}
+      key={glassKey}
     >
       {children}
     </GlassView>

@@ -1,5 +1,110 @@
 # Implementation Plans — DNSChat
 
+## Cycle 3 — deep audit 2026-07-12 (planned against commit `3147b64`)
+
+Deep audit of the 4.2.x uncommitted working tree (chat-list "Signal Path"
+redesign + cross-platform web fixes). Three parallel read-only auditors
+(correctness/security, a11y/design, i18n), all findings vetted against live
+code by the advisor. Cheap, low-risk conformance/defense fixes were applied
+directly in-session; the one data-integrity finding too risky to fix blind
+pre-release is planned below.
+
+### Applied in-session (2026-07-12, verified: full Jest suite green)
+
+- **appAlert web no-op fix** (BUG-WEB-1): `Alert.alert` is a silent no-op on
+  react-native-web; added `src/utils/appAlert.ts` (Platform-aware, uses
+  `window.confirm`/`window.alert`), migrated all 10 call sites. Runtime-proven
+  on web (Reset Settings confirm dialog now resets state).
+- **Theme preference on web** (BUG-WEB-2): `Appearance.setColorScheme` is
+  ignored by react-native-web; added `src/ui/theme/resolvedColorScheme.ts` and
+  routed the palette + theme-sensitive components through it. Runtime-proven
+  (dark theme now paints `#000` canvas on web).
+- **Plain Language copy** (CONTRACT-2): rewrote onboarding + chat-list copy to
+  drop "magic/revolutionary/world's first/Amazing"; new policy spec guards
+  onboarding AND chat-list subtrees.
+- **DESIGN-05**: chat-row message-count badge was blue-on-15%-blue (~3.4:1,
+  below AA) and violated the One Signal Rule — recolored to neutral
+  (`assistantBubble` fill, `textPrimary` label).
+- **A11Y-04**: `observableNotice` security disclosure bumped caption1(12px)→
+  footnote(13px) + `textPrimary` for a stronger, AA-margin trust signal.
+- **DESIGN-06**: hero title given `fontWeight: 600` per DESIGN.md §3
+  (hero/state-panel titles are 600/22; `title2` token is 400).
+- **NIT-01**: signal-path hero given `importantForAccessibility="no-hide-
+  descendants"` for Android parity with the iOS `accessibilityElementsHidden`.
+- **CORRECT-02**: `appAlert` dev-warns when given >2 buttons on web (window.
+  confirm is binary; a third action would be silently dropped).
+- **TECHDEBT-07**: removed dead `newConversation.subtitle` i18n key (both
+  locales; unreferenced + off-tone).
+
+### Planned
+
+| Plan | Title | Priority | Effort | Status |
+|------|-------|----------|--------|--------|
+| 011 | loadChats corruption blast-radius: per-record quarantine vs whole-history wipe (CORRECT-01) | P2 | M | DONE (2026-07-13, codex executor + advisor review + 2 autoreview cycles) |
+
+**011 outcome.** Codex implemented per-record quarantine (a bad chat/message is
+dropped, survivors kept, original payload backed up; genuinely unparseable
+payloads still fail safe). Advisor review + autoreview surfaced one real gap the
+initial patch missed: the JSON date **reviver** (`storageService.ts:237-259`)
+threw `StorageCorruptionError` *during* `JSON.parse` for a present-but-invalid
+date (e.g. `"timestamp":"corrupt"`), which bypassed the new per-record boundary
+and still wiped the whole history. Fixed by making the reviver **non-throwing** —
+it returns the raw value on an invalid/foreign-typed date (never coercing
+`null`→1970) so the per-record loop rejects only that record. Two strict-mode
+tests updated (throw now originates in the loop, same reject-not-coerce intent)
+and two new default-mode quarantine tests added (invalid-date-string chat and
+message). Full suite green (1010 passed), `tsc` clean, lint clean.
+
+### Autoreview — deferred (not a landing blocker)
+
+- **CACHE-01 (concurrency, P2, verified narrow — deferred).** On the quarantine
+  persist path, when the concurrency guard trips (`latestPayload !==
+  serializedChats`), `loadChats` skips the write but still returns chats parsed
+  from the *older* payload; if that array reaches the `mutateChats` cache commit
+  (`storageService.ts:104`), a concurrent non-queued write could later be
+  overwritten. **Why deferred:** the reviewer's stated trigger (concurrent
+  `createChat`/`updateChat`) is impossible as described — all mutations are
+  serialized by `operationQueue`, so they cannot run concurrently with a
+  mutation's load. The only real non-queued writer is a public display
+  `loadChats()` persisting a *corrupt* payload, and that guard-and-stale-return
+  is **pre-existing** (the plaintext-migration branch had identical semantics
+  before this patch). The fully-correct fix touches the `mutateChats`
+  cache-commit invariant — a different owner boundary — so it is out of scope for
+  the corruption patch. This patch does not worsen the fundamental non-queued
+  read-modify-write race (`saveChats` would clobber regardless). Track as its own
+  concurrency-hardening slice (candidate `plans/012`).
+
+### Backlog — vetted, not planned (cycle 3)
+
+- **DEBT-01 (i18n)** promotional key *names* survive (`dnsMagic`,
+  `revolutionary`) though their values are now factual; the plainLanguage
+  policy only scans string values, not key paths. M effort (rename + all call
+  sites) — bundle with the next onboarding-touching change.
+- **DEBT-02 (i18n)** soft-promo adjectives outside the banned list
+  ("Powerful Features", "Beautiful iOS 26 interface", "Pretty cool, right?").
+  Judgment call; S copy-only if pursued.
+- **DEBT-03 (i18n)** pt-BR mixes "Ajustes" and "Configurações" for Settings;
+  pre-existing, standardize opportunistically.
+- **NIT-02 (onboarding)** `markStepCompleted` updates React state only, never
+  persisted; likely presentation-only by design — document or fold into the
+  snapshot if step-completion should survive reload.
+
+### Rejected / verified-compliant (cycle 3, do not re-audit)
+
+- **A11Y-02** primary compose button contrast: black `#000` on `#007AFF`
+  (5.23:1) / `#0A84FF` (5.76:1) MEETS AA. `textOnChroma = #000` is correct — do
+  NOT switch the label to white (white-on-#007AFF = 4.02:1, fails).
+- **A11Y-03** touch targets: primary button `minHeight: 48` (pass); nodes/chevron are
+  non-interactive.
+- **A11Y-01** signal-path hero color-only nodes: it is a decorative motif (not
+  the live transport-state indicator), hidden from AT and restated by the
+  adjacent title/description — the "State Is More Than Color" rule targets real
+  success/fallback/failure state, so this is polish, not a defect. Left as-is.
+- appAlert / useResolvedColorScheme / OnboardingContext validator / GlassChatList
+  keys+stagger: audited clean by the correctness auditor.
+
+---
+
 ## Cycle 2 — deep audit 2026-07-10 (planned against commit `2739cf2`)
 
 Deep audit (8 categories, all findings vetted against the live code by the

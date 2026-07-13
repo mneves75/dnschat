@@ -21,17 +21,15 @@ import {
   StyleSheet,
   Text,
   View,
-  Alert,
-  useColorScheme,
   Platform,
 } from "react-native";
 import type { AccessibilityActionEvent } from "react-native";
 import Animated from "react-native-reanimated";
+import type { SharedValue } from "react-native-reanimated";
 import { useRouter } from "expo-router";
 import { useChat } from "../../context/ChatContext";
 import { Form } from "../../components/glass/GlassForm";
 import { GlassActionSheet, useGlassBottomSheet } from "../../components/glass/GlassBottomSheet";
-import { LiquidGlassWrapper } from "../../components/LiquidGlassWrapper";
 import { PressableRipple } from "../../components/PressableRipple";
 import { TrashIcon } from "../../components/icons/TrashIcon";
 import { PlusIcon } from "../../components/icons/PlusIcon";
@@ -51,6 +49,7 @@ import { ShareService } from "../../services/ShareService";
 import { useSettings } from "../../context/SettingsContext";
 import type { Chat } from "../../types/chat";
 import { Toast } from "../../components/ui/Toast";
+import { appAlert } from "../../utils/appAlert";
 
 // ==================================================================================
 // TYPES
@@ -81,13 +80,11 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
   onShare,
   onShowActions,
 }) => {
-  const colorScheme = useColorScheme();
   const { t } = useTranslation();
   const palette = useImessagePalette();
   const typography = useTypography();
   const { locale } = useSettings();
 
-  const isDark = colorScheme === "dark";
   const lastMessage = chat.messages[chat.messages.length - 1];
   const messageCount = chat.messages.length;
   const timeAgo = formatDistanceToNow(chat.createdAt, {
@@ -198,10 +195,10 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
                 <View
                   style={[
                     styles.messageBadge,
-                    { backgroundColor: `${palette.userBubble}26` }, // 15% opacity
+                    { backgroundColor: palette.assistantBubble },
                   ]}
                 >
-                  <Text style={[styles.messageBadgeText, { color: palette.userBubble }]}>
+                  <Text style={[styles.messageBadgeText, { color: palette.textPrimary }]}>
                     {messageBadgeLabel}
                   </Text>
                 </View>
@@ -239,13 +236,144 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
   );
 };
 
+function NewConversationSection({ onPress }: { onPress: () => void }) {
+  const { t } = useTranslation();
+  const palette = useImessagePalette();
+  const typography = useTypography();
+
+  return (
+    <View style={styles.signalHero}>
+      <View
+        style={styles.signalPath}
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+      >
+        <View style={[styles.signalNode, { backgroundColor: palette.userBubble }]} />
+        <View style={[styles.signalLine, { backgroundColor: palette.border }]} />
+        <View style={[styles.signalNode, styles.signalNodeOutline, { borderColor: palette.userBubble }]} />
+        <View style={[styles.signalLine, { backgroundColor: palette.border }]} />
+        <View style={[styles.signalNode, { backgroundColor: palette.success }]} />
+      </View>
+      <Text style={[typography.title2, styles.signalTitle, { color: palette.textPrimary }]}>
+        {t("screen.glassChatList.newConversation.title")}
+      </Text>
+      <Text style={[styles.signalDescription, typography.subheadline, { color: palette.textSecondary }]}>
+        {t("screen.glassChatList.newConversation.description")}
+      </Text>
+      <Text style={[styles.observableNotice, typography.footnote, { color: palette.textPrimary }]}>
+        {t("screen.glassChatList.newConversation.observableNotice")}
+      </Text>
+      <View style={styles.primaryComposeButton}>
+        <PressableRipple
+          testID="chat-list-new-chat"
+          variant="primary"
+          onPress={onPress}
+          accessibilityRole="button"
+          accessibilityLabel={t("screen.glassChatList.newConversation.button")}
+          accessibilityHint={t("screen.glassChatList.newConversation.description")}
+        >
+          <View
+            style={[
+              styles.primaryComposeContent,
+              { backgroundColor: palette.userBubble },
+            ]}
+          >
+            <PlusIcon size={18} color={palette.textOnChroma} />
+            <Text
+              style={[
+                styles.primaryComposeLabel,
+                { color: palette.textOnChroma },
+              ]}
+            >
+              {t("screen.glassChatList.newConversation.button")}
+            </Text>
+          </View>
+        </PressableRipple>
+      </View>
+    </View>
+  );
+}
+
+interface RecentChatsSectionProps {
+  chats: Chat[];
+  showSkeleton: boolean;
+  opacities: SharedValue<number>[];
+  translates: SharedValue<number>[];
+  onCreate: () => void;
+  onPress: (chat: Chat) => void;
+  onDelete: (chat: Chat) => void;
+  onShare: (chat: Chat) => void;
+  onShowActions: (chat: Chat) => void;
+}
+
+function RecentChatsSection({
+  chats,
+  showSkeleton,
+  opacities,
+  translates,
+  onCreate,
+  onPress,
+  onDelete,
+  onShare,
+  onShowActions,
+}: RecentChatsSectionProps) {
+  const { t } = useTranslation();
+  const recentFooter = chats.length === 1
+    ? t("screen.glassChatList.recent.footerSingle", { count: chats.length })
+    : t("screen.glassChatList.recent.footerMultiple", { count: chats.length });
+
+  if (showSkeleton) {
+    return (
+      <Form.Section title={t("screen.glassChatList.recent.title")}>
+        <ChatListSkeleton count={5} />
+      </Form.Section>
+    );
+  }
+
+  if (chats.length === 0) {
+    return (
+      <Form.Section>
+        <EmptyState
+          title={t("screen.glassChatList.empty.title")}
+          description={t("screen.glassChatList.empty.subtitle")}
+          iconType="chat"
+          actionLabel={t("screen.glassChatList.newConversation.button")}
+          onAction={onCreate}
+          testID="chat-list-empty-state"
+        />
+      </Form.Section>
+    );
+  }
+
+  return (
+    <Form.Section title={t("screen.glassChatList.recent.title")} footer={recentFooter}>
+      <View style={styles.chatsList}>
+        {chats.map((chat, index) => (
+          <AnimatedListItem
+            key={chat.id}
+            opacity={opacities[index]}
+            translateX={translates[index]}
+          >
+            <GlassChatItem
+              chat={chat}
+              onPress={() => onPress(chat)}
+              onDelete={() => onDelete(chat)}
+              onShare={() => onShare(chat)}
+              onShowActions={() => onShowActions(chat)}
+            />
+          </AnimatedListItem>
+        ))}
+      </View>
+    </Form.Section>
+  );
+}
+
 // ==================================================================================
 // MAIN GLASS CHAT LIST COMPONENT
 // ==================================================================================
 
 export function GlassChatList() {
   const { push } = useRouter();
-  const colorScheme = useColorScheme();
   const palette = useImessagePalette();
   const {
     chats,
@@ -314,7 +442,6 @@ export function GlassChatList() {
     clearError();
   };
 
-  const isDark = colorScheme === "dark";
   const [refreshing, setRefreshing] = React.useState(false);
   const showSkeleton = isLoading && !hasLoadedOnce && chats.length === 0;
 
@@ -355,7 +482,7 @@ export function GlassChatList() {
   };
 
   const handleDeleteChat = (chatId: string, chatTitle: string) => {
-    Alert.alert(
+    appAlert(
       t("screen.glassChatList.alerts.deleteTitle"),
       t("screen.glassChatList.alerts.deleteMessage", { title: chatTitle }),
       [
@@ -391,16 +518,6 @@ export function GlassChatList() {
     );
   };
 
-  const recentFooter = chats.length === 1
-    ? t("screen.glassChatList.recent.footerSingle", { count: chats.length })
-    : t("screen.glassChatList.recent.footerMultiple", { count: chats.length });
-
-  // Computed once for both the total and the average stat (was reduced twice in JSX).
-  const totalMessages = chats.reduce(
-    (total, chat) => total + chat.messages.length,
-    0,
-  );
-
   return (
     <>
       <Form.List
@@ -412,101 +529,18 @@ export function GlassChatList() {
         onRefresh={handleRefresh}
       >
       <Animated.View style={animatedStyle}>
-        {/* New Chat Section */}
-        <Form.Section
-          title={t("screen.glassChatList.newConversation.title")}
-        >
-          <Form.Item
-            testID="chat-list-new-chat"
-            title={t("screen.glassChatList.newConversation.button")}
-            subtitle={t("screen.glassChatList.newConversation.description")}
-            accessibilityLabel={t("screen.glassChatList.newConversation.button")}
-            accessibilityHint={t("screen.glassChatList.newConversation.description")}
-            rightContent={
-              <LiquidGlassWrapper
-                variant="interactive"
-                shape="capsule"
-                style={styles.newChatBadge}
-              >
-                <PlusIcon size={20} />
-              </LiquidGlassWrapper>
-            }
-            onPress={handleNewChat}
-            showChevron
-          />
-        </Form.Section>
-
-        {/* Loading Skeleton */}
-        {showSkeleton && (
-          <Form.Section
-            title={t("screen.glassChatList.recent.title")}
-          >
-            <ChatListSkeleton count={5} />
-          </Form.Section>
-        )}
-
-        {/* Recent Chats Section */}
-        {!showSkeleton && chats.length > 0 ? (
-          <Form.Section
-            title={t("screen.glassChatList.recent.title")}
-            footer={recentFooter}
-          >
-            <View style={styles.chatsList}>
-              {chats.map((chat, index) => (
-                <AnimatedListItem
-                  key={chat.id}
-                  opacity={opacities[index]}
-                  translateX={translates[index]}
-                >
-                  <GlassChatItem
-                    chat={chat}
-                    onPress={() => handleChatPress(chat)}
-                    onDelete={() => handleDeleteChat(chat.id, chat.title)}
-                    onShare={() => handleShareChat(chat)}
-                    onShowActions={() => handleShowChatActions(chat)}
-                  />
-                </AnimatedListItem>
-              ))}
-            </View>
-          </Form.Section>
-        ) : !showSkeleton && chats.length === 0 ? (
-          <Form.Section>
-            <EmptyState
-              title={t("screen.glassChatList.empty.title")}
-              description={t("screen.glassChatList.empty.subtitle")}
-              iconType="chat"
-              actionLabel={t("screen.glassChatList.newConversation.button")}
-              onAction={handleNewChat}
-              testID="chat-list-empty-state"
-            />
-          </Form.Section>
-        ) : null}
-
-        {/* Statistics Section */}
-        {chats.length > 0 && (
-          <Form.Section title={t("screen.glassChatList.stats.title")}>
-            <Form.Item
-              testID="chat-list-total-messages"
-              title={t("screen.glassChatList.stats.totalMessagesTitle")}
-              subtitle={t("screen.glassChatList.stats.totalMessagesSubtitle")}
-              rightContent={
-                <Text style={[styles.statValue, { color: palette.userBubble }]}>
-                  {totalMessages}
-                </Text>
-              }
-            />
-            <Form.Item
-              testID="chat-list-average-messages"
-              title={t("screen.glassChatList.stats.averageTitle")}
-              subtitle={t("screen.glassChatList.stats.averageSubtitle")}
-              rightContent={
-                <Text style={[styles.statValue, { color: palette.userBubble }]}>
-                  {Math.round(totalMessages / chats.length)}
-                </Text>
-              }
-            />
-          </Form.Section>
-        )}
+        <NewConversationSection onPress={handleNewChat} />
+        <RecentChatsSection
+          chats={chats}
+          showSkeleton={showSkeleton}
+          opacities={opacities}
+          translates={translates}
+          onCreate={handleNewChat}
+          onPress={handleChatPress}
+          onDelete={(chat) => handleDeleteChat(chat.id, chat.title)}
+          onShare={handleShareChat}
+          onShowActions={handleShowChatActions}
+        />
         </Animated.View>
       </Form.List>
       {/* Shared Chat Action Sheet (one instance for every row) */}
@@ -566,11 +600,56 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 140,
   },
-  newChatBadge: {
-    // iOS 26 HIG: Minimum 44pt touch target
-    // 20px icon + 12px padding all sides = 44×44px total
-    padding: 12,
-    // No backgroundColor - LiquidGlassWrapper provides glass effect
+  signalHero: {
+    marginHorizontal: 20,
+    marginBottom: 28,
+    paddingTop: 8,
+  },
+  signalPath: {
+    flexDirection: "row",
+    alignItems: "center",
+    width: 120,
+    marginBottom: 18,
+  },
+  signalNode: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  signalNodeOutline: {
+    backgroundColor: "transparent",
+    borderWidth: 2,
+  },
+  signalLine: {
+    flex: 1,
+    height: StyleSheet.hairlineWidth,
+  },
+  signalTitle: {
+    fontWeight: "600",
+  },
+  signalDescription: {
+    marginTop: 6,
+    maxWidth: 440,
+  },
+  observableNotice: {
+    marginTop: 8,
+    maxWidth: 440,
+  },
+  primaryComposeButton: {
+    marginTop: 18,
+    borderRadius: 14,
+    overflow: "hidden",
+  },
+  primaryComposeContent: {
+    minHeight: 48,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+  primaryComposeLabel: {
+    fontSize: 17,
+    fontWeight: "600",
   },
   newChatIcon: {
     fontSize: 16,
@@ -637,10 +716,5 @@ const styles = StyleSheet.create({
   },
   chatActions: {
     marginLeft: 12,
-  },
-  statValue: {
-    fontSize: 17,
-    fontWeight: "600",
-    // Color will be applied inline using palette.accentPrimary
   },
 });
