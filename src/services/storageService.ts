@@ -7,6 +7,10 @@ import { STORAGE_CONSTANTS } from "../constants/appConstants";
 
 const CHATS_KEY = STORAGE_CONSTANTS.CHATS_KEY;
 const CHAT_BACKUP_KEY = STORAGE_CONSTANTS.CHAT_BACKUP_KEY;
+const normalizeChatTitle = (
+  title: string | undefined,
+  fallback: string,
+): string => title?.trim() || fallback;
 
 /**
  * Error thrown when storage data is corrupted and cannot be recovered.
@@ -141,6 +145,7 @@ export class StorageService {
   private static async createCorruptionBackupPayload(
     error: StorageCorruptionError,
     storedPayload: string,
+    redactOnEncryptionFailure = true,
   ): Promise<string> {
     const timestamp = new Date().toISOString();
     const payloadWasEncrypted = isEncryptedPayload(storedPayload);
@@ -157,6 +162,9 @@ export class StorageService {
         payloadWasEncrypted,
       });
     } catch (backupEncryptionError) {
+      if (!redactOnEncryptionFailure) {
+        throw backupEncryptionError;
+      }
       devWarn(
         "[StorageService] Failed to encrypt corrupted storage backup payload",
         backupEncryptionError,
@@ -228,22 +236,20 @@ export class StorageService {
         decrypted = await decryptIfEncrypted(serializedChats);
         parsed = JSON.parse(decrypted, (key, value) => {
           if (key === "createdAt" || key === "updatedAt" || key === "timestamp") {
-            // SECURITY FIX: Validate date parsing to prevent Invalid Date propagation.
-            // new Date('garbage') returns an Invalid Date object (not null),
-            // which causes silent failures downstream.
-            // Reject non-string/non-number values first: new Date(null) coerces to
-            // the 1970 epoch (a *valid* Date), which would silently corrupt
-            // timestamps and reorder chats instead of being caught below.
+            // Convert valid ISO strings/epochs to Date. For an invalid but
+            // *present* value, DO NOT throw here: a global throw during
+            // JSON.parse would bypass the per-record quarantine loop below and
+            // wipe the entire chat history for one bad date. Return the raw
+            // value instead so the per-record validation can reject that single
+            // record. Crucially, never coerce here (new Date(null) => 1970
+            // epoch, a valid Date that would silently reorder chats) — the raw
+            // value fails the `instanceof Date` check downstream and is dropped.
             if (typeof value !== "string" && typeof value !== "number") {
-              throw new StorageCorruptionError(
-                `Invalid date type for ${key}: ${value === null ? "null" : typeof value}`,
-              );
+              return value;
             }
             const date = new Date(value);
             if (isNaN(date.getTime())) {
-              throw new StorageCorruptionError(
-                `Invalid date value for ${key}: ${String(value).slice(0, 50)}`
-              );
+              return value;
             }
             return date;
           }
@@ -282,64 +288,150 @@ export class StorageService {
       // SECURITY FIX: Validate each chat object structure to prevent runtime crashes
       // from corrupted or malicious data. Unsafe type casts like `parsed as Chat[]`
       // skip runtime validation and can cause crashes when accessing expected properties.
+      const chats: Chat[] = [];
+      const quarantinedErrors: StorageCorruptionError[] = [];
       for (let i = 0; i < parsed.length; i++) {
-        const chat = parsed[i] as Record<string, unknown>;
-        if (!chat || typeof chat !== 'object') {
-          throw new StorageCorruptionError(
-            `Chat at index ${i} is not an object`
-          );
-        }
-        const chatId = chat['id'];
-        if (typeof chatId !== 'string' || !chatId) {
-          throw new StorageCorruptionError(
-            `Chat at index ${i} has invalid id: ${String(chatId).slice(0, 50)}`
-          );
-        }
-        const messages = chat['messages'];
-        if (!Array.isArray(messages)) {
-          throw new StorageCorruptionError(
-            `Chat "${chatId}" has invalid messages array`
-          );
-        }
-        // Validate messages structure
-        for (let j = 0; j < messages.length; j++) {
-          const msg = messages[j] as Record<string, unknown>;
-          if (!msg || typeof msg !== 'object') {
+        try {
+          const candidate = parsed[i];
+          if (!candidate || typeof candidate !== 'object') {
             throw new StorageCorruptionError(
-              `Message at index ${j} in chat "${chatId}" is not an object`
+              `Chat at index ${i} is not an object`
             );
           }
-          const messageId = msg['id'];
-          if (typeof messageId !== 'string' || !messageId) {
+          const chat = candidate as Record<string, unknown>;
+          const chatId = chat['id'];
+          if (typeof chatId !== 'string' || !chatId) {
             throw new StorageCorruptionError(
-              `Message at index ${j} in chat "${chatId}" has invalid id`
+              `Chat at index ${i} has invalid id: ${String(chatId).slice(0, 50)}`
             );
           }
-          const role = msg['role'];
-          if (typeof role !== 'string' || !['user', 'assistant'].includes(role)) {
+          const title = chat['title'];
+          if (typeof title !== 'string') {
             throw new StorageCorruptionError(
-              `Message "${messageId}" has invalid role: ${String(role)}`
+              `Chat "${chatId}" has invalid title`,
             );
           }
-          const content = msg['content'];
-          if (typeof content !== 'string') {
+          chat['title'] = normalizeChatTitle(title, "New Chat");
+          if (!(chat['createdAt'] instanceof Date) || !(chat['updatedAt'] instanceof Date)) {
             throw new StorageCorruptionError(
-              `Message "${messageId}" has invalid content type: ${typeof content}`
+              `Chat "${chatId}" has missing or invalid timestamps`,
             );
           }
+          const messages = chat['messages'];
+          if (!Array.isArray(messages)) {
+            throw new StorageCorruptionError(
+              `Chat "${chatId}" has invalid messages array`
+            );
+          }
+          const validMessages: Message[] = [];
+          // Validate messages structure
+          for (let j = 0; j < messages.length; j++) {
+            try {
+              const candidateMessage = messages[j];
+              if (!candidateMessage || typeof candidateMessage !== 'object') {
+                throw new StorageCorruptionError(
+                  `Message at index ${j} in chat "${chatId}" is not an object`
+                );
+              }
+              const msg = candidateMessage as Record<string, unknown>;
+              const messageId = msg['id'];
+              if (typeof messageId !== 'string' || !messageId) {
+                throw new StorageCorruptionError(
+                  `Message at index ${j} in chat "${chatId}" has invalid id`
+                );
+              }
+              const role = msg['role'];
+              if (typeof role !== 'string' || !['user', 'assistant'].includes(role)) {
+                throw new StorageCorruptionError(
+                  `Message "${messageId}" has invalid role: ${String(role)}`
+                );
+              }
+              const content = msg['content'];
+              if (typeof content !== 'string') {
+                throw new StorageCorruptionError(
+                  `Message "${messageId}" has invalid content type: ${typeof content}`
+                );
+              }
+              if (!(msg['timestamp'] instanceof Date)) {
+                throw new StorageCorruptionError(
+                  `Message "${messageId}" has missing or invalid timestamp`,
+                );
+              }
+              const status = msg['status'];
+              if (status === undefined) {
+                msg['status'] = 'sent';
+              } else if (
+                status !== 'sending' &&
+                status !== 'sent' &&
+                status !== 'error'
+              ) {
+                throw new StorageCorruptionError(
+                  `Message "${messageId}" has invalid status: ${String(status)}`,
+                );
+              }
+              validMessages.push(msg as unknown as Message);
+            } catch (error) {
+              if (!(error instanceof StorageCorruptionError) || !recoverOnCorruption) {
+                throw error;
+              }
+              quarantinedErrors.push(error);
+              devWarn("[StorageService] Quarantined corrupted message", error);
+            }
+          }
+          chat['messages'] = validMessages;
+          chats.push(chat as unknown as Chat);
+        } catch (error) {
+          if (!(error instanceof StorageCorruptionError) || !recoverOnCorruption) {
+            throw error;
+          }
+          quarantinedErrors.push(error);
+          devWarn("[StorageService] Quarantined corrupted chat", error);
         }
       }
 
-      const chats = parsed as Chat[];
+      if (quarantinedErrors.length > 0) {
+        // Storage is about to diverge from any previously cached snapshot.
+        this.invalidateChatCache();
+        try {
+          const firstError = quarantinedErrors[0];
+          if (firstError) {
+            const backupPayload = await this.createCorruptionBackupPayload(
+              firstError,
+              serializedChats,
+              false,
+            );
+            await AsyncStorage.setItem(CHAT_BACKUP_KEY, backupPayload);
+            devWarn("[StorageService] Pre-quarantine storage backed up", {
+              key: CHAT_BACKUP_KEY,
+              quarantinedCount: quarantinedErrors.length,
+            });
+          }
+        } catch (backupError) {
+          devWarn("[StorageService] Failed to backup pre-quarantine storage", backupError);
+          throw backupError;
+        }
+      }
 
-      if (migratePlaintext && !isEncryptedPayload(serializedChats)) {
+      const shouldMigratePlaintext = migratePlaintext && !isEncryptedPayload(serializedChats);
+      if (quarantinedErrors.length > 0 || shouldMigratePlaintext) {
         const latestPayload = await AsyncStorage.getItem(CHATS_KEY);
         if (latestPayload === serializedChats) {
           const encryptedPayload = await encryptString(this.serializeChats(chats));
           await AsyncStorage.setItem(CHATS_KEY, encryptedPayload);
-          devWarn("[StorageService] Migrated legacy plaintext chat storage to encrypted payload");
+          if (quarantinedErrors.length > 0) {
+            devWarn("[StorageService] Persisted chats after corruption quarantine", {
+              chatCount: chats.length,
+              quarantinedCount: quarantinedErrors.length,
+            });
+          } else {
+            devWarn("[StorageService] Migrated legacy plaintext chat storage to encrypted payload");
+          }
         } else {
-          devWarn("[StorageService] Skipped plaintext migration because chat storage changed concurrently");
+          devWarn(
+            quarantinedErrors.length > 0
+              ? "[StorageService] Skipped quarantine persistence because chat storage changed concurrently"
+              : "[StorageService] Skipped plaintext migration because chat storage changed concurrently",
+          );
         }
       }
 
@@ -394,7 +486,7 @@ export class StorageService {
     return this.mutateChats("createChat", (chats) => {
       const newChat: Chat = {
         id: Crypto.randomUUID(),
-        title: title || "New Chat",
+        title: normalizeChatTitle(title, "New Chat"),
         createdAt: new Date(),
         updatedAt: new Date(),
         messages: [],
@@ -421,7 +513,7 @@ export class StorageService {
         id: existingChat.id,
         createdAt: existingChat.createdAt,
         messages: updates.messages ?? existingChat.messages,
-        title: updates.title ?? existingChat.title,
+        title: normalizeChatTitle(updates.title, existingChat.title),
         updatedAt: new Date(),
       };
 

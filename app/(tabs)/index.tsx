@@ -1,9 +1,9 @@
 import React from "react";
-import { Alert } from "react-native";
 import { Stack, useRouter } from "expo-router";
 import { useChat } from "../../src/context/ChatContext";
 import { useTranslation } from "../../src/i18n";
 import { GlassChatList } from "../../src/navigation/screens/GlassChatList";
+import { appAlert } from "../../src/utils/appAlert";
 
 export default function ChatListRoute() {
   const { push } = useRouter();
@@ -29,7 +29,7 @@ export default function ChatListRoute() {
         error instanceof Error
           ? error.message
           : t("screen.chatList.createErrorMessage");
-      Alert.alert(t("screen.chatList.createErrorTitle"), message);
+      appAlert(t("screen.chatList.createErrorTitle"), message);
     }
     setIsCreatingChat(false);
   };

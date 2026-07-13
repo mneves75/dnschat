@@ -29,7 +29,7 @@ import type {
 } from "./settingsStorage";
 import type { AccessibilityConfig } from "./AccessibilityContext";
 import { DNSLogService } from "../services/dnsLogService";
-import { validateDNSServer } from "../services/dnsService";
+import { validateDNSServer } from "../services/dnsServerValidation";
 import { devWarn } from "../utils/devLog";
 
 interface SettingsContextValue {
@@ -75,7 +75,7 @@ type SettingsActionsContextValue = Omit<
   keyof SettingsStateContextValue
 >;
 
-const SettingsContext = createContext<SettingsContextValue | undefined>(
+export const SettingsContext = createContext<SettingsContextValue | undefined>(
   undefined,
 );
 const SettingsStateContext = createContext<SettingsStateContextValue | undefined>(undefined);

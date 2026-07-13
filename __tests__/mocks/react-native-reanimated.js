@@ -60,11 +60,8 @@ function makeMutable(initial) {
 }
 
 function useSharedValue(initial) {
-  const ref = React.useRef(undefined);
-  if (ref.current === undefined) {
-    ref.current = makeMutable(initial);
-  }
-  return ref.current;
+  const [mutable] = React.useState(() => makeMutable(initial));
+  return mutable;
 }
 
 function useAnimatedStyle(factory) {

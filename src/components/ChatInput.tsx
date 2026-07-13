@@ -30,7 +30,6 @@ import {
   View,
   TextInput,
   StyleSheet,
-  useColorScheme,
   Text,
   Platform,
   ActivityIndicator,
@@ -62,6 +61,7 @@ import { useTranslation } from "../i18n";
 import { LiquidGlassWrapper, useLiquidGlassCapabilities } from "./LiquidGlassWrapper";
 import { PressableRipple } from "./PressableRipple";
 import { MESSAGE_CONSTANTS } from "../constants/appConstants";
+import { useResolvedColorScheme } from "../ui/theme/resolvedColorScheme";
 
 // Animated wrapper around PressableRipple — preserves Reanimated style animations
 // while giving Android a proper Material 3 ripple via PressableRipple's android_ripple.
@@ -95,7 +95,7 @@ export function ChatInput({
 }: ChatInputProps) {
   const [message, setMessage] = useState("");
   const textInputRef = useRef<TextInput>(null);
-  const colorScheme = useColorScheme();
+  const colorScheme = useResolvedColorScheme();
   const isDark = colorScheme === "dark";
   const typography = useTypography();
   const palette = useImessagePalette();

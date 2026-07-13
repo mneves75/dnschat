@@ -446,8 +446,8 @@ describe("Onboarding i18n Integration", () => {
     it("pt-BR translations use Portuguese words", () => {
       const ptSubtitle = getNestedValue(ptBRMessages, "screen.onboarding.welcome.subtitle");
 
-      // Check for common Portuguese words
-      expect(ptSubtitle).toMatch(/aplicativo|comunicar|mundo/i);
+      // Check for common Portuguese words in the factual transport copy.
+      expect(ptSubtitle).toMatch(/envie|consultas|respostas|registros/i);
     });
   });
 });

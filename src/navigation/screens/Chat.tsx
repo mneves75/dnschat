@@ -12,7 +12,6 @@
 import React, { useEffect, useState } from "react";
 import {
   StyleSheet,
-  useColorScheme,
   StatusBar,
   View,
   Platform,
@@ -40,6 +39,7 @@ import { useMotionReduction } from "../../context/AccessibilityContext";
 import { devLog, devWarn } from "../../utils/devLog";
 import { Toast } from "../../components/ui/Toast";
 import type { Message } from "../../types/chat";
+import { useResolvedColorScheme } from "../../ui/theme/resolvedColorScheme";
 
 function getRetryableFailedPrompt(messages: Message[]): string | null {
   for (let index = messages.length - 1; index > 0; index -= 1) {
@@ -59,7 +59,7 @@ function getRetryableFailedPrompt(messages: Message[]): string | null {
 }
 
 export function Chat() {
-  const colorScheme = useColorScheme();
+  const colorScheme = useResolvedColorScheme();
   const isDark = colorScheme === "dark";
   const palette = useImessagePalette();
   const typography = useTypography();

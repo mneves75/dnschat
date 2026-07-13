@@ -41,6 +41,12 @@ describe("UI design policy", () => {
     expect(offenders).toEqual([]);
   });
 
+  it("keeps Android ripple feedback visible above opaque pressable content", () => {
+    const source = fs.readFileSync("src/components/PressableRipple.tsx", "utf8");
+
+    expect(source).toContain("foreground: true");
+  });
+
   it("keeps theme picker options accessible with option-level hints", () => {
     expect(settingsSource).toContain("hint: t(");
     expect(settingsSource).toContain('"screen.settings.sections.appearance.optionHint"');

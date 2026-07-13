@@ -11,11 +11,11 @@ This file provides a fast, practical map of the repo so agents can orient quickl
 
 ## Execution Standards
 
-- Always choose the best performance technique that is justified by the task, measured constraints, and the existing architecture. Do not trade maintainability for speculative micro-optimizations.
-- No laid-back approach. No loose thinking. Define the plan, execute it, critique the result, and close every material flaw before claiming the task is done.
-- No shortcuts. Work must be well-structured, neat, clean, and easy to review.
-- Do not overcomplicate. Prefer the simplest robust design that satisfies the requirement, then carry it end-to-end through implementation, documentation, and verification.
-- Do not be biased toward the user, the agent, or any proposed idea. Evaluate ideas logically against evidence, requirements, risk, and maintainability.
+- Keep work scoped to the requested outcome and this project's requirement contract; do not expand into adjacent improvements without a clear need.
+- Prefer the simplest robust design that satisfies the requirement and remains easy to review and maintain.
+- Choose performance techniques only when justified by measured constraints and the existing architecture.
+- Evaluate proposals against evidence, requirements, risk, and maintainability rather than their source.
+- Match validation depth to risk. Stop when the requested outcome has sufficient evidence, and report any remaining verification gap precisely.
 
 ## What This App Is
 
@@ -43,6 +43,8 @@ Routes live exclusively in `app/`. `src/navigation/screens/*.tsx` files are scre
 - `src/services/encryptionService.ts` -> AES-GCM encryption helpers and SecureStore-backed key handling.
 - `src/context/settingsStorage.ts` -> settings persistence, default DNS server, and migration/coercion of invalid settings.
 - `src/i18n/messages/en-US.ts`, `src/i18n/messages/pt-BR.ts` -> bilingual copy; update both locales together.
+- `src/utils/appAlert.ts` -> cross-platform alert/confirm wrapper; use `appAlert()` instead of `Alert.alert` (no-op on react-native-web).
+- `src/ui/theme/resolvedColorScheme.ts` -> `useResolvedColorScheme()`; resolve the active light/dark scheme through this, never raw `useColorScheme` (web ignores `Appearance.setColorScheme`).
 - `modules/dns-native/` -> native DNS module (iOS/Android).
 
 ## Requirement Contract
@@ -115,7 +117,7 @@ When asked for a broad review, "latest/best practices", "2026+", or a full sourc
 ## Release / TestFlight Protocol
 
 - Treat the uploaded TestFlight binary as evidence only if it was archived after the final source, dependency, pod, version, and docs state was verified. If any release-affecting file changes after upload, bump the build number with `bun run sync-versions --bump-build`, rebuild, export, upload, and validate a new build.
-- Until the installed Expo release carries equivalent iOS 27 support, preserve `UIApplicationSceneManifest` and the local `SceneDelegate` bridge. Do not run `expo prebuild --clean` without restoring that bridge and passing `__tests__/iosSceneLifecycle.spec.ts`; a successful `devicectl` launch response is not sufficient without sustained process evidence.
+- Until the installed Expo release carries equivalent iOS 27 support, preserve `UIApplicationSceneManifest` and the local `SceneDelegate` bridge. Do not run `expo prebuild --clean` without restoring that bridge and passing `__tests__/iosSceneLifecycle.spec.ts`; a successful `devicectl` launch response is not sufficient without process-survival evidence.
 - Run `bun run verify:all` before signed archive/export. If `expo-doctor` requires an SDK patch package that Bun blocks through `minimumReleaseAge`, do not weaken the global policy; use a one-command override only for the required package, update `package.json` and `bun.lock`, run `pod install` when native pods change, then rerun `verify:all`.
 - For TestFlight releases, require this evidence chain before claiming completion: signed archive succeeded, IPA export succeeded, `asc publish testflight --wait` returned `VALID`, and `asc validate testflight` has `0` errors and `0` warnings. If a matching App Store version record exists, `asc validate --app <APP_ID> --version <VERSION> --platform IOS` must have no blocking findings; if no matching App Store version record exists, document the exact blocker and treat it as App Store-submission state, not TestFlight processing state.
 - Run Argent MCP after release-facing UI, navigation, accessibility, or localization changes. Use Argent screenshot and component-tree/debugger discovery before interactions, then exercise the changed flow on the compiled native app. AXe is opt-in/fallback only and must not replace Argent as the default runtime proof surface.

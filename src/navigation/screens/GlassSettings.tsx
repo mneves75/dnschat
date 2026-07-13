@@ -20,7 +20,6 @@ import {
   Switch,
   Text,
   View,
-  Alert,
   Platform,
   Share,
 } from "react-native";
@@ -37,6 +36,7 @@ import { StorageService } from "../../services/storageService";
 import { useImessagePalette } from "../../ui/theme/imessagePalette";
 import { getMinimumTouchTarget } from "../../ui/theme/liquidGlassSpacing";
 import { useScreenEntrance } from "../../ui/hooks/useScreenEntrance";
+import { appAlert } from "../../utils/appAlert";
 
 import {
   Form,
@@ -226,7 +226,7 @@ export function GlassSettings() {
 
 
   const handleResetSettings = () => {
-    Alert.alert(
+    appAlert(
       t("screen.glassSettings.alerts.resetTitle"),
       t("screen.glassSettings.alerts.resetMessage"),
       [
@@ -249,7 +249,7 @@ export function GlassSettings() {
   };
 
   const handleResetOnboarding = () => {
-    Alert.alert(
+    appAlert(
       t("screen.settings.alerts.onboardingTitle"),
       t("screen.settings.alerts.onboardingMessage"),
       [
@@ -309,7 +309,7 @@ export function GlassSettings() {
       await updateLocale(nextLocale);
     } catch (error) {
       devLog("Failed to update locale", error);
-      Alert.alert(
+      appAlert(
         t("screen.settings.alerts.saveErrorTitle"),
         t("screen.settings.alerts.saveErrorMessage"),
       );
@@ -378,7 +378,7 @@ export function GlassSettings() {
   };
 
   const handleClearData = () => {
-    Alert.alert(
+    appAlert(
       t("screen.glassSettings.alerts.clearCacheTitle"),
       t("screen.glassSettings.alerts.clearCacheMessage"),
       [
@@ -399,7 +399,7 @@ export function GlassSettings() {
               );
             } catch (error) {
               devWarn("[GlassSettings] Failed to clear local data", error);
-              Alert.alert(
+              appAlert(
                 t("common.errorTitle"),
                 t("screen.glassSettings.alerts.clearCacheErrorMessage"),
               );

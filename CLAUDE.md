@@ -26,7 +26,8 @@ A React Native Expo app that sends short prompts as DNS TXT queries to LLM serve
 | Chat context | `src/context/ChatContext.tsx` |
 | Message sanitization | `modules/dns-native/constants.ts` (`sanitizeDNSMessageReference`) |
 | Color/typography/spacing tokens | `src/ui/theme/imessagePalette.ts`, `liquidGlassTypography.ts`, `liquidGlassSpacing.ts` |
-| Theme preference (System/Light/Dark) | `src/context/settingsStorage.ts:themePreference` -> `app/_layout.tsx` `Appearance.setColorScheme` |
+| Theme preference (System/Light/Dark) | `src/context/settingsStorage.ts:themePreference` -> `app/_layout.tsx` `Appearance.setColorScheme`; web-safe resolution via `src/ui/theme/resolvedColorScheme.ts` (`useResolvedColorScheme`) |
+| Cross-platform alerts / confirmations | `src/utils/appAlert.ts` (`appAlert`) — use instead of `Alert.alert` (no-op on web) |
 | Responsive layout (phone/tablet/desktop) | `src/ui/hooks/useResponsiveLayout.ts` |
 | Accessibility provider + resilient hooks | `src/context/AccessibilityContext.tsx` |
 | Glass UI primitives | `src/components/LiquidGlassWrapper.tsx`, `src/components/glass/*` |
@@ -205,6 +206,8 @@ docs/                         # Developer docs (see docs/README.md for index)
 ### Theming & Accessibility
 
 - **Palette**: `useImessagePalette()` is the single source of truth for colours. It auto-resolves dark/light and honours `useHighContrast()`. Don't hard-code hex strings in components — read from the palette.
+- **Color scheme (web-safe)**: resolve the active scheme through `useResolvedColorScheme()` (`src/ui/theme/resolvedColorScheme.ts`), never raw `useColorScheme()` from `react-native`. `Appearance.setColorScheme` is ignored by react-native-web, so the raw hook would strand the user's Light/Dark preference on web. The palette already routes through it. The hook collapses `null`/`undefined`/`"unspecified"` to `"light"` (its return type is strictly `"light" | "dark"` — `tsc` enforces this).
+- **Alerts / confirmations**: call `appAlert()` (`src/utils/appAlert.ts`), never `Alert.alert` directly. `Alert.alert` is a silent no-op on react-native-web; `appAlert` bridges to `window.confirm`/`window.alert` there. Pass a real button list only when you need actions — `appAlert` forwards the platform default (dismissable) when the list is empty.
 - **Resilient hooks**: `useHighContrast`, `useMotionReduction`, `useScreenReader`, `useFontSize` return defaults when no `AccessibilityProvider` is mounted (so isolated unit tests don't need to wrap providers). Only `useAccessibility()` itself throws when used outside a provider — keep it that way to catch real wiring bugs.
 - **Reduce motion**: any animation in `ChatInput`, `LiquidGlassButton`, `GlassBottomSheet`, screen entrance, etc., must short-circuit to the end state when `shouldReduceMotion` is true. Do not gate haptics on it — those still fire.
 - **Responsive bubbles / icons**: `useResponsiveLayout()` returns `{ messageMaxWidth, tabIconSize, isPhone/isTablet/isDesktop }`. Breakpoints: phone < 600, tablet 600–1024, desktop ≥ 1024. Apply `messageMaxWidth` instead of a fixed `"75%"` for chat content.

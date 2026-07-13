@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { Share, Alert } from "react-native";
+import { Share } from "react-native";
 import { Chat } from "../../src/navigation/screens/Chat";
 import { EmptyState } from "../../src/components/EmptyState";
 import { Form } from "../../src/components/glass/GlassForm";
@@ -9,6 +9,7 @@ import { useTranslation } from "../../src/i18n";
 import { resolveRouteChat } from "../../src/utils/chatRoute";
 import { normalizeRouteParam } from "../../src/utils/routeParams";
 import { devWarn } from "../../src/utils/devLog";
+import { appAlert } from "../../src/utils/appAlert";
 
 // Auto-create retry ceiling: one transient storage failure recovers, but a
 // persistent failure stops retrying instead of looping create/fail forever.
@@ -152,7 +153,7 @@ export default function ChatRoute() {
 
   const handleClearChat = () => {
     if (!routeChat) return;
-    Alert.alert(
+    appAlert(
       t("common.clear"),
       t("screen.glassChatList.alerts.deleteMessage", { title: routeChat.title }),
       [

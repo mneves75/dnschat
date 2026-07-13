@@ -135,7 +135,7 @@ export const PressableRipple = forwardRef<View, PressableRippleProps>(
         ref={ref}
         android_ripple={
           Platform.OS === "android"
-            ? { color, borderless, radius: rippleRadius }
+            ? { color, borderless, radius: rippleRadius, foreground: true }
             : undefined
         }
         onPressIn={handlePressIn}

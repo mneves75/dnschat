@@ -1,5 +1,5 @@
 import React from "react";
-import { Alert, View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
 import type { StyleProp, TextStyle } from "react-native";
 import { format } from "date-fns";
 import Markdown from "react-native-markdown-display";
@@ -10,6 +10,7 @@ import type { TypographyScale } from "../ui/theme/liquidGlassTypography";
 import { LiquidGlassSpacing } from "../ui/theme/liquidGlassSpacing";
 import { useTranslation } from "../i18n";
 import { openExternalLink } from "../utils/externalLinks";
+import { appAlert } from "../utils/appAlert";
 
 interface MessageContentProps {
   message: Message;
@@ -54,7 +55,7 @@ export function MessageContent({
     : message.content;
   const markdownProps = markdownStyles ? { style: markdownStyles } : {};
   const handleMarkdownLinkPress = (url: string): boolean => {
-    Alert.alert(
+    appAlert(
       t("screen.chat.externalLink.title"),
       t("screen.chat.externalLink.message", { url }),
       [

@@ -5,7 +5,6 @@ import * as React from "react";
 import { Appearance, Platform } from "react-native";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { useColorScheme } from "react-native";
 import { ErrorBoundary } from "../src/components/ErrorBoundary";
 import { HapticsConfigurator } from "../src/components/HapticsConfigurator";
 import { AccessibilityProvider } from "../src/context/AccessibilityContext";
@@ -16,6 +15,7 @@ import { I18nProvider } from "../src/i18n";
 import { DNSLogService } from "../src/services/dnsLogService";
 import { useImessagePalette } from "../src/ui/theme/imessagePalette";
 import { createNavigationTheme } from "../src/ui/theme/navigationTheme";
+import { useResolvedColorScheme } from "../src/ui/theme/resolvedColorScheme";
 import { AndroidStartupDiagnostics } from "../src/utils/androidStartupDiagnostics";
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -28,8 +28,8 @@ function RootLayoutContent() {
   const rootNavigationState = useRootNavigationState();
 
   // Apply user theme preference globally via Appearance.setColorScheme so
-  // every useColorScheme() consumer (palette, navigation, system controls)
-  // observes the override. RN 0.85 uses 'unspecified' to defer to the OS.
+  // native system controls observe the override. RN uses 'unspecified' to
+  // defer to the OS; app visuals resolve the preference through the theme hook.
   React.useEffect(() => {
     if (typeof Appearance.setColorScheme !== "function") {
       return;
@@ -40,7 +40,7 @@ function RootLayoutContent() {
     );
   }, [themePreference]);
 
-  const colorScheme = useColorScheme();
+  const colorScheme = useResolvedColorScheme();
   const isDark = colorScheme === "dark";
   const palette = useImessagePalette();
   const navigationTheme = createNavigationTheme(palette, isDark);

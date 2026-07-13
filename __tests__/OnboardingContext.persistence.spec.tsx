@@ -68,4 +68,31 @@ describe("OnboardingProvider persistence", () => {
     expect(latestOnboarding?.currentStep).toBe(0);
     expect(latestOnboarding?.steps[0]?.completed).toBe(false);
   });
+
+  it.each([
+    ["an out-of-range step", { completed: false, stepIndex: 99, completedSteps: [] }],
+    ["a non-boolean completion flag", { completed: "yes", stepIndex: 0, completedSteps: [] }],
+    ["an unknown completed step", { completed: false, stepIndex: 0, completedSteps: ["missing"] }],
+    ["a completed state on the first step", { completed: true, stepIndex: 0, completedSteps: [] }],
+    ["a final incomplete step without its prefix", { completed: false, stepIndex: 4, completedSteps: [] }],
+  ])("resets %s instead of hydrating a blank onboarding route", async (_label, payload) => {
+    mockAsyncStorage.getItem.mockResolvedValueOnce(JSON.stringify(payload));
+
+    await renderProvider();
+
+    expect(latestOnboarding?.currentStep).toBe(0);
+    expect(latestOnboarding?.hasCompletedOnboarding).toBe(false);
+    expect(latestOnboarding?.steps[0]?.id).toBe("welcome");
+    expect(mockAsyncStorage.removeItem).toHaveBeenCalledWith("@chat_dns_onboarding");
+  });
+
+  it("removes malformed JSON instead of retrying the same corrupt state on every launch", async () => {
+    mockAsyncStorage.getItem.mockResolvedValueOnce('{"completed":');
+
+    await renderProvider();
+
+    expect(latestOnboarding?.currentStep).toBe(0);
+    expect(latestOnboarding?.hasCompletedOnboarding).toBe(false);
+    expect(mockAsyncStorage.removeItem).toHaveBeenCalledWith("@chat_dns_onboarding");
+  });
 });

@@ -1,7 +1,8 @@
-import { Alert, Share } from 'react-native';
+import { Share } from 'react-native';
 import { HapticFeedback } from '../utils/haptics';
 import { createTranslator } from '../i18n';
 import type { SupportedLocale } from '../i18n/translations';
+import { appAlert } from '../utils/appAlert';
 
 /**
  * ShareService
@@ -68,7 +69,7 @@ export class ShareService {
 
       // TRICKY: Only show alert for real errors. Type guard for Error object.
       if (error instanceof Error) {
-        Alert.alert(
+        appAlert(
           t("components.share.failedTitle"),
           t("components.share.failedMessage"),
           [{ text: t("common.ok") }],

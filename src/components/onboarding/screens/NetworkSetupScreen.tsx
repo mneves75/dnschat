@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  Alert,
   ActivityIndicator,
   ScrollView,
 } from "react-native";
@@ -16,6 +15,7 @@ import { LiquidGlassSpacing } from "../../../ui/theme/liquidGlassSpacing";
 import { useTranslation } from "../../../i18n";
 import { devWarn } from "../../../utils/devLog";
 import { wait } from "../../../utils/wait";
+import { appAlert } from "../../../utils/appAlert";
 
 interface NetworkTest {
   method: string;
@@ -63,7 +63,7 @@ export function NetworkSetupScreen() {
         await applyRecommendedNetworkSettings(recommendedSetting);
       } catch (error) {
         devWarn("[NetworkSetupScreen] Failed to apply recommended settings", error);
-        Alert.alert(
+        appAlert(
           t("screen.onboarding.networkSetup.alerts.errorTitle"),
           t("screen.onboarding.networkSetup.alerts.errorMessage"),
         );
@@ -72,7 +72,7 @@ export function NetworkSetupScreen() {
       }
       setIsApplyingSettings(false);
 
-      Alert.alert(
+      appAlert(
         t("screen.onboarding.networkSetup.alerts.successTitle"),
         t("screen.onboarding.networkSetup.alerts.successMessage"),
         [{ text: t("screen.onboarding.networkSetup.alerts.successButton"), style: "default" }],
@@ -109,7 +109,7 @@ export function NetworkSetupScreen() {
         setOptimizationComplete(true);
       } catch (error) {
         devWarn("[NetworkSetupScreen] Network configuration failed", error);
-        Alert.alert(
+        appAlert(
           t("screen.onboarding.networkSetup.alerts.errorTitle"),
           t("screen.onboarding.networkSetup.alerts.errorMessage"),
         );

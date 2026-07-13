@@ -8,6 +8,7 @@
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { StorageService, StorageCorruptionError } from "../src/services/storageService";
+import { decryptIfEncrypted } from "../src/services/encryptionService";
 
 // Mock AsyncStorage
 jest.mock("@react-native-async-storage/async-storage", () => ({
@@ -195,11 +196,200 @@ describe("StorageService Corruption Handling", () => {
       expect(first.createdAt).toBeInstanceOf(Date);
       expect(first.updatedAt).toBeInstanceOf(Date);
       expect(firstMessage.timestamp).toBeInstanceOf(Date);
+      expect(firstMessage.status).toBe("sent");
+    });
+
+    it.each([
+      ["title", 42, /invalid title/],
+      ["createdAt", undefined, /missing or invalid timestamps/],
+      ["updatedAt", undefined, /missing or invalid timestamps/],
+    ])("rejects a chat with invalid %s in strict mode", async (field, value, expectedError) => {
+      const invalidChat: Record<string, unknown> = {
+        id: "chat-1",
+        title: "Test",
+        createdAt: "2025-06-15T12:00:00.000Z",
+        updatedAt: "2025-06-15T13:00:00.000Z",
+        messages: [],
+      };
+      invalidChat[field] = value;
+      mockAsyncStorage.getItem.mockResolvedValue(JSON.stringify([invalidChat]));
+
+      await expect(
+        StorageService.loadChats({ recoverOnCorruption: false }),
+      ).rejects.toThrow(expectedError);
+    });
+
+    it("quarantines one invalid chat while preserving valid chats by default", async () => {
+      const validChatA = {
+        id: "chat-a",
+        title: "Chat A",
+        createdAt: "2025-06-15T12:00:00.000Z",
+        updatedAt: "2025-06-15T13:00:00.000Z",
+        messages: [],
+      };
+      const chatMissingTimestamps = {
+        id: "chat-corrupted",
+        title: "Corrupted Chat",
+        messages: [],
+      };
+      const validChatB = {
+        id: "chat-b",
+        title: "Chat B",
+        createdAt: "2025-06-16T12:00:00.000Z",
+        updatedAt: "2025-06-16T13:00:00.000Z",
+        messages: [],
+      };
+      const originalPayload = JSON.stringify([
+        validChatA,
+        chatMissingTimestamps,
+        validChatB,
+      ]);
+      mockAsyncStorage.getItem.mockResolvedValue(originalPayload);
+
+      const chats = await StorageService.loadChats();
+
+      expect(chats.map(({ id }) => id)).toEqual(["chat-a", "chat-b"]);
+      const backupCall = mockAsyncStorage.setItem.mock.calls.find(
+        ([key]) => key === "@chat_dns_chats_backup",
+      );
+      const backup = JSON.parse(String(backupCall?.[1])) as Record<string, unknown>;
+      expect(typeof backup['payload']).toBe("string");
+      await expect(decryptIfEncrypted(String(backup['payload']))).resolves.toBe(
+        originalPayload,
+      );
+      const persistedCall = mockAsyncStorage.setItem.mock.calls.find(
+        ([key]) => key === "@chat_dns_chats",
+      );
+      const persisted = await decryptIfEncrypted(String(persistedCall?.[1]));
+      const persistedChats = JSON.parse(persisted) as Array<Record<string, unknown>>;
+      expect(persistedChats.map((chat) => chat['id'])).toEqual(["chat-a", "chat-b"]);
+      expect(mockAsyncStorage.removeItem).not.toHaveBeenCalledWith("@chat_dns_chats");
+    });
+
+    it("leaves the original payload intact when the quarantine backup write fails", async () => {
+      const originalPayload = JSON.stringify([{
+        id: "chat-corrupted",
+        title: "Corrupted Chat",
+        messages: [],
+      }]);
+      mockAsyncStorage.getItem.mockResolvedValue(originalPayload);
+      mockAsyncStorage.setItem.mockRejectedValueOnce(new Error("Backup write failed"));
+
+      await expect(StorageService.loadChats()).rejects.toThrow("Backup write failed");
+
+      expect(mockAsyncStorage.setItem).toHaveBeenCalledTimes(1);
+      expect(mockAsyncStorage.setItem).toHaveBeenCalledWith(
+        "@chat_dns_chats_backup",
+        expect.any(String),
+      );
+      expect(mockAsyncStorage.removeItem).not.toHaveBeenCalledWith("@chat_dns_chats");
+    });
+
+    it("normalizes a legacy blank title without discarding valid history", async () => {
+      mockAsyncStorage.getItem.mockResolvedValue(JSON.stringify([{
+        id: "chat-1",
+        title: "   ",
+        createdAt: "2025-06-15T12:00:00.000Z",
+        updatedAt: "2025-06-15T13:00:00.000Z",
+        messages: [],
+      }]));
+
+      const chats = await StorageService.loadChats({ recoverOnCorruption: false });
+      expect(chats[0]?.title).toBe("New Chat");
+      expect(mockAsyncStorage.removeItem).not.toHaveBeenCalledWith("@chat_dns_chats");
+    });
+
+    it("rejects a message with a missing timestamp in strict mode", async () => {
+      mockAsyncStorage.getItem.mockResolvedValue(JSON.stringify([{
+        id: "chat-1",
+        title: "Test",
+        createdAt: "2025-06-15T12:00:00.000Z",
+        updatedAt: "2025-06-15T13:00:00.000Z",
+        messages: [{ id: "msg-1", role: "user", content: "Hello", status: "sent" }],
+      }]));
+
+      await expect(
+        StorageService.loadChats({ recoverOnCorruption: false }),
+      ).rejects.toThrow(/missing or invalid timestamp/);
+    });
+
+    it("rejects an unknown message status in strict mode", async () => {
+      mockAsyncStorage.getItem.mockResolvedValue(JSON.stringify([{
+        id: "chat-1",
+        title: "Test",
+        createdAt: "2025-06-15T12:00:00.000Z",
+        updatedAt: "2025-06-15T13:00:00.000Z",
+        messages: [{
+          id: "msg-1",
+          role: "user",
+          content: "Hello",
+          timestamp: "2025-06-15T12:30:00.000Z",
+          status: "unknown",
+        }],
+      }]));
+
+      await expect(
+        StorageService.loadChats({ recoverOnCorruption: false }),
+      ).rejects.toThrow(/invalid status/);
+    });
+
+    it("quarantines one bad message while preserving its chat and valid messages", async () => {
+      const originalPayload = JSON.stringify([{
+        id: "chat-1",
+        title: "Test",
+        createdAt: "2025-06-15T12:00:00.000Z",
+        updatedAt: "2025-06-15T13:00:00.000Z",
+        messages: [
+          {
+            id: "msg-good-a",
+            role: "user",
+            content: "Hello",
+            timestamp: "2025-06-15T12:30:00.000Z",
+            status: "sent",
+          },
+          {
+            id: "msg-corrupted",
+            role: "assistant",
+            content: "Missing timestamp",
+            status: "sent",
+          },
+          {
+            id: "msg-good-b",
+            role: "assistant",
+            content: "World",
+            timestamp: "2025-06-15T12:31:00.000Z",
+            status: "sent",
+          },
+        ],
+      }]);
+      mockAsyncStorage.getItem.mockResolvedValue(originalPayload);
+
+      const chats = await StorageService.loadChats();
+
+      expect(chats).toHaveLength(1);
+      expect(chats[0]?.messages.map(({ id }) => id)).toEqual([
+        "msg-good-a",
+        "msg-good-b",
+      ]);
+      const persistedCall = mockAsyncStorage.setItem.mock.calls.find(
+        ([key]) => key === "@chat_dns_chats",
+      );
+      const persisted = await decryptIfEncrypted(String(persistedCall?.[1]));
+      const persistedChats = JSON.parse(persisted) as Array<Record<string, unknown>>;
+      const persistedMessages = persistedChats[0]?.['messages'];
+      expect(Array.isArray(persistedMessages)).toBe(true);
+      expect(persistedMessages).toHaveLength(2);
+      expect(mockAsyncStorage.setItem).toHaveBeenCalledWith(
+        "@chat_dns_chats_backup",
+        expect.any(String),
+      );
     });
 
     it("treats a null date as corruption instead of silently coercing to the 1970 epoch", async () => {
       // Regression: new Date(null) returns a *valid* Date (epoch 0), which would
       // silently corrupt timestamps and reorder the chat list rather than be caught.
+      // The reviver returns the raw null (never coerces); the per-record loop then
+      // rejects the record because null is not a Date instance.
       const chatsWithNullDate = [
         {
           id: "chat-1",
@@ -215,7 +405,7 @@ describe("StorageService Corruption Handling", () => {
 
       await expect(
         StorageService.loadChats({ recoverOnCorruption: false }),
-      ).rejects.toThrow(/Invalid date type for createdAt: null/);
+      ).rejects.toThrow(/missing or invalid timestamps/);
     });
 
     it("treats an object-valued timestamp as corruption", async () => {
@@ -241,7 +431,81 @@ describe("StorageService Corruption Handling", () => {
 
       await expect(
         StorageService.loadChats({ recoverOnCorruption: false }),
-      ).rejects.toThrow(/Invalid date type for timestamp: object/);
+      ).rejects.toThrow(/missing or invalid timestamp/);
+    });
+
+    it("quarantines a present-but-invalid date string without wiping valid history", async () => {
+      // Regression for the corruption blast-radius: an invalid *present* date
+      // string (e.g. a partially corrupted payload) must drop only its own
+      // record, not the entire chat history, under the default recovery mode.
+      const validChatA = {
+        id: "chat-a",
+        title: "Chat A",
+        createdAt: "2025-06-15T12:00:00.000Z",
+        updatedAt: "2025-06-15T13:00:00.000Z",
+        messages: [],
+      };
+      const chatWithBadDate = {
+        id: "chat-corrupted",
+        title: "Corrupted Chat",
+        createdAt: "not-a-real-date",
+        updatedAt: "2025-06-15T13:00:00.000Z",
+        messages: [],
+      };
+      const validChatB = {
+        id: "chat-b",
+        title: "Chat B",
+        createdAt: "2025-06-16T12:00:00.000Z",
+        updatedAt: "2025-06-16T13:00:00.000Z",
+        messages: [],
+      };
+      const originalPayload = JSON.stringify([
+        validChatA,
+        chatWithBadDate,
+        validChatB,
+      ]);
+      mockAsyncStorage.getItem.mockResolvedValue(originalPayload);
+
+      const chats = await StorageService.loadChats();
+
+      expect(chats.map(({ id }) => id)).toEqual(["chat-a", "chat-b"]);
+      expect(mockAsyncStorage.removeItem).not.toHaveBeenCalledWith("@chat_dns_chats");
+      const backupCall = mockAsyncStorage.setItem.mock.calls.find(
+        ([key]) => key === "@chat_dns_chats_backup",
+      );
+      expect(backupCall).toBeDefined();
+    });
+
+    it("quarantines a message with a present-but-invalid timestamp string", async () => {
+      const originalPayload = JSON.stringify([{
+        id: "chat-1",
+        title: "Test",
+        createdAt: "2025-06-15T12:00:00.000Z",
+        updatedAt: "2025-06-15T13:00:00.000Z",
+        messages: [
+          {
+            id: "msg-good",
+            role: "user",
+            content: "Hello",
+            timestamp: "2025-06-15T12:30:00.000Z",
+            status: "sent",
+          },
+          {
+            id: "msg-bad-date",
+            role: "assistant",
+            content: "Corrupt timestamp",
+            timestamp: "definitely-not-a-date",
+            status: "sent",
+          },
+        ],
+      }]);
+      mockAsyncStorage.getItem.mockResolvedValue(originalPayload);
+
+      const chats = await StorageService.loadChats();
+
+      expect(chats).toHaveLength(1);
+      expect(chats[0]?.messages.map(({ id }) => id)).toEqual(["msg-good"]);
+      expect(mockAsyncStorage.removeItem).not.toHaveBeenCalledWith("@chat_dns_chats");
     });
 
     it("preserves error cause when recovery disabled", async () => {
