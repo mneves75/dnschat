@@ -4,6 +4,22 @@ All notable changes to DNSChat will be documented in this file.
 
 The format is based on Keep a Changelog, and this project follows Semantic Versioning.
 
+## [4.3.1] - 2026-07-13
+
+Build `78` -> `79`. Concurrency hardening for chat-storage corruption
+recovery: closes a latent data-loss race without weakening encryption at rest.
+Working version on `main`; not a TestFlight release.
+
+### Fixed
+
+- Chat-storage loads no longer perform a non-queued write to the primary chat
+  key. Previously a corruption-quarantine or legacy-plaintext migration could
+  persist from the read path, outside the serialized mutation queue, where it
+  could overwrite a concurrent write and lose data. Legacy plaintext is now
+  re-encrypted through the mutation queue (still guaranteed for read-only
+  upgrades), and quarantine cleanup persists on the next queued mutation, so all
+  writes to the chat key stay serialized.
+
 ## [4.3.0] - 2026-07-13
 
 Build `77` -> `78`. Home-screen "Signal Path" redesign, cross-platform web
