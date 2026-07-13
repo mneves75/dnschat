@@ -7,8 +7,14 @@
  */
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { StorageService, StorageCorruptionError } from "../src/services/storageService";
-import { decryptIfEncrypted } from "../src/services/encryptionService";
+import {
+  StorageService,
+  StorageCorruptionError,
+} from "../src/services/storageService";
+import {
+  decryptIfEncrypted,
+  encryptString,
+} from "../src/services/encryptionService";
 
 // Mock AsyncStorage
 jest.mock("@react-native-async-storage/async-storage", () => ({
@@ -22,6 +28,9 @@ const mockAsyncStorage = AsyncStorage as jest.Mocked<typeof AsyncStorage>;
 describe("StorageService Corruption Handling", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // The deferred plaintext->encrypted migration populates the static chats
+    // cache; clear it so migration writes in one test can't leak into the next.
+    StorageService.invalidateChatCache();
   });
 
   describe("loadChats", () => {
@@ -119,32 +128,11 @@ describe("StorageService Corruption Handling", () => {
       expect(first.title).toBe("Test Chat");
     });
 
-    it("migrates valid legacy plaintext chat storage to encrypted payload", async () => {
-      const validChats = [
-        {
-          id: "chat-1",
-          title: "Legacy Chat",
-          createdAt: "2025-01-01T00:00:00.000Z",
-          updatedAt: "2025-01-01T00:00:00.000Z",
-          messages: [],
-        },
-      ];
-      mockAsyncStorage.getItem.mockResolvedValue(JSON.stringify(validChats));
-
-      const result = await StorageService.loadChats();
-
-      expect(result[0]?.title).toBe("Legacy Chat");
-      expect(mockAsyncStorage.setItem).toHaveBeenCalledWith(
-        "@chat_dns_chats",
-        expect.stringContaining("enc:v1:"),
-      );
-      const migrationCall = mockAsyncStorage.setItem.mock.calls.find(
-        ([key]) => key === "@chat_dns_chats",
-      );
-      expect(String(migrationCall?.[1])).not.toContain("Legacy Chat");
-    });
-
-    it("does not overwrite chat storage when plaintext migration sees a concurrent write", async () => {
+    it("migrates a legacy plaintext payload to an encrypted payload through the mutation queue", async () => {
+      // Encryption-at-rest must survive the corruption-quarantine refactor: a
+      // read-only upgrade (open the app, never mutate) must still re-encrypt
+      // legacy plaintext. loadChats performs no direct write; the encrypting
+      // save runs inside the serialized mutation queue, so CACHE-01 stays closed.
       const legacyChats = [
         {
           id: "chat-1",
@@ -154,17 +142,58 @@ describe("StorageService Corruption Handling", () => {
           messages: [],
         },
       ];
-      const legacyPayload = JSON.stringify(legacyChats);
-      mockAsyncStorage.getItem
-        .mockResolvedValueOnce(legacyPayload)
-        .mockResolvedValueOnce("enc:v1:concurrent-write");
+      mockAsyncStorage.getItem.mockResolvedValue(JSON.stringify(legacyChats));
 
       const result = await StorageService.loadChats();
 
       expect(result[0]?.title).toBe("Legacy Chat");
+      const migrationCall = mockAsyncStorage.setItem.mock.calls.find(
+        ([key]) => key === "@chat_dns_chats",
+      );
+      expect(migrationCall).toBeDefined();
+      const migratedPayload = String(migrationCall?.[1]);
+      expect(migratedPayload).toContain("enc:v1:");
+      expect(migratedPayload).not.toContain("Legacy Chat");
+      const decrypted = await decryptIfEncrypted(migratedPayload);
+      const migratedChats = JSON.parse(decrypted) as Array<{ id: string }>;
+      expect(migratedChats.map((chat) => chat.id)).toEqual(["chat-1"]);
+    });
+
+    it("does not rewrite CHATS_KEY from the load path when quarantining an already-encrypted payload (CACHE-01)", async () => {
+      // For an already-encrypted payload there is no migration to perform, so a
+      // quarantine load returns survivors WITHOUT rewriting CHATS_KEY: a write
+      // here would be non-queued and could clobber a concurrent mutation. It
+      // only backs up the original; cleaned data is re-quarantined idempotently
+      // until a real mutation persists it through the serialized queue.
+      const encrypted = await encryptString(
+        JSON.stringify([
+          {
+            id: "chat-good",
+            title: "Good",
+            createdAt: "2025-06-15T12:00:00.000Z",
+            updatedAt: "2025-06-15T13:00:00.000Z",
+            messages: [],
+          },
+          { id: "chat-corrupt", title: "Corrupt", messages: [] },
+        ]),
+      );
+      mockAsyncStorage.getItem.mockResolvedValue(encrypted);
+
+      const chats = await StorageService.loadChats();
+
+      expect(chats.map(({ id }) => id)).toEqual(["chat-good"]);
+      // A backup of the original is written (forensics, a different key)...
+      expect(mockAsyncStorage.setItem).toHaveBeenCalledWith(
+        "@chat_dns_chats_backup",
+        expect.any(String),
+      );
+      // ...but CHATS_KEY itself is never written or wiped by the load.
       expect(mockAsyncStorage.setItem).not.toHaveBeenCalledWith(
         "@chat_dns_chats",
-        expect.any(String),
+        expect.anything(),
+      );
+      expect(mockAsyncStorage.removeItem).not.toHaveBeenCalledWith(
+        "@chat_dns_chats",
       );
     });
 
@@ -257,6 +286,9 @@ describe("StorageService Corruption Handling", () => {
       await expect(decryptIfEncrypted(String(backup['payload']))).resolves.toBe(
         originalPayload,
       );
+      // The legacy plaintext payload is migrated through the serialized queue:
+      // survivors are re-persisted encrypted (the migration re-quarantines the
+      // bad record idempotently). loadChats never writes CHATS_KEY directly.
       const persistedCall = mockAsyncStorage.setItem.mock.calls.find(
         ([key]) => key === "@chat_dns_chats",
       );
@@ -371,6 +403,8 @@ describe("StorageService Corruption Handling", () => {
         "msg-good-a",
         "msg-good-b",
       ]);
+      // Legacy plaintext is migrated through the queue: the surviving messages
+      // are re-persisted encrypted, and the original is backed up for forensics.
       const persistedCall = mockAsyncStorage.setItem.mock.calls.find(
         ([key]) => key === "@chat_dns_chats",
       );
@@ -383,6 +417,7 @@ describe("StorageService Corruption Handling", () => {
         "@chat_dns_chats_backup",
         expect.any(String),
       );
+      expect(mockAsyncStorage.removeItem).not.toHaveBeenCalledWith("@chat_dns_chats");
     });
 
     it("treats a null date as corruption instead of silently coercing to the 1970 epoch", async () => {

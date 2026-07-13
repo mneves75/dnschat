@@ -82,7 +82,11 @@ export class StorageService {
       return this.cachedChats;
     }
     // Note: if this load throws (decrypt/parse failure), nothing is cached.
-    return this.loadChats({ migratePlaintext: false });
+    // scheduleRewrite:false is REQUIRED here: this load runs inside a queued
+    // mutation, and the mutation's own saveChats() already re-encrypts, so a
+    // queued plaintext-migration rewrite would both be redundant and DEADLOCK
+    // (it would await the queue tail that includes the current operation).
+    return this.loadChats({ scheduleRewrite: false });
   }
 
   /**
@@ -208,12 +212,17 @@ export class StorageService {
   }
 
   static async loadChats(options?: {
-    migratePlaintext?: boolean;
     recoverOnCorruption?: boolean;
+    /**
+     * When the stored payload is legacy plaintext, rewrite it to an encrypted
+     * payload through the serialized mutation queue (default true). MUST be
+     * false for any load that already runs inside queueOperation() — otherwise
+     * the awaited queued rewrite deadlocks on the in-flight operation.
+     */
+    scheduleRewrite?: boolean;
   }): Promise<Chat[]> {
     const startTime = Date.now();
     devLog("[StorageService] loadChats called");
-    const migratePlaintext = options?.migratePlaintext !== false;
     const recoverOnCorruption = options?.recoverOnCorruption !== false;
     let serializedChats: string | null = null;
 
@@ -229,6 +238,11 @@ export class StorageService {
       devLog("[StorageService] Retrieved chats from storage", {
         dataSize: serializedChats.length,
       });
+
+      // Legacy plaintext payload (pre-encryption-at-rest). Captured here so the
+      // migration below can rewrite it to an encrypted payload through the
+      // mutation queue without a non-queued write.
+      const payloadWasPlaintext = !isEncryptedPayload(serializedChats);
 
       let parsed: unknown;
       let decrypted = '';
@@ -412,28 +426,46 @@ export class StorageService {
         }
       }
 
-      const shouldMigratePlaintext = migratePlaintext && !isEncryptedPayload(serializedChats);
-      if (quarantinedErrors.length > 0 || shouldMigratePlaintext) {
-        const latestPayload = await AsyncStorage.getItem(CHATS_KEY);
-        if (latestPayload === serializedChats) {
-          const encryptedPayload = await encryptString(this.serializeChats(chats));
-          await AsyncStorage.setItem(CHATS_KEY, encryptedPayload);
-          if (quarantinedErrors.length > 0) {
-            devWarn("[StorageService] Persisted chats after corruption quarantine", {
-              chatCount: chats.length,
-              quarantinedCount: quarantinedErrors.length,
-            });
-          } else {
-            devWarn("[StorageService] Migrated legacy plaintext chat storage to encrypted payload");
-          }
-        } else {
+      // loadChats itself never writes CHATS_KEY directly. A direct write here
+      // would run outside the mutation queue (public display loads, and the
+      // warm-up load inside getChatsForMutation) and could clobber a concurrent
+      // queued saveChats (CACHE-01). But encryption-at-rest still requires
+      // migrating a legacy plaintext payload — and a read-only upgrade (open the
+      // app, never mutate) must not leave history plaintext forever. So we
+      // rewrite it THROUGH the serialized mutation queue: the encrypting write
+      // is saveChats() inside queueOperation(), serialized with every other
+      // mutation, so the race stays closed. Awaited so the migration completes
+      // before the read returns, matching the pre-quarantine guarantee.
+      if (payloadWasPlaintext && options?.scheduleRewrite !== false) {
+        try {
+          await this.queueOperation(async () => {
+            const latest = await AsyncStorage.getItem(CHATS_KEY);
+            // A concurrent mutation may have already encrypted it, or storage
+            // may have been cleared; only rewrite a still-plaintext payload.
+            if (!latest || isEncryptedPayload(latest)) {
+              return;
+            }
+            // scheduleRewrite:false: this inner load runs inside the queue, so
+            // it must not recursively enqueue another rewrite (deadlock).
+            const fresh = await this.loadChats({ scheduleRewrite: false });
+            await this.saveChats(fresh);
+            this.cachedChats = fresh;
+          });
+        } catch (rewriteError) {
+          // Migration is best-effort: a failure must neither fail the read nor
+          // be mistaken for payload corruption (which would wipe CHATS_KEY in
+          // the outer catch). The next load retries. Swallow locally.
           devWarn(
-            quarantinedErrors.length > 0
-              ? "[StorageService] Skipped quarantine persistence because chat storage changed concurrently"
-              : "[StorageService] Skipped plaintext migration because chat storage changed concurrently",
+            "[StorageService] Deferred plaintext->encrypted rewrite failed",
+            rewriteError,
           );
         }
       }
+      // Quarantine-cleanup for an already-encrypted payload is not persisted
+      // here (it would need a non-queued write); corrupt records are
+      // re-quarantined idempotently on each load and the backup above preserves
+      // the original. The whole-payload corruption recovery in the catch below
+      // is a separate, deliberate recovery path for genuinely unparseable data.
 
       const duration = Date.now() - startTime;
       devLog("[StorageService] loadChats completed", {

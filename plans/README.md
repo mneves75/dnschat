@@ -41,6 +41,7 @@ pre-release is planned below.
 | Plan | Title | Priority | Effort | Status |
 |------|-------|----------|--------|--------|
 | 011 | loadChats corruption blast-radius: per-record quarantine vs whole-history wipe (CORRECT-01) | P2 | M | DONE (2026-07-13, codex executor + advisor review + 2 autoreview cycles) |
+| — | CACHE-01 concurrency: non-queued write from the load path (data-loss race) | P2 | M | FIXED (2026-07-13, advisor, released as 4.3.1) |
 
 **011 outcome.** Codex implemented per-record quarantine (a bad chat/message is
 dropped, survivors kept, original payload backed up; genuinely unparseable
@@ -55,24 +56,28 @@ tests updated (throw now originates in the loop, same reject-not-coerce intent)
 and two new default-mode quarantine tests added (invalid-date-string chat and
 message). Full suite green (1010 passed), `tsc` clean, lint clean.
 
-### Autoreview — deferred (not a landing blocker)
+### Autoreview — CACHE-01 (FIXED 2026-07-13, released as 4.3.1)
 
-- **CACHE-01 (concurrency, P2, verified narrow — deferred).** On the quarantine
-  persist path, when the concurrency guard trips (`latestPayload !==
-  serializedChats`), `loadChats` skips the write but still returns chats parsed
-  from the *older* payload; if that array reaches the `mutateChats` cache commit
-  (`storageService.ts:104`), a concurrent non-queued write could later be
-  overwritten. **Why deferred:** the reviewer's stated trigger (concurrent
-  `createChat`/`updateChat`) is impossible as described — all mutations are
-  serialized by `operationQueue`, so they cannot run concurrently with a
-  mutation's load. The only real non-queued writer is a public display
-  `loadChats()` persisting a *corrupt* payload, and that guard-and-stale-return
-  is **pre-existing** (the plaintext-migration branch had identical semantics
-  before this patch). The fully-correct fix touches the `mutateChats`
-  cache-commit invariant — a different owner boundary — so it is out of scope for
-  the corruption patch. This patch does not worsen the fundamental non-queued
-  read-modify-write race (`saveChats` would clobber regardless). Track as its own
-  concurrency-hardening slice (candidate `plans/012`).
+- **CACHE-01 (concurrency, P2 — FIXED).** The corruption patch left `loadChats`
+  persisting from the read path (quarantine cleanup and legacy plaintext→
+  encrypted migration), i.e. a **non-queued writer** to `CHATS_KEY` that runs
+  outside `operationQueue` and can overwrite a concurrent queued `saveChats`
+  (lost update). **Root-cause fix (advisor, this session):** `loadChats` no
+  longer writes `CHATS_KEY` directly. The only remaining `CHATS_KEY` writer is
+  `saveChats()`, always invoked inside `queueOperation()`, so every write is
+  serialized. Encryption at rest is preserved WITHOUT reopening the race: when a
+  load sees a legacy plaintext payload it rewrites it to an encrypted payload
+  *through the mutation queue* (awaited, so a read-only upgrade — open the app,
+  never mutate — still migrates), re-reading the latest payload inside the queue
+  and skipping the write if a concurrent mutation already encrypted it.
+  Mutation-path loads (`getChatsForMutation`) and the migration's own inner load
+  pass `scheduleRewrite:false` to avoid a recursive-queue deadlock. Quarantine
+  cleanup for an already-encrypted payload is not persisted from the load path
+  (it would need a non-queued write); corrupt records are re-quarantined
+  idempotently on each load and the original is backed up. Verified: full Jest
+  suite green (1010 passed), `tsc` clean, lint clean, two autoreview cycles
+  (first surfaced the encryption-at-rest regression of the naive fix; second
+  clean, "patch is correct").
 
 ### Backlog — vetted, not planned (cycle 3)
 
