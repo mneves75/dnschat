@@ -1,5 +1,217 @@
 # Implementation Plans — DNSChat
 
+## Cycle 4 — deep audit 2026-07-28 (planned against commit `749334c`)
+
+Release-closeout pass on `main` at `4.3.2`. Three parallel read-only auditors
+(correctness/services, UI architecture + performance, tests/tooling/docs), plus
+an autoreview cycle and a security audit. Every finding below was re-opened and
+confirmed against live code by the advisor before being recorded; two auditor
+claims were corrected in the process (see "Vetted with corrections").
+
+Security audit found nothing: gitleaks clean over 449 commits, `pnpm audit`
+and the `modules/dns-native` lockfile both at zero vulnerabilities, no
+client-exposed env, no TLS disabling, no injection or upload surface. The one
+residual risk is by design and documented: prompts travel as cleartext DNS to a
+third-party server.
+
+### Applied in-session (2026-07-28, docs only — commits `b404ecc`, `749334c`)
+
+Documentation corrections, each verified against the code that disproved it:
+
+- `getLLMServers()` returns a **single** server (`LLM_DNS_SERVERS` is
+  `[DNS_SERVERS[0]]`), so there is no server-level fallback and `queryLLM`'s
+  multi-server loop, `logServerFallback`, and the "All LLM servers are
+  unreachable" message are unreachable in the default configuration. `CLAUDE.md`
+  had claimed two servers.
+- `gitleaks` does run in CI, via its own workflow. Four workflows exist
+  (`ci.yml`, `gitleaks.yml`, `codeql.yml`, `public-redaction.yml`); only
+  `ci.yml` was documented.
+- `pnpm run lint` loads zero rules and enforces nothing — now stated as such in
+  `CLAUDE.md` until plan 012 lands.
+- CI job inventory omitted the `sbom` job; the hygiene policy permits tracked
+  `.env*.example` files; the pbxproj recovery step recommended a whole-file
+  `git checkout` that would discard unrelated unstaged native edits.
+- `.node-version` pinned to `24`: `react-compiler-healthcheck` crashes on Node
+  26 (`yargs`: `require is not defined in ES module scope`).
+
+### Planned
+
+| Plan | Title | Priority | Effort | Depends on | Status |
+|------|-------|----------|--------|------------|--------|
+| 012 | Lint gate loads and enforces the ast-grep rules | P1 | S | — | TODO |
+| 013 | Drop `--passWithNoTests`; add a suite-size floor | P1 | S | — | TODO |
+| 014 | Bind the UDP socket before sending | P1 | S | 013 (soft) | TODO |
+| 015 | Keep chats recovered from a corrupted store | P1 | S | — | TODO |
+| 016 | Test encryption against real AES-GCM | P1 | M | — | TODO |
+
+Status values: TODO | IN PROGRESS | DONE | BLOCKED (reason) | REJECTED (rationale)
+
+### Dependency notes (cycle 4)
+
+- 012 and 013 come first: until they land, two gates report green while
+  checking nothing, so no other plan's "tests pass" evidence means much.
+- 014 depends softly on 013 — its proof rests entirely on the suite running.
+- 015 and 016 are independent of everything and of each other.
+
+### Backlog — vetted, not planned (cycle 4)
+
+Correctness:
+
+- **C-03** Android `DNSResolver.java` has no overall query budget:
+  `QUERY_TIMEOUT_MS = 10000` is per-attempt inside a 3-attempt loop, then
+  `queryTXTLegacy` runs 3 more, so a query can hold a pool thread ~60s after JS
+  abandoned it at 10s. iOS documents the exact invariant Android violates
+  (`ios/DNSResolver.swift:14-24`, 9.5s budget). M effort, MED risk (shortening
+  the budget converts slow-but-successful queries into timeouts).
+- **C-05** A failed sanitizer configuration latches native DNS off for the
+  whole JS runtime: `configureSanitizerIfNeeded()` runs only from the
+  constructor, so one transient bridge failure at startup downgrades the
+  session to UDP/TCP/mock with no recovery short of a restart. S-M.
+- **C-04** `isAvailable()` creates its promise lock *after* an `await`
+  (`modules/dns-native/index.ts:540` check, `:556` await, `:571` assignment),
+  so the documented race guarantee does not hold. Behavior stays correct
+  (idempotent calls); the comment is misleading. S.
+- **C-06** `accessibility.fontSize` is passed through unvalidated in
+  `migrateSettings` while every sibling field is normalized, and the "Version
+  4+" branch matches versions greater than `SETTINGS_VERSION`. Not reachable
+  from the UI today. S.
+
+Tests and tooling:
+
+- **TEST-02** `modules/dns-native/__tests__/concurrency.stress.test.ts` (337
+  lines, in the CI `dns-native` job) never imports the module under test; every
+  assertion is about its own `jest.fn()`. Its dedup case is tautological. It
+  reads as evidence that the Swift ResumeGate race is covered; nothing in the
+  repo tests that. S to delete, M to replace with a real `NativeDNS` test.
+- **TEST-03** The shared `__tests__/mocks/react-native.js` omits `AppState`,
+  `StatusBar`, `Appearance`, `TouchableWithoutFeedback` and `Settings`, so the
+  Chat screen, `OnboardingContainer` and `GlassBottomSheet` cannot render in
+  tests and are covered only by file-text specs. This is the mechanical cause
+  of the text-spec ratio, not a style choice. M.
+- **TEST-04** The background-suspension abort path
+  (`dnsService.ts:586-604`, wrapping 10 call sites) has no test, nor do
+  `recordServerFailure`, `assertWithinQueryBudget` or `normalizePort`. S.
+- **TEST-05** `__tests__/mocks/modules-dns-native.js` and
+  `__tests__/mocks/react-native-device-info.js` are both unreferenced; the
+  first has drifted to a 2-arg `queryTXT` (real contract is 3) and re-implements
+  multipart parsing without duplicate-part rejection or bidi stripping. S.
+- **DX-03** `verify:react-doctor` runs `npx -y react-doctor@latest` inside
+  `verify:all`, so the release gate depends on an unpinned network fetch while
+  every other gate is pinned. S.
+- **DX-04** `verify:android-16kb` warns and exits 0 when no build artifacts
+  exist, so `verify:all` green does not imply 16KB compliance. Add a
+  `--require-artifacts` flag for the CI path. S.
+- **DX-05** `modules/dns-native`'s `lint` script invokes `eslint` with no
+  ESLint config anywhere in the repo, carrying four EOL ESLint 8
+  devDependencies into the lockfile and the SBOM. Fold into the 012 decision. S.
+- **CI-01** Node is pinned to a fourth value (`20.19.4`) in
+  `public-redaction.yml`, below `engines.node >= 22`, and
+  `__tests__/repo.ci.spec.ts:86` hard-codes `/node-version: '?22[.']/` — so
+  converging CI on `.node-version` breaks the suite. The inconsistency is
+  self-enforcing. S.
+
+UI, performance and debt:
+
+- **PERF-01** `reduceTransparency` seeds `true` on iOS
+  (`LiquidGlassWrapper.tsx:284`) and the glass/non-glass branches have
+  different tree shapes (`:329-345`), so every glass surface renders once
+  non-glass and then remounts its whole subtree. Multiplied by ~200 wrapper
+  instances on the Logs screen. M, MED risk.
+- **PERF-02** `GlassChatList.tsx:369` and `Logs.tsx:174` `.map()` unbounded
+  data into a `ScrollView` (`GlassForm.tsx:176`), each row carrying its own
+  hooks, animated style and (on Logs) native glass view. `MessageList.tsx` is
+  already a properly tuned `FlatList` — the pattern exists. M per screen.
+- **PERF-03** `OnboardingProgress.tsx` animates `width` via legacy `Animated`
+  with `useNativeDriver: false`, alone among the app's animations, exactly when
+  onboarding is mounting the next screen. S.
+- **DEBT-05** Four hardcoded colours bypass `useImessagePalette()`. The visible
+  one: `GlassChatList.tsx:586` hardcodes `#FF453A` (the **dark**-mode
+  destructive) so the delete icon is the wrong red in light mode. Also
+  `GlassSettings.tsx:477,503` and `ChatInput.tsx:616-623` (the Android and
+  pre-iOS-26 fallback path). S.
+- **DEBT-02** `app/chat/[threadId].tsx:146-152` builds share text with
+  hardcoded English `You:`/`AI:` labels instead of `ShareService`, which
+  `GlassChatList.tsx:532-537` uses. pt-BR users get English. Note the two
+  paths also produce different formats, so "just call ShareService" would drop
+  the role labels — decide the intended format first. S.
+- **DEBT-03** `SkeletonBase.tsx:89` detects dark mode by comparing
+  `palette.textPrimary` to a hex literal; the sibling `SkeletonMessage.tsx:33`
+  was already migrated to `palette.isDark`. The two also freeze at different
+  reduce-motion opacities. S.
+- **DEBT-01** `useStaggeredList` (`src/ui/hooks/useStaggeredList.tsx:156-244`)
+  is a near-verbatim duplicate of `useStaggeredListValues` and has no
+  production consumer — it is kept alive only by
+  `__tests__/staggeredList.api.spec.ts`, which reads the file as text. S.
+- **DEBT-06** `SettingsSkeleton` is exported and contract-tested but never
+  rendered; `GlassSettings.tsx:84` reads `loading` and has no loading branch,
+  so Settings shows default values during hydration. S.
+- **DEBT-04** Three divergent create-chat paths
+  (`app/(tabs)/index.tsx:12-34`, `GlassChatList.tsx:466-492`,
+  `app/chat/[threadId].tsx:174-193`) with different guards, different error
+  surfaces (blocking alert vs toast) and inconsistent haptics. M, MED risk.
+- **A11Y-01** `Toast.tsx:468` hardcodes a white icon glyph on chroma fills
+  while every adjacent label uses `palette.textOnChroma` (`#000000`), chosen
+  precisely for contrast on bright fills. S.
+- **RESP-01** `useResponsiveLayout()` exposes `isTablet`/`isDesktop`/`size`/
+  `width`/`height` with zero consumers; the content-width constraint is gated
+  on `Platform.OS === "web"` (`GlassForm.tsx:165`, `Chat.tsx:179`), so native
+  iPad runs full-bleed while a 1024px browser window is constrained. S-M.
+
+Direction (options for the maintainer, not defects):
+
+- **`ch.at` is selectable but offline.** `GlassSettings.tsx:160-164` offers it;
+  selecting any server pins the app to that server with no fallback. The picker
+  therefore lets a user configure guaranteed failure. Either mark it
+  unavailable or remove it from the options.
+- **Native code has no test surface, and the scheme points at a phantom
+  target.** `ios/DNSChat.xcodeproj/xcshareddata/xcschemes/DNSChat.xcscheme:30-40`
+  references `DNSChatTests.xctest` (blueprint `00E356ED1AD99517003FC87E`),
+  which exists neither in the pbxproj nor on disk, so `xcodebuild test` fails
+  on a missing target. Native DNS is the primary transport on device, and
+  findings C-03, C-05 and TEST-02 all live in code no test can reach.
+- **Node convergence** is now a two-file change plus relaxing the hard-coded
+  major in `repo.ci.spec.ts:86`.
+
+### Vetted with corrections (cycle 4)
+
+- The correctness auditor reported the sanitizer latch as "set in exactly one
+  place and cleared in none". It *is* cleared
+  (`modules/dns-native/index.ts:333,344,347`) — but only inside
+  `configureSanitizerIfNeeded()`, which runs solely from the constructor. The
+  no-retry-after-startup substance stands; the claim as written did not.
+- The UI auditor cited the web width gate as `styles.webContentWidth` in
+  `Chat.tsx`; the actual style name there is `webContent` (`Chat.tsx:179`,
+  `:247-249`). Evidence sound, name wrong.
+
+### Rejected / verified-compliant (cycle 4, do not re-audit)
+
+- **Test-suite flakiness**: the full suite was run twice plus once with
+  `--randomize --seed=1337`; 129 passed / 1 skipped / 1017 tests each time.
+  `encryptionService.key.spec.ts` mutates `process.env.JEST_WORKER_ID` but
+  restores it every time. No order dependence.
+- **`modules/dns-native` tests running twice** (root glob plus the dedicated CI
+  job): deliberate per `repo.ci.spec.ts:35-46`, which documents the job as
+  proving independent installability. Costs ~2.7s.
+- **`docs/architecture/SYSTEM-ARCHITECTURE.md` transport claims**: pinned by
+  `docs.architecture.spec.ts` and matching `dnsService.getMethodOrder`. Docs
+  and code agree.
+- **Android combining-marks default vs the JS `\p{M}+` config**: the subsequent
+  `[^a-z0-9-]` pass removes anything the narrower default leaves, so outputs
+  are identical. Not drift in practice.
+- **Unused teardown APIs** (`DNSLogService.stopCleanupScheduler`,
+  `DNSService.destroyBackgroundListener`): correct for app-lifetime singletons.
+- **`redactText` storing SHA-256 of short prompts**: brute-forceable in theory,
+  but the log store is encrypted at rest and this is the documented redaction
+  design.
+- **`useTypography` rebuilding its scale object per render**, **`React.Children.count`
+  inside `React.Children.map`** (max 6 children), **`PressableRipple`'s rgba
+  defaults**, **`MessageList` scroll effect keyed on `content.length`** (no
+  streaming exists): all considered and not worth doing.
+- **i18n key parity**: verified programmatically, identical key sets, zero
+  missing or extra.
+
+---
+
 ## Cycle 3 — deep audit 2026-07-12 (planned against commit `3147b64`)
 
 Deep audit of the 4.2.x uncommitted working tree (chat-list "Signal Path"
