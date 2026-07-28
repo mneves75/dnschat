@@ -9,6 +9,17 @@ A React Native Expo app that sends short prompts as DNS TXT queries to LLM serve
 **Default DNS Server**: `llm.pieter.com:53` (by @levelsio)
 **Fallback Server**: `ch.at:53` (currently offline)
 
+## Start Here
+
+This file covers architecture, commands, and platform mechanics. The companion docs own the rest:
+
+| Doc | Owns |
+|-----|------|
+| `AGENTS.md` | Guardrails, requirement contract, review/security sweep protocol, release + TestFlight protocol |
+| `docs/technical/SPECIFICATION.md` | Product and engineering behavior contract (read before broad review or behavior changes) |
+| `docs/README.md` | Documentation index |
+| `DESIGN.md`, `PRODUCT.md` | Visual system + product intent (source of the Plain Language Rule enforced in tests) |
+
 ## Quick Navigation for Common Tasks
 
 | Task | Files to Check |
@@ -34,6 +45,8 @@ A React Native Expo app that sends short prompts as DNS TXT queries to LLM serve
 
 ## Commands
 
+**Toolchain**: pnpm `11.17.0` pinned via `packageManager` (CI enables Corepack); `.node-version` is `24`, `engines.node >= 22`, CI pins Node `22.23.1`. Do not run the gates on a newer Node than the pin - `verify:react-compiler` breaks on Node 26 (see Common Issues). Never pass a `--` separator to a pnpm script (also Common Issues).
+
 ```bash
 # Development
 pnpm run start       # Expo development server
@@ -41,13 +54,12 @@ pnpm run ios         # Build and run iOS
 pnpm run android     # Build and run Android (auto-selects Java 17)
 pnpm run web         # Web preview (uses Mock DNS)
 
-# Testing
+# Typecheck and tests
+pnpm run typecheck   # tsc --noEmit (first gate in CI)
 pnpm run test        # Run all unit tests (jest --runInBand)
 pnpm run test --testPathPattern=<pattern>  # Run specific test file
-# Runtime UI verification: use Argent MCP by default for simulator discovery,
-# screenshots, component-tree/debugger inspection, and tap/type flows.
-# Do not run AXe by default; use pnpm run e2e:axe:* only by explicit request or
-# documented Argent unavailability.
+pnpm run verify:fast # typecheck + lint + test (inner loop)
+# Runtime UI verification: Argent MCP (policy: "Argent MCP Runtime Verification" below).
 
 # Linting
 pnpm run lint        # ast-grep rules (blocks legacy liquid glass imports)
@@ -82,10 +94,12 @@ xcodebuild clean archive -workspace ios/DNSChat.xcworkspace -scheme DNSChat -con
 xcodebuild -exportArchive -archivePath /tmp/DNSChat.xcarchive -exportPath /tmp/DNSChat-export -exportOptionsPlist /tmp/DNSChat-ExportOptions.plist
 asc publish testflight --app <APP_ID> --ipa /tmp/DNSChat-export/DNSChat.ipa --version <VERSION> --build-number <BUILD> --group <GROUPS> --wait
 
-# Android diagnostics
+# Verification gates
 pnpm run verify:android    # Sanity check tooling/device
 pnpm run verify:android-16kb # Validate 16KB page size alignment after a native Android build
 pnpm run verify:typed-routes # Generate and validate Expo Router typed routes
+pnpm run verify:dnsresolver-sync # iOS/Android DNSResolver source parity
+pnpm run verify:sdk-alignment # Expo SDK 57 dependency version alignment
 pnpm run verify:react-compiler # Run React Compiler healthcheck
 pnpm run verify:react-doctor # Run react-doctor (scoped to this project)
 pnpm run verify:public-redaction # Ensure public docs do not expose local release identifiers
@@ -130,8 +144,8 @@ inspection, and record the exact fallback reason.
 
 ### DNS Server Fallback Chain
 
-**Server selection** (search `getLLMServers` in `src/services/dnsService.ts` — currently around line 775):
-- If user has selected a server in settings -> use ONLY that server (no fallback)
+**Server selection** (search for the `getLLMServers` call site in `src/services/dnsService.ts`):
+- If user has selected a server in settings -> use only that server (no fallback)
 - Otherwise -> use `getLLMServers()` which returns `[llm.pieter.com:53, ch.at:53]`
 
 **Transport fallback** (for each server):
@@ -192,15 +206,13 @@ docs/                         # Developer docs (see docs/README.md for index)
 ### Settings System
 
 **User settings** stored in AsyncStorage at key `@chat_dns_settings`, schema versioned (`SETTINGS_VERSION` in `src/context/settingsStorage.ts`):
-- `dnsServer`: Selected DNS server (default: `llm.pieter.com`)
+- `dnsServer`: Selected DNS server (default: `llm.pieter.com`); when set, only that server is used — no fallback chain
 - `enableMockDNS`: Use mock responses for testing
 - `allowExperimentalTransports`: Enable UDP/TCP fallbacks
 - `enableHaptics`: Haptic feedback
 - `preferredLocale`: Language preference (null = follow system)
 - `themePreference`: `'system' | 'light' | 'dark'` — applied globally via `Appearance.setColorScheme('unspecified' | 'light' | 'dark')` in `app/_layout.tsx`
 - `accessibility`: `{ fontSize, highContrast, reduceMotion, screenReader }`
-
-**Important**: When `dnsServer` is set, the app uses ONLY that server with NO fallback chain.
 
 **When you bump `SETTINGS_VERSION`**: add a migration branch in `migrateSettings()` (covers v1, v2, v3, v4+) and update the spec at `__tests__/settings.migration.spec.ts`. New fields must be backfilled with safe defaults across every prior version.
 
@@ -221,6 +233,17 @@ Key constraints:
 - `MAX_MESSAGE_LENGTH: 120` (before sanitization)
 - `MAX_DNS_LABEL_LENGTH: 63` (RFC 1035)
 - `DNS_SERVERS` array defines server order and ports
+
+### Enforced Repo Policies
+
+`__tests__/` contains policy specs that fail the whole suite (and therefore the pre-commit hook and CI) on things that are easy to write by reflex. Before editing source or docs:
+
+- **No emoji or pictographic glyphs** in any tracked source or doc file (`repo.noEmoji.spec.ts`). This includes markdown you add to `CLAUDE.md`, `README.md`, or the changelog.
+- **No `console.*` in `src/`** outside `src/utils/devLog.ts`, `src/utils/androidStartupDiagnostics.ts`, and `src/components/ErrorBoundary.tsx` (`repo.noConsoleLog.spec.ts`). Use `devLog`.
+- **No pure-black literals** (`#000` / `#000000`) in `src/components` or `src/navigation` styles (`uiDesignPolicy.spec.ts`). Read colours from `useImessagePalette()`.
+- **Plain Language Rule** for user-facing copy: no "magic", "revolutionary", "amazing", "world's first" or their pt-BR equivalents, in either locale (`i18n.plainLanguage.policy.spec.ts`, from `DESIGN.md`).
+- **No private URLs or private-range IPs**, no tracked `.env*` / keystores / `.DS_Store`, non-`.md` files under `docs/App_store/`, and an empty iOS `DEVELOPMENT_TEAM` (`repo.noPrivateUrls`, `repo.hygiene`, `repo.noCredentials`).
+- Twelve `*.policy.spec.ts` files assert on **file text** rather than behavior - TS sources (`messageContent`, `rootLayout`, `errorBoundary`, `webAlert`, `webRuntime`, `doctorConfig`), native sources (`iosDnsResolver`, `androidDnsResolver`, `nativeLogging`, `dnsNativePlugin`, `iosScreenshots`), and the Android manifest. A clean refactor can break a test that looks unrelated; update the spec deliberately rather than working around it.
 
 ### Pre-commit Hook
 
@@ -257,15 +280,33 @@ Never edit `ios/` or `android/` version fields by hand — they will be overwrit
 
 ## CI
 
-GitHub Actions (`.github/workflows/ci.yml`) runs on push to main and PRs:
-- Root tests: verify:ios-pods, lint, test
-- dns-native tests: separate job in `modules/dns-native`
+GitHub Actions (`.github/workflows/ci.yml`) runs on push to main and PRs, on Node `22.23.1` with Corepack enabled (three jobs):
+
+- `test`: typecheck, `pnpm audit`, verify:ios-pods, verify:expo-doctor, verify:sdk-alignment, verify:typed-routes, verify:dnsresolver-sync, verify:public-redaction, verify:react-compiler, lint, test.
+- `dns-native`: installs and tests the `modules/dns-native` workspace separately.
+- `android`: Java 17 + Gradle `assembleDebug` and `assembleRelease`, then verify:android-16kb.
+
+`verify:react-doctor`, `verify:android`, and the gitleaks half of `verify:security` are in `verify:all` but not in CI (CI runs `pnpm audit` directly) - run `verify:all` locally before a release.
 
 ## Platform Notes
 
-**iOS**: Requires Xcode 26.4+, iOS 16.4+ target. Device builds need a local signing team/profile, but the repo keeps `DEVELOPMENT_TEAM` empty for public portability. The latest shipped release is `4.2.3` build `77`, **`VALID` on TestFlight as of `2026-07-10`** for the iOS 27 scene-lifecycle recovery after the build `75` startup crash. Signed archive/export succeeded, bilingual "What to Test" notes are present, non-exempt encryption is `false`, and `asc validate testflight --strict` reported `0` errors and `0` warnings; App Store Connect identifiers remain private. Build `76` supplied the separate physical-device proof; build `77` was not installed locally. App Store submission is also separate: no iOS `4.2.3` App Store version record exists, so no version attachment or production submission is claimed. `4.2.3` supersedes `4.2.0` build `73`, which was `VALID` on `2026-07-04`. `4.2.0` carried the iOS 26 HIG redesign pass across every screen, DNS transport correctness hardening (wall-clock query budget, UDP `defer` teardown parity, TCP frame-length validation, mixed plain/multipart rejection), storage write-amplification coalescing, dead-module removal, and Expo SDK 57 patch alignment (`expo-doctor` 19/19). The heavy backend/transport work was specified as self-contained plans (`plans/001`-`004`) and implemented via a dispatched `codex` run, then reviewed and reconciled in the main session (two review misses fixed: an orphaned `doctor.config.json` exemption and the second `DNSResolver.swift` copy); the frontend redesign was authored in the main session. Final build `77` gates on `2026-07-10`: `pnpm run verify:all` passed with Jest 983, native DNS tests 65, React Compiler 101/101, Expo Doctor 19/19, version/pod/public-redaction checks, `pnpm audit`, gitleaks, and `asc doctor` clean. Archive-lane landmine hit this release: `node_modules` (and the `/tmp` DerivedData `.o` cache) were wiped mid-build under a Microsoft Defender fork-storm, surfacing as an `RNDeps` script failure `node_modules/react-native/scripts/xcode/with-environment.sh: No such file` — the fix was `pnpm install --frozen-lockfile --ignore-scripts` plus running the archive from durable `$HOME` build paths (not `/tmp`); grep the archive log for `No such file` and check `ls -ld node_modules` before blaming host load. The Podfile clamps every pod target to `IPHONEOS_DEPLOYMENT_TARGET >= 16.4`. Toolchain choice (updated 2026-07-10): on a macOS 27 beta host, Xcode 26.6's SWBBuildService dies silently, which makes the nested `expo-modules-jsi` SPM build (the `[CP-User] Build ExpoModulesJSI xcframework` script phase) hang forever at 0% CPU with no crash report — build with `DEVELOPER_DIR=/Applications/Xcode-beta.app/Contents/Developer` instead; the old note that the Xcode 27 beta cannot compile `expo-modules-jsi` is stale (verified compiling on `2026-07-10`). On stable macOS, prefer the stable Xcode as before. `4.2.2` build `75` (dev-signed Release, built with the Xcode 27 beta after `EXPO_USE_PRECOMPILED_MODULES=0 pod install`) was installed on a physical device on `2026-07-10`, but `devicectl`'s successful launch response was a false positive: the process exited in about 0.1 seconds with `___UIApplicationEvaluateRuntimeIssueForNoSceneLifecycleAdoption_block_invoke`. Build `76` adds the required `UIScene` lifecycle; a dev-signed Release was installed on a physical iOS 27 device on `2026-07-10`, initialized React Native, remained alive through the full 30-second `devicectl --console` window, repeated the sustained cold start through `dnschat://`, and accepted the same URL while already running. The repo's committed pod state remains precompiled-mode. Runtime UI verification defaults to Argent MCP; in this SDK 57 lane the accessibility and React component-tree backends worked, while the screenshot/gesture simulator-server backend failed with `simulator-server exited with code before becoming ready`, so do not claim tap-flow proof from this run. Keep App Store Connect IDs, tester group names, device names, local paths, profile names, and signing identifiers out of public docs. `xcodebuild test` is not a native gate yet because the `DNSChat` scheme has no XCTest bundles.
+**iOS — durable rules**:
 
-If a freshly imported distribution certificate makes `codesign` hang during `[CP] Embed Pods Frameworks`, isolate signing in a temporary or local build keychain, unlock it, set its key partition list, put it first in `security list-keychains`, and pass `OTHER_CODE_SIGN_FLAGS='--keychain <keychain path>'` to `xcodebuild archive`. Do not commit certificates, private keys, `.p12` files, provisioning profiles, or App Store Connect keys. Keep exact device, signing, tester-group, local-path, and App Store Connect evidence in private notes outside git; public docs must follow `docs/public-release-redaction.md`.
+- Requires Xcode 26.4+, iOS 16.4+ target. Device builds need a local signing team/profile; the repo keeps `DEVELOPMENT_TEAM` empty for public portability. The Podfile clamps every pod target to `IPHONEOS_DEPLOYMENT_TARGET >= 16.4`. The committed pod state is precompiled-mode.
+- Toolchain choice (verified 2026-07-10): on a macOS 27 beta host, Xcode 26.6's SWBBuildService dies silently, which makes the nested `expo-modules-jsi` SPM build (the `[CP-User] Build ExpoModulesJSI xcframework` script phase) hang forever at 0% CPU with no crash report — build with `DEVELOPER_DIR=/Applications/Xcode-beta.app/Contents/Developer` instead. On stable macOS, prefer the stable Xcode. (The old note that the Xcode 27 beta cannot compile `expo-modules-jsi` is stale.)
+- Keep App Store Connect IDs, tester group names, device names, local paths, profile names, and signing identifiers out of public docs (`docs/public-release-redaction.md`); record exact release evidence in private notes outside git. Do not commit certificates, private keys, `.p12` files, provisioning profiles, or App Store Connect keys.
+- `xcodebuild test` is not a native gate yet because the `DNSChat` scheme has no XCTest bundles.
+- Archive-lane incident recipe: if an archive fails with an `RNDeps` script error like `node_modules/react-native/scripts/xcode/with-environment.sh: No such file`, `node_modules` (and the `/tmp` DerivedData `.o` cache) may have been wiped mid-build (seen once under a Microsoft Defender fork-storm). Fix: `pnpm install --frozen-lockfile --ignore-scripts`, then archive from durable `$HOME` build paths (not `/tmp`). Grep the archive log for `No such file` and check `ls -ld node_modules` before blaming host load.
+- A successful `devicectl` launch response is not survival evidence — build `75` "launched" and exited in ~0.1 s with `___UIApplicationEvaluateRuntimeIssueForNoSceneLifecycleAdoption_block_invoke` (missing `UIScene` lifecycle). Require process-survival proof (e.g. the full 30-second `devicectl --console` window plus `dnschat://` cold/warm starts, as done for build `76`).
+
+**iOS — release state**:
+
+- Current `main` (2026-07-28): `4.3.2`, build `80`. Working version, not a TestFlight release - see the `[4.3.2]` changelog entry (bun-to-pnpm close-out, dependency security floors, multipart TXT parsing fix, improve-deep audit fixes).
+- Last TestFlight release (2026-07-10): `4.2.3` build `77`, `VALID` on TestFlight, carrying the iOS 27 scene-lifecycle recovery after the build `75` startup crash. Signed archive/export succeeded, bilingual "What to Test" notes present, non-exempt encryption `false`, `asc validate testflight --strict` clean (`0` errors, `0` warnings). Build `76` supplied the separate physical-device proof; build `77` was not installed locally. No iOS `4.2.3` App Store version record exists, so no version attachment or production submission is claimed. Build `77` gates: `pnpm run verify:all` (Jest 983, native DNS tests 65, React Compiler 101/101, Expo Doctor 19/19, version/pod/public-redaction checks), `pnpm audit`, gitleaks, and `asc doctor` — all clean.
+- `4.2.3` supersedes `4.2.0` build `73` (`VALID` 2026-07-04): iOS 26 HIG redesign across every screen, DNS transport correctness hardening (wall-clock query budget, UDP `defer` teardown parity, TCP frame-length validation, mixed plain/multipart rejection), storage write-amplification coalescing, dead-module removal, Expo SDK 57 patch alignment (`expo-doctor` 19/19). The backend/transport work ran as dispatched `codex` plans (`plans/001`-`004`), reconciled in the main session (two review misses fixed: an orphaned `doctor.config.json` exemption and the second `DNSResolver.swift` copy); the frontend redesign was authored in the main session.
+- Argent caveat from that lane: the accessibility and React component-tree backends worked, but the screenshot/gesture simulator-server backend failed with `simulator-server exited with code before becoming ready` — do not claim tap-flow proof from that run.
+
+If a freshly imported distribution certificate makes `codesign` hang during `[CP] Embed Pods Frameworks`, isolate signing in a temporary or local build keychain, unlock it, set its key partition list, put it first in `security list-keychains`, and pass `OTHER_CODE_SIGN_FLAGS='--keychain <keychain path>'` to `xcodebuild archive`. (Secrets and redaction rules: "iOS — durable rules" above.)
 
 **Profile ↔ certificate mismatch recovery**: when `xcodebuild archive` fails with `Provisioning profile X doesn't include signing certificate Apple Distribution: …`, the profile was issued for the legacy `iPhone Distribution` cert while the keychain only carries the modern `Apple Distribution` cert. Use the `asc` CLI to pull a profile bound to the current cert instead of editing entitlements:
 
@@ -315,6 +356,9 @@ Topics available there include Liquid Glass design (`SwiftUI-`, `UIKit-`, `AppKi
 | `expo-doctor` fails "local Expo modules are gitignored" while `git check-ignore` shows nothing | False positive: the doctor's `ProjectSetupCheck` globs `modules/**/ios/*.podspec` + `modules/**/android/build.gradle` WITHOUT excluding `node_modules`, so a populated `modules/dns-native/node_modules/` (e.g. after `npm ci` there) matches react-native's own podspecs — which are legitimately ignored. Fix: `rm -rf modules/dns-native/node_modules` (regenerable; reinstall before running that workspace's tests). Module sources themselves stay tracked. |
 | `Build input file cannot be found: …ReactCodegen/*-generated.mm` during device/Release build | New-Arch codegen is partially materialized under `ios/build/generated`. Run `bundle exec pod install` to regenerate the full codegen set — `xcodebuild build` alone never regenerates it. Under host overload also drop to `-jobs 2` + `nice` (the `ExpoModulesJSI` xcframework script phase fork-storms). |
 | Theme override doesn't apply | `Appearance.setColorScheme()` accepts `'unspecified' \| 'light' \| 'dark'` on RN 0.85, not `null` or `undefined`. |
+| `verify:react-compiler` dies with `ReferenceError: require is not defined in ES module scope` (yargs) | You are on a Node newer than the repo pin. `react-compiler-healthcheck` breaks under Node 26; verified working on Node 24.18.0. Run repo gates under `.node-version` (24), e.g. `PATH="$HOME/.nvm/versions/node/v24.18.0/bin:$PATH" pnpm run verify:all`. |
+| Jest matches 0 tests and exits 1 | pnpm forwards `--` **literally** to scripts, so `pnpm run test -- --bail` makes jest read the flags as positional test-name patterns. Drop the `--`: `pnpm run test --bail`. |
+| `repo.noCredentials.spec.ts` fails locally | A local signing setup filled iOS `DEVELOPMENT_TEAM` in `ios/DNSChat.xcodeproj/project.pbxproj`. That breaks `pnpm run test`, `verify:all`, and the pre-commit hook. Restore it before committing (`git checkout ios/DNSChat.xcodeproj/project.pbxproj`) and never stage that field. |
 
 ## Agent skills
 

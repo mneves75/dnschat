@@ -4,6 +4,32 @@ All notable changes to DNSChat will be documented in this file.
 
 The format is based on Keep a Changelog, and this project follows Semantic Versioning.
 
+## [Unreleased]
+
+### Changed
+
+- Optimized `CLAUDE.md` and `AGENTS.md` for current Claude 5 (Fable 5 / Opus 5)
+  prompting guidance: the Argent/AXe runtime-verification policy is now stated
+  once (in `CLAUDE.md`) with pointers elsewhere, the iOS platform notes are
+  restructured into durable rules vs release-state history, and redundant
+  emphasis was removed. Docs-only; no behavior or command changes.
+- Corrected and completed `CLAUDE.md` against the current repo: added a Start
+  Here doc map (`AGENTS.md`, `SPECIFICATION.md`, `docs/README.md`,
+  `DESIGN.md`/`PRODUCT.md`), documented the toolchain pins and the missing
+  `typecheck`/`verify:fast`/`verify:dnsresolver-sync`/`verify:sdk-alignment`
+  commands, added an "Enforced Repo Policies" section for the `__tests__/`
+  policy specs (no emoji, no `console.*` in `src/`, no pure-black literals,
+  Plain Language Rule, hygiene/credentials), expanded the CI section to the
+  real three-job gate, replaced a stale `dnsService.ts` line-number hint,
+  refreshed the iOS release state to `4.3.2` build `80` on `main` with
+  `4.2.3` build `77` as the last TestFlight release, and added Common Issues
+  entries for the pnpm `--` forwarding trap, the local `DEVELOPMENT_TEAM`
+  test failure, and the Node version pin.
+- Pinned `.node-version` to `24`. `verify:react-compiler` crashes on Node 26
+  (`react-compiler-healthcheck` loads yargs, which fails with
+  `require is not defined in ES module scope`); the full gate is verified
+  clean on Node `24.18.0`.
+
 ## [4.3.2] - 2026-07-28
 
 Build `79` -> `80`. Bun-to-pnpm migration close-out, refreshed transitive
