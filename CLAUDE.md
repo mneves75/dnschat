@@ -6,8 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A React Native Expo app that sends short prompts as DNS TXT queries to LLM servers and renders responses. Uses React Native 0.86.x, Expo SDK 57, React 19.2.3, TypeScript 6.x.
 
-**Default DNS Server**: `llm.pieter.com:53` (by @levelsio)
-**Fallback Server**: `ch.at:53` (currently offline)
+**Default DNS Server**: `llm.pieter.com:53` (by @levelsio) - the only server in the automatic chain.
+**`ch.at:53`** is still in `DNS_SERVERS` and selectable in Settings, but it is **not** an automatic fallback (it is offline). See DNS Server Fallback Chain below.
 
 ## Start Here
 
@@ -62,7 +62,7 @@ pnpm run verify:fast # typecheck + lint + test (inner loop)
 # Runtime UI verification: Argent MCP (policy: "Argent MCP Runtime Verification" below).
 
 # Linting
-pnpm run lint        # ast-grep rules (blocks legacy liquid glass imports)
+pnpm run lint        # ast-grep - currently loads 0 rules, see CI section
 
 # DNS module tests (separate workspace)
 cd modules/dns-native && pnpm run test
@@ -146,7 +146,9 @@ inspection, and record the exact fallback reason.
 
 **Server selection** (search for the `getLLMServers` call site in `src/services/dnsService.ts`):
 - If user has selected a server in settings -> use only that server (no fallback)
-- Otherwise -> use `getLLMServers()` which returns `[llm.pieter.com:53, ch.at:53]`
+- Otherwise -> use `getLLMServers()`, which returns `LLM_DNS_SERVERS` in `modules/dns-native/constants.ts` - currently a single entry, `llm.pieter.com:53`
+
+**There is no server-level fallback today.** `LLM_DNS_SERVERS` holds one server, so `queryLLM`'s multi-server loop, `logServerFallback`, and the "All LLM servers are unreachable" message are unreachable in the default configuration. All real fallback happens at the transport level below.
 
 **Transport fallback** (for each server):
 1. Native DNS (iOS/Android native module)
@@ -242,7 +244,7 @@ Key constraints:
 - **No `console.*` in `src/`** outside `src/utils/devLog.ts`, `src/utils/androidStartupDiagnostics.ts`, and `src/components/ErrorBoundary.tsx` (`repo.noConsoleLog.spec.ts`). Use `devLog`.
 - **No pure-black literals** (`#000` / `#000000`) in `src/components` or `src/navigation` styles (`uiDesignPolicy.spec.ts`). Read colours from `useImessagePalette()`.
 - **Plain Language Rule** for user-facing copy: no "magic", "revolutionary", "amazing", "world's first" or their pt-BR equivalents, in either locale (`i18n.plainLanguage.policy.spec.ts`, from `DESIGN.md`).
-- **No private URLs or private-range IPs**, no tracked `.env*` / keystores / `.DS_Store`, non-`.md` files under `docs/App_store/`, and an empty iOS `DEVELOPMENT_TEAM` (`repo.noPrivateUrls`, `repo.hygiene`, `repo.noCredentials`).
+- **No private URLs or private-range IPs**, no tracked `.env*` files except `*.example` / `*.example.local` (`.env.development.example` is tracked on purpose), no keystores or `.DS_Store`, no non-`.md` files under `docs/App_store/`, and an empty iOS `DEVELOPMENT_TEAM` (`repo.noPrivateUrls`, `repo.hygiene`, `repo.noCredentials`).
 - Twelve `*.policy.spec.ts` files assert on **file text** rather than behavior - TS sources (`messageContent`, `rootLayout`, `errorBoundary`, `webAlert`, `webRuntime`, `doctorConfig`), native sources (`iosDnsResolver`, `androidDnsResolver`, `nativeLogging`, `dnsNativePlugin`, `iosScreenshots`), and the Android manifest. A clean refactor can break a test that looks unrelated; update the spec deliberately rather than working around it.
 
 ### Pre-commit Hook
@@ -254,11 +256,11 @@ Installed via `pnpm install` -> `scripts/install-git-hooks.js`. Runs:
 
 ### AST-Grep Rules
 
-`project-rules/astgrep-liquid-glass.yml` blocks:
-- Imports from deleted `../components/liquidGlass/` path
-- References to deleted `LiquidGlassNative` module
+`project-rules/astgrep-liquid-glass.yml` is *intended* to block:
+- Imports from the deleted `../components/liquidGlass/` path
+- References to the deleted `LiquidGlassNative` module
 
-Use `components/LiquidGlassWrapper` instead.
+Use `components/LiquidGlassWrapper` instead. **These rules do not currently load** - see the lint note in the CI section. Until that is fixed, the ban is convention only, not enforcement.
 
 ### Babel Constraint
 
@@ -280,13 +282,18 @@ Never edit `ios/` or `android/` version fields by hand — they will be overwrit
 
 ## CI
 
-GitHub Actions (`.github/workflows/ci.yml`) runs on push to main and PRs, on Node `22.23.1` with Corepack enabled (three jobs):
+Four workflows run on push to main and PRs: `ci.yml`, `gitleaks.yml` (secret scan), `codeql.yml`, and `public-redaction.yml` (which pins Node `20.19.4`, below `engines.node`).
+
+`ci.yml` runs on Node `22.23.1` with Corepack enabled (four jobs):
 
 - `test`: typecheck, `pnpm audit`, verify:ios-pods, verify:expo-doctor, verify:sdk-alignment, verify:typed-routes, verify:dnsresolver-sync, verify:public-redaction, verify:react-compiler, lint, test.
 - `dns-native`: installs and tests the `modules/dns-native` workspace separately.
 - `android`: Java 17 + Gradle `assembleDebug` and `assembleRelease`, then verify:android-16kb.
+- `sbom`: generates a CycloneDX SBOM (`anchore/sbom-action`) into `artifacts/sbom/<version>.json` and uploads it as a workflow artifact.
 
-`verify:react-doctor`, `verify:android`, and the gitleaks half of `verify:security` are in `verify:all` but not in CI (CI runs `pnpm audit` directly) - run `verify:all` locally before a release.
+`verify:react-doctor` and `verify:android` are in `verify:all` but not in CI - run `verify:all` locally before a release. (`pnpm audit` runs directly in `ci.yml`; gitleaks has its own workflow.)
+
+**`pnpm run lint` currently enforces nothing.** `scripts/run-ast-grep.js` passes `project-rules/astgrep-liquid-glass.yml` to `ast-grep scan --config`, which expects a *project* config (`sgconfig.yml` with `ruleDirs:`), not a rule file. `ast-grep scan --inspect summary` reports `effectiveRuleCount=0`, and a file containing both banned patterns exits 0. CI, the pre-commit hook, and `verify:all` all run this gate and all get a meaningless green. Treat lint as unverified until the config form is fixed.
 
 ## Platform Notes
 
@@ -358,7 +365,7 @@ Topics available there include Liquid Glass design (`SwiftUI-`, `UIKit-`, `AppKi
 | Theme override doesn't apply | `Appearance.setColorScheme()` accepts `'unspecified' \| 'light' \| 'dark'` on RN 0.85, not `null` or `undefined`. |
 | `verify:react-compiler` dies with `ReferenceError: require is not defined in ES module scope` (yargs) | You are on a Node newer than the repo pin. `react-compiler-healthcheck` breaks under Node 26; verified working on Node 24.18.0. Run repo gates under `.node-version` (24), e.g. `PATH="$HOME/.nvm/versions/node/v24.18.0/bin:$PATH" pnpm run verify:all`. |
 | Jest matches 0 tests and exits 1 | pnpm forwards `--` **literally** to scripts, so `pnpm run test -- --bail` makes jest read the flags as positional test-name patterns. Drop the `--`: `pnpm run test --bail`. |
-| `repo.noCredentials.spec.ts` fails locally | A local signing setup filled iOS `DEVELOPMENT_TEAM` in `ios/DNSChat.xcodeproj/project.pbxproj`. That breaks `pnpm run test`, `verify:all`, and the pre-commit hook. Restore it before committing (`git checkout ios/DNSChat.xcodeproj/project.pbxproj`) and never stage that field. |
+| `repo.noCredentials.spec.ts` fails locally | A local signing setup filled iOS `DEVELOPMENT_TEAM` in `ios/DNSChat.xcodeproj/project.pbxproj`. It also makes `sync-versions.js` refuse to run, so `syncVersions.spec.ts` fails too. That breaks `pnpm run test`, `verify:all`, and the pre-commit hook. Blank only that field before committing - `sed -i '' 's/DEVELOPMENT_TEAM = [A-Z0-9]*;/DEVELOPMENT_TEAM = "";/g' ios/DNSChat.xcodeproj/project.pbxproj` - and never stage it. Do not `git checkout` the whole pbxproj: that also discards unrelated unstaged native project edits. |
 
 ## Agent skills
 

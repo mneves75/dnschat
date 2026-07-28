@@ -76,7 +76,7 @@ transport chain, retries, logging, and server fallback orchestration.
 
 Prereqs:
 
-- Node.js 22.23.1+
+- Node.js 22.23.1+ (use the `.node-version` pin, currently `24`; `pnpm run verify:react-compiler` crashes on Node 26)
 - iOS: Xcode 26.4+ (macOS only), iOS 16.4+ device/simulator
 - Android: Java 17 + Android SDK
 

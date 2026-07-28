@@ -25,6 +25,12 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
   `4.2.3` build `77` as the last TestFlight release, and added Common Issues
   entries for the pnpm `--` forwarding trap, the local `DEVELOPMENT_TEAM`
   test failure, and the Node version pin.
+- Corrected four `CLAUDE.md` statements that a follow-up audit proved false:
+  `getLLMServers()` returns a single server (`llm.pieter.com`), not two, so
+  there is no server-level fallback; `gitleaks` does run in CI via its own
+  workflow (four workflows exist, not one); `pnpm run lint` loads zero
+  ast-grep rules and enforces nothing today; and the CI job inventory omitted
+  the `sbom` job and the tracked `.env*.example` hygiene exception.
 - Pinned `.node-version` to `24`. `verify:react-compiler` crashes on Node 26
   (`react-compiler-healthcheck` loads yargs, which fails with
   `require is not defined in ES module scope`); the full gate is verified
