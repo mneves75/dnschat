@@ -12,11 +12,12 @@
           "__tests__/**"
         ],
         "rules": [
-          "react-doctor/async-defer-await",
           "react-doctor/async-await-in-loop",
+          "react-doctor/async-defer-await",
           "react-doctor/js-combine-iterations",
           "react-doctor/js-flatmap-filter",
           "react-doctor/js-set-map-lookups",
+          "react-doctor/no-prop-callback-in-render",
           "react-doctor/rn-prefer-pressable",
           "react-doctor/server-sequential-independent-await",
           "react-hooks-js/globals"
@@ -363,6 +364,24 @@
           "knip/*",
           "unused-export",
           "unused-dev-dependency"
+        ]
+      },
+      {
+        "files": [
+          "src/components/onboarding/OnboardingNavigation.tsx",
+          "src/components/onboarding/screens/FirstChatScreen.tsx",
+          "src/context/ChatContext.tsx"
+        ],
+        "rules": [
+          "react-doctor/no-loading-flag-reset-outside-finally"
+        ]
+      },
+      {
+        "files": [
+          "src/context/ChatContext.tsx"
+        ],
+        "rules": [
+          "react-doctor/no-set-state-after-await-in-effect"
         ]
       }
     ]

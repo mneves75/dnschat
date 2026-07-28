@@ -131,12 +131,23 @@ describe("repo policy: dependency hygiene", () => {
     const xcode = require("xcode") as { project?: unknown };
 
     // modules/dns-native is a separate npm-installed workspace, so npm-style
-    // overrides remain the correct mechanism there.
-    expect(nativePkg.overrides).toEqual(
-      expect.objectContaining({
-        "brace-expansion": "5.0.6",
-      }),
-    );
+    // overrides remain the correct mechanism there. Its floors must not drift
+    // below the root workspace floors for the packages it also pins.
+    const rootOverrides = readPnpmOverrides();
+    const nativeOverrides = nativePkg.overrides ?? {};
+    expect(Object.keys(nativeOverrides).length).toBeGreaterThan(0);
+
+    for (const [name, nativeFloor] of Object.entries(nativeOverrides)) {
+      const rootFloor = rootOverrides[name];
+      if (!rootFloor) continue;
+      const stripped = nativeFloor.replace(/^[>=^~\s]+/, "");
+      expect({ name, nativeFloor, rootFloor, ok: satisfiesFloor(stripped, rootFloor) }).toEqual({
+        name,
+        nativeFloor,
+        rootFloor,
+        ok: true,
+      });
+    }
     expect(typeof uuid.v4).toBe("function");
     expect(typeof xcode.project).toBe("function");
   });

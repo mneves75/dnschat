@@ -213,6 +213,57 @@ describe('StorageService Race Condition Prevention', () => {
       const finalChats = await parseStoredChats(currentStorage);
       expect(finalChats[0].messages).toHaveLength(2);
     });
+
+    it('does not let concurrent corruption recovery delete a newly created chat', async () => {
+      let currentStorage: string | null = 'not valid json {{{';
+      const firstBackupGate: { release?: () => void } = {};
+      let firstBackupStarted: (() => void) | null = null;
+      const firstBackupObserved = new Promise<void>((resolve) => {
+        firstBackupStarted = resolve;
+      });
+      let backupCount = 0;
+
+      mockAsyncStorage.getItem.mockImplementation(async (key) =>
+        key === '@chat_dns_chats' ? currentStorage : null,
+      );
+      mockAsyncStorage.setItem.mockImplementation(async (key, value) => {
+        if (key === '@chat_dns_chats_backup') {
+          backupCount += 1;
+          if (backupCount === 1) {
+            firstBackupStarted?.();
+            await new Promise<void>((resolve) => {
+              firstBackupGate.release = resolve;
+            });
+          }
+          return;
+        }
+        if (key === '@chat_dns_chats') {
+          currentStorage = value;
+        }
+      });
+      mockAsyncStorage.removeItem.mockImplementation(async (key) => {
+        if (key === '@chat_dns_chats') {
+          currentStorage = null;
+        }
+      });
+
+      const recovery = StorageService.loadChats();
+      await firstBackupObserved;
+
+      const createdChatPromise = StorageService.createChat('Created during recovery');
+      await new Promise<void>((resolve) => setImmediate(resolve));
+      firstBackupGate.release?.();
+
+      const [, createdChat] = await Promise.all([recovery, createdChatPromise]);
+      if (!currentStorage) {
+        throw new Error('Expected the concurrently created chat to remain persisted');
+      }
+      const persistedChats = await parseStoredChats(currentStorage) as Array<{
+        id: string;
+      }>;
+
+      expect(persistedChats.map((chat) => chat.id)).toContain(createdChat.id);
+    });
   });
 
   describe('Individual Operation Correctness', () => {

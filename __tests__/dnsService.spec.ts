@@ -668,6 +668,42 @@ describe("DNS Service helpers", () => {
       await assertion;
     });
 
+    it("falls back to UDP when the native transport exceeds its per-transport timeout", async () => {
+      const attemptedMethods: string[] = [];
+      jest.spyOn(dnsServiceInternals, "tryMethod").mockImplementation(
+        (...args: unknown[]) => {
+          const method = args[1];
+          if (typeof method !== "string") {
+            return Promise.reject(new Error("Expected a transport method"));
+          }
+          attemptedMethods.push(method);
+          if (method === "native") {
+            return new Promise(() => undefined);
+          }
+          if (method === "udp") {
+            return Promise.resolve({
+              response: "udp fallback ok",
+              method: "udp",
+            });
+          }
+          return Promise.reject(new Error(`Unexpected transport: ${method}`));
+        },
+      );
+
+      const query = DNSService.queryLLM(
+        "native timeout fallback",
+        "llm.pieter.com",
+        false,
+        true,
+      );
+      const assertion = expect(query).resolves.toBe("udp fallback ok");
+
+      await jest.advanceTimersByTimeAsync(10000);
+
+      await assertion;
+      expect(attemptedMethods).toEqual(["native", "udp"]);
+    });
+
     it("keeps fast successful responses on the same success path", async () => {
       jest.spyOn(dnsServiceInternals, "tryMethod").mockResolvedValueOnce({
         response: "fast ok",

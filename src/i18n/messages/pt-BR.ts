@@ -328,6 +328,7 @@ export const ptBR = {
     },
     glassChatList: {
       navigationTitle: "DNS Chat",
+      untitledChat: "Nova conversa",
       newConversation: {
         title: "Iniciar nova conversa",
         button: "Nova conversa",

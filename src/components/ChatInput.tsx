@@ -5,7 +5,7 @@
  * - Minimal design with integrated send button
  * - Auto-growing height (1-5 lines based on actual line height)
  * - Keyboard suggestions enabled (autocorrect, spellcheck)
- * - Character counter at 90% threshold
+ * - Character counter from the first warning milestone
  * - Liquid Glass effect on iOS 26+
  * - Accessibility announcements
  * - Performance-optimized with Reanimated
@@ -68,8 +68,19 @@ import { useResolvedColorScheme } from "../ui/theme/resolvedColorScheme";
 const AnimatedPressableRipple = Animated.createAnimatedComponent(PressableRipple);
 
 // Constants derived from design system (no magic numbers!)
-const CHARACTER_COUNTER_THRESHOLD = Math.ceil(MESSAGE_CONSTANTS.MAX_MESSAGE_LENGTH * 0.9);
+//
+// The sendable limit is the DNS label limit, not MAX_MESSAGE_LENGTH: sendMessage
+// sanitizes into a single label and rejects anything longer than 63 bytes, so a
+// 120-char allowance let users type text that was silently destroyed on send.
+// Sanitization never lengthens input (spaces map 1:1 to dashes, everything else
+// is stripped), so anything accepted here always survives sanitization.
+const MAX_SENDABLE_LENGTH = MESSAGE_CONSTANTS.MAX_DNS_LABEL_LENGTH;
 const CHARACTER_ANNOUNCEMENT_REMAINING = new Set([10, 5, 0]);
+// Reveal the counter at the first announced milestone so the visual and
+// screen-reader warnings start together. A fixed 90% no longer lines up with
+// these milestones now that the limit is the 63-byte DNS label rather than 120.
+const CHARACTER_COUNTER_THRESHOLD =
+  MAX_SENDABLE_LENGTH - Math.max(...CHARACTER_ANNOUNCEMENT_REMAINING);
 const ANIMATION_DURATION_MS = 200;
 const BUTTON_SPACING = LiquidGlassSpacing.xxs; // 4px from edge
 
@@ -151,7 +162,7 @@ export function ChatInput({
   const opacity = useSharedValue(0.4);
   const resolvedPlaceholder = placeholder ?? t("screen.chatInput.placeholder");
   const canSend = message.trim().length > 0 && !isLoading;
-  const showCharacterCount = message.length > CHARACTER_COUNTER_THRESHOLD;
+  const showCharacterCount = message.length >= CHARACTER_COUNTER_THRESHOLD;
   const useGlassInput = Platform.OS === "ios" && supportsLiquidGlass;
 
   /**
@@ -211,7 +222,7 @@ export function ChatInput({
    * Triggers at 92% (last 10 characters).
    */
   React.useEffect(() => {
-    const remaining = MESSAGE_CONSTANTS.MAX_MESSAGE_LENGTH - message.length;
+    const remaining = MAX_SENDABLE_LENGTH - message.length;
     if (CHARACTER_ANNOUNCEMENT_REMAINING.has(remaining)) {
       AccessibilityInfo.announceForAccessibility(
         t("components.chatInput.charactersRemaining", { count: remaining })
@@ -383,7 +394,7 @@ export function ChatInput({
         placeholder={resolvedPlaceholder}
         placeholderTextColor={palette.textTertiary}
         multiline={true}
-        maxLength={MESSAGE_CONSTANTS.MAX_MESSAGE_LENGTH}
+        maxLength={MAX_SENDABLE_LENGTH}
         editable={!isLoading}
         returnKeyType="send"
         enablesReturnKeyAutomatically={true}
@@ -477,7 +488,7 @@ export function ChatInput({
 
     return (
       <Text style={[styles.characterCount, { color: palette.textSecondary }]}>
-        {message.length}/{MESSAGE_CONSTANTS.MAX_MESSAGE_LENGTH}
+        {message.length}/{MAX_SENDABLE_LENGTH}
       </Text>
     );
   };

@@ -780,11 +780,15 @@ export class DNSService {
 
         for (const method of methodOrder) {
           const remainingBudgetMs = this.assertWithinQueryBudget(deadline);
+          const timeoutExhaustsQueryBudget = remainingBudgetMs <= this.TIMEOUT;
           try {
             const result = await this.withTimeout(
               this.tryMethod(queryId, method, queryContext),
               Math.min(this.TIMEOUT, remainingBudgetMs),
-              () => this.createQueryBudgetError(),
+              () =>
+                timeoutExhaustsQueryBudget
+                  ? this.createQueryBudgetError()
+                  : new Error('DNS query timed out'),
             );
             if (result) {
               return result;

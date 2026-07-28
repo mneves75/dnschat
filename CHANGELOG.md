@@ -7,8 +7,9 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 ## [4.3.2] - 2026-07-28
 
 Build `79` -> `80`. Bun-to-pnpm migration close-out, refreshed transitive
-dependency security floors, and a multipart TXT parsing fix. Working version on
-`main`; not a TestFlight release.
+dependency security floors, multipart TXT parsing fix, and additional
+improve-deep audit correctness fixes. Working version on `main`; not a
+TestFlight release.
 
 ### Changed
 
@@ -32,6 +33,24 @@ dependency security floors, and a multipart TXT parsing fix. Working version on
   of leaking the `1/N:` prefix or failing as mixed plain/multipart records.
 - `scripts/run-ast-grep.js` no longer re-runs the `@ast-grep/cli` postinstall on
   every lint invocation when the binary is already present.
+- `ChatInput` now enforces the sendable DNS-label limit (63 characters) instead
+  of the larger pre-sanitization allowance, so text typed past the real limit
+  is no longer silently destroyed on send.
+- `ChatContext.sendMessage` sets the loading state before any early return, so
+  in-flight UI feedback cannot be left stale when a second send is single-flighted.
+- `GlassSettings` reset now restores every persisted setting (server, mock DNS,
+  experimental transports, haptics, locale, theme, and accessibility) instead of
+  only a subset, matching the "reset all settings" confirmation.
+- `GlassSettings` clear-cache now resyncs the chat list even when an error
+  occurs partway through, preventing the UI from showing chats that were already
+  deleted.
+- `GlassChatList` translates the untitled-chat sentinel at render time instead of
+  showing the English "New Chat" string to pt-BR users.
+- `DNSService` distinguishes a per-method timeout from the overall query-budget
+  exhaustion, so retries and logs report the correct failure reason.
+- `StorageService` corruption recovery no longer recursively enqueues itself
+  inside the operation queue, and legacy/sending message statuses are normalized
+  safely during load.
 
 ## [4.3.1] - 2026-07-13
 

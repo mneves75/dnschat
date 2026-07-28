@@ -23,14 +23,14 @@ describe("ChatInput Component - John Carmack Quality Standards", () => {
 
   describe("Design System Compliance (No Magic Numbers)", () => {
     it("uses MESSAGE_CONSTANTS for character limit", () => {
-      expect(source).toContain("MESSAGE_CONSTANTS.MAX_MESSAGE_LENGTH");
+      expect(source).toContain("MESSAGE_CONSTANTS.MAX_DNS_LABEL_LENGTH");
       expect(source).not.toContain("maxLength={120}");
       expect(source).not.toContain("maxLength={1000}");
     });
 
     it("calculates CHARACTER_COUNTER_THRESHOLD from constants", () => {
       expect(source).toContain(
-        "Math.ceil(MESSAGE_CONSTANTS.MAX_MESSAGE_LENGTH * 0.9)"
+        "MAX_SENDABLE_LENGTH - Math.max(...CHARACTER_ANNOUNCEMENT_REMAINING)"
       );
     });
 
@@ -136,19 +136,17 @@ describe("ChatInput Component - John Carmack Quality Standards", () => {
     });
   });
 
-  describe("Character Counter at 90% Threshold", () => {
-    it("shows counter at 90%", () => {
-      expect(source).toContain(
-        "const CHARACTER_COUNTER_THRESHOLD = Math.ceil(MESSAGE_CONSTANTS.MAX_MESSAGE_LENGTH * 0.9)"
-      );
+  describe("Character Counter Threshold", () => {
+    it("derives the counter threshold from the announcement milestones", () => {
+      expect(source).toContain("const CHARACTER_COUNTER_THRESHOLD =");
     });
 
     it("uses threshold in showCharacterCount condition", () => {
-      expect(source).toContain("message.length > CHARACTER_COUNTER_THRESHOLD");
+      expect(source).toContain("message.length >= CHARACTER_COUNTER_THRESHOLD");
     });
 
     it("displays format as current/max", () => {
-      expect(source).toContain("{message.length}/{MESSAGE_CONSTANTS.MAX_MESSAGE_LENGTH}");
+      expect(source).toContain("{message.length}/{MAX_SENDABLE_LENGTH}");
     });
   });
 
@@ -189,7 +187,7 @@ describe("ChatInput Component - John Carmack Quality Standards", () => {
 
     it("announces at remaining-character milestones", () => {
       expect(source).toContain("CHARACTER_ANNOUNCEMENT_REMAINING.has(remaining)");
-      expect(source).toContain("MESSAGE_CONSTANTS.MAX_MESSAGE_LENGTH - message.length");
+      expect(source).toContain("MAX_SENDABLE_LENGTH - message.length");
     });
 
     it("uses i18n for accessibility announcement", () => {

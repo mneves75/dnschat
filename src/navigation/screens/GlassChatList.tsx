@@ -52,6 +52,17 @@ import { Toast } from "../../components/ui/Toast";
 import { appAlert } from "../../utils/appAlert";
 
 // ==================================================================================
+// CONSTANTS
+// ==================================================================================
+
+/**
+ * Title persisted for a chat the user has not named. StorageService and the
+ * auto-title logic both match on this exact English string, so it is a storage
+ * sentinel rather than display copy — it must be translated at render time.
+ */
+const UNTITLED_CHAT_SENTINEL = "New Chat";
+
+// ==================================================================================
 // TYPES
 // ==================================================================================
 
@@ -87,6 +98,13 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
 
   const lastMessage = chat.messages[chat.messages.length - 1];
   const messageCount = chat.messages.length;
+  // Untitled chats are persisted with the English sentinel "New Chat" (storage
+  // and title-generation both match on it), so translate at render time rather
+  // than showing a pt-BR user an English title.
+  const displayTitle =
+    chat.title === UNTITLED_CHAT_SENTINEL
+      ? t("screen.glassChatList.untitledChat")
+      : chat.title;
   const timeAgo = formatDistanceToNow(chat.createdAt, {
     addSuffix: true,
     locale: getDateFnsLocale(locale),
@@ -102,7 +120,7 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
   const itemAccessibilityLabel = t(
     "screen.glassChatList.itemAccessibilityLabel",
     {
-      title: chat.title,
+      title: displayTitle,
       count: messageCount,
       time: timeAgo,
     },
@@ -162,7 +180,7 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
               { color: palette.textPrimary },
             ]}
           >
-            {chat.title}
+            {displayTitle}
           </Text>
 
           {lastMessage && (
