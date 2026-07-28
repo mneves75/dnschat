@@ -1,0 +1,23 @@
+packages:
+  - '.'
+
+# React Native/Expo compatibility fallback.
+nodeLinker: hoisted
+enableGlobalVirtualStore: false
+allowBuilds:
+  '@ast-grep/cli': true
+
+# Security version floors (formerly npm-style "overrides" in package.json,
+# which pnpm ignores — they must live here to apply).
+overrides:
+  '@xmldom/xmldom': '>=0.8.13'
+  brace-expansion: '>=5.0.8'
+  handlebars: '>=4.7.9'
+  js-yaml: '>=4.3.0'
+  markdown-it: '>=12.3.2'
+  node-forge: '>=1.4.0'
+  postcss: '>=8.5.18'
+  shell-quote: '>=1.8.5'
+  uuid: '>=11.1.1'
+  ws: '>=8.21.0'
+  yaml: '>=2.8.3'

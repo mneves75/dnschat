@@ -4,6 +4,35 @@ All notable changes to DNSChat will be documented in this file.
 
 The format is based on Keep a Changelog, and this project follows Semantic Versioning.
 
+## [4.3.2] - 2026-07-28
+
+Build `79` -> `80`. Bun-to-pnpm migration close-out, refreshed transitive
+dependency security floors, and a multipart TXT parsing fix. Working version on
+`main`; not a TestFlight release.
+
+### Changed
+
+- Completed the package-manager migration from Bun to pnpm: removed tracked
+  `bun.lock`/`bunfig.toml`, committed `pnpm-lock.yaml` and `pnpm-workspace.yaml`,
+  and updated all scripts, CI, docs, and repo-policy tests to use pnpm.
+- CI now enables Corepack so the `packageManager` field is the single source of
+  truth for pnpm, and pins Node.js to `22.23.1` for reproducible builds.
+- `expo-doctor` is now a pinned devDependency; the verify script uses
+  `pnpm exec` instead of unpinned `npx`.
+
+### Fixed
+
+- Refreshed security version floors in `pnpm-workspace.yaml` so `pnpm audit`
+  reports no known vulnerabilities (`brace-expansion`, `js-yaml`, `shell-quote`,
+  `postcss`).
+- Removed the stray `--` separator from pnpm script invocations in CI, the
+  pre-commit hook, docs, and tests; pnpm forwards `--` literally to scripts,
+  which broke jest flags and would have blocked commits/CI.
+- Multipart TXT responses containing newlines are now parsed correctly instead
+  of leaking the `1/N:` prefix or failing as mixed plain/multipart records.
+- `scripts/run-ast-grep.js` no longer re-runs the `@ast-grep/cli` postinstall on
+  every lint invocation when the binary is already present.
+
 ## [4.3.1] - 2026-07-13
 
 Build `78` -> `79`. Concurrency hardening for chat-storage corruption

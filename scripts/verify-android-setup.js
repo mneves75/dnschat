@@ -549,7 +549,7 @@ function main() {
     success("Metro bundler is running");
   } else {
     warn(`Metro bundler not running on port ${metroPort}`);
-    info("Run: bun run start");
+    info("Run: pnpm run start");
   }
 
   // Check 8: ADB reverse (if adb available)
@@ -557,7 +557,7 @@ function main() {
     log("\n--- ADB Reverse ---");
     if (!checkAdbReverse()) {
       warn("ADB reverse not configured for all devices");
-      info("Run: bun run android (automatically sets up reverse)");
+      info("Run: pnpm run android (automatically sets up reverse)");
     }
   }
 
@@ -565,7 +565,7 @@ function main() {
 
   if (allChecksPassed) {
     success("All critical checks passed!");
-    log("You can now run: bun run android");
+    log("You can now run: pnpm run android");
     process.exit(0);
   } else {
     error("Some checks failed. Please fix the issues above.");

@@ -7,7 +7,7 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 - JavaScript fallback transports (UDP/TCP) for constrained networks
 - An in-app Logs screen to inspect attempts, failures, and fallbacks
 
-[![Version](https://img.shields.io/badge/version-4.2.3-blue.svg)](.)
+[![Version](https://img.shields.io/badge/version-4.3.2-blue.svg)](.)
 [![React Native](https://img.shields.io/badge/React%20Native-0.86.0-blue.svg)](https://reactnative.dev/)
 [![Expo](https://img.shields.io/badge/Expo-57.0.x-black.svg)](https://expo.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0.x-blue.svg)](https://www.typescriptlang.org/)
@@ -31,7 +31,7 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 
 ## Tech stack
 
-- App version: `4.3.1` (build `79`)
+- App version: `4.3.2` (build `80`)
 - Expo workflow: Expo Router + EAS-compatible native config
 - Expo SDK: `57.0.x`
 - React: `19.2.3`
@@ -76,7 +76,7 @@ transport chain, retries, logging, and server fallback orchestration.
 
 Prereqs:
 
-- Node.js 20.19.4+
+- Node.js 22.23.1+
 - iOS: Xcode 26.4+ (macOS only), iOS 16.4+ device/simulator
 - Android: Java 17 + Android SDK
 
@@ -85,23 +85,23 @@ Install:
 ```bash
 git clone <repository-url>
 cd dnschat
-bun install
+pnpm install
 ```
 
 Run:
 
 ```bash
 # Dev server
-bun run start
+pnpm run start
 
 # iOS
-bun run ios
+pnpm run ios
 
 # Android (auto-selects Java 17 when available)
-bun run android
+pnpm run android
 
 # Web preview (uses Mock DNS)
-bun run web
+pnpm run web
 ```
 
 Notes:
@@ -121,45 +121,45 @@ node test-dns-simple.js "test message"
 node test-dns-simple.js "test message" --local-server
 
 # Full harness (builds scripts/ ts -> js, then runs UDP/TCP transports)
-bun run dns:harness -- --message "test message"
-bun run dns:harness -- --message "test message" --local-server
+pnpm run dns:harness --message "test message"
+pnpm run dns:harness --message "test message" --local-server
 
 # Debug output artifacts
-bun run dns:harness -- --message "test" --json-out harness-output.json --raw-out raw-dns.bin
+pnpm run dns:harness --message "test" --json-out harness-output.json --raw-out raw-dns.bin
 ```
 
 ## Development commands
 
 ```bash
 # Lint (ast-grep rules)
-bun run lint
+pnpm run lint
 
 # Unit tests
-bun run test
+pnpm run test
 
 # AXe simulator E2E
-bun run e2e:axe:doctor
-bun run e2e:axe:release
+pnpm run e2e:axe:doctor
+pnpm run e2e:axe:release
 
 # Public-doc redaction gate
-bun run verify:public-redaction
+pnpm run verify:public-redaction
 
 # Keep Expo iOS pods aligned with installed node_modules (iOS)
-bun run verify:ios-pods
+pnpm run verify:ios-pods
 
 # Sanity checks for Android tooling/device expectations
-bun run verify:android
+pnpm run verify:android
 
 # Full verification gate before committing/release work
-bun run verify:all
+pnpm run verify:all
 
 # Sync app + native module versions (use :dry to preview)
-bun run sync-versions
-bun run sync-versions:dry
+pnpm run sync-versions
+pnpm run sync-versions:dry
 
 # CocoaPods cleanup helpers
-bun run fix-pods
-bun run clean-ios
+pnpm run fix-pods
+pnpm run clean-ios
 ```
 
 ## Git hook (ast-grep)
@@ -169,7 +169,7 @@ fails.
 
 Mechanism:
 
-- `bun install` runs `bun run prepare`
+- `pnpm install` runs `pnpm run prepare`
 - `prepare` runs `scripts/install-git-hooks.js`
 - that script writes `.git/hooks/pre-commit` that runs `verify:ios-pods`, `lint`
   (ast-grep), and unit tests
@@ -258,12 +258,12 @@ and a keyboard drag-to-dismiss regression test; no app-behavior change versus
   skipped, `964` tests passed, `13` skipped), dns-native workspace tests (`8`
   suites, `65` tests passed), DNSResolver sync, iOS pods sync, SDK alignment,
   Expo Doctor (`19/19`), typed-routes, public-redaction, and security
-  (`bun audit` `No vulnerabilities found`; `gitleaks` `no leaks found`) all
+  (`pnpm audit` `No vulnerabilities found`; `gitleaks` `no leaks found`) all
   passed. The backend/transport work was implemented via a dispatched `codex`
   run and reviewed in the main session; native runtime, Android native gates,
   and TestFlight upload remain separate claims not covered by these gates.
-- `4.1.5` build `72` SDK 57 gates on `2026-06-30`: `bun run verify:all`
-  passed; Expo Doctor reported `19/19`; `bun audit` reported
+- `4.1.5` build `72` SDK 57 gates on `2026-06-30`: `pnpm run verify:all`
+  passed; Expo Doctor reported `19/19`; `pnpm audit` reported
   `No vulnerabilities found`; `gitleaks detect` reported `no leaks found`;
   Jest reported `122` suites passed, `1` skipped, `959` tests passed, and
   `13` skipped.
@@ -316,7 +316,7 @@ and a keyboard drag-to-dismiss regression test; no app-behavior change versus
 - Store submission credentials are not committed. Keep `eas submit`/App Store
   Connect identifiers local (do not add them to `eas.json`).
 - Public release docs use placeholders for local/device/account identifiers.
-  Run `bun run verify:public-redaction` before committing release notes or store
+  Run `pnpm run verify:public-redaction` before committing release notes or store
   runbooks. Exact release evidence belongs in private notes outside git.
 
 ## Contributing

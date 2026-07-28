@@ -17,7 +17,7 @@
 - [ ] `bun run verify:public-redaction` passes
 - [ ] `gitleaks detect --source . --redact --no-banner --config .gitleaks.toml` passes when docs, release, config, or metadata changed
 - [ ] `bun run verify:ios-pods` passes
-- [ ] DNS smoke test: `bun run dns:harness -- --message "hello"` when DNS behavior changed
+- [ ] DNS smoke test: `pnpm run dns:harness --message "hello"` when DNS behavior changed
 - [ ] Tested on iOS
 - [ ] Tested on Android
 - [ ] Updated relevant documentation

@@ -36,34 +36,34 @@ A React Native Expo app that sends short prompts as DNS TXT queries to LLM serve
 
 ```bash
 # Development
-bun run start       # Expo development server
-bun run ios         # Build and run iOS
-bun run android     # Build and run Android (auto-selects Java 17)
-bun run web         # Web preview (uses Mock DNS)
+pnpm run start       # Expo development server
+pnpm run ios         # Build and run iOS
+pnpm run android     # Build and run Android (auto-selects Java 17)
+pnpm run web         # Web preview (uses Mock DNS)
 
 # Testing
-bun run test        # Run all unit tests (jest --runInBand)
-bun run test -- --testPathPattern=<pattern>  # Run specific test file
+pnpm run test        # Run all unit tests (jest --runInBand)
+pnpm run test --testPathPattern=<pattern>  # Run specific test file
 # Runtime UI verification: use Argent MCP by default for simulator discovery,
 # screenshots, component-tree/debugger inspection, and tap/type flows.
-# Do not run AXe by default; use bun run e2e:axe:* only by explicit request or
+# Do not run AXe by default; use pnpm run e2e:axe:* only by explicit request or
 # documented Argent unavailability.
 
 # Linting
-bun run lint        # ast-grep rules (blocks legacy liquid glass imports)
+pnpm run lint        # ast-grep rules (blocks legacy liquid glass imports)
 
 # DNS module tests (separate workspace)
-cd modules/dns-native && bun run test
+cd modules/dns-native && pnpm run test
 
 # DNS smoke tests (no RN runtime)
 dig @llm.pieter.com "hello" TXT +short  # Quick server test
 node test-dns-simple.js "test message"
-bun run dns:harness -- --message "test message"
+pnpm run dns:harness --message "test message"
 
 # iOS pod helpers
-bun run verify:ios-pods   # Check lockfile sync
-bun run fix-pods          # Basic CocoaPods cleanup
-bun run clean-ios         # Deep pods reset
+pnpm run verify:ios-pods   # Check lockfile sync
+pnpm run fix-pods          # Basic CocoaPods cleanup
+pnpm run clean-ios         # Deep pods reset
 
 # iOS CLI release smoke
 xcodebuild -workspace ios/DNSChat.xcworkspace -scheme DNSChat -showdestinations
@@ -83,17 +83,17 @@ xcodebuild -exportArchive -archivePath /tmp/DNSChat.xcarchive -exportPath /tmp/D
 asc publish testflight --app <APP_ID> --ipa /tmp/DNSChat-export/DNSChat.ipa --version <VERSION> --build-number <BUILD> --group <GROUPS> --wait
 
 # Android diagnostics
-bun run verify:android    # Sanity check tooling/device
-bun run verify:android-16kb # Validate 16KB page size alignment after a native Android build
-bun run verify:typed-routes # Generate and validate Expo Router typed routes
-bun run verify:react-compiler # Run React Compiler healthcheck
-bun run verify:public-redaction # Ensure public docs do not expose local release identifiers
-bun run verify:security # Run dependency audit plus gitleaks secret scan
-bun run verify:all     # Run ALL verification gates (lint, test, pods, sdk alignment, etc.)
+pnpm run verify:android    # Sanity check tooling/device
+pnpm run verify:android-16kb # Validate 16KB page size alignment after a native Android build
+pnpm run verify:typed-routes # Generate and validate Expo Router typed routes
+pnpm run verify:react-compiler # Run React Compiler healthcheck
+pnpm run verify:public-redaction # Ensure public docs do not expose local release identifiers
+pnpm run verify:security # Run dependency audit plus gitleaks secret scan
+pnpm run verify:all     # Run ALL verification gates (lint, test, pods, sdk alignment, etc.)
 
 # Version sync
-bun run sync-versions     # Sync version across package.json, app.json, native configs
-bun run sync-versions:dry # Preview changes
+pnpm run sync-versions     # Sync version across package.json, app.json, native configs
+pnpm run sync-versions:dry # Preview changes
 ```
 
 ## Architecture
@@ -104,14 +104,14 @@ This app uses **Expo Router** (file-based routing under `app/`), not React Navig
 
 `src/navigation/screens/` contains screen components consumed by Expo Router routes — they are not routes themselves. Don't add new files there expecting routing to pick them up; add a route in `app/` and import the screen.
 
-`experiments.reactCompiler: true` and `experiments.typedRoutes: true` are enabled in `app.json`. Manual `useMemo`/`useCallback` should be removed (the compiler handles memoization). Run `bun run verify:typed-routes` after adding/renaming routes.
+`experiments.reactCompiler: true` and `experiments.typedRoutes: true` are enabled in `app.json`. Manual `useMemo`/`useCallback` should be removed (the compiler handles memoization). Run `pnpm run verify:typed-routes` after adding/renaming routes.
 
 **React Compiler conventions** (keeps `react-doctor` at 100/100 — see `implementation-notes.html`):
 - Reanimated shared values must use the `.get()`/`.set()` accessors, never `.value` (the compiler cannot optimize `.value`).
 - Hold "create once" animated values (`Animated.Value`, `makeMutable`) in a `useState(() => …)` initializer, not `useRef(...).current` — refs cannot be read during render.
 - Do not use a `finally` block (the compiler cannot lower it); use `Promise.prototype.finally()` or a trailing cleanup statement after `try/catch`.
 - Legitimate external-sync `setState`-in-effect cases (splash settle, route hydration, load-on-mount) are exempted per-file in `doctor.config.json`, not in code.
-- `react-doctor` must be scoped with `--project chat-dns`; a bare run can report the sibling `paquera-mobile` project from the parent Bun workspace.
+- `react-doctor` must be scoped with `--project chat-dns`; a bare run can report the sibling `paquera-mobile` project from the parent workspace.
 
 ### Argent MCP Runtime Verification
 
@@ -120,7 +120,7 @@ work. Before tapping or typing, run discovery first: `describe`,
 `debugger-component-tree`, or screenshot. Never guess coordinates. For
 release-facing UI, navigation, accessibility, or localization changes, exercise
 the compiled native app with Argent screenshots/component-tree evidence after
-`bun run verify:all` and before claiming release readiness. At session end, call
+`pnpm run verify:all` and before claiming release readiness. At session end, call
 Argent `stop-all-simulator-servers` and clean up temporary simulator state.
 
 AXe is not the default verification surface in this repo. Use AXe only when the
@@ -223,10 +223,10 @@ Key constraints:
 
 ### Pre-commit Hook
 
-Installed via `bun install` -> `scripts/install-git-hooks.js`. Runs:
-1. `bun run verify:ios-pods`
-2. `bun run lint`
-3. `bun run test -- --bail --passWithNoTests`
+Installed via `pnpm install` -> `scripts/install-git-hooks.js`. Runs:
+1. `pnpm run verify:ios-pods`
+2. `pnpm run lint`
+3. `pnpm run test --bail --passWithNoTests`
 
 ### AST-Grep Rules
 
@@ -246,8 +246,8 @@ Use `components/LiquidGlassWrapper` instead.
 
 ```bash
 # 1. Edit package.json version manually, then:
-bun run sync-versions          # Propagates to app.json (iOS buildNumber, Android versionCode), native modules
-bun run sync-versions:dry      # Preview without writing
+pnpm run sync-versions          # Propagates to app.json (iOS buildNumber, Android versionCode), native modules
+pnpm run sync-versions:dry      # Preview without writing
 ```
 
 Never edit `ios/` or `android/` version fields by hand — they will be overwritten.
@@ -260,7 +260,7 @@ GitHub Actions (`.github/workflows/ci.yml`) runs on push to main and PRs:
 
 ## Platform Notes
 
-**iOS**: Requires Xcode 26.4+, iOS 16.4+ target. Device builds need a local signing team/profile, but the repo keeps `DEVELOPMENT_TEAM` empty for public portability. The latest shipped release is `4.2.3` build `77`, **`VALID` on TestFlight as of `2026-07-10`** for the iOS 27 scene-lifecycle recovery after the build `75` startup crash. Signed archive/export succeeded, bilingual "What to Test" notes are present, non-exempt encryption is `false`, and `asc validate testflight --strict` reported `0` errors and `0` warnings; App Store Connect identifiers remain private. Build `76` supplied the separate physical-device proof; build `77` was not installed locally. App Store submission is also separate: no iOS `4.2.3` App Store version record exists, so no version attachment or production submission is claimed. `4.2.3` supersedes `4.2.0` build `73`, which was `VALID` on `2026-07-04`. `4.2.0` carried the iOS 26 HIG redesign pass across every screen, DNS transport correctness hardening (wall-clock query budget, UDP `defer` teardown parity, TCP frame-length validation, mixed plain/multipart rejection), storage write-amplification coalescing, dead-module removal, and Expo SDK 57 patch alignment (`expo-doctor` 19/19). The heavy backend/transport work was specified as self-contained plans (`plans/001`-`004`) and implemented via a dispatched `codex` run, then reviewed and reconciled in the main session (two review misses fixed: an orphaned `doctor.config.json` exemption and the second `DNSResolver.swift` copy); the frontend redesign was authored in the main session. Final build `77` gates on `2026-07-10`: `bun run verify:all` passed with Jest 983, native DNS tests 65, React Compiler 101/101, Expo Doctor 19/19, version/pod/public-redaction checks, `bun audit`, gitleaks, and `asc doctor` clean. Archive-lane landmine hit this release: `node_modules` (and the `/tmp` DerivedData `.o` cache) were wiped mid-build under a Microsoft Defender fork-storm, surfacing as an `RNDeps` script failure `node_modules/react-native/scripts/xcode/with-environment.sh: No such file` — the fix was `bun install --frozen-lockfile --ignore-scripts` plus running the archive from durable `$HOME` build paths (not `/tmp`); grep the archive log for `No such file` and check `ls -ld node_modules` before blaming host load. The Podfile clamps every pod target to `IPHONEOS_DEPLOYMENT_TARGET >= 16.4`. Toolchain choice (updated 2026-07-10): on a macOS 27 beta host, Xcode 26.6's SWBBuildService dies silently, which makes the nested `expo-modules-jsi` SPM build (the `[CP-User] Build ExpoModulesJSI xcframework` script phase) hang forever at 0% CPU with no crash report — build with `DEVELOPER_DIR=/Applications/Xcode-beta.app/Contents/Developer` instead; the old note that the Xcode 27 beta cannot compile `expo-modules-jsi` is stale (verified compiling on `2026-07-10`). On stable macOS, prefer the stable Xcode as before. `4.2.2` build `75` (dev-signed Release, built with the Xcode 27 beta after `EXPO_USE_PRECOMPILED_MODULES=0 pod install`) was installed on a physical device on `2026-07-10`, but `devicectl`'s successful launch response was a false positive: the process exited in about 0.1 seconds with `___UIApplicationEvaluateRuntimeIssueForNoSceneLifecycleAdoption_block_invoke`. Build `76` adds the required `UIScene` lifecycle; a dev-signed Release was installed on a physical iOS 27 device on `2026-07-10`, initialized React Native, remained alive through the full 30-second `devicectl --console` window, repeated the sustained cold start through `dnschat://`, and accepted the same URL while already running. The repo's committed pod state remains precompiled-mode. Runtime UI verification defaults to Argent MCP; in this SDK 57 lane the accessibility and React component-tree backends worked, while the screenshot/gesture simulator-server backend failed with `simulator-server exited with code before becoming ready`, so do not claim tap-flow proof from this run. Keep App Store Connect IDs, tester group names, device names, local paths, profile names, and signing identifiers out of public docs. `xcodebuild test` is not a native gate yet because the `DNSChat` scheme has no XCTest bundles.
+**iOS**: Requires Xcode 26.4+, iOS 16.4+ target. Device builds need a local signing team/profile, but the repo keeps `DEVELOPMENT_TEAM` empty for public portability. The latest shipped release is `4.2.3` build `77`, **`VALID` on TestFlight as of `2026-07-10`** for the iOS 27 scene-lifecycle recovery after the build `75` startup crash. Signed archive/export succeeded, bilingual "What to Test" notes are present, non-exempt encryption is `false`, and `asc validate testflight --strict` reported `0` errors and `0` warnings; App Store Connect identifiers remain private. Build `76` supplied the separate physical-device proof; build `77` was not installed locally. App Store submission is also separate: no iOS `4.2.3` App Store version record exists, so no version attachment or production submission is claimed. `4.2.3` supersedes `4.2.0` build `73`, which was `VALID` on `2026-07-04`. `4.2.0` carried the iOS 26 HIG redesign pass across every screen, DNS transport correctness hardening (wall-clock query budget, UDP `defer` teardown parity, TCP frame-length validation, mixed plain/multipart rejection), storage write-amplification coalescing, dead-module removal, and Expo SDK 57 patch alignment (`expo-doctor` 19/19). The heavy backend/transport work was specified as self-contained plans (`plans/001`-`004`) and implemented via a dispatched `codex` run, then reviewed and reconciled in the main session (two review misses fixed: an orphaned `doctor.config.json` exemption and the second `DNSResolver.swift` copy); the frontend redesign was authored in the main session. Final build `77` gates on `2026-07-10`: `pnpm run verify:all` passed with Jest 983, native DNS tests 65, React Compiler 101/101, Expo Doctor 19/19, version/pod/public-redaction checks, `pnpm audit`, gitleaks, and `asc doctor` clean. Archive-lane landmine hit this release: `node_modules` (and the `/tmp` DerivedData `.o` cache) were wiped mid-build under a Microsoft Defender fork-storm, surfacing as an `RNDeps` script failure `node_modules/react-native/scripts/xcode/with-environment.sh: No such file` — the fix was `pnpm install --frozen-lockfile --ignore-scripts` plus running the archive from durable `$HOME` build paths (not `/tmp`); grep the archive log for `No such file` and check `ls -ld node_modules` before blaming host load. The Podfile clamps every pod target to `IPHONEOS_DEPLOYMENT_TARGET >= 16.4`. Toolchain choice (updated 2026-07-10): on a macOS 27 beta host, Xcode 26.6's SWBBuildService dies silently, which makes the nested `expo-modules-jsi` SPM build (the `[CP-User] Build ExpoModulesJSI xcframework` script phase) hang forever at 0% CPU with no crash report — build with `DEVELOPER_DIR=/Applications/Xcode-beta.app/Contents/Developer` instead; the old note that the Xcode 27 beta cannot compile `expo-modules-jsi` is stale (verified compiling on `2026-07-10`). On stable macOS, prefer the stable Xcode as before. `4.2.2` build `75` (dev-signed Release, built with the Xcode 27 beta after `EXPO_USE_PRECOMPILED_MODULES=0 pod install`) was installed on a physical device on `2026-07-10`, but `devicectl`'s successful launch response was a false positive: the process exited in about 0.1 seconds with `___UIApplicationEvaluateRuntimeIssueForNoSceneLifecycleAdoption_block_invoke`. Build `76` adds the required `UIScene` lifecycle; a dev-signed Release was installed on a physical iOS 27 device on `2026-07-10`, initialized React Native, remained alive through the full 30-second `devicectl --console` window, repeated the sustained cold start through `dnschat://`, and accepted the same URL while already running. The repo's committed pod state remains precompiled-mode. Runtime UI verification defaults to Argent MCP; in this SDK 57 lane the accessibility and React component-tree backends worked, while the screenshot/gesture simulator-server backend failed with `simulator-server exited with code before becoming ready`, so do not claim tap-flow proof from this run. Keep App Store Connect IDs, tester group names, device names, local paths, profile names, and signing identifiers out of public docs. `xcodebuild test` is not a native gate yet because the `DNSChat` scheme has no XCTest bundles.
 
 If a freshly imported distribution certificate makes `codesign` hang during `[CP] Embed Pods Frameworks`, isolate signing in a temporary or local build keychain, unlock it, set its key partition list, put it first in `security list-keychains`, and pass `OTHER_CODE_SIGN_FLAGS='--keychain <keychain path>'` to `xcodebuild archive`. Do not commit certificates, private keys, `.p12` files, provisioning profiles, or App Store Connect keys. Keep exact device, signing, tester-group, local-path, and App Store Connect evidence in private notes outside git; public docs must follow `docs/public-release-redaction.md`.
 
@@ -276,7 +276,7 @@ cp /tmp/<name>.mobileprovision "$HOME/Library/MobileDevice/Provisioning Profiles
 # Then re-archive with PROVISIONING_PROFILE_SPECIFIER set to the new profile name and CODE_SIGN_IDENTITY='Apple Distribution'.
 ```
 
-**Android**: Requires Java 17. `bun run android` auto-detects via `/usr/libexec/java_home -v 17` or Homebrew paths. Release signing credentials are never committed (uses `keystore.properties` or CI injection).
+**Android**: Requires Java 17. `pnpm run android` auto-detects via `/usr/libexec/java_home -v 17` or Homebrew paths. Release signing credentials are never committed (uses `keystore.properties` or CI injection).
 
 Android release manifests intentionally avoid legacy storage and overlay permissions. SecureStore is excluded from Android backup/device-transfer rules via `android/app/src/main/res/xml/secure_store_backup_rules.xml` and `secure_store_data_extraction_rules.xml`.
 

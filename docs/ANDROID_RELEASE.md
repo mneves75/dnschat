@@ -11,13 +11,13 @@ This document tracks the manual steps for preparing and shipping an Android buil
   - `app.json` (`expo.version`)
 - Ensure dependencies are Expo-SDK compatible:
   - Run `expo install --fix`
-  - Run `bun run verify:all`
+  - Run `pnpm run verify:all`
 
 ## Build
 
 Typical options:
 
-- Local Android build: `bun run android`
+- Local Android build: `pnpm run android`
 - EAS build (recommended for store builds): `eas build --platform android --profile production`
 
 ### Release signing (required for Play Store)
@@ -47,7 +47,7 @@ accidentally producing a debug-signed “release”.
   - Install/launch on a physical device
   - Network/DNS flows work as expected
   - No unexpected runtime logs in production mode
-  - `bun run verify:android-16kb` passes after native Android build artifacts exist
+  - `pnpm run verify:android-16kb` passes after native Android build artifacts exist
 
 For detailed Google Play Store publishing instructions, see:
 **[ANDROID_GOOGLE_PLAY_STORE.md](./ANDROID_GOOGLE_PLAY_STORE.md)**

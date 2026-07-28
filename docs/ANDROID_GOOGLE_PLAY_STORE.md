@@ -189,7 +189,7 @@ Capture these screens for best store presentation:
 
 ```bash
 # Start emulator
-bun run android
+pnpm run android
 
 # Take screenshot (saves to desktop)
 adb exec-out screencap -p > ~/Desktop/screenshot_$(date +%s).png

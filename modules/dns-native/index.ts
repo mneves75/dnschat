@@ -188,7 +188,7 @@ export function parseMultiPartTXTResponse(txtRecords: string[]): string {
       continue;
     }
 
-    const match = rawValue.match(/^\s*(\d+)\/(\d+):(.*)$/);
+    const match = rawValue.match(/^\s*(\d+)\/(\d+):(.*)$/s);
     if (match && match[1] && match[2] && match[3] !== undefined) {
       parts.push({
         partNumber: parseInt(match[1], 10),

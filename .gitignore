@@ -131,8 +131,9 @@ app-example
 # Fastlane generated files
 /ios/fastlane/report.xml
 
-# pnpm lock file (using bun)
-pnpm-lock.yaml
+# bun lock file (using pnpm)
+bun.lock
+bun.lockb
 
 # codebase-memory tooling cache (re-indexed locally, not source)
 .codebase-memory/

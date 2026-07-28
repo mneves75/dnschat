@@ -13,9 +13,74 @@ const CRITICAL_DEPENDENCIES = [
   "react-native-screens",
 ];
 
-function parseLenientJson(raw) {
-  // bun.lock uses JSON-like syntax with trailing commas; normalize before parse.
-  return JSON.parse(raw.replace(/,\s*([}\]])/g, "$1"));
+function parsePnpmLockResolvedVersions(raw) {
+  // Extracts the root importer's resolved versions from pnpm-lock.yaml (v9)
+  // without a YAML dependency. Only the fixed structure below is walked:
+  //   importers: > .: > dependencies|devDependencies|optionalDependencies: >
+  //   <name>: > version: <semver>(<peer suffix>)
+  const versions = {};
+  let inImporters = false;
+  let inRootImporter = false;
+  let inDepSection = false;
+  let currentDep = null;
+
+  for (const rawLine of raw.split(/\r?\n/)) {
+    if (!rawLine.trim()) continue;
+
+    if (/^\S/.test(rawLine)) {
+      inImporters = rawLine.startsWith("importers:");
+      inRootImporter = false;
+      inDepSection = false;
+      currentDep = null;
+      continue;
+    }
+    if (!inImporters) continue;
+
+    const indent = rawLine.length - rawLine.trimStart().length;
+    const content = rawLine.trim();
+
+    if (indent === 2) {
+      inRootImporter = content === ".:" || content === "'.':" || content === '".":';
+      inDepSection = false;
+      currentDep = null;
+      continue;
+    }
+    if (!inRootImporter) continue;
+
+    if (indent === 4) {
+      inDepSection =
+        content === "dependencies:" ||
+        content === "devDependencies:" ||
+        content === "optionalDependencies:";
+      currentDep = null;
+      continue;
+    }
+    if (!inDepSection) continue;
+
+    if (indent === 6 && content.endsWith(":")) {
+      currentDep = content.slice(0, -1).replace(/^['"]|['"]$/g, "");
+      continue;
+    }
+
+    if (indent === 8 && currentDep && content.startsWith("version:")) {
+      let value = content.slice("version:".length).trim();
+      const parenIndex = value.indexOf("(");
+      if (parenIndex > 0) value = value.slice(0, parenIndex);
+      versions[currentDep] = value.replace(/^['"]|['"]$/g, "");
+    }
+  }
+
+  return versions;
+}
+
+function buildLockfileFromPnpmLock(raw) {
+  // Adapts pnpm resolved versions to the { packages: { name: ["name@version"] } }
+  // shape the validators consume.
+  const packages = {};
+  for (const [name, version] of Object.entries(parsePnpmLockResolvedVersions(raw))) {
+    packages[name] = [`${name}@${version}`];
+  }
+  return { packages };
 }
 
 function parseSemver(version) {
@@ -100,14 +165,14 @@ function validateDependencyAlignment({
     const lockEntry = packagesMap[depName];
     if (!lockEntry) {
       issues.push(
-        `[MISSING] ${depName}: presente no package.json (${declaredRange}), ausente em bun.lock`,
+        `[MISSING] ${depName}: presente no package.json (${declaredRange}), ausente em pnpm-lock.yaml`,
       );
       continue;
     }
 
     const resolvedVersion = parseResolvedVersionFromLockEntry(lockEntry);
     if (!resolvedVersion) {
-      issues.push(`[PARSE] ${depName}: não foi possível ler versão resolvida no bun.lock`);
+      issues.push(`[PARSE] ${depName}: não foi possível ler versão resolvida no pnpm-lock.yaml`);
       continue;
     }
 
@@ -194,11 +259,11 @@ function validateInstalledDependencyAlignment({
 function run() {
   const projectRoot = path.join(__dirname, "..");
   const packageJsonPath = path.join(projectRoot, "package.json");
-  const lockfilePath = path.join(projectRoot, "bun.lock");
+  const lockfilePath = path.join(projectRoot, "pnpm-lock.yaml");
 
   const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
   const lockfileRaw = fs.readFileSync(lockfilePath, "utf8");
-  const lockfile = parseLenientJson(lockfileRaw);
+  const lockfile = buildLockfileFromPnpmLock(lockfileRaw);
 
   const issues = [
     ...validateDependencyAlignment({ packageJson, lockfile }),
@@ -213,7 +278,7 @@ function run() {
     process.exit(1);
   }
 
-  console.log("[verify-sdk-alignment] OK: package.json e bun.lock alinhados para dependências críticas.");
+  console.log("[verify-sdk-alignment] OK: package.json e pnpm-lock.yaml alinhados para dependências críticas.");
 }
 
 if (require.main === module) {
@@ -222,8 +287,9 @@ if (require.main === module) {
 
 module.exports = {
   CRITICAL_DEPENDENCIES,
+  buildLockfileFromPnpmLock,
   compareSemver,
-  parseLenientJson,
+  parsePnpmLockResolvedVersions,
   parseResolvedVersionFromLockEntry,
   parseSemver,
   satisfiesRange,

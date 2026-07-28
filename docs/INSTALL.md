@@ -1,10 +1,10 @@
 # Installation
 
-This repo builds DNSChat `4.2.3` build `77` (React Native `0.86.0`, Expo SDK `57`, React `19.2.3`).
+This repo builds DNSChat `4.3.2` build `80` (React Native `0.86.0`, Expo SDK `57`, React `19.2.3`).
 
 Prereqs:
 
-- Node.js 20.19.4+
+- Node.js 22.23.1+
 - Git
 - iOS: macOS + Xcode 26.4+ (iOS 16.4+ simulator/device)
 - Android: Java 17 + Android Studio/SDK (API 24+)
@@ -14,37 +14,37 @@ Prereqs:
 ```bash
 git clone <repository-url>
 cd dnschat
-bun install
+pnpm install
 ```
 
 Notes:
 
-- `bun install` runs `bun run prepare` which installs a `.git/hooks/pre-commit`
+- `pnpm install` runs `pnpm run prepare` which installs a `.git/hooks/pre-commit`
   hook (verify pods + lint + tests).
-- iOS pods drift guardrail exists. Run `bun run verify:ios-pods` if you touch
+- iOS pods drift guardrail exists. Run `pnpm run verify:ios-pods` if you touch
   native deps and expect `ios/Podfile.lock` changes.
 
 ## Run
 
 ```bash
 # Dev server
-bun run start
+pnpm run start
 
 # iOS (Expo run:ios)
-bun run ios
+pnpm run ios
 
 # Android (Expo run:android). Script selects Java 17 when available.
-bun run android
+pnpm run android
 
 # Web preview (Mock DNS only)
-bun run web
+pnpm run web
 ```
 
 ## Platform notes
 
 ### iOS
 
-- Default path: `bun run ios` (Expo prebuild + Xcode build).
+- Default path: `pnpm run ios` (Expo prebuild + Xcode build).
 - CocoaPods is still needed because this repo has native modules.
 - Simulator builds do not require code signing.
 - Device builds require a local signing team/profile (this repo keeps `DEVELOPMENT_TEAM` empty for public distribution).
@@ -58,26 +58,26 @@ bun run web
 If pods are broken:
 
 ```bash
-bun run fix-pods
-bun run clean-ios
+pnpm run fix-pods
+pnpm run clean-ios
 ```
 
 If you need a deeper CocoaPods cleanup (slower, more destructive):
 
 ```bash
-bun run fix-pods -- --deep
+pnpm run fix-pods --deep
 ```
 
 If your `ios/Podfile.lock` is corrupted and you must regenerate it:
 
 ```bash
-bun run fix-pods -- --reset-lock
+pnpm run fix-pods --reset-lock
 ```
 
 Verify pods lockfile sync:
 
 ```bash
-bun run verify:ios-pods
+pnpm run verify:ios-pods
 ```
 
 Native iOS build smoke:
@@ -176,7 +176,7 @@ Keep all certificates, private keys, `.p12` files, provisioning profiles, and
 keychains out of git.
 
 `xcodebuild test` is not currently a native gate because the `DNSChat` scheme has
-no XCTest bundles. Use `bun run test` for the app test suite until a native test
+no XCTest bundles. Use `pnpm run test` for the app test suite until a native test
 target is added.
 
 If Xcode script phases report a missing Node binary, check the ignored local file
@@ -192,7 +192,7 @@ You need Java 17. If you do not have it:
 brew install openjdk@17
 ```
 
-`bun run android` behavior:
+`pnpm run android` behavior:
 
 - Runs `scripts/ensure-adb-reverse.js` (so Metro can be reached from device/emulator).
 - If `JAVA_HOME` is already set and valid, it uses it.
@@ -200,22 +200,22 @@ brew install openjdk@17
 - Then it falls back to common Homebrew OpenJDK 17 locations (Apple Silicon + Intel).
 
 If your Java is installed elsewhere, set `JAVA_HOME` appropriately and re-run
-`bun run android`.
+`pnpm run android`.
 
 Basic diagnostics:
 
 ```bash
-bun run verify:android
+pnpm run verify:android
 ```
 
 Full pre-commit/release gate:
 
 ```bash
-bun run verify:all
+pnpm run verify:all
 ```
 
-`bun run verify:android-16kb` requires native Android build artifacts first; run
-it after `bun run android` or an equivalent release/debug build has produced
+`pnpm run verify:android-16kb` requires native Android build artifacts first; run
+it after `pnpm run android` or an equivalent release/debug build has produced
 native `.so` files.
 
 ## DNS smoke tests
@@ -230,6 +230,6 @@ node test-dns-simple.js "Hello world" --local-server
 Full harness (UDP/TCP transports):
 
 ```bash
-bun run dns:harness -- --message "Hello world"
-bun run dns:harness -- --message "Hello world" --local-server
+pnpm run dns:harness --message "Hello world"
+pnpm run dns:harness --message "Hello world" --local-server
 ```

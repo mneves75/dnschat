@@ -97,7 +97,7 @@ export class AndroidStartupDiagnostics {
         name: "Metro Bundler",
         status: "warning",
         message: "Dev mode - verify Metro is running on port 8081",
-        details: "Run: bun run start or check adb reverse tcp:8081 tcp:8081",
+        details: "Run: pnpm run start or check adb reverse tcp:8081 tcp:8081",
       });
       this.warn("Dev mode - verify Metro connection");
     } else {

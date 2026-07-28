@@ -3,7 +3,7 @@
 This repo intentionally uses a few package metadata exclusions, but the current
 baseline is expected to pass Expo Doctor.
 
-Current verified baseline: `bun run verify:expo-doctor` passes 19/19 checks on
+Current verified baseline: `pnpm run verify:expo-doctor` passes 19/19 checks on
 `2026-05-24`.
 
 ## Why ios/ + android/ exist (and stay committed)
@@ -44,19 +44,19 @@ metadata is not applicable.
 
 ```bash
 # Align Expo-compatible native package versions when upgrading SDK patches
-bunx expo install --fix
+npx expo install --fix
 
 # Expo dependency and config checks
-bun run verify:expo-doctor
+pnpm run verify:expo-doctor
 
 # Lint (includes ast-grep rules)
-bun run lint
+pnpm run lint
 
 # Unit tests
-bun run test
+pnpm run test
 
 # Full local gate
-bun run verify:all
+pnpm run verify:all
 
 # DNS smoke test
 node test-dns-simple.js "Hello world"

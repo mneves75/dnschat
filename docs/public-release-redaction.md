@@ -45,7 +45,7 @@ copy.
 Before committing release docs, run:
 
 ```bash
-bun run verify:public-redaction
+pnpm run verify:public-redaction
 gitleaks detect --source . --redact --no-banner --config .gitleaks.toml
 ```
 

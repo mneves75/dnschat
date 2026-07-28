@@ -18,6 +18,12 @@ describe('parseTXTResponse', () => {
     expect(result).toBe('Hello DNS');
   });
 
+  it('reassembles multipart responses containing newlines', () => {
+    const records = ['1/2:Hello\nWorld', '2/2:!'];
+    const result = parseTXTResponse(records);
+    expect(result).toBe('Hello\nWorld!');
+  });
+
   it('throws on duplicate multipart part numbers', () => {
     const records = ['1/2:Hel', '1/2:lo'];
     expect(() => parseTXTResponse(records)).toThrow(/Conflicting content for part/);

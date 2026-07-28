@@ -14,12 +14,12 @@ describe("repo policy: git hooks are installed and enforce gates", () => {
 
     // Ensure the generated hook blocks commits when these gates fail.
     expect(script).toContain("pre-commit: verifying iOS pods lockfile");
-    expect(script).toContain("bun run verify:ios-pods");
+    expect(script).toContain("pnpm run verify:ios-pods");
 
     expect(script).toContain("pre-commit: running lint");
-    expect(script).toContain("bun run lint");
+    expect(script).toContain("pnpm run lint");
 
     expect(script).toContain("pre-commit: running unit tests");
-    expect(script).toContain("bun run test -- --bail --passWithNoTests");
+    expect(script).toContain("pnpm run test --bail --passWithNoTests");
   });
 });

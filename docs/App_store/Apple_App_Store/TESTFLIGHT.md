@@ -112,7 +112,7 @@ xcodebuild clean archive \
 Current TestFlight release is `4.2.3` build `77` (`2026-07-10`, Expo SDK 57 /
 React Native 0.86, iOS 27 scene lifecycle):
 
-- `bun run verify:all`, native DNS tests, secret scan, version sync, and `asc
+- `pnpm run verify:all`, native DNS tests, secret scan, version sync, and `asc
   doctor` passed with fresh build `77` evidence on `2026-07-10`.
 - Physical-device launch evidence belongs to build `76`, the immediate
   predecessor carrying the same `UIScene` repair. Build `77` was not separately
@@ -166,8 +166,8 @@ If you prefer command line or need automation:
 
 ```bash
 # Install Expo CLI tools
-bun add -g @expo/cli
-bun add -g eas-cli
+pnpm add -g @expo/cli
+pnpm add -g eas-cli
 
 # Configure EAS (Expo Application Services)
 eas login
@@ -220,7 +220,7 @@ rm -rf ~/Library/Developer/Xcode/DerivedData
 cd ios && pod install && cd ..
 
 # Check native module compilation
-bun run ios -- --verbose
+pnpm run ios --verbose
 ```
 
 #### Bundle Identifier Conflicts:
@@ -328,7 +328,7 @@ If you encounter issues during the upload process:
 
 1. Check the [Apple Developer Forums](https://developer.apple.com/forums/)
 2. Review Expo documentation for native builds
-3. Verify all native modules compile correctly with `bun run ios`
+3. Verify all native modules compile correctly with `pnpm run ios`
 4. Ensure code signing certificates are valid and not expired
 
 ---
