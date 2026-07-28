@@ -71,15 +71,12 @@ For any source-code sweep, map findings and fixes back to these requirements. Do
 - Dev: `pnpm run start`, `pnpm run ios`, `pnpm run android`, `pnpm run web`
 - Lint: `pnpm run lint`
 - Tests: `pnpm run test`
-- Runtime UI verification: use Argent MCP by default for iOS simulator app
-  launch, screenshots, accessibility/component-tree inspection, and tap/type
-  flows. Always run Argent discovery first (`describe`, screenshot, or
-  debugger-component-tree) before any tap; never guess coordinates. At the end
-  of an Argent session, call `stop-all-simulator-servers` and clean up temporary
-  simulators/processes.
-- AXe E2E: do not use `pnpm run e2e:axe:*` by default. Run AXe only when the
-  user explicitly asks for AXe or Argent MCP is unavailable for the required
-  check; preserve the exact blocker/fallback reason in notes.
+- Runtime UI verification: Argent MCP is the default proof surface. Run
+  discovery (`describe`, screenshot, or `debugger-component-tree`) before any
+  tap — never guess coordinates — and call `stop-all-simulator-servers` at
+  session end. AXe (`pnpm run e2e:axe:*`) is opt-in fallback only (explicit
+  user request, or a documented Argent blocker); record the exact reason.
+  Full policy: `CLAUDE.md` -> "Argent MCP Runtime Verification".
 - Native module tests: `cd modules/dns-native && pnpm run test`
 - DNS harness: `pnpm run dns:harness --message "test message"`; add `--local-server` for offline UDP/TCP verification.
 - Security scan: `gitleaks detect --source . --redact --no-banner --config .gitleaks.toml`
@@ -93,7 +90,7 @@ For any source-code sweep, map findings and fixes back to these requirements. Do
 - TestFlight release: after signed archive/export, use `asc publish testflight --app <APP_ID> --ipa <IPA> --version <VERSION> --build-number <BUILD> --group <GROUPS> --wait`, then verify with `asc validate testflight` and `asc validate --app <APP_ID> --version <VERSION> --platform IOS`.
 - Version sync: `pnpm run sync-versions` (source = `package.json`); preview with `pnpm run sync-versions:dry`.
 - Individual verifies: `pnpm run verify:ios-pods`, `verify:android`, `verify:android-16kb`, `verify:typed-routes`, `verify:react-compiler`, `verify:sdk-alignment`, `verify:dnsresolver-sync`, `verify:expo-doctor`.
-- Verify (full gate): `pnpm run verify:all` runs all of the above plus public redaction, lint, and tests. Release-facing UI/runtime work should also run an Argent MCP simulator smoke/inspection pass when simulator automation is available; do not default to AXe.
+- Verify (full gate): `pnpm run verify:all` runs all of the above plus public redaction, lint, and tests. Release-facing UI/runtime work also needs an Argent simulator smoke/inspection pass when simulator automation is available (see Runtime UI verification above).
 
 ## Review / Security Sweep Protocol
 
@@ -120,7 +117,7 @@ When asked for a broad review, "latest/best practices", "2026+", or a full sourc
 - Until the installed Expo release carries equivalent iOS 27 support, preserve `UIApplicationSceneManifest` and the local `SceneDelegate` bridge. Do not run `expo prebuild --clean` without restoring that bridge and passing `__tests__/iosSceneLifecycle.spec.ts`; a successful `devicectl` launch response is not sufficient without process-survival evidence.
 - Run `pnpm run verify:all` before signed archive/export. If `expo-doctor` requires an SDK patch package that the registry delays, do not weaken the global policy; use a one-command override only for the required package, update `package.json` and `pnpm-lock.yaml`, run `pod install` when native pods change, then rerun `verify:all`.
 - For TestFlight releases, require this evidence chain before claiming completion: signed archive succeeded, IPA export succeeded, `asc publish testflight --wait` returned `VALID`, and `asc validate testflight` has `0` errors and `0` warnings. If a matching App Store version record exists, `asc validate --app <APP_ID> --version <VERSION> --platform IOS` must have no blocking findings; if no matching App Store version record exists, document the exact blocker and treat it as App Store-submission state, not TestFlight processing state.
-- Run Argent MCP after release-facing UI, navigation, accessibility, or localization changes. Use Argent screenshot and component-tree/debugger discovery before interactions, then exercise the changed flow on the compiled native app. AXe is opt-in/fallback only and must not replace Argent as the default runtime proof surface.
+- After release-facing UI, navigation, accessibility, or localization changes, exercise the changed flow on the compiled native app with Argent (policy: Runtime UI verification, in Commands above).
 - Keep App Store Connect internal IDs, build IDs, tester group names, signing identities, profile names, team IDs, device identifiers, and local paths out of public docs and commit messages. Record exact identifiers only in private release notes outside git.
 - Do not describe a build as attached to an App Store version unless `asc` or App Store Connect evidence specifically proves that relationship. A processed `VALID` TestFlight build and an updated App Store version are separate claims.
 
