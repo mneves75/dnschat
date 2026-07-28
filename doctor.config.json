@@ -383,6 +383,14 @@
         "rules": [
           "react-doctor/no-set-state-after-await-in-effect"
         ]
+      },
+      {
+        "files": [
+          "pnpm-workspace.yaml"
+        ],
+        "rules": [
+          "react-doctor/require-pnpm-hardening"
+        ]
       }
     ]
   },

@@ -87,6 +87,7 @@ pnpm run verify:android    # Sanity check tooling/device
 pnpm run verify:android-16kb # Validate 16KB page size alignment after a native Android build
 pnpm run verify:typed-routes # Generate and validate Expo Router typed routes
 pnpm run verify:react-compiler # Run React Compiler healthcheck
+pnpm run verify:react-doctor # Run react-doctor (scoped to this project)
 pnpm run verify:public-redaction # Ensure public docs do not expose local release identifiers
 pnpm run verify:security # Run dependency audit plus gitleaks secret scan
 pnpm run verify:all     # Run ALL verification gates (lint, test, pods, sdk alignment, etc.)
@@ -238,7 +239,9 @@ Use `components/LiquidGlassWrapper` instead.
 
 ### Babel Constraint
 
-`react-native-reanimated/plugin` must remain the **last** entry in `babel.config.js:plugins`. The production-only `transform-remove-console` plugin runs before it.
+Do **not** add `react-native-reanimated/plugin` to `babel.config.js:plugins`. In SDK 57 that path is a shim re-exporting `react-native-worklets/plugin`, and `babel-preset-expo` already registers that plugin automatically whenever the package is installed — listing it manually runs the same visitors twice on every file. The only plugin entry is the production-only `transform-remove-console`.
+
+(Ordering is also not a lever here: Babel runs plugins before presets, so the preset's copy always ran last regardless of position.)
 
 ### Versioning
 
