@@ -86,8 +86,25 @@ asc doctor                # Local App Store Connect CLI health; upload/submissio
 
 # iOS physical-device / TestFlight release path
 # Device install must use the compiled native app, not Expo Go.
-xcodebuild clean build -workspace ios/DNSChat.xcworkspace -scheme DNSChat -configuration Debug -destination 'platform=iOS,id=<DEVICE_ID>' DEVELOPMENT_TEAM=<TEAM_ID> CODE_SIGN_STYLE=Manual PROVISIONING_PROFILE_SPECIFIER='<DEVELOPMENT_PROFILE>'
-xcrun devicectl device install app --device <COREDEVICE_ID> <DERIVED_DATA>/Build/Products/Debug-iphoneos/DNSChat.app
+#
+# Use -configuration RELEASE for a standalone install. Release embeds
+# main.jsbundle; a Debug device build has NO bundle and boots straight to the
+# React Native redbox "No script URL provided" unless Metro is running and
+# reachable from the device. Only build Debug on device when you are actively
+# attached to Metro.
+xcodebuild clean build -workspace ios/DNSChat.xcworkspace -scheme DNSChat -configuration Release -destination 'platform=iOS,id=<DEVICE_UDID>' -derivedDataPath <DERIVED_DATA> -allowProvisioningUpdates DEVELOPMENT_TEAM=<TEAM_ID> CODE_SIGN_STYLE=Automatic
+ls <DERIVED_DATA>/Build/Products/Release-iphoneos/DNSChat.app/main.jsbundle   # must exist
+xcrun devicectl device install app --device <COREDEVICE_ID> <DERIVED_DATA>/Build/Products/Release-iphoneos/DNSChat.app
+
+# Device identifiers: `xcrun devicectl list devices` gives the CoreDevice id
+# (for `install`/`launch`); `xcrun xctrace list devices` gives the hardware
+# UDID (for the xcodebuild `-destination id=`). They are different values.
+#
+# Survival + smoke proof (a successful launch response alone proves nothing):
+xcrun devicectl device process launch --device <COREDEVICE_ID> --console <BUNDLE_ID>   # hold ~30s
+xcrun devicectl device info processes --device <COREDEVICE_ID>                          # app still listed
+xcrun devicectl device process launch --device <COREDEVICE_ID> --payload-url 'dnschat://' <BUNDLE_ID>
+xcrun devicectl device capture screenshot --device <COREDEVICE_ID> --destination <PATH>.png
 
 # Signed TestFlight export requires a distribution identity + App Store profile.
 xcodebuild clean archive -workspace ios/DNSChat.xcworkspace -scheme DNSChat -configuration Release -destination 'generic/platform=iOS' -archivePath /tmp/DNSChat.xcarchive DEVELOPMENT_TEAM=<TEAM_ID> CODE_SIGN_STYLE=Manual PROVISIONING_PROFILE_SPECIFIER='<APP_STORE_PROFILE>' CODE_SIGN_IDENTITY='iPhone Distribution'
@@ -358,6 +375,8 @@ Topics available there include Liquid Glass design (`SwiftUI-`, `UIKit-`, `AppKi
 | DNS Native Module not registered | The `dns-native-plugin.js` handles this - regenerate with prebuild |
 | `useAccessibility must be used within an AccessibilityProvider` in tests | Use the resilient variants (`useHighContrast`, `useMotionReduction`, …) which default-out; only call `useAccessibility()` from components that always render under the provider tree (or stub it in the suite's `jest.mock("../src/context/AccessibilityContext", …)`). |
 | `Provisioning profile … doesn't include signing certificate` during archive | Pull the matching profile via `asc profiles download` (see "Platform Notes / iOS"). |
+| Same error on a **development** build, even though the profile names the right cert | Xcode matches certificates by identity, not common name. A reissued `Apple Development` cert has the same CN as the one baked into an older profile. Compare fingerprints - `security find-certificate -c '<CN>' -p \| openssl x509 -noout -fingerprint -sha1` against the SHA-1 of each DER in the profile's `DeveloperCertificates` - and if they differ, rebuild with `-allowProvisioningUpdates CODE_SIGN_STYLE=Automatic` instead of hunting for a profile. |
+| Device app shows the red screen `No script URL provided` / `unsanitizedScriptURLString = (null)` | A Debug build was installed on the device. Debug embeds no JS bundle. Rebuild `-configuration Release` (see the device path above) or start Metro and keep the device on the same network. |
 | Device/Release build fails at `ExpoSymbols`/`ExpoModulesCore` with "this SDK is not supported by the compiler (the SDK is built with 'Apple Swift version X', while this compiler is 'Y')" | The precompiled Expo module xcframeworks were built with an older Swift than the local Xcode. Re-run `cd ios && EXPO_USE_PRECOMPILED_MODULES=0 bundle exec pod install` to build Expo modules from source, build, then restore the committed pod state (`git checkout ios/Podfile.lock ios/DNSChat.xcodeproj/project.pbxproj ios/DNSChat/PrivacyInfo.xcprivacy && bundle exec pod install`). |
 | `[CP-User] Build ExpoModulesJSI xcframework` phase hangs forever (0% CPU, DerivedData frozen, no error) | The nested SPM `xcodebuild` is waiting on a build service that died silently (seen with Xcode 26.6 on a macOS 27 beta host; no crash report). `sample <pid>` shows `waitForBuildWithBuildLog` + `mach_msg2_trap`. Kill the build tree and rebuild with the Xcode that matches the OS beta (`DEVELOPER_DIR=/Applications/Xcode-beta.app/Contents/Developer`). Do NOT patch away the `env -i` in `build-xcframework.sh` — inside the pod phase it must stay, or the inherited Xcode env breaks `Package.swift` paths (`module map file '…/Pods/' not found`). |
 | `expo-doctor` fails "local Expo modules are gitignored" while `git check-ignore` shows nothing | False positive: the doctor's `ProjectSetupCheck` globs `modules/**/ios/*.podspec` + `modules/**/android/build.gradle` WITHOUT excluding `node_modules`, so a populated `modules/dns-native/node_modules/` (e.g. after `npm ci` there) matches react-native's own podspecs — which are legitimately ignored. Fix: `rm -rf modules/dns-native/node_modules` (regenerable; reinstall before running that workspace's tests). Module sources themselves stay tracked. |

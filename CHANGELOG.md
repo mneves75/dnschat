@@ -4,6 +4,20 @@ All notable changes to DNSChat will be documented in this file.
 
 The format is based on Keep a Changelog, and this project follows Semantic Versioning.
 
+## [Unreleased]
+
+### Changed
+
+- Corrected the iOS physical-device install recipe in `CLAUDE.md`. It specified
+  `-configuration Debug`, which produces an app with no embedded
+  `main.jsbundle` - installing it boots straight to the React Native redbox
+  `No script URL provided` unless Metro is running and reachable. The recipe now
+  uses Release, verifies `main.jsbundle` exists, distinguishes the CoreDevice id
+  from the hardware UDID (they are different values used by different tools),
+  and includes the survival/deep-link/screenshot proof commands. Adds Common
+  Issues entries for that redbox and for development profiles that name the
+  right certificate but embed a superseded one.
+
 ## [4.3.3] - 2026-07-28
 
 Build `80` -> `81`. Audit-driven release: two gates that reported green while
