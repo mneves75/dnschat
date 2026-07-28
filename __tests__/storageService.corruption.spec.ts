@@ -228,6 +228,44 @@ describe("StorageService Corruption Handling", () => {
       expect(firstMessage.status).toBe("sent");
     });
 
+    it("hydrates an interrupted sending response as a retry-eligible error", async () => {
+      const interruptedChat = [
+        {
+          id: "chat-1",
+          title: "Interrupted Chat",
+          createdAt: "2025-06-15T12:00:00.000Z",
+          updatedAt: "2025-06-15T13:00:00.000Z",
+          messages: [
+            {
+              id: "msg-user",
+              content: "Retry this prompt",
+              role: "user",
+              timestamp: "2025-06-15T12:30:00.000Z",
+              status: "sent",
+            },
+            {
+              id: "msg-assistant",
+              content: "",
+              role: "assistant",
+              timestamp: "2025-06-15T12:30:01.000Z",
+              status: "sending",
+            },
+          ],
+        },
+      ];
+      mockAsyncStorage.getItem.mockResolvedValue(JSON.stringify(interruptedChat));
+
+      const result = await StorageService.loadChats();
+      const messages = result[0]?.messages;
+
+      expect(messages).toMatchObject([
+        { role: "user", content: "Retry this prompt", status: "sent" },
+        { role: "assistant", status: "error" },
+      ]);
+      expect(messages?.[messages.length - 1]?.status).toBe("error");
+      expect(messages?.[messages.length - 2]?.role).toBe("user");
+    });
+
     it.each([
       ["title", 42, /invalid title/],
       ["createdAt", undefined, /missing or invalid timestamps/],

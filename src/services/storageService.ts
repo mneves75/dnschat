@@ -86,7 +86,10 @@ export class StorageService {
     // mutation, and the mutation's own saveChats() already re-encrypts, so a
     // queued plaintext-migration rewrite would both be redundant and DEADLOCK
     // (it would await the queue tail that includes the current operation).
-    return this.loadChats({ scheduleRewrite: false });
+    return this.loadChats({
+      scheduleRewrite: false,
+      alreadyInsideOperationQueue: true,
+    });
   }
 
   /**
@@ -220,6 +223,11 @@ export class StorageService {
      * the awaited queued rewrite deadlocks on the in-flight operation.
      */
     scheduleRewrite?: boolean;
+    /**
+     * Internal marker for mutation loads that already own operationQueue.
+     * Prevents corruption recovery from recursively enqueueing itself.
+     */
+    alreadyInsideOperationQueue?: boolean;
   }): Promise<Chat[]> {
     const startTime = Date.now();
     devLog("[StorageService] loadChats called");
@@ -374,8 +382,9 @@ export class StorageService {
               const status = msg['status'];
               if (status === undefined) {
                 msg['status'] = 'sent';
+              } else if (status === 'sending') {
+                msg['status'] = 'error';
               } else if (
-                status !== 'sending' &&
                 status !== 'sent' &&
                 status !== 'error'
               ) {
@@ -447,7 +456,10 @@ export class StorageService {
             }
             // scheduleRewrite:false: this inner load runs inside the queue, so
             // it must not recursively enqueue another rewrite (deadlock).
-            const fresh = await this.loadChats({ scheduleRewrite: false });
+            const fresh = await this.loadChats({
+              scheduleRewrite: false,
+              alreadyInsideOperationQueue: true,
+            });
             await this.saveChats(fresh);
             this.cachedChats = fresh;
           });
@@ -479,28 +491,39 @@ export class StorageService {
       if (error instanceof StorageCorruptionError) {
         devWarn("[StorageService] Storage corruption detected", error);
         if (recoverOnCorruption) {
-          try {
-            if (serializedChats) {
-              const backupPayload = await this.createCorruptionBackupPayload(
-                error,
-                serializedChats,
-              );
-              await AsyncStorage.setItem(CHAT_BACKUP_KEY, backupPayload);
-              devWarn("[StorageService] Corrupted storage backed up", {
-                key: CHAT_BACKUP_KEY,
-              });
+          const recoverCorruptedPayload = async (): Promise<void> => {
+            try {
+              if (serializedChats) {
+                const backupPayload = await this.createCorruptionBackupPayload(
+                  error,
+                  serializedChats,
+                );
+                await AsyncStorage.setItem(CHAT_BACKUP_KEY, backupPayload);
+                devWarn("[StorageService] Corrupted storage backed up", {
+                  key: CHAT_BACKUP_KEY,
+                });
+              }
+            } catch (backupError) {
+              devWarn("[StorageService] Failed to backup corrupted storage", backupError);
             }
-          } catch (backupError) {
-            devWarn("[StorageService] Failed to backup corrupted storage", backupError);
-          }
 
-          try {
-            await AsyncStorage.removeItem(CHATS_KEY);
-            devWarn("[StorageService] Corrupted storage cleared", {
-              key: CHATS_KEY,
-            });
-          } catch (clearError) {
-            devWarn("[StorageService] Failed to clear corrupted storage", clearError);
+            try {
+              const latestStoredPayload = await AsyncStorage.getItem(CHATS_KEY);
+              if (latestStoredPayload === serializedChats) {
+                await AsyncStorage.removeItem(CHATS_KEY);
+                devWarn("[StorageService] Corrupted storage cleared", {
+                  key: CHATS_KEY,
+                });
+              }
+            } catch (clearError) {
+              devWarn("[StorageService] Failed to clear corrupted storage", clearError);
+            }
+          };
+
+          if (options?.alreadyInsideOperationQueue) {
+            await recoverCorruptedPayload();
+          } else {
+            await this.queueOperation(recoverCorruptedPayload);
           }
           // Storage content just changed underneath any warm mutation cache.
           this.invalidateChatCache();

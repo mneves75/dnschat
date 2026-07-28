@@ -247,6 +247,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
     }
 
     sendInFlightRef.current = true;
+    setIsLoading(true);
 
     const userMessage: Message = {
       id: Crypto.randomUUID(),
@@ -317,7 +318,6 @@ export function ChatProvider({ children }: ChatProviderProps) {
       // Settings are read from the ref at call time (see settingsRef above).
       const { dnsServer, enableMockDNS, allowExperimentalTransports } =
         settingsRef.current;
-      setIsLoading(true);
       devLog("[ChatContext] Starting DNS query...", {
         server: dnsServer,
         enableMockDNS,

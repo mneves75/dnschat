@@ -137,4 +137,57 @@ describe("ChatContext single-flight send protection", () => {
     expect(mockStorageService.appendAndUpdateMessages).toHaveBeenCalledTimes(1);
     expect(mockStorageService.addMessage).not.toHaveBeenCalled();
   });
+
+  it("sets loading before awaiting the initial message persistence", async () => {
+    let resolvePersist: (() => void) | null = null;
+    mockStorageService.appendAndUpdateMessages.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolvePersist = () =>
+            resolve({
+              id: "chat-1",
+              title: "Test Chat",
+              createdAt: new Date(),
+              updatedAt: new Date(),
+              messages: [],
+            });
+        }),
+    );
+    mockDNSService.queryLLM.mockResolvedValue("reply");
+
+    await act(async () => {
+      createWithSuppressedWarnings(
+        <ChatProvider>
+          <Harness />
+        </ChatProvider>,
+      );
+      await Promise.resolve();
+    });
+
+    if (!latestChat) {
+      throw new Error("Chat context failed to initialize");
+    }
+    await act(async () => {
+      await latestChat?.createChat("Test Chat");
+    });
+
+    if (!latestChat) {
+      throw new Error("Chat context did not refresh after chat creation");
+    }
+    let sendPromise: Promise<void> | null = null;
+    act(() => {
+      sendPromise = latestChat?.sendMessage("hello") ?? null;
+    });
+
+    expect(mockStorageService.appendAndUpdateMessages).toHaveBeenCalledTimes(1);
+    expect(latestChat.isLoading).toBe(true);
+
+    if (!resolvePersist || !sendPromise) {
+      throw new Error("Expected the send to be waiting on persistence");
+    }
+    await act(async () => {
+      resolvePersist?.();
+      await sendPromise;
+    });
+  });
 });

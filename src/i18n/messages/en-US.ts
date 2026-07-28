@@ -328,6 +328,7 @@ export const enUS = {
     },
     glassChatList: {
       navigationTitle: "DNS Chat",
+      untitledChat: "New Chat",
       newConversation: {
         title: "Start New Conversation",
         button: "New Chat",

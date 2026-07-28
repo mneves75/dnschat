@@ -29,7 +29,7 @@ import { useSettings } from "../../context/SettingsContext";
 import { useOnboarding } from "../../context/OnboardingContext";
 import { useTranslation } from "../../i18n";
 import { LOCALE_LABEL_KEYS } from "../../i18n/localeMeta";
-import { DEFAULT_DNS_SERVER } from "../../context/settingsStorage";
+import { DEFAULT_DNS_SERVER, DEFAULT_SETTINGS } from "../../context/settingsStorage";
 import { DNSLogService } from "../../services/dnsLogService";
 import { DNSService } from "../../services/dnsService";
 import { StorageService } from "../../services/storageService";
@@ -73,6 +73,8 @@ export function GlassSettings() {
     updateEnableMockDNS,
     enableHaptics,
     updateEnableHaptics,
+    updateAllowExperimentalTransports,
+    updateAccessibility,
     systemLocale,
     preferredLocale,
     availableLocales,
@@ -235,9 +237,27 @@ export function GlassSettings() {
           text: t("screen.glassSettings.alerts.resetConfirm"),
           style: "destructive",
           onPress: async () => {
-            await updateDnsServer(DEFAULT_DNS_SERVER);
-            await updateEnableMockDNS(false);
-            await updateEnableHaptics(true);
+            // Reset every persisted setting: the confirmation promises "all
+            // settings", and leaving transports/locale/theme/accessibility
+            // untouched made the success toast a lie.
+            try {
+              await updateDnsServer(DEFAULT_SETTINGS.dnsServer);
+              await updateEnableMockDNS(DEFAULT_SETTINGS.enableMockDNS);
+              await updateAllowExperimentalTransports(
+                DEFAULT_SETTINGS.allowExperimentalTransports,
+              );
+              await updateEnableHaptics(DEFAULT_SETTINGS.enableHaptics);
+              await updateLocale(DEFAULT_SETTINGS.preferredLocale);
+              await updateThemePreference(DEFAULT_SETTINGS.themePreference);
+              await updateAccessibility(DEFAULT_SETTINGS.accessibility);
+            } catch (error) {
+              devWarn("[GlassSettings] Failed to reset settings", error);
+              appAlert(
+                t("common.errorTitle"),
+                t("screen.glassSettings.alerts.clearCacheErrorMessage"),
+              );
+              return;
+            }
             showSuccess(
               t("screen.glassSettings.alerts.resetTitle"),
               t("screen.settings.alerts.saveSuccessMessage"),
@@ -392,7 +412,6 @@ export function GlassSettings() {
             try {
               await StorageService.clearAllChats();
               await DNSLogService.clearLogs();
-              await loadChats();
               showSuccess(
                 t("screen.glassSettings.alerts.clearCacheSuccessTitle"),
                 t("screen.glassSettings.alerts.clearCacheSuccessMessage"),
@@ -404,6 +423,10 @@ export function GlassSettings() {
                 t("screen.glassSettings.alerts.clearCacheErrorMessage"),
               );
             }
+            // Always resync: chats may already be deleted even when a later
+            // step threw, and a stale list lets the user open a chat that no
+            // longer exists.
+            await loadChats();
             setClearingData(false);
           },
         },

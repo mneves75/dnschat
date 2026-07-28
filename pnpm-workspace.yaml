@@ -1,6 +1,22 @@
 packages:
   - '.'
 
+# NOTE ON SUPPLY-CHAIN POLICIES (react-doctor suggests minimumReleaseAge +
+# trustPolicy here). Both were evaluated on 2026-07-28 and deliberately NOT
+# enabled, because each currently rejects the committed lockfile outright and
+# would fail CI's `pnpm install --frozen-lockfile`:
+#
+#   minimumReleaseAge — the security floors below (brace-expansion 5.0.8,
+#     js-yaml, postcss) and the Expo SDK 57 patch set that expo-doctor requires
+#     are all younger than the suggested 7-day window. The policy would reject
+#     the very versions the security floors exist to force.
+#   trustPolicy: no-downgrade — flags semver@6.3.1 and ua-parser-js@1.0.41 as
+#     trust downgrades. Both are long-stable releases that predate npm
+#     provenance attestations and are pinned upstream (fbjs -> react-native-web),
+#     so they are not ours to move.
+#
+# Revisit once the pinned Expo/security versions have aged past the window.
+
 # React Native/Expo compatibility fallback.
 nodeLinker: hoisted
 enableGlobalVirtualStore: false

@@ -133,7 +133,7 @@ describe("ChatInput behavior", () => {
   it("shows the counter after the documented threshold and announces only milestone remaining counts", () => {
     const announceSpy = jest.spyOn(AccessibilityInfo, "announceForAccessibility");
     const tree = renderChatInput();
-    const nearLimit = "x".repeat(MESSAGE_CONSTANTS.MAX_MESSAGE_LENGTH - 9);
+    const nearLimit = "x".repeat(MESSAGE_CONSTANTS.MAX_DNS_LABEL_LENGTH - 9);
 
     act(() => {
       tree.root.findByProps({ testID: "chat-input-field" }).props["onChangeText"](nearLimit);
@@ -141,10 +141,10 @@ describe("ChatInput behavior", () => {
 
     const rendered = JSON.stringify(tree.toJSON());
     expect(rendered).toContain(String(nearLimit.length));
-    expect(rendered).toContain(String(MESSAGE_CONSTANTS.MAX_MESSAGE_LENGTH));
+    expect(rendered).toContain(String(MESSAGE_CONSTANTS.MAX_DNS_LABEL_LENGTH));
     expect(announceSpy).not.toHaveBeenCalled();
 
-    const milestone = "x".repeat(MESSAGE_CONSTANTS.MAX_MESSAGE_LENGTH - 5);
+    const milestone = "x".repeat(MESSAGE_CONSTANTS.MAX_DNS_LABEL_LENGTH - 5);
     act(() => {
       tree.root.findByProps({ testID: "chat-input-field" }).props["onChangeText"](milestone);
     });
