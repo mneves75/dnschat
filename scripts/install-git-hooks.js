@@ -19,7 +19,7 @@ echo "pre-commit: running lint"
 pnpm run lint
 
 echo "pre-commit: running unit tests"
-pnpm run test --bail --passWithNoTests
+pnpm run test --bail
 `;
 
 if (!fs.existsSync(path.join(repoRoot, ".git"))) {

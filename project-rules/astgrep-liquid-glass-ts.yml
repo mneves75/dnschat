@@ -1,5 +1,5 @@
-id: no-legacy-liquid-glass-imports
-language: Tsx
+id: no-legacy-liquid-glass-imports-ts
+language: TypeScript
 severity: error
 message: "Legacy liquidGlass module was removed. Import from 'components/LiquidGlassWrapper' instead."
 rule:

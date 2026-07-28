@@ -6,6 +6,22 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+### Fixed
+
+- `pnpm run lint` now loads and enforces the ast-grep rules. It was passing a
+  rule file to `ast-grep scan --config`, which expects a project config, so it
+  loaded `effectiveRuleCount=0` and always exited 0 - in CI, in the pre-commit
+  hook, and in `verify:all`. Adds `sgconfig.yml` with `ruleDirs`, converts the
+  rules to ast-grep's single-rule format, and covers both banned patterns in
+  `.ts` and `.tsx` (they are separate ast-grep languages, so one rule per
+  pattern silently missed half the codebase). `__tests__/repo.lint.spec.ts` now
+  runs the linter against real violation fixtures instead of asserting on
+  script text, so an inert gate fails the suite.
+- CI and the generated pre-commit hook no longer pass `--passWithNoTests` to
+  Jest, so a broken `testMatch` fails instead of reporting a green no-op.
+  `__tests__/repo.ci.spec.ts` asserts test discovery still finds at least 100
+  files.
+
 ### Changed
 
 - Optimized `CLAUDE.md` and `AGENTS.md` for current Claude 5 (Fable 5 / Opus 5)

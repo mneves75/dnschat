@@ -1,3 +1,4 @@
+import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 
 function read(path: string): string {
@@ -88,5 +89,19 @@ describe("repo policy: CI configuration exists and matches spec", () => {
     expect(content).toContain("assembleDebug");
     expect(content).toContain("assembleRelease");
     expect(content).toContain("verify:android-16kb");
+  });
+
+  it("discovers at least 100 test files", () => {
+    const output = execFileSync(
+      process.execPath,
+      [require.resolve("jest/bin/jest"), "--listTests", "--json"],
+      {
+        cwd: process.cwd(),
+        encoding: "utf8",
+      },
+    );
+    const testPaths = JSON.parse(output) as string[];
+
+    expect(testPaths.length).toBeGreaterThanOrEqual(100);
   });
 });

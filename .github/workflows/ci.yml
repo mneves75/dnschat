@@ -63,7 +63,7 @@ jobs:
         run: pnpm run lint
 
       - name: Test
-        run: pnpm run test --bail --passWithNoTests
+        run: pnpm run test --bail
 
   dns-native:
     runs-on: ubuntu-latest
