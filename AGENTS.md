@@ -159,6 +159,8 @@ Release:
 - Keep signing assets local. Never commit certificates, private keys, `.p12` files, provisioning profiles, App Store Connect API keys, or temporary keychains created for archive/export.
 - Keep public docs privacy-clean. Follow `docs/public-release-redaction.md`; use placeholders for local paths, device names, device identifiers, App Store Connect internal UUIDs, tester group names, certificate IDs, team IDs, and profile names.
 - Never re-add `react-native-reanimated/plugin` to `babel.config.js` (duplicate worklets transform).
+- ast-grep rules load through `sgconfig.yml` (`ruleDirs: project-rules`), never by passing a rule file to `scan --config` - that loads zero rules and exits 0. Each ban needs a `Tsx` and a `TypeScript` rule file plus a fixture; `__tests__/repo.lint.spec.ts` runs the linter against `__tests__/fixtures/astgrep/` and fails if fewer than 4 rules load.
+- Do not pass `--passWithNoTests` to Jest in CI or the pre-commit hook; it turns a broken `testMatch` into a green build. `__tests__/repo.ci.spec.ts` asserts test discovery still finds at least 100 files.
 - Keep React Compiler enabled and avoid adding manual `useMemo`/`useCallback` unless profiling proves it is needed.
 - Do not add new files under `src/navigation/screens/` expecting routing to pick them up — add a route under `app/` and import the screen.
 - Do not change DNS prompt limits (`MAX_MESSAGE_LENGTH`, `MAX_DNS_LABEL_LENGTH`) without updating native constants and tests.

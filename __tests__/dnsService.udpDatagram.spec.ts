@@ -5,12 +5,29 @@ import { decodeDnsPacket } from "../src/services/dnsWire";
 type SocketHandler = (...args: unknown[]) => void;
 
 type MockUdpSocketBehavior = {
+  bindError?: Error;
   emitResponses(query: Uint8Array, socket: MockUdpSocket): void;
 };
 
 class MockUdpSocket {
   private readonly handlers = new Map<string, SocketHandler[]>();
+  private bound = false;
+  readonly callOrder: string[] = [];
   readonly close = jest.fn<void, []>();
+  readonly bind = jest.fn(
+    (_port: number, callback: (error?: unknown) => void): void => {
+      this.callOrder.push("bind");
+      queueMicrotask(() => {
+        if (currentBehavior.bindError) {
+          callback(currentBehavior.bindError);
+          return;
+        }
+        this.bound = true;
+        this.emit("listening");
+        callback();
+      });
+    },
+  );
 
   on(event: string, handler: SocketHandler): void {
     const handlers = this.handlers.get(event) ?? [];
@@ -38,6 +55,10 @@ class MockUdpSocket {
     _address: string,
     callback: (error?: unknown) => void,
   ): void {
+    this.callOrder.push("send");
+    if (!this.bound) {
+      throw new Error("ERR_SOCKET_BAD_PORT");
+    }
     callback();
     currentBehavior.emitResponses(query, this);
   }
@@ -190,6 +211,43 @@ describe("DNSService UDP datagram validation", () => {
 
     // Then
     expect(result).toEqual(["first try"]);
+    expect(currentSocket.close).toHaveBeenCalledTimes(1);
+  });
+
+  it("binds to an ephemeral port before sending", async () => {
+    // Given
+    currentBehavior = {
+      emitResponses(query, socket) {
+        socket.emit("message", buildTxtResponse(query, "bound first"), resolverInfo);
+      },
+    };
+
+    // When
+    const result = await performUdpQuery();
+
+    // Then
+    expect(result).toEqual(["bound first"]);
+    expect(currentSocket.bind).toHaveBeenCalledWith(0, expect.any(Function));
+    expect(currentSocket.callOrder).toEqual(["bind", "send"]);
+  });
+
+  it("reports bind failures and closes the socket once", async () => {
+    // Given
+    currentBehavior = {
+      bindError: new Error("address unavailable"),
+      emitResponses() {
+        throw new Error("send must not run after a bind failure");
+      },
+    };
+
+    // When
+    const result = performUdpQuery();
+
+    // Then
+    await expect(result).rejects.toThrow(
+      "Failed to bind UDP socket: address unavailable",
+    );
+    expect(currentSocket.callOrder).toEqual(["bind"]);
     expect(currentSocket.close).toHaveBeenCalledTimes(1);
   });
 });

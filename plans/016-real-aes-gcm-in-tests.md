@@ -120,7 +120,8 @@ Repo conventions:
 |---|---|---|
 | Install | `pnpm install --frozen-lockfile` | exit 0 |
 | Typecheck | `pnpm run typecheck` | exit 0, no output |
-| Encryption suites | `pnpm run test --testPathPattern='(encryptionService\|storageService)'` | all pass |
+| Encryption suite | `pnpm run test --testPathPattern=encryptionService` | all pass |
+| Storage suite | `pnpm run test --testPathPattern=storageService` | all pass |
 | Full suite | `pnpm run test` | 129 suites passed, 1 skipped |
 | Suite timing | `pnpm run test` | note the reported time before and after |
 
@@ -233,7 +234,8 @@ Then add a storage-level case asserting that a payload encrypted under a
 different key surfaces the `likely encryption key mismatch` hint from
 `src/services/storageService.ts:294`.
 
-**Verify**: `pnpm run test --testPathPattern='(encryptionService\|storageService)'`
+**Verify**: `pnpm run test --testPathPattern=encryptionService` and
+`pnpm run test --testPathPattern=storageService`
 → all pass, including the four new cases.
 
 ### Step 7: Full gate

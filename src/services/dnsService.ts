@@ -63,6 +63,7 @@ type DNSQueryContext = {
 };
 
 type UDPSocket = {
+  bind(port: number, callback: (error?: unknown) => void): void;
   on(event: 'error', handler: (error: unknown) => void): void;
   on(
     event: 'message',
@@ -904,7 +905,9 @@ export class DNSService {
           // Check for specific iOS port blocking errors
           const errorMsg = details.message.toLowerCase();
           const errorCode = details.code;
-          if (
+          if (errorMsg.startsWith('failed to bind udp socket:')) {
+            reject(e);
+          } else if (
             errorMsg.includes('bad_port') ||
             errorMsg.includes('port') ||
             errorCode === 'ERR_SOCKET_BAD_PORT'
@@ -979,19 +982,41 @@ export class DNSService {
           }
         });
 
-        socket.send(
-          queryBuffer,
-          0,
-          queryBuffer.length,
-          port,  // Use the allowlisted resolver port
-          dnsServer,
-          (error?: unknown) => {
-            if (error) {
-              const message = getErrorMessage(error);
-              onError(new Error(`Failed to send UDP packet to ${dnsServer}:${port}: ${message}`));
+        const onBindError = (error: unknown) => {
+          onError(new Error(`Failed to bind UDP socket: ${getErrorMessage(error)}`));
+        };
+
+        try {
+          socket.bind(0, (bindError?: unknown) => {
+            if (bindError) {
+              onBindError(bindError);
+              return;
             }
-          },
-        );
+            if (settled) return;
+
+            try {
+              socket.send(
+                queryBuffer,
+                0,
+                queryBuffer.length,
+                port,  // Use the allowlisted resolver port
+                dnsServer,
+                (error?: unknown) => {
+                  if (error) {
+                    const message = getErrorMessage(error);
+                    onError(
+                      new Error(`Failed to send UDP packet to ${dnsServer}:${port}: ${message}`),
+                    );
+                  }
+                },
+              );
+            } catch (error) {
+              onError(error);
+            }
+          });
+        } catch (error) {
+          onBindError(error);
+        }
       } catch (error) {
         onError(error);
       }

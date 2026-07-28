@@ -266,6 +266,11 @@ export const ptBR = {
       errorAlertDismiss: "OK",
       errorRetry: "Tentar de novo",
       errorMessage: "A consulta DNS falhou. Tente de novo ou veja os logs DNS em Ajustes.",
+      storageRecovery: {
+        recovered:
+          "O armazenamento de conversas foi corrompido. As conversas que puderam ser recuperadas continuam disponíveis.",
+        reset: "O armazenamento de conversas foi corrompido e foi redefinido.",
+      },
       placeholder: "Pergunte qualquer coisa...",
       emptyState: {
         title: "Comece uma conversa!",

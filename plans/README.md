@@ -40,9 +40,9 @@ Documentation corrections, each verified against the code that disproved it:
 |------|-------|----------|--------|------------|--------|
 | 012 | Lint gate loads and enforces the ast-grep rules | P1 | S | — | DONE (2026-07-28, codex executor + advisor review) |
 | 013 | Drop `--passWithNoTests`; add a suite-size floor | P1 | S | — | DONE (2026-07-28, codex executor + advisor review) |
-| 014 | Bind the UDP socket before sending | P1 | S | 013 (soft) | TODO |
-| 015 | Keep chats recovered from a corrupted store | P1 | S | — | TODO |
-| 016 | Test encryption against real AES-GCM | P1 | M | — | TODO |
+| 014 | Bind the UDP socket before sending | P1 | S | 013 (soft) | DONE (2026-07-28, codex executor + advisor review) |
+| 015 | Keep chats recovered from a corrupted store | P1 | S | — | DONE (2026-07-28, codex executor + advisor review) |
+| 016 | Test encryption against real AES-GCM | P1 | M | — | BLOCKED — `@noble/ciphers` is ESM and this Jest suite is CommonJS; removing the mock fails 27 suites with `Cannot use import statement outside a module`. Needs a `transformIgnorePatterns` change the plan put out of scope. |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (reason) | REJECTED (rationale)
 
@@ -65,6 +65,23 @@ Status values: TODO | IN PROGRESS | DONE | BLOCKED (reason) | REJECTED (rational
   because the spec forbade touching `.git/`, and validated the generated hook
   body in memory instead. The advisor ran the installer for real afterwards and
   confirmed `.git/hooks/pre-commit` contains `pnpm run test --bail`.
+- **014/015 (codex, 2026-07-28)**: both landed cleanly with the required
+  red-then-green evidence. Two advisor corrections: plan 015's zero-recovered
+  branch was left with a hardcoded English string while the recovered branch was
+  localized, so a `storageRecovery.reset` key was added to both locales for
+  symmetry. The executor's choice of `settingsRef.current.locale` (the resolved
+  active locale) over `preferredLocale` (nullable) was verified correct.
+- **016 BLOCKED — the plan was wrong, not the executor.** It asserted
+  "`@noble/ciphers` is pure JavaScript and fast, there is no reason the tests
+  cannot run the real thing". The obstacle is module format, not speed: the
+  package ships ESM, `jest.config.js` runs `testEnvironment: "node"` through
+  ts-jest in CommonJS, and no `transformIgnorePatterns` entry lets it through.
+  Removing the mock fails 27 suites with
+  `SyntaxError: Cannot use import statement outside a module`. The executor hit
+  the plan's own STOP condition and restored the mock. Revising 016 means
+  allowing a `jest.config.js` change (transform `@noble/*`) or switching the
+  encryption suites to `--experimental-vm-modules`; both were explicitly out of
+  scope, so the plan needs rewriting before another attempt.
 - Plans 013, 015 and 016 contain a `--testPathPattern` example written as
   `'repo\.(gitHooks\|ci)'`. Inside single quotes the `\|` is a literal escaped
   pipe, which matches nothing in ERE. Use `'repo\.(gitHooks|ci)'`.

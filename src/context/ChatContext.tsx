@@ -11,6 +11,7 @@ import type { Chat, Message, ChatContextType } from "../types/chat";
 import { StorageService, StorageCorruptionError } from "../services/storageService";
 import { DNSService, sanitizeDNSMessage } from "../services/dnsService";
 import { useSettings } from "./SettingsContext";
+import { createTranslator } from "../i18n";
 import { isScreenshotMode, getMockConversations } from "../utils/screenshotMode";
 import { MESSAGE_CONSTANTS } from "../constants/appConstants";
 import { devLog, devWarn } from "../utils/devLog";
@@ -97,17 +98,30 @@ export function ChatProvider({ children }: ChatProviderProps) {
       if (err instanceof StorageCorruptionError) {
         // Best-effort recovery: a recovery failure must still reset state and
         // clear loading below (it must not escape and skip cleanup).
+        const translate = createTranslator(settingsRef.current.locale);
+        let recoveryMessage = translate("screen.chat.storageRecovery.reset");
         try {
-          await StorageService.loadChats();
+          const recoveredChats = await StorageService.loadChats();
+          setChats(recoveredChats);
+          const preferredChat = options?.preserveChatId
+            ? (recoveredChats.find(
+                (chat) => chat.id === options.preserveChatId,
+              ) ?? null)
+            : null;
+          setCurrentChat(
+            (preferredChat ?? recoveredChats[0] ?? null) as Chat | null,
+          );
+          if (recoveredChats.length > 0) {
+            recoveryMessage = translate("screen.chat.storageRecovery.recovered");
+          }
         } catch {
-          // Intentionally swallowed; state is reset regardless.
+          setChats([]);
+          setCurrentChat(null);
         }
-        setChats([]);
-        setCurrentChat(null);
         setError(
           options?.clearError === false
-            ? options?.preserveError ?? "Chat storage was corrupted and has been reset."
-            : "Chat storage was corrupted and has been reset.",
+            ? options?.preserveError ?? recoveryMessage
+            : recoveryMessage,
         );
       } else {
         setError(err instanceof Error ? err.message : "Failed to load chats");
