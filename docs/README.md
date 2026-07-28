@@ -26,39 +26,39 @@ Developer documentation for DNSChat. Code is the source of truth — these docs 
 
 ## Current verification baseline
 
-Last architecture/dependency verification: `2026-06-30`.
-Last full source/security sweep: `2026-06-10` (three-track review with fixes —
-see `CHANGELOG.md` `4.0.29`).
+Last architecture/dependency verification: `2026-07-28`.
+Last full source/security sweep: `2026-07-28` (bun→pnpm migration close-out
+with refreshed dependency security floors; see `CHANGELOG.md` `4.3.2`).
 Last AXe simulator E2E feature pass: `2026-06-05` for version `4.0.26` build
 `60`; 10 feature groups passed. Runtime UI verification now defaults to Argent.
-Current working and latest shipped version: `4.2.3` build `77` (TestFlight
-`VALID` on `2026-07-10`, with strict validation clean and bilingual test
-notes). Build `76` was
-installed and sustained through normal, cold `dnschat://`, and foreground
-`dnschat://` launches on a physical device. Build `75` was installed but
-exited immediately because its Xcode 27-linked binary still used the legacy
-application lifecycle. Build `77` supersedes version `4.2.0` build `73`
-(`VALID` on `2026-07-04`). Its signed archive/export, TestFlight processing,
-group relationship, bilingual notes, and `0` error / `0` warning validation are
-verified; physical-device launch proof remains scoped to build `76`. No App
-Store version record exists for `4.2.3`, and App Store production submission
-has not happened for this line.
+Current working version: `4.3.2` build `80`. Latest shipped TestFlight build
+remains `4.2.3` build `77` (`VALID` on `2026-07-10`, with strict validation
+clean and bilingual test notes). Build `76` was installed and sustained through
+normal, cold `dnschat://`, and foreground `dnschat://` launches on a physical
+device. Build `75` was installed but exited immediately because its Xcode
+27-linked binary still used the legacy application lifecycle. Build `77`
+supersedes version `4.2.0` build `73` (`VALID` on `2026-07-04`). Its signed
+archive/export, TestFlight processing, group relationship, bilingual notes, and
+`0` error / `0` warning validation are verified; physical-device launch proof
+remains scoped to build `76`. No App Store version record exists for `4.2.3`,
+and App Store production submission has not happened for this line.
 
 - `npx react-doctor@latest --project chat-dns` reports `100 / 100` for
-  `chat-dns` on `2026-06-10` (module also `100 / 100`).
-- Jest baseline on `2026-06-30`: `122` suites passed, `1` skipped; `959` tests
+  `chat-dns` on `2026-07-28` (module also `100 / 100`).
+- Jest baseline on `2026-07-28`: `129` suites passed, `1` skipped; `1013` tests
   passed, `13` skipped.
-- Native DNS module tests pass on `2026-06-30` (`8` suites passed, `1` skipped;
-  `64` tests passed, `13` skipped).
+- Native DNS module tests pass on `2026-07-28` (`8` suites passed, `1` skipped;
+  `65` tests passed, `13` skipped).
 - AXe E2E baseline: 10 feature groups passed in one owned release-simulator
   run on `2026-06-05`.
-- `bun run verify:all` passed on `2026-07-10` for build `77`: 125 suites and
-  983 tests passed; 1 suite and 13 tests skipped; React Compiler 101/101 and
-  Expo Doctor 19/19.
-- Native DNS tests passed on `2026-07-10`: 8 suites and 65 tests passed; 1
+- `pnpm run verify:all` passed on `2026-07-28` for build `80`: 129 suites and
+  1013 tests passed; 1 suite and 13 tests skipped; React Compiler 105/105 and
+  Expo Doctor 19/19. Android `assembleDebug`/`assembleRelease` and 16KB alignment
+  checks require native build artifacts and are run separately in CI.
+- Native DNS tests passed on `2026-07-28`: 8 suites and 65 tests passed; 1
   suite and 13 tests skipped.
-- `gitleaks detect` on `2026-07-10` reports `no leaks found`.
-- `bun audit` on `2026-07-10` reports `No vulnerabilities found`.
+- `gitleaks detect` on `2026-07-28` reports `no leaks found`.
+- `pnpm audit` on `2026-07-28` reports `No known vulnerabilities found`.
 - `xcodebuild clean build` passes for Debug on an iOS 26.5 simulator on
   `2026-06-30`.
 - `xcodebuild clean build` and `xcodebuild clean archive` pass for generic iOS
@@ -79,7 +79,7 @@ has not happened for this line.
 - Public docs and store copy must not claim that DNS prompts are private or
   end-to-end encrypted; only local history is encrypted at rest.
 - Public docs must use placeholders for local/device/account-specific release
-  identifiers. Run `bun run verify:public-redaction` and `gitleaks detect`
+  identifiers. Run `pnpm run verify:public-redaction` and `gitleaks detect`
   before committing release docs.
 
 ## Release

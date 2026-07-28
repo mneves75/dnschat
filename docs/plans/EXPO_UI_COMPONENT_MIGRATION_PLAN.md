@@ -29,7 +29,7 @@ TestFlight startup-crash evidence.
   upstream, so the patch became obsolete.
 - The iOS pod graph was refreshed for `React-Core-prebuilt` and
   `ReactNativeDependencies` after the SDK 56 package changes.
-- Final validation included `bun run verify:all`, native DNS module tests,
+- Final validation included `pnpm run verify:all`, native DNS module tests,
   gitleaks, iOS Debug simulator build, and AXe release E2E. AXe passed 10
   feature groups after the harness was updated to resume localized onboarding
   states and close Expo UI sheets through the native close control when AXe
@@ -40,7 +40,7 @@ TestFlight startup-crash evidence.
   collisions. The 2026-05-27 crash review removed the bottom-sheet adapter and
   replaced those tests with a policy that prevents `@expo/ui/community/bottom-sheet`
   from being mounted before a sheet is opened. Verification: focused migration
-  tests, `bun run typecheck`, `git diff --check`, `bun run verify:all`, native
+  tests, `pnpm run typecheck`, `git diff --check`, `pnpm run verify:all`, native
   DNS module tests, and gitleaks.
 
 ## Decision
@@ -129,7 +129,7 @@ row, and must ship only after simulator plus physical-device launch proof.
 
 ### Phase 0: dependency and type proof
 
-1. Run `bunx expo install @expo/ui`.
+1. Run `npx expo install @expo/ui`.
 2. Inspect installed `.d.ts` files under `node_modules/@expo/ui` for:
    - `community/menu`
    - `community/bottom-sheet`
@@ -137,11 +137,11 @@ row, and must ship only after simulator plus physical-device launch proof.
 3. Confirm whether `@expo/material-symbols` is installed or bundled as needed
    for Android menu icons. Add it only if the installed types or examples
    require a direct dependency.
-4. Run `bun install` if the lockfile is not updated by the Expo install path.
-5. Run `bun run verify:ios-pods`; if pods changed, run the documented pod sync
+4. Run `pnpm install` if the lockfile is not updated by the Expo install path.
+5. Run `pnpm run verify:ios-pods`; if pods changed, run the documented pod sync
    path and keep `ios/Podfile.lock` deterministic.
 
-Stop condition: `package.json`, `bun.lock`, native dependency metadata, and
+Stop condition: `package.json`, `pnpm-lock.yaml`, native dependency metadata, and
 TypeScript resolution agree on the installed `@expo/ui` version.
 
 ### Phase 1: menu replacement
@@ -164,8 +164,8 @@ TypeScript resolution agree on the installed `@expo/ui` version.
 
 Validation:
 
-- `bunx tsc --noEmit`
-- `bun run test -- --runTestsByPath __tests__/messageBubble*.spec.ts`
+- `npx tsc --noEmit`
+- `pnpm run test --runTestsByPath __tests__/messageBubble*.spec.ts`
 - AXe or manual runtime proof: long-press a message on iOS and Android, run
   copy and share, and verify no prompt text is logged.
 - Web proof: copy/share fallback still works or is intentionally hidden.
@@ -203,13 +203,13 @@ Status: rolled back. Do not execute in the current release lane.
 
 Validation required before this phase can be reopened:
 
-- `bunx tsc --noEmit`
-- `bun run test -- --runTestsByPath __tests__/settings*.spec.ts`
-- `bun run e2e:axe:doctor`
-- `bun run e2e:axe:release` when simulator automation is available
+- `npx tsc --noEmit`
+- `pnpm run test --runTestsByPath __tests__/settings*.spec.ts`
+- `pnpm run e2e:axe:doctor`
+- `pnpm run e2e:axe:release` when simulator automation is available
 - Physical-device launch proof on iOS before TestFlight upload.
 - Manual runtime proof on iOS and Android for each sheet listed above.
-- Web preview proof with `bun run web` because the Expo UI bottom sheet uses a
+- Web preview proof with `pnpm run web` because the Expo UI bottom sheet uses a
   web drawer implementation.
 
 Rollback already happened on 2026-05-27: `GlassBottomSheet` uses React Native
@@ -227,9 +227,9 @@ After Phase 1 passes and Phase 2 remains rolled back:
 3. Keep `react-native-reanimated`; it is still used by chat input, animations,
    and screen/list transitions.
 4. Run:
-   - `bun install`
-   - `bun run verify:all`
-   - `cd modules/dns-native && bun run test`
+   - `pnpm install`
+   - `pnpm run verify:all`
+   - `cd modules/dns-native && pnpm run test`
    - `gitleaks detect --source . --redact --no-banner --config .gitleaks.toml`
    - `git diff --check`
 
@@ -270,17 +270,17 @@ and keep the current implementation.
 
 For the complete migration:
 
-1. `bunx tsc --noEmit`
-2. `bun run lint`
-3. `bun run test -- --bail --passWithNoTests`
-4. `bun run verify:typed-routes`
-5. `bun run verify:react-compiler`
-6. `bun run verify:ios-pods`
-7. `bun run verify:all`
-8. `cd modules/dns-native && bun run test`
+1. `npx tsc --noEmit`
+2. `pnpm run lint`
+3. `pnpm run test --bail --passWithNoTests`
+4. `pnpm run verify:typed-routes`
+5. `pnpm run verify:react-compiler`
+6. `pnpm run verify:ios-pods`
+7. `pnpm run verify:all`
+8. `cd modules/dns-native && pnpm run test`
 9. `gitleaks detect --source . --redact --no-banner --config .gitleaks.toml`
-10. `bun run verify:public-redaction`
-11. `bun run e2e:axe:release` for release-facing UI changes when simulator
+10. `pnpm run verify:public-redaction`
+11. `pnpm run e2e:axe:release` for release-facing UI changes when simulator
     automation is available.
 12. iOS Debug simulator build and Android runtime smoke for native UI changes.
 

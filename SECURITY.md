@@ -29,30 +29,28 @@ Please do not open public issues for security vulnerabilities.
 
 ## Current Security Baseline
 
-Last full source/security sweep: `2026-06-10` (full codebase security,
-architecture, and performance review with fixes: dnsjava `3.6.2`
-(CVE-2024-25638), subset-only native allowlist narrowing, UDP datagram
-re-arm validation, inbound TXT control/bidi sanitization, `shell-quote`
-override (GHSA-w7jw-789q-3m8p), additional Clang security diagnostics).
-Current iOS release target: `4.1.5` build `72`. The latest uploaded TestFlight
-build before this SDK 57 lane remains `4.1.3` build `70`; do not describe
-`4.1.5` build `72` as distributed until signed archive/export, upload,
-processing, and validation evidence exists.
+Last full source/security sweep: `2026-07-28` (bun→pnpm migration close-out;
+refreshed transitive dependency security floors in `pnpm-workspace.yaml`;
+`pnpm audit` and `gitleaks` gates green).
+Current iOS release target: `4.3.2`. The latest validated TestFlight build
+remains `4.2.3` build `77`; do not describe `4.3.2` as distributed until
+signed archive/export, upload, processing, and validation evidence exists.
 
-- Dependency audits pass on `2026-06-30` (`bun audit` reports
-  `No vulnerabilities found` after the SDK 57 dependency refresh).
+- Dependency audits pass on `2026-07-28` (`pnpm audit` reports
+  `No known vulnerabilities found` after the dependency-floor refresh).
 - Secret scanning passes with `gitleaks detect --source . --redact --no-banner --config .gitleaks.toml`.
 - Public-repo leak prevention uses defense in depth: local `gitleaks`,
-  `bun run verify:public-redaction`, repo hygiene tests, GitHub secret scanning,
+  `pnpm run verify:public-redaction`, repo hygiene tests, GitHub secret scanning,
   and push protection when available.
 - Xcode Debug simulator build, unsigned generic iOS Release build/archive,
   physical-device compiled-app install, signed App Store archive/export, and
-  TestFlight upload are part of the release gate. For `4.1.5` build `72`, local
-  verification, Debug simulator build, and unsigned generic Release
-  build/archive have passed; signed archive/export/upload, TestFlight
-  validation, and physical-device install remain separate evidence claims.
+  TestFlight upload are part of the release gate. For `4.3.2`, local
+  verification (`pnpm run verify:all`) has passed; Debug simulator build,
+  unsigned generic Release build/archive, signed archive/export/upload,
+  TestFlight validation, and physical-device install remain separate evidence
+  claims.
 - TestFlight validation must report `0` errors and `0` warnings before a build
-  is described as distributed. App Store version validation for `4.1.5` is not
+  is described as distributed. App Store version validation for `4.3.2` is not
   applicable until App Store Connect has a matching App Store version record.
   Internal App Store Connect IDs, tester group names, device names, local paths,
   and signing identifiers are intentionally omitted from public docs.

@@ -11,7 +11,7 @@ Authoritative references checked on 2026-05-22:
 
 ## Success criteria
 
-- `package.json`, `bun.lock`, native pods, and app config align with Expo SDK 56.
+- `package.json`, `pnpm-lock.yaml`, native pods, and app config align with Expo SDK 56.
 - App code has no direct `@react-navigation/*` imports; SDK 56 router entry points are used.
 - React Native 0.85 removals are handled, especially removed `StyleSheet.absoluteFillObject`.
 - iOS minimum target is `16.4` across Expo config, Podfile properties, local podspecs, and docs.
@@ -24,7 +24,7 @@ Authoritative references checked on 2026-05-22:
 1. Use the SDK 56 upgrade command with Bun:
 
    ```bash
-   bunx expo install expo@~56.0.4 --fix --bun -- --minimum-release-age 0
+   npx expo install expo@~56.0.4 --fix -- --minimum-release-age 0
    ```
 
    The `--minimum-release-age 0` override is scoped to this install because SDK 56 was published on 2026-05-21 and Bun's repo policy otherwise blocks fresh packages.
@@ -101,22 +101,22 @@ Work order:
 Minimum gate for the SDK upgrade branch:
 
 ```bash
-bunx expo install --check --json
-bun run verify:ios-pods
-bun run verify:sdk-alignment
-bun run verify:typed-routes
-bun run typecheck
-bun run lint
-bun run test
-cd modules/dns-native && bun run test
+npx expo install --check --json
+pnpm run verify:ios-pods
+pnpm run verify:sdk-alignment
+pnpm run verify:typed-routes
+pnpm run typecheck
+pnpm run lint
+pnpm run test
+cd modules/dns-native && pnpm run test
 gitleaks detect --source . --redact --no-banner --config .gitleaks.toml
 ```
 
 Release-facing completion should add:
 
 ```bash
-bun run verify:all
-bun run e2e:axe:release
+pnpm run verify:all
+pnpm run e2e:axe:release
 xcodebuild clean build -workspace ios/DNSChat.xcworkspace -scheme DNSChat -configuration Debug -destination 'platform=iOS Simulator,name=iPhone 17'
 xcodebuild clean build -workspace ios/DNSChat.xcworkspace -scheme DNSChat -configuration Release -destination 'generic/platform=iOS' CODE_SIGNING_ALLOWED=NO
 xcodebuild clean archive -workspace ios/DNSChat.xcworkspace -scheme DNSChat -configuration Release -destination 'generic/platform=iOS' -archivePath /tmp/DNSChat.xcarchive CODE_SIGNING_ALLOWED=NO

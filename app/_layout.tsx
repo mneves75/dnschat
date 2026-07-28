@@ -18,6 +18,10 @@ import { createNavigationTheme } from "../src/ui/theme/navigationTheme";
 import { useResolvedColorScheme } from "../src/ui/theme/resolvedColorScheme";
 import { AndroidStartupDiagnostics } from "../src/utils/androidStartupDiagnostics";
 
+// Anchors the root stack so a cold deep link (dnschat://chat/<id>) still builds
+// a back stack behind the target screen instead of stranding the user there.
+export const unstable_settings = { anchor: "(tabs)" };
+
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
 function RootLayoutContent() {
@@ -129,7 +133,10 @@ function RootLayoutContent() {
       <Stack.Screen name="onboarding" options={{ headerShown: false, title: "" }} />
       <Stack.Screen name="chat/[threadId]" options={{ headerBackTitle: "", title: "" }} />
       <Stack.Screen name="profile/[user]" />
-      <Stack.Screen name="(modals)/settings" />
+      {/* stackPresentation is a mount-time native prop: setting it from inside
+          the route body runs a layout effect after the screen is already
+          pushed, so it must be declared here. */}
+      <Stack.Screen name="(modals)/settings" options={{ presentation: "modal" }} />
       <Stack.Screen name="dev/logs" />
       <Stack.Screen name="+not-found" />
     </Stack>

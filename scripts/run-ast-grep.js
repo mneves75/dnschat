@@ -11,8 +11,12 @@ const binaryName = process.platform === "win32" ? "ast-grep.exe" : "ast-grep";
 const binaryPath = path.join(cliDir, binaryName);
 
 function ensureCliBinary() {
+  if (fs.existsSync(binaryPath)) {
+    return;
+  }
+
   if (!fs.existsSync(postinstallScript)) {
-    console.error("[lint:ast-grep] @ast-grep/cli não encontrado. Rode `bun install`.");
+    console.error("[lint:ast-grep] @ast-grep/cli não encontrado. Rode `pnpm install`.");
     process.exit(1);
   }
 

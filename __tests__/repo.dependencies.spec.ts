@@ -11,6 +11,46 @@ function readPackageJson(path = "package.json"): PackageJson {
   return JSON.parse(fs.readFileSync(path, "utf8")) as PackageJson;
 }
 
+/**
+ * pnpm ignores npm-style `overrides` in package.json; the security floors live in
+ * pnpm-workspace.yaml. Parsed with a narrow reader so the repo keeps no YAML dep.
+ */
+function readPnpmOverrides(path = "pnpm-workspace.yaml"): Record<string, string> {
+  const overrides: Record<string, string> = {};
+  let inOverrides = false;
+
+  for (const line of fs.readFileSync(path, "utf8").split(/\r?\n/)) {
+    if (!line.trim() || line.trim().startsWith("#")) continue;
+
+    if (/^\S/.test(line)) {
+      inOverrides = line.startsWith("overrides:");
+      continue;
+    }
+    if (!inOverrides) continue;
+
+    const match = line.match(/^\s{2}(\S+):\s*(.+?)\s*$/);
+    if (!match?.[1] || !match[2]) continue;
+    const name = match[1].replace(/^['"]|['"]$/g, "");
+    overrides[name] = match[2].replace(/^['"]|['"]$/g, "");
+  }
+
+  return overrides;
+}
+
+function parseVersion(version: string): [number, number, number] {
+  const match = version.trim().match(/^(\d+)\.(\d+)\.(\d+)/);
+  if (!match) throw new Error(`unparseable version: ${version}`);
+  return [Number(match[1]), Number(match[2]), Number(match[3])];
+}
+
+function satisfiesFloor(installed: string, floor: string): boolean {
+  const [iMajor, iMinor, iPatch] = parseVersion(installed);
+  const [fMajor, fMinor, fPatch] = parseVersion(floor.replace(/^[>=^~\s]+/, ""));
+  if (iMajor !== fMajor) return iMajor > fMajor;
+  if (iMinor !== fMinor) return iMinor > fMinor;
+  return iPatch >= fPatch;
+}
+
 function trackedSourceFiles(): string[] {
   return execSync("git ls-files app src", { encoding: "utf8" })
     .split("\n")
@@ -51,30 +91,52 @@ describe("repo policy: dependency hygiene", () => {
     expect(gradle).not.toContain("react-native:+");
   });
 
-  it("keeps security overrides compatible with Expo native tooling", () => {
+  it("declares security overrides where pnpm actually reads them", () => {
     const pkg = readPackageJson();
+    const overrides = readPnpmOverrides();
+
+    // npm-style overrides in package.json are silently ignored by pnpm — a floor
+    // declared there would look enforced while resolving to a vulnerable version.
+    expect(pkg.overrides).toBeUndefined();
+
+    for (const name of ["brace-expansion", "js-yaml", "uuid", "ws"]) {
+      expect(overrides[name]).toBeDefined();
+    }
+  });
+
+  it("keeps installed transitive versions at or above their security floors", () => {
+    const overrides = readPnpmOverrides();
+
+    for (const [name, floor] of Object.entries(overrides)) {
+      let installed: string;
+      try {
+        installed = (require(`${name}/package.json`) as { version: string }).version;
+      } catch {
+        // Not every floored package is present in every install graph.
+        continue;
+      }
+
+      expect({ name, installed, floor, ok: satisfiesFloor(installed, floor) }).toEqual({
+        name,
+        installed,
+        floor,
+        ok: true,
+      });
+    }
+  });
+
+  it("keeps security overrides compatible with Expo native tooling", () => {
     const nativePkg = readPackageJson("modules/dns-native/package.json");
     const uuid = require("uuid") as { v4?: unknown };
-    const uuidPackage = require("uuid/package.json") as { version?: string };
     const xcode = require("xcode") as { project?: unknown };
 
-    expect(pkg.overrides).toEqual(
-      expect.objectContaining({
-        "brace-expansion": "5.0.6",
-        "js-yaml": "4.2.0",
-        uuid: "11.1.1",
-        ws: "8.21.0",
-      }),
-    );
+    // modules/dns-native is a separate npm-installed workspace, so npm-style
+    // overrides remain the correct mechanism there.
     expect(nativePkg.overrides).toEqual(
       expect.objectContaining({
         "brace-expansion": "5.0.6",
       }),
     );
-    expect(pkg.overrides?.["js-yaml"]).toBe("4.2.0");
-    expect(pkg.overrides?.["ws"]).toBe("8.21.0");
-    expect(pkg.overrides?.["uuid"]).toBe("11.1.1");
-    expect(uuidPackage.version).toBe("11.1.1");
     expect(typeof uuid.v4).toBe("function");
     expect(typeof xcode.project).toBe("function");
   });

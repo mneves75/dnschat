@@ -13,9 +13,9 @@ uses selectors first and avoids coordinates except for future debugging.
 ## Running the loop
 
 ```bash
-bun run e2e:axe:doctor
-bun run e2e:axe -- --udid <BOOTED_SIMULATOR_UDID>
-bun run e2e:axe:release
+pnpm run e2e:axe:doctor
+pnpm run e2e:axe -- --udid <BOOTED_SIMULATOR_UDID>
+pnpm run e2e:axe:release
 ```
 
 `e2e:axe` expects DNSChat to be installed and running as the real app. If the
@@ -23,7 +23,7 @@ Expo development launcher is visible, the runner fails because it is not testing
 DNSChat. `e2e:axe:release` builds a Release simulator app, reinstalls it, and
 then runs the full feature loop on a fresh simulator that the runner creates,
 boots, and deletes. To reuse a manually booted simulator instead, run
-`bun run e2e:axe:release -- --udid <BOOTED_SIMULATOR_UDID> --boot-simulator`.
+`pnpm run e2e:axe:release -- --udid <BOOTED_SIMULATOR_UDID> --boot-simulator`.
 
 ## Feature checklist
 
@@ -46,7 +46,7 @@ When an AXe assertion fails, inspect the UI state with:
 
 ```bash
 AXE_BIN=/opt/homebrew/Cellar/axe/1.7.0/libexec/axe \
-  bun run e2e:axe -- --udid <BOOTED_SIMULATOR_UDID> --describe-only
+  pnpm run e2e:axe -- --udid <BOOTED_SIMULATOR_UDID> --describe-only
 ```
 
 Fix the app when the expected feature behavior is absent or broken. Update the

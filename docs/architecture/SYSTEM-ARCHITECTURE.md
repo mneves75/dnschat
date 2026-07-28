@@ -45,7 +45,7 @@ App:
 Native DNS module:
 
 - `modules/dns-native/` shared TS API and source-of-truth iOS/Android bridge code.
-- `ios/DNSNative/` tracked iOS prebuild copy; resolver changes must stay synchronized with `modules/dns-native/ios/` and are checked by `bun run verify:dnsresolver-sync`.
+- `ios/DNSNative/` tracked iOS prebuild copy; resolver changes must stay synchronized with `modules/dns-native/ios/` and are checked by `pnpm run verify:dnsresolver-sync`.
 
 ## DNS query pipeline (what matters)
 

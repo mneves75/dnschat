@@ -4,13 +4,15 @@ import path from "node:path";
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const {
-  parseLenientJson,
+  buildLockfileFromPnpmLock,
+  parsePnpmLockResolvedVersions,
   parseResolvedVersionFromLockEntry,
   satisfiesRange,
   validateDependencyAlignment,
   validateInstalledDependencyAlignment,
 } = require("../scripts/verify-sdk-alignment.js") as {
-  parseLenientJson: (raw: string) => Record<string, unknown>;
+  buildLockfileFromPnpmLock: (raw: string) => { packages: Record<string, [string]> };
+  parsePnpmLockResolvedVersions: (raw: string) => Record<string, string>;
   parseResolvedVersionFromLockEntry: (entry: unknown) => string | null;
   satisfiesRange: (resolvedVersion: string, declaredRange: string) => boolean;
   validateDependencyAlignment: (args: {
@@ -37,12 +39,47 @@ const {
 };
 
 describe("scripts/verify-sdk-alignment.js", () => {
-  it("parses bun-style trailing commas", () => {
-    const parsed = parseLenientJson('{"a": 1, "b": {"c": 2,},}');
-    expect(parsed).toEqual({ a: 1, b: { c: 2 } });
+  it("parses root importer resolved versions from pnpm-lock.yaml", () => {
+    const raw = [
+      "lockfileVersion: '9.0'",
+      "",
+      "importers:",
+      "",
+      "  .:",
+      "    dependencies:",
+      "      '@expo/metro-runtime':",
+      "        specifier: ~57.0.3",
+      "        version: 57.0.3(expo@57.0.4)(react@19.2.3)",
+      "      dns-packet:",
+      "        specifier: ^5.6.1",
+      "        version: 5.6.1",
+      "    devDependencies:",
+      "      jest:",
+      "        specifier: ^29.7.0",
+      "        version: 29.7.0",
+      "",
+      "packages:",
+      "",
+      "  jest@29.7.0:",
+      "    resolution: {integrity: sha512-x}",
+    ].join("\n");
+
+    expect(parsePnpmLockResolvedVersions(raw)).toEqual({
+      "@expo/metro-runtime": "57.0.3",
+      "dns-packet": "5.6.1",
+      jest: "29.7.0",
+    });
+
+    expect(buildLockfileFromPnpmLock(raw)).toEqual({
+      packages: {
+        "@expo/metro-runtime": ["@expo/metro-runtime@57.0.3"],
+        "dns-packet": ["dns-packet@5.6.1"],
+        jest: ["jest@29.7.0"],
+      },
+    });
   });
 
-  it("parses a resolved version from bun lock package entries", () => {
+  it("parses a resolved version from adapted lock package entries", () => {
     expect(parseResolvedVersionFromLockEntry(["expo@55.0.2"])).toBe("55.0.2");
     expect(parseResolvedVersionFromLockEntry(["@react-native-menu/menu@2.0.0"])).toBe("2.0.0");
     expect(parseResolvedVersionFromLockEntry(["expo@invalid"])).toBeNull();

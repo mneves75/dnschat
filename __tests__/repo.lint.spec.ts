@@ -36,7 +36,7 @@ describe("repo policy: full verification gate covers release-critical checks", (
     expect(pkg.scripts?.["typecheck"]).toBe("tsc --noEmit -p tsconfig.json");
 
     const verifyAll = pkg.scripts?.["verify:all"] ?? "";
-    expect(verifyAll).toContain("bun run typecheck");
-    expect(verifyAll).toContain("bun run verify:android-16kb");
+    expect(verifyAll).toContain("pnpm run typecheck");
+    expect(verifyAll).toContain("pnpm run verify:android-16kb");
   });
 });

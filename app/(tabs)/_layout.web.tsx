@@ -1,4 +1,4 @@
-import { Tabs } from "expo-router";
+import { Tabs } from "expo-router/js-tabs";
 import React from "react";
 import { Image } from "react-native";
 import type { ColorValue } from "react-native";

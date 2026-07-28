@@ -18,7 +18,7 @@ External baseline reviewed:
    repo root instead of the template's `src/app/`; this is intentional and
    already matches Expo Router's file-based model.
 3. Use Expo Doctor as a hard dependency-alignment gate. The current baseline is
-   the SDK 55 patch set in `package.json` and `bun.lock`.
+   the SDK 55 patch set in `package.json` and `pnpm-lock.yaml`.
 4. Preserve the product boundary that differs from the template: no account
    system, no API-key chat backend, no server action, and no provider SDK in the
    client. DNS TXT remains the transport.
@@ -60,7 +60,7 @@ External baseline reviewed:
 
 ## Remaining policy
 
-1. Run `bun run verify:all` with `modules/dns-native/node_modules` absent.
+1. Run `pnpm run verify:all` with `modules/dns-native/node_modules` absent.
    `expo-doctor` intentionally scans `modules/**/android` and `modules/**/ios`;
    a nested `node_modules` created by `npm ci` inside the local module can
    produce a false positive.
