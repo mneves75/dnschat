@@ -20,6 +20,14 @@ TestFlight release.
   truth for pnpm, and pins Node.js to `22.23.1` for reproducible builds.
 - `expo-doctor` is now a pinned devDependency; the verify script uses
   `pnpm exec` instead of unpinned `npx`.
+- Aligned the Expo SDK 57 dependency set to the versions `expo-doctor` requires
+  (`expo` 57.0.8, `expo-router` 57.0.8, `react-native-screens` 4.26.0 and the
+  related patches), restoring a 19/19 doctor run, and regenerated `Podfile.lock`.
+- The web tab layout imports `Tabs` from `expo-router/js-tabs`; the root
+  re-export is deprecated in SDK 57 and will be removed.
+- `react-doctor` is wired into `verify:all`, with the false positives it reports
+  recorded as justified per-file exemptions in `doctor.config.json` (the repo
+  cannot use `finally` blocks — the React Compiler cannot lower them).
 
 ### Fixed
 
@@ -46,11 +54,29 @@ TestFlight release.
   deleted.
 - `GlassChatList` translates the untitled-chat sentinel at render time instead of
   showing the English "New Chat" string to pt-BR users.
-- `DNSService` distinguishes a per-method timeout from the overall query-budget
-  exhaustion, so retries and logs report the correct failure reason.
+- `DNSService` distinguishes a per-method timeout from overall query-budget
+  exhaustion. Previously a transport that merely hung (the blocked-port case the
+  fallback chain exists for) raised a budget error at 10s with 10s of budget
+  left, which aborted the whole query — so UDP and TCP were never attempted.
 - `StorageService` corruption recovery no longer recursively enqueues itself
-  inside the operation queue, and legacy/sending message statuses are normalized
-  safely during load.
+  inside the operation queue, and now runs the backup plus a compare-and-delete
+  through that queue, so concurrent recovery can no longer wipe a chat created
+  in parallel.
+- A message left in `sending` when the OS kills the app mid-query is hydrated as
+  an error instead of rendering a typing indicator forever with no retry.
+- `verify:typed-routes` now runs Expo's real typed-routes generator and fails
+  when the declaration does not augment `expo-router`. It previously fell back
+  to writing a comment-only stub over `.expo/types/router.d.ts` and passed with
+  a warning, so `Href` never narrowed and CI typechecked with no router types.
+- Removed the redundant `react-native-reanimated/plugin` entry from
+  `babel.config.js`: `babel-preset-expo` already registers the worklets plugin
+  it now re-exports, so every file was running the same visitors twice.
+- Settings presents as a modal again: `presentation` is declared on the layout's
+  `Stack.Screen` instead of from inside the route body, where it was applied by
+  a layout effect after the native screen had already been pushed.
+- A cold deep link (`dnschat://chat/<id>`) now builds a back stack behind the
+  target screen via `unstable_settings.anchor`, instead of stranding the user on
+  a screen with no back affordance.
 
 ## [4.3.1] - 2026-07-13
 
