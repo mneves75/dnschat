@@ -62,7 +62,7 @@ pnpm run verify:fast # typecheck + lint + test (inner loop)
 # Runtime UI verification: Argent MCP (policy: "Argent MCP Runtime Verification" below).
 
 # Linting
-pnpm run lint        # ast-grep - currently loads 0 rules, see CI section
+pnpm run lint        # ast-grep via sgconfig.yml (4 rules; blocks legacy liquid glass)
 
 # DNS module tests (separate workspace)
 cd modules/dns-native && pnpm run test
@@ -152,7 +152,7 @@ inspection, and record the exact fallback reason.
 
 **Transport fallback** (for each server):
 1. Native DNS (iOS/Android native module)
-2. UDP (react-native-udp)
+2. UDP (react-native-udp) - the socket is bound to an ephemeral port before `send()`; `react-native-udp` throws `ERR_SOCKET_BAD_PORT` from `send()` on an unbound socket, so skipping the bind makes this rung fail 100% of the time. Bind failures report `Failed to bind UDP socket:` and are deliberately *not* reclassified as a blocked port.
 3. TCP (react-native-tcp-socket)
 4. Mock (web/development)
 
@@ -256,11 +256,13 @@ Installed via `pnpm install` -> `scripts/install-git-hooks.js`. Runs:
 
 ### AST-Grep Rules
 
-`project-rules/astgrep-liquid-glass.yml` is *intended* to block:
+`sgconfig.yml` (repo root) registers `project-rules/` as the rule directory; `pnpm run lint` scans with it. Four rules block:
 - Imports from the deleted `../components/liquidGlass/` path
 - References to the deleted `LiquidGlassNative` module
 
-Use `components/LiquidGlassWrapper` instead. **These rules do not currently load** - see the lint note in the CI section. Until that is fixed, the ban is convention only, not enforcement.
+Use `components/LiquidGlassWrapper` instead.
+
+**Two rule files per ban, not one.** ast-grep treats `Tsx` and `TypeScript` as separate languages, and a rule file holds exactly one rule for one language. A single-language rule silently misses half the codebase - that is how this gate originally shipped inert. When adding a rule, add both variants and a fixture for each; `__tests__/repo.lint.spec.ts` runs the linter against `__tests__/fixtures/astgrep/` and asserts `effectiveRuleCount >= 4`, so an inert gate fails the suite.
 
 ### Babel Constraint
 
@@ -292,8 +294,6 @@ Four workflows run on push to main and PRs: `ci.yml`, `gitleaks.yml` (secret sca
 - `sbom`: generates a CycloneDX SBOM (`anchore/sbom-action`) into `artifacts/sbom/<version>.json` and uploads it as a workflow artifact.
 
 `verify:react-doctor` and `verify:android` are in `verify:all` but not in CI - run `verify:all` locally before a release. (`pnpm audit` runs directly in `ci.yml`; gitleaks has its own workflow.)
-
-**`pnpm run lint` currently enforces nothing.** `scripts/run-ast-grep.js` passes `project-rules/astgrep-liquid-glass.yml` to `ast-grep scan --config`, which expects a *project* config (`sgconfig.yml` with `ruleDirs:`), not a rule file. `ast-grep scan --inspect summary` reports `effectiveRuleCount=0`, and a file containing both banned patterns exits 0. CI, the pre-commit hook, and `verify:all` all run this gate and all get a meaningless green. Treat lint as unverified until the config form is fixed.
 
 ## Platform Notes
 

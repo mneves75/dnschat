@@ -266,6 +266,11 @@ export const enUS = {
       errorAlertDismiss: "OK",
       errorRetry: "Retry",
       errorMessage: "DNS request failed. Try again or check DNS logs in Settings.",
+      storageRecovery: {
+        recovered:
+          "Chat storage was corrupted. Chats that could be recovered are still available.",
+        reset: "Chat storage was corrupted and has been reset.",
+      },
       placeholder: "Ask me anything...",
       emptyState: {
         title: "Start a conversation!",

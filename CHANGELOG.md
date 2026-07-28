@@ -4,10 +4,31 @@ All notable changes to DNSChat will be documented in this file.
 
 The format is based on Keep a Changelog, and this project follows Semantic Versioning.
 
-## [Unreleased]
+## [4.3.3] - 2026-07-28
+
+Build `80` -> `81`. Audit-driven release: two gates that reported green while
+checking nothing now enforce, and two real defects found behind them are fixed.
 
 ### Fixed
 
+- The JS UDP transport could never send. `performNativeUDPQuery` created a
+  socket and called `send()` without binding it, and `react-native-udp` throws
+  `ERR_SOCKET_BAD_PORT` from `send()` on an unbound socket - so on Android the
+  middle rung of the `native -> UDP -> TCP -> mock` chain failed instantly on
+  every attempt. The error was then relabelled "UDP port 53 blocked by
+  network/iOS", pointing debugging at the network instead of the missing bind.
+  The socket now binds to an ephemeral port first, bind failures report
+  `Failed to bind UDP socket:` and are no longer reclassified as a blocked
+  port, and the test mock enforces the bound precondition so the regression
+  cannot return.
+- One corrupt message no longer hides the entire chat history. The
+  `StorageCorruptionError` path called the recovery load, discarded the
+  surviving chats it returned, and set the list to empty - and since the
+  quarantine is not persisted for encrypted payloads, the history stayed
+  invisible on every subsequent launch while remaining decryptable in storage.
+  Recovered chats are now shown, `preserveChatId` resolves against them, and a
+  full reset happens only when recovery itself fails. Both outcomes have
+  localized copy in `en-US` and `pt-BR`.
 - `pnpm run lint` now loads and enforces the ast-grep rules. It was passing a
   rule file to `ast-grep scan --config`, which expects a project config, so it
   loaded `effectiveRuleCount=0` and always exited 0 - in CI, in the pre-commit
@@ -44,9 +65,10 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 - Corrected four `CLAUDE.md` statements that a follow-up audit proved false:
   `getLLMServers()` returns a single server (`llm.pieter.com`), not two, so
   there is no server-level fallback; `gitleaks` does run in CI via its own
-  workflow (four workflows exist, not one); `pnpm run lint` loads zero
-  ast-grep rules and enforces nothing today; and the CI job inventory omitted
-  the `sbom` job and the tracked `.env*.example` hygiene exception.
+  workflow (four workflows exist, not one); `pnpm run lint` was loading zero
+  ast-grep rules and enforcing nothing (fixed in this same release, above);
+  and the CI job inventory omitted the `sbom` job and the tracked
+  `.env*.example` hygiene exception.
 - Pinned `.node-version` to `24`. `verify:react-compiler` crashes on Node 26
   (`react-compiler-healthcheck` loads yargs, which fails with
   `require is not defined in ES module scope`); the full gate is verified

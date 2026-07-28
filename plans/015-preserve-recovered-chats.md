@@ -129,7 +129,8 @@ Repo conventions:
 |---|---|---|
 | Install | `pnpm install --frozen-lockfile` | exit 0 |
 | Typecheck | `pnpm run typecheck` | exit 0, no output |
-| Targeted tests | `pnpm run test --testPathPattern='(chatContext\|storageService)'` | all pass |
+| Targeted tests (context) | `pnpm run test --testPathPattern=chatContext` | all pass |
+| Targeted tests (storage) | `pnpm run test --testPathPattern=storageService` | all pass |
 | i18n parity | `pnpm run test --testPathPattern=i18n` | all pass |
 | Full suite | `pnpm run test` | 129 suites passed, 1 skipped |
 
@@ -201,7 +202,8 @@ list and still clears `loading`. In that failure case the old behavior is
 correct and must remain.
 
 **Verify**: the Step 1 case passes;
-`pnpm run test --testPathPattern='(chatContext\|storageService)'` all pass.
+`pnpm run test --testPathPattern=chatContext` and
+`pnpm run test --testPathPattern=storageService` all pass.
 
 ### Step 3: Keep the user informed, accurately
 

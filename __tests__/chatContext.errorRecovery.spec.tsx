@@ -2,7 +2,10 @@ import React from "react";
 import { act } from "react-test-renderer";
 import { ChatProvider, useChat } from "../src/context/ChatContext";
 import { DNSService } from "../src/services/dnsService";
-import { StorageService } from "../src/services/storageService";
+import {
+  StorageCorruptionError,
+  StorageService,
+} from "../src/services/storageService";
 import type { Chat } from "../src/types/chat";
 import { createWithSuppressedWarnings } from "./utils/reactTestRenderer";
 
@@ -88,6 +91,17 @@ const createStoredChat = async (title: string): Promise<Chat> => {
   return created;
 };
 
+const makeRecoveredChat = (id: string, title: string): Chat => {
+  const timestamp = new Date("2026-07-28T12:00:00.000Z");
+  return {
+    id,
+    title,
+    createdAt: timestamp,
+    updatedAt: timestamp,
+    messages: [],
+  };
+};
+
 describe("ChatContext error recovery", () => {
   beforeEach(() => {
     latestChat = null;
@@ -158,6 +172,86 @@ describe("ChatContext error recovery", () => {
       storedChats = [];
     });
     mockDNSService.queryLLM.mockRejectedValue(new Error("DNS unavailable"));
+  });
+
+  it("exposes chats salvaged by corruption recovery", async () => {
+    const recoveredChats = [
+      makeRecoveredChat("chat-survivor-1", "First survivor"),
+      makeRecoveredChat("chat-survivor-2", "Second survivor"),
+    ];
+    mockStorageService.loadChats
+      .mockRejectedValueOnce(new StorageCorruptionError("Corrupted chat"))
+      .mockResolvedValueOnce(recoveredChats);
+
+    await renderProvider();
+
+    expect(getLatestChat().chats).toEqual(recoveredChats);
+    expect(getLatestChat().currentChat).toEqual(recoveredChats[0]);
+    expect(getLatestChat().error).toBe(
+      "Chat storage was corrupted. Chats that could be recovered are still available.",
+    );
+  });
+
+  it("preserves a selected thread that survives corruption recovery", async () => {
+    await renderProvider();
+    const selectedChat = await createStoredChat("Selected survivor");
+    await createStoredChat("Newer thread");
+    act(() => {
+      getLatestChat().setCurrentChat(selectedChat);
+    });
+    const recoveredChats = [
+      makeRecoveredChat("chat-other", "Other survivor"),
+      makeRecoveredChat(selectedChat.id, selectedChat.title),
+    ];
+    failInitialPersistAfterUser = true;
+    mockStorageService.loadChats.mockReset();
+    mockStorageService.loadChats
+      .mockRejectedValueOnce(new StorageCorruptionError("Corrupted chat"))
+      .mockResolvedValueOnce(recoveredChats);
+
+    await act(async () => {
+      await getLatestChat().sendMessage("stay selected");
+    });
+
+    expect(getLatestChat().chats).toEqual(recoveredChats);
+    expect(getLatestChat().currentChat?.id).toBe(selectedChat.id);
+  });
+
+  it("falls back to the first survivor when the selected thread is quarantined", async () => {
+    await renderProvider();
+    const selectedChat = await createStoredChat("Quarantined selection");
+    const recoveredChats = [
+      makeRecoveredChat("chat-survivor-1", "First survivor"),
+      makeRecoveredChat("chat-survivor-2", "Second survivor"),
+    ];
+    failInitialPersistAfterUser = true;
+    mockStorageService.loadChats.mockReset();
+    mockStorageService.loadChats
+      .mockRejectedValueOnce(new StorageCorruptionError("Corrupted chat"))
+      .mockResolvedValueOnce(recoveredChats);
+
+    await act(async () => {
+      await getLatestChat().sendMessage("fall back safely");
+    });
+
+    expect(getLatestChat().chats).toEqual(recoveredChats);
+    expect(getLatestChat().currentChat?.id).not.toBe(selectedChat.id);
+    expect(getLatestChat().currentChat).toEqual(recoveredChats[0]);
+  });
+
+  it("resets state and clears loading when corruption recovery also fails", async () => {
+    mockStorageService.loadChats
+      .mockRejectedValueOnce(new StorageCorruptionError("Corrupted chat"))
+      .mockRejectedValueOnce(new Error("Recovery failed"));
+
+    await renderProvider();
+
+    expect(getLatestChat().chats).toEqual([]);
+    expect(getLatestChat().currentChat).toBeNull();
+    expect(getLatestChat().error).toBe(
+      "Chat storage was corrupted and has been reset.",
+    );
+    expect(getLatestChat().isLoading).toBe(false);
   });
 
   it("updates a persisted assistant placeholder to error and reloads both messages", async () => {

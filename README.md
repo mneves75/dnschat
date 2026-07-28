@@ -131,7 +131,7 @@ pnpm run dns:harness --message "test" --json-out harness-output.json --raw-out r
 ## Development commands
 
 ```bash
-# Lint (ast-grep rules)
+# Lint (ast-grep rules; config in sgconfig.yml -> project-rules/)
 pnpm run lint
 
 # Unit tests
