@@ -38,13 +38,36 @@ Documentation corrections, each verified against the code that disproved it:
 
 | Plan | Title | Priority | Effort | Depends on | Status |
 |------|-------|----------|--------|------------|--------|
-| 012 | Lint gate loads and enforces the ast-grep rules | P1 | S | — | TODO |
-| 013 | Drop `--passWithNoTests`; add a suite-size floor | P1 | S | — | TODO |
+| 012 | Lint gate loads and enforces the ast-grep rules | P1 | S | — | DONE (2026-07-28, codex executor + advisor review) |
+| 013 | Drop `--passWithNoTests`; add a suite-size floor | P1 | S | — | DONE (2026-07-28, codex executor + advisor review) |
 | 014 | Bind the UDP socket before sending | P1 | S | 013 (soft) | TODO |
 | 015 | Keep chats recovered from a corrupted store | P1 | S | — | TODO |
 | 016 | Test encryption against real AES-GCM | P1 | M | — | TODO |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (reason) | REJECTED (rationale)
+
+### Executor review notes (cycle 4)
+
+- **012/013 (codex, 2026-07-28)**: implementation was sound and stayed in
+  scope, but the advisor review caught a real gap before landing. ast-grep
+  treats `Tsx` and `TypeScript` as **separate languages**, and the executor
+  carried the original file's single-language split forward: the legacy-import
+  rule was `Tsx`-only and the native-module rule `TypeScript`-only, so a
+  `LiquidGlassNative` reference in a `.tsx` file (where nearly all components
+  live) and a legacy import in a `.ts` file both passed. Verified empirically
+  with planted files, then fixed by adding the mirrored rules
+  (`astgrep-liquid-glass-ts.yml`, `astgrep-native-liquid-glass-tsx.yml`),
+  extending the fixtures to all four combinations, and raising the rule floor
+  from 2 to 4. Lesson for future plans: a done-criterion phrased as "a file
+  containing the pattern fails lint" is satisfiable by one extension; name the
+  extensions.
+- The executor correctly declined to run `node scripts/install-git-hooks.js`
+  because the spec forbade touching `.git/`, and validated the generated hook
+  body in memory instead. The advisor ran the installer for real afterwards and
+  confirmed `.git/hooks/pre-commit` contains `pnpm run test --bail`.
+- Plans 013, 015 and 016 contain a `--testPathPattern` example written as
+  `'repo\.(gitHooks\|ci)'`. Inside single quotes the `\|` is a literal escaped
+  pipe, which matches nothing in ERE. Use `'repo\.(gitHooks|ci)'`.
 
 ### Dependency notes (cycle 4)
 

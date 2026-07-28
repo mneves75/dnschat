@@ -1,0 +1,5 @@
+import LegacyDefault from "../components/liquidGlass/Default";
+import { LegacyNamed } from "../../components/liquidGlass/Named";
+import * as LegacyNamespace from "../../../components/liquidGlass/Namespace";
+
+void [LegacyDefault, LegacyNamed, LegacyNamespace];

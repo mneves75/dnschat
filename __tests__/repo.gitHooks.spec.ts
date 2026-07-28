@@ -20,6 +20,6 @@ describe("repo policy: git hooks are installed and enforce gates", () => {
     expect(script).toContain("pnpm run lint");
 
     expect(script).toContain("pre-commit: running unit tests");
-    expect(script).toContain("pnpm run test --bail --passWithNoTests");
+    expect(script).toContain("pnpm run test --bail");
   });
 });

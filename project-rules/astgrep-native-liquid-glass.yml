@@ -1,0 +1,12 @@
+id: no-native-liquid-glass-module
+language: TypeScript
+severity: error
+message: "Do not reference deleted ios/LiquidGlassNative modules."
+rule:
+  any:
+    - all:
+        - kind: identifier
+        - regex: "^LiquidGlassNative$"
+    - all:
+        - kind: string
+        - regex: "^['\"]LiquidGlassNative['\"]$"
