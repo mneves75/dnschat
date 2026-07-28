@@ -40,7 +40,9 @@
     "react-native": ">=0.70.0"
   },
   "overrides": {
-    "brace-expansion": "5.0.6"
+    "brace-expansion": ">=5.0.8",
+    "js-yaml": ">=4.3.0",
+    "shell-quote": ">=1.8.5"
   },
   "files": [
     "index.ts",
