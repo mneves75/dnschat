@@ -47,7 +47,6 @@ import Animated, {
   useAnimatedStyle,
   useAnimatedReaction,
   withSpring,
-  withTiming,
   runOnJS,
 } from "react-native-reanimated";
 import { useTypography } from "../ui/hooks/useTypography";
@@ -81,7 +80,6 @@ const CHARACTER_ANNOUNCEMENT_REMAINING = new Set([10, 5, 0]);
 // these milestones now that the limit is the 63-byte DNS label rather than 120.
 const CHARACTER_COUNTER_THRESHOLD =
   MAX_SENDABLE_LENGTH - Math.max(...CHARACTER_ANNOUNCEMENT_REMAINING);
-const ANIMATION_DURATION_MS = 200;
 const BUTTON_SPACING = LiquidGlassSpacing.xxs; // 4px from edge
 
 interface ChatInputProps {
@@ -159,11 +157,13 @@ export function ChatInput({
   // Reanimated shared values for UI thread performance
   const inputHeight = useSharedValue(heightConstraints.min);
   const scale = useSharedValue(1);
-  const opacity = useSharedValue(0.4);
   const resolvedPlaceholder = placeholder ?? t("screen.chatInput.placeholder");
   const canSend = message.trim().length > 0 && !isLoading;
   const showCharacterCount = message.length >= CHARACTER_COUNTER_THRESHOLD;
   const useGlassInput = Platform.OS === "ios" && supportsLiquidGlass;
+  // iOS Messages: solid blue when sendable, solid gray when idle. Never stack
+  // opacity on a translucent tint — that made the control vanish on dark input.
+  const sendButtonBackground = canSend ? palette.userBubble : palette.textTertiary;
 
   /**
    * Button Position Animation
@@ -199,21 +199,6 @@ export function ChatInput({
   const inputPadding = {
     paddingRight: minimumTouchTarget + BUTTON_SPACING,
   };
-
-  /**
-   * Update Send Button Opacity
-   *
-   * Animates from 0.4 (disabled) to 1.0 (enabled).
-   * Uses Reanimated withTiming for smooth UI thread animation.
-   */
-  React.useEffect(() => {
-    const target = canSend ? 1 : 0.4;
-    if (shouldReduceMotion) {
-      opacity.set(target);
-      return;
-    }
-    opacity.set(withTiming(target, { duration: ANIMATION_DURATION_MS }));
-  }, [canSend, opacity, shouldReduceMotion]);
 
   /**
    * Accessibility Announcement for Character Limit
@@ -263,12 +248,12 @@ export function ChatInput({
   /**
    * Animated Button Style
    *
-   * Combines scale (press feedback) and opacity (enabled state).
-   * Both animations run on UI thread for 60fps performance.
+   * Press-scale only. Enabled/disabled is a solid background swap (see
+   * sendButtonBackground) — opacity was stacking on a translucent tint and
+   * made the idle control invisible on dark inputs.
    */
   const animatedButtonStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.get() }],
-    opacity: opacity.get(),
   }));
 
   /**
@@ -438,10 +423,8 @@ export function ChatInput({
           width: minimumTouchTarget,
           height: minimumTouchTarget,
           borderRadius: minimumTouchTarget / 2,
-          // CRITICAL: Use solid userBubble (systemBlue) instead of semi-transparent accentTint
-          // iOS Messages pattern: SOLID blue button when active, gray tint when disabled
-          // accentTint was 55%/65% opacity - too transparent for button background
-          backgroundColor: canSend ? palette.userBubble : palette.tint,
+          backgroundColor: sendButtonBackground,
+          // style form required on RN Web (prop form is deprecated there).
           pointerEvents: canSend ? "auto" : "none",
         },
       ]}
@@ -467,9 +450,9 @@ export function ChatInput({
       accessibilityState={{ disabled: !canSend }}
     >
       {isLoading ? (
-        <ActivityIndicator size="small" color={palette.userBubble} />
+        <ActivityIndicator size="small" color={palette.bubbleTextOnBlue} />
       ) : (
-        <SendIcon size={20} isActive={canSend} />
+        <SendIcon size={20} />
       )}
     </AnimatedPressableRipple>
   );

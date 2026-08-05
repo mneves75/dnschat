@@ -56,9 +56,12 @@ describe("ChatInput Component - John Carmack Quality Standards", () => {
       expect(source).toContain("const BUTTON_SPACING = LiquidGlassSpacing.xxs");
     });
 
-    it("defines ANIMATION_DURATION_MS constant instead of hardcoded values", () => {
-      expect(source).toContain("const ANIMATION_DURATION_MS = 200");
-      expect(source).toContain("duration: ANIMATION_DURATION_MS");
+    it("does not stack opacity on the send button", () => {
+      // Idle visibility is a solid gray fill, not opacity × translucent tint.
+      expect(source).not.toContain("useSharedValue(0.4)");
+      expect(source).not.toContain("ANIMATION_DURATION_MS");
+      expect(source).toContain("sendButtonBackground");
+      expect(source).toContain("palette.textTertiary");
     });
   });
 
@@ -72,10 +75,6 @@ describe("ChatInput Component - John Carmack Quality Standards", () => {
       expect(source).toContain("const scale = useSharedValue(1)");
     });
 
-    it("uses useSharedValue for button opacity", () => {
-      expect(source).toContain("const opacity = useSharedValue(0.4)");
-    });
-
     it("uses useAnimatedStyle for button position (NOT useMemo)", () => {
       expect(source).toContain("const animatedButtonPosition = useAnimatedStyle");
       expect(source).toContain("top: (inputHeight.get() - minimumTouchTarget) / 2");
@@ -86,7 +85,7 @@ describe("ChatInput Component - John Carmack Quality Standards", () => {
     it("uses useAnimatedStyle for button style animations", () => {
       expect(source).toContain("const animatedButtonStyle = useAnimatedStyle");
       expect(source).toContain("transform: [{ scale: scale.get() }]");
-      expect(source).toContain("opacity: opacity.get()");
+      expect(source).not.toContain("opacity: opacity.get()");
     });
 
     it("uses useAnimatedStyle for input height animation", () => {
@@ -99,11 +98,6 @@ describe("ChatInput Component - John Carmack Quality Standards", () => {
       // Input auto-grow uses the stiff (damping 20 / no-overshoot) preset rather
       // than a bouncy spring — a text field that overshoots reads as toy-like.
       expect(source).toContain("SpringConfig.stiff");
-    });
-
-    it("uses withTiming for opacity transitions", () => {
-      expect(source).toContain("withTiming");
-      expect(source).toContain("duration: ANIMATION_DURATION_MS");
     });
 
     it("initializes inputHeight with calculated minimum (not 0)", () => {
@@ -247,9 +241,9 @@ describe("ChatInput Component - John Carmack Quality Standards", () => {
       expect(source).toContain("* CRITICAL: Cannot use useMemo with shared values");
     });
 
-    it("documents send button opacity animation", () => {
-      expect(source).toContain("* Update Send Button Opacity");
-      expect(source).toContain("* Animates from 0.4 (disabled) to 1.0 (enabled)");
+    it("documents send button solid fill (no opacity stack)", () => {
+      expect(source).toContain("sendButtonBackground");
+      expect(source).toContain("made the idle control invisible on dark inputs");
     });
 
     it("documents handleSend function steps", () => {
