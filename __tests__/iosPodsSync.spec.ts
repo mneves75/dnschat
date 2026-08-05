@@ -28,6 +28,17 @@ PODS:
 `;
       expect(getPodVersionFromLockfileText(lockText, "expo-dev-launcher")).toBeNull();
     });
+
+    it("parses leaf pods (no trailing colon) and ignores DEPENDENCIES lines", () => {
+      const lockText = `
+PODS:
+  - FBLazyVector (0.86.2)
+
+DEPENDENCIES:
+  - FBLazyVector (from \`../node_modules/react-native/Libraries/FBLazyVector\`)
+`;
+      expect(getPodVersionFromLockfileText(lockText, "FBLazyVector")).toBe("0.86.2");
+    });
   });
 
   describe("getOutOfSyncPodsFromVersions", () => {
@@ -91,6 +102,33 @@ PODS:
           reason: "MISSING_LOCK_ENTRY",
         },
       ]);
+    });
+
+    it("catches React Native and worklets patch drift in Podfile.lock", () => {
+      const lockText = `
+PODS:
+  - FBLazyVector (0.86.0)
+  - RNWorklets (0.10.0):
+    - React-Core
+`;
+
+      const installedVersions = {
+        "react-native": "0.86.2",
+        "react-native-worklets": "0.10.1",
+      };
+
+      const outOfSync = getOutOfSyncPodsFromVersions({
+        lockfileText: lockText,
+        installedVersions,
+      });
+
+      expect(outOfSync.map((entry: { podName: string }) => entry.podName)).toEqual([
+        "FBLazyVector",
+        "RNWorklets",
+      ]);
+      expect(
+        outOfSync.every((entry: { reason: string }) => entry.reason === "VERSION_MISMATCH")
+      ).toBe(true);
     });
   });
 });

@@ -6,8 +6,52 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+## [4.3.4] - 2026-08-05
+
+Build `81` -> `82`. Security hardening (encryption key pinned to the device,
+dependency floors for a published advisory), dependency alignment that also
+fixes the iOS device build, and a chat send-button visibility fix.
+
+### Security
+
+- The local encryption key is no longer included in iCloud backups. The
+  keychain item was written with the default accessibility class
+  (`kSecAttrAccessibleWhenUnlocked`), which migrates on restore, while the
+  ciphertext travels in the app's backup - together they defeat AES-GCM at
+  rest. `generateAndPersistKey` now stores the key with
+  `WHEN_UNLOCKED_THIS_DEVICE_ONLY`, so a restored backup cannot recover the key
+  on another device. `__tests__/encryptionService.key.spec.ts` asserts the
+  accessibility option on every key write.
+- Raised the `brace-expansion` dependency floor to `5.0.9` (JS and the native
+  module) for GHSA-rgw5-rvv9-x895. `pnpm audit` reports no known
+  vulnerabilities.
+
+### Fixed
+
+- Chat send button was nearly invisible when idle on dark input: disabled state
+  stacked translucent `palette.tint` × button opacity `0.4` × arrow opacity
+  `0.55`. Idle is now solid `textTertiary`, sendable is solid `userBubble`, no
+  opacity stack. Covered by `chatInput.behavior` / `chatInput.comprehensive`.
+- `ios/Podfile.lock` drifted from `package.json`: it still pinned React Native
+  `0.86.0` and the pre-alignment Expo patch versions while the manifest had
+  moved to `0.86.2` / the expo-doctor-aligned set. A signed device build
+  therefore failed to find `RNWorklets` headers, and `verify:ios-pods` did not
+  catch it because it only tracked the `expo` and `expo-modules-core` pods.
+  The lockfile is regenerated from the aligned manifest (React Native
+  `0.86.2`, Hermes `250829098.0.16`, RNWorklets `0.10.1`, ExpoRouter
+  `57.0.10`, EXConstants `57.0.9`), and the sync guardrail now also tracks
+  `react-native` and `react-native-worklets` pods with a regression test, so
+  RN core and worklets patch drift fails `verify:ios-pods` instead of
+  surfacing as a device-build failure.
+
 ### Changed
 
+- Aligned the Expo SDK 57 patch set with `expo-doctor` and `verify:sdk-alignment`:
+  `expo` `57.0.10`, `react-native` `0.86.2`, `react-native-reanimated` `4.5.1`,
+  `react-native-worklets` `0.10.1`, plus the `@expo/*` packages flagged by the
+  doctor. `pnpm-workspace.yaml` documents that pnpm 11's `minimumReleaseAge`
+  policy is active by default and lists the aligned packages in
+  `minimumReleaseAgeExclude` so frozen installs resolve them.
 - Corrected the iOS physical-device install recipe in `CLAUDE.md`. It specified
   `-configuration Debug`, which produces an app with no embedded
   `main.jsbundle` - installing it boots straight to the React Native redbox
@@ -17,6 +61,10 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
   and includes the survival/deep-link/screenshot proof commands. Adds Common
   Issues entries for that redbox and for development profiles that name the
   right certificate but embed a superseded one.
+- Hardened the Remotion launch-video research docs (autoreview findings):
+  `ffprobe` calls now use the Remotion-bundled binary via `pnpm exec remotion
+  ffprobe` instead of assuming a system install, and the capture script creates
+  the output directory before copying frames.
 
 ## [4.3.3] - 2026-07-28
 

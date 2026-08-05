@@ -67,6 +67,7 @@ jest.mock("../src/ui/theme/imessagePalette", () => ({
     textSecondary: "#444444",
     textTertiary: "#777777",
     userBubble: "#007aff",
+    bubbleTextOnBlue: "#ffffff",
     tint: "#c7c7cc",
   }),
 }));
@@ -92,11 +93,21 @@ describe("ChatInput behavior", () => {
     const onSendMessage = jest.fn();
     const tree = renderChatInput({ onSendMessage });
 
+    const idleBg = () => {
+      const style = tree.root.findByProps({ testID: "chat-input-send" }).props["style"];
+      const flat = Array.isArray(style) ? Object.assign({}, ...style) : style;
+      return flat.backgroundColor as string;
+    };
+
+    expect(idleBg()).toBe("#777777"); // textTertiary — solid idle, not translucent tint
+
     act(() => {
       tree.root
         .findByProps({ testID: "chat-input-field" })
         .props["onChangeText"]("  hello dns  ");
     });
+
+    expect(idleBg()).toBe("#007aff"); // userBubble — solid blue when sendable
 
     act(() => {
       tree.root.findByProps({ testID: "chat-input-send" }).props["onPress"]();

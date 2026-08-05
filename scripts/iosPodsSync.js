@@ -17,9 +17,16 @@ function getPodVersionFromLockfileText(lockfileText, podName) {
   if (typeof lockfileText !== "string") return null;
   if (!podName) return null;
 
+  // Only the PODS section records resolved versions; DEPENDENCIES lines reuse
+  // the `- Name (...)` shape with a local path instead of a version.
+  const dependenciesIndex = lockfileText.indexOf("DEPENDENCIES:");
+  const podsSection =
+    dependenciesIndex >= 0 ? lockfileText.slice(0, dependenciesIndex) : lockfileText;
+
   const podNamePattern = escapeRegExp(podName);
-  const match = lockfileText.match(
-    new RegExp(`^\\s*-\\s+${podNamePattern}\\s+\\(([^)]+)\\):\\s*$`, "m")
+  // The trailing colon is present only when the pod lists dependencies.
+  const match = podsSection.match(
+    new RegExp(`^\\s*-\\s+${podNamePattern}\\s+\\(([^)]+)\\):?\\s*$`, "m")
   );
   return match ? match[1].trim() : null;
 }
@@ -46,6 +53,8 @@ function defaultPodSyncTargets() {
   return [
     { packageName: "expo", podName: "Expo" },
     { packageName: "expo-modules-core", podName: "ExpoModulesCore" },
+    { packageName: "react-native", podName: "FBLazyVector" },
+    { packageName: "react-native-worklets", podName: "RNWorklets" },
   ];
 }
 
