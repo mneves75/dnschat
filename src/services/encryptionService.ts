@@ -128,7 +128,14 @@ const generateAndPersistKey = async (): Promise<Uint8Array> => {
     return generated;
   }
 
-  await SecureStore.setItemAsync(KEY_STORAGE_KEY, encoded);
+  // THIS_DEVICE_ONLY keeps the key out of iCloud/device backups, preserving the
+  // key/ciphertext separation: chat payloads live in AsyncStorage (which IS
+  // backed up), so the key must never travel with them. Existing keys written
+  // with the library default (WHEN_UNLOCKED) remain readable because the
+  // read path does not filter by kSecAttrAccessible.
+  await SecureStore.setItemAsync(KEY_STORAGE_KEY, encoded, {
+    keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
+  });
   cachedKey = generated;
   return generated;
 };
