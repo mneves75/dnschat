@@ -2,20 +2,18 @@ packages:
   - '.'
 
 # NOTE ON SUPPLY-CHAIN POLICIES (react-doctor suggests minimumReleaseAge +
-# trustPolicy here). Both were evaluated on 2026-07-28 and deliberately NOT
-# enabled, because each currently rejects the committed lockfile outright and
-# would fail CI's `pnpm install --frozen-lockfile`:
+# trustPolicy here). Since pnpm v11, minimumReleaseAge defaults to 1440 (1 day)
+# and is ACTIVE unless `minimumReleaseAge: 0` is set — not a repo decision.
+# The Excludes below are the required-package overrides for the Expo SDK 57
+# patch set that expo-doctor mandates; the versions were published within the
+# 24h window, so they are excluded rather than weakening the policy (see
+# AGENTS.md). `blockExoticSubdeps`, `strictDepBuilds` stay on default.
+# trustPolicy: no-downgrade — flags semver@6.3.1 and ua-parser-js@1.0.41 as
+# trust downgrades. Both are long-stable releases that predate npm
+# provenance attestations and are pinned upstream (fbjs -> react-native-web),
+# so they are not ours to move.
 #
-#   minimumReleaseAge — the security floors below (brace-expansion 5.0.8,
-#     js-yaml, postcss) and the Expo SDK 57 patch set that expo-doctor requires
-#     are all younger than the suggested 7-day window. The policy would reject
-#     the very versions the security floors exist to force.
-#   trustPolicy: no-downgrade — flags semver@6.3.1 and ua-parser-js@1.0.41 as
-#     trust downgrades. Both are long-stable releases that predate npm
-#     provenance attestations and are pinned upstream (fbjs -> react-native-web),
-#     so they are not ours to move.
-#
-# Revisit once the pinned Expo/security versions have aged past the window.
+# Revisit the Excludes once these versions have aged past the 1-day window.
 
 # React Native/Expo compatibility fallback.
 nodeLinker: hoisted
@@ -37,3 +35,13 @@ overrides:
   uuid: '>=11.1.1'
   ws: '>=8.21.0'
   yaml: '>=2.8.3'
+
+minimumReleaseAgeExclude:
+  - '@expo/cli@57.0.12'
+  - '@expo/router-server@57.0.5'
+  - expo-constants@57.0.9
+  - expo-modules-core@57.0.9
+  - expo@57.0.10
+  - '@expo/ui@57.0.9'
+  - expo-linking@57.0.5
+  - expo-router@57.0.10
