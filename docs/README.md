@@ -27,12 +27,11 @@ Developer documentation for DNSChat. Code is the source of truth — these docs 
 ## Current verification baseline
 
 Last architecture/dependency verification: `2026-08-05`.
-Last full source/security sweep: `2026-08-05` (device-only encryption key,
-brace-expansion floor, Expo/RN pod alignment, chat send-button solid fill;
-see `CHANGELOG.md` `4.3.4`).
+Last full source/security sweep: `2026-08-05` (send-button disc paint fix on
+top of 4.3.4 security/pod work; see `CHANGELOG.md` `4.3.5`).
 Last AXe simulator E2E feature pass: `2026-06-05` for version `4.0.26` build
 `60`; 10 feature groups passed. Runtime UI verification now defaults to Argent.
-Current working version: `4.3.4` build `82`. Latest shipped TestFlight build
+Current working version: `4.3.5` build `83`. Latest shipped TestFlight build
 remains `4.2.3` build `77` (`VALID` on `2026-07-10`, with strict validation
 clean and bilingual test notes). Build `76` was installed and sustained through
 normal, cold `dnschat://`, and foreground `dnschat://` launches on a physical
