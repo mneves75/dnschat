@@ -4,7 +4,7 @@ PODS:
     - React-Core
   - EXConstants (57.0.7):
     - ExpoModulesCore
-  - Expo (57.0.8):
+  - Expo (57.0.10):
     - ExpoModulesCore
     - ExpoModulesJSI
     - hermes-engine
@@ -50,9 +50,9 @@ PODS:
     - ExpoModulesCore
   - ExpoLocalization (57.0.1):
     - ExpoModulesCore
-  - ExpoLogBox (57.0.1):
+  - ExpoLogBox (57.0.2):
     - React-Core
-  - ExpoModulesCore (57.0.7):
+  - ExpoModulesCore (57.0.9):
     - ExpoModulesJSI
     - hermes-engine
     - RCTRequired
@@ -79,10 +79,10 @@ PODS:
   - ExpoModulesJSI (57.0.4):
     - React-Core
     - ReactCommon
-  - ExpoModulesWorklets (57.0.7):
+  - ExpoModulesWorklets (57.0.9):
     - ExpoModulesCore
     - ExpoModulesJSI
-  - ExpoModulesWorkletsAdapter (57.0.7):
+  - ExpoModulesWorkletsAdapter (57.0.9):
     - ExpoModulesCore
     - ExpoModulesJSI
     - ExpoModulesWorklets
@@ -2745,7 +2745,7 @@ SPEC CHECKSUMS:
   CocoaAsyncSocket: 065fd1e645c7abab64f7a6a2007a48038fdc6a99
   DNSNative: e1654d7333a1747c724a008c144aca102b26539d
   EXConstants: fa5647482320b7bde855057f8b86580456d4b9f0
-  Expo: 4a3b7c95f7f7251c884c75699d60d653555ff9b9
+  Expo: df0ee7c76ff52b8f559e4ac50e70c81d5d61d806
   ExpoAsset: 98143758ff37e14c9ff2a4e7673097db00473011
   ExpoCrypto: 366380ffafeb22cc9795438cddcbfa299e1aaf42
   ExpoDomWebView: beaec034e51bd028428b98bb1f2633ab79c6d095
@@ -2756,11 +2756,11 @@ SPEC CHECKSUMS:
   ExpoKeepAwake: c26f14275017370cc8a4b7b43a0e23361f2053a5
   ExpoLinking: 5a796f9284535c0349537a844dd40680229b7fcb
   ExpoLocalization: 659243b03b3a3e9589793cee2f728a899e181329
-  ExpoLogBox: 8a3cfa2897e088083cd49fc1ff7fdb2de4385547
-  ExpoModulesCore: 5d572565fbab2ebc1595b5f749de2ebff6037760
+  ExpoLogBox: 6bb73c341aca22e699bd4da6cc61afc844e1a648
+  ExpoModulesCore: 1b11a538eb78f86cb6ebb7c2b217807515617d6a
   ExpoModulesJSI: b20fefa4cdd9097e7e6b715466d1900b8c5d4711
-  ExpoModulesWorklets: b21b8f233b5fd71ca74327217601fa4ead9ddaaf
-  ExpoModulesWorkletsAdapter: 6b3dffb299973f4f2b1a96738aa2cb46987b18e1
+  ExpoModulesWorklets: a8986b0872d09df168f5d4e092625e9fbb6b38bb
+  ExpoModulesWorkletsAdapter: 83cea5cd135067f047382f1ee1445601b2aed2fa
   ExpoRouter: c086c97b2229152334ab68200ade40b64f75515b
   ExpoSecureStore: 94793113049a2d7478dfe1a13aa15081e9f61755
   ExpoSplashScreen: 247464c0fe484f766892db0d66c3fe54f92a624e
@@ -2857,4 +2857,4 @@ SPEC CHECKSUMS:
 
 PODFILE CHECKSUM: a2b5f68c3f94546645bd2d5eac7ca52539c4fcf8
 
-COCOAPODS: 1.16.2
+COCOAPODS: 1.17.0
