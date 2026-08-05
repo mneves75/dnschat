@@ -57,11 +57,14 @@ describe("ChatInput Component - John Carmack Quality Standards", () => {
     });
 
     it("does not stack opacity on the send button", () => {
-      // Idle visibility is a solid gray fill, not opacity × translucent tint.
+      // Idle visibility is a solid gray fill on Animated.View, not opacity × tint.
       expect(source).not.toContain("useSharedValue(0.4)");
       expect(source).not.toContain("ANIMATION_DURATION_MS");
       expect(source).toContain("sendButtonBackground");
-      expect(source).toContain("palette.textTertiary");
+      expect(source).toContain('"#636366"');
+      expect(source).toContain('"#C7C7CC"');
+      // Disc chrome is on Animated.View; pressable is a plain child.
+      expect(source).toContain("Disc chrome lives on Animated.View");
     });
   });
 

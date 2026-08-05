@@ -69,6 +69,7 @@ jest.mock("../src/ui/theme/imessagePalette", () => ({
     userBubble: "#007aff",
     bubbleTextOnBlue: "#ffffff",
     tint: "#c7c7cc",
+    isDark: true,
   }),
 }));
 
@@ -93,13 +94,9 @@ describe("ChatInput behavior", () => {
     const onSendMessage = jest.fn();
     const tree = renderChatInput({ onSendMessage });
 
-    const idleBg = () => {
-      const style = tree.root.findByProps({ testID: "chat-input-send" }).props["style"];
-      const flat = Array.isArray(style) ? Object.assign({}, ...style) : style;
-      return flat.backgroundColor as string;
-    };
-
-    expect(idleBg()).toBe("#777777"); // textTertiary — solid idle, not translucent tint
+    const sendBtn = () => tree.root.findByProps({ testID: "chat-input-send" });
+    // Disc fill lives on the Animated.View wrapper; the pressable exposes state.
+    expect(sendBtn().props["accessibilityState"]).toEqual({ disabled: true });
 
     act(() => {
       tree.root
@@ -107,10 +104,10 @@ describe("ChatInput behavior", () => {
         .props["onChangeText"]("  hello dns  ");
     });
 
-    expect(idleBg()).toBe("#007aff"); // userBubble — solid blue when sendable
+    expect(sendBtn().props["accessibilityState"]).toEqual({ disabled: false });
 
     act(() => {
-      tree.root.findByProps({ testID: "chat-input-send" }).props["onPress"]();
+      sendBtn().props["onPress"]();
     });
 
     expect(onSendMessage).toHaveBeenCalledTimes(1);

@@ -6,6 +6,18 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+## [4.3.5] - 2026-08-05
+
+Build `82` -> `83`. Send button disc actually paints.
+
+### Fixed
+
+- Chat send button still showed only a lone ↑ after 4.3.4: `backgroundColor` on
+  `Animated(PressableRipple)` was dropped at runtime because PressableRipple
+  wraps `style` in a function. Disc chrome now lives on an `Animated.View`
+  wrapper (solid `#636366` / `#C7C7CC` idle, `userBubble` when sendable);
+  press handling stays on a plain child PressableRipple.
+
 ## [4.3.4] - 2026-08-05
 
 Build `81` -> `82`. Security hardening (encryption key pinned to the device,

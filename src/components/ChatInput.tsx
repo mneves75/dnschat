@@ -62,10 +62,6 @@ import { PressableRipple } from "./PressableRipple";
 import { MESSAGE_CONSTANTS } from "../constants/appConstants";
 import { useResolvedColorScheme } from "../ui/theme/resolvedColorScheme";
 
-// Animated wrapper around PressableRipple — preserves Reanimated style animations
-// while giving Android a proper Material 3 ripple via PressableRipple's android_ripple.
-const AnimatedPressableRipple = Animated.createAnimatedComponent(PressableRipple);
-
 // Constants derived from design system (no magic numbers!)
 //
 // The sendable limit is the DNS label limit, not MAX_MESSAGE_LENGTH: sendMessage
@@ -161,9 +157,15 @@ export function ChatInput({
   const canSend = message.trim().length > 0 && !isLoading;
   const showCharacterCount = message.length >= CHARACTER_COUNTER_THRESHOLD;
   const useGlassInput = Platform.OS === "ios" && supportsLiquidGlass;
-  // iOS Messages: solid blue when sendable, solid gray when idle. Never stack
-  // opacity on a translucent tint — that made the control vanish on dark input.
-  const sendButtonBackground = canSend ? palette.userBubble : palette.textTertiary;
+  // iOS Messages: solid blue when sendable, solid gray when idle.
+  // Idle gray is mid-systemGray (not textTertiary and not translucent tint) so
+  // the disc stays visible on both the solid fallback pill and Liquid Glass.
+  // Never stack opacity on the fill — that made the control vanish on dark input.
+  const sendButtonBackground = canSend
+    ? palette.userBubble
+    : palette.isDark
+      ? "#636366"
+      : "#C7C7CC";
 
   /**
    * Button Position Animation
@@ -413,8 +415,11 @@ export function ChatInput({
    * blocking touches to the TextInput underneath.
    */
   const renderSendButton = () => (
-    <AnimatedPressableRipple
-      testID={testID ? `${testID}-send` : undefined}
+    // Disc chrome lives on Animated.View — putting backgroundColor on an
+    // animated Pressable wrapper dropped the fill at runtime (function-style
+    // style inside the pressable), leaving only the arrow glyph. Position +
+    // scale stay on this wrapper; press handling is a plain child pressable.
+    <Animated.View
       style={[
         animatedButtonStyle,
         animatedButtonPosition,
@@ -424,37 +429,47 @@ export function ChatInput({
           height: minimumTouchTarget,
           borderRadius: minimumTouchTarget / 2,
           backgroundColor: sendButtonBackground,
+          overflow: "hidden",
           // style form required on RN Web (prop form is deprecated there).
           pointerEvents: canSend ? "auto" : "none",
         },
       ]}
-      onPress={handleSend}
-      onPressIn={handlePressIn}
-      onPressOut={handlePressOut}
-      disabled={!canSend}
-      variant="icon"
-      // The send button animates its own scale (animatedButtonStyle); disable
-      // PressableRipple's built-in scale so the transform isn't applied twice.
-      pressScale={false}
-      borderless
-      rippleRadius={minimumTouchTarget / 2}
-      pressedOpacity={0.85}
-      accessible={true}
-      accessibilityRole="button"
-      accessibilityLabel={
-        isLoading
-          ? t("components.chatInput.sendingLabel")
-          : t("components.chatInput.sendLabel")
-      }
-      accessibilityHint={t("components.chatInput.sendHint")}
-      accessibilityState={{ disabled: !canSend }}
     >
-      {isLoading ? (
-        <ActivityIndicator size="small" color={palette.bubbleTextOnBlue} />
-      ) : (
-        <SendIcon size={20} />
-      )}
-    </AnimatedPressableRipple>
+      <PressableRipple
+        testID={testID ? `${testID}-send` : undefined}
+        style={{
+          width: minimumTouchTarget,
+          height: minimumTouchTarget,
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+        onPress={handleSend}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        disabled={!canSend}
+        variant="icon"
+        // Wrapper owns the press-scale animation; disable the built-in one.
+        pressScale={false}
+        borderless
+        rippleRadius={minimumTouchTarget / 2}
+        pressedOpacity={0.85}
+        accessible={true}
+        accessibilityRole="button"
+        accessibilityLabel={
+          isLoading
+            ? t("components.chatInput.sendingLabel")
+            : t("components.chatInput.sendLabel")
+        }
+        accessibilityHint={t("components.chatInput.sendHint")}
+        accessibilityState={{ disabled: !canSend }}
+      >
+        {isLoading ? (
+          <ActivityIndicator size="small" color={palette.bubbleTextOnBlue} />
+        ) : (
+          <SendIcon size={20} />
+        )}
+      </PressableRipple>
+    </Animated.View>
   );
 
   /**
