@@ -4,6 +4,7 @@ import { ENCRYPTION_CONSTANTS } from "../src/constants/appConstants";
 jest.mock("expo-secure-store", () => ({
   getItemAsync: jest.fn(),
   setItemAsync: jest.fn(),
+  WHEN_UNLOCKED_THIS_DEVICE_ONLY: "whenUnlockedThisDeviceOnly",
 }));
 
 jest.mock("expo-crypto", () => ({
@@ -38,6 +39,7 @@ describe("encryptionService key handling", () => {
       expect(mockSecureStore.setItemAsync).toHaveBeenCalledWith(
         "dnschat.encryption_key",
         expect.any(String),
+        { keychainAccessible: "whenUnlockedThisDeviceOnly" },
       );
     } finally {
       if (originalWorkerId !== undefined) {
@@ -62,6 +64,7 @@ describe("encryptionService key handling", () => {
       expect(mockSecureStore.setItemAsync).toHaveBeenCalledWith(
         "dnschat.encryption_key",
         expect.any(String),
+        { keychainAccessible: "whenUnlockedThisDeviceOnly" },
       );
     } finally {
       if (originalWorkerId !== undefined) {
@@ -85,6 +88,7 @@ describe("encryptionService key handling", () => {
       expect(mockSecureStore.setItemAsync).toHaveBeenCalledWith(
         "dnschat.encryption_key",
         expect.any(String),
+        { keychainAccessible: "whenUnlockedThisDeviceOnly" },
       );
     } finally {
       if (originalWorkerId !== undefined) {
