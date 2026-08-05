@@ -130,8 +130,9 @@ pnpm exec remotion render DNSChatLaunch out/dnschat-launch.mp4 --codec=h264 --au
 pnpm exec remotion render DNSChatTutorial out/dnschat-tutorial.mp4 --codec=h264 --audio-codec=aac --crf=18
 pnpm exec remotion still DNSChatLaunch out/dnschat-launch-poster.png --frame=825
 pnpm exec remotion still DNSChatTutorial out/dnschat-tutorial-poster.png --frame=60
-ffprobe -v error -show_entries stream=codec_name,width,height,r_frame_rate:format=duration -of json out/dnschat-launch.mp4
-ffprobe -v error -show_entries stream=codec_name,width,height,r_frame_rate:format=duration -of json out/dnschat-tutorial.mp4
+pnpm exec remotion ffprobe -v error -show_entries stream=codec_name,width,height,r_frame_rate:format=duration -of json out/dnschat-launch.mp4
+pnpm exec remotion ffprobe -v error -show_entries stream=codec_name,width,height,r_frame_rate:format=duration -of json out/dnschat-tutorial.mp4
+mkdir -p ../public/video
 cp out/dnschat-launch.mp4 out/dnschat-launch-poster.png out/dnschat-tutorial.mp4 out/dnschat-tutorial-poster.png ../public/video/
 ```
 
