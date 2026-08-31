@@ -19,13 +19,13 @@
     "@remotion/cli": "4.0.518",
     "@remotion/media": "4.0.518",
     "@remotion/transitions": "4.0.518",
-    "react": "19.2.3",
-    "react-dom": "19.2.3",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
     "remotion": "4.0.518"
   },
   "devDependencies": {
-    "@types/react": "19.2.10",
-    "@types/react-dom": "19.2.3",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.5",
     "typescript": "~6.0.3"
   },
   "engines": {
