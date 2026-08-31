@@ -14,6 +14,7 @@ Developer documentation for DNSChat. Code is the source of truth — these docs 
 - `docs/e2e-axe-feature-coverage.md` — AXe simulator E2E feature checklist
   and runner notes
 - `docs/technical/CHAT-TEMPLATE-2026-REVIEW.md` — 2026 chat-template review plan and applied repairs
+- `docs/technical/SCREEN-MOUNT-PERF.md` — per-screen mount budget, measurement protocol, current baseline
 - `docs/troubleshooting/COMMON-ISSUES.md` — known issues and fixes
 
 ## Reference
@@ -26,12 +27,13 @@ Developer documentation for DNSChat. Code is the source of truth — these docs 
 
 ## Current verification baseline
 
-Last architecture/dependency verification: `2026-08-05`.
-Last full source/security sweep: `2026-08-05` (send-button disc paint fix on
-top of 4.3.4 security/pod work; see `CHANGELOG.md` `4.3.5`).
+Last architecture/dependency verification: `2026-08-31`.
+Last full source/security sweep: `2026-08-31` (native DNS, encrypted storage,
+release automation, model-output rendering, UI/accessibility, and public
+disclosures; see `CHANGELOG.md` `4.3.6`).
 Last AXe simulator E2E feature pass: `2026-06-05` for version `4.0.26` build
 `60`; 10 feature groups passed. Runtime UI verification now defaults to Argent.
-Current working version: `4.3.5` build `83`. Latest shipped TestFlight build
+Current beta candidate: `4.3.6` build `84`. Latest validated TestFlight build
 remains `4.2.3` build `77` (`VALID` on `2026-07-10`, with strict validation
 clean and bilingual test notes). Build `76` was installed and sustained through
 normal, cold `dnschat://`, and foreground `dnschat://` launches on a physical
@@ -43,7 +45,7 @@ archive/export, TestFlight processing, group relationship, bilingual notes, and
 remains scoped to build `76`. No App Store version record exists for `4.2.3`,
 and App Store production submission has not happened for this line.
 
-- `npx react-doctor@latest --project chat-dns` reports `100 / 100` for
+- `pnpm dlx react-doctor@latest --project chat-dns` reports `100 / 100` for
   `chat-dns` on `2026-07-28` (module also `100 / 100`).
 - Jest baseline on `2026-07-28`: `129` suites passed, `1` skipped; `1013` tests
   passed, `13` skipped.
@@ -67,7 +69,7 @@ and App Store production submission has not happened for this line.
 - Physical-device Release build, install, installed metadata check, and launch
   are separate evidence claims and are not implied by the local SDK 57 simulator
   and unsigned archive checks.
-- Current release: `4.2.3` build `77`. Signed App Store archive/export passed,
+- Latest validated TestFlight release: `4.2.3` build `77`. Signed App Store archive/export passed,
   TestFlight processing returned `VALID`, and strict validation reported `0`
   errors and `0` warnings. Internal App Store Connect IDs are intentionally
   omitted from public docs.

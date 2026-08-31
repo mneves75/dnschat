@@ -273,7 +273,7 @@ describe('DNS Native Module - Performance Benchmarks', () => {
   function shouldLogBenchmarks(): boolean {
     // Benchmarks are useful locally, but console output in CI makes test logs noisy.
     // Opt-in explicitly when you want to inspect timings:
-    // `SHOW_BENCHMARKS=1 npm test`
+    // `SHOW_BENCHMARKS=1 pnpm run test:native`
     return process.env['SHOW_BENCHMARKS'] === '1';
   }
 

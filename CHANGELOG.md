@@ -4,7 +4,83 @@ All notable changes to DNSChat will be documented in this file.
 
 The format is based on Keep a Changelog, and this project follows Semantic Versioning.
 
-## [Unreleased]
+## [4.3.6] - 2026-08-31
+
+Build `83` -> `84`. Pre-production correctness, security, release-tooling, and
+accessibility audit for the TestFlight beta line.
+
+### Fixed
+
+- Native DNS queries now share one monotonic deadline across Android hostname
+  resolution, UDP, DoH, and legacy fallbacks; iOS cancellation can no longer
+  strand a connection-ready continuation. Both native parsers now reject
+  truncated answers, malformed TXT segments, invalid UTF-8, and incomplete names
+  instead of returning partial data. A stuck Android platform hostname lookup no
+  longer blocks every later query; one bounded recovery lane remains available,
+  and saturation fails fast without unbounded thread creation.
+- Encrypted storage now rejects malformed AES-GCM envelopes and preserves chats
+  and DNS logs when SecureStore key access is corrupt or temporarily unavailable
+  instead of silently rotating the key or deleting data. Chat recovery creates
+  and verifies an encrypted backup before removing a damaged primary payload.
+  Web queries consistently use the documented mock transport, and DNS-log
+  initialization is single-flight with an explicit cleanup-scheduler lifecycle.
+- Follow-up corrections to the flat redesign: grouped form sections are rounded
+  again (the radius had travelled with the removed glass wrapper), the Logs
+  method badge now meets the 4.5:1 small-text contrast bar in both themes, the
+  last row of a log list and of the onboarding network list no longer draw a
+  stray separator, the onboarding chat preview uses the same bubble text token
+  as the real chat, user bubbles and onboarding actions now meet the WCAG AA
+  small-text contrast bar in both themes, onboarding network rows no longer shift
+  sideways as each stage activates, and the onboarding feature cards no longer
+  carry accessibility labels that VoiceOver ignored.
+- Logs now surface localized load failures without unhandled promise rejections
+  or post-unmount updates. Haptics copy no longer claims a Reduce Motion behavior
+  the app does not implement, marketing videos no longer expose prompt-derived
+  DNS labels or advertise nonexistent conversation search, and site video
+  captions follow the active locale.
+- `LiquidGlassWrapper` now keeps one supported `GlassView` mounted while the
+  asynchronous Reduce Transparency value resolves, switching the native effect
+  between `none` and `regular` instead of replacing the element tree. The
+  conservative first frame stays opaque, child state is preserved, and Expo's
+  runtime availability guard is honored instead of being bypassed from the iOS
+  version number.
+- Updated the Expo SDK 57 patch set, including React Native `0.86.3`, to pick up
+  current Hermes/startup fixes and realign the iOS pod graph.
+- `pnpm run ios` crashed at `DOMParser.parseFromString: the provided mimeType
+  "undefined" is not valid` before it could build. The unscoped
+  `@xmldom/xmldom: '>=0.8.13'` security floor pulled `@expo/plist` (which
+  declares `^0.8.8` and parses without a mimeType) onto xmldom `0.9`, where
+  that became a hard error. `@expo/plist` is now scoped to the patched `0.8`
+  line; `plist@3`, which genuinely wants `^0.9.10`, is unchanged.
+
+### Security
+
+- Model output Markdown now renders only through a hardened wrapper that removes
+  images and confirms allowlisted external links. A structural lint rule and
+  positive-control fixtures prevent direct renderer imports from bypassing it.
+- Release-owned workspaces now share the root pnpm lock and audit policy, GitHub
+  Pages actions are pinned to immutable commit SHAs, Corepack is enabled before
+  pnpm-dependent setup, and the release gate builds and verifies the exact site
+  output directory, videos, poster stills, and native-module tests.
+- User-facing copy now also states that DNS responses are not authenticated and
+  may be altered in transit. Packet validation rejects malformed responses but
+  does not prove which provider produced a syntactically valid TXT answer.
+- Android setup verification now validates the Metro port and passes both port
+  and ADB serial values as process arguments instead of interpolating them into
+  shell commands.
+- Onboarding and chat-list copy now state that prompts reach a third-party DNS
+  service whose retention may be outside DNSChat's control. Store release
+  runbooks conservatively block submission until the provider's retention,
+  secondary-use, deletion, and service-provider status is documented.
+- Floored `nanoid` at `^3.3.18` (GHSA-2v37-7h3g-55p8, custom generators can
+  loop indefinitely when size is zero). Caret-pinned rather than `>=` because
+  every consumer here wants `^3` and `>=` would resolve to `6.x`.
+- Suppressed the two high-severity `image-size` denial-of-service advisories
+  (GHSA-w3rx-r6r6-pgpr ICNS, GHSA-5p2g-fcmc-qvqq JXL/HEIF) in
+  `pnpm-workspace.yaml` with a `2026-09-12` recheck. No fixed release exists:
+  both advisories declare `patched >=2.0.3` while npm's newest is `2.0.2`.
+  `image-size` is Metro-only, used at bundle time on assets in this repository,
+  and is not part of the shipped binary. See `SECURITY.md`.
 
 ## [4.3.5] - 2026-08-05
 

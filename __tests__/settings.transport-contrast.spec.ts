@@ -5,7 +5,7 @@
  * rendered their label with `color: palette.userBubble` — the SAME systemBlue as
  * the LiquidGlassWrapper "interactive" fill — making the text invisible/illegible
  * (see Settings screenshot, blue-on-blue). The fix uses the dedicated
- * `palette.bubbleTextOnBlue` (#FFFFFF) token instead.
+ * `palette.bubbleTextOnBlue` token instead.
  *
  * Hermetic source-policy test (preferred per project memory): it inspects the
  * source rather than booting the GlassSettings render tree, which pollutes the

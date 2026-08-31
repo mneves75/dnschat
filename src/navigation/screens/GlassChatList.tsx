@@ -161,7 +161,7 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
   // Use solid backgrounds (standard materials), NOT Liquid Glass
   // Real iMessage uses solid backgrounds for chat list items
   // Android: Use solid color (palette.solid) since rgba appears gray without blur
-  const itemBackgroundColor = Platform.OS === "android" ? palette.solid : palette.surface;
+  const itemBackgroundColor = palette.backgroundSecondary;
   const renderChatContent = (pressed: boolean) => (
     <View
       style={[
@@ -317,7 +317,6 @@ interface RecentChatsSectionProps {
   showSkeleton: boolean;
   opacities: SharedValue<number>[];
   translates: SharedValue<number>[];
-  onCreate: () => void;
   onPress: (chat: Chat) => void;
   onDelete: (chat: Chat) => void;
   onShare: (chat: Chat) => void;
@@ -329,13 +328,13 @@ function RecentChatsSection({
   showSkeleton,
   opacities,
   translates,
-  onCreate,
   onPress,
   onDelete,
   onShare,
   onShowActions,
 }: RecentChatsSectionProps) {
   const { t } = useTranslation();
+  const palette = useImessagePalette();
   const recentFooter = chats.length === 1
     ? t("screen.glassChatList.recent.footerSingle", { count: chats.length })
     : t("screen.glassChatList.recent.footerMultiple", { count: chats.length });
@@ -355,8 +354,6 @@ function RecentChatsSection({
           title={t("screen.glassChatList.empty.title")}
           description={t("screen.glassChatList.empty.subtitle")}
           iconType="chat"
-          actionLabel={t("screen.glassChatList.newConversation.button")}
-          onAction={onCreate}
           testID="chat-list-empty-state"
         />
       </Form.Section>
@@ -371,6 +368,13 @@ function RecentChatsSection({
             key={chat.id}
             opacity={opacities[index]}
             translateX={translates[index]}
+            style={{
+              borderBottomWidth:
+                index < chats.length - 1
+                  ? StyleSheet.hairlineWidth
+                  : 0,
+              borderBottomColor: palette.separator,
+            }}
           >
             <GlassChatItem
               chat={chat}
@@ -553,7 +557,6 @@ export function GlassChatList() {
           showSkeleton={showSkeleton}
           opacities={opacities}
           translates={translates}
-          onCreate={handleNewChat}
           onPress={handleChatPress}
           onDelete={(chat) => handleDeleteChat(chat.id, chat.title)}
           onShare={handleShareChat}
@@ -673,25 +676,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   chatsList: {
-    gap: 8,
+    gap: 0,
   },
   chatItemWrapper: {
     paddingHorizontal: 0,
-    paddingVertical: 4,
   },
   chatItemContainer: {
     padding: 16,
-    marginHorizontal: 20,
-    borderRadius: 12,
-    ...(Platform.OS === "web"
-      ? { boxShadow: "0px 1px 2px rgba(0, 0, 0, 0.08)" }
-      : {
-          shadowColor: "#111827",
-          shadowOffset: { width: 0, height: 1 },
-          shadowOpacity: 0.08,
-          shadowRadius: 2,
-          elevation: 2,
-        }),
   },
   chatItemPressed: {
     transform: [{ scale: 0.98 }],

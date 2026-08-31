@@ -1,0 +1,16 @@
+jest.setTimeout(1000);
+
+describe("valid suite", () => {
+  beforeEach(() => undefined);
+
+  test("awaits its assertion", async () => {
+    const response = await Promise.resolve("response");
+    expect(response).toBe("response");
+  });
+
+  test("returns its promise chain", () => {
+    return Promise.resolve("second response").then((response) => {
+      expect(response).toBe("second response");
+    });
+  });
+});

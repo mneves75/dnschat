@@ -47,8 +47,8 @@ import Animated, {
   useAnimatedStyle,
   useAnimatedReaction,
   withSpring,
-  runOnJS,
 } from "react-native-reanimated";
+import { scheduleOnRN } from "react-native-worklets";
 import { useTypography } from "../ui/hooks/useTypography";
 import { useImessagePalette } from "../ui/theme/imessagePalette";
 import { LiquidGlassSpacing, getMinimumTouchTarget } from "../ui/theme/liquidGlassSpacing";
@@ -241,7 +241,7 @@ export function ChatInput({
         previousValue == null ? undefined : Math.round(previousValue);
 
       if (previousRounded === undefined || rounded !== previousRounded) {
-        runOnJS(reportHeight)(rounded);
+        scheduleOnRN(reportHeight, rounded);
       }
     },
     [reportHeight],

@@ -1,6 +1,7 @@
 import { Platform } from "react-native";
 
 jest.mock("expo-glass-effect", () => ({
+  isGlassEffectAPIAvailable: jest.fn(() => true),
   isLiquidGlassAvailable: jest.fn(() => true),
 }));
 
@@ -12,6 +13,9 @@ import { splitGlassStyles } from "../src/components/glass/glassStyleUtils";
 
 const { isLiquidGlassAvailable } = require("expo-glass-effect") as {
   isLiquidGlassAvailable: jest.Mock<boolean, []>;
+};
+const { isGlassEffectAPIAvailable } = require("expo-glass-effect") as {
+  isGlassEffectAPIAvailable: jest.Mock<boolean, []>;
 };
 
 const setPlatform = (os: string, version?: string | number) => {
@@ -113,11 +117,21 @@ describe("LiquidGlassWrapper helpers", () => {
     restore();
   });
 
-  it("enables glass heuristically on iOS 26 when Expo API returns false", () => {
+  it("does not bypass Expo's availability result on iOS 26", () => {
     const restore = setPlatform("ios", "26.1");
     isLiquidGlassAvailable.mockReturnValue(false);
 
-    expect(shouldUseGlassEffect(false)).toBe(true);
+    expect(shouldUseGlassEffect(false)).toBe(false);
+
+    restore();
+  });
+
+  it("disables glass when the runtime API is unavailable", () => {
+    const restore = setPlatform("ios", "26.1");
+    isLiquidGlassAvailable.mockReturnValue(true);
+    isGlassEffectAPIAvailable.mockReturnValue(false);
+
+    expect(shouldUseGlassEffect(false)).toBe(false);
 
     restore();
   });

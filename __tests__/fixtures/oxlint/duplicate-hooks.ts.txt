@@ -1,0 +1,8 @@
+describe("duplicate hooks", () => {
+  beforeEach(() => undefined);
+  beforeEach(() => undefined);
+
+  test("runs", () => {
+    expect(true).toBe(true);
+  });
+});

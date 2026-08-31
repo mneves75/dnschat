@@ -1,5 +1,7 @@
 packages:
   - '.'
+  - 'modules/dns-native'
+  - 'marketing/video'
 
 # NOTE ON SUPPLY-CHAIN POLICIES (react-doctor suggests minimumReleaseAge +
 # trustPolicy here). Since pnpm v11, minimumReleaseAge defaults to 1440 (1 day)
@@ -20,21 +22,48 @@ nodeLinker: hoisted
 enableGlobalVirtualStore: false
 allowBuilds:
   '@ast-grep/cli': true
+  esbuild: true
 
 # Security version floors (formerly npm-style "overrides" in package.json,
 # which pnpm ignores — they must live here to apply).
 overrides:
   '@xmldom/xmldom': '>=0.8.13'
+  # ...but @expo/plist@0.8.1 declares `^0.8.8` and calls
+  # `parseFromString(xml)` with no mimeType. xmldom 0.9 made that a hard error,
+  # so the unscoped floor above crashed `expo run:ios` (`pnpm run ios`) with
+  # `the provided mimeType "undefined" is not valid` as soon as the CLI probed
+  # usbmux. Keep @expo/plist on the patched 0.8 line; `plist@3` genuinely wants
+  # ^0.9.10 and stays there.
+  '@expo/plist>@xmldom/xmldom': '~0.8.13'
   brace-expansion: '>=5.0.9'
   handlebars: '>=4.7.9'
   js-yaml: '>=4.3.0'
   markdown-it: '>=12.3.2'
+  # GHSA-2v37-7h3g-55p8. Caret-pinned, not '>=': every consumer here
+  # (expo-router, postcss) wants nanoid ^3, and '>=' would resolve to 6.x.
+  nanoid: '^3.3.18'
   node-forge: '>=1.4.0'
   postcss: '>=8.5.18'
   shell-quote: '>=1.8.5'
   uuid: '>=11.1.1'
   ws: '>=8.21.0'
   yaml: '>=2.8.3'
+
+# Time-boxed audit suppressions. Each entry needs a published-fix blocker and a
+# recheck date; delete the entry (and bump the floor) the moment a fix ships.
+#
+# image-size GHSA-w3rx-r6r6-pgpr (ICNS parser infinite loop) and
+# GHSA-5p2g-fcmc-qvqq (JXL/HEIF parser infinite loops), both high.
+# Blocker: the advisories declare `patched >=2.0.3`, and no 2.0.3 exists on npm
+# (newest is 2.0.2, and the whole 1.x line carries the `legacy` tag). There is
+# no version to move to. image-size reaches this repo only as a Metro
+# dependency used at bundle time to read the dimensions of assets already in
+# this repository; it is not linked into the iOS or Android binary and never
+# parses network input. Recheck 2026-09-12.
+auditConfig:
+  ignoreGhsas:
+    - GHSA-w3rx-r6r6-pgpr
+    - GHSA-5p2g-fcmc-qvqq
 
 minimumReleaseAgeExclude:
   - '@expo/cli@57.0.12'

@@ -29,8 +29,8 @@ import {
   withTiming,
   withSpring,
   Easing,
-  runOnJS,
 } from 'react-native-reanimated';
+import { scheduleOnRN } from 'react-native-worklets';
 import type { AnimatedStyle, WithSpringConfig, WithTimingConfig } from 'react-native-reanimated';
 import { useMotionReduction } from '../../context/AccessibilityContext';
 import { SpringConfig, TimingConfig } from '../../utils/animations';
@@ -108,14 +108,14 @@ export function useScreenEntrance(
       // Instant transition for reduced motion
       opacity.set(1);
       translateY.set(0);
-      runOnJS(markReady)();
+      scheduleOnRN(markReady);
       return;
     }
 
     // Opacity: timing animation (0.3s)
     opacity.set(withTiming(1, TimingConfig.normal, (finished) => {
       if (finished) {
-        runOnJS(markReady)();
+        scheduleOnRN(markReady);
       }
     }));
 

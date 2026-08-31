@@ -10,6 +10,7 @@ jest.mock('react-native', () => {
 
 import {
   DNSService,
+  MockDNSService,
   parseTXTResponse,
   sanitizeDNSMessage,
   validateDNSMessage,
@@ -19,6 +20,7 @@ import {
   validateDecodedDnsResponseForTxt,
   DNSErrorType,
 } from "../src/services/dnsService";
+import { Platform } from "react-native";
 import { DNSLogService } from "../src/services/dnsLogService";
 import { sanitizeDNSMessageReference } from "../modules/dns-native/constants";
 
@@ -342,6 +344,30 @@ describe("DNS Service helpers", () => {
     it("appends mock to native-only when experimental disabled", () => {
       const order = getOrder(true, false);
       expect(order).toEqual(["native", "mock"]);
+    });
+
+    it("uses mock transport by default on web", async () => {
+      const originalPlatform = Platform.OS;
+      const mockQuery = jest
+        .spyOn(MockDNSService, "queryLLM")
+        .mockResolvedValue("web mock response");
+
+      try {
+        await DNSLogService.clearLogs();
+        (Platform as { OS: string }).OS = "web";
+
+        expect(getOrder(undefined, true)).toEqual(["mock"]);
+        await expect(DNSService.queryLLM("web default query")).resolves.toBe(
+          "web mock response",
+        );
+
+        expect(mockQuery).toHaveBeenCalledWith("web default query");
+        expect(DNSLogService.getLogs()[0]?.finalMethod).toBe("mock");
+      } finally {
+        mockQuery.mockRestore();
+        (Platform as { OS: string }).OS = originalPlatform;
+        await DNSLogService.clearLogs();
+      }
     });
 
     it("never includes https (removed in v3.0.0)", () => {

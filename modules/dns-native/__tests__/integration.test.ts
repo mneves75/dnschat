@@ -9,6 +9,8 @@ import { nativeDNS, DNSError, DNSErrorType } from "../index";
 import type { NativeDNSModule } from "../index";
 import { sanitizeDNSMessageReference } from "../constants";
 
+jest.setTimeout(30000);
+
 // Skip these tests in CI/automated environments
 const shouldRunIntegrationTests = process.env["RUN_INTEGRATION_TESTS"] === "true";
 
@@ -17,11 +19,6 @@ const describeIntegration = shouldRunIntegrationTests
   : describe.skip;
 
 describeIntegration("Native DNS Integration Tests", () => {
-  beforeAll(async () => {
-    // Allow extra time for native module initialization
-    jest.setTimeout(30000);
-  });
-
   describe("Platform Detection", () => {
     it("should detect platform capabilities correctly", async () => {
       const capabilities = await nativeDNS.isAvailable();

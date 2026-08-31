@@ -16,6 +16,8 @@ export interface IMessagePalette {
   textPrimary: string;
   textSecondary: string;
   textTertiary: string;
+  /** Accent-colored text for neutral surfaces. Distinct from the bubble fill. */
+  accentText: string;
   highlight: string;
   destructive: string;
   success: string;
@@ -47,6 +49,7 @@ export const IMESSAGE_LIGHT: IMessagePalette = {
   textPrimary: "#000000",
   textSecondary: "#6D6D70",
   textTertiary: "#8E8E93",
+  accentText: "#0057B8",
   highlight: "rgba(0,0,0,0.04)",
   destructive: "#FF3B30",
   success: "#34C759",
@@ -56,7 +59,7 @@ export const IMESSAGE_LIGHT: IMessagePalette = {
   // iMessage-style bubble colors (solid backgrounds, no glass)
   userBubble: "#007AFF", // iOS systemBlue
   assistantBubble: "#E5E5EA", // iOS systemGray5
-  bubbleTextOnBlue: "#FFFFFF", // White text on blue/red bubbles
+  bubbleTextOnBlue: "#000000", // AA text on blue/red bubbles
   bubbleTextOnGray: "#000000", // Dark text on light gray bubbles
   textOnChroma: "#000000", // Dark label maximizes contrast on bright chroma fills
   isDark: false,
@@ -75,6 +78,7 @@ export const IMESSAGE_DARK: IMessagePalette = {
   textPrimary: "#FFFFFF",
   textSecondary: "#AEAEB2",
   textTertiary: "#8E8E93",
+  accentText: "#66B2FF",
   highlight: "rgba(255,255,255,0.06)",
   destructive: "#FF453A",
   success: "#32D74B",
@@ -84,7 +88,7 @@ export const IMESSAGE_DARK: IMessagePalette = {
   // iMessage-style bubble colors (solid backgrounds, no glass)
   userBubble: "#0A84FF", // iOS systemBlue dark mode
   assistantBubble: "#2C2C2E", // iOS systemGray6 dark mode
-  bubbleTextOnBlue: "#FFFFFF", // White text on blue/red bubbles
+  bubbleTextOnBlue: "#000000", // AA text on blue/red bubbles
   bubbleTextOnGray: "#FFFFFF", // White text on dark gray bubbles in dark mode
   textOnChroma: "#000000", // Dark label maximizes contrast on bright chroma fills
   isDark: true,

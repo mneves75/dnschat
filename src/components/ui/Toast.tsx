@@ -12,8 +12,8 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
   withTiming,
-  runOnJS,
 } from "react-native-reanimated";
+import { scheduleOnRN } from "react-native-worklets";
 import { useTypography } from "../../ui/hooks/useTypography";
 import { useImessagePalette } from "../../ui/theme/imessagePalette";
 import { LiquidGlassSpacing, getCornerRadius } from "../../ui/theme/liquidGlassSpacing";
@@ -245,9 +245,9 @@ export function Toast({
       (finished) => {
         if (finished) {
           if (notifyDismiss) {
-            runOnJS(onDismiss)();
+            scheduleOnRN(onDismiss);
           }
-          runOnJS(finishHide)();
+          scheduleOnRN(finishHide);
         }
       }
     ));

@@ -68,6 +68,12 @@ target 'DNSChat' do
     # 9.0/12.4/13.4). Clamp every pod target to the app minimum.
     installer.pods_project.targets.each do |target|
       target.build_configurations.each do |build_configuration|
+        # Xcode 27's explicit Clang modules are not compatible with the
+        # React Native/Expo pod compiler wrapper used when ccache is enabled.
+        # Keep pod builds deterministic by applying the same workaround that
+        # the compiler diagnostic recommends for unrecognized launchers.
+        build_configuration.build_settings['CLANG_ENABLE_EXPLICIT_MODULES'] = 'NO'
+
         deployment_target = build_configuration.build_settings['IPHONEOS_DEPLOYMENT_TARGET']
         if deployment_target && deployment_target.to_f < 16.4
           build_configuration.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '16.4'

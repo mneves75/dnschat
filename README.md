@@ -7,8 +7,8 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 - JavaScript fallback transports (UDP/TCP) for constrained networks
 - An in-app Logs screen to inspect attempts, failures, and fallbacks
 
-[![Version](https://img.shields.io/badge/version-4.3.5-blue.svg)](.)
-[![React Native](https://img.shields.io/badge/React%20Native-0.86.0-blue.svg)](https://reactnative.dev/)
+[![Version](https://img.shields.io/badge/version-4.3.6-blue.svg)](.)
+[![React Native](https://img.shields.io/badge/React%20Native-0.86.3-blue.svg)](https://reactnative.dev/)
 [![Expo](https://img.shields.io/badge/Expo-57.0.x-black.svg)](https://expo.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0.x-blue.svg)](https://www.typescriptlang.org/)
 [![iOS](https://img.shields.io/badge/iOS-16.4%2B-lightgrey.svg)](https://developer.apple.com/ios/)
@@ -23,7 +23,7 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 - Encrypted local chat history (AES-GCM)
 - Multi-server support with automatic transport fallback
 - Bilingual UI (English / Portuguese)
-- Full offline chat history with search
+- Full offline chat history
 - **NativeTabs** with SF Symbols (iOS) and Material Symbols (Android)
 - **Platform colors** via expo-router Color API (auto light/dark, Android 12+ dynamic)
 - **Native iOS toolbars** with share, clear, and new-chat actions (liquid glass)
@@ -31,11 +31,11 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 
 ## Tech stack
 
-- App version: `4.3.5` (build `83`)
+- App version: `4.3.6` (build `84`)
 - Expo workflow: Expo Router + EAS-compatible native config
 - Expo SDK: `57.0.x`
 - React: `19.2.3`
-- React Native: `0.86.0`
+- React Native: `0.86.3`
 - TypeScript: `6.0.x`
 - Hermes: enabled
 - New Architecture: enabled by default on SDK 57
@@ -206,10 +206,11 @@ Release:
 
 ## Current verification baseline
 
-Last architecture/dependency verification: `2026-06-30`.
-Last full source/security sweep: `2026-06-10` (three-track review: security,
-architecture, performance; fixes applied across the DNS pipeline, native
-layer, storage, and UI — see `CHANGELOG.md` `4.0.29`).
+Current beta candidate: `4.3.6` build `84`.
+Last architecture/dependency verification: `2026-08-31`.
+Last full source/security sweep: `2026-08-31` (native DNS, encrypted storage,
+release automation, model-output rendering, UI/accessibility, and public
+disclosures; see `CHANGELOG.md` `4.3.6`).
 Last AXe simulator E2E feature pass: `2026-06-05` for version `4.0.26` build
 `60`; 10 feature groups passed (historical; Argent MCP is the current
 verification surface).

@@ -23,10 +23,13 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { LiquidGlassWrapper } from "../LiquidGlassWrapper";
 import { PressableRipple } from "../PressableRipple";
 import { ChevronIcon } from "../icons/ChevronIcon";
 import { useImessagePalette } from "../../ui/theme/imessagePalette";
+import {
+  LiquidGlassSpacing,
+  SafeAreaDefaults,
+} from "../../ui/theme/liquidGlassSpacing";
 import { HapticFeedback } from "../../utils/haptics";
 import { openExternalLink } from "../../utils/externalLinks";
 
@@ -159,7 +162,13 @@ export const GlassForm: React.FC<GlassFormProps> = ({
   const colors = useGlassColors();
   const insets = useSafeAreaInsets();
 
-  const contentPaddingBottom = Math.max(insets.bottom, 24);
+  const contentPaddingBottom =
+    Platform.OS === "web"
+      ? 24
+      : Math.max(
+          insets.bottom + SafeAreaDefaults.bottom.tabBar + 24,
+          96,
+        );
   const contentStyle = [
     styles.scrollContent,
     Platform.OS === "web" && styles.webContentWidth,
@@ -217,6 +226,7 @@ export const GlassFormSection: React.FC<GlassFormSectionProps> = ({
   style,
 }) => {
   const colors = useGlassColors();
+  const hasChildren = React.Children.count(children) > 0;
 
   return (
     <View style={[styles.sectionContainer, style]}>
@@ -231,26 +241,28 @@ export const GlassFormSection: React.FC<GlassFormSectionProps> = ({
         </View>
       )}
 
-      <LiquidGlassWrapper
-        variant="regular"
-        shape="roundedRect"
-        cornerRadius={10}
-        style={styles.sectionContent}
-      >
-        {React.Children.map(children, (child, index) => (
-          <React.Fragment key={index}>
-            {child}
-            {index < React.Children.count(children) - 1 && (
-              <View
-                style={[
-                  styles.separator,
-                  { backgroundColor: colors.separator },
-                ]}
-              />
-            )}
-          </React.Fragment>
-        ))}
-      </LiquidGlassWrapper>
+      {hasChildren && (
+        <View
+          style={[
+            styles.sectionContent,
+            { backgroundColor: colors.backgroundSecondary },
+          ]}
+        >
+          {React.Children.map(children, (child, index) => (
+            <React.Fragment key={index}>
+              {child}
+              {index < React.Children.count(children) - 1 && (
+                <View
+                  style={[
+                    styles.separator,
+                    { backgroundColor: colors.separator },
+                  ]}
+                />
+              )}
+            </React.Fragment>
+          ))}
+        </View>
+      )}
 
       {Boolean(footer) && (
         <View style={styles.sectionFooterContainer}>
@@ -439,6 +451,9 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
   },
   sectionContent: {
+    // Inset grouped panel. The radius travelled with the removed
+    // LiquidGlassWrapper; without it the tinted inset clipped to a square.
+    borderRadius: LiquidGlassSpacing.cornerRadiusSmall,
     marginHorizontal: 20,
     overflow: "hidden",
   },

@@ -25,11 +25,24 @@ describe("UI error-path hardening", () => {
   );
 
   it("Logs pull-to-refresh clears the spinner through .finally even on failure", () => {
-    expect(logsSource).toContain(".finally(() => setRefreshing(false))");
+    const refreshBlock = logsSource.slice(
+      logsSource.indexOf("const handleRefresh"),
+      logsSource.indexOf("const toggleExpanded"),
+    );
+    expect(refreshBlock).toContain(".finally(");
+    expect(refreshBlock).toContain("setRefreshing(false)");
     // The old unguarded shape (await then a bare setRefreshing(false)) is gone.
-    expect(logsSource).not.toContain("await loadLogs();\n    setRefreshing(false);");
+    expect(refreshBlock).not.toContain("await loadLogs();\n    setRefreshing(false);");
     // React Compiler convention: no try/finally block in the refresh path.
-    expect(logsSource).not.toContain("} finally {");
+    expect(refreshBlock).not.toContain("} finally {");
+  });
+
+  it("Logs surfaces load failures without updating state after unmount", () => {
+    expect(logsSource).toContain('testID="logs-load-error"');
+    expect(logsSource).toContain("void loadLogs().catch(() => undefined)");
+    expect(logsSource).toContain("const isMountedRef = useRef(true)");
+    expect(logsSource).toContain("isMountedRef.current = false;");
+    expect(logsSource).toContain("setLoadFailed(true)");
   });
 
   it("GlassChatList guards New Chat against a double fire", () => {

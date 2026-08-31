@@ -22,7 +22,7 @@ pnpm run start
 If you insist on calling Expo directly:
 
 ```bash
-npx expo --version
+pnpm exec expo --version
 ```
 
 ### Node version

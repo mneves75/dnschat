@@ -54,23 +54,23 @@ export const enUS = {
       },
       welcome: {
         title: "Welcome to DNS Chat",
-        subtitle: "Send prompts as DNS TXT queries and receive responses in TXT records",
+        subtitle: "Send short prompts in DNS TXT queries and receive TXT responses.",
         appIconLabel: "DNS Chat app icon",
         features: {
           revolutionary: {
             label: "DNS TXT",
             title: "DNS-Based Transport",
-            description: "Chat through DNS TXT records - no traditional APIs needed",
+            description: "The app carries each short prompt and response in DNS TXT records.",
           },
           private: {
             label: "Observable",
             title: "DNS Is Observable",
-            description: "Do not send secrets or personal data; DNS infrastructure can observe queries",
+            description: "Queries and responses cross the selected third-party DNS service and may be observed, retained, or altered. Do not send secrets or personal data.",
           },
           fast: {
-            label: "Fast",
-            title: "Network Resilient",
-            description: "Automatically adapts to different network conditions",
+            label: "Fallback",
+            title: "Multiple DNS Transports",
+            description: "Native DNS, UDP, and TCP provide an ordered fallback path.",
           },
         },
       },
@@ -144,7 +144,7 @@ export const enUS = {
           success: "Success",
           failed: "Failed",
         },
-        demoResponse: "Welcome to DNS Chat! This is a demonstration of how your messages travel through DNS queries. Pretty cool, right?",
+        demoResponse: "The response returned through the DNS transport path.",
         demoFailure: "No DNS response returned during this demo. You can continue and adjust Settings later.",
         accessibility: {
           idleLabel: "Start DNS demo",
@@ -204,7 +204,7 @@ export const enUS = {
         logs: {
           label: "Logs",
           title: "DNS Query Logs",
-          description: "Monitor all DNS queries in real-time with detailed timing and fallback information.",
+          description: "Review transport attempts, status, timing, and fallback details.",
         },
         customize: {
           label: "Customize",
@@ -213,18 +213,18 @@ export const enUS = {
         },
         liquidGlass: {
           label: "iOS 26",
-          title: "Liquid Glass Design",
-          description: "Beautiful iOS 26 interface with native glass effects and Material Design 3 on Android.",
+          title: "Native Interface",
+          description: "Platform controls and navigation adapt across iOS and Android.",
         },
         i18n: {
-          label: "i18n",
-          title: "Multilingual Support",
-          description: "Full internationalization with English and Portuguese languages.",
+          label: "Language",
+          title: "English and Portuguese",
+          description: "The interface follows your device language or your in-app choice.",
         },
         haptics: {
           label: "Haptics",
-          title: "Haptic Feedback",
-          description: "Customizable haptic feedback for interactive elements and actions.",
+          title: "Optional Haptics",
+          description: "Tactile feedback can be disabled independently in Settings.",
         },
         opensource: {
           label: "Open",
@@ -234,25 +234,25 @@ export const enUS = {
           accessibilityHint: "Opens the DNS Chat GitHub repository in your browser where you can view the source code and contribute",
         },
         themes: {
-          label: "Adapt",
-          title: "Dark and Light Themes",
-          description: "Beautiful interface that adapts to your system preferences with high contrast mode support.",
+          label: "Theme",
+          title: "Light, Dark, or System",
+          description: "Choose a theme and use the high-contrast accessibility setting when needed.",
         },
         storage: {
           label: "Local",
-          title: "Local Storage",
-          description: "All your conversations are stored securely on your device - no cloud dependency.",
+          title: "Encrypted Local History",
+          description: "Conversation history is encrypted and kept on this device.",
         },
         fallbacks: {
-          label: "Smart",
-          title: "Smart Fallbacks",
-          description: "Intelligent fallback system ensures connectivity across different network conditions.",
+          label: "Order",
+          title: "Explicit Fallback Chain",
+          description: "The app tries supported transports in a defined order and records each attempt.",
         },
       },
       header: {
-        label: "Features",
-        title: "Powerful Features",
-        subtitle: "Discover what makes DNS Chat special",
+        label: "Reference",
+        title: "Know What the App Does",
+        subtitle: "Review local storage, settings, logs, and transport fallback behavior.",
       },
       ready: {
         title: "You're All Set",
@@ -338,7 +338,7 @@ export const enUS = {
         title: "Start New Conversation",
         button: "New Chat",
         description: "Send a short prompt through a DNS TXT request.",
-        observableNotice: "DNS traffic is observable on the network and is not private.",
+        observableNotice: "A third-party DNS service or network may observe, retain, or alter queries and responses.",
       },
       recent: {
         title: "Recent Conversations",
@@ -348,7 +348,7 @@ export const enUS = {
       empty: {
         title: "No Conversations Yet",
         subtitle:
-          "Start your first conversation by tapping \"New Chat\" above. Your chats will appear here.",
+          "Your conversations will appear here after you start one.",
       },
       stats: {
         title: "Statistics",
@@ -382,7 +382,12 @@ export const enUS = {
       empty: {
         title: "No DNS Queries Yet",
         subtitle:
-          "Send a message to see DNS query logs appear here. All query attempts and methods will be tracked.",
+          "Send a message to record transport status and timing. Prompt and response text stay redacted.",
+      },
+      loadError: {
+        title: "Unable to Load DNS Logs",
+        subtitle:
+          "No log data was removed. Pull down to try again when secure local storage is available.",
       },
       history: {
         title: "DNS Query History",
@@ -450,7 +455,7 @@ export const enUS = {
           enableHaptics: {
             label: "Enable Haptics",
             description:
-              "Plays tactile feedback when supported; suppressed if Reduce Motion is enabled.",
+              "Plays tactile feedback when supported and can be disabled independently here.",
           },
         },
         transportTest: {
@@ -649,7 +654,7 @@ export const enUS = {
       fallbackInitials: "DNS",
       appName: "DNS Chat",
       tagline:
-        "Chat with AI using DNS TXT queries - a unique approach to LLM communication.",
+        "Short prompts go to a third-party service in DNS TXT queries. Traffic is observable and responses are not authenticated.",
       versionLabel: "v{{version}}",
       footer: "© 2025 DNSChat contributors • MIT Licensed",
       quickActions: {

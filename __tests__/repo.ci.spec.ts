@@ -5,12 +5,13 @@ function read(path: string): string {
   return fs.readFileSync(path, "utf8");
 }
 
-describe("repo policy: CI configuration exists and matches spec", () => {
-  const expectOneOf = (content: string, candidates: string[]) => {
-    const found = candidates.some((candidate) => content.includes(candidate));
-    expect(found).toBe(true);
-  };
+function findMutableActionRefs(content: string): string[] {
+  return [...content.matchAll(/^\s*uses:\s*([^\s#]+)@([^\s#]+)/gm)]
+    .filter((match) => !/^[a-f0-9]{40}$/.test(match[2] ?? ""))
+    .map((match) => `${match[1]}@${match[2]}`);
+}
 
+describe("repo policy: CI configuration exists and matches spec", () => {
   it("has CI workflow that runs lint + unit tests on PRs and main", () => {
     const workflow = ".github/workflows/ci.yml";
     expect(fs.existsSync(workflow)).toBe(true);
@@ -22,15 +23,15 @@ describe("repo policy: CI configuration exists and matches spec", () => {
     expect(content).toContain("branches:");
     expect(content).toContain("- main");
 
-    expectOneOf(content, ["npm ci", "pnpm install --frozen-lockfile"]);
-    expectOneOf(content, ["npm run verify:ios-pods", "pnpm run verify:ios-pods"]);
-    expectOneOf(content, ["npm run verify:expo-doctor", "pnpm run verify:expo-doctor"]);
-    expectOneOf(content, ["npm run verify:sdk-alignment", "pnpm run verify:sdk-alignment"]);
-    expectOneOf(content, ["npm run verify:typed-routes", "pnpm run verify:typed-routes"]);
-    expectOneOf(content, ["npm run verify:dnsresolver-sync", "pnpm run verify:dnsresolver-sync"]);
-    expectOneOf(content, ["npm run verify:react-compiler", "pnpm run verify:react-compiler"]);
-    expectOneOf(content, ["npm run lint", "pnpm run lint"]);
-    expectOneOf(content, ["npm test", "pnpm run test"]);
+    expect(content).toContain("pnpm install --frozen-lockfile");
+    expect(content).toContain("pnpm run verify:ios-pods");
+    expect(content).toContain("pnpm run verify:expo-doctor");
+    expect(content).toContain("pnpm run verify:sdk-alignment");
+    expect(content).toContain("pnpm run verify:typed-routes");
+    expect(content).toContain("pnpm run verify:dnsresolver-sync");
+    expect(content).toContain("pnpm run verify:react-compiler");
+    expect(content).toContain("pnpm run lint");
+    expect(content).toContain("pnpm run test");
   });
 
   it("runs dns-native module tests in CI (release verification invariant)", () => {
@@ -38,12 +39,35 @@ describe("repo policy: CI configuration exists and matches spec", () => {
     expect(fs.existsSync(workflow)).toBe(true);
     const content = read(workflow);
 
-    // The public release hardening spec requires the `modules/dns-native` package
-    // to stay tested and independently installable.
+    // The native package shares the root pnpm lock so audit and install evidence
+    // cover the exact graph exercised by this job.
     expect(content).toContain("dns-native:");
-    expect(content).toContain("working-directory: modules/dns-native");
-    expect(content).toContain("Install (modules/dns-native)");
+    expect(content).toContain("corepack pnpm install --frozen-lockfile");
     expect(content).toContain("Test (modules/dns-native)");
+    expect(content).toContain("pnpm --filter @dnschat/dns-native run test");
+    expect(content).not.toContain("npm ci");
+  });
+
+  it("pins every GitHub Action to an immutable commit SHA", () => {
+    expect(findMutableActionRefs("uses: actions/checkout@v6")).toEqual([
+      "actions/checkout@v6",
+    ]);
+    expect(
+      findMutableActionRefs(
+        `uses: actions/checkout@${"a".repeat(40)} # v6`,
+      ),
+    ).toEqual([]);
+
+    const offenders = fs
+      .readdirSync(".github/workflows")
+      .filter((file) => file.endsWith(".yml") || file.endsWith(".yaml"))
+      .flatMap((file) =>
+        findMutableActionRefs(read(`.github/workflows/${file}`)).map(
+          (reference) => `${file}: ${reference}`,
+        ),
+      );
+
+    expect(offenders).toEqual([]);
   });
 
   it("has gitleaks workflow that uses repo config", () => {

@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 
-const { execSync } = require("node:child_process");
+const { execFileSync, execSync } = require("node:child_process");
 const fs = require("fs");
 const os = require("node:os");
 const path = require("path");
+const { parseAdbDevices, resolveMetroPort } = require("./utils/adbReverse");
 
 const colors = {
   reset: "\x1b[0m",
@@ -90,11 +91,28 @@ function checkJavaRuntimeCompatibility() {
   }
 }
 
-function checkMetroPort() {
+function isValidTcpPort(value) {
+  if (typeof value !== "string" || !/^[0-9]+$/.test(value)) {
+    return false;
+  }
+
+  const port = Number(value);
+  return Number.isInteger(port) && port >= 1 && port <= 65535;
+}
+
+function checkMetroPort({
+  env = process.env,
+  execFileSyncImpl = execFileSync,
+} = {}) {
   try {
-    const { execSync } = require("node:child_process");
-    const port = process.env.RCT_METRO_PORT || "8081";
-    const result = execSync(`lsof -ti:${port}`, { encoding: "utf8" });
+    const port = resolveMetroPort(env);
+    if (!isValidTcpPort(port)) {
+      return false;
+    }
+
+    const result = execFileSyncImpl("lsof", ["-ti", `:${port}`], {
+      encoding: "utf8",
+    });
     return result.trim().length > 0;
   } catch {
     return false;
@@ -429,27 +447,32 @@ function checkNdkVersion(projectRoot) {
   return true;
 }
 
-function checkAdbReverse() {
+function checkAdbReverse({
+  env = process.env,
+  execFileSyncImpl = execFileSync,
+} = {}) {
   try {
-    const output = execSync("adb devices", { encoding: "utf8" });
-    const devices = output
-      .split("\n")
-      .slice(1)
-      .filter((line) => line.trim().length > 0 && line.includes("device"));
+    const output = execFileSyncImpl("adb", ["devices"], { encoding: "utf8" });
+    const devices = parseAdbDevices(output);
 
     if (devices.length === 0) {
       warn("No Android devices or emulators connected");
       return false;
     }
 
-    const port = process.env.RCT_METRO_PORT || "8081";
+    const port = resolveMetroPort(env);
+    if (!isValidTcpPort(port)) {
+      warn("Metro port must be an integer between 1 and 65535");
+      return false;
+    }
+
     let allReversed = true;
 
-    for (const deviceLine of devices) {
-      const serial = deviceLine.split("\t")[0];
+    for (const serial of devices) {
       try {
-        const reverseOutput = execSync(
-          `adb -s ${serial} reverse --list`,
+        const reverseOutput = execFileSyncImpl(
+          "adb",
+          ["-s", serial, "reverse", "--list"],
           { encoding: "utf8" },
         );
         if (reverseOutput.includes(`tcp:${port}`)) {
@@ -519,7 +542,7 @@ function main() {
   log("\n--- DNS Native Module Files ---");
   if (!checkDNSNativeFiles()) {
     allChecksPassed = false;
-    error("DNS native module files are missing. Run: npx expo prebuild");
+    error("DNS native module files are missing. Run: pnpm exec expo prebuild");
   }
 
   // Check 4: NDK version
@@ -544,8 +567,10 @@ function main() {
 
   // Check 7: Metro bundler
   log("\n--- Metro Bundler ---");
-  const metroPort = process.env.RCT_METRO_PORT || "8081";
-  if (checkMetroPort()) {
+  const metroPort = resolveMetroPort(process.env);
+  if (!isValidTcpPort(metroPort)) {
+    warn("Metro port must be an integer between 1 and 65535");
+  } else if (checkMetroPort()) {
     success("Metro bundler is running");
   } else {
     warn(`Metro bundler not running on port ${metroPort}`);
@@ -578,9 +603,12 @@ if (require.main === module) {
 }
 
 module.exports = {
+  checkAdbReverse,
   checkAndroidReleaseSigningPolicy,
   checkJavaRuntimeCompatibility,
   checkMainApplicationKt,
+  checkMetroPort,
+  isValidTcpPort,
   isSupportedAndroidJavaMajor,
   parseJavaMajorVersion,
   parseJavaProperties,

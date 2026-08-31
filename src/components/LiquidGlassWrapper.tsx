@@ -8,6 +8,7 @@ import type { ViewProps } from "react-native";
 import {
   GlassView,
   GlassContainer,
+  isGlassEffectAPIAvailable as expoIsGlassEffectAPIAvailable,
   isLiquidGlassAvailable as expoIsLiquidGlassAvailable,
 } from "expo-glass-effect";
 import { getImessagePalette, getAndroidGlassFallback } from "../ui/theme/imessagePalette";
@@ -22,7 +23,7 @@ const MIN_IOS_GLASS_VERSION = 26;
 
 type GlassAvailabilityReason =
   | "expo"
-  | "ios-version"
+  | "expo-unavailable"
   | "ios-version-too-low"
   | "unsupported-platform";
 
@@ -115,7 +116,10 @@ const computeGlassAvailability = (): GlassAvailability => {
   const iosMajorVersion = parseIosMajorVersion();
 
   try {
-    if (expoIsLiquidGlassAvailable()) {
+    if (
+      expoIsLiquidGlassAvailable() &&
+      expoIsGlassEffectAPIAvailable()
+    ) {
       return {
         available: true,
         reason: "expo",
@@ -126,17 +130,12 @@ const computeGlassAvailability = (): GlassAvailability => {
     // expoIsLiquidGlassAvailable should be safe, but guard just in case.
   }
 
-  if (iosMajorVersion >= MIN_IOS_GLASS_VERSION) {
-    return {
-      available: true,
-      reason: "ios-version",
-      iosMajorVersion,
-    };
-  }
-
   return {
     available: false,
-    reason: "ios-version-too-low",
+    reason:
+      iosMajorVersion < MIN_IOS_GLASS_VERSION
+        ? "ios-version-too-low"
+        : "expo-unavailable",
     iosMajorVersion,
   };
 };
@@ -281,7 +280,9 @@ export const LiquidGlassWrapper: React.FC<LiquidGlassProps> = ({
 }) => {
   const colorScheme = useResolvedColorScheme();
   const isDark = colorScheme === "dark";
-  const [reduceTransparency, setReduceTransparency] = useState(Platform.OS === "ios");
+  const [reduceTransparency, setReduceTransparency] = useState(
+    Platform.OS === "ios",
+  );
 
   // Effect: sync reduce-transparency accessibility setting on iOS.
   // react-doctor-disable-next-line react-doctor/effect-needs-cleanup
@@ -296,9 +297,13 @@ export const LiquidGlassWrapper: React.FC<LiquidGlassProps> = ({
       }
     });
 
+    const handleChange = (value: boolean) => {
+      setReduceTransparency(Boolean(value));
+    };
+
     const subscription = AccessibilityInfo.addEventListener(
       "reduceTransparencyChanged",
-      setReduceTransparency,
+      handleChange,
     );
 
     return () => {
@@ -324,9 +329,9 @@ export const LiquidGlassWrapper: React.FC<LiquidGlassProps> = ({
   const tint = tintForVariant(variant, isDark, tintColor);
   const glassEffect = glassEffectForVariant(variant);
 
-  const useGlass = shouldUseGlassEffect(reduceTransparency);
+  const canRenderGlass = computeGlassAvailability().available;
 
-  if (!useGlass) {
+  if (!canRenderGlass) {
     return (
       <View style={[baseContainerStyle, fallbackStyle, style]} {...rest}>
         {children}
@@ -335,12 +340,16 @@ export const LiquidGlassWrapper: React.FC<LiquidGlassProps> = ({
   }
 
   const { containerStyle, glassStyle } = splitGlassStyles(style);
-  const containerStyles = [baseContainerStyle, containerStyle];
+  const containerStyles = [
+    baseContainerStyle,
+    reduceTransparency ? fallbackStyle : undefined,
+    containerStyle,
+  ];
   const glassStyles = [baseContainerStyle, glassStyle];
 
   const glassContent = (
     <GlassView
-      glassEffectStyle={glassEffect}
+      glassEffectStyle={reduceTransparency ? "none" : glassEffect}
       isInteractive={isInteractive}
       tintColor={tint}
       style={glassStyles}
@@ -387,7 +396,9 @@ export const useLiquidGlassCapabilities = () => {
     () => computeGlassAvailability(),
   );
   const [loading, setLoading] = useState(Platform.OS === "ios");
-  const [reduceTransparency, setReduceTransparency] = useState(Platform.OS === "ios");
+  const [reduceTransparency, setReduceTransparency] = useState(
+    Platform.OS === "ios",
+  );
 
   // Effect: compute glass capability and watch reduce-transparency changes on iOS.
   // react-doctor-disable-next-line react-doctor/effect-needs-cleanup

@@ -4,7 +4,16 @@ Complete step-by-step guide for publishing DNSChat to the Google Play Store.
 
 **App**: DNSChat
 **Package**: `<ANDROID_PACKAGE>`
-**Current Version**: 4.1.5
+**Repository Target**: `4.3.6` build `84`
+
+## Release state
+
+- **Repository target:** `4.3.6` build `84`; this is source state, not proof of
+  an uploaded artifact.
+- **Latest validated Android artifact:** not recorded in this public runbook;
+  build and validate a fresh AAB before upload.
+- **Latest production Google Play release:** unverified. Confirm the active
+  track and version in Google Play Console before making production claims.
 
 ---
 
@@ -223,21 +232,20 @@ Navigate to: **Policy → App content → Content ratings**
 
 ### IARC Questionnaire
 
-Answer the following for DNSChat:
+Do not copy categorical answers from this runbook. DNSChat renders third-party
+model output, so content answers depend on provider safeguards and observed
+behavior. Before completing IARC:
 
-| Question | Answer |
-|----------|--------|
-| Violence | No |
-| Sexual content | No |
-| Language | No |
-| Controlled substances | No |
-| User interaction | No (no chat between users) |
-| Location sharing | No |
-| User-generated content | No |
-| In-app purchases | No |
-| Ads | No |
+- document the provider's enforceable content safeguards;
+- test representative adversarial prompts for violence, sexual content,
+  language, controlled substances, and other IARC categories;
+- record the evidence and answer for the worst content the released service can
+  return, not the app's intended use;
+- confirm the non-content product facts, including user interaction, location,
+  purchases, and ads, against the exact release build.
 
-**Expected Rating**: PEGI 3 / Everyone
+**Expected rating:** unverified. Treat the completed questionnaire and resulting
+IARC classification as a release gate.
 
 ---
 
@@ -323,10 +331,9 @@ See [ANDROID_RELEASE.md](./ANDROID_RELEASE.md) for signing configuration.
    - **Upload** new AAB
 4. Add release notes:
    ```
-   What's new in v4.1.5:
-   - Expo SDK 57 and React Native 0.86 upgrade
-   - iOS CocoaPods graph refreshed for the SDK 57 native stack
-   - Public release docs and verification notes aligned with build 72
+   Repository target: 4.3.6 build 84.
+   Replace this placeholder with user-facing notes derived from CHANGELOG.md
+   after validating the exact AAB selected for upload.
    ```
 5. Click **"Review release"**
 6. Set rollout percentage (start with 10-20% recommended)
@@ -338,6 +345,14 @@ See [ANDROID_RELEASE.md](./ANDROID_RELEASE.md) for signing configuration.
 
 Navigate to: **Policy → App content → Data safety**
 
+> **Release blocker:** no public provider policy covering retention,
+> secondary use, deletion, or service-provider status was located after
+> reviewing the default third-party DNS service's public page and web search on
+> `2026-08-29`. Do not submit
+> the Data safety form until those facts are obtained from the operator. The
+> table below uses the conservative fallback: prompts are collected, shared
+> with a third party, and required for the app's chat function.
+
 ### DNSChat Data Practices
 
 | Category | Collected | Shared | Required |
@@ -345,7 +360,7 @@ Navigate to: **Policy → App content → Data safety**
 | Personal info | No | No | - |
 | Financial info | No | No | - |
 | Health & fitness | No | No | - |
-| Messages | Yes* | No | Optional |
+| Messages | Yes* | Yes* | Required |
 | Photos & videos | No | No | - |
 | Audio | No | No | - |
 | Files & docs | No | No | - |
@@ -357,15 +372,19 @@ Navigate to: **Policy → App content → Data safety**
 | Device identifiers | No | No | - |
 | Location | No | No | - |
 
-*Messages are stored locally only (AsyncStorage) and transmitted via DNS queries to llm.pieter.com servers. DNS transport is observable; users should not send secrets or personal data.
+*Messages are encrypted in local storage and transmitted through the selected
+third-party DNS service. DNSChat does not control or currently have evidence
+for that provider's retention, secondary use, or deletion practices. DNS
+transport is observable; users should not send secrets or personal data.
 
 ### Security Practices
 
 - [ ] Data encrypted in transit (DNS over standard port 53 is not encrypted)
 - [x] Data encrypted at rest (local AES-GCM)
-- [x] Data stored locally on device only
+- [ ] Data stored locally on device only (provider handling is unverified)
 - [x] SecureStore key material excluded from Android backup/device transfer
-- [x] Users can request data deletion (clear from Settings)
+- [x] Users can delete local data from Settings
+- [ ] Provider-side deletion mechanism verified
 
 ---
 

@@ -70,7 +70,7 @@ See [SECURITY.md](SECURITY.md) for responsible disclosure.
 
 - `pnpm run verify:ios-pods`
 - `pnpm run lint`
-- `pnpm run test --bail --passWithNoTests`
+- `pnpm run test --bail`
 
 Remove `.git/hooks/pre-commit` locally if you do not want repo-managed hooks.
 

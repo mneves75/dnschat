@@ -2,7 +2,13 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { Chat, Message } from "../types/chat";
 import * as Crypto from "expo-crypto";
 import { devLog, devLogLazy, devWarn, devWarnLazy } from "../utils/devLog";
-import { decryptIfEncrypted, encryptString, isEncryptedPayload } from "./encryptionService";
+import {
+  EncryptionKeyCorruptionError,
+  EncryptionKeyUnavailableError,
+  decryptIfEncrypted,
+  encryptString,
+  isEncryptedPayload,
+} from "./encryptionService";
 import { STORAGE_CONSTANTS } from "../constants/appConstants";
 
 const CHATS_KEY = STORAGE_CONSTANTS.CHATS_KEY;
@@ -152,37 +158,19 @@ export class StorageService {
   private static async createCorruptionBackupPayload(
     error: StorageCorruptionError,
     storedPayload: string,
-    redactOnEncryptionFailure = true,
   ): Promise<string> {
     const timestamp = new Date().toISOString();
     const payloadWasEncrypted = isEncryptedPayload(storedPayload);
+    const protectedPayload = payloadWasEncrypted
+      ? storedPayload
+      : await encryptString(storedPayload);
 
-    try {
-      const protectedPayload = payloadWasEncrypted
-        ? storedPayload
-        : await encryptString(storedPayload);
-
-      return JSON.stringify({
-        timestamp,
-        error: error.message,
-        payload: protectedPayload,
-        payloadWasEncrypted,
-      });
-    } catch (backupEncryptionError) {
-      if (!redactOnEncryptionFailure) {
-        throw backupEncryptionError;
-      }
-      devWarn(
-        "[StorageService] Failed to encrypt corrupted storage backup payload",
-        backupEncryptionError,
-      );
-      return JSON.stringify({
-        timestamp,
-        error: error.message,
-        payloadRedacted: true,
-        payloadWasEncrypted,
-      });
-    }
+    return JSON.stringify({
+      timestamp,
+      error: error.message,
+      payload: protectedPayload,
+      payloadWasEncrypted,
+    });
   }
 
   static async saveChats(chats: Chat[]): Promise<void> {
@@ -278,6 +266,12 @@ export class StorageService {
           return value;
         });
       } catch (parseError) {
+        if (
+          parseError instanceof EncryptionKeyCorruptionError ||
+          parseError instanceof EncryptionKeyUnavailableError
+        ) {
+          throw parseError;
+        }
         // JSON parse failure = data corruption
         const cause = parseError instanceof Error ? parseError : new Error(String(parseError));
         if (parseError instanceof StorageCorruptionError) {
@@ -421,7 +415,6 @@ export class StorageService {
             const backupPayload = await this.createCorruptionBackupPayload(
               firstError,
               serializedChats,
-              false,
             );
             await AsyncStorage.setItem(CHAT_BACKUP_KEY, backupPayload);
             devWarn("[StorageService] Pre-quarantine storage backed up", {
@@ -487,25 +480,33 @@ export class StorageService {
 
       return chats;
     } catch (error) {
+      if (
+        error instanceof EncryptionKeyCorruptionError ||
+        error instanceof EncryptionKeyUnavailableError
+      ) {
+        devWarn(
+          "[StorageService] Encryption key cannot be used; preserving encrypted chats",
+          error,
+        );
+        throw error;
+      }
       // Re-throw StorageCorruptionError - caller needs to handle it
       if (error instanceof StorageCorruptionError) {
         devWarn("[StorageService] Storage corruption detected", error);
         if (recoverOnCorruption) {
           const recoverCorruptedPayload = async (): Promise<void> => {
-            try {
-              if (serializedChats) {
-                const backupPayload = await this.createCorruptionBackupPayload(
-                  error,
-                  serializedChats,
-                );
-                await AsyncStorage.setItem(CHAT_BACKUP_KEY, backupPayload);
-                devWarn("[StorageService] Corrupted storage backed up", {
-                  key: CHAT_BACKUP_KEY,
-                });
-              }
-            } catch (backupError) {
-              devWarn("[StorageService] Failed to backup corrupted storage", backupError);
+            if (serializedChats === null) {
+              throw error;
             }
+
+            const backupPayload = await this.createCorruptionBackupPayload(
+              error,
+              serializedChats,
+            );
+            await AsyncStorage.setItem(CHAT_BACKUP_KEY, backupPayload);
+            devWarn("[StorageService] Corrupted storage backed up", {
+              key: CHAT_BACKUP_KEY,
+            });
 
             try {
               const latestStoredPayload = await AsyncStorage.getItem(CHATS_KEY);

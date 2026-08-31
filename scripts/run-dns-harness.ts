@@ -5,7 +5,7 @@
  * configured transport order (native -> UDP -> TCP by default).
  *
  * Usage examples:
- *   npx ts-node scripts/run-dns-harness.ts --message "Hello" --server llm.pieter.com \
+ *   pnpm run dns:harness --message "Hello" --server llm.pieter.com \
  *     --method-order native,udp,tcp --json-out artifacts/result.json --raw-out artifacts/raw
  */
 
@@ -199,7 +199,7 @@ function parseArgs(argv: string[]): HarnessOptions {
 
 function printHelp() {
   console.log(`DNS Harness Usage:\n\n` +
-    `  npx ts-node scripts/run-dns-harness.ts --message "hello world" [options]\n\n` +
+    `  pnpm run dns:harness --message "hello world" [options]\n\n` +
     `Options:\n` +
     `  --message, -m        Message to encode (required)\n` +
     `  --server,  -s        Resolver host (default: ${DEFAULT_SERVER})\n` +

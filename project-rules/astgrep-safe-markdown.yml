@@ -1,0 +1,15 @@
+id: no-direct-markdown-renderer-imports
+language: Tsx
+severity: error
+message: "Render untrusted Markdown through src/components/SafeMarkdown.tsx."
+ignores:
+  - src/components/SafeMarkdown.tsx
+rule:
+  all:
+    - kind: string
+    - regex: "^['\"]react-native-markdown-display['\"]$"
+    - inside:
+        any:
+          - kind: import_statement
+          - kind: call_expression
+        stopBy: end

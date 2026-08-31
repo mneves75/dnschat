@@ -44,7 +44,7 @@ metadata is not applicable.
 
 ```bash
 # Align Expo-compatible native package versions when upgrading SDK patches
-npx expo install --fix
+pnpm exec expo install --fix
 
 # Expo dependency and config checks
 pnpm run verify:expo-doctor

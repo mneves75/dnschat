@@ -37,9 +37,9 @@ import Animated, {
   withTiming,
   withSpring,
   withDelay,
-  runOnJS,
   makeMutable,
 } from 'react-native-reanimated';
+import { scheduleOnRN } from 'react-native-worklets';
 import type { SharedValue } from 'react-native-reanimated';
 import type { ViewStyle } from 'react-native';
 import { useMotionReduction } from '../../context/AccessibilityContext';
@@ -206,7 +206,7 @@ export function useStaggeredList(
           if (finished) {
             completedCount.set(completedCount.get() + 1);
             if (completedCount.get() === effectiveCount && onComplete) {
-              runOnJS(onComplete)();
+              scheduleOnRN(onComplete);
             }
           }
         })
@@ -344,7 +344,7 @@ export function useStaggeredListValues(
           if (finished) {
             completedCount.set(completedCount.get() + 1);
             if (completedCount.get() === effectiveCount && onComplete) {
-              runOnJS(onComplete)();
+              scheduleOnRN(onComplete);
             }
           }
         })

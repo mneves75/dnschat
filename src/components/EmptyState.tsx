@@ -16,7 +16,6 @@ import {
   View,
   Text,
   StyleSheet,
-  Platform,
 } from 'react-native';
 import { PressableRipple } from './PressableRipple';
 import Animated, {
@@ -29,9 +28,8 @@ import Animated, {
 import Svg, { Path, Circle, Rect } from 'react-native-svg';
 import { useImessagePalette } from '../ui/theme/imessagePalette';
 import { useTypography } from '../ui/hooks/useTypography';
-import { LiquidGlassSpacing, getCornerRadius } from '../ui/theme/liquidGlassSpacing';
+import { LiquidGlassSpacing } from '../ui/theme/liquidGlassSpacing';
 import { useMotionReduction } from '../context/AccessibilityContext';
-import { LiquidGlassWrapper } from './LiquidGlassWrapper';
 import { TimingConfig, SpringConfig } from '../utils/animations';
 
 export type EmptyStateIconType =
@@ -74,12 +72,6 @@ interface EmptyStateProps {
    * Callback when action button is pressed
    */
   onAction?: () => void;
-
-  /**
-   * Whether to use glass wrapper for the container
-   * @default false
-   */
-  useGlass?: boolean;
 
   /**
    * Test ID for automated testing
@@ -325,7 +317,6 @@ export function EmptyState({
   iconColor,
   actionLabel,
   onAction,
-  useGlass = false,
   testID,
 }: EmptyStateProps) {
   const palette = useImessagePalette();
@@ -371,14 +362,21 @@ export function EmptyState({
     >
       {/* Icon */}
       <Animated.View style={[styles.iconContainer, iconContainerStyle]}>
-        <IconComponent size={80} color={effectiveIconColor} />
+        <IconComponent size={64} color={effectiveIconColor} />
       </Animated.View>
 
       {/* Text */}
       <Text style={[styles.title, typography.title3, { color: palette.textPrimary }]}>
         {title}
       </Text>
-      <Text style={[styles.description, typography.body, { color: palette.textSecondary }]}>
+      <Text
+        style={[
+          styles.description,
+          hasAction && styles.descriptionWithAction,
+          typography.body,
+          { color: palette.textSecondary },
+        ]}
+      >
         {description}
       </Text>
 
@@ -392,7 +390,7 @@ export function EmptyState({
           accessibilityRole="button"
           accessibilityLabel={actionLabel}
         >
-          <Text style={[styles.actionButtonText, typography.callout, { color: palette.bubbleTextOnBlue }]}>
+          <Text style={[styles.actionButtonText, typography.callout, { color: palette.textOnChroma }]}>
             {actionLabel}
           </Text>
         </PressableRipple>
@@ -400,28 +398,9 @@ export function EmptyState({
     </View>
   );
 
-  if (useGlass) {
-    return (
-      <Animated.View style={containerStyle} testID={testID}>
-        <LiquidGlassWrapper
-          variant="regular"
-          shape="roundedRect"
-          cornerRadius={getCornerRadius('card')}
-          style={styles.glassContainer}
-        >
-          {content}
-        </LiquidGlassWrapper>
-      </Animated.View>
-    );
-  }
-
   return (
     <Animated.View
-      style={[
-        styles.container,
-        { backgroundColor: Platform.OS === 'android' ? palette.solid : palette.surface },
-        containerStyle,
-      ]}
+      style={[styles.container, containerStyle]}
       testID={testID}
     >
       {content}
@@ -431,25 +410,14 @@ export function EmptyState({
 
 const styles = StyleSheet.create({
   container: {
-    marginHorizontal: LiquidGlassSpacing.lg,
-    padding: LiquidGlassSpacing.xl,
-    borderRadius: getCornerRadius('card'),
-    ...(Platform.OS === 'web'
-      ? { boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.08)' }
-      : {
-          shadowColor: '#111827',
-          shadowOffset: { width: 0, height: 1 },
-          shadowOpacity: 0.08,
-          shadowRadius: 2,
-          elevation: 2,
-        }),
-  },
-  glassContainer: {
-    marginHorizontal: LiquidGlassSpacing.lg,
-    padding: LiquidGlassSpacing.xl,
+    paddingHorizontal: LiquidGlassSpacing.xl,
+    paddingVertical: LiquidGlassSpacing.xxl,
   },
   content: {
     alignItems: 'center',
+    width: '100%',
+    maxWidth: 440,
+    alignSelf: 'center',
   },
   iconContainer: {
     marginBottom: LiquidGlassSpacing.lg,
@@ -461,15 +429,16 @@ const styles = StyleSheet.create({
   },
   description: {
     textAlign: 'center',
+  },
+  descriptionWithAction: {
     marginBottom: LiquidGlassSpacing.lg,
-    // fontSize/fontWeight/lineHeight applied inline via typography.body
   },
   actionButton: {
     paddingHorizontal: LiquidGlassSpacing.lg,
     paddingVertical: LiquidGlassSpacing.sm,
-    borderRadius: 22,
-    // iOS 26 HIG: Minimum 44pt touch target; Material 3: 48dp on Android
-    minHeight: Platform.OS === 'android' ? 48 : 44,
+    borderRadius: 14,
+    minHeight: 48,
+    minWidth: 160,
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',

@@ -139,7 +139,9 @@ export function NetworkSetupScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.headerSection}>
-          <Text style={[typography.displayMedium, { color: palette.accentTint }]}>
+          <Text
+            style={[typography.displayMedium, { color: palette.accentText }]}
+          >
             {t("screen.onboarding.networkSetup.label")}
           </Text>
 
@@ -184,11 +186,20 @@ export function NetworkSetupScreen() {
           </View>
         </View>
 
-        <View style={styles.testsSection}>
+        <View
+          style={[
+            styles.testsSection,
+            {
+              backgroundColor: palette.solid,
+              borderColor: palette.border,
+            },
+          ]}
+        >
           {networkTests.map((test, index) => (
             <NetworkTestItem
               key={test.method}
               test={test}
+              isLast={index === networkTests.length - 1}
               palette={palette}
               typography={typography}
               isActive={isOptimizing && test.status === "configuring"}
@@ -211,7 +222,7 @@ export function NetworkSetupScreen() {
               style={[
                 typography.headline,
                 styles.recommendationTitle,
-                { color: palette.accentTint },
+                { color: palette.accentText },
               ]}
             >
               {t("screen.onboarding.networkSetup.optimization.title")}
@@ -232,11 +243,14 @@ export function NetworkSetupScreen() {
               testID="onboarding-network-apply"
               style={[
                 styles.applyButton,
-                { backgroundColor: palette.accentTint },
+                {
+                  backgroundColor: palette.surface,
+                  borderColor: palette.accentTint,
+                },
               ]}
               onPress={applyRecommendedSettings}
               disabled={isApplyingSettings}
-              variant="primary"
+              variant="surface"
               pressedOpacity={0.7}
               accessibilityRole="button"
               accessibilityLabel={t("screen.onboarding.networkSetup.accessibility.applyLabel")}
@@ -246,7 +260,7 @@ export function NetworkSetupScreen() {
                 style={[
                   typography.callout,
                   styles.applyButtonText,
-                  { color: palette.solid, fontWeight: "600" },
+                  { color: palette.accentText, fontWeight: "600" },
                 ]}
               >
                 {t("screen.onboarding.networkSetup.optimization.applyButton")}
@@ -268,7 +282,7 @@ export function NetworkSetupScreen() {
             accessibilityLiveRegion="polite"
             style={styles.loadingSection}
           >
-            <ActivityIndicator size="large" color={palette.accentTint} />
+            <ActivityIndicator size="large" color={palette.accentText} />
             <Text
               accessible={false}
               importantForAccessibility="no-hide-descendants"
@@ -294,12 +308,19 @@ export function NetworkSetupScreen() {
 
 interface NetworkTestItemProps {
   test: NetworkTest;
+  isLast: boolean;
   palette: ReturnType<typeof useImessagePalette>;
   typography: ReturnType<typeof useTypography>;
   isActive: boolean;
 }
 
-function NetworkTestItem({ test, palette, typography, isActive }: NetworkTestItemProps) {
+function NetworkTestItem({
+  test,
+  isLast,
+  palette,
+  typography,
+  isActive,
+}: NetworkTestItemProps) {
   const { t } = useTranslation();
 
   const getStatusLabel = () => {
@@ -318,7 +339,7 @@ function NetworkTestItem({ test, palette, typography, isActive }: NetworkTestIte
   const getStatusColor = () => {
     switch (test.status) {
       case "configuring":
-        return palette.accentTint;
+        return palette.accentText;
       case "configured":
         return palette.success;
       case "waiting":
@@ -333,9 +354,16 @@ function NetworkTestItem({ test, palette, typography, isActive }: NetworkTestIte
       style={[
         styles.testItem,
         {
-          backgroundColor: palette.surface,
-          borderColor: isActive ? palette.accentBorder : palette.border,
-          borderWidth: isActive ? 2 : 1,
+          backgroundColor: isActive
+            ? palette.accentSurface
+            : palette.transparent,
+          borderBottomColor: palette.separator,
+          borderBottomWidth: isLast ? 0 : StyleSheet.hairlineWidth,
+          // The active-stage marker is always 2pt wide and only changes color,
+          // so rows do not shift horizontally as the progression advances.
+          borderLeftColor: isActive
+            ? palette.accentTint
+            : palette.transparent,
         },
       ]}
       accessibilityLiveRegion={isActive ? "polite" : "none"}
@@ -394,13 +422,16 @@ const styles = StyleSheet.create({
   },
   content: {
     flexGrow: 1,
+    width: "100%",
+    maxWidth: LiquidGlassSpacing.huge * 12,
+    alignSelf: "center",
     paddingHorizontal: LiquidGlassSpacing.xl,
     paddingTop: LiquidGlassSpacing.lg,
-    paddingBottom: 100,
+    paddingBottom: LiquidGlassSpacing.xl,
   },
   headerSection: {
     alignItems: "center",
-    marginBottom: LiquidGlassSpacing.xxxl,
+    marginBottom: LiquidGlassSpacing.xl,
   },
   title: {
     textAlign: "center",
@@ -424,12 +455,15 @@ const styles = StyleSheet.create({
     fontStyle: "italic",
   },
   testsSection: {
-    gap: LiquidGlassSpacing.sm,
+    gap: 0,
     marginBottom: LiquidGlassSpacing.xxl,
+    borderRadius: LiquidGlassSpacing.sm,
+    borderWidth: StyleSheet.hairlineWidth,
+    overflow: "hidden",
   },
   testItem: {
     padding: LiquidGlassSpacing.md,
-    borderRadius: LiquidGlassSpacing.sm,
+    borderLeftWidth: 2,
   },
   testHeader: {
     flexDirection: "row",
@@ -480,7 +514,10 @@ const styles = StyleSheet.create({
     paddingVertical: LiquidGlassSpacing.sm,
     paddingHorizontal: LiquidGlassSpacing.lg,
     borderRadius: LiquidGlassSpacing.xs,
+    borderWidth: 1,
+    minHeight: 48,
     alignItems: "center",
+    justifyContent: "center",
   },
   applyButtonText: {
     fontWeight: "600",

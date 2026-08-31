@@ -68,7 +68,7 @@ export function OnboardingProgress() {
           <Animated.View
             style={[
               styles.progressBar,
-              { backgroundColor: palette.accentTint },
+              { backgroundColor: palette.userBubble },
               {
                 width: animatedWidth.interpolate({
                   inputRange: [0, 1],
@@ -87,7 +87,7 @@ export function OnboardingProgress() {
                 styles.dot,
                 {
                   backgroundColor:
-                    index <= currentStep ? palette.accentTint : palette.separator,
+                    index <= currentStep ? palette.userBubble : palette.separator,
                 },
               ]}
             />
@@ -101,10 +101,11 @@ export function OnboardingProgress() {
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: LiquidGlassSpacing.md,
-    paddingVertical: LiquidGlassSpacing.lg,
+    paddingTop: LiquidGlassSpacing.xs,
+    paddingBottom: LiquidGlassSpacing.sm,
   },
   header: {
-    marginBottom: LiquidGlassSpacing.md,
+    marginBottom: LiquidGlassSpacing.xs,
   },
   stepText: {
     fontWeight: "500",

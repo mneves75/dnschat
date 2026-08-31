@@ -21,7 +21,7 @@ This file provides a fast, practical map of the repo so agents can orient quickl
 
 DNSChat is an Expo React Native app that sends short prompts as DNS TXT queries and renders responses. Development and release builds use the compiled native app, not Expo Go or Expo dev-client.
 
-**Stack**: Expo SDK 57 / React Native 0.86.0 / React 19.2.3 / TypeScript 6.0.x / Hermes / New Architecture
+**Stack**: Expo SDK 57 / React Native 0.86.3 / React 19.2.3 / TypeScript 6.0.x / Hermes / New Architecture
 
 The app's product promise is: no accounts, no API keys, no tracking, local encrypted history, and DNS-based prompt/response transport. DNS is observable infrastructure, so UX, docs, logs, and tests must never imply that DNS prompts are private.
 
@@ -80,7 +80,7 @@ For any source-code sweep, map findings and fixes back to these requirements. Do
 - Native module tests: `cd modules/dns-native && pnpm run test`
 - DNS harness: `pnpm run dns:harness --message "test message"`; add `--local-server` for offline UDP/TCP verification.
 - Security scan: `gitleaks detect --source . --redact --no-banner --config .gitleaks.toml`
-- React Doctor: `npx react-doctor@latest --project chat-dns` (scope to this project; a bare run can report the sibling `paquera-mobile` from the parent workspace). Kept at `100/100`; see the React Compiler conventions in `CLAUDE.md` (Reanimated `.get()`/`.set()`, no `finally`, `useState` over `useRef` for create-once animated values).
+- React Doctor: `pnpm dlx react-doctor@latest --project chat-dns` (scope to this project; a bare run can report the sibling `paquera-mobile` from the parent workspace). Kept at `100/100`; see the React Compiler conventions in `CLAUDE.md` (Reanimated `.get()`/`.set()`, no `finally`, `useState` over `useRef` for create-once animated values).
 - Public redaction scan: `pnpm run verify:public-redaction`
 - iOS CLI build smoke: `xcodebuild clean build -workspace ios/DNSChat.xcworkspace -scheme DNSChat -configuration Debug -destination 'platform=iOS Simulator,name=iPhone 17'`. On a macOS 27 beta host, use `DEVELOPER_DIR=/Applications/Xcode-beta.app/Contents/Developer`; Xcode 26.6's build service can terminate silently on that host. If precompiled Expo modules were produced by an incompatible Swift compiler, run the release build from source pods with `EXPO_USE_PRECOMPILED_MODULES=0 pod install`, then restore the committed precompiled pod state after the build. The Podfile clamps pod targets to `IPHONEOS_DEPLOYMENT_TARGET >= 16.4` for newer toolchains.
 - iOS unsigned release smoke: `xcodebuild clean build -workspace ios/DNSChat.xcworkspace -scheme DNSChat -configuration Release -destination 'generic/platform=iOS' CODE_SIGNING_ALLOWED=NO`
@@ -113,6 +113,9 @@ When asked for a broad review, "latest/best practices", "2026+", or a full sourc
 
 ## Release / TestFlight Protocol
 
+- TestFlight/staging tags use `vX.Y.Z-betaN`, starting at `beta1` and
+  incrementing for each candidate of the same version. Reserve the clean
+  `vX.Y.Z` tag for a separately authorized production promotion.
 - Treat the uploaded TestFlight binary as evidence only if it was archived after the final source, dependency, pod, version, and docs state was verified. If any release-affecting file changes after upload, bump the build number with `pnpm run sync-versions --bump-build`, rebuild, export, upload, and validate a new build.
 - Until the installed Expo release carries equivalent iOS 27 support, preserve `UIApplicationSceneManifest` and the local `SceneDelegate` bridge. Do not run `expo prebuild --clean` without restoring that bridge and passing `__tests__/iosSceneLifecycle.spec.ts`; a successful `devicectl` launch response is not sufficient without process-survival evidence.
 - Run `pnpm run verify:all` before signed archive/export. If `expo-doctor` requires an SDK patch package that the registry delays, do not weaken the global policy; use a one-command override only for the required package, update `package.json` and `pnpm-lock.yaml`, run `pod install` when native pods change, then rerun `verify:all`.
@@ -159,7 +162,7 @@ Release:
 - Keep signing assets local. Never commit certificates, private keys, `.p12` files, provisioning profiles, App Store Connect API keys, or temporary keychains created for archive/export.
 - Keep public docs privacy-clean. Follow `docs/public-release-redaction.md`; use placeholders for local paths, device names, device identifiers, App Store Connect internal UUIDs, tester group names, certificate IDs, team IDs, and profile names.
 - Never re-add `react-native-reanimated/plugin` to `babel.config.js` (duplicate worklets transform).
-- ast-grep rules load through `sgconfig.yml` (`ruleDirs: project-rules`), never by passing a rule file to `scan --config` - that loads zero rules and exits 0. Each ban needs a `Tsx` and a `TypeScript` rule file plus a fixture; `__tests__/repo.lint.spec.ts` runs the linter against `__tests__/fixtures/astgrep/` and fails if fewer than 4 rules load.
+- ast-grep rules load through `sgconfig.yml` (`ruleDirs: project-rules`), never by passing a rule file to `scan --config` - that loads zero rules and exits 0. Each ban needs a `Tsx` and a `TypeScript` rule file plus a fixture; `__tests__/repo.lint.spec.ts` runs the linter against `__tests__/fixtures/astgrep/` and proves the configured rule floor loads.
 - Do not pass `--passWithNoTests` to Jest in CI or the pre-commit hook; it turns a broken `testMatch` into a green build. `__tests__/repo.ci.spec.ts` asserts test discovery still finds at least 100 files.
 - Keep React Compiler enabled and avoid adding manual `useMemo`/`useCallback` unless profiling proves it is needed.
 - Do not add new files under `src/navigation/screens/` expecting routing to pick them up — add a route under `app/` and import the screen.
@@ -167,6 +170,16 @@ Release:
 - Do not add arbitrary DNS server input; server choices must stay in the allowlist in `modules/dns-native/constants.ts`.
 - Do not log prompts, TXT responses, encryption keys, device identifiers, or credentials in production paths (`__tests__/repo.noConsoleLog.spec.ts` enforces).
 - Do not commit `.env*`, App Store Connect keys, Android keystores, Firebase configs, or other secret-bearing files (`__tests__/repo.hygiene.spec.ts` enforces).
+- Every entry in `auditConfig.ignoreGhsas` (`pnpm-workspace.yaml`) needs a stated blocker, a reachability argument, and a recheck date. A suppression is only legitimate while no fixed version exists; once one ships, delete the entry and add a version floor to `overrides`.
 - Do not write emoji or pictographic glyphs in tracked source/docs (`__tests__/repo.noEmoji.spec.ts` enforces).
 - Keep user-facing copy bilingual; update `en-US` and `pt-BR` in the same change.
 - Run `pnpm run verify:all` before committing to catch drift early.
+
+## Package management
+
+- **Use pnpm exclusively.** Never use `npm install`, `yarn`, or `bun install` — they ignore `pnpm-lock.yaml` and create duplicate physical copies of every dependency.
+- Setup / CI: `pnpm install --frozen-lockfile`
+- Add dependency: `pnpm add <pkg>` · dev: `pnpm add -D <pkg>` · workspace pkg: `pnpm --filter <name> add <pkg>`
+- Run scripts: `pnpm <script>`
+- `node_modules/` is disposable: hardlinked views into the shared pnpm store. Deleting it is always safe; reinstall is fast and offline. Never commit or edit it.
+- `pnpm-lock.yaml` is the source of truth: commit it, never hand-edit.

@@ -2,18 +2,25 @@ import fs from "node:fs";
 
 describe("MessageContent render policy", () => {
   const source = fs.readFileSync("src/components/MessageContent.tsx", "utf8");
+  const safeMarkdownSource = fs.readFileSync(
+    "src/components/SafeMarkdown.tsx",
+    "utf8",
+  );
   const bubbleSource = fs.readFileSync("src/components/MessageBubble.tsx", "utf8");
 
   it("covers loading, markdown, plain text, and localized error indicator branches", () => {
     expect(source).toContain('message.status === "sending"');
-    expect(source).toContain("<Markdown");
-    expect(source).toContain('image: () => null');
-    expect(source).toContain("onLinkPress={handleMarkdownLinkPress}");
-    expect(source).toContain("appAlert(");
-    expect(source).toContain('t("screen.chat.externalLink.message", { url })');
-    expect(source).toContain("openExternalLink(url)");
-    expect(source).toContain("return false");
-    expect(source).not.toContain("Linking.openURL");
+    expect(source).toContain("<SafeMarkdown");
+    expect(safeMarkdownSource).toContain("<Markdown");
+    expect(safeMarkdownSource).toContain('image: () => null');
+    expect(safeMarkdownSource).toContain("onLinkPress={handleLinkPress}");
+    expect(safeMarkdownSource).toContain("appAlert(");
+    expect(safeMarkdownSource).toContain(
+      't("screen.chat.externalLink.message", { url })',
+    );
+    expect(safeMarkdownSource).toContain("openExternalLink(url)");
+    expect(safeMarkdownSource).toContain("return false");
+    expect(safeMarkdownSource).not.toContain("Linking.openURL");
     expect(source).toContain('t("screen.chat.errorMessage")');
     expect(source).toContain("hasError ? (");
     expect(source).toContain("{displayContent}");

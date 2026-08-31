@@ -76,7 +76,7 @@ export function About() {
     <Form.List testID="about-screen" navigationTitle={t("screen.about.navigationTitle")}>
       <Animated.View style={animatedStyle}>
         <Form.Section>
-        <View style={[styles.headerContainer, { backgroundColor: palette.surface }]}>
+        <View style={styles.headerContainer}>
           <View style={styles.header}>
             <View
               style={styles.logoContainer}
@@ -253,10 +253,7 @@ export function About() {
 
 const styles = StyleSheet.create({
   headerContainer: {
-    marginHorizontal: LiquidGlassSpacing.lg,
     padding: LiquidGlassSpacing.xl,
-    borderRadius: 16,
-    // backgroundColor applied inline from palette.surface
   },
   header: {
     alignItems: "center",

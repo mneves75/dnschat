@@ -1386,7 +1386,9 @@ export class DNSService {
 
     // Web platform has no working DNS methods (no native, UDP, TCP support)
     if (Platform.OS === 'web') {
-      return appendMock([]);
+      // Browsers cannot open custom DNS sockets, so web always uses the mock
+      // transport regardless of the native-only setting flags.
+      return ['mock'];
     }
 
     // Production: Native with UDP/TCP fallbacks enabled

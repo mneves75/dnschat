@@ -4,6 +4,7 @@ import { ENCRYPTION_CONSTANTS } from "../src/constants/appConstants";
 jest.mock("expo-secure-store", () => ({
   getItemAsync: jest.fn(),
   setItemAsync: jest.fn(),
+  deleteItemAsync: jest.fn(),
   WHEN_UNLOCKED_THIS_DEVICE_ONLY: "whenUnlockedThisDeviceOnly",
 }));
 
@@ -48,24 +49,26 @@ describe("encryptionService key handling", () => {
     }
   });
 
-  it("regenerates when stored key length is invalid", async () => {
+  it("preserves an existing key with invalid length and surfaces typed corruption", async () => {
     const originalWorkerId = process.env["JEST_WORKER_ID"];
     delete process.env["JEST_WORKER_ID"];
     try {
       jest.resetModules();
-      const { encryptString } = require("../src/services/encryptionService");
+      const {
+        EncryptionKeyCorruptionError,
+        encryptString,
+      } = require("../src/services/encryptionService");
       const SecureStoreModule = require("expo-secure-store") as typeof SecureStore;
       const mockSecureStore = SecureStoreModule as jest.Mocked<typeof SecureStore>;
       const badKey = new Uint8Array(ENCRYPTION_CONSTANTS.KEY_LENGTH - 1).fill(1);
       mockSecureStore.getItemAsync.mockResolvedValue(toHex(badKey));
 
-      await encryptString("hello");
-
-      expect(mockSecureStore.setItemAsync).toHaveBeenCalledWith(
-        "dnschat.encryption_key",
-        expect.any(String),
-        { keychainAccessible: "whenUnlockedThisDeviceOnly" },
+      await expect(encryptString("hello")).rejects.toBeInstanceOf(
+        EncryptionKeyCorruptionError,
       );
+
+      expect(mockSecureStore.setItemAsync).not.toHaveBeenCalled();
+      expect(mockSecureStore.deleteItemAsync).not.toHaveBeenCalled();
     } finally {
       if (originalWorkerId !== undefined) {
         process.env["JEST_WORKER_ID"] = originalWorkerId;
@@ -73,23 +76,71 @@ describe("encryptionService key handling", () => {
     }
   });
 
-  it("regenerates when stored key is malformed hex", async () => {
+  it("preserves malformed stored key material and surfaces typed corruption", async () => {
     const originalWorkerId = process.env["JEST_WORKER_ID"];
     delete process.env["JEST_WORKER_ID"];
     try {
       jest.resetModules();
-      const { encryptString } = require("../src/services/encryptionService");
+      const {
+        EncryptionKeyCorruptionError,
+        encryptString,
+      } = require("../src/services/encryptionService");
       const SecureStoreModule = require("expo-secure-store") as typeof SecureStore;
       const mockSecureStore = SecureStoreModule as jest.Mocked<typeof SecureStore>;
       mockSecureStore.getItemAsync.mockResolvedValue("not-hex-key-material");
 
-      await encryptString("hello");
-
-      expect(mockSecureStore.setItemAsync).toHaveBeenCalledWith(
-        "dnschat.encryption_key",
-        expect.any(String),
-        { keychainAccessible: "whenUnlockedThisDeviceOnly" },
+      await expect(encryptString("hello")).rejects.toBeInstanceOf(
+        EncryptionKeyCorruptionError,
       );
+
+      expect(mockSecureStore.setItemAsync).not.toHaveBeenCalled();
+      expect(mockSecureStore.deleteItemAsync).not.toHaveBeenCalled();
+    } finally {
+      if (originalWorkerId !== undefined) {
+        process.env["JEST_WORKER_ID"] = originalWorkerId;
+      }
+    }
+  });
+
+  it("rejects encrypted envelopes with extra fields as typed payload corruption", async () => {
+    const originalWorkerId = process.env["JEST_WORKER_ID"];
+    delete process.env["JEST_WORKER_ID"];
+    try {
+      jest.resetModules();
+      const {
+        decryptString,
+        EncryptionPayloadCorruptionError,
+      } = require("../src/services/encryptionService");
+      const nonceHex = "00".repeat(ENCRYPTION_CONSTANTS.IV_LENGTH);
+      const cipherHex = "00".repeat(16);
+
+      await expect(
+        decryptString(`enc:v1:${nonceHex}:${cipherHex}:junk`),
+      ).rejects.toBeInstanceOf(EncryptionPayloadCorruptionError);
+    } finally {
+      if (originalWorkerId !== undefined) {
+        process.env["JEST_WORKER_ID"] = originalWorkerId;
+      }
+    }
+  });
+
+  it("rejects invalid nonce and too-short ciphertext lengths", async () => {
+    const originalWorkerId = process.env["JEST_WORKER_ID"];
+    delete process.env["JEST_WORKER_ID"];
+    try {
+      jest.resetModules();
+      const {
+        decryptString,
+        EncryptionPayloadCorruptionError,
+      } = require("../src/services/encryptionService");
+      const validNonceHex = "00".repeat(ENCRYPTION_CONSTANTS.IV_LENGTH);
+
+      await expect(
+        decryptString(`enc:v1:${"00".repeat(ENCRYPTION_CONSTANTS.IV_LENGTH - 1)}:${"00".repeat(16)}`),
+      ).rejects.toBeInstanceOf(EncryptionPayloadCorruptionError);
+      await expect(
+        decryptString(`enc:v1:${validNonceHex}:0000`),
+      ).rejects.toBeInstanceOf(EncryptionPayloadCorruptionError);
     } finally {
       if (originalWorkerId !== undefined) {
         process.env["JEST_WORKER_ID"] = originalWorkerId;
@@ -118,19 +169,24 @@ describe("encryptionService key handling", () => {
     }
   });
 
-  it("throws when the stored key cannot be read", async () => {
+  it("surfaces SecureStore read rejection as transient key unavailability", async () => {
     const originalWorkerId = process.env["JEST_WORKER_ID"];
     delete process.env["JEST_WORKER_ID"];
     try {
       jest.resetModules();
-      const { encryptString } = require("../src/services/encryptionService");
+      const {
+        EncryptionKeyUnavailableError,
+        encryptString,
+      } = require("../src/services/encryptionService");
       const SecureStoreModule = require("expo-secure-store") as typeof SecureStore;
       const mockSecureStore = SecureStoreModule as jest.Mocked<typeof SecureStore>;
       mockSecureStore.getItemAsync.mockRejectedValue(new Error("SecureStore read failed"));
 
-      await expect(encryptString("hello")).rejects.toThrow(
-        "Encryption key is unavailable",
+      await expect(encryptString("hello")).rejects.toBeInstanceOf(
+        EncryptionKeyUnavailableError,
       );
+      expect(mockSecureStore.setItemAsync).not.toHaveBeenCalled();
+      expect(mockSecureStore.deleteItemAsync).not.toHaveBeenCalled();
     } finally {
       if (originalWorkerId !== undefined) {
         process.env["JEST_WORKER_ID"] = originalWorkerId;
@@ -161,8 +217,8 @@ describe("encryptionService key handling", () => {
       const SecureStoreModule = require("expo-secure-store") as typeof SecureStore;
       const mockSecureStore = SecureStoreModule as jest.Mocked<typeof SecureStore>;
 
-      const encrypted = await encryptString("hello web");
-      await expect(decryptIfEncrypted(encrypted)).resolves.toBe("hello web");
+      const encrypted = await encryptString("hello web encryption");
+      await expect(decryptIfEncrypted(encrypted)).resolves.toBe("hello web encryption");
 
       expect(mockSecureStore.getItemAsync).not.toHaveBeenCalled();
       expect(mockSecureStore.setItemAsync).not.toHaveBeenCalled();

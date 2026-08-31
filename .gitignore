@@ -78,6 +78,9 @@ firebase-debug.*.log
 
 # Additional build artifacts
 /artifacts/
+/.omo/
+/marketing/video/out/
+/.site-dist/
 *.orig
 *.bak
 *~

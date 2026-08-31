@@ -11,6 +11,7 @@ jest.mock("@react-native-async-storage/async-storage", () => ({
 jest.mock("../src/services/encryptionService", () => ({
   encryptString: jest.fn(async (value: string) => value),
   decryptIfEncrypted: jest.fn(async (value: string) => value),
+  isEncryptedPayload: jest.fn((value: string) => value.startsWith("enc:v1:")),
 }));
 
 jest.mock("../src/utils/screenshotMode", () => ({
@@ -19,11 +20,27 @@ jest.mock("../src/utils/screenshotMode", () => ({
 }));
 
 const mockAsyncStorage = AsyncStorage as jest.Mocked<typeof AsyncStorage>;
+const dnsLogServiceInternals = DNSLogService as unknown as {
+  initialized: boolean;
+  initializationInFlight: Promise<void> | null;
+  persistenceQueue: Promise<void>;
+  cleanupIntervalId: ReturnType<typeof setInterval> | null;
+};
 
 describe("DNSLogService concurrent query isolation", () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     await DNSLogService.clearLogs();
+    dnsLogServiceInternals.initialized = false;
+    dnsLogServiceInternals.initializationInFlight = null;
+    dnsLogServiceInternals.persistenceQueue = Promise.resolve();
+  });
+
+  afterEach(() => {
+    DNSLogService.stopCleanupScheduler();
+    dnsLogServiceInternals.initialized = false;
+    dnsLogServiceInternals.initializationInFlight = null;
+    dnsLogServiceInternals.persistenceQueue = Promise.resolve();
   });
 
   it("keeps overlapping queries isolated by query id", async () => {
@@ -92,6 +109,65 @@ describe("DNSLogService concurrent query isolation", () => {
     expect(persistedLogs).toHaveLength(2);
     expect(persistedLogs[0]?.query).toContain("[settings] second");
     expect(persistedLogs[1]?.query).toContain("[settings] first");
+  });
+
+  it("single-flights initialization and preserves a mutation queued during its read", async () => {
+    let releaseRead: ((value: string) => void) | undefined;
+    const readStarted = new Promise<void>((resolve) => {
+      mockAsyncStorage.getItem.mockImplementationOnce(
+        () =>
+          new Promise<string>((readResolve) => {
+            releaseRead = readResolve;
+            resolve();
+          }),
+      );
+    });
+    const storedLog = JSON.stringify([
+      {
+        id: "stored-log",
+        query: "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa len:3",
+        startTime: "2026-08-30T12:00:00.000Z",
+        finalStatus: "success",
+        finalMethod: "native",
+        entries: [],
+      },
+    ]);
+
+    const firstInitialize = DNSLogService.initialize();
+    const secondInitialize = DNSLogService.initialize();
+    await readStarted;
+    const concurrentMutation = DNSLogService.recordSettingsEvent("during init");
+
+    expect(mockAsyncStorage.getItem).toHaveBeenCalledTimes(1);
+    releaseRead?.(storedLog);
+    await Promise.all([firstInitialize, secondInitialize, concurrentMutation]);
+
+    const ids = DNSLogService.getLogs().map(({ id }) => id);
+    expect(ids).toContain("stored-log");
+    expect(
+      DNSLogService.getLogs().some(({ query }) => query.includes("during init")),
+    ).toBe(true);
+
+    const finalPrimaryWrite = mockAsyncStorage.setItem.mock.calls
+      .filter(([key]) => key === "@dns_query_logs")
+      .at(-1);
+    expect(finalPrimaryWrite).toBeDefined();
+    const persisted = JSON.parse(String(finalPrimaryWrite?.[1])) as Array<{
+      id: string;
+      query: string;
+    }>;
+    expect(persisted.map(({ id }) => id)).toContain("stored-log");
+    expect(persisted.some(({ query }) => query.includes("during init"))).toBe(true);
+  });
+
+  it("starts and stops the cleanup scheduler as part of initialization lifecycle", async () => {
+    await DNSLogService.initialize();
+
+    expect(dnsLogServiceInternals.cleanupIntervalId).not.toBeNull();
+
+    DNSLogService.stopCleanupScheduler();
+
+    expect(dnsLogServiceInternals.cleanupIntervalId).toBeNull();
   });
 
   it("attributes failed queries to the last attempted transport instead of mock", async () => {

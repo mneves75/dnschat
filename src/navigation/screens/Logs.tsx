@@ -11,20 +11,18 @@
  * @see DESIGN-UI-UX-GUIDELINES.md - Loading and empty states
  */
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
   StyleSheet,
   ActivityIndicator,
-  Platform,
 } from "react-native";
 import Animated from "react-native-reanimated";
 import type { SharedValue } from "react-native-reanimated";
 import { DNSLogService } from "../../services/dnsLogService";
 import type { DNSQueryLog, DNSLogEntry } from "../../services/dnsLogService";
 import { Form } from "../../components/glass/GlassForm";
-import { LiquidGlassWrapper } from "../../components/LiquidGlassWrapper";
 import { PressableRipple } from "../../components/PressableRipple";
 import { useTranslation } from "../../i18n";
 import type { MessageKey, TranslationParams } from "../../i18n";
@@ -37,6 +35,7 @@ import { EmptyState } from "../../components/EmptyState";
 import { CheckmarkIcon } from "../../components/icons/CheckmarkIcon";
 import { CloseIcon } from "../../components/icons/CloseIcon";
 import { appAlert } from "../../utils/appAlert";
+import { devWarn } from "../../utils/devLog";
 
 type TFn = (key: MessageKey, params?: TranslationParams) => string;
 
@@ -46,8 +45,10 @@ export function Logs() {
   const [logs, setLogs] = useState<DNSQueryLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [expandedLogs, setExpandedLogs] = useState<Set<string>>(new Set());
+  const isMountedRef = useRef(true);
   const { t } = useTranslation();
   const { animatedStyle } = useScreenEntrance();
   const { opacities, translates } = useStaggeredListValues(logs.length);
@@ -64,38 +65,58 @@ export function Logs() {
   // No synchronous setIsLoading(true): isLoading already starts true for the
   // initial skeleton, and pull-to-refresh uses its own `refreshing` flag — so
   // the mount effect performs no synchronous state write.
-  const loadLogs = async () => {
-    await DNSLogService.initialize()
-      .then(() => setLogs(DNSLogService.getLogs()))
+  const loadLogs = () =>
+    DNSLogService.initialize()
+      .then(() => {
+        if (isMountedRef.current) {
+          setLogs(DNSLogService.getLogs());
+          setLoadFailed(false);
+        }
+      })
+      .catch((loadError: unknown) => {
+        devWarn("[Logs] Failed to load DNS logs", loadError);
+        if (isMountedRef.current) {
+          setLoadFailed(true);
+        }
+        throw loadError;
+      })
       .finally(() => {
-        setIsLoading(false);
-        if (!hasLoadedOnce) {
+        if (isMountedRef.current) {
+          setIsLoading(false);
           setHasLoadedOnce(true);
         }
       });
-  };
 
   // Effect: load logs on mount and subscribe to updates.
   useEffect(() => {
-    loadLogs();
+    isMountedRef.current = true;
+    void loadLogs().catch(() => undefined);
 
     // Subscribe to log updates
     const unsubscribe = DNSLogService.subscribe((updatedLogs) => {
-      setLogs(updatedLogs);
+      if (isMountedRef.current) {
+        setLogs(updatedLogs);
+      }
     });
 
     // Wrap cleanup to ensure void return type (unsubscribe may return boolean)
-    return () => { unsubscribe(); };
+    return () => {
+      isMountedRef.current = false;
+      unsubscribe();
+    };
   }, []);
 
   const handleRefresh = () => {
     setRefreshing(true);
     // Promise form (not try/finally block) per the React Compiler convention.
-    // loadLogs already swallows its own failure, but the .catch keeps a future
-    // rejection from leaving the pull-to-refresh spinner locked on.
-    loadLogs()
-      .catch(() => {})
-      .finally(() => setRefreshing(false));
+    // The error state is already surfaced; catch only settles this event path.
+    void loadLogs()
+      .catch(() => undefined)
+      .finally(() => {
+        if (isMountedRef.current) {
+          setRefreshing(false);
+        }
+      });
   };
 
   const toggleExpanded = (logId: string) => {
@@ -152,8 +173,20 @@ export function Logs() {
           </Form.Section>
         )}
 
+        {/* Load Error */}
+        {!showSkeleton && loadFailed && (
+          <Form.Section>
+            <EmptyState
+              title={t("screen.logs.loadError.title")}
+              description={t("screen.logs.loadError.subtitle")}
+              iconType="logs"
+              testID="logs-load-error"
+            />
+          </Form.Section>
+        )}
+
         {/* Empty State */}
-        {!showSkeleton && logs.length === 0 && (
+        {!showSkeleton && !loadFailed && logs.length === 0 && (
           <Form.Section>
             <EmptyState
               title={t("screen.logs.empty.title")}
@@ -176,6 +209,7 @@ export function Logs() {
                   key={item.id}
                   item={item}
                   index={index}
+                  isLast={index === logs.length - 1}
                   palette={palette}
                   t={t}
                   isExpanded={expandedLogs.has(item.id)}
@@ -263,6 +297,7 @@ const LogEntryRow: React.FC<LogEntryRowProps> = ({ entry, parentId, palette, t }
 interface LogQueryRowProps {
   item: DNSQueryLog;
   index: number;
+  isLast: boolean;
   palette: IMessagePalette;
   t: TFn;
   isExpanded: boolean;
@@ -273,6 +308,7 @@ interface LogQueryRowProps {
 
 const LogQueryRow: React.FC<LogQueryRowProps> = ({
   item,
+  isLast,
   palette,
   t,
   isExpanded,
@@ -324,14 +360,18 @@ const LogQueryRow: React.FC<LogQueryRowProps> = ({
         }
         accessibilityState={{ expanded: isExpanded }}
       >
-        <LiquidGlassWrapper
-          variant={isActive ? "interactive" : "regular"}
-          shape="roundedRect"
-          cornerRadius={12}
-          isInteractive={false}
+        <View
           style={[
             styles.logCard,
-            isActive && { backgroundColor: palette.accentSurface },
+            {
+              backgroundColor: isActive
+                ? palette.accentSurface
+                : palette.backgroundSecondary,
+              borderBottomColor: palette.separator,
+              // The grouped panel already closes the list; a separator under
+              // the final row reads as a stray hairline.
+              borderBottomWidth: isLast ? 0 : StyleSheet.hairlineWidth,
+            },
           ]}
         >
           <View style={styles.logHeader}>
@@ -347,18 +387,21 @@ const LogQueryRow: React.FC<LogQueryRowProps> = ({
                   {timeLabel}
                 </Text>
                 {Boolean(item.finalMethod) && (
-                  <LiquidGlassWrapper
-                    variant="interactive"
-                    shape="capsule"
+                  <View
                     style={[
                       styles.methodBadge,
-                      { backgroundColor: `${palette.userBubble}26` },
+                      { backgroundColor: palette.assistantBubble },
                     ]}
                   >
-                    <Text style={[styles.methodText, { color: palette.userBubble }]}>
+                    <Text
+                      style={[
+                        styles.methodText,
+                        { color: palette.bubbleTextOnGray },
+                      ]}
+                    >
                       {methodLabel}
                     </Text>
-                  </LiquidGlassWrapper>
+                  </View>
                 )}
                 {item.totalDuration !== undefined && (
                   <Text style={[styles.duration, { color: palette.textSecondary }]}>
@@ -374,19 +417,19 @@ const LogQueryRow: React.FC<LogQueryRowProps> = ({
               importantForAccessibility="no-hide-descendants"
             >
               {isActive && (
-                <ActivityIndicator size="small" color={palette.bubbleTextOnBlue} />
+                <ActivityIndicator size="small" color={palette.textOnChroma} />
               )}
               {!isActive && item.finalStatus === "success" && (
-                <CheckmarkIcon size={16} color={palette.bubbleTextOnBlue} />
+                <CheckmarkIcon size={16} color={palette.textOnChroma} />
               )}
               {!isActive && item.finalStatus === "failure" && (
-                <CloseIcon size={14} color={palette.bubbleTextOnBlue} />
+                <CloseIcon size={14} color={palette.textOnChroma} />
               )}
               {!isActive &&
                 item.finalStatus !== "success" &&
                 item.finalStatus !== "failure" && (
                   <Text
-                    style={[styles.statusText, { color: palette.bubbleTextOnBlue }]}
+                    style={[styles.statusText, { color: palette.textOnChroma }]}
                     accessibilityElementsHidden
                     importantForAccessibility="no-hide-descendants"
                   >
@@ -441,7 +484,7 @@ const LogQueryRow: React.FC<LogQueryRowProps> = ({
               </View>
             </View>
           )}
-        </LiquidGlassWrapper>
+        </View>
       </PressableRipple>
     </AnimatedListItem>
   );
@@ -449,15 +492,13 @@ const LogQueryRow: React.FC<LogQueryRowProps> = ({
 
 const styles = StyleSheet.create({
   logsList: {
-    gap: 8,
+    gap: 0,
   },
   logItemWrapper: {
     paddingHorizontal: 0,
-    paddingVertical: 4,
   },
   logCard: {
     padding: 16,
-    marginHorizontal: 20,
   },
   logHeader: {
     flexDirection: "row",
@@ -486,6 +527,7 @@ const styles = StyleSheet.create({
   methodBadge: {
     paddingHorizontal: 8,
     paddingVertical: 2,
+    borderRadius: 6,
   },
   methodText: {
     fontSize: 12,

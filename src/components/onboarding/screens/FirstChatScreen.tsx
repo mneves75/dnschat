@@ -172,7 +172,9 @@ export function FirstChatScreen() {
     <View testID="onboarding-first-chat" style={styles.container}>
       <View style={styles.content}>
         <View style={styles.headerSection}>
-          <Text style={[typography.displayMedium, { color: palette.accentTint }]}>
+          <Text
+            style={[typography.displayMedium, { color: palette.accentText }]}
+          >
             {t("screen.onboarding.firstChat.label")}
           </Text>
 
@@ -252,7 +254,7 @@ export function FirstChatScreen() {
                     style={[
                       typography.callout,
                       styles.suggestionText,
-                      { color: palette.accentTint },
+                      { color: palette.accentText },
                     ]}
                   >
                     {suggestion}
@@ -302,7 +304,7 @@ export function FirstChatScreen() {
                 backgroundColor:
                   !inputText.trim() || isLoading
                     ? palette.textTertiary
-                    : palette.accentTint,
+                    : palette.userBubble,
                 width: minimumTouchTarget,
                 height: minimumTouchTarget,
                 borderRadius: minimumTouchTarget / 2,
@@ -327,7 +329,7 @@ export function FirstChatScreen() {
             }}
           >
             {isLoading ? (
-              <Text style={[typography.headline, { color: palette.solid }]}>…</Text>
+              <Text style={[typography.headline, { color: palette.textOnChroma }]}>…</Text>
             ) : (
               <SendIcon size={20} isActive={!!inputText.trim()} />
             )}
@@ -370,9 +372,11 @@ function MessageBubble({ message, palette, typography }: MessageBubbleProps) {
           styles.messageBubble,
           {
             backgroundColor: message.isUser
-              ? palette.accentTint
-              : palette.surface,
-            borderColor: message.isUser ? palette.transparent : palette.border,
+              ? palette.userBubble
+              : message.status === "sending"
+                ? palette.surface
+                : palette.solid,
+            borderColor: message.isUser ? palette.accentTint : palette.border,
           },
         ]}
       >
@@ -381,7 +385,11 @@ function MessageBubble({ message, palette, typography }: MessageBubbleProps) {
             typography.callout,
             styles.messageText,
             {
-              color: message.isUser ? palette.solid : palette.textPrimary,
+              // Same token pairing as the real chat MessageBubble, so the
+              // onboarding preview does not disagree with the app it previews.
+              color: message.isUser
+                ? palette.bubbleTextOnBlue
+                : palette.textPrimary,
             },
           ]}
         >

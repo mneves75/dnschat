@@ -1,9 +1,38 @@
-const { withDangerousMod, withPlugins } = require("@expo/config-plugins");
+const {
+  withAppDelegate,
+  withDangerousMod,
+  withInfoPlist,
+  withPlugins,
+} = require("@expo/config-plugins");
 const path = require("path");
 const fs = require("fs");
 
+const DNSJAVA_MIN_VERSION = "3.6.2";
+const iosSceneDelegateTemplate = fs.readFileSync(
+  path.join(__dirname, "templates", "ios", "SceneDelegate.swift"),
+  "utf8",
+);
+
 const withDNSNativeModule = (config) => {
   return withPlugins(config, [
+    (config) => {
+      config = withInfoPlist(config, (config) => {
+        config.modResults = applyIosSceneManifestPolicy(config.modResults);
+        return config;
+      });
+
+      return withAppDelegate(config, (config) => {
+        if (config.modResults.language !== "swift") {
+          throw new Error("DNSChat's iOS scene lifecycle requires a Swift AppDelegate");
+        }
+
+        config.modResults.contents = applyIosAppDelegateScenePolicy(
+          config.modResults.contents,
+        );
+        return config;
+      });
+    },
+
     // iOS native module integration
     (config) =>
       withDangerousMod(config, [
@@ -126,10 +155,22 @@ const withDNSNativeModule = (config) => {
 function applyAndroidBuildGradlePolicy(content) {
   let next = content;
 
-  if (!next.includes("dnsjava:dnsjava")) {
+  let foundDnsjavaDependency = false;
+  next = next.replace(
+    /(["']dnsjava:dnsjava:)(\d+\.\d+\.\d+(?:[-+][A-Za-z0-9.-]+)?)(["'])/g,
+    (dependency, prefix, version, suffix) => {
+      foundDnsjavaDependency = true;
+      if (compareVersions(version, DNSJAVA_MIN_VERSION) < 0) {
+        return prefix + DNSJAVA_MIN_VERSION + suffix;
+      }
+      return dependency;
+    },
+  );
+
+  if (!foundDnsjavaDependency && !next.includes("dnsjava:dnsjava")) {
     next = next.replace(
       /(dependencies\s*\{)/,
-      `$1\n    // DNS Java library for legacy DNS support (API < 29)\n    implementation("dnsjava:dnsjava:3.5.2")\n`,
+      `$1\n    // DNS Java library for legacy DNS support (API < 29)\n    // 3.6.2+ fixes CVE-2024-25638 (improper DNS response validation)\n    implementation("dnsjava:dnsjava:${DNSJAVA_MIN_VERSION}")\n`,
     );
   }
 
@@ -139,15 +180,37 @@ def keystoreProperties = new Properties()
 def keystorePropertiesFile = rootProject.file("keystore.properties")
 def repoKeystorePropertiesFile = new File(projectRoot, "keystore.properties")
 def hasReleaseSigning = false
+def keystorePropertiesBaseDir = null
 if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+    keystorePropertiesBaseDir = keystorePropertiesFile.getParentFile()
     hasReleaseSigning = true
 } else if (repoKeystorePropertiesFile.exists()) {
     keystoreProperties.load(new FileInputStream(repoKeystorePropertiesFile))
+    keystorePropertiesBaseDir = repoKeystorePropertiesFile.getParentFile()
     hasReleaseSigning = true
 }
 `;
     next = next.replace(/^(\s*def jscFlavor = [^\n]+\n)/m, `$1${keystorePolicyBlock}\n`);
+  }
+
+  if (!next.includes("def keystorePropertiesBaseDir = null")) {
+    next = next.replace(
+      /def hasReleaseSigning = false\n/,
+      "def hasReleaseSigning = false\ndef keystorePropertiesBaseDir = null\n",
+    );
+  }
+  if (!next.includes("keystorePropertiesBaseDir = keystorePropertiesFile.getParentFile()")) {
+    next = next.replace(
+      /(keystoreProperties\.load\(new FileInputStream\(keystorePropertiesFile\)\)\n)/,
+      "$1    keystorePropertiesBaseDir = keystorePropertiesFile.getParentFile()\n",
+    );
+  }
+  if (!next.includes("keystorePropertiesBaseDir = repoKeystorePropertiesFile.getParentFile()")) {
+    next = next.replace(
+      /(keystoreProperties\.load\(new FileInputStream\(repoKeystorePropertiesFile\)\)\n)/,
+      "$1    keystorePropertiesBaseDir = repoKeystorePropertiesFile.getParentFile()\n",
+    );
   }
 
   if (!/signingConfigs\s*\{[\s\S]*?\n\s*release\s*\{[\s\S]*?hasReleaseSigning/.test(next)) {
@@ -156,7 +219,8 @@ if (keystorePropertiesFile.exists()) {
       `$1
         release {
             if (hasReleaseSigning) {
-                storeFile file(keystoreProperties['storeFile'])
+                def configuredStoreFile = new File(keystoreProperties['storeFile'])
+                storeFile(configuredStoreFile.isAbsolute() ? configuredStoreFile : new File(keystorePropertiesBaseDir, configuredStoreFile.path))
                 storePassword keystoreProperties['storePassword']
                 keyAlias keystoreProperties['keyAlias']
                 keyPassword keystoreProperties['keyPassword']
@@ -164,6 +228,11 @@ if (keystorePropertiesFile.exists()) {
         }`,
     );
   }
+
+  next = next.replace(
+    /storeFile\s+file\(keystoreProperties\[['"]storeFile['"]\]\)/g,
+    "def configuredStoreFile = new File(keystoreProperties['storeFile'])\n                storeFile(configuredStoreFile.isAbsolute() ? configuredStoreFile : new File(keystorePropertiesBaseDir, configuredStoreFile.path))",
+  );
 
   next = rewriteNamedBlock(next, "buildTypes", (buildTypesBody) => {
     let nextBuildTypesBody = buildTypesBody;
@@ -194,6 +263,64 @@ if (keystorePropertiesFile.exists()) {
 
     return nextBuildTypesBody;
   });
+
+  return next;
+}
+
+function compareVersions(left, right) {
+  const parse = (version) => {
+    const [core, qualifier = ""] = version.split(/(?=[-+])/u, 2);
+    return {
+      parts: core.split(".").map(Number),
+      isPrerelease: qualifier.startsWith("-"),
+    };
+  };
+  const leftVersion = parse(left);
+  const rightVersion = parse(right);
+
+  for (let i = 0; i < 3; i += 1) {
+    const difference = leftVersion.parts[i] - rightVersion.parts[i];
+    if (difference !== 0) return difference;
+  }
+  if (leftVersion.isPrerelease === rightVersion.isPrerelease) return 0;
+  return leftVersion.isPrerelease ? -1 : 1;
+}
+
+function applyIosSceneManifestPolicy(infoPlist) {
+  return {
+    ...infoPlist,
+    UIApplicationSceneManifest: {
+      UIApplicationSupportsMultipleScenes: false,
+      UISceneConfigurations: {
+        UIWindowSceneSessionRoleApplication: [
+          {
+            UISceneConfigurationName: "Default Configuration",
+            UISceneDelegateClassName: "$(PRODUCT_MODULE_NAME).SceneDelegate",
+          },
+        ],
+      },
+    },
+  };
+}
+
+function applyIosAppDelegateScenePolicy(content) {
+  let next = content;
+
+  if (!next.includes("internal import ExpoModulesCore")) {
+    next = next.replace(
+      "internal import Expo\n",
+      "internal import Expo\ninternal import ExpoModulesCore\n",
+    );
+  }
+
+  next = next.replace(
+    /\n#if os\(iOS\) \|\| os\(tvOS\)\n[\s\S]*?factory\.startReactNative\([\s\S]*?\n#endif\n/,
+    "\n",
+  );
+
+  if (!next.includes("class SceneDelegate: UIResponder, UIWindowSceneDelegate")) {
+    next = next.trimEnd() + "\n\n" + iosSceneDelegateTemplate.trim() + "\n";
+  }
 
   return next;
 }
@@ -374,5 +501,8 @@ module.exports.__test__ = {
   applyMainApplicationKotlinPolicy,
   applyMainApplicationJavaPolicy,
   applyIosProjectVersionPolicy,
+  applyIosSceneManifestPolicy,
+  applyIosAppDelegateScenePolicy,
+  compareVersions,
   rewriteNamedBlock,
 };

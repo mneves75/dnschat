@@ -51,7 +51,6 @@ const response = nativeDNS.parseMultiPartResponse(txtRecords);
 ## Development
 
 ```bash
-cd modules/dns-native
-npm ci
-npm test
+pnpm install --frozen-lockfile
+pnpm run test:native
 ```

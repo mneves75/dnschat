@@ -65,8 +65,16 @@ This document inventories the data stored or processed by DNSChat and satisfies 
 - DNS prompt text is sent as a DNS TXT query to configured DNS servers (default: `llm.pieter.com:53`).
 - The app transmits user input over UDP/TCP via the DNS pipeline, with optional mock DNS in development.
 - Responses are rendered in the UI and stored in local encrypted chat history.
-- DNS over standard port 53 is observable by resolvers and networks. Users must
-  not send secrets or personal data through prompts.
+- DNS over standard port 53 is observable and not authenticated end to end.
+  Resolvers or on-path infrastructure may observe, retain, replay, or alter
+  queries and responses. Users must not send secrets or personal data through
+  prompts and must not treat responses as cryptographically verified.
+- The configured DNS services are third parties. As of `2026-08-29`, the
+  default service's public page documents how to query it, but no public policy
+  covering retention, secondary use, deletion, or service-provider status was
+  located on that page or through web search. Provider-side storage and use
+  therefore remain unknown; production store declarations must
+  not claim local-only handling or no sharing without operator evidence.
 
 ## Data Classification
 
@@ -98,5 +106,4 @@ This document inventories the data stored or processed by DNSChat and satisfies 
 ## Review Cadence
 
 - Review this inventory whenever storage keys, retention policies, or data flows change.
-- Last reviewed during the startup crash and full source/security sweep on
-  `2026-05-27`.
+- Last reviewed during the production security sweep on `2026-08-29`.

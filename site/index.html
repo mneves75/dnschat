@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="DNSChat envia prompts curtos por consultas DNS TXT, sem conta, chave de API ou rastreamento. DNS é infraestrutura observável."
+    />
+    <meta name="theme-color" content="#111218" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; base-uri 'self'; connect-src 'none'; font-src 'self'; form-action 'none'; img-src 'self'; media-src 'self'; object-src 'none'; script-src 'self'; style-src 'self'"
+    />
+    <title>DNSChat | IA por DNS, sem falsas promessas</title>
+    <link rel="icon" href="assets/favicon.png" />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="script.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main" data-i18n="skip">Pular para o conteúdo</a>
+
+    <header class="site-header">
+      <a class="brand" href="#top" aria-label="DNSChat, início">
+        <img src="assets/dnschat-icon.png" alt="" width="36" height="36" />
+        <span>DNSChat</span>
+      </a>
+
+      <nav aria-label="Navegação principal" data-i18n-aria-label="navLabel">
+        <a href="#produto" data-i18n="navProduct">Produto</a>
+        <a href="#como-funciona" data-i18n="navHow">Como funciona</a>
+        <a href="#videos" data-i18n="navVideos">Vídeos</a>
+        <a href="#privacidade" data-i18n="navPrivacy">Privacidade</a>
+      </nav>
+
+      <div class="language-switcher" role="group" aria-label="Idioma" data-i18n-aria-label="languageLabel">
+        <button type="button" data-language="pt-BR" aria-pressed="true">PT</button>
+        <button type="button" data-language="en-US" aria-pressed="false">EN</button>
+      </div>
+    </header>
+
+    <main id="main">
+      <section class="hero" id="top" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <p class="eyebrow" data-i18n="heroEyebrow">Conversa curta. Transporte incomum. Limites claros.</p>
+          <h1 id="hero-title" data-i18n="heroTitle">IA por DNS, sem conta e sem falsas promessas.</h1>
+          <p class="hero-lede" data-i18n="heroLede">
+            Envie prompts curtos como consultas DNS TXT e receba respostas no app. Sem chave de API, sem SDK de rastreamento e com histórico local criptografado.
+          </p>
+          <div class="hero-actions">
+            <a class="button button-primary" href="#videos" data-i18n="watchDemo">Assistir à demonstração</a>
+            <a
+              class="button button-secondary"
+              href="https://github.com/mneves75/dnschat"
+              target="_blank"
+              rel="noopener noreferrer"
+              data-i18n="viewSource"
+            >Ver o código-fonte</a>
+          </div>
+          <p class="truth-note" data-i18n="heroTruth">
+            Importante: DNS é infraestrutura observável. O serviço DNS selecionado pode registrar ou reter sua mensagem. Não envie segredos nem dados pessoais.
+          </p>
+        </div>
+
+        <figure class="hero-visual">
+          <img
+            src="assets/signal-path-hero.png"
+            alt="Fluxo abstrato de um sinal percorrendo uma rede até retornar como resposta"
+            data-i18n-alt="heroImageAlt"
+            width="1672"
+            height="941"
+          />
+          <figcaption data-i18n="heroCaption">Uma mensagem curta percorre o DNS; a resposta volta como um registro TXT.</figcaption>
+        </figure>
+      </section>
+
+      <section class="product-section" id="produto" aria-labelledby="product-title">
+        <div class="section-heading">
+          <p class="eyebrow" data-i18n="productEyebrow">O essencial, sem cadastro</p>
+          <h2 id="product-title" data-i18n="productTitle">Projetado para uma tarefa simples.</h2>
+          <p data-i18n="productIntro">O DNSChat mantém a experiência pequena: escreva, envie, acompanhe a rota e conserve o histórico no aparelho.</p>
+        </div>
+
+        <dl class="principles">
+          <div>
+            <dt data-i18n="principleOneTitle">Sem conta</dt>
+            <dd data-i18n="principleOneBody">Abra o app e comece. Nenhum perfil ou login é necessário.</dd>
+          </div>
+          <div>
+            <dt data-i18n="principleTwoTitle">Sem chave de API</dt>
+            <dd data-i18n="principleTwoBody">A consulta usa o transporte DNS já configurado pelo produto.</dd>
+          </div>
+          <div>
+            <dt data-i18n="principleThreeTitle">Histórico local criptografado</dt>
+            <dd data-i18n="principleThreeBody">Conversas salvas no aparelho são protegidas por criptografia.</dd>
+          </div>
+          <div>
+            <dt data-i18n="principleFourTitle">Sem rastreamento</dt>
+            <dd data-i18n="principleFourBody">O app não inclui SDK de analytics ou publicidade.</dd>
+          </div>
+        </dl>
+      </section>
+
+      <section class="how-section" id="como-funciona" aria-labelledby="how-title">
+        <div class="section-heading">
+          <p class="eyebrow" data-i18n="howEyebrow">Como funciona</p>
+          <h2 id="how-title" data-i18n="howTitle">Três etapas, uma fronteira de confiança visível.</h2>
+        </div>
+
+        <ol class="steps">
+          <li>
+            <span aria-hidden="true">01</span>
+            <div>
+              <h3 data-i18n="stepOneTitle">Escreva uma mensagem curta</h3>
+              <p data-i18n="stepOneBody">O app valida o tamanho e prepara uma consulta DNS TXT.</p>
+            </div>
+          </li>
+          <li>
+            <span aria-hidden="true">02</span>
+            <div>
+              <h3 data-i18n="stepTwoTitle">Envie pelo resolvedor selecionado</h3>
+              <p data-i18n="stepTwoBody">A mensagem deixa o aparelho e atravessa infraestrutura DNS observável.</p>
+            </div>
+          </li>
+          <li>
+            <span aria-hidden="true">03</span>
+            <div>
+              <h3 data-i18n="stepThreeTitle">Leia e salve a resposta</h3>
+              <p data-i18n="stepThreeBody">A resposta TXT aparece na conversa e pode permanecer no histórico local criptografado.</p>
+            </div>
+          </li>
+        </ol>
+      </section>
+
+      <section class="video-section" id="videos" aria-labelledby="videos-title">
+        <div class="section-heading">
+          <p class="eyebrow" data-i18n="videosEyebrow">Veja antes de instalar</p>
+          <h2 id="videos-title" data-i18n="videosTitle">Uma visão rápida e um passo a passo completo.</h2>
+          <p data-i18n="videosIntro">Os vídeos usam apenas interfaces demonstrativas e efeitos sonoros; não contêm perfis reais nem dados pessoais.</p>
+        </div>
+
+        <div class="video-list">
+          <article>
+            <div class="video-copy">
+              <p class="duration">00:30</p>
+              <h3 data-i18n="launchTitle">Filme de lançamento</h3>
+              <p data-i18n="launchBody">A proposta, o caminho da mensagem e o limite de privacidade em meio minuto.</p>
+            </div>
+            <video
+              controls
+              preload="metadata"
+              poster="assets/posters/dnschat-launch-poster.png"
+              aria-describedby="launch-transcript"
+            >
+              <source src="assets/videos/dnschat-launch.mp4" type="video/mp4" />
+              <track
+                default
+                kind="captions"
+                src="captions/dnschat-launch.pt-BR.vtt"
+                srclang="pt-BR"
+                label="Português"
+              />
+              <track
+                kind="captions"
+                src="captions/dnschat-launch.en-US.vtt"
+                srclang="en-US"
+                label="English"
+              />
+              <p data-i18n="videoFallback">Seu navegador não reproduz este vídeo. Baixe o arquivo MP4 pelo link abaixo.</p>
+            </video>
+            <details id="launch-transcript">
+              <summary data-i18n="transcriptLabel">Descrição do vídeo</summary>
+              <p data-i18n="launchTranscript">Animação sem narração: uma mensagem curta sai do DNSChat, percorre uma rota DNS, retorna como resposta TXT e termina com o aviso de que DNS é observável.</p>
+            </details>
+            <a class="text-link" href="assets/videos/dnschat-launch.mp4" download data-i18n="downloadVideo">Baixar MP4</a>
+          </article>
+
+          <article>
+            <div class="video-copy">
+              <p class="duration">01:15</p>
+              <h3 data-i18n="tutorialTitle">Tutorial do produto</h3>
+              <p data-i18n="tutorialBody">Configuração, nova conversa, envio, resposta, histórico, logs e uso responsável.</p>
+            </div>
+            <video
+              controls
+              preload="metadata"
+              poster="assets/posters/dnschat-tutorial-poster.png"
+              aria-describedby="tutorial-transcript"
+            >
+              <source src="assets/videos/dnschat-tutorial.mp4" type="video/mp4" />
+              <track
+                default
+                kind="captions"
+                src="captions/dnschat-tutorial.pt-BR.vtt"
+                srclang="pt-BR"
+                label="Português"
+              />
+              <track
+                kind="captions"
+                src="captions/dnschat-tutorial.en-US.vtt"
+                srclang="en-US"
+                label="English"
+              />
+              <p data-i18n="videoFallback">Seu navegador não reproduz este vídeo. Baixe o arquivo MP4 pelo link abaixo.</p>
+            </video>
+            <details id="tutorial-transcript">
+              <summary data-i18n="transcriptLabel">Descrição do vídeo</summary>
+              <p data-i18n="tutorialTranscript">Tutorial animado sem narração: abre Configurações, escolhe um resolvedor, cria uma conversa, envia uma mensagem demonstrativa, recebe a resposta e consulta histórico e logs antes do aviso de segurança.</p>
+            </details>
+            <a class="text-link" href="assets/videos/dnschat-tutorial.mp4" download data-i18n="downloadVideo">Baixar MP4</a>
+          </article>
+        </div>
+      </section>
+
+      <section class="privacy-section" id="privacidade" aria-labelledby="privacy-title">
+        <div class="privacy-statement">
+          <p class="eyebrow" data-i18n="privacyEyebrow">Privacidade sem ambiguidade</p>
+          <h2 id="privacy-title" data-i18n="privacyTitle">Criptografia local não torna o DNS privado.</h2>
+          <p data-i18n="privacyBody">
+            O histórico armazenado pelo app é criptografado no aparelho. Durante o envio, porém, o conteúdo passa pelo serviço DNS selecionado e por infraestrutura de rede. Esses operadores podem observar, reter ou alterar consultas e respostas segundo práticas que o DNSChat não controla.
+          </p>
+        </div>
+        <aside aria-labelledby="safe-use-title">
+          <h3 id="safe-use-title" data-i18n="safeUseTitle">Use com segurança</h3>
+          <ul>
+            <li data-i18n="safeUseOne">Não envie senhas, tokens ou chaves.</li>
+            <li data-i18n="safeUseTwo">Não envie dados pessoais, médicos ou financeiros.</li>
+            <li data-i18n="safeUseThree">Considere consultas e respostas observáveis; as respostas não são autenticadas.</li>
+          </ul>
+        </aside>
+      </section>
+
+      <section class="source-section" aria-labelledby="source-title">
+        <div>
+          <p class="eyebrow" data-i18n="sourceEyebrow">Código aberto para inspeção</p>
+          <h2 id="source-title" data-i18n="sourceTitle">Confira as decisões, os limites e a implementação.</h2>
+        </div>
+        <a
+          class="button button-primary"
+          href="https://github.com/mneves75/dnschat"
+          target="_blank"
+          rel="noopener noreferrer"
+          data-i18n="openGitHub"
+        >Abrir no GitHub</a>
+      </section>
+    </main>
+
+    <footer>
+      <p data-i18n="footerCopy">DNSChat. Sem conta. Sem rastreamento. DNS continua sendo observável.</p>
+      <a href="#top" data-i18n="backTop">Voltar ao topo</a>
+    </footer>
+  </body>
+</html>

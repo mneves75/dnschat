@@ -2,28 +2,23 @@ import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import type { StyleProp, TextStyle } from "react-native";
 import { format } from "date-fns";
-import Markdown from "react-native-markdown-display";
-import type { MarkdownProps, RenderRules } from "react-native-markdown-display";
 import type { Message } from "../types/chat";
 import type { IMessagePalette } from "../ui/theme/imessagePalette";
 import type { TypographyScale } from "../ui/theme/liquidGlassTypography";
 import { LiquidGlassSpacing } from "../ui/theme/liquidGlassSpacing";
 import { useTranslation } from "../i18n";
-import { openExternalLink } from "../utils/externalLinks";
-import { appAlert } from "../utils/appAlert";
+import { SafeMarkdown } from "./SafeMarkdown";
+import type { SafeMarkdownStyle } from "./SafeMarkdown";
 
 interface MessageContentProps {
   message: Message;
   textColor: string;
   textStyles: StyleProp<TextStyle>;
-  markdownStyles: MarkdownProps["style"];
+  markdownStyles: SafeMarkdownStyle;
   palette: IMessagePalette;
   typography: TypographyScale;
 }
 
-const markdownRules: RenderRules = {
-  image: () => null,
-};
 const FIXED_GLYPH_MAX_FONT_SCALE = 1.2;
 
 /**
@@ -53,37 +48,15 @@ export function MessageContent({
   const displayContent = hasError
     ? t("screen.chat.errorMessage")
     : message.content;
-  const markdownProps = markdownStyles ? { style: markdownStyles } : {};
-  const handleMarkdownLinkPress = (url: string): boolean => {
-    appAlert(
-      t("screen.chat.externalLink.title"),
-      t("screen.chat.externalLink.message", { url }),
-      [
-        { text: t("common.cancel"), style: "cancel" },
-        {
-          text: t("screen.chat.externalLink.open"),
-          onPress: () => {
-            openExternalLink(url);
-          },
-        },
-      ],
-    );
-    return false;
-  };
-
   return (
     <>
       {/* Message text content */}
       {isUser || hasError ? (
         <Text style={[textStyles, typography.body]} selectable={false}>{displayContent}</Text>
       ) : (
-        <Markdown
-          {...markdownProps}
-          onLinkPress={handleMarkdownLinkPress}
-          rules={markdownRules}
-        >
+        <SafeMarkdown style={markdownStyles}>
           {displayContent}
-        </Markdown>
+        </SafeMarkdown>
       )}
 
       {/* Loading indicator for sending messages */}

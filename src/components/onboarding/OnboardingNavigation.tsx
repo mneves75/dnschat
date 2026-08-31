@@ -108,7 +108,15 @@ export function OnboardingNavigation({
       : t("screen.onboarding.navigation.continue"));
 
   return (
-    <View style={styles.container}>
+    <View
+      style={[
+        styles.container,
+        {
+          backgroundColor: palette.background,
+          borderTopColor: palette.separator,
+        },
+      ]}
+    >
       <View style={styles.leftSection}>
         {/* iOS HIG: Skip button allows users to bypass onboarding tutorial */}
         {showSkip && !isLastStep && (
@@ -151,7 +159,7 @@ export function OnboardingNavigation({
               style={[
                 typography.callout,
                 styles.backButtonText,
-                { color: palette.accentTint },
+                { color: palette.accentText },
               ]}
             >
               {t("screen.onboarding.navigation.back")}
@@ -166,7 +174,8 @@ export function OnboardingNavigation({
         disabled={isSubmitting}
         style={[
           styles.nextButton,
-          { backgroundColor: palette.accentTint },
+          { backgroundColor: palette.userBubble },
+          isSubmitting && styles.nextButtonDisabled,
         ]}
         testID={isLastStep ? "onboarding-complete" : "onboarding-continue"}
         variant="primary"
@@ -184,7 +193,7 @@ export function OnboardingNavigation({
           style={[
             typography.callout,
             styles.nextButtonText,
-            { color: palette.solid },
+            { color: palette.textOnChroma },
           ]}
         >
           {resolvedNextButtonText}
@@ -200,16 +209,21 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: LiquidGlassSpacing.md,
-    paddingVertical: LiquidGlassSpacing.lg,
-    paddingBottom: LiquidGlassSpacing.xxxl,
+    paddingTop: LiquidGlassSpacing.sm,
+    paddingBottom: LiquidGlassSpacing.md,
+    gap: LiquidGlassSpacing.sm,
+    borderTopWidth: StyleSheet.hairlineWidth,
   },
   leftSection: {
     flexDirection: "row",
     gap: LiquidGlassSpacing.md,
+    flexShrink: 1,
   },
   skipButton: {
     paddingVertical: LiquidGlassSpacing.sm,
     paddingHorizontal: LiquidGlassSpacing.md,
+    minHeight: 44,
+    justifyContent: "center",
   },
   skipButtonText: {
     fontWeight: "500",
@@ -217,18 +231,28 @@ const styles = StyleSheet.create({
   backButton: {
     paddingVertical: LiquidGlassSpacing.sm,
     paddingHorizontal: LiquidGlassSpacing.md,
+    minHeight: 44,
+    justifyContent: "center",
   },
   backButtonText: {
     fontWeight: "500",
   },
   nextButton: {
-    paddingVertical: LiquidGlassSpacing.sm,
-    paddingHorizontal: LiquidGlassSpacing.xl,
-    borderRadius: LiquidGlassSpacing.xl,
-    minWidth: 120,
+    paddingVertical: LiquidGlassSpacing.xs,
+    paddingHorizontal: LiquidGlassSpacing.lg,
+    borderRadius: 14,
+    minHeight: 48,
+    minWidth: 132,
+    maxWidth: 240,
+    flexShrink: 1,
     alignItems: "center",
+    justifyContent: "center",
+  },
+  nextButtonDisabled: {
+    opacity: 0.55,
   },
   nextButtonText: {
     fontWeight: "600",
+    textAlign: "center",
   },
 });

@@ -1,0 +1,4 @@
+test("uses an independent oracle", () => {
+  const value = 1;
+  expect(value === value).toBe(true);
+});

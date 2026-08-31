@@ -67,7 +67,7 @@ function main() {
       "postinstall-ios-pods: CocoaPods not found (`pod`), but iOS pods are out of sync.\n"
     );
     process.stderr.write(
-      "Fix: install CocoaPods and rerun `npm install`, or set SKIP_IOS_POD_INSTALL=1 and run `npm run verify:ios-pods` before committing.\n"
+      "Fix: install CocoaPods and rerun `pnpm install`, or set SKIP_IOS_POD_INSTALL=1 and run `pnpm run verify:ios-pods` before committing.\n"
     );
     process.exit(1);
   }

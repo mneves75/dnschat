@@ -1,5 +1,14 @@
 # DNS Chat - App Store Connect Marketing Materials
 
+## Release state
+
+- **Repository target:** `4.3.6` build `84`; this is the current TestFlight beta
+  candidate and is not production evidence.
+- **Latest validated TestFlight artifact:** `4.2.3` build `77`, processed
+  `VALID` with strict validation at `0` errors and `0` warnings.
+- **Latest production App Store release:** unverified. Confirm it in App Store
+  Connect before changing production metadata or making publication claims.
+
 ## App Store Listing Information
 
 ### App Title
@@ -48,10 +57,14 @@ MODERN CHAT EXPERIENCE
 LOCAL DATA & TRANSPARENCY
 
 - Conversation history is stored locally on your device
-- No account required, no data tracking
+- No account required; DNSChat includes no analytics or tracking SDK
 - Network-resilient with multiple fallback methods
 - Open-source and fully transparent
 - DNS queries are observable by DNS infrastructure, so do not send secrets or personal data
+- Queries are sent to the selected third-party DNS service; its retention,
+  secondary-use, and deletion practices are not controlled by DNSChat
+- Do not submit App Privacy answers until the provider's practices are
+  documented or the publisher approves conservative collection/linkage answers
 
 CROSS-PLATFORM READY
 
@@ -79,7 +92,7 @@ AI,chat,DNS,assistant,local,native,tech,innovation,queries,networking
 
 ---
 
-## What's New (Release Notes v4.2.3)
+## Latest Validated What's New (TestFlight v4.2.3)
 
 iOS 27 STARTUP RECOVERY
 
@@ -123,7 +136,10 @@ AI chat using DNS queries with native iOS performance, local encrypted history, 
 
 ### Content Rating
 
-**4+** (Ages 4 and up)
+**Pending evidence.** Do not select or publish an age rating from this runbook.
+The app renders third-party model output, so complete the App Store questionnaire
+only after documenting provider safeguards and testing representative adversarial
+prompts. Record the observed content risks and answer conservatively.
 
 ### App Icon
 
@@ -149,8 +165,9 @@ Validated screenshot sets currently available in App Store Connect:
 ### Bundle Information
 
 - **Bundle ID**: `<BUNDLE_ID>`
-- **Version**: `4.1.5`
-- **Build Number**: 72 (sync-versions)
+- **Repository target**: `4.3.6` build `84` (from `package.json` via `sync-versions`)
+- **Latest validated TestFlight artifact**: `4.2.3` build `77`
+- **Latest production App Store release**: unverified
 - **App Store Connect internal IDs**: intentionally omitted from public docs; keep exact IDs in private release notes.
 - **Minimum iOS Version**: 16.4
 - **Device Support**: iPhone, iPad
@@ -158,7 +175,7 @@ Validated screenshot sets currently available in App Store Connect:
 
 ### App Store Connect Settings
 
-- **Age Rating**: 4+
+- **Age Rating**: pending provider-safeguard and representative adversarial evidence
 - **Uses IDFA**: No
 - **Contains Ads**: No
 - **In-App Purchases**: No
@@ -173,7 +190,10 @@ Validated screenshot sets currently available in App Store Connect:
 ```
 This app uses innovative DNS TXT queries to communicate with AI.
 Test with any message to see the DNS-based communication in action.
-Conversations are stored locally. DNS queries are observable, so do not send secrets or personal data.
+Conversations are encrypted in local storage. Prompts are also sent to the
+selected third-party DNS service; its retention and deletion practices are not
+controlled by DNSChat. DNS queries are observable, so do not send secrets or
+personal data.
 No user account is required. The app does not require app-owned backend infrastructure, but it does require a compatible DNS service.
 ```
 
@@ -284,11 +304,11 @@ No user account is required. The app does not require app-owned backend infrastr
 ### App Store Connect Configuration
 
 - [x] Historical IPA upload evidence exists for `4.0.13` build `43`
-- [x] Upload current release IPA build (`4.2.3` build `77`)
+- [x] Latest validated TestFlight artifact uploaded (`4.2.3` build `77`)
 - [x] Local ASC health checked with `asc doctor` (`2026-07-10`)
 - [x] Apply App Store Connect metadata for `en-US` and `pt-BR`
 - [x] Renew iPhone and iPad screenshot sets for `en-US` and `pt-BR`
-- [ ] Create or update an App Store version for `4.2.3` when preparing App Store submission
+- [ ] Create or update an App Store version for the validated repository target
 - [ ] Configure pricing (Free)
 - [ ] Set availability (Worldwide)
 - [ ] Age rating questionnaire
@@ -305,10 +325,10 @@ No user account is required. The app does not require app-owned backend infrastr
 - [x] Historical App Store Connect upload/submission check passed for build `43`
 - [x] Historical TestFlight validation passed (`0` errors, `0` warnings) for build `43`
 - [x] Historical build `56` physical-device Release build/install/launch
-- [x] Current build `77` signed archive/export
-- [x] Current build `77` App Store Connect upload/processing check (`VALID`)
-- [x] Current build `77` TestFlight validation (`0` errors, `0` warnings)
-- [ ] Current build `77` App Store pre-submit validation (`app store version not found for version "4.2.3" and platform "IOS"`)
+- [x] Latest validated build `77` signed archive/export
+- [x] Latest validated build `77` App Store Connect upload/processing check (`VALID`)
+- [x] Latest validated build `77` TestFlight validation (`0` errors, `0` warnings)
+- [ ] Latest validated build `77` App Store pre-submit validation (`app store version not found for version "4.2.3" and platform "IOS"`)
 - [ ] Submit for App Store Review
 - [ ] Final testing on TestFlight
 - [ ] Review guidelines compliance check
@@ -316,4 +336,4 @@ No user account is required. The app does not require app-owned backend infrastr
 
 ---
 
-_Updated for DNS Chat v4.2.3 build 77 - iOS 27 startup recovery_
+_Release-state guide: repository target 4.3.6 build 84; latest validated TestFlight artifact 4.2.3 build 77; production release unverified._

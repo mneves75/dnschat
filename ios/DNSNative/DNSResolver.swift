@@ -308,6 +308,7 @@ final class DNSResolver: NSObject {
         // This provides better predictability than global queues and aligns
         // with Swift 6.2+ concurrency best practices.
         let connectionQueue = DispatchQueue(label: "com.dnschat.dns.connection", qos: .userInitiated)
+        let connectionReadyGate = ContinuationResumeGate<Void>()
 
         // CRITICAL: Ensure connection cleanup on cancellation/timeout.
         // When the parent Task is cancelled (e.g., by withTimeout), we MUST cancel
@@ -317,11 +318,14 @@ final class DNSResolver: NSObject {
             try await performUDPQueryInternal(
                 connection: connection,
                 query: query,
-                queue: connectionQueue
+                queue: connectionQueue,
+                connectionReadyGate: connectionReadyGate
             )
         } onCancel: {
-            // Called synchronously when Task is cancelled.
-            // Safe to call from any thread - NWConnection.cancel() is thread-safe.
+            // Cancellation can run before the operation installs its continuation.
+            // Settle the shared gate first so clearing the Network callback cannot
+            // strand the checked continuation.
+            connectionReadyGate.resume(throwing: DNSError.cancelled)
             connection.stateUpdateHandler = nil
             connection.cancel()
         }
@@ -339,15 +343,18 @@ final class DNSResolver: NSObject {
         let dnsPort = NWEndpoint.Port(integerLiteral: port)
         let connection = NWConnection(host: host, port: dnsPort, using: .tcp)
         let connectionQueue = DispatchQueue(label: "com.dnschat.dns.tcp.connection", qos: .userInitiated)
+        let connectionReadyGate = ContinuationResumeGate<Void>()
 
         return try await withTaskCancellationHandler {
             try await performTCPQueryInternal(
                 connection: connection,
                 framedQuery: framedQuery,
                 query: query,
-                queue: connectionQueue
+                queue: connectionQueue,
+                connectionReadyGate: connectionReadyGate
             )
         } onCancel: {
+            connectionReadyGate.resume(throwing: DNSError.cancelled)
             connection.stateUpdateHandler = nil
             connection.cancel()
         }
@@ -358,7 +365,8 @@ final class DNSResolver: NSObject {
     nonisolated private func performUDPQueryInternal(
         connection: NWConnection,
         query: DnsQuery,
-        queue: DispatchQueue
+        queue: DispatchQueue,
+        connectionReadyGate: ContinuationResumeGate<Void>
     ) async throws -> [String] {
         defer {
             connection.stateUpdateHandler = nil
@@ -378,15 +386,12 @@ final class DNSResolver: NSObject {
         // Serial Queue: Using a dedicated serial queue provides more predictable callback ordering
         // than global queues, though rapid state changes can still occur.
         try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, Error>) in
-            let gate = ResumeGate()
-
             connection.stateUpdateHandler = { state in
                 switch state {
                 case .ready:
-                    gate.tryResume {
+                    connectionReadyGate.resume(returning: ()) {
                         // Clear handler first to prevent retain cycle
                         connection.stateUpdateHandler = nil
-                        cont.resume()
                     }
                 case .waiting(let error):
                     // Connection cannot be established yet - log but don't fail immediately.
@@ -395,28 +400,27 @@ final class DNSResolver: NSObject {
                     // For transient network issues, we want to give the connection a chance.
                     // However, if this is a definitive error (e.g., no route), fail fast.
                     if Self.isBlockedNetworkError(error) {
-                        gate.tryResume {
+                        connectionReadyGate.resume(throwing: Self.classifyNetworkError(error)) {
                             connection.stateUpdateHandler = nil
                             connection.cancel()
-                            cont.resume(throwing: Self.classifyNetworkError(error))
                         }
                     }
                     // Otherwise, let it retry or timeout naturally
                 case .failed(let error):
-                    gate.tryResume {
+                    connectionReadyGate.resume(throwing: Self.classifyNetworkError(error)) {
                         connection.stateUpdateHandler = nil
-                        cont.resume(throwing: Self.classifyNetworkError(error))
                     }
                 case .cancelled:
-                    gate.tryResume {
+                    connectionReadyGate.resume(throwing: DNSError.cancelled) {
                         connection.stateUpdateHandler = nil
-                        cont.resume(throwing: DNSError.cancelled)
                     }
                 default:
                     break
                 }
             }
-            connection.start(queue: queue)
+            if connectionReadyGate.install(cont) {
+                connection.start(queue: queue)
+            }
         }
 
         // Send DNS query packet
@@ -484,14 +488,19 @@ final class DNSResolver: NSObject {
         connection: NWConnection,
         framedQuery: Data,
         query: DnsQuery,
-        queue: DispatchQueue
+        queue: DispatchQueue,
+        connectionReadyGate: ContinuationResumeGate<Void>
     ) async throws -> [String] {
         defer {
             connection.stateUpdateHandler = nil
             connection.cancel()
         }
 
-        try await waitForConnectionReady(connection: connection, queue: queue)
+        try await waitForConnectionReady(
+            connection: connection,
+            queue: queue,
+            connectionReadyGate: connectionReadyGate
+        )
         try await sendTCPQuery(connection: connection, framedQuery: framedQuery)
         let responseData = try await receiveTCPResponse(connection: connection)
 
@@ -505,40 +514,40 @@ final class DNSResolver: NSObject {
     }
 
     @available(iOS 16.0, *)
-    nonisolated private func waitForConnectionReady(connection: NWConnection, queue: DispatchQueue) async throws {
+    nonisolated private func waitForConnectionReady(
+        connection: NWConnection,
+        queue: DispatchQueue,
+        connectionReadyGate: ContinuationResumeGate<Void>
+    ) async throws {
         try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, Error>) in
-            let gate = ResumeGate()
-
             connection.stateUpdateHandler = { state in
                 switch state {
                 case .ready:
-                    gate.tryResume {
+                    connectionReadyGate.resume(returning: ()) {
                         connection.stateUpdateHandler = nil
-                        cont.resume()
                     }
                 case .waiting(let error):
                     if Self.isBlockedNetworkError(error) {
-                        gate.tryResume {
+                        connectionReadyGate.resume(throwing: Self.classifyNetworkError(error)) {
                             connection.stateUpdateHandler = nil
                             connection.cancel()
-                            cont.resume(throwing: Self.classifyNetworkError(error))
                         }
                     }
                 case .failed(let error):
-                    gate.tryResume {
+                    connectionReadyGate.resume(throwing: Self.classifyNetworkError(error)) {
                         connection.stateUpdateHandler = nil
-                        cont.resume(throwing: Self.classifyNetworkError(error))
                     }
                 case .cancelled:
-                    gate.tryResume {
+                    connectionReadyGate.resume(throwing: DNSError.cancelled) {
                         connection.stateUpdateHandler = nil
-                        cont.resume(throwing: DNSError.cancelled)
                     }
                 default:
                     break
                 }
             }
-            connection.start(queue: queue)
+            if connectionReadyGate.install(cont) {
+                connection.start(queue: queue)
+            }
         }
     }
 
@@ -740,7 +749,9 @@ final class DNSResolver: NSObject {
         for _ in 0..<anCount {
             let (answerName, answerOffset) = try readName(bytes: bytes, offset: offset)
             offset = answerOffset
-            if offset + 10 > bytes.count { break }
+            guard offset + 10 <= bytes.count else {
+                throw DNSError.queryFailed("DNS response answer header truncated")
+            }
             let type = Int(bytes[offset]) << 8 | Int(bytes[offset + 1])
             offset += 2 // TYPE
             let answerClass = Int(bytes[offset]) << 8 | Int(bytes[offset + 1])
@@ -748,22 +759,39 @@ final class DNSResolver: NSObject {
             offset += 4 // TTL
             let rdLength = Int(bytes[offset]) << 8 | Int(bytes[offset + 1])
             offset += 2
-            if type == 16 && answerClass == 1 && answerName == expectedQueryName && offset + rdLength <= bytes.count { // TXT
-                let end = offset + rdLength
+            guard rdLength <= bytes.count - offset else {
+                throw DNSError.queryFailed("DNS response RDATA truncated")
+            }
+            let end = offset + rdLength
+
+            if type == 16 { // TXT
+                guard rdLength > 0 else {
+                    throw DNSError.queryFailed("DNS TXT RDATA is empty")
+                }
+
+                var recordResults: [String] = []
                 var p = offset
                 while p < end {
                     let txtLen = Int(bytes[p])
                     p += 1
-                    if txtLen > 0 && p + txtLen <= end {
-                        let sub = bytes[p..<(p+txtLen)]
-                        if let s = String(bytes: sub, encoding: .utf8) {
-                            results.append(s)
-                        }
-                        p += txtLen
-                    } else { break }
+                    guard txtLen <= end - p else {
+                        throw DNSError.queryFailed("DNS TXT character-string truncated")
+                    }
+                    let sub = bytes[p..<(p + txtLen)]
+                    guard let decoded = String(bytes: sub, encoding: .utf8) else {
+                        throw DNSError.queryFailed("DNS TXT character-string is not valid UTF-8")
+                    }
+                    if !decoded.isEmpty {
+                        recordResults.append(decoded)
+                    }
+                    p += txtLen
+                }
+
+                if answerClass == 1 && answerName == expectedQueryName {
+                    results.append(contentsOf: recordResults)
                 }
             }
-            offset += rdLength
+            offset = end
         }
         return results
     }
@@ -774,10 +802,12 @@ final class DNSResolver: NSObject {
         var nextOffset = offset
         var jumped = false
         var jumps = 0
+        var terminated = false
 
         while currentOffset < bytes.count {
             let len = Int(bytes[currentOffset])
             if len == 0 {
+                terminated = true
                 currentOffset += 1
                 if !jumped {
                     nextOffset = currentOffset
@@ -805,6 +835,10 @@ final class DNSResolver: NSObject {
                 continue
             }
 
+            guard (len & 0xC0) == 0 else {
+                throw DNSError.queryFailed("DNS response name label type is invalid")
+            }
+
             currentOffset += 1
             guard currentOffset + len <= bytes.count else {
                 throw DNSError.queryFailed("DNS response name truncated")
@@ -818,6 +852,10 @@ final class DNSResolver: NSObject {
             if !jumped {
                 nextOffset = currentOffset
             }
+        }
+
+        guard terminated else {
+            throw DNSError.queryFailed("DNS response name truncated")
         }
 
         let name = labels.joined(separator: ".").lowercased()
@@ -970,6 +1008,73 @@ extension DNSResolver {
 private extension UInt16 {
     var bigEndianBytes: [UInt8] {
         return [UInt8(self >> 8), UInt8(self & 0xFF)]
+    }
+}
+
+/// Cancellation-aware continuation gate for the NWConnection ready phase.
+///
+/// `withTaskCancellationHandler` may invoke `onCancel` before its operation
+/// installs the continuation, or concurrently with a Network.framework state
+/// callback. The gate stores either side until they meet and guarantees that
+/// exactly one result resumes the continuation.
+@available(iOS 16.0, *)
+internal final class ContinuationResumeGate<Value>: @unchecked Sendable {
+    private enum State {
+        case awaitingContinuation
+        case installed(CheckedContinuation<Value, Error>)
+        case pending(Result<Value, Error>)
+        case finished
+    }
+
+    private let lock = OSAllocatedUnfairLock(initialState: State.awaitingContinuation)
+
+    /// Installs the continuation. Returns `true` only when the caller should
+    /// start the underlying operation; a pending cancellation resumes inline.
+    func install(_ continuation: CheckedContinuation<Value, Error>) -> Bool {
+        let outcome: (shouldStart: Bool, pendingResult: Result<Value, Error>?) = lock.withLock { state in
+            switch state {
+            case .awaitingContinuation:
+                state = .installed(continuation)
+                return (true, nil)
+            case .pending(let result):
+                state = .finished
+                return (false, result)
+            case .installed, .finished:
+                return (false, nil)
+            }
+        }
+
+        if let pendingResult = outcome.pendingResult {
+            continuation.resume(with: pendingResult)
+        }
+        return outcome.shouldStart
+    }
+
+    func resume(returning value: Value, beforeResume: () -> Void = {}) {
+        resume(with: .success(value), beforeResume: beforeResume)
+    }
+
+    func resume(throwing error: Error, beforeResume: () -> Void = {}) {
+        resume(with: .failure(error), beforeResume: beforeResume)
+    }
+
+    private func resume(with result: Result<Value, Error>, beforeResume: () -> Void) {
+        let outcome: (won: Bool, continuation: CheckedContinuation<Value, Error>?) = lock.withLock { state in
+            switch state {
+            case .awaitingContinuation:
+                state = .pending(result)
+                return (true, nil)
+            case .installed(let continuation):
+                state = .finished
+                return (true, continuation)
+            case .pending, .finished:
+                return (false, nil)
+            }
+        }
+
+        guard outcome.won else { return }
+        beforeResume()
+        outcome.continuation?.resume(with: result)
     }
 }
 

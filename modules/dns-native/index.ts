@@ -147,8 +147,9 @@ export function sanitizeLLMResponseText(text: string): string {
  * boundary).
  *
  * Behavior:
- * - If any record is plain (no "n/N:" prefix), concatenate plain records in order
- * - If multipart records are present, require a complete set [1..N] and join in order
+ * - If all non-empty records are plain (no "n/N:" prefix), concatenate them in order
+ * - If all non-empty records are multipart, require a complete set [1..N] and join in order
+ * - Reject responses that mix plain and multipart records
  * - Reject multipart sets declaring more than DNS_CONSTANTS.MAX_TXT_PARTS parts
  * - Throw DNSError(INVALID_RESPONSE) on empty input or incomplete/inconsistent sets
  * - Sanitize the assembled text (control/bidi characters) before returning
@@ -163,11 +164,22 @@ export function parseMultiPartTXTResponse(txtRecords: string[]): string {
   if (txtRecords.length === 1) {
     const rawValue = String(txtRecords[0] ?? "");
     const first = rawValue.charCodeAt(0);
-    if ((first < 48 || first > 57) && first > 32) return sanitizeLLMResponseText(rawValue);
+    const sanitizedResponse = sanitizeLLMResponseText(rawValue);
+    if ((first < 48 || first > 57) && first > 32) {
+      if (!sanitizedResponse.trim()) {
+        throw new DNSError(DNSErrorType.INVALID_RESPONSE, "Received empty response");
+      }
+      return sanitizedResponse;
+    }
     if (!rawValue.trim()) {
       throw new DNSError(DNSErrorType.INVALID_RESPONSE, "Received empty response");
     }
-    if (!/^\s*\d+\/\d+:/.test(rawValue)) return sanitizeLLMResponseText(rawValue);
+    if (!/^\s*\d+\/\d+:/.test(rawValue)) {
+      if (!sanitizedResponse.trim()) {
+        throw new DNSError(DNSErrorType.INVALID_RESPONSE, "Received empty response");
+      }
+      return sanitizedResponse;
+    }
   }
 
   type Part = { partNumber: number; totalParts: number; content: string };
@@ -208,10 +220,11 @@ export function parseMultiPartTXTResponse(txtRecords: string[]): string {
         "Mixed plain and multipart TXT records",
       );
     }
-    if (!plainResponse.trim()) {
+    const sanitizedResponse = sanitizeLLMResponseText(plainResponse);
+    if (!sanitizedResponse.trim()) {
       throw new DNSError(DNSErrorType.INVALID_RESPONSE, "Received empty response");
     }
-    return sanitizeLLMResponseText(plainResponse);
+    return sanitizedResponse;
   }
 
   if (parts.length === 0) {
@@ -286,10 +299,11 @@ export function parseMultiPartTXTResponse(txtRecords: string[]): string {
     fullResponse += content;
   }
 
-  if (!fullResponse.trim()) {
+  const sanitizedResponse = sanitizeLLMResponseText(fullResponse);
+  if (!sanitizedResponse.trim()) {
     throw new DNSError(DNSErrorType.INVALID_RESPONSE, "Received empty response");
   }
-  return sanitizeLLMResponseText(fullResponse);
+  return sanitizedResponse;
 }
 
 export class NativeDNS implements NativeDNSModule {
@@ -298,6 +312,7 @@ export class NativeDNS implements NativeDNSModule {
   private capabilitiesTimestamp = 0;
   private sanitizerConfigurationPromise: Promise<void> | null = null;
   private sanitizerConfigurationError: Error | null = null;
+  private sanitizerConfigurationPermanentFailure = false;
   // RACE CONDITION FIX: Promise lock to prevent concurrent isAvailable() calls
   // from all bypassing the cache and making redundant native module calls.
   private capabilitiesPromise: Promise<DNSCapabilities> | null = null;
@@ -306,56 +321,92 @@ export class NativeDNS implements NativeDNSModule {
   // to detect network changes (e.g., WiFi to cellular, VPN connection).
   private static readonly CAPABILITIES_TTL_MS = 30000;
 
+  private isPermanentSanitizerConfigurationError(error: unknown): boolean {
+    const code = getErrorCode(error);
+    if (code?.startsWith("SANITIZER_CONFIG_") === true) return true;
+
+    return getErrorMessage(error).toUpperCase().includes("SANITIZER_CONFIG_");
+  }
+
+  private recordSanitizerConfigurationFailure(
+    error: unknown,
+    permanent = false,
+  ): void {
+    this.sanitizerConfigurationError =
+      error instanceof Error ? error : new Error(String(error));
+    this.sanitizerConfigurationPermanentFailure =
+      permanent || this.isPermanentSanitizerConfigurationError(error);
+    debugWarn("[NativeDNS] Failed to configure sanitizer:", error);
+  }
+
   private configureSanitizerIfNeeded(): void {
     if (!this.nativeModule) return;
+    if (this.sanitizerConfigurationPromise || this.sanitizerConfigurationPermanentFailure) {
+      return;
+    }
     debugLog("[NativeDNS] RNDNSModule methods:", Object.keys(this.nativeModule));
     if (typeof this.nativeModule.configureSanitizer !== "function") {
-      this.sanitizerConfigurationError = new Error(
-        "Native DNS module does not expose sanitizer configuration",
+      this.recordSanitizerConfigurationFailure(
+        new Error("Native DNS module does not expose sanitizer configuration"),
+        true,
       );
-      debugWarn("[NativeDNS] Failed to configure sanitizer:", this.sanitizerConfigurationError);
       return;
     }
 
+    let configurationAttempt: Promise<void>;
     try {
       const maybeResult = this.nativeModule.configureSanitizer(
         getNativeSanitizerConfig(),
       );
 
-      if (maybeResult && typeof (maybeResult as Promise<unknown>).then === "function") {
-        this.sanitizerConfigurationPromise = (maybeResult as Promise<boolean>)
-          .then((didUpdate) => {
-            if (didUpdate) {
-              debugLog("[NativeDNS] Sanitizer configured via shared constants");
-            } else {
-              debugLog("[NativeDNS] Sanitizer already up to date; skipped reconfiguration");
-            }
-            this.sanitizerConfigurationError = null;
-          })
-          .catch((error: unknown) => {
-            this.sanitizerConfigurationError =
-              error instanceof Error ? error : new Error(String(error));
-            debugWarn("[NativeDNS] Failed to configure sanitizer:", error);
-          })
-          .then(() => {
-            this.sanitizerConfigurationPromise = null;
-          });
-      } else if (maybeResult !== undefined) {
-        this.sanitizerConfigurationError = null;
-        debugLog("[NativeDNS] Sanitizer configured via shared constants");
-      } else {
-        this.sanitizerConfigurationError = null;
-      }
-    } catch (error) {
-      this.sanitizerConfigurationError =
-        error instanceof Error ? error : new Error(String(error));
-      debugWarn("[NativeDNS] Failed to configure sanitizer:", error);
+      configurationAttempt = Promise.resolve(maybeResult)
+        .then((didUpdate) => {
+          if (didUpdate) {
+            debugLog("[NativeDNS] Sanitizer configured via shared constants");
+          } else {
+            debugLog("[NativeDNS] Sanitizer already up to date; skipped reconfiguration");
+          }
+          this.sanitizerConfigurationError = null;
+          this.sanitizerConfigurationPermanentFailure = false;
+        })
+        .catch((error: unknown) => {
+          this.recordSanitizerConfigurationFailure(error);
+        })
+        .then(() => {
+          this.sanitizerConfigurationPromise = null;
+        });
+    } catch (error: unknown) {
+      // Keep synchronous bridge failures in the same single-flight path as
+      // rejected promises so concurrent queries cannot all retry at once.
+      configurationAttempt = Promise.resolve()
+        .then(() => {
+          this.recordSanitizerConfigurationFailure(error);
+        })
+        .then(() => {
+          this.sanitizerConfigurationPromise = null;
+        });
     }
+
+    this.sanitizerConfigurationPromise = configurationAttempt;
   }
 
   private async ensureSanitizerConfigured(): Promise<void> {
-    if (this.sanitizerConfigurationPromise) {
-      await this.sanitizerConfigurationPromise;
+    if (!this.nativeModule) return;
+
+    const currentConfigurationPromise = this.sanitizerConfigurationPromise;
+    if (currentConfigurationPromise) {
+      await currentConfigurationPromise;
+    }
+
+    if (this.sanitizerConfigurationError && !this.sanitizerConfigurationPermanentFailure) {
+      // Configuration can fail transiently while the native bridge is starting
+      // or reconnecting. Retry on the next query, sharing one in-flight attempt.
+      if (!this.sanitizerConfigurationPromise) {
+        this.configureSanitizerIfNeeded();
+      }
+      if (this.sanitizerConfigurationPromise) {
+        await this.sanitizerConfigurationPromise;
+      }
     }
 
     if (this.sanitizerConfigurationError) {

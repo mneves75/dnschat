@@ -1,21 +1,12 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
 } from "react-native";
-import Animated, {
-  cancelAnimation,
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withSequence,
-  withTiming,
-} from "react-native-reanimated";
 import { OnboardingNavigation } from "../OnboardingNavigation";
 import { PressableRipple } from "../../PressableRipple";
-import { useMotionReduction } from "../../../context/AccessibilityContext";
 import { DNSService } from "../../../services/dnsService";
 import { useImessagePalette } from "../../../ui/theme/imessagePalette";
 import { useTypography } from "../../../ui/hooks/useTypography";
@@ -66,7 +57,6 @@ export function DNSMagicScreen() {
   const palette = useImessagePalette();
   const typography = useTypography();
   const { t } = useTranslation();
-  const { shouldReduceMotion } = useMotionReduction();
 
   const createInitialDnsSteps = (): DNSStep[] =>
     DNS_DEMO_STEPS.map((step) => ({
@@ -79,33 +69,6 @@ export function DNSMagicScreen() {
   const [isRunning, setIsRunning] = useState(false);
   const [dnsSteps, setDnsSteps] = useState<DNSStep[]>(createInitialDnsSteps);
   const [response, setResponse] = useState<string>("");
-
-  const pulseAnim = useSharedValue(1);
-
-  // Effect: start the Reanimated pulse animation on mount and cancel on unmount.
-  useEffect(() => {
-    if (shouldReduceMotion) {
-      pulseAnim.set(1);
-      return;
-    }
-
-    pulseAnim.set(withRepeat(
-      withSequence(
-        withTiming(1.1, { duration: 1000 }),
-        withTiming(1, { duration: 1000 }),
-      ),
-      -1,
-      false,
-    ));
-
-    return () => {
-      cancelAnimation(pulseAnim);
-    };
-  }, [shouldReduceMotion]);
-
-  const pulseStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: pulseAnim.get() }],
-  }));
 
   const runDNSDemo = async () => {
     setIsRunning(true);
@@ -168,13 +131,19 @@ export function DNSMagicScreen() {
 
   return (
     <View testID="onboarding-dns-magic" style={styles.container}>
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.headerSection}>
-          <Animated.View style={[styles.dnsIcon, pulseStyle]}>
-            <Text style={[typography.displayMedium, { color: palette.accentTint }]}>
+          <View style={styles.dnsIcon}>
+            <Text
+              style={[typography.displayMedium, { color: palette.accentText }]}
+            >
               {t("screen.onboarding.dnsMagic.label")}
             </Text>
-          </Animated.View>
+          </View>
 
           <Text
             style={[
@@ -203,11 +172,14 @@ export function DNSMagicScreen() {
             testID="onboarding-dns-demo"
             style={[
               styles.demoButton,
-              { backgroundColor: isRunning ? palette.surface : palette.accentTint },
+              {
+                backgroundColor: palette.surface,
+                borderColor: palette.accentTint,
+              },
             ]}
             onPress={runDNSDemo}
             disabled={isRunning}
-            variant="primary"
+            variant="surface"
             pressedOpacity={0.7}
             accessibilityRole="button"
             accessibilityLabel={t(
@@ -223,7 +195,7 @@ export function DNSMagicScreen() {
                 typography.callout,
                 styles.demoButtonText,
                 {
-                  color: isRunning ? palette.textSecondary : palette.solid,
+                  color: isRunning ? palette.textSecondary : palette.accentText,
                   fontWeight: "600",
                 },
               ]}
@@ -232,7 +204,12 @@ export function DNSMagicScreen() {
             </Text>
           </PressableRipple>
 
-          <View style={styles.stepsContainer}>
+          <View
+            style={[
+              styles.stepsContainer,
+              { backgroundColor: palette.solid },
+            ]}
+          >
             {dnsSteps.map((step, index) => (
               <DNSStepItem
                 key={step.id}
@@ -291,7 +268,7 @@ interface DNSStepItemProps {
   typography: ReturnType<typeof useTypography>;
 }
 
-function DNSStepItem({ step, palette, typography }: DNSStepItemProps) {
+function DNSStepItem({ step, index, palette, typography }: DNSStepItemProps) {
   const { t } = useTranslation();
 
   const getStatusLabel = () => {
@@ -314,7 +291,7 @@ function DNSStepItem({ step, palette, typography }: DNSStepItemProps) {
       case "pending":
         return palette.textTertiary;
       case "active":
-        return palette.accentTint;
+        return palette.accentText;
       case "success":
         return palette.success;
       case "failed":
@@ -328,7 +305,13 @@ function DNSStepItem({ step, palette, typography }: DNSStepItemProps) {
     <View
       style={[
         styles.stepItem,
-        { backgroundColor: palette.surface, borderColor: palette.border },
+        {
+          borderBottomColor: palette.separator,
+          borderBottomWidth:
+            index < DNS_DEMO_STEPS.length - 1
+              ? StyleSheet.hairlineWidth
+              : 0,
+        },
       ]}
     >
       <View style={styles.stepHeader}>
@@ -385,14 +368,21 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  content: {
+  scrollView: {
     flex: 1,
+  },
+  content: {
+    flexGrow: 1,
+    width: "100%",
+    maxWidth: LiquidGlassSpacing.huge * 12,
+    alignSelf: "center",
     paddingHorizontal: LiquidGlassSpacing.xl,
     paddingTop: LiquidGlassSpacing.lg,
+    paddingBottom: LiquidGlassSpacing.xl,
   },
   headerSection: {
     alignItems: "center",
-    marginBottom: LiquidGlassSpacing.xxxl,
+    marginBottom: LiquidGlassSpacing.xl,
   },
   dnsIcon: {
     marginBottom: LiquidGlassSpacing.md,
@@ -413,18 +403,21 @@ const styles = StyleSheet.create({
     paddingVertical: LiquidGlassSpacing.md,
     paddingHorizontal: LiquidGlassSpacing.xl,
     borderRadius: LiquidGlassSpacing.sm,
+    borderWidth: 1,
+    minHeight: 48,
     alignItems: "center",
+    justifyContent: "center",
   },
   demoButtonText: {
     fontWeight: "600",
   },
   stepsContainer: {
-    gap: LiquidGlassSpacing.md,
+    gap: 0,
+    borderRadius: LiquidGlassSpacing.sm,
+    overflow: "hidden",
   },
   stepItem: {
     padding: LiquidGlassSpacing.md,
-    borderRadius: LiquidGlassSpacing.xs,
-    borderWidth: 1,
   },
   stepHeader: {
     flexDirection: "row",

@@ -14,6 +14,8 @@ module.exports = {
     "^react-native$": "<rootDir>/__tests__/mocks/react-native.js",
     "^react-native-reanimated$":
       "<rootDir>/__tests__/mocks/react-native-reanimated.js",
+    "^react-native-worklets$":
+      "<rootDir>/__tests__/mocks/react-native-worklets.js",
     "^react-native-safe-area-context$":
       "<rootDir>/__tests__/mocks/react-native-safe-area-context.js",
     "^react-native-svg$": "<rootDir>/__tests__/mocks/react-native-svg.js",

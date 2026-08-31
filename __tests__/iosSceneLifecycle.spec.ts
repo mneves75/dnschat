@@ -3,6 +3,7 @@ import fs from "node:fs";
 describe("iOS scene lifecycle", () => {
   const appDelegatePath = "ios/DNSChat/AppDelegate.swift";
   const infoPlistPath = "ios/DNSChat/Info.plist";
+  const sceneTemplatePath = "plugins/templates/ios/SceneDelegate.swift";
 
   it("declares a single-window scene backed by SceneDelegate", () => {
     const infoPlist = fs.readFileSync(infoPlistPath, "utf8");
@@ -35,5 +36,14 @@ describe("iOS scene lifecycle", () => {
     );
     expect(appDelegate).toContain("UIApplicationLaunchOptionsURLKey");
     expect(appDelegate).toContain("RCTLinkingManager.application(");
+  });
+
+  it("keeps the tracked SceneDelegate bridge aligned with the config-plugin template", () => {
+    const appDelegate = fs.readFileSync(appDelegatePath, "utf8");
+    const sceneTemplate = fs.readFileSync(sceneTemplatePath, "utf8").trim();
+    const sceneStart = appDelegate.indexOf("@objc(SceneDelegate)");
+
+    expect(sceneStart).toBeGreaterThanOrEqual(0);
+    expect(appDelegate.slice(sceneStart).trim()).toBe(sceneTemplate);
   });
 });

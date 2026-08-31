@@ -2,6 +2,15 @@
 
 This document tracks the manual steps for preparing and shipping an Android build.
 
+## Release state
+
+- **Repository target:** `4.3.6` build `84`, sourced from `package.json` and
+  synchronized into the native projects.
+- **Latest validated Android artifact:** not recorded in this public runbook;
+  build and validate a fresh AAB before upload.
+- **Latest production release:** unverified. Confirm the active version in
+  Google Play Console before promoting or describing a release as production.
+
 ## Pre-flight
 
 - Ensure `main` is green (CI passing).
@@ -34,7 +43,6 @@ Supported signing inputs (in order):
 
 2) Local developer signing (never commit):
    - `android/keystore.properties` or `keystore.properties` at repo root (ignored by git)
-   - Or `MYAPP_UPLOAD_*` Gradle properties (`gradle.properties` / CI secrets)
 
 If no signing is provided, `./gradlew :app:assembleRelease` will generate an **unsigned**
 APK (`app-release-unsigned.apk`). This is expected for local verification and prevents
@@ -54,7 +62,8 @@ For detailed Google Play Store publishing instructions, see:
 
 ## Notes
 
-- Latest local release target: `v4.1.5` build `72`.
+- The repository target is not a validated or published artifact until the
+  release checks above pass for that exact source and build.
 - Release manifests intentionally avoid legacy storage and overlay permissions.
 - SecureStore is excluded from Android backup/device-transfer rules under
   `android/app/src/main/res/xml/`.

@@ -1,0 +1,9 @@
+describe("timeout placement", () => {
+  beforeAll(() => {
+    jest.setTimeout(1000);
+  });
+
+  test("runs", () => {
+    expect(true).toBe(true);
+  });
+});

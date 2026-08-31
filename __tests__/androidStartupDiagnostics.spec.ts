@@ -107,11 +107,12 @@ describe("AndroidStartupDiagnostics", () => {
   });
 
   describe("printSummary", () => {
-    it("should print summary of results", () => {
-      AndroidStartupDiagnostics.runDiagnostics().then(() => {
-        AndroidStartupDiagnostics.printSummary();
-        expect(console.log).toHaveBeenCalled();
-      });
+    it("should print summary of results", async () => {
+      await AndroidStartupDiagnostics.runDiagnostics();
+
+      AndroidStartupDiagnostics.printSummary();
+
+      expect(console.log).toHaveBeenCalled();
     });
   });
 });

@@ -1,6 +1,6 @@
 {
   "name": "chat-dns",
-  "version": "4.3.5",
+  "version": "4.3.6",
   "description": "DNSChat - A React Native chat app using DNS TXT queries",
   "main": "entry.tsx",
   "author": "DNSChat contributors",
@@ -33,7 +33,9 @@
     "clean-ios": "cd ios && rm -rf Pods/ build/ && pod install",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "typecheck:native": "tsgo --noEmit -p tsconfig.json",
+    "typecheck:video": "pnpm --filter @dnschat/video run typecheck",
     "test": "jest --runInBand",
+    "test:native": "pnpm --filter @dnschat/dns-native run test --runInBand",
     "e2e:axe": "node scripts/e2e-axe.js",
     "e2e:axe:doctor": "node scripts/e2e-axe.js --doctor",
     "e2e:axe:release": "node scripts/e2e-axe.js --create-simulator --delete-created-simulator --build-release --reset-app",
@@ -44,14 +46,16 @@
     "verify:typed-routes": "node scripts/verify-typed-routes.js",
     "verify:expo-doctor": "RUBYOPT=-rlogger pnpm exec expo-doctor",
     "verify:react-compiler": "react-compiler-healthcheck",
-    "verify:react-doctor": "npx -y react-doctor@latest . --project chat-dns",
+    "verify:react-doctor": "pnpm dlx react-doctor@latest . --project chat-dns",
     "verify:public-redaction": "node scripts/check-public-redaction.js",
     "verify:security": "pnpm audit && gitleaks detect --source . --redact --no-banner --config .gitleaks.toml",
+    "verify:video": "pnpm run typecheck:video && pnpm --filter @dnschat/video run compositions",
     "verify:fast": "pnpm run typecheck && pnpm run lint && pnpm run test",
-    "verify:all": "pnpm run typecheck && pnpm run lint && pnpm run verify:typed-routes && pnpm run verify:dnsresolver-sync && pnpm run verify:ios-pods && pnpm run verify:react-compiler && pnpm run verify:react-doctor && pnpm run verify:sdk-alignment && pnpm run verify:public-redaction && pnpm run verify:android && pnpm run verify:android-16kb && pnpm run verify:security && pnpm run verify:expo-doctor && pnpm run test",
+    "verify:all": "pnpm run typecheck && pnpm run lint && pnpm run verify:typed-routes && pnpm run verify:dnsresolver-sync && pnpm run verify:ios-pods && pnpm run verify:react-compiler && pnpm run verify:react-doctor && pnpm run verify:sdk-alignment && pnpm run verify:public-redaction && pnpm run verify:android && pnpm run verify:android-16kb && pnpm run verify:security && pnpm run verify:expo-doctor && pnpm run verify:video && pnpm run test && pnpm run test:native",
     "verify:dnsresolver-sync": "node scripts/verify-dnsresolver-sync.js",
+    "lint:oxlint": "oxlint .",
     "lint:ast-grep": "node scripts/run-ast-grep.js --config sgconfig.yml",
-    "lint": "node scripts/run-ast-grep.js --config sgconfig.yml",
+    "lint": "pnpm run lint:oxlint && pnpm run lint:ast-grep",
     "dns:harness:build": "tsc -p scripts/tsconfig.harness.json",
     "dns:harness": "pnpm run dns:harness:build && node scripts/dist/run-dns-harness.js",
     "verify:ios-pods": "node scripts/verify-ios-pods-sync.js",
@@ -59,31 +63,31 @@
     "postinstall": "node scripts/postinstall-ios-pods.js"
   },
   "dependencies": {
-    "@expo/metro-runtime": "~57.0.8",
-    "@expo/ui": "~57.0.9",
+    "@expo/metro-runtime": "~57.0.14",
+    "@expo/ui": "~57.0.14",
     "@noble/ciphers": "^2.1.1",
     "@noble/hashes": "^2.0.1",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@react-native-clipboard/clipboard": "^1.14.2",
     "date-fns": "^4.1.0",
     "dns-packet": "^5.6.1",
-    "expo": "~57.0.10",
-    "expo-asset": "~57.0.8",
-    "expo-build-properties": "~57.0.8",
-    "expo-constants": "57.0.9",
-    "expo-crypto": "~57.0.1",
+    "expo": "~57.0.18",
+    "expo-asset": "~57.0.15",
+    "expo-build-properties": "~57.0.15",
+    "expo-constants": "~57.0.16",
+    "expo-crypto": "~57.0.2",
     "expo-glass-effect": "~57.0.1",
-    "expo-haptics": "~57.0.1",
-    "expo-linking": "~57.0.5",
+    "expo-haptics": "~57.0.2",
+    "expo-linking": "~57.0.8",
     "expo-localization": "~57.0.1",
-    "expo-router": "~57.0.10",
-    "expo-secure-store": "~57.0.1",
-    "expo-splash-screen": "~57.0.5",
+    "expo-router": "~57.0.17",
+    "expo-secure-store": "~57.0.2",
+    "expo-splash-screen": "~57.0.8",
     "expo-status-bar": "~57.0.1",
-    "expo-system-ui": "~57.0.2",
+    "expo-system-ui": "~57.0.3",
     "react": "19.2.3",
     "react-dom": "19.2.3",
-    "react-native": "0.86.2",
+    "react-native": "0.86.3",
     "react-native-edge-to-edge": "1.6.0",
     "react-native-keyboard-controller": "1.21.9",
     "react-native-markdown-display": "^7.0.2",
@@ -106,6 +110,7 @@
     "babel-plugin-transform-remove-console": "^6.9.4",
     "expo-doctor": "1.20.1",
     "jest": "^29.7.0",
+    "oxlint": "~1.79.0",
     "react-compiler-healthcheck": "1.0.0",
     "react-test-renderer": "19.2.3",
     "ts-jest": "^29.4.9",
@@ -126,6 +131,20 @@
       "appConfigFieldsNotSyncedCheck": {
         "enabled": false
       }
+    }
+  },
+  "reactDoctor": {
+    "ignore": {
+      "overrides": [
+        {
+          "files": [
+            "site/script.js"
+          ],
+          "rules": [
+            "deslop/unused-file"
+          ]
+        }
+      ]
     }
   },
   "private": true,

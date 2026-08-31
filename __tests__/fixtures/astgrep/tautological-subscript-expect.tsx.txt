@@ -1,0 +1,3 @@
+const values = [<span key="answer">42</span>];
+
+expect(values[0]).toStrictEqual(values[0]);

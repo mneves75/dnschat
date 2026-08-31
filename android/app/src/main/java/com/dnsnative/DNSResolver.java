@@ -5,20 +5,25 @@ package com.dnsnative;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.os.Build;
+import android.os.SystemClock;
 import android.util.Log;
 
 import java.net.InetAddress;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.HttpURLConnection;
+import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.net.URL;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.time.Duration;
 import java.security.SecureRandom;
 import java.nio.ByteBuffer;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.text.Normalizer;
 import java.util.ArrayList;
@@ -31,11 +36,15 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
@@ -47,7 +56,10 @@ import org.xbill.DNS.*;
 public class DNSResolver {
     private static final String TAG = "DNSResolver";
     private static final int DNS_PORT = 53;  // Default DNS port (RFC 1035)
-    private static final int QUERY_TIMEOUT_MS = 10000;
+    // Leave 500 ms for bridge/JS scheduling so the native result settles before
+    // DNSService's 10-second Promise.race abandons its non-cancellable bridge call.
+    private static final int QUERY_TIMEOUT_MS = 9500;
+    private static final int MAX_DNS_MESSAGE_BYTES = 65535;
     private static final int DEFAULT_MAX_LABEL_LENGTH = 63;
     private static final int MAX_QNAME_LENGTH = 255;
     private static final int MAX_NATIVE_ATTEMPTS = 3;
@@ -80,6 +92,24 @@ public class DNSResolver {
     // Size equals CPU cores for optimal I/O-bound task performance
     private static final int THREAD_POOL_SIZE = Math.max(2, Runtime.getRuntime().availableProcessors());
     private static final int QUEUE_CAPACITY = 50;
+    // InetAddress has no timeout/cancellation API on the app's API 24 floor. Keep one
+    // bounded recovery lane so an uncooperative lookup cannot poison every later query.
+    // With no queue, two stuck platform calls saturate the pool and later callers fail
+    // fast instead of leaking more threads or waiting behind work that may never finish.
+    private static final int MAX_HOST_RESOLVER_THREADS = 2;
+    private static final ThreadPoolExecutor HOST_RESOLVER_EXECUTOR = new ThreadPoolExecutor(
+        0,
+        MAX_HOST_RESOLVER_THREADS,
+        30L,
+        TimeUnit.SECONDS,
+        new SynchronousQueue<>(),
+        runnable -> {
+            Thread thread = new Thread(runnable, "DNSHostResolver");
+            thread.setDaemon(true);
+            return thread;
+        },
+        new ThreadPoolExecutor.AbortPolicy()
+    );
 
     private final ExecutorService executor = new ThreadPoolExecutor(
         THREAD_POOL_SIZE,                              // Core pool size
@@ -89,6 +119,8 @@ public class DNSResolver {
         new ThreadPoolExecutor.AbortPolicy()           // Never run blocking DNS work on caller thread
     );
     private final ConnectivityManager connectivityManager;
+    private final HostResolver hostResolver;
+    private final long queryTimeoutMillis;
     
     // Query deduplication - prevents multiple identical requests (matches iOS implementation)
     private final Map<String, CompletableFuture<List<String>>> activeQueries = new ConcurrentHashMap<>();
@@ -105,8 +137,25 @@ public class DNSResolver {
         }
     }
 
+    interface HostResolver {
+        InetAddress resolve(String host) throws Exception;
+    }
+
     public DNSResolver(ConnectivityManager connectivityManager) {
+        this(connectivityManager, InetAddress::getByName, QUERY_TIMEOUT_MS);
+    }
+
+    DNSResolver(
+        ConnectivityManager connectivityManager,
+        HostResolver hostResolver,
+        long queryTimeoutMillis
+    ) {
+        if (queryTimeoutMillis <= 0) {
+            throw new IllegalArgumentException("queryTimeoutMillis must be positive");
+        }
         this.connectivityManager = connectivityManager;
+        this.hostResolver = Objects.requireNonNull(hostResolver, "hostResolver");
+        this.queryTimeoutMillis = queryTimeoutMillis;
     }
 
     private <T> CompletableFuture<T> supplyDnsAsync(Supplier<T> supplier) {
@@ -127,10 +176,10 @@ public class DNSResolver {
      *
      * This method:
      * 1. Cancels all pending queries with a CANCELLED error
-     * 2. Clears the static activeQueries map to prevent memory leaks
+     * 2. Clears the activeQueries map to prevent memory leaks
      * 3. Shuts down the executor thread pool
      *
-     * CRITICAL: This MUST be called from invalidate() to prevent static map leaks.
+     * CRITICAL: This MUST be called from invalidate() to prevent query-map leaks.
      */
     public void cleanup() {
         int pendingQueries = activeQueries.size();
@@ -145,6 +194,7 @@ public class DNSResolver {
             }
         }
         activeQueries.clear();
+        HOST_RESOLVER_EXECUTOR.purge();
         try {
             Log.d(TAG, "DNS: Cleanup complete - cleared " + pendingQueries + " active queries");
         } catch (RuntimeException ignored) {
@@ -315,35 +365,51 @@ public class DNSResolver {
         CompletableFuture<List<String>> result
     ) {
         Log.d(TAG, "DNS: Active queries count: " + activeQueries.size());
+        long deadlineNanos = newQueryDeadlineNanos();
+        result.whenComplete((ignoredRecords, ignoredError) ->
+            activeQueries.remove(queryId, result)
+        );
+        CompletableFuture<InetAddress> serverAddressFuture = resolveServerAddress(
+            normalizedDomain,
+            deadlineNanos
+        );
 
         // Android internal fallback strategy must preserve resolver truthfulness.
         // Do not silently switch a Google/custom/authoritative resolver query to
         // Cloudflare DoH, or the app will lie about which resolver answered.
-        queryTXTRawUDP(queryName, normalizedDomain, port)
+        serverAddressFuture
+            .thenCompose(serverAddress ->
+                queryTXTRawUDP(queryName, serverAddress, port, deadlineNanos)
+            )
             .thenAccept(txtRecords -> {
-                activeQueries.remove(queryId, result);
                 Log.d(TAG, "DNS: Query completed, active queries: " + activeQueries.size());
                 result.complete(txtRecords);
             })
             .exceptionally(err -> {
+                if (result.isDone()) {
+                    return null;
+                }
                 if (shouldUseCloudflareDohFallback(normalizedDomain, port)) {
                     Log.d(TAG, "DNS: Trying DNS-over-HTTPS (fallback 1)");
-                    queryTXTDNSOverHTTPS(queryName)
+                    queryTXTDNSOverHTTPS(queryName, deadlineNanos)
                         .thenAccept(txtRecords -> {
-                            activeQueries.remove(queryId, result);
                             Log.d(TAG, "DNS: Query completed (HTTPS), active queries: " + activeQueries.size());
                             result.complete(txtRecords);
                         })
                         .exceptionally(err2 -> {
+                            if (result.isDone()) {
+                                return null;
+                            }
                             Log.d(TAG, "DNS: Trying legacy DNS (fallback 2)");
-                            queryTXTLegacy(normalizedDomain, queryName, port)
+                            serverAddressFuture
+                                .thenCompose(serverAddress ->
+                                    queryTXTLegacy(serverAddress, queryName, port, deadlineNanos)
+                                )
                                 .thenAccept(txtRecords -> {
-                                    activeQueries.remove(queryId, result);
                                     Log.d(TAG, "DNS: Query completed (legacy), active queries: " + activeQueries.size());
                                     result.complete(txtRecords);
                                 })
                                 .exceptionally(err3 -> {
-                                    activeQueries.remove(queryId, result);
                                     Log.d(TAG, "DNS: All fallback methods failed, active queries: " + activeQueries.size());
                                     result.completeExceptionally(err3);
                                     return null;
@@ -352,14 +418,15 @@ public class DNSResolver {
                         });
                 } else {
                     Log.d(TAG, "DNS: Skipping Cloudflare DoH, trying legacy DNS on the selected resolver");
-                    queryTXTLegacy(normalizedDomain, queryName, port)
+                    serverAddressFuture
+                        .thenCompose(serverAddress ->
+                            queryTXTLegacy(serverAddress, queryName, port, deadlineNanos)
+                        )
                         .thenAccept(txtRecords -> {
-                            activeQueries.remove(queryId, result);
                             Log.d(TAG, "DNS: Query completed (legacy), active queries: " + activeQueries.size());
                             result.complete(txtRecords);
                         })
                         .exceptionally(err3 -> {
-                            activeQueries.remove(queryId, result);
                             Log.d(TAG, "DNS: All fallback methods failed, active queries: " + activeQueries.size());
                             result.completeExceptionally(err3);
                             return null;
@@ -373,20 +440,137 @@ public class DNSResolver {
         return port == 53 && "1.1.1.1".equals(normalizedDomain);
     }
 
+    private long newQueryDeadlineNanos() {
+        return SystemClock.elapsedRealtimeNanos() + TimeUnit.MILLISECONDS.toNanos(queryTimeoutMillis);
+    }
 
-    private CompletableFuture<List<String>> queryTXTLegacy(String domain, String queryName, int port) {
+    private static int remainingTimeoutMillis(long deadlineNanos) {
+        long remainingNanos = deadlineNanos - SystemClock.elapsedRealtimeNanos();
+        if (remainingNanos <= 0) {
+            throw new DNSError(DNSError.Type.TIMEOUT, "Native DNS query budget exhausted");
+        }
+        long remainingMillis = TimeUnit.NANOSECONDS.toMillis(remainingNanos);
+        return (int) Math.min(Integer.MAX_VALUE, Math.max(1L, remainingMillis));
+    }
+
+    private static void sleepBeforeRetry(long delayMillis, long deadlineNanos) {
+        int remainingMillis = remainingTimeoutMillis(deadlineNanos);
+        long sleepMillis = Math.min(delayMillis, remainingMillis);
+        try {
+            Thread.sleep(sleepMillis);
+        } catch (InterruptedException error) {
+            Thread.currentThread().interrupt();
+            throw new DNSError(DNSError.Type.CANCELLED, "DNS query was cancelled", error);
+        }
+        if (sleepMillis < delayMillis || sleepMillis >= remainingMillis) {
+            throw new DNSError(DNSError.Type.TIMEOUT, "Native DNS query budget exhausted");
+        }
+    }
+
+    private CompletableFuture<InetAddress> resolveServerAddress(
+        String server,
+        long deadlineNanos
+    ) {
+        if (isNumericAddressLiteral(server)) {
+            try {
+                // Android documents literal parsing as validation-only, with no name-service lookup.
+                return CompletableFuture.completedFuture(InetAddress.getByName(server));
+            } catch (Exception error) {
+                CompletableFuture<InetAddress> failed = new CompletableFuture<>();
+                failed.completeExceptionally(new DNSError(
+                    DNSError.Type.QUERY_FAILED,
+                    "DNS server address literal is invalid",
+                    error
+                ));
+                return failed;
+            }
+        }
+        return supplyDnsAsync(() -> resolveServerAddressBlocking(server, deadlineNanos));
+    }
+
+    private static boolean isNumericAddressLiteral(String server) {
+        if (server.indexOf(':') >= 0) {
+            return true;
+        }
+        boolean sawDot = false;
+        for (int index = 0; index < server.length(); index++) {
+            char character = server.charAt(index);
+            if (character == '.') {
+                sawDot = true;
+            } else if (character < '0' || character > '9') {
+                return false;
+            }
+        }
+        return sawDot;
+    }
+
+    private InetAddress resolveServerAddressBlocking(String server, long deadlineNanos) {
+        Future<InetAddress> lookup;
+        try {
+            lookup = HOST_RESOLVER_EXECUTOR.submit(() -> hostResolver.resolve(server));
+        } catch (RejectedExecutionException error) {
+            throw new DNSError(
+                DNSError.Type.QUERY_FAILED,
+                "DNS host resolver is busy; retry shortly",
+                error
+            );
+        }
+
+        try {
+            InetAddress address = lookup.get(
+                remainingTimeoutMillis(deadlineNanos),
+                TimeUnit.MILLISECONDS
+            );
+            remainingTimeoutMillis(deadlineNanos);
+            return address;
+        } catch (TimeoutException error) {
+            throw new DNSError(
+                DNSError.Type.TIMEOUT,
+                "DNS server address lookup timed out",
+                error
+            );
+        } catch (InterruptedException error) {
+            Thread.currentThread().interrupt();
+            throw new DNSError(DNSError.Type.CANCELLED, "DNS query was cancelled", error);
+        } catch (ExecutionException error) {
+            Throwable cause = error.getCause() != null ? error.getCause() : error;
+            if (cause instanceof DNSError) {
+                throw (DNSError) cause;
+            }
+            remainingTimeoutMillis(deadlineNanos);
+            throw new DNSError(
+                DNSError.Type.QUERY_FAILED,
+                "DNS server address lookup failed",
+                cause
+            );
+        } finally {
+            if (!lookup.isDone()) {
+                lookup.cancel(true);
+            }
+            HOST_RESOLVER_EXECUTOR.purge();
+        }
+    }
+
+    private CompletableFuture<List<String>> queryTXTLegacy(
+        InetAddress serverAddress,
+        String queryName,
+        int port,
+        long deadlineNanos
+    ) {
         return supplyDnsAsync(() -> {
             DNSError lastError = null;
             for (int attempt = 0; attempt < MAX_NATIVE_ATTEMPTS; attempt++) {
                 try {
+                    int timeoutMillis = remainingTimeoutMillis(deadlineNanos);
                     Lookup lookup = new Lookup(queryName, Type.TXT);
 
-                    SimpleResolver resolver = new SimpleResolver(domain);
+                    SimpleResolver resolver = new SimpleResolver(serverAddress);
                     resolver.setPort(port);
-                    resolver.setTimeout(Duration.ofMillis(QUERY_TIMEOUT_MS));
+                    resolver.setTimeout(Duration.ofMillis(timeoutMillis));
                     lookup.setResolver(resolver);
 
                     org.xbill.DNS.Record[] records = lookup.run();
+                    remainingTimeoutMillis(deadlineNanos);
 
                     if (records == null || records.length == 0) {
                         throw new DNSError(DNSError.Type.NO_RECORDS_FOUND, "No TXT records found in legacy query");
@@ -412,17 +596,13 @@ public class DNSResolver {
                 } catch (DNSError e) {
                     lastError = e;
                     if (e.getType() == DNSError.Type.NO_RECORDS_FOUND && attempt < MAX_NATIVE_ATTEMPTS - 1) {
-                        try {
-                            Thread.sleep((long) (RETRY_DELAY_MS * Math.pow(2, attempt)));
-                        } catch (InterruptedException ie) {
-                            Thread.currentThread().interrupt();
-                            throw e;
-                        }
+                        sleepBeforeRetry((long) (RETRY_DELAY_MS * Math.pow(2, attempt)), deadlineNanos);
                         continue;
                     }
                     Log.e(TAG, "DNS query failed", e);
                     throw e;
                 } catch (Exception e) {
+                    remainingTimeoutMillis(deadlineNanos);
                     Log.e(TAG, "DNS query failed", e);
                     throw new DNSError(DNSError.Type.QUERY_FAILED, "Legacy DNS query failed: " + e.getMessage(), e);
                 }
@@ -450,26 +630,36 @@ public class DNSResolver {
     /**
      * Send a raw UDP DNS TXT query for the fully-qualified domain name provided by the JS bridge.
      */
-    private CompletableFuture<List<String>> queryTXTRawUDP(String queryName, String server, int port) {
+    private CompletableFuture<List<String>> queryTXTRawUDP(
+        String queryName,
+        InetAddress serverAddress,
+        int port,
+        long deadlineNanos
+    ) {
         return supplyDnsAsync(() -> {
             DNSError lastError = null;
             for (int attempt = 0; attempt < MAX_NATIVE_ATTEMPTS; attempt++) {
                 DatagramSocket socket = null;
                 try {
+                    remainingTimeoutMillis(deadlineNanos);
                     DnsQuery query = buildDnsQuery(queryName, false);
 
                     socket = new DatagramSocket();
-                    socket.setSoTimeout(QUERY_TIMEOUT_MS);
-                    InetAddress serverAddr = InetAddress.getByName(server);
+                    socket.setSoTimeout(remainingTimeoutMillis(deadlineNanos));
 
-                    DatagramPacket packet = new DatagramPacket(query.payload, query.payload.length, serverAddr, port);
+                    DatagramPacket packet = new DatagramPacket(
+                        query.payload,
+                        query.payload.length,
+                        serverAddress,
+                        port
+                    );
                     socket.send(packet);
 
                     byte[] buffer = new byte[2048];
                     DatagramPacket responsePacket = new DatagramPacket(buffer, buffer.length);
                     socket.receive(responsePacket);
 
-                    if (!serverAddr.equals(responsePacket.getAddress()) || responsePacket.getPort() != port) {
+                    if (!serverAddress.equals(responsePacket.getAddress()) || responsePacket.getPort() != port) {
                         throw new DNSError(
                             DNSError.Type.QUERY_FAILED,
                             "DNS response from unexpected source: " +
@@ -485,20 +675,19 @@ public class DNSResolver {
                     if (txtRecords.isEmpty()) {
                         throw new DNSError(DNSError.Type.NO_RECORDS_FOUND, "No TXT records found in UDP response");
                     }
+                    remainingTimeoutMillis(deadlineNanos);
                     return txtRecords;
                 } catch (DNSError e) {
                     lastError = e;
                     if (e.getType() == DNSError.Type.NO_RECORDS_FOUND && attempt < MAX_NATIVE_ATTEMPTS - 1) {
-                        try {
-                            Thread.sleep((long) (RETRY_DELAY_MS * Math.pow(2, attempt)));
-                        } catch (InterruptedException ie) {
-                            Thread.currentThread().interrupt();
-                            throw e;
-                        }
+                        sleepBeforeRetry((long) (RETRY_DELAY_MS * Math.pow(2, attempt)), deadlineNanos);
                         continue;
                     }
                     throw e;
+                } catch (SocketTimeoutException e) {
+                    throw new DNSError(DNSError.Type.TIMEOUT, "Raw UDP DNS query timed out", e);
                 } catch (Exception e) {
+                    remainingTimeoutMillis(deadlineNanos);
                     throw new DNSError(DNSError.Type.QUERY_FAILED, "UDP DNS query failed: " + e.getMessage(), e);
                 } finally {
                     if (socket != null) {
@@ -717,11 +906,13 @@ public class DNSResolver {
             }
         }
 
-        for (int i = 0; i < anCount && offset + 10 <= data.length; i++) {
+        for (int i = 0; i < anCount; i++) {
             NameParseResult answerName = readName(data, offset);
             offset = answerName.nextOffset;
 
-            if (offset + 10 > data.length) break;
+            if (offset + 10 > data.length) {
+                throw new DNSError(DNSError.Type.QUERY_FAILED, "DNS response answer header truncated");
+            }
             int type = ((data[offset] & 0xFF) << 8) | (data[offset + 1] & 0xFF);
             offset += 2;
             int answerClass = ((data[offset] & 0xFF) << 8) | (data[offset + 1] & 0xFF);
@@ -729,32 +920,57 @@ public class DNSResolver {
             offset += 4; // TTL
             int rdLength = ((data[offset] & 0xFF) << 8) | (data[offset + 1] & 0xFF);
             offset += 2;
+            if (rdLength > data.length - offset) {
+                throw new DNSError(DNSError.Type.QUERY_FAILED, "DNS response RDATA truncated");
+            }
+            int end = offset + rdLength;
 
-            if (
-                type == 16 &&
-                answerClass == 1 &&
-                answerName.name.equals(expectedQueryName) &&
-                offset + rdLength <= data.length
-            ) {
-                int end = offset + rdLength;
+            if (type == 16) {
+                if (rdLength == 0) {
+                    throw new DNSError(DNSError.Type.QUERY_FAILED, "DNS TXT RDATA is empty");
+                }
+
+                List<String> recordResults = new ArrayList<>();
                 int p = offset;
                 while (p < end) {
                     int txtLen = data[p] & 0xFF;
                     p += 1;
-                    if (p + txtLen <= end && txtLen > 0) {
-                        String s = new String(data, p, txtLen, StandardCharsets.UTF_8);
-                        results.add(s);
-                        p += txtLen;
-                    } else {
-                        break;
+                    if (txtLen > end - p) {
+                        throw new DNSError(DNSError.Type.QUERY_FAILED, "DNS TXT character-string truncated");
                     }
+                    String decoded = decodeUtf8Strict(data, p, txtLen);
+                    if (!decoded.isEmpty()) {
+                        recordResults.add(decoded);
+                    }
+                    p += txtLen;
+                }
+
+                if (answerClass == 1 && answerName.name.equals(expectedQueryName)) {
+                    results.addAll(recordResults);
                 }
             }
 
-            offset += rdLength;
+            offset = end;
         }
 
         return results;
+    }
+
+    private static String decodeUtf8Strict(byte[] data, int offset, int length) throws DNSError {
+        try {
+            return StandardCharsets.UTF_8
+                .newDecoder()
+                .onMalformedInput(CodingErrorAction.REPORT)
+                .onUnmappableCharacter(CodingErrorAction.REPORT)
+                .decode(ByteBuffer.wrap(data, offset, length))
+                .toString();
+        } catch (CharacterCodingException error) {
+            throw new DNSError(
+                DNSError.Type.QUERY_FAILED,
+                "DNS TXT character-string is not valid UTF-8",
+                error
+            );
+        }
     }
 
     private static final class NameParseResult {
@@ -773,10 +989,12 @@ public class DNSResolver {
         int nextOffset = offset;
         boolean jumped = false;
         int jumps = 0;
+        boolean terminated = false;
 
         while (currentOffset < data.length) {
             int len = data[currentOffset] & 0xFF;
             if (len == 0) {
+                terminated = true;
                 currentOffset += 1;
                 if (!jumped) {
                     nextOffset = currentOffset;
@@ -805,6 +1023,10 @@ public class DNSResolver {
                 continue;
             }
 
+            if ((len & DNS_POINTER_MASK) != 0) {
+                throw new DNSError(DNSError.Type.QUERY_FAILED, "DNS response name label type is invalid");
+            }
+
             currentOffset += 1;
             if (currentOffset + len > data.length) {
                 throw new DNSError(DNSError.Type.QUERY_FAILED, "DNS response name truncated");
@@ -820,13 +1042,55 @@ public class DNSResolver {
             }
         }
 
+        if (!terminated) {
+            throw new DNSError(DNSError.Type.QUERY_FAILED, "DNS response name truncated");
+        }
+
         return new NameParseResult(name.toString().toLowerCase(Locale.US), nextOffset);
+    }
+
+    static byte[] readDnsMessageBody(
+        InputStream inputStream,
+        long contentLength,
+        Runnable beforeRead
+    ) throws IOException {
+        Objects.requireNonNull(inputStream, "inputStream");
+        Objects.requireNonNull(beforeRead, "beforeRead");
+        if (contentLength > MAX_DNS_MESSAGE_BYTES) {
+            throw new DNSError(
+                DNSError.Type.QUERY_FAILED,
+                "DNS-over-HTTPS response exceeds 65535 bytes"
+            );
+        }
+
+        try (ByteArrayOutputStream buffer = new ByteArrayOutputStream()) {
+            byte[] chunk = new byte[4096];
+            int responseSize = 0;
+            while (true) {
+                beforeRead.run();
+                int read = inputStream.read(chunk);
+                if (read == -1) {
+                    return buffer.toByteArray();
+                }
+                if (responseSize > MAX_DNS_MESSAGE_BYTES - read) {
+                    throw new DNSError(
+                        DNSError.Type.QUERY_FAILED,
+                        "DNS-over-HTTPS response exceeds 65535 bytes"
+                    );
+                }
+                buffer.write(chunk, 0, read);
+                responseSize += read;
+            }
+        }
     }
 
     /**
      * DNS-over-HTTPS query using wireformat (RFC 8484) via Cloudflare.
      */
-    private CompletableFuture<List<String>> queryTXTDNSOverHTTPS(String message) {
+    private CompletableFuture<List<String>> queryTXTDNSOverHTTPS(
+        String message,
+        long deadlineNanos
+    ) {
         return supplyDnsAsync(() -> {
             try {
                 Log.d(TAG, "DNS-over-HTTPS: Querying Cloudflare for selected DNS name");
@@ -841,8 +1105,9 @@ public class DNSResolver {
                     connection.setDoOutput(true);
                     connection.setRequestProperty("Content-Type", "application/dns-message");
                     connection.setRequestProperty("Accept", "application/dns-message");
-                    connection.setConnectTimeout(QUERY_TIMEOUT_MS);
-                    connection.setReadTimeout(QUERY_TIMEOUT_MS);
+                    int requestTimeoutMillis = remainingTimeoutMillis(deadlineNanos);
+                    connection.setConnectTimeout(requestTimeoutMillis);
+                    connection.setReadTimeout(requestTimeoutMillis);
                     connection.setFixedLengthStreamingMode(query.payload.length);
 
                     try (OutputStream outputStream = connection.getOutputStream()) {
@@ -850,6 +1115,7 @@ public class DNSResolver {
                         outputStream.flush();
                     }
 
+                    connection.setReadTimeout(remainingTimeoutMillis(deadlineNanos));
                     int responseCode = connection.getResponseCode();
                     if (responseCode != 200) {
                         throw new DNSError(
@@ -859,16 +1125,18 @@ public class DNSResolver {
                     }
 
                     byte[] responseBytes;
-                    try (InputStream inputStream = connection.getInputStream();
-                        ByteArrayOutputStream buffer = new ByteArrayOutputStream()) {
-                        byte[] chunk = new byte[4096];
-                        int read;
-                        while ((read = inputStream.read(chunk)) != -1) {
-                            buffer.write(chunk, 0, read);
-                        }
-                        responseBytes = buffer.toByteArray();
+                    try (InputStream inputStream = connection.getInputStream()) {
+                        HttpURLConnection responseConnection = connection;
+                        responseBytes = readDnsMessageBody(
+                            inputStream,
+                            responseConnection.getContentLengthLong(),
+                            () -> responseConnection.setReadTimeout(
+                                remainingTimeoutMillis(deadlineNanos)
+                            )
+                        );
                     }
 
+                    remainingTimeoutMillis(deadlineNanos);
                     return parseDnsTxtResponse(responseBytes, query.transactionId, query.queryName);
                 } finally {
                     if (connection != null) {
@@ -877,7 +1145,10 @@ public class DNSResolver {
                 }
             } catch (DNSError e) {
                 throw e; // Re-throw structured errors
+            } catch (SocketTimeoutException e) {
+                throw new DNSError(DNSError.Type.TIMEOUT, "DNS-over-HTTPS query timed out", e);
             } catch (Exception e) {
+                remainingTimeoutMillis(deadlineNanos);
                 throw new DNSError(DNSError.Type.QUERY_FAILED, "DNS-over-HTTPS query failed: " + e.getMessage(), e);
             }
         });

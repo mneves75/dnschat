@@ -1,0 +1,34 @@
+{
+  "name": "@dnschat/video",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Deterministic Remotion launch and tutorial videos for DNSChat",
+  "scripts": {
+    "dev": "remotion studio --no-open",
+    "typecheck": "tsc --noEmit",
+    "compositions": "remotion compositions src/index.ts",
+    "render:launch": "remotion render src/index.ts DNSChatLaunch out/dnschat-launch.mp4 --codec=h264 --audio-codec=aac --crf=22 --overwrite",
+    "render:tutorial": "remotion render src/index.ts DNSChatTutorial out/dnschat-tutorial.mp4 --codec=h264 --audio-codec=aac --crf=22 --overwrite",
+    "render": "pnpm run render:launch && pnpm run render:tutorial",
+    "still:launch": "remotion still src/index.ts DNSChatLaunch out/dnschat-launch-poster.png --frame=825 --overwrite",
+    "still:tutorial": "remotion still src/index.ts DNSChatTutorial out/dnschat-tutorial-poster.png --frame=60 --overwrite",
+    "stills": "pnpm run still:launch && pnpm run still:tutorial",
+    "generate:sfx": "node scripts/generate-sfx.mjs"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.518",
+    "@remotion/media": "4.0.518",
+    "@remotion/transitions": "4.0.518",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "remotion": "4.0.518"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.10",
+    "@types/react-dom": "19.2.3",
+    "typescript": "~6.0.3"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}

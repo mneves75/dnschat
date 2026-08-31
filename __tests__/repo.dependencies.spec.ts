@@ -125,29 +125,19 @@ describe("repo policy: dependency hygiene", () => {
     }
   });
 
-  it("keeps security overrides compatible with Expo native tooling", () => {
+  it("keeps the native module inside the shared pnpm security graph", () => {
     const nativePkg = readPackageJson("modules/dns-native/package.json");
+    const workspace = fs.readFileSync("pnpm-workspace.yaml", "utf8");
+
+    expect(workspace).toContain("- 'modules/dns-native'");
+    expect(nativePkg.overrides).toBeUndefined();
+    expect(fs.existsSync("modules/dns-native/package-lock.json")).toBe(false);
+  });
+
+  it("keeps security overrides compatible with Expo native tooling", () => {
     const uuid = require("uuid") as { v4?: unknown };
     const xcode = require("xcode") as { project?: unknown };
 
-    // modules/dns-native is a separate npm-installed workspace, so npm-style
-    // overrides remain the correct mechanism there. Its floors must not drift
-    // below the root workspace floors for the packages it also pins.
-    const rootOverrides = readPnpmOverrides();
-    const nativeOverrides = nativePkg.overrides ?? {};
-    expect(Object.keys(nativeOverrides).length).toBeGreaterThan(0);
-
-    for (const [name, nativeFloor] of Object.entries(nativeOverrides)) {
-      const rootFloor = rootOverrides[name];
-      if (!rootFloor) continue;
-      const stripped = nativeFloor.replace(/^[>=^~\s]+/, "");
-      expect({ name, nativeFloor, rootFloor, ok: satisfiesFloor(stripped, rootFloor) }).toEqual({
-        name,
-        nativeFloor,
-        rootFloor,
-        ok: true,
-      });
-    }
     expect(typeof uuid.v4).toBe("function");
     expect(typeof xcode.project).toBe("function");
   });

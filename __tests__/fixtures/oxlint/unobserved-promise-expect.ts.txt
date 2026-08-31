@@ -1,0 +1,5 @@
+test("observes the promise assertion", () => {
+  Promise.resolve("response").then((response) => {
+    expect(response).toBe("response");
+  });
+});

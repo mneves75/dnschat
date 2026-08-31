@@ -12,9 +12,11 @@ import {
   StorageCorruptionError,
 } from "../src/services/storageService";
 import {
+  EncryptionKeyCorruptionError,
   decryptIfEncrypted,
   encryptString,
 } from "../src/services/encryptionService";
+import * as encryptionService from "../src/services/encryptionService";
 
 // Mock AsyncStorage
 jest.mock("@react-native-async-storage/async-storage", () => ({
@@ -126,6 +128,77 @@ describe("StorageService Corruption Handling", () => {
       if (!first) throw new Error("Expected chat to exist");
       expect(first.id).toBe("chat-1");
       expect(first.title).toBe("Test Chat");
+    });
+
+    it("preserves encrypted chat storage when key material is corrupted", async () => {
+      const encryptedPayload = "enc:v1:001122:334455";
+      mockAsyncStorage.getItem.mockResolvedValue(encryptedPayload);
+      const decryptSpy = jest
+        .spyOn(encryptionService, "decryptIfEncrypted")
+        .mockRejectedValueOnce(
+          new EncryptionKeyCorruptionError("Stored encryption key is malformed"),
+        );
+
+      try {
+        await expect(StorageService.loadChats()).rejects.toBeInstanceOf(
+          EncryptionKeyCorruptionError,
+        );
+      } finally {
+        decryptSpy.mockRestore();
+      }
+
+      expect(mockAsyncStorage.setItem).not.toHaveBeenCalled();
+      expect(mockAsyncStorage.removeItem).not.toHaveBeenCalled();
+    });
+
+    it("preserves a valid encrypted payload when SecureStore read is temporarily unavailable", async () => {
+      const encryptedPayload = await encryptString(JSON.stringify([{
+        id: "chat-1",
+        title: "Test Chat",
+        createdAt: "2025-01-01T00:00:00.000Z",
+        updatedAt: "2025-01-01T00:00:00.000Z",
+        messages: [],
+      }]));
+      const originalWorkerId = process.env["JEST_WORKER_ID"];
+      delete process.env["JEST_WORKER_ID"];
+      try {
+        jest.resetModules();
+        const {
+          EncryptionKeyUnavailableError: FreshEncryptionKeyUnavailableError,
+        } = require(
+          "../src/services/encryptionService"
+        ) as typeof import("../src/services/encryptionService");
+        const {
+          StorageService: FreshStorageService,
+        } = require(
+          "../src/services/storageService"
+        ) as typeof import("../src/services/storageService");
+        const freshAsyncStorage = require(
+          "@react-native-async-storage/async-storage",
+        ) as jest.Mocked<typeof AsyncStorage>;
+        const secureStore = require("expo-secure-store") as {
+          getItemAsync: jest.Mock;
+          setItemAsync: jest.Mock;
+          deleteItemAsync: jest.Mock;
+        };
+        freshAsyncStorage.getItem.mockResolvedValue(encryptedPayload);
+        secureStore.getItemAsync.mockRejectedValueOnce(
+          new Error("SecureStore read failed"),
+        );
+
+        await expect(FreshStorageService.loadChats()).rejects.toBeInstanceOf(
+          FreshEncryptionKeyUnavailableError,
+        );
+
+        expect(freshAsyncStorage.setItem).not.toHaveBeenCalled();
+        expect(freshAsyncStorage.removeItem).not.toHaveBeenCalled();
+        expect(secureStore.setItemAsync).not.toHaveBeenCalled();
+        expect(secureStore.deleteItemAsync).not.toHaveBeenCalled();
+      } finally {
+        if (originalWorkerId !== undefined) {
+          process.env["JEST_WORKER_ID"] = originalWorkerId;
+        }
+      }
     });
 
     it("migrates a legacy plaintext payload to an encrypted payload through the mutation queue", async () => {
@@ -351,6 +424,43 @@ describe("StorageService Corruption Handling", () => {
       expect(mockAsyncStorage.setItem).toHaveBeenCalledWith(
         "@chat_dns_chats_backup",
         expect.any(String),
+      );
+      expect(mockAsyncStorage.removeItem).not.toHaveBeenCalledWith("@chat_dns_chats");
+    });
+
+    it("leaves an unparseable primary payload intact when backup encryption fails", async () => {
+      const originalPayload = "not valid json {{{";
+      mockAsyncStorage.getItem.mockResolvedValue(originalPayload);
+      const encryptSpy = jest
+        .spyOn(encryptionService, "encryptString")
+        .mockRejectedValueOnce(new Error("Backup encryption failed"));
+
+      try {
+        await expect(StorageService.loadChats()).rejects.toThrow(
+          "Backup encryption failed",
+        );
+      } finally {
+        encryptSpy.mockRestore();
+      }
+
+      expect(mockAsyncStorage.setItem).not.toHaveBeenCalled();
+      expect(mockAsyncStorage.removeItem).not.toHaveBeenCalledWith("@chat_dns_chats");
+    });
+
+    it("leaves an unparseable primary payload intact when the backup write exceeds quota", async () => {
+      const originalPayload = "not valid json {{{";
+      mockAsyncStorage.getItem.mockResolvedValue(originalPayload);
+      mockAsyncStorage.setItem.mockRejectedValueOnce(
+        new Error("AsyncStorage quota exceeded"),
+      );
+
+      await expect(StorageService.loadChats()).rejects.toThrow(
+        "AsyncStorage quota exceeded",
+      );
+
+      expect(mockAsyncStorage.setItem).toHaveBeenCalledWith(
+        "@chat_dns_chats_backup",
+        expect.stringContaining('"payload"'),
       );
       expect(mockAsyncStorage.removeItem).not.toHaveBeenCalledWith("@chat_dns_chats");
     });

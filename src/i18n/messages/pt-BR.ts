@@ -54,23 +54,23 @@ export const ptBR = {
       },
       welcome: {
         title: "Bem-vindo ao DNS Chat",
-        subtitle: "Envie mensagens como consultas DNS TXT e receba respostas em registros TXT",
+        subtitle: "Envie mensagens curtas em consultas DNS TXT e receba respostas TXT.",
         appIconLabel: "Ícone do aplicativo DNS Chat",
         features: {
           revolutionary: {
             label: "DNS TXT",
             title: "Transporte por DNS",
-            description: "Converse através de registros DNS TXT - sem APIs tradicionais",
+            description: "O app transporta cada mensagem curta e resposta em registros DNS TXT.",
           },
           private: {
             label: "Observável",
             title: "DNS é observável",
-            description: "Não envie segredos ou dados pessoais; a infraestrutura DNS pode observar consultas",
+            description: "Consultas e respostas passam pelo serviço DNS terceirizado selecionado e podem ser observadas, retidas ou alteradas. Não envie segredos nem dados pessoais.",
           },
           fast: {
-            label: "Rápido",
-            title: "Resiliente à Rede",
-            description: "Adapta-se automaticamente a diferentes condições de rede",
+            label: "Fallback",
+            title: "Múltiplos Transportes DNS",
+            description: "DNS nativo, UDP e TCP formam uma rota ordenada de fallback.",
           },
         },
       },
@@ -144,7 +144,7 @@ export const ptBR = {
           success: "Sucesso",
           failed: "Falhou",
         },
-        demoResponse: "Bem-vindo ao DNS Chat! Esta é uma demonstração de como suas mensagens viajam através de consultas DNS. Bem legal, né?",
+        demoResponse: "A resposta retornou pela rota de transporte DNS.",
         demoFailure: "Nenhuma resposta DNS retornou durante esta demonstração. Você pode continuar e ajustar as Configurações depois.",
         accessibility: {
           idleLabel: "Iniciar demonstração DNS",
@@ -204,7 +204,7 @@ export const ptBR = {
         logs: {
           label: "Logs",
           title: "Logs de Consultas DNS",
-          description: "Monitore todas as consultas DNS em tempo real com informações detalhadas de tempo e fallback.",
+          description: "Revise tentativas de transporte, status, tempo e detalhes de fallback.",
         },
         customize: {
           label: "Personalizar",
@@ -213,18 +213,18 @@ export const ptBR = {
         },
         liquidGlass: {
           label: "iOS 26",
-          title: "Design Liquid Glass",
-          description: "Bela interface iOS 26 com efeitos de vidro nativos e Material Design 3 no Android.",
+          title: "Interface Nativa",
+          description: "Controles e navegação da plataforma se adaptam ao iOS e Android.",
         },
         i18n: {
-          label: "i18n",
-          title: "Suporte Multilíngue",
-          description: "Internacionalização completa com idiomas Inglês e Português.",
+          label: "Idioma",
+          title: "Inglês e Português",
+          description: "A interface segue o idioma do dispositivo ou sua escolha no app.",
         },
         haptics: {
           label: "Hápticos",
-          title: "Feedback Háptico",
-          description: "Feedback háptico personalizável para elementos e ações interativas.",
+          title: "Hápticos Opcionais",
+          description: "O feedback tátil pode ser desativado de forma independente nos Ajustes.",
         },
         opensource: {
           label: "Aberto",
@@ -234,25 +234,25 @@ export const ptBR = {
           accessibilityHint: "Abre o repositório do DNS Chat no GitHub no navegador para você ver o código-fonte e contribuir",
         },
         themes: {
-          label: "Adapta",
-          title: "Temas Claro e Escuro",
-          description: "Interface bonita que se adapta às suas preferências do sistema com suporte a modo de alto contraste.",
+          label: "Tema",
+          title: "Claro, Escuro ou Sistema",
+          description: "Escolha o tema e use o ajuste de alto contraste quando necessário.",
         },
         storage: {
           label: "Local",
-          title: "Armazenamento Local",
-          description: "Todas as suas conversas são armazenadas com segurança no seu dispositivo - sem dependência de nuvem.",
+          title: "Histórico Local Criptografado",
+          description: "O histórico de conversas é criptografado e mantido neste dispositivo.",
         },
         fallbacks: {
-          label: "Inteligente",
-          title: "Fallbacks Inteligentes",
-          description: "Sistema de fallback inteligente garante conectividade em diferentes condições de rede.",
+          label: "Ordem",
+          title: "Cadeia Explícita de Fallback",
+          description: "O app tenta os transportes suportados em ordem definida e registra cada tentativa.",
         },
       },
       header: {
-        label: "Recursos",
-        title: "Recursos Poderosos",
-        subtitle: "Descubra o que torna o DNS Chat especial",
+        label: "Referência",
+        title: "Saiba o que o App Faz",
+        subtitle: "Revise armazenamento local, ajustes, logs e comportamento de fallback.",
       },
       ready: {
         title: "Tudo Pronto",
@@ -338,7 +338,7 @@ export const ptBR = {
         title: "Iniciar nova conversa",
         button: "Nova conversa",
         description: "Envie uma mensagem curta por uma consulta DNS TXT.",
-        observableNotice: "O tráfego DNS pode ser observado na rede e não é privado.",
+        observableNotice: "Um serviço DNS terceirizado ou a rede pode observar, reter ou alterar consultas e respostas.",
       },
       recent: {
         title: "Conversas recentes",
@@ -348,7 +348,7 @@ export const ptBR = {
       empty: {
         title: "Nenhuma conversa ainda",
         subtitle:
-          "Toque em \"Nova conversa\" para iniciar. Suas conversas aparecerão aqui.",
+          "Suas conversas aparecerão aqui depois que você iniciar uma.",
       },
       stats: {
         title: "Estatísticas",
@@ -382,7 +382,12 @@ export const ptBR = {
       empty: {
         title: "Sem consultas DNS ainda",
         subtitle:
-          "Envie uma mensagem para ver os registros de consultas. Todas as tentativas ficam documentadas.",
+          "Envie uma mensagem para registrar status e tempo do transporte. O texto de mensagens e respostas permanece oculto.",
+      },
+      loadError: {
+        title: "Não foi possível carregar os logs DNS",
+        subtitle:
+          "Nenhum dado de log foi removido. Puxe para baixo e tente de novo quando o armazenamento local seguro estiver disponível.",
       },
       history: {
         title: "Histórico de consultas DNS",
@@ -450,7 +455,7 @@ export const ptBR = {
           enableHaptics: {
             label: "Ativar hápticos",
             description:
-              "Reproduz feedback tátil quando houver suporte e respeita Reduzir Movimento.",
+              "Reproduz feedback tátil quando houver suporte e pode ser desativado aqui de forma independente.",
           },
         },
         transportTest: {
@@ -648,7 +653,7 @@ export const ptBR = {
       fallbackInitials: "DNS",
       appName: "DNS Chat",
       tagline:
-        "Converse com IA por consultas DNS TXT – uma forma única de falar com modelos de linguagem.",
+        "Mensagens curtas vão para um serviço terceirizado em consultas DNS TXT. O tráfego é observável e as respostas não são autenticadas.",
       versionLabel: "v{{version}}",
       footer: "© 2025 Colaboradores do DNSChat • Licença MIT",
       quickActions: {

@@ -12,6 +12,12 @@ describe("NativeDNS sanitizer configuration", () => {
   const platformRecord = Platform as unknown as Record<string, unknown>;
   const globalRecord = globalThis as Record<string, unknown>;
 
+  const flushConfiguration = async (): Promise<void> => {
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+  };
+
   beforeEach(() => {
     console.warn = jest.fn();
     console.log = jest.fn();
@@ -69,8 +75,9 @@ describe("NativeDNS sanitizer configuration", () => {
   it("marks native DNS unavailable when sanitizer configuration fails", async () => {
     const error = Object.assign(new Error("Invalid regex"), { code: "SANITIZER_CONFIG_REGEX" });
     const queryTXT = jest.fn().mockResolvedValue(["ok"]);
+    const configureSanitizer = jest.fn().mockRejectedValue(error);
     nativeModulesRecord["RNDNSModule"] = {
-      configureSanitizer: jest.fn().mockRejectedValue(error),
+      configureSanitizer,
       queryTXT,
       isAvailable: jest.fn().mockResolvedValue({ available: true, platform: "android", supportsCustomServer: true, supportsAsyncQuery: true, apiLevel: 34 }),
     };
@@ -89,5 +96,66 @@ describe("NativeDNS sanitizer configuration", () => {
       platform: "android",
     });
     expect(queryTXT).not.toHaveBeenCalled();
+    expect(configureSanitizer).toHaveBeenCalledTimes(1);
+  });
+
+  it("retries transient sanitizer configuration failures on a later query", async () => {
+    const transientError = new Error("Native bridge is starting");
+    const configureSanitizer = jest
+      .fn()
+      .mockRejectedValueOnce(transientError)
+      .mockResolvedValueOnce(true);
+    const queryTXT = jest.fn().mockResolvedValue(["ok"]);
+    const dns = new NativeDNS({
+      configureSanitizer,
+      queryTXT,
+      isAvailable: jest.fn().mockResolvedValue({
+        available: true,
+        platform: "android",
+        supportsCustomServer: true,
+        supportsAsyncQuery: true,
+        apiLevel: 34,
+      }),
+    });
+
+    await flushConfiguration();
+
+    await expect(dns.queryTXT("llm.pieter.com", "hello.llm.pieter.com", 53)).resolves.toEqual(["ok"]);
+    expect(configureSanitizer).toHaveBeenCalledTimes(2);
+    expect(queryTXT).toHaveBeenCalledTimes(1);
+  });
+
+  it("shares one in-flight retry across concurrent queries", async () => {
+    let resolveRetry!: (didUpdate: boolean) => void;
+    const retryPromise = new Promise<boolean>((resolve) => {
+      resolveRetry = resolve;
+    });
+    const configureSanitizer = jest
+      .fn()
+      .mockRejectedValueOnce(new Error("Native bridge is starting"))
+      .mockReturnValueOnce(retryPromise);
+    const queryTXT = jest.fn().mockResolvedValue(["ok"]);
+    const dns = new NativeDNS({
+      configureSanitizer,
+      queryTXT,
+      isAvailable: jest.fn().mockResolvedValue({
+        available: true,
+        platform: "android",
+        supportsCustomServer: true,
+        supportsAsyncQuery: true,
+        apiLevel: 34,
+      }),
+    });
+
+    await flushConfiguration();
+
+    const firstQuery = dns.queryTXT("llm.pieter.com", "first.llm.pieter.com", 53);
+    const secondQuery = dns.queryTXT("llm.pieter.com", "second.llm.pieter.com", 53);
+
+    expect(configureSanitizer).toHaveBeenCalledTimes(2);
+    resolveRetry(true);
+
+    await expect(Promise.all([firstQuery, secondQuery])).resolves.toEqual([["ok"], ["ok"]]);
+    expect(queryTXT).toHaveBeenCalledTimes(2);
   });
 });

@@ -60,12 +60,7 @@ External baseline reviewed:
 
 ## Remaining policy
 
-1. Run `pnpm run verify:all` with `modules/dns-native/node_modules` absent.
-   `expo-doctor` intentionally scans `modules/**/android` and `modules/**/ios`;
-   a nested `node_modules` created by `npm ci` inside the local module can
-   produce a false positive.
-2. Run native module tests separately with `cd modules/dns-native && npm ci &&
-   npm test`, then remove `modules/dns-native/node_modules` before rerunning
-   Expo Doctor.
-3. Keep DNS logs diagnostic-only. Do not persist raw prompts, raw TXT responses,
+1. Run `pnpm run verify:all`; the root workspace install now owns the native
+   module dependencies and its tests.
+2. Keep DNS logs diagnostic-only. Do not persist raw prompts, raw TXT responses,
    or prompt-derived DNS labels.

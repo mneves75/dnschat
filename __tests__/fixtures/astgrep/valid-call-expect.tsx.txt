@@ -1,0 +1,4 @@
+const singleton = <span>value</span>;
+const getSingleton = () => singleton;
+
+expect(getSingleton()).toBe(getSingleton());

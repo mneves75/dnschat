@@ -2,7 +2,13 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { sha256 } from '@noble/hashes/sha2.js';
 import { bytesToHex, utf8ToBytes } from '@noble/hashes/utils.js';
 import { LOGGING_CONSTANTS, STORAGE_CONSTANTS } from '../constants/appConstants';
-import { decryptIfEncrypted, encryptString, isEncryptedPayload } from './encryptionService';
+import {
+  EncryptionKeyCorruptionError,
+  EncryptionKeyUnavailableError,
+  decryptIfEncrypted,
+  encryptString,
+  isEncryptedPayload,
+} from './encryptionService';
 import { isScreenshotMode, getMockDNSLogs } from '../utils/screenshotMode';
 import { devLog, devWarn } from "../utils/devLog";
 
@@ -46,6 +52,31 @@ const LOGS_BACKUP_KEY = STORAGE_CONSTANTS.LOGS_BACKUP_KEY;
 const MAX_LOGS = LOGGING_CONSTANTS.MAX_LOGS;
 const LOG_RETENTION_DAYS = LOGGING_CONSTANTS.LOG_RETENTION_DAYS;
 const STORAGE_SIZE_WARNING_MB = LOGGING_CONSTANTS.STORAGE_SIZE_WARNING_MB;
+const DNS_METHODS: readonly DNSLogEntry["method"][] = [
+  "native",
+  "udp",
+  "tcp",
+  "https",
+  "mock",
+];
+const DNS_ENTRY_STATUSES: readonly DNSLogEntry["status"][] = [
+  "attempt",
+  "success",
+  "failure",
+  "fallback",
+];
+const DNS_FINAL_STATUSES: readonly DNSQueryLog["finalStatus"][] = [
+  "pending",
+  "success",
+  "failure",
+];
+
+class DNSLogStorageCorruptionError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "DNSLogStorageCorruptionError";
+  }
+}
 
 export class DNSLogService {
   private static activeQueryLogs: Map<string, DNSQueryLog> = new Map();
@@ -54,6 +85,8 @@ export class DNSLogService {
   private static idCounter = 0;
   private static cleanupIntervalId: ReturnType<typeof setInterval> | null = null;
   private static persistenceQueue: Promise<void> = Promise.resolve();
+  private static initialized = false;
+  private static initializationInFlight: Promise<void> | null = null;
   /**
    * Per-query map of raw, unredacted sensitive values (prompt text + chat title)
    * to their pre-compiled redaction regexes, used to scrub those exact strings
@@ -144,36 +177,227 @@ export class DNSLogService {
     };
   }
 
+  private static isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === "object" && value !== null && !Array.isArray(value);
+  }
+
+  private static requireString(
+    record: Record<string, unknown>,
+    key: string,
+    context: string,
+  ): string {
+    const value = record[key];
+    if (typeof value !== "string" || value.length === 0) {
+      throw new DNSLogStorageCorruptionError(
+        `${context} has invalid ${key}`,
+      );
+    }
+    return value;
+  }
+
+  private static optionalString(
+    record: Record<string, unknown>,
+    key: string,
+    context: string,
+  ): string | undefined {
+    const value = record[key];
+    if (value === undefined) {
+      return undefined;
+    }
+    if (typeof value !== "string") {
+      throw new DNSLogStorageCorruptionError(
+        `${context} has invalid ${key}`,
+      );
+    }
+    return value;
+  }
+
+  private static optionalDuration(
+    record: Record<string, unknown>,
+    key: string,
+    context: string,
+  ): number | undefined {
+    const value = record[key];
+    if (value === undefined) {
+      return undefined;
+    }
+    if (typeof value !== "number" || !Number.isFinite(value) || value < 0) {
+      throw new DNSLogStorageCorruptionError(
+        `${context} has invalid ${key}`,
+      );
+    }
+    return value;
+  }
+
+  private static parseStoredDate(
+    value: unknown,
+    context: string,
+  ): Date {
+    if (typeof value !== "string" && typeof value !== "number") {
+      throw new DNSLogStorageCorruptionError(`${context} is invalid`);
+    }
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      throw new DNSLogStorageCorruptionError(`${context} is invalid`);
+    }
+    return date;
+  }
+
+  private static parseStoredEntry(
+    candidate: unknown,
+    logIndex: number,
+    entryIndex: number,
+  ): DNSLogEntry {
+    const context = `DNS log entry ${entryIndex} in log ${logIndex}`;
+    if (!this.isRecord(candidate)) {
+      throw new DNSLogStorageCorruptionError(`${context} is not an object`);
+    }
+
+    const method = this.requireString(candidate, "method", context);
+    if (!DNS_METHODS.includes(method as DNSLogEntry["method"])) {
+      throw new DNSLogStorageCorruptionError(`${context} has invalid method`);
+    }
+    const status = this.requireString(candidate, "status", context);
+    if (!DNS_ENTRY_STATUSES.includes(status as DNSLogEntry["status"])) {
+      throw new DNSLogStorageCorruptionError(`${context} has invalid status`);
+    }
+
+    const details = this.optionalString(candidate, "details", context);
+    const error = this.optionalString(candidate, "error", context);
+    const duration = this.optionalDuration(candidate, "duration", context);
+    return {
+      id: this.requireString(candidate, "id", context),
+      timestamp: this.parseStoredDate(candidate["timestamp"], `${context} timestamp`),
+      message: this.requireString(candidate, "message", context),
+      method: method as DNSLogEntry["method"],
+      status: status as DNSLogEntry["status"],
+      ...(details !== undefined ? { details } : {}),
+      ...(error !== undefined ? { error } : {}),
+      ...(duration !== undefined ? { duration } : {}),
+    };
+  }
+
+  private static parseStoredLog(
+    candidate: unknown,
+    logIndex: number,
+  ): DNSQueryLog {
+    const context = `DNS log ${logIndex}`;
+    if (!this.isRecord(candidate)) {
+      throw new DNSLogStorageCorruptionError(`${context} is not an object`);
+    }
+
+    const finalStatus = this.requireString(candidate, "finalStatus", context);
+    if (!DNS_FINAL_STATUSES.includes(finalStatus as DNSQueryLog["finalStatus"])) {
+      throw new DNSLogStorageCorruptionError(
+        `${context} has invalid finalStatus`,
+      );
+    }
+    const finalMethod = this.optionalString(candidate, "finalMethod", context);
+    if (
+      finalMethod !== undefined &&
+      !DNS_METHODS.includes(finalMethod as DNSLogEntry["method"])
+    ) {
+      throw new DNSLogStorageCorruptionError(
+        `${context} has invalid finalMethod`,
+      );
+    }
+
+    const storedEntries = candidate["entries"];
+    if (storedEntries !== undefined && !Array.isArray(storedEntries)) {
+      throw new DNSLogStorageCorruptionError(
+        `${context} has invalid entries`,
+      );
+    }
+    const entries = (storedEntries ?? []).map((entry, entryIndex) =>
+      this.parseStoredEntry(entry, logIndex, entryIndex),
+    );
+    const chatId = this.optionalString(candidate, "chatId", context);
+    const chatTitle = this.optionalString(candidate, "chatTitle", context);
+    const response = this.optionalString(candidate, "response", context);
+    const endTimeValue = candidate["endTime"];
+    const endTime =
+      endTimeValue === undefined
+        ? undefined
+        : this.parseStoredDate(endTimeValue, `${context} endTime`);
+    const totalDuration = this.optionalDuration(
+      candidate,
+      "totalDuration",
+      context,
+    );
+
+    return {
+      id: this.requireString(candidate, "id", context),
+      ...(chatId !== undefined ? { chatId } : {}),
+      ...(chatTitle !== undefined ? { chatTitle } : {}),
+      query: this.requireString(candidate, "query", context),
+      startTime: this.parseStoredDate(candidate["startTime"], `${context} startTime`),
+      ...(endTime !== undefined ? { endTime } : {}),
+      ...(totalDuration !== undefined ? { totalDuration } : {}),
+      finalStatus: finalStatus as DNSQueryLog["finalStatus"],
+      ...(finalMethod !== undefined
+        ? { finalMethod: finalMethod as DNSLogEntry["method"] }
+        : {}),
+      ...(response !== undefined ? { response } : {}),
+      entries,
+    };
+  }
+
+  private static parseStoredLogs(parsed: unknown): DNSQueryLog[] {
+    if (!Array.isArray(parsed)) {
+      throw new DNSLogStorageCorruptionError(
+        "Persisted DNS logs are not an array",
+      );
+    }
+    return parsed.map((candidate, index) =>
+      this.parseStoredLog(candidate, index),
+    );
+  }
+
+  private static redactLegacyText(value: string): string {
+    return /^sha256:[0-9a-f]{64} len:\d+$/.test(value)
+      ? value
+      : this.redactText(value);
+  }
+
+  private static migrateLegacyLog(log: DNSQueryLog): DNSQueryLog {
+    return {
+      ...log,
+      ...(log.chatTitle !== undefined
+        ? { chatTitle: this.redactLegacyText(log.chatTitle) }
+        : {}),
+      query: this.redactLegacyText(log.query),
+      ...(log.response !== undefined
+        ? { response: this.redactLegacyText(log.response) }
+        : {}),
+      entries: log.entries.map((entry) => ({
+        ...entry,
+        message: "Legacy DNS log entry",
+        ...(entry.details !== undefined
+          ? { details: this.redactLegacyText(entry.details) }
+          : {}),
+        ...(entry.error !== undefined
+          ? { error: this.redactLegacyText(entry.error) }
+          : {}),
+      })),
+    };
+  }
+
   private static async createCorruptionBackupPayload(
     error: unknown,
     storedPayload: string,
   ): Promise<string> {
     const timestamp = new Date().toISOString();
     const payloadWasEncrypted = isEncryptedPayload(storedPayload);
+    const protectedPayload = payloadWasEncrypted
+      ? storedPayload
+      : await encryptString(storedPayload);
 
-    try {
-      const protectedPayload = payloadWasEncrypted
-        ? storedPayload
-        : await encryptString(storedPayload);
-
-      return JSON.stringify({
-        timestamp,
-        error: error instanceof Error ? error.message : String(error),
-        payload: protectedPayload,
-        payloadWasEncrypted,
-      });
-    } catch (backupEncryptionError) {
-      devWarn(
-        "[DNSLogService] Failed to encrypt corrupted DNS logs backup payload",
-        backupEncryptionError,
-      );
-      return JSON.stringify({
-        timestamp,
-        error: error instanceof Error ? error.message : String(error),
-        payloadRedacted: true,
-        payloadWasEncrypted,
-      });
-    }
+    return JSON.stringify({
+      timestamp,
+      error: error instanceof Error ? error.message : String(error),
+      payload: protectedPayload,
+      payloadWasEncrypted,
+    });
   }
 
   /**
@@ -199,69 +423,112 @@ export class DNSLogService {
     return `${prefix}-${timestamp}-${performance}-${counter}-${random}`;
   }
 
-  static async initialize() {
+  private static async loadPersistentLogs(): Promise<boolean> {
     let stored: string | null = null;
+    let storageReadCompleted = false;
     try {
-      // SCREENSHOT MODE: Load mock DNS logs for deterministic UI captures
       if (isScreenshotMode()) {
         devLog("[DNSLogService] Screenshot mode detected, loading mock DNS logs");
-        this.queryLogs = getMockDNSLogs(); // Locale resolved from the device (-AppleLanguages) at capture time
+        this.queryLogs = getMockDNSLogs();
         this.notifyListeners();
-        return;
+        return true;
       }
 
-      // NORMAL MODE: Load logs from storage
       stored = await AsyncStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const wasEncrypted = isEncryptedPayload(stored);
-        const decrypted = await decryptIfEncrypted(stored);
-        const parsed = JSON.parse(decrypted) as unknown;
-        if (Array.isArray(parsed)) {
-          this.queryLogs = (parsed as StoredDNSQueryLog[]).map((log) => {
-            const { startTime, endTime: storedEndTime, entries: storedEntries, ...rest } = log;
-            const endTime = storedEndTime ? new Date(storedEndTime) : undefined;
-            const normalizedEntries = Array.isArray(storedEntries)
-              ? storedEntries.map((entry) => ({
-                  ...entry,
-                  timestamp: new Date(entry.timestamp),
-                }))
-              : [];
-            return {
-              ...rest,
-              startTime: new Date(startTime),
-              ...(endTime ? { endTime } : {}),
-              entries: normalizedEntries,
-            };
-          });
-          if (!wasEncrypted) {
-            await this.writePersistentLogs();
-            devWarn("[DNSLogService] Migrated legacy plaintext DNS logs to encrypted payload");
-          }
-        } else {
-          this.queryLogs = [];
-        }
+      storageReadCompleted = true;
+      if (!stored) {
+        this.queryLogs = [];
+        return false;
+      }
+
+      const wasEncrypted = isEncryptedPayload(stored);
+      const decrypted = await decryptIfEncrypted(stored);
+      const parsed = this.parseStoredLogs(JSON.parse(decrypted) as unknown);
+      this.queryLogs = wasEncrypted
+        ? parsed
+        : parsed.map((log) => this.migrateLegacyLog(log));
+
+      if (!wasEncrypted) {
+        await this.writePersistentLogs();
+        devWarn(
+          "[DNSLogService] Migrated legacy plaintext DNS logs to encrypted and redacted payload",
+        );
       }
     } catch (error) {
-      devWarn("[DNSLogService] Failed to load DNS logs", error);
-      if (stored) {
-        try {
-          const backupPayload = await this.createCorruptionBackupPayload(error, stored);
-          await AsyncStorage.setItem(LOGS_BACKUP_KEY, backupPayload);
-          await AsyncStorage.removeItem(STORAGE_KEY);
-          devWarn("[DNSLogService] Corrupted DNS logs backed up and cleared", {
-            key: LOGS_BACKUP_KEY,
-          });
-        } catch (backupError) {
-          devWarn("[DNSLogService] Failed to backup corrupted DNS logs", backupError);
-        }
+      if (!storageReadCompleted) {
+        devWarn("[DNSLogService] Failed to read DNS logs", error);
+        throw error;
       }
+
+      if (
+        error instanceof EncryptionKeyCorruptionError ||
+        error instanceof EncryptionKeyUnavailableError
+      ) {
+        devWarn(
+          "[DNSLogService] Encryption key cannot be used; preserving encrypted DNS logs",
+          error,
+        );
+        throw error;
+      }
+
+      devWarn("[DNSLogService] Failed to load DNS logs", error);
+      if (!stored) {
+        this.queryLogs = [];
+        return false;
+      }
+
+      let backupPayload: string;
+      try {
+        backupPayload = await this.createCorruptionBackupPayload(error, stored);
+        await AsyncStorage.setItem(LOGS_BACKUP_KEY, backupPayload);
+      } catch (backupError) {
+        devWarn("[DNSLogService] Failed to backup corrupted DNS logs", backupError);
+        throw backupError;
+      }
+
+      await AsyncStorage.removeItem(STORAGE_KEY);
       this.queryLogs = [];
+      devWarn("[DNSLogService] Corrupted DNS logs backed up and cleared", {
+        key: LOGS_BACKUP_KEY,
+      });
     }
 
-    // Initialize cleanup scheduler after loading logs (skip in screenshot mode)
-    if (!isScreenshotMode()) {
-      await this.initializeCleanupScheduler();
+    return false;
+  }
+
+  private static enqueueInitializationRead(): Promise<boolean> {
+    const run = this.persistenceQueue.then(() => this.loadPersistentLogs());
+    this.persistenceQueue = run.then(
+      () => undefined,
+      () => undefined,
+    );
+    return run;
+  }
+
+  static initialize(): Promise<void> {
+    if (this.initialized) {
+      return Promise.resolve();
     }
+    if (this.initializationInFlight) {
+      return this.initializationInFlight;
+    }
+
+    const run = this.enqueueInitializationRead().then(async (screenshotMode) => {
+      if (!screenshotMode) {
+        await this.initializeCleanupScheduler();
+      }
+    });
+    this.initializationInFlight = run;
+    void run.then(
+      () => {
+        this.initialized = true;
+        this.initializationInFlight = null;
+      },
+      () => {
+        this.initializationInFlight = null;
+      },
+    );
+    return run;
   }
 
   /**

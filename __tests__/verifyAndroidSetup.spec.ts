@@ -4,16 +4,28 @@ import path from "node:path";
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const {
+  checkAdbReverse,
   checkAndroidReleaseSigningPolicy,
+  checkMetroPort,
   isSupportedAndroidJavaMajor,
   checkMainApplicationKt,
+  isValidTcpPort,
   parseJavaMajorVersion,
   parseJavaProperties,
   resolveAndroidSdkDir,
 } = require("../scripts/verify-android-setup.js") as {
+  checkAdbReverse: (options?: {
+    env?: Record<string, string | undefined>;
+    execFileSyncImpl?: (...args: unknown[]) => string;
+  }) => boolean;
   checkAndroidReleaseSigningPolicy: () => boolean;
+  checkMetroPort: (options?: {
+    env?: Record<string, string | undefined>;
+    execFileSyncImpl?: (...args: unknown[]) => string;
+  }) => boolean;
   isSupportedAndroidJavaMajor: (major: number | null) => boolean;
   checkMainApplicationKt: () => boolean;
+  isValidTcpPort: (value: string) => boolean;
   parseJavaMajorVersion: (raw: string) => number | null;
   parseJavaProperties: (raw: string) => Record<string, string>;
   resolveAndroidSdkDir: (args: {
@@ -96,6 +108,50 @@ describe("scripts/verify-android-setup.js helpers", () => {
     expect(isSupportedAndroidJavaMajor(21)).toBe(true);
     expect(isSupportedAndroidJavaMajor(25)).toBe(false);
     expect(isSupportedAndroidJavaMajor(null)).toBe(false);
+  });
+
+  it("rejects invalid Metro ports before launching a process", () => {
+    const execFileSyncImpl = jest.fn(() => "123\n");
+
+    expect(isValidTcpPort("8081")).toBe(true);
+    expect(isValidTcpPort("0")).toBe(false);
+    expect(isValidTcpPort("65536")).toBe(false);
+    expect(isValidTcpPort("8081;invalid")).toBe(false);
+    expect(
+      checkMetroPort({
+        env: { RCT_METRO_PORT: "8081;invalid" },
+        execFileSyncImpl,
+      }),
+    ).toBe(false);
+    expect(execFileSyncImpl).not.toHaveBeenCalled();
+  });
+
+  it("passes Metro and ADB values as argument arrays", () => {
+    const execFileSyncImpl = jest.fn((command: unknown, args: unknown) => {
+      if (command === "lsof") return "123\n";
+      if (command === "adb" && Array.isArray(args) && args[0] === "devices") {
+        return "List of devices attached\nemulator-5554\tdevice\n";
+      }
+      if (command === "adb") return "emulator-5554 tcp:8081 tcp:8081\n";
+      throw new Error("unexpected command");
+    });
+
+    expect(
+      checkMetroPort({ env: { RCT_METRO_PORT: "8081" }, execFileSyncImpl }),
+    ).toBe(true);
+    expect(
+      checkAdbReverse({ env: { RCT_METRO_PORT: "8081" }, execFileSyncImpl }),
+    ).toBe(true);
+    expect(execFileSyncImpl).toHaveBeenCalledWith(
+      "lsof",
+      ["-ti", ":8081"],
+      expect.objectContaining({ encoding: "utf8" }),
+    );
+    expect(execFileSyncImpl).toHaveBeenCalledWith(
+      "adb",
+      ["-s", "emulator-5554", "reverse", "--list"],
+      expect.objectContaining({ encoding: "utf8" }),
+    );
   });
 
   it("validates current MainApplication registration policy", () => {

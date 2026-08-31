@@ -133,7 +133,9 @@ function FeatureItem({ label, title, description, palette, typography }: Feature
           styles.featureIconContainer,
           {
             backgroundColor: palette.accentSurface,
-            borderColor: palette.accentBorder,
+            borderColor: palette.isDark
+              ? palette.accentTint
+              : palette.accentBorder,
           },
         ]}
       >
@@ -144,7 +146,7 @@ function FeatureItem({ label, title, description, palette, typography }: Feature
           style={[
             typography.headline,
             styles.featureLabel,
-            { color: palette.accentTint },
+            { color: palette.accentText },
           ]}
         >
           {label}
@@ -182,20 +184,24 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: LiquidGlassSpacing.xl,
-    paddingTop: LiquidGlassSpacing.xxxl,
-    paddingBottom: LiquidGlassSpacing.lg,
+    flexGrow: 1,
+    width: "100%",
+    maxWidth: LiquidGlassSpacing.huge * 12,
+    alignSelf: "center",
+    paddingHorizontal: LiquidGlassSpacing.lg,
+    paddingTop: LiquidGlassSpacing.lg,
+    paddingBottom: LiquidGlassSpacing.xxxl,
   },
   heroSection: {
     alignItems: "center",
-    marginBottom: LiquidGlassSpacing.huge,
-  },
-  iconContainer: {
     marginBottom: LiquidGlassSpacing.xl,
   },
+  iconContainer: {
+    marginBottom: LiquidGlassSpacing.lg,
+  },
   appIcon: {
-    width: 80,
-    height: 80,
+    width: 72,
+    height: 72,
     borderRadius: LiquidGlassSpacing.md,
   },
   title: {
@@ -207,19 +213,18 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   featuresSection: {
-    gap: LiquidGlassSpacing.xl,
+    gap: LiquidGlassSpacing.md,
   },
   featureItem: {
-    flexDirection: "row",
+    flexDirection: "column",
     alignItems: "flex-start",
-    gap: LiquidGlassSpacing.md,
+    gap: LiquidGlassSpacing.xs,
   },
   featureIconContainer: {
     paddingHorizontal: LiquidGlassSpacing.sm,
     paddingVertical: LiquidGlassSpacing.xxs,
     borderRadius: LiquidGlassSpacing.xs,
     borderWidth: 1,
-    marginTop: LiquidGlassSpacing.xxs,
   },
   featureLabel: {
     fontWeight: "600",

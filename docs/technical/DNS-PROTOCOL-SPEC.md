@@ -49,15 +49,18 @@ Input is a list of TXT strings as returned by the transport.
 Parsing rules (implemented by `parseTXTResponse(txtRecords)`):
 
 1. Ignore empty/whitespace-only records.
-2. If any record does NOT match multipart prefix `n/N:...`, treat the response
-   as plain and return the concatenation of all plain records (in received order).
-3. Otherwise treat as multipart:
+2. If every remaining record does NOT match multipart prefix `n/N:...`, treat the
+   response as plain and return the concatenation of all records (in received order).
+3. If every remaining record matches the multipart prefix, treat the response as
+   multipart:
    - Each record must be `partNumber/totalParts:content`.
    - `totalParts` is taken from the first parsed part.
    - Parts are keyed by `partNumber`; duplicates are allowed only if content is identical.
    - The response must contain exactly `totalParts` unique parts `1..totalParts`.
    - Join `content` in order `1..N`.
-4. Empty final response is rejected.
+4. Mixing plain and multipart records is rejected as an invalid response.
+5. Sanitize the assembled response by removing unsafe control and bidi
+   characters; reject it if it is empty after sanitization.
 
 ## Response validation
 
@@ -92,6 +95,8 @@ Web builds use Mock because browsers cannot do custom DNS on port 53.
 
 ## Security model (non-negotiable)
 
-- Do not send secrets or personal data; DNS is observable infrastructure.
+- Do not send secrets or personal data; DNS is observable infrastructure and
+  responses are not authenticated end to end. Packet validation rejects
+  malformed or mismatched replies but cannot prove who produced a valid reply.
 - DNS server input is validated and constrained in both JS and native; see whitelist and
   sanitizer rules in `modules/dns-native/constants.ts`.

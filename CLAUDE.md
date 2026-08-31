@@ -269,7 +269,7 @@ Key constraints:
 Installed via `pnpm install` -> `scripts/install-git-hooks.js`. Runs:
 1. `pnpm run verify:ios-pods`
 2. `pnpm run lint`
-3. `pnpm run test --bail --passWithNoTests`
+3. `pnpm run test --bail`
 
 ### AST-Grep Rules
 
@@ -325,7 +325,11 @@ Four workflows run on push to main and PRs: `ci.yml`, `gitleaks.yml` (secret sca
 
 **iOS — release state**:
 
-- Current `main` (2026-08-05): `4.3.5`, build `83`. Working version, not a TestFlight release - see the `[4.3.5]` changelog entry (send-button disc on Animated.View so the fill actually paints).
+- Current beta candidate (2026-08-31): `4.3.6`, build `84`. It contains the
+  pre-production correctness, security, release-tooling, and accessibility
+  audit recorded under `[4.3.6]`; do not describe it as validated TestFlight
+  evidence until archive, physical-device install, upload, and ASC validation
+  all pass for this exact build.
 - Last TestFlight release (2026-07-10): `4.2.3` build `77`, `VALID` on TestFlight, carrying the iOS 27 scene-lifecycle recovery after the build `75` startup crash. Signed archive/export succeeded, bilingual "What to Test" notes present, non-exempt encryption `false`, `asc validate testflight --strict` clean (`0` errors, `0` warnings). Build `76` supplied the separate physical-device proof; build `77` was not installed locally. No iOS `4.2.3` App Store version record exists, so no version attachment or production submission is claimed. Build `77` gates: `pnpm run verify:all` (Jest 983, native DNS tests 65, React Compiler 101/101, Expo Doctor 19/19, version/pod/public-redaction checks), `pnpm audit`, gitleaks, and `asc doctor` — all clean.
 - `4.2.3` supersedes `4.2.0` build `73` (`VALID` 2026-07-04): iOS 26 HIG redesign across every screen, DNS transport correctness hardening (wall-clock query budget, UDP `defer` teardown parity, TCP frame-length validation, mixed plain/multipart rejection), storage write-amplification coalescing, dead-module removal, Expo SDK 57 patch alignment (`expo-doctor` 19/19). The backend/transport work ran as dispatched `codex` plans (`plans/001`-`004`), reconciled in the main session (two review misses fixed: an orphaned `doctor.config.json` exemption and the second `DNSResolver.swift` copy); the frontend redesign was authored in the main session.
 - Argent caveat from that lane: the accessibility and React component-tree backends worked, but the screenshot/gesture simulator-server backend failed with `simulator-server exited with code before becoming ready` — do not claim tap-flow proof from that run.
@@ -369,7 +373,7 @@ Topics available there include Liquid Glass design (`SwiftUI-`, `UIKit-`, `AppKi
 | Settings not updating | Check `src/context/SettingsContext.tsx` |
 | Server picker wrong order | Check `src/navigation/screens/GlassSettings.tsx:dnsServerOptions` |
 | Translation mismatch | Update both `en-US.ts` and `pt-BR.ts` |
-| Android "Failed to locate application identifier" | Run `npx expo prebuild --platform android --clean` |
+| Android "Failed to locate application identifier" | Run `pnpm exec expo prebuild --platform android --clean` |
 | Android minSdkVersion mismatch | Ensure `app.json` has `minSdkVersion: 24` (required by dependencies) |
 | Android signature mismatch on install | Uninstall existing app: `adb uninstall <ANDROID_PACKAGE>` |
 | DNS Native Module not registered | The `dns-native-plugin.js` handles this - regenerate with prebuild |
@@ -379,7 +383,7 @@ Topics available there include Liquid Glass design (`SwiftUI-`, `UIKit-`, `AppKi
 | Device app shows the red screen `No script URL provided` / `unsanitizedScriptURLString = (null)` | A Debug build was installed on the device. Debug embeds no JS bundle. Rebuild `-configuration Release` (see the device path above) or start Metro and keep the device on the same network. |
 | Device/Release build fails at `ExpoSymbols`/`ExpoModulesCore` with "this SDK is not supported by the compiler (the SDK is built with 'Apple Swift version X', while this compiler is 'Y')" | The precompiled Expo module xcframeworks were built with an older Swift than the local Xcode. Re-run `cd ios && EXPO_USE_PRECOMPILED_MODULES=0 bundle exec pod install` to build Expo modules from source, build, then restore the committed pod state (`git checkout ios/Podfile.lock ios/DNSChat.xcodeproj/project.pbxproj ios/DNSChat/PrivacyInfo.xcprivacy && bundle exec pod install`). |
 | `[CP-User] Build ExpoModulesJSI xcframework` phase hangs forever (0% CPU, DerivedData frozen, no error) | The nested SPM `xcodebuild` is waiting on a build service that died silently (seen with Xcode 26.6 on a macOS 27 beta host; no crash report). `sample <pid>` shows `waitForBuildWithBuildLog` + `mach_msg2_trap`. Kill the build tree and rebuild with the Xcode that matches the OS beta (`DEVELOPER_DIR=/Applications/Xcode-beta.app/Contents/Developer`). Do NOT patch away the `env -i` in `build-xcframework.sh` — inside the pod phase it must stay, or the inherited Xcode env breaks `Package.swift` paths (`module map file '…/Pods/' not found`). |
-| `expo-doctor` fails "local Expo modules are gitignored" while `git check-ignore` shows nothing | False positive: the doctor's `ProjectSetupCheck` globs `modules/**/ios/*.podspec` + `modules/**/android/build.gradle` WITHOUT excluding `node_modules`, so a populated `modules/dns-native/node_modules/` (e.g. after `npm ci` there) matches react-native's own podspecs — which are legitimately ignored. Fix: `rm -rf modules/dns-native/node_modules` (regenerable; reinstall before running that workspace's tests). Module sources themselves stay tracked. |
+| `expo-doctor` reports the owned local module as ignored | Confirm the workspace was installed from the root with `pnpm install --frozen-lockfile`, then run `pnpm run verify:expo-doctor`; the native module is part of the root workspace and must not maintain a nested lockfile or install. |
 | `Build input file cannot be found: …ReactCodegen/*-generated.mm` during device/Release build | New-Arch codegen is partially materialized under `ios/build/generated`. Run `bundle exec pod install` to regenerate the full codegen set — `xcodebuild build` alone never regenerates it. Under host overload also drop to `-jobs 2` + `nice` (the `ExpoModulesJSI` xcframework script phase fork-storms). |
 | Theme override doesn't apply | `Appearance.setColorScheme()` accepts `'unspecified' \| 'light' \| 'dark'` on RN 0.85, not `null` or `undefined`. |
 | `verify:react-compiler` dies with `ReferenceError: require is not defined in ES module scope` (yargs) | You are on a Node newer than the repo pin. `react-compiler-healthcheck` breaks under Node 26; verified working on Node 24.18.0. Run repo gates under `.node-version` (24), e.g. `PATH="$HOME/.nvm/versions/node/v24.18.0/bin:$PATH" pnpm run verify:all`. |

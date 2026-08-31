@@ -1,0 +1,3 @@
+const result = { answer: 42 };
+
+expect(result.answer).toEqual(result.answer);

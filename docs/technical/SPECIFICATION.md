@@ -200,8 +200,8 @@ Run locally:
 
 - `pnpm install`
 - `pnpm run lint`
-- `pnpm run test --bail --passWithNoTests`
-- `cd modules/dns-native && npm ci && npm test`
+- `pnpm run test --bail`
+- `pnpm run test:native`
 - `gitleaks detect --source . --redact --no-banner --config .gitleaks.toml`
 
 CI enforces:

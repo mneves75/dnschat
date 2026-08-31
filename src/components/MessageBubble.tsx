@@ -97,7 +97,7 @@ function MessageBubbleComponent({ message }: MessageBubbleProps) {
     },
   ];
 
-  // Text color: white on blue/red, dark/light on gray depending on mode
+  // Text color: AA text on blue/red, dark/light on gray depending on mode.
   const textColor = isUser || hasError
     ? palette.bubbleTextOnBlue
     : palette.bubbleTextOnGray;

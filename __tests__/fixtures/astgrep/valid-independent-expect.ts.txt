@@ -1,0 +1,6 @@
+const observedValue = "dns response";
+const expectedValue = "dns response";
+
+test("compares against an independent oracle", () => {
+  expect(observedValue).toEqual(expectedValue);
+});

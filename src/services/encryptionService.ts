@@ -9,6 +9,43 @@ import { devWarn } from '../utils/devLog';
 // SecureStore keys must be alphanumeric plus ., -, _ (no @ or /)
 const KEY_STORAGE_KEY = 'dnschat.encryption_key';
 const ENCRYPTION_PREFIX = 'enc:v1:';
+const GCM_AUTH_TAG_LENGTH = 16;
+
+export class EncryptionKeyCorruptionError extends Error {
+  readonly code = 'ENCRYPTION_KEY_CORRUPTION';
+
+  constructor(
+    message: string,
+    public override readonly cause?: Error,
+  ) {
+    super(message);
+    this.name = 'EncryptionKeyCorruptionError';
+  }
+}
+
+export class EncryptionKeyUnavailableError extends Error {
+  readonly code = 'ENCRYPTION_KEY_UNAVAILABLE';
+
+  constructor(
+    message: string,
+    public override readonly cause?: Error,
+  ) {
+    super(message);
+    this.name = 'EncryptionKeyUnavailableError';
+  }
+}
+
+export class EncryptionPayloadCorruptionError extends Error {
+  readonly code = 'ENCRYPTION_PAYLOAD_CORRUPTION';
+
+  constructor(
+    message: string,
+    public override readonly cause?: Error,
+  ) {
+    super(message);
+    this.name = 'EncryptionPayloadCorruptionError';
+  }
+}
 
 let cachedKey: Uint8Array | null = null;
 let keyLoadInFlight: Promise<Uint8Array> | null = null;
@@ -77,24 +114,32 @@ const setWebStoredKey = (key: string): boolean => {
   }
 };
 
-const decodeStoredKey = async (stored: string): Promise<Uint8Array> => {
+const decodeStoredKey = (stored: string): Uint8Array => {
   let decoded: Uint8Array;
   try {
     decoded = hexToBytes(stored);
   } catch (error) {
+    const cause = error instanceof Error ? error : new Error(String(error));
     devWarn(
-      '[EncryptionService] Stored key is malformed, rotating to a newly persisted key',
-      error,
+      '[EncryptionService] Stored key is malformed; preserving existing key material',
+      cause,
     );
-    return generateAndPersistKey();
+    throw new EncryptionKeyCorruptionError(
+      'Stored encryption key is malformed',
+      cause,
+    );
   }
 
   if (decoded.length !== ENCRYPTION_CONSTANTS.KEY_LENGTH) {
+    const cause = new Error(`Stored key has invalid length: ${decoded.length}`);
     devWarn(
-      '[EncryptionService] Stored key has invalid length, rotating to a newly persisted key',
-      new Error(`Stored key has invalid length: ${decoded.length}`),
+      '[EncryptionService] Stored key has invalid length; preserving existing key material',
+      cause,
     );
-    return generateAndPersistKey();
+    throw new EncryptionKeyCorruptionError(
+      'Stored encryption key has invalid length',
+      cause,
+    );
   }
 
   return decoded;
@@ -157,16 +202,20 @@ const loadEncryptionKey = async (): Promise<Uint8Array> => {
           ? getWebStoredKey()
           : await SecureStore.getItemAsync(KEY_STORAGE_KEY);
       } catch (error) {
+        const cause = error instanceof Error ? error : new Error(String(error));
         devWarn(
           `[EncryptionService] Failed to read key from ${getKeyStorageName()}`,
-          error,
+          cause,
         );
-        throw new Error('Encryption key is unavailable');
+        throw new EncryptionKeyUnavailableError(
+          'Encryption key is unavailable',
+          cause,
+        );
       }
     })();
 
-    if (stored) {
-      const decoded = await decodeStoredKey(stored);
+    if (stored !== null) {
+      const decoded = decodeStoredKey(stored);
       cachedKey = decoded;
       return decoded;
     }
@@ -200,19 +249,55 @@ export const encryptString = async (plaintext: string): Promise<string> => {
 
 export const decryptString = async (payload: string): Promise<string> => {
   if (!payload.startsWith(ENCRYPTION_PREFIX)) {
-    throw new Error('Invalid encrypted payload format');
+    throw new EncryptionPayloadCorruptionError('Invalid encrypted payload format');
   }
+
   const remainder = payload.slice(ENCRYPTION_PREFIX.length);
-  const [nonceHex, cipherHex] = remainder.split(':');
+  const fields = remainder.split(':');
+  if (fields.length !== 2) {
+    throw new EncryptionPayloadCorruptionError('Invalid encrypted payload format');
+  }
+
+  const [nonceHex, cipherHex] = fields;
   if (!nonceHex || !cipherHex) {
-    throw new Error('Invalid encrypted payload format');
+    throw new EncryptionPayloadCorruptionError('Invalid encrypted payload format');
+  }
+
+  let nonce: Uint8Array;
+  let cipher: Uint8Array;
+  try {
+    nonce = hexToBytes(nonceHex);
+    cipher = hexToBytes(cipherHex);
+  } catch (error) {
+    const cause = error instanceof Error ? error : new Error(String(error));
+    throw new EncryptionPayloadCorruptionError(
+      'Encrypted payload contains invalid hexadecimal data',
+      cause,
+    );
+  }
+
+  if (nonce.length !== ENCRYPTION_CONSTANTS.IV_LENGTH) {
+    throw new EncryptionPayloadCorruptionError(
+      `Encrypted payload nonce must be ${ENCRYPTION_CONSTANTS.IV_LENGTH} bytes`,
+    );
+  }
+  if (cipher.length < GCM_AUTH_TAG_LENGTH) {
+    throw new EncryptionPayloadCorruptionError(
+      `Encrypted payload ciphertext must include at least the ${GCM_AUTH_TAG_LENGTH}-byte authentication tag`,
+    );
   }
 
   const key = await loadEncryptionKey();
-  const nonce = hexToBytes(nonceHex);
-  const cipher = hexToBytes(cipherHex);
-  const plaintext = gcm(key, nonce).decrypt(cipher);
-  return decodeUtf8(plaintext);
+  try {
+    const plaintext = gcm(key, nonce).decrypt(cipher);
+    return decodeUtf8(plaintext);
+  } catch (error) {
+    const cause = error instanceof Error ? error : new Error(String(error));
+    throw new EncryptionPayloadCorruptionError(
+      'Failed to decrypt encrypted payload',
+      cause,
+    );
+  }
 };
 
 export const decryptIfEncrypted = async (payload: string): Promise<string> => {

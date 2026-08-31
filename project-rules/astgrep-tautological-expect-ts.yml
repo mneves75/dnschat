@@ -1,0 +1,26 @@
+id: no-tautological-jest-equality-ts
+language: TypeScript
+severity: error
+message: "Use an independent expected value instead of comparing an observed value with itself."
+rule:
+  any:
+    - pattern: expect($VALUE).toBe($VALUE)
+    - pattern: expect($VALUE).toEqual($VALUE)
+    - pattern: expect($VALUE).toStrictEqual($VALUE)
+constraints:
+  VALUE:
+    all:
+      - any:
+          - kind: identifier
+          - kind: member_expression
+          - kind: subscript_expression
+      - not:
+          has:
+            stopBy: end
+            any:
+              - kind: call_expression
+              - kind: await_expression
+              - kind: update_expression
+              - kind: assignment_expression
+              - kind: new_expression
+              - kind: yield_expression

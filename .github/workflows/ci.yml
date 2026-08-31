@@ -77,13 +77,14 @@ jobs:
         with:
           node-version: '22.23.1'
 
-      - name: Install (modules/dns-native)
-        working-directory: modules/dns-native
-        run: npm ci
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install
+        run: corepack pnpm install --frozen-lockfile
 
       - name: Test (modules/dns-native)
-        working-directory: modules/dns-native
-        run: npm test
+        run: pnpm --filter @dnschat/dns-native run test --runInBand
 
   android:
     runs-on: ubuntu-latest

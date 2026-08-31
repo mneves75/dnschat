@@ -1,0 +1,3 @@
+test.only("must not narrow the committed suite", () => {
+  expect(true).toBe(true);
+});

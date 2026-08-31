@@ -371,6 +371,26 @@ describe("Native DNS Module", () => {
       const result = testDNS.parseMultiPartResponse(txtRecords);
       expect(result).toBe("Regular response without part formatAnother regular response");
     });
+
+    it("rejects responses that become empty after sanitization", () => {
+      const cases = [
+        ["\u202E"],
+        ["\u0000"],
+        ["\u202E", "\u0000"],
+        ["1/2:\u202E", "2/2:\u2066"],
+      ];
+
+      for (const txtRecords of cases) {
+        expect(() => testDNS.parseMultiPartResponse(txtRecords)).toThrow(
+          new DNSError(DNSErrorType.INVALID_RESPONSE, "Received empty response"),
+        );
+      }
+    });
+
+    it("sanitizes non-empty plain and multipart responses before returning", () => {
+      expect(testDNS.parseMultiPartResponse(["\u202Eresponse"])).toBe("response");
+      expect(testDNS.parseMultiPartResponse(["1/1:\u2066response"])).toBe("response");
+    });
   });
 
   describe("Error Handling", () => {

@@ -1,6 +1,6 @@
 # Installation
 
-This repo builds DNSChat `4.3.2` build `80` (React Native `0.86.0`, Expo SDK `57`, React `19.2.3`).
+This repo builds DNSChat `4.3.6` build `84` (React Native `0.86.3`, Expo SDK `57`, React `19.2.3`).
 
 Prereqs:
 
@@ -126,7 +126,8 @@ xcrun devicectl device install app \
   <DERIVED_DATA>/Build/Products/Release-iphoneos/DNSChat.app
 ```
 
-Current release: version `4.2.3` build `77`. Physical-device evidence on
+Latest validated TestFlight release: version `4.2.3` build `77`.
+Physical-device evidence on
 `2026-07-10` covers build `76`, which sustained normal, cold `dnschat://`, and
 foreground `dnschat://` launches after the iOS 27 `UIScene` repair. Build `77`
 completed its signed archive, IPA export, TestFlight upload, `VALID` processing,

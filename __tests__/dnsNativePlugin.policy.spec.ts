@@ -5,8 +5,10 @@ import path from "node:path";
 const plugin = require("../plugins/dns-native-plugin.js");
 const {
   applyAndroidBuildGradlePolicy,
+  applyIosAppDelegateScenePolicy,
   applyMainApplicationKotlinPolicy,
   applyIosProjectVersionPolicy,
+  applyIosSceneManifestPolicy,
 } = plugin.__test__;
 
 describe("dns-native config plugin policies", () => {
@@ -45,6 +47,18 @@ dependencies {
 
       expect(transformed).toContain('rootProject.file("keystore.properties")');
       expect(transformed).toContain('new File(projectRoot, "keystore.properties")');
+      expect(transformed).toContain(
+        "keystorePropertiesBaseDir = keystorePropertiesFile.getParentFile()",
+      );
+      expect(transformed).toContain(
+        "keystorePropertiesBaseDir = repoKeystorePropertiesFile.getParentFile()",
+      );
+      expect(transformed).toContain(
+        "def configuredStoreFile = new File(keystoreProperties['storeFile'])",
+      );
+      expect(transformed).toContain(
+        "storeFile(configuredStoreFile.isAbsolute() ? configuredStoreFile : new File(keystorePropertiesBaseDir, configuredStoreFile.path))",
+      );
       expect(transformed).toContain("if (hasReleaseSigning) {");
       expect(transformed).toContain("signingConfig signingConfigs.release");
 
@@ -52,10 +66,94 @@ dependencies {
       expect(releaseBlock).not.toContain("signingConfig signingConfigs.debug");
     });
 
+    it("upgrades dnsjava versions below the security floor", () => {
+      const withVulnerableDnsjava = baselineGradle.replace(
+        "dependencies {\n}",
+        'dependencies {\n  implementation("dnsjava:dnsjava:3.5.2")\n}',
+      );
+
+      const transformed = applyAndroidBuildGradlePolicy(withVulnerableDnsjava);
+
+      expect(transformed).toContain('implementation("dnsjava:dnsjava:3.6.2")');
+      expect(transformed).not.toContain("dnsjava:dnsjava:3.5.2");
+    });
+
+    it("preserves dnsjava versions above the security floor", () => {
+      const withNewerDnsjava = baselineGradle.replace(
+        "dependencies {\n}",
+        'dependencies {\n  implementation("dnsjava:dnsjava:3.7.0")\n}',
+      );
+
+      const transformed = applyAndroidBuildGradlePolicy(withNewerDnsjava);
+
+      expect(transformed).toContain('implementation("dnsjava:dnsjava:3.7.0")');
+      expect(transformed).not.toContain("dnsjava:dnsjava:3.6.2");
+    });
+
     it("is idempotent", () => {
       const once = applyAndroidBuildGradlePolicy(baselineGradle);
       const twice = applyAndroidBuildGradlePolicy(once);
       expect(twice).toBe(once);
+    });
+  });
+
+  describe("iOS scene lifecycle", () => {
+    const cleanExpoAppDelegate = `internal import Expo
+import React
+import ReactAppDependencyProvider
+
+@main
+class AppDelegate: ExpoAppDelegate {
+  var window: UIWindow?
+  var reactNativeFactory: RCTReactNativeFactory?
+
+  public override func application(
+    _ application: UIApplication,
+    didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
+  ) -> Bool {
+    let factory = ExpoReactNativeFactory(delegate: ReactNativeDelegate())
+    reactNativeFactory = factory
+
+#if os(iOS) || os(tvOS)
+    window = UIWindow(frame: UIScreen.main.bounds)
+    factory.startReactNative(
+      withModuleName: "main",
+      in: window,
+      launchOptions: launchOptions)
+#endif
+
+    return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+  }
+}
+`;
+
+    it("replaces direct window startup with one SceneDelegate bridge", () => {
+      const transformed = applyIosAppDelegateScenePolicy(cleanExpoAppDelegate);
+
+      expect(transformed).toContain("internal import ExpoModulesCore");
+      expect(transformed).not.toContain("UIWindow(frame: UIScreen.main.bounds)");
+      expect(transformed).toContain("UIWindow(windowScene: windowScene)");
+      expect(transformed.match(/class SceneDelegate:/g)).toHaveLength(1);
+      expect(applyIosAppDelegateScenePolicy(transformed)).toBe(transformed);
+    });
+
+    it("generates the single-window scene manifest without dropping unrelated keys", () => {
+      const transformed = applyIosSceneManifestPolicy({
+        CFBundleDisplayName: "DNS Chat",
+      });
+
+      expect(transformed.CFBundleDisplayName).toBe("DNS Chat");
+      expect(transformed.UIApplicationSceneManifest).toEqual({
+        UIApplicationSupportsMultipleScenes: false,
+        UISceneConfigurations: {
+          UIWindowSceneSessionRoleApplication: [
+            {
+              UISceneConfigurationName: "Default Configuration",
+              UISceneDelegateClassName: "$(PRODUCT_MODULE_NAME).SceneDelegate",
+            },
+          ],
+        },
+      });
     });
   });
 

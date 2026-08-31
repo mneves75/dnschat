@@ -2,6 +2,16 @@
 
 To upload your DNSChat iOS app to TestFlight, you'll need to follow these steps:
 
+## Release state
+
+- **Repository target:** `4.3.6` build `84`. This is the current TestFlight beta
+  candidate; it is not validated or uploaded until the evidence chain below
+  succeeds for this exact build.
+- **Latest validated TestFlight artifact:** `4.2.3` build `77`, processed
+  `VALID` on `2026-07-10` with strict validation at `0` errors and `0` warnings.
+- **Latest production App Store release:** unverified. Confirm it in App Store
+  Connect; TestFlight validation does not prove production publication.
+
 ## TestFlight upload process
 
 ### 1. **Prerequisites**
@@ -30,22 +40,18 @@ To upload your DNSChat iOS app to TestFlight, you'll need to follow these steps:
 ### 3. **Configure Xcode Project for Distribution**
 
 ```bash
-# Navigate to iOS project
-cd ios
+# From the repository root, install/update pods
+cd ios && pod install --clean-install && cd ..
 
-# Clean previous builds
-rm -rf build/
-rm -rf DerivedData/
-
-# Install/update pods
-pod install --clean-install
+# Build commands below use this task-owned Derived Data directory
+# /tmp/dnschat-testflight-derived-data
 ```
 
 ### 4. **Open Xcode and Configure Signing**
 
 ```bash
 # Open workspace in Xcode
-open DNSChat.xcworkspace
+open ios/DNSChat.xcworkspace
 ```
 
 **In Xcode**:
@@ -90,6 +96,7 @@ xcodebuild clean build \
   -workspace ios/DNSChat.xcworkspace \
   -scheme DNSChat \
   -configuration Debug \
+  -derivedDataPath /tmp/dnschat-testflight-derived-data \
   -destination 'platform=iOS Simulator,name=iPhone 17'
 
 # Release compile/archive smoke without local signing credentials
@@ -97,6 +104,7 @@ xcodebuild clean build \
   -workspace ios/DNSChat.xcworkspace \
   -scheme DNSChat \
   -configuration Release \
+  -derivedDataPath /tmp/dnschat-testflight-derived-data \
   -destination 'generic/platform=iOS' \
   CODE_SIGNING_ALLOWED=NO
 
@@ -104,12 +112,13 @@ xcodebuild clean archive \
   -workspace ios/DNSChat.xcworkspace \
   -scheme DNSChat \
   -configuration Release \
+  -derivedDataPath /tmp/dnschat-testflight-derived-data \
   -destination 'generic/platform=iOS' \
   -archivePath /tmp/DNSChat.xcarchive \
   CODE_SIGNING_ALLOWED=NO
 ```
 
-Current TestFlight release is `4.2.3` build `77` (`2026-07-10`, Expo SDK 57 /
+The latest validated TestFlight artifact is `4.2.3` build `77` (`2026-07-10`, Expo SDK 57 /
 React Native 0.86, iOS 27 scene lifecycle):
 
 - `pnpm run verify:all`, native DNS tests, secret scan, version sync, and `asc
@@ -175,7 +184,7 @@ eas build:configure
 
 # Build and submit
 eas build --platform ios --profile production
-eas submit --platform ios --profile production
+eas submit --platform ios
 ```
 
 ### 9. **Configure TestFlight in App Store Connect**
@@ -206,8 +215,11 @@ eas submit --platform ios --profile production
 #### Code Signing Problems:
 
 ```bash
-# Clean derived data
-rm -rf ~/Library/Developer/Xcode/DerivedData
+# Clean only this runbook's task-owned Derived Data directory
+xcodebuild clean \
+  -workspace ios/DNSChat.xcworkspace \
+  -scheme DNSChat \
+  -derivedDataPath /tmp/dnschat-testflight-derived-data
 
 # Regenerate certificates
 # Go to Xcode → Preferences → Accounts → Download Manual Profiles
@@ -234,7 +246,7 @@ pnpm run ios --verbose
 - **App Store Connect** app record created
 - **Code signing** configured correctly
 - **Bundle ID** matches (`<BUNDLE_ID>`)
-- **Version numbers** consistent (v4.2.3 build 77)
+- **Version numbers** consistent with the repository target (`4.3.6` build `84`)
 - **Native DNS module** compiles successfully
 - **Xcode CLI smoke** passed:
   - Debug simulator build
@@ -262,7 +274,7 @@ eas build --platform ios --profile production
 
 ### TestFlight distribution
 
-Current v4.2.3 distribution:
+Latest validated TestFlight distribution (`4.2.3` build `77`):
 
 - Version/build: `4.2.3` / `77`
 - Processing state: `VALID`; signed archive/export and upload succeeded, and
@@ -333,4 +345,4 @@ If you encounter issues during the upload process:
 
 ---
 
-_TestFlight upload guide for DNSChat v4.2.3 build 77 - Last updated: 2026-07-10_
+_Release-state guide: repository target 4.3.6 build 84; latest validated TestFlight artifact 4.2.3 build 77._

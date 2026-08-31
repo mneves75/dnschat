@@ -108,8 +108,8 @@ android {
         applicationId 'org.mvneves.dnschat'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 83
-        versionName "4.3.5"
+        versionCode 84
+        versionName "4.3.6"
 
         buildConfigField "String", "REACT_NATIVE_RELEASE_LEVEL", "\"${findProperty('reactNativeReleaseLevel') ?: 'stable'}\""
     }
@@ -122,7 +122,8 @@ android {
         }
         release {
             if (hasReleaseSigning) {
-                storeFile new File(keystorePropertiesBaseDir, keystoreProperties['storeFile'])
+                def configuredStoreFile = new File(keystoreProperties['storeFile'])
+                storeFile(configuredStoreFile.isAbsolute() ? configuredStoreFile : new File(keystorePropertiesBaseDir, configuredStoreFile.path))
                 storePassword keystoreProperties['storePassword']
                 keyAlias keystoreProperties['keyAlias']
                 keyPassword keystoreProperties['keyPassword']

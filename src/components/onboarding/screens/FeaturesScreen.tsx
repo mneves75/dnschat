@@ -84,11 +84,15 @@ export function FeaturesScreen() {
 
   return (
     <View testID="onboarding-features" style={styles.container}>
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.headerSection}>
           <Text
             accessibilityElementsHidden={true}
-            style={[typography.displayMedium, { color: palette.accentTint }]}
+            style={[typography.displayMedium, { color: palette.accentText }]}
           >
             {t("screen.onboarding.header.label")}
           </Text>
@@ -114,11 +118,17 @@ export function FeaturesScreen() {
           </Text>
         </View>
 
-        <View style={styles.featuresGrid}>
-          {features.map((feature) => (
+        <View
+          style={[
+            styles.featuresGrid,
+            { backgroundColor: palette.solid },
+          ]}
+        >
+          {features.map((feature, index) => (
             <FeatureCard
               key={feature.label}
               feature={feature}
+              isLast={index === features.length - 1}
               palette={palette}
               typography={typography}
             />
@@ -144,7 +154,7 @@ export function FeaturesScreen() {
             style={[
               typography.title3,
               styles.readyTitle,
-              { color: palette.accentTint, fontWeight: "700" },
+              { color: palette.accentText, fontWeight: "700" },
             ]}
           >
             {t("screen.onboarding.ready.title")}
@@ -175,30 +185,44 @@ export function FeaturesScreen() {
 
 interface FeatureCardProps {
   feature: Feature;
+  isLast: boolean;
   palette: ReturnType<typeof useImessagePalette>;
   typography: ReturnType<typeof useTypography>;
 }
 
-function FeatureCard({ feature, palette, typography }: FeatureCardProps) {
+function FeatureCard({ feature, isLast, palette, typography }: FeatureCardProps) {
   const { t } = useTranslation();
+
+  // A card with an action stays a plain container so its nested link and text
+  // remain individually focusable. Label/hint only exist on the summary form —
+  // on the container form they were inert props that screen readers ignore.
+  const isSummary = !feature.action;
 
   return (
     <View
-      accessible={true}
-      accessibilityRole="summary"
-      accessibilityLabel={`${feature.label}. ${feature.title}. ${feature.description}`}
-      accessibilityHint={t("screen.settings.sections.appearance.summaryHint")}
+      accessible={isSummary}
+      accessibilityRole={isSummary ? "summary" : undefined}
+      accessibilityLabel={
+        isSummary
+          ? `${feature.label}. ${feature.title}. ${feature.description}`
+          : undefined
+      }
+      accessibilityHint={
+        isSummary
+          ? t("screen.settings.sections.appearance.summaryHint")
+          : undefined
+      }
       style={[
         styles.featureCard,
+        !isLast && styles.featureSeparator,
         {
-          backgroundColor: palette.surface,
           borderColor: palette.border,
         },
       ]}
     >
       <View
-        accessible={false}
-        importantForAccessibility="no-hide-descendants"
+        accessible={Boolean(feature.action)}
+        importantForAccessibility={feature.action ? "auto" : "no-hide-descendants"}
         style={[
           styles.featureLabelContainer,
           {
@@ -211,7 +235,7 @@ function FeatureCard({ feature, palette, typography }: FeatureCardProps) {
           style={[
             typography.caption1,
             styles.featureLabel,
-            { color: palette.accentTint, fontWeight: "600" },
+            { color: palette.accentText, fontWeight: "600" },
           ]}
         >
           {feature.label}
@@ -219,8 +243,8 @@ function FeatureCard({ feature, palette, typography }: FeatureCardProps) {
       </View>
 
       <Text
-        accessible={false}
-        importantForAccessibility="no-hide-descendants"
+        accessible={Boolean(feature.action)}
+        importantForAccessibility={feature.action ? "auto" : "no-hide-descendants"}
         style={[
           typography.headline,
           styles.featureTitle,
@@ -231,8 +255,8 @@ function FeatureCard({ feature, palette, typography }: FeatureCardProps) {
       </Text>
 
       <Text
-        accessible={false}
-        importantForAccessibility="no-hide-descendants"
+        accessible={Boolean(feature.action)}
+        importantForAccessibility={feature.action ? "auto" : "no-hide-descendants"}
         style={[
           typography.callout,
           styles.featureDescription,
@@ -247,10 +271,11 @@ function FeatureCard({ feature, palette, typography }: FeatureCardProps) {
         <PressableRipple
           style={[
             styles.featureAction,
-            { backgroundColor: palette.accentTint },
+            { backgroundColor: palette.surface },
           ]}
           onPress={feature.action.onPress}
-          variant="primary"
+          variant="surface"
+          rippleColor={palette.accentTint}
           pressedOpacity={0.7}
           accessibilityRole="link"
           accessibilityLabel={feature.action.text}
@@ -260,7 +285,7 @@ function FeatureCard({ feature, palette, typography }: FeatureCardProps) {
             style={[
               typography.footnote,
               styles.featureActionText,
-              { color: palette.solid, fontWeight: "600" },
+              { color: palette.accentText, fontWeight: "600" },
             ]}
           >
             {feature.action.text}
@@ -275,14 +300,21 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  content: {
+  scrollView: {
     flex: 1,
+  },
+  content: {
+    flexGrow: 1,
+    width: "100%",
+    maxWidth: LiquidGlassSpacing.huge * 12,
+    alignSelf: "center",
     paddingHorizontal: LiquidGlassSpacing.lg,
     paddingTop: LiquidGlassSpacing.lg,
+    paddingBottom: LiquidGlassSpacing.xl,
   },
   headerSection: {
     alignItems: "center",
-    marginBottom: LiquidGlassSpacing.xxl,
+    marginBottom: LiquidGlassSpacing.xl,
   },
   title: {
     textAlign: "center",
@@ -294,13 +326,16 @@ const styles = StyleSheet.create({
     opacity: 0.8,
   },
   featuresGrid: {
-    gap: LiquidGlassSpacing.md,
+    gap: 0,
     marginBottom: LiquidGlassSpacing.xxl,
+    borderRadius: LiquidGlassSpacing.md,
+    overflow: "hidden",
   },
   featureCard: {
     padding: LiquidGlassSpacing.lg,
-    borderRadius: LiquidGlassSpacing.md,
-    borderWidth: 1,
+  },
+  featureSeparator: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   featureLabelContainer: {
     paddingHorizontal: LiquidGlassSpacing.xs,
@@ -323,9 +358,11 @@ const styles = StyleSheet.create({
   },
   featureAction: {
     marginTop: LiquidGlassSpacing.sm,
+    paddingHorizontal: LiquidGlassSpacing.sm,
     paddingVertical: LiquidGlassSpacing.xs,
-    paddingHorizontal: LiquidGlassSpacing.md,
     borderRadius: LiquidGlassSpacing.xs,
+    minHeight: 44,
+    justifyContent: "center",
     alignSelf: "flex-start",
   },
   featureActionText: {
