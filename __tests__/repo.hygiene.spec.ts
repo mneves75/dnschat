@@ -1,4 +1,11 @@
 import { execSync } from "node:child_process";
+import {
+  mkdtempSync,
+  rmdirSync,
+  unlinkSync,
+  writeFileSync,
+} from "node:fs";
+import { join } from "node:path";
 
 function listTrackedFiles(): string[] {
   return execSync("git ls-files", { encoding: "utf8" })
@@ -113,5 +120,23 @@ describe("repo hygiene", () => {
     expect(() => {
       execSync("node scripts/check-public-redaction.js", { encoding: "utf8" });
     }).not.toThrow();
+  });
+
+  it("checks untracked public docs before they can be committed", () => {
+    const fixtureDirectory = mkdtempSync(join(process.cwd(), ".redaction-fixture-"));
+    const fixturePath = join(fixtureDirectory, "release.md");
+
+    try {
+      writeFileSync(fixturePath, "Install on iMarcus before release.\n");
+      expect(() => {
+        execSync("node scripts/check-public-redaction.js", {
+          encoding: "utf8",
+          stdio: "pipe",
+        });
+      }).toThrow();
+    } finally {
+      unlinkSync(fixturePath);
+      rmdirSync(fixtureDirectory);
+    }
   });
 });

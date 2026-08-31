@@ -3,8 +3,12 @@
 const { execFileSync } = require("node:child_process");
 const { existsSync, readFileSync } = require("node:fs");
 
-function listTrackedFiles() {
-  return execFileSync("git", ["ls-files"], { encoding: "utf8" })
+function listCandidateFiles() {
+  return execFileSync(
+    "git",
+    ["ls-files", "--cached", "--others", "--exclude-standard"],
+    { encoding: "utf8" },
+  )
     .split("\n")
     .map((line) => line.trim())
     .filter(Boolean)
@@ -77,7 +81,7 @@ const rules = [
 
 const findings = [];
 
-for (const path of listTrackedFiles().filter(isScannable)) {
+for (const path of listCandidateFiles().filter(isScannable)) {
   const body = readFileSync(path, "utf8");
 
   for (const rule of rules) {

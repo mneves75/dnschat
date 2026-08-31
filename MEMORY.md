@@ -10,8 +10,8 @@
 ## Active Work
 
 - The pre-production audit is complete and the authorized TestFlight candidate is `4.3.6` build `84`, tagged as `v4.3.6-beta1` only after the final commit is pushed.
-- Release acceptance requires the same final build to pass the repository gates, signed archive/export, installation on the physical `iMarcus` device, TestFlight processing, and strict ASC validation.
-- `iMarcus` is paired with Developer Mode enabled but was unavailable during initial discovery; reconnect and unlock it before physical-device installation.
+- Release acceptance requires the same final build to pass the repository gates, signed archive/export, installation on the authorized physical iPhone, TestFlight processing, and strict ASC validation.
+- The authorized physical iPhone is paired with Developer Mode enabled but was unavailable during initial discovery; reconnect and unlock it before installation.
 
 ## Decisions and Blockers
 
