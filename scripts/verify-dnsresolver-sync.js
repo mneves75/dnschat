@@ -1,23 +1,51 @@
 #!/usr/bin/env node
 
-const fs = require('fs');
-const path = require('path');
+const fs = require("fs");
+const path = require("path");
 
-const repoRoot = path.resolve(__dirname, '..');
+const repoRoot = path.resolve(__dirname, "..");
 const resolverPairs = [
   {
-    label: 'Android DNSResolver.java',
-    appPath: path.join(repoRoot, 'android/app/src/main/java/com/dnsnative/DNSResolver.java'),
-    modulePath: path.join(repoRoot, 'modules/dns-native/android/DNSResolver.java'),
+    label: "Android DNSResolver.java",
+    appPath: path.join(
+      repoRoot,
+      "android/app/src/main/java/com/dnsnative/DNSResolver.java",
+    ),
+    modulePath: path.join(
+      repoRoot,
+      "modules/dns-native/android/DNSResolver.java",
+    ),
   },
   {
-    label: 'iOS DNSResolver.swift',
-    appPath: path.join(repoRoot, 'ios/DNSNative/DNSResolver.swift'),
-    modulePath: path.join(repoRoot, 'modules/dns-native/ios/DNSResolver.swift'),
+    label: "Android RNDNSModule.java",
+    appPath: path.join(
+      repoRoot,
+      "android/app/src/main/java/com/dnsnative/RNDNSModule.java",
+    ),
+    modulePath: path.join(
+      repoRoot,
+      "modules/dns-native/android/RNDNSModule.java",
+    ),
+  },
+  {
+    label: "Android DNSNativePackage.java",
+    appPath: path.join(
+      repoRoot,
+      "android/app/src/main/java/com/dnsnative/DNSNativePackage.java",
+    ),
+    modulePath: path.join(
+      repoRoot,
+      "modules/dns-native/android/DNSNativePackage.java",
+    ),
+  },
+  {
+    label: "iOS DNSResolver.swift",
+    appPath: path.join(repoRoot, "ios/DNSNative/DNSResolver.swift"),
+    modulePath: path.join(repoRoot, "modules/dns-native/ios/DNSResolver.swift"),
   },
 ];
 
-const read = (filePath) => fs.readFileSync(filePath, 'utf8');
+const read = (filePath) => fs.readFileSync(filePath, "utf8");
 
 for (const { label, appPath, modulePath } of resolverPairs) {
   let appSource;
@@ -34,7 +62,9 @@ for (const { label, appPath, modulePath } of resolverPairs) {
   try {
     moduleSource = read(modulePath);
   } catch (error) {
-    console.error(`[dnsresolver-sync] Failed to read module resolver: ${modulePath}`);
+    console.error(
+      `[dnsresolver-sync] Failed to read module resolver: ${modulePath}`,
+    );
     console.error(error.message);
     process.exit(1);
   }
@@ -43,9 +73,9 @@ for (const { label, appPath, modulePath } of resolverPairs) {
     console.error(`[dnsresolver-sync] ${label} copies are out of sync.`);
     console.error(`- ${appPath}`);
     console.error(`- ${modulePath}`);
-    console.error('Please sync the files before committing.');
+    console.error("Please sync the files before committing.");
     process.exit(1);
   }
 }
 
-console.log('[dnsresolver-sync] DNS resolver copies are in sync.');
+console.log("[dnsresolver-sync] DNS resolver copies are in sync.");

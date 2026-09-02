@@ -27,14 +27,25 @@
       "id": "F-CHAT-001",
       "name": "Chat thread and messaging",
       "expected": "A thread renders message history, accepts a prompt, disables duplicate sends while loading, shows user and assistant bubbles, and surfaces errors without hiding the failed message.",
-      "primarySelectors": ["chat-screen", "message-list", "chat-input-field", "chat-input-send"],
+      "primarySelectors": [
+        "chat-screen",
+        "message-list",
+        "chat-input-field",
+        "chat-input-send"
+      ],
       "coverage": ["axe-e2e", "jest"]
     },
     {
       "id": "F-DNS-001",
       "name": "DNS query transport behavior",
       "expected": "Prompts are validated, sanitized, sent through the native, UDP, TCP, and mock fallback chain as configured, TXT responses are parsed, and DNS attempts are logged.",
-      "primarySelectors": ["settings-transport-test", "settings-force-native", "settings-force-udp", "settings-force-tcp", "logs-screen"],
+      "primarySelectors": [
+        "settings-transport-test",
+        "settings-force-native",
+        "settings-force-udp",
+        "settings-force-tcp",
+        "logs-screen"
+      ],
       "coverage": ["jest", "dns-harness", "axe-e2e-settings-smoke"]
     },
     {
@@ -71,21 +82,36 @@
       "id": "F-USER-001",
       "name": "Profile and data management",
       "expected": "The profile route shows user identity, conversation/message statistics, settings navigation, export placeholder, and clear-all data confirmation.",
-      "primarySelectors": ["profile-screen", "profile-settings-link", "profile-export-data", "profile-clear-all-data"],
+      "primarySelectors": [
+        "profile-screen",
+        "profile-settings-link",
+        "profile-export-data",
+        "profile-clear-all-data"
+      ],
       "coverage": ["axe-e2e", "jest"]
     },
     {
       "id": "F-ERR-001",
       "name": "Not-found fallback",
       "expected": "Unknown routes render a not-found screen with quick links back to chat, logs, and about.",
-      "primarySelectors": ["not-found-screen", "not-found-chat-link", "not-found-logs-link", "not-found-about-link"],
+      "primarySelectors": [
+        "not-found-screen",
+        "not-found-chat-link",
+        "not-found-logs-link",
+        "not-found-about-link"
+      ],
       "coverage": ["axe-e2e", "jest"]
     },
     {
       "id": "F-SYS-001",
       "name": "Localization and accessibility context",
       "expected": "Locale selection, system-locale fallback, reduced motion, font size, high contrast, screen reader flags, and accessible labels remain available to the app shell and screens.",
-      "primarySelectors": ["settings-screen", "language-option-system", "language-option-en-US", "language-option-pt-BR"],
+      "primarySelectors": [
+        "settings-screen",
+        "language-option-system",
+        "language-option-en-US",
+        "language-option-pt-BR"
+      ],
       "coverage": ["axe-e2e-settings-smoke", "jest"]
     }
   ]

@@ -5,7 +5,9 @@ const fs = require("fs");
 const path = require("path");
 
 const { getIosPodfileLockPath, getOutOfSyncPods } = require("./iosPodsSync");
-const { decideIosPodsPostinstallAction } = require("./iosPodsPostinstallPolicy");
+const {
+  decideIosPodsPostinstallAction,
+} = require("./iosPodsPostinstallPolicy");
 
 function hasCommand(command) {
   const result = spawnSync(command, ["--version"], { stdio: "ignore" });
@@ -25,7 +27,7 @@ function runOrThrow(command, args, options) {
   if (result.error) throw result.error;
   if (result.status !== 0) {
     throw new Error(
-      `Command failed: ${command} ${args.join(" ")} (exit ${result.status})`
+      `Command failed: ${command} ${args.join(" ")} (exit ${result.status})`,
     );
   }
 }
@@ -33,7 +35,9 @@ function runOrThrow(command, args, options) {
 function main() {
   // Allow explicit opt-out for CI or non-iOS workflows.
   if (process.env.SKIP_IOS_POD_INSTALL === "1") {
-    process.stdout.write("postinstall-ios-pods: SKIP_IOS_POD_INSTALL=1, skipping\n");
+    process.stdout.write(
+      "postinstall-ios-pods: SKIP_IOS_POD_INSTALL=1, skipping\n",
+    );
     return;
   }
 
@@ -49,7 +53,9 @@ function main() {
   const hasPodfile = fs.existsSync(podfilePath);
   if (!hasIosDir || !hasPodfile) return;
 
-  const lockfileText = fs.existsSync(lockPath) ? fs.readFileSync(lockPath, "utf8") : "";
+  const lockfileText = fs.existsSync(lockPath)
+    ? fs.readFileSync(lockPath, "utf8")
+    : "";
   const outOfSync = getOutOfSyncPods({ projectRoot, lockfileText });
 
   const policy = decideIosPodsPostinstallAction({
@@ -64,10 +70,10 @@ function main() {
   if (policy.action === "skip") return;
   if (policy.action === "error") {
     process.stderr.write(
-      "postinstall-ios-pods: CocoaPods not found (`pod`), but iOS pods are out of sync.\n"
+      "postinstall-ios-pods: CocoaPods not found (`pod`), but iOS pods are out of sync.\n",
     );
     process.stderr.write(
-      "Fix: install CocoaPods and rerun `pnpm install`, or set SKIP_IOS_POD_INSTALL=1 and run `pnpm run verify:ios-pods` before committing.\n"
+      "Fix: install CocoaPods and rerun `pnpm install`, or set SKIP_IOS_POD_INSTALL=1 and run `pnpm run verify:ios-pods` before committing.\n",
     );
     process.exit(1);
   }
@@ -76,8 +82,8 @@ function main() {
   for (const entry of outOfSync) {
     process.stdout.write(
       `- ${entry.podName}: lock=${formatVersion(entry.lockfileVersion)} installed=${formatVersion(
-        entry.installedVersion
-      )}${entry.reason ? ` (${entry.reason})` : ""}\n`
+        entry.installedVersion,
+      )}${entry.reason ? ` (${entry.reason})` : ""}\n`,
     );
   }
 

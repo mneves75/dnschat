@@ -48,10 +48,14 @@ function getJavaMajorVersionForHome({
 } = {}) {
   if (!isNonEmptyString(javaHomeDir)) return null;
   try {
-    const result = spawnSyncImpl(path.join(javaHomeDir, "bin", "java"), ["-version"], {
-      encoding: "utf8",
-      stdio: "pipe",
-    });
+    const result = spawnSyncImpl(
+      path.join(javaHomeDir, "bin", "java"),
+      ["-version"],
+      {
+        encoding: "utf8",
+        stdio: "pipe",
+      },
+    );
     const output = `${result.stdout || ""}\n${result.stderr || ""}`;
     return parseJavaMajorVersion(output);
   } catch {
@@ -59,9 +63,7 @@ function getJavaMajorVersionForHome({
   }
 }
 
-function getCurrentJavaMajorVersion({
-  spawnSyncImpl = spawnSync,
-} = {}) {
+function getCurrentJavaMajorVersion({ spawnSyncImpl = spawnSync } = {}) {
   try {
     const result = spawnSyncImpl("java", ["-version"], {
       encoding: "utf8",
@@ -82,7 +84,10 @@ function resolveJava17Home({
   existsSyncImpl = fs.existsSync,
 } = {}) {
   // Honor explicit JAVA_HOME when it exists and is supported.
-  if (isNonEmptyString(env.JAVA_HOME) && isDirectoryExists(existsSyncImpl, env.JAVA_HOME)) {
+  if (
+    isNonEmptyString(env.JAVA_HOME) &&
+    isDirectoryExists(existsSyncImpl, env.JAVA_HOME)
+  ) {
     const major = getJavaMajorVersionForHome({
       javaHomeDir: env.JAVA_HOME,
       spawnSyncImpl,
@@ -96,10 +101,14 @@ function resolveJava17Home({
   if (platform === "darwin") {
     for (const version of ["17", "21"]) {
       try {
-        const resolved = execFileSyncImpl("/usr/libexec/java_home", ["-v", version], {
-          encoding: "utf8",
-          stdio: ["ignore", "pipe", "ignore"],
-        }).trim();
+        const resolved = execFileSyncImpl(
+          "/usr/libexec/java_home",
+          ["-v", version],
+          {
+            encoding: "utf8",
+            stdio: ["ignore", "pipe", "ignore"],
+          },
+        ).trim();
 
         if (isDirectoryExists(existsSyncImpl, resolved)) {
           const major = getJavaMajorVersionForHome({
@@ -107,7 +116,11 @@ function resolveJava17Home({
             spawnSyncImpl,
           });
           if (isSupportedAndroidJavaMajor(major)) {
-            return { source: `/usr/libexec/java_home -v ${version}`, dir: resolved, major };
+            return {
+              source: `/usr/libexec/java_home -v ${version}`,
+              dir: resolved,
+              major,
+            };
           }
         }
       } catch {
@@ -139,10 +152,7 @@ function resolveJava17Home({
   return null;
 }
 
-function buildAndroidEnv({
-  baseEnv = process.env,
-  javaHomeResult,
-} = {}) {
+function buildAndroidEnv({ baseEnv = process.env, javaHomeResult } = {}) {
   const env = { ...baseEnv };
   if (!javaHomeResult) return env;
 
@@ -202,11 +212,15 @@ function main() {
   const expoArgs = process.argv.slice(2);
   const pnpmCmd = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
 
-  const result = spawnSync(pnpmCmd, ["exec", "expo", "run:android", ...expoArgs], {
-    cwd: repoRoot,
-    stdio: "inherit",
-    env,
-  });
+  const result = spawnSync(
+    pnpmCmd,
+    ["exec", "expo", "run:android", ...expoArgs],
+    {
+      cwd: repoRoot,
+      stdio: "inherit",
+      env,
+    },
+  );
 
   if (typeof result.status === "number") {
     process.exit(result.status);

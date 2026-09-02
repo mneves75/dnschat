@@ -98,12 +98,12 @@ function buildSiteArtifact(outputDir = defaultOutputDir) {
     }
   }
 
-  fs.rmSync(resolvedOutput, {recursive: true, force: true});
-  fs.cpSync(siteDir, resolvedOutput, {recursive: true});
+  fs.rmSync(resolvedOutput, { recursive: true, force: true });
+  fs.cpSync(siteDir, resolvedOutput, { recursive: true });
 
   for (const [artifactPath, sourcePath] of Object.entries(generatedAssets)) {
     const targetPath = path.join(resolvedOutput, artifactPath);
-    fs.mkdirSync(path.dirname(targetPath), {recursive: true});
+    fs.mkdirSync(path.dirname(targetPath), { recursive: true });
     fs.copyFileSync(sourcePath, targetPath);
   }
 
@@ -120,7 +120,9 @@ function buildSiteArtifact(outputDir = defaultOutputDir) {
 }
 
 if (require.main === module) {
-  const outputDir = buildSiteArtifact(parseOutputDirectory(process.argv.slice(2)));
+  const outputDir = buildSiteArtifact(
+    parseOutputDirectory(process.argv.slice(2)),
+  );
   console.log(`Verified site artifact: ${path.relative(repoRoot, outputDir)}`);
 }
 

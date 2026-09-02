@@ -15,6 +15,9 @@ set -e
 echo "pre-commit: verifying iOS pods lockfile"
 pnpm run verify:ios-pods
 
+echo "pre-commit: checking formatting"
+pnpm run fmt:check
+
 echo "pre-commit: running lint"
 pnpm run lint
 
@@ -23,12 +26,14 @@ pnpm run test --bail
 `;
 
 if (!fs.existsSync(path.join(repoRoot, ".git"))) {
-  console.warn("[install-git-hooks] No .git directory found; skipping hook install.");
+  console.warn(
+    "[install-git-hooks] No .git directory found; skipping hook install.",
+  );
   process.exit(0);
 }
 
 fs.mkdirSync(hooksDir, { recursive: true });
 fs.writeFileSync(hookPath, hookScript, { mode: 0o755 });
 console.log(
-  "[install-git-hooks] Installed pre-commit hook (verify:ios-pods, lint, test)",
+  "[install-git-hooks] Installed pre-commit hook (verify:ios-pods, fmt:check, lint, test)",
 );

@@ -60,7 +60,9 @@ function checkJavaRuntimeCompatibility() {
     const output = execSync("java -version 2>&1", { encoding: "utf8" });
     const major = parseJavaMajorVersion(output);
     if (isSupportedAndroidJavaMajor(major)) {
-      success(`Java runtime major ${major} is supported (recommended: 17 or 21)`);
+      success(
+        `Java runtime major ${major} is supported (recommended: 17 or 21)`,
+      );
       return true;
     }
     if (process.platform === "darwin") {
@@ -82,11 +84,17 @@ function checkJavaRuntimeCompatibility() {
       }
     }
 
-    error(`Unsupported Java runtime major version: ${major ?? "unknown"} (expected 17 or 21).`);
-    info("Set JAVA_HOME to a supported JDK before running Android native build.");
+    error(
+      `Unsupported Java runtime major version: ${major ?? "unknown"} (expected 17 or 21).`,
+    );
+    info(
+      "Set JAVA_HOME to a supported JDK before running Android native build.",
+    );
     return false;
   } catch {
-    error("Unable to execute 'java -version'. Install JDK 17 or 21 and set JAVA_HOME.");
+    error(
+      "Unable to execute 'java -version'. Install JDK 17 or 21 and set JAVA_HOME.",
+    );
     return false;
   }
 }
@@ -168,9 +176,17 @@ function resolveAndroidSdkDir({
 
   // 1) local.properties `sdk.dir`
   if (fs.existsSync(localPropertiesPath)) {
-    const parsed = parseJavaProperties(fs.readFileSync(localPropertiesPath, "utf8"));
-    if (typeof parsed["sdk.dir"] === "string" && parsed["sdk.dir"].trim() !== "") {
-      candidates.push({ source: "android/local.properties sdk.dir", dir: parsed["sdk.dir"] });
+    const parsed = parseJavaProperties(
+      fs.readFileSync(localPropertiesPath, "utf8"),
+    );
+    if (
+      typeof parsed["sdk.dir"] === "string" &&
+      parsed["sdk.dir"].trim() !== ""
+    ) {
+      candidates.push({
+        source: "android/local.properties sdk.dir",
+        dir: parsed["sdk.dir"],
+      });
     }
   }
 
@@ -183,11 +199,15 @@ function resolveAndroidSdkDir({
   }
 
   // 3) default macOS location
-  candidates.push({ source: "default", dir: path.join(homedir, "Library", "Android", "sdk") });
+  candidates.push({
+    source: "default",
+    dir: path.join(homedir, "Library", "Android", "sdk"),
+  });
 
   const existing = [];
   for (const candidate of candidates) {
-    if (typeof candidate.dir !== "string" || candidate.dir.trim() === "") continue;
+    if (typeof candidate.dir !== "string" || candidate.dir.trim() === "")
+      continue;
     const resolved = path.resolve(candidate.dir);
     try {
       const stat = fs.statSync(resolved);
@@ -314,7 +334,9 @@ function checkAndroidReleaseSigningPolicy() {
   }
 
   const releaseBlock =
-    content.match(/buildTypes\s*\{[\s\S]*?release\s*\{([\s\S]*?)\n\s*}\s*}/)?.[1] ?? "";
+    content.match(
+      /buildTypes\s*\{[\s\S]*?release\s*\{([\s\S]*?)\n\s*}\s*}/,
+    )?.[1] ?? "";
   if (/signingConfig\s+signingConfigs\.debug/.test(releaseBlock)) {
     error("Release buildType still uses debug signingConfig");
     allPassed = false;
@@ -327,9 +349,13 @@ function checkAndroidReleaseSigningPolicy() {
       releaseBlock,
     )
   ) {
-    success("Release buildType uses signingConfigs.release when hasReleaseSigning=true");
+    success(
+      "Release buildType uses signingConfigs.release when hasReleaseSigning=true",
+    );
   } else {
-    error("Release buildType missing conditional signingConfigs.release policy");
+    error(
+      "Release buildType missing conditional signingConfigs.release policy",
+    );
     allPassed = false;
   }
 
@@ -405,8 +431,12 @@ function getInstalledNdkVersions(sdkDir) {
 }
 
 function compareVersions(a, b) {
-  const aParts = String(a).split(/[.+-]/).map((part) => Number(part));
-  const bParts = String(b).split(/[.+-]/).map((part) => Number(part));
+  const aParts = String(a)
+    .split(/[.+-]/)
+    .map((part) => Number(part));
+  const bParts = String(b)
+    .split(/[.+-]/)
+    .map((part) => Number(part));
   const length = Math.max(aParts.length, bParts.length);
   for (let i = 0; i < length; i += 1) {
     const aValue = aParts[i] ?? 0;
@@ -518,7 +548,9 @@ function main() {
   } else {
     allChecksPassed = false;
     error("Android SDK not found");
-    info("Set ANDROID_SDK_ROOT or ANDROID_HOME, or install via Android Studio.");
+    info(
+      "Set ANDROID_SDK_ROOT or ANDROID_HOME, or install via Android Studio.",
+    );
     if (sdk.localSdkDirIsInvalid) {
       warn("android/local.properties sdk.dir points to a missing directory");
       info(`Check: ${sdk.localPropertiesPath}`);

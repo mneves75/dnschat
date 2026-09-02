@@ -27,9 +27,13 @@ function getConnectedDevices() {
 function reversePortForDevices(devices, port) {
   devices.forEach((serial) => {
     try {
-      execFileSync("adb", ["-s", serial, "reverse", `tcp:${port}`, `tcp:${port}`], {
-        stdio: "ignore",
-      });
+      execFileSync(
+        "adb",
+        ["-s", serial, "reverse", `tcp:${port}`, `tcp:${port}`],
+        {
+          stdio: "ignore",
+        },
+      );
       log(`Reversed tcp:${port} on ${serial}`);
     } catch (error) {
       warn(

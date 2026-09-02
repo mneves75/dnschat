@@ -16,7 +16,9 @@ function ensureCliBinary() {
   }
 
   if (!fs.existsSync(postinstallScript)) {
-    console.error("[lint:ast-grep] @ast-grep/cli não encontrado. Rode `pnpm install`.");
+    console.error(
+      "[lint:ast-grep] @ast-grep/cli não encontrado. Rode `pnpm install`.",
+    );
     process.exit(1);
   }
 
@@ -34,7 +36,9 @@ function ensureCliBinary() {
   }
 
   if (!fs.existsSync(binaryPath)) {
-    console.error("[lint:ast-grep] Binário ast-grep não disponível após postinstall.");
+    console.error(
+      "[lint:ast-grep] Binário ast-grep não disponível após postinstall.",
+    );
     process.exit(1);
   }
 }
@@ -47,7 +51,9 @@ function runAstGrep() {
   });
 
   if (result.error) {
-    console.error(`[lint:ast-grep] erro ao executar ast-grep: ${result.error.message}`);
+    console.error(
+      `[lint:ast-grep] erro ao executar ast-grep: ${result.error.message}`,
+    );
     process.exit(1);
   }
 

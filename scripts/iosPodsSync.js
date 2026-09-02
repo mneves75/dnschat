@@ -21,12 +21,14 @@ function getPodVersionFromLockfileText(lockfileText, podName) {
   // the `- Name (...)` shape with a local path instead of a version.
   const dependenciesIndex = lockfileText.indexOf("DEPENDENCIES:");
   const podsSection =
-    dependenciesIndex >= 0 ? lockfileText.slice(0, dependenciesIndex) : lockfileText;
+    dependenciesIndex >= 0
+      ? lockfileText.slice(0, dependenciesIndex)
+      : lockfileText;
 
   const podNamePattern = escapeRegExp(podName);
   // The trailing colon is present only when the pod lists dependencies.
   const match = podsSection.match(
-    new RegExp(`^\\s*-\\s+${podNamePattern}\\s+\\(([^)]+)\\):?\\s*$`, "m")
+    new RegExp(`^\\s*-\\s+${podNamePattern}\\s+\\(([^)]+)\\):?\\s*$`, "m"),
   );
   return match ? match[1].trim() : null;
 }
@@ -75,7 +77,11 @@ function getDriftReason({ installedVersion, lockfileVersion }) {
  * - The invariant we want: when JS deps change (patch updates), Podfile.lock must
  *   be regenerated so the Pods project sources are refreshed.
  */
-function getOutOfSyncPodsFromVersions({ lockfileText, installedVersions, targets }) {
+function getOutOfSyncPodsFromVersions({
+  lockfileText,
+  installedVersions,
+  targets,
+}) {
   const resolvedTargets = targets?.length ? targets : defaultPodSyncTargets();
   const resolvedInstalledVersions = installedVersions || {};
 
@@ -85,7 +91,10 @@ function getOutOfSyncPodsFromVersions({ lockfileText, installedVersions, targets
         typeof resolvedInstalledVersions[packageName] === "string"
           ? resolvedInstalledVersions[packageName]
           : null;
-      const lockfileVersion = getPodVersionFromLockfileText(lockfileText, podName);
+      const lockfileVersion = getPodVersionFromLockfileText(
+        lockfileText,
+        podName,
+      );
 
       // If the npm package isn't installed, we can't establish drift.
       if (!installedVersion) return null;
@@ -117,12 +126,19 @@ function getOutOfSyncPods({ projectRoot, lockfileText, targets }) {
   const resolvedTargets = targets?.length ? targets : defaultPodSyncTargets();
 
   const installedVersions = resolvedTargets.reduce((acc, { packageName }) => {
-    const installedVersion = getInstalledPackageVersion(packageName, resolvedProjectRoot);
+    const installedVersion = getInstalledPackageVersion(
+      packageName,
+      resolvedProjectRoot,
+    );
     if (installedVersion) acc[packageName] = installedVersion;
     return acc;
   }, {});
 
-  return getOutOfSyncPodsFromVersions({ lockfileText, installedVersions, targets });
+  return getOutOfSyncPodsFromVersions({
+    lockfileText,
+    installedVersions,
+    targets,
+  });
 }
 
 function getIosPodfileLockPath(projectRoot) {

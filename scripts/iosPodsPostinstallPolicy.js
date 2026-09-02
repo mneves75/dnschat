@@ -6,9 +6,11 @@ function decideIosPodsPostinstallAction({
   outOfSyncCount,
   hasPodCommand,
 }) {
-  if (skipPodInstallEnv) return { action: "skip", reason: "SKIP_IOS_POD_INSTALL" };
+  if (skipPodInstallEnv)
+    return { action: "skip", reason: "SKIP_IOS_POD_INSTALL" };
   if (platform !== "darwin") return { action: "skip", reason: "NOT_DARWIN" };
-  if (!hasIosDir || !hasPodfile) return { action: "skip", reason: "NO_IOS_PROJECT" };
+  if (!hasIosDir || !hasPodfile)
+    return { action: "skip", reason: "NO_IOS_PROJECT" };
 
   if (!outOfSyncCount || outOfSyncCount <= 0) {
     // Key invariant: never require CocoaPods if we don't need to run it.
@@ -20,4 +22,3 @@ function decideIosPodsPostinstallAction({
 }
 
 module.exports = { decideIosPodsPostinstallAction };
-

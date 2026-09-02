@@ -10,7 +10,12 @@ const MANIFEST_PATH = path.join(__dirname, "e2e-axe-feature-manifest.json");
 const MANIFEST = JSON.parse(fs.readFileSync(MANIFEST_PATH, "utf8"));
 const DEFAULT_BUNDLE_ID = "org.mvneves.dnschat";
 const DEFAULT_ARTIFACTS = path.join(ROOT, "artifacts", "axe-e2e");
-const DEFAULT_DERIVED_DATA = path.join(ROOT, "artifacts", "axe-e2e", "DerivedData");
+const DEFAULT_DERIVED_DATA = path.join(
+  ROOT,
+  "artifacts",
+  "axe-e2e",
+  "DerivedData",
+);
 const DEFAULT_RELEASE_APP = path.join(
   DEFAULT_DERIVED_DATA,
   "Build",
@@ -105,7 +110,7 @@ function parseArgs(argv) {
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, {
     cwd: options.cwd || ROOT,
-    env: { ...process.env, ...(options.env || {}) },
+    env: { ...process.env, ...options.env },
     encoding: "utf8",
     timeout: options.timeout || 30000,
     maxBuffer: options.maxBuffer || 64 * 1024 * 1024,
@@ -125,7 +130,9 @@ function run(command, args, options = {}) {
   }
 
   if (result.error) {
-    throw new Error(`${command} ${args.join(" ")} failed: ${result.error.message}`);
+    throw new Error(
+      `${command} ${args.join(" ")} failed: ${result.error.message}`,
+    );
   }
 
   if (result.status !== 0 && !options.allowFailure) {
@@ -134,7 +141,9 @@ function run(command, args, options = {}) {
         `${command} ${args.join(" ")} failed with status ${result.status}`,
         result.stdout,
         result.stderr,
-      ].filter(Boolean).join("\n"),
+      ]
+        .filter(Boolean)
+        .join("\n"),
     );
   }
 
@@ -182,9 +191,10 @@ function findBootedSimulator(options) {
   const output = axe(options, ["list-simulators"], { timeout: 15000 });
   const line = output
     .split("\n")
-    .find((candidate) =>
-      candidate.includes("| Booted |") &&
-      (candidate.includes("| iPhone") || candidate.includes("| iPad")),
+    .find(
+      (candidate) =>
+        candidate.includes("| Booted |") &&
+        (candidate.includes("| iPhone") || candidate.includes("| iPad")),
     );
 
   if (!line) {
@@ -198,9 +208,7 @@ function findBootedSimulator(options) {
 
 function getAxeSimulatorLine(options, udid) {
   const output = axe(options, ["list-simulators"], { timeout: 15000 });
-  return output
-    .split("\n")
-    .find((line) => line.startsWith(`${udid} |`)) || "";
+  return output.split("\n").find((line) => line.startsWith(`${udid} |`)) || "";
 }
 
 function getSimulatorState(options, udid) {
@@ -257,18 +265,20 @@ function bootSimulator(options) {
     !boot.stderr.includes("Unable to boot device in current state: Booted")
   ) {
     throw new Error(
-      [
-        `Could not boot simulator ${options.udid}.`,
-        boot.stdout,
-        boot.stderr,
-      ].filter(Boolean).join("\n"),
+      [`Could not boot simulator ${options.udid}.`, boot.stdout, boot.stderr]
+        .filter(Boolean)
+        .join("\n"),
     );
   }
 
-  const bootstatus = run("xcrun", ["simctl", "bootstatus", options.udid, "-b"], {
-    timeout: 240000,
-    allowFailure: true,
-  });
+  const bootstatus = run(
+    "xcrun",
+    ["simctl", "bootstatus", options.udid, "-b"],
+    {
+      timeout: 240000,
+      allowFailure: true,
+    },
+  );
   if (bootstatus.status !== 0) {
     const { line } = getSimulatorState(options, options.udid);
     throw new Error(
@@ -277,16 +287,22 @@ function bootSimulator(options) {
         line ? `AXe simulator row: ${line}` : "",
         bootstatus.stdout,
         bootstatus.stderr,
-      ].filter(Boolean).join("\n"),
+      ]
+        .filter(Boolean)
+        .join("\n"),
     );
   }
 }
 
 function openSimulatorWindow(options) {
-  run("open", ["-a", "Simulator", "--args", "-CurrentDeviceUDID", options.udid], {
-    timeout: 10000,
-    allowFailure: true,
-  });
+  run(
+    "open",
+    ["-a", "Simulator", "--args", "-CurrentDeviceUDID", options.udid],
+    {
+      timeout: 10000,
+      allowFailure: true,
+    },
+  );
   Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 2000);
 }
 
@@ -296,7 +312,9 @@ function assertSimulatorBooted(options) {
     throw new Error(
       [
         `Simulator ${options.udid} is ${state}, not Booted.`,
-        line ? `AXe simulator row: ${line}` : "AXe did not list this simulator UDID.",
+        line
+          ? `AXe simulator row: ${line}`
+          : "AXe did not list this simulator UDID.",
         "Boot a healthy iOS simulator before running AXe E2E.",
       ].join("\n"),
     );
@@ -317,7 +335,7 @@ function deleteSimulator(udid) {
 function parseTree(raw) {
   try {
     return JSON.parse(raw);
-  } catch (error) {
+  } catch {
     throw new Error(`AXe describe-ui did not return JSON:\n${raw}`);
   }
 }
@@ -355,11 +373,13 @@ function describeElements(options) {
 }
 
 function slugifyArtifactName(name) {
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 80) || "failure";
+  return (
+    name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 80) || "failure"
+  );
 }
 
 function writeFailureArtifacts(options, name, elements, lastDescribeError) {
@@ -370,10 +390,14 @@ function writeFailureArtifacts(options, name, elements, lastDescribeError) {
   const dumpPath = `${base}.txt`;
 
   fs.mkdirSync(options.artifactsDir, { recursive: true });
-  const screenshot = run("xcrun", ["simctl", "io", options.udid, "screenshot", screenshotPath], {
-    timeout: 30000,
-    allowFailure: true,
-  });
+  const screenshot = run(
+    "xcrun",
+    ["simctl", "io", options.udid, "screenshot", screenshotPath],
+    {
+      timeout: 30000,
+      allowFailure: true,
+    },
+  );
 
   let diagnostics = { interestingDevices: [], activeProcesses: [] };
   try {
@@ -386,8 +410,9 @@ function writeFailureArtifacts(options, name, elements, lastDescribeError) {
 
   const visible = elements
     .filter((element) => element.id || element.label || element.value)
-    .map((element) =>
-      `${element.type} id=${element.id} label=${JSON.stringify(element.label)} value=${JSON.stringify(element.value)}`,
+    .map(
+      (element) =>
+        `${element.type} id=${element.id} label=${JSON.stringify(element.label)} value=${JSON.stringify(element.value)}`,
     );
 
   fs.writeFileSync(
@@ -395,7 +420,9 @@ function writeFailureArtifacts(options, name, elements, lastDescribeError) {
     [
       `Failure: ${name}`,
       `UDID: ${options.udid}`,
-      lastDescribeError ? `Last describe-ui error: ${lastDescribeError}` : "Last describe-ui error: none",
+      lastDescribeError
+        ? `Last describe-ui error: ${lastDescribeError}`
+        : "Last describe-ui error: none",
       screenshot.status === 0
         ? `Screenshot: ${screenshotPath}`
         : `Screenshot failed: ${screenshot.stderr || screenshot.stdout}`,
@@ -418,16 +445,29 @@ function writeFailureArtifacts(options, name, elements, lastDescribeError) {
 function captureRequiredScreenshot(options, name) {
   const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
   const slug = slugifyArtifactName(name);
-  const screenshotPath = path.join(options.artifactsDir, `${timestamp}-${slug}.png`);
+  const screenshotPath = path.join(
+    options.artifactsDir,
+    `${timestamp}-${slug}.png`,
+  );
 
   fs.mkdirSync(options.artifactsDir, { recursive: true });
-  const screenshot = run("xcrun", ["simctl", "io", options.udid, "screenshot", screenshotPath], {
-    timeout: 30000,
-    allowFailure: true,
-  });
+  const screenshot = run(
+    "xcrun",
+    ["simctl", "io", options.udid, "screenshot", screenshotPath],
+    {
+      timeout: 30000,
+      allowFailure: true,
+    },
+  );
 
-  if (screenshot.status !== 0 || !fs.existsSync(screenshotPath) || fs.statSync(screenshotPath).size === 0) {
-    throw new Error(`Required screenshot failed: ${screenshot.stderr || screenshot.stdout || screenshotPath}`);
+  if (
+    screenshot.status !== 0 ||
+    !fs.existsSync(screenshotPath) ||
+    fs.statSync(screenshotPath).size === 0
+  ) {
+    throw new Error(
+      `Required screenshot failed: ${screenshot.stderr || screenshot.stdout || screenshotPath}`,
+    );
   }
 
   return screenshotPath;
@@ -442,10 +482,11 @@ function hasLabel(elements, text) {
 }
 
 function tapDeepLinkPromptIfPresent(options, elements) {
-  const hasDeepLinkPrompt = elements.some((element) =>
-    element.label.includes("Abrir com") ||
-    element.label.includes("Open with") ||
-    element.label.includes("Open in"),
+  const hasDeepLinkPrompt = elements.some(
+    (element) =>
+      element.label.includes("Abrir com") ||
+      element.label.includes("Open with") ||
+      element.label.includes("Open in"),
   );
 
   if (!hasDeepLinkPrompt) return false;
@@ -471,7 +512,8 @@ function waitFor(options, name, predicate, timeoutMs = 20000) {
       elements = describeElements(options);
       lastDescribeError = "";
     } catch (error) {
-      lastDescribeError = error instanceof Error ? error.message : String(error);
+      lastDescribeError =
+        error instanceof Error ? error.message : String(error);
       Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 500);
       continue;
     }
@@ -487,7 +529,12 @@ function waitFor(options, name, predicate, timeoutMs = 20000) {
     .slice(0, 40)
     .map((element) => `${element.type} id=${element.id} label=${element.label}`)
     .join("\n");
-  const artifacts = writeFailureArtifacts(options, name, elements, lastDescribeError);
+  const artifacts = writeFailureArtifacts(
+    options,
+    name,
+    elements,
+    lastDescribeError,
+  );
   throw new Error(
     [
       `Timed out waiting for ${name}.`,
@@ -496,7 +543,9 @@ function waitFor(options, name, predicate, timeoutMs = 20000) {
       `Screenshot: ${artifacts.screenshotPath}`,
       "Visible elements:",
       visible,
-    ].filter(Boolean).join("\n"),
+    ]
+      .filter(Boolean)
+      .join("\n"),
   );
 }
 
@@ -521,14 +570,10 @@ function waitForMaybe(options, predicate, timeoutMs = 20000) {
 }
 
 function waitForId(options, id, timeoutMs) {
-  return waitFor(options, `id ${id}`, (elements) => hasId(elements, id), timeoutMs);
-}
-
-function waitForAnyId(options, ids, timeoutMs) {
   return waitFor(
     options,
-    `one of ids ${ids.join(", ")}`,
-    (elements) => ids.some((id) => hasId(elements, id)),
+    `id ${id}`,
+    (elements) => hasId(elements, id),
     timeoutMs,
   );
 }
@@ -546,32 +591,11 @@ function waitForChatList(options, timeoutMs = 30000) {
   );
 }
 
-function waitForOnboardingStep(options, id, labels, timeoutMs = 30000) {
-  return waitFor(
-    options,
-    `onboarding step ${id}`,
-    (elements) => hasId(elements, id) || labels.some((label) => hasLabel(elements, label)),
-    timeoutMs,
-  );
-}
-
 function tapId(options, id, timeout = 10) {
   axe(options, [
     "tap",
     "--id",
     id,
-    "--wait-timeout",
-    String(timeout),
-    "--udid",
-    options.udid,
-  ]);
-}
-
-function tapLabel(options, label, timeout = 10) {
-  axe(options, [
-    "tap",
-    "--label",
-    label,
     "--wait-timeout",
     String(timeout),
     "--udid",
@@ -616,7 +640,9 @@ function acceptDeepLinkPromptIfNeeded(options, timeoutMs = 5000) {
 
 function openRoute(options, route) {
   const normalized = route.replace(/^\/+/, "");
-  const url = normalized ? `${options.scheme}://${normalized}` : `${options.scheme}://`;
+  const url = normalized
+    ? `${options.scheme}://${normalized}`
+    : `${options.scheme}://`;
   run("xcrun", ["simctl", "openurl", options.udid, url], { timeout: 15000 });
   acceptDeepLinkPromptIfNeeded(options);
 }
@@ -642,7 +668,9 @@ function terminateApp(options) {
 
 function buildReleaseApp(options) {
   fs.mkdirSync(DEFAULT_DERIVED_DATA, { recursive: true });
-  const destination = options.udid ? `id=${options.udid}` : "generic/platform=iOS Simulator";
+  const destination = options.udid
+    ? `id=${options.udid}`
+    : "generic/platform=iOS Simulator";
   run(
     "xcodebuild",
     [
@@ -686,18 +714,22 @@ function collectSimulatorHostDiagnostics(options) {
   const axeSimulators = axe(options, ["list-simulators"], { timeout: 15000 });
   const interestingDevices = axeSimulators
     .split("\n")
-    .filter((line) =>
-      (line.includes("iPhone") || line.includes("iPad")) &&
-      (line.includes("| Booted |") || line.includes("| Booting |") || line.includes("| Shutdown |")),
+    .filter(
+      (line) =>
+        (line.includes("iPhone") || line.includes("iPad")) &&
+        (line.includes("| Booted |") ||
+          line.includes("| Booting |") ||
+          line.includes("| Shutdown |")),
     );
   const activeProcesses = run("ps", ["-axo", "pid,ppid,stat,command"], {
     timeout: 10000,
     allowFailure: true,
-  }).stdout
-    .split("\n")
-    .filter((line) =>
-      /CoreSimulator|launchd_sim|Simulator|xcodebuild|simctl/.test(line) &&
-      !/scripts\/e2e-axe\.js/.test(line),
+  })
+    .stdout.split("\n")
+    .filter(
+      (line) =>
+        /CoreSimulator|launchd_sim|Simulator|xcodebuild|simctl/.test(line) &&
+        !/scripts\/e2e-axe\.js/.test(line),
     );
 
   return {
@@ -722,9 +754,14 @@ function assertNotDevLauncher(elements) {
 function assertManifestSelectors() {
   for (const feature of MANIFEST.features) {
     if (!feature.id || !feature.name || !feature.expected) {
-      throw new Error(`Invalid feature manifest entry: ${JSON.stringify(feature)}`);
+      throw new Error(
+        `Invalid feature manifest entry: ${JSON.stringify(feature)}`,
+      );
     }
-    if (!Array.isArray(feature.primarySelectors) || feature.primarySelectors.length === 0) {
+    if (
+      !Array.isArray(feature.primarySelectors) ||
+      feature.primarySelectors.length === 0
+    ) {
       throw new Error(`Feature ${feature.id} has no primary selectors`);
     }
   }
@@ -757,7 +794,9 @@ function runOnboarding(options) {
   assertNotDevLauncher(landing);
 
   if (hasId(landing, "chat-list") || hasId(landing, "chat-list-new-chat")) {
-    console.log("F-APP-001 onboarding already completed; chat list is visible.");
+    console.log(
+      "F-APP-001 onboarding already completed; chat list is visible.",
+    );
     return;
   }
 
@@ -813,7 +852,12 @@ function runOnboarding(options) {
       hasLabel(current, "Tudo Pronto")
     ) {
       logStep("features", "F-APP-001 onboarding: feature summary");
-      tapId(options, hasId(current, "onboarding-complete") ? "onboarding-complete" : "onboarding-continue");
+      tapId(
+        options,
+        hasId(current, "onboarding-complete")
+          ? "onboarding-complete"
+          : "onboarding-continue",
+      );
     } else {
       throw new Error(
         "Onboarding is visible, but AXe did not expose a known step label or id.",
@@ -876,14 +920,18 @@ function runSettingsSmoke(options) {
     }
     currentSettings = waitForId(options, "settings-mock-dns-switch", 10000);
   }
-  const mockSwitch = currentSettings.find((element) => element.id === "settings-mock-dns-switch");
+  const mockSwitch = currentSettings.find(
+    (element) => element.id === "settings-mock-dns-switch",
+  );
   if (!String(mockSwitch && mockSwitch.value).includes("1")) {
     tapId(options, "settings-mock-dns-switch");
     waitFor(
       options,
       "mock DNS switch enabled",
       (elements) => {
-        const element = elements.find((item) => item.id === "settings-mock-dns-switch");
+        const element = elements.find(
+          (item) => item.id === "settings-mock-dns-switch",
+        );
         return String(element && element.value).includes("1");
       },
       10000,
@@ -914,17 +962,26 @@ function runChatFlow(options) {
   typeText(options, "ping");
   tapId(options, "chat-input-send");
 
-  waitFor(options, "sent user and assistant messages", (elements) => {
-    const labels = elements.map((element) => element.label.toLowerCase());
-    return labels.some((label) =>
-      label.includes("your message: ping") ||
-      label.includes("sua mensagem: ping"),
-    ) &&
-      labels.some((label) =>
-        label.includes("assistant message:") ||
-        label.includes("mensagem do assistente:"),
+  waitFor(
+    options,
+    "sent user and assistant messages",
+    (elements) => {
+      const labels = elements.map((element) => element.label.toLowerCase());
+      return (
+        labels.some(
+          (label) =>
+            label.includes("your message: ping") ||
+            label.includes("sua mensagem: ping"),
+        ) &&
+        labels.some(
+          (label) =>
+            label.includes("assistant message:") ||
+            label.includes("mensagem do assistente:"),
+        )
       );
-  }, 45000);
+    },
+    45000,
+  );
 }
 
 function runLogsSmoke(options) {
@@ -972,7 +1029,11 @@ function runProfileSmoke(options) {
       hasLabel(elements, "Profile"),
     30000,
   );
-  for (const id of ["profile-settings-link", "profile-export-data", "profile-clear-all-data"]) {
+  for (const id of [
+    "profile-settings-link",
+    "profile-export-data",
+    "profile-clear-all-data",
+  ]) {
     waitForId(options, id, 10000);
   }
   console.log("F-USER-001 profile screen");
@@ -990,7 +1051,11 @@ function runNotFoundSmoke(options) {
       hasLabel(elements, "Page not found"),
     30000,
   );
-  for (const id of ["not-found-chat-link", "not-found-logs-link", "not-found-about-link"]) {
+  for (const id of [
+    "not-found-chat-link",
+    "not-found-logs-link",
+    "not-found-about-link",
+  ]) {
     waitForId(options, id, 10000);
   }
   console.log("F-ERR-001 not-found screen");
@@ -1006,11 +1071,14 @@ function doctor(options) {
   assertManifestSelectors();
   console.log(`AXe binary: ${options.axeBin}`);
   console.log(`AXe version: ${axe(options, ["--version"]).trim()}`);
-  const { interestingDevices, activeProcesses } = collectSimulatorHostDiagnostics(options);
-  const booted = interestingDevices
-    .filter((line) => line.includes("| Booted |"));
-  const booting = interestingDevices
-    .filter((line) => line.includes("| Booting |"));
+  const { interestingDevices, activeProcesses } =
+    collectSimulatorHostDiagnostics(options);
+  const booted = interestingDevices.filter((line) =>
+    line.includes("| Booted |"),
+  );
+  const booting = interestingDevices.filter((line) =>
+    line.includes("| Booting |"),
+  );
   console.log(`Booted iOS simulators: ${booted.length}`);
   for (const line of booted) console.log(line);
   if (booting.length > 0) {
@@ -1088,9 +1156,14 @@ function main() {
     runProfileSmoke(options);
     runNotFoundSmoke(options);
 
-    const screenshotPath = captureRequiredScreenshot(options, "axe-e2e-success");
+    const screenshotPath = captureRequiredScreenshot(
+      options,
+      "axe-e2e-success",
+    );
     console.log(`AXe E2E screenshot: ${screenshotPath}`);
-    console.log(`AXe E2E passed for ${MANIFEST.features.length} feature groups.`);
+    console.log(
+      `AXe E2E passed for ${MANIFEST.features.length} feature groups.`,
+    );
   } finally {
     if (createdSimulator && options.deleteCreatedSimulator) {
       deleteSimulator(createdSimulator);

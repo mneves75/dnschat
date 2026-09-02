@@ -40,7 +40,8 @@ function parsePnpmLockResolvedVersions(raw) {
     const content = rawLine.trim();
 
     if (indent === 2) {
-      inRootImporter = content === ".:" || content === "'.':" || content === '".":';
+      inRootImporter =
+        content === ".:" || content === "'.':" || content === '".":';
       inDepSection = false;
       currentDep = null;
       continue;
@@ -77,14 +78,18 @@ function buildLockfileFromPnpmLock(raw) {
   // Adapts pnpm resolved versions to the { packages: { name: ["name@version"] } }
   // shape the validators consume.
   const packages = {};
-  for (const [name, version] of Object.entries(parsePnpmLockResolvedVersions(raw))) {
+  for (const [name, version] of Object.entries(
+    parsePnpmLockResolvedVersions(raw),
+  )) {
     packages[name] = [`${name}@${version}`];
   }
   return { packages };
 }
 
 function parseSemver(version) {
-  const cleaned = String(version).trim().replace(/^[=v]+/, "");
+  const cleaned = String(version)
+    .trim()
+    .replace(/^[=v]+/, "");
   const match = cleaned.match(/^(\d+)\.(\d+)\.(\d+)/);
   if (!match) return null;
   return {
@@ -122,7 +127,11 @@ function satisfiesRange(resolvedVersion, declaredRange) {
 
   if (range.startsWith("^")) {
     const base = parseSemver(range.slice(1));
-    return !!base && resolved.major === base.major && compareSemver(resolved, base) >= 0;
+    return (
+      !!base &&
+      resolved.major === base.major &&
+      compareSemver(resolved, base) >= 0
+    );
   }
 
   if (range.startsWith("~")) {
@@ -151,8 +160,8 @@ function validateDependencyAlignment({
 }) {
   const issues = [];
   const declaredDeps = {
-    ...(packageJson.dependencies || {}),
-    ...(packageJson.devDependencies || {}),
+    ...packageJson.dependencies,
+    ...packageJson.devDependencies,
   };
   const packagesMap = lockfile.packages || {};
 
@@ -172,7 +181,9 @@ function validateDependencyAlignment({
 
     const resolvedVersion = parseResolvedVersionFromLockEntry(lockEntry);
     if (!resolvedVersion) {
-      issues.push(`[PARSE] ${depName}: não foi possível ler versão resolvida no pnpm-lock.yaml`);
+      issues.push(
+        `[PARSE] ${depName}: não foi possível ler versão resolvida no pnpm-lock.yaml`,
+      );
       continue;
     }
 
@@ -196,8 +207,8 @@ function validateInstalledDependencyAlignment({
 }) {
   const issues = [];
   const declaredDeps = {
-    ...(packageJson.dependencies || {}),
-    ...(packageJson.devDependencies || {}),
+    ...packageJson.dependencies,
+    ...packageJson.devDependencies,
   };
   const packagesMap = lockfile.packages || {};
 
@@ -225,7 +236,9 @@ function validateInstalledDependencyAlignment({
         fsImpl.readFileSync(installedPackageJsonPath, "utf8"),
       );
       installedVersion =
-        typeof installedPackageJson.version === "string" ? installedPackageJson.version : null;
+        typeof installedPackageJson.version === "string"
+          ? installedPackageJson.version
+          : null;
     } catch {
       issues.push(
         `[INSTALLED_PARSE] ${depName}: falha ao ler ${pathImpl.relative(projectRoot, installedPackageJsonPath)}`,
@@ -267,18 +280,26 @@ function run() {
 
   const issues = [
     ...validateDependencyAlignment({ packageJson, lockfile }),
-    ...validateInstalledDependencyAlignment({ projectRoot, packageJson, lockfile }),
+    ...validateInstalledDependencyAlignment({
+      projectRoot,
+      packageJson,
+      lockfile,
+    }),
   ];
 
   if (issues.length > 0) {
-    console.error("[verify-sdk-alignment] Falha de alinhamento de dependências críticas:");
+    console.error(
+      "[verify-sdk-alignment] Falha de alinhamento de dependências críticas:",
+    );
     for (const issue of issues) {
       console.error(`- ${issue}`);
     }
     process.exit(1);
   }
 
-  console.log("[verify-sdk-alignment] OK: package.json e pnpm-lock.yaml alinhados para dependências críticas.");
+  console.log(
+    "[verify-sdk-alignment] OK: package.json e pnpm-lock.yaml alinhados para dependências críticas.",
+  );
 }
 
 if (require.main === module) {

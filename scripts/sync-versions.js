@@ -34,12 +34,17 @@ function getSourceVersionFromPackageJson() {
     const version = packageJson?.version;
 
     if (typeof version !== "string" || !/^\d+\.\d+\.\d+$/.test(version)) {
-      throw new Error(`Invalid package.json version: ${JSON.stringify(version)}`);
+      throw new Error(
+        `Invalid package.json version: ${JSON.stringify(version)}`,
+      );
     }
 
     return version;
   } catch (error) {
-    console.error("[sync-versions] Error reading package.json version:", error.message);
+    console.error(
+      "[sync-versions] Error reading package.json version:",
+      error.message,
+    );
     process.exit(1);
   }
 }
@@ -75,7 +80,9 @@ function readIosVersions() {
   const marketingMatch = iosContent.match(/MARKETING_VERSION = ([^;]+);/);
   const buildMatch = iosContent.match(/CURRENT_PROJECT_VERSION = (\d+);/);
 
-  const marketingVersion = marketingMatch ? String(marketingMatch[1]).trim() : null;
+  const marketingVersion = marketingMatch
+    ? String(marketingMatch[1]).trim()
+    : null;
   const buildNumber = buildMatch ? parseInt(buildMatch[1], 10) : null;
 
   return { iosContent, marketingVersion, buildNumber };
@@ -88,10 +95,10 @@ function assertIosDevelopmentTeamIsEmpty(iosContent) {
     const configured = (match[1] ?? "").trim();
     if (configured !== '""') {
       console.error(
-        "[sync-versions] Refusing to proceed: iOS DEVELOPMENT_TEAM must be empty (\"\") for a portable public repo.",
+        '[sync-versions] Refusing to proceed: iOS DEVELOPMENT_TEAM must be empty ("") for a portable public repo.',
       );
       console.error(
-        "[sync-versions] Fix: in Xcode set Signing Team to \"None\" (or clear it), then ensure the pbxproj contains: DEVELOPMENT_TEAM = \"\";",
+        '[sync-versions] Fix: in Xcode set Signing Team to "None" (or clear it), then ensure the pbxproj contains: DEVELOPMENT_TEAM = "";',
       );
       process.exit(1);
     }
@@ -106,8 +113,12 @@ function readAndroidVersions() {
   const versionNameMatch = androidContent.match(/versionName\s*=?\s*"([^"]+)"/);
   const versionCodeMatch = androidContent.match(/versionCode\s*=?\s*(\d+)/);
 
-  const versionName = versionNameMatch ? String(versionNameMatch[1]).trim() : null;
-  const versionCode = versionCodeMatch ? parseInt(versionCodeMatch[1], 10) : null;
+  const versionName = versionNameMatch
+    ? String(versionNameMatch[1]).trim()
+    : null;
+  const versionCode = versionCodeMatch
+    ? parseInt(versionCodeMatch[1], 10)
+    : null;
 
   return { androidContent, versionName, versionCode };
 }
@@ -115,12 +126,16 @@ function readAndroidVersions() {
 function parseExplicitBuildNumber(rawValue) {
   if (rawValue == null) return null;
   if (!/^\d+$/.test(String(rawValue))) {
-    console.error(`[sync-versions] Invalid --build-number: ${JSON.stringify(rawValue)}`);
+    console.error(
+      `[sync-versions] Invalid --build-number: ${JSON.stringify(rawValue)}`,
+    );
     process.exit(1);
   }
   const parsed = Number.parseInt(String(rawValue), 10);
   if (!Number.isFinite(parsed) || parsed <= 0) {
-    console.error(`[sync-versions] Invalid --build-number: ${JSON.stringify(rawValue)}`);
+    console.error(
+      `[sync-versions] Invalid --build-number: ${JSON.stringify(rawValue)}`,
+    );
     process.exit(1);
   }
   return parsed;
@@ -208,7 +223,9 @@ function updateIosProject(version, buildNumber) {
       fs.writeFileSync(FILES.iosProject, iosContent);
     }
 
-    console.log(`[sync-versions] iOS: ${oldMarketingVersion} (${oldBuildNumber}) -> ${version} (${buildNumber}) ${isDryRun ? "(dry run)" : ""}`);
+    console.log(
+      `[sync-versions] iOS: ${oldMarketingVersion} (${oldBuildNumber}) -> ${version} (${buildNumber}) ${isDryRun ? "(dry run)" : ""}`,
+    );
     return true;
   } catch (error) {
     console.error("[sync-versions] Error updating iOS project:", error.message);
@@ -224,14 +241,18 @@ function updateAndroidBuild(version, buildNumber) {
     let androidContent = fs.readFileSync(FILES.androidBuild, "utf8");
 
     // Extract current versions
-    const versionNameMatch = androidContent.match(/versionName\s*=?\s*"([^"]+)"/);
+    const versionNameMatch = androidContent.match(
+      /versionName\s*=?\s*"([^"]+)"/,
+    );
     const versionCodeMatch = androidContent.match(/versionCode\s*=?\s*(\d+)/);
 
     const oldVersionName = versionNameMatch ? versionNameMatch[1] : "unknown";
     const oldVersionCode = versionCodeMatch ? parseInt(versionCodeMatch[1]) : 0;
 
     if (oldVersionName === version && oldVersionCode >= buildNumber) {
-      console.log(`[sync-versions] Android already at version ${version} (${buildNumber})`);
+      console.log(
+        `[sync-versions] Android already at version ${version} (${buildNumber})`,
+      );
       return false;
     }
 
@@ -249,10 +270,15 @@ function updateAndroidBuild(version, buildNumber) {
       fs.writeFileSync(FILES.androidBuild, androidContent);
     }
 
-    console.log(`[sync-versions] Android: ${oldVersionName} (${oldVersionCode}) -> ${version} (${buildNumber}) ${isDryRun ? "(dry run)" : ""}`);
+    console.log(
+      `[sync-versions] Android: ${oldVersionName} (${oldVersionCode}) -> ${version} (${buildNumber}) ${isDryRun ? "(dry run)" : ""}`,
+    );
     return true;
   } catch (error) {
-    console.error("[sync-versions] Error updating Android build.gradle:", error.message);
+    console.error(
+      "[sync-versions] Error updating Android build.gradle:",
+      error.message,
+    );
     return false;
   }
 }

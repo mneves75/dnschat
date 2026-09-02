@@ -29,7 +29,9 @@ function isUserFacingSource(path) {
 }
 
 function isScannable(path) {
-  return isPublicDoc(path) || isUserFacingSource(path) || path.startsWith(".github/");
+  return (
+    isPublicDoc(path) || isUserFacingSource(path) || path.startsWith(".github/")
+  );
 }
 
 const rules = [
@@ -40,25 +42,30 @@ const rules = [
   },
   {
     id: "app-store-connect-uuid",
-    description: "Internal App Store Connect UUIDs belong in private release notes.",
-    pattern: /\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi,
+    description:
+      "Internal App Store Connect UUIDs belong in private release notes.",
+    pattern:
+      /\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi,
     publicDocOnly: true,
   },
   {
     id: "apple-team-profile-id",
-    description: "Concrete Apple team/profile/certificate IDs must be placeholders in public docs.",
+    description:
+      "Concrete Apple team/profile/certificate IDs must be placeholders in public docs.",
     pattern: /\b(?=[A-Z0-9]*\d)(?=[A-Z0-9]*[A-Z])[A-Z0-9]{10}\b/g,
     publicDocOnly: true,
   },
   {
     id: "apple-device-identifier",
-    description: "Concrete Apple device identifiers must be placeholders in public docs.",
+    description:
+      "Concrete Apple device identifiers must be placeholders in public docs.",
     pattern: /\b[0-9A-F]{8}-[0-9A-F]{16}\b/g,
     publicDocOnly: true,
   },
   {
     id: "concrete-testflight-group",
-    description: "Private TestFlight group names must be placeholders in public docs.",
+    description:
+      "Private TestFlight group names must be placeholders in public docs.",
     pattern: /(--group\s+(?!<GROUPS>)[^\s]+|Groups?:\s+`[^<][^`]+`)/gi,
     publicDocOnly: true,
   },

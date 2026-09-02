@@ -103,12 +103,7 @@ const resolveNdkDir = (sdkDir) => {
 
 const resolveReadelf = (ndkDir) => {
   if (!ndkDir) return null;
-  const prebuiltDir = path.join(
-    ndkDir,
-    "toolchains",
-    "llvm",
-    "prebuilt",
-  );
+  const prebuiltDir = path.join(ndkDir, "toolchains", "llvm", "prebuilt");
   if (!fs.existsSync(prebuiltDir)) return null;
 
   const candidates = fs
@@ -262,7 +257,13 @@ const run = () => {
 
   const searchRoots = [
     path.join(androidDir, "app", "build", "intermediates", "cxx"),
-    path.join(androidDir, "app", "build", "intermediates", "merged_native_libs"),
+    path.join(
+      androidDir,
+      "app",
+      "build",
+      "intermediates",
+      "merged_native_libs",
+    ),
   ];
 
   const soFiles = searchRoots.flatMap((root) => collectSoFiles(root));
@@ -288,7 +289,9 @@ const run = () => {
       return;
     }
 
-    warn("No native .so files found. Skipping 16KB alignment until Android build artifacts exist.");
+    warn(
+      "No native .so files found. Skipping 16KB alignment until Android build artifacts exist.",
+    );
     return;
   }
 

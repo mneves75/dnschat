@@ -22,7 +22,7 @@ function main() {
 
   if (!fs.existsSync(lockPath)) {
     process.stderr.write(
-      "verify-ios-pods-sync: missing ios/Podfile.lock (run `pnpm run ios` or `cd ios && pod install`)\n"
+      "verify-ios-pods-sync: missing ios/Podfile.lock (run `pnpm run ios` or `cd ios && pod install`)\n",
     );
     process.exit(1);
   }
@@ -39,16 +39,16 @@ function main() {
   for (const entry of outOfSync) {
     process.stderr.write(
       `- ${entry.podName}: lock=${formatVersion(entry.lockfileVersion)} installed=${formatVersion(
-        entry.installedVersion
-      )}${entry.reason ? ` (${entry.reason})` : ""}\n`
+        entry.installedVersion,
+      )}${entry.reason ? ` (${entry.reason})` : ""}\n`,
     );
   }
   process.stderr.write(
-    `Fix: run \`pnpm run ios\` (recommended) or \`cd ios && pod install\`, then commit the updated \`ios/Podfile.lock\`.\n`
+    `Fix: run \`pnpm run ios\` (recommended) or \`cd ios && pod install\`, then commit the updated \`ios/Podfile.lock\`.\n`,
   );
   if (process.platform !== "darwin") {
     process.stderr.write(
-      "Note: CocoaPods runs on macOS. If you are on another OS, ask a macOS teammate to run pod install and commit the lockfile.\n"
+      "Note: CocoaPods runs on macOS. If you are on another OS, ask a macOS teammate to run pod install and commit the lockfile.\n",
     );
   }
   process.exit(1);

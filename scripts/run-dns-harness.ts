@@ -9,21 +9,21 @@
  *     --method-order native,udp,tcp --json-out artifacts/result.json --raw-out artifacts/raw
  */
 
-import { promises as fs } from 'node:fs';
-import { mkdirSync } from 'node:fs';
-import path from 'node:path';
-import dgram from 'node:dgram';
-import net from 'node:net';
-import crypto from 'node:crypto';
-import dnsPacket from 'dns-packet';
-import type { Answer, TxtAnswer, TxtData } from 'dns-packet';
+import { promises as fs } from "node:fs";
+import { mkdirSync } from "node:fs";
+import path from "node:path";
+import dgram from "node:dgram";
+import net from "node:net";
+import crypto from "node:crypto";
+import dnsPacket from "dns-packet";
+import type { Answer, TxtAnswer, TxtData } from "dns-packet";
 
-const DEFAULT_SERVER = 'llm.pieter.com';
+const DEFAULT_SERVER = "llm.pieter.com";
 const DEFAULT_PORT = 53;
-const DEFAULT_METHOD_ORDER: HarnessMethod[] = ['native', 'udp', 'tcp'];
+const DEFAULT_METHOD_ORDER: HarnessMethod[] = ["native", "udp", "tcp"];
 const DEFAULT_TIMEOUT_MS = 5000;
 
-const METHOD_NAMES: HarnessMethod[] = ['native', 'udp', 'tcp'];
+const METHOD_NAMES: HarnessMethod[] = ["native", "udp", "tcp"];
 
 // NOTE: Keep these values in sync with modules/dns-native/constants.ts
 const HARNESS_DNS_CONSTANTS = {
@@ -31,9 +31,9 @@ const HARNESS_DNS_CONSTANTS = {
   MAX_DNS_LABEL_LENGTH: 63,
 };
 
-type HarnessMethod = 'native' | 'udp' | 'tcp';
+type HarnessMethod = "native" | "udp" | "tcp";
 
-type AttemptStatus = 'success' | 'failure';
+type AttemptStatus = "success" | "failure";
 
 type HarnessOptions = {
   message: string;
@@ -71,11 +71,11 @@ type HarnessResult = {
 
 const getErrorMessage = (error: unknown, fallback: string): string => {
   if (error instanceof Error) return error.message || fallback;
-  if (typeof error === 'string') return error || fallback;
-  if (error && typeof error === 'object') {
+  if (typeof error === "string") return error || fallback;
+  if (error && typeof error === "object") {
     const record = error as Record<string, unknown>;
-    if (typeof record['message'] === 'string') {
-      return record['message'] || fallback;
+    if (typeof record["message"] === "string") {
+      return record["message"] || fallback;
     }
   }
   return fallback;
@@ -89,14 +89,18 @@ const normalizeTxtData = (data: TxtData): Array<string | Uint8Array> => {
 const extractTxtRecords = (answers: Answer[] | undefined): string[] => {
   if (!answers || answers.length === 0) return [];
   return answers
-    .filter((answer): answer is TxtAnswer => answer.type === 'TXT')
+    .filter((answer): answer is TxtAnswer => answer.type === "TXT")
     .flatMap((answer) => normalizeTxtData(answer.data))
-    .map((record) => (typeof record === 'string' ? record : Buffer.from(record).toString('utf8')));
+    .map((record) =>
+      typeof record === "string"
+        ? record
+        : Buffer.from(record).toString("utf8"),
+    );
 };
 
 function parseArgs(argv: string[]): HarnessOptions {
   const args = [...argv];
-  let message = '';
+  let message = "";
   let server = DEFAULT_SERVER;
   let port = DEFAULT_PORT;
   let methodOrder = DEFAULT_METHOD_ORDER;
@@ -119,25 +123,25 @@ function parseArgs(argv: string[]): HarnessOptions {
     if (!arg) {
       continue;
     }
-    if (arg === '--message' || arg === '-m') {
+    if (arg === "--message" || arg === "-m") {
       message = takeValue(arg, i);
       i += 1;
-    } else if (arg === '--server' || arg === '-s') {
+    } else if (arg === "--server" || arg === "-s") {
       server = takeValue(arg, i);
       i += 1;
-    } else if (arg === '--port' || arg === '-p') {
+    } else if (arg === "--port" || arg === "-p") {
       const rawPort = takeValue(arg, i);
       if (!/^\d+$/.test(rawPort)) {
         throw new Error(`Invalid --port value: ${rawPort}`);
       }
       port = parseInt(rawPort, 10);
       i += 1;
-    } else if (arg === '--method-order') {
+    } else if (arg === "--method-order") {
       const raw = takeValue(arg, i);
       i += 1;
       methodOrderExplicit = true;
       const parsedMethodOrder = raw
-        .split(',')
+        .split(",")
         .map((item) => item.trim().toLowerCase())
         .filter(Boolean);
       const invalidMethods = parsedMethodOrder.filter(
@@ -152,21 +156,21 @@ function parseArgs(argv: string[]): HarnessOptions {
       if (methodOrder.length === 0) {
         throw new Error("--method-order must include at least one transport");
       }
-    } else if (arg === '--timeout') {
+    } else if (arg === "--timeout") {
       timeoutMs = parseInt(takeValue(arg, i), 10) || DEFAULT_TIMEOUT_MS;
       i += 1;
-    } else if (arg === '--json-out') {
+    } else if (arg === "--json-out") {
       jsonOut = takeValue(arg, i);
       i += 1;
-    } else if (arg === '--raw-out') {
+    } else if (arg === "--raw-out") {
       rawOutDir = takeValue(arg, i);
       i += 1;
-    } else if (arg === '--local-server') {
+    } else if (arg === "--local-server") {
       localServer = true;
-    } else if (arg === '--help' || arg === '-h') {
+    } else if (arg === "--help" || arg === "-h") {
       printHelp();
       process.exit(0);
-    } else if (!arg.startsWith('--') && message === '') {
+    } else if (!arg.startsWith("--") && message === "") {
       message = arg;
     }
   }
@@ -191,40 +195,47 @@ function parseArgs(argv: string[]): HarnessOptions {
   }
 
   if (options.localServer && !methodOrderExplicit) {
-    options.methodOrder = ['udp', 'tcp'];
+    options.methodOrder = ["udp", "tcp"];
   }
 
   return options;
 }
 
 function printHelp() {
-  console.log(`DNS Harness Usage:\n\n` +
-    `  pnpm run dns:harness --message "hello world" [options]\n\n` +
-    `Options:\n` +
-    `  --message, -m        Message to encode (required)\n` +
-    `  --server,  -s        Resolver host (default: ${DEFAULT_SERVER})\n` +
-    `  --port,    -p        Resolver port (default: ${DEFAULT_PORT})\n` +
-    `  --method-order       Comma list of transports (native,udp,tcp)\n` +
-    `  --timeout            Transport timeout in ms (default: ${DEFAULT_TIMEOUT_MS})\n` +
-    `  --json-out           Path to write harness JSON artifact\n` +
-    `  --raw-out            Directory to persist raw request/response buffers\n` +
-    `  --local-server       Spin up a local UDP/TCP DNS responder for offline validation\n` +
-    `  --help, -h           Show this help message`);
+  console.log(
+    `DNS Harness Usage:\n\n` +
+      `  pnpm run dns:harness --message "hello world" [options]\n\n` +
+      `Options:\n` +
+      `  --message, -m        Message to encode (required)\n` +
+      `  --server,  -s        Resolver host (default: ${DEFAULT_SERVER})\n` +
+      `  --port,    -p        Resolver port (default: ${DEFAULT_PORT})\n` +
+      `  --method-order       Comma list of transports (native,udp,tcp)\n` +
+      `  --timeout            Transport timeout in ms (default: ${DEFAULT_TIMEOUT_MS})\n` +
+      `  --json-out           Path to write harness JSON artifact\n` +
+      `  --raw-out            Directory to persist raw request/response buffers\n` +
+      `  --local-server       Spin up a local UDP/TCP DNS responder for offline validation\n` +
+      `  --help, -h           Show this help message`,
+  );
 }
 
 function validateMessage(message: string) {
-  if (typeof message !== 'string' || message.length === 0) {
-    throw new Error('Message must be a non-empty string');
+  if (typeof message !== "string" || message.length === 0) {
+    throw new Error("Message must be a non-empty string");
   }
   if (message.length > HARNESS_DNS_CONSTANTS.MAX_MESSAGE_LENGTH) {
-    throw new Error(`Message too long (max ${HARNESS_DNS_CONSTANTS.MAX_MESSAGE_LENGTH} characters)`);
+    throw new Error(
+      `Message too long (max ${HARNESS_DNS_CONSTANTS.MAX_MESSAGE_LENGTH} characters)`,
+    );
   }
   if (message.trim().length === 0) {
-    throw new Error('Message cannot be only whitespace');
+    throw new Error("Message cannot be only whitespace");
   }
-  const controlChars = /[\x00-\x1F\x7F-\x9F]/;
+  // oxlint-disable-next-line eslint/no-control-regex -- Rejecting control characters is the point of this check.
+  const controlChars = /[\u0000-\u001F\u007F-\u009F]/;
   if (controlChars.test(message)) {
-    throw new Error('Message contains control characters that cannot be encoded safely');
+    throw new Error(
+      "Message contains control characters that cannot be encoded safely",
+    );
   }
 }
 
@@ -232,14 +243,14 @@ function sanitizeMessageForDns(message: string): string {
   let result = message.normalize("NFKD").replace(/[\u0300-\u036f]/g, "");
   result = result.toLowerCase();
   result = result.trim();
-  result = result.replace(/\s+/g, '-');
-  result = result.replace(/[^a-z0-9-]/g, '');
-  result = result.replace(/-{2,}/g, '-');
-  result = result.replace(/^-+|-+$/g, '');
+  result = result.replace(/\s+/g, "-");
+  result = result.replace(/[^a-z0-9-]/g, "");
+  result = result.replace(/-{2,}/g, "-");
+  result = result.replace(/^-+|-+$/g, "");
 
   if (!result) {
     throw new Error(
-      'Message must contain at least one letter or number after sanitization',
+      "Message must contain at least one letter or number after sanitization",
     );
   }
   if (result.length > HARNESS_DNS_CONSTANTS.MAX_DNS_LABEL_LENGTH) {
@@ -252,14 +263,22 @@ function sanitizeMessageForDns(message: string): string {
 }
 
 function composeQueryName(label: string, dnsServer: string): string {
-  const trimmedLabel = label.replace(/\.+$/g, '').trim();
+  const trimmedLabel = label.replace(/\.+$/g, "").trim();
   if (!trimmedLabel) {
-    throw new Error('Sanitized label cannot be empty when composing query name');
+    throw new Error(
+      "Sanitized label cannot be empty when composing query name",
+    );
   }
 
-  const serverInput = (dnsServer || '').trim().replace(/:\d+$/, '').replace(/\.+$/g, '');
+  const serverInput = (dnsServer || "")
+    .trim()
+    .replace(/:\d+$/, "")
+    .replace(/\.+$/g, "");
   const ipRegex = /^(?:\d{1,3}\.){3}\d{1,3}$/;
-  const zone = !serverInput || ipRegex.test(serverInput) ? DEFAULT_SERVER : serverInput.toLowerCase();
+  const zone =
+    !serverInput || ipRegex.test(serverInput)
+      ? DEFAULT_SERVER
+      : serverInput.toLowerCase();
 
   return `${trimmedLabel}.${zone}`;
 }
@@ -272,12 +291,12 @@ function ensureDirectory(dir: string) {
 function buildDnsQueryBuffer(queryName: string): Buffer {
   // SECURITY: Use cryptographically secure random for DNS transaction ID (RFC 5452)
   return dnsPacket.encode({
-    type: 'query',
+    type: "query",
     id: crypto.randomInt(0, 65536),
     flags: dnsPacket.RECURSION_DESIRED,
     questions: [
       {
-        type: 'TXT',
+        type: "TXT",
         name: queryName,
       },
     ],
@@ -290,21 +309,24 @@ type LocalDnsServer = {
   close: () => Promise<void>;
 };
 
-function buildTxtResponseFromQuery(queryBuffer: Buffer, responseText: string): Buffer {
+function buildTxtResponseFromQuery(
+  queryBuffer: Buffer,
+  responseText: string,
+): Buffer {
   const decoded = dnsPacket.decode(queryBuffer);
   const question = decoded.questions?.[0];
   if (!question || !question.name) {
-    throw new Error('DNS query missing question');
+    throw new Error("DNS query missing question");
   }
 
   return dnsPacket.encode({
-    type: 'response',
+    type: "response",
     id: decoded.id,
     flags: dnsPacket.RECURSION_DESIRED | dnsPacket.AUTHORITATIVE_ANSWER,
     questions: decoded.questions,
     answers: [
       {
-        type: 'TXT',
+        type: "TXT",
         name: question.name,
         ttl: 60,
         data: [responseText],
@@ -313,11 +335,13 @@ function buildTxtResponseFromQuery(queryBuffer: Buffer, responseText: string): B
   });
 }
 
-async function startLocalDnsServer(responseText: string): Promise<LocalDnsServer> {
+async function startLocalDnsServer(
+  responseText: string,
+): Promise<LocalDnsServer> {
   const tcpServer = net.createServer((socket) => {
     let buffer = Buffer.alloc(0);
-    socket.on('data', (chunk) => {
-      const data = typeof chunk === 'string' ? Buffer.from(chunk) : chunk;
+    socket.on("data", (chunk) => {
+      const data = typeof chunk === "string" ? Buffer.from(chunk) : chunk;
       buffer = Buffer.concat([buffer, data]);
       if (buffer.length < 2) {
         return;
@@ -340,21 +364,21 @@ async function startLocalDnsServer(responseText: string): Promise<LocalDnsServer
   });
 
   await new Promise<void>((resolve) => {
-    tcpServer.listen(0, '127.0.0.1', () => resolve());
+    tcpServer.listen(0, "127.0.0.1", () => resolve());
   });
 
   const address = tcpServer.address();
-  if (!address || typeof address === 'string') {
+  if (!address || typeof address === "string") {
     tcpServer.close();
-    throw new Error('Failed to bind local TCP server');
+    throw new Error("Failed to bind local TCP server");
   }
 
-  const udpSocket = dgram.createSocket('udp4');
+  const udpSocket = dgram.createSocket("udp4");
   await new Promise<void>((resolve) => {
-    udpSocket.bind(address.port, '127.0.0.1', () => resolve());
+    udpSocket.bind(address.port, "127.0.0.1", () => resolve());
   });
 
-  udpSocket.on('message', (message, rinfo) => {
+  udpSocket.on("message", (message, rinfo) => {
     try {
       const response = buildTxtResponseFromQuery(message, responseText);
       udpSocket.send(response, rinfo.port, rinfo.address);
@@ -364,7 +388,7 @@ async function startLocalDnsServer(responseText: string): Promise<LocalDnsServer
   });
 
   return {
-    host: '127.0.0.1',
+    host: "127.0.0.1",
     port: address.port,
     close: () =>
       new Promise((resolve) => {
@@ -377,36 +401,46 @@ async function startLocalDnsServer(responseText: string): Promise<LocalDnsServer
 
 type NativeModule = {
   nativeDNS: {
-    queryTXT: (domain: string, message: string) => Promise<string[]>;
+    queryTXT: (
+      domain: string,
+      message: string,
+      port: number,
+      deadlineEpochMs: number,
+    ) => Promise<string[]>;
   };
 };
 
 async function attemptNative(
   options: HarnessOptions,
   queryName: string,
-): Promise<Omit<HarnessAttempt, 'method'>> {
+): Promise<Omit<HarnessAttempt, "method">> {
   try {
     const start = Date.now();
     const nativeModule = (await importNativeModule()) as NativeModule | null;
     if (!nativeModule) {
       return {
-        status: 'failure',
+        status: "failure",
         durationMs: Date.now() - start,
-        error: 'Native module unavailable in this environment',
+        error: "Native module unavailable in this environment",
       };
     }
 
-    const records = await nativeModule.nativeDNS.queryTXT(options.server, queryName);
+    const records = await nativeModule.nativeDNS.queryTXT(
+      options.server,
+      queryName,
+      options.port,
+      Date.now() + options.timeoutMs,
+    );
     return {
-      status: 'success',
+      status: "success",
       durationMs: Date.now() - start,
       txtRecords: records,
     };
   } catch (error: unknown) {
     return {
-      status: 'failure',
+      status: "failure",
       durationMs: 0,
-      error: getErrorMessage(error, 'Native query failed'),
+      error: getErrorMessage(error, "Native query failed"),
     };
   }
 }
@@ -415,8 +449,10 @@ async function importNativeModule() {
   // Native module only works in React Native environment, not Node.js
   // The harness always runs in Node.js, so we always skip the native module
   // and rely on UDP/TCP transports instead
-  if (process.env['DNS_HARNESS_DEBUG'] === '1') {
-    console.warn('Native module skipped: DNS harness runs in Node.js (not React Native)');
+  if (process.env["DNS_HARNESS_DEBUG"] === "1") {
+    console.warn(
+      "Native module skipped: DNS harness runs in Node.js (not React Native)",
+    );
   }
   return null;
 }
@@ -427,7 +463,7 @@ async function attemptUdp(
   queryBuffer: Buffer,
   rawOutDir?: string,
   attemptIndex?: number,
-): Promise<Omit<HarnessAttempt, 'method'>> {
+): Promise<Omit<HarnessAttempt, "method">> {
   const start = Date.now();
 
   const requestPath = rawOutDir
@@ -442,7 +478,7 @@ async function attemptUdp(
   }
 
   return new Promise((resolve) => {
-    const socket = dgram.createSocket('udp4');
+    const socket = dgram.createSocket("udp4");
     let timeout: ReturnType<typeof setTimeout> | null = null;
 
     const cleanup = () => {
@@ -453,17 +489,17 @@ async function attemptUdp(
       socket.close();
     };
 
-    socket.on('error', (error) => {
+    socket.on("error", (error) => {
       cleanup();
       resolve({
-        status: 'failure',
+        status: "failure",
         durationMs: Date.now() - start,
-        error: error.message || 'UDP socket error',
+        error: error.message || "UDP socket error",
         ...(requestPath ? { rawRequestPath: requestPath } : {}),
       });
     });
 
-    socket.on('message', async (response) => {
+    socket.on("message", async (response) => {
       cleanup();
       if (responsePath) {
         await fs.writeFile(responsePath, response);
@@ -472,7 +508,7 @@ async function attemptUdp(
         const decoded = dnsPacket.decode(response);
         const answers = extractTxtRecords(decoded.answers);
         resolve({
-          status: 'success',
+          status: "success",
           durationMs: Date.now() - start,
           txtRecords: answers,
           ...(requestPath ? { rawRequestPath: requestPath } : {}),
@@ -480,9 +516,9 @@ async function attemptUdp(
         });
       } catch (error: unknown) {
         resolve({
-          status: 'failure',
+          status: "failure",
           durationMs: Date.now() - start,
-          error: getErrorMessage(error, 'Failed to decode UDP response'),
+          error: getErrorMessage(error, "Failed to decode UDP response"),
           ...(requestPath ? { rawRequestPath: requestPath } : {}),
           ...(responsePath ? { rawResponsePath: responsePath } : {}),
         });
@@ -492,24 +528,31 @@ async function attemptUdp(
     timeout = setTimeout(() => {
       cleanup();
       resolve({
-        status: 'failure',
+        status: "failure",
         durationMs: Date.now() - start,
         error: `UDP query timed out after ${options.timeoutMs}ms`,
         ...(requestPath ? { rawRequestPath: requestPath } : {}),
       });
     }, options.timeoutMs);
 
-    socket.send(queryBuffer, 0, queryBuffer.length, options.port, options.server, (error) => {
-      if (error) {
-        cleanup();
-        resolve({
-          status: 'failure',
-          durationMs: Date.now() - start,
-          error: error.message || 'UDP send failed',
-          ...(requestPath ? { rawRequestPath: requestPath } : {}),
-        });
-      }
-    });
+    socket.send(
+      queryBuffer,
+      0,
+      queryBuffer.length,
+      options.port,
+      options.server,
+      (error) => {
+        if (error) {
+          cleanup();
+          resolve({
+            status: "failure",
+            durationMs: Date.now() - start,
+            error: error.message || "UDP send failed",
+            ...(requestPath ? { rawRequestPath: requestPath } : {}),
+          });
+        }
+      },
+    );
   });
 }
 
@@ -519,7 +562,7 @@ async function attemptTcp(
   queryBuffer: Buffer,
   rawOutDir?: string,
   attemptIndex?: number,
-): Promise<Omit<HarnessAttempt, 'method'>> {
+): Promise<Omit<HarnessAttempt, "method">> {
   const start = Date.now();
 
   const requestPath = rawOutDir
@@ -534,7 +577,10 @@ async function attemptTcp(
   }
 
   return new Promise((resolve) => {
-    const client = net.createConnection({ host: options.server, port: options.port });
+    const client = net.createConnection({
+      host: options.server,
+      port: options.port,
+    });
     let timeout: ReturnType<typeof setTimeout> | null = null;
     const chunks: Buffer[] = [];
 
@@ -547,31 +593,31 @@ async function attemptTcp(
       client.destroy();
     };
 
-    client.on('error', (error) => {
+    client.on("error", (error) => {
       cleanup();
       resolve({
-        status: 'failure',
+        status: "failure",
         durationMs: Date.now() - start,
-        error: error.message || 'TCP socket error',
+        error: error.message || "TCP socket error",
         ...(requestPath ? { rawRequestPath: requestPath } : {}),
       });
     });
 
-    client.on('timeout', () => {
+    client.on("timeout", () => {
       cleanup();
       resolve({
-        status: 'failure',
+        status: "failure",
         durationMs: Date.now() - start,
         error: `TCP query timed out after ${options.timeoutMs}ms`,
         ...(requestPath ? { rawRequestPath: requestPath } : {}),
       });
     });
 
-    client.on('data', (data) => {
-      chunks.push(typeof data === 'string' ? Buffer.from(data) : data);
+    client.on("data", (data) => {
+      chunks.push(typeof data === "string" ? Buffer.from(data) : data);
     });
 
-    client.on('end', async () => {
+    client.on("end", async () => {
       cleanup();
       const responseBuffer = Buffer.concat(chunks);
       if (responsePath) {
@@ -582,7 +628,7 @@ async function attemptTcp(
         const decodedMessage = parseTcpResponse(responseBuffer);
         const answers = extractTxtRecords(decodedMessage.answers);
         resolve({
-          status: 'success',
+          status: "success",
           durationMs: Date.now() - start,
           txtRecords: answers,
           ...(requestPath ? { rawRequestPath: requestPath } : {}),
@@ -590,9 +636,9 @@ async function attemptTcp(
         });
       } catch (error: unknown) {
         resolve({
-          status: 'failure',
+          status: "failure",
           durationMs: Date.now() - start,
-          error: getErrorMessage(error, 'Failed to decode TCP response'),
+          error: getErrorMessage(error, "Failed to decode TCP response"),
           ...(requestPath ? { rawRequestPath: requestPath } : {}),
           ...(responsePath ? { rawResponsePath: responsePath } : {}),
         });
@@ -600,7 +646,7 @@ async function attemptTcp(
     });
 
     timeout = setTimeout(() => {
-      client.emit('timeout');
+      client.emit("timeout");
     }, options.timeoutMs);
 
     const payload = prependLength(queryBuffer);
@@ -617,12 +663,14 @@ function prependLength(buffer: Buffer): Buffer {
 
 function parseTcpResponse(buffer: Buffer) {
   if (buffer.length < 2) {
-    throw new Error('TCP response too short to contain length prefix');
+    throw new Error("TCP response too short to contain length prefix");
   }
   const expectedLength = buffer.readUInt16BE(0);
   const payload = buffer.slice(2);
   if (payload.length !== expectedLength) {
-    throw new Error(`TCP response length mismatch (expected ${expectedLength}, got ${payload.length})`);
+    throw new Error(
+      `TCP response length mismatch (expected ${expectedLength}, got ${payload.length})`,
+    );
   }
   return dnsPacket.decode(payload);
 }
@@ -634,7 +682,7 @@ function reduceTxtRecords(records: string[] | undefined): string | undefined {
   const parts: Array<{ part: number; total: number; content: string }> = [];
 
   for (const record of records) {
-    const trimmed = (record ?? '').trim();
+    const trimmed = (record ?? "").trim();
     if (!trimmed) continue;
     const match = trimmed.match(/^(\d+)\/(\d+):(.*)$/);
     if (match && match[1] && match[2] && match[3] !== undefined) {
@@ -649,7 +697,7 @@ function reduceTxtRecords(records: string[] | undefined): string | undefined {
   }
 
   if (plainSegments.length) {
-    return plainSegments.join('');
+    return plainSegments.join("");
   }
 
   if (!parts.length) {
@@ -670,7 +718,7 @@ function reduceTxtRecords(records: string[] | undefined): string | undefined {
   if (map.size !== total) {
     return undefined;
   }
-  return Array.from({ length: total }, (_, i) => map.get(i + 1) ?? '').join('');
+  return Array.from({ length: total }, (_, i) => map.get(i + 1) ?? "").join("");
 }
 
 async function writeJsonArtifact(pathname: string, result: HarnessResult) {
@@ -682,7 +730,7 @@ async function writeJsonArtifact(pathname: string, result: HarnessResult) {
 function normalizeServerHost(server: string): string {
   const trimmed = server.trim();
   if (!trimmed) return DEFAULT_SERVER;
-  return trimmed.replace(/:\d+$/, '');
+  return trimmed.replace(/:\d+$/, "");
 }
 
 async function runHarness() {
@@ -705,7 +753,7 @@ async function runHarness() {
     if (options.rawOutDir) {
       ensureDirectory(options.rawOutDir);
       await fs.writeFile(
-        path.join(options.rawOutDir, 'input-metadata.json'),
+        path.join(options.rawOutDir, "input-metadata.json"),
         JSON.stringify(
           {
             message: options.message,
@@ -720,31 +768,43 @@ async function runHarness() {
         ),
       );
       await fs.writeFile(
-        path.join(options.rawOutDir, 'query.bin'),
+        path.join(options.rawOutDir, "query.bin"),
         queryBuffer,
       );
     }
 
     const attempts: HarnessAttempt[] = [];
     let finalResponse: string | undefined;
-    let finalStatus: AttemptStatus = 'failure';
+    let finalStatus: AttemptStatus = "failure";
 
     for (let index = 0; index < options.methodOrder.length; index++) {
       const method = options.methodOrder[index];
       if (!method) {
         continue;
       }
-      let attempt: Omit<HarnessAttempt, 'method'>;
+      let attempt: Omit<HarnessAttempt, "method">;
 
-      if (method === 'native') {
+      if (method === "native") {
         attempt = await attemptNative(options, queryName);
-      } else if (method === 'udp') {
-        attempt = await attemptUdp(options, queryName, queryBuffer, options.rawOutDir, index);
-      } else if (method === 'tcp') {
-        attempt = await attemptTcp(options, queryName, queryBuffer, options.rawOutDir, index);
+      } else if (method === "udp") {
+        attempt = await attemptUdp(
+          options,
+          queryName,
+          queryBuffer,
+          options.rawOutDir,
+          index,
+        );
+      } else if (method === "tcp") {
+        attempt = await attemptTcp(
+          options,
+          queryName,
+          queryBuffer,
+          options.rawOutDir,
+          index,
+        );
       } else {
         attempt = {
-          status: 'failure',
+          status: "failure",
           durationMs: 0,
           error: `Unsupported method: ${method}`,
         };
@@ -757,8 +817,8 @@ async function runHarness() {
 
       attempts.push(harnessAttempt);
 
-      if (attempt.status === 'success') {
-        finalStatus = 'success';
+      if (attempt.status === "success") {
+        finalStatus = "success";
         finalResponse = reduceTxtRecords(attempt.txtRecords);
         break;
       }
@@ -777,16 +837,18 @@ async function runHarness() {
       ...(finalResponse ? { resolvedText: finalResponse } : {}),
     };
 
-    console.log('DNS Harness');
+    console.log("DNS Harness");
     console.log(`  Message:        ${options.message}`);
     console.log(`  Sanitized:      ${sanitizedLabel}`);
     console.log(`  Query name:     ${queryName}`);
     console.log(`  Server:         ${normalizedServer}:${options.port}`);
-    console.log(`  Method order:   ${options.methodOrder.join(' -> ')}`);
+    console.log(`  Method order:   ${options.methodOrder.join(" -> ")}`);
 
     for (const attempt of attempts) {
-      if (attempt.status === 'success') {
-        console.log(`  ${attempt.method.toUpperCase()} succeeded in ${attempt.durationMs}ms`);
+      if (attempt.status === "success") {
+        console.log(
+          `  ${attempt.method.toUpperCase()} succeeded in ${attempt.durationMs}ms`,
+        );
         if (attempt.txtRecords?.length) {
           console.log(`    TXT records: ${JSON.stringify(attempt.txtRecords)}`);
         }
@@ -794,7 +856,9 @@ async function runHarness() {
           console.log(`    Combined: ${finalResponse}`);
         }
       } else {
-        console.log(`  ${attempt.method.toUpperCase()} failed (${attempt.error ?? 'unknown error'})`);
+        console.log(
+          `  ${attempt.method.toUpperCase()} failed (${attempt.error ?? "unknown error"})`,
+        );
       }
     }
 
@@ -807,8 +871,10 @@ async function runHarness() {
       console.log(`  Raw buffers saved to ${options.rawOutDir}`);
     }
 
-    if (finalStatus === 'failure') {
-      console.error('Harness failed to resolve TXT record with the provided transports.');
+    if (finalStatus === "failure") {
+      console.error(
+        "Harness failed to resolve TXT record with the provided transports.",
+      );
       process.exitCode = 1;
     }
   } finally {
@@ -819,6 +885,9 @@ async function runHarness() {
 }
 
 runHarness().catch((error) => {
-  console.error('DNS harness execution failed:', error instanceof Error ? error.stack : error);
+  console.error(
+    "DNS harness execution failed:",
+    error instanceof Error ? error.stack : error,
+  );
   process.exit(1);
 });

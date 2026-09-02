@@ -11,7 +11,9 @@ function isIpv4(value) {
 
   return trimmed
     .split(".")
-    .every((octet) => octet.length > 0 && Number(octet) >= 0 && Number(octet) <= 255);
+    .every(
+      (octet) => octet.length > 0 && Number(octet) >= 0 && Number(octet) <= 255,
+    );
 }
 
 function stripTrailingDots(value) {
@@ -26,13 +28,16 @@ function sanitizeMessage(message) {
 
   if (trimmed.length > MAX_MESSAGE_LENGTH) {
     throw new Error(
-      `Message too long (maximum ${MAX_MESSAGE_LENGTH} characters before sanitization)`
+      `Message too long (maximum ${MAX_MESSAGE_LENGTH} characters before sanitization)`,
     );
   }
 
   // Allow printable ASCII + common whitespace; reject other control chars.
-  if (/[^\x09\x0A\x0D\x20-\x7E]/.test(trimmed)) {
-    throw new Error("Message contains control characters that cannot be encoded safely");
+  // oxlint-disable-next-line eslint/no-control-regex -- Rejecting control characters is the point of this check.
+  if (/[^\u0009\u000A\u000D\u0020-\u007E]/.test(trimmed)) {
+    throw new Error(
+      "Message contains control characters that cannot be encoded safely",
+    );
   }
 
   let result = trimmed.normalize("NFKD").replace(/[\u0300-\u036f]/g, "");
@@ -43,12 +48,14 @@ function sanitizeMessage(message) {
   result = result.replace(/^-+|-+$/g, "");
 
   if (!result) {
-    throw new Error("Message must contain at least one letter or number after sanitization");
+    throw new Error(
+      "Message must contain at least one letter or number after sanitization",
+    );
   }
 
   if (result.length > MAX_DNS_LABEL_LENGTH) {
     throw new Error(
-      `Message too long after sanitization (maximum ${MAX_DNS_LABEL_LENGTH} characters)`
+      `Message too long after sanitization (maximum ${MAX_DNS_LABEL_LENGTH} characters)`,
     );
   }
 
@@ -76,7 +83,9 @@ function composeQueryName(label, zone) {
     throw new Error("DNS label must be non-empty when composing query name");
   }
 
-  const normalizedZone = stripTrailingDots(zone || DEFAULT_ZONE).trim().toLowerCase();
+  const normalizedZone = stripTrailingDots(zone || DEFAULT_ZONE)
+    .trim()
+    .toLowerCase();
   if (!normalizedZone) {
     throw new Error("DNS zone must be non-empty when composing query name");
   }
@@ -99,11 +108,17 @@ function resolveTargetFromArgs({ resolverArg, zoneArg, portArg }) {
 
   const resolverHost = resolverParsed?.host || DEFAULT_ZONE;
   const resolverPort = explicitPort || resolverParsed?.port || DEFAULT_PORT;
-  const zone = stripTrailingDots(zoneArg || DEFAULT_ZONE).trim().toLowerCase();
+  const zone = stripTrailingDots(zoneArg || DEFAULT_ZONE)
+    .trim()
+    .toLowerCase();
 
   // If resolver is an IP and no explicit zone was provided, default to the
   // app's primary DNS zone.
-  const effectiveZone = zoneArg ? zone : isIpv4(resolverHost) ? DEFAULT_ZONE : zone;
+  const effectiveZone = zoneArg
+    ? zone
+    : isIpv4(resolverHost)
+      ? DEFAULT_ZONE
+      : zone;
 
   return {
     resolverHost,
