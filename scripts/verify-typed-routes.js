@@ -2,6 +2,7 @@
 
 const fs = require("node:fs");
 const path = require("node:path");
+const { setTimeout: delay } = require("node:timers/promises");
 
 const projectRoot = path.resolve(__dirname, "..");
 const appRoot = path.join(projectRoot, "app");
@@ -12,6 +13,7 @@ const outputFile = path.join(outputDir, "router.d.ts");
 // Asserting on this string is what keeps the gate honest: an empty or
 // placeholder file would satisfy "file exists" but not this.
 const REQUIRED_DECLARATION = "declare module 'expo-router'";
+const GENERATION_TIMEOUT_MS = 5_000;
 
 const log = (message) => console.log(message);
 const fail = (message) => {
@@ -32,6 +34,20 @@ const isTypedRoutesEnabled = () => {
   return Boolean(appJson?.expo?.experiments?.typedRoutes);
 };
 
+// `regenerateDeclarations` in @expo/router-server is debounced, so
+// `setupTypedRoutes` resolves before router.d.ts is written. Poll for the file
+// instead of trusting the returned promise.
+const waitForGeneratedFile = async () => {
+  const deadline = Date.now() + GENERATION_TIMEOUT_MS;
+
+  while (Date.now() < deadline) {
+    if (fs.existsSync(outputFile)) return;
+    await delay(50);
+  }
+
+  throw new Error("Timed out waiting for Expo Router typed routes generation");
+};
+
 /**
  * Regenerate .expo/types/router.d.ts using the same generator the Expo dev
  * server runs. `setupTypedRoutes` supports this Metro-less path (it is what
@@ -47,12 +63,15 @@ const generateTypedRoutes = async () => {
     setupTypedRoutes,
   } = require("@expo/cli/build/src/start/server/type-generation/routes.js");
 
+  fs.mkdirSync(outputDir, { recursive: true });
+  fs.rmSync(outputFile, { force: true });
   await setupTypedRoutes({
     typesDirectory: outputDir,
     projectRoot,
     routerDirectory: appRoot,
     plugin: undefined,
   });
+  await waitForGeneratedFile();
 };
 
 const verify = async () => {
