@@ -976,7 +976,13 @@ public class DNSResolver {
                 try {
                     requireQueryCanContinue(operation, deadlineNanos);
                     int timeoutMillis = remainingTimeoutMillis(deadlineNanos);
-                    Lookup lookup = new Lookup(queryName, Type.TXT);
+                    // Absolute name, rooted explicitly. dnsjava treats a name with no
+                    // trailing dot as relative and walks the system search path, which
+                    // would put <queryName>.<local-search-domain> on the wire and hand
+                    // the user's internal search domain to the DNS server. The response
+                    // filter already rejects those answers, but the query must not be
+                    // sent at all -- the zone pin is a wire-level guarantee.
+                    Lookup lookup = new Lookup(Name.fromString(queryName, Name.root), Type.TXT);
 
                     SimpleResolver resolver = new SimpleResolver(serverAddress);
                     resolver.setPort(port);

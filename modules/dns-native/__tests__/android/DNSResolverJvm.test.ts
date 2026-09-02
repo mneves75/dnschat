@@ -45,6 +45,14 @@ describe("Android DNSResolver executable JVM boundaries", () => {
         "DNS",
         "SimpleResolver.java",
       ),
+      path.join(
+        fixtureRoot,
+        "stubs",
+        "org",
+        "xbill",
+        "DNS",
+        "TextParseException.java",
+      ),
       path.join(fixtureRoot, "stubs", "org", "xbill", "DNS", "TXTRecord.java"),
       path.join(fixtureRoot, "stubs", "org", "xbill", "DNS", "Type.java"),
     ];
