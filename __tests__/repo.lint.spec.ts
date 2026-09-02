@@ -40,6 +40,19 @@ function runLintOnFixture(fixtureName: string, sourceName: string) {
   }
 }
 
+// Fixture -> the rule it must trip. Shared with the valid-control test, which
+// asserts none of these rule ids appear for a clean file.
+const OXLINT_VIOLATION_FIXTURES: ReadonlyArray<readonly [string, string]> = [
+  ["unused-variable.ts.txt", "no-unused-vars"],
+  ["confusing-timeout.ts.txt", "no-confusing-set-timeout"],
+  ["duplicate-hooks.ts.txt", "no-duplicate-hooks"],
+  ["focused-test.ts.txt", "no-focused-tests"],
+  ["identical-title.ts.txt", "no-identical-title"],
+  ["invalid-describe.ts.txt", "valid-describe-callback"],
+  ["self-compare.ts.txt", "no-self-compare"],
+  ["unobserved-promise-expect.ts.txt", "valid-expect-in-promise"],
+];
+
 function runOxlintOnFixture(fixtureName: string) {
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "dnschat-oxlint-"));
   const sourcePath = path.join(
@@ -309,23 +322,17 @@ describe("repo policy: lint is portable (no global installs)", () => {
     },
   );
 
-  it.each([
-    ["unused-variable.ts.txt", "no-unused-vars"],
-    ["confusing-timeout.ts.txt", "no-confusing-set-timeout"],
-    ["duplicate-hooks.ts.txt", "no-duplicate-hooks"],
-    ["focused-test.ts.txt", "no-focused-tests"],
-    ["identical-title.ts.txt", "no-identical-title"],
-    ["invalid-describe.ts.txt", "valid-describe-callback"],
-    ["self-compare.ts.txt", "no-self-compare"],
-    ["unobserved-promise-expect.ts.txt", "valid-expect-in-promise"],
-  ])("rejects Oxlint fixture %s with %s", (fixtureName, ruleId) => {
-    const result = runOxlintOnFixture(fixtureName);
-    const output = `${result.stdout}${result.stderr}`;
+  it.each(OXLINT_VIOLATION_FIXTURES)(
+    "rejects Oxlint fixture %s with %s",
+    (fixtureName, ruleId) => {
+      const result = runOxlintOnFixture(fixtureName);
+      const output = `${result.stdout}${result.stderr}`;
 
-    expect(result.error).toBeUndefined();
-    expect(result.status).not.toBe(0);
-    expect(output).toContain(ruleId);
-  });
+      expect(result.error).toBeUndefined();
+      expect(result.status).not.toBe(0);
+      expect(output).toContain(ruleId);
+    },
+  );
 
   it("accepts the valid Oxlint control", () => {
     const result = runOxlintOnFixture("valid.ts.txt");
@@ -333,7 +340,19 @@ describe("repo policy: lint is portable (no global installs)", () => {
 
     expect(result.error).toBeUndefined();
     expect(result.status).toBe(0);
-    expect(output).not.toContain("error");
+
+    // Assert on the reported diagnostic count, not the substring "error".
+    // A clean run prints nothing on the darwin-arm64 binding and
+    // "Found 0 warnings and 0 errors." on linux-x64, and that success
+    // summary itself contains "errors" -- so a substring check passes on a
+    // developer laptop and fails in CI for a passing lint run.
+    const summary = output.match(/Found \d+ warnings? and (\d+) errors?/);
+    expect(Number(summary?.[1] ?? 0)).toBe(0);
+    // No rule violation was reported for any of the rules the sibling
+    // fixtures assert on.
+    for (const [, ruleId] of OXLINT_VIOLATION_FIXTURES) {
+      expect(output).not.toContain(ruleId);
+    }
   });
 
   it("rejects an unformatted Oxfmt fixture", () => {
