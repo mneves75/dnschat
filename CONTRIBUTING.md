@@ -22,7 +22,13 @@ Use this repository's GitHub issue templates for bug reports and feature request
 Common checks:
 
 ```bash
-# Lint (ast-grep rules)
+# Check formatting (Oxfmt)
+pnpm run fmt:check
+
+# Apply formatting (Oxfmt)
+pnpm run fmt
+
+# Lint (Oxlint + ast-grep structural rules)
 pnpm run lint
 
 # Unit tests
@@ -69,6 +75,7 @@ See [SECURITY.md](SECURITY.md) for responsible disclosure.
 `pnpm install` runs `pnpm run prepare` which installs a pre-commit hook that runs:
 
 - `pnpm run verify:ios-pods`
+- `pnpm run fmt:check`
 - `pnpm run lint`
 - `pnpm run test --bail`
 
@@ -76,6 +83,7 @@ Remove `.git/hooks/pre-commit` locally if you do not want repo-managed hooks.
 
 ## PR checklist
 
+- `pnpm run fmt:check`
 - `pnpm run lint`
 - `pnpm run test`
 - `node test-dns-simple.js "hello"`

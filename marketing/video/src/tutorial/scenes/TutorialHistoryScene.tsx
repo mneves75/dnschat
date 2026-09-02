@@ -1,9 +1,9 @@
-import {interpolate, useCurrentFrame} from 'remotion';
-import {HistoryMock} from '../../shared/AppMocks';
-import {PhoneFrame} from '../../shared/PhoneFrame';
-import {SceneShell} from '../../shared/SceneShell';
-import {Kicker, SceneTitle, SupportingText} from '../../shared/Typography';
-import {COLORS} from '../../shared/tokens';
+import { interpolate, useCurrentFrame } from "remotion";
+import { HistoryMock } from "../../shared/AppMocks";
+import { PhoneFrame } from "../../shared/PhoneFrame";
+import { SceneShell } from "../../shared/SceneShell";
+import { Kicker, SceneTitle, SupportingText } from "../../shared/Typography";
+import { COLORS } from "../../shared/tokens";
 
 export const TutorialHistoryScene = () => {
   const frame = useCurrentFrame();
@@ -15,23 +15,23 @@ export const TutorialHistoryScene = () => {
     >
       <div
         style={{
-          width: '100%',
-          height: '100%',
-          display: 'grid',
-          gridTemplateColumns: '650px 1fr',
-          alignItems: 'center',
+          width: "100%",
+          height: "100%",
+          display: "grid",
+          gridTemplateColumns: "650px 1fr",
+          alignItems: "center",
           gap: 92,
         }}
       >
         <div
           style={{
             opacity: interpolate(frame, [10, 30], [0, 1], {
-              extrapolateLeft: 'clamp',
-              extrapolateRight: 'clamp',
+              extrapolateLeft: "clamp",
+              extrapolateRight: "clamp",
             }),
-            translate: interpolate(frame, [10, 34], ['-50px 0px', '0px 0px'], {
-              extrapolateLeft: 'clamp',
-              extrapolateRight: 'clamp',
+            translate: interpolate(frame, [10, 34], ["-50px 0px", "0px 0px"], {
+              extrapolateLeft: "clamp",
+              extrapolateRight: "clamp",
             }),
           }}
         >
@@ -39,7 +39,7 @@ export const TutorialHistoryScene = () => {
             <HistoryMock />
           </PhoneFrame>
         </div>
-        <div style={{display: 'flex', flexDirection: 'column', gap: 28}}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
           <Kicker>De volta ao histórico</Kicker>
           <SceneTitle>Retome uma conversa sem criar um perfil.</SceneTitle>
           <SupportingText muted>
@@ -47,15 +47,15 @@ export const TutorialHistoryScene = () => {
           </SupportingText>
           <div
             style={{
-              width: 'fit-content',
+              width: "fit-content",
               minHeight: 66,
               borderRadius: 18,
-              padding: '0 22px',
-              display: 'flex',
-              alignItems: 'center',
+              padding: "0 22px",
+              display: "flex",
+              alignItems: "center",
               gap: 14,
-              backgroundColor: 'rgba(105,217,176,0.13)',
-              border: '1px solid rgba(105,217,176,0.32)',
+              backgroundColor: "rgba(105,217,176,0.13)",
+              border: "1px solid rgba(105,217,176,0.32)",
               color: COLORS.mint,
               fontSize: 26,
               fontWeight: 730,

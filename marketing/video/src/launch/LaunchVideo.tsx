@@ -1,11 +1,11 @@
-import {TransitionSeries} from '@remotion/transitions';
-import {LaunchCtaScene} from './scenes/LaunchCtaScene';
-import {LaunchHookScene} from './scenes/LaunchHookScene';
-import {LaunchProofScene} from './scenes/LaunchProofScene';
-import {LaunchResponseScene} from './scenes/LaunchResponseScene';
-import {LaunchSendScene} from './scenes/LaunchSendScene';
-import {LaunchTransportScene} from './scenes/LaunchTransportScene';
-import {LaunchTrustScene} from './scenes/LaunchTrustScene';
+import { TransitionSeries } from "@remotion/transitions";
+import { LaunchCtaScene } from "./scenes/LaunchCtaScene";
+import { LaunchHookScene } from "./scenes/LaunchHookScene";
+import { LaunchProofScene } from "./scenes/LaunchProofScene";
+import { LaunchResponseScene } from "./scenes/LaunchResponseScene";
+import { LaunchSendScene } from "./scenes/LaunchSendScene";
+import { LaunchTransportScene } from "./scenes/LaunchTransportScene";
+import { LaunchTrustScene } from "./scenes/LaunchTrustScene";
 
 export const LaunchVideo = () => {
   return (

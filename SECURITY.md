@@ -33,9 +33,10 @@ Last full source/security sweep: `2026-08-31` (native DNS lifecycle and parser
 hardening, strict encrypted-storage corruption handling, safe Markdown boundary,
 Web transport isolation, release/site workflow review, and unified workspace
 auditing; `verify:all` and `gitleaks` gates green).
-Current repository beta candidate: `4.3.6` build `84`. The latest validated
-TestFlight build remains `4.2.3`; do not describe `4.3.6` as distributed until
-signed archive/export, upload, processing, and validation evidence exists.
+Latest validated TestFlight beta: `4.3.6` build `84`, tagged
+`v4.3.6-beta1` and processed `VALID` on `2026-08-31` after signed
+archive/export, physical-device install/launch, bilingual test notes, and strict
+validation at `0` errors and `0` warnings. This is not production evidence.
 
 - **Production privacy blocker:** no public provider policy covering retention,
   secondary use, deletion, or service-provider status was located after
@@ -62,10 +63,8 @@ signed archive/export, upload, processing, and validation evidence exists.
   and push protection when available.
 - Xcode Debug simulator build, unsigned generic iOS Release build/archive,
   physical-device compiled-app install, signed App Store archive/export, and
-  TestFlight upload are part of the release gate. For `4.3.6`, rerun local
-  verification and platform builds after the final source state; signed
-  archive/export/upload, TestFlight validation, and physical-device install
-  remain separate evidence claims.
+  TestFlight upload are part of the release gate. For `4.3.6` build `84`, each
+  claim was verified independently against the final beta source.
 - TestFlight validation must report `0` errors and `0` warnings before a build
   is described as distributed. App Store version validation for `4.3.6` is not
   applicable until App Store Connect has a matching App Store version record.

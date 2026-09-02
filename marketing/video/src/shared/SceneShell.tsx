@@ -1,12 +1,12 @@
-import type {ReactNode} from 'react';
+import type { ReactNode } from "react";
 import {
   AbsoluteFill,
   Img,
   interpolate,
   staticFile,
   useCurrentFrame,
-} from 'remotion';
-import {COLORS, FONT_MONO, FONT_SANS} from './tokens';
+} from "remotion";
+import { COLORS, FONT_MONO, FONT_SANS } from "./tokens";
 
 type SceneShellProps = {
   children: ReactNode;
@@ -29,57 +29,57 @@ export const SceneShell = ({
         backgroundColor: light ? COLORS.paper : COLORS.ink,
         color: light ? COLORS.ink : COLORS.white,
         fontFamily: FONT_SANS,
-        overflow: 'hidden',
+        overflow: "hidden",
       }}
     >
       <Img
-        src={staticFile('assets/signal-path-hero.png')}
+        src={staticFile("assets/signal-path-hero.png")}
         style={{
-          position: 'absolute',
+          position: "absolute",
           width: 1600,
           height: 900,
           right: -300,
           top: 70,
-          objectFit: 'cover',
+          objectFit: "cover",
           opacity: light ? 0.055 : 0.11,
-          mixBlendMode: light ? 'multiply' : 'screen',
+          mixBlendMode: light ? "multiply" : "screen",
         }}
       />
       <div
         style={{
-          position: 'absolute',
+          position: "absolute",
           inset: 0,
           backgroundImage: light
-            ? 'linear-gradient(rgba(7,17,31,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(7,17,31,0.035) 1px, transparent 1px)'
-            : 'linear-gradient(rgba(144,174,255,0.055) 1px, transparent 1px), linear-gradient(90deg, rgba(144,174,255,0.055) 1px, transparent 1px)',
-          backgroundSize: '72px 72px',
+            ? "linear-gradient(rgba(7,17,31,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(7,17,31,0.035) 1px, transparent 1px)"
+            : "linear-gradient(rgba(144,174,255,0.055) 1px, transparent 1px), linear-gradient(90deg, rgba(144,174,255,0.055) 1px, transparent 1px)",
+          backgroundSize: "72px 72px",
           opacity: 0.7,
         }}
       />
       <div
         style={{
-          position: 'absolute',
+          position: "absolute",
           width: 820,
           height: 820,
           borderRadius: 410,
           right: -240,
           bottom: -350,
           background: light
-            ? 'radial-gradient(circle, rgba(47,107,255,0.14) 0%, rgba(47,107,255,0) 68%)'
-            : 'radial-gradient(circle, rgba(47,107,255,0.27) 0%, rgba(47,107,255,0) 68%)',
+            ? "radial-gradient(circle, rgba(47,107,255,0.14) 0%, rgba(47,107,255,0) 68%)"
+            : "radial-gradient(circle, rgba(47,107,255,0.27) 0%, rgba(47,107,255,0) 68%)",
         }}
       />
       <div
         style={{
-          position: 'absolute',
+          position: "absolute",
           top: 72,
           left: 96,
-          display: 'flex',
-          alignItems: 'center',
+          display: "flex",
+          alignItems: "center",
           gap: 16,
           opacity: interpolate(frame, [0, 15], [0, 1], {
-            extrapolateLeft: 'clamp',
-            extrapolateRight: 'clamp',
+            extrapolateLeft: "clamp",
+            extrapolateRight: "clamp",
           }),
         }}
       >
@@ -89,7 +89,7 @@ export const SceneShell = ({
             height: 14,
             borderRadius: 7,
             backgroundColor: COLORS.cobalt,
-            boxShadow: '0 0 24px rgba(47,107,255,0.65)',
+            boxShadow: "0 0 24px rgba(47,107,255,0.65)",
           }}
         />
         <div
@@ -98,17 +98,17 @@ export const SceneShell = ({
             fontSize: 24,
             lineHeight: 1,
             letterSpacing: 2,
-            textTransform: 'uppercase',
+            textTransform: "uppercase",
             color: light ? COLORS.mutedDark : COLORS.cobaltSoft,
           }}
         >
-          {step ?? 'DNSChat'}
+          {step ?? "DNSChat"}
         </div>
       </div>
       <div
         style={{
-          position: 'absolute',
-          inset: '132px 96px 128px',
+          position: "absolute",
+          inset: "132px 96px 128px",
         }}
       >
         {children}
@@ -116,26 +116,26 @@ export const SceneShell = ({
       {caption ? (
         <div
           style={{
-            position: 'absolute',
+            position: "absolute",
             left: 96,
             right: 96,
             bottom: 42,
             minHeight: 62,
             borderRadius: 18,
             border: light
-              ? '1px solid rgba(7,17,31,0.12)'
-              : '1px solid rgba(144,174,255,0.25)',
+              ? "1px solid rgba(7,17,31,0.12)"
+              : "1px solid rgba(144,174,255,0.25)",
             backgroundColor: light
-              ? 'rgba(255,255,255,0.94)'
-              : 'rgba(7,17,31,0.94)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '10px 28px',
-            boxSizing: 'border-box',
+              ? "rgba(255,255,255,0.94)"
+              : "rgba(7,17,31,0.94)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "10px 28px",
+            boxSizing: "border-box",
             fontSize: 34,
             lineHeight: 1.2,
-            textAlign: 'center',
+            textAlign: "center",
             fontWeight: 650,
             letterSpacing: -0.5,
             color: light ? COLORS.ink : COLORS.white,

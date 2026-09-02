@@ -1,5 +1,5 @@
-import {Audio} from '@remotion/media';
-import {Sequence, staticFile} from 'remotion';
+import { Audio } from "@remotion/media";
+import { Sequence, staticFile } from "remotion";
 
 type TypingSfxProps = {
   characterCount: number;
@@ -14,7 +14,7 @@ export const TypingSfx = ({
 }: TypingSfxProps) => {
   return (
     <>
-      {Array.from({length: characterCount}, (_, index) => (
+      {Array.from({ length: characterCount }, (_, index) => (
         <Sequence
           key={index}
           from={startFrame + index * framesPerCharacter}
@@ -30,18 +30,18 @@ export const TypingSfx = ({
   );
 };
 
-export const ClickSfx = ({from}: {from: number}) => {
+export const ClickSfx = ({ from }: { from: number }) => {
   return (
     <Sequence from={from} durationInFrames={8}>
-      <Audio src={staticFile('audio/click.wav')} volume={0.2} />
+      <Audio src={staticFile("audio/click.wav")} volume={0.2} />
     </Sequence>
   );
 };
 
-export const SuccessSfx = ({from}: {from: number}) => {
+export const SuccessSfx = ({ from }: { from: number }) => {
   return (
     <Sequence from={from} durationInFrames={20}>
-      <Audio src={staticFile('audio/success.wav')} volume={0.18} />
+      <Audio src={staticFile("audio/success.wav")} volume={0.18} />
     </Sequence>
   );
 };

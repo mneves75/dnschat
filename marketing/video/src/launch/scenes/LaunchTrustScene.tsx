@@ -1,8 +1,8 @@
-import {interpolate, useCurrentFrame} from 'remotion';
-import {DEMO} from '../../data/demo';
-import {SceneShell} from '../../shared/SceneShell';
-import {Kicker, SceneTitle} from '../../shared/Typography';
-import {COLORS} from '../../shared/tokens';
+import { interpolate, useCurrentFrame } from "remotion";
+import { DEMO } from "../../data/demo";
+import { SceneShell } from "../../shared/SceneShell";
+import { Kicker, SceneTitle } from "../../shared/Typography";
+import { COLORS } from "../../shared/tokens";
 
 export const LaunchTrustScene = () => {
   const frame = useCurrentFrame();
@@ -11,11 +11,11 @@ export const LaunchTrustScene = () => {
     <SceneShell step="05 / Limite de confiança">
       <div
         style={{
-          width: '100%',
-          height: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
+          width: "100%",
+          height: "100%",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
           gap: 38,
         }}
       >
@@ -25,27 +25,27 @@ export const LaunchTrustScene = () => {
           style={{
             maxWidth: 1480,
             borderRadius: 28,
-            border: '1px solid rgba(255,142,142,0.44)',
-            backgroundColor: 'rgba(255,142,142,0.1)',
-            padding: '30px 36px',
-            boxSizing: 'border-box',
-            display: 'grid',
-            gridTemplateColumns: '12px 1fr',
+            border: "1px solid rgba(255,142,142,0.44)",
+            backgroundColor: "rgba(255,142,142,0.1)",
+            padding: "30px 36px",
+            boxSizing: "border-box",
+            display: "grid",
+            gridTemplateColumns: "12px 1fr",
             gap: 24,
             opacity: interpolate(frame, [34, 52], [0, 1], {
-              extrapolateLeft: 'clamp',
-              extrapolateRight: 'clamp',
+              extrapolateLeft: "clamp",
+              extrapolateRight: "clamp",
             }),
-            translate: interpolate(frame, [34, 54], ['0px 22px', '0px 0px'], {
-              extrapolateLeft: 'clamp',
-              extrapolateRight: 'clamp',
+            translate: interpolate(frame, [34, 54], ["0px 22px", "0px 0px"], {
+              extrapolateLeft: "clamp",
+              extrapolateRight: "clamp",
             }),
           }}
         >
           <div
             style={{
               width: 12,
-              height: '100%',
+              height: "100%",
               minHeight: 118,
               borderRadius: 6,
               backgroundColor: COLORS.red,

@@ -1,11 +1,11 @@
-import {interpolate, useCurrentFrame} from 'remotion';
-import {DEMO} from '../../data/demo';
-import {Cursor} from '../../shared/Cursor';
-import {PhoneFrame} from '../../shared/PhoneFrame';
-import {SceneShell} from '../../shared/SceneShell';
-import {ClickSfx, TypingSfx} from '../../shared/Sfx';
-import {Kicker, SceneTitle, SupportingText} from '../../shared/Typography';
-import {COLORS} from '../../shared/tokens';
+import { interpolate, useCurrentFrame } from "remotion";
+import { DEMO } from "../../data/demo";
+import { Cursor } from "../../shared/Cursor";
+import { PhoneFrame } from "../../shared/PhoneFrame";
+import { SceneShell } from "../../shared/SceneShell";
+import { ClickSfx, TypingSfx } from "../../shared/Sfx";
+import { Kicker, SceneTitle, SupportingText } from "../../shared/Typography";
+import { COLORS } from "../../shared/tokens";
 
 export const LaunchSendScene = () => {
   const frame = useCurrentFrame();
@@ -20,51 +20,51 @@ export const LaunchSendScene = () => {
     <SceneShell step="01 / Pergunta">
       <div
         style={{
-          width: '100%',
-          height: '100%',
-          display: 'grid',
-          gridTemplateColumns: '1fr 650px',
-          alignItems: 'center',
+          width: "100%",
+          height: "100%",
+          display: "grid",
+          gridTemplateColumns: "1fr 650px",
+          alignItems: "center",
           gap: 80,
         }}
       >
-        <div style={{display: 'flex', flexDirection: 'column', gap: 26}}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 26 }}>
           <Kicker>Entrada pequena, intenção clara</Kicker>
           <SceneTitle>Escreva uma pergunta curta.</SceneTitle>
           <SupportingText muted>
             A demonstração usa conteúdo neutro e não sensível.
           </SupportingText>
         </div>
-        <div style={{position: 'relative', justifySelf: 'end'}}>
+        <div style={{ position: "relative", justifySelf: "end" }}>
           <PhoneFrame width={600} height={810}>
             <div
               style={{
-                height: '100%',
+                height: "100%",
                 padding: 28,
-                boxSizing: 'border-box',
-                display: 'flex',
-                flexDirection: 'column',
+                boxSizing: "border-box",
+                display: "flex",
+                flexDirection: "column",
               }}
             >
-              <div style={{flex: 1}}>
+              <div style={{ flex: 1 }}>
                 {sent ? (
                   <div
                     style={{
-                      marginLeft: 'auto',
-                      maxWidth: '86%',
-                      padding: '19px 21px',
-                      borderRadius: '24px 24px 7px 24px',
+                      marginLeft: "auto",
+                      maxWidth: "86%",
+                      padding: "19px 21px",
+                      borderRadius: "24px 24px 7px 24px",
                       backgroundColor: COLORS.cobalt,
                       color: COLORS.white,
                       fontSize: 24,
                       lineHeight: 1.28,
                       opacity: interpolate(frame, [102, 114], [0, 1], {
-                        extrapolateLeft: 'clamp',
-                        extrapolateRight: 'clamp',
+                        extrapolateLeft: "clamp",
+                        extrapolateRight: "clamp",
                       }),
                       scale: interpolate(frame, [102, 114], [0.95, 1], {
-                        extrapolateLeft: 'clamp',
-                        extrapolateRight: 'clamp',
+                        extrapolateLeft: "clamp",
+                        extrapolateRight: "clamp",
                       }),
                     }}
                   >
@@ -76,13 +76,13 @@ export const LaunchSendScene = () => {
                 style={{
                   minHeight: 82,
                   borderRadius: 22,
-                  border: '1px solid rgba(7,17,31,0.15)',
-                  backgroundColor: '#FFFFFF',
-                  display: 'flex',
-                  alignItems: 'center',
+                  border: "1px solid rgba(7,17,31,0.15)",
+                  backgroundColor: "#FFFFFF",
+                  display: "flex",
+                  alignItems: "center",
                   gap: 14,
-                  padding: '0 13px 0 22px',
-                  boxSizing: 'border-box',
+                  padding: "0 13px 0 22px",
+                  boxSizing: "border-box",
                 }}
               >
                 <div
@@ -92,11 +92,11 @@ export const LaunchSendScene = () => {
                     color: typedPrompt ? COLORS.ink : COLORS.mutedDark,
                   }}
                 >
-                  {sent ? 'Escreva uma pergunta curta' : typedPrompt}
+                  {sent ? "Escreva uma pergunta curta" : typedPrompt}
                   {!sent && typedPrompt ? (
                     <span
                       style={{
-                        display: 'inline-block',
+                        display: "inline-block",
                         width: 2,
                         height: 24,
                         marginLeft: 3,
@@ -114,9 +114,9 @@ export const LaunchSendScene = () => {
                     borderRadius: 18,
                     backgroundColor: COLORS.cobalt,
                     color: COLORS.white,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
                     fontWeight: 800,
                     fontSize: 24,
                   }}

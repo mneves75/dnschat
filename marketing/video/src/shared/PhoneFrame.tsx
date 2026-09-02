@@ -1,5 +1,5 @@
-import type {ReactNode} from 'react';
-import {COLORS, FONT_MONO, FONT_SANS} from './tokens';
+import type { ReactNode } from "react";
+import { COLORS, FONT_MONO, FONT_SANS } from "./tokens";
 
 type PhoneFrameProps = {
   children: ReactNode;
@@ -10,7 +10,7 @@ type PhoneFrameProps = {
 
 export const PhoneFrame = ({
   children,
-  title = 'DNSChat',
+  title = "DNSChat",
   width = 590,
   height = 820,
 }: PhoneFrameProps) => {
@@ -21,51 +21,51 @@ export const PhoneFrame = ({
         height,
         borderRadius: 58,
         padding: 15,
-        boxSizing: 'border-box',
+        boxSizing: "border-box",
         background:
-          'linear-gradient(145deg, rgba(255,255,255,0.35), rgba(144,174,255,0.08))',
-        border: '1px solid rgba(255,255,255,0.34)',
+          "linear-gradient(145deg, rgba(255,255,255,0.35), rgba(144,174,255,0.08))",
+        border: "1px solid rgba(255,255,255,0.34)",
         boxShadow:
-          '0 42px 100px rgba(0,0,0,0.32), inset 0 0 0 1px rgba(255,255,255,0.12)',
+          "0 42px 100px rgba(0,0,0,0.32), inset 0 0 0 1px rgba(255,255,255,0.12)",
       }}
     >
       <div
         style={{
-          width: '100%',
-          height: '100%',
+          width: "100%",
+          height: "100%",
           borderRadius: 44,
-          overflow: 'hidden',
+          overflow: "hidden",
           backgroundColor: COLORS.paper,
           color: COLORS.ink,
           fontFamily: FONT_SANS,
-          display: 'flex',
-          flexDirection: 'column',
+          display: "flex",
+          flexDirection: "column",
         }}
       >
         <div
           style={{
             height: 76,
-            padding: '0 30px',
-            boxSizing: 'border-box',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            borderBottom: '1px solid rgba(7,17,31,0.09)',
-            backgroundColor: 'rgba(255,255,255,0.92)',
+            padding: "0 30px",
+            boxSizing: "border-box",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            borderBottom: "1px solid rgba(7,17,31,0.09)",
+            backgroundColor: "rgba(255,255,255,0.92)",
           }}
         >
-          <div style={{fontSize: 28, fontWeight: 760, letterSpacing: -1}}>
+          <div style={{ fontSize: 28, fontWeight: 760, letterSpacing: -1 }}>
             {title}
           </div>
           <div
             style={{
-              display: 'flex',
-              alignItems: 'center',
+              display: "flex",
+              alignItems: "center",
               gap: 10,
               fontFamily: FONT_MONO,
               fontSize: 24,
               color: COLORS.mutedDark,
-              textTransform: 'uppercase',
+              textTransform: "uppercase",
               letterSpacing: 1.3,
             }}
           >
@@ -80,7 +80,7 @@ export const PhoneFrame = ({
             DNS ativo
           </div>
         </div>
-        <div style={{flex: 1, minHeight: 0}}>{children}</div>
+        <div style={{ flex: 1, minHeight: 0 }}>{children}</div>
       </div>
     </div>
   );

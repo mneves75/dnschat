@@ -1,7 +1,7 @@
-import type {ReactNode} from 'react';
-import {COLORS, FONT_MONO} from './tokens';
+import type { ReactNode } from "react";
+import { COLORS, FONT_MONO } from "./tokens";
 
-export const Kicker = ({children}: {children: ReactNode}) => {
+export const Kicker = ({ children }: { children: ReactNode }) => {
   return (
     <div
       style={{
@@ -9,7 +9,7 @@ export const Kicker = ({children}: {children: ReactNode}) => {
         fontSize: 26,
         lineHeight: 1.2,
         letterSpacing: 2.5,
-        textTransform: 'uppercase',
+        textTransform: "uppercase",
         color: COLORS.cobaltSoft,
         fontWeight: 700,
       }}
@@ -19,7 +19,7 @@ export const Kicker = ({children}: {children: ReactNode}) => {
   );
 };
 
-export const HeroTitle = ({children}: {children: ReactNode}) => {
+export const HeroTitle = ({ children }: { children: ReactNode }) => {
   return (
     <div
       style={{
@@ -35,7 +35,7 @@ export const HeroTitle = ({children}: {children: ReactNode}) => {
   );
 };
 
-export const SceneTitle = ({children}: {children: ReactNode}) => {
+export const SceneTitle = ({ children }: { children: ReactNode }) => {
   return (
     <div
       style={{
@@ -65,7 +65,7 @@ export const SupportingText = ({
         fontSize: 38,
         lineHeight: 1.28,
         letterSpacing: -1,
-        color: muted ? COLORS.muted : 'currentColor',
+        color: muted ? COLORS.muted : "currentColor",
       }}
     >
       {children}

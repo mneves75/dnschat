@@ -69,6 +69,7 @@ For any source-code sweep, map findings and fixes back to these requirements. Do
 ## Commands (pnpm)
 
 - Dev: `pnpm run start`, `pnpm run ios`, `pnpm run android`, `pnpm run web`
+- Format: `pnpm run fmt:check` (check), `pnpm run fmt` (write)
 - Lint: `pnpm run lint`
 - Tests: `pnpm run test`
 - Runtime UI verification: Argent MCP is the default proof surface. Run
@@ -89,7 +90,7 @@ For any source-code sweep, map findings and fixes back to these requirements. Do
 - iOS physical-device install: build the native `DNSChat` target for the device identifier and install the compiled `.app` with `xcrun devicectl device install app`; do not treat Expo Go as a valid full-app install because this repo depends on native DNS modules. Do not commit device names, UDIDs, local user paths, or profile identifiers to public docs.
 - TestFlight release: after signed archive/export, use `asc publish testflight --app <APP_ID> --ipa <IPA> --version <VERSION> --build-number <BUILD> --group <GROUPS> --wait`, then verify with `asc validate testflight` and `asc validate --app <APP_ID> --version <VERSION> --platform IOS`.
 - Version sync: `pnpm run sync-versions` (source = `package.json`); preview with `pnpm run sync-versions:dry`.
-- Individual verifies: `pnpm run verify:ios-pods`, `verify:android`, `verify:android-16kb`, `verify:typed-routes`, `verify:react-compiler`, `verify:sdk-alignment`, `verify:dnsresolver-sync`, `verify:expo-doctor`.
+- Individual verifies: `pnpm run typecheck:dns-native`, `pnpm run verify:ios-pods`, `verify:android`, `verify:android-16kb`, `verify:typed-routes`, `verify:react-compiler`, `verify:sdk-alignment`, `verify:dnsresolver-sync`, `verify:expo-doctor`.
 - Verify (full gate): `pnpm run verify:all` runs all of the above plus public redaction, lint, and tests. Release-facing UI/runtime work also needs an Argent simulator smoke/inspection pass when simulator automation is available (see Runtime UI verification above).
 
 ## Review / Security Sweep Protocol

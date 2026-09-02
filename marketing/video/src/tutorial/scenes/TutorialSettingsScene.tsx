@@ -1,11 +1,11 @@
-import {interpolate, useCurrentFrame} from 'remotion';
-import {DEMO} from '../../data/demo';
-import {Cursor} from '../../shared/Cursor';
-import {PhoneFrame} from '../../shared/PhoneFrame';
-import {SceneShell} from '../../shared/SceneShell';
-import {ClickSfx} from '../../shared/Sfx';
-import {Kicker, SceneTitle, SupportingText} from '../../shared/Typography';
-import {COLORS, FONT_MONO} from '../../shared/tokens';
+import { interpolate, useCurrentFrame } from "remotion";
+import { DEMO } from "../../data/demo";
+import { Cursor } from "../../shared/Cursor";
+import { PhoneFrame } from "../../shared/PhoneFrame";
+import { SceneShell } from "../../shared/SceneShell";
+import { ClickSfx } from "../../shared/Sfx";
+import { Kicker, SceneTitle, SupportingText } from "../../shared/Typography";
+import { COLORS, FONT_MONO } from "../../shared/tokens";
 
 export const TutorialSettingsScene = () => {
   const frame = useCurrentFrame();
@@ -18,15 +18,15 @@ export const TutorialSettingsScene = () => {
     >
       <div
         style={{
-          width: '100%',
-          height: '100%',
-          display: 'grid',
-          gridTemplateColumns: '1fr 660px',
-          alignItems: 'center',
+          width: "100%",
+          height: "100%",
+          display: "grid",
+          gridTemplateColumns: "1fr 660px",
+          alignItems: "center",
           gap: 84,
         }}
       >
-        <div style={{display: 'flex', flexDirection: 'column', gap: 28}}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
           <Kicker>Preferências controladas</Kicker>
           <SceneTitle>Serviço, tema e idioma.</SceneTitle>
           <SupportingText muted>
@@ -34,12 +34,12 @@ export const TutorialSettingsScene = () => {
           </SupportingText>
           <div
             style={{
-              display: 'flex',
-              flexWrap: 'wrap',
+              display: "flex",
+              flexWrap: "wrap",
               gap: 14,
               opacity: interpolate(frame, [100, 124], [0, 1], {
-                extrapolateLeft: 'clamp',
-                extrapolateRight: 'clamp',
+                extrapolateLeft: "clamp",
+                extrapolateRight: "clamp",
               }),
             }}
           >
@@ -48,15 +48,13 @@ export const TutorialSettingsScene = () => {
                 key={service}
                 style={{
                   borderRadius: 16,
-                  padding: '13px 18px',
+                  padding: "13px 18px",
                   fontFamily: FONT_MONO,
                   fontSize: 24,
                   color: index === 0 ? COLORS.white : COLORS.cobaltSoft,
                   backgroundColor:
-                    index === 0
-                      ? COLORS.cobalt
-                      : 'rgba(13,26,43,0.8)',
-                  border: '1px solid rgba(144,174,255,0.25)',
+                    index === 0 ? COLORS.cobalt : "rgba(13,26,43,0.8)",
+                  border: "1px solid rgba(144,174,255,0.25)",
                 }}
               >
                 {service}
@@ -64,52 +62,57 @@ export const TutorialSettingsScene = () => {
             ))}
           </div>
         </div>
-        <div style={{position: 'relative', justifySelf: 'end'}}>
+        <div style={{ position: "relative", justifySelf: "end" }}>
           <PhoneFrame width={600} height={810} title="Preferências">
             <div
               style={{
-                height: '100%',
+                height: "100%",
                 padding: 28,
-                boxSizing: 'border-box',
-                display: 'flex',
-                flexDirection: 'column',
+                boxSizing: "border-box",
+                display: "flex",
+                flexDirection: "column",
                 gap: 18,
               }}
             >
-              <div style={{fontSize: 26, fontWeight: 760}}>Serviço DNS</div>
+              <div style={{ fontSize: 26, fontWeight: 760 }}>Serviço DNS</div>
               <div
                 style={{
                   minHeight: 80,
                   borderRadius: 18,
-                  padding: '0 20px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  border: '2px solid rgba(47,107,255,0.42)',
-                  backgroundColor: '#FFFFFF',
+                  padding: "0 20px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  border: "2px solid rgba(47,107,255,0.42)",
+                  backgroundColor: "#FFFFFF",
                   fontSize: 24,
                   fontWeight: 700,
                 }}
               >
                 {DEMO.selectedService}
-                <span style={{color: COLORS.cobalt}}>Selecionado</span>
+                <span style={{ color: COLORS.cobalt }}>Selecionado</span>
               </div>
               {menuVisible ? (
                 <div
                   style={{
                     borderRadius: 20,
                     padding: 10,
-                    backgroundColor: '#FFFFFF',
-                    border: '1px solid rgba(7,17,31,0.1)',
-                    boxShadow: '0 20px 50px rgba(7,17,31,0.12)',
+                    backgroundColor: "#FFFFFF",
+                    border: "1px solid rgba(7,17,31,0.1)",
+                    boxShadow: "0 20px 50px rgba(7,17,31,0.12)",
                     opacity: interpolate(frame, [72, 88], [0, 1], {
-                      extrapolateLeft: 'clamp',
-                      extrapolateRight: 'clamp',
+                      extrapolateLeft: "clamp",
+                      extrapolateRight: "clamp",
                     }),
-                    translate: interpolate(frame, [72, 90], ['0px -12px', '0px 0px'], {
-                      extrapolateLeft: 'clamp',
-                      extrapolateRight: 'clamp',
-                    }),
+                    translate: interpolate(
+                      frame,
+                      [72, 90],
+                      ["0px -12px", "0px 0px"],
+                      {
+                        extrapolateLeft: "clamp",
+                        extrapolateRight: "clamp",
+                      },
+                    ),
                   }}
                 >
                   {DEMO.services.map((service, index) => (
@@ -118,14 +121,14 @@ export const TutorialSettingsScene = () => {
                       style={{
                         minHeight: 64,
                         borderRadius: 14,
-                        padding: '0 14px',
-                        display: 'flex',
-                        alignItems: 'center',
+                        padding: "0 14px",
+                        display: "flex",
+                        alignItems: "center",
                         fontFamily: FONT_MONO,
                         fontSize: 24,
                         color: index === 0 ? COLORS.cobalt : COLORS.ink,
                         backgroundColor:
-                          index === 0 ? 'rgba(47,107,255,0.1)' : 'transparent',
+                          index === 0 ? "rgba(47,107,255,0.1)" : "transparent",
                       }}
                     >
                       {service}
@@ -135,15 +138,15 @@ export const TutorialSettingsScene = () => {
               ) : null}
               <div
                 style={{
-                  marginTop: 'auto',
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr',
+                  marginTop: "auto",
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
                   gap: 14,
                 }}
               >
                 {[
-                  ['Tema', 'Sistema'],
-                  ['Idioma', 'pt-BR'],
+                  ["Tema", "Sistema"],
+                  ["Idioma", "pt-BR"],
                 ].map(([label, value]) => (
                   <div
                     key={label}
@@ -151,17 +154,17 @@ export const TutorialSettingsScene = () => {
                       minHeight: 96,
                       borderRadius: 18,
                       padding: 16,
-                      backgroundColor: '#E8EDF5',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'center',
+                      backgroundColor: "#E8EDF5",
+                      display: "flex",
+                      flexDirection: "column",
+                      justifyContent: "center",
                       gap: 6,
                     }}
                   >
-                    <div style={{fontSize: 24, color: COLORS.mutedDark}}>
+                    <div style={{ fontSize: 24, color: COLORS.mutedDark }}>
                       {label}
                     </div>
-                    <div style={{fontSize: 24, fontWeight: 700}}>{value}</div>
+                    <div style={{ fontSize: 24, fontWeight: 700 }}>{value}</div>
                   </div>
                 ))}
               </div>

@@ -1,9 +1,9 @@
-import {interpolate, useCurrentFrame} from 'remotion';
-import {ChatMock} from '../../shared/AppMocks';
-import {PhoneFrame} from '../../shared/PhoneFrame';
-import {SceneShell} from '../../shared/SceneShell';
-import {HeroTitle, Kicker, SupportingText} from '../../shared/Typography';
-import {COLORS} from '../../shared/tokens';
+import { interpolate, useCurrentFrame } from "remotion";
+import { ChatMock } from "../../shared/AppMocks";
+import { PhoneFrame } from "../../shared/PhoneFrame";
+import { SceneShell } from "../../shared/SceneShell";
+import { HeroTitle, Kicker, SupportingText } from "../../shared/Typography";
+import { COLORS } from "../../shared/tokens";
 
 export const TutorialIntroScene = () => {
   const frame = useCurrentFrame();
@@ -15,26 +15,26 @@ export const TutorialIntroScene = () => {
     >
       <div
         style={{
-          width: '100%',
-          height: '100%',
-          display: 'grid',
-          gridTemplateColumns: '1fr 620px',
-          alignItems: 'center',
+          width: "100%",
+          height: "100%",
+          display: "grid",
+          gridTemplateColumns: "1fr 620px",
+          alignItems: "center",
           gap: 90,
         }}
       >
         <div
           style={{
-            display: 'flex',
-            flexDirection: 'column',
+            display: "flex",
+            flexDirection: "column",
             gap: 28,
             opacity: interpolate(frame, [5, 25], [0, 1], {
-              extrapolateLeft: 'clamp',
-              extrapolateRight: 'clamp',
+              extrapolateLeft: "clamp",
+              extrapolateRight: "clamp",
             }),
-            translate: interpolate(frame, [5, 28], ['0px 30px', '0px 0px'], {
-              extrapolateLeft: 'clamp',
-              extrapolateRight: 'clamp',
+            translate: interpolate(frame, [5, 28], ["0px 30px", "0px 0px"], {
+              extrapolateLeft: "clamp",
+              extrapolateRight: "clamp",
             }),
           }}
         >
@@ -42,7 +42,8 @@ export const TutorialIntroScene = () => {
           <HeroTitle>
             Uma pergunta.
             <br />
-            Um caminho <span style={{color: COLORS.cobaltSoft}}>visível.</span>
+            Um caminho{" "}
+            <span style={{ color: COLORS.cobaltSoft }}>visível.</span>
           </HeroTitle>
           <SupportingText muted>
             Aprenda a iniciar, enviar, ler e inspecionar.
@@ -50,14 +51,14 @@ export const TutorialIntroScene = () => {
         </div>
         <div
           style={{
-            justifySelf: 'end',
+            justifySelf: "end",
             opacity: interpolate(frame, [18, 42], [0, 1], {
-              extrapolateLeft: 'clamp',
-              extrapolateRight: 'clamp',
+              extrapolateLeft: "clamp",
+              extrapolateRight: "clamp",
             }),
-            translate: interpolate(frame, [18, 45], ['60px 0px', '0px 0px'], {
-              extrapolateLeft: 'clamp',
-              extrapolateRight: 'clamp',
+            translate: interpolate(frame, [18, 45], ["60px 0px", "0px 0px"], {
+              extrapolateLeft: "clamp",
+              extrapolateRight: "clamp",
             }),
           }}
         >

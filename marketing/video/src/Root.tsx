@@ -1,6 +1,6 @@
-import {Composition} from 'remotion';
-import {LaunchVideo} from './launch/LaunchVideo';
-import {TutorialVideo} from './tutorial/TutorialVideo';
+import { Composition } from "remotion";
+import { LaunchVideo } from "./launch/LaunchVideo";
+import { TutorialVideo } from "./tutorial/TutorialVideo";
 
 export const RemotionRoot = () => {
   return (

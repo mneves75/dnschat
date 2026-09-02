@@ -9,9 +9,9 @@
 
 ## Active Work
 
-- The pre-production audit is complete and the authorized TestFlight candidate is `4.3.6` build `84`, tagged as `v4.3.6-beta1` only after the final commit is pushed.
-- Release acceptance requires the same final build to pass the repository gates, signed archive/export, installation on the authorized physical iPhone, TestFlight processing, and strict ASC validation.
-- The authorized physical iPhone is paired with Developer Mode enabled but was unavailable during initial discovery; reconnect and unlock it before installation.
+- TestFlight beta `4.3.6` build `84` is complete and tagged `v4.3.6-beta1` from the exact binary source commit.
+- Final gates, signed archive/IPA export, physical-device Release install/launch, TestFlight `VALID` processing, bilingual notes, and strict ASC validation (`0` errors, `0` warnings) passed.
+- No matching App Store version record exists; production remains blocked by the provider-policy and unauthenticated-response decisions below.
 
 ## Decisions and Blockers
 
