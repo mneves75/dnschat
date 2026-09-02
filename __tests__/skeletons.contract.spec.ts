@@ -2,7 +2,10 @@ import fs from "node:fs";
 
 describe("skeleton component contracts", () => {
   it("keeps ChatListSkeleton count configurable", () => {
-    const source = fs.readFileSync("src/components/skeletons/ChatListSkeleton.tsx", "utf8");
+    const source = fs.readFileSync(
+      "src/components/skeletons/ChatListSkeleton.tsx",
+      "utf8",
+    );
 
     expect(source).toContain("export function ChatListSkeleton({ count = 5 }");
     expect(source).toContain("Array.from({ length: count })");
@@ -10,7 +13,10 @@ describe("skeleton component contracts", () => {
   });
 
   it("keeps SettingsSkeleton sections and item counts configurable", () => {
-    const source = fs.readFileSync("src/components/skeletons/SettingsSkeleton.tsx", "utf8");
+    const source = fs.readFileSync(
+      "src/components/skeletons/SettingsSkeleton.tsx",
+      "utf8",
+    );
 
     expect(source).toContain("sections = 3");
     expect(source).toContain("itemsPerSection = 3");

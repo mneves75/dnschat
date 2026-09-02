@@ -90,12 +90,18 @@ describe("NativeMenu", () => {
 
     const modal = findHostType(tree!.root, "Modal");
     expect(modal.props["visible"]).toBe(true);
-    expect(tree!.root.findByProps({ accessibilityLabel: "common.close" })).toBeTruthy();
     expect(
-      tree!.root.findAll((node) => node.props["accessibilityLabel"] === "Hidden"),
+      tree!.root.findByProps({ accessibilityLabel: "common.close" }),
+    ).toBeTruthy();
+    expect(
+      tree!.root.findAll(
+        (node) => node.props["accessibilityLabel"] === "Hidden",
+      ),
     ).toHaveLength(0);
 
-    const disabledShare = tree!.root.findByProps({ accessibilityLabel: "Share" });
+    const disabledShare = tree!.root.findByProps({
+      accessibilityLabel: "Share",
+    });
     act(() => {
       disabledShare.props["onPress"]();
     });
@@ -114,7 +120,9 @@ describe("NativeMenu", () => {
 
   it("normalizes action identifiers to match Expo UI event payloads", () => {
     expect(getNativeMenuActionId({ id: "copy", title: "Copy" })).toBe("copy");
-    expect(getNativeMenuActionId({ title: "Fallback title" })).toBe("Fallback title");
+    expect(getNativeMenuActionId({ title: "Fallback title" })).toBe(
+      "Fallback title",
+    );
     expect(createNativeMenuActionEvent("share")).toEqual({
       nativeEvent: { event: "share" },
     });

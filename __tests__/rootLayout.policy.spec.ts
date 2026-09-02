@@ -6,7 +6,7 @@ describe("root layout routing policy", () => {
   it("keeps the navigator mounted while onboarding redirect settles", () => {
     expect(source).toContain("hasSettledInitialRoute");
     expect(source).not.toContain("if (!hasSettledInitialRoute) return null");
-    expect(source).toContain('<Stack.Screen name="chat/[threadId]"');
+    expect(source).toMatch(/<Stack\.Screen\s+name="chat\/\[threadId\]"/);
   });
 
   it("initializes DNS log storage without gating the splash screen on it", () => {

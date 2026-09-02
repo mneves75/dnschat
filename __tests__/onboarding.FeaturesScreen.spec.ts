@@ -9,7 +9,7 @@ import path from "path";
 describe("FeaturesScreen - iOS 26 HIG Compliance", () => {
   const filePath = path.resolve(
     __dirname,
-    "../src/components/onboarding/screens/FeaturesScreen.tsx"
+    "../src/components/onboarding/screens/FeaturesScreen.tsx",
   );
   let sourceCode: string;
 
@@ -41,7 +41,7 @@ describe("FeaturesScreen - iOS 26 HIG Compliance", () => {
     });
 
     it("does not contain chart emoji", () => {
-      expect(sourceCode).not.toContain(String.fromCodePoint(0x1F4CA));
+      expect(sourceCode).not.toContain(String.fromCodePoint(0x1f4ca));
     });
 
     it("does not contain gear emoji", () => {
@@ -49,23 +49,23 @@ describe("FeaturesScreen - iOS 26 HIG Compliance", () => {
     });
 
     it("does not contain moon emoji", () => {
-      expect(sourceCode).not.toContain(String.fromCodePoint(0x1F319));
+      expect(sourceCode).not.toContain(String.fromCodePoint(0x1f319));
     });
 
     it("does not contain floppy disk emoji", () => {
-      expect(sourceCode).not.toContain(String.fromCodePoint(0x1F4BE));
+      expect(sourceCode).not.toContain(String.fromCodePoint(0x1f4be));
     });
 
     it("does not contain recycling emoji", () => {
-      expect(sourceCode).not.toContain(String.fromCodePoint(0x1F504));
+      expect(sourceCode).not.toContain(String.fromCodePoint(0x1f504));
     });
 
     it("does not contain globe emoji", () => {
-      expect(sourceCode).not.toContain(String.fromCodePoint(0x1F310));
+      expect(sourceCode).not.toContain(String.fromCodePoint(0x1f310));
     });
 
     it("does not contain party emoji", () => {
-      expect(sourceCode).not.toContain(String.fromCodePoint(0x1F389));
+      expect(sourceCode).not.toContain(String.fromCodePoint(0x1f389));
     });
 
     it("contains zero emoji characters", () => {
@@ -74,62 +74,116 @@ describe("FeaturesScreen - iOS 26 HIG Compliance", () => {
     });
 
     it("uses translation keys instead of hardcoded labels", () => {
-      expect(sourceCode).toContain('t("screen.onboarding.features.logs.label")');
-      expect(sourceCode).toContain('t("screen.onboarding.features.customize.label")');
-      expect(sourceCode).toContain('t("screen.onboarding.features.liquidGlass.label")');
-      expect(sourceCode).toContain('t("screen.onboarding.features.i18n.label")');
-      expect(sourceCode).toContain('t("screen.onboarding.features.haptics.label")');
-      expect(sourceCode).toContain('t("screen.onboarding.features.themes.label")');
-      expect(sourceCode).toContain('t("screen.onboarding.features.storage.label")');
-      expect(sourceCode).toContain('t("screen.onboarding.features.fallbacks.label")');
-      expect(sourceCode).toContain('t("screen.onboarding.features.opensource.label")');
+      expect(sourceCode).toContain(
+        't("screen.onboarding.features.logs.label")',
+      );
+      expect(sourceCode).toContain(
+        't("screen.onboarding.features.customize.label")',
+      );
+      expect(sourceCode).toContain(
+        't("screen.onboarding.features.liquidGlass.label")',
+      );
+      expect(sourceCode).toContain(
+        't("screen.onboarding.features.i18n.label")',
+      );
+      expect(sourceCode).toContain(
+        't("screen.onboarding.features.haptics.label")',
+      );
+      expect(sourceCode).toContain(
+        't("screen.onboarding.features.themes.label")',
+      );
+      expect(sourceCode).toContain(
+        't("screen.onboarding.features.storage.label")',
+      );
+      expect(sourceCode).toContain(
+        't("screen.onboarding.features.fallbacks.label")',
+      );
+      expect(sourceCode).toContain(
+        't("screen.onboarding.features.opensource.label")',
+      );
     });
   });
 
   describe("Updated Feature List", () => {
     it("includes DNS Query Logs feature", () => {
-      expect(sourceCode).toContain('t("screen.onboarding.features.logs.title")');
-      expect(sourceCode).toContain('t("screen.onboarding.features.logs.description")');
+      expect(sourceCode).toContain(
+        't("screen.onboarding.features.logs.title")',
+      );
+      expect(sourceCode).toContain(
+        't("screen.onboarding.features.logs.description")',
+      );
     });
 
     it("includes Customizable Settings feature", () => {
-      expect(sourceCode).toContain('t("screen.onboarding.features.customize.title")');
-      expect(sourceCode).toContain('t("screen.onboarding.features.customize.description")');
+      expect(sourceCode).toContain(
+        't("screen.onboarding.features.customize.title")',
+      );
+      expect(sourceCode).toContain(
+        't("screen.onboarding.features.customize.description")',
+      );
     });
 
     it("includes iOS 26 Liquid Glass Design feature", () => {
-      expect(sourceCode).toContain('t("screen.onboarding.features.liquidGlass.title")');
-      expect(sourceCode).toContain('t("screen.onboarding.features.liquidGlass.description")');
+      expect(sourceCode).toContain(
+        't("screen.onboarding.features.liquidGlass.title")',
+      );
+      expect(sourceCode).toContain(
+        't("screen.onboarding.features.liquidGlass.description")',
+      );
     });
 
     it("includes Multilingual Support feature", () => {
-      expect(sourceCode).toContain('t("screen.onboarding.features.i18n.title")');
-      expect(sourceCode).toContain('t("screen.onboarding.features.i18n.description")');
+      expect(sourceCode).toContain(
+        't("screen.onboarding.features.i18n.title")',
+      );
+      expect(sourceCode).toContain(
+        't("screen.onboarding.features.i18n.description")',
+      );
     });
 
     it("includes Haptic Feedback feature", () => {
-      expect(sourceCode).toContain('t("screen.onboarding.features.haptics.title")');
-      expect(sourceCode).toContain('t("screen.onboarding.features.haptics.description")');
+      expect(sourceCode).toContain(
+        't("screen.onboarding.features.haptics.title")',
+      );
+      expect(sourceCode).toContain(
+        't("screen.onboarding.features.haptics.description")',
+      );
     });
 
     it("includes Dark and Light Themes feature", () => {
-      expect(sourceCode).toContain('t("screen.onboarding.features.themes.title")');
-      expect(sourceCode).toContain('t("screen.onboarding.features.themes.description")');
+      expect(sourceCode).toContain(
+        't("screen.onboarding.features.themes.title")',
+      );
+      expect(sourceCode).toContain(
+        't("screen.onboarding.features.themes.description")',
+      );
     });
 
     it("includes Local Storage feature", () => {
-      expect(sourceCode).toContain('t("screen.onboarding.features.storage.title")');
-      expect(sourceCode).toContain('t("screen.onboarding.features.storage.description")');
+      expect(sourceCode).toContain(
+        't("screen.onboarding.features.storage.title")',
+      );
+      expect(sourceCode).toContain(
+        't("screen.onboarding.features.storage.description")',
+      );
     });
 
     it("includes Smart Fallbacks feature", () => {
-      expect(sourceCode).toContain('t("screen.onboarding.features.fallbacks.title")');
-      expect(sourceCode).toContain('t("screen.onboarding.features.fallbacks.description")');
+      expect(sourceCode).toContain(
+        't("screen.onboarding.features.fallbacks.title")',
+      );
+      expect(sourceCode).toContain(
+        't("screen.onboarding.features.fallbacks.description")',
+      );
     });
 
     it("includes Open Source feature with GitHub link", () => {
-      expect(sourceCode).toContain('t("screen.onboarding.features.opensource.title")');
-      expect(sourceCode).toContain('t("screen.onboarding.features.opensource.action")');
+      expect(sourceCode).toContain(
+        't("screen.onboarding.features.opensource.title")',
+      );
+      expect(sourceCode).toContain(
+        't("screen.onboarding.features.opensource.action")',
+      );
       expect(sourceCode).toContain("github.com/mneves75/dnschat");
     });
   });
@@ -150,7 +204,7 @@ describe("FeaturesScreen - iOS 26 HIG Compliance", () => {
       expect(sourceCode).toContain("featureLabelContainer");
       const labelSection = sourceCode.substring(
         sourceCode.indexOf("featureLabelContainer"),
-        sourceCode.indexOf("featureLabelContainer") + 300
+        sourceCode.indexOf("featureLabelContainer") + 300,
       );
       expect(labelSection).toContain("palette.accentSurface");
       expect(labelSection).toContain("palette.accentBorder");
@@ -176,7 +230,7 @@ describe("FeaturesScreen - iOS 26 HIG Compliance", () => {
     it("applies semantic styling to ready section", () => {
       const readySection = sourceCode.substring(
         sourceCode.indexOf("readySection"),
-        sourceCode.indexOf("readySection") + 400
+        sourceCode.indexOf("readySection") + 400,
       );
       expect(readySection).toContain("palette.accentSurface");
       expect(readySection).toContain("palette.accentBorder");
@@ -206,13 +260,16 @@ describe("FeaturesScreen - iOS 26 HIG Compliance", () => {
 
   describe("Spacing System", () => {
     it("uses LiquidGlassSpacing throughout", () => {
-      expect(sourceCode.match(/LiquidGlassSpacing\./g)!.length).toBeGreaterThanOrEqual(20);
+      expect(
+        sourceCode.match(/LiquidGlassSpacing\./g)!.length,
+      ).toBeGreaterThanOrEqual(20);
     });
 
     it("does not use hardcoded numeric spacing", () => {
       const styles = sourceCode.substring(sourceCode.indexOf("const styles"));
       // Allow only 0, 1, 2, 21, 24 for specific props (borderRadius, lineHeight, etc.)
-      const numericSpacingPattern = /(?:padding|margin|gap|top|bottom|left|right)(?:Horizontal|Vertical)?:\s*(?!0\b|1\b|2\b)\d+/g;
+      const numericSpacingPattern =
+        /(?:padding|margin|gap|top|bottom|left|right)(?:Horizontal|Vertical)?:\s*(?!0\b|1\b|2\b)\d+/g;
       expect(styles.match(numericSpacingPattern)).toBeNull();
     });
   });
@@ -288,7 +345,9 @@ describe("FeaturesScreen - iOS 26 HIG Compliance", () => {
 
     it("includes OnboardingNavigation with translation", () => {
       expect(sourceCode).toContain("OnboardingNavigation");
-      expect(sourceCode).toContain('nextButtonText={t("screen.onboarding.ready.button")}');
+      expect(sourceCode).toContain(
+        'nextButtonText={t("screen.onboarding.ready.button")}',
+      );
       expect(sourceCode).toContain("showSkip={false}");
       expect(sourceCode).toContain("showBack={false}");
     });

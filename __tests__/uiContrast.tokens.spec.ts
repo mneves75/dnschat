@@ -13,10 +13,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
-import {
-  IMESSAGE_DARK,
-  IMESSAGE_LIGHT,
-} from "../src/ui/theme/imessagePalette";
+import { IMESSAGE_DARK, IMESSAGE_LIGHT } from "../src/ui/theme/imessagePalette";
 import type { IMessagePalette } from "../src/ui/theme/imessagePalette";
 
 const AA_SMALL_TEXT = 4.5;
@@ -57,22 +54,21 @@ const parseColor = (color: string): Rgba => {
     /^rgba\((\d+),\s*(\d+),\s*(\d+),\s*(0(?:\.\d+)?|1(?:\.0+)?)\)$/,
   );
   if (!rgba) {
-    throw new Error(`Expected an opaque hex or rgba color, received "${color}"`);
+    throw new Error(
+      `Expected an opaque hex or rgba color, received "${color}"`,
+    );
   }
 
-  return [
-    Number(rgba[1]),
-    Number(rgba[2]),
-    Number(rgba[3]),
-    Number(rgba[4]),
-  ];
+  return [Number(rgba[1]), Number(rgba[2]), Number(rgba[3]), Number(rgba[4])];
 };
 
 const composite = (foreground: string, background: string): string => {
   const [r, g, b, a] = parseColor(foreground);
   const [br, bg, bb, ba] = parseColor(background);
   if (ba !== 1) {
-    throw new Error(`Background must resolve to opaque before compositing: ${background}`);
+    throw new Error(
+      `Background must resolve to opaque before compositing: ${background}`,
+    );
   }
 
   const channels = [r, g, b].map((channel, index) => {
@@ -122,7 +118,9 @@ describe("contrastRatio helper (positive control)", () => {
   });
 
   it("rejects a color it cannot measure instead of scoring it", () => {
-    expect(() => contrastRatio("currentColor", "#FFFFFF")).toThrow();
+    expect(() => contrastRatio("currentColor", "#FFFFFF")).toThrow(
+      "Expected an opaque hex color",
+    );
   });
 });
 
@@ -130,7 +128,9 @@ describe("message bubble text contrast", () => {
   it.each(themes)(
     "detects the old white-on-userBubble failure (%s)",
     (_name, palette) => {
-      expect(contrastRatio(WHITE, palette.userBubble)).toBeLessThan(AA_SMALL_TEXT);
+      expect(contrastRatio(WHITE, palette.userBubble)).toBeLessThan(
+        AA_SMALL_TEXT,
+      );
     },
   );
 
@@ -150,10 +150,14 @@ describe("onboarding accent text contrast", () => {
     (_name, palette) => {
       const resolvedSurface = composite(palette.surface, palette.background);
 
-      for (const background of [palette.background, palette.solid, resolvedSurface]) {
-        expect(contrastRatio(palette.accentText, background)).toBeGreaterThanOrEqual(
-          AA_SMALL_TEXT,
-        );
+      for (const background of [
+        palette.background,
+        palette.solid,
+        resolvedSurface,
+      ]) {
+        expect(
+          contrastRatio(palette.accentText, background),
+        ).toBeGreaterThanOrEqual(AA_SMALL_TEXT);
       }
     },
   );

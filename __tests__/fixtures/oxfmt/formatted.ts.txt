@@ -1,0 +1,3 @@
+const value = { answer: 42 };
+
+void value;

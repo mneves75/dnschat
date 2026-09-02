@@ -25,7 +25,9 @@ describe("imessagePalette isDark signal", () => {
   });
 
   it("preserves isDark through the high-contrast spread", () => {
-    expect(getImessagePalette(false, { highContrast: true }).isDark).toBe(false);
+    expect(getImessagePalette(false, { highContrast: true }).isDark).toBe(
+      false,
+    );
     expect(getImessagePalette(true, { highContrast: true }).isDark).toBe(true);
   });
 });

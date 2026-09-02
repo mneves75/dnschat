@@ -208,7 +208,9 @@ describe("Logs list separators", () => {
     });
 
     if (!renderer) throw new Error("renderer was not created");
-    expect(renderer.root.findByProps({ testID: "logs-load-error" })).toBeDefined();
+    expect(
+      renderer.root.findByProps({ testID: "logs-load-error" }),
+    ).toBeDefined();
 
     await act(async () => {
       renderer?.unmount();

@@ -1,36 +1,36 @@
-import * as dnsPacket from 'dns-packet';
+import * as dnsPacket from "dns-packet";
 import {
   sanitizeDNSMessage,
   composeDNSQueryName,
-} from '../src/services/dnsService';
+} from "../src/services/dnsService";
 
-describe('DNS pipeline integration', () => {
+describe("DNS pipeline integration", () => {
   const mockServerDecode = (fqdn: string): string => {
     let name = fqdn;
-    if (name.endsWith('.')) {
+    if (name.endsWith(".")) {
       name = name.slice(0, -1);
     }
-    if (name.toLowerCase().endsWith('.ch.at')) {
-      name = name.slice(0, -'.ch.at'.length);
+    if (name.toLowerCase().endsWith(".ch.at")) {
+      name = name.slice(0, -".ch.at".length);
     }
-    return name.replace(/-/g, ' ');
+    return name.replace(/-/g, " ");
   };
 
-  it('sanitizes, composes, and encodes within DNS limits', () => {
-    const original = 'Hello DNS World';
+  it("sanitizes, composes, and encodes within DNS limits", () => {
+    const original = "Hello DNS World";
     const label = sanitizeDNSMessage(original);
-    const fqdn = composeDNSQueryName(label, 'ch.at');
+    const fqdn = composeDNSQueryName(label, "ch.at");
 
-    expect(label).toBe('hello-dns-world');
+    expect(label).toBe("hello-dns-world");
     expect(fqdn.length).toBeLessThanOrEqual(253);
 
     const encoded = dnsPacket.encode({
-      type: 'query',
+      type: "query",
       id: 12345,
       flags: dnsPacket.RECURSION_DESIRED,
       questions: [
         {
-          type: 'TXT',
+          type: "TXT",
           name: fqdn,
         },
       ],
@@ -40,21 +40,21 @@ describe('DNS pipeline integration', () => {
     expect(decoded.questions?.[0]?.name).toBe(fqdn);
 
     const serverView = mockServerDecode(fqdn);
-    expect(serverView).toBe('hello dns world');
+    expect(serverView).toBe("hello dns world");
   });
 
-  it('rejects labels that would overflow DNS limits', () => {
-    const tooLong = 'a'.repeat(121);
+  it("rejects labels that would overflow DNS limits", () => {
+    const tooLong = "a".repeat(121);
     expect(() => sanitizeDNSMessage(tooLong)).toThrow(
-      'Message too long (maximum 120 characters before sanitization)',
+      "Message too long (maximum 120 characters before sanitization)",
     );
   });
 
-  it('folds accented input into ASCII-safe DNS labels', () => {
-    const label = sanitizeDNSMessage('Olá São Paulo');
-    expect(label).toBe('ola-sao-paulo');
+  it("folds accented input into ASCII-safe DNS labels", () => {
+    const label = sanitizeDNSMessage("Olá São Paulo");
+    expect(label).toBe("ola-sao-paulo");
 
-    const fqdn = composeDNSQueryName(label, 'ch.at');
-    expect(fqdn).toBe('ola-sao-paulo.ch.at');
+    const fqdn = composeDNSQueryName(label, "ch.at");
+    expect(fqdn).toBe("ola-sao-paulo.ch.at");
   });
 });

@@ -30,13 +30,15 @@ jest.mock("../src/context/AccessibilityContext", () => ({
     highContrastEnabled: false,
   }),
   useHighContrast: () => ({ isHighContrast: false }),
-  useMotionReduction: () => ({ shouldReduceMotion: false, animationDuration: undefined }),
+  useMotionReduction: () => ({
+    shouldReduceMotion: false,
+    animationDuration: undefined,
+  }),
   useScreenReader: () => ({ isEnabled: false, announce: () => undefined }),
   useFontSize: () => ({ scale: 1.0 }),
 }));
 
 jest.mock("../src/components/glass", () => {
-  const React = require("react");
   const Placeholder = ({ children }: { children?: React.ReactNode }) => (
     <>{children}</>
   );
@@ -79,7 +81,11 @@ jest.mock("../src/ui/hooks/useTransportTestThrottle", () => ({
 }));
 
 jest.mock("expo-router", () => ({
-  useNavigation: () => ({ goBack: jest.fn(), setOptions: jest.fn(), navigate: jest.fn() }),
+  useNavigation: () => ({
+    goBack: jest.fn(),
+    setOptions: jest.fn(),
+    navigate: jest.fn(),
+  }),
   useTheme: () => ({
     colors: {
       text: "#000",
@@ -113,7 +119,9 @@ jest.mock("../src/i18n", () => ({
   }),
 }));
 
-const { GlassSettings: Settings } = require("../src/navigation/screens/GlassSettings");
+const {
+  GlassSettings: Settings,
+} = require("../src/navigation/screens/GlassSettings");
 const toggleSwitchMock = jest
   .spyOn(HapticsUtils, "toggleSwitch")
   .mockImplementation(jest.fn());
@@ -158,7 +166,9 @@ describe("Enable Haptics toggle", () => {
       throw new Error("Failed to render Settings");
     }
     const renderedTree = tree as ReactTestRenderer;
-    const switches = renderedTree.root.findAllByType(Switch) as ReactTestInstance[];
+    const switches = renderedTree.root.findAllByType(
+      Switch,
+    ) as ReactTestInstance[];
     const hapticsSwitch = switches.find((node) => node.props["value"] === true);
     expect(hapticsSwitch).toBeDefined();
 

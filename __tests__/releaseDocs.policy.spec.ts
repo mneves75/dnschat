@@ -20,26 +20,42 @@ describe("release documentation policy", () => {
   const repositoryTarget = `\`${packageJson.version}\` build \`${appJson.expo.ios.buildNumber}\``;
 
   it("separates repository targets, validated artifacts, and production state", () => {
-    expect(androidRelease).toContain(`Repository target:** ${repositoryTarget}`);
+    expect(androidRelease).toContain(
+      `Repository target:** ${repositoryTarget}`,
+    );
     expect(playStore).toContain(`Repository target:** ${repositoryTarget}`);
     expect(testFlight).toContain(`Repository target:** ${repositoryTarget}`);
     expect(appStore).toContain(`Repository target:** ${repositoryTarget}`);
 
-    expect(testFlight).toContain("Latest validated TestFlight artifact:** `4.2.3` build `77`");
-    expect(appStore).toContain("Latest validated TestFlight artifact:** `4.2.3` build `77`");
+    expect(testFlight).toContain(
+      `Latest validated TestFlight artifact:** ${repositoryTarget}`,
+    );
+    expect(appStore).toContain(
+      `Latest validated TestFlight artifact:** ${repositoryTarget}`,
+    );
     expect(androidRelease).toContain("Latest production release:** unverified");
-    expect(playStore).toContain("Latest production Google Play release:** unverified");
-    expect(testFlight).toContain("Latest production App Store release:** unverified");
-    expect(appStore).toContain("Latest production App Store release:** unverified");
+    expect(playStore).toContain(
+      "Latest production Google Play release:** unverified",
+    );
+    expect(testFlight).toContain(
+      "Latest production App Store release:** unverified",
+    );
+    expect(appStore).toContain(
+      "Latest production App Store release:** unverified",
+    );
   });
 
   it("does not revive stale current-version labels", () => {
-    const combined = [androidRelease, playStore, testFlight, appStore].join("\n");
+    const combined = [androidRelease, playStore, testFlight, appStore].join(
+      "\n",
+    );
 
     expect(combined).not.toMatch(/\*\*Current Version\*\*:/);
     expect(combined).not.toMatch(/Current TestFlight release is/);
     expect(combined).not.toMatch(/Current v\d+\.\d+\.\d+ distribution/);
-    expect(combined).not.toContain("Latest local release target: `v4.1.5` build `72`");
+    expect(combined).not.toContain(
+      "Latest local release target: `v4.1.5` build `72`",
+    );
   });
 
   it("documents only signing and submit inputs supported by the repository", () => {
@@ -50,7 +66,9 @@ describe("release documentation policy", () => {
   it("keeps cleanup scoped to the runbook-owned Derived Data directory", () => {
     expect(testFlight).not.toContain("rm -rf");
     expect(testFlight).not.toContain("~/Library/Developer/Xcode/DerivedData");
-    expect(testFlight).toContain("-derivedDataPath /tmp/dnschat-testflight-derived-data");
+    expect(testFlight).toContain(
+      "-derivedDataPath /tmp/dnschat-testflight-derived-data",
+    );
   });
 
   it("gates age and content ratings on provider and adversarial evidence", () => {

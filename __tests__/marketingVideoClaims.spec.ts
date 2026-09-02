@@ -9,13 +9,13 @@ describe("marketing video product claims", () => {
           typeof entry === "string" && entry.endsWith(".tsx"),
       );
     const historySurface = sourceFiles
-      .map((entry) =>
-        fs.readFileSync(`marketing/video/src/${entry}`, "utf8"),
-      )
+      .map((entry) => fs.readFileSync(`marketing/video/src/${entry}`, "utf8"))
       .join("\n");
 
     expect(historySurface).toContain("Conversas recentes");
-    expect(historySurface).not.toMatch(/pesquisável|buscar conversas|\bbusca\b/i);
+    expect(historySurface).not.toMatch(
+      /pesquisável|buscar conversas|\bbusca\b/i,
+    );
   });
 
   it("does not expose prompt-derived DNS labels in the Logs mock", () => {

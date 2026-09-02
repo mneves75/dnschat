@@ -101,8 +101,12 @@ describe("scripts/verify-android-setup.js helpers", () => {
   });
 
   it("parses Java major version and validates supported range", () => {
-    expect(parseJavaMajorVersion('openjdk version "21.0.9" 2025-10-21 LTS')).toBe(21);
-    expect(parseJavaMajorVersion('openjdk version "25.0.2" 2026-01-20 LTS')).toBe(25);
+    expect(
+      parseJavaMajorVersion('openjdk version "21.0.9" 2025-10-21 LTS'),
+    ).toBe(21);
+    expect(
+      parseJavaMajorVersion('openjdk version "25.0.2" 2026-01-20 LTS'),
+    ).toBe(25);
     expect(parseJavaMajorVersion("invalid")).toBeNull();
     expect(isSupportedAndroidJavaMajor(17)).toBe(true);
     expect(isSupportedAndroidJavaMajor(21)).toBe(true);

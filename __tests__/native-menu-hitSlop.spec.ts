@@ -2,8 +2,14 @@ import fs from "node:fs";
 
 describe("Expo UI native menu migration", () => {
   const packageJson = JSON.parse(fs.readFileSync("package.json", "utf8"));
-  const nativeMenuSource = fs.readFileSync("src/components/platform/NativeMenu.tsx", "utf8");
-  const messageBubbleSource = fs.readFileSync("src/components/MessageBubble.tsx", "utf8");
+  const nativeMenuSource = fs.readFileSync(
+    "src/components/platform/NativeMenu.tsx",
+    "utf8",
+  );
+  const messageBubbleSource = fs.readFileSync(
+    "src/components/MessageBubble.tsx",
+    "utf8",
+  );
 
   it("uses Expo UI menu and removes the patched community menu dependency", () => {
     expect(packageJson.dependencies["@expo/ui"]).toBeDefined();

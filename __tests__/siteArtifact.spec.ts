@@ -23,7 +23,7 @@ describe("static site artifact contract", () => {
     expect(siteHtml).toContain('<script src="script.js" defer></script>');
 
     const packageJson = JSON.parse(fs.readFileSync("package.json", "utf8")) as {
-      reactDoctor?: {ignore?: {overrides?: unknown[]}};
+      reactDoctor?: { ignore?: { overrides?: unknown[] } };
     };
     expect(packageJson.reactDoctor?.ignore?.overrides).toEqual([
       {
@@ -48,7 +48,7 @@ describe("static site artifact contract", () => {
 
     const videoPackage = JSON.parse(
       fs.readFileSync("marketing/video/package.json", "utf8"),
-    ) as {scripts?: Record<string, string>};
+    ) as { scripts?: Record<string, string> };
     const renderScripts = Object.values(videoPackage.scripts ?? {}).join("\n");
     for (const sourcePath of Object.values(generatedAssets)) {
       const relativeOutput = path.relative("marketing/video", sourcePath);
@@ -75,7 +75,9 @@ describe("static site artifact contract", () => {
   it("restricts destructive artifact replacement to the dedicated output", () => {
     expect(() => assertSafeOutputDirectory(".site-dist")).not.toThrow();
     expect(() =>
-      assertSafeOutputDirectory(path.join(process.cwd(), "..", "unrelated-site")),
+      assertSafeOutputDirectory(
+        path.join(process.cwd(), "..", "unrelated-site"),
+      ),
     ).toThrow(/Refusing unsafe site artifact directory/);
     expect(() => assertSafeOutputDirectory("site")).toThrow(
       /Refusing unsafe site artifact directory/,
@@ -110,7 +112,7 @@ describe("static site artifact contract", () => {
   it("keeps documented React Native versions aligned with package.json", () => {
     const version = (
       JSON.parse(fs.readFileSync("package.json", "utf8")) as {
-        dependencies: {"react-native": string};
+        dependencies: { "react-native": string };
       }
     ).dependencies["react-native"];
 
@@ -171,7 +173,12 @@ describe("static site artifact contract", () => {
     buttonListeners.get("en-US")?.();
 
     expect(document.documentElement.lang).toBe("en-US");
-    expect(tracks.map((track) => track.default)).toEqual([false, true, false, true]);
+    expect(tracks.map((track) => track.default)).toEqual([
+      false,
+      true,
+      false,
+      true,
+    ]);
     expect(tracks.map((track) => track.track.mode)).toEqual([
       "disabled",
       "showing",

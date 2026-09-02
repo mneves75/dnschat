@@ -7,7 +7,9 @@ describe("chat route hydration", () => {
     expect(source).toContain("isRouteHydrating");
     expect(source).toContain("hasAttemptedRouteLoad");
     expect(source).toContain("setIsRouteHydrating(true)");
-    expect(source).toContain("if (targetId && chats.length === 0 && !hasAttemptedRouteLoad)");
+    expect(source).toContain(
+      "if (targetId && chats.length === 0 && !hasAttemptedRouteLoad)",
+    );
     expect(source).toContain("isMissingRouteChat");
     expect(source).toContain('testID="chat-route-missing"');
   });

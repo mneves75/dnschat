@@ -1,4 +1,4 @@
-import { DNSService } from '../src/services/dnsService';
+import { DNSService } from "../src/services/dnsService";
 
 type DNSServiceInternals = {
   requestHistory: number[];
@@ -13,12 +13,12 @@ const resetRateLimiter = () => {
   dnsServiceInternals.requestHistory = [];
 };
 
-describe('DNSService rate limiting', () => {
+describe("DNSService rate limiting", () => {
   beforeEach(() => {
     resetRateLimiter();
   });
 
-  it('allows first request and blocks when exceeding MAX_REQUESTS_PER_WINDOW', () => {
+  it("allows first request and blocks when exceeding MAX_REQUESTS_PER_WINDOW", () => {
     const checkRateLimit = dnsServiceInternals.checkRateLimit.bind(DNSService);
 
     const maxRequests = dnsServiceInternals.MAX_REQUESTS_PER_WINDOW ?? 30;
@@ -30,7 +30,7 @@ describe('DNSService rate limiting', () => {
     expect(checkRateLimit()).toBe(false);
   });
 
-  it('removes expired requests outside the sliding window', () => {
+  it("removes expired requests outside the sliding window", () => {
     const checkRateLimit = dnsServiceInternals.checkRateLimit.bind(DNSService);
     const windowMs = dnsServiceInternals.RATE_LIMIT_WINDOW ?? 60000;
 

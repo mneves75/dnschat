@@ -17,13 +17,21 @@ describe("external link safety", () => {
   });
 
   it("allows only explicit https and mailto URLs", () => {
-    expect(isAllowedExternalUrl("https://github.com/mneves75/dnschat")).toBe(true);
+    expect(isAllowedExternalUrl("https://github.com/mneves75/dnschat")).toBe(
+      true,
+    );
     expect(
-      isAllowedExternalUrl("mailto:support@dnschat.app?subject=DNSChat%20Support"),
+      isAllowedExternalUrl(
+        "mailto:support@dnschat.app?subject=DNSChat%20Support",
+      ),
     ).toBe(true);
-    expect(isAllowedExternalUrl("http://github.com/mneves75/dnschat")).toBe(false);
+    expect(isAllowedExternalUrl("http://github.com/mneves75/dnschat")).toBe(
+      false,
+    );
     expect(isAllowedExternalUrl("javascript:alert(1)")).toBe(false);
-    expect(isAllowedExternalUrl(" https://github.com/mneves75/dnschat")).toBe(false);
+    expect(isAllowedExternalUrl(" https://github.com/mneves75/dnschat")).toBe(
+      false,
+    );
   });
 
   it("does not invoke native URL opening for blocked schemes", async () => {
@@ -33,9 +41,9 @@ describe("external link safety", () => {
   });
 
   it("opens allowed URLs and converts native failures into false", async () => {
-    await expect(openExternalUrl("https://github.com/mneves75/dnschat")).resolves.toBe(
-      true,
-    );
+    await expect(
+      openExternalUrl("https://github.com/mneves75/dnschat"),
+    ).resolves.toBe(true);
     expect(openURL).toHaveBeenCalledWith("https://github.com/mneves75/dnschat");
 
     openURL.mockRejectedValueOnce(new Error("No handler"));

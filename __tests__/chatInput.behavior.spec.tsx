@@ -9,7 +9,8 @@ jest.mock("react-native-reanimated", () => {
   const { View } = require("react-native");
   const AnimatedMock = {
     View,
-    createAnimatedComponent: <P,>(Component: React.ComponentType<P>) => Component,
+    createAnimatedComponent: <P,>(Component: React.ComponentType<P>) =>
+      Component,
     useSharedValue: (value: unknown) => {
       const sv = {
         value,
@@ -31,7 +32,9 @@ jest.mock("react-native-reanimated", () => {
 });
 
 jest.mock("../src/components/LiquidGlassWrapper", () => ({
-  LiquidGlassWrapper: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  LiquidGlassWrapper: ({ children }: { children: React.ReactNode }) => (
+    <>{children}</>
+  ),
   useLiquidGlassCapabilities: () => ({ supportsLiquidGlass: false }),
 }));
 
@@ -73,9 +76,12 @@ jest.mock("../src/ui/theme/imessagePalette", () => ({
   }),
 }));
 
-const { ChatInput } = require("../src/components/ChatInput") as typeof import("../src/components/ChatInput");
+const { ChatInput } =
+  require("../src/components/ChatInput") as typeof import("../src/components/ChatInput");
 
-function renderChatInput(props: Partial<React.ComponentProps<typeof ChatInput>> = {}) {
+function renderChatInput(
+  props: Partial<React.ComponentProps<typeof ChatInput>> = {},
+) {
   let tree!: ReactTestRenderer;
   act(() => {
     tree = createWithSuppressedWarnings(
@@ -113,7 +119,9 @@ describe("ChatInput behavior", () => {
     expect(onSendMessage).toHaveBeenCalledTimes(1);
     expect(onSendMessage).toHaveBeenCalledWith("hello dns");
     expect(mockHaptics.medium).toHaveBeenCalledTimes(1);
-    expect(tree.root.findByProps({ testID: "chat-input-field" }).props["value"]).toBe("");
+    expect(
+      tree.root.findByProps({ testID: "chat-input-field" }).props["value"],
+    ).toBe("");
   });
 
   it("does not send whitespace-only or loading messages", () => {
@@ -121,7 +129,9 @@ describe("ChatInput behavior", () => {
     const tree = renderChatInput({ onSendMessage });
 
     act(() => {
-      tree.root.findByProps({ testID: "chat-input-field" }).props["onChangeText"]("   ");
+      tree.root
+        .findByProps({ testID: "chat-input-field" })
+        .props["onChangeText"]("   ");
       tree.root.findByProps({ testID: "chat-input-send" }).props["onPress"]();
     });
 
@@ -129,9 +139,15 @@ describe("ChatInput behavior", () => {
 
     act(() => {
       tree.update(
-        <ChatInput onSendMessage={onSendMessage} isLoading testID="chat-input" />,
+        <ChatInput
+          onSendMessage={onSendMessage}
+          isLoading
+          testID="chat-input"
+        />,
       );
-      tree.root.findByProps({ testID: "chat-input-field" }).props["onChangeText"]("send");
+      tree.root
+        .findByProps({ testID: "chat-input-field" })
+        .props["onChangeText"]("send");
       tree.root.findByProps({ testID: "chat-input-send" }).props["onPress"]();
     });
 
@@ -139,12 +155,17 @@ describe("ChatInput behavior", () => {
   });
 
   it("shows the counter after the documented threshold and announces only milestone remaining counts", () => {
-    const announceSpy = jest.spyOn(AccessibilityInfo, "announceForAccessibility");
+    const announceSpy = jest.spyOn(
+      AccessibilityInfo,
+      "announceForAccessibility",
+    );
     const tree = renderChatInput();
     const nearLimit = "x".repeat(MESSAGE_CONSTANTS.MAX_DNS_LABEL_LENGTH - 9);
 
     act(() => {
-      tree.root.findByProps({ testID: "chat-input-field" }).props["onChangeText"](nearLimit);
+      tree.root
+        .findByProps({ testID: "chat-input-field" })
+        .props["onChangeText"](nearLimit);
     });
 
     const rendered = JSON.stringify(tree.toJSON());
@@ -154,7 +175,9 @@ describe("ChatInput behavior", () => {
 
     const milestone = "x".repeat(MESSAGE_CONSTANTS.MAX_DNS_LABEL_LENGTH - 5);
     act(() => {
-      tree.root.findByProps({ testID: "chat-input-field" }).props["onChangeText"](milestone);
+      tree.root
+        .findByProps({ testID: "chat-input-field" })
+        .props["onChangeText"](milestone);
     });
 
     expect(announceSpy).toHaveBeenCalledWith(

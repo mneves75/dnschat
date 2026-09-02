@@ -67,7 +67,7 @@ function useSharedValue(initial) {
 function useAnimatedStyle(factory) {
   try {
     return factory() || {};
-  } catch (error) {
+  } catch {
     return {};
   }
 }
@@ -76,7 +76,7 @@ function useDerivedValue(factory) {
   let value;
   try {
     value = factory();
-  } catch (error) {
+  } catch {
     value = undefined;
   }
   return useSharedValue(value);
@@ -140,7 +140,11 @@ const easing = function easing() {
 };
 const Easing = new Proxy({}, { get: () => easing });
 
-const Extrapolation = { CLAMP: "clamp", EXTEND: "extend", IDENTITY: "identity" };
+const Extrapolation = {
+  CLAMP: "clamp",
+  EXTEND: "extend",
+  IDENTITY: "identity",
+};
 
 const Animated = {
   View: AnimatedView,

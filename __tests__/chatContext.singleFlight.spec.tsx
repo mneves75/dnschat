@@ -49,7 +49,9 @@ jest.mock("../src/utils/screenshotMode", () => ({
 }));
 
 let latestChat: ReturnType<typeof useChat> | null = null;
-const { StorageService: mockStorageService } = jest.requireMock("../src/services/storageService") as {
+const { StorageService: mockStorageService } = jest.requireMock(
+  "../src/services/storageService",
+) as {
   StorageService: {
     loadChats: jest.Mock;
     createChat: jest.Mock;
@@ -59,7 +61,9 @@ const { StorageService: mockStorageService } = jest.requireMock("../src/services
     deleteChat: jest.Mock;
   };
 };
-const { DNSService: mockDNSService } = jest.requireMock("../src/services/dnsService") as {
+const { DNSService: mockDNSService } = jest.requireMock(
+  "../src/services/dnsService",
+) as {
   DNSService: {
     queryLLM: jest.Mock;
   };

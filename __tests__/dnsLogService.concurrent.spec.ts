@@ -59,10 +59,18 @@ describe("DNSLogService concurrent query isolation", () => {
 
     expect(alphaLog).toBeDefined();
     expect(betaLog).toBeDefined();
-    expect(alphaLog?.entries.some((entry) => entry.details === "alpha-attempt")).toBe(true);
-    expect(alphaLog?.entries.some((entry) => entry.details === "beta-attempt")).toBe(false);
-    expect(betaLog?.entries.some((entry) => entry.details === "beta-attempt")).toBe(true);
-    expect(betaLog?.entries.some((entry) => entry.details === "alpha-attempt")).toBe(false);
+    expect(
+      alphaLog?.entries.some((entry) => entry.details === "alpha-attempt"),
+    ).toBe(true);
+    expect(
+      alphaLog?.entries.some((entry) => entry.details === "beta-attempt"),
+    ).toBe(false);
+    expect(
+      betaLog?.entries.some((entry) => entry.details === "beta-attempt"),
+    ).toBe(true);
+    expect(
+      betaLog?.entries.some((entry) => entry.details === "alpha-attempt"),
+    ).toBe(false);
     expect(mockAsyncStorage.setItem).toHaveBeenCalled();
   });
 
@@ -105,7 +113,9 @@ describe("DNSLogService concurrent query isolation", () => {
     await Promise.all([firstWrite, secondWrite]);
     mockAsyncStorage.setItem.mockResolvedValue();
 
-    const persistedLogs = JSON.parse(latestPersistedPayload) as Array<{ query: string }>;
+    const persistedLogs = JSON.parse(latestPersistedPayload) as Array<{
+      query: string;
+    }>;
     expect(persistedLogs).toHaveLength(2);
     expect(persistedLogs[0]?.query).toContain("[settings] second");
     expect(persistedLogs[1]?.query).toContain("[settings] first");
@@ -125,7 +135,8 @@ describe("DNSLogService concurrent query isolation", () => {
     const storedLog = JSON.stringify([
       {
         id: "stored-log",
-        query: "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa len:3",
+        query:
+          "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa len:3",
         startTime: "2026-08-30T12:00:00.000Z",
         finalStatus: "success",
         finalMethod: "native",
@@ -145,7 +156,9 @@ describe("DNSLogService concurrent query isolation", () => {
     const ids = DNSLogService.getLogs().map(({ id }) => id);
     expect(ids).toContain("stored-log");
     expect(
-      DNSLogService.getLogs().some(({ query }) => query.includes("during init")),
+      DNSLogService.getLogs().some(({ query }) =>
+        query.includes("during init"),
+      ),
     ).toBe(true);
 
     const finalPrimaryWrite = mockAsyncStorage.setItem.mock.calls
@@ -157,7 +170,9 @@ describe("DNSLogService concurrent query isolation", () => {
       query: string;
     }>;
     expect(persisted.map(({ id }) => id)).toContain("stored-log");
-    expect(persisted.some(({ query }) => query.includes("during init"))).toBe(true);
+    expect(persisted.some(({ query }) => query.includes("during init"))).toBe(
+      true,
+    );
   });
 
   it("starts and stops the cleanup scheduler as part of initialization lifecycle", async () => {
@@ -203,7 +218,11 @@ describe("DNSLogService concurrent query isolation", () => {
 
     let errorMessage = "";
     try {
-      parseTXTResponse(["1/2:secret-fragment", "1/2:different-secret", "2/2:tail"]);
+      parseTXTResponse([
+        "1/2:secret-fragment",
+        "1/2:different-secret",
+        "2/2:tail",
+      ]);
     } catch (error) {
       errorMessage = error instanceof Error ? error.message : String(error);
     }

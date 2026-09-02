@@ -83,7 +83,9 @@ describe("SettingsProvider persistence", () => {
     const settings = await renderProvider();
     mockAsyncStorage.setItem.mockRejectedValueOnce(new Error("disk full"));
 
-    await expect(settings.updateEnableMockDNS(true)).rejects.toThrow("disk full");
+    await expect(settings.updateEnableMockDNS(true)).rejects.toThrow(
+      "disk full",
+    );
     expect(latestSettings?.enableMockDNS).toBe(false);
   });
 
@@ -170,7 +172,9 @@ describe("SettingsProvider persistence", () => {
     const settings = await renderProvider();
     const rejectedInput = "internal.secret.example";
 
-    await expect(settings.updateDnsServer(rejectedInput)).rejects.toThrow("DNS server not allowed");
+    await expect(settings.updateDnsServer(rejectedInput)).rejects.toThrow(
+      "DNS server not allowed",
+    );
 
     const recordSettingsEvent = DNSLogService.recordSettingsEvent as jest.Mock;
     const serializedCalls = JSON.stringify(recordSettingsEvent.mock.calls);

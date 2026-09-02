@@ -23,7 +23,9 @@ jest.mock("../src/context/SettingsContext", () => ({
 }));
 
 jest.mock("../src/services/dnsService", () => {
-  const actual = jest.requireActual("../src/services/dnsService") as typeof import("../src/services/dnsService");
+  const actual = jest.requireActual(
+    "../src/services/dnsService",
+  ) as typeof import("../src/services/dnsService");
   return {
     ...actual,
     DNSService: {
@@ -38,9 +40,20 @@ jest.mock("../src/utils/screenshotMode", () => ({
 }));
 
 const mockAsyncStorage = AsyncStorage as jest.Mocked<typeof AsyncStorage>;
-const { DNSService: mockDNSService } = jest.requireMock("../src/services/dnsService") as {
+const { DNSService: mockDNSService } = jest.requireMock(
+  "../src/services/dnsService",
+) as {
   DNSService: {
-    queryLLM: jest.Mock<Promise<string>, [string, string | undefined, boolean | undefined, boolean, { chatId?: string; chatTitle?: string } | undefined]>;
+    queryLLM: jest.Mock<
+      Promise<string>,
+      [
+        string,
+        string | undefined,
+        boolean | undefined,
+        boolean,
+        { chatId?: string; chatTitle?: string } | undefined,
+      ]
+    >;
   };
 };
 

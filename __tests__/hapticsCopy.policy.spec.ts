@@ -5,7 +5,9 @@ describe("haptics copy", () => {
   const portuguese = readFileSync("src/i18n/messages/pt-BR.ts", "utf8");
 
   it("does not claim that Reduce Motion suppresses haptics", () => {
-    expect(english).not.toMatch(/haptic[^\n]*(?:respects|suppressed)[^\n]*Reduce Motion/i);
+    expect(english).not.toMatch(
+      /haptic[^\n]*(?:respects|suppressed)[^\n]*Reduce Motion/i,
+    );
     expect(portuguese).not.toMatch(/háptic[^\n]*Reduzir Movimento/i);
   });
 

@@ -16,7 +16,7 @@ import path from "path";
 describe("ChatContext Race Condition Prevention", () => {
   const chatContextPath = path.resolve(
     __dirname,
-    "../src/context/ChatContext.tsx"
+    "../src/context/ChatContext.tsx",
   );
   const source = fs.readFileSync(chatContextPath, "utf8");
 
@@ -28,7 +28,7 @@ describe("ChatContext Race Condition Prevention", () => {
 
       // Verify it's captured with security comment explaining the fix
       expect(source).toContain(
-        "SECURITY: Capture chat ID at function entry to prevent race conditions"
+        "SECURITY: Capture chat ID at function entry to prevent race conditions",
       );
     });
 
@@ -39,7 +39,7 @@ describe("ChatContext Race Condition Prevention", () => {
 
       // Verify it has a security comment explaining the pattern
       expect(source).toContain(
-        "SECURITY: Track assistant message ID for error handling"
+        "SECURITY: Track assistant message ID for error handling",
       );
     });
 
@@ -52,7 +52,9 @@ describe("ChatContext Race Condition Prevention", () => {
   describe("Error Handler Uses Captured Values", () => {
     it("uses chatIdAtSend in error handler condition", () => {
       // Error handler should check captured chatId, not currentChat
-      expect(source).toContain("if (chatIdAtSend && assistantMessage && userMessagePersisted)");
+      expect(source).toContain(
+        "if (chatIdAtSend && assistantMessage && userMessagePersisted)",
+      );
     });
 
     it("passes chatIdAtSend to StorageService.updateMessage", () => {
@@ -69,7 +71,7 @@ describe("ChatContext Race Condition Prevention", () => {
       // The fix uses assistantMessageId directly instead of searching.
       const errorHandlerSection = source.slice(
         source.indexOf("} catch (err)"),
-        source.indexOf("} finally")
+        source.indexOf("} finally"),
       );
 
       // Should NOT have the buggy pattern
@@ -82,14 +84,12 @@ describe("ChatContext Race Condition Prevention", () => {
   describe("Security Comments Document the Fix", () => {
     it("explains stale closure bug in comment", () => {
       expect(source).toContain(
-        "currentChat could change if user switches chats during async operation"
+        "currentChat could change if user switches chats during async operation",
       );
     });
 
     it("explains chats array stale closure issue", () => {
-      expect(source).toContain(
-        "chats array could be stale"
-      );
+      expect(source).toContain("chats array could be stale");
     });
   });
 
@@ -102,9 +102,7 @@ describe("ChatContext Race Condition Prevention", () => {
     });
 
     it("logs error update failures with devWarn", () => {
-      expect(source).toContain(
-        "Failed to update message with error status"
-      );
+      expect(source).toContain("Failed to update message with error status");
     });
 
     it("reloads chats after error update while preserving selection and error state", () => {

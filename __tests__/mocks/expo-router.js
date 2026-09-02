@@ -1,8 +1,10 @@
 const React = require("react");
 
 const createNavigator = () => {
-  const Navigator = ({ children }) => React.createElement(React.Fragment, null, children);
-  Navigator.Screen = ({ children }) => React.createElement(React.Fragment, null, children);
+  const Navigator = ({ children }) =>
+    React.createElement(React.Fragment, null, children);
+  Navigator.Screen = ({ children }) =>
+    React.createElement(React.Fragment, null, children);
   return Navigator;
 };
 
@@ -20,7 +22,11 @@ module.exports = {
   useLocalSearchParams: () => ({}),
   useSegments: () => [],
   useRootNavigationState: () => ({ key: "test" }),
-  useNavigation: () => ({ goBack: jest.fn(), setOptions: jest.fn(), navigate: jest.fn() }),
+  useNavigation: () => ({
+    goBack: jest.fn(),
+    setOptions: jest.fn(),
+    navigate: jest.fn(),
+  }),
   useTheme: () => ({
     colors: {
       text: "#000",

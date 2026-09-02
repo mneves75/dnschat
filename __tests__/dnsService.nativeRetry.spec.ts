@@ -1,5 +1,5 @@
-jest.mock('react-native', () => {
-  const actual = jest.requireActual('react-native');
+jest.mock("react-native", () => {
+  const actual = jest.requireActual("react-native");
   return {
     ...actual,
     AppState: {
@@ -8,27 +8,27 @@ jest.mock('react-native', () => {
   };
 });
 
-import { DNSService } from '../src/services/dnsService';
+import { DNSService } from "../src/services/dnsService";
 import { DNSLogService } from "../src/services/dnsLogService";
+import { nativeDNS, DNSError, DNSErrorType } from "../modules/dns-native";
 import {
-  nativeDNS,
-  DNSError,
-  DNSErrorType,
-} from '../modules/dns-native';
-import { sanitizeDNSMessage, composeDNSQueryName } from "../src/services/dnsService";
+  sanitizeDNSMessage,
+  composeDNSQueryName,
+} from "../src/services/dnsService";
+import { DNS_CONSTANTS } from "../modules/dns-native/constants";
 
-jest.mock('../modules/dns-native', () => {
-  const actual = jest.requireActual('../modules/dns-native');
+jest.mock("../modules/dns-native", () => {
+  const actual = jest.requireActual("../modules/dns-native");
   return {
     ...actual,
     nativeDNS: {
       queryTXT: jest.fn(),
       queryTXTUDP: jest.fn(),
       queryTXTTCP: jest.fn(),
-      parseMultiPartResponse: jest.fn((records: string[]) => records.join('')),
+      parseMultiPartResponse: jest.fn((records: string[]) => records.join("")),
       isAvailable: jest.fn().mockResolvedValue({
         available: true,
-        platform: 'ios',
+        platform: "ios",
         supportsCustomServer: true,
         supportsAsyncQuery: true,
       }),
@@ -47,31 +47,36 @@ type DNSServiceInternals = {
 };
 const dnsServiceInternals = DNSService as unknown as DNSServiceInternals;
 
-describe('DNSService native retry integration', () => {
+describe("DNSService native retry integration", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.spyOn(DNSLogService, "startQuery").mockReturnValue("query-1");
     jest.spyOn(DNSLogService, "addLog").mockImplementation(() => undefined);
-    jest.spyOn(DNSLogService, "logMethodFailure").mockImplementation(() => undefined);
-    jest.spyOn(DNSLogService, "logFallback").mockImplementation(() => undefined);
+    jest
+      .spyOn(DNSLogService, "logMethodFailure")
+      .mockImplementation(() => undefined);
+    jest
+      .spyOn(DNSLogService, "logFallback")
+      .mockImplementation(() => undefined);
     jest.spyOn(DNSLogService, "endQuery").mockResolvedValue(undefined);
   });
   afterEach(() => {
     DNSService.destroyBackgroundListener();
   });
 
-  it('falls back to UDP when native DNS reports missing TXT records', async () => {
-    mockedNativeDNS.queryTXT
-      .mockRejectedValueOnce(new DNSError(DNSErrorType.INVALID_RESPONSE, 'No TXT records found'));
-    mockedNativeDNS.queryTXTUDP.mockResolvedValueOnce(['Hello from UDP']);
+  it("falls back to UDP when native DNS reports missing TXT records", async () => {
+    mockedNativeDNS.queryTXT.mockRejectedValueOnce(
+      new DNSError(DNSErrorType.INVALID_RESPONSE, "No TXT records found"),
+    );
+    mockedNativeDNS.queryTXTUDP.mockResolvedValueOnce(["Hello from UDP"]);
 
     const udpSpy = jest
       .spyOn(dnsServiceInternals, "performNativeUDPQuery")
-      .mockResolvedValue(['Hello from UDP']);
+      .mockResolvedValue(["Hello from UDP"]);
 
     const result = await DNSService.queryLLM(
-      'test fallback',
-      'ch.at',
+      "test fallback",
+      "ch.at",
       false,
       true,
     );
@@ -79,7 +84,7 @@ describe('DNSService native retry integration', () => {
     expect(mockedNativeDNS.queryTXT).toHaveBeenCalledTimes(1);
     expect(mockedNativeDNS.queryTXTUDP).toHaveBeenCalledTimes(1);
     expect(udpSpy).not.toHaveBeenCalled();
-    expect(result).toBe('Hello from UDP');
+    expect(result).toBe("Hello from UDP");
   });
 
   it("composes the query name in TypeScript and passes it to native as-is", async () => {
@@ -92,6 +97,8 @@ describe('DNSService native retry integration', () => {
     const targetServer = "ch.at";
     const label = sanitizeDNSMessage(message);
     const expectedQueryName = composeDNSQueryName(label, targetServer);
+    const fixedNow = 1_800_000_000_000;
+    const nowSpy = jest.spyOn(Date, "now").mockReturnValue(fixedNow);
 
     const result = await DNSService.queryLLM(
       message,
@@ -99,6 +106,7 @@ describe('DNSService native retry integration', () => {
       false,
       false, // native-only (no UDP/TCP)
     );
+    nowSpy.mockRestore();
 
     expect(result).toBe("Hello from native");
     expect(mockedNativeDNS.queryTXT).toHaveBeenCalledTimes(1);
@@ -106,6 +114,7 @@ describe('DNSService native retry integration', () => {
       targetServer,
       expectedQueryName,
       53, // ch.at uses standard DNS port
+      fixedNow + DNS_CONSTANTS.QUERY_TIMEOUT_MS,
     );
   });
 });

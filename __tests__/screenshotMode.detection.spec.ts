@@ -20,8 +20,9 @@ function loadIsScreenshotMode(settings: SettingsMock): () => boolean {
   jest.isolateModules(() => {
     const rn = require("react-native") as { Settings?: SettingsMock };
     rn.Settings = settings;
-    fn = (require("../src/utils/screenshotMode") as typeof import("../src/utils/screenshotMode"))
-      .isScreenshotMode;
+    fn = (
+      require("../src/utils/screenshotMode") as typeof import("../src/utils/screenshotMode")
+    ).isScreenshotMode;
   });
   if (!fn) throw new Error("failed to load screenshotMode module");
   return fn;
@@ -52,7 +53,7 @@ describe("isScreenshotMode", () => {
     expect(isScreenshotMode()).toBe(false);
   });
 
-  it("treats an unrelated Settings value (e.g. \"0\") as off", () => {
+  it('treats an unrelated Settings value (e.g. "0") as off', () => {
     const isScreenshotMode = loadIsScreenshotMode({
       get: (key) => (key === "SCREENSHOT_MODE" ? "0" : undefined),
     });

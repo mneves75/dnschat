@@ -1,13 +1,16 @@
 type NativeDnsTransportMock = {
-  isAvailable: jest.Mock<Promise<{
-    available: boolean;
-    platform: "ios";
-    supportsCustomServer: boolean;
-    supportsAsyncQuery: boolean;
-  }>, []>;
-  queryTXT: jest.Mock<Promise<string[]>, [string, string, number]>;
-  queryTXTUDP: jest.Mock<Promise<string[]>, [string, string, number]>;
-  queryTXTTCP: jest.Mock<Promise<string[]>, [string, string, number]>;
+  isAvailable: jest.Mock<
+    Promise<{
+      available: boolean;
+      platform: "ios";
+      supportsCustomServer: boolean;
+      supportsAsyncQuery: boolean;
+    }>,
+    []
+  >;
+  queryTXT: jest.Mock<Promise<string[]>, [string, string, number, number]>;
+  queryTXTUDP: jest.Mock<Promise<string[]>, [string, string, number, number]>;
+  queryTXTTCP: jest.Mock<Promise<string[]>, [string, string, number, number]>;
   parseMultiPartResponse: jest.Mock<string, [string[]]>;
 };
 
@@ -32,20 +35,33 @@ const loadDNSServiceWithTransportMocks = (
         queryTXT: jest.fn().mockResolvedValue(["native"]),
         queryTXTUDP: jest.fn().mockResolvedValue(["udp native"]),
         queryTXTTCP: jest.fn().mockResolvedValue(["tcp native"]),
-        parseMultiPartResponse: jest.fn((records: string[]) => records.join("")),
+        parseMultiPartResponse: jest.fn((records: string[]) =>
+          records.join(""),
+        ),
       },
     };
   });
 
-  const dnsModule = require("../src/services/dnsService") as typeof import("../src/services/dnsService");
-  const nativeModule = require("../modules/dns-native") as typeof import("../modules/dns-native");
-  const logModule = require("../src/services/dnsLogService") as typeof import("../src/services/dnsLogService");
+  const dnsModule =
+    require("../src/services/dnsService") as typeof import("../src/services/dnsService");
+  const nativeModule =
+    require("../modules/dns-native") as typeof import("../modules/dns-native");
+  const logModule =
+    require("../src/services/dnsLogService") as typeof import("../src/services/dnsLogService");
 
   jest.spyOn(logModule.DNSLogService, "startQuery").mockReturnValue("query-1");
-  jest.spyOn(logModule.DNSLogService, "addLog").mockImplementation(() => undefined);
-  jest.spyOn(logModule.DNSLogService, "logMethodAttempt").mockImplementation(() => undefined);
-  jest.spyOn(logModule.DNSLogService, "logMethodSuccess").mockImplementation(() => undefined);
-  jest.spyOn(logModule.DNSLogService, "logMethodFailure").mockImplementation(() => undefined);
+  jest
+    .spyOn(logModule.DNSLogService, "addLog")
+    .mockImplementation(() => undefined);
+  jest
+    .spyOn(logModule.DNSLogService, "logMethodAttempt")
+    .mockImplementation(() => undefined);
+  jest
+    .spyOn(logModule.DNSLogService, "logMethodSuccess")
+    .mockImplementation(() => undefined);
+  jest
+    .spyOn(logModule.DNSLogService, "logMethodFailure")
+    .mockImplementation(() => undefined);
   jest.spyOn(logModule.DNSLogService, "endQuery").mockResolvedValue(undefined);
 
   return {
@@ -70,13 +86,18 @@ describe("DNSService iOS native transport fallbacks", () => {
       () => ({ Socket: class MockSocket {} }),
     );
 
-    const result = await DNSService.testTransport("test", "udp", "llm.pieter.com");
+    const result = await DNSService.testTransport(
+      "test",
+      "udp",
+      "llm.pieter.com",
+    );
 
     expect(result).toBe("udp native");
     expect(nativeDNS.queryTXTUDP).toHaveBeenCalledWith(
       "llm.pieter.com",
       "test.llm.pieter.com",
       53,
+      expect.any(Number),
     );
   });
 
@@ -85,7 +106,10 @@ describe("DNSService iOS native transport fallbacks", () => {
       on(event: string, handler: (error: unknown) => void): void {
         if (event === "error") {
           setTimeout(() => {
-            handler({ code: "EAI_NONAME", message: "nodename nor servname provided, or not known" });
+            handler({
+              code: "EAI_NONAME",
+              message: "nodename nor servname provided, or not known",
+            });
           }, 0);
         }
       }
@@ -102,13 +126,18 @@ describe("DNSService iOS native transport fallbacks", () => {
       () => ({ Socket: HostnameFailingSocket }),
     );
 
-    const result = await DNSService.testTransport("test", "tcp", "llm.pieter.com");
+    const result = await DNSService.testTransport(
+      "test",
+      "tcp",
+      "llm.pieter.com",
+    );
 
     expect(result).toBe("tcp native");
     expect(nativeDNS.queryTXTTCP).toHaveBeenCalledWith(
       "llm.pieter.com",
       "test.llm.pieter.com",
       53,
+      expect.any(Number),
     );
   });
 });

@@ -1,6 +1,9 @@
 const path = require("node:path");
 
-const { resolveJava17Home, buildAndroidEnv } = require("../scripts/run-android");
+const {
+  resolveJava17Home,
+  buildAndroidEnv,
+} = require("../scripts/run-android");
 
 describe("run-android: Java 17 detection", () => {
   function createJavaHomeExecStub() {
@@ -17,7 +20,9 @@ describe("run-android: Java 17 detection", () => {
     };
   }
 
-  function createJavaVersionSpawnStub(outputByJavaBinaryPath: Record<string, string>) {
+  function createJavaVersionSpawnStub(
+    outputByJavaBinaryPath: Record<string, string>,
+  ) {
     return (cmd: string) => {
       const stderr = outputByJavaBinaryPath[cmd];
       if (!stderr) throw new Error(`unexpected spawn: ${cmd}`);
@@ -40,7 +45,11 @@ describe("run-android: Java 17 detection", () => {
       }),
     });
 
-    expect(result).toEqual({ source: "JAVA_HOME", dir: "/custom/jdk17", major: 17 });
+    expect(result).toEqual({
+      source: "JAVA_HOME",
+      dir: "/custom/jdk17",
+      major: 17,
+    });
   });
 
   it("uses macOS /usr/libexec/java_home -v 17 when available", () => {
@@ -64,7 +73,8 @@ describe("run-android: Java 17 detection", () => {
   });
 
   it("falls back to supported Homebrew Java locations", () => {
-    const existing = "/usr/local/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home";
+    const existing =
+      "/usr/local/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home";
 
     const result = resolveJava17Home({
       platform: "linux",
@@ -89,7 +99,8 @@ describe("run-android: Java 17 detection", () => {
       platform: "darwin",
       env: { JAVA_HOME: "/custom/jdk25" },
       existsSyncImpl: (p: string) =>
-        p === "/custom/jdk25" || p === "/Library/Java/JavaVirtualMachines/jdk-21.jdk/Contents/Home",
+        p === "/custom/jdk25" ||
+        p === "/Library/Java/JavaVirtualMachines/jdk-21.jdk/Contents/Home",
       execFileSyncImpl: createJavaHomeExecStub(),
       spawnSyncImpl: createJavaVersionSpawnStub({
         "/custom/jdk25/bin/java": 'openjdk version "25.0.2" 2026-01-20 LTS',

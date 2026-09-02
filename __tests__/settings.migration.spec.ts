@@ -3,12 +3,12 @@ import {
   SETTINGS_VERSION,
   migrateSettings,
   areAccessibilityConfigsEqual,
-} from '../src/context/settingsStorage';
+} from "../src/context/settingsStorage";
 
-describe('SettingsContext migrateSettings', () => {
-  it('migrates legacy v1 payload (no version) to current version', () => {
+describe("SettingsContext migrateSettings", () => {
+  it("migrates legacy v1 payload (no version) to current version", () => {
     const legacyPayload = {
-      dnsServer: '8.8.8.8',
+      dnsServer: "8.8.8.8",
       enableMockDNS: true,
     };
 
@@ -16,26 +16,26 @@ describe('SettingsContext migrateSettings', () => {
 
     expect(result).toEqual({
       version: SETTINGS_VERSION,
-      dnsServer: '8.8.8.8',
+      dnsServer: "8.8.8.8",
       enableMockDNS: true,
       allowExperimentalTransports: true,
       enableHaptics: true,
       preferredLocale: null,
-      themePreference: 'system',
+      themePreference: "system",
       accessibility: DEFAULT_SETTINGS.accessibility,
     });
   });
 
-  it('migrates v2 payload to current version (removes HTTPS fields, enables experimental transports, migrates ch.at)', () => {
+  it("migrates v2 payload to current version (removes HTTPS fields, enables experimental transports, migrates ch.at)", () => {
     const v2Payload = {
       version: 2,
-      dnsServer: 'ch.at',
+      dnsServer: "ch.at",
       preferDnsOverHttps: true,
-      dnsMethodPreference: 'prefer-https',
+      dnsMethodPreference: "prefer-https",
       enableMockDNS: false,
       allowExperimentalTransports: false,
       enableHaptics: true,
-      preferredLocale: 'en-US',
+      preferredLocale: "en-US",
     };
 
     const result = migrateSettings(v2Payload);
@@ -43,42 +43,42 @@ describe('SettingsContext migrateSettings', () => {
     // ch.at is offline, so it gets migrated to llm.pieter.com
     expect(result).toEqual({
       version: SETTINGS_VERSION,
-      dnsServer: 'llm.pieter.com',
+      dnsServer: "llm.pieter.com",
       enableMockDNS: false,
       allowExperimentalTransports: true,
       enableHaptics: true,
-      preferredLocale: 'en-US',
-      themePreference: 'system',
+      preferredLocale: "en-US",
+      themePreference: "system",
       accessibility: DEFAULT_SETTINGS.accessibility,
     });
   });
 
-  it('migrates v3 payload with ch.at to llm.pieter.com', () => {
+  it("migrates v3 payload with ch.at to llm.pieter.com", () => {
     const v3Payload = {
       version: 3,
-      dnsServer: 'ch.at',
+      dnsServer: "ch.at",
       enableMockDNS: false,
       allowExperimentalTransports: true,
       enableHaptics: true,
-      preferredLocale: 'en-US',
+      preferredLocale: "en-US",
       accessibility: DEFAULT_SETTINGS.accessibility,
     };
 
     const result = migrateSettings(v3Payload);
 
     // ch.at is offline, so it gets migrated to llm.pieter.com
-    expect(result.dnsServer).toBe('llm.pieter.com');
+    expect(result.dnsServer).toBe("llm.pieter.com");
     expect(result.version).toBe(SETTINGS_VERSION);
   });
 
-  it('preserves v3 payload with correct fields', () => {
+  it("preserves v3 payload with correct fields", () => {
     const v3Payload = {
       version: 3,
-      dnsServer: 'llm.pieter.com',
+      dnsServer: "llm.pieter.com",
       enableMockDNS: true,
       allowExperimentalTransports: false,
       enableHaptics: false,
-      preferredLocale: 'pt-BR',
+      preferredLocale: "pt-BR",
       accessibility: DEFAULT_SETTINGS.accessibility,
     };
 
@@ -86,23 +86,23 @@ describe('SettingsContext migrateSettings', () => {
 
     expect(result).toEqual({
       version: SETTINGS_VERSION,
-      dnsServer: 'llm.pieter.com',
+      dnsServer: "llm.pieter.com",
       enableMockDNS: true,
       allowExperimentalTransports: false,
       enableHaptics: false,
-      preferredLocale: 'pt-BR',
-      themePreference: 'system',
+      preferredLocale: "pt-BR",
+      themePreference: "system",
       accessibility: DEFAULT_SETTINGS.accessibility,
     });
   });
 
-  it('sanitizes invalid values in v3 payloads', () => {
+  it("sanitizes invalid values in v3 payloads", () => {
     const malformedPayload = {
       version: 3,
-      dnsServer: '   ',
-      enableMockDNS: 'truthy',
-      allowExperimentalTransports: 'truthy',
-      preferredLocale: 'en-US',
+      dnsServer: "   ",
+      enableMockDNS: "truthy",
+      allowExperimentalTransports: "truthy",
+      preferredLocale: "en-US",
     } as unknown;
 
     const result = migrateSettings(malformedPayload);
@@ -113,40 +113,40 @@ describe('SettingsContext migrateSettings', () => {
       enableMockDNS: true,
       allowExperimentalTransports: true,
       enableHaptics: true,
-      preferredLocale: 'en-US',
-      themePreference: 'system',
+      preferredLocale: "en-US",
+      themePreference: "system",
       accessibility: DEFAULT_SETTINGS.accessibility,
     });
   });
 
-  it('preserves themePreference for v4+ payloads and normalizes invalid values', () => {
+  it("preserves themePreference for v4+ payloads and normalizes invalid values", () => {
     const validPayload = {
       version: 4,
-      dnsServer: 'llm.pieter.com',
+      dnsServer: "llm.pieter.com",
       enableMockDNS: false,
       allowExperimentalTransports: true,
       enableHaptics: true,
       preferredLocale: null,
-      themePreference: 'dark',
+      themePreference: "dark",
       accessibility: DEFAULT_SETTINGS.accessibility,
     };
-    expect(migrateSettings(validPayload).themePreference).toBe('dark');
+    expect(migrateSettings(validPayload).themePreference).toBe("dark");
 
     const invalidPayload = {
       ...validPayload,
-      themePreference: 'bogus',
+      themePreference: "bogus",
     };
-    expect(migrateSettings(invalidPayload).themePreference).toBe('system');
+    expect(migrateSettings(invalidPayload).themePreference).toBe("system");
   });
 
-  it('backfills system themePreference when migrating v4 payloads without it', () => {
+  it("backfills system themePreference when migrating v4 payloads without it", () => {
     const payload = {
       version: 4,
-      dnsServer: 'llm.pieter.com',
+      dnsServer: "llm.pieter.com",
       enableMockDNS: false,
       allowExperimentalTransports: true,
       enableHaptics: true,
-      preferredLocale: 'pt-BR',
+      preferredLocale: "pt-BR",
       accessibility: DEFAULT_SETTINGS.accessibility,
     };
 
@@ -155,18 +155,18 @@ describe('SettingsContext migrateSettings', () => {
     expect(result).toEqual({
       ...payload,
       version: SETTINGS_VERSION,
-      themePreference: 'system',
+      themePreference: "system",
     });
   });
 
-  it('falls back to default dnsServer when payload is not allowlisted', () => {
+  it("falls back to default dnsServer when payload is not allowlisted", () => {
     const payload = {
       version: 3,
-      dnsServer: 'example.com',
+      dnsServer: "example.com",
       enableMockDNS: false,
       allowExperimentalTransports: true,
       enableHaptics: true,
-      preferredLocale: 'en-US',
+      preferredLocale: "en-US",
       accessibility: DEFAULT_SETTINGS.accessibility,
     };
 
@@ -175,23 +175,23 @@ describe('SettingsContext migrateSettings', () => {
     expect(result.dnsServer).toBe(DEFAULT_SETTINGS.dnsServer);
   });
 
-  it('falls back to defaults for invalid payload', () => {
+  it("falls back to defaults for invalid payload", () => {
     expect(migrateSettings(undefined)).toEqual(DEFAULT_SETTINGS);
-    expect(migrateSettings('bad')).toEqual(DEFAULT_SETTINGS);
+    expect(migrateSettings("bad")).toEqual(DEFAULT_SETTINGS);
   });
 
-  it('normalizes preferredLocale values when present', () => {
+  it("normalizes preferredLocale values when present", () => {
     const payload = {
       version: 3,
-      preferredLocale: 'pt',
+      preferredLocale: "pt",
     };
 
     const result = migrateSettings(payload);
 
-    expect(result.preferredLocale).toBe('pt-BR');
+    expect(result.preferredLocale).toBe("pt-BR");
   });
 
-  it('compares accessibility configs by field', () => {
+  it("compares accessibility configs by field", () => {
     const baseline = DEFAULT_SETTINGS.accessibility;
     expect(areAccessibilityConfigsEqual(baseline, baseline)).toBe(true);
     expect(

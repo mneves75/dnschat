@@ -1,10 +1,5 @@
-import {
-  createNavigationTheme,
-} from "../src/ui/theme/navigationTheme";
-import {
-  IMESSAGE_DARK,
-  IMESSAGE_LIGHT,
-} from "../src/ui/theme/imessagePalette";
+import { createNavigationTheme } from "../src/ui/theme/navigationTheme";
+import { IMESSAGE_DARK, IMESSAGE_LIGHT } from "../src/ui/theme/imessagePalette";
 
 jest.mock("expo-router/react-navigation", () => ({
   DefaultTheme: {

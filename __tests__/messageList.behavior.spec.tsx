@@ -8,18 +8,20 @@ import type { Message } from "../src/types/chat";
 import { createWithSuppressedWarnings } from "./utils/reactTestRenderer";
 
 jest.mock("../src/components/MessageBubble", () => ({
-  MessageBubble: ({ message }: { message: Message }) => (
-    React.createElement("message-bubble", { testID: `message-${message.id}` })
-  ),
+  MessageBubble: ({ message }: { message: Message }) =>
+    React.createElement("message-bubble", { testID: `message-${message.id}` }),
 }));
 
 jest.mock("../src/components/LiquidGlassWrapper", () => ({
-  LiquidGlassWrapper: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  LiquidGlassWrapper: ({ children }: { children: React.ReactNode }) => (
+    <>{children}</>
+  ),
   useLiquidGlassCapabilities: () => ({ supportsLiquidGlass: false }),
 }));
 
 jest.mock("../src/components/SkeletonMessage", () => ({
-  SkeletonMessage: () => React.createElement("skeleton-message", { testID: "message-skeleton" }),
+  SkeletonMessage: () =>
+    React.createElement("skeleton-message", { testID: "message-skeleton" }),
 }));
 
 jest.mock("../src/i18n", () => ({
@@ -55,15 +57,19 @@ const baseMessage: Message = {
 
 describe("MessageList behavior", () => {
   const source = fs.readFileSync("src/components/MessageList.tsx", "utf8");
-  let originalRequestAnimationFrame: typeof global.requestAnimationFrame | undefined;
+  let originalRequestAnimationFrame:
+    | typeof global.requestAnimationFrame
+    | undefined;
   let scrollToEnd: jest.Mock;
 
   beforeEach(() => {
     originalRequestAnimationFrame = global.requestAnimationFrame;
     scrollToEnd = jest.fn();
-    (globalThis as typeof globalThis & {
-      __RN_FLATLIST_SCROLL_TO_END?: jest.Mock;
-    }).__RN_FLATLIST_SCROLL_TO_END = scrollToEnd;
+    (
+      globalThis as typeof globalThis & {
+        __RN_FLATLIST_SCROLL_TO_END?: jest.Mock;
+      }
+    ).__RN_FLATLIST_SCROLL_TO_END = scrollToEnd;
     global.requestAnimationFrame = ((callback: FrameRequestCallback) => {
       callback(0);
       return 0;
@@ -74,20 +80,28 @@ describe("MessageList behavior", () => {
     if (originalRequestAnimationFrame) {
       global.requestAnimationFrame = originalRequestAnimationFrame;
     } else {
-      delete (global as typeof globalThis & {
-        requestAnimationFrame?: typeof global.requestAnimationFrame;
-      }).requestAnimationFrame;
+      delete (
+        global as typeof globalThis & {
+          requestAnimationFrame?: typeof global.requestAnimationFrame;
+        }
+      ).requestAnimationFrame;
     }
-    delete (globalThis as typeof globalThis & {
-      __RN_FLATLIST_SCROLL_TO_END?: jest.Mock;
-    }).__RN_FLATLIST_SCROLL_TO_END;
+    delete (
+      globalThis as typeof globalThis & {
+        __RN_FLATLIST_SCROLL_TO_END?: jest.Mock;
+      }
+    ).__RN_FLATLIST_SCROLL_TO_END;
   });
 
   function render(messages: Message[], bottomInset = 0) {
     let tree!: ReactTestRenderer;
     act(() => {
       tree = createWithSuppressedWarnings(
-        <MessageList messages={messages} bottomInset={bottomInset} testID="messages" />,
+        <MessageList
+          messages={messages}
+          bottomInset={bottomInset}
+          testID="messages"
+        />,
       );
     });
     return tree;
@@ -123,7 +137,9 @@ describe("MessageList behavior", () => {
     const footerProps = footer.props as Record<string, unknown>;
 
     expect(footerProps["testID"]).toBe("message-list-footer");
-    expect(footerProps["style"]).toEqual({ height: LiquidGlassSpacing.xs + 42 });
+    expect(footerProps["style"]).toEqual({
+      height: LiquidGlassSpacing.xs + 42,
+    });
   });
 
   it("cancels scheduled scroll frames and respects reduced motion", () => {

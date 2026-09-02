@@ -9,7 +9,9 @@ jest.mock("expo-secure-store", () => ({
 }));
 
 jest.mock("expo-crypto", () => ({
-  getRandomBytesAsync: jest.fn(async (size: number) => new Uint8Array(size).fill(7)),
+  getRandomBytesAsync: jest.fn(async (size: number) =>
+    new Uint8Array(size).fill(7),
+  ),
   getRandomValues: jest.fn((arr: Uint8Array) => arr.fill(9)),
 }));
 
@@ -31,8 +33,11 @@ describe("encryptionService key handling", () => {
     try {
       jest.resetModules();
       const { encryptString } = require("../src/services/encryptionService");
-      const SecureStoreModule = require("expo-secure-store") as typeof SecureStore;
-      const mockSecureStore = SecureStoreModule as jest.Mocked<typeof SecureStore>;
+      const SecureStoreModule =
+        require("expo-secure-store") as typeof SecureStore;
+      const mockSecureStore = SecureStoreModule as jest.Mocked<
+        typeof SecureStore
+      >;
       mockSecureStore.getItemAsync.mockResolvedValue(null);
 
       await encryptString("hello");
@@ -58,9 +63,14 @@ describe("encryptionService key handling", () => {
         EncryptionKeyCorruptionError,
         encryptString,
       } = require("../src/services/encryptionService");
-      const SecureStoreModule = require("expo-secure-store") as typeof SecureStore;
-      const mockSecureStore = SecureStoreModule as jest.Mocked<typeof SecureStore>;
-      const badKey = new Uint8Array(ENCRYPTION_CONSTANTS.KEY_LENGTH - 1).fill(1);
+      const SecureStoreModule =
+        require("expo-secure-store") as typeof SecureStore;
+      const mockSecureStore = SecureStoreModule as jest.Mocked<
+        typeof SecureStore
+      >;
+      const badKey = new Uint8Array(ENCRYPTION_CONSTANTS.KEY_LENGTH - 1).fill(
+        1,
+      );
       mockSecureStore.getItemAsync.mockResolvedValue(toHex(badKey));
 
       await expect(encryptString("hello")).rejects.toBeInstanceOf(
@@ -85,8 +95,11 @@ describe("encryptionService key handling", () => {
         EncryptionKeyCorruptionError,
         encryptString,
       } = require("../src/services/encryptionService");
-      const SecureStoreModule = require("expo-secure-store") as typeof SecureStore;
-      const mockSecureStore = SecureStoreModule as jest.Mocked<typeof SecureStore>;
+      const SecureStoreModule =
+        require("expo-secure-store") as typeof SecureStore;
+      const mockSecureStore = SecureStoreModule as jest.Mocked<
+        typeof SecureStore
+      >;
       mockSecureStore.getItemAsync.mockResolvedValue("not-hex-key-material");
 
       await expect(encryptString("hello")).rejects.toBeInstanceOf(
@@ -136,7 +149,9 @@ describe("encryptionService key handling", () => {
       const validNonceHex = "00".repeat(ENCRYPTION_CONSTANTS.IV_LENGTH);
 
       await expect(
-        decryptString(`enc:v1:${"00".repeat(ENCRYPTION_CONSTANTS.IV_LENGTH - 1)}:${"00".repeat(16)}`),
+        decryptString(
+          `enc:v1:${"00".repeat(ENCRYPTION_CONSTANTS.IV_LENGTH - 1)}:${"00".repeat(16)}`,
+        ),
       ).rejects.toBeInstanceOf(EncryptionPayloadCorruptionError);
       await expect(
         decryptString(`enc:v1:${validNonceHex}:0000`),
@@ -154,10 +169,15 @@ describe("encryptionService key handling", () => {
     try {
       jest.resetModules();
       const { encryptString } = require("../src/services/encryptionService");
-      const SecureStoreModule = require("expo-secure-store") as typeof SecureStore;
-      const mockSecureStore = SecureStoreModule as jest.Mocked<typeof SecureStore>;
+      const SecureStoreModule =
+        require("expo-secure-store") as typeof SecureStore;
+      const mockSecureStore = SecureStoreModule as jest.Mocked<
+        typeof SecureStore
+      >;
       mockSecureStore.getItemAsync.mockResolvedValue(null);
-      mockSecureStore.setItemAsync.mockRejectedValue(new Error("SecureStore unavailable"));
+      mockSecureStore.setItemAsync.mockRejectedValue(
+        new Error("SecureStore unavailable"),
+      );
 
       await expect(encryptString("hello")).rejects.toThrow(
         "Encryption key could not be persisted",
@@ -178,9 +198,14 @@ describe("encryptionService key handling", () => {
         EncryptionKeyUnavailableError,
         encryptString,
       } = require("../src/services/encryptionService");
-      const SecureStoreModule = require("expo-secure-store") as typeof SecureStore;
-      const mockSecureStore = SecureStoreModule as jest.Mocked<typeof SecureStore>;
-      mockSecureStore.getItemAsync.mockRejectedValue(new Error("SecureStore read failed"));
+      const SecureStoreModule =
+        require("expo-secure-store") as typeof SecureStore;
+      const mockSecureStore = SecureStoreModule as jest.Mocked<
+        typeof SecureStore
+      >;
+      mockSecureStore.getItemAsync.mockRejectedValue(
+        new Error("SecureStore read failed"),
+      );
 
       await expect(encryptString("hello")).rejects.toBeInstanceOf(
         EncryptionKeyUnavailableError,
@@ -213,12 +238,20 @@ describe("encryptionService key handling", () => {
         },
       });
 
-      const { encryptString, decryptIfEncrypted } = require("../src/services/encryptionService");
-      const SecureStoreModule = require("expo-secure-store") as typeof SecureStore;
-      const mockSecureStore = SecureStoreModule as jest.Mocked<typeof SecureStore>;
+      const {
+        encryptString,
+        decryptIfEncrypted,
+      } = require("../src/services/encryptionService");
+      const SecureStoreModule =
+        require("expo-secure-store") as typeof SecureStore;
+      const mockSecureStore = SecureStoreModule as jest.Mocked<
+        typeof SecureStore
+      >;
 
       const encrypted = await encryptString("hello web encryption");
-      await expect(decryptIfEncrypted(encrypted)).resolves.toBe("hello web encryption");
+      await expect(decryptIfEncrypted(encrypted)).resolves.toBe(
+        "hello web encryption",
+      );
 
       expect(mockSecureStore.getItemAsync).not.toHaveBeenCalled();
       expect(mockSecureStore.setItemAsync).not.toHaveBeenCalled();

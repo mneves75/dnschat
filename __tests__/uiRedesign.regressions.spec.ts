@@ -27,9 +27,10 @@ describe("Signal Path UI regressions", () => {
 
   it("reserves native tab-bar clearance for every form-backed screen", () => {
     expect(formSource).toContain("SafeAreaDefaults.bottom.tabBar");
-    expect(formSource).toContain("insets.bottom + SafeAreaDefaults.bottom.tabBar + 24");
-    expect(formSource).toContain("96,");
-    expect(aboutSource).toContain('<Form.List testID="about-screen"');
+    expect(formSource).toMatch(
+      /Math\.max\(\s*insets\.bottom \+ SafeAreaDefaults\.bottom\.tabBar \+ 24,\s*96,?\s*\)/,
+    );
+    expect(aboutSource).toMatch(/<Form\.List\s+testID="about-screen"/);
   });
 
   it("offers a single create action on the empty conversation screen", () => {
@@ -51,8 +52,12 @@ describe("Signal Path UI regressions", () => {
     expect(navigationSource).toContain("color: palette.textOnChroma");
     expect(navigationSource).toContain("color: palette.accentText");
     expect(navigationSource).toContain("minHeight: 48");
-    expect(navigationSource).toContain("borderTopWidth: StyleSheet.hairlineWidth");
-    expect(navigationSource).not.toContain("backgroundColor: palette.accentTint");
+    expect(navigationSource).toContain(
+      "borderTopWidth: StyleSheet.hairlineWidth",
+    );
+    expect(navigationSource).not.toContain(
+      "backgroundColor: palette.accentTint",
+    );
   });
 
   it("keeps onboarding scrollable and limits decorative competition", () => {

@@ -8,19 +8,25 @@ describe("web runtime policy", () => {
   it("passes image tint through the Image prop instead of deprecated web style tintColor", () => {
     const source = readSource("app/(tabs)/_layout.web.tsx");
     expect(source).toContain("tintColor={color}");
-    expect(source).not.toContain("style={{ width: 22, height: 22, tintColor: color }}");
+    expect(source).not.toContain(
+      "style={{ width: 22, height: 22, tintColor: color }}",
+    );
   });
 
   it("renders the new-chat icon inside one accessible primary control", () => {
     const source = readSource("src/navigation/screens/GlassChatList.tsx");
-    const controlStart = source.indexOf('<PressableRipple\n          testID="chat-list-new-chat"');
+    const controlStart = source.indexOf(
+      '<PressableRipple\n          testID="chat-list-new-chat"',
+    );
     const controlEnd = source.indexOf("</PressableRipple>", controlStart);
 
     expect(controlStart).toBeGreaterThan(-1);
     expect(controlEnd).toBeGreaterThan(controlStart);
 
     const control = source.slice(controlStart, controlEnd);
-    expect(control).toContain('<PlusIcon size={18} color={palette.textOnChroma} />');
+    expect(control).toContain(
+      "<PlusIcon size={18} color={palette.textOnChroma} />",
+    );
     expect(control).toContain("{ color: palette.textOnChroma }");
     expect(control).toContain('accessibilityRole="button"');
     expect(control).not.toContain("<Form.Item");
@@ -53,7 +59,9 @@ describe("web runtime policy", () => {
   });
 
   it("does not render empty string guards as raw View text on onboarding web", () => {
-    const source = readSource("src/components/onboarding/screens/DNSMagicScreen.tsx");
+    const source = readSource(
+      "src/components/onboarding/screens/DNSMagicScreen.tsx",
+    );
 
     expect(source).toContain("response.length > 0 &&");
     expect(source).toContain("step.timing !== undefined &&");

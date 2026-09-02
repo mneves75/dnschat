@@ -46,7 +46,9 @@ dependencies {
       const transformed = applyAndroidBuildGradlePolicy(baselineGradle);
 
       expect(transformed).toContain('rootProject.file("keystore.properties")');
-      expect(transformed).toContain('new File(projectRoot, "keystore.properties")');
+      expect(transformed).toContain(
+        'new File(projectRoot, "keystore.properties")',
+      );
       expect(transformed).toContain(
         "keystorePropertiesBaseDir = keystorePropertiesFile.getParentFile()",
       );
@@ -62,7 +64,8 @@ dependencies {
       expect(transformed).toContain("if (hasReleaseSigning) {");
       expect(transformed).toContain("signingConfig signingConfigs.release");
 
-      const releaseBlock = transformed.match(/release\s*\{[\s\S]*?\n\s*\}/)?.[0] ?? "";
+      const releaseBlock =
+        transformed.match(/release\s*\{[\s\S]*?\n\s*\}/)?.[0] ?? "";
       expect(releaseBlock).not.toContain("signingConfig signingConfigs.debug");
     });
 
@@ -131,7 +134,9 @@ class AppDelegate: ExpoAppDelegate {
       const transformed = applyIosAppDelegateScenePolicy(cleanExpoAppDelegate);
 
       expect(transformed).toContain("internal import ExpoModulesCore");
-      expect(transformed).not.toContain("UIWindow(frame: UIScreen.main.bounds)");
+      expect(transformed).not.toContain(
+        "UIWindow(frame: UIScreen.main.bounds)",
+      );
       expect(transformed).toContain("UIWindow(windowScene: windowScene)");
       expect(transformed.match(/class SceneDelegate:/g)).toHaveLength(1);
       expect(applyIosAppDelegateScenePolicy(transformed)).toBe(transformed);
@@ -183,14 +188,18 @@ class MainApplication : Application(), ReactApplication {
       expect(transformed).toContain("ExpoLinkingPackage");
       expect(transformed).toContain("ModuleRegistryAdapter");
       expect(transformed).toContain("DNSNativePackage");
-      expect(transformed).toContain("add(ModuleRegistryAdapter(manualExpoPackages))");
+      expect(transformed).toContain(
+        "add(ModuleRegistryAdapter(manualExpoPackages))",
+      );
       expect(transformed).toContain("add(DNSNativePackage())");
     });
   });
 
   describe("applyIosProjectVersionPolicy", () => {
     it("rewrites MARKETING_VERSION and CURRENT_PROJECT_VERSION from config values", () => {
-      const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "dnschat-plugin-test-"));
+      const tmpDir = fs.mkdtempSync(
+        path.join(os.tmpdir(), "dnschat-plugin-test-"),
+      );
       const projectName = "DNSChat";
       const pbxprojDir = path.join(tmpDir, `${projectName}.xcodeproj`);
       const pbxprojPath = path.join(pbxprojDir, "project.pbxproj");

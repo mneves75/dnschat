@@ -8,8 +8,10 @@ describe("AXe E2E screenshot artifact policy", () => {
 
   it("requires a non-empty screenshot before reporting success", () => {
     expect(source).toContain("function captureRequiredScreenshot");
-    expect(source).toContain('fs.statSync(screenshotPath).size === 0');
-    expect(source).toContain('captureRequiredScreenshot(options, "axe-e2e-success")');
+    expect(source).toContain("fs.statSync(screenshotPath).size === 0");
+    expect(source).toMatch(
+      /captureRequiredScreenshot\(\s*options,\s*"axe-e2e-success",?\s*\)/,
+    );
     expect(source).toContain("AXe E2E screenshot:");
   });
 
@@ -24,7 +26,9 @@ describe("AXe E2E screenshot artifact policy", () => {
     expect(packageJson.scripts).toEqual(expect.objectContaining(axeScripts));
 
     for (const name of Object.keys(axeScripts)) {
-      expect(packageJson.scripts?.[name]).not.toContain("bun scripts/e2e-axe.js");
+      expect(packageJson.scripts?.[name]).not.toContain(
+        "bun scripts/e2e-axe.js",
+      );
     }
   });
 

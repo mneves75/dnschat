@@ -20,7 +20,10 @@ const { isGlassEffectAPIAvailable } = require("expo-glass-effect") as {
 
 const setPlatform = (os: string, version?: string | number) => {
   const osDescriptor = Object.getOwnPropertyDescriptor(Platform, "OS");
-  const versionDescriptor = Object.getOwnPropertyDescriptor(Platform, "Version");
+  const versionDescriptor = Object.getOwnPropertyDescriptor(
+    Platform,
+    "Version",
+  );
 
   Object.defineProperty(Platform, "OS", {
     configurable: true,
@@ -57,7 +60,9 @@ describe("LiquidGlassWrapper helpers", () => {
   it("computes iMessage-inspired fallback styling for dark interactive elements", () => {
     const style = buildFallbackStyle("interactive", true, "capsule");
 
-    expect(style.backgroundColor.replace(/\s/g, "")).toBe("rgba(10,132,255,0.40)");
+    expect(style.backgroundColor.replace(/\s/g, "")).toBe(
+      "rgba(10,132,255,0.40)",
+    );
     expect(style.borderColor.replace(/\s/g, "")).toBe("rgba(10,132,255,0.55)");
     expect(style.borderRadius).toBe(24);
   });

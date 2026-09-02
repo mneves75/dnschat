@@ -3,7 +3,10 @@ import path from "path";
 
 describe("OnboardingProgress reduce motion policy", () => {
   const source = fs.readFileSync(
-    path.resolve(__dirname, "../src/components/onboarding/OnboardingProgress.tsx"),
+    path.resolve(
+      __dirname,
+      "../src/components/onboarding/OnboardingProgress.tsx",
+    ),
     "utf8",
   );
 

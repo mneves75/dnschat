@@ -17,7 +17,7 @@ import path from "path";
 describe("ChatInput Component - John Carmack Quality Standards", () => {
   const chatInputPath = path.resolve(
     __dirname,
-    "../src/components/ChatInput.tsx"
+    "../src/components/ChatInput.tsx",
   );
   const source = fs.readFileSync(chatInputPath, "utf8");
 
@@ -30,7 +30,7 @@ describe("ChatInput Component - John Carmack Quality Standards", () => {
 
     it("calculates CHARACTER_COUNTER_THRESHOLD from constants", () => {
       expect(source).toContain(
-        "MAX_SENDABLE_LENGTH - Math.max(...CHARACTER_ANNOUNCEMENT_REMAINING)"
+        "MAX_SENDABLE_LENGTH - Math.max(...CHARACTER_ANNOUNCEMENT_REMAINING)",
       );
     });
 
@@ -71,7 +71,9 @@ describe("ChatInput Component - John Carmack Quality Standards", () => {
   describe("Reanimated Performance Optimization", () => {
     it("uses useSharedValue for height management", () => {
       expect(source).toContain("useSharedValue");
-      expect(source).toContain("const inputHeight = useSharedValue(heightConstraints.min)");
+      expect(source).toContain(
+        "const inputHeight = useSharedValue(heightConstraints.min)",
+      );
     });
 
     it("uses useSharedValue for button scale animation", () => {
@@ -79,8 +81,12 @@ describe("ChatInput Component - John Carmack Quality Standards", () => {
     });
 
     it("uses useAnimatedStyle for button position (NOT useMemo)", () => {
-      expect(source).toContain("const animatedButtonPosition = useAnimatedStyle");
-      expect(source).toContain("top: (inputHeight.get() - minimumTouchTarget) / 2");
+      expect(source).toContain(
+        "const animatedButtonPosition = useAnimatedStyle",
+      );
+      expect(source).toContain(
+        "top: (inputHeight.get() - minimumTouchTarget) / 2",
+      );
       // Verify NOT using useMemo for this
       expect(source).not.toContain("const buttonPosition = useMemo");
     });
@@ -104,7 +110,9 @@ describe("ChatInput Component - John Carmack Quality Standards", () => {
     });
 
     it("initializes inputHeight with calculated minimum (not 0)", () => {
-      expect(source).toContain("const inputHeight = useSharedValue(heightConstraints.min)");
+      expect(source).toContain(
+        "const inputHeight = useSharedValue(heightConstraints.min)",
+      );
       expect(source).not.toContain("useSharedValue(0)");
     });
   });
@@ -112,23 +120,33 @@ describe("ChatInput Component - John Carmack Quality Standards", () => {
   describe("Height Constraints Calculation", () => {
     it("calculates heightConstraints from typography", () => {
       expect(source).toContain("const heightConstraints = {");
-      expect(source).toContain("const lineHeight = typography.body.lineHeight || 22");
-      expect(source).toContain("const verticalPadding = LiquidGlassSpacing.sm * 2");
+      expect(source).toContain(
+        "const lineHeight = typography.body.lineHeight || 22",
+      );
+      expect(source).toContain(
+        "const verticalPadding = LiquidGlassSpacing.sm * 2",
+      );
     });
 
     it("defines min height ensuring it accommodates touch target", () => {
       // CRITICAL FIX: Min height must be >= touch target to prevent button misalignment
       expect(source).toContain("min: Math.max(naturalMin, touchTarget)");
-      expect(source).toContain("const naturalMin = lineHeight + verticalPadding");
+      expect(source).toContain(
+        "const naturalMin = lineHeight + verticalPadding",
+      );
     });
 
     it("defines max height as 5 lines + padding", () => {
-      expect(source).toContain("max: (lineHeight * 5) + verticalPadding");
+      expect(source).toMatch(/max:\s*lineHeight \* 5 \+ verticalPadding/);
     });
 
     it("calculates heightConstraints before using in useSharedValue", () => {
-      const heightConstraintsIndex = source.indexOf("const heightConstraints = {");
-      const inputHeightIndex = source.indexOf("const inputHeight = useSharedValue");
+      const heightConstraintsIndex = source.indexOf(
+        "const heightConstraints = {",
+      );
+      const inputHeightIndex = source.indexOf(
+        "const inputHeight = useSharedValue",
+      );
       expect(heightConstraintsIndex).toBeLessThan(inputHeightIndex);
     });
   });
@@ -173,7 +191,9 @@ describe("ChatInput Component - John Carmack Quality Standards", () => {
     });
 
     it("has comment explaining keyboard configuration", () => {
-      expect(source).toContain("// Keyboard configuration - enables suggestions and autocorrect");
+      expect(source).toContain(
+        "// Keyboard configuration - enables suggestions and autocorrect",
+      );
     });
   });
 
@@ -183,20 +203,28 @@ describe("ChatInput Component - John Carmack Quality Standards", () => {
     });
 
     it("announces at remaining-character milestones", () => {
-      expect(source).toContain("CHARACTER_ANNOUNCEMENT_REMAINING.has(remaining)");
+      expect(source).toContain(
+        "CHARACTER_ANNOUNCEMENT_REMAINING.has(remaining)",
+      );
       expect(source).toContain("MAX_SENDABLE_LENGTH - message.length");
     });
 
     it("uses i18n for accessibility announcement", () => {
-      expect(source).toContain('t("components.chatInput.charactersRemaining", { count: remaining })');
+      expect(source).toContain(
+        't("components.chatInput.charactersRemaining", { count: remaining })',
+      );
     });
 
     it("has accessibilityLabel on TextInput", () => {
-      expect(source).toContain('accessibilityLabel={t("components.chatInput.accessibilityLabel")}');
+      expect(source).toContain(
+        'accessibilityLabel={t("components.chatInput.accessibilityLabel")}',
+      );
     });
 
     it("has accessibilityHint on TextInput", () => {
-      expect(source).toContain('accessibilityHint={t("components.chatInput.accessibilityHint")}');
+      expect(source).toContain(
+        'accessibilityHint={t("components.chatInput.accessibilityHint")}',
+      );
     });
 
     it("has accessibilityRole on send button", () => {
@@ -212,15 +240,19 @@ describe("ChatInput Component - John Carmack Quality Standards", () => {
     it("resets height when message becomes empty", () => {
       const resetEffect = source.substring(
         source.indexOf("Reset Input Height on Message Clear"),
-        source.indexOf("Reset Input Height on Message Clear") + 500
+        source.indexOf("Reset Input Height on Message Clear") + 500,
       );
       expect(resetEffect).toContain('if (message === "")');
-      expect(resetEffect).toContain("inputHeight.set(withSpring(heightConstraints.min");
+      expect(resetEffect).toContain(
+        "inputHeight.set(withSpring(heightConstraints.min",
+      );
     });
 
     it("has JSDoc comment explaining reset behavior", () => {
       expect(source).toContain("* Reset Input Height on Message Clear");
-      expect(source).toContain("* After sending, collapse input back to minimum height");
+      expect(source).toContain(
+        "* After sending, collapse input back to minimum height",
+      );
     });
   });
 
@@ -234,19 +266,27 @@ describe("ChatInput Component - John Carmack Quality Standards", () => {
 
     it("documents height calculation approach", () => {
       expect(source).toContain("* Height Calculation (Design System Derived)");
-      expect(source).toContain("* Min Height: MUST be >= minimumTouchTarget to accommodate send button");
+      expect(source).toContain(
+        "* Min Height: MUST be >= minimumTouchTarget to accommodate send button",
+      );
       expect(source).toContain("* Max Height: 5 lines + vertical padding");
-      expect(source).toContain("* CRITICAL: Minimum height must be at least minimumTouchTarget");
+      expect(source).toContain(
+        "* CRITICAL: Minimum height must be at least minimumTouchTarget",
+      );
     });
 
     it("documents button position animation", () => {
       expect(source).toContain("* Button Position Animation");
-      expect(source).toContain("* CRITICAL: Cannot use useMemo with shared values");
+      expect(source).toContain(
+        "* CRITICAL: Cannot use useMemo with shared values",
+      );
     });
 
     it("documents send button solid fill (no opacity stack)", () => {
       expect(source).toContain("sendButtonBackground");
-      expect(source).toContain("made the idle control invisible on dark inputs");
+      expect(source).toContain(
+        "made the idle control invisible on dark inputs",
+      );
     });
 
     it("documents handleSend function steps", () => {
@@ -258,13 +298,19 @@ describe("ChatInput Component - John Carmack Quality Standards", () => {
 
     it("documents StyleSheet decisions", () => {
       expect(source).toContain("* StyleSheet");
-      expect(source).toContain("* All values derived from design system constants");
+      expect(source).toContain(
+        "* All values derived from design system constants",
+      );
       expect(source).toContain("* No magic numbers");
     });
 
     it("explains Liquid Glass rendering", () => {
-      expect(source).toContain("// iOS 26 HIG: Glass wrapper for text input (iOS only)");
-      expect(source).toContain("* CRITICAL: Glass wrapper handles background, input must be transparent");
+      expect(source).toContain(
+        "// iOS 26 HIG: Glass wrapper for text input (iOS only)",
+      );
+      expect(source).toContain(
+        "* CRITICAL: Glass wrapper handles background, input must be transparent",
+      );
     });
   });
 
@@ -290,13 +336,15 @@ describe("ChatInput Component - John Carmack Quality Standards", () => {
 
   describe("Integrated Send Button Layout", () => {
     it("uses absolute positioning for button", () => {
-      expect(source).toContain("position: \"absolute\"");
+      expect(source).toContain('position: "absolute"');
       expect(source).toContain("right: BUTTON_SPACING");
     });
 
     it("calculates button top position dynamically", () => {
       expect(source).toContain("animatedButtonPosition");
-      expect(source).toContain("top: (inputHeight.get() - minimumTouchTarget) / 2");
+      expect(source).toContain(
+        "top: (inputHeight.get() - minimumTouchTarget) / 2",
+      );
     });
 
     it("applies animatedButtonPosition to button style", () => {
@@ -305,7 +353,9 @@ describe("ChatInput Component - John Carmack Quality Standards", () => {
     });
 
     it("calculates input padding to accommodate button", () => {
-      expect(source).toContain("paddingRight: minimumTouchTarget + BUTTON_SPACING");
+      expect(source).toContain(
+        "paddingRight: minimumTouchTarget + BUTTON_SPACING",
+      );
     });
   });
 
@@ -313,7 +363,7 @@ describe("ChatInput Component - John Carmack Quality Standards", () => {
     it("provides light haptic on button press", () => {
       const handlePressIn = source.substring(
         source.indexOf("const handlePressIn ="),
-        source.indexOf("const handlePressIn =") + 300
+        source.indexOf("const handlePressIn =") + 300,
       );
       expect(handlePressIn).toContain("HapticFeedback.light()");
     });
@@ -321,7 +371,7 @@ describe("ChatInput Component - John Carmack Quality Standards", () => {
     it("provides medium haptic on send", () => {
       const handleSend = source.substring(
         source.indexOf("const handleSend ="),
-        source.indexOf("const handleSend =") + 500
+        source.indexOf("const handleSend =") + 500,
       );
       expect(handleSend).toContain("HapticFeedback.medium()");
     });
@@ -334,13 +384,19 @@ describe("ChatInput Component - John Carmack Quality Standards", () => {
     });
 
     it("conditionally renders glass input", () => {
-      expect(source).toContain("const useGlassInput = Platform.OS === \"ios\" && supportsLiquidGlass");
+      expect(source).toContain(
+        'const useGlassInput = Platform.OS === "ios" && supportsLiquidGlass',
+      );
       expect(source).toContain("{useGlassInput ? (");
     });
 
     it("provides fallback for non-glass platforms", () => {
-      expect(source).toContain("// Android/iOS < 26: Solid background fallback");
-      expect(source).toContain("isDark ? styles.darkTextInput : styles.lightTextInput");
+      expect(source).toContain(
+        "// Android/iOS < 26: Solid background fallback",
+      );
+      expect(source).toContain(
+        "isDark ? styles.darkTextInput : styles.lightTextInput",
+      );
     });
   });
 

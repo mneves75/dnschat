@@ -69,7 +69,7 @@ class MockUdpSocket {
 
   emit(event: string, ...args: unknown[]): void {
     const handlers = this.handlers.get(event) ?? [];
-    for (const handler of [...handlers]) {
+    for (const handler of handlers) {
       handler(...args);
     }
   }
@@ -111,6 +111,7 @@ const buildTxtResponse = (
 };
 
 let currentSocket: MockUdpSocket;
+let currentAppStateHandler: ((state: string) => void) | null = null;
 let currentBehavior: MockUdpSocketBehavior = {
   emitResponses(query, socket) {
     socket.emit("message", buildTxtResponse(query, "ok"), resolverInfo);
@@ -126,7 +127,12 @@ const loadDNSService = () => {
   jest.doMock("react-native-tcp-socket", () => null);
   jest.doMock("react-native", () => ({
     AppState: {
-      addEventListener: jest.fn(() => ({ remove: jest.fn() })),
+      addEventListener: jest.fn(
+        (_event: string, handler: (state: string) => void) => {
+          currentAppStateHandler = handler;
+          return { remove: jest.fn() };
+        },
+      ),
     },
     Platform: {
       OS: "android",
@@ -139,22 +145,40 @@ const loadDNSService = () => {
   return require("../src/services/dnsService") as typeof import("../src/services/dnsService");
 };
 
-const performUdpQuery = (): Promise<string[]> => {
-  const { DNSService } = loadDNSService();
-  const performNativeUDPQuery: (
+type DNSServiceInternals = {
+  performNativeUDPQuery: (
     name: string,
     server: string,
     port: number,
-  ) => Promise<string[]> = Reflect.get(
-    DNSService,
-    "performNativeUDPQuery",
-  ).bind(DNSService);
-  return performNativeUDPQuery(queryName, resolver, 53);
+    deadline: number,
+  ) => Promise<string[]>;
+  captureLifecycleToken: () => number;
+  handleBackgroundSuspension: <T>(
+    operation: () => Promise<T>,
+    lifecycleToken: number,
+  ) => Promise<T>;
+};
+
+const getInternals = (
+  DNSService: typeof import("../src/services/dnsService").DNSService,
+): DNSServiceInternals => DNSService as unknown as DNSServiceInternals;
+
+const performUdpQuery = (
+  deadline: number = Date.now() + 5_000,
+): Promise<string[]> => {
+  const { DNSService } = loadDNSService();
+  return getInternals(DNSService).performNativeUDPQuery(
+    queryName,
+    resolver,
+    53,
+    deadline,
+  );
 };
 
 describe("DNSService UDP datagram validation", () => {
   afterEach(() => {
     jest.useRealTimers();
+    currentAppStateHandler = null;
     jest.dontMock("react-native-udp");
     jest.dontMock("react-native-tcp-socket");
     jest.dontMock("react-native");
@@ -165,8 +189,16 @@ describe("DNSService UDP datagram validation", () => {
     // Given
     currentBehavior = {
       emitResponses(query, socket) {
-        socket.emit("message", buildTxtResponse(query, "forged", 1), resolverInfo);
-        socket.emit("message", buildTxtResponse(query, "valid response"), resolverInfo);
+        socket.emit(
+          "message",
+          buildTxtResponse(query, "forged", 1),
+          resolverInfo,
+        );
+        socket.emit(
+          "message",
+          buildTxtResponse(query, "valid response"),
+          resolverInfo,
+        );
       },
     };
 
@@ -183,13 +215,22 @@ describe("DNSService UDP datagram validation", () => {
     jest.useFakeTimers();
     currentBehavior = {
       emitResponses(query, socket) {
-        socket.emit("message", buildTxtResponse(query, "forged", 1), resolverInfo);
-        socket.emit("message", buildTxtResponse(query, "also forged", 2), resolverInfo);
+        socket.emit(
+          "message",
+          buildTxtResponse(query, "forged", 1),
+          resolverInfo,
+        );
+        socket.emit(
+          "message",
+          buildTxtResponse(query, "also forged", 2),
+          resolverInfo,
+        );
       },
     };
 
     // When
     const result = performUdpQuery();
+    // oxlint-disable-next-line jest/valid-expect -- Awaited after fake timers advance so the rejection can settle.
     const assertion = expect(result).rejects.toThrow("DNS query timed out");
     await jest.runOnlyPendingTimersAsync();
 
@@ -198,11 +239,110 @@ describe("DNSService UDP datagram validation", () => {
     expect(currentSocket.close).toHaveBeenCalledTimes(1);
   });
 
+  it("closes the UDP socket at the caller's absolute deadline", async () => {
+    // Given
+    jest.useFakeTimers();
+    currentBehavior = {
+      emitResponses() {
+        // Keep the socket open until the deadline fires.
+      },
+    };
+    const { DNSService } = loadDNSService();
+    const deadline = Date.now() + 25;
+
+    // When
+    const result = getInternals(DNSService).performNativeUDPQuery(
+      queryName,
+      resolver,
+      53,
+      deadline,
+    );
+    const outcome = result.then(
+      () => ({ status: "resolved" as const }),
+      (error: unknown) => ({ status: "rejected" as const, error }),
+    );
+    await jest.advanceTimersByTimeAsync(24);
+
+    // Then
+    expect(currentSocket.close).not.toHaveBeenCalled();
+    await jest.advanceTimersByTimeAsync(1);
+    await expect(outcome).resolves.toMatchObject({
+      status: "rejected",
+      error: {
+        message: "DNS query timed out",
+      },
+    });
+    expect(currentSocket.close).toHaveBeenCalledTimes(1);
+  });
+
+  it("cancels an in-flight UDP socket across background then active", async () => {
+    // Given
+    jest.useFakeTimers();
+    let pendingQuery: Uint8Array | null = null;
+    currentBehavior = {
+      emitResponses(query) {
+        pendingQuery = query;
+      },
+    };
+    const { DNSService } = loadDNSService();
+    const internals = getInternals(DNSService);
+    DNSService.initialize();
+    const lifecycleToken = internals.captureLifecycleToken();
+
+    const operation = internals.handleBackgroundSuspension(
+      () =>
+        internals.performNativeUDPQuery(
+          queryName,
+          resolver,
+          53,
+          Date.now() + 5_000,
+        ),
+      lifecycleToken,
+    );
+    const outcome = operation.then(
+      (value) => ({ status: "resolved" as const, value }),
+      (error: unknown) => ({ status: "rejected" as const, error }),
+    );
+    await jest.advanceTimersByTimeAsync(0);
+    expect(pendingQuery).not.toBeNull();
+    if (!currentAppStateHandler || !pendingQuery) {
+      throw new Error("Expected an active UDP query and AppState listener");
+    }
+
+    // When
+    currentAppStateHandler("background");
+    currentAppStateHandler("active");
+    const settledOutcome = await outcome;
+
+    // Then
+    expect(settledOutcome).toMatchObject({
+      status: "rejected",
+      error: {
+        message:
+          "DNS query failed - app was backgrounded during network operation",
+      },
+    });
+    expect(currentSocket.close).toHaveBeenCalledTimes(1);
+
+    currentSocket.emit(
+      "message",
+      buildTxtResponse(pendingQuery, "late response"),
+      resolverInfo,
+    );
+    await Promise.resolve();
+    expect(settledOutcome.status).toBe("rejected");
+    expect(currentSocket.close).toHaveBeenCalledTimes(1);
+  });
+
   it("resolves the first valid datagram and closes the socket once", async () => {
     // Given
     currentBehavior = {
       emitResponses(query, socket) {
-        socket.emit("message", buildTxtResponse(query, "first try"), resolverInfo);
+        socket.emit(
+          "message",
+          buildTxtResponse(query, "first try"),
+          resolverInfo,
+        );
       },
     };
 
@@ -218,7 +358,11 @@ describe("DNSService UDP datagram validation", () => {
     // Given
     currentBehavior = {
       emitResponses(query, socket) {
-        socket.emit("message", buildTxtResponse(query, "bound first"), resolverInfo);
+        socket.emit(
+          "message",
+          buildTxtResponse(query, "bound first"),
+          resolverInfo,
+        );
       },
     };
 

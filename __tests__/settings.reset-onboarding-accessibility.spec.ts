@@ -14,35 +14,40 @@ import path from "path";
 describe("Settings Reset Onboarding Button Accessibility", () => {
   const settingsPath = path.resolve(
     __dirname,
-    "../src/navigation/screens/GlassSettings.tsx"
+    "../src/navigation/screens/GlassSettings.tsx",
   );
   const source = fs.readFileSync(settingsPath, "utf8");
 
   it("Reset Onboarding button uses Form.Item component", () => {
-    // Find the Form.Item that uses handleResetOnboarding
-    const devSectionStart = source.indexOf("sections.development.title");
-    const devSection = source.substring(devSectionStart, devSectionStart + 500);
+    const devSectionStart = source.indexOf("{/* App tour reset */}");
+    const devSectionEnd = source.indexOf("</Form.Section>", devSectionStart);
+    const devSection = source.slice(devSectionStart, devSectionEnd);
     expect(devSection).toContain("Form.Item");
     expect(devSection).toContain("onPress={handleResetOnboarding}");
   });
 
   it("Reset Onboarding button has localized title", () => {
     const devSectionStart = source.indexOf("onPress={handleResetOnboarding}");
-    const buttonSection = source.substring(devSectionStart - 200, devSectionStart + 100);
+    const buttonSection = source.substring(
+      devSectionStart - 200,
+      devSectionStart + 100,
+    );
     expect(buttonSection).toContain("resetOnboardingTitle");
   });
 
   it("Reset Onboarding button has localized subtitle", () => {
     const devSectionStart = source.indexOf("onPress={handleResetOnboarding}");
-    const buttonSection = source.substring(devSectionStart - 200, devSectionStart + 100);
+    const buttonSection = source.substring(
+      devSectionStart - 200,
+      devSectionStart + 100,
+    );
     expect(buttonSection).toContain("resetOnboardingSubtitle");
   });
 
   it("button is in Development section", () => {
-    const devSection = source.substring(
-      source.indexOf("sections.development.title"),
-      source.indexOf("sections.development.title") + 500
-    );
+    const devSectionStart = source.indexOf("{/* App tour reset */}");
+    const devSectionEnd = source.indexOf("</Form.Section>", devSectionStart);
+    const devSection = source.slice(devSectionStart, devSectionEnd);
     expect(devSection).toContain("handleResetOnboarding");
     expect(devSection).toContain("resetOnboardingTitle");
   });

@@ -7,22 +7,13 @@ import fs from "node:fs";
  * spinner loudly instead of silently.
  */
 describe("UI error-path hardening", () => {
-  const logsSource = fs.readFileSync(
-    "src/navigation/screens/Logs.tsx",
-    "utf8",
-  );
+  const logsSource = fs.readFileSync("src/navigation/screens/Logs.tsx", "utf8");
   const chatListSource = fs.readFileSync(
     "src/navigation/screens/GlassChatList.tsx",
     "utf8",
   );
-  const chatSource = fs.readFileSync(
-    "src/navigation/screens/Chat.tsx",
-    "utf8",
-  );
-  const chatRouteSource = fs.readFileSync(
-    "app/chat/[threadId].tsx",
-    "utf8",
-  );
+  const chatSource = fs.readFileSync("src/navigation/screens/Chat.tsx", "utf8");
+  const chatRouteSource = fs.readFileSync("app/chat/[threadId].tsx", "utf8");
 
   it("Logs pull-to-refresh clears the spinner through .finally even on failure", () => {
     const refreshBlock = logsSource.slice(
@@ -32,7 +23,9 @@ describe("UI error-path hardening", () => {
     expect(refreshBlock).toContain(".finally(");
     expect(refreshBlock).toContain("setRefreshing(false)");
     // The old unguarded shape (await then a bare setRefreshing(false)) is gone.
-    expect(refreshBlock).not.toContain("await loadLogs();\n    setRefreshing(false);");
+    expect(refreshBlock).not.toContain(
+      "await loadLogs();\n    setRefreshing(false);",
+    );
     // React Compiler convention: no try/finally block in the refresh path.
     expect(refreshBlock).not.toContain("} finally {");
   });
@@ -46,17 +39,23 @@ describe("UI error-path hardening", () => {
   });
 
   it("GlassChatList guards New Chat against a double fire", () => {
-    expect(chatListSource).toContain("const isCreatingChatRef = React.useRef(false)");
+    expect(chatListSource).toContain(
+      "const isCreatingChatRef = React.useRef(false)",
+    );
     expect(chatListSource).toContain("if (isCreatingChatRef.current) {");
     expect(chatListSource).toContain("isCreatingChatRef.current = true;");
     expect(chatListSource).toContain("isCreatingChatRef.current = false;");
     // The create + navigate is wrapped so the rethrow cannot escape.
     expect(chatListSource).toContain("const newChat = await createChat();");
-    expect(chatListSource).toContain('devWarn("[GlassChatList] Failed to create chat"');
+    expect(chatListSource).toContain(
+      'devWarn("[GlassChatList] Failed to create chat"',
+    );
   });
 
   it("GlassChatList mount load never locks the skeleton on rejection", () => {
-    expect(chatListSource).toContain('devWarn("[GlassChatList] Failed to load chats"');
+    expect(chatListSource).toContain(
+      'devWarn("[GlassChatList] Failed to load chats"',
+    );
     // hasLoadedOnce is set from .finally, not only from the old success-only .then.
     expect(chatListSource).not.toContain("loadChats().then(");
     const mountBlock = chatListSource.slice(
@@ -70,9 +69,12 @@ describe("UI error-path hardening", () => {
 
   it("GlassChatList re-arms dismissed errors on a new action", () => {
     // Both the create and refresh entry points reset the dismissed-error latch.
-    const dismissedResets = chatListSource.match(/setDismissedError\(null\)/g) ?? [];
+    const dismissedResets =
+      chatListSource.match(/setDismissedError\(null\)/g) ?? [];
     expect(dismissedResets.length).toBeGreaterThanOrEqual(2);
-    expect(chatListSource).toContain('devWarn("[GlassChatList] Failed to refresh chats"');
+    expect(chatListSource).toContain(
+      'devWarn("[GlassChatList] Failed to refresh chats"',
+    );
   });
 
   it("GlassChatList keeps low-value aggregate statistics out of the primary path", () => {
@@ -105,7 +107,9 @@ describe("UI error-path hardening", () => {
       "createAttemptsRef.current < MAX_AUTO_CREATE_ATTEMPTS",
     );
     expect(chatRouteSource).toContain("const MAX_AUTO_CREATE_ATTEMPTS = 3");
-    expect(createBlock).toContain('devWarn("[ChatRoute] Failed to create chat"');
+    expect(createBlock).toContain(
+      'devWarn("[ChatRoute] Failed to create chat"',
+    );
   });
 
   it("chat route clears the auto-create guards after a successful creation", () => {

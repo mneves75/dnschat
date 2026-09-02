@@ -70,7 +70,9 @@ describe("StorageService Corruption Handling", () => {
       const backupPayload = String(backupCall?.[1]);
       expect(backupPayload).toContain("enc:v1:");
       expect(backupPayload).toContain('"payloadWasEncrypted":false');
-      expect(mockAsyncStorage.removeItem).toHaveBeenCalledWith("@chat_dns_chats");
+      expect(mockAsyncStorage.removeItem).toHaveBeenCalledWith(
+        "@chat_dns_chats",
+      );
     });
 
     it("throws StorageCorruptionError on invalid JSON when recovery disabled", async () => {
@@ -90,7 +92,9 @@ describe("StorageService Corruption Handling", () => {
 
       const result = await StorageService.loadChats();
       expect(result).toEqual([]);
-      expect(mockAsyncStorage.removeItem).toHaveBeenCalledWith("@chat_dns_chats");
+      expect(mockAsyncStorage.removeItem).toHaveBeenCalledWith(
+        "@chat_dns_chats",
+      );
     });
 
     it("recovers when data is a string", async () => {
@@ -98,7 +102,9 @@ describe("StorageService Corruption Handling", () => {
 
       const result = await StorageService.loadChats();
       expect(result).toEqual([]);
-      expect(mockAsyncStorage.removeItem).toHaveBeenCalledWith("@chat_dns_chats");
+      expect(mockAsyncStorage.removeItem).toHaveBeenCalledWith(
+        "@chat_dns_chats",
+      );
     });
 
     it("recovers when data is a number", async () => {
@@ -106,7 +112,9 @@ describe("StorageService Corruption Handling", () => {
 
       const result = await StorageService.loadChats();
       expect(result).toEqual([]);
-      expect(mockAsyncStorage.removeItem).toHaveBeenCalledWith("@chat_dns_chats");
+      expect(mockAsyncStorage.removeItem).toHaveBeenCalledWith(
+        "@chat_dns_chats",
+      );
     });
 
     it("returns parsed chats when data is valid", async () => {
@@ -136,7 +144,9 @@ describe("StorageService Corruption Handling", () => {
       const decryptSpy = jest
         .spyOn(encryptionService, "decryptIfEncrypted")
         .mockRejectedValueOnce(
-          new EncryptionKeyCorruptionError("Stored encryption key is malformed"),
+          new EncryptionKeyCorruptionError(
+            "Stored encryption key is malformed",
+          ),
         );
 
       try {
@@ -152,30 +162,31 @@ describe("StorageService Corruption Handling", () => {
     });
 
     it("preserves a valid encrypted payload when SecureStore read is temporarily unavailable", async () => {
-      const encryptedPayload = await encryptString(JSON.stringify([{
-        id: "chat-1",
-        title: "Test Chat",
-        createdAt: "2025-01-01T00:00:00.000Z",
-        updatedAt: "2025-01-01T00:00:00.000Z",
-        messages: [],
-      }]));
+      const encryptedPayload = await encryptString(
+        JSON.stringify([
+          {
+            id: "chat-1",
+            title: "Test Chat",
+            createdAt: "2025-01-01T00:00:00.000Z",
+            updatedAt: "2025-01-01T00:00:00.000Z",
+            messages: [],
+          },
+        ]),
+      );
       const originalWorkerId = process.env["JEST_WORKER_ID"];
       delete process.env["JEST_WORKER_ID"];
       try {
         jest.resetModules();
         const {
           EncryptionKeyUnavailableError: FreshEncryptionKeyUnavailableError,
-        } = require(
-          "../src/services/encryptionService"
-        ) as typeof import("../src/services/encryptionService");
-        const {
-          StorageService: FreshStorageService,
-        } = require(
-          "../src/services/storageService"
-        ) as typeof import("../src/services/storageService");
-        const freshAsyncStorage = require(
-          "@react-native-async-storage/async-storage",
-        ) as jest.Mocked<typeof AsyncStorage>;
+        } =
+          require("../src/services/encryptionService") as typeof import("../src/services/encryptionService");
+        const { StorageService: FreshStorageService } =
+          require("../src/services/storageService") as typeof import("../src/services/storageService");
+        const freshAsyncStorage =
+          require("@react-native-async-storage/async-storage") as jest.Mocked<
+            typeof AsyncStorage
+          >;
         const secureStore = require("expo-secure-store") as {
           getItemAsync: jest.Mock;
           setItemAsync: jest.Mock;
@@ -287,7 +298,9 @@ describe("StorageService Corruption Handling", () => {
           ],
         },
       ];
-      mockAsyncStorage.getItem.mockResolvedValue(JSON.stringify(chatsWithDates));
+      mockAsyncStorage.getItem.mockResolvedValue(
+        JSON.stringify(chatsWithDates),
+      );
 
       const result = await StorageService.loadChats();
 
@@ -326,7 +339,9 @@ describe("StorageService Corruption Handling", () => {
           ],
         },
       ];
-      mockAsyncStorage.getItem.mockResolvedValue(JSON.stringify(interruptedChat));
+      mockAsyncStorage.getItem.mockResolvedValue(
+        JSON.stringify(interruptedChat),
+      );
 
       const result = await StorageService.loadChats();
       const messages = result[0]?.messages;
@@ -343,21 +358,26 @@ describe("StorageService Corruption Handling", () => {
       ["title", 42, /invalid title/],
       ["createdAt", undefined, /missing or invalid timestamps/],
       ["updatedAt", undefined, /missing or invalid timestamps/],
-    ])("rejects a chat with invalid %s in strict mode", async (field, value, expectedError) => {
-      const invalidChat: Record<string, unknown> = {
-        id: "chat-1",
-        title: "Test",
-        createdAt: "2025-06-15T12:00:00.000Z",
-        updatedAt: "2025-06-15T13:00:00.000Z",
-        messages: [],
-      };
-      invalidChat[field] = value;
-      mockAsyncStorage.getItem.mockResolvedValue(JSON.stringify([invalidChat]));
+    ])(
+      "rejects a chat with invalid %s in strict mode",
+      async (field, value, expectedError) => {
+        const invalidChat: Record<string, unknown> = {
+          id: "chat-1",
+          title: "Test",
+          createdAt: "2025-06-15T12:00:00.000Z",
+          updatedAt: "2025-06-15T13:00:00.000Z",
+          messages: [],
+        };
+        invalidChat[field] = value;
+        mockAsyncStorage.getItem.mockResolvedValue(
+          JSON.stringify([invalidChat]),
+        );
 
-      await expect(
-        StorageService.loadChats({ recoverOnCorruption: false }),
-      ).rejects.toThrow(expectedError);
-    });
+        await expect(
+          StorageService.loadChats({ recoverOnCorruption: false }),
+        ).rejects.toThrow(expectedError);
+      },
+    );
 
     it("quarantines one invalid chat while preserving valid chats by default", async () => {
       const validChatA = {
@@ -392,9 +412,12 @@ describe("StorageService Corruption Handling", () => {
       const backupCall = mockAsyncStorage.setItem.mock.calls.find(
         ([key]) => key === "@chat_dns_chats_backup",
       );
-      const backup = JSON.parse(String(backupCall?.[1])) as Record<string, unknown>;
-      expect(typeof backup['payload']).toBe("string");
-      await expect(decryptIfEncrypted(String(backup['payload']))).resolves.toBe(
+      const backup = JSON.parse(String(backupCall?.[1])) as Record<
+        string,
+        unknown
+      >;
+      expect(typeof backup["payload"]).toBe("string");
+      await expect(decryptIfEncrypted(String(backup["payload"]))).resolves.toBe(
         originalPayload,
       );
       // The legacy plaintext payload is migrated through the serialized queue:
@@ -404,28 +427,43 @@ describe("StorageService Corruption Handling", () => {
         ([key]) => key === "@chat_dns_chats",
       );
       const persisted = await decryptIfEncrypted(String(persistedCall?.[1]));
-      const persistedChats = JSON.parse(persisted) as Array<Record<string, unknown>>;
-      expect(persistedChats.map((chat) => chat['id'])).toEqual(["chat-a", "chat-b"]);
-      expect(mockAsyncStorage.removeItem).not.toHaveBeenCalledWith("@chat_dns_chats");
+      const persistedChats = JSON.parse(persisted) as Array<
+        Record<string, unknown>
+      >;
+      expect(persistedChats.map((chat) => chat["id"])).toEqual([
+        "chat-a",
+        "chat-b",
+      ]);
+      expect(mockAsyncStorage.removeItem).not.toHaveBeenCalledWith(
+        "@chat_dns_chats",
+      );
     });
 
     it("leaves the original payload intact when the quarantine backup write fails", async () => {
-      const originalPayload = JSON.stringify([{
-        id: "chat-corrupted",
-        title: "Corrupted Chat",
-        messages: [],
-      }]);
+      const originalPayload = JSON.stringify([
+        {
+          id: "chat-corrupted",
+          title: "Corrupted Chat",
+          messages: [],
+        },
+      ]);
       mockAsyncStorage.getItem.mockResolvedValue(originalPayload);
-      mockAsyncStorage.setItem.mockRejectedValueOnce(new Error("Backup write failed"));
+      mockAsyncStorage.setItem.mockRejectedValueOnce(
+        new Error("Backup write failed"),
+      );
 
-      await expect(StorageService.loadChats()).rejects.toThrow("Backup write failed");
+      await expect(StorageService.loadChats()).rejects.toThrow(
+        "Backup write failed",
+      );
 
       expect(mockAsyncStorage.setItem).toHaveBeenCalledTimes(1);
       expect(mockAsyncStorage.setItem).toHaveBeenCalledWith(
         "@chat_dns_chats_backup",
         expect.any(String),
       );
-      expect(mockAsyncStorage.removeItem).not.toHaveBeenCalledWith("@chat_dns_chats");
+      expect(mockAsyncStorage.removeItem).not.toHaveBeenCalledWith(
+        "@chat_dns_chats",
+      );
     });
 
     it("leaves an unparseable primary payload intact when backup encryption fails", async () => {
@@ -444,7 +482,9 @@ describe("StorageService Corruption Handling", () => {
       }
 
       expect(mockAsyncStorage.setItem).not.toHaveBeenCalled();
-      expect(mockAsyncStorage.removeItem).not.toHaveBeenCalledWith("@chat_dns_chats");
+      expect(mockAsyncStorage.removeItem).not.toHaveBeenCalledWith(
+        "@chat_dns_chats",
+      );
     });
 
     it("leaves an unparseable primary payload intact when the backup write exceeds quota", async () => {
@@ -462,31 +502,47 @@ describe("StorageService Corruption Handling", () => {
         "@chat_dns_chats_backup",
         expect.stringContaining('"payload"'),
       );
-      expect(mockAsyncStorage.removeItem).not.toHaveBeenCalledWith("@chat_dns_chats");
+      expect(mockAsyncStorage.removeItem).not.toHaveBeenCalledWith(
+        "@chat_dns_chats",
+      );
     });
 
     it("normalizes a legacy blank title without discarding valid history", async () => {
-      mockAsyncStorage.getItem.mockResolvedValue(JSON.stringify([{
-        id: "chat-1",
-        title: "   ",
-        createdAt: "2025-06-15T12:00:00.000Z",
-        updatedAt: "2025-06-15T13:00:00.000Z",
-        messages: [],
-      }]));
+      mockAsyncStorage.getItem.mockResolvedValue(
+        JSON.stringify([
+          {
+            id: "chat-1",
+            title: "   ",
+            createdAt: "2025-06-15T12:00:00.000Z",
+            updatedAt: "2025-06-15T13:00:00.000Z",
+            messages: [],
+          },
+        ]),
+      );
 
-      const chats = await StorageService.loadChats({ recoverOnCorruption: false });
+      const chats = await StorageService.loadChats({
+        recoverOnCorruption: false,
+      });
       expect(chats[0]?.title).toBe("New Chat");
-      expect(mockAsyncStorage.removeItem).not.toHaveBeenCalledWith("@chat_dns_chats");
+      expect(mockAsyncStorage.removeItem).not.toHaveBeenCalledWith(
+        "@chat_dns_chats",
+      );
     });
 
     it("rejects a message with a missing timestamp in strict mode", async () => {
-      mockAsyncStorage.getItem.mockResolvedValue(JSON.stringify([{
-        id: "chat-1",
-        title: "Test",
-        createdAt: "2025-06-15T12:00:00.000Z",
-        updatedAt: "2025-06-15T13:00:00.000Z",
-        messages: [{ id: "msg-1", role: "user", content: "Hello", status: "sent" }],
-      }]));
+      mockAsyncStorage.getItem.mockResolvedValue(
+        JSON.stringify([
+          {
+            id: "chat-1",
+            title: "Test",
+            createdAt: "2025-06-15T12:00:00.000Z",
+            updatedAt: "2025-06-15T13:00:00.000Z",
+            messages: [
+              { id: "msg-1", role: "user", content: "Hello", status: "sent" },
+            ],
+          },
+        ]),
+      );
 
       await expect(
         StorageService.loadChats({ recoverOnCorruption: false }),
@@ -494,19 +550,25 @@ describe("StorageService Corruption Handling", () => {
     });
 
     it("rejects an unknown message status in strict mode", async () => {
-      mockAsyncStorage.getItem.mockResolvedValue(JSON.stringify([{
-        id: "chat-1",
-        title: "Test",
-        createdAt: "2025-06-15T12:00:00.000Z",
-        updatedAt: "2025-06-15T13:00:00.000Z",
-        messages: [{
-          id: "msg-1",
-          role: "user",
-          content: "Hello",
-          timestamp: "2025-06-15T12:30:00.000Z",
-          status: "unknown",
-        }],
-      }]));
+      mockAsyncStorage.getItem.mockResolvedValue(
+        JSON.stringify([
+          {
+            id: "chat-1",
+            title: "Test",
+            createdAt: "2025-06-15T12:00:00.000Z",
+            updatedAt: "2025-06-15T13:00:00.000Z",
+            messages: [
+              {
+                id: "msg-1",
+                role: "user",
+                content: "Hello",
+                timestamp: "2025-06-15T12:30:00.000Z",
+                status: "unknown",
+              },
+            ],
+          },
+        ]),
+      );
 
       await expect(
         StorageService.loadChats({ recoverOnCorruption: false }),
@@ -514,34 +576,36 @@ describe("StorageService Corruption Handling", () => {
     });
 
     it("quarantines one bad message while preserving its chat and valid messages", async () => {
-      const originalPayload = JSON.stringify([{
-        id: "chat-1",
-        title: "Test",
-        createdAt: "2025-06-15T12:00:00.000Z",
-        updatedAt: "2025-06-15T13:00:00.000Z",
-        messages: [
-          {
-            id: "msg-good-a",
-            role: "user",
-            content: "Hello",
-            timestamp: "2025-06-15T12:30:00.000Z",
-            status: "sent",
-          },
-          {
-            id: "msg-corrupted",
-            role: "assistant",
-            content: "Missing timestamp",
-            status: "sent",
-          },
-          {
-            id: "msg-good-b",
-            role: "assistant",
-            content: "World",
-            timestamp: "2025-06-15T12:31:00.000Z",
-            status: "sent",
-          },
-        ],
-      }]);
+      const originalPayload = JSON.stringify([
+        {
+          id: "chat-1",
+          title: "Test",
+          createdAt: "2025-06-15T12:00:00.000Z",
+          updatedAt: "2025-06-15T13:00:00.000Z",
+          messages: [
+            {
+              id: "msg-good-a",
+              role: "user",
+              content: "Hello",
+              timestamp: "2025-06-15T12:30:00.000Z",
+              status: "sent",
+            },
+            {
+              id: "msg-corrupted",
+              role: "assistant",
+              content: "Missing timestamp",
+              status: "sent",
+            },
+            {
+              id: "msg-good-b",
+              role: "assistant",
+              content: "World",
+              timestamp: "2025-06-15T12:31:00.000Z",
+              status: "sent",
+            },
+          ],
+        },
+      ]);
       mockAsyncStorage.getItem.mockResolvedValue(originalPayload);
 
       const chats = await StorageService.loadChats();
@@ -557,15 +621,19 @@ describe("StorageService Corruption Handling", () => {
         ([key]) => key === "@chat_dns_chats",
       );
       const persisted = await decryptIfEncrypted(String(persistedCall?.[1]));
-      const persistedChats = JSON.parse(persisted) as Array<Record<string, unknown>>;
-      const persistedMessages = persistedChats[0]?.['messages'];
+      const persistedChats = JSON.parse(persisted) as Array<
+        Record<string, unknown>
+      >;
+      const persistedMessages = persistedChats[0]?.["messages"];
       expect(Array.isArray(persistedMessages)).toBe(true);
       expect(persistedMessages).toHaveLength(2);
       expect(mockAsyncStorage.setItem).toHaveBeenCalledWith(
         "@chat_dns_chats_backup",
         expect.any(String),
       );
-      expect(mockAsyncStorage.removeItem).not.toHaveBeenCalledWith("@chat_dns_chats");
+      expect(mockAsyncStorage.removeItem).not.toHaveBeenCalledWith(
+        "@chat_dns_chats",
+      );
     });
 
     it("treats a null date as corruption instead of silently coercing to the 1970 epoch", async () => {
@@ -652,7 +720,9 @@ describe("StorageService Corruption Handling", () => {
       const chats = await StorageService.loadChats();
 
       expect(chats.map(({ id }) => id)).toEqual(["chat-a", "chat-b"]);
-      expect(mockAsyncStorage.removeItem).not.toHaveBeenCalledWith("@chat_dns_chats");
+      expect(mockAsyncStorage.removeItem).not.toHaveBeenCalledWith(
+        "@chat_dns_chats",
+      );
       const backupCall = mockAsyncStorage.setItem.mock.calls.find(
         ([key]) => key === "@chat_dns_chats_backup",
       );
@@ -660,48 +730,52 @@ describe("StorageService Corruption Handling", () => {
     });
 
     it("quarantines a message with a present-but-invalid timestamp string", async () => {
-      const originalPayload = JSON.stringify([{
-        id: "chat-1",
-        title: "Test",
-        createdAt: "2025-06-15T12:00:00.000Z",
-        updatedAt: "2025-06-15T13:00:00.000Z",
-        messages: [
-          {
-            id: "msg-good",
-            role: "user",
-            content: "Hello",
-            timestamp: "2025-06-15T12:30:00.000Z",
-            status: "sent",
-          },
-          {
-            id: "msg-bad-date",
-            role: "assistant",
-            content: "Corrupt timestamp",
-            timestamp: "definitely-not-a-date",
-            status: "sent",
-          },
-        ],
-      }]);
+      const originalPayload = JSON.stringify([
+        {
+          id: "chat-1",
+          title: "Test",
+          createdAt: "2025-06-15T12:00:00.000Z",
+          updatedAt: "2025-06-15T13:00:00.000Z",
+          messages: [
+            {
+              id: "msg-good",
+              role: "user",
+              content: "Hello",
+              timestamp: "2025-06-15T12:30:00.000Z",
+              status: "sent",
+            },
+            {
+              id: "msg-bad-date",
+              role: "assistant",
+              content: "Corrupt timestamp",
+              timestamp: "definitely-not-a-date",
+              status: "sent",
+            },
+          ],
+        },
+      ]);
       mockAsyncStorage.getItem.mockResolvedValue(originalPayload);
 
       const chats = await StorageService.loadChats();
 
       expect(chats).toHaveLength(1);
       expect(chats[0]?.messages.map(({ id }) => id)).toEqual(["msg-good"]);
-      expect(mockAsyncStorage.removeItem).not.toHaveBeenCalledWith("@chat_dns_chats");
+      expect(mockAsyncStorage.removeItem).not.toHaveBeenCalledWith(
+        "@chat_dns_chats",
+      );
     });
 
     it("preserves error cause when recovery disabled", async () => {
       mockAsyncStorage.getItem.mockResolvedValue("{truncated json");
 
-      try {
-        await StorageService.loadChats({ recoverOnCorruption: false });
-        fail("Should have thrown");
-      } catch (error) {
-        expect(error).toBeInstanceOf(StorageCorruptionError);
-        expect((error as StorageCorruptionError).cause).toBeDefined();
-        expect((error as StorageCorruptionError).cause?.message).toContain("JSON");
-      }
+      await expect(
+        StorageService.loadChats({ recoverOnCorruption: false }),
+      ).rejects.toMatchObject({
+        name: "StorageCorruptionError",
+        cause: expect.objectContaining({
+          message: expect.stringContaining("JSON"),
+        }),
+      } satisfies Partial<StorageCorruptionError>);
     });
 
     it("propagates AsyncStorage errors without masking them", async () => {
@@ -710,9 +784,7 @@ describe("StorageService Corruption Handling", () => {
 
       await expect(
         StorageService.loadChats({ recoverOnCorruption: false }),
-      ).rejects.toThrow(
-        "AsyncStorage quota exceeded",
-      );
+      ).rejects.toThrow("AsyncStorage quota exceeded");
     });
   });
 
@@ -738,8 +810,12 @@ describe("StorageService Corruption Handling", () => {
     it("removes primary chat storage and corrupted chat backups", async () => {
       await StorageService.clearAllChats();
 
-      expect(mockAsyncStorage.removeItem).toHaveBeenCalledWith("@chat_dns_chats");
-      expect(mockAsyncStorage.removeItem).toHaveBeenCalledWith("@chat_dns_chats_backup");
+      expect(mockAsyncStorage.removeItem).toHaveBeenCalledWith(
+        "@chat_dns_chats",
+      );
+      expect(mockAsyncStorage.removeItem).toHaveBeenCalledWith(
+        "@chat_dns_chats_backup",
+      );
     });
   });
 });

@@ -1,6 +1,9 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 
-const { getOutOfSyncPodsFromVersions, getPodVersionFromLockfileText } = require("../scripts/iosPodsSync");
+const {
+  getOutOfSyncPodsFromVersions,
+  getPodVersionFromLockfileText,
+} = require("../scripts/iosPodsSync");
 
 describe("iosPodsSync", () => {
   describe("getPodVersionFromLockfileText", () => {
@@ -16,8 +19,12 @@ DEPENDENCIES:
   - expo-dev-launcher (from \`../node_modules/expo-dev-launcher\`)
 `;
 
-      expect(getPodVersionFromLockfileText(lockText, "expo-dev-launcher")).toBe("6.0.18");
-      expect(getPodVersionFromLockfileText(lockText, "EXConstants")).toBe("18.0.10");
+      expect(getPodVersionFromLockfileText(lockText, "expo-dev-launcher")).toBe(
+        "6.0.18",
+      );
+      expect(getPodVersionFromLockfileText(lockText, "EXConstants")).toBe(
+        "18.0.10",
+      );
     });
 
     it("returns null when the pod entry is missing", () => {
@@ -26,7 +33,9 @@ PODS:
   - ExpoModulesCore (3.0.26):
     - React-Core
 `;
-      expect(getPodVersionFromLockfileText(lockText, "expo-dev-launcher")).toBeNull();
+      expect(
+        getPodVersionFromLockfileText(lockText, "expo-dev-launcher"),
+      ).toBeNull();
     });
 
     it("parses leaf pods (no trailing colon) and ignores DEPENDENCIES lines", () => {
@@ -37,7 +46,9 @@ PODS:
 DEPENDENCIES:
   - FBLazyVector (from \`../node_modules/react-native/Libraries/FBLazyVector\`)
 `;
-      expect(getPodVersionFromLockfileText(lockText, "FBLazyVector")).toBe("0.86.2");
+      expect(getPodVersionFromLockfileText(lockText, "FBLazyVector")).toBe(
+        "0.86.2",
+      );
     });
   });
 
@@ -90,7 +101,9 @@ PODS:
       const outOfSync = getOutOfSyncPodsFromVersions({
         lockfileText: lockText,
         installedVersions,
-        targets: [{ packageName: "expo-dev-launcher", podName: "expo-dev-launcher" }],
+        targets: [
+          { packageName: "expo-dev-launcher", podName: "expo-dev-launcher" },
+        ],
       });
 
       expect(outOfSync).toEqual([
@@ -122,12 +135,13 @@ PODS:
         installedVersions,
       });
 
-      expect(outOfSync.map((entry: { podName: string }) => entry.podName)).toEqual([
-        "FBLazyVector",
-        "RNWorklets",
-      ]);
       expect(
-        outOfSync.every((entry: { reason: string }) => entry.reason === "VERSION_MISMATCH")
+        outOfSync.map((entry: { podName: string }) => entry.podName),
+      ).toEqual(["FBLazyVector", "RNWorklets"]);
+      expect(
+        outOfSync.every(
+          (entry: { reason: string }) => entry.reason === "VERSION_MISMATCH",
+        ),
       ).toBe(true);
     });
   });

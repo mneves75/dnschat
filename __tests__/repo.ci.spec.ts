@@ -12,7 +12,7 @@ function findMutableActionRefs(content: string): string[] {
 }
 
 describe("repo policy: CI configuration exists and matches spec", () => {
-  it("has CI workflow that runs lint + unit tests on PRs and main", () => {
+  it("has CI workflow that runs format, lint, and unit tests on PRs and main", () => {
     const workflow = ".github/workflows/ci.yml";
     expect(fs.existsSync(workflow)).toBe(true);
     const content = read(workflow);
@@ -30,8 +30,17 @@ describe("repo policy: CI configuration exists and matches spec", () => {
     expect(content).toContain("pnpm run verify:typed-routes");
     expect(content).toContain("pnpm run verify:dnsresolver-sync");
     expect(content).toContain("pnpm run verify:react-compiler");
+    expect(content).toContain("pnpm run fmt:check");
     expect(content).toContain("pnpm run lint");
     expect(content).toContain("pnpm run test");
+  });
+
+  it("installs a pre-commit hook with the same formatting gate", () => {
+    const content = read("scripts/install-git-hooks.js");
+
+    expect(content).toContain("pnpm run fmt:check");
+    expect(content).toContain("pnpm run lint");
+    expect(content).toContain("pnpm run test --bail");
   });
 
   it("runs dns-native module tests in CI (release verification invariant)", () => {
@@ -53,9 +62,7 @@ describe("repo policy: CI configuration exists and matches spec", () => {
       "actions/checkout@v6",
     ]);
     expect(
-      findMutableActionRefs(
-        `uses: actions/checkout@${"a".repeat(40)} # v6`,
-      ),
+      findMutableActionRefs(`uses: actions/checkout@${"a".repeat(40)} # v6`),
     ).toEqual([]);
 
     const offenders = fs

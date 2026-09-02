@@ -12,7 +12,8 @@ function isPrivateIPv4(hostname: string): boolean {
   const parts = hostname.split(".");
   if (parts.length !== 4) return false;
   const octets = parts.map((p) => Number(p));
-  if (octets.some((n) => !Number.isInteger(n) || n < 0 || n > 255)) return false;
+  if (octets.some((n) => !Number.isInteger(n) || n < 0 || n > 255))
+    return false;
 
   const a = octets[0];
   const b = octets[1];

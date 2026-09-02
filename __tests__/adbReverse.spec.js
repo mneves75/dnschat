@@ -20,10 +20,7 @@ describe("adbReverse utilities", () => {
         "",
       ].join("\n");
 
-      expect(parseAdbDevices(output)).toEqual([
-        "emulator-5554",
-        "FAKE123456",
-      ]);
+      expect(parseAdbDevices(output)).toEqual(["emulator-5554", "FAKE123456"]);
     });
   });
 

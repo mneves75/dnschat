@@ -4,6 +4,7 @@ import { execSync } from "node:child_process";
 type PackageJson = {
   dependencies?: Record<string, string>;
   devDependencies?: Record<string, string>;
+  engines?: Record<string, string>;
   overrides?: Record<string, string>;
 };
 
@@ -15,7 +16,9 @@ function readPackageJson(path = "package.json"): PackageJson {
  * pnpm ignores npm-style `overrides` in package.json; the security floors live in
  * pnpm-workspace.yaml. Parsed with a narrow reader so the repo keeps no YAML dep.
  */
-function readPnpmOverrides(path = "pnpm-workspace.yaml"): Record<string, string> {
+function readPnpmOverrides(
+  path = "pnpm-workspace.yaml",
+): Record<string, string> {
   const overrides: Record<string, string> = {};
   let inOverrides = false;
 
@@ -45,7 +48,9 @@ function parseVersion(version: string): [number, number, number] {
 
 function satisfiesFloor(installed: string, floor: string): boolean {
   const [iMajor, iMinor, iPatch] = parseVersion(installed);
-  const [fMajor, fMinor, fPatch] = parseVersion(floor.replace(/^[>=^~\s]+/, ""));
+  const [fMajor, fMinor, fPatch] = parseVersion(
+    floor.replace(/^[>=^~\s]+/, ""),
+  );
   if (iMajor !== fMajor) return iMajor > fMajor;
   if (iMinor !== fMinor) return iMinor > fMinor;
   return iPatch >= fPatch;
@@ -57,12 +62,18 @@ function trackedSourceFiles(): string[] {
     .map((line) => line.trim())
     .filter(
       (path) =>
-        (path.endsWith(".ts") || path.endsWith(".tsx")) &&
-        fs.existsSync(path),
+        (path.endsWith(".ts") || path.endsWith(".tsx")) && fs.existsSync(path),
     );
 }
 
 describe("repo policy: dependency hygiene", () => {
+  it("pins development to supported Node LTS lines", () => {
+    const pkg = readPackageJson();
+
+    expect(pkg.engines?.["node"]).toBe(">=22.13.0 <26.0.0");
+    expect(fs.readFileSync(".node-version", "utf8").trim()).toBe("24");
+  });
+
   it("does not include heavyweight unused tooling dependencies", () => {
     const pkg = readPackageJson();
     const allDeps = new Set([
@@ -85,9 +96,14 @@ describe("repo policy: dependency hygiene", () => {
   });
 
   it("does not use dynamic React Native versions in native Gradle modules", () => {
-    const gradle = fs.readFileSync("modules/dns-native/android/build.gradle", "utf8");
+    const gradle = fs.readFileSync(
+      "modules/dns-native/android/build.gradle",
+      "utf8",
+    );
 
-    expect(gradle).toContain('implementation "com.facebook.react:react-android"');
+    expect(gradle).toContain(
+      'implementation "com.facebook.react:react-android"',
+    );
     expect(gradle).not.toContain("react-native:+");
   });
 
@@ -110,13 +126,19 @@ describe("repo policy: dependency hygiene", () => {
     for (const [name, floor] of Object.entries(overrides)) {
       let installed: string;
       try {
-        installed = (require(`${name}/package.json`) as { version: string }).version;
+        installed = (require(`${name}/package.json`) as { version: string })
+          .version;
       } catch {
         // Not every floored package is present in every install graph.
         continue;
       }
 
-      expect({ name, installed, floor, ok: satisfiesFloor(installed, floor) }).toEqual({
+      expect({
+        name,
+        installed,
+        floor,
+        ok: satisfiesFloor(installed, floor),
+      }).toEqual({
         name,
         installed,
         floor,
@@ -149,15 +171,15 @@ describe("repo policy: dependency hygiene", () => {
       : "";
     const expoImageImports = trackedSourceFiles().filter((file) => {
       const content = fs.readFileSync(file, "utf8");
-      return /from\s+["']expo-image["']|require\(["']expo-image["']\)/.test(content);
+      return /from\s+["']expo-image["']|require\(["']expo-image["']\)/.test(
+        content,
+      );
     });
 
-    if (expoImageImports.length === 0) {
-      expect(pkg.dependencies?.["expo-image"]).toBeUndefined();
-      return;
-    }
-
-    expect(pkg.dependencies?.["expo-image"]).toBeDefined();
-    expect(podfileLock).toContain("ExpoImage");
+    const importsExpoImage = expoImageImports.length > 0;
+    expect(typeof pkg.dependencies?.["expo-image"] === "string").toBe(
+      importsExpoImage,
+    );
+    expect(!importsExpoImage || podfileLock.includes("ExpoImage")).toBe(true);
   });
 });

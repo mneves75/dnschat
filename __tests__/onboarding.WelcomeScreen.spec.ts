@@ -19,7 +19,7 @@ import path from "path";
 describe("WelcomeScreen - iOS 26 HIG Compliance", () => {
   const filePath = path.resolve(
     __dirname,
-    "../src/components/onboarding/screens/WelcomeScreen.tsx"
+    "../src/components/onboarding/screens/WelcomeScreen.tsx",
   );
   let sourceCode: string;
 
@@ -30,19 +30,19 @@ describe("WelcomeScreen - iOS 26 HIG Compliance", () => {
   describe("iOS 26 HIG: Required Imports", () => {
     it("imports useImessagePalette for semantic colors", () => {
       expect(sourceCode).toContain(
-        'import { useImessagePalette } from "../../../ui/theme/imessagePalette"'
+        'import { useImessagePalette } from "../../../ui/theme/imessagePalette"',
       );
     });
 
     it("imports useTypography for SF Pro typography system", () => {
       expect(sourceCode).toContain(
-        'import { useTypography } from "../../../ui/hooks/useTypography"'
+        'import { useTypography } from "../../../ui/hooks/useTypography"',
       );
     });
 
     it("imports LiquidGlassSpacing for 8px grid system", () => {
       expect(sourceCode).toContain(
-        'import { LiquidGlassSpacing } from "../../../ui/theme/liquidGlassSpacing"'
+        'import { LiquidGlassSpacing } from "../../../ui/theme/liquidGlassSpacing"',
       );
     });
 
@@ -189,15 +189,15 @@ describe("WelcomeScreen - iOS 26 HIG Compliance", () => {
 
   describe("No Emoji Requirement", () => {
     it("does not contain rocket emoji", () => {
-      expect(sourceCode).not.toContain(String.fromCodePoint(0x1F680));
+      expect(sourceCode).not.toContain(String.fromCodePoint(0x1f680));
     });
 
     it("does not contain lock emoji", () => {
-      expect(sourceCode).not.toContain(String.fromCodePoint(0x1F512));
+      expect(sourceCode).not.toContain(String.fromCodePoint(0x1f512));
     });
 
     it("does not contain lightning emoji", () => {
-      expect(sourceCode).not.toContain(String.fromCodePoint(0x26A1));
+      expect(sourceCode).not.toContain(String.fromCodePoint(0x26a1));
     });
 
     it("contains zero emoji characters in code", () => {
@@ -207,9 +207,15 @@ describe("WelcomeScreen - iOS 26 HIG Compliance", () => {
     });
 
     it("uses text labels instead of emojis", () => {
-      expect(sourceCode).toContain('t("screen.onboarding.welcome.features.revolutionary.label")');
-      expect(sourceCode).toContain('t("screen.onboarding.welcome.features.private.label")');
-      expect(sourceCode).toContain('t("screen.onboarding.welcome.features.fast.label")');
+      expect(sourceCode).toContain(
+        't("screen.onboarding.welcome.features.revolutionary.label")',
+      );
+      expect(sourceCode).toContain(
+        't("screen.onboarding.welcome.features.private.label")',
+      );
+      expect(sourceCode).toContain(
+        't("screen.onboarding.welcome.features.fast.label")',
+      );
     });
   });
 

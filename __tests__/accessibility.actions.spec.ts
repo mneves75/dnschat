@@ -2,23 +2,46 @@ import fs from "node:fs";
 
 describe("accessibility action coverage", () => {
   it("exposes settings switches, message actions, chat list actions, and log summaries to assistive tech", () => {
-    const settings = fs.readFileSync("src/navigation/screens/GlassSettings.tsx", "utf8");
-    const messageBubble = fs.readFileSync("src/components/MessageBubble.tsx", "utf8");
-    const chatList = fs.readFileSync("src/navigation/screens/GlassChatList.tsx", "utf8");
+    const settings = fs.readFileSync(
+      "src/navigation/screens/GlassSettings.tsx",
+      "utf8",
+    );
+    const messageBubble = fs.readFileSync(
+      "src/components/MessageBubble.tsx",
+      "utf8",
+    );
+    const chatList = fs.readFileSync(
+      "src/navigation/screens/GlassChatList.tsx",
+      "utf8",
+    );
     const logs = fs.readFileSync("src/navigation/screens/Logs.tsx", "utf8");
 
     expect(settings).toContain('testID="settings-mock-dns-switch"');
-    expect(settings).toContain('accessibilityLabel={t("screen.glassSettings.sections.dnsConfig.mockTitle")}');
+    expect(settings).toMatch(
+      /accessibilityLabel={t\(\s*"screen\.glassSettings\.sections\.dnsConfig\.mockTitle",?\s*\)}/,
+    );
     expect(settings).toContain('testID="settings-haptics-switch"');
-    expect(settings).toContain('accessibilityLabel={t("screen.settings.sections.appBehavior.enableHaptics.label")}');
+    expect(settings).toMatch(
+      /accessibilityLabel={t\(\s*"screen\.settings\.sections\.appBehavior\.enableHaptics\.label",?\s*\)}/,
+    );
 
-    expect(messageBubble).toContain("accessibilityActions: messageAccessibilityActions");
-    expect(messageBubble).toContain("onAccessibilityAction: isLoading ? undefined : handleAccessibilityAction");
+    expect(messageBubble).toContain(
+      "accessibilityActions: messageAccessibilityActions",
+    );
+    expect(messageBubble).toMatch(
+      /onAccessibilityAction:\s*isLoading\s*\?\s*undefined\s*:\s*handleAccessibilityAction/,
+    );
     expect(messageBubble).toContain("accessible={!exposesInteractiveMarkdown}");
 
-    expect(chatList).toContain("accessibilityActions={chatAccessibilityActions}");
-    expect(chatList).toContain("onAccessibilityAction={handleAccessibilityAction}");
-    expect(chatList).toContain('t("screen.glassChatList.itemAccessibilityHint")');
+    expect(chatList).toContain(
+      "accessibilityActions={chatAccessibilityActions}",
+    );
+    expect(chatList).toContain(
+      "onAccessibilityAction={handleAccessibilityAction}",
+    );
+    expect(chatList).toContain(
+      't("screen.glassChatList.itemAccessibilityHint")',
+    );
     expect(chatList).toContain("ShareService.shareConversation");
     expect(chatList).not.toContain('devLog("Sharing chat"');
 

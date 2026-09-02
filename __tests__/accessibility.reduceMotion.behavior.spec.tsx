@@ -66,11 +66,15 @@ describe("AccessibilityContext reduce-motion behavior", () => {
   beforeEach(() => {
     currentSettings = baseSettings;
     jest.clearAllMocks();
-    (AccessibilityInfo.isReduceMotionEnabled as unknown) = jest.fn(async () => false);
+    (AccessibilityInfo.isReduceMotionEnabled as unknown) = jest.fn(
+      async () => false,
+    );
   });
 
   it("honors the initial OS reduce-motion setting before children render", async () => {
-    (AccessibilityInfo.isReduceMotionEnabled as unknown) = jest.fn(async () => true);
+    (AccessibilityInfo.isReduceMotionEnabled as unknown) = jest.fn(
+      async () => true,
+    );
 
     const values = await renderProbe();
 

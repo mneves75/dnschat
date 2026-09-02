@@ -10,17 +10,17 @@ const selectionAsync = createAsyncMock();
 const isAvailableAsync = jest.fn().mockResolvedValue(true);
 
 const ImpactFeedbackStyle = {
-  Light: 'light',
-  Medium: 'medium',
-  Heavy: 'heavy',
-  Rigid: 'rigid',
-  Soft: 'soft',
+  Light: "light",
+  Medium: "medium",
+  Heavy: "heavy",
+  Rigid: "rigid",
+  Soft: "soft",
 };
 
 const NotificationFeedbackType = {
-  Success: 'success',
-  Warning: 'warning',
-  Error: 'error',
+  Success: "success",
+  Warning: "warning",
+  Error: "error",
 };
 
 const reset = () => {

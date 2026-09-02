@@ -29,13 +29,15 @@ jest.mock("../src/context/AccessibilityContext", () => ({
     highContrastEnabled: false,
   }),
   useHighContrast: () => ({ isHighContrast: false }),
-  useMotionReduction: () => ({ shouldReduceMotion: false, animationDuration: undefined }),
+  useMotionReduction: () => ({
+    shouldReduceMotion: false,
+    animationDuration: undefined,
+  }),
   useScreenReader: () => ({ isEnabled: false, announce: () => undefined }),
   useFontSize: () => ({ scale: 1.0 }),
 }));
 
 jest.mock("../src/components/glass", () => {
-  const React = require("react");
   const { TouchableOpacity } = require("react-native");
   const Placeholder = ({ children }: { children?: React.ReactNode }) => (
     <>{children}</>
@@ -47,7 +49,12 @@ jest.mock("../src/components/glass", () => {
     onPress?: () => void;
   };
   type ChildrenOnlyProps = { children?: React.ReactNode };
-  const FormItem = ({ children, rightContent, testID, onPress }: FormItemProps) => (
+  const FormItem = ({
+    children,
+    rightContent,
+    testID,
+    onPress,
+  }: FormItemProps) => (
     <TouchableOpacity testID={testID} onPress={onPress}>
       {children}
       {rightContent}
@@ -66,7 +73,11 @@ jest.mock("../src/components/glass", () => {
     },
     GlassBottomSheet: Placeholder,
     GlassActionSheet: Placeholder,
-    useGlassBottomSheet: () => ({ show: jest.fn(), hide: jest.fn(), visible: false }),
+    useGlassBottomSheet: () => ({
+      show: jest.fn(),
+      hide: jest.fn(),
+      visible: false,
+    }),
     LiquidGlassWrapper: Placeholder,
   };
 });
@@ -108,7 +119,11 @@ jest.mock("../src/i18n", () => ({
 }));
 
 jest.mock("expo-router", () => ({
-  useNavigation: () => ({ goBack: jest.fn(), setOptions: jest.fn(), navigate: jest.fn() }),
+  useNavigation: () => ({
+    goBack: jest.fn(),
+    setOptions: jest.fn(),
+    navigate: jest.fn(),
+  }),
   useTheme: () => ({
     colors: {
       text: "#000",
@@ -119,7 +134,9 @@ jest.mock("expo-router", () => ({
   }),
 }));
 
-const { GlassSettings: Settings } = require("../src/navigation/screens/GlassSettings");
+const {
+  GlassSettings: Settings,
+} = require("../src/navigation/screens/GlassSettings");
 
 type SettingsValue = {
   dnsServer: string;
@@ -162,7 +179,12 @@ const baseSettingsValue: SettingsValue = {
     { locale: "pt-BR", label: "Português" },
   ],
   updateLocale: jest.fn().mockResolvedValue(undefined),
-  accessibility: { fontSize: "medium", highContrast: false, reduceMotion: false, screenReader: false },
+  accessibility: {
+    fontSize: "medium",
+    highContrast: false,
+    reduceMotion: false,
+    screenReader: false,
+  },
   updateAccessibility: jest.fn(),
   loading: false,
 };
@@ -191,7 +213,9 @@ describe("Settings language picker", () => {
     }
     const renderedTree = tree as ReactTestRenderer;
     const option = renderedTree.root.find(
-      (node) => node.props?.["testID"] === "language-option-en-US" && node.type === TouchableOpacity,
+      (node) =>
+        node.props?.["testID"] === "language-option-en-US" &&
+        node.type === TouchableOpacity,
     );
 
     await act(async () => {
@@ -214,7 +238,9 @@ describe("Settings language picker", () => {
     }
     const renderedTree = tree as ReactTestRenderer;
     const option = renderedTree.root.find(
-      (node) => node.props?.["testID"] === "language-option-system" && node.type === TouchableOpacity,
+      (node) =>
+        node.props?.["testID"] === "language-option-system" &&
+        node.type === TouchableOpacity,
     );
 
     await act(async () => {

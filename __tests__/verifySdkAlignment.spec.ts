@@ -11,7 +11,9 @@ const {
   validateDependencyAlignment,
   validateInstalledDependencyAlignment,
 } = require("../scripts/verify-sdk-alignment.js") as {
-  buildLockfileFromPnpmLock: (raw: string) => { packages: Record<string, [string]> };
+  buildLockfileFromPnpmLock: (raw: string) => {
+    packages: Record<string, [string]>;
+  };
   parsePnpmLockResolvedVersions: (raw: string) => Record<string, string>;
   parseResolvedVersionFromLockEntry: (entry: unknown) => string | null;
   satisfiesRange: (resolvedVersion: string, declaredRange: string) => boolean;
@@ -81,7 +83,9 @@ describe("scripts/verify-sdk-alignment.js", () => {
 
   it("parses a resolved version from adapted lock package entries", () => {
     expect(parseResolvedVersionFromLockEntry(["expo@55.0.2"])).toBe("55.0.2");
-    expect(parseResolvedVersionFromLockEntry(["@react-native-menu/menu@2.0.0"])).toBe("2.0.0");
+    expect(
+      parseResolvedVersionFromLockEntry(["@react-native-menu/menu@2.0.0"]),
+    ).toBe("2.0.0");
     expect(parseResolvedVersionFromLockEntry(["expo@invalid"])).toBeNull();
   });
 
@@ -116,12 +120,22 @@ describe("scripts/verify-sdk-alignment.js", () => {
   });
 
   it("reports node_modules mismatch against lockfile", () => {
-    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "verify-sdk-alignment-"));
-    const depPackageJsonPath = path.join(tempDir, "node_modules", "expo", "package.json");
+    const tempDir = fs.mkdtempSync(
+      path.join(os.tmpdir(), "verify-sdk-alignment-"),
+    );
+    const depPackageJsonPath = path.join(
+      tempDir,
+      "node_modules",
+      "expo",
+      "package.json",
+    );
 
     try {
       fs.mkdirSync(path.dirname(depPackageJsonPath), { recursive: true });
-      fs.writeFileSync(depPackageJsonPath, JSON.stringify({ name: "expo", version: "54.0.30" }));
+      fs.writeFileSync(
+        depPackageJsonPath,
+        JSON.stringify({ name: "expo", version: "54.0.30" }),
+      );
 
       const issues = validateInstalledDependencyAlignment({
         projectRoot: tempDir,
@@ -138,20 +152,34 @@ describe("scripts/verify-sdk-alignment.js", () => {
         dependencyNames: ["expo"],
       });
 
-      expect(issues).toContain("[INSTALLED_MISMATCH] expo: declarado=^55.0.0 instalado=54.0.30");
-      expect(issues).toContain("[LOCK_INSTALLED_MISMATCH] expo: lock=55.0.2 instalado=54.0.30");
+      expect(issues).toContain(
+        "[INSTALLED_MISMATCH] expo: declarado=^55.0.0 instalado=54.0.30",
+      );
+      expect(issues).toContain(
+        "[LOCK_INSTALLED_MISMATCH] expo: lock=55.0.2 instalado=54.0.30",
+      );
     } finally {
       fs.rmSync(tempDir, { recursive: true, force: true });
     }
   });
 
   it("passes when installed dependency matches lockfile and range", () => {
-    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "verify-sdk-alignment-"));
-    const depPackageJsonPath = path.join(tempDir, "node_modules", "expo", "package.json");
+    const tempDir = fs.mkdtempSync(
+      path.join(os.tmpdir(), "verify-sdk-alignment-"),
+    );
+    const depPackageJsonPath = path.join(
+      tempDir,
+      "node_modules",
+      "expo",
+      "package.json",
+    );
 
     try {
       fs.mkdirSync(path.dirname(depPackageJsonPath), { recursive: true });
-      fs.writeFileSync(depPackageJsonPath, JSON.stringify({ name: "expo", version: "55.0.2" }));
+      fs.writeFileSync(
+        depPackageJsonPath,
+        JSON.stringify({ name: "expo", version: "55.0.2" }),
+      );
 
       const issues = validateInstalledDependencyAlignment({
         projectRoot: tempDir,

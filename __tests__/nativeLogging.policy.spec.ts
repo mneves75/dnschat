@@ -14,7 +14,9 @@ function loggedPayloadExpressions(source: string): string[] {
     .split("\n")
     .map((line) => line.trim())
     .filter((line) => /(Log\.[dwe]\(|NSLog\()/.test(line))
-    .filter((line) => /\b(queryName|message|txtRecords|response|label)\b/.test(line));
+    .filter((line) =>
+      /\b(queryName|message|txtRecords|response|label)\b/.test(line),
+    );
 }
 
 describe("native runtime logging policy", () => {

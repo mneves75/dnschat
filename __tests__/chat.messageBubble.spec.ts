@@ -18,7 +18,7 @@ import path from "path";
 describe("MessageBubble - iOS 26 HIG Compliance", () => {
   const messageBubblePath = path.resolve(
     __dirname,
-    "../src/components/MessageBubble.tsx"
+    "../src/components/MessageBubble.tsx",
   );
   let sourceCode: string;
 
@@ -103,14 +103,14 @@ describe("MessageBubble - iOS 26 HIG Compliance", () => {
     it("applies smaller corner radius (6) for tail side", () => {
       const tailSection = sourceCode.substring(
         sourceCode.indexOf("iMessage-style tail"),
-        sourceCode.indexOf("iMessage-style tail") + 300
+        sourceCode.indexOf("iMessage-style tail") + 300,
       );
       expect(tailSection).toContain(": 6");
     });
 
     it("uses messageCornerRadius for non-tail corners", () => {
       expect(sourceCode).toContain("messageCornerRadius");
-      expect(sourceCode).toContain("getCornerRadius('message')");
+      expect(sourceCode).toMatch(/getCornerRadius\(["']message["']\)/);
     });
   });
 
@@ -164,7 +164,7 @@ describe("MessageBubble - iOS 26 HIG Compliance", () => {
 
     it("exports MessageBubble component", () => {
       expect(sourceCode).toMatch(
-        /export\s+(const\s+MessageBubble\s*=|{\s*MessageBubbleComponent\s+as\s+MessageBubble\s*})/
+        /export\s+(const\s+MessageBubble\s*=|{\s*MessageBubbleComponent\s+as\s+MessageBubble\s*})/,
       );
     });
   });
@@ -206,12 +206,14 @@ describe("MessageBubble - iOS 26 HIG Compliance", () => {
 
     it("prevents reintroduction of overlay layers", () => {
       expect(sourceCode).not.toContain("glassLayers");
-      expect(sourceCode).not.toContain("pointerEvents=\"none\"");
+      expect(sourceCode).not.toContain('pointerEvents="none"');
     });
 
     it("prevents reintroduction of useGlassRendering logic", () => {
       expect(sourceCode).not.toContain("useGlassRendering");
-      expect(sourceCode).not.toContain("Platform.OS === \"ios\" && supportsLiquidGlass");
+      expect(sourceCode).not.toContain(
+        'Platform.OS === "ios" && supportsLiquidGlass',
+      );
     });
   });
 });

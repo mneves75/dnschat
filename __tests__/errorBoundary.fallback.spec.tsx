@@ -32,13 +32,17 @@ describe("ErrorBoundary - custom fallback", () => {
     let tree!: ReactTestRenderer;
     act(() => {
       tree = createWithSuppressedWarnings(
-        <ErrorBoundary fallback={() => <Text testID="custom-fallback">nope</Text>}>
+        <ErrorBoundary
+          fallback={() => <Text testID="custom-fallback">nope</Text>}
+        >
           <Bomb />
         </ErrorBoundary>,
       );
     });
 
-    expect(tree.root.findAllByProps({ testID: "custom-fallback" }).length).toBeGreaterThan(0);
+    expect(
+      tree.root.findAllByProps({ testID: "custom-fallback" }).length,
+    ).toBeGreaterThan(0);
     // The throwing child must not be mounted while the fallback is shown.
     expect(tree.root.findAllByProps({ testID: "recovered" })).toHaveLength(0);
   });
@@ -58,7 +62,9 @@ describe("ErrorBoundary - custom fallback", () => {
         </ErrorBoundary>,
       );
     });
-    expect(tree.root.findAllByProps({ testID: "custom-fallback" }).length).toBeGreaterThan(0);
+    expect(
+      tree.root.findAllByProps({ testID: "custom-fallback" }).length,
+    ).toBeGreaterThan(0);
 
     // Stop throwing, then retry: the boundary should re-mount the recovered child.
     shouldThrow = false;
@@ -66,8 +72,12 @@ describe("ErrorBoundary - custom fallback", () => {
       capturedRetry();
     });
 
-    expect(tree.root.findAllByProps({ testID: "recovered" }).length).toBeGreaterThan(0);
-    expect(tree.root.findAllByProps({ testID: "custom-fallback" })).toHaveLength(0);
+    expect(
+      tree.root.findAllByProps({ testID: "recovered" }).length,
+    ).toBeGreaterThan(0);
+    expect(
+      tree.root.findAllByProps({ testID: "custom-fallback" }),
+    ).toHaveLength(0);
   });
 
   it("invokes onError when a child throws", () => {

@@ -6,13 +6,16 @@ describe("MessageContent render policy", () => {
     "src/components/SafeMarkdown.tsx",
     "utf8",
   );
-  const bubbleSource = fs.readFileSync("src/components/MessageBubble.tsx", "utf8");
+  const bubbleSource = fs.readFileSync(
+    "src/components/MessageBubble.tsx",
+    "utf8",
+  );
 
   it("covers loading, markdown, plain text, and localized error indicator branches", () => {
     expect(source).toContain('message.status === "sending"');
     expect(source).toContain("<SafeMarkdown");
     expect(safeMarkdownSource).toContain("<Markdown");
-    expect(safeMarkdownSource).toContain('image: () => null');
+    expect(safeMarkdownSource).toContain("image: () => null");
     expect(safeMarkdownSource).toContain("onLinkPress={handleLinkPress}");
     expect(safeMarkdownSource).toContain("appAlert(");
     expect(safeMarkdownSource).toContain(
@@ -25,15 +28,17 @@ describe("MessageContent render policy", () => {
     expect(source).toContain("hasError ? (");
     expect(source).toContain("{displayContent}");
     expect(source).toContain('t("screen.chat.accessibility.errorIndicator")');
-    expect(source).toContain("maxFontSizeMultiplier={FIXED_GLYPH_MAX_FONT_SCALE}");
+    expect(source).toContain(
+      "maxFontSizeMultiplier={FIXED_GLYPH_MAX_FONT_SCALE}",
+    );
     expect(source).not.toContain("Error indicator");
   });
 
   it("uses an AA-contrast dark label on the destructive error badge", () => {
     // White-on-red fails WCAG AA; textOnChroma (dark) restores contrast and
     // matches the Toast error variant.
-    expect(source).toContain(
-      "backgroundColor: palette.destructive, color: palette.textOnChroma",
+    expect(source).toMatch(
+      /backgroundColor:\s*palette\.destructive,\s*color:\s*palette\.textOnChroma/,
     );
     expect(source).not.toContain("color: palette.bubbleTextOnBlue }]}");
   });
@@ -42,6 +47,6 @@ describe("MessageContent render policy", () => {
     expect(bubbleSource).toContain("MARKDOWN_LINK_PATTERN");
     expect(bubbleSource).toContain("exposesInteractiveMarkdown");
     expect(bubbleSource).toContain("accessible={!exposesInteractiveMarkdown}");
-    expect(bubbleSource).toContain('(?:https:\\/\\/|mailto:)');
+    expect(bubbleSource).toContain("(?:https:\\/\\/|mailto:)");
   });
 });

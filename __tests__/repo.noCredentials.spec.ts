@@ -11,7 +11,7 @@ function collectNonEmptyStringValues(
   value: Json,
   keyNames: Set<string>,
   prefix: string,
-  hits: string[]
+  hits: string[],
 ): void {
   if (value === null) return;
 
@@ -63,21 +63,18 @@ describe("repo policy: no release credentials", () => {
 
   it("does not commit iOS code signing team identifiers", () => {
     const pbxproj = "ios/DNSChat.xcodeproj/project.pbxproj";
-    if (!fs.existsSync(pbxproj)) return;
-
-    const content = fs.readFileSync(pbxproj, "utf8");
+    const content = fs.existsSync(pbxproj)
+      ? fs.readFileSync(pbxproj, "utf8")
+      : "";
     // `DEVELOPMENT_TEAM = "<TEAMID>";` makes the repo non-portable for others.
     // Keep it empty (`""`) and let developers configure signing locally.
     const matches = content.matchAll(/DEVELOPMENT_TEAM\s*=\s*([^;]+);/g);
 
-    for (const match of matches) {
-      const configured = (match[1] ?? "").trim();
-      if (configured !== '""') {
-        throw new Error(
-          "ios/DNSChat.xcodeproj/project.pbxproj contains DEVELOPMENT_TEAM entries; keep it empty for public repos",
-        );
-      }
-    }
+    const configuredTeams = [...matches]
+      .map((match) => (match[1] ?? "").trim())
+      .filter((configured) => configured !== '""');
+
+    expect(configuredTeams).toEqual([]);
   });
 
   it("keeps iOS export compliance aligned for standard app encryption", () => {

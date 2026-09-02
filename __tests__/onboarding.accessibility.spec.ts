@@ -19,31 +19,49 @@ describe("Onboarding Accessibility Tests", () => {
   describe("OnboardingNavigation accessibility", () => {
     const navigationPath = path.resolve(
       __dirname,
-      "../src/components/onboarding/OnboardingNavigation.tsx"
+      "../src/components/onboarding/OnboardingNavigation.tsx",
     );
     const source = fs.readFileSync(navigationPath, "utf8");
 
     it("Skip button has accessibilityRole, Label, and Hint", () => {
       expect(source).toContain('accessibilityRole="button"');
-      expect(source).toContain('accessibilityLabel={t("screen.onboarding.navigation.skip")}');
-      expect(source).toContain('accessibilityHint={t("screen.onboarding.navigation.skipHint")}');
+      expect(source).toContain(
+        'accessibilityLabel={t("screen.onboarding.navigation.skip")}',
+      );
+      expect(source).toContain(
+        'accessibilityHint={t("screen.onboarding.navigation.skipHint")}',
+      );
     });
 
     it("Back button has accessibilityRole, Label, and Hint", () => {
-      expect(source).toContain('accessibilityLabel={t("screen.onboarding.navigation.back")}');
-      expect(source).toContain('accessibilityHint={t("screen.onboarding.navigation.backHint")}');
+      expect(source).toContain(
+        'accessibilityLabel={t("screen.onboarding.navigation.back")}',
+      );
+      expect(source).toContain(
+        'accessibilityHint={t("screen.onboarding.navigation.backHint")}',
+      );
     });
 
     it("Next/Get Started button has dynamic accessibilityLabel", () => {
       expect(source).toContain('t("screen.onboarding.navigation.getStarted")');
-      expect(source).toContain('t("screen.onboarding.navigation.completeHint")');
-      expect(source).toContain('t("screen.onboarding.navigation.continueHint")');
-      expect(source).toContain("accessibilityState={{ disabled: isSubmitting, busy: isSubmitting }}");
+      expect(source).toContain(
+        't("screen.onboarding.navigation.completeHint")',
+      );
+      expect(source).toContain(
+        't("screen.onboarding.navigation.continueHint")',
+      );
+      expect(source).toContain(
+        "accessibilityState={{ disabled: isSubmitting, busy: isSubmitting }}",
+      );
     });
 
     it("has iOS HIG comments explaining button purposes", () => {
-      expect(source).toContain("iOS HIG: Skip button allows users to bypass onboarding tutorial");
-      expect(source).toContain("iOS HIG: Back button for navigation between onboarding steps");
+      expect(source).toContain(
+        "iOS HIG: Skip button allows users to bypass onboarding tutorial",
+      );
+      expect(source).toContain(
+        "iOS HIG: Back button for navigation between onboarding steps",
+      );
       expect(source).toContain("iOS HIG: Primary action button");
     });
   });
@@ -51,15 +69,21 @@ describe("Onboarding Accessibility Tests", () => {
   describe("FirstChatScreen accessibility", () => {
     const chatPath = path.resolve(
       __dirname,
-      "../src/components/onboarding/screens/FirstChatScreen.tsx"
+      "../src/components/onboarding/screens/FirstChatScreen.tsx",
     );
     const source = fs.readFileSync(chatPath, "utf8");
 
     it("Send button has accessibilityRole, dynamic Label, and Hint", () => {
       expect(source).toContain('accessibilityRole="button"');
-      expect(source).toContain('screen.onboarding.firstChat.accessibility.sendingLabel');
-      expect(source).toContain('screen.onboarding.firstChat.accessibility.sendLabel');
-      expect(source).toContain('screen.onboarding.firstChat.accessibility.sendHint');
+      expect(source).toContain(
+        "screen.onboarding.firstChat.accessibility.sendingLabel",
+      );
+      expect(source).toContain(
+        "screen.onboarding.firstChat.accessibility.sendLabel",
+      );
+      expect(source).toContain(
+        "screen.onboarding.firstChat.accessibility.sendHint",
+      );
     });
 
     it("Send button has accessibilityState with disabled and busy", () => {
@@ -70,81 +94,113 @@ describe("Onboarding Accessibility Tests", () => {
 
     it("Suggestion buttons have accessibilityRole, Label, and Hint", () => {
       expect(source).toContain('accessibilityRole="button"');
-      expect(source).toContain("screen.onboarding.firstChat.accessibility.suggestionLabel");
-      expect(source).toContain("screen.onboarding.firstChat.accessibility.suggestionHint");
+      expect(source).toContain(
+        "screen.onboarding.firstChat.accessibility.suggestionLabel",
+      );
+      expect(source).toContain(
+        "screen.onboarding.firstChat.accessibility.suggestionHint",
+      );
     });
 
     it("TextInput has accessibilityLabel and Hint", () => {
-      expect(source).toContain("screen.onboarding.firstChat.accessibility.inputLabel");
+      expect(source).toContain(
+        "screen.onboarding.firstChat.accessibility.inputLabel",
+      );
       expect(source).toContain("MESSAGE_CONSTANTS.MAX_MESSAGE_LENGTH");
-      expect(source).toContain("screen.onboarding.firstChat.accessibility.inputHint");
+      expect(source).toContain(
+        "screen.onboarding.firstChat.accessibility.inputHint",
+      );
     });
 
     it("has iOS HIG comment for message suggestions", () => {
-      expect(source).toContain("iOS HIG: Show message suggestions before first chat attempt");
+      expect(source).toContain(
+        "iOS HIG: Show message suggestions before first chat attempt",
+      );
     });
   });
 
   describe("DNSMagicScreen accessibility", () => {
     const dnsPath = path.resolve(
       __dirname,
-      "../src/components/onboarding/screens/DNSMagicScreen.tsx"
+      "../src/components/onboarding/screens/DNSMagicScreen.tsx",
     );
     const source = fs.readFileSync(dnsPath, "utf8");
 
     it("Start Demo button has accessibilityRole, dynamic Label, and Hint", () => {
       expect(source).toContain('accessibilityRole="button"');
-      expect(source).toContain("screen.onboarding.dnsMagic.accessibility.runningLabel");
-      expect(source).toContain("screen.onboarding.dnsMagic.accessibility.idleLabel");
-      expect(source).toContain("screen.onboarding.dnsMagic.accessibility.demoHint");
+      expect(source).toContain(
+        "screen.onboarding.dnsMagic.accessibility.runningLabel",
+      );
+      expect(source).toContain(
+        "screen.onboarding.dnsMagic.accessibility.idleLabel",
+      );
+      expect(source).toContain(
+        "screen.onboarding.dnsMagic.accessibility.demoHint",
+      );
     });
 
     it("Start Demo button has accessibilityState reflecting disabled and busy states", () => {
-      expect(source).toContain("accessibilityState={{ disabled: isRunning, busy: isRunning }}");
+      expect(source).toContain(
+        "accessibilityState={{ disabled: isRunning, busy: isRunning }}",
+      );
     });
 
     it("has iOS HIG comment for demo button", () => {
-      expect(source).toContain("iOS HIG: Primary action button to trigger DNS demonstration");
+      expect(source).toContain(
+        "iOS HIG: Primary action button to trigger DNS demonstration",
+      );
     });
   });
 
   describe("NetworkSetupScreen accessibility", () => {
     const networkPath = path.resolve(
       __dirname,
-      "../src/components/onboarding/screens/NetworkSetupScreen.tsx"
+      "../src/components/onboarding/screens/NetworkSetupScreen.tsx",
     );
     const source = fs.readFileSync(networkPath, "utf8");
 
     it("Apply Settings button has accessibilityRole, Label, and Hint", () => {
       expect(source).toContain('accessibilityRole="button"');
-      expect(source).toContain("screen.onboarding.networkSetup.accessibility.applyLabel");
-      expect(source).toContain("screen.onboarding.networkSetup.accessibility.applyHint");
+      expect(source).toContain(
+        "screen.onboarding.networkSetup.accessibility.applyLabel",
+      );
+      expect(source).toContain(
+        "screen.onboarding.networkSetup.accessibility.applyHint",
+      );
     });
 
     it("has iOS HIG comment for apply button", () => {
-      expect(source).toContain("iOS HIG: Primary action button to apply network optimization results");
+      expect(source).toContain(
+        "iOS HIG: Primary action button to apply network optimization results",
+      );
     });
   });
 
   describe("FeaturesScreen accessibility", () => {
     const featuresPath = path.resolve(
       __dirname,
-      "../src/components/onboarding/screens/FeaturesScreen.tsx"
+      "../src/components/onboarding/screens/FeaturesScreen.tsx",
     );
     const source = fs.readFileSync(featuresPath, "utf8");
 
     it("GitHub link has accessibilityRole='link' (not button)", () => {
       expect(source).toContain('accessibilityRole="link"');
-      expect(source).toContain('t("screen.onboarding.features.opensource.action")');
+      expect(source).toContain(
+        't("screen.onboarding.features.opensource.action")',
+      );
     });
 
     it("GitHub link has accessibilityLabel and descriptive Hint", () => {
-      expect(source).toContain('accessibilityLabel={feature.action.text}');
-      expect(source).toContain("screen.onboarding.features.opensource.accessibilityHint");
+      expect(source).toContain("accessibilityLabel={feature.action.text}");
+      expect(source).toContain(
+        "screen.onboarding.features.opensource.accessibilityHint",
+      );
     });
 
     it("has iOS HIG comment for external link", () => {
-      expect(source).toContain("iOS HIG: External link button to open GitHub repository in browser");
+      expect(source).toContain(
+        "iOS HIG: External link button to open GitHub repository in browser",
+      );
     });
   });
 
@@ -158,21 +214,24 @@ describe("Onboarding Accessibility Tests", () => {
     ];
 
     it("no hardcoded 'transparent' color strings remain", () => {
-      onboardingFiles.forEach((file) => {
+      const offenders = onboardingFiles.flatMap((file) => {
         const source = fs.readFileSync(path.resolve(__dirname, file), "utf8");
-        // Should use palette.transparent, not the string "transparent"
-        const matches = source.match(/(borderColor|backgroundColor):\s*["']transparent["']/g);
-        if (matches) {
-          fail(`Found hardcoded "transparent" in ${file}: ${matches.join(", ")}`);
-        }
+        const matches = source.match(
+          /(borderColor|backgroundColor):\s*["']transparent["']/g,
+        );
+        return matches?.map((match) => `${file}: ${match}`) ?? [];
       });
+
+      expect(offenders).toEqual([]);
     });
 
     it("all TouchableOpacity interactive elements have accessibilityRole", () => {
       onboardingFiles.forEach((file) => {
         const source = fs.readFileSync(path.resolve(__dirname, file), "utf8");
         // Count TouchableOpacity elements with onPress
-        const touchableCount = (source.match(/<TouchableOpacity[\s\S]*?onPress=/g) || []).length;
+        const touchableCount = (
+          source.match(/<TouchableOpacity[\s\S]*?onPress=/g) || []
+        ).length;
         // Count accessibilityRole props
         const roleCount = (source.match(/accessibilityRole=/g) || []).length;
 

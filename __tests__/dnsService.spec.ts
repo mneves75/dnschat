@@ -1,5 +1,5 @@
-jest.mock('react-native', () => {
-  const actual = jest.requireActual('react-native');
+jest.mock("react-native", () => {
+  const actual = jest.requireActual("react-native");
   return {
     ...actual,
     AppState: {
@@ -37,13 +37,17 @@ type DNSServiceModuleShape = {
 };
 
 type DNSServiceInternals = {
-  queryWithServer: (...args: unknown[]) => Promise<{ response: string; method: string }>;
+  queryWithServer: (
+    ...args: unknown[]
+  ) => Promise<{ response: string; method: string }>;
   getServerHealthSnapshot: () => Record<
     string,
     { successes: number; failures: number; lastError?: string | null }
   >;
   resetServerHealthForTests?: () => void;
-  tryMethod?: (...args: unknown[]) => Promise<{ response: string; method: string }>;
+  tryMethod?: (
+    ...args: unknown[]
+  ) => Promise<{ response: string; method: string }>;
   sleep?: (ms: number) => Promise<void>;
 };
 
@@ -113,7 +117,7 @@ describe("DNS Service helpers", () => {
     });
 
     it("rejects inputs that lose all content after sanitization", () => {
-      const smiley = String.fromCodePoint(0x1F642);
+      const smiley = String.fromCodePoint(0x1f642);
       expect(() => sanitizeDNSMessage("!!!")).toThrow(
         "Message must contain at least one letter or number after sanitization",
       );
@@ -183,16 +187,24 @@ describe("DNS Service helpers", () => {
         let tsValue: string | null = null;
         let nativeValue: string | null = null;
 
+        let tsRejected = false;
+        let nativeRejected = false;
+
         try {
           tsValue = sanitizeDNSMessage(input);
-        } catch (error) {
-          // If TS rejects, native must reject with the same contract.
-          expect(() => sanitizeDNSMessageReference(input)).toThrow();
-          continue;
+        } catch {
+          tsRejected = true;
+        }
+        try {
+          nativeValue = sanitizeDNSMessageReference(input);
+        } catch {
+          nativeRejected = true;
         }
 
-        nativeValue = sanitizeDNSMessageReference(input);
-        expect(tsValue).toBe(nativeValue);
+        expect({ tsRejected, tsValue }).toEqual({
+          tsRejected: nativeRejected,
+          tsValue: nativeValue,
+        });
       }
     });
   });
@@ -217,7 +229,9 @@ describe("DNS Service helpers", () => {
       flags: 0x8100,
       rcode: "NOERROR",
       questions: [{ name: "hello.ch.at", type: "TXT", class: "IN" }],
-      answers: [{ name: "hello.ch.at", type: "TXT", class: "IN", data: ["ok"] }],
+      answers: [
+        { name: "hello.ch.at", type: "TXT", class: "IN", data: ["ok"] },
+      ],
     } as unknown as import("dns-packet").DecodedPacket;
 
     it("accepts a valid TXT response that matches the original query", () => {
@@ -289,8 +303,12 @@ describe("DNS Service helpers", () => {
     });
 
     it("rejects non-allowlisted DNS servers", () => {
-      expect(() => validateDNSServer("example.com")).toThrow("DNS server not allowed");
-      expect(() => validateDNSServer("dns.google")).toThrow("DNS server not allowed");
+      expect(() => validateDNSServer("example.com")).toThrow(
+        "DNS server not allowed",
+      );
+      expect(() => validateDNSServer("dns.google")).toThrow(
+        "DNS server not allowed",
+      );
     });
 
     it("rejects host:port style input (ports are not supported)", () => {
@@ -376,7 +394,9 @@ describe("DNS Service helpers", () => {
       const orderWithMock = getOrder(true, true);
 
       expect((orderWithExperimental as string[]).includes("https")).toBe(false);
-      expect((orderWithoutExperimental as string[]).includes("https")).toBe(false);
+      expect((orderWithoutExperimental as string[]).includes("https")).toBe(
+        false,
+      );
       expect((orderWithMock as string[]).includes("https")).toBe(false);
     });
 
@@ -431,10 +451,14 @@ describe("DNS Service helpers", () => {
     });
 
     it("uses global crypto.getRandomValues when available", () => {
-      const globalWithCrypto = global as unknown as { crypto?: Crypto | undefined };
+      const globalWithCrypto = global as unknown as {
+        crypto?: Crypto | undefined;
+      };
       const originalCrypto = globalWithCrypto.crypto;
       let getRandomValuesCalled = false;
-      const trackedGetRandomValues = <T extends ArrayBufferView>(array: T): T => {
+      const trackedGetRandomValues = <T extends ArrayBufferView>(
+        array: T,
+      ): T => {
         getRandomValuesCalled = true;
         if (array instanceof Uint16Array) {
           array[0] = 4242;
@@ -442,7 +466,7 @@ describe("DNS Service helpers", () => {
         return array;
       };
       globalWithCrypto.crypto = {
-        ...(originalCrypto ?? {}),
+        ...originalCrypto,
         getRandomValues: trackedGetRandomValues,
       } as unknown as Crypto;
 
@@ -456,11 +480,13 @@ describe("DNS Service helpers", () => {
     });
 
     it("uses expo-crypto fallback when global crypto is unavailable", () => {
-      const globalWithCrypto = global as unknown as { crypto?: Crypto | undefined };
+      const globalWithCrypto = global as unknown as {
+        crypto?: Crypto | undefined;
+      };
       const originalCrypto = globalWithCrypto.crypto;
       globalWithCrypto.crypto = undefined;
 
-      const expoCrypto = require('expo-crypto');
+      const expoCrypto = require("expo-crypto");
 
       try {
         const id = generateSecureDNSId();
@@ -477,9 +503,15 @@ describe("DNS Service helpers", () => {
       jest.clearAllMocks();
       jest.spyOn(DNSLogService, "startQuery").mockReturnValue("query-1");
       jest.spyOn(DNSLogService, "addLog").mockImplementation(() => undefined);
-      jest.spyOn(DNSLogService, "logMethodFailure").mockImplementation(() => undefined);
-      jest.spyOn(DNSLogService, "logFallback").mockImplementation(() => undefined);
-      jest.spyOn(DNSLogService, "logServerFallback").mockImplementation(() => undefined);
+      jest
+        .spyOn(DNSLogService, "logMethodFailure")
+        .mockImplementation(() => undefined);
+      jest
+        .spyOn(DNSLogService, "logFallback")
+        .mockImplementation(() => undefined);
+      jest
+        .spyOn(DNSLogService, "logServerFallback")
+        .mockImplementation(() => undefined);
       jest.spyOn(DNSLogService, "endQuery").mockResolvedValue(undefined);
       dnsServiceInternals.resetServerHealthForTests?.();
     });
@@ -494,15 +526,14 @@ describe("DNS Service helpers", () => {
         .spyOn(dnsServiceInternals, "queryWithServer")
         .mockRejectedValueOnce(new Error("Primary server down"));
 
-      await expect(DNSService.queryLLM(
-        "test fallback",
-        undefined,
-        true,
-        true,
-      )).rejects.toThrow("llm.pieter.com:53");
+      await expect(
+        DNSService.queryLLM("test fallback", undefined, true, true),
+      ).rejects.toThrow("llm.pieter.com:53");
 
       expect(querySpy).toHaveBeenCalledTimes(1);
-      const calls = querySpy.mock.calls as Array<[{ targetServer: string }, ...unknown[]]>;
+      const calls = querySpy.mock.calls as Array<
+        [{ targetServer: string }, ...unknown[]]
+      >;
       const firstContext = calls[0]?.[0] as { targetServer: string };
       expect(firstContext.targetServer).toBe("llm.pieter.com");
     });
@@ -512,20 +543,12 @@ describe("DNS Service helpers", () => {
         .spyOn(dnsServiceInternals, "queryWithServer")
         .mockRejectedValueOnce(new Error("Primary server down"));
 
-      await expect(DNSService.queryLLM(
-        "test health",
-        undefined,
-        true,
-        true,
-      )).rejects.toThrow("llm.pieter.com:53");
+      await expect(
+        DNSService.queryLLM("test health", undefined, true, true),
+      ).rejects.toThrow("llm.pieter.com:53");
 
       querySpy.mockResolvedValueOnce({ response: "ok", method: "udp" });
-      await DNSService.queryLLM(
-        "test explicit secondary",
-        "ch.at",
-        true,
-        true,
-      );
+      await DNSService.queryLLM("test explicit secondary", "ch.at", true, true);
 
       const snapshot = dnsServiceInternals.getServerHealthSnapshot();
       const primary = snapshot["llm.pieter.com:53"];
@@ -544,22 +567,19 @@ describe("DNS Service helpers", () => {
         .spyOn(dnsServiceInternals, "queryWithServer")
         .mockResolvedValueOnce({ response: "ok", method: "udp" });
 
-      await DNSService.queryLLM(
-        "secret prompt",
-        "llm.pieter.com",
-        true,
-        true,
-      );
+      await DNSService.queryLLM("secret prompt", "llm.pieter.com", true, true);
 
-      const serializedEntries = JSON.stringify(addLogSpy.mock.calls.map(([, entry]) => entry));
+      const serializedEntries = JSON.stringify(
+        addLogSpy.mock.calls.map(([, entry]) => entry),
+      );
       expect(serializedEntries).toContain("sha256:");
       expect(serializedEntries).not.toContain("secret-prompt.llm.pieter.com");
     });
 
     it("returns a successful DNS response when final query logging fails", async () => {
-      jest.spyOn(DNSLogService, "endQuery").mockRejectedValueOnce(
-        new Error("log persistence failed"),
-      );
+      jest
+        .spyOn(DNSLogService, "endQuery")
+        .mockRejectedValueOnce(new Error("log persistence failed"));
       jest
         .spyOn(dnsServiceInternals, "queryWithServer")
         .mockResolvedValueOnce({ response: "ok", method: "udp" });
@@ -574,7 +594,9 @@ describe("DNS Service helpers", () => {
     beforeEach(() => {
       jest.clearAllMocks();
       jest.spyOn(DNSLogService, "addLog").mockImplementation(() => undefined);
-      jest.spyOn(DNSLogService, "logFallback").mockImplementation(() => undefined);
+      jest
+        .spyOn(DNSLogService, "logFallback")
+        .mockImplementation(() => undefined);
       jest.spyOn(dnsServiceInternals, "sleep").mockResolvedValue(undefined);
     });
 
@@ -587,8 +609,9 @@ describe("DNS Service helpers", () => {
       const failureSpy = jest
         .spyOn(DNSLogService, "logMethodFailure")
         .mockImplementation(() => undefined);
-      jest.spyOn(dnsServiceInternals, "tryMethod").mockImplementation(
-        async (queryId, method) => {
+      jest
+        .spyOn(dnsServiceInternals, "tryMethod")
+        .mockImplementation(async (queryId, method) => {
           DNSLogService.logMethodFailure(
             queryId as string,
             method as "native" | "udp" | "tcp" | "mock",
@@ -596,8 +619,7 @@ describe("DNS Service helpers", () => {
             5,
           );
           throw new Error("transport failed");
-        },
-      );
+        });
 
       await expect(
         dnsServiceInternals.queryWithServer(
@@ -636,7 +658,7 @@ describe("DNS Service helpers", () => {
           false,
           false,
         ),
-      ).rejects.toThrow();
+      ).rejects.toThrow("All 1 DNS transports failed for ch.at:53");
 
       const retryEntries = addLogSpy.mock.calls
         .map(([, entry]) => entry)
@@ -650,7 +672,9 @@ describe("DNS Service helpers", () => {
         ) as Array<{ message: string; method: string }>;
 
       expect(retryEntries).toHaveLength(2);
-      expect(retryEntries.every((entry) => entry.method === "native")).toBe(true);
+      expect(retryEntries.every((entry) => entry.method === "native")).toBe(
+        true,
+      );
     });
   });
 
@@ -660,9 +684,15 @@ describe("DNS Service helpers", () => {
       jest.clearAllMocks();
       jest.spyOn(DNSLogService, "startQuery").mockReturnValue("query-budget");
       jest.spyOn(DNSLogService, "addLog").mockImplementation(() => undefined);
-      jest.spyOn(DNSLogService, "logMethodAttempt").mockImplementation(() => undefined);
-      jest.spyOn(DNSLogService, "logMethodFailure").mockImplementation(() => undefined);
-      jest.spyOn(DNSLogService, "logFallback").mockImplementation(() => undefined);
+      jest
+        .spyOn(DNSLogService, "logMethodAttempt")
+        .mockImplementation(() => undefined);
+      jest
+        .spyOn(DNSLogService, "logMethodFailure")
+        .mockImplementation(() => undefined);
+      jest
+        .spyOn(DNSLogService, "logFallback")
+        .mockImplementation(() => undefined);
       jest.spyOn(DNSLogService, "endQuery").mockResolvedValue(undefined);
       dnsServiceInternals.resetServerHealthForTests?.();
     });
@@ -674,9 +704,9 @@ describe("DNS Service helpers", () => {
     });
 
     it("rejects hanging transports when the query budget is exhausted", async () => {
-      jest.spyOn(dnsServiceInternals, "tryMethod").mockImplementation(
-        () => new Promise(() => undefined),
-      );
+      jest
+        .spyOn(dnsServiceInternals, "tryMethod")
+        .mockImplementation(() => new Promise(() => undefined));
 
       const query = DNSService.queryLLM(
         "budget timeout",
@@ -684,6 +714,7 @@ describe("DNS Service helpers", () => {
         false,
         true,
       );
+      // oxlint-disable-next-line jest/valid-expect -- Awaited after fake timers advance so the timeout can settle.
       const assertion = expect(query).rejects.toMatchObject({
         type: DNSErrorType.TIMEOUT,
         message: "DNS query budget exhausted",
@@ -696,8 +727,9 @@ describe("DNS Service helpers", () => {
 
     it("falls back to UDP when the native transport exceeds its per-transport timeout", async () => {
       const attemptedMethods: string[] = [];
-      jest.spyOn(dnsServiceInternals, "tryMethod").mockImplementation(
-        (...args: unknown[]) => {
+      jest
+        .spyOn(dnsServiceInternals, "tryMethod")
+        .mockImplementation((...args: unknown[]) => {
           const method = args[1];
           if (typeof method !== "string") {
             return Promise.reject(new Error("Expected a transport method"));
@@ -713,8 +745,7 @@ describe("DNS Service helpers", () => {
             });
           }
           return Promise.reject(new Error(`Unexpected transport: ${method}`));
-        },
-      );
+        });
 
       const query = DNSService.queryLLM(
         "native timeout fallback",
@@ -722,6 +753,7 @@ describe("DNS Service helpers", () => {
         false,
         true,
       );
+      // oxlint-disable-next-line jest/valid-expect -- Awaited after fake timers advance so the fallback can settle.
       const assertion = expect(query).resolves.toBe("udp fallback ok");
 
       await jest.advanceTimersByTimeAsync(10000);

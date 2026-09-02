@@ -13,7 +13,11 @@ const BottomSheetModal = React.forwardRef((props, ref) => {
     dismiss: jest.fn(),
     present: jest.fn(),
   }));
-  return React.createElement("BottomSheetModal", props, props?.children ?? null);
+  return React.createElement(
+    "BottomSheetModal",
+    props,
+    props?.children ?? null,
+  );
 });
 BottomSheetModal.displayName = "BottomSheetModal";
 

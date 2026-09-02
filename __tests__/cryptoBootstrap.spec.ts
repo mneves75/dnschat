@@ -1,5 +1,8 @@
 describe("crypto bootstrap", () => {
-  const originalDescriptor = Object.getOwnPropertyDescriptor(globalThis, "crypto");
+  const originalDescriptor = Object.getOwnPropertyDescriptor(
+    globalThis,
+    "crypto",
+  );
 
   afterEach(() => {
     jest.resetModules();

@@ -5,6 +5,18 @@ import path from "node:path";
 
 const projectRoot = process.cwd();
 
+const EXPECTED_OXLINT_PLUGINS = [
+  "eslint",
+  "typescript",
+  "unicorn",
+  "oxc",
+  "jest",
+  "react",
+  "import",
+  "promise",
+  "node",
+] as const;
+
 function runLintOnFixture(fixtureName: string, sourceName: string) {
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "dnschat-astgrep-"));
   const sourcePath = path.join(tempDir, sourceName);
@@ -17,12 +29,7 @@ function runLintOnFixture(fixtureName: string, sourceName: string) {
 
     return spawnSync(
       process.execPath,
-      [
-        "scripts/run-ast-grep.js",
-        "--config",
-        "sgconfig.yml",
-        sourcePath,
-      ],
+      ["scripts/run-ast-grep.js", "--config", "sgconfig.yml", sourcePath],
       {
         cwd: projectRoot,
         encoding: "utf8",
@@ -71,6 +78,45 @@ function runOxlintOnFixture(fixtureName: string) {
   }
 }
 
+function runOxfmtOnFixture(fixtureName: string) {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "dnschat-oxfmt-"));
+  const sourcePath = path.join(
+    tempDir,
+    fixtureName.replace(/\.ts\.txt$/, ".ts"),
+  );
+  const oxfmtBin = path.join(
+    projectRoot,
+    "node_modules",
+    "oxfmt",
+    "bin",
+    "oxfmt",
+  );
+
+  try {
+    fs.copyFileSync(
+      path.join(projectRoot, "__tests__", "fixtures", "oxfmt", fixtureName),
+      sourcePath,
+    );
+
+    return spawnSync(
+      process.execPath,
+      [
+        oxfmtBin,
+        "--check",
+        "--config",
+        path.join(projectRoot, ".oxfmtrc.json"),
+        sourcePath,
+      ],
+      {
+        cwd: projectRoot,
+        encoding: "utf8",
+      },
+    );
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+}
+
 describe("repo policy: lint is portable (no global installs)", () => {
   it("uses ast-grep from devDependencies and a checked-in config", () => {
     const pkg = JSON.parse(fs.readFileSync("package.json", "utf8")) as {
@@ -86,13 +132,15 @@ describe("repo policy: lint is portable (no global installs)", () => {
     const lintAstGrep = pkg.scripts?.["lint:ast-grep"] ?? "";
     const lintScripts = [lintScript, lintAstGrep].join("\n");
     const usesDirectAstGrep = lintScripts.includes("ast-grep scan");
-    const usesDeterministicRunner = lintScripts.includes("scripts/run-ast-grep.js");
+    const usesDeterministicRunner = lintScripts.includes(
+      "scripts/run-ast-grep.js",
+    );
 
     expect(usesDirectAstGrep || usesDeterministicRunner).toBe(true);
     expect(lintScripts).toContain("sgconfig.yml");
-    if (usesDeterministicRunner) {
-      expect(fs.existsSync("scripts/run-ast-grep.js")).toBe(true);
-    }
+    const deterministicRunnerExists =
+      !usesDeterministicRunner || fs.existsSync("scripts/run-ast-grep.js");
+    expect(deterministicRunnerExists).toBe(true);
 
     expect(fs.existsSync("sgconfig.yml")).toBe(true);
     expect(fs.existsSync("project-rules/astgrep-liquid-glass.yml")).toBe(true);
@@ -109,6 +157,46 @@ describe("repo policy: lint is portable (no global installs)", () => {
     expect(pkg.scripts?.["lint"]).toContain("pnpm run lint:oxlint");
     expect(pkg.scripts?.["lint"]).toContain("pnpm run lint:ast-grep");
     expect(fs.existsSync(".oxlintrc.json")).toBe(true);
+
+    const config = JSON.parse(fs.readFileSync(".oxlintrc.json", "utf8")) as {
+      categories?: Record<string, string>;
+      plugins?: string[];
+    };
+
+    expect(config.categories?.["correctness"]).toBe("error");
+    expect(config.plugins).toEqual(EXPECTED_OXLINT_PLUGINS);
+  });
+
+  it("does not retain the obsolete dns-native ESLint toolchain", () => {
+    const nativePkg = JSON.parse(
+      fs.readFileSync("modules/dns-native/package.json", "utf8"),
+    ) as {
+      scripts?: Record<string, string>;
+      devDependencies?: Record<string, string>;
+    };
+
+    expect(nativePkg.scripts?.["lint"]).toBeUndefined();
+    expect(nativePkg.devDependencies?.["eslint"]).toBeUndefined();
+    expect(
+      nativePkg.devDependencies?.["@typescript-eslint/eslint-plugin"],
+    ).toBeUndefined();
+    expect(
+      nativePkg.devDependencies?.["@typescript-eslint/parser"],
+    ).toBeUndefined();
+  });
+
+  it("uses Oxfmt from devDependencies with checked-in write and check commands", () => {
+    const pkg = JSON.parse(fs.readFileSync("package.json", "utf8")) as {
+      scripts?: Record<string, string>;
+      devDependencies?: Record<string, string>;
+    };
+
+    expect(pkg.devDependencies?.["oxfmt"]).toBeDefined();
+    expect(pkg.scripts?.["fmt"]).toBe("oxfmt .");
+    expect(pkg.scripts?.["fmt:check"]).toBe("oxfmt --check .");
+    expect(pkg.scripts?.["verify:fast"]).toContain("pnpm run fmt:check");
+    expect(pkg.scripts?.["verify:all"]).toContain("pnpm run fmt:check");
+    expect(fs.existsSync(".oxfmtrc.json")).toBe(true);
   });
 
   // Both banned patterns must be caught in BOTH .ts and .tsx sources. ast-grep
@@ -222,6 +310,7 @@ describe("repo policy: lint is portable (no global installs)", () => {
   );
 
   it.each([
+    ["unused-variable.ts.txt", "no-unused-vars"],
     ["confusing-timeout.ts.txt", "no-confusing-set-timeout"],
     ["duplicate-hooks.ts.txt", "no-duplicate-hooks"],
     ["focused-test.ts.txt", "no-focused-tests"],
@@ -245,6 +334,22 @@ describe("repo policy: lint is portable (no global installs)", () => {
     expect(result.error).toBeUndefined();
     expect(result.status).toBe(0);
     expect(output).not.toContain("error");
+  });
+
+  it("rejects an unformatted Oxfmt fixture", () => {
+    const result = runOxfmtOnFixture("unformatted.ts.txt");
+
+    expect(result.error).toBeUndefined();
+    expect(result.status).not.toBe(0);
+  });
+
+  it("accepts a formatted Oxfmt fixture", () => {
+    const result = runOxfmtOnFixture("formatted.ts.txt");
+    const output = `${result.stdout}${result.stderr}`;
+
+    expect(result.error).toBeUndefined();
+    expect(result.status).toBe(0);
+    expect(output).not.toContain("unformatted");
   });
 
   it("loads at least eight effective ast-grep rules", () => {
@@ -273,7 +378,7 @@ describe("repo policy: lint is portable (no global installs)", () => {
 });
 
 describe("repo policy: full verification gate covers release-critical checks", () => {
-  it("runs TypeScript and Android 16KB checks in verify:all", () => {
+  it("runs formatting, TypeScript, and Android 16KB checks in verify:all", () => {
     const pkg = JSON.parse(fs.readFileSync("package.json", "utf8")) as {
       scripts?: Record<string, string>;
     };
@@ -281,6 +386,7 @@ describe("repo policy: full verification gate covers release-critical checks", (
     expect(pkg.scripts?.["typecheck"]).toBe("tsc --noEmit -p tsconfig.json");
 
     const verifyAll = pkg.scripts?.["verify:all"] ?? "";
+    expect(verifyAll).toContain("pnpm run fmt:check");
     expect(verifyAll).toContain("pnpm run typecheck");
     expect(verifyAll).toContain("pnpm run verify:android-16kb");
   });

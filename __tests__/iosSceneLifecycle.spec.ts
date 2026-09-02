@@ -12,14 +12,18 @@ describe("iOS scene lifecycle", () => {
     expect(infoPlist).toMatch(
       /<key>UIApplicationSupportsMultipleScenes<\/key>\s*<false\/>/,
     );
-    expect(infoPlist).toContain("<key>UIWindowSceneSessionRoleApplication</key>");
+    expect(infoPlist).toContain(
+      "<key>UIWindowSceneSessionRoleApplication</key>",
+    );
     expect(infoPlist).toContain("$(PRODUCT_MODULE_NAME).SceneDelegate");
   });
 
   it("creates the React Native window from the connecting UIWindowScene", () => {
     const appDelegate = fs.readFileSync(appDelegatePath, "utf8");
 
-    expect(appDelegate).toContain("class SceneDelegate: UIResponder, UIWindowSceneDelegate");
+    expect(appDelegate).toContain(
+      "class SceneDelegate: UIResponder, UIWindowSceneDelegate",
+    );
     expect(appDelegate).toContain("UIWindow(windowScene: windowScene)");
     expect(appDelegate).toContain("factory.startReactNative(");
     expect(appDelegate).not.toContain("UIWindow(frame: UIScreen.main.bounds)");

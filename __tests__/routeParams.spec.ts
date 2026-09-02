@@ -1,4 +1,7 @@
-import { normalizeRouteParam, parseProfileHandle } from "../src/utils/routeParams";
+import {
+  normalizeRouteParam,
+  parseProfileHandle,
+} from "../src/utils/routeParams";
 
 describe("route params", () => {
   describe("normalizeRouteParam", () => {

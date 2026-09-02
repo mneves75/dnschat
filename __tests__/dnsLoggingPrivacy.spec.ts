@@ -11,7 +11,9 @@ jest.mock("@react-native-async-storage/async-storage", () => ({
 jest.mock("../src/services/encryptionService", () => ({
   decryptIfEncrypted: jest.fn(),
   encryptString: jest.fn(async (payload: string) => payload),
-  isEncryptedPayload: jest.fn((payload: string) => payload.startsWith("enc:v1:")),
+  isEncryptedPayload: jest.fn((payload: string) =>
+    payload.startsWith("enc:v1:"),
+  ),
 }));
 
 function readSource(path: string): string {

@@ -82,7 +82,8 @@ jest.mock("../src/ui/theme/imessagePalette", () => ({
   }),
 }));
 
-const { FirstChatScreen } = require("../src/components/onboarding/screens/FirstChatScreen") as typeof import("../src/components/onboarding/screens/FirstChatScreen");
+const { FirstChatScreen } =
+  require("../src/components/onboarding/screens/FirstChatScreen") as typeof import("../src/components/onboarding/screens/FirstChatScreen");
 
 function renderFirstChatScreen() {
   let tree!: ReactTestRenderer;
@@ -128,8 +129,12 @@ function findKeyboardStickyView(tree: ReactTestRenderer) {
 }
 
 describe("FirstChatScreen keyboard behavior", () => {
-  let originalRequestAnimationFrame: typeof global.requestAnimationFrame | undefined;
-  let originalCancelAnimationFrame: typeof global.cancelAnimationFrame | undefined;
+  let originalRequestAnimationFrame:
+    | typeof global.requestAnimationFrame
+    | undefined;
+  let originalCancelAnimationFrame:
+    | typeof global.cancelAnimationFrame
+    | undefined;
   let nextFrameId: number;
   let cancelledFrameIds: number[];
 
@@ -152,17 +157,21 @@ describe("FirstChatScreen keyboard behavior", () => {
     if (originalRequestAnimationFrame) {
       global.requestAnimationFrame = originalRequestAnimationFrame;
     } else {
-      delete (global as typeof globalThis & {
-        requestAnimationFrame?: typeof global.requestAnimationFrame;
-      }).requestAnimationFrame;
+      delete (
+        global as typeof globalThis & {
+          requestAnimationFrame?: typeof global.requestAnimationFrame;
+        }
+      ).requestAnimationFrame;
     }
 
     if (originalCancelAnimationFrame) {
       global.cancelAnimationFrame = originalCancelAnimationFrame;
     } else {
-      delete (global as typeof globalThis & {
-        cancelAnimationFrame?: typeof global.cancelAnimationFrame;
-      }).cancelAnimationFrame;
+      delete (
+        global as typeof globalThis & {
+          cancelAnimationFrame?: typeof global.cancelAnimationFrame;
+        }
+      ).cancelAnimationFrame;
     }
   });
 

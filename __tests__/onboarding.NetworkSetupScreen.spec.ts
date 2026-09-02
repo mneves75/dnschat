@@ -9,7 +9,7 @@ import path from "path";
 describe("NetworkSetupScreen - iOS 26 HIG Compliance", () => {
   const filePath = path.resolve(
     __dirname,
-    "../src/components/onboarding/screens/NetworkSetupScreen.tsx"
+    "../src/components/onboarding/screens/NetworkSetupScreen.tsx",
   );
   let sourceCode: string;
 
@@ -33,7 +33,9 @@ describe("NetworkSetupScreen - iOS 26 HIG Compliance", () => {
 
   describe("Disclaimer Requirement", () => {
     it("contains the required disclaimer text", () => {
-      expect(sourceCode).toContain('t("screen.onboarding.networkSetup.disclaimer")');
+      expect(sourceCode).toContain(
+        't("screen.onboarding.networkSetup.disclaimer")',
+      );
     });
 
     it("renders disclaimer in a styled container", () => {
@@ -43,7 +45,7 @@ describe("NetworkSetupScreen - iOS 26 HIG Compliance", () => {
     it("applies semantic colors to disclaimer", () => {
       const disclaimerSection = sourceCode.substring(
         sourceCode.indexOf("disclaimerContainer"),
-        sourceCode.indexOf("disclaimerContainer") + 500
+        sourceCode.indexOf("disclaimerContainer") + 500,
       );
       expect(disclaimerSection).toContain("palette.accentSurface");
       expect(disclaimerSection).toContain("palette.accentBorder");
@@ -56,15 +58,15 @@ describe("NetworkSetupScreen - iOS 26 HIG Compliance", () => {
     });
 
     it("does not contain cross mark emoji", () => {
-      expect(sourceCode).not.toContain(String.fromCodePoint(0x274C));
+      expect(sourceCode).not.toContain(String.fromCodePoint(0x274c));
     });
 
     it("does not contain hourglass emoji", () => {
-      expect(sourceCode).not.toContain(String.fromCodePoint(0x23F3));
+      expect(sourceCode).not.toContain(String.fromCodePoint(0x23f3));
     });
 
     it("does not contain rocket emoji", () => {
-      expect(sourceCode).not.toContain(String.fromCodePoint(0x1F680));
+      expect(sourceCode).not.toContain(String.fromCodePoint(0x1f680));
     });
 
     it("does not contain sparkles emoji", () => {
@@ -72,7 +74,7 @@ describe("NetworkSetupScreen - iOS 26 HIG Compliance", () => {
     });
 
     it("does not contain lightning emoji", () => {
-      expect(sourceCode).not.toContain(String.fromCodePoint(0x26A1));
+      expect(sourceCode).not.toContain(String.fromCodePoint(0x26a1));
     });
 
     it("does not contain gear emoji", () => {
@@ -85,9 +87,15 @@ describe("NetworkSetupScreen - iOS 26 HIG Compliance", () => {
     });
 
     it("uses text-based status labels instead", () => {
-      expect(sourceCode).toContain('t("screen.onboarding.networkSetup.status.testing")');
-      expect(sourceCode).toContain('t("screen.onboarding.networkSetup.status.waiting")');
-      expect(sourceCode).toContain('t("screen.onboarding.networkSetup.status.success")');
+      expect(sourceCode).toContain(
+        't("screen.onboarding.networkSetup.status.testing")',
+      );
+      expect(sourceCode).toContain(
+        't("screen.onboarding.networkSetup.status.waiting")',
+      );
+      expect(sourceCode).toContain(
+        't("screen.onboarding.networkSetup.status.success")',
+      );
     });
   });
 
@@ -113,15 +121,21 @@ describe("NetworkSetupScreen - iOS 26 HIG Compliance", () => {
 
   describe("Network Test Items", () => {
     it("includes Native DNS test", () => {
-      expect(sourceCode).toContain('t("screen.onboarding.networkSetup.tests.native.name")');
+      expect(sourceCode).toContain(
+        't("screen.onboarding.networkSetup.tests.native.name")',
+      );
     });
 
     it("includes DNS over UDP test", () => {
-      expect(sourceCode).toContain('t("screen.onboarding.networkSetup.tests.udp.name")');
+      expect(sourceCode).toContain(
+        't("screen.onboarding.networkSetup.tests.udp.name")',
+      );
     });
 
     it("includes DNS over TCP test", () => {
-      expect(sourceCode).toContain('t("screen.onboarding.networkSetup.tests.tcp.name")');
+      expect(sourceCode).toContain(
+        't("screen.onboarding.networkSetup.tests.tcp.name")',
+      );
     });
 
     it("does not display fabricated latency metrics", () => {
@@ -162,13 +176,16 @@ describe("NetworkSetupScreen - iOS 26 HIG Compliance", () => {
 
   describe("Spacing System", () => {
     it("uses LiquidGlassSpacing throughout", () => {
-      expect(sourceCode.match(/LiquidGlassSpacing\./g)!.length).toBeGreaterThan(20);
+      expect(sourceCode.match(/LiquidGlassSpacing\./g)!.length).toBeGreaterThan(
+        20,
+      );
     });
 
     it("does not use hardcoded numeric spacing", () => {
       const styles = sourceCode.substring(sourceCode.indexOf("const styles"));
       // Allow only 0, 1, 2 for borderWidth and similar props
-      const numericSpacingPattern = /(?:padding|margin|gap|top|bottom|left|right|width|height):\s*(?!0\b|1\b|2\b)\d+/g;
+      const numericSpacingPattern =
+        /(?:padding|margin|gap|top|bottom|left|right|width|height):\s*(?!0\b|1\b|2\b)\d+/g;
       expect(styles.match(numericSpacingPattern)).toBeNull();
     });
   });
@@ -184,12 +201,16 @@ describe("NetworkSetupScreen - iOS 26 HIG Compliance", () => {
 
     it("includes recommendation section", () => {
       expect(sourceCode).toContain("recommendationContainer");
-      expect(sourceCode).toContain('t("screen.onboarding.networkSetup.optimization.title")');
+      expect(sourceCode).toContain(
+        't("screen.onboarding.networkSetup.optimization.title")',
+      );
     });
 
     it("includes apply settings button", () => {
       expect(sourceCode).toContain("applyButton");
-      expect(sourceCode).toContain('t("screen.onboarding.networkSetup.optimization.applyButton")');
+      expect(sourceCode).toContain(
+        't("screen.onboarding.networkSetup.optimization.applyButton")',
+      );
     });
   });
 

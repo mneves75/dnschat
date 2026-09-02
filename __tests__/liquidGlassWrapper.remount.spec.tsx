@@ -37,7 +37,8 @@ jest
 
 const getGlassView = (tree: TestRenderer.ReactTestRenderer) =>
   tree.root.find(
-    (node) => typeof node.type === "string" && node.props?.["testID"] === "glass-view",
+    (node) =>
+      typeof node.type === "string" && node.props?.["testID"] === "glass-view",
   );
 
 describe("LiquidGlassWrapper reduce-transparency resolution", () => {

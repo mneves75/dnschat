@@ -16,13 +16,14 @@ type AxeManifest = {
 };
 
 const root = path.resolve(__dirname, "..");
-const manifestPath = path.join(root, "scripts", "e2e-axe-feature-manifest.json");
+const manifestPath = path.join(
+  root,
+  "scripts",
+  "e2e-axe-feature-manifest.json",
+);
 const docsPath = path.join(root, "docs", "e2e-axe-feature-coverage.md");
 const runnerPath = path.join(root, "scripts", "e2e-axe.js");
-const sourceRoots = [
-  path.join(root, "app"),
-  path.join(root, "src"),
-];
+const sourceRoots = [path.join(root, "app"), path.join(root, "src")];
 
 const readSourceFiles = (directory: string): string[] => {
   if (!fs.existsSync(directory)) return [];
@@ -42,23 +43,33 @@ const selectorBackedBySource = (selector: string): boolean => {
   if (sourceText.includes(selector)) return true;
 
   if (selector.startsWith("language-option-")) {
-    return sourceText.includes("language-option-${option.key}") &&
-      sourceText.includes(selector.replace("language-option-", ""));
+    return (
+      sourceText.includes("language-option-${option.key}") &&
+      sourceText.includes(selector.replace("language-option-", ""))
+    );
   }
 
   if (selector.startsWith("settings-dns-option-")) {
-    return sourceText.includes("settings-dns-option-${option.value") &&
-      sourceText.includes(selector.replace("settings-dns-option-", "").replace(/-/g, "."));
+    return (
+      sourceText.includes("settings-dns-option-${option.value") &&
+      sourceText.includes(
+        selector.replace("settings-dns-option-", "").replace(/-/g, "."),
+      )
+    );
   }
 
   if (selector.startsWith("settings-force-")) {
-    return sourceText.includes("settings-force-${transportKey}") &&
-      sourceText.includes(selector.replace("settings-force-", ""));
+    return (
+      sourceText.includes("settings-force-${transportKey}") &&
+      sourceText.includes(selector.replace("settings-force-", ""))
+    );
   }
 
   if (selector.startsWith("chat-input-")) {
-    return sourceText.includes('testID="chat-input"') &&
-      sourceText.includes(`\${testID}-${selector.replace("chat-input-", "")}`);
+    return (
+      sourceText.includes('testID="chat-input"') &&
+      sourceText.includes(`\${testID}-${selector.replace("chat-input-", "")}`)
+    );
   }
 
   return false;

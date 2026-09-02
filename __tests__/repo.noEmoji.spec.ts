@@ -64,10 +64,7 @@ describe("repo policy: no emoji characters", () => {
         const sampleCodepoints = Array.from(sample)
           .map((ch) => ch.codePointAt(0))
           .filter((cp): cp is number => typeof cp === "number")
-          .map(
-            (cp) =>
-              `U+${cp.toString(16).toUpperCase().padStart(4, "0")}`
-          )
+          .map((cp) => `U+${cp.toString(16).toUpperCase().padStart(4, "0")}`)
           .join(" ");
 
         offenders.push({ file, sample: sampleCodepoints });

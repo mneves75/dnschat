@@ -1,10 +1,5 @@
 import { execSync } from "node:child_process";
-import {
-  mkdtempSync,
-  rmdirSync,
-  unlinkSync,
-  writeFileSync,
-} from "node:fs";
+import { mkdtempSync, rmdirSync, unlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 function listTrackedFiles(): string[] {
@@ -22,7 +17,9 @@ function isEnvExample(path: string): boolean {
 describe("repo hygiene", () => {
   it("does not track macOS metadata files", () => {
     const tracked = listTrackedFiles();
-    const offenders = tracked.filter((p) => p.endsWith("/.DS_Store") || p === ".DS_Store");
+    const offenders = tracked.filter(
+      (p) => p.endsWith("/.DS_Store") || p === ".DS_Store",
+    );
     expect(offenders).toEqual([]);
   });
 
@@ -37,14 +34,19 @@ describe("repo hygiene", () => {
   it("does not track repo-internal planning folders", () => {
     const tracked = listTrackedFiles();
     const offenders = tracked.filter(
-      (p) => p.startsWith("agent_planning/") || p.startsWith(".claude/") || p.startsWith(".cursor/")
+      (p) =>
+        p.startsWith("agent_planning/") ||
+        p.startsWith(".claude/") ||
+        p.startsWith(".cursor/"),
     );
     expect(offenders).toEqual([]);
   });
 
   it("does not track generated Gradle cache folders", () => {
     const tracked = listTrackedFiles();
-    const offenders = tracked.filter((p) => p.includes("/.gradle/") || p.startsWith(".gradle/"));
+    const offenders = tracked.filter(
+      (p) => p.includes("/.gradle/") || p.startsWith(".gradle/"),
+    );
     expect(offenders).toEqual([]);
   });
 
@@ -64,7 +66,8 @@ describe("repo hygiene", () => {
       if (p === "ios/fastlane/Snapfile") return true;
       if (p === "ios/fastlane/README.md") return true;
       if (p === "ios/fastlane/screenshots/screenshots.html") return true;
-      if (p.startsWith("ios/fastlane/screenshots/") && p.endsWith(".png")) return true;
+      if (p.startsWith("ios/fastlane/screenshots/") && p.endsWith(".png"))
+        return true;
       return false;
     });
 
@@ -80,7 +83,11 @@ describe("repo hygiene", () => {
 
       // Android local machine configuration (must never be committed).
       if (lower === "android/local.properties") return true;
-      if (lower === "keystore.properties" || lower === "android/keystore.properties") return true;
+      if (
+        lower === "keystore.properties" ||
+        lower === "android/keystore.properties"
+      )
+        return true;
 
       // Environment files: allow only explicit examples.
       if (lower === ".env" || lower.startsWith(".env.")) {
@@ -101,7 +108,10 @@ describe("repo hygiene", () => {
       }
 
       // Known service config files that often include secrets.
-      if (lower.endsWith("/google-services.json") || lower.endsWith("/googleservice-info.plist")) {
+      if (
+        lower.endsWith("/google-services.json") ||
+        lower.endsWith("/googleservice-info.plist")
+      ) {
         return true;
       }
 
@@ -123,7 +133,9 @@ describe("repo hygiene", () => {
   });
 
   it("checks untracked public docs before they can be committed", () => {
-    const fixtureDirectory = mkdtempSync(join(process.cwd(), ".redaction-fixture-"));
+    const fixtureDirectory = mkdtempSync(
+      join(process.cwd(), ".redaction-fixture-"),
+    );
     const fixturePath = join(fixtureDirectory, "release.md");
 
     try {
@@ -133,7 +145,7 @@ describe("repo hygiene", () => {
           encoding: "utf8",
           stdio: "pipe",
         });
-      }).toThrow();
+      }).toThrow(/Public redaction check failed/);
     } finally {
       unlinkSync(fixturePath);
       rmdirSync(fixtureDirectory);

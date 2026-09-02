@@ -2,13 +2,14 @@ const React = require("react");
 
 const noop = () => {};
 const createStubComponent = (name) => {
-  const Comp = (props) => React.createElement(name, props, props?.children ?? null);
+  const Comp = (props) =>
+    React.createElement(name, props, props?.children ?? null);
   Comp.displayName = name;
   return Comp;
 };
 
 const Pressable = React.forwardRef((props, ref) =>
-  React.createElement("Pressable", { ...props, ref }, props?.children ?? null)
+  React.createElement("Pressable", { ...props, ref }, props?.children ?? null),
 );
 Pressable.displayName = "Pressable";
 
@@ -55,13 +56,29 @@ module.exports = {
   Image: createStubComponent("Image"),
   ActivityIndicator: createStubComponent("ActivityIndicator"),
   Switch: createStubComponent("Switch"),
+  AppState: {
+    currentState: "active",
+    addEventListener: () => ({ remove: noop }),
+  },
   Alert: { alert: noop },
   Linking: { openURL: noop },
   Share: { share: async () => ({}) },
   useColorScheme: () => "light",
-  useWindowDimensions: () => ({ width: 375, height: 812, scale: 3, fontScale: 1 }),
+  useWindowDimensions: () => ({
+    width: 375,
+    height: 812,
+    scale: 3,
+    fontScale: 1,
+  }),
   Dimensions: { get: () => ({ width: 375, height: 812 }) },
-  Animated: { Value: function (v) { this.value = v; return { setValue: noop, interpolate: () => 0 }; }, timing: () => ({ start: noop, stop: noop }), parallel: () => ({ start: noop, stop: noop }) },
+  Animated: {
+    Value: function (v) {
+      this.value = v;
+      return { setValue: noop, interpolate: () => 0 };
+    },
+    timing: () => ({ start: noop, stop: noop }),
+    parallel: () => ({ start: noop, stop: noop }),
+  },
   Easing: { out: () => () => 0, cubic: () => 0 },
   BackHandler: {
     addEventListener: () => ({ remove: noop }),

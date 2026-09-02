@@ -23,7 +23,7 @@ import { LiquidGlassSpacing } from "../src/ui/theme/liquidGlassSpacing";
 describe("MessageList - iOS 26 HIG Compliance", () => {
   const messageListPath = path.resolve(
     __dirname,
-    "../src/components/MessageList.tsx"
+    "../src/components/MessageList.tsx",
   );
   let sourceCode: string;
 
@@ -34,19 +34,19 @@ describe("MessageList - iOS 26 HIG Compliance", () => {
   describe("iOS 26 HIG: Required Imports", () => {
     it("imports useImessagePalette for semantic colors", () => {
       expect(sourceCode).toContain(
-        'import { useImessagePalette } from "../ui/theme/imessagePalette"'
+        'import { useImessagePalette } from "../ui/theme/imessagePalette"',
       );
     });
 
     it("imports useTypography for SF Pro typography system", () => {
       expect(sourceCode).toContain(
-        'import { useTypography } from "../ui/hooks/useTypography"'
+        'import { useTypography } from "../ui/hooks/useTypography"',
       );
     });
 
     it("imports LiquidGlassSpacing for 8px grid system", () => {
-      expect(sourceCode).toContain(
-        'import { LiquidGlassSpacing, getCornerRadius } from "../ui/theme/liquidGlassSpacing"'
+      expect(sourceCode).toMatch(
+        /import\s*{\s*LiquidGlassSpacing,\s*getCornerRadius,?\s*}\s*from\s*"\.\.\/ui\/theme\/liquidGlassSpacing"/,
       );
     });
 
@@ -81,7 +81,7 @@ describe("MessageList - iOS 26 HIG Compliance", () => {
 
     it("documents transparent background rationale in comments", () => {
       expect(sourceCode).toContain(
-        "iOS 26 HIG: Transparent background to show glass effect"
+        "iOS 26 HIG: Transparent background to show glass effect",
       );
     });
 
@@ -139,7 +139,7 @@ describe("MessageList - iOS 26 HIG Compliance", () => {
     it("does not use hardcoded fontWeight in styles", () => {
       // fontWeight should come from typography hook, not hardcoded in StyleSheet
       const stylesSection = sourceCode.substring(
-        sourceCode.indexOf("const styles = StyleSheet.create")
+        sourceCode.indexOf("const styles = StyleSheet.create"),
       );
       const hasHardcodedFontWeight = stylesSection.includes("fontWeight:");
       expect(hasHardcodedFontWeight).toBe(false);
@@ -160,7 +160,9 @@ describe("MessageList - iOS 26 HIG Compliance", () => {
       // FlatList.scrollToEnd() ignores contentContainerStyle.paddingBottom, so footer is used instead
       // UPDATED: footer/empty are passed as ELEMENTS (not render functions) so a
       // bottomInset change re-renders them in place instead of remounting them
-      expect(sourceCode).toContain("height: LiquidGlassSpacing.xs + bottomInset");
+      expect(sourceCode).toContain(
+        "height: LiquidGlassSpacing.xs + bottomInset",
+      );
       expect(sourceCode).toContain("ListFooterComponent={listFooter}");
       expect(sourceCode).toContain("ListEmptyComponent={listEmptyContent}");
     });
@@ -184,7 +186,7 @@ describe("MessageList - iOS 26 HIG Compliance", () => {
     it("does not use hardcoded spacing values", () => {
       // Check that styles don't have raw pixel values for spacing
       const stylesSection = sourceCode.substring(
-        sourceCode.indexOf("const styles = StyleSheet.create")
+        sourceCode.indexOf("const styles = StyleSheet.create"),
       );
 
       // These hardcoded values should not appear (should use LiquidGlassSpacing instead)
@@ -196,9 +198,7 @@ describe("MessageList - iOS 26 HIG Compliance", () => {
 
   describe("iOS 26 HIG: Code Comments & Documentation", () => {
     it("documents iOS 26 HIG compliance in comments", () => {
-      const higCommentCount = (
-        sourceCode.match(/iOS 26 HIG/g) || []
-      ).length;
+      const higCommentCount = (sourceCode.match(/iOS 26 HIG/g) || []).length;
       expect(higCommentCount).toBeGreaterThan(5); // Should have multiple HIG comments
     });
 
@@ -267,7 +267,7 @@ describe("MessageList - iOS 26 HIG Compliance", () => {
 
     it("documents auto-scroll timing rationale", () => {
       expect(sourceCode).toContain(
-        "ensures FlatList has completed layout before scrolling"
+        "ensures FlatList has completed layout before scrolling",
       );
     });
 
@@ -294,7 +294,9 @@ describe("MessageList - iOS 26 HIG Compliance", () => {
 
   describe("Loading State", () => {
     it("uses the message skeleton instead of a spinner-only empty loading state", () => {
-      expect(sourceCode).toContain('import { SkeletonMessage } from "./SkeletonMessage"');
+      expect(sourceCode).toContain(
+        'import { SkeletonMessage } from "./SkeletonMessage"',
+      );
       expect(sourceCode).toContain("<SkeletonMessage />");
       expect(sourceCode).not.toContain("ActivityIndicator");
     });
@@ -331,7 +333,7 @@ describe("MessageList - iOS 26 HIG Compliance", () => {
 
     it("documents style pattern in comments", () => {
       expect(sourceCode).toContain(
-        "Static layout properties in StyleSheet, dynamic theme properties inline"
+        "Static layout properties in StyleSheet, dynamic theme properties inline",
       );
     });
   });
@@ -347,7 +349,7 @@ describe("MessageList - iOS 26 HIG Compliance", () => {
 
     it("prevents reintroduction of hardcoded white (#FFFFFF)", () => {
       const stylesSection = sourceCode.substring(
-        sourceCode.indexOf("const styles")
+        sourceCode.indexOf("const styles"),
       );
       // Remove comments to avoid false positives from explanatory text
       const stylesWithoutComments = stylesSection
@@ -358,7 +360,7 @@ describe("MessageList - iOS 26 HIG Compliance", () => {
 
     it("prevents reintroduction of hardcoded black (#000000)", () => {
       const stylesSection = sourceCode.substring(
-        sourceCode.indexOf("const styles")
+        sourceCode.indexOf("const styles"),
       );
       // Remove comments to avoid false positives from explanatory text
       const stylesWithoutComments = stylesSection
@@ -381,12 +383,12 @@ describe("MessageList - iOS 26 HIG Compliance", () => {
     it("has no unguarded console.log statements (production-ready)", () => {
       // DEV-only logging is allowed (if (__DEV__) console.log(...))
       // Check for unguarded console.log that would run in production
-      const lines = sourceCode.split('\n');
+      const lines = sourceCode.split("\n");
       const unguardedLogs = lines.filter((line, idx) => {
-        if (!line.includes('console.log')) return false;
+        if (!line.includes("console.log")) return false;
         // Allow console.log inside if (__DEV__) blocks
-        const prevLines = lines.slice(Math.max(0, idx - 3), idx).join('\n');
-        return !prevLines.includes('if (__DEV__)');
+        const prevLines = lines.slice(Math.max(0, idx - 3), idx).join("\n");
+        return !prevLines.includes("if (__DEV__)");
       });
       expect(unguardedLogs.length).toBe(0);
     });

@@ -5,7 +5,9 @@ const readSource = (relativePath: string) =>
   fs.readFileSync(path.join(__dirname, "..", relativePath), "utf8");
 
 describe("glass modal accessibility policy", () => {
-  const bottomSheetSource = readSource("src/components/glass/GlassBottomSheet.tsx");
+  const bottomSheetSource = readSource(
+    "src/components/glass/GlassBottomSheet.tsx",
+  );
 
   it("treats native bottom sheets as modal accessibility scopes", () => {
     expect(bottomSheetSource).toContain("accessibilityViewIsModal");
@@ -19,15 +21,21 @@ describe("glass modal accessibility policy", () => {
     expect(bottomSheetSource).toContain("onCloseRef.current()");
     expect(bottomSheetSource).toContain('event.key === "Escape"');
     expect(bottomSheetSource).toContain('event.key !== "Tab"');
-    expect(bottomSheetSource).toContain("document.addEventListener(\"keydown\", handleKeyDown)");
-    expect(bottomSheetSource).toContain("document.removeEventListener(\"keydown\", handleKeyDown)");
+    expect(bottomSheetSource).toContain(
+      'document.addEventListener("keydown", handleKeyDown)',
+    );
+    expect(bottomSheetSource).toContain(
+      'document.removeEventListener("keydown", handleKeyDown)',
+    );
     expect(bottomSheetSource).toContain("}, [visible]);");
   });
 
   it("keeps constrained sheet content reachable by scrolling", () => {
     expect(bottomSheetSource).toContain("ScrollView");
     expect(bottomSheetSource).toContain('keyboardShouldPersistTaps="handled"');
-    expect(bottomSheetSource).toContain("contentContainerStyle={styles.contentContainer}");
+    expect(bottomSheetSource).toContain(
+      "contentContainerStyle={styles.contentContainer}",
+    );
     expect(bottomSheetSource).toContain("paddingBottom: 20");
   });
 
@@ -35,8 +43,12 @@ describe("glass modal accessibility policy", () => {
     // The project runs the React Compiler (experiments.reactCompiler), which
     // auto-memoizes these handlers, so manual useCallback is intentionally removed.
     expect(bottomSheetSource).toContain("const show = () => setVisible(true);");
-    expect(bottomSheetSource).toContain("const hide = () => setVisible(false);");
-    expect(bottomSheetSource).toContain("const toggle = () => setVisible((prev) => !prev);");
+    expect(bottomSheetSource).toContain(
+      "const hide = () => setVisible(false);",
+    );
+    expect(bottomSheetSource).toContain(
+      "const toggle = () => setVisible((prev) => !prev);",
+    );
   });
 
   it("does not mount Expo UI bottom sheets before a user opens a sheet", () => {
@@ -48,17 +60,25 @@ describe("glass modal accessibility policy", () => {
   });
 
   it("gives close and action sheet controls accessible button metadata", () => {
-    expect(bottomSheetSource).toContain('accessibilityLabel={t("common.close")}');
+    expect(bottomSheetSource).toContain(
+      'accessibilityLabel={t("common.close")}',
+    );
     expect(bottomSheetSource).toContain('accessibilityRole="button"');
-    expect(bottomSheetSource).toContain("accessibilityLabel={action.accessibilityLabel ?? action.title}");
-    expect(bottomSheetSource).toContain("accessibilityState={{ disabled: action.disabled }}");
+    expect(bottomSheetSource).toContain(
+      "accessibilityLabel={action.accessibilityLabel ?? action.title}",
+    );
+    expect(bottomSheetSource).toContain(
+      "accessibilityState={{ disabled: action.disabled }}",
+    );
   });
 
   it("uses a fixed-size vector close glyph immune to Dynamic Type scaling", () => {
     // The close control renders an SVG CloseIcon (fixed `size` prop) instead of a
     // text "X". A vector glyph does not scale with Dynamic Type, so the old
     // maxFontSizeMultiplier cap on a text glyph is structurally unnecessary.
-    expect(bottomSheetSource).toContain('import { CloseIcon } from "../icons/CloseIcon"');
+    expect(bottomSheetSource).toContain(
+      'import { CloseIcon } from "../icons/CloseIcon"',
+    );
     expect(bottomSheetSource).toContain("<CloseIcon");
     expect(bottomSheetSource).not.toContain("FIXED_GLYPH_MAX_FONT_SCALE");
   });
@@ -82,11 +102,15 @@ describe("shared interactive control accessibility policy", () => {
 
   it("keeps toast actions reachable and reserves assertive live regions for errors", () => {
     const source = readSource("src/components/ui/Toast.tsx");
-    expect(source).toContain('const liveRegion = variant === "error" ? "assertive" : "polite"');
-    expect(source).toContain("accessibilityRole={variant === \"error\" ? \"alert\" : undefined}");
+    expect(source).toContain(
+      'const liveRegion = variant === "error" ? "assertive" : "polite"',
+    );
+    expect(source).toContain(
+      'accessibilityRole={variant === "error" ? "alert" : undefined}',
+    );
     expect(source).toContain("accessibilityLiveRegion={liveRegion}");
-    expect(source).toContain("importantForAccessibility=\"no-hide-descendants\"");
-    expect(source).toContain("numberOfLines: variant === \"error\" ? 3 : 2");
+    expect(source).toContain('importantForAccessibility="no-hide-descendants"');
+    expect(source).toContain('numberOfLines: variant === "error" ? 3 : 2');
     expect(source).toContain("maxHeight: 168");
     expect(source).toContain("flexShrink: 1");
     expect(source).not.toContain('accessibilityLiveRegion="assertive"');
@@ -109,7 +133,7 @@ describe("shared interactive control accessibility policy", () => {
     const source = readSource("src/navigation/screens/Logs.tsx");
     expect(source).toContain("status: statusLabel");
     expect(source).toContain("accessible={false}");
-    expect(source).toContain("importantForAccessibility=\"no-hide-descendants\"");
+    expect(source).toContain('importantForAccessibility="no-hide-descendants"');
     expect(source).not.toContain('accessibilityRole="image"');
   });
 
@@ -117,6 +141,6 @@ describe("shared interactive control accessibility policy", () => {
     const source = readSource("app/(tabs)/_layout.web.tsx");
     expect(source).toContain("accessible={false}");
     expect(source).toContain("accessibilityElementsHidden");
-    expect(source).toContain("importantForAccessibility=\"no-hide-descendants\"");
+    expect(source).toContain('importantForAccessibility="no-hide-descendants"');
   });
 });

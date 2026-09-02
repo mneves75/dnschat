@@ -153,20 +153,24 @@ describe("ChatContext error recovery", () => {
     mockStorageService.updateMessage.mockImplementation(
       async (chatId, messageId, updates) => {
         const chat = storedChats.find((candidate) => candidate.id === chatId);
-        const message = chat?.messages.find((candidate) => candidate.id === messageId);
+        const message = chat?.messages.find(
+          (candidate) => candidate.id === messageId,
+        );
         if (!message) {
           throw new Error("Message not found");
         }
         Object.assign(message, updates);
       },
     );
-    mockStorageService.addMessage.mockImplementation(async (chatId, message) => {
-      const chat = storedChats.find((candidate) => candidate.id === chatId);
-      if (!chat) {
-        throw new Error("Chat not found");
-      }
-      chat.messages.push(message);
-    });
+    mockStorageService.addMessage.mockImplementation(
+      async (chatId, message) => {
+        const chat = storedChats.find((candidate) => candidate.id === chatId);
+        if (!chat) {
+          throw new Error("Chat not found");
+        }
+        chat.messages.push(message);
+      },
+    );
     mockStorageService.deleteChat.mockResolvedValue(undefined);
     mockStorageService.clearAllChats.mockImplementation(async () => {
       storedChats = [];

@@ -1,7 +1,8 @@
 import fs from "node:fs";
 
 const MAIN_MANIFEST = "android/app/src/main/AndroidManifest.xml";
-const DEBUG_OPTIMIZED_MANIFEST = "android/app/src/debugOptimized/AndroidManifest.xml";
+const DEBUG_OPTIMIZED_MANIFEST =
+  "android/app/src/debugOptimized/AndroidManifest.xml";
 
 function read(path: string): string {
   return fs.readFileSync(path, "utf8");

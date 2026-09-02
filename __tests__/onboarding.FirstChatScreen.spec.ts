@@ -9,7 +9,7 @@ import path from "path";
 describe("FirstChatScreen - iOS 26 HIG Compliance", () => {
   const filePath = path.resolve(
     __dirname,
-    "../src/components/onboarding/screens/FirstChatScreen.tsx"
+    "../src/components/onboarding/screens/FirstChatScreen.tsx",
   );
   let sourceCode: string;
 
@@ -41,19 +41,19 @@ describe("FirstChatScreen - iOS 26 HIG Compliance", () => {
 
   describe("Zero Emoji Requirement", () => {
     it("does not contain chat bubble emoji", () => {
-      expect(sourceCode).not.toContain(String.fromCodePoint(0x1F4AC));
+      expect(sourceCode).not.toContain(String.fromCodePoint(0x1f4ac));
     });
 
     it("does not contain sparkles emoji", () => {
-      expect(sourceCode).not.toContain(String.fromCodePoint(0x1F31F));
+      expect(sourceCode).not.toContain(String.fromCodePoint(0x1f31f));
     });
 
     it("does not contain rocket emoji", () => {
-      expect(sourceCode).not.toContain(String.fromCodePoint(0x1F680));
+      expect(sourceCode).not.toContain(String.fromCodePoint(0x1f680));
     });
 
     it("does not contain hourglass emoji", () => {
-      expect(sourceCode).not.toContain(String.fromCodePoint(0x23F3));
+      expect(sourceCode).not.toContain(String.fromCodePoint(0x23f3));
     });
 
     it("contains zero emoji characters", () => {
@@ -66,7 +66,9 @@ describe("FirstChatScreen - iOS 26 HIG Compliance", () => {
     });
 
     it("uses text status 'Sending via DNS...' instead of emoji", () => {
-      expect(sourceCode).toContain('t("screen.onboarding.firstChat.input.sendingVia")');
+      expect(sourceCode).toContain(
+        't("screen.onboarding.firstChat.input.sendingVia")',
+      );
     });
   });
 
@@ -96,7 +98,9 @@ describe("FirstChatScreen - iOS 26 HIG Compliance", () => {
 
     it("honors Reduce Motion when auto-scrolling messages", () => {
       expect(sourceCode).toContain("shouldReduceMotion");
-      expect(sourceCode).toContain("scrollToEnd({ animated: !shouldReduceMotion })");
+      expect(sourceCode).toContain(
+        "scrollToEnd({ animated: !shouldReduceMotion })",
+      );
     });
 
     it("includes hasTriedChat state", () => {
@@ -118,7 +122,7 @@ describe("FirstChatScreen - iOS 26 HIG Compliance", () => {
     it("applies different colors for user vs assistant messages", () => {
       const bubbleSection = sourceCode.substring(
         sourceCode.indexOf("function MessageBubble"),
-        sourceCode.indexOf("const styles")
+        sourceCode.indexOf("const styles"),
       );
       expect(bubbleSection).toContain("message.isUser");
       expect(bubbleSection).toContain("palette.accentTint");
@@ -135,8 +139,12 @@ describe("FirstChatScreen - iOS 26 HIG Compliance", () => {
   describe("Suggested Messages", () => {
     it("includes suggested messages array", () => {
       expect(sourceCode).toContain("suggestedMessages");
-      expect(sourceCode).toContain('t("screen.onboarding.firstChat.suggestions.option1")');
-      expect(sourceCode).toContain('t("screen.onboarding.firstChat.suggestions.option2")');
+      expect(sourceCode).toContain(
+        't("screen.onboarding.firstChat.suggestions.option1")',
+      );
+      expect(sourceCode).toContain(
+        't("screen.onboarding.firstChat.suggestions.option2")',
+      );
     });
 
     it("renders suggestions conditionally", () => {
@@ -147,7 +155,7 @@ describe("FirstChatScreen - iOS 26 HIG Compliance", () => {
     it("applies semantic styling to suggestion buttons", () => {
       const suggestionsSection = sourceCode.substring(
         sourceCode.indexOf("suggestionButton"),
-        sourceCode.indexOf("suggestionButton") + 500
+        sourceCode.indexOf("suggestionButton") + 500,
       );
       expect(suggestionsSection).toContain("palette.surface");
       expect(suggestionsSection).toContain("palette.border");
@@ -177,13 +185,16 @@ describe("FirstChatScreen - iOS 26 HIG Compliance", () => {
 
   describe("Spacing System", () => {
     it("uses LiquidGlassSpacing throughout", () => {
-      expect(sourceCode.match(/LiquidGlassSpacing\./g)!.length).toBeGreaterThan(15);
+      expect(sourceCode.match(/LiquidGlassSpacing\./g)!.length).toBeGreaterThan(
+        15,
+      );
     });
 
     it("does not use hardcoded numeric spacing", () => {
       const styles = sourceCode.substring(sourceCode.indexOf("const styles"));
       // Allow only 0, 1, 2, 18, 20, 21, 22, 24, 40, 100 for specific props (borderRadius, lineHeight, maxHeight, etc.)
-      const numericSpacingPattern = /(?:padding|margin|gap|top|bottom|left|right)(?:Horizontal|Vertical)?:\s*(?!0\b|1\b|2\b)\d+/g;
+      const numericSpacingPattern =
+        /(?:padding|margin|gap|top|bottom|left|right)(?:Horizontal|Vertical)?:\s*(?!0\b|1\b|2\b)\d+/g;
       expect(styles.match(numericSpacingPattern)).toBeNull();
     });
   });
@@ -215,14 +226,16 @@ describe("FirstChatScreen - iOS 26 HIG Compliance", () => {
       // input row follows the keyboard while OnboardingNavigation stays anchored.
       expect(sourceCode).toContain("KeyboardStickyView");
       expect(sourceCode).toContain("offset={stickyInputOffset}");
-      expect(sourceCode).toContain("Math.min(navigationHeight, keyboardHeight)");
+      expect(sourceCode).toMatch(
+        /Math\.min\(\s*navigationHeight,\s*keyboardHeight,?\s*\)/,
+      );
       expect(sourceCode).not.toContain("KeyboardAvoidingView");
     });
 
     it("reserves keyboard overlap in the messages scroll area", () => {
       expect(sourceCode).toContain("useKeyboardState");
-      expect(sourceCode).toContain(
-        "const keyboardOverlayInset = Math.max(0, keyboardHeight - navigationHeight)",
+      expect(sourceCode).toMatch(
+        /const keyboardOverlayInset = Math\.max\(\s*0,\s*keyboardHeight - navigationHeight,?\s*\)/,
       );
       expect(sourceCode).toContain("paddingBottom: keyboardOverlayInset");
       expect(sourceCode).toContain('keyboardShouldPersistTaps="handled"');
@@ -244,7 +257,9 @@ describe("FirstChatScreen - iOS 26 HIG Compliance", () => {
       expect(sourceCode).toContain("inputContainer");
       expect(sourceCode).toContain("TextInput");
       expect(sourceCode).toContain("multiline");
-      expect(sourceCode).toContain("maxLength={MESSAGE_CONSTANTS.MAX_MESSAGE_LENGTH}");
+      expect(sourceCode).toContain(
+        "maxLength={MESSAGE_CONSTANTS.MAX_MESSAGE_LENGTH}",
+      );
     });
 
     it("includes send button", () => {
@@ -254,7 +269,9 @@ describe("FirstChatScreen - iOS 26 HIG Compliance", () => {
 
     it("uses platform minimum touch target for the send button", () => {
       expect(sourceCode).toContain("getMinimumTouchTarget");
-      expect(sourceCode).toContain("const minimumTouchTarget = getMinimumTouchTarget()");
+      expect(sourceCode).toContain(
+        "const minimumTouchTarget = getMinimumTouchTarget()",
+      );
       expect(sourceCode).toContain("width: minimumTouchTarget");
       expect(sourceCode).toContain("height: minimumTouchTarget");
       expect(sourceCode).toContain("rippleRadius={minimumTouchTarget / 2}");
@@ -286,7 +303,9 @@ describe("FirstChatScreen - iOS 26 HIG Compliance", () => {
 
   describe("Accessibility", () => {
     it("provides placeholder text for input", () => {
-      expect(sourceCode).toContain('placeholder={t("screen.onboarding.firstChat.input.placeholder")}');
+      expect(sourceCode).toContain(
+        'placeholder={t("screen.onboarding.firstChat.input.placeholder")}',
+      );
     });
 
     it("uses appropriate pressedOpacity for touch feedback", () => {

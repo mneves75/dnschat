@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 
-const { decideIosPodsPostinstallAction } = require("../scripts/iosPodsPostinstallPolicy");
+const {
+  decideIosPodsPostinstallAction,
+} = require("../scripts/iosPodsPostinstallPolicy");
 
 describe("iosPodsPostinstallPolicy", () => {
   it("skips when SKIP_IOS_POD_INSTALL is set", () => {
@@ -12,7 +14,7 @@ describe("iosPodsPostinstallPolicy", () => {
         hasPodfile: true,
         outOfSyncCount: 1,
         hasPodCommand: true,
-      })
+      }),
     ).toEqual({ action: "skip", reason: "SKIP_IOS_POD_INSTALL" });
   });
 
@@ -25,7 +27,7 @@ describe("iosPodsPostinstallPolicy", () => {
         hasPodfile: true,
         outOfSyncCount: 1,
         hasPodCommand: false,
-      })
+      }),
     ).toEqual({ action: "skip", reason: "NOT_DARWIN" });
   });
 
@@ -38,7 +40,7 @@ describe("iosPodsPostinstallPolicy", () => {
         hasPodfile: false,
         outOfSyncCount: 1,
         hasPodCommand: false,
-      })
+      }),
     ).toEqual({ action: "skip", reason: "NO_IOS_PROJECT" });
   });
 
@@ -51,7 +53,7 @@ describe("iosPodsPostinstallPolicy", () => {
         hasPodfile: true,
         outOfSyncCount: 0,
         hasPodCommand: false,
-      })
+      }),
     ).toEqual({ action: "skip", reason: "IN_SYNC" });
   });
 
@@ -64,7 +66,7 @@ describe("iosPodsPostinstallPolicy", () => {
         hasPodfile: true,
         outOfSyncCount: 2,
         hasPodCommand: false,
-      })
+      }),
     ).toEqual({ action: "error", reason: "MISSING_COCOAPODS" });
   });
 
@@ -77,8 +79,7 @@ describe("iosPodsPostinstallPolicy", () => {
         hasPodfile: true,
         outOfSyncCount: 2,
         hasPodCommand: true,
-      })
+      }),
     ).toEqual({ action: "run_pod_install", reason: "DRIFT_DETECTED" });
   });
 });
-

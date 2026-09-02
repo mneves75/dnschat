@@ -9,7 +9,7 @@ import path from "path";
 describe("DNSMagicScreen - iOS 26 HIG Compliance", () => {
   const filePath = path.resolve(
     __dirname,
-    "../src/components/onboarding/screens/DNSMagicScreen.tsx"
+    "../src/components/onboarding/screens/DNSMagicScreen.tsx",
   );
   let sourceCode: string;
 
@@ -33,15 +33,15 @@ describe("DNSMagicScreen - iOS 26 HIG Compliance", () => {
 
   describe("Zero Emoji Requirement", () => {
     it("does not contain lightning emoji", () => {
-      expect(sourceCode).not.toContain(String.fromCodePoint(0x26A1));
+      expect(sourceCode).not.toContain(String.fromCodePoint(0x26a1));
     });
 
     it("does not contain hourglass emoji", () => {
-      expect(sourceCode).not.toContain(String.fromCodePoint(0x23F3));
+      expect(sourceCode).not.toContain(String.fromCodePoint(0x23f3));
     });
 
     it("does not contain arrows emoji", () => {
-      expect(sourceCode).not.toContain(String.fromCodePoint(0x1F504));
+      expect(sourceCode).not.toContain(String.fromCodePoint(0x1f504));
     });
 
     it("does not contain checkmark emoji", () => {
@@ -49,7 +49,7 @@ describe("DNSMagicScreen - iOS 26 HIG Compliance", () => {
     });
 
     it("does not contain cross mark emoji", () => {
-      expect(sourceCode).not.toContain(String.fromCodePoint(0x274C));
+      expect(sourceCode).not.toContain(String.fromCodePoint(0x274c));
     });
 
     it("does not contain sparkles emoji", () => {
@@ -57,7 +57,7 @@ describe("DNSMagicScreen - iOS 26 HIG Compliance", () => {
     });
 
     it("does not contain dart emoji", () => {
-      expect(sourceCode).not.toContain(String.fromCodePoint(0x1F3AF));
+      expect(sourceCode).not.toContain(String.fromCodePoint(0x1f3af));
     });
 
     it("contains zero emoji characters", () => {
@@ -66,10 +66,18 @@ describe("DNSMagicScreen - iOS 26 HIG Compliance", () => {
     });
 
     it("uses text-based status labels instead", () => {
-      expect(sourceCode).toContain('t("screen.onboarding.dnsMagic.status.pending")');
-      expect(sourceCode).toContain('t("screen.onboarding.dnsMagic.status.active")');
-      expect(sourceCode).toContain('t("screen.onboarding.dnsMagic.status.success")');
-      expect(sourceCode).toContain('t("screen.onboarding.dnsMagic.status.failed")');
+      expect(sourceCode).toContain(
+        't("screen.onboarding.dnsMagic.status.pending")',
+      );
+      expect(sourceCode).toContain(
+        't("screen.onboarding.dnsMagic.status.active")',
+      );
+      expect(sourceCode).toContain(
+        't("screen.onboarding.dnsMagic.status.success")',
+      );
+      expect(sourceCode).toContain(
+        't("screen.onboarding.dnsMagic.status.failed")',
+      );
     });
   });
 
@@ -115,7 +123,9 @@ describe("DNSMagicScreen - iOS 26 HIG Compliance", () => {
 
   describe("Spacing System", () => {
     it("uses LiquidGlassSpacing throughout", () => {
-      expect(sourceCode.match(/LiquidGlassSpacing\./g)!.length).toBeGreaterThan(10);
+      expect(sourceCode.match(/LiquidGlassSpacing\./g)!.length).toBeGreaterThan(
+        10,
+      );
     });
   });
 });

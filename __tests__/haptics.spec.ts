@@ -58,7 +58,8 @@ describe("HapticFeedback capability gating", () => {
     const notificationSpy = jest
       .spyOn(ExpoHaptics, "notificationAsync")
       .mockResolvedValue(undefined);
-    const { HapticFeedback, configureHaptics, __hapticsTestHooks } = loadModule();
+    const { HapticFeedback, configureHaptics, __hapticsTestHooks } =
+      loadModule();
     configureHaptics({ userEnabled: true });
 
     await expect(__hapticsTestHooks.shouldPlayCheck()).resolves.toBe(true);

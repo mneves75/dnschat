@@ -3,7 +3,10 @@ import fs from "node:fs";
 describe("DNS log UI redaction policy", () => {
   it("does not render stored query or response payload fields directly", () => {
     const viewer = fs.readFileSync("src/components/DNSLogViewer.tsx", "utf8");
-    const logsScreen = fs.readFileSync("src/navigation/screens/Logs.tsx", "utf8");
+    const logsScreen = fs.readFileSync(
+      "src/navigation/screens/Logs.tsx",
+      "utf8",
+    );
 
     expect(viewer).not.toContain("{log.chatTitle || log.query}");
     expect(viewer).not.toContain("{log.response}");

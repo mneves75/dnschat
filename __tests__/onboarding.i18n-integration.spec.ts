@@ -23,7 +23,10 @@ import { ptBR as ptBRMessages } from "../src/i18n/messages/pt-BR";
 type NestedMessages = Record<string, unknown>;
 
 describe("Onboarding i18n Integration", () => {
-  const screensDir = path.resolve(__dirname, "../src/components/onboarding/screens");
+  const screensDir = path.resolve(
+    __dirname,
+    "../src/components/onboarding/screens",
+  );
 
   const screens = [
     { name: "WelcomeScreen", file: "WelcomeScreen.tsx" },
@@ -34,40 +37,40 @@ describe("Onboarding i18n Integration", () => {
   ];
 
   describe("Translation Hook Integration", () => {
-    screens.forEach(({ name, file }) => {
-      describe(name, () => {
-        let sourceCode: string;
+    describe.each(screens)("$name", ({ file }) => {
+      let sourceCode: string;
 
-        beforeAll(() => {
-          const filePath = path.join(screensDir, file);
-          sourceCode = fs.readFileSync(filePath, "utf8");
-        });
+      beforeAll(() => {
+        const filePath = path.join(screensDir, file);
+        sourceCode = fs.readFileSync(filePath, "utf8");
+      });
 
-        it("imports useTranslation hook", () => {
-          expect(sourceCode).toContain('import { useTranslation } from "../../../i18n"');
-        });
+      it("imports useTranslation hook", () => {
+        expect(sourceCode).toContain(
+          'import { useTranslation } from "../../../i18n"',
+        );
+      });
 
-        it("calls useTranslation hook", () => {
-          expect(sourceCode).toContain("const { t } = useTranslation()");
-        });
+      it("calls useTranslation hook", () => {
+        expect(sourceCode).toContain("const { t } = useTranslation()");
+      });
 
-        it("uses t() function for translations", () => {
-          expect(sourceCode).toContain('t("screen.onboarding.');
-        });
+      it("uses t() function for translations", () => {
+        expect(sourceCode).toContain('t("screen.onboarding.');
+      });
 
-        it("does NOT contain hardcoded English text in JSX", () => {
-          // Check for common hardcoded patterns that should be translated
-          const hardcodedPatterns = [
-            /<Text[^>]*>Welcome to DNS Chat</,
-            /<Text[^>]*>Try Your First Chat</,
-            /<Text[^>]*>DNS Magic in Action</,
-            /<Text[^>]*>Network Optimization</,
-            /<Text[^>]*>Powerful Features</,
-          ];
+      it("does NOT contain hardcoded English text in JSX", () => {
+        // Check for common hardcoded patterns that should be translated
+        const hardcodedPatterns = [
+          /<Text[^>]*>Welcome to DNS Chat</,
+          /<Text[^>]*>Try Your First Chat</,
+          /<Text[^>]*>DNS Magic in Action</,
+          /<Text[^>]*>Network Optimization</,
+          /<Text[^>]*>Powerful Features</,
+        ];
 
-          hardcodedPatterns.forEach((pattern) => {
-            expect(sourceCode).not.toMatch(pattern);
-          });
+        hardcodedPatterns.forEach((pattern) => {
+          expect(sourceCode).not.toMatch(pattern);
         });
       });
     });
@@ -103,8 +106,10 @@ describe("Onboarding i18n Integration", () => {
     });
 
     it("en-US and pt-BR translations are different", () => {
-      expect(getNestedValue(enUSMessages, "screen.onboarding.welcome.title")).not.toBe(
-        getNestedValue(ptBRMessages, "screen.onboarding.welcome.title")
+      expect(
+        getNestedValue(enUSMessages, "screen.onboarding.welcome.title"),
+      ).not.toBe(
+        getNestedValue(ptBRMessages, "screen.onboarding.welcome.title"),
       );
     });
   });
@@ -145,9 +150,15 @@ describe("Onboarding i18n Integration", () => {
 
     it("suggestions are translated differently", () => {
       expect(
-        getNestedValue(enUSMessages, "screen.onboarding.firstChat.suggestions.option1")
+        getNestedValue(
+          enUSMessages,
+          "screen.onboarding.firstChat.suggestions.option1",
+        ),
       ).not.toBe(
-        getNestedValue(ptBRMessages, "screen.onboarding.firstChat.suggestions.option1")
+        getNestedValue(
+          ptBRMessages,
+          "screen.onboarding.firstChat.suggestions.option1",
+        ),
       );
     });
   });
@@ -191,28 +202,56 @@ describe("Onboarding i18n Integration", () => {
 
     it("DNS method names are translated", () => {
       expect(
-        getNestedValue(enUSMessages, "screen.onboarding.dnsMagic.fallbackMethods.native.name")
+        getNestedValue(
+          enUSMessages,
+          "screen.onboarding.dnsMagic.fallbackMethods.native.name",
+        ),
       ).not.toBe(
-        getNestedValue(ptBRMessages, "screen.onboarding.dnsMagic.fallbackMethods.native.name")
+        getNestedValue(
+          ptBRMessages,
+          "screen.onboarding.dnsMagic.fallbackMethods.native.name",
+        ),
       );
     });
 
     it("status labels are translated", () => {
       expect(
-        getNestedValue(enUSMessages, "screen.onboarding.dnsMagic.status.success")
+        getNestedValue(
+          enUSMessages,
+          "screen.onboarding.dnsMagic.status.success",
+        ),
       ).not.toBe(
-        getNestedValue(ptBRMessages, "screen.onboarding.dnsMagic.status.success")
+        getNestedValue(
+          ptBRMessages,
+          "screen.onboarding.dnsMagic.status.success",
+        ),
       );
     });
 
     it("does not advertise unsupported TypeScript HTTPS fallback", () => {
-      const enHint = getNestedValue(enUSMessages, "screen.onboarding.dnsMagic.accessibility.demoHint");
-      const ptHint = getNestedValue(ptBRMessages, "screen.onboarding.dnsMagic.accessibility.demoHint");
+      const enHint = getNestedValue(
+        enUSMessages,
+        "screen.onboarding.dnsMagic.accessibility.demoHint",
+      );
+      const ptHint = getNestedValue(
+        ptBRMessages,
+        "screen.onboarding.dnsMagic.accessibility.demoHint",
+      );
 
       expect(enHint).not.toMatch(/HTTPS|Cloudflare/);
       expect(ptHint).not.toMatch(/HTTPS|Cloudflare/);
-      expect(getNestedValue(enUSMessages, "screen.onboarding.dnsMagic.fallbackMethods.https.name")).toBeUndefined();
-      expect(getNestedValue(ptBRMessages, "screen.onboarding.dnsMagic.fallbackMethods.https.name")).toBeUndefined();
+      expect(
+        getNestedValue(
+          enUSMessages,
+          "screen.onboarding.dnsMagic.fallbackMethods.https.name",
+        ),
+      ).toBeUndefined();
+      expect(
+        getNestedValue(
+          ptBRMessages,
+          "screen.onboarding.dnsMagic.fallbackMethods.https.name",
+        ),
+      ).toBeUndefined();
     });
   });
 
@@ -262,9 +301,15 @@ describe("Onboarding i18n Integration", () => {
 
     it("Alert messages are translated", () => {
       expect(
-        getNestedValue(enUSMessages, "screen.onboarding.networkSetup.alerts.successTitle")
+        getNestedValue(
+          enUSMessages,
+          "screen.onboarding.networkSetup.alerts.successTitle",
+        ),
       ).not.toBe(
-        getNestedValue(ptBRMessages, "screen.onboarding.networkSetup.alerts.successTitle")
+        getNestedValue(
+          ptBRMessages,
+          "screen.onboarding.networkSetup.alerts.successTitle",
+        ),
       );
     });
   });
@@ -323,41 +368,65 @@ describe("Onboarding i18n Integration", () => {
 
     it("feature descriptions are translated", () => {
       expect(
-        getNestedValue(enUSMessages, "screen.onboarding.features.liquidGlass.description")
+        getNestedValue(
+          enUSMessages,
+          "screen.onboarding.features.liquidGlass.description",
+        ),
       ).not.toBe(
-        getNestedValue(ptBRMessages, "screen.onboarding.features.liquidGlass.description")
+        getNestedValue(
+          ptBRMessages,
+          "screen.onboarding.features.liquidGlass.description",
+        ),
       );
     });
 
     it("final button text is translated", () => {
       expect(
-        getNestedValue(enUSMessages, "screen.onboarding.ready.button")
+        getNestedValue(enUSMessages, "screen.onboarding.ready.button"),
       ).not.toBe(
-        getNestedValue(ptBRMessages, "screen.onboarding.ready.button")
+        getNestedValue(ptBRMessages, "screen.onboarding.ready.button"),
       );
     });
   });
 
   describe("Translation Structure Consistency", () => {
     it("en-US and pt-BR have matching onboarding key structures", () => {
-      const enKeys = getAllKeys(enUSMessages.screen.onboarding, "screen.onboarding");
-      const ptKeys = getAllKeys(ptBRMessages.screen.onboarding, "screen.onboarding");
+      const enKeys = getAllKeys(
+        enUSMessages.screen.onboarding,
+        "screen.onboarding",
+      );
+      const ptKeys = getAllKeys(
+        ptBRMessages.screen.onboarding,
+        "screen.onboarding",
+      );
 
       // Both should have same keys
       expect(enKeys.sort()).toEqual(ptKeys.sort());
     });
 
     it("no missing translations in pt-BR", () => {
-      const enKeys = getAllKeys(enUSMessages.screen.onboarding, "screen.onboarding");
-      const ptKeys = getAllKeys(ptBRMessages.screen.onboarding, "screen.onboarding");
+      const enKeys = getAllKeys(
+        enUSMessages.screen.onboarding,
+        "screen.onboarding",
+      );
+      const ptKeys = getAllKeys(
+        ptBRMessages.screen.onboarding,
+        "screen.onboarding",
+      );
 
       const missingInPtBR = enKeys.filter((key) => !ptKeys.includes(key));
       expect(missingInPtBR).toEqual([]);
     });
 
     it("no extra translations in pt-BR", () => {
-      const enKeys = getAllKeys(enUSMessages.screen.onboarding, "screen.onboarding");
-      const ptKeys = getAllKeys(ptBRMessages.screen.onboarding, "screen.onboarding");
+      const enKeys = getAllKeys(
+        enUSMessages.screen.onboarding,
+        "screen.onboarding",
+      );
+      const ptKeys = getAllKeys(
+        ptBRMessages.screen.onboarding,
+        "screen.onboarding",
+      );
 
       const extraInPtBR = ptKeys.filter((key) => !enKeys.includes(key));
       expect(extraInPtBR).toEqual([]);
@@ -370,10 +439,18 @@ describe("Onboarding i18n Integration", () => {
       const sourceCode = fs.readFileSync(filePath, "utf8");
 
       // Should build suggestions from translation keys
-      expect(sourceCode).toContain('t("screen.onboarding.firstChat.suggestions.option1")');
-      expect(sourceCode).toContain('t("screen.onboarding.firstChat.suggestions.option2")');
-      expect(sourceCode).toContain('t("screen.onboarding.firstChat.suggestions.option3")');
-      expect(sourceCode).toContain('t("screen.onboarding.firstChat.suggestions.option4")');
+      expect(sourceCode).toContain(
+        't("screen.onboarding.firstChat.suggestions.option1")',
+      );
+      expect(sourceCode).toContain(
+        't("screen.onboarding.firstChat.suggestions.option2")',
+      );
+      expect(sourceCode).toContain(
+        't("screen.onboarding.firstChat.suggestions.option3")',
+      );
+      expect(sourceCode).toContain(
+        't("screen.onboarding.firstChat.suggestions.option4")',
+      );
     });
 
     it("DNSMagicScreen initializes DNS steps with translations", () => {
@@ -381,9 +458,15 @@ describe("Onboarding i18n Integration", () => {
       const sourceCode = fs.readFileSync(filePath, "utf8");
 
       // Should initialize state with translated method names
-      expect(sourceCode).toContain('methodKey: "screen.onboarding.dnsMagic.fallbackMethods.native.name"');
-      expect(sourceCode).toContain('methodKey: "screen.onboarding.dnsMagic.fallbackMethods.udp.name"');
-      expect(sourceCode).toContain('methodKey: "screen.onboarding.dnsMagic.fallbackMethods.tcp.name"');
+      expect(sourceCode).toContain(
+        'methodKey: "screen.onboarding.dnsMagic.fallbackMethods.native.name"',
+      );
+      expect(sourceCode).toContain(
+        'methodKey: "screen.onboarding.dnsMagic.fallbackMethods.udp.name"',
+      );
+      expect(sourceCode).toContain(
+        'methodKey: "screen.onboarding.dnsMagic.fallbackMethods.tcp.name"',
+      );
     });
 
     it("NetworkSetupScreen initializes network tests with translations", () => {
@@ -391,9 +474,15 @@ describe("Onboarding i18n Integration", () => {
       const sourceCode = fs.readFileSync(filePath, "utf8");
 
       // Should initialize state with translated test names
-      expect(sourceCode).toContain('t("screen.onboarding.networkSetup.tests.native.name")');
-      expect(sourceCode).toContain('t("screen.onboarding.networkSetup.tests.udp.name")');
-      expect(sourceCode).toContain('t("screen.onboarding.networkSetup.tests.tcp.name")');
+      expect(sourceCode).toContain(
+        't("screen.onboarding.networkSetup.tests.native.name")',
+      );
+      expect(sourceCode).toContain(
+        't("screen.onboarding.networkSetup.tests.udp.name")',
+      );
+      expect(sourceCode).toContain(
+        't("screen.onboarding.networkSetup.tests.tcp.name")',
+      );
     });
 
     it("FeaturesScreen builds features array from translations", () => {
@@ -401,33 +490,39 @@ describe("Onboarding i18n Integration", () => {
       const sourceCode = fs.readFileSync(filePath, "utf8");
 
       // Should build entire features array from translations
-      expect(sourceCode).toContain('t("screen.onboarding.features.logs.label")');
-      expect(sourceCode).toContain('t("screen.onboarding.features.customize.label")');
-      expect(sourceCode).toContain('t("screen.onboarding.features.liquidGlass.label")');
-      expect(sourceCode).toContain('t("screen.onboarding.features.opensource.action")');
+      expect(sourceCode).toContain(
+        't("screen.onboarding.features.logs.label")',
+      );
+      expect(sourceCode).toContain(
+        't("screen.onboarding.features.customize.label")',
+      );
+      expect(sourceCode).toContain(
+        't("screen.onboarding.features.liquidGlass.label")',
+      );
+      expect(sourceCode).toContain(
+        't("screen.onboarding.features.opensource.action")',
+      );
     });
   });
 
   describe("Code Quality", () => {
-    screens.forEach(({ name, file }) => {
-      describe(name, () => {
-        let sourceCode: string;
+    describe.each(screens)("$name", ({ file }) => {
+      let sourceCode: string;
 
-        beforeAll(() => {
-          const filePath = path.join(screensDir, file);
-          sourceCode = fs.readFileSync(filePath, "utf8");
-        });
+      beforeAll(() => {
+        const filePath = path.join(screensDir, file);
+        sourceCode = fs.readFileSync(filePath, "utf8");
+      });
 
-        it("does not contain hardcoded translation fallbacks", () => {
-          // Should not have fallback English text like: t("key") || "English Fallback"
-          expect(sourceCode).not.toMatch(/t\([^)]+\)\s*\|\|\s*["']/);
-        });
+      it("does not contain hardcoded translation fallbacks", () => {
+        // Should not have fallback English text like: t("key") || "English Fallback"
+        expect(sourceCode).not.toMatch(/t\([^)]+\)\s*\|\|\s*["']/);
+      });
 
-        it("does not use conditional locale rendering", () => {
-          // Should not have: locale === 'en-US' ? "English" : "Portuguese"
-          expect(sourceCode).not.toMatch(/locale\s*===\s*["']en-US["']/);
-          expect(sourceCode).not.toMatch(/locale\s*===\s*["']pt-BR["']/);
-        });
+      it("does not use conditional locale rendering", () => {
+        // Should not have: locale === 'en-US' ? "English" : "Portuguese"
+        expect(sourceCode).not.toMatch(/locale\s*===\s*["']en-US["']/);
+        expect(sourceCode).not.toMatch(/locale\s*===\s*["']pt-BR["']/);
       });
     });
   });
@@ -435,8 +530,14 @@ describe("Onboarding i18n Integration", () => {
   describe("Translation Quality", () => {
     it("pt-BR translations are not just English text", () => {
       // Sample check - pt-BR should not be identical to en-US
-      const enTitle = getNestedValue(enUSMessages, "screen.onboarding.welcome.title");
-      const ptTitle = getNestedValue(ptBRMessages, "screen.onboarding.welcome.title");
+      const enTitle = getNestedValue(
+        enUSMessages,
+        "screen.onboarding.welcome.title",
+      );
+      const ptTitle = getNestedValue(
+        ptBRMessages,
+        "screen.onboarding.welcome.title",
+      );
 
       expect(enTitle).toBe("Welcome to DNS Chat");
       expect(ptTitle).not.toBe("Welcome to DNS Chat");
@@ -444,7 +545,10 @@ describe("Onboarding i18n Integration", () => {
     });
 
     it("pt-BR translations use Portuguese words", () => {
-      const ptSubtitle = getNestedValue(ptBRMessages, "screen.onboarding.welcome.subtitle");
+      const ptSubtitle = getNestedValue(
+        ptBRMessages,
+        "screen.onboarding.welcome.subtitle",
+      );
 
       // Check for common Portuguese words in the factual transport copy.
       expect(ptSubtitle).toMatch(/envie|consultas|respostas|registros/i);

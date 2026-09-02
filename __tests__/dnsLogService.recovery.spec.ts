@@ -21,12 +21,16 @@ jest.mock("../src/services/encryptionService", () => {
     EncryptionKeyUnavailableError,
     decryptIfEncrypted: jest.fn(),
     encryptString: jest.fn(async (payload: string) => payload),
-    isEncryptedPayload: jest.fn((payload: string) => payload.startsWith("enc:v1:")),
+    isEncryptedPayload: jest.fn((payload: string) =>
+      payload.startsWith("enc:v1:"),
+    ),
   };
 });
 
 const mockAsyncStorage = AsyncStorage as jest.Mocked<typeof AsyncStorage>;
-const { decryptIfEncrypted } = jest.requireMock("../src/services/encryptionService");
+const { decryptIfEncrypted } = jest.requireMock(
+  "../src/services/encryptionService",
+);
 const dnsLogServiceInternals = DNSLogService as unknown as {
   currentQueryLog: unknown;
   activeQueryLogs: Map<string, unknown>;
@@ -70,8 +74,12 @@ describe("DNSLogService recovery", () => {
   it("encrypts corrupted legacy plaintext logs before writing a backup", async () => {
     mockAsyncStorage.getItem.mockResolvedValue("{not json");
     decryptIfEncrypted.mockResolvedValue("{not json");
-    const { encryptString } = jest.requireMock("../src/services/encryptionService");
-    encryptString.mockImplementation(async (payload: string) => `enc:v1:${payload.length}`);
+    const { encryptString } = jest.requireMock(
+      "../src/services/encryptionService",
+    );
+    encryptString.mockImplementation(
+      async (payload: string) => `enc:v1:${payload.length}`,
+    );
 
     await DNSLogService.initialize();
 
@@ -114,8 +122,12 @@ describe("DNSLogService recovery", () => {
     ]);
     mockAsyncStorage.getItem.mockResolvedValue(legacyPayload);
     decryptIfEncrypted.mockResolvedValue(legacyPayload);
-    const { encryptString } = jest.requireMock("../src/services/encryptionService");
-    encryptString.mockImplementation(async (payload: string) => `enc:v1:${payload}`);
+    const { encryptString } = jest.requireMock(
+      "../src/services/encryptionService",
+    );
+    encryptString.mockImplementation(
+      async (payload: string) => `enc:v1:${payload}`,
+    );
 
     await DNSLogService.initialize();
 
@@ -268,7 +280,9 @@ describe("DNSLogService recovery", () => {
         entries: [],
       },
     ];
-    mockAsyncStorage.removeItem.mockRejectedValueOnce(new Error("remove failed"));
+    mockAsyncStorage.removeItem.mockRejectedValueOnce(
+      new Error("remove failed"),
+    );
 
     await expect(DNSLogService.clearLogs()).rejects.toThrow("remove failed");
     expect(DNSLogService.getLogs()).toHaveLength(1);

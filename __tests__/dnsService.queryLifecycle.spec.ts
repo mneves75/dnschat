@@ -44,9 +44,7 @@ describe("DNSLogService sensitive-value lifecycle", () => {
   const source = fs.readFileSync("src/services/dnsLogService.ts", "utf8");
 
   it("drops the sensitive-value entry on endQuery, deleteLog, and clearLogs", () => {
-    const deletions = source.match(
-      /this\.sensitiveValuesByQueryId\.delete\(/g,
-    );
+    const deletions = source.match(/this\.sensitiveValuesByQueryId\.delete\(/g);
     expect(deletions?.length ?? 0).toBeGreaterThanOrEqual(2);
     expect(source).toContain("this.sensitiveValuesByQueryId.clear()");
   });
@@ -55,6 +53,8 @@ describe("DNSLogService sensitive-value lifecycle", () => {
     // The boundary group + trailing negative class replace the old `\b` form to
     // avoid over-redacting malformed fragments; no lookbehind (Hermes safety).
     expect(source).not.toContain("(?<");
-    expect(source).toContain("[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\\.(?:llm\\.pieter\\.com|ch\\.at)");
+    expect(source).toContain(
+      "[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\\.(?:llm\\.pieter\\.com|ch\\.at)",
+    );
   });
 });

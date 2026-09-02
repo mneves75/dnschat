@@ -30,7 +30,9 @@ jest.mock("../src/utils/haptics", () => ({
   preloadHaptics,
 }));
 
-const { HapticsConfigurator } = require("../src/components/HapticsConfigurator");
+const {
+  HapticsConfigurator,
+} = require("../src/components/HapticsConfigurator");
 const originalPlatformOS = Platform.OS;
 
 describe("HapticsConfigurator", () => {
@@ -100,7 +102,10 @@ describe("HapticsConfigurator", () => {
 
   it("does not consume reduce-motion state because haptics still fire", () => {
     const source = require("fs").readFileSync(
-      require("path").join(__dirname, "../src/components/HapticsConfigurator.tsx"),
+      require("path").join(
+        __dirname,
+        "../src/components/HapticsConfigurator.tsx",
+      ),
       "utf8",
     );
 

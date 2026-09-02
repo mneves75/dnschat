@@ -22,6 +22,8 @@ describe("resolveRouteChat", () => {
     const staleCurrentChat = makeChat("chat-a", "Chat A");
     const routeChat = makeChat("chat-b", "Chat B");
 
-    expect(resolveRouteChat([routeChat], staleCurrentChat, "chat-b")).toBe(routeChat);
+    expect(resolveRouteChat([routeChat], staleCurrentChat, "chat-b")).toBe(
+      routeChat,
+    );
   });
 });

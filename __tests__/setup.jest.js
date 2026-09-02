@@ -1,10 +1,9 @@
 // Mock AsyncStorage for node/Jest environment
-jest.mock(
-  '@react-native-async-storage/async-storage',
-  () => require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
+jest.mock("@react-native-async-storage/async-storage", () =>
+  require("@react-native-async-storage/async-storage/jest/async-storage-mock"),
 );
 
-jest.mock('expo-secure-store', () => {
+jest.mock("expo-secure-store", () => {
   const store = new Map();
   return {
     getItemAsync: jest.fn((key) => Promise.resolve(store.get(key) ?? null)),
@@ -20,7 +19,7 @@ jest.mock('expo-secure-store', () => {
 });
 
 let expoCryptoUuidCounter = 0;
-jest.mock('expo-crypto', () => ({
+jest.mock("expo-crypto", () => ({
   getRandomBytesAsync: jest.fn((size) =>
     Promise.resolve(Uint8Array.from({ length: size }, (_, i) => (i + 1) % 256)),
   ),
@@ -32,47 +31,51 @@ jest.mock('expo-crypto', () => ({
   }),
   randomUUID: jest.fn(() => {
     expoCryptoUuidCounter += 1;
-    return `00000000-0000-4000-8000-${String(expoCryptoUuidCounter).padStart(12, '0')}`;
+    return `00000000-0000-4000-8000-${String(expoCryptoUuidCounter).padStart(12, "0")}`;
   }),
 }));
 
 const bytesToHex = (bytes) =>
-  Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
+  Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
 
 const hexToBytes = (hex) => {
-  const clean = (hex ?? '').trim();
+  const clean = (hex ?? "").trim();
   if (!clean) return new Uint8Array();
   if (clean.length % 2 !== 0) {
-    throw new Error(`hex string expected, got unpadded hex of length ${clean.length}`);
+    throw new Error(
+      `hex string expected, got unpadded hex of length ${clean.length}`,
+    );
   }
   const nonHex = clean.match(/[^0-9a-f]/i);
   if (nonHex) {
-    throw new Error(`hex string expected, got non-hex character "${nonHex[0]}"`);
+    throw new Error(
+      `hex string expected, got non-hex character "${nonHex[0]}"`,
+    );
   }
   const pairs = clean.match(/.{1,2}/g) ?? [];
   return Uint8Array.from(pairs.map((pair) => parseInt(pair, 16)));
 };
 
-const utf8ToBytes = (text) => Uint8Array.from(Buffer.from(text ?? '', 'utf8'));
+const utf8ToBytes = (text) => Uint8Array.from(Buffer.from(text ?? "", "utf8"));
 
-jest.mock('@noble/hashes/utils.js', () => ({
+jest.mock("@noble/hashes/utils.js", () => ({
   bytesToHex,
   hexToBytes,
   utf8ToBytes,
 }));
 
-jest.mock('@noble/hashes/sha2.js', () => {
-  const { createHash } = require('node:crypto');
+jest.mock("@noble/hashes/sha2.js", () => {
+  const { createHash } = require("node:crypto");
   return {
     sha256: (input) => {
       const buffer = Buffer.isBuffer(input) ? input : Buffer.from(input);
-      const hash = createHash('sha256').update(buffer).digest();
+      const hash = createHash("sha256").update(buffer).digest();
       return Uint8Array.from(hash);
     },
   };
 });
 
-jest.mock('@noble/ciphers/aes.js', () => ({
+jest.mock("@noble/ciphers/aes.js", () => ({
   gcm: () => ({
     encrypt: (plaintext) => Uint8Array.from(plaintext),
     decrypt: (ciphertext) => Uint8Array.from(ciphertext),
@@ -82,15 +85,15 @@ jest.mock('@noble/ciphers/aes.js', () => ({
 // Keep default console behavior for debugging capability detection
 
 // Provide Web Crypto API for Node test environment if not already present.
-if (typeof global.crypto === 'undefined') {
-  const { webcrypto } = require('crypto');
+if (typeof global.crypto === "undefined") {
+  const { webcrypto } = require("crypto");
   global.crypto = webcrypto;
 }
 
-if (typeof global.IS_REACT_ACT_ENVIRONMENT === 'undefined') {
+if (typeof global.IS_REACT_ACT_ENVIRONMENT === "undefined") {
   global.IS_REACT_ACT_ENVIRONMENT = true;
 }
 
-if (typeof global.__DEV__ === 'undefined') {
+if (typeof global.__DEV__ === "undefined") {
   global.__DEV__ = true;
 }

@@ -1,7 +1,8 @@
 const React = require("react");
 
 module.exports = {
-  ThemeProvider: ({ children }) => React.createElement(React.Fragment, null, children),
+  ThemeProvider: ({ children }) =>
+    React.createElement(React.Fragment, null, children),
   DarkTheme: {
     dark: true,
     colors: {
