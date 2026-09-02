@@ -23,7 +23,9 @@ const withDNSNativeModule = (config) => {
 
       return withAppDelegate(config, (config) => {
         if (config.modResults.language !== "swift") {
-          throw new Error("DNSChat's iOS scene lifecycle requires a Swift AppDelegate");
+          throw new Error(
+            "DNSChat's iOS scene lifecycle requires a Swift AppDelegate",
+          );
         }
 
         config.modResults.contents = applyIosAppDelegateScenePolicy(
@@ -93,7 +95,9 @@ const withDNSNativeModule = (config) => {
 
           // Copy Android native module files (Java only, skip build.gradle etc)
           if (fs.existsSync(androidSourcePath)) {
-            await copyDirectory(androidSourcePath, androidDestPath, { javaOnly: true });
+            await copyDirectory(androidSourcePath, androidDestPath, {
+              javaOnly: true,
+            });
           }
 
           // Add dnsjava dependency to app/build.gradle
@@ -104,8 +108,12 @@ const withDNSNativeModule = (config) => {
           );
 
           if (fs.existsSync(appBuildGradlePath)) {
-            let buildGradleContent = fs.readFileSync(appBuildGradlePath, "utf8");
-            buildGradleContent = applyAndroidBuildGradlePolicy(buildGradleContent);
+            let buildGradleContent = fs.readFileSync(
+              appBuildGradlePath,
+              "utf8",
+            );
+            buildGradleContent =
+              applyAndroidBuildGradlePolicy(buildGradleContent);
             fs.writeFileSync(appBuildGradlePath, buildGradleContent);
           }
 
@@ -191,7 +199,10 @@ if (keystorePropertiesFile.exists()) {
     hasReleaseSigning = true
 }
 `;
-    next = next.replace(/^(\s*def jscFlavor = [^\n]+\n)/m, `$1${keystorePolicyBlock}\n`);
+    next = next.replace(
+      /^(\s*def jscFlavor = [^\n]+\n)/m,
+      `$1${keystorePolicyBlock}\n`,
+    );
   }
 
   if (!next.includes("def keystorePropertiesBaseDir = null")) {
@@ -200,20 +211,32 @@ if (keystorePropertiesFile.exists()) {
       "def hasReleaseSigning = false\ndef keystorePropertiesBaseDir = null\n",
     );
   }
-  if (!next.includes("keystorePropertiesBaseDir = keystorePropertiesFile.getParentFile()")) {
+  if (
+    !next.includes(
+      "keystorePropertiesBaseDir = keystorePropertiesFile.getParentFile()",
+    )
+  ) {
     next = next.replace(
       /(keystoreProperties\.load\(new FileInputStream\(keystorePropertiesFile\)\)\n)/,
       "$1    keystorePropertiesBaseDir = keystorePropertiesFile.getParentFile()\n",
     );
   }
-  if (!next.includes("keystorePropertiesBaseDir = repoKeystorePropertiesFile.getParentFile()")) {
+  if (
+    !next.includes(
+      "keystorePropertiesBaseDir = repoKeystorePropertiesFile.getParentFile()",
+    )
+  ) {
     next = next.replace(
       /(keystoreProperties\.load\(new FileInputStream\(repoKeystorePropertiesFile\)\)\n)/,
       "$1    keystorePropertiesBaseDir = repoKeystorePropertiesFile.getParentFile()\n",
     );
   }
 
-  if (!/signingConfigs\s*\{[\s\S]*?\n\s*release\s*\{[\s\S]*?hasReleaseSigning/.test(next)) {
+  if (
+    !/signingConfigs\s*\{[\s\S]*?\n\s*release\s*\{[\s\S]*?hasReleaseSigning/.test(
+      next,
+    )
+  ) {
     next = next.replace(
       /(signingConfigs\s*\{\s*debug\s*\{[\s\S]*?\n\s*\})/,
       `$1
@@ -237,29 +260,40 @@ if (keystorePropertiesFile.exists()) {
   next = rewriteNamedBlock(next, "buildTypes", (buildTypesBody) => {
     let nextBuildTypesBody = buildTypesBody;
 
-    nextBuildTypesBody = rewriteNamedBlock(nextBuildTypesBody, "debug", (debugBody) =>
-      debugBody.replace(
-        /\n\s*if \(hasReleaseSigning\)\s*\{[\s\S]*?signingConfig\s+signingConfigs\.release[\s\S]*?\n\s*\}/g,
-        "",
-      ),
+    nextBuildTypesBody = rewriteNamedBlock(
+      nextBuildTypesBody,
+      "debug",
+      (debugBody) =>
+        debugBody.replace(
+          /\n\s*if \(hasReleaseSigning\)\s*\{[\s\S]*?signingConfig\s+signingConfigs\.release[\s\S]*?\n\s*\}/g,
+          "",
+        ),
     );
 
-    nextBuildTypesBody = rewriteNamedBlock(nextBuildTypesBody, "release", (releaseBody) => {
-      let nextReleaseBody = releaseBody;
-      nextReleaseBody = nextReleaseBody.replace(
-        /\n[ \t]*signingConfig\s+signingConfigs\.debug[ \t]*\n/g,
-        "\n",
-      );
-
-      if (!/if \(hasReleaseSigning\)\s*\{[\s\S]*?signingConfig\s+signingConfigs\.release/.test(nextReleaseBody)) {
+    nextBuildTypesBody = rewriteNamedBlock(
+      nextBuildTypesBody,
+      "release",
+      (releaseBody) => {
+        let nextReleaseBody = releaseBody;
         nextReleaseBody = nextReleaseBody.replace(
-          /(\n\s*\/\/ see https:\/\/reactnative\.dev\/docs\/signed-apk-android\.\n)/,
-          `$1            if (hasReleaseSigning) {\n                signingConfig signingConfigs.release\n            }\n`,
+          /\n[ \t]*signingConfig\s+signingConfigs\.debug[ \t]*\n/g,
+          "\n",
         );
-      }
 
-      return nextReleaseBody;
-    });
+        if (
+          !/if \(hasReleaseSigning\)\s*\{[\s\S]*?signingConfig\s+signingConfigs\.release/.test(
+            nextReleaseBody,
+          )
+        ) {
+          nextReleaseBody = nextReleaseBody.replace(
+            /(\n\s*\/\/ see https:\/\/reactnative\.dev\/docs\/signed-apk-android\.\n)/,
+            `$1            if (hasReleaseSigning) {\n                signingConfig signingConfigs.release\n            }\n`,
+          );
+        }
+
+        return nextReleaseBody;
+      },
+    );
 
     return nextBuildTypesBody;
   });
@@ -318,7 +352,9 @@ function applyIosAppDelegateScenePolicy(content) {
     "\n",
   );
 
-  if (!next.includes("class SceneDelegate: UIResponder, UIWindowSceneDelegate")) {
+  if (
+    !next.includes("class SceneDelegate: UIResponder, UIWindowSceneDelegate")
+  ) {
     next = next.trimEnd() + "\n\n" + iosSceneDelegateTemplate.trim() + "\n";
   }
 
@@ -374,11 +410,18 @@ function applyMainApplicationKotlinPolicy(content) {
   let next = content;
 
   next = insertImport(next, "import com.dnsnative.DNSNativePackage");
-  next = insertImport(next, "import expo.modules.adapters.react.ModuleRegistryAdapter");
+  next = insertImport(
+    next,
+    "import expo.modules.adapters.react.ModuleRegistryAdapter",
+  );
   next = insertImport(next, "import expo.modules.core.interfaces.Package");
   next = insertImport(next, "import expo.modules.linking.ExpoLinkingPackage");
 
-  if (!next.includes("private val manualExpoPackages: List<Package> = listOf(ExpoLinkingPackage())")) {
+  if (
+    !next.includes(
+      "private val manualExpoPackages: List<Package> = listOf(ExpoLinkingPackage())",
+    )
+  ) {
     next = next.replace(
       /(class MainApplication[^\n]*\{\n)/,
       `$1  private val manualExpoPackages: List<Package> = listOf(ExpoLinkingPackage())\n\n`,
@@ -475,17 +518,19 @@ async function copyDirectory(src, dest, options = {}) {
 
     // Skip build artifacts and gradle files when copying Java sources
     if (javaOnly) {
-      if (entry.name === 'build.gradle' ||
-          entry.name === '.gradle' ||
-          entry.name === 'build' ||
-          entry.name.endsWith('.kt')) {
+      if (
+        entry.name === "build.gradle" ||
+        entry.name === ".gradle" ||
+        entry.name === "build" ||
+        entry.name.endsWith(".kt")
+      ) {
         continue;
       }
     }
 
     if (entry.isDirectory()) {
       // Skip .gradle and build directories
-      if (entry.name === '.gradle' || entry.name === 'build') {
+      if (entry.name === ".gradle" || entry.name === "build") {
         continue;
       }
       await copyDirectory(srcPath, destPath, options);

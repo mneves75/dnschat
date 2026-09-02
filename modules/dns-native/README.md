@@ -24,6 +24,10 @@ internal fallback chain inside the native "native" step.
 
 Native UDP responses are validated before TXT parsing (transaction ID, header
 flags, QDCOUNT, and question name/type/class matching) to reduce spoofing risk.
+Every query receives the caller's absolute epoch deadline. The native boundary
+converts it once to a monotonic budget capped at 9.5 seconds. Calls are tracked
+as independent operations so `cancelActiveQueries()` can cancel all in-flight
+work without coupling callers that have different deadlines.
 
 ## Usage
 
@@ -38,14 +42,23 @@ if (!capabilities.available) {
 // queryName must be the fully-qualified name you want to look up (already
 // sanitized/validated by the caller).
 const queryName = "hello-world.llm.pieter.com";
-const txtRecords = await nativeDNS.queryTXT("llm.pieter.com", queryName, 53);
+const deadlineEpochMs = Date.now() + 10_000;
+const txtRecords = await nativeDNS.queryTXT(
+  "llm.pieter.com",
+  queryName,
+  53,
+  deadlineEpochMs,
+);
 const response = nativeDNS.parseMultiPartResponse(txtRecords);
 ```
 
 ## API
 
 - `nativeDNS.isAvailable(): Promise<DNSCapabilities>`
-- `nativeDNS.queryTXT(dnsServer: string, queryName: string, port?: number): Promise<string[]>`
+- `nativeDNS.queryTXT(dnsServer: string, queryName: string, port: number, deadlineEpochMs: number): Promise<string[]>`
+- `nativeDNS.queryTXTUDP(dnsServer: string, queryName: string, port: number, deadlineEpochMs: number): Promise<string[]>`
+- `nativeDNS.queryTXTTCP(dnsServer: string, queryName: string, port: number, deadlineEpochMs: number): Promise<string[]>`
+- `nativeDNS.cancelActiveQueries(): Promise<number>`
 - `nativeDNS.parseMultiPartResponse(records: string[]): string`
 
 ## Development

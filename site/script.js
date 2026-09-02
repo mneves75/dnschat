@@ -36,13 +36,11 @@ const translations = Object.freeze({
     principleThreeBody:
       "Conversas salvas no aparelho são protegidas por criptografia.",
     principleFourTitle: "Sem rastreamento",
-    principleFourBody:
-      "O app não inclui SDK de analytics ou publicidade.",
+    principleFourBody: "O app não inclui SDK de analytics ou publicidade.",
     howEyebrow: "Como funciona",
     howTitle: "Três etapas, uma fronteira de confiança visível.",
     stepOneTitle: "Escreva uma mensagem curta",
-    stepOneBody:
-      "O app valida o tamanho e prepara uma consulta DNS TXT.",
+    stepOneBody: "O app valida o tamanho e prepara uma consulta DNS TXT.",
     stepTwoTitle: "Envie pelo resolvedor selecionado",
     stepTwoBody:
       "A mensagem deixa o aparelho e atravessa infraestrutura DNS observável e não autenticada.",
@@ -120,13 +118,11 @@ const translations = Object.freeze({
     principleThreeBody:
       "Conversations saved on the device are protected with encryption.",
     principleFourTitle: "No tracking",
-    principleFourBody:
-      "The app includes no analytics or advertising SDK.",
+    principleFourBody: "The app includes no analytics or advertising SDK.",
     howEyebrow: "How it works",
     howTitle: "Three steps, with a visible trust boundary.",
     stepOneTitle: "Write a short message",
-    stepOneBody:
-      "The app validates its length and prepares a DNS TXT query.",
+    stepOneBody: "The app validates its length and prepares a DNS TXT query.",
     stepTwoTitle: "Send through the selected resolver",
     stepTwoBody:
       "The message leaves the device and crosses observable, unauthenticated DNS infrastructure.",
@@ -163,8 +159,7 @@ const translations = Object.freeze({
     sourceEyebrow: "Open source for inspection",
     sourceTitle: "Inspect the decisions, limits, and implementation.",
     openGitHub: "Open on GitHub",
-    footerCopy:
-      "DNSChat. No account. No tracking. DNS remains observable.",
+    footerCopy: "DNSChat. No account. No tracking. DNS remains observable.",
     backTop: "Back to top",
   },
 });

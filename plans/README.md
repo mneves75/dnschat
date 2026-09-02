@@ -141,7 +141,7 @@ Tests and tooling:
 - **DX-04** `verify:android-16kb` warns and exits 0 when no build artifacts
   exist, so `verify:all` green does not imply 16KB compliance. Add a
   `--require-artifacts` flag for the CI path. S.
-- **DX-05** `modules/dns-native`'s `lint` script invokes `eslint` with no
+- **DX-05** (done: the script and the ESLint devDependencies were removed with the Oxfmt/Oxlint migration) `modules/dns-native`'s `lint` script invokes `eslint` with no
   ESLint config anywhere in the repo, carrying four EOL ESLint 8
   devDependencies into the lockfile and the SBOM. Fold into the 012 decision. S.
 - **CI-01** Node is pinned to a fourth value (`20.19.4`) in

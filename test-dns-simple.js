@@ -20,12 +20,17 @@ function parseArgs() {
   const forceDoh = args.includes("--force-doh");
   const localServer = args.includes("--local-server");
 
-  const resolverIndex = args.findIndex((arg) => arg === "--resolver" || arg === "--server");
+  const resolverIndex = args.findIndex(
+    (arg) => arg === "--resolver" || arg === "--server",
+  );
   const zoneIndex = args.findIndex((arg) => arg === "--zone");
   const portIndex = args.findIndex((arg) => arg === "--port");
   const messageIndex = args.findIndex((arg) => arg === "--message");
 
-  const messageArg = messageIndex >= 0 ? args[messageIndex + 1] : args.find((arg) => !arg.startsWith("--"));
+  const messageArg =
+    messageIndex >= 0
+      ? args[messageIndex + 1]
+      : args.find((arg) => !arg.startsWith("--"));
 
   return {
     allowExperimental,
@@ -116,7 +121,9 @@ async function startLocalDnsServer(responseText) {
   }
 
   const udpSocket = dgram.createSocket("udp4");
-  await new Promise((resolve) => udpSocket.bind(address.port, "127.0.0.1", resolve));
+  await new Promise((resolve) =>
+    udpSocket.bind(address.port, "127.0.0.1", resolve),
+  );
 
   udpSocket.on("message", (message, rinfo) => {
     try {
@@ -184,7 +191,10 @@ async function queryUdp({ resolverHost, resolverPort, queryName, timeoutMs }) {
 
 async function queryTcp({ resolverHost, resolverPort, queryName, timeoutMs }) {
   return new Promise((resolve, reject) => {
-    const socket = net.createConnection({ host: resolverHost, port: resolverPort });
+    const socket = net.createConnection({
+      host: resolverHost,
+      port: resolverPort,
+    });
     const query = buildQuery(queryName);
 
     const lengthPrefix = Buffer.alloc(2);
@@ -244,7 +254,7 @@ function stripDnsJsonQuotes(value) {
   return trimmed;
 }
 
-async function queryDohJson({ providerName, url, queryName, timeoutMs }) {
+async function queryDohJson({ providerName, url, timeoutMs }) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -262,7 +272,10 @@ async function queryDohJson({ providerName, url, queryName, timeoutMs }) {
     const body = await response.json();
     const answers = Array.isArray(body.Answer) ? body.Answer : [];
     const txtData = answers
-      .filter((answer) => answer && answer.type === 16 && typeof answer.data === "string")
+      .filter(
+        (answer) =>
+          answer && answer.type === 16 && typeof answer.data === "string",
+      )
       .map((answer) => stripDnsJsonQuotes(answer.data))
       .join("");
 
@@ -288,7 +301,11 @@ async function queryDohJson({ providerName, url, queryName, timeoutMs }) {
     port,
     localServer,
   } = parseArgs();
-  const target = resolveTargetFromArgs({ resolverArg: resolver, zoneArg: zone, portArg: port });
+  const target = resolveTargetFromArgs({
+    resolverArg: resolver,
+    zoneArg: zone,
+    portArg: port,
+  });
   let localDnsServer = null;
   if (localServer) {
     localDnsServer = await startLocalDnsServer(`local:${message}`);
@@ -357,13 +374,15 @@ async function queryDohJson({ providerName, url, queryName, timeoutMs }) {
   // may not return TXT records for that zone. We default to skipping DoH for ch.at
   // unless explicitly forced.
   const dohAllowed =
-    !localServer && (forceDoh || (target.zone !== DEFAULT_ZONE && (!noDoh || allowExperimental)));
+    !localServer &&
+    (forceDoh ||
+      (target.zone !== DEFAULT_ZONE && (!noDoh || allowExperimental)));
 
   if (dohAllowed) {
     try {
       const start = Date.now();
       const cloudflareUrl = `https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(
-        queryName
+        queryName,
       )}&type=TXT`;
       const { txtData } = await queryDohJson({
         providerName: "Cloudflare",
@@ -387,7 +406,7 @@ async function queryDohJson({ providerName, url, queryName, timeoutMs }) {
       try {
         const start = Date.now();
         const googleUrl = `https://dns.google/resolve?name=${encodeURIComponent(
-          queryName
+          queryName,
         )}&type=TXT`;
         const { txtData } = await queryDohJson({
           providerName: "Google",
@@ -404,12 +423,14 @@ async function queryDohJson({ providerName, url, queryName, timeoutMs }) {
         }
         process.exit(0);
       } catch (error) {
-        console.error(`DoH (experimental Google) TXT query failed: ${error.message}`);
+        console.error(
+          `DoH (experimental Google) TXT query failed: ${error.message}`,
+        );
       }
     }
   } else if (!noDoh || allowExperimental) {
     console.log(
-      `Skipping DoH fallback: zone=${target.zone} is not expected to be resolvable via public DoH (use --force-doh to try anyway).`
+      `Skipping DoH fallback: zone=${target.zone} is not expected to be resolvable via public DoH (use --force-doh to try anyway).`,
     );
   }
 
