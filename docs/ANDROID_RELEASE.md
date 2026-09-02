@@ -4,7 +4,7 @@ This document tracks the manual steps for preparing and shipping an Android buil
 
 ## Release state
 
-- **Repository target:** `4.3.6` build `84`, sourced from `package.json` and
+- **Repository target:** `4.4.0` build `85`, sourced from `package.json` and
   synchronized into the native projects.
 - **Latest validated Android artifact:** not recorded in this public runbook;
   build and validate a fresh AAB before upload.

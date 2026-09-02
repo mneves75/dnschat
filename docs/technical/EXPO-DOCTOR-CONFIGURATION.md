@@ -50,6 +50,7 @@ pnpm exec expo install --fix
 pnpm run verify:expo-doctor
 
 # Lint (includes ast-grep rules)
+pnpm run fmt:check
 pnpm run lint
 
 # Unit tests

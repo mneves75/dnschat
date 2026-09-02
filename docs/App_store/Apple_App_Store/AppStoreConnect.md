@@ -2,10 +2,10 @@
 
 ## Release state
 
-- **Repository target:** `4.3.6` build `84`; this is the current TestFlight beta
-  candidate and is not production evidence.
-- **Latest validated TestFlight artifact:** `4.2.3` build `77`, processed
-  `VALID` with strict validation at `0` errors and `0` warnings.
+- **Repository target:** `4.4.0` build `85`.
+- **Latest validated TestFlight artifact:** `4.4.0` build `85`, tagged
+  `v4.3.6-beta1` and processed `VALID` with strict validation at `0` errors
+  and `0` warnings. This is beta evidence, not production evidence.
 - **Latest production App Store release:** unverified. Confirm it in App Store
   Connect before changing production metadata or making publication claims.
 
@@ -92,15 +92,16 @@ AI,chat,DNS,assistant,local,native,tech,innovation,queries,networking
 
 ---
 
-## Latest Validated What's New (TestFlight v4.2.3)
+## Latest Validated What's New (TestFlight v4.3.6)
 
-iOS 27 STARTUP RECOVERY
+RELIABILITY, SECURITY, AND ACCESSIBILITY
 
-- Adopted the required iOS 27 scene lifecycle so the app no longer exits immediately after launch.
-- Preserved Expo lifecycle callbacks plus cold-start and foreground deep-link routing.
-- Added a repository contract test to prevent native bootstrap regeneration from removing the scene bridge.
+- Hardened native DNS deadlines, cancellation, and malformed-response rejection.
+- Preserved encrypted data during secure-key failures.
+- Improved contrast, localized failures, and bilingual captions.
+- Hardened model-output links and release/public-data controls.
 
-## TestFlight What to Test (v4.2.3 build 77)
+## TestFlight What to Test (v4.3.6 build 84)
 
 - Launch the app on iOS 27 and confirm it remains open instead of returning to the Home Screen.
 - Cold-start the app from a `dnschat://` link, then open another `dnschat://` link while it is already running.
@@ -109,7 +110,7 @@ iOS 27 STARTUP RECOVERY
 - Open settings and chat sheets and confirm React Native modal dismissal, accessibility labels, and hit targets behave correctly.
 - Open a stale chat deep link and confirm the conversation-not-found state appears instead of a blank chat.
 - Send short prompts over the default DNS service and confirm responses render without transport errors.
-- Confirm settings/About version metadata reports 4.2.3 build 77 and DNS failures show a compact localized retry prompt instead of an oversized diagnostic overlay.
+- Confirm settings/About reports 4.3.6 build 84 and DNS failures show a compact localized retry prompt.
 - Confirm DNS failures, invalid settings, and unsupported server choices fail closed without exposing prompt text or TXT response contents.
 - Type in a long chat thread and confirm new messages follow the bottom while manual scrollback is not forced down by background updates.
 - Open onboarding/help, Settings, and About external links and confirm allowed HTTPS and email destinations open normally.
@@ -165,8 +166,8 @@ Validated screenshot sets currently available in App Store Connect:
 ### Bundle Information
 
 - **Bundle ID**: `<BUNDLE_ID>`
-- **Repository target**: `4.3.6` build `84` (from `package.json` via `sync-versions`)
-- **Latest validated TestFlight artifact**: `4.2.3` build `77`
+- **Repository target**: `4.4.0` build `85` (from `package.json` via `sync-versions`)
+- **Latest validated TestFlight artifact**: `4.4.0` build `85`
 - **Latest production App Store release**: unverified
 - **App Store Connect internal IDs**: intentionally omitted from public docs; keep exact IDs in private release notes.
 - **Minimum iOS Version**: 16.4
@@ -304,8 +305,8 @@ No user account is required. The app does not require app-owned backend infrastr
 ### App Store Connect Configuration
 
 - [x] Historical IPA upload evidence exists for `4.0.13` build `43`
-- [x] Latest validated TestFlight artifact uploaded (`4.2.3` build `77`)
-- [x] Local ASC health checked with `asc doctor` (`2026-07-10`)
+- [x] Latest validated TestFlight artifact uploaded (`4.4.0` build `85`)
+- [x] Local ASC health checked with `asc doctor` (`2026-08-31`)
 - [x] Apply App Store Connect metadata for `en-US` and `pt-BR`
 - [x] Renew iPhone and iPad screenshot sets for `en-US` and `pt-BR`
 - [ ] Create or update an App Store version for the validated repository target
@@ -325,10 +326,11 @@ No user account is required. The app does not require app-owned backend infrastr
 - [x] Historical App Store Connect upload/submission check passed for build `43`
 - [x] Historical TestFlight validation passed (`0` errors, `0` warnings) for build `43`
 - [x] Historical build `56` physical-device Release build/install/launch
-- [x] Latest validated build `77` signed archive/export
-- [x] Latest validated build `77` App Store Connect upload/processing check (`VALID`)
-- [x] Latest validated build `77` TestFlight validation (`0` errors, `0` warnings)
-- [ ] Latest validated build `77` App Store pre-submit validation (`app store version not found for version "4.2.3" and platform "IOS"`)
+- [x] Latest validated build `84` signed archive/export
+- [x] Latest validated build `84` physical-device Release install/launch
+- [x] Latest validated build `84` TestFlight processing check (`VALID`)
+- [x] Latest validated build `84` TestFlight validation (`0` errors, `0` warnings)
+- [ ] Build `84` App Store pre-submit validation (no `4.3.6` iOS version record)
 - [ ] Submit for App Store Review
 - [ ] Final testing on TestFlight
 - [ ] Review guidelines compliance check
@@ -336,4 +338,4 @@ No user account is required. The app does not require app-owned backend infrastr
 
 ---
 
-_Release-state guide: repository target 4.3.6 build 84; latest validated TestFlight artifact 4.2.3 build 77; production release unverified._
+_Release-state guide: latest validated TestFlight beta 4.3.6 build 84; production release unverified._

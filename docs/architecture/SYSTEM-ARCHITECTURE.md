@@ -54,6 +54,9 @@ Native DNS module:
 3. Sanitize into a single DNS label (lowercase, replace whitespace with `-`,
    remove invalid, enforce 63-char DNS label limit).
 4. Compose query name `label.<zone>` and send it via the transport chain.
+   One absolute 20-second deadline covers every resolver, retry, backoff, and
+   transport; each rung is capped at the smaller of 10 seconds or the remaining
+   budget.
 5. Validate DNS response headers before parsing:
    - Transaction ID match, QR/opcode/TC/RCODE checks, QDCOUNT=1.
    - Question section matches QNAME/QTYPE/QCLASS.
@@ -65,12 +68,29 @@ Native DNS module:
 The reference constants live in `modules/dns-native/constants.ts`. Shared
 TypeScript wire-format helpers live in `src/services/dnsWire.ts` so UDP and TCP
 adapters use the same packet, framing, validation, and TXT extraction rules.
+Native code converts the caller's epoch deadline once to a monotonic deadline
+and caps its work at 9.5 seconds. When the app enters the background, the
+current lifecycle is invalidated: native work is cancelled, JavaScript sockets
+are closed, and late results cannot start a fallback or reach the UI after a
+foreground transition.
 
 ## DNS-over-HTTPS notes
 
 - Web builds cannot do raw DNS to a custom server on port 53, so Web uses Mock.
 - The TypeScript transport chain does not implement DNS-over-HTTPS; `tcp` is
   DNS-over-TCP on port 53.
-- Android native DNS has its own internal fallback: raw UDP first, then
-  DNS-over-HTTPS only when the selected resolver is Cloudflare `1.1.1.1`, then a legacy resolver (dnsjava).
+- Android native DNS has its own internal fallback: the platform resolver
+  first, then a legacy resolver (dnsjava). The DNS-over-HTTPS rung was removed
+  in 4.4.0 -- the native resolver speaks only DNS, so no query leaves the
+  device over HTTPS to a third party.
   See `modules/dns-native/android/DNSResolver.java`.
+- Native DNS (both platforms) is deliberately stricter than the JavaScript
+  layer: it compiles in only the LLM zones (never a public recursive
+  resolver), accepts only port 53, and pins each query name to the selected
+  resolver's zone.
+- Consequence of that asymmetry: selecting an IP resolver such as `8.8.8.8`
+  makes the native rung reject the query, and the chain continues to UDP then
+  TCP, which still accept it. With **Allow Experimental Transports** turned
+  off the order is native-only, so an IP resolver has no rung left and the
+  query fails with "Native DNS is enforced". Prefer a hostname resolver when
+  experimental transports are disabled.

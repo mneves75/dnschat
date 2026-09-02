@@ -69,7 +69,7 @@ This document inventories the data stored or processed by DNSChat and satisfies 
   Resolvers or on-path infrastructure may observe, retain, replay, or alter
   queries and responses. Users must not send secrets or personal data through
   prompts and must not treat responses as cryptographically verified.
-- The configured DNS services are third parties. As of `2026-08-29`, the
+- The configured DNS services are third parties. As of `2026-08-31`, the
   default service's public page documents how to query it, but no public policy
   covering retention, secondary use, deletion, or service-provider status was
   located on that page or through web search. Provider-side storage and use
@@ -106,4 +106,4 @@ This document inventories the data stored or processed by DNSChat and satisfies 
 ## Review Cadence
 
 - Review this inventory whenever storage keys, retention policies, or data flows change.
-- Last reviewed during the production security sweep on `2026-08-29`.
+- Last reviewed during the production security sweep on `2026-08-31`.

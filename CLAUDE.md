@@ -45,7 +45,7 @@ This file covers architecture, commands, and platform mechanics. The companion d
 
 ## Commands
 
-**Toolchain**: pnpm `11.17.0` pinned via `packageManager` (CI enables Corepack); `.node-version` is `24`, `engines.node >= 22`, CI pins Node `22.23.1`. Do not run the gates on a newer Node than the pin - `verify:react-compiler` breaks on Node 26 (see Common Issues). Never pass a `--` separator to a pnpm script (also Common Issues).
+**Toolchain**: pnpm `11.17.0` pinned via `packageManager` (CI enables Corepack); `.node-version` is `24`, `engines.node >= 22.13 < 26`, CI pins Node `22.23.1`. Use Node 22.13+ or 24 - React Native and Metro require that floor on the Node 22 line, and `verify:react-compiler` breaks on Node 26 (see Common Issues). Never pass a `--` separator to a pnpm script (also Common Issues).
 
 ```bash
 # Development
@@ -56,13 +56,16 @@ pnpm run web         # Web preview (uses Mock DNS)
 
 # Typecheck and tests
 pnpm run typecheck   # tsc --noEmit (first gate in CI)
+pnpm run typecheck:dns-native # Isolated tsc gate for modules/dns-native
 pnpm run test        # Run all unit tests (jest --runInBand)
 pnpm run test --testPathPattern=<pattern>  # Run specific test file
-pnpm run verify:fast # typecheck + lint + test (inner loop)
+pnpm run verify:fast # typecheck + format check + lint + test (inner loop)
 # Runtime UI verification: Argent MCP (policy: "Argent MCP Runtime Verification" below).
 
-# Linting
-pnpm run lint        # ast-grep via sgconfig.yml (4 rules; blocks legacy liquid glass)
+# Formatting and linting
+pnpm run fmt         # Write deterministic JS/TS/JSON/CSS formatting with Oxfmt
+pnpm run fmt:check   # Check formatting without writing
+pnpm run lint        # Oxlint correctness + ast-grep structural rules
 
 # DNS module tests (separate workspace)
 cd modules/dns-native && pnpm run test
@@ -142,7 +145,7 @@ This app uses **Expo Router** (file-based routing under `app/`), not React Navig
 - Reanimated shared values must use the `.get()`/`.set()` accessors, never `.value` (the compiler cannot optimize `.value`).
 - Hold "create once" animated values (`Animated.Value`, `makeMutable`) in a `useState(() => …)` initializer, not `useRef(...).current` — refs cannot be read during render.
 - Do not use a `finally` block (the compiler cannot lower it); use `Promise.prototype.finally()` or a trailing cleanup statement after `try/catch`.
-- Legitimate external-sync `setState`-in-effect cases (splash settle, route hydration, load-on-mount) are exempted per-file in `doctor.config.json`, not in code.
+- Legitimate external-sync `setState`-in-effect cases (splash settle, route hydration, load-on-mount) are exempted per-file in `doctor.config.json` (react-doctor) and in the `.oxlintrc.json` overrides (Oxlint `react/set-state-in-effect`), not in code. The two tools do not flag the same files, so the lists are maintained independently.
 - `react-doctor` must be scoped with `--project chat-dns`; a bare run can report the sibling `paquera-mobile` project from the parent workspace.
 
 ### Argent MCP Runtime Verification
@@ -166,6 +169,17 @@ inspection, and record the exact fallback reason.
 - Otherwise -> use `getLLMServers()`, which returns `LLM_DNS_SERVERS` in `modules/dns-native/constants.ts` - currently a single entry, `llm.pieter.com:53`
 
 **There is no server-level fallback today.** `LLM_DNS_SERVERS` holds one server, so `queryLLM`'s multi-server loop, `logServerFallback`, and the "All LLM servers are unreachable" message are unreachable in the default configuration. All real fallback happens at the transport level below.
+
+**Native is stricter than JS (since 4.4.0)**: the compiled-in native allowlist is
+the two LLM zones only (never a public recursive resolver), the bridge accepts
+port 53 and nothing else, and every native query name is pinned to the selected
+resolver's zone. Native must stay a strict *subset* of `ALLOWED_DNS_SERVERS`, and
+both platforms must narrow identically - enforced by
+`modules/dns-native/__tests__/nativeSecurityPolicy.test.ts`. Selecting an IP
+resolver therefore fails the native rung and falls through to UDP/TCP; with
+experimental transports off it fails outright. The Android DNS-over-HTTPS rung
+was removed; `androidDnsResolver.policy.spec.ts` fails the build if
+`HttpURLConnection` returns to that resolver.
 
 **Transport fallback** (for each server):
 1. Native DNS (iOS/Android native module)
@@ -268,18 +282,22 @@ Key constraints:
 
 Installed via `pnpm install` -> `scripts/install-git-hooks.js`. Runs:
 1. `pnpm run verify:ios-pods`
-2. `pnpm run lint`
-3. `pnpm run test --bail`
+2. `pnpm run fmt:check`
+3. `pnpm run lint`
+4. `pnpm run test --bail`
 
 ### AST-Grep Rules
 
-`sgconfig.yml` (repo root) registers `project-rules/` as the rule directory; `pnpm run lint` scans with it. Four rules block:
+`sgconfig.yml` (repo root) registers `project-rules/` as the rule directory; `pnpm run lint` scans with it. Eight language-specific rules enforce four bans:
 - Imports from the deleted `../components/liquidGlass/` path
 - References to the deleted `LiquidGlassNative` module
+- Direct imports, `require`, or dynamic imports of the unhardened Markdown renderer
+- Tautological Jest equality assertions that compare an observed value with itself
 
-Use `components/LiquidGlassWrapper` instead.
+Use `components/LiquidGlassWrapper` for liquid glass and
+`src/components/SafeMarkdown.tsx` for untrusted Markdown.
 
-**Two rule files per ban, not one.** ast-grep treats `Tsx` and `TypeScript` as separate languages, and a rule file holds exactly one rule for one language. A single-language rule silently misses half the codebase - that is how this gate originally shipped inert. When adding a rule, add both variants and a fixture for each; `__tests__/repo.lint.spec.ts` runs the linter against `__tests__/fixtures/astgrep/` and asserts `effectiveRuleCount >= 4`, so an inert gate fails the suite.
+**Two rule files per ban, not one.** ast-grep treats `Tsx` and `TypeScript` as separate languages, and a rule file holds exactly one rule for one language. A single-language rule silently misses half the codebase - that is how this gate originally shipped inert. When adding a rule, add both variants and a fixture for each; `__tests__/repo.lint.spec.ts` runs the linter against `__tests__/fixtures/astgrep/` and asserts `effectiveRuleCount >= 8`, so an inert gate fails the suite.
 
 ### Babel Constraint
 
@@ -305,8 +323,8 @@ Four workflows run on push to main and PRs: `ci.yml`, `gitleaks.yml` (secret sca
 
 `ci.yml` runs on Node `22.23.1` with Corepack enabled (four jobs):
 
-- `test`: typecheck, `pnpm audit`, verify:ios-pods, verify:expo-doctor, verify:sdk-alignment, verify:typed-routes, verify:dnsresolver-sync, verify:public-redaction, verify:react-compiler, lint, test.
-- `dns-native`: installs and tests the `modules/dns-native` workspace separately.
+- `test`: typecheck, Oxfmt check, `pnpm audit`, verify:ios-pods, verify:expo-doctor, verify:sdk-alignment, verify:typed-routes, verify:dnsresolver-sync, verify:public-redaction, verify:react-compiler, lint, test.
+- `dns-native`: typechecks and tests the `modules/dns-native` workspace separately.
 - `android`: Java 17 + Gradle `assembleDebug` and `assembleRelease`, then verify:android-16kb.
 - `sbom`: generates a CycloneDX SBOM (`anchore/sbom-action`) into `artifacts/sbom/<version>.json` and uploads it as a workflow artifact.
 
@@ -325,12 +343,13 @@ Four workflows run on push to main and PRs: `ci.yml`, `gitleaks.yml` (secret sca
 
 **iOS — release state**:
 
-- Current beta candidate (2026-08-31): `4.3.6`, build `84`. It contains the
-  pre-production correctness, security, release-tooling, and accessibility
-  audit recorded under `[4.3.6]`; do not describe it as validated TestFlight
-  evidence until archive, physical-device install, upload, and ASC validation
-  all pass for this exact build.
-- Last TestFlight release (2026-07-10): `4.2.3` build `77`, `VALID` on TestFlight, carrying the iOS 27 scene-lifecycle recovery after the build `75` startup crash. Signed archive/export succeeded, bilingual "What to Test" notes present, non-exempt encryption `false`, `asc validate testflight --strict` clean (`0` errors, `0` warnings). Build `76` supplied the separate physical-device proof; build `77` was not installed locally. No iOS `4.2.3` App Store version record exists, so no version attachment or production submission is claimed. Build `77` gates: `pnpm run verify:all` (Jest 983, native DNS tests 65, React Compiler 101/101, Expo Doctor 19/19, version/pod/public-redaction checks), `pnpm audit`, gitleaks, and `asc doctor` — all clean.
+- Current TestFlight beta (2026-08-31): `4.3.6` build `84`, tagged
+  `v4.3.6-beta1` from the exact source used for the signed archive and IPA.
+  TestFlight returned `VALID`; bilingual notes and strict validation (`0`
+  errors, `0` warnings) are verified. The physical Release app installed and
+  remained running. No matching App Store version exists, so this is not a
+  production submission.
+- Previous TestFlight release (2026-07-10): `4.2.3` build `77`, `VALID` on TestFlight. Signed archive/export and strict validation passed; physical-device proof belonged to build `76`. No matching App Store version record existed, so it was not a production submission.
 - `4.2.3` supersedes `4.2.0` build `73` (`VALID` 2026-07-04): iOS 26 HIG redesign across every screen, DNS transport correctness hardening (wall-clock query budget, UDP `defer` teardown parity, TCP frame-length validation, mixed plain/multipart rejection), storage write-amplification coalescing, dead-module removal, Expo SDK 57 patch alignment (`expo-doctor` 19/19). The backend/transport work ran as dispatched `codex` plans (`plans/001`-`004`), reconciled in the main session (two review misses fixed: an orphaned `doctor.config.json` exemption and the second `DNSResolver.swift` copy); the frontend redesign was authored in the main session.
 - Argent caveat from that lane: the accessibility and React component-tree backends worked, but the screenshot/gesture simulator-server backend failed with `simulator-server exited with code before becoming ready` — do not claim tap-flow proof from that run.
 

@@ -27,7 +27,10 @@ pnpm exec expo --version
 
 ### Node version
 
-This repo expects Node 18+.
+This repo supports Node 22.13+ and the Node 24 LTS line. Use the `.node-version`
+pin (`24`); React Native and Metro require Node 22.13+ on the Node 22 line, and Node 26 is outside the
+supported engine range because the installed React Compiler healthcheck does
+not load correctly there.
 
 ```bash
 node -v

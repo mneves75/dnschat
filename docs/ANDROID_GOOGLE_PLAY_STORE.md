@@ -4,11 +4,11 @@ Complete step-by-step guide for publishing DNSChat to the Google Play Store.
 
 **App**: DNSChat
 **Package**: `<ANDROID_PACKAGE>`
-**Repository Target**: `4.3.6` build `84`
+**Repository Target**: `4.4.0` build `85`
 
 ## Release state
 
-- **Repository target:** `4.3.6` build `84`; this is source state, not proof of
+- **Repository target:** `4.4.0` build `85`; this is source state, not proof of
   an uploaded artifact.
 - **Latest validated Android artifact:** not recorded in this public runbook;
   build and validate a fresh AAB before upload.
@@ -133,7 +133,7 @@ TECHNICAL DETAILS:
 • Built with React Native 0.86.0 and Expo SDK 57
 • React 19 with New Architecture enabled
 • Native DNS module for iOS and Android
-• Supports DNS servers: 1.1.1.1, 8.8.8.8, 9.9.9.9
+• Supports the LLM DNS servers llm.pieter.com and ch.at
 
 OPEN SOURCE:
 DNSChat is open source. View the code and contribute at:
@@ -331,7 +331,7 @@ See [ANDROID_RELEASE.md](./ANDROID_RELEASE.md) for signing configuration.
    - **Upload** new AAB
 4. Add release notes:
    ```
-   Repository target: 4.3.6 build 84.
+   Repository target: 4.4.0 build 85.
    Replace this placeholder with user-facing notes derived from CHANGELOG.md
    after validating the exact AAB selected for upload.
    ```
@@ -348,7 +348,7 @@ Navigate to: **Policy → App content → Data safety**
 > **Release blocker:** no public provider policy covering retention,
 > secondary use, deletion, or service-provider status was located after
 > reviewing the default third-party DNS service's public page and web search on
-> `2026-08-29`. Do not submit
+> `2026-08-31`. Do not submit
 > the Data safety form until those facts are obtained from the operator. The
 > table below uses the conservative fallback: prompts are collected, shared
 > with a third party, and required for the app's chat function.

@@ -4,7 +4,7 @@ This repo builds DNSChat `4.3.6` build `84` (React Native `0.86.3`, Expo SDK `57
 
 Prereqs:
 
-- Node.js 22.23.1+
+- Node.js 22.13+ or 24 LTS (`.node-version` pins the local default to `24`)
 - Git
 - iOS: macOS + Xcode 26.4+ (iOS 16.4+ simulator/device)
 - Android: Java 17 + Android Studio/SDK (API 24+)
@@ -20,7 +20,7 @@ pnpm install
 Notes:
 
 - `pnpm install` runs `pnpm run prepare` which installs a `.git/hooks/pre-commit`
-  hook (verify pods + lint + tests).
+  hook (verify pods + Oxfmt check + lint + tests).
 - iOS pods drift guardrail exists. Run `pnpm run verify:ios-pods` if you touch
   native deps and expect `ios/Podfile.lock` changes.
 
@@ -126,20 +126,16 @@ xcrun devicectl device install app \
   <DERIVED_DATA>/Build/Products/Release-iphoneos/DNSChat.app
 ```
 
-Latest validated TestFlight release: version `4.2.3` build `77`.
-Physical-device evidence on
-`2026-07-10` covers build `76`, which sustained normal, cold `dnschat://`, and
-foreground `dnschat://` launches after the iOS 27 `UIScene` repair. Build `77`
-completed its signed archive, IPA export, TestFlight upload, `VALID` processing,
-and strict validation with `0` errors and `0` warnings. It was not separately
-installed on the physical device and is not attached to an App Store version.
+Latest validated TestFlight release: version `4.3.6` build `84`, tagged
+`v4.3.6-beta1`. The exact final source completed signed archive and IPA
+export, installed and remained running on an authorized physical iPhone, and
+processed `VALID` in TestFlight on `2026-08-31`. Bilingual test notes are
+present and strict validation reports `0` errors and `0` warnings.
 
-The latest uploaded TestFlight evidence is version `4.2.3` build `77`, processed
-`VALID` on `2026-07-10` with bilingual test notes and non-exempt encryption set
-to `false`. App Store version validation is blocked because no `4.2.3` iOS
-version record exists. App Store Connect identifiers, signing identifiers,
-tester group names, local paths, and device identifiers are intentionally
-omitted from public docs.
+App Store version validation is blocked because no `4.3.6` iOS version record
+exists. This is production-submission state, not a TestFlight failure. App Store
+Connect identifiers, signing identifiers, tester group names, local paths, and
+device identifiers are intentionally omitted from public docs.
 
 Signed TestFlight release shape:
 

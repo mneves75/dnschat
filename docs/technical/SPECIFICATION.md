@@ -54,6 +54,21 @@ Order:
 
 Web builds use Mock because browsers cannot do custom DNS to a resolver on port 53.
 
+### Deadlines and app lifecycle
+
+- A user query has one absolute 20-second wall-clock budget shared by every
+  server, retry, backoff, and transport rung.
+- Each transport rung is capped at 10 seconds and clipped to the remaining
+  query budget. The same absolute deadline reaches native and JavaScript socket
+  transports; native code converts it once to a monotonic budget capped at 9.5
+  seconds.
+- Moving the app to the background invalidates the in-flight query lifecycle,
+  cancels native work, and closes active JavaScript UDP/TCP sockets. A result
+  from the invalidated lifecycle is rejected even if the app becomes active
+  again before the old operation settles.
+- A cancelled or expired operation cannot start another retry, server, or
+  transport fallback. A new foreground query uses a fresh lifecycle.
+
 ## Local persistence
 
 Storage backend:
@@ -103,6 +118,8 @@ Transport + DNS:
 - TypeScript transport chain is: native -> udp -> tcp -> mock.
 - TCP transport means DNS-over-TCP on port 53 (not DNS-over-HTTPS).
 - DNS query name is fully composed by TypeScript and passed to native as-is.
+- One absolute deadline bounds the complete query. Backgrounding invalidates
+  active native and JavaScript transports before any later fallback can start.
 
 Security:
 
@@ -147,8 +164,9 @@ Repo quality:
 
 5. Documentation correctness
    - Architecture doc explicitly states TS chain has no DNS-over-HTTPS
-   - Android native internal fallback chain only uses DNS-over-HTTPS when the
-     selected resolver is Cloudflare (`1.1.1.1`)
+   - Android native internal fallback chain no longer has a DNS-over-HTTPS rung
+     at all: it was removed in 4.4.0, and `androidDnsResolver.policy.spec.ts`
+     now fails the build if `HttpURLConnection` reappears in that resolver
      (`docs/architecture/SYSTEM-ARCHITECTURE.md`)
 
 6. CI hardening (public repo baseline)

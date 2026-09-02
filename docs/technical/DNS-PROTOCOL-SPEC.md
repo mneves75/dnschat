@@ -41,6 +41,10 @@ Important consequence:
 - If the user selects an IP resolver like `8.8.8.8`, we still query a name under
   `llm.pieter.com` (e.g. `hello-world.llm.pieter.com`) but we send it to
   resolver `8.8.8.8`.
+- Since 4.4.0 this path is JavaScript-only. The native rung compiles in the LLM
+  zones alone and rejects an IP resolver, so the chain falls through to UDP/TCP,
+  which still honour it. With **Allow Experimental Transports** disabled the
+  order is native-only and an IP resolver has no rung left, so the query fails.
 
 ## TXT response parsing
 
@@ -92,6 +96,19 @@ Android native module internal fallback chain:
 3. Legacy resolver (dnsjava)
 
 Web builds use Mock because browsers cannot do custom DNS on port 53.
+
+### Deadline and cancellation semantics
+
+- Orchestration uses one absolute 20-second deadline across resolver fallback,
+  retries, backoff, and all transport rungs.
+- A single rung may use at most 10 seconds and never more than the query's
+  remaining budget. Native transports cap their monotonic budget at 9.5
+  seconds.
+- JavaScript UDP/TCP deadline or lifecycle cancellation closes the socket;
+  timing out only the awaiting promise is insufficient.
+- On an app-background transition, all work from the prior lifecycle is
+  invalid. It cannot publish a late response or start another fallback after
+  the app returns to the foreground.
 
 ## Security model (non-negotiable)
 

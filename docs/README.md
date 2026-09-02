@@ -33,17 +33,13 @@ release automation, model-output rendering, UI/accessibility, and public
 disclosures; see `CHANGELOG.md` `4.3.6`).
 Last AXe simulator E2E feature pass: `2026-06-05` for version `4.0.26` build
 `60`; 10 feature groups passed. Runtime UI verification now defaults to Argent.
-Current beta candidate: `4.3.6` build `84`. Latest validated TestFlight build
-remains `4.2.3` build `77` (`VALID` on `2026-07-10`, with strict validation
-clean and bilingual test notes). Build `76` was installed and sustained through
-normal, cold `dnschat://`, and foreground `dnschat://` launches on a physical
-device. Build `75` was installed but exited immediately because its Xcode
-27-linked binary still used the legacy application lifecycle. Build `77`
-supersedes version `4.2.0` build `73` (`VALID` on `2026-07-04`). Its signed
-archive/export, TestFlight processing, group relationship, bilingual notes, and
-`0` error / `0` warning validation are verified; physical-device launch proof
-remains scoped to build `76`. No App Store version record exists for `4.2.3`,
-and App Store production submission has not happened for this line.
+Latest validated TestFlight beta: `4.3.6` build `84`, tagged
+`v4.3.6-beta1` and processed `VALID` on `2026-08-31`. Its signed
+archive/export, physical-device Release install/launch, group relationship,
+bilingual notes, and `0` error / `0` warning strict validation are verified.
+No App Store version record exists for `4.3.6`, and App Store production
+submission has not happened for this line. Build `4.2.3`/`77` is the previous
+validated TestFlight artifact.
 
 - `pnpm dlx react-doctor@latest --project chat-dns` reports `100 / 100` for
   `chat-dns` on `2026-07-28` (module also `100 / 100`).
@@ -69,11 +65,11 @@ and App Store production submission has not happened for this line.
 - Physical-device Release build, install, installed metadata check, and launch
   are separate evidence claims and are not implied by the local SDK 57 simulator
   and unsigned archive checks.
-- Latest validated TestFlight release: `4.2.3` build `77`. Signed App Store archive/export passed,
-  TestFlight processing returned `VALID`, and strict validation reported `0`
-  errors and `0` warnings. Internal App Store Connect IDs are intentionally
-  omitted from public docs.
-- App Store version validation for `4.2.3` is blocked because no matching App
+- Latest validated TestFlight release: `4.3.6` build `84`. Signed archive/IPA
+  export and physical-device Release install/launch passed, TestFlight
+  processing returned `VALID`, and strict validation reported `0` errors and
+  `0` warnings. Internal App Store Connect IDs are intentionally omitted.
+- App Store version validation for `4.3.6` is blocked because no matching App
   Store version record exists. This is App Store-submission state, not a
   TestFlight processing failure.
 - `xcodebuild test` is not a native gate yet because the `DNSChat` scheme has no

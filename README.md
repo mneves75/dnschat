@@ -7,7 +7,7 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 - JavaScript fallback transports (UDP/TCP) for constrained networks
 - An in-app Logs screen to inspect attempts, failures, and fallbacks
 
-[![Version](https://img.shields.io/badge/version-4.3.6-blue.svg)](.)
+[![Version](https://img.shields.io/badge/version-4.4.0-blue.svg)](.)
 [![React Native](https://img.shields.io/badge/React%20Native-0.86.3-blue.svg)](https://reactnative.dev/)
 [![Expo](https://img.shields.io/badge/Expo-57.0.x-black.svg)](https://expo.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0.x-blue.svg)](https://www.typescriptlang.org/)
@@ -31,7 +31,7 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 
 ## Tech stack
 
-- App version: `4.3.6` (build `84`)
+- App version: `4.4.0` (build `85`)
 - Expo workflow: Expo Router + EAS-compatible native config
 - Expo SDK: `57.0.x`
 - React: `19.2.3`
@@ -76,7 +76,7 @@ transport chain, retries, logging, and server fallback orchestration.
 
 Prereqs:
 
-- Node.js 22.23.1+ (use the `.node-version` pin, currently `24`; `pnpm run verify:react-compiler` crashes on Node 26)
+- Node.js 22.13+ or 24 LTS (use the `.node-version` pin, currently `24`; React Native and Metro require Node 22.13+ on the Node 22 line, and Node 26 is outside the supported engine range)
 - iOS: Xcode 26.4+ (macOS only), iOS 16.4+ device/simulator
 - Android: Java 17 + Android SDK
 
@@ -131,7 +131,11 @@ pnpm run dns:harness --message "test" --json-out harness-output.json --raw-out r
 ## Development commands
 
 ```bash
-# Lint (ast-grep rules; config in sgconfig.yml -> project-rules/)
+# Check or apply deterministic formatting with Oxfmt
+pnpm run fmt:check
+pnpm run fmt
+
+# Lint (Oxlint correctness + ast-grep structural rules)
 pnpm run lint
 
 # Unit tests
@@ -162,17 +166,17 @@ pnpm run fix-pods
 pnpm run clean-ios
 ```
 
-## Git hook (ast-grep)
+## Git hook (format + lint)
 
-This repo installs a pre-commit hook that blocks commits when the ast-grep lint
-fails.
+This repo installs a pre-commit hook that blocks commits when formatting, lint,
+pods, or unit tests fail.
 
 Mechanism:
 
 - `pnpm install` runs `pnpm run prepare`
 - `prepare` runs `scripts/install-git-hooks.js`
-- that script writes `.git/hooks/pre-commit` that runs `verify:ios-pods`, `lint`
-  (ast-grep), and unit tests
+- that script writes `.git/hooks/pre-commit` that runs `verify:ios-pods`,
+  `fmt:check`, `lint` (Oxlint + ast-grep), and unit tests
 
 If you do not want repo-managed hooks, remove `.git/hooks/pre-commit` locally.
 
@@ -206,7 +210,8 @@ Release:
 
 ## Current verification baseline
 
-Current beta candidate: `4.3.6` build `84`.
+Latest validated TestFlight beta: `4.3.6` build `84`, tagged
+`v4.3.6-beta1`.
 Last architecture/dependency verification: `2026-08-31`.
 Last full source/security sweep: `2026-08-31` (native DNS, encrypted storage,
 release automation, model-output rendering, UI/accessibility, and public
@@ -214,16 +219,16 @@ disclosures; see `CHANGELOG.md` `4.3.6`).
 Last AXe simulator E2E feature pass: `2026-06-05` for version `4.0.26` build
 `60`; 10 feature groups passed (historical; Argent MCP is the current
 verification surface).
-The latest `VALID` TestFlight build is version `4.2.3` build `77`, processed
-`VALID` on `2026-07-10` with bilingual `What to Test` notes (`en-US` and
-`pt-BR`) and strict validation reporting `0` errors and `0` warnings. It
-supersedes `4.2.0` build `73` (`VALID` on `2026-07-04`). Release builds use
-the proven `xcodebuild archive` -> `-exportArchive` -> `asc publish
-testflight` lane. App Store Connect has no App Store version record for this
-line, so App Store submission validation is not applicable for these
-TestFlight-only staging builds. The paragraphs below are release history.
+The latest `VALID` TestFlight build is version `4.3.6` build `84`, processed
+`VALID` on `2026-08-31` with bilingual `What to Test` notes (`en-US` and
+`pt-BR`) and strict validation reporting `0` errors and `0` warnings. The same
+final source produced the signed archive/IPA and the physical Release install.
+Release builds use the proven `xcodebuild archive` -> `-exportArchive` -> `asc
+publish testflight` lane. App Store Connect has no `4.3.6` App Store version
+record, so this is TestFlight-only staging, not production. The paragraphs
+below are release history.
 
-Version `4.2.3` build `77` is the current TestFlight release. It carries
+Version `4.2.3` build `77` is the previous TestFlight release. It carries
 the iOS 27 `UIScene` startup fix proven on a physical device in build `76`;
 final pre-archive gates passed on `2026-07-10` (Jest 983, native DNS 65, React
 Compiler 101/101, Expo Doctor 19/19, audit and secret scan clean). Its signed
@@ -245,6 +250,11 @@ and a keyboard drag-to-dismiss regression test; no app-behavior change versus
 `4.1.2`). It carries all of the `4.1.2` premium-feel work to TestFlight, since
 `4.1.2` itself was only Development-signed onto a device and never uploaded.
 
+- `4.3.6` build `84` **SHIPPED to TestFlight — `VALID` on `2026-08-31`**
+  after the complete pre-production audit. Signed archive/export, physical
+  Release install/launch, bilingual test notes, strict validation (`0` errors,
+  `0` warnings), and tag `v4.3.6-beta1` are verified. No production submission
+  is claimed because no matching App Store version exists.
 - `4.2.3` build `77` **SHIPPED to TestFlight — `VALID` on `2026-07-10`**
   for the iOS 27 scene-lifecycle startup fix. Signed archive/export succeeded,
   bilingual test notes are present, and strict validation reported `0` errors

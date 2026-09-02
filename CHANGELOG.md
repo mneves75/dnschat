@@ -4,10 +4,78 @@ All notable changes to DNSChat will be documented in this file.
 
 The format is based on Keep a Changelog, and this project follows Semantic Versioning.
 
+## [Unreleased]
+
+## [4.4.0] - 2026-09-02
+
+Build `84` -> `85`. Native DNS transport hardening: the Android
+DNS-over-HTTPS fallback is gone, the native bridge accepts only port 53, and
+every native query is pinned to the allowlisted zone.
+
+### Security
+
+- Removed the Android Cloudflare DNS-over-HTTPS fallback and the
+  `HttpURLConnection` body reader behind it. The native resolver now speaks
+  only DNS, so no DNS query leaves the device over HTTPS to a third party.
+- The native bridge accepts port 53 and nothing else on both platforms. JS
+  never sends another port -- every `DNS_SERVERS` entry uses 53 and
+  `validateDNSServer` rejects `host:port` input -- so a non-53 port can only
+  come from a tampered bundle aiming an allowlisted host at another service.
+- Every native query name is pinned to the selected resolver's zone, mirroring
+  `composeDNSQueryName`, so an allowlisted resolver cannot be used to reach a
+  name outside that zone.
+- The compiled-in native allowlist is now the two LLM zones only, never a
+  public recursive resolver. It stays a strict subset of the JavaScript
+  `ALLOWED_DNS_SERVERS`; the subset direction is enforced by test, and both
+  platforms must narrow identically so one user setting cannot succeed on iOS
+  and fail on Android.
+- Aligned the Expo SDK 57 patch set (nine packages), returning `expo-doctor`
+  to 19/19.
+- Recorded a time-boxed audit suppression for `decode-uri-component`
+  (GHSA-vcc3-ghjq-m6fr / CVE-2026-45822, moderate). Its only patched release,
+  `0.5.0`, is ESM-only while `query-string` requires it from the Metro CommonJS
+  bundle, so there is no version to move to; the entry carries the blocker and
+  a recheck date, and every other advisory still fails the build.
+
+### Changed
+
+- Concurrent identical native DNS queries are no longer coalesced onto one
+  in-flight request. Each query owns its own socket, deadline, and
+  cancellation, so cancelling one caller can never silently cancel another.
+- JavaScript and TypeScript tooling now uses Oxfmt for deterministic formatting
+  and a broader Oxlint correctness profile alongside the existing ast-grep
+  structural rules. Formatting is enforced by CI, `verify:*`, and pre-commit;
+  the obsolete, unconfigured ESLint stack was removed from the native workspace.
+  The supported Node floor is now 22.13, matching the installed React Native
+  and Metro engine requirements.
+
+### Fixed
+
+- Each JavaScript transport rung now passes its own absolute deadline through
+  the native bridge, where Android and iOS convert it once to a monotonic
+  budget. Expired or background-cancelled queries cannot start later native
+  fallbacks, and foreground queries remain reusable after cancellation. The
+  native module now has an isolated TypeScript gate in `verify:all`.
+- `verify:typed-routes` now deletes the generated declaration and polls for it,
+  instead of trusting the promise returned by Expo's debounced generator. The
+  gate was failing in CI on a clean checkout while passing locally against a
+  stale file.
+- Restored the Android JVM boundary harness after the DNS-over-HTTPS removal:
+  the stub `android.util.Log` was missing the two-argument `e` overload the real
+  API declares, which broke compilation of the resolver under test.
+
 ## [4.3.6] - 2026-08-31
 
 Build `83` -> `84`. Pre-production correctness, security, release-tooling, and
 accessibility audit for the TestFlight beta line.
+
+### Release
+
+- Tagged `v4.3.6-beta1` from the exact source used for the signed archive and
+  IPA. The compiled Release app installed and remained running on an authorized
+  physical iPhone, and TestFlight processed build `84` as `VALID` with bilingual
+  test notes and strict validation at `0` errors and `0` warnings. No matching
+  App Store version record exists, so this is a beta release, not production.
 
 ### Fixed
 

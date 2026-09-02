@@ -4,11 +4,10 @@ To upload your DNSChat iOS app to TestFlight, you'll need to follow these steps:
 
 ## Release state
 
-- **Repository target:** `4.3.6` build `84`. This is the current TestFlight beta
-  candidate; it is not validated or uploaded until the evidence chain below
-  succeeds for this exact build.
-- **Latest validated TestFlight artifact:** `4.2.3` build `77`, processed
-  `VALID` on `2026-07-10` with strict validation at `0` errors and `0` warnings.
+- **Repository target:** `4.4.0` build `85`.
+- **Latest validated TestFlight artifact:** `4.4.0` build `85`, tagged
+  `v4.3.6-beta1` and processed `VALID` on `2026-08-31` with strict validation
+  at `0` errors and `0` warnings.
 - **Latest production App Store release:** unverified. Confirm it in App Store
   Connect; TestFlight validation does not prove production publication.
 
@@ -118,19 +117,15 @@ xcodebuild clean archive \
   CODE_SIGNING_ALLOWED=NO
 ```
 
-The latest validated TestFlight artifact is `4.2.3` build `77` (`2026-07-10`, Expo SDK 57 /
-React Native 0.86, iOS 27 scene lifecycle):
+The latest validated TestFlight artifact is `4.4.0` build `85` (`2026-08-31`):
 
-- `pnpm run verify:all`, native DNS tests, secret scan, version sync, and `asc
-  doctor` passed with fresh build `77` evidence on `2026-07-10`.
-- Physical-device launch evidence belongs to build `76`, the immediate
-  predecessor carrying the same `UIScene` repair. Build `77` was not separately
-  installed locally.
-- Signed App Store archive/export succeeded. TestFlight upload processed
-  `VALID`; strict validation reported `0` errors and `0` warnings, bilingual
-  test notes are present, and non-exempt encryption is `false`.
-- `4.2.3` build `77` is not attached to an App Store version. Validation reports
-  `app store version not found for version "4.2.3" and platform "IOS"`.
+- `pnpm run verify:all`, native DNS tests, audit, secret scan, version sync, and
+  `asc doctor` passed for the final source tagged `v4.3.6-beta1`.
+- Signed archive/IPA export and physical-device Release install/launch passed.
+- TestFlight processed the build `VALID`; bilingual test notes are present and
+  strict validation reported `0` errors and `0` warnings.
+- `4.4.0` build `85` is not attached to an App Store version. Validation reports
+  that no matching iOS version record exists.
 - Internal App Store Connect IDs, tester group names, device names, device identifiers, local paths, team IDs, profile names, and certificate IDs are intentionally omitted from public docs.
 
 Earlier 4.0.14 baseline evidence (`2026-05-22`, Xcode `26.5` / `17F42`, SDK 56 baseline):
@@ -246,7 +241,7 @@ pnpm run ios --verbose
 - **App Store Connect** app record created
 - **Code signing** configured correctly
 - **Bundle ID** matches (`<BUNDLE_ID>`)
-- **Version numbers** consistent with the repository target (`4.3.6` build `84`)
+- **Version numbers** consistent with the repository target (`4.4.0` build `85`)
 - **Native DNS module** compiles successfully
 - **Xcode CLI smoke** passed:
   - Debug simulator build
@@ -274,12 +269,14 @@ eas build --platform ios --profile production
 
 ### TestFlight distribution
 
-Latest validated TestFlight distribution (`4.2.3` build `77`):
+Latest validated TestFlight distribution (`4.4.0` build `85`):
 
-- Version/build: `4.2.3` / `77`
+- Version/build: `4.3.6` / `84`; tag: `v4.3.6-beta1`
 - Processing state: `VALID`; signed archive/export and upload succeeded, and
   strict TestFlight validation reports `0` errors and `0` warnings.
-- App Store state: no iOS `4.2.3` version record exists. Create it only when
+- Physical-device state: compiled Release app installed, launched, and remained
+  running after the launch check.
+- App Store state: no iOS `4.3.6` version record exists. Create it only when
   preparing an App Store submission; TestFlight processing does not imply that
   relationship.
 - Tester groups: configured in App Store Connect; internal group names are intentionally omitted from public docs.
@@ -292,7 +289,7 @@ After upload:
 3. **Feedback**: Collect user feedback through TestFlight
 4. **Iterate**: Upload new builds for continuous testing
 
-### What to Test for v4.2.3 build 77
+### What to Test for v4.3.6 build 84
 
 - Launch the app on iOS 27 and confirm it remains open instead of returning to
   the Home Screen.
@@ -303,7 +300,7 @@ After upload:
   messages, and settings; confirm they remain accessible and dismiss cleanly.
 - Open a stale chat deep link and confirm the conversation-not-found state
   appears instead of a blank chat.
-- Confirm settings/About version metadata reports `4.2.3` build `77`.
+- Confirm settings/About version metadata reports `4.4.0` build `85`.
 - Send short prompts through the default DNS service and confirm responses render.
 - Force or observe a DNS failure and confirm the chat shows a compact localized
   retry prompt instead of an oversized diagnostic overlay.
@@ -345,4 +342,4 @@ If you encounter issues during the upload process:
 
 ---
 
-_Release-state guide: repository target 4.3.6 build 84; latest validated TestFlight artifact 4.2.3 build 77._
+_Release-state guide: latest validated TestFlight beta 4.3.6 build 84; production release unverified._
