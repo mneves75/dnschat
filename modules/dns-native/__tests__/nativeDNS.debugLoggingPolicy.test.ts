@@ -14,4 +14,3 @@ describe("NativeDNS debug logging policy", () => {
     expect(spy).not.toHaveBeenCalled();
   });
 });
-

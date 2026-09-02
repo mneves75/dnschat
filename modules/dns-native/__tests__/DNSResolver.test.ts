@@ -1,12 +1,15 @@
-import { nativeDNS, DNSError, DNSErrorType, NativeDNS } from "../index";
+import { DNSError, DNSErrorType, NativeDNS } from "../index";
 import type { NativeDNSModule } from "../index";
 import { NativeModules } from "react-native";
+
+const futureDeadline = (): number => Date.now() + 30_000;
 
 // Mock React Native NativeModules
 jest.mock("react-native", () => ({
   NativeModules: {
     RNDNSModule: {
       queryTXT: jest.fn(),
+      cancelActiveQueries: jest.fn(),
       isAvailable: jest.fn(),
       configureSanitizer: jest.fn().mockResolvedValue(true),
     },
@@ -18,11 +21,14 @@ describe("Native DNS Module", () => {
   let testDNS: NativeDNS;
 
   beforeEach(() => {
-    mockNativeModule = NativeModules['RNDNSModule'] as jest.Mocked<NativeDNSModule>;
+    mockNativeModule = NativeModules[
+      "RNDNSModule"
+    ] as jest.Mocked<NativeDNSModule>;
     testDNS = new NativeDNS();
 
     // Reset all mocks
     jest.clearAllMocks();
+    mockNativeModule.cancelActiveQueries.mockResolvedValue(0);
 
     // Reset capabilities cache
     testDNS.resetCapabilities();
@@ -91,16 +97,55 @@ describe("Native DNS Module", () => {
   });
 
   describe("DNS Query Functionality", () => {
+    it("returns the number of active native queries cancelled", async () => {
+      mockNativeModule.cancelActiveQueries.mockResolvedValue(3);
+
+      await expect(testDNS.cancelActiveQueries()).resolves.toBe(3);
+      expect(mockNativeModule.cancelActiveQueries).toHaveBeenCalledTimes(1);
+    });
+
+    it("treats cancellation without a native module as a no-op", async () => {
+      await expect(new NativeDNS(null).cancelActiveQueries()).resolves.toBe(0);
+    });
+
+    it("rejects a loaded native module that lacks cancellation support", async () => {
+      const staleNativeModule = {
+        queryTXT: jest.fn(),
+        isAvailable: jest.fn(),
+        configureSanitizer: jest.fn().mockResolvedValue(true),
+      } as unknown as NativeDNSModule;
+
+      await expect(
+        new NativeDNS(staleNativeModule).cancelActiveQueries(),
+      ).rejects.toMatchObject({
+        type: DNSErrorType.PLATFORM_UNSUPPORTED,
+      });
+    });
+
+    it("rejects an invalid native cancellation count", async () => {
+      mockNativeModule.cancelActiveQueries.mockResolvedValue(-1);
+
+      await expect(testDNS.cancelActiveQueries()).rejects.toMatchObject({
+        type: DNSErrorType.DNS_QUERY_FAILED,
+      });
+    });
+
     it("should successfully query TXT records", async () => {
       const mockResponse = ["1/2:Hello from", "2/2: AI assistant"];
       mockNativeModule.queryTXT.mockResolvedValue(mockResponse);
 
-      const result = await testDNS.queryTXT("ch.at", "test message");
+      const result = await testDNS.queryTXT(
+        "ch.at",
+        "test message",
+        53,
+        futureDeadline(),
+      );
 
       expect(mockNativeModule.queryTXT).toHaveBeenCalledWith(
         "ch.at",
         "test message",
         53, // ch.at uses standard DNS port
+        expect.any(Number),
       );
       expect(result).toEqual(mockResponse);
     });
@@ -108,22 +153,24 @@ describe("Native DNS Module", () => {
     it("passes custom server to native module", async () => {
       const mockResponse = ["hello world"];
       mockNativeModule.queryTXT.mockResolvedValue(mockResponse);
-      await testDNS.queryTXT("example.com", "foo");
+      await testDNS.queryTXT("example.com", "foo", 53, futureDeadline());
       expect(mockNativeModule.queryTXT).toHaveBeenCalledWith(
         "example.com",
         "foo",
         53, // Default DNS port for unknown servers
+        expect.any(Number),
       );
     });
 
     it("uses port 53 for llm.pieter.com", async () => {
       const mockResponse = ["hello world"];
       mockNativeModule.queryTXT.mockResolvedValue(mockResponse);
-      await testDNS.queryTXT("llm.pieter.com", "test");
+      await testDNS.queryTXT("llm.pieter.com", "test", 53, futureDeadline());
       expect(mockNativeModule.queryTXT).toHaveBeenCalledWith(
         "llm.pieter.com",
         "test",
         53, // LLM server now uses standard port 53 (as of 2026-01-05)
+        expect.any(Number),
       );
     });
 
@@ -131,13 +178,19 @@ describe("Native DNS Module", () => {
       const mockResponse = ["hello udp"];
       mockNativeModule.queryTXTUDP = jest.fn().mockResolvedValue(mockResponse);
 
-      const result = await testDNS.queryTXTUDP("llm.pieter.com", "test.llm.pieter.com", 53);
+      const result = await testDNS.queryTXTUDP(
+        "llm.pieter.com",
+        "test.llm.pieter.com",
+        53,
+        futureDeadline(),
+      );
 
       expect(result).toEqual(mockResponse);
       expect(mockNativeModule.queryTXTUDP).toHaveBeenCalledWith(
         "llm.pieter.com",
         "test.llm.pieter.com",
         53,
+        expect.any(Number),
       );
     });
 
@@ -145,24 +198,38 @@ describe("Native DNS Module", () => {
       const mockResponse = ["hello tcp"];
       mockNativeModule.queryTXTTCP = jest.fn().mockResolvedValue(mockResponse);
 
-      const result = await testDNS.queryTXTTCP("llm.pieter.com", "test.llm.pieter.com", 53);
+      const result = await testDNS.queryTXTTCP(
+        "llm.pieter.com",
+        "test.llm.pieter.com",
+        53,
+        futureDeadline(),
+      );
 
       expect(result).toEqual(mockResponse);
       expect(mockNativeModule.queryTXTTCP).toHaveBeenCalledWith(
         "llm.pieter.com",
         "test.llm.pieter.com",
         53,
+        expect.any(Number),
       );
     });
 
     it("should reject empty messages", async () => {
-      await expect(testDNS.queryTXT("ch.at", "")).rejects.toThrow(DNSError);
-      await expect(testDNS.queryTXT("ch.at", "   ")).rejects.toThrow(DNSError);
+      await expect(
+        testDNS.queryTXT("ch.at", "", 53, futureDeadline()),
+      ).rejects.toThrow(DNSError);
+      await expect(
+        testDNS.queryTXT("ch.at", "   ", 53, futureDeadline()),
+      ).rejects.toThrow(DNSError);
     });
 
     it("parses plain TXT segments without numbering", () => {
       const dns = new NativeDNS();
-      const result = dns.parseMultiPartResponse(["Hello ", "world", "! from DNS"]);
+      const result = dns.parseMultiPartResponse([
+        "Hello ",
+        "world",
+        "! from DNS",
+      ]);
       expect(result).toBe("Hello world! from DNS");
     });
 
@@ -186,14 +253,20 @@ describe("Native DNS Module", () => {
     it("throws on duplicate numbered parts", () => {
       const dns = new NativeDNS();
       expect(() =>
-        dns.parseMultiPartResponse(["1/2:Hello", "1/2:Duplicate", "2/2: world"]),
-      ).toThrow('Conflicting content for part 1');
+        dns.parseMultiPartResponse([
+          "1/2:Hello",
+          "1/2:Duplicate",
+          "2/2: world",
+        ]),
+      ).toThrow("Conflicting content for part 1");
     });
 
     it("should handle native module unavailable", async () => {
       const dnsWithoutNative = new NativeDNS(null);
 
-      await expect(dnsWithoutNative.queryTXT("ch.at", "test")).rejects.toThrow(
+      await expect(
+        dnsWithoutNative.queryTXT("ch.at", "test", 53, futureDeadline()),
+      ).rejects.toThrow(
         new DNSError(
           DNSErrorType.PLATFORM_UNSUPPORTED,
           "Native DNS module is not available on this platform",
@@ -204,9 +277,30 @@ describe("Native DNS Module", () => {
     it("should handle empty response from native module", async () => {
       mockNativeModule.queryTXT.mockResolvedValue([]);
 
-      await expect(testDNS.queryTXT("ch.at", "test")).rejects.toMatchObject({
+      await expect(
+        testDNS.queryTXT("ch.at", "test", 53, futureDeadline()),
+      ).rejects.toMatchObject({
         type: DNSErrorType.INVALID_RESPONSE,
       });
+    });
+
+    it("rejects an expired deadline before dispatching native work", async () => {
+      await expect(
+        testDNS.queryTXT("ch.at", "test", 53, Date.now() - 1),
+      ).rejects.toMatchObject({
+        type: DNSErrorType.TIMEOUT,
+        message: "DNS query deadline expired",
+      });
+
+      expect(mockNativeModule.queryTXT).not.toHaveBeenCalled();
+    });
+
+    it("rejects a non-integer deadline before dispatching native work", async () => {
+      await expect(
+        testDNS.queryTXT("ch.at", "test", 53, Number.POSITIVE_INFINITY),
+      ).rejects.toMatchObject({ type: DNSErrorType.TIMEOUT });
+
+      expect(mockNativeModule.queryTXT).not.toHaveBeenCalled();
     });
 
     it("should handle various native errors correctly", async () => {
@@ -276,7 +370,9 @@ describe("Native DNS Module", () => {
       for (const testCase of testCases) {
         mockNativeModule.queryTXT.mockRejectedValue(testCase.nativeError);
 
-        await expect(testDNS.queryTXT("ch.at", "test")).rejects.toMatchObject({
+        await expect(
+          testDNS.queryTXT("ch.at", "test", 53, futureDeadline()),
+        ).rejects.toMatchObject({
           type: testCase.expectedType,
         });
       }
@@ -285,7 +381,9 @@ describe("Native DNS Module", () => {
 
   describe("Port Validation", () => {
     it("should reject port 0", async () => {
-      await expect(testDNS.queryTXT("ch.at", "test", 0)).rejects.toThrow(
+      await expect(
+        testDNS.queryTXT("ch.at", "test", 0, futureDeadline()),
+      ).rejects.toThrow(
         new DNSError(
           DNSErrorType.INVALID_RESPONSE,
           "Invalid DNS port: 0. Must be between 1 and 65535.",
@@ -294,7 +392,9 @@ describe("Native DNS Module", () => {
     });
 
     it("should reject negative port", async () => {
-      await expect(testDNS.queryTXT("ch.at", "test", -1)).rejects.toThrow(
+      await expect(
+        testDNS.queryTXT("ch.at", "test", -1, futureDeadline()),
+      ).rejects.toThrow(
         new DNSError(
           DNSErrorType.INVALID_RESPONSE,
           "Invalid DNS port: -1. Must be between 1 and 65535.",
@@ -303,7 +403,9 @@ describe("Native DNS Module", () => {
     });
 
     it("should reject port greater than 65535", async () => {
-      await expect(testDNS.queryTXT("ch.at", "test", 70000)).rejects.toThrow(
+      await expect(
+        testDNS.queryTXT("ch.at", "test", 70000, futureDeadline()),
+      ).rejects.toThrow(
         new DNSError(
           DNSErrorType.INVALID_RESPONSE,
           "Invalid DNS port: 70000. Must be between 1 and 65535.",
@@ -313,14 +415,24 @@ describe("Native DNS Module", () => {
 
     it("should accept valid port 1", async () => {
       mockNativeModule.queryTXT.mockResolvedValue(["response"]);
-      await testDNS.queryTXT("ch.at", "test", 1);
-      expect(mockNativeModule.queryTXT).toHaveBeenCalledWith("ch.at", "test", 1);
+      await testDNS.queryTXT("ch.at", "test", 1, futureDeadline());
+      expect(mockNativeModule.queryTXT).toHaveBeenCalledWith(
+        "ch.at",
+        "test",
+        1,
+        expect.any(Number),
+      );
     });
 
     it("should accept valid port 65535", async () => {
       mockNativeModule.queryTXT.mockResolvedValue(["response"]);
-      await testDNS.queryTXT("ch.at", "test", 65535);
-      expect(mockNativeModule.queryTXT).toHaveBeenCalledWith("ch.at", "test", 65535);
+      await testDNS.queryTXT("ch.at", "test", 65535, futureDeadline());
+      expect(mockNativeModule.queryTXT).toHaveBeenCalledWith(
+        "ch.at",
+        "test",
+        65535,
+        expect.any(Number),
+      );
     });
   });
 
@@ -369,7 +481,9 @@ describe("Native DNS Module", () => {
         "Another regular response",
       ];
       const result = testDNS.parseMultiPartResponse(txtRecords);
-      expect(result).toBe("Regular response without part formatAnother regular response");
+      expect(result).toBe(
+        "Regular response without part formatAnother regular response",
+      );
     });
 
     it("rejects responses that become empty after sanitization", () => {
@@ -382,14 +496,21 @@ describe("Native DNS Module", () => {
 
       for (const txtRecords of cases) {
         expect(() => testDNS.parseMultiPartResponse(txtRecords)).toThrow(
-          new DNSError(DNSErrorType.INVALID_RESPONSE, "Received empty response"),
+          new DNSError(
+            DNSErrorType.INVALID_RESPONSE,
+            "Received empty response",
+          ),
         );
       }
     });
 
     it("sanitizes non-empty plain and multipart responses before returning", () => {
-      expect(testDNS.parseMultiPartResponse(["\u202Eresponse"])).toBe("response");
-      expect(testDNS.parseMultiPartResponse(["1/1:\u2066response"])).toBe("response");
+      expect(testDNS.parseMultiPartResponse(["\u202Eresponse"])).toBe(
+        "response",
+      );
+      expect(testDNS.parseMultiPartResponse(["1/1:\u2066response"])).toBe(
+        "response",
+      );
     });
   });
 
@@ -423,12 +544,12 @@ describe("Native DNS Module", () => {
   describe("Performance and Memory", () => {
     it("should handle concurrent queries efficiently", async () => {
       mockNativeModule.queryTXT.mockImplementation(
-        (domain: string, message: string, port: number) =>
+        (domain: string, message: string, _port: number) =>
           Promise.resolve([`Response to: ${message}`]),
       );
 
       const queries = Array.from({ length: 10 }, (_, i) =>
-        testDNS.queryTXT("ch.at", `message ${i}`),
+        testDNS.queryTXT("ch.at", `message ${i}`, 53, futureDeadline()),
       );
 
       const results = await Promise.all(queries);
@@ -438,14 +559,16 @@ describe("Native DNS Module", () => {
     });
 
     it("should handle query cancellation gracefully", async () => {
-      let resolveQuery: (value: string[]) => void;
-      const queryPromise = new Promise<string[]>((resolve) => {
-        resolveQuery = resolve;
-      });
+      const queryPromise = new Promise<string[]>(() => undefined);
 
       mockNativeModule.queryTXT.mockReturnValue(queryPromise);
 
-      const queryResult = testDNS.queryTXT("ch.at", "test");
+      const queryResult = testDNS.queryTXT(
+        "ch.at",
+        "test",
+        53,
+        futureDeadline(),
+      );
 
       // Don't resolve the promise - simulate a cancelled/timeout scenario
 
@@ -467,6 +590,8 @@ describe("Native DNS Module", () => {
       const result = await testDNS.queryTXT(
         "ch.at",
         "How does DNS TXT querying work for AI responses?",
+        53,
+        futureDeadline(),
       );
 
       expect(result).toEqual(mockLLMResponse);
@@ -481,13 +606,14 @@ describe("Native DNS Module", () => {
       const longMessage = "A".repeat(500); // Very long message
       mockNativeModule.queryTXT.mockResolvedValue(["Response to long message"]);
 
-      await testDNS.queryTXT("ch.at", longMessage);
+      await testDNS.queryTXT("ch.at", longMessage, 53, futureDeadline());
 
       // Verify the native module was called (message handling is done at native level)
       expect(mockNativeModule.queryTXT).toHaveBeenCalledWith(
         "ch.at",
         longMessage,
         53, // ch.at uses standard DNS port
+        expect.any(Number),
       );
     });
   });

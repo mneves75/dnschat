@@ -5,31 +5,32 @@
 RCT_EXTERN_METHOD(queryTXT:(NSString *)domain
                   message:(NSString *)message
                   port:(nonnull NSNumber *)port
+                  deadlineEpochMs:(nonnull NSNumber *)deadlineEpochMs
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 
 RCT_EXTERN_METHOD(queryTXTUDP:(NSString *)domain
                   message:(NSString *)message
                   port:(nonnull NSNumber *)port
+                  deadlineEpochMs:(nonnull NSNumber *)deadlineEpochMs
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 
 RCT_EXTERN_METHOD(queryTXTTCP:(NSString *)domain
                   message:(NSString *)message
                   port:(nonnull NSNumber *)port
+                  deadlineEpochMs:(nonnull NSNumber *)deadlineEpochMs
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 
 RCT_EXTERN_METHOD(isAvailable:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 
+RCT_EXTERN_METHOD(cancelActiveQueries:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+
 RCT_EXTERN_METHOD(configureSanitizer:(NSDictionary *)config
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
-
-+ (BOOL)requiresMainQueueSetup
-{
-  return NO;
-}
 
 @end

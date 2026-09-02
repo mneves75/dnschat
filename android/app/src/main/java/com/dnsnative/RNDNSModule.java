@@ -41,9 +41,36 @@ public class RNDNSModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void queryTXT(String domain, String message, int port, Promise promise) {
-        CompletableFuture<List<String>> future = dnsResolver.queryTXT(domain, message, port);
-        
+    public void queryTXT(
+        String domain,
+        String message,
+        int port,
+        double deadlineEpochMillis,
+        Promise promise
+    ) {
+        if (!Double.isFinite(deadlineEpochMillis)
+            || deadlineEpochMillis < 1d
+            || deadlineEpochMillis > 9_007_199_254_740_991d
+            || deadlineEpochMillis != Math.rint(deadlineEpochMillis)) {
+            promise.reject(
+                "DNS_DEADLINE_INVALID",
+                "DNS deadline must be a positive safe-integer epoch timestamp"
+            );
+            return;
+        }
+        try {
+            DNSResolver.requireAllowedPort(port);
+        } catch (DNSResolver.DNSError error) {
+            promise.reject(error.getType().name(), error.getDetails(), error);
+            return;
+        }
+        CompletableFuture<List<String>> future = dnsResolver.queryTXT(
+            domain,
+            message,
+            port,
+            (long) deadlineEpochMillis
+        );
+
         future
             .thenAccept(txtRecords -> {
                 WritableArray result = Arguments.createArray();
@@ -53,12 +80,34 @@ public class RNDNSModule extends ReactContextBaseJavaModule {
                 promise.resolve(result);
             })
             .exceptionally(throwable -> {
-                String errorMessage = throwable.getCause() != null 
-                    ? throwable.getCause().getMessage() 
-                    : throwable.getMessage();
-                promise.reject("DNS_QUERY_FAILED", errorMessage, throwable);
+                rejectWithDnsError(promise, throwable);
                 return null;
             });
+    }
+
+    /**
+     * Reject with a structured code (DNSError.Type name) so JavaScript can classify
+     * TIMEOUT / CANCELLED / NO_RECORDS_FOUND without parsing English messages.
+     */
+    private static void rejectWithDnsError(Promise promise, Throwable throwable) {
+        Throwable current = throwable;
+        while (current != null && !(current instanceof DNSResolver.DNSError)) {
+            current = current.getCause();
+        }
+        if (current instanceof DNSResolver.DNSError) {
+            DNSResolver.DNSError error = (DNSResolver.DNSError) current;
+            promise.reject(error.getType().name(), error.getDetails(), error);
+            return;
+        }
+        String errorMessage = throwable.getCause() != null
+            ? throwable.getCause().getMessage()
+            : throwable.getMessage();
+        promise.reject("DNS_QUERY_FAILED", errorMessage, throwable);
+    }
+
+    @ReactMethod
+    public void cancelActiveQueries(Promise promise) {
+        promise.resolve(dnsResolver.cancelActiveQueries());
     }
 
     @ReactMethod

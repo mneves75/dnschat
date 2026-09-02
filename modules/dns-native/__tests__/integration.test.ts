@@ -11,8 +11,11 @@ import { sanitizeDNSMessageReference } from "../constants";
 
 jest.setTimeout(30000);
 
+const integrationDeadline = (): number => Date.now() + 15_000;
+
 // Skip these tests in CI/automated environments
-const shouldRunIntegrationTests = process.env["RUN_INTEGRATION_TESTS"] === "true";
+const shouldRunIntegrationTests =
+  process.env["RUN_INTEGRATION_TESTS"] === "true";
 
 const describeIntegration = shouldRunIntegrationTests
   ? describe
@@ -59,6 +62,8 @@ describeIntegration("Native DNS Integration Tests", () => {
         const result = await nativeDNS.queryTXT(
           "google.com",
           "google-site-verification",
+          53,
+          integrationDeadline(),
         );
 
         expect(Array.isArray(result)).toBe(true);
@@ -83,7 +88,12 @@ describeIntegration("Native DNS Integration Tests", () => {
       }
 
       try {
-        const result = await nativeDNS.queryTXT("ch.at", "hello");
+        const result = await nativeDNS.queryTXT(
+          "ch.at",
+          "hello",
+          53,
+          integrationDeadline(),
+        );
 
         expect(Array.isArray(result)).toBe(true);
 
@@ -118,7 +128,12 @@ describeIntegration("Native DNS Integration Tests", () => {
 
       try {
         // Query a non-existent server to trigger timeout
-        await nativeDNS.queryTXT("non-existent-server-12345.com", "test");
+        await nativeDNS.queryTXT(
+          "non-existent-server-12345.com",
+          "test",
+          53,
+          integrationDeadline(),
+        );
       } catch (error) {
         const elapsed = Date.now() - startTime;
 
@@ -143,9 +158,9 @@ describeIntegration("Native DNS Integration Tests", () => {
       }
 
       const queries = [
-        nativeDNS.queryTXT("google.com", "test1"),
-        nativeDNS.queryTXT("google.com", "test2"),
-        nativeDNS.queryTXT("google.com", "test3"),
+        nativeDNS.queryTXT("google.com", "test1", 53, integrationDeadline()),
+        nativeDNS.queryTXT("google.com", "test2", 53, integrationDeadline()),
+        nativeDNS.queryTXT("google.com", "test3", 53, integrationDeadline()),
       ];
 
       const results = await Promise.allSettled(queries);
@@ -177,7 +192,7 @@ describeIntegration("Native DNS Integration Tests", () => {
 
       for (const domain of invalidDomains) {
         try {
-          await nativeDNS.queryTXT(domain, "test");
+          await nativeDNS.queryTXT(domain, "test", 53, integrationDeadline());
           // If it doesn't throw, that's also acceptable
         } catch (error) {
           expect(error instanceof DNSError || error instanceof Error).toBe(
@@ -197,7 +212,12 @@ describeIntegration("Native DNS Integration Tests", () => {
       // This test would require actual network manipulation
       // For now, just verify the error handling structure exists
       try {
-        await nativeDNS.queryTXT("127.0.0.1", "test");
+        await nativeDNS.queryTXT(
+          "127.0.0.1",
+          "test",
+          53,
+          integrationDeadline(),
+        );
       } catch (error) {
         if (error instanceof DNSError) {
           expect(error.type).toBeDefined();
@@ -230,7 +250,7 @@ describeIntegration("Native DNS Integration Tests", () => {
     (canValidate ? it : it.skip)(
       "matches JavaScript reference sanitizer for tricky inputs",
       async () => {
-        const rocket = String.fromCodePoint(0x1F680);
+        const rocket = String.fromCodePoint(0x1f680);
         const samples = [
           `  HélLo   Wørld${rocket}  `,
           "--Leading__And++Trailing--",
@@ -252,14 +272,16 @@ describeIntegration("Native DNS Integration Tests", () => {
     (canValidate ? it : it.skip)(
       "rejects invalid labels the same way JavaScript does",
       async () => {
-        const rocket = String.fromCodePoint(0x1F680);
+        const rocket = String.fromCodePoint(0x1f680);
         const invalidSamples = ["   ", rocket.repeat(3), "***", "--"];
 
         if (!debugModule) return;
 
         for (const sample of invalidSamples) {
           expect(() => sanitizeDNSMessageReference(sample)).toThrow();
-          await expect(debugModule.debugSanitizeLabel(sample)).rejects.toMatchObject({
+          await expect(
+            debugModule.debugSanitizeLabel(sample),
+          ).rejects.toMatchObject({
             code: "QUERY_FAILED",
           });
         }
@@ -282,10 +304,15 @@ describeIntegration("Native DNS Integration Tests", () => {
         const start = Date.now();
 
         try {
-          await nativeDNS.queryTXT("google.com", `test-${i}`);
+          await nativeDNS.queryTXT(
+            "google.com",
+            `test-${i}`,
+            53,
+            integrationDeadline(),
+          );
           const elapsed = Date.now() - start;
           times.push(elapsed);
-        } catch (error) {
+        } catch {
           // Record failed attempts with max time
           times.push(10000);
         }
@@ -316,7 +343,7 @@ describeIntegration("Native DNS Integration Tests", () => {
       // Execute many queries
       const queries = Array.from({ length: 20 }, (_, i) =>
         nativeDNS
-          .queryTXT("google.com", `memory-test-${i}`)
+          .queryTXT("google.com", `memory-test-${i}`, 53, integrationDeadline())
           .catch((error) => ({ error })),
       );
 
@@ -356,6 +383,8 @@ describeIntegration("Native DNS Integration Tests", () => {
         const txtRecords = await nativeDNS.queryTXT(
           "llm.pieter.com",
           userMessage,
+          53,
+          integrationDeadline(),
         );
 
         if (txtRecords.length > 0) {
@@ -399,11 +428,21 @@ export const runManualTests = async () => {
     }
 
     console.log("\nTesting basic DNS query...");
-    const result = await nativeDNS.queryTXT("google.com", "test");
+    const result = await nativeDNS.queryTXT(
+      "google.com",
+      "test",
+      53,
+      integrationDeadline(),
+    );
     console.log("Basic query result:", result);
 
     console.log("\nTesting LLM DNS query...");
-    const llmResult = await nativeDNS.queryTXT("ch.at", "Hello AI");
+    const llmResult = await nativeDNS.queryTXT(
+      "ch.at",
+      "Hello AI",
+      53,
+      integrationDeadline(),
+    );
     console.log("LLM query result:", llmResult);
 
     const parsedResponse = nativeDNS.parseMultiPartResponse(llmResult);

@@ -83,7 +83,7 @@ describe("NativeDNS capabilities TTL", () => {
     const dns = new NativeDNS();
 
     // First call
-    const result1 = await dns.isAvailable();
+    await dns.isAvailable();
     expect(mockIsAvailable).toHaveBeenCalledTimes(1);
 
     // Advance time past TTL (31 seconds)
@@ -141,7 +141,7 @@ describe("NativeDNS capabilities TTL", () => {
     expect(result.platform).toBe("web");
     expect(console.warn).toHaveBeenCalledWith(
       "Failed to check DNS availability:",
-      expect.any(Error)
+      expect.any(Error),
     );
   });
 

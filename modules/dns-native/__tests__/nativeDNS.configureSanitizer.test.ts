@@ -3,6 +3,8 @@ import { NativeModules, Platform } from "react-native";
 import { DNSErrorType, NativeDNS } from "../index";
 import { getNativeSanitizerConfig } from "../constants";
 
+const futureDeadline = (): number => Date.now() + 30_000;
+
 describe("NativeDNS sanitizer configuration", () => {
   const originalConsoleWarn = console.warn;
   const originalConsoleLog = console.log;
@@ -42,14 +44,22 @@ describe("NativeDNS sanitizer configuration", () => {
     nativeModulesRecord["RNDNSModule"] = {
       configureSanitizer: configureSanitizerMock,
       queryTXT: jest.fn(),
-      isAvailable: jest.fn().mockResolvedValue({ available: true, platform: "android", supportsCustomServer: true, supportsAsyncQuery: true, apiLevel: 34 }),
+      isAvailable: jest.fn().mockResolvedValue({
+        available: true,
+        platform: "android",
+        supportsCustomServer: true,
+        supportsAsyncQuery: true,
+        apiLevel: 34,
+      }),
     };
 
     const dns = new NativeDNS();
     await Promise.resolve();
     await Promise.resolve();
 
-    expect(configureSanitizerMock).toHaveBeenCalledWith(getNativeSanitizerConfig());
+    expect(configureSanitizerMock).toHaveBeenCalledWith(
+      getNativeSanitizerConfig(),
+    );
 
     // Trigger second constructor invocation to ensure duplicate configs short-circuit gracefully.
     new NativeDNS();
@@ -73,21 +83,39 @@ describe("NativeDNS sanitizer configuration", () => {
   });
 
   it("marks native DNS unavailable when sanitizer configuration fails", async () => {
-    const error = Object.assign(new Error("Invalid regex"), { code: "SANITIZER_CONFIG_REGEX" });
+    const error = Object.assign(new Error("Invalid regex"), {
+      code: "SANITIZER_CONFIG_REGEX",
+    });
     const queryTXT = jest.fn().mockResolvedValue(["ok"]);
     const configureSanitizer = jest.fn().mockRejectedValue(error);
     nativeModulesRecord["RNDNSModule"] = {
       configureSanitizer,
       queryTXT,
-      isAvailable: jest.fn().mockResolvedValue({ available: true, platform: "android", supportsCustomServer: true, supportsAsyncQuery: true, apiLevel: 34 }),
+      isAvailable: jest.fn().mockResolvedValue({
+        available: true,
+        platform: "android",
+        supportsCustomServer: true,
+        supportsAsyncQuery: true,
+        apiLevel: 34,
+      }),
     };
 
     const dns = new NativeDNS();
     await Promise.resolve();
     await Promise.resolve();
 
-    expect(console.warn).toHaveBeenCalledWith("[NativeDNS] Failed to configure sanitizer:", error);
-    await expect(dns.queryTXT("llm.pieter.com", "hello.llm.pieter.com", 53)).rejects.toMatchObject({
+    expect(console.warn).toHaveBeenCalledWith(
+      "[NativeDNS] Failed to configure sanitizer:",
+      error,
+    );
+    await expect(
+      dns.queryTXT(
+        "llm.pieter.com",
+        "hello.llm.pieter.com",
+        53,
+        futureDeadline(),
+      ),
+    ).rejects.toMatchObject({
       type: DNSErrorType.PLATFORM_UNSUPPORTED,
       message: "Native DNS sanitizer configuration failed",
     });
@@ -109,6 +137,7 @@ describe("NativeDNS sanitizer configuration", () => {
     const dns = new NativeDNS({
       configureSanitizer,
       queryTXT,
+      cancelActiveQueries: jest.fn().mockResolvedValue(0),
       isAvailable: jest.fn().mockResolvedValue({
         available: true,
         platform: "android",
@@ -120,7 +149,14 @@ describe("NativeDNS sanitizer configuration", () => {
 
     await flushConfiguration();
 
-    await expect(dns.queryTXT("llm.pieter.com", "hello.llm.pieter.com", 53)).resolves.toEqual(["ok"]);
+    await expect(
+      dns.queryTXT(
+        "llm.pieter.com",
+        "hello.llm.pieter.com",
+        53,
+        futureDeadline(),
+      ),
+    ).resolves.toEqual(["ok"]);
     expect(configureSanitizer).toHaveBeenCalledTimes(2);
     expect(queryTXT).toHaveBeenCalledTimes(1);
   });
@@ -138,6 +174,7 @@ describe("NativeDNS sanitizer configuration", () => {
     const dns = new NativeDNS({
       configureSanitizer,
       queryTXT,
+      cancelActiveQueries: jest.fn().mockResolvedValue(0),
       isAvailable: jest.fn().mockResolvedValue({
         available: true,
         platform: "android",
@@ -149,13 +186,26 @@ describe("NativeDNS sanitizer configuration", () => {
 
     await flushConfiguration();
 
-    const firstQuery = dns.queryTXT("llm.pieter.com", "first.llm.pieter.com", 53);
-    const secondQuery = dns.queryTXT("llm.pieter.com", "second.llm.pieter.com", 53);
+    const firstQuery = dns.queryTXT(
+      "llm.pieter.com",
+      "first.llm.pieter.com",
+      53,
+      futureDeadline(),
+    );
+    const secondQuery = dns.queryTXT(
+      "llm.pieter.com",
+      "second.llm.pieter.com",
+      53,
+      futureDeadline(),
+    );
 
     expect(configureSanitizer).toHaveBeenCalledTimes(2);
     resolveRetry(true);
 
-    await expect(Promise.all([firstQuery, secondQuery])).resolves.toEqual([["ok"], ["ok"]]);
+    await expect(Promise.all([firstQuery, secondQuery])).resolves.toEqual([
+      ["ok"],
+      ["ok"],
+    ]);
     expect(queryTXT).toHaveBeenCalledTimes(2);
   });
 });

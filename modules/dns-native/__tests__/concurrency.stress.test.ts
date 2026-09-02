@@ -18,7 +18,7 @@
  */
 
 // Mock NativeModules for test environment (must be before imports due to Jest hoisting)
-jest.mock('react-native', () => ({
+jest.mock("react-native", () => ({
   NativeModules: {
     RNDNSModule: {
       queryTXT: jest.fn(),
@@ -27,11 +27,12 @@ jest.mock('react-native', () => ({
   },
 }));
 
-import { NativeModules } from 'react-native';
+import { NativeModules } from "react-native";
 
-const mockNativeModule = NativeModules['RNDNSModule'];
+const mockNativeModule = NativeModules["RNDNSModule"];
+const queryDeadline = (): number => Date.now() + 30_000;
 
-describe('DNS Native Module - Concurrency Stress Tests', () => {
+describe("DNS Native Module - Concurrency Stress Tests", () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -44,28 +45,36 @@ describe('DNS Native Module - Concurrency Stress Tests', () => {
    * - State corruption
    * - Response mixing
    */
-  it('should handle 100 concurrent queries without crashes', async () => {
+  it("should handle 100 concurrent queries without crashes", async () => {
     // Mock successful responses with unique payloads
-    mockNativeModule.queryTXT.mockImplementation((domain: string, message: string) => {
-      return Promise.resolve([`response-${message}`]);
-    });
+    mockNativeModule.queryTXT.mockImplementation(
+      (domain: string, message: string) => {
+        return Promise.resolve([`response-${message}`]);
+      },
+    );
 
     const promises = Array.from({ length: 100 }, (_, i) =>
-      NativeModules['RNDNSModule'].queryTXT('1.1.1.1', `query-${i}`)
+      NativeModules["RNDNSModule"].queryTXT(
+        "1.1.1.1",
+        `query-${i}`,
+        53,
+        queryDeadline(),
+      ),
     );
 
     const results = await Promise.allSettled(promises);
 
     // All should succeed
-    const succeeded = results.filter((r) => r.status === 'fulfilled').length;
+    const succeeded = results.filter((r) => r.status === "fulfilled").length;
     expect(succeeded).toBe(100);
 
-    // Each should get correct response
-    results.forEach((result, i) => {
-      if (result.status === 'fulfilled') {
-        expect(result.value).toEqual([`response-query-${i}`]);
-      }
-    });
+    // Each should get the response for its corresponding query.
+    const fulfilledValues = results.flatMap((result) =>
+      result.status === "fulfilled" ? [result.value] : [],
+    );
+    expect(fulfilledValues).toEqual(
+      Array.from({ length: 100 }, (_, i) => [`response-query-${i}`]),
+    );
   }, 30000); // 30s timeout for stress test
 
   /**
@@ -74,7 +83,7 @@ describe('DNS Native Module - Concurrency Stress Tests', () => {
    * Simulates user rapidly typing/cancelling queries (like autocomplete).
    * Verifies cancellation doesn't cause continuation resume races.
    */
-  it('should handle rapid query initiation and cancellation', async () => {
+  it("should handle rapid query initiation and cancellation", async () => {
     let resolveCount = 0;
 
     mockNativeModule.queryTXT.mockImplementation(() => {
@@ -90,7 +99,12 @@ describe('DNS Native Module - Concurrency Stress Tests', () => {
 
     // Start 50 queries rapidly
     const promises = Array.from({ length: 50 }, (_, i) =>
-      NativeModules['RNDNSModule'].queryTXT('1.1.1.1', `query-${i}`)
+      NativeModules["RNDNSModule"].queryTXT(
+        "1.1.1.1",
+        `query-${i}`,
+        53,
+        queryDeadline(),
+      ),
     );
 
     // Let some start, then await all
@@ -101,7 +115,7 @@ describe('DNS Native Module - Concurrency Stress Tests', () => {
     expect(results.length).toBe(50);
 
     // No crashes from continuation double-resume
-    const fulfilled = results.filter((r) => r.status === 'fulfilled').length;
+    const fulfilled = results.filter((r) => r.status === "fulfilled").length;
     expect(fulfilled).toBeGreaterThan(0); // At least some should succeed
   }, 15000);
 
@@ -111,18 +125,25 @@ describe('DNS Native Module - Concurrency Stress Tests', () => {
    * Simulates flaky network with random failures.
    * Verifies error paths don't race with success paths.
    */
-  it('should handle mixed success/failure without state corruption', async () => {
-    mockNativeModule.queryTXT.mockImplementation((domain: string, message: string) => {
-      // 50% success, 50% failure
-      if (Math.random() > 0.5) {
-        return Promise.resolve([`success-${message}`]);
-      } else {
-        return Promise.reject(new Error(`failure-${message}`));
-      }
-    });
+  it("should handle mixed success/failure without state corruption", async () => {
+    mockNativeModule.queryTXT.mockImplementation(
+      (domain: string, message: string) => {
+        // 50% success, 50% failure
+        if (Math.random() > 0.5) {
+          return Promise.resolve([`success-${message}`]);
+        } else {
+          return Promise.reject(new Error(`failure-${message}`));
+        }
+      },
+    );
 
     const promises = Array.from({ length: 200 }, (_, i) =>
-      NativeModules['RNDNSModule'].queryTXT('1.1.1.1', `query-${i}`)
+      NativeModules["RNDNSModule"].queryTXT(
+        "1.1.1.1",
+        `query-${i}`,
+        53,
+        queryDeadline(),
+      ),
     );
 
     const results = await Promise.allSettled(promises);
@@ -130,8 +151,8 @@ describe('DNS Native Module - Concurrency Stress Tests', () => {
     // All should settle (no hangs from race conditions)
     expect(results.length).toBe(200);
 
-    const succeeded = results.filter((r) => r.status === 'fulfilled').length;
-    const failed = results.filter((r) => r.status === 'rejected').length;
+    const succeeded = results.filter((r) => r.status === "fulfilled").length;
+    const failed = results.filter((r) => r.status === "rejected").length;
 
     // Both success and failure paths should execute
     expect(succeeded).toBeGreaterThan(0);
@@ -145,7 +166,7 @@ describe('DNS Native Module - Concurrency Stress Tests', () => {
    * Simulates queries that timeout while response arrives.
    * Verifies ResumeGate prevents double-resume when timeout and success race.
    */
-  it('should handle timeout races gracefully', async () => {
+  it("should handle timeout races gracefully", async () => {
     // Important: Promise.race does not cancel the "losing" promise.
     // This test intentionally simulates responses that arrive after the timeout.
     // To keep Jest deterministic and avoid leaving real timers pending (open-handle),
@@ -158,7 +179,7 @@ describe('DNS Native Module - Concurrency Stress Tests', () => {
         // Keep this deterministic so the test is stable.
         const delayMs = 15000;
         const timer = setTimeout(() => {
-          resolve(['late-response']);
+          resolve(["late-response"]);
         }, delayMs);
         pendingResponseTimers.push(timer);
       });
@@ -168,11 +189,16 @@ describe('DNS Native Module - Concurrency Stress Tests', () => {
       const promises = Array.from({ length: 50 }, () =>
         // Race each query against 100ms timeout
         Promise.race([
-          NativeModules['RNDNSModule'].queryTXT('1.1.1.1', 'slow-query'),
-          new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('timeout')), 100)
+          NativeModules["RNDNSModule"].queryTXT(
+            "1.1.1.1",
+            "slow-query",
+            53,
+            queryDeadline(),
           ),
-        ])
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error("timeout")), 100),
+          ),
+        ]),
       );
 
       const results = await Promise.allSettled(promises);
@@ -182,7 +208,7 @@ describe('DNS Native Module - Concurrency Stress Tests', () => {
 
       // Most should timeout given 100ms limit vs 15s responses
       const timedOut = results.filter(
-        (r) => r.status === 'rejected' && r.reason.message === 'timeout'
+        (r) => r.status === "rejected" && r.reason.message === "timeout",
       ).length;
 
       expect(timedOut).toBeGreaterThan(40); // Most should timeout
@@ -197,7 +223,7 @@ describe('DNS Native Module - Concurrency Stress Tests', () => {
    * Simulates production load pattern with queries arriving continuously.
    * Verifies no memory leaks or state corruption over extended operation.
    */
-  it('should handle sustained query load without degradation', async () => {
+  it("should handle sustained query load without degradation", async () => {
     let queryCount = 0;
 
     mockNativeModule.queryTXT.mockImplementation(() => {
@@ -208,13 +234,18 @@ describe('DNS Native Module - Concurrency Stress Tests', () => {
     // Run queries in waves
     for (let wave = 0; wave < 10; wave++) {
       const promises = Array.from({ length: 20 }, (_, i) =>
-        NativeModules['RNDNSModule'].queryTXT('1.1.1.1', `wave-${wave}-query-${i}`)
+        NativeModules["RNDNSModule"].queryTXT(
+          "1.1.1.1",
+          `wave-${wave}-query-${i}`,
+          53,
+          queryDeadline(),
+        ),
       );
 
       const results = await Promise.allSettled(promises);
 
       // Each wave should complete successfully
-      const succeeded = results.filter((r) => r.status === 'fulfilled').length;
+      const succeeded = results.filter((r) => r.status === "fulfilled").length;
       expect(succeeded).toBe(20);
 
       // Small delay between waves
@@ -224,40 +255,6 @@ describe('DNS Native Module - Concurrency Stress Tests', () => {
     // Total queries should match expectations
     expect(queryCount).toBe(200);
   }, 30000);
-
-  /**
-   * Test: Deduplication stress
-   *
-   * Verifies activeQueries map handles concurrent identical queries correctly.
-   * Tests the Task<> caching logic that prevents duplicate in-flight queries.
-   */
-  it('should deduplicate concurrent identical queries', async () => {
-    let executionCount = 0;
-
-    mockNativeModule.queryTXT.mockImplementation((domain: string, message: string) => {
-      executionCount++;
-      return new Promise((resolve) => {
-        // Slow enough that concurrent calls should dedupe
-        setTimeout(() => resolve([`response-${message}`]), 100);
-      });
-    });
-
-    // Fire 50 identical queries simultaneously
-    const promises = Array.from({ length: 50 }, () =>
-      NativeModules['RNDNSModule'].queryTXT('1.1.1.1', 'same-query')
-    );
-
-    const results = await Promise.allSettled(promises);
-
-    // All should succeed with same result
-    const succeeded = results.filter((r) => r.status === 'fulfilled').length;
-    expect(succeeded).toBe(50);
-
-    // Due to deduplication, actual executions should be < 50
-    // (This tests the activeQueries caching, not ResumeGate, but validates
-    // concurrent Task<> access doesn't trigger ResumeGate races)
-    expect(executionCount).toBeLessThanOrEqual(50);
-  }, 15000);
 });
 
 /**
@@ -265,7 +262,7 @@ describe('DNS Native Module - Concurrency Stress Tests', () => {
  *
  * Measure overhead of concurrency primitives in critical path.
  */
-describe('DNS Native Module - Performance Benchmarks', () => {
+describe("DNS Native Module - Performance Benchmarks", () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -274,22 +271,27 @@ describe('DNS Native Module - Performance Benchmarks', () => {
     // Benchmarks are useful locally, but console output in CI makes test logs noisy.
     // Opt-in explicitly when you want to inspect timings:
     // `SHOW_BENCHMARKS=1 pnpm run test:native`
-    return process.env['SHOW_BENCHMARKS'] === '1';
+    return process.env["SHOW_BENCHMARKS"] === "1";
   }
 
   /**
    * Baseline: Sequential query performance
    */
-  it('benchmark: sequential queries', async () => {
+  it("benchmark: sequential queries", async () => {
     mockNativeModule.queryTXT.mockImplementation(() =>
-      Promise.resolve(['response'])
+      Promise.resolve(["response"]),
     );
 
     const iterations = 1000;
     const startTime = performance.now();
 
     for (let i = 0; i < iterations; i++) {
-      await NativeModules['RNDNSModule'].queryTXT('1.1.1.1', `query-${i}`);
+      await NativeModules["RNDNSModule"].queryTXT(
+        "1.1.1.1",
+        `query-${i}`,
+        53,
+        queryDeadline(),
+      );
     }
 
     const endTime = performance.now();
@@ -307,16 +309,21 @@ describe('DNS Native Module - Performance Benchmarks', () => {
   /**
    * Benchmark: Concurrent query throughput
    */
-  it('benchmark: concurrent query throughput', async () => {
+  it("benchmark: concurrent query throughput", async () => {
     mockNativeModule.queryTXT.mockImplementation(() =>
-      Promise.resolve(['response'])
+      Promise.resolve(["response"]),
     );
 
     const iterations = 1000;
     const startTime = performance.now();
 
     const promises = Array.from({ length: iterations }, (_, i) =>
-      NativeModules['RNDNSModule'].queryTXT('1.1.1.1', `query-${i}`)
+      NativeModules["RNDNSModule"].queryTXT(
+        "1.1.1.1",
+        `query-${i}`,
+        53,
+        queryDeadline(),
+      ),
     );
 
     await Promise.all(promises);
@@ -327,7 +334,7 @@ describe('DNS Native Module - Performance Benchmarks', () => {
     if (shouldLogBenchmarks()) {
       // eslint-disable-next-line no-console
       console.log(
-        `Concurrent: ${iterations} queries in ${totalTime.toFixed(2)}ms (${(iterations / (totalTime / 1000)).toFixed(0)} qps)`
+        `Concurrent: ${iterations} queries in ${totalTime.toFixed(2)}ms (${(iterations / (totalTime / 1000)).toFixed(0)} qps)`,
       );
     }
 

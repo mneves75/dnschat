@@ -8,10 +8,10 @@ describe("iOS Podspec deployment target", () => {
 
     // Match either platforms hash or explicit deployment_target
     const platformsMatch = content.match(
-      /platforms\s*=\s*\{\s*:ios\s*=>\s*\"(\d+\.\d+)\"\s*\}/,
+      /platforms\s*=\s*\{\s*:ios\s*=>\s*"(\d+\.\d+)"\s*\}/,
     );
     const deploymentMatch = content.match(
-      /ios\.deployment_target\s*=\s*\"(\d+\.\d+)\"/,
+      /ios\.deployment_target\s*=\s*"(\d+\.\d+)"/,
     );
 
     const versions: number[] = [];
