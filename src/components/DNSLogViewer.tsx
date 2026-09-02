@@ -18,7 +18,9 @@ interface DNSLogViewerProps {
 export const DNSLogViewer: React.FC<DNSLogViewerProps> = ({
   maxEntries = 20,
 }) => {
-  const [logs, setLogs] = useState<DNSQueryLog[]>(() => DNSLogService.getLogs());
+  const [logs, setLogs] = useState<DNSQueryLog[]>(() =>
+    DNSLogService.getLogs(),
+  );
   const { t } = useTranslation();
   const palette = useImessagePalette();
   const typography = useTypography();
@@ -36,24 +38,51 @@ export const DNSLogViewer: React.FC<DNSLogViewerProps> = ({
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       {display.length === 0 ? (
-        <Text style={[styles.empty, typography.body, { color: palette.textSecondary }]}>
+        <Text
+          style={[
+            styles.empty,
+            typography.body,
+            { color: palette.textSecondary },
+          ]}
+        >
           {t("components.dnsLogViewer.empty")}
         </Text>
       ) : (
         display.map((log) => (
           <View
             key={log.id}
-            style={[styles.card, { backgroundColor: palette.surface, borderColor: palette.border }]}
+            style={[
+              styles.card,
+              { backgroundColor: palette.surface, borderColor: palette.border },
+            ]}
           >
             <View style={styles.headerRow}>
-              <Text style={[styles.title, typography.headline, { color: palette.textPrimary }]}>
+              <Text
+                style={[
+                  styles.title,
+                  typography.headline,
+                  { color: palette.textPrimary },
+                ]}
+              >
                 {t("components.dnsLogViewer.redactedTitle")}
               </Text>
-              <Text style={[styles.duration, typography.caption1, { color: palette.textSecondary }]}>
+              <Text
+                style={[
+                  styles.duration,
+                  typography.caption1,
+                  { color: palette.textSecondary },
+                ]}
+              >
                 {DNSLogService.formatDuration(log.totalDuration)}
               </Text>
             </View>
-            <Text style={[styles.meta, typography.caption2, { color: palette.textSecondary }]}>
+            <Text
+              style={[
+                styles.meta,
+                typography.caption2,
+                { color: palette.textSecondary },
+              ]}
+            >
               {log.startTime.toLocaleTimeString()} •{" "}
               {log.finalStatus.toUpperCase()}
               {log.finalMethod ? ` via ${log.finalMethod.toUpperCase()}` : ""}
@@ -76,11 +105,23 @@ export const DNSLogViewer: React.FC<DNSLogViewerProps> = ({
                   <Text style={styles.icon}>
                     {DNSLogService.getStatusIcon(e.status)}
                   </Text>
-                  <Text style={[styles.entryText, typography.footnote, { color: palette.textPrimary }]}>
+                  <Text
+                    style={[
+                      styles.entryText,
+                      typography.footnote,
+                      { color: palette.textPrimary },
+                    ]}
+                  >
                     {e.message}
                   </Text>
                   {typeof e.duration === "number" && (
-                    <Text style={[styles.entryDuration, typography.caption2, { color: palette.textTertiary }]}>
+                    <Text
+                      style={[
+                        styles.entryDuration,
+                        typography.caption2,
+                        { color: palette.textTertiary },
+                      ]}
+                    >
                       {DNSLogService.formatDuration(e.duration)}
                     </Text>
                   )}
@@ -88,11 +129,21 @@ export const DNSLogViewer: React.FC<DNSLogViewerProps> = ({
               ))}
             </View>
             {log.response ? (
-              <View style={[styles.responseBox, { backgroundColor: palette.solid }]}>
-                <Text style={[styles.responseLabel, typography.caption1, { color: palette.accentTint }]}>
+              <View
+                style={[styles.responseBox, { backgroundColor: palette.solid }]}
+              >
+                <Text
+                  style={[
+                    styles.responseLabel,
+                    typography.caption1,
+                    { color: palette.accentTint },
+                  ]}
+                >
                   {t("components.dnsLogViewer.responseLabel")}
                 </Text>
-                <Text style={[typography.footnote, { color: palette.textPrimary }]}>
+                <Text
+                  style={[typography.footnote, { color: palette.textPrimary }]}
+                >
                   {t("components.dnsLogViewer.redactedResponse")}
                 </Text>
               </View>
@@ -123,7 +174,11 @@ const styles = StyleSheet.create({
   duration: { fontVariant: ["tabular-nums"] },
   meta: { marginTop: LiquidGlassSpacing.xxs },
   entries: { marginTop: LiquidGlassSpacing.xs },
-  entryRow: { flexDirection: "row", alignItems: "center", marginBottom: LiquidGlassSpacing.xxs },
+  entryRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: LiquidGlassSpacing.xxs,
+  },
   badge: {
     paddingHorizontal: LiquidGlassSpacing.xxs,
     paddingVertical: LiquidGlassSpacing.xxs / 2,

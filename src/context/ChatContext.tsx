@@ -1,18 +1,18 @@
-import React, {
-  createContext,
-  use,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import React, { createContext, use, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import * as Crypto from "expo-crypto";
 import type { Chat, Message, ChatContextType } from "../types/chat";
-import { StorageService, StorageCorruptionError } from "../services/storageService";
+import {
+  StorageService,
+  StorageCorruptionError,
+} from "../services/storageService";
 import { DNSService, sanitizeDNSMessage } from "../services/dnsService";
 import { useSettings } from "./SettingsContext";
 import { createTranslator } from "../i18n";
-import { isScreenshotMode, getMockConversations } from "../utils/screenshotMode";
+import {
+  isScreenshotMode,
+  getMockConversations,
+} from "../utils/screenshotMode";
 import { MESSAGE_CONSTANTS } from "../constants/appConstants";
 import { devLog, devWarn } from "../utils/devLog";
 
@@ -26,8 +26,12 @@ type ChatActionsContextValue = Omit<
 >;
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
-const ChatStateContext = createContext<ChatStateContextValue | undefined>(undefined);
-const ChatActionsContext = createContext<ChatActionsContextValue | undefined>(undefined);
+const ChatStateContext = createContext<ChatStateContextValue | undefined>(
+  undefined,
+);
+const ChatActionsContext = createContext<ChatActionsContextValue | undefined>(
+  undefined,
+);
 
 interface ChatProviderProps {
   children: ReactNode;
@@ -59,7 +63,9 @@ export function ChatProvider({ children }: ChatProviderProps) {
     setChats((prevChats) =>
       prevChats.map((chat) => (chat.id === chatId ? replacement : chat)),
     );
-    setCurrentChat((previous) => (previous?.id === chatId ? replacement : previous));
+    setCurrentChat((previous) =>
+      previous?.id === chatId ? replacement : previous,
+    );
   };
 
   const loadChats = async (options?: {
@@ -71,14 +77,24 @@ export function ChatProvider({ children }: ChatProviderProps) {
 
     // SCREENSHOT MODE: Load mock conversations for deterministic UI captures
     if (isScreenshotMode()) {
-      devLog("[ChatContext] Screenshot mode detected, loading mock conversations");
-      const mockConversations = getMockConversations(settingsRef.current.preferredLocale);
+      devLog(
+        "[ChatContext] Screenshot mode detected, loading mock conversations",
+      );
+      const mockConversations = getMockConversations(
+        settingsRef.current.preferredLocale,
+      );
       setChats(mockConversations as Chat[]);
       const preferredChat = options?.preserveChatId
-        ? (mockConversations.find((chat) => chat.id === options.preserveChatId) ?? null)
+        ? (mockConversations.find(
+            (chat) => chat.id === options.preserveChatId,
+          ) ?? null)
         : null;
-      setCurrentChat((preferredChat ?? mockConversations[0] ?? null) as Chat | null);
-      setError(options?.clearError === false ? options?.preserveError ?? null : null);
+      setCurrentChat(
+        (preferredChat ?? mockConversations[0] ?? null) as Chat | null,
+      );
+      setError(
+        options?.clearError === false ? (options?.preserveError ?? null) : null,
+      );
       setIsLoading(false);
       return;
     }
@@ -90,10 +106,13 @@ export function ChatProvider({ children }: ChatProviderProps) {
       });
       setChats(loadedChats);
       const preferredChat = options?.preserveChatId
-        ? (loadedChats.find((chat) => chat.id === options.preserveChatId) ?? null)
+        ? (loadedChats.find((chat) => chat.id === options.preserveChatId) ??
+          null)
         : null;
       setCurrentChat((preferredChat ?? loadedChats[0] ?? null) as Chat | null);
-      setError(options?.clearError === false ? options?.preserveError ?? null : null);
+      setError(
+        options?.clearError === false ? (options?.preserveError ?? null) : null,
+      );
     } catch (err) {
       if (err instanceof StorageCorruptionError) {
         // Best-effort recovery: a recovery failure must still reset state and
@@ -112,7 +131,9 @@ export function ChatProvider({ children }: ChatProviderProps) {
             (preferredChat ?? recoveredChats[0] ?? null) as Chat | null,
           );
           if (recoveredChats.length > 0) {
-            recoveryMessage = translate("screen.chat.storageRecovery.recovered");
+            recoveryMessage = translate(
+              "screen.chat.storageRecovery.recovered",
+            );
           }
         } catch {
           setChats([]);
@@ -120,7 +141,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
         }
         setError(
           options?.clearError === false
-            ? options?.preserveError ?? recoveryMessage
+            ? (options?.preserveError ?? recoveryMessage)
             : recoveryMessage,
         );
       } else {
@@ -218,7 +239,9 @@ export function ChatProvider({ children }: ChatProviderProps) {
     }
 
     if (sendInFlightRef.current) {
-      setError("Please wait for the current response to finish before sending another message.");
+      setError(
+        "Please wait for the current response to finish before sending another message.",
+      );
       return;
     }
 
@@ -254,7 +277,8 @@ export function ChatProvider({ children }: ChatProviderProps) {
           : "Failed to send message";
       devWarn("[ChatContext] Message validation failed", {
         error: errorMessage,
-        stack: validationError instanceof Error ? validationError.stack : undefined,
+        stack:
+          validationError instanceof Error ? validationError.stack : undefined,
       });
       setError(errorMessage);
       return;
@@ -311,10 +335,15 @@ export function ChatProvider({ children }: ChatProviderProps) {
       devLog("[ChatContext] Updating state with assistant placeholder", {
         messageCount: chatWithAssistantPlaceholder.messages.length,
       });
-      replaceChatInState(chatWithAssistantPlaceholder.id, chatWithAssistantPlaceholder);
+      replaceChatInState(
+        chatWithAssistantPlaceholder.id,
+        chatWithAssistantPlaceholder,
+      );
       devLog("[ChatContext] State updated with assistant placeholder");
 
-      devLog("[ChatContext] Persisting user message and assistant placeholder...");
+      devLog(
+        "[ChatContext] Persisting user message and assistant placeholder...",
+      );
       await StorageService.appendAndUpdateMessages(chatIdAtSend, (chat) => {
         chat.messages.push(userMessage);
         if (chat.title === "New Chat" && chat.messages.length === 1) {
@@ -359,7 +388,9 @@ export function ChatProvider({ children }: ChatProviderProps) {
         status: "sent",
       };
 
-      devLog("[ChatContext] Updating assistant message in storage with response...");
+      devLog(
+        "[ChatContext] Updating assistant message in storage with response...",
+      );
       await StorageService.updateMessage(chatIdAtSend, assistantMessage.id, {
         content: response,
         status: "sent",
@@ -404,10 +435,13 @@ export function ChatProvider({ children }: ChatProviderProps) {
       if (chatIdAtSend && assistantMessage && userMessagePersisted) {
         try {
           if (!assistantMessagePersisted) {
-            devLog("[ChatContext] Persisting failed assistant message after placeholder write error", {
-              messageId: assistantMessage.id,
-              chatId: chatIdAtSend,
-            });
+            devLog(
+              "[ChatContext] Persisting failed assistant message after placeholder write error",
+              {
+                messageId: assistantMessage.id,
+                chatId: chatIdAtSend,
+              },
+            );
 
             await StorageService.addMessage(chatIdAtSend, {
               ...assistantMessage,
@@ -459,7 +493,10 @@ export function ChatProvider({ children }: ChatProviderProps) {
             clearError: false,
           });
         } catch (reloadErr) {
-          devWarn("[ChatContext] Failed to reload chats after send persistence error", reloadErr);
+          devWarn(
+            "[ChatContext] Failed to reload chats after send persistence error",
+            reloadErr,
+          );
         }
       }
     }

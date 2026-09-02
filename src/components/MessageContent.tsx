@@ -52,22 +52,18 @@ export function MessageContent({
     <>
       {/* Message text content */}
       {isUser || hasError ? (
-        <Text style={[textStyles, typography.body]} selectable={false}>{displayContent}</Text>
-      ) : (
-        <SafeMarkdown style={markdownStyles}>
+        <Text style={[textStyles, typography.body]} selectable={false}>
           {displayContent}
-        </SafeMarkdown>
+        </Text>
+      ) : (
+        <SafeMarkdown style={markdownStyles}>{displayContent}</SafeMarkdown>
       )}
 
       {/* Loading indicator for sending messages */}
       {isLoading && (
         <View style={styles.loadingIndicator}>
           <Text
-            style={[
-              styles.loadingText,
-              typography.body,
-              { color: textColor },
-            ]}
+            style={[styles.loadingText, typography.body, { color: textColor }]}
             selectable={false}
           >
             ●●●
@@ -90,7 +86,13 @@ export function MessageContent({
 
         {hasError && (
           <Text
-            style={[styles.errorIndicator, { backgroundColor: palette.destructive, color: palette.textOnChroma }]}
+            style={[
+              styles.errorIndicator,
+              {
+                backgroundColor: palette.destructive,
+                color: palette.textOnChroma,
+              },
+            ]}
             accessible={true}
             accessibilityLabel={t("screen.chat.accessibility.errorIndicator")}
             selectable={false}

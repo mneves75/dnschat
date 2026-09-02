@@ -6,10 +6,10 @@
  * @see Logs.tsx for the actual component layout
  */
 
-import React from 'react';
-import { View, StyleSheet } from 'react-native';
-import { SkeletonBox, SkeletonCard } from './SkeletonBase';
-import { LiquidGlassSpacing } from '../../ui/theme/liquidGlassSpacing';
+import React from "react";
+import { View, StyleSheet } from "react-native";
+import { SkeletonBox, SkeletonCard } from "./SkeletonBase";
+import { LiquidGlassSpacing } from "../../ui/theme/liquidGlassSpacing";
 
 interface LogsSkeletonProps {
   /**
@@ -75,9 +75,9 @@ const styles = StyleSheet.create({
     marginVertical: 4,
   },
   logHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
   },
   logHeaderLeft: {
     flex: 1,
@@ -87,8 +87,8 @@ const styles = StyleSheet.create({
     marginBottom: LiquidGlassSpacing.sm,
   },
   logMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 8,
   },
 });

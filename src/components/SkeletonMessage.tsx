@@ -8,7 +8,10 @@ import Animated, {
   Easing,
 } from "react-native-reanimated";
 import { useImessagePalette } from "../ui/theme/imessagePalette";
-import { LiquidGlassSpacing, getCornerRadius } from "../ui/theme/liquidGlassSpacing";
+import {
+  LiquidGlassSpacing,
+  getCornerRadius,
+} from "../ui/theme/liquidGlassSpacing";
 import { useResponsiveLayout } from "../ui/hooks/useResponsiveLayout";
 import { shimmerDuration } from "../utils/animations";
 import { useTranslation } from "../i18n";
@@ -44,14 +47,16 @@ export function SkeletonMessage({ isUser = false }: SkeletonMessageProps) {
       return;
     }
 
-    shimmer.set(withRepeat(
-      withTiming(1, {
-        duration: shimmerDuration,
-        easing: Easing.linear,
-      }),
-      -1, // Infinite loop
-      false // Don't reverse
-    ));
+    shimmer.set(
+      withRepeat(
+        withTiming(1, {
+          duration: shimmerDuration,
+          easing: Easing.linear,
+        }),
+        -1, // Infinite loop
+        false, // Don't reverse
+      ),
+    );
   }, [shouldReduceMotion, shimmer]);
 
   // Animated shimmer style
@@ -79,7 +84,9 @@ export function SkeletonMessage({ isUser = false }: SkeletonMessageProps) {
           styles.bubble,
           isUser ? styles.userBubble : styles.assistantBubble,
           {
-            backgroundColor: isUser ? palette.userBubble : palette.assistantBubble,
+            backgroundColor: isUser
+              ? palette.userBubble
+              : palette.assistantBubble,
           },
         ]}
       >

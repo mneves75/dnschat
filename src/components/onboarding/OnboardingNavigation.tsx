@@ -1,11 +1,5 @@
 import React from "react";
-import {
-  BackHandler,
-  Platform,
-  View,
-  Text,
-  StyleSheet,
-} from "react-native";
+import { BackHandler, Platform, View, Text, StyleSheet } from "react-native";
 import { useOnboarding } from "../../context/OnboardingContext";
 import { PressableRipple } from "../PressableRipple";
 import { useImessagePalette } from "../../ui/theme/imessagePalette";
@@ -78,6 +72,7 @@ export function OnboardingNavigation({
 
   // Effect: Android hardware back button — go to previous step instead of popping route.
   // react-doctor-disable-next-line react-doctor/effect-needs-cleanup
+  /* oxlint-disable react-hooks/exhaustive-deps -- The handler intentionally tracks the listed state; runAction has a render-time identity. */
   React.useEffect(() => {
     if (Platform.OS !== "android") return;
     const subscription = BackHandler.addEventListener(
@@ -93,6 +88,7 @@ export function OnboardingNavigation({
     );
     return () => subscription.remove();
   }, [isSubmitting, isFirstStep, previousStep]);
+  /* oxlint-enable react-hooks/exhaustive-deps */
 
   const handleSkip = () => {
     void runAction(skipOnboarding);

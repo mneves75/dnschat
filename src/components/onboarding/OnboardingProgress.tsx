@@ -22,7 +22,7 @@ export function OnboardingProgress() {
   const { width: screenWidth } = useWindowDimensions();
 
   const progress = (currentStep + 1) / steps.length;
-  const progressWidth = Math.max(0, screenWidth - (LiquidGlassSpacing.md * 2));
+  const progressWidth = Math.max(0, screenWidth - LiquidGlassSpacing.md * 2);
   // useState initializer creates the value once and is safe to read during
   // render (unlike a ref, whose `.current` cannot be accessed while rendering).
   const [animatedWidth] = React.useState(() => new Animated.Value(0));
@@ -87,7 +87,9 @@ export function OnboardingProgress() {
                 styles.dot,
                 {
                   backgroundColor:
-                    index <= currentStep ? palette.userBubble : palette.separator,
+                    index <= currentStep
+                      ? palette.userBubble
+                      : palette.separator,
                 },
               ]}
             />

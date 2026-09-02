@@ -25,14 +25,34 @@ function resolve(): SystemColors {
     const attr = (android["attr"] ?? {}) as SystemColors;
 
     return {
-      background: Platform.select({ ios: ios["systemGroupedBackground"], android: dynamic["surface"], default: undefined }),
-      textPrimary: Platform.select({ ios: ios["label"], android: attr["colorOnSurface"], default: undefined }),
-      textSecondary: Platform.select({ ios: ios["secondaryLabel"], default: undefined }),
-      textTertiary: Platform.select({ ios: ios["tertiaryLabel"], default: undefined }),
+      background: Platform.select({
+        ios: ios["systemGroupedBackground"],
+        android: dynamic["surface"],
+        default: undefined,
+      }),
+      textPrimary: Platform.select({
+        ios: ios["label"],
+        android: attr["colorOnSurface"],
+        default: undefined,
+      }),
+      textSecondary: Platform.select({
+        ios: ios["secondaryLabel"],
+        default: undefined,
+      }),
+      textTertiary: Platform.select({
+        ios: ios["tertiaryLabel"],
+        default: undefined,
+      }),
       separator: Platform.select({ ios: ios["separator"], default: undefined }),
-      destructive: Platform.select({ ios: ios["systemRed"], default: undefined }),
+      destructive: Platform.select({
+        ios: ios["systemRed"],
+        default: undefined,
+      }),
       success: Platform.select({ ios: ios["systemGreen"], default: undefined }),
-      warning: Platform.select({ ios: ios["systemOrange"], default: undefined }),
+      warning: Platform.select({
+        ios: ios["systemOrange"],
+        default: undefined,
+      }),
     };
   } catch {
     return EMPTY;

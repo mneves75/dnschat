@@ -92,7 +92,7 @@ const isPersistedOnboardingState = (
   const candidate = value as Record<string, unknown>;
   const completedSteps = candidate["completedSteps"];
   const knownStepIds = new Set(ONBOARDING_STEP_IDS);
-  const fieldsAreValid = (
+  const fieldsAreValid =
     typeof candidate["completed"] === "boolean" &&
     Number.isInteger(candidate["stepIndex"]) &&
     Number(candidate["stepIndex"]) >= 0 &&
@@ -100,8 +100,7 @@ const isPersistedOnboardingState = (
     Array.isArray(completedSteps) &&
     completedSteps.every(
       (stepId) => typeof stepId === "string" && knownStepIds.has(stepId),
-    )
-  );
+    );
   if (!fieldsAreValid) {
     return false;
   }
@@ -178,7 +177,9 @@ export function OnboardingProvider({
         } else {
           await AsyncStorage.removeItem(ONBOARDING_STORAGE_KEY);
           applySnapshot(INITIAL_ONBOARDING_STATE);
-          devWarn("[OnboardingContext] Reset invalid persisted onboarding state");
+          devWarn(
+            "[OnboardingContext] Reset invalid persisted onboarding state",
+          );
         }
       }
     } catch (error) {
@@ -236,7 +237,9 @@ export function OnboardingProvider({
       await persistSnapshot({
         completed: false,
         stepIndex: newStep,
-        completedSteps: ONBOARDING_STEPS.slice(0, newStep).map((step) => step.id),
+        completedSteps: ONBOARDING_STEPS.slice(0, newStep).map(
+          (step) => step.id,
+        ),
       });
     }
   };
@@ -248,7 +251,9 @@ export function OnboardingProvider({
       await persistSnapshot({
         completed: false,
         stepIndex: newStep,
-        completedSteps: ONBOARDING_STEPS.slice(0, newStep).map((step) => step.id),
+        completedSteps: ONBOARDING_STEPS.slice(0, newStep).map(
+          (step) => step.id,
+        ),
       });
     }
   };

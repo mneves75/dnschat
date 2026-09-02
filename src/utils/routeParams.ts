@@ -1,8 +1,6 @@
 const PROFILE_HANDLE_PATTERN = /^@[a-zA-Z0-9-_]+$/;
 
-export function normalizeRouteParam(
-  value?: string | string[],
-): string | null {
+export function normalizeRouteParam(value?: string | string[]): string | null {
   if (typeof value === "string") {
     const trimmed = value.trim();
     return trimmed ? trimmed : null;
@@ -16,9 +14,7 @@ export function normalizeRouteParam(
   return null;
 }
 
-export function parseProfileHandle(
-  value?: string | string[],
-): string | null {
+export function parseProfileHandle(value?: string | string[]): string | null {
   const normalized = normalizeRouteParam(value);
   if (!normalized || !PROFILE_HANDLE_PATTERN.test(normalized)) {
     return null;

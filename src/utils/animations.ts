@@ -1,5 +1,8 @@
-import { withSpring, withTiming, Easing } from 'react-native-reanimated';
-import type { WithSpringConfig, WithTimingConfig } from 'react-native-reanimated';
+import { withSpring, withTiming, Easing } from "react-native-reanimated";
+import type {
+  WithSpringConfig,
+  WithTimingConfig,
+} from "react-native-reanimated";
 
 /**
  * Liquid Glass Animation Configuration
@@ -189,8 +192,11 @@ export const buttonPressScale = 0.96;
  * }));
  * ```
  */
-export const createModalAnimation = (visible: boolean, screenHeight: number) => {
-  'worklet';
+export const createModalAnimation = (
+  visible: boolean,
+  screenHeight: number,
+) => {
+  "worklet";
   return withSpring(visible ? 0 : screenHeight, SpringConfig.smooth);
 };
 
@@ -201,10 +207,10 @@ export const createModalAnimation = (visible: boolean, screenHeight: number) => 
 export const createToastAnimation = (
   visible: boolean,
   distance: number,
-  fromTop: boolean = true
+  fromTop: boolean = true,
 ) => {
-  'worklet';
-  const targetValue = visible ? 0 : (fromTop ? -distance : distance);
+  "worklet";
+  const targetValue = visible ? 0 : fromTop ? -distance : distance;
   return withSpring(targetValue, SpringConfig.default);
 };
 
@@ -219,9 +225,15 @@ export const createToastAnimation = (
  * }));
  * ```
  */
-export const createFadeAnimation = (visible: boolean, quick: boolean = false) => {
-  'worklet';
-  return withTiming(visible ? 1 : 0, quick ? TimingConfig.quick : TimingConfig.normal);
+export const createFadeAnimation = (
+  visible: boolean,
+  quick: boolean = false,
+) => {
+  "worklet";
+  return withTiming(
+    visible ? 1 : 0,
+    quick ? TimingConfig.quick : TimingConfig.normal,
+  );
 };
 
 /**
@@ -236,7 +248,7 @@ export const createFadeAnimation = (visible: boolean, quick: boolean = false) =>
  * ```
  */
 export const createScaleAnimation = (visible: boolean, from: number = 0) => {
-  'worklet';
+  "worklet";
   return withSpring(visible ? 1 : from, SpringConfig.bouncy);
 };
 
@@ -251,10 +263,10 @@ export const createScaleAnimation = (visible: boolean, from: number = 0) => {
 export const createSlideAnimation = (
   visible: boolean,
   distance: number,
-  direction: 'left' | 'right' | 'up' | 'down' = 'right'
+  direction: "left" | "right" | "up" | "down" = "right",
 ) => {
-  'worklet';
-  const multiplier = direction === 'left' || direction === 'up' ? -1 : 1;
+  "worklet";
+  const multiplier = direction === "left" || direction === "up" ? -1 : 1;
   return withSpring(visible ? 0 : distance * multiplier, SpringConfig.default);
 };
 

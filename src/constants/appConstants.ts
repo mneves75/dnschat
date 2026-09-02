@@ -1,18 +1,21 @@
 /**
  * Application Constants
- * 
+ *
  * Centralized constants to avoid magic numbers and improve maintainability
  */
 
 // DNS Configuration
 // NOTE: Primary config is in modules/dns-native/constants.ts
 // This re-exports for backward compatibility
-import { DNS_CONSTANTS as NATIVE_DNS_CONSTANTS, getDefaultServer } from '../../modules/dns-native/constants';
+import {
+  DNS_CONSTANTS as NATIVE_DNS_CONSTANTS,
+  getDefaultServer,
+} from "../../modules/dns-native/constants";
 
 export const DNS_CONSTANTS = {
-  DEFAULT_DNS_SERVER: getDefaultServer().host,  // llm.pieter.com
-  DEFAULT_DNS_PORT: getDefaultServer().port,    // 53
-  DNS_PORT: NATIVE_DNS_CONSTANTS.DNS_PORT,      // 53 (standard)
+  DEFAULT_DNS_SERVER: getDefaultServer().host, // llm.pieter.com
+  DEFAULT_DNS_PORT: getDefaultServer().port, // 53
+  DNS_PORT: NATIVE_DNS_CONSTANTS.DNS_PORT, // 53 (standard)
   QUERY_TIMEOUT_MS: NATIVE_DNS_CONSTANTS.QUERY_TIMEOUT_MS,
   MAX_RETRIES: NATIVE_DNS_CONSTANTS.MAX_RETRIES,
   RETRY_DELAY_MS: NATIVE_DNS_CONSTANTS.RETRY_DELAY_MS,
@@ -64,22 +67,23 @@ export const NETWORK_CONSTANTS = {
 
 // Storage Configuration
 export const STORAGE_CONSTANTS = {
-  CHATS_KEY: '@chat_dns_chats',
-  SETTINGS_KEY: '@chat_dns_settings',
-  LOGS_KEY: '@dns_query_logs',
-  ENCRYPTION_VERSION_KEY: '@chat_dns_encryption_version',
-  CHAT_BACKUP_KEY: '@chat_dns_chats_backup',
-  LOGS_BACKUP_KEY: '@dns_query_logs_backup',
+  CHATS_KEY: "@chat_dns_chats",
+  SETTINGS_KEY: "@chat_dns_settings",
+  LOGS_KEY: "@dns_query_logs",
+  ENCRYPTION_VERSION_KEY: "@chat_dns_encryption_version",
+  CHAT_BACKUP_KEY: "@chat_dns_chats_backup",
+  LOGS_BACKUP_KEY: "@dns_query_logs_backup",
 } as const;
 
 // Error Messages
 export const ERROR_MESSAGES = {
-  DNS_SERVER_INVALID: 'DNS server must be a valid allowlisted hostname or IP address',
-  DNS_SERVER_NOT_ALLOWED: 'DNS server not allowed',
-  MESSAGE_EMPTY: 'Message cannot be empty',
-  MESSAGE_TOO_LONG: 'Message too long',
-  NETWORK_ERROR: 'Network error occurred',
-  TIMEOUT_ERROR: 'Request timed out',
-  PERMISSION_DENIED: 'Permission denied',
-  DATA_TOO_LARGE: 'Data too large for processing',
+  DNS_SERVER_INVALID:
+    "DNS server must be a valid allowlisted hostname or IP address",
+  DNS_SERVER_NOT_ALLOWED: "DNS server not allowed",
+  MESSAGE_EMPTY: "Message cannot be empty",
+  MESSAGE_TOO_LONG: "Message too long",
+  NETWORK_ERROR: "Network error occurred",
+  TIMEOUT_ERROR: "Request timed out",
+  PERMISSION_DENIED: "Permission denied",
+  DATA_TOO_LARGE: "Data too large for processing",
 } as const;

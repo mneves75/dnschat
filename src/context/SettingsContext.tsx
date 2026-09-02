@@ -1,10 +1,4 @@
-import React, {
-  createContext,
-  use,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import React, { createContext, use, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Localization from "expo-localization";
@@ -78,8 +72,12 @@ type SettingsActionsContextValue = Omit<
 export const SettingsContext = createContext<SettingsContextValue | undefined>(
   undefined,
 );
-const SettingsStateContext = createContext<SettingsStateContextValue | undefined>(undefined);
-const SettingsActionsContext = createContext<SettingsActionsContextValue | undefined>(undefined);
+const SettingsStateContext = createContext<
+  SettingsStateContextValue | undefined
+>(undefined);
+const SettingsActionsContext = createContext<
+  SettingsActionsContextValue | undefined
+>(undefined);
 const LocaleContext = createContext<SupportedLocale | undefined>(undefined);
 const INITIAL_PERSIST_QUEUE = Promise.resolve();
 
@@ -101,8 +99,10 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const actionsValue: SettingsActionsContextValue = {
     updateDnsServer: contextValue.updateDnsServer,
     updateEnableMockDNS: contextValue.updateEnableMockDNS,
-    updateAllowExperimentalTransports: contextValue.updateAllowExperimentalTransports,
-    applyRecommendedNetworkSettings: contextValue.applyRecommendedNetworkSettings,
+    updateAllowExperimentalTransports:
+      contextValue.updateAllowExperimentalTransports,
+    applyRecommendedNetworkSettings:
+      contextValue.applyRecommendedNetworkSettings,
     updateEnableHaptics: contextValue.updateEnableHaptics,
     updateLocale: contextValue.updateLocale,
     updateThemePreference: contextValue.updateThemePreference,
@@ -113,9 +113,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     <SettingsStateContext value={stateValue}>
       <SettingsActionsContext value={actionsValue}>
         <LocaleContext value={contextValue.locale}>
-          <SettingsContext value={contextValue}>
-            {children}
-          </SettingsContext>
+          <SettingsContext value={contextValue}>{children}</SettingsContext>
         </LocaleContext>
       </SettingsActionsContext>
     </SettingsStateContext>
@@ -128,7 +126,8 @@ function useSettingsContextValue(): SettingsContextValue {
   const [systemLocale] = useState<SupportedLocale>(() => {
     const localizationLocales = Localization.getLocales();
     return resolveLocale(
-      localizationLocales[0]?.languageTag ?? localizationLocales[0]?.languageCode,
+      localizationLocales[0]?.languageTag ??
+        localizationLocales[0]?.languageCode,
     );
   });
   const [settings, setSettings] = useState<PersistedSettings>(
@@ -200,13 +199,11 @@ function useSettingsContextValue(): SettingsContextValue {
     next: PersistedSettings;
     changed: boolean;
   }> => {
-    let outcome:
-      | {
-          previous: PersistedSettings;
-          next: PersistedSettings;
-          changed: boolean;
-        }
-      | null = null;
+    let outcome: {
+      previous: PersistedSettings;
+      next: PersistedSettings;
+      changed: boolean;
+    } | null = null;
 
     const run = persistQueueRef.current.then(async () => {
       const previous = settingsRef.current;
@@ -218,10 +215,7 @@ function useSettingsContextValue(): SettingsContextValue {
         return;
       }
 
-      await AsyncStorage.setItem(
-        SETTINGS_STORAGE_KEY,
-        JSON.stringify(next),
-      );
+      await AsyncStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(next));
       settingsRef.current = next;
       setSettings(next);
     });
@@ -250,7 +244,9 @@ function useSettingsContextValue(): SettingsContextValue {
       validatedServer = validateDNSServer(cleaned);
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : String(error ?? "Validation failed");
+        error instanceof Error
+          ? error.message
+          : String(error ?? "Validation failed");
       await DNSLogService.recordSettingsEvent(
         "DNS server validation failed",
         `${message}; inputLength=${server.length}`,
@@ -287,7 +283,7 @@ function useSettingsContextValue(): SettingsContextValue {
       return;
     }
     await DNSLogService.recordSettingsEvent(
-      `Mock DNS ${enable ? 'enabled' : 'disabled'}`,
+      `Mock DNS ${enable ? "enabled" : "disabled"}`,
     );
   };
 
@@ -304,7 +300,7 @@ function useSettingsContextValue(): SettingsContextValue {
       return;
     }
     await DNSLogService.recordSettingsEvent(
-      `Experimental transports ${enable ? 'enabled' : 'disabled'}`,
+      `Experimental transports ${enable ? "enabled" : "disabled"}`,
     );
   };
 
@@ -319,12 +315,10 @@ function useSettingsContextValue(): SettingsContextValue {
         allowExperimentalTransports: enableExperimentalTransports,
       };
 
-      return (
-        current.dnsServer === updated.dnsServer &&
+      return current.dnsServer === updated.dnsServer &&
         current.enableMockDNS === updated.enableMockDNS &&
         current.allowExperimentalTransports ===
           updated.allowExperimentalTransports
-      )
         ? current
         : updated;
     });
@@ -352,7 +346,7 @@ function useSettingsContextValue(): SettingsContextValue {
       return;
     }
     await DNSLogService.recordSettingsEvent(
-      `Haptics ${enable ? 'enabled' : 'disabled'}`,
+      `Haptics ${enable ? "enabled" : "disabled"}`,
     );
   };
 
@@ -370,7 +364,7 @@ function useSettingsContextValue(): SettingsContextValue {
       return;
     }
     await DNSLogService.recordSettingsEvent(
-      `Preferred locale set to ${normalized ?? 'system default'}`,
+      `Preferred locale set to ${normalized ?? "system default"}`,
     );
   };
 
@@ -392,7 +386,9 @@ function useSettingsContextValue(): SettingsContextValue {
     );
   };
 
-  const updateAccessibility = async (accessibilityConfig: AccessibilityConfig) => {
+  const updateAccessibility = async (
+    accessibilityConfig: AccessibilityConfig,
+  ) => {
     const { changed } = await persistSettings((current) =>
       areAccessibilityConfigsEqual(current.accessibility, accessibilityConfig)
         ? current
@@ -455,7 +451,9 @@ export function useLocale() {
 export function useSettingsActions() {
   const context = use(SettingsActionsContext);
   if (context === undefined) {
-    throw new Error("useSettingsActions must be used within a SettingsProvider");
+    throw new Error(
+      "useSettingsActions must be used within a SettingsProvider",
+    );
   }
   return context;
 }

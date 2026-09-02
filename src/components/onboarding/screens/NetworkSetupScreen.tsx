@@ -27,9 +27,7 @@ export function NetworkSetupScreen() {
   const palette = useImessagePalette();
   const typography = useTypography();
   const { t } = useTranslation();
-  const {
-    applyRecommendedNetworkSettings,
-  } = useSettings();
+  const { applyRecommendedNetworkSettings } = useSettings();
 
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [isApplyingSettings, setIsApplyingSettings] = useState(false);
@@ -62,7 +60,10 @@ export function NetworkSetupScreen() {
       try {
         await applyRecommendedNetworkSettings(recommendedSetting);
       } catch (error) {
-        devWarn("[NetworkSetupScreen] Failed to apply recommended settings", error);
+        devWarn(
+          "[NetworkSetupScreen] Failed to apply recommended settings",
+          error,
+        );
         appAlert(
           t("screen.onboarding.networkSetup.alerts.errorTitle"),
           t("screen.onboarding.networkSetup.alerts.errorMessage"),
@@ -75,7 +76,12 @@ export function NetworkSetupScreen() {
       appAlert(
         t("screen.onboarding.networkSetup.alerts.successTitle"),
         t("screen.onboarding.networkSetup.alerts.successMessage"),
-        [{ text: t("screen.onboarding.networkSetup.alerts.successButton"), style: "default" }],
+        [
+          {
+            text: t("screen.onboarding.networkSetup.alerts.successButton"),
+            style: "default",
+          },
+        ],
       );
     }
   };
@@ -253,8 +259,12 @@ export function NetworkSetupScreen() {
               variant="surface"
               pressedOpacity={0.7}
               accessibilityRole="button"
-              accessibilityLabel={t("screen.onboarding.networkSetup.accessibility.applyLabel")}
-              accessibilityHint={t("screen.onboarding.networkSetup.accessibility.applyHint")}
+              accessibilityLabel={t(
+                "screen.onboarding.networkSetup.accessibility.applyLabel",
+              )}
+              accessibilityHint={t(
+                "screen.onboarding.networkSetup.accessibility.applyHint",
+              )}
             >
               <Text
                 style={[
@@ -299,7 +309,11 @@ export function NetworkSetupScreen() {
       </ScrollView>
 
       <OnboardingNavigation
-        nextButtonText={optimizationComplete ? t("screen.onboarding.networkSetup.navigation.continue") : t("screen.onboarding.networkSetup.navigation.skip")}
+        nextButtonText={
+          optimizationComplete
+            ? t("screen.onboarding.networkSetup.navigation.continue")
+            : t("screen.onboarding.networkSetup.navigation.skip")
+        }
         showSkip={false}
       />
     </View>
@@ -361,9 +375,7 @@ function NetworkTestItem({
           borderBottomWidth: isLast ? 0 : StyleSheet.hairlineWidth,
           // The active-stage marker is always 2pt wide and only changes color,
           // so rows do not shift horizontally as the progression advances.
-          borderLeftColor: isActive
-            ? palette.accentTint
-            : palette.transparent,
+          borderLeftColor: isActive ? palette.accentTint : palette.transparent,
         },
       ]}
       accessibilityLiveRegion={isActive ? "polite" : "none"}

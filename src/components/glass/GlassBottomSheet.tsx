@@ -30,7 +30,6 @@ import { PressableRipple } from "../PressableRipple";
 import { CloseIcon } from "../icons/CloseIcon";
 import { useResolvedColorScheme } from "../../ui/theme/resolvedColorScheme";
 
-
 interface GlassBottomSheetProps {
   visible: boolean;
   onClose: () => void;
@@ -58,8 +57,10 @@ interface GlassSheetAction {
   icon?: React.ReactNode;
 }
 
-interface GlassActionSheetProps
-  extends Omit<GlassBottomSheetProps, "children"> {
+interface GlassActionSheetProps extends Omit<
+  GlassBottomSheetProps,
+  "children"
+> {
   actions: GlassSheetAction[];
   message?: string;
 }
@@ -164,13 +165,16 @@ export const GlassBottomSheet: React.FC<GlassBottomSheetProps> = ({
       "input",
       "select",
       "textarea",
-      "[tabindex]:not([tabindex=\"-1\"])",
+      '[tabindex]:not([tabindex="-1"])',
     ].join(",");
-    const getSheetElement = () => sheetRef.current as unknown as HTMLElement | null;
+    const getSheetElement = () =>
+      sheetRef.current as unknown as HTMLElement | null;
     const getFocusableElements = () => {
       const sheetElement = getSheetElement();
       if (!sheetElement?.querySelectorAll) return [];
-      return Array.from(sheetElement.querySelectorAll<HTMLElement>(focusableSelector)).filter(
+      return Array.from(
+        sheetElement.querySelectorAll<HTMLElement>(focusableSelector),
+      ).filter(
         (element) =>
           !element.hasAttribute("disabled") &&
           element.getAttribute("aria-hidden") !== "true",
@@ -178,7 +182,9 @@ export const GlassBottomSheet: React.FC<GlassBottomSheetProps> = ({
     };
 
     restoreFocusRef.current =
-      document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
 
     const focusSheet = () => {
       const focusTargets = getFocusableElements();
@@ -272,16 +278,15 @@ export const GlassBottomSheet: React.FC<GlassBottomSheetProps> = ({
         >
           {dragToDismiss && (
             <View style={styles.handleContainer} accessible={false}>
-              <View style={[styles.handle, { backgroundColor: colors.handle }]} />
+              <View
+                style={[styles.handle, { backgroundColor: colors.handle }]}
+              />
             </View>
           )}
 
           {Boolean(title || subtitle || showCloseButton || headerContent) && (
             <View
-              style={[
-                styles.header,
-                { borderBottomColor: colors.separator },
-              ]}
+              style={[styles.header, { borderBottomColor: colors.separator }]}
             >
               {headerContent || (
                 <>
@@ -379,7 +384,9 @@ export const GlassActionSheet: React.FC<GlassActionSheetProps> = ({
               accessibilityLabel={action.accessibilityLabel ?? action.title}
               accessibilityHint={action.accessibilityHint}
               accessibilityState={{ disabled: action.disabled }}
-              variant={action.style === "destructive" ? "destructive" : "surface"}
+              variant={
+                action.style === "destructive" ? "destructive" : "surface"
+              }
             >
               <View style={styles.actionContent}>
                 {Boolean(action.icon) && (
@@ -446,9 +453,7 @@ function useGlassSheetColors() {
     actionDisabled: palette.textTertiary,
     separator: palette.separator,
     closeButtonBackground:
-      Platform.OS === "ios"
-        ? palette.highlight
-        : palette.transparent,
+      Platform.OS === "ios" ? palette.highlight : palette.transparent,
   };
 }
 

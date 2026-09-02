@@ -11,35 +11,31 @@
  * @see DESIGN-UI-UX-GUIDELINES.md - Empty state design guidelines
  */
 
-import React, { useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-} from 'react-native';
-import { PressableRipple } from './PressableRipple';
+import React, { useEffect } from "react";
+import { View, Text, StyleSheet } from "react-native";
+import { PressableRipple } from "./PressableRipple";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
   withSpring,
   withDelay,
-} from 'react-native-reanimated';
-import Svg, { Path, Circle, Rect } from 'react-native-svg';
-import { useImessagePalette } from '../ui/theme/imessagePalette';
-import { useTypography } from '../ui/hooks/useTypography';
-import { LiquidGlassSpacing } from '../ui/theme/liquidGlassSpacing';
-import { useMotionReduction } from '../context/AccessibilityContext';
-import { TimingConfig, SpringConfig } from '../utils/animations';
+} from "react-native-reanimated";
+import Svg, { Path, Circle, Rect } from "react-native-svg";
+import { useImessagePalette } from "../ui/theme/imessagePalette";
+import { useTypography } from "../ui/hooks/useTypography";
+import { LiquidGlassSpacing } from "../ui/theme/liquidGlassSpacing";
+import { useMotionReduction } from "../context/AccessibilityContext";
+import { TimingConfig, SpringConfig } from "../utils/animations";
 
 export type EmptyStateIconType =
-  | 'chat'
-  | 'logs'
-  | 'search'
-  | 'error'
-  | 'profile'
-  | 'home'
-  | 'generic';
+  | "chat"
+  | "logs"
+  | "search"
+  | "error"
+  | "profile"
+  | "home"
+  | "generic";
 
 interface EmptyStateProps {
   /**
@@ -127,9 +123,24 @@ function LogsIcon({ size, color }: { size: number; color: string }) {
         fill="none"
       />
       {/* Lines */}
-      <Path d="M25 28h30" stroke={color} strokeWidth={2.5} strokeLinecap="round" />
-      <Path d="M25 40h25" stroke={color} strokeWidth={2.5} strokeLinecap="round" />
-      <Path d="M25 52h20" stroke={color} strokeWidth={2.5} strokeLinecap="round" />
+      <Path
+        d="M25 28h30"
+        stroke={color}
+        strokeWidth={2.5}
+        strokeLinecap="round"
+      />
+      <Path
+        d="M25 40h25"
+        stroke={color}
+        strokeWidth={2.5}
+        strokeLinecap="round"
+      />
+      <Path
+        d="M25 52h20"
+        stroke={color}
+        strokeWidth={2.5}
+        strokeLinecap="round"
+      />
     </Svg>
   );
 }
@@ -138,13 +149,7 @@ function SearchIcon({ size, color }: { size: number; color: string }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 80 80" fill="none">
       {/* Circle */}
-      <Circle
-        cx="35"
-        cy="35"
-        r="20"
-        fill={color}
-        opacity={0.15}
-      />
+      <Circle cx="35" cy="35" r="20" fill={color} opacity={0.15} />
       <Circle
         cx="35"
         cy="35"
@@ -168,11 +173,7 @@ function ErrorIcon({ size, color }: { size: number; color: string }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 80 80" fill="none">
       {/* Triangle */}
-      <Path
-        d="M40 12L70 62H10L40 12z"
-        fill={color}
-        opacity={0.15}
-      />
+      <Path d="M40 12L70 62H10L40 12z" fill={color} opacity={0.15} />
       <Path
         d="M40 12L70 62H10L40 12z"
         stroke={color}
@@ -196,13 +197,7 @@ function ProfileIcon({ size, color }: { size: number; color: string }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 80 80" fill="none">
       {/* Head */}
-      <Circle
-        cx="40"
-        cy="28"
-        r="14"
-        fill={color}
-        opacity={0.15}
-      />
+      <Circle cx="40" cy="28" r="14" fill={color} opacity={0.15} />
       <Circle
         cx="40"
         cy="28"
@@ -232,11 +227,7 @@ function HomeIcon({ size, color }: { size: number; color: string }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 80 80" fill="none">
       {/* House */}
-      <Path
-        d="M40 12L10 36v32h60V36L40 12z"
-        fill={color}
-        opacity={0.15}
-      />
+      <Path d="M40 12L10 36v32h60V36L40 12z" fill={color} opacity={0.15} />
       <Path
         d="M40 12L10 36v32h60V36L40 12z"
         stroke={color}
@@ -300,7 +291,10 @@ function GenericIcon({ size, color }: { size: number; color: string }) {
   );
 }
 
-const iconComponents: Record<EmptyStateIconType, React.FC<{ size: number; color: string }>> = {
+const iconComponents: Record<
+  EmptyStateIconType,
+  React.FC<{ size: number; color: string }>
+> = {
   chat: ChatIcon,
   logs: LogsIcon,
   search: SearchIcon,
@@ -313,7 +307,7 @@ const iconComponents: Record<EmptyStateIconType, React.FC<{ size: number; color:
 export function EmptyState({
   title,
   description,
-  iconType = 'generic',
+  iconType = "generic",
   iconColor,
   actionLabel,
   onAction,
@@ -366,7 +360,13 @@ export function EmptyState({
       </Animated.View>
 
       {/* Text */}
-      <Text style={[styles.title, typography.title3, { color: palette.textPrimary }]}>
+      <Text
+        style={[
+          styles.title,
+          typography.title3,
+          { color: palette.textPrimary },
+        ]}
+      >
         {title}
       </Text>
       <Text
@@ -390,7 +390,13 @@ export function EmptyState({
           accessibilityRole="button"
           accessibilityLabel={actionLabel}
         >
-          <Text style={[styles.actionButtonText, typography.callout, { color: palette.textOnChroma }]}>
+          <Text
+            style={[
+              styles.actionButtonText,
+              typography.callout,
+              { color: palette.textOnChroma },
+            ]}
+          >
             {actionLabel}
           </Text>
         </PressableRipple>
@@ -399,10 +405,7 @@ export function EmptyState({
   );
 
   return (
-    <Animated.View
-      style={[styles.container, containerStyle]}
-      testID={testID}
-    >
+    <Animated.View style={[styles.container, containerStyle]} testID={testID}>
       {content}
     </Animated.View>
   );
@@ -414,21 +417,21 @@ const styles = StyleSheet.create({
     paddingVertical: LiquidGlassSpacing.xxl,
   },
   content: {
-    alignItems: 'center',
-    width: '100%',
+    alignItems: "center",
+    width: "100%",
     maxWidth: 440,
-    alignSelf: 'center',
+    alignSelf: "center",
   },
   iconContainer: {
     marginBottom: LiquidGlassSpacing.lg,
   },
   title: {
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: LiquidGlassSpacing.sm,
     // fontSize/fontWeight applied inline via typography.title3
   },
   description: {
-    textAlign: 'center',
+    textAlign: "center",
   },
   descriptionWithAction: {
     marginBottom: LiquidGlassSpacing.lg,
@@ -439,9 +442,9 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     minHeight: 48,
     minWidth: 160,
-    justifyContent: 'center',
-    alignItems: 'center',
-    overflow: 'hidden',
+    justifyContent: "center",
+    alignItems: "center",
+    overflow: "hidden",
   },
   actionButtonText: {
     // fontSize/fontWeight applied inline via typography.callout

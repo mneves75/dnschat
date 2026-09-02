@@ -8,12 +8,12 @@ export interface SupportedLocaleOption {
 const DEFAULT_LOCALE: SupportedLocale = "en-US";
 
 const NORMALIZED_LOCALE_MAP: Record<string, SupportedLocale> = {
-  "en": "en-US",
+  en: "en-US",
   "en-us": "en-US",
-  "en_us": "en-US",
-  "pt": "pt-BR",
+  en_us: "en-US",
+  pt: "pt-BR",
   "pt-br": "pt-BR",
-  "pt_br": "pt-BR",
+  pt_br: "pt-BR",
 };
 
 export const SUPPORTED_LOCALE_OPTIONS: SupportedLocaleOption[] = [

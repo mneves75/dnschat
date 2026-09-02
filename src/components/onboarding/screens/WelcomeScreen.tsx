@@ -1,11 +1,5 @@
 import React from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  Image,
-  ScrollView,
-} from "react-native";
+import { View, Text, StyleSheet, Image, ScrollView } from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -39,7 +33,7 @@ export function WelcomeScreen() {
 
     fadeAnim.set(withTiming(1, { duration: 800 }));
     slideAnim.set(withTiming(0, { duration: 800 }));
-  }, [shouldReduceMotion]);
+  }, [fadeAnim, shouldReduceMotion, slideAnim]);
 
   const heroAnimatedStyle = useAnimatedStyle(() => ({
     opacity: fadeAnim.get(),
@@ -89,7 +83,9 @@ export function WelcomeScreen() {
           <FeatureItem
             label={t("screen.onboarding.welcome.features.revolutionary.label")}
             title={t("screen.onboarding.welcome.features.revolutionary.title")}
-            description={t("screen.onboarding.welcome.features.revolutionary.description")}
+            description={t(
+              "screen.onboarding.welcome.features.revolutionary.description",
+            )}
             palette={palette}
             typography={typography}
           />
@@ -97,7 +93,9 @@ export function WelcomeScreen() {
           <FeatureItem
             label={t("screen.onboarding.welcome.features.private.label")}
             title={t("screen.onboarding.welcome.features.private.title")}
-            description={t("screen.onboarding.welcome.features.private.description")}
+            description={t(
+              "screen.onboarding.welcome.features.private.description",
+            )}
             palette={palette}
             typography={typography}
           />
@@ -105,7 +103,9 @@ export function WelcomeScreen() {
           <FeatureItem
             label={t("screen.onboarding.welcome.features.fast.label")}
             title={t("screen.onboarding.welcome.features.fast.title")}
-            description={t("screen.onboarding.welcome.features.fast.description")}
+            description={t(
+              "screen.onboarding.welcome.features.fast.description",
+            )}
             palette={palette}
             typography={typography}
           />
@@ -125,7 +125,13 @@ interface FeatureItemProps {
   typography: ReturnType<typeof useTypography>;
 }
 
-function FeatureItem({ label, title, description, palette, typography }: FeatureItemProps) {
+function FeatureItem({
+  label,
+  title,
+  description,
+  palette,
+  typography,
+}: FeatureItemProps) {
   return (
     <View style={styles.featureItem}>
       <View
@@ -236,6 +242,5 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     marginBottom: LiquidGlassSpacing.xxs,
   },
-  featureDescription: {
-  },
+  featureDescription: {},
 });

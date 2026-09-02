@@ -1,10 +1,5 @@
 import React from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-} from "react-native";
+import { View, Text, StyleSheet, ScrollView } from "react-native";
 import { OnboardingNavigation } from "../OnboardingNavigation";
 import { PressableRipple } from "../../PressableRipple";
 import { useImessagePalette } from "../../../ui/theme/imessagePalette";
@@ -118,12 +113,7 @@ export function FeaturesScreen() {
           </Text>
         </View>
 
-        <View
-          style={[
-            styles.featuresGrid,
-            { backgroundColor: palette.solid },
-          ]}
-        >
+        <View style={[styles.featuresGrid, { backgroundColor: palette.solid }]}>
           {features.map((feature, index) => (
             <FeatureCard
               key={feature.label}
@@ -139,7 +129,9 @@ export function FeaturesScreen() {
           accessible={true}
           accessibilityRole="summary"
           accessibilityLabel={`${t("screen.onboarding.ready.title")}. ${t("screen.onboarding.ready.description")}`}
-          accessibilityHint={t("screen.settings.sections.appearance.summaryHint")}
+          accessibilityHint={t(
+            "screen.settings.sections.appearance.summaryHint",
+          )}
           style={[
             styles.readySection,
             {
@@ -190,7 +182,12 @@ interface FeatureCardProps {
   typography: ReturnType<typeof useTypography>;
 }
 
-function FeatureCard({ feature, isLast, palette, typography }: FeatureCardProps) {
+function FeatureCard({
+  feature,
+  isLast,
+  palette,
+  typography,
+}: FeatureCardProps) {
   const { t } = useTranslation();
 
   // A card with an action stays a plain container so its nested link and text
@@ -222,7 +219,9 @@ function FeatureCard({ feature, isLast, palette, typography }: FeatureCardProps)
     >
       <View
         accessible={Boolean(feature.action)}
-        importantForAccessibility={feature.action ? "auto" : "no-hide-descendants"}
+        importantForAccessibility={
+          feature.action ? "auto" : "no-hide-descendants"
+        }
         style={[
           styles.featureLabelContainer,
           {
@@ -244,7 +243,9 @@ function FeatureCard({ feature, isLast, palette, typography }: FeatureCardProps)
 
       <Text
         accessible={Boolean(feature.action)}
-        importantForAccessibility={feature.action ? "auto" : "no-hide-descendants"}
+        importantForAccessibility={
+          feature.action ? "auto" : "no-hide-descendants"
+        }
         style={[
           typography.headline,
           styles.featureTitle,
@@ -256,7 +257,9 @@ function FeatureCard({ feature, isLast, palette, typography }: FeatureCardProps)
 
       <Text
         accessible={Boolean(feature.action)}
-        importantForAccessibility={feature.action ? "auto" : "no-hide-descendants"}
+        importantForAccessibility={
+          feature.action ? "auto" : "no-hide-descendants"
+        }
         style={[
           typography.callout,
           styles.featureDescription,
@@ -269,17 +272,16 @@ function FeatureCard({ feature, isLast, palette, typography }: FeatureCardProps)
       {feature.action && (
         /* iOS HIG: External link button to open GitHub repository in browser */
         <PressableRipple
-          style={[
-            styles.featureAction,
-            { backgroundColor: palette.surface },
-          ]}
+          style={[styles.featureAction, { backgroundColor: palette.surface }]}
           onPress={feature.action.onPress}
           variant="surface"
           rippleColor={palette.accentTint}
           pressedOpacity={0.7}
           accessibilityRole="link"
           accessibilityLabel={feature.action.text}
-          accessibilityHint={t("screen.onboarding.features.opensource.accessibilityHint")}
+          accessibilityHint={t(
+            "screen.onboarding.features.opensource.accessibilityHint",
+          )}
         >
           <Text
             style={[

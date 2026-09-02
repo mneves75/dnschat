@@ -54,23 +54,27 @@ export const enUS = {
       },
       welcome: {
         title: "Welcome to DNS Chat",
-        subtitle: "Send short prompts in DNS TXT queries and receive TXT responses.",
+        subtitle:
+          "Send short prompts in DNS TXT queries and receive TXT responses.",
         appIconLabel: "DNS Chat app icon",
         features: {
           revolutionary: {
             label: "DNS TXT",
             title: "DNS-Based Transport",
-            description: "The app carries each short prompt and response in DNS TXT records.",
+            description:
+              "The app carries each short prompt and response in DNS TXT records.",
           },
           private: {
             label: "Observable",
             title: "DNS Is Observable",
-            description: "Queries and responses cross the selected third-party DNS service and may be observed, retained, or altered. Do not send secrets or personal data.",
+            description:
+              "Queries and responses cross the selected third-party DNS service and may be observed, retained, or altered. Do not send secrets or personal data.",
           },
           fast: {
             label: "Fallback",
             title: "Multiple DNS Transports",
-            description: "Native DNS, UDP, and TCP provide an ordered fallback path.",
+            description:
+              "Native DNS, UDP, and TCP provide an ordered fallback path.",
           },
         },
       },
@@ -78,9 +82,12 @@ export const enUS = {
         label: "Chat",
         title: "Try Your First Chat",
         subtitle: "Send a message and watch it travel through DNS",
-        welcomeMessage: "Send a short prompt. The app carries it in a DNS TXT query.",
-        successMessage: "Your prompt was sent as a DNS TXT query. When the server replies, the response returns in DNS TXT records.",
-        failureMessage: "The DNS message could not be delivered. Check your network settings or try again later.",
+        welcomeMessage:
+          "Send a short prompt. The app carries it in a DNS TXT query.",
+        successMessage:
+          "Your prompt was sent as a DNS TXT query. When the server replies, the response returns in DNS TXT records.",
+        failureMessage:
+          "The DNS message could not be delivered. Check your network settings or try again later.",
         suggestions: {
           title: "Try one of these:",
           option1: "What is DNS?",
@@ -100,9 +107,11 @@ export const enUS = {
         },
         accessibility: {
           suggestionLabel: "Suggestion: {{suggestion}}",
-          suggestionHint: "Fills the message input with this suggested question",
+          suggestionHint:
+            "Fills the message input with this suggested question",
           inputLabel: "Message input",
-          inputHint: "Type your message to send via DNS. Maximum {{max}} characters.",
+          inputHint:
+            "Type your message to send via DNS. Maximum {{max}} characters.",
           sendLabel: "Send message",
           sendingLabel: "Sending message",
           sendHint: "Sends your message through DNS TXT query",
@@ -111,7 +120,8 @@ export const enUS = {
       dnsMagic: {
         label: "DNS",
         title: "DNS Transport in Action",
-        subtitle: "Watch as your message travels through multiple DNS fallback methods",
+        subtitle:
+          "Watch as your message travels through multiple DNS fallback methods",
         demoButton: "Start DNS Demo",
         demoButtonRunning: "DNS Query in Progress...",
         responseLabel: "DNS Response:",
@@ -145,11 +155,13 @@ export const enUS = {
           failed: "Failed",
         },
         demoResponse: "The response returned through the DNS transport path.",
-        demoFailure: "No DNS response returned during this demo. You can continue and adjust Settings later.",
+        demoFailure:
+          "No DNS response returned during this demo. You can continue and adjust Settings later.",
         accessibility: {
           idleLabel: "Start DNS demo",
           runningLabel: "DNS query in progress",
-          demoHint: "Demonstrates how DNS queries work through the fallback chain. Watch as your message travels through Native DNS, UDP, and TCP methods.",
+          demoHint:
+            "Demonstrates how DNS queries work through the fallback chain. Watch as your message travels through Native DNS, UDP, and TCP methods.",
         },
       },
       networkSetup: {
@@ -180,7 +192,8 @@ export const enUS = {
         },
         optimization: {
           title: "Configuration Applied",
-          description: "DNS Chat will use the automatic fallback chain across these transports. You can adjust this anytime in Settings.",
+          description:
+            "DNS Chat will use the automatic fallback chain across these transports. You can adjust this anytime in Settings.",
           applyButton: "Apply Recommended Settings",
           loading: "Configuring transport order...",
         },
@@ -192,71 +205,85 @@ export const enUS = {
           errorTitle: "Error",
           errorMessage: "Network configuration failed. Using default settings.",
           successTitle: "Settings Applied",
-          successMessage: "Network configuration complete. DNS will use the automatic fallback chain.",
+          successMessage:
+            "Network configuration complete. DNS will use the automatic fallback chain.",
           successButton: "Great",
         },
         accessibility: {
           applyLabel: "Apply recommended settings",
-          applyHint: "Configures DNS to use the automatic fallback chain across the supported transports",
+          applyHint:
+            "Configures DNS to use the automatic fallback chain across the supported transports",
         },
       },
       features: {
         logs: {
           label: "Logs",
           title: "DNS Query Logs",
-          description: "Review transport attempts, status, timing, and fallback details.",
+          description:
+            "Review transport attempts, status, timing, and fallback details.",
         },
         customize: {
           label: "Customize",
           title: "Customizable Settings",
-          description: "Configure DNS servers, haptics, and transport behavior for your network.",
+          description:
+            "Configure DNS servers, haptics, and transport behavior for your network.",
         },
         liquidGlass: {
           label: "iOS 26",
           title: "Native Interface",
-          description: "Platform controls and navigation adapt across iOS and Android.",
+          description:
+            "Platform controls and navigation adapt across iOS and Android.",
         },
         i18n: {
           label: "Language",
           title: "English and Portuguese",
-          description: "The interface follows your device language or your in-app choice.",
+          description:
+            "The interface follows your device language or your in-app choice.",
         },
         haptics: {
           label: "Haptics",
           title: "Optional Haptics",
-          description: "Tactile feedback can be disabled independently in Settings.",
+          description:
+            "Tactile feedback can be disabled independently in Settings.",
         },
         opensource: {
           label: "Open",
           title: "Open Source",
-          description: "Built transparently - explore the code and contribute to the future of DNS chat.",
+          description:
+            "Built transparently - explore the code and contribute to the future of DNS chat.",
           action: "View on GitHub",
-          accessibilityHint: "Opens the DNS Chat GitHub repository in your browser where you can view the source code and contribute",
+          accessibilityHint:
+            "Opens the DNS Chat GitHub repository in your browser where you can view the source code and contribute",
         },
         themes: {
           label: "Theme",
           title: "Light, Dark, or System",
-          description: "Choose a theme and use the high-contrast accessibility setting when needed.",
+          description:
+            "Choose a theme and use the high-contrast accessibility setting when needed.",
         },
         storage: {
           label: "Local",
           title: "Encrypted Local History",
-          description: "Conversation history is encrypted and kept on this device.",
+          description:
+            "Conversation history is encrypted and kept on this device.",
         },
         fallbacks: {
           label: "Order",
           title: "Explicit Fallback Chain",
-          description: "The app tries supported transports in a defined order and records each attempt.",
+          description:
+            "The app tries supported transports in a defined order and records each attempt.",
         },
       },
       header: {
         label: "Reference",
         title: "Know What the App Does",
-        subtitle: "Review local storage, settings, logs, and transport fallback behavior.",
+        subtitle:
+          "Review local storage, settings, logs, and transport fallback behavior.",
       },
       ready: {
         title: "You're All Set",
-        description: "You now know how DNS Chat sends short messages over DNS and where to adjust the transport settings. Start a conversation when you are ready.",
+        description:
+          "You now know how DNS Chat sends short messages over DNS and where to adjust the transport settings. Start a conversation when you are ready.",
         button: "Start Chatting",
       },
     },
@@ -265,7 +292,8 @@ export const enUS = {
       errorAlertTitle: "Error",
       errorAlertDismiss: "OK",
       errorRetry: "Retry",
-      errorMessage: "DNS request failed. Try again or check DNS logs in Settings.",
+      errorMessage:
+        "DNS request failed. Try again or check DNS logs in Settings.",
       storageRecovery: {
         recovered:
           "Chat storage was corrupted. Chats that could be recovered are still available.",
@@ -321,7 +349,7 @@ export const enUS = {
       lastUserPrefix: "You: {{content}}",
       yesterday: "Yesterday",
       deleteTitle: "Delete Chat",
-      deleteMessage: "Are you sure you want to delete \"{{title}}\"?",
+      deleteMessage: 'Are you sure you want to delete "{{title}}"?',
       createErrorTitle: "Unable to create chat",
       createErrorMessage: "Failed to create chat",
       accessibility: {
@@ -338,7 +366,8 @@ export const enUS = {
         title: "Start New Conversation",
         button: "New Chat",
         description: "Send a short prompt through a DNS TXT request.",
-        observableNotice: "A third-party DNS service or network may observe, retain, or alter queries and responses.",
+        observableNotice:
+          "A third-party DNS service or network may observe, retain, or alter queries and responses.",
       },
       recent: {
         title: "Recent Conversations",
@@ -347,8 +376,7 @@ export const enUS = {
       },
       empty: {
         title: "No Conversations Yet",
-        subtitle:
-          "Your conversations will appear here after you start one.",
+        subtitle: "Your conversations will appear here after you start one.",
       },
       stats: {
         title: "Statistics",
@@ -362,7 +390,8 @@ export const enUS = {
         messagePlural: "{{count}} messages",
       },
       itemAccessibilityLabel: "Chat: {{title}}. {{count}} messages. {{time}}.",
-      itemAccessibilityHint: "Double tap to open. Use available actions to share or delete this conversation.",
+      itemAccessibilityHint:
+        "Double tap to open. Use available actions to share or delete this conversation.",
       actionSheet: {
         title: "Choose an action",
         message: "Choose an action for this conversation",
@@ -418,12 +447,14 @@ export const enUS = {
         clearMessage: "Are you sure you want to clear all DNS query logs?",
         clearConfirm: "Clear",
         clearErrorTitle: "Unable to Clear Logs",
-        clearErrorMessage: "DNS logs could not be removed from local storage. Please try again.",
+        clearErrorMessage:
+          "DNS logs could not be removed from local storage. Please try again.",
       },
       accessibility: {
         expandRow: "Show DNS query details",
         collapseRow: "Hide DNS query details",
-        rowLabel: "DNS query. Status: {{status}}. Method: {{method}}. Started at {{time}}. Duration: {{duration}}.",
+        rowLabel:
+          "DNS query. Status: {{status}}. Method: {{method}}. Started at {{time}}. Duration: {{duration}}.",
       },
       status: {
         success: "Succeeded",
@@ -445,8 +476,7 @@ export const enUS = {
         },
         appBehavior: {
           title: "App Behavior",
-          description:
-            "Configure app features and behavior settings.",
+          description: "Configure app features and behavior settings.",
           enableMockDNS: {
             label: "Enable Mock DNS",
             description:
@@ -488,7 +518,8 @@ export const enUS = {
           description:
             "Manage locally stored chats and DNS logs on this device.",
           clearDataTitle: "Clear Local Data",
-          clearDataSubtitle: "Delete chat history and DNS logs from this device",
+          clearDataSubtitle:
+            "Delete chat history and DNS logs from this device",
           clearDataHint:
             "Deletes all local chats and DNS logs stored on this device",
         },
@@ -529,8 +560,7 @@ export const enUS = {
       },
       alerts: {
         resetTitle: "Reset to Default",
-        resetMessage:
-          "Are you sure you want to reset all settings to default?",
+        resetMessage: "Are you sure you want to reset all settings to default?",
         resetConfirm: "Reset",
         onboardingTitle: "Reset Onboarding",
         onboardingMessage:
@@ -552,8 +582,7 @@ export const enUS = {
         clearDataSuccessTitle: "Local Data Cleared",
         clearDataSuccessMessage:
           "Your chat history and DNS logs have been cleared.",
-        clearDataErrorMessage:
-          "Unable to clear local data. Please try again.",
+        clearDataErrorMessage: "Unable to clear local data. Please try again.",
       },
     },
     glassSettings: {
@@ -612,10 +641,10 @@ export const enUS = {
         },
         advanced: {
           title: "Advanced",
-          footer:
-            "Advanced settings for power users. Use with caution.",
+          footer: "Advanced settings for power users. Use with caution.",
           clearCacheTitle: "Clear Local Data",
-          clearCacheSubtitle: "Delete chat history and DNS logs from this device",
+          clearCacheSubtitle:
+            "Delete chat history and DNS logs from this device",
           resetTitle: "Reset Settings",
           resetSubtitle: "Restore all settings to default values",
         },
@@ -641,8 +670,7 @@ export const enUS = {
         clearCacheSuccessTitle: "Local Data Cleared",
         clearCacheSuccessMessage:
           "Your chat history and DNS logs have been cleared.",
-        clearCacheErrorMessage:
-          "Unable to clear local data. Please try again.",
+        clearCacheErrorMessage: "Unable to clear local data. Please try again.",
       },
       results: {
         label: "Result: {{value}}",
@@ -763,8 +791,10 @@ export const enUS = {
           "This will delete all your chats and messages. This action cannot be undone.",
         clearDataConfirm: "Clear Data",
         clearDataSuccessTitle: "Data cleared",
-        clearDataSuccessMessage: "All conversations were deleted from this device.",
-        clearDataErrorMessage: "Unable to clear your local chat data. Please try again.",
+        clearDataSuccessMessage:
+          "All conversations were deleted from this device.",
+        clearDataErrorMessage:
+          "Unable to clear your local chat data. Please try again.",
         exportTitle: "Export Data",
         exportMessage: "Data export will be available in a future update.",
       },
@@ -793,7 +823,8 @@ export const enUS = {
       title: "404",
       goHome: "Go to Home",
       navigationTitle: "Not Found",
-      description: "The page you're looking for doesn't exist or has been moved.",
+      description:
+        "The page you're looking for doesn't exist or has been moved.",
       quickLinks: "Quick Links",
       chatDescription: "Start a new conversation",
       logsDescription: "View DNS query logs",

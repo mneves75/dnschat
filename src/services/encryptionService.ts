@@ -1,49 +1,49 @@
-import * as SecureStore from 'expo-secure-store';
-import { getRandomBytesAsync, getRandomValues } from 'expo-crypto';
-import { Platform } from 'react-native';
-import { gcm } from '@noble/ciphers/aes.js';
-import { bytesToHex, hexToBytes, utf8ToBytes } from '@noble/hashes/utils.js';
-import { ENCRYPTION_CONSTANTS } from '../constants/appConstants';
-import { devWarn } from '../utils/devLog';
+import * as SecureStore from "expo-secure-store";
+import { getRandomBytesAsync, getRandomValues } from "expo-crypto";
+import { Platform } from "react-native";
+import { gcm } from "@noble/ciphers/aes.js";
+import { bytesToHex, hexToBytes, utf8ToBytes } from "@noble/hashes/utils.js";
+import { ENCRYPTION_CONSTANTS } from "../constants/appConstants";
+import { devWarn } from "../utils/devLog";
 
 // SecureStore keys must be alphanumeric plus ., -, _ (no @ or /)
-const KEY_STORAGE_KEY = 'dnschat.encryption_key';
-const ENCRYPTION_PREFIX = 'enc:v1:';
+const KEY_STORAGE_KEY = "dnschat.encryption_key";
+const ENCRYPTION_PREFIX = "enc:v1:";
 const GCM_AUTH_TAG_LENGTH = 16;
 
 export class EncryptionKeyCorruptionError extends Error {
-  readonly code = 'ENCRYPTION_KEY_CORRUPTION';
+  readonly code = "ENCRYPTION_KEY_CORRUPTION";
 
   constructor(
     message: string,
     public override readonly cause?: Error,
   ) {
     super(message);
-    this.name = 'EncryptionKeyCorruptionError';
+    this.name = "EncryptionKeyCorruptionError";
   }
 }
 
 export class EncryptionKeyUnavailableError extends Error {
-  readonly code = 'ENCRYPTION_KEY_UNAVAILABLE';
+  readonly code = "ENCRYPTION_KEY_UNAVAILABLE";
 
   constructor(
     message: string,
     public override readonly cause?: Error,
   ) {
     super(message);
-    this.name = 'EncryptionKeyUnavailableError';
+    this.name = "EncryptionKeyUnavailableError";
   }
 }
 
 export class EncryptionPayloadCorruptionError extends Error {
-  readonly code = 'ENCRYPTION_PAYLOAD_CORRUPTION';
+  readonly code = "ENCRYPTION_PAYLOAD_CORRUPTION";
 
   constructor(
     message: string,
     public override readonly cause?: Error,
   ) {
     super(message);
-    this.name = 'EncryptionPayloadCorruptionError';
+    this.name = "EncryptionPayloadCorruptionError";
   }
 }
 
@@ -53,14 +53,17 @@ let cachedDecoder: TextDecoder | null = null;
 let warnedWebKeyPersisted = false;
 
 const isTestRuntime = () =>
-  typeof process !== 'undefined' &&
-  typeof process.env === 'object' &&
+  typeof process !== "undefined" &&
+  typeof process.env === "object" &&
   process.env !== null &&
-  typeof process.env['JEST_WORKER_ID'] === 'string';
+  typeof process.env["JEST_WORKER_ID"] === "string";
 
 const getRandomBytes = async (size: number): Promise<Uint8Array> => {
   try {
-    if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+    if (
+      typeof crypto !== "undefined" &&
+      typeof crypto.getRandomValues === "function"
+    ) {
       const bytes = new Uint8Array(size);
       crypto.getRandomValues(bytes);
       return bytes;
@@ -76,18 +79,23 @@ const getRandomBytes = async (size: number): Promise<Uint8Array> => {
   return getRandomBytesAsync(size);
 };
 
-const isWebRuntime = (): boolean => Platform.OS === 'web';
+const isWebRuntime = (): boolean => Platform.OS === "web";
 
-const getKeyStorageName = (): string => (isWebRuntime() ? 'web fallback key storage' : 'SecureStore');
+const getKeyStorageName = (): string =>
+  isWebRuntime() ? "web fallback key storage" : "SecureStore";
 
 const getWebStoredKey = (): string | null => {
   if (!isWebRuntime()) return null;
   try {
     const localStorage = globalThis.localStorage;
-    if (!localStorage || typeof localStorage.getItem !== 'function') return null;
+    if (!localStorage || typeof localStorage.getItem !== "function")
+      return null;
     return localStorage.getItem(KEY_STORAGE_KEY);
   } catch (error) {
-    devWarn('[EncryptionService] Failed to read web fallback key storage', error);
+    devWarn(
+      "[EncryptionService] Failed to read web fallback key storage",
+      error,
+    );
     return null;
   }
 };
@@ -96,7 +104,8 @@ const setWebStoredKey = (key: string): boolean => {
   if (!isWebRuntime()) return false;
   try {
     const localStorage = globalThis.localStorage;
-    if (!localStorage || typeof localStorage.setItem !== 'function') return false;
+    if (!localStorage || typeof localStorage.setItem !== "function")
+      return false;
     localStorage.setItem(KEY_STORAGE_KEY, key);
     if (!warnedWebKeyPersisted) {
       warnedWebKeyPersisted = true;
@@ -104,12 +113,15 @@ const setWebStoredKey = (key: string): boolean => {
       // secure production at-rest boundary (see SECURITY.md / docs/data-inventory.md).
       // Surface this at runtime so it is never silently treated as native SecureStore.
       devWarn(
-        '[EncryptionService] Web preview persists the encryption key in browser storage; this is not a secure at-rest boundary.',
+        "[EncryptionService] Web preview persists the encryption key in browser storage; this is not a secure at-rest boundary.",
       );
     }
     return true;
   } catch (error) {
-    devWarn('[EncryptionService] Failed to persist web fallback key storage', error);
+    devWarn(
+      "[EncryptionService] Failed to persist web fallback key storage",
+      error,
+    );
     return false;
   }
 };
@@ -121,11 +133,11 @@ const decodeStoredKey = (stored: string): Uint8Array => {
   } catch (error) {
     const cause = error instanceof Error ? error : new Error(String(error));
     devWarn(
-      '[EncryptionService] Stored key is malformed; preserving existing key material',
+      "[EncryptionService] Stored key is malformed; preserving existing key material",
       cause,
     );
     throw new EncryptionKeyCorruptionError(
-      'Stored encryption key is malformed',
+      "Stored encryption key is malformed",
       cause,
     );
   }
@@ -133,11 +145,11 @@ const decodeStoredKey = (stored: string): Uint8Array => {
   if (decoded.length !== ENCRYPTION_CONSTANTS.KEY_LENGTH) {
     const cause = new Error(`Stored key has invalid length: ${decoded.length}`);
     devWarn(
-      '[EncryptionService] Stored key has invalid length; preserving existing key material',
+      "[EncryptionService] Stored key has invalid length; preserving existing key material",
       cause,
     );
     throw new EncryptionKeyCorruptionError(
-      'Stored encryption key has invalid length',
+      "Stored encryption key has invalid length",
       cause,
     );
   }
@@ -147,12 +159,12 @@ const decodeStoredKey = (stored: string): Uint8Array => {
 
 const decodeUtf8 = (payload: Uint8Array): string => {
   try {
-    if (typeof TextDecoder !== 'undefined') {
+    if (typeof TextDecoder !== "undefined") {
       cachedDecoder = cachedDecoder ?? new TextDecoder();
       return cachedDecoder.decode(payload);
     }
   } catch {}
-  let out = '';
+  let out = "";
   for (const byte of payload) {
     out += String.fromCharCode(byte);
   }
@@ -166,7 +178,7 @@ const generateAndPersistKey = async (): Promise<Uint8Array> => {
   if (isWebRuntime()) {
     if (!setWebStoredKey(encoded)) {
       devWarn(
-        '[EncryptionService] Web key fallback is session-only because localStorage is unavailable',
+        "[EncryptionService] Web key fallback is session-only because localStorage is unavailable",
       );
     }
     cachedKey = generated;
@@ -208,7 +220,7 @@ const loadEncryptionKey = async (): Promise<Uint8Array> => {
           cause,
         );
         throw new EncryptionKeyUnavailableError(
-          'Encryption key is unavailable',
+          "Encryption key is unavailable",
           cause,
         );
       }
@@ -223,8 +235,11 @@ const loadEncryptionKey = async (): Promise<Uint8Array> => {
     try {
       return await generateAndPersistKey();
     } catch (error) {
-      devWarn(`[EncryptionService] Failed to persist key in ${getKeyStorageName()}`, error);
-      throw new Error('Encryption key could not be persisted');
+      devWarn(
+        `[EncryptionService] Failed to persist key in ${getKeyStorageName()}`,
+        error,
+      );
+      throw new Error("Encryption key could not be persisted");
     }
   })();
 
@@ -236,7 +251,7 @@ const loadEncryptionKey = async (): Promise<Uint8Array> => {
 };
 
 export const isEncryptedPayload = (value: string): boolean =>
-  typeof value === 'string' && value.startsWith(ENCRYPTION_PREFIX);
+  typeof value === "string" && value.startsWith(ENCRYPTION_PREFIX);
 
 export const encryptString = async (plaintext: string): Promise<string> => {
   const key = await loadEncryptionKey();
@@ -249,18 +264,24 @@ export const encryptString = async (plaintext: string): Promise<string> => {
 
 export const decryptString = async (payload: string): Promise<string> => {
   if (!payload.startsWith(ENCRYPTION_PREFIX)) {
-    throw new EncryptionPayloadCorruptionError('Invalid encrypted payload format');
+    throw new EncryptionPayloadCorruptionError(
+      "Invalid encrypted payload format",
+    );
   }
 
   const remainder = payload.slice(ENCRYPTION_PREFIX.length);
-  const fields = remainder.split(':');
+  const fields = remainder.split(":");
   if (fields.length !== 2) {
-    throw new EncryptionPayloadCorruptionError('Invalid encrypted payload format');
+    throw new EncryptionPayloadCorruptionError(
+      "Invalid encrypted payload format",
+    );
   }
 
   const [nonceHex, cipherHex] = fields;
   if (!nonceHex || !cipherHex) {
-    throw new EncryptionPayloadCorruptionError('Invalid encrypted payload format');
+    throw new EncryptionPayloadCorruptionError(
+      "Invalid encrypted payload format",
+    );
   }
 
   let nonce: Uint8Array;
@@ -271,7 +292,7 @@ export const decryptString = async (payload: string): Promise<string> => {
   } catch (error) {
     const cause = error instanceof Error ? error : new Error(String(error));
     throw new EncryptionPayloadCorruptionError(
-      'Encrypted payload contains invalid hexadecimal data',
+      "Encrypted payload contains invalid hexadecimal data",
       cause,
     );
   }
@@ -294,7 +315,7 @@ export const decryptString = async (payload: string): Promise<string> => {
   } catch (error) {
     const cause = error instanceof Error ? error : new Error(String(error));
     throw new EncryptionPayloadCorruptionError(
-      'Failed to decrypt encrypted payload',
+      "Failed to decrypt encrypted payload",
       cause,
     );
   }

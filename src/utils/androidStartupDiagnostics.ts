@@ -15,7 +15,10 @@ export class AndroidStartupDiagnostics {
   }
 
   static error(message: string, details?: string) {
-    console.error(`[AndroidStartupDiagnostics] ERROR ${message}`, details || "");
+    console.error(
+      `[AndroidStartupDiagnostics] ERROR ${message}`,
+      details || "",
+    );
   }
 
   static warn(message: string, details?: string) {
@@ -118,9 +121,7 @@ export class AndroidStartupDiagnostics {
         "RNCSafeAreaProvider",
       ];
 
-      const missing = criticalModules.filter(
-        (name) => !modules.includes(name),
-      );
+      const missing = criticalModules.filter((name) => !modules.includes(name));
 
       if (missing.length === 0) {
         this.results.push({

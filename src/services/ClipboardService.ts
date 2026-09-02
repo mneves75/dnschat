@@ -1,5 +1,5 @@
-import Clipboard from '@react-native-clipboard/clipboard';
-import { HapticFeedback } from '../utils/haptics';
+import Clipboard from "@react-native-clipboard/clipboard";
+import { HapticFeedback } from "../utils/haptics";
 
 /**
  * ClipboardService
@@ -33,7 +33,7 @@ export class ClipboardService {
       // Provide haptic feedback for user confirmation
       // Light haptic is subtle, appropriate for copy action
       HapticFeedback.light();
-    } catch (error) {
+    } catch {
       // Clipboard operations can fail on some devices (enterprise MDM, permissions)
       // Fail silently - clipboard is best-effort
       // Error already logged by @react-native-clipboard/clipboard
@@ -52,9 +52,9 @@ export class ClipboardService {
     try {
       const content = await Clipboard.getString();
       return content;
-    } catch (error) {
+    } catch {
       // Read failures are silent - return empty string
-      return '';
+      return "";
     }
   }
 
@@ -67,7 +67,7 @@ export class ClipboardService {
     try {
       const content = await Clipboard.getString();
       return content.length > 0;
-    } catch (error) {
+    } catch {
       // Check failures are silent - return false
       return false;
     }

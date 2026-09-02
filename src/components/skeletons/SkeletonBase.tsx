@@ -7,9 +7,9 @@
  * @see DESIGN-UI-UX-GUIDELINES.md - Skeleton loading patterns
  */
 
-import React, { useEffect } from 'react';
-import { View, StyleSheet, Platform } from 'react-native';
-import type { ViewStyle } from 'react-native';
+import React, { useEffect } from "react";
+import { View, StyleSheet, Platform } from "react-native";
+import type { ViewStyle } from "react-native";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -17,10 +17,10 @@ import Animated, {
   withTiming,
   withDelay,
   Easing,
-} from 'react-native-reanimated';
-import { useImessagePalette } from '../../ui/theme/imessagePalette';
-import { useMotionReduction } from '../../context/AccessibilityContext';
-import { shimmerDuration } from '../../utils/animations';
+} from "react-native-reanimated";
+import { useImessagePalette } from "../../ui/theme/imessagePalette";
+import { useMotionReduction } from "../../context/AccessibilityContext";
+import { shimmerDuration } from "../../utils/animations";
 
 interface SkeletonBoxProps {
   /**
@@ -69,27 +69,29 @@ export function SkeletonBox({
       return;
     }
 
-    shimmer.set(withDelay(
-      delay,
-      withRepeat(
-        withTiming(1, {
-          duration: shimmerDuration,
-          easing: Easing.linear,
-        }),
-        -1,
-        false
-      )
-    ));
+    shimmer.set(
+      withDelay(
+        delay,
+        withRepeat(
+          withTiming(1, {
+            duration: shimmerDuration,
+            easing: Easing.linear,
+          }),
+          -1,
+          false,
+        ),
+      ),
+    );
   }, [shouldReduceMotion, delay, shimmer]);
 
   const shimmerStyle = useAnimatedStyle(() => ({
     opacity: shouldReduceMotion ? 0.5 : 0.3 + shimmer.get() * 0.4,
   }));
 
-  const isDark = palette.textPrimary === '#FFFFFF';
+  const isDark = palette.textPrimary === "#FFFFFF";
   const backgroundColor = isDark
-    ? 'rgba(255, 255, 255, 0.15)'
-    : 'rgba(0, 0, 0, 0.08)';
+    ? "rgba(255, 255, 255, 0.15)"
+    : "rgba(0, 0, 0, 0.08)";
 
   return (
     <Animated.View
@@ -151,7 +153,7 @@ interface SkeletonTextProps {
 }
 
 export function SkeletonText({
-  width = '100%',
+  width = "100%",
   lines = 1,
   lineHeight = 17,
   lineGap = 8,
@@ -163,10 +165,10 @@ export function SkeletonText({
     <View style={[styles.textContainer, style]}>
       {Array.from({ length: lines }).map((_, index) => {
         const isLastLine = index === lines - 1;
-        const lineWidth = isLastLine && shortLastLine && lines > 1 ? '60%' : width;
-        const boxProps = index < lines - 1
-          ? { style: { marginBottom: lineGap } }
-          : {};
+        const lineWidth =
+          isLastLine && shortLastLine && lines > 1 ? "60%" : width;
+        const boxProps =
+          index < lines - 1 ? { style: { marginBottom: lineGap } } : {};
 
         return (
           <SkeletonBox
@@ -200,7 +202,11 @@ interface SkeletonCardProps {
   style?: ViewStyle;
 }
 
-export function SkeletonCard({ children, delay = 0, style }: SkeletonCardProps) {
+export function SkeletonCard({
+  children,
+  delay = 0,
+  style,
+}: SkeletonCardProps) {
   const palette = useImessagePalette();
   const { shouldReduceMotion } = useMotionReduction();
   const opacity = useSharedValue(shouldReduceMotion ? 1 : 0);
@@ -223,7 +229,10 @@ export function SkeletonCard({ children, delay = 0, style }: SkeletonCardProps) 
     <Animated.View
       style={[
         styles.card,
-        { backgroundColor: Platform.OS === 'android' ? palette.solid : palette.surface },
+        {
+          backgroundColor:
+            Platform.OS === "android" ? palette.solid : palette.surface,
+        },
         animatedStyle,
         style,
       ]}
@@ -235,16 +244,16 @@ export function SkeletonCard({ children, delay = 0, style }: SkeletonCardProps) 
 
 const styles = StyleSheet.create({
   textContainer: {
-    flexDirection: 'column',
+    flexDirection: "column",
   },
   card: {
     padding: 16,
     marginHorizontal: 20,
     borderRadius: 12,
-    ...(Platform.OS === 'web'
-      ? { boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.08)' }
+    ...(Platform.OS === "web"
+      ? { boxShadow: "0px 1px 2px rgba(0, 0, 0, 0.08)" }
       : {
-          shadowColor: '#111827',
+          shadowColor: "#111827",
           shadowOffset: { width: 0, height: 1 },
           shadowOpacity: 0.08,
           shadowRadius: 2,

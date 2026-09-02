@@ -9,7 +9,9 @@ export default function SettingsRoute() {
 
   return (
     <>
-      <Stack.Screen.Title>{t("screen.settings.navigationTitle")}</Stack.Screen.Title>
+      <Stack.Screen.Title>
+        {t("screen.settings.navigationTitle")}
+      </Stack.Screen.Title>
       <Stack.Toolbar placement="left">
         <Stack.Toolbar.Button onPress={back}>
           {t("common.close")}

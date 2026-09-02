@@ -141,7 +141,7 @@ export class StorageService {
       this.operationQueue = this.operationQueue.then(() =>
         Promise.resolve()
           .then(() => operation())
-          .then(resolve, reject)
+          .then(resolve, reject),
       );
     });
   }
@@ -241,11 +241,15 @@ export class StorageService {
       const payloadWasPlaintext = !isEncryptedPayload(serializedChats);
 
       let parsed: unknown;
-      let decrypted = '';
+      let decrypted = "";
       try {
         decrypted = await decryptIfEncrypted(serializedChats);
         parsed = JSON.parse(decrypted, (key, value) => {
-          if (key === "createdAt" || key === "updatedAt" || key === "timestamp") {
+          if (
+            key === "createdAt" ||
+            key === "updatedAt" ||
+            key === "timestamp"
+          ) {
             // Convert valid ISO strings/epochs to Date. For an invalid but
             // *present* value, DO NOT throw here: a global throw during
             // JSON.parse would bypass the per-record quarantine loop below and
@@ -273,21 +277,26 @@ export class StorageService {
           throw parseError;
         }
         // JSON parse failure = data corruption
-        const cause = parseError instanceof Error ? parseError : new Error(String(parseError));
+        const cause =
+          parseError instanceof Error
+            ? parseError
+            : new Error(String(parseError));
         if (parseError instanceof StorageCorruptionError) {
           throw parseError;
         }
-        let hint = '';
+        let hint = "";
         const causeMessage = cause.message.toLowerCase();
         if (
-          causeMessage.includes('ghash') ||
-          causeMessage.includes('auth tag') ||
-          causeMessage.includes('invalid tag') ||
-          causeMessage.includes('decrypt')
+          causeMessage.includes("ghash") ||
+          causeMessage.includes("auth tag") ||
+          causeMessage.includes("invalid tag") ||
+          causeMessage.includes("decrypt")
         ) {
-          hint = ' (likely encryption key mismatch)';
+          hint = " (likely encryption key mismatch)";
         }
-        const payloadInfo = decrypted ? ` (decrypted length ${decrypted.length})` : '';
+        const payloadInfo = decrypted
+          ? ` (decrypted length ${decrypted.length})`
+          : "";
         throw new StorageCorruptionError(
           `Failed to parse chats JSON - storage may be corrupted${hint}${payloadInfo}`,
           cause,
@@ -309,34 +318,37 @@ export class StorageService {
       for (let i = 0; i < parsed.length; i++) {
         try {
           const candidate = parsed[i];
-          if (!candidate || typeof candidate !== 'object') {
+          if (!candidate || typeof candidate !== "object") {
             throw new StorageCorruptionError(
-              `Chat at index ${i} is not an object`
+              `Chat at index ${i} is not an object`,
             );
           }
           const chat = candidate as Record<string, unknown>;
-          const chatId = chat['id'];
-          if (typeof chatId !== 'string' || !chatId) {
+          const chatId = chat["id"];
+          if (typeof chatId !== "string" || !chatId) {
             throw new StorageCorruptionError(
-              `Chat at index ${i} has invalid id: ${String(chatId).slice(0, 50)}`
+              `Chat at index ${i} has invalid id: ${String(chatId).slice(0, 50)}`,
             );
           }
-          const title = chat['title'];
-          if (typeof title !== 'string') {
+          const title = chat["title"];
+          if (typeof title !== "string") {
             throw new StorageCorruptionError(
               `Chat "${chatId}" has invalid title`,
             );
           }
-          chat['title'] = normalizeChatTitle(title, "New Chat");
-          if (!(chat['createdAt'] instanceof Date) || !(chat['updatedAt'] instanceof Date)) {
+          chat["title"] = normalizeChatTitle(title, "New Chat");
+          if (
+            !(chat["createdAt"] instanceof Date) ||
+            !(chat["updatedAt"] instanceof Date)
+          ) {
             throw new StorageCorruptionError(
               `Chat "${chatId}" has missing or invalid timestamps`,
             );
           }
-          const messages = chat['messages'];
+          const messages = chat["messages"];
           if (!Array.isArray(messages)) {
             throw new StorageCorruptionError(
-              `Chat "${chatId}" has invalid messages array`
+              `Chat "${chatId}" has invalid messages array`,
             );
           }
           const validMessages: Message[] = [];
@@ -344,61 +356,67 @@ export class StorageService {
           for (let j = 0; j < messages.length; j++) {
             try {
               const candidateMessage = messages[j];
-              if (!candidateMessage || typeof candidateMessage !== 'object') {
+              if (!candidateMessage || typeof candidateMessage !== "object") {
                 throw new StorageCorruptionError(
-                  `Message at index ${j} in chat "${chatId}" is not an object`
+                  `Message at index ${j} in chat "${chatId}" is not an object`,
                 );
               }
               const msg = candidateMessage as Record<string, unknown>;
-              const messageId = msg['id'];
-              if (typeof messageId !== 'string' || !messageId) {
+              const messageId = msg["id"];
+              if (typeof messageId !== "string" || !messageId) {
                 throw new StorageCorruptionError(
-                  `Message at index ${j} in chat "${chatId}" has invalid id`
+                  `Message at index ${j} in chat "${chatId}" has invalid id`,
                 );
               }
-              const role = msg['role'];
-              if (typeof role !== 'string' || !['user', 'assistant'].includes(role)) {
+              const role = msg["role"];
+              if (
+                typeof role !== "string" ||
+                !["user", "assistant"].includes(role)
+              ) {
                 throw new StorageCorruptionError(
-                  `Message "${messageId}" has invalid role: ${String(role)}`
+                  `Message "${messageId}" has invalid role: ${String(role)}`,
                 );
               }
-              const content = msg['content'];
-              if (typeof content !== 'string') {
+              const content = msg["content"];
+              if (typeof content !== "string") {
                 throw new StorageCorruptionError(
-                  `Message "${messageId}" has invalid content type: ${typeof content}`
+                  `Message "${messageId}" has invalid content type: ${typeof content}`,
                 );
               }
-              if (!(msg['timestamp'] instanceof Date)) {
+              if (!(msg["timestamp"] instanceof Date)) {
                 throw new StorageCorruptionError(
                   `Message "${messageId}" has missing or invalid timestamp`,
                 );
               }
-              const status = msg['status'];
+              const status = msg["status"];
               if (status === undefined) {
-                msg['status'] = 'sent';
-              } else if (status === 'sending') {
-                msg['status'] = 'error';
-              } else if (
-                status !== 'sent' &&
-                status !== 'error'
-              ) {
+                msg["status"] = "sent";
+              } else if (status === "sending") {
+                msg["status"] = "error";
+              } else if (status !== "sent" && status !== "error") {
                 throw new StorageCorruptionError(
                   `Message "${messageId}" has invalid status: ${String(status)}`,
                 );
               }
               validMessages.push(msg as unknown as Message);
             } catch (error) {
-              if (!(error instanceof StorageCorruptionError) || !recoverOnCorruption) {
+              if (
+                !(error instanceof StorageCorruptionError) ||
+                !recoverOnCorruption
+              ) {
                 throw error;
               }
               quarantinedErrors.push(error);
               devWarn("[StorageService] Quarantined corrupted message", error);
             }
           }
-          chat['messages'] = validMessages;
+          chat["messages"] = validMessages;
           chats.push(chat as unknown as Chat);
         } catch (error) {
-          if (!(error instanceof StorageCorruptionError) || !recoverOnCorruption) {
+          if (
+            !(error instanceof StorageCorruptionError) ||
+            !recoverOnCorruption
+          ) {
             throw error;
           }
           quarantinedErrors.push(error);
@@ -423,7 +441,10 @@ export class StorageService {
             });
           }
         } catch (backupError) {
-          devWarn("[StorageService] Failed to backup pre-quarantine storage", backupError);
+          devWarn(
+            "[StorageService] Failed to backup pre-quarantine storage",
+            backupError,
+          );
           throw backupError;
         }
       }
@@ -517,7 +538,10 @@ export class StorageService {
                 });
               }
             } catch (clearError) {
-              devWarn("[StorageService] Failed to clear corrupted storage", clearError);
+              devWarn(
+                "[StorageService] Failed to clear corrupted storage",
+                clearError,
+              );
             }
           };
 
@@ -663,7 +687,9 @@ export class StorageService {
         throw new Error("Chat not found");
       }
 
-      const messageIndex = chat.messages.findIndex((msg) => msg.id === messageId);
+      const messageIndex = chat.messages.findIndex(
+        (msg) => msg.id === messageId,
+      );
       const existingMessage =
         messageIndex === -1 ? undefined : chat.messages[messageIndex];
 

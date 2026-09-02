@@ -1,21 +1,25 @@
-import { Platform, AppState } from 'react-native';
+import { Platform, AppState } from "react-native";
 import {
   nativeDNS,
   DNSError,
   DNSErrorType,
   parseMultiPartTXTResponse,
   sanitizeLLMResponseText,
-} from '../../modules/dns-native';
-export { DNSError, DNSErrorType, sanitizeLLMResponseText } from '../../modules/dns-native';
+} from "../../modules/dns-native";
+export {
+  DNSError,
+  DNSErrorType,
+  sanitizeLLMResponseText,
+} from "../../modules/dns-native";
 import {
   DNS_CONSTANTS,
   sanitizeDNSMessageReference,
   getServerPort,
   getLLMServers,
   type DNSServerConfig,
-} from '../../modules/dns-native/constants';
-import { getRandomValues as expoGetRandomValues } from 'expo-crypto';
-import { DNSLogService } from './dnsLogService';
+} from "../../modules/dns-native/constants";
+import { getRandomValues as expoGetRandomValues } from "expo-crypto";
+import { DNSLogService } from "./dnsLogService";
 import {
   createTcpTxtDnsQueryFrame,
   decodeDnsPacket,
@@ -24,25 +28,36 @@ import {
   readTcpFrameLength,
   type BufferFactory,
   type BufferLike,
-} from './dnsWire';
-export { validateDecodedDnsResponseForTxt } from './dnsWire';
-import { devLog, devLogArgs, devLogLazy } from '../utils/devLog';
+} from "./dnsWire";
+export { validateDecodedDnsResponseForTxt } from "./dnsWire";
+import { devLog, devLogArgs, devLogLazy } from "../utils/devLog";
 
 const DEFAULT_DNS_ZONE = DNS_CONSTANTS.DEFAULT_DNS_SERVER;
 // Invariant: total elapsed time for one queryLLM call across all servers,
 // retries, and transports must not exceed this budget.
 export const TOTAL_QUERY_BUDGET_MS = 20000;
+const BACKGROUND_CANCELLATION_MESSAGE =
+  "DNS query failed - app was backgrounded during network operation";
+
+class DNSBackgroundCancellationError extends Error {
+  constructor() {
+    super(BACKGROUND_CANCELLATION_MESSAGE);
+    this.name = "DNSBackgroundCancellationError";
+  }
+}
 
 // DNS server validation lives in dnsServerValidation.ts so lightweight modules
 // (settings storage) can use it without loading this transport-heavy module.
 // Re-exported here for backwards compatibility with existing imports.
-import { validateDNSServer } from './dnsServerValidation';
-export { validateDNSServer } from './dnsServerValidation';
+import { validateDNSServer } from "./dnsServerValidation";
+export { validateDNSServer } from "./dnsServerValidation";
 
 export function composeDNSQueryName(label: string, dnsServer: string): string {
-  const trimmedLabel = label.endsWith('.') ? label.replace(/\.+$/g, '').trim() : label.trim();
+  const trimmedLabel = label.endsWith(".")
+    ? label.replace(/\.+$/g, "").trim()
+    : label.trim();
   if (!trimmedLabel) {
-    throw new Error('DNS label must be non-empty when composing query name');
+    throw new Error("DNS label must be non-empty when composing query name");
   }
 
   // SECURITY FIX: Validate DNS server before using it to prevent injection and
@@ -62,17 +77,25 @@ type DNSQueryContext = {
   targetPort: number;
 };
 
+type QueryLifecycleToken = number;
+
 type UDPSocket = {
   bind(port: number, callback: (error?: unknown) => void): void;
-  on(event: 'error', handler: (error: unknown) => void): void;
+  on(event: "error", handler: (error: unknown) => void): void;
   on(
-    event: 'message',
-    handler: (message: Uint8Array, rinfo: { address: string; port: number }) => void,
+    event: "message",
+    handler: (
+      message: Uint8Array,
+      rinfo: { address: string; port: number },
+    ) => void,
   ): void;
-  once(event: 'error', handler: (error: unknown) => void): void;
+  once(event: "error", handler: (error: unknown) => void): void;
   once(
-    event: 'message',
-    handler: (message: Uint8Array, rinfo: { address: string; port: number }) => void,
+    event: "message",
+    handler: (
+      message: Uint8Array,
+      rinfo: { address: string; port: number },
+    ) => void,
   ): void;
   send(
     buffer: Uint8Array,
@@ -87,7 +110,7 @@ type UDPSocket = {
 };
 
 type UDPModule = {
-  createSocket(type: 'udp4' | 'udp6'): UDPSocket;
+  createSocket(type: "udp4" | "udp6"): UDPSocket;
 };
 
 type TcpSocketInstance = {
@@ -96,10 +119,10 @@ type TcpSocketInstance = {
     hostOrListener?: string | (() => void) | ((result?: unknown) => void),
     listener?: () => void,
   ): void;
-  on(event: 'data', handler: (data: Uint8Array) => void): void;
-  on(event: 'error', handler: (error: unknown) => void): void;
-  on(event: 'close' | 'connect' | 'timeout', handler: () => void): void;
-  once(event: 'timeout', handler: () => void): void;
+  on(event: "data", handler: (data: Uint8Array) => void): void;
+  on(event: "error", handler: (error: unknown) => void): void;
+  on(event: "close" | "connect" | "timeout", handler: () => void): void;
+  once(event: "timeout", handler: () => void): void;
   setTimeout(timeoutMs: number): void;
   write(data: Uint8Array, callback?: (error?: unknown) => void): boolean;
   end(): void;
@@ -112,16 +135,16 @@ type TcpSocketModule = {
 };
 
 const isUDPModule = (value: unknown): value is UDPModule =>
-  typeof value === 'object' &&
+  typeof value === "object" &&
   value !== null &&
-  'createSocket' in value &&
-  typeof (value as UDPModule).createSocket === 'function';
+  "createSocket" in value &&
+  typeof (value as UDPModule).createSocket === "function";
 
 const isTcpSocketModule = (value: unknown): value is TcpSocketModule =>
-  typeof value === 'object' &&
+  typeof value === "object" &&
   value !== null &&
-  'Socket' in value &&
-  typeof (value as TcpSocketModule).Socket === 'function';
+  "Socket" in value &&
+  typeof (value as TcpSocketModule).Socket === "function";
 
 const resolveModuleCandidate = <T>(
   candidate: unknown,
@@ -130,8 +153,8 @@ const resolveModuleCandidate = <T>(
   if (guard(candidate)) return candidate;
   if (
     candidate !== null &&
-    typeof candidate === 'object' &&
-    'default' in candidate
+    typeof candidate === "object" &&
+    "default" in candidate
   ) {
     const defaultExport = (candidate as { default?: unknown }).default;
     if (guard(defaultExport)) return defaultExport;
@@ -140,30 +163,35 @@ const resolveModuleCandidate = <T>(
 };
 
 const isBufferFactory = (value: unknown): value is BufferFactory => {
-  if (typeof value !== 'function' && (typeof value !== 'object' || value === null)) {
+  if (
+    typeof value !== "function" &&
+    (typeof value !== "object" || value === null)
+  ) {
     return false;
   }
   const candidate = value as Partial<BufferFactory>;
   return (
-    typeof candidate.alloc === 'function' &&
-    typeof candidate.concat === 'function' &&
-    typeof candidate.from === 'function'
+    typeof candidate.alloc === "function" &&
+    typeof candidate.concat === "function" &&
+    typeof candidate.from === "function"
   );
 };
 
 const getErrorMessage = (error: unknown): string => {
   if (error instanceof Error) return error.message;
-  if (typeof error === 'string') return error;
+  if (typeof error === "string") return error;
   return String(error);
 };
 
 const getErrorCode = (error: unknown): string | undefined => {
-  if (!error || typeof error !== 'object') return undefined;
+  if (!error || typeof error !== "object") return undefined;
   const code = (error as { code?: unknown }).code;
-  return typeof code === 'string' ? code : undefined;
+  return typeof code === "string" ? code : undefined;
 };
 
-const getErrorDetails = (error: unknown): { message: string; code?: string; errno?: string } => {
+const getErrorDetails = (
+  error: unknown,
+): { message: string; code?: string; errno?: string } => {
   if (error instanceof Error) {
     const errnoValue = (error as { errno?: unknown }).errno;
     const details: { message: string; code?: string; errno?: string } = {
@@ -173,27 +201,32 @@ const getErrorDetails = (error: unknown): { message: string; code?: string; errn
     if (code) {
       details.code = code;
     }
-    if (typeof errnoValue === 'string' || typeof errnoValue === 'number') {
+    if (typeof errnoValue === "string" || typeof errnoValue === "number") {
       details.errno = String(errnoValue);
     }
     return details;
   }
-  if (error && typeof error === 'object') {
+  if (error && typeof error === "object") {
     const record = error as Record<string, unknown>;
     const message =
-      typeof record['message'] === 'string'
-        ? record['message']
-        : typeof record['error'] === 'string'
-          ? record['error']
-          : typeof record['description'] === 'string'
-            ? record['description']
+      typeof record["message"] === "string"
+        ? record["message"]
+        : typeof record["error"] === "string"
+          ? record["error"]
+          : typeof record["description"] === "string"
+            ? record["description"]
             : getErrorMessage(error);
-    const details: { message: string; code?: string; errno?: string } = { message };
-    if (typeof record['code'] === 'string') {
-      details.code = record['code'];
+    const details: { message: string; code?: string; errno?: string } = {
+      message,
+    };
+    if (typeof record["code"] === "string") {
+      details.code = record["code"];
     }
-    if (typeof record['errno'] === 'string' || typeof record['errno'] === 'number') {
-      details.errno = String(record['errno']);
+    if (
+      typeof record["errno"] === "string" ||
+      typeof record["errno"] === "number"
+    ) {
+      details.errno = String(record["errno"]);
     }
     return details;
   }
@@ -212,33 +245,38 @@ let Buffer: BufferFactory | null = null;
 try {
   // UDP DNS transport (fallback #2 after native DNS)
   // Used when native DNS unavailable or fails
-  const udpCandidate: unknown = require('react-native-udp');
+  const udpCandidate: unknown = require("react-native-udp");
   const udpModule = resolveModuleCandidate(udpCandidate, isUDPModule);
   if (udpModule) {
     dgram = udpModule;
-    devLog('[DNSService] UDP library loaded successfully:', !!dgram);
+    devLog("[DNSService] UDP library loaded successfully:", !!dgram);
   } else {
-    devLog('[DNSService] UDP library did not expose createSocket as expected');
+    devLog("[DNSService] UDP library did not expose createSocket as expected");
   }
 } catch (error) {
-  devLog('[DNSService] UDP library failed to load:', error);
+  devLog("[DNSService] UDP library failed to load:", error);
   // UDP not available, will use TCP/Mock fallback methods
 }
 
 try {
   // TCP DNS transport (fallback #3 after UDP)
   // Critical for corporate networks that block UDP port 53
-  const tcpCandidate: unknown = require('react-native-tcp-socket');
+  const tcpCandidate: unknown = require("react-native-tcp-socket");
   const tcpModule = resolveModuleCandidate(tcpCandidate, isTcpSocketModule);
   if (tcpModule) {
     TcpSocket = tcpModule;
-    devLogLazy('[DNSService] TCP Socket library structure:', () => Object.keys(tcpModule));
-    devLog('[DNSService] TCP Socket library loaded successfully:', !!TcpSocket?.Socket);
+    devLogLazy("[DNSService] TCP Socket library structure:", () =>
+      Object.keys(tcpModule),
+    );
+    devLog(
+      "[DNSService] TCP Socket library loaded successfully:",
+      !!TcpSocket?.Socket,
+    );
   } else {
-    devLog('[DNSService] TCP Socket library missing Socket constructor');
+    devLog("[DNSService] TCP Socket library missing Socket constructor");
   }
 } catch (error) {
-  devLog('[DNSService] TCP Socket library failed to load:', error);
+  devLog("[DNSService] TCP Socket library failed to load:", error);
   // TCP Socket not available, will use native DNS/Mock fallback
 }
 
@@ -248,7 +286,7 @@ try {
 try {
   // Try to use native Buffer (React Native with polyfill or Node.js)
   const bufferCandidate =
-    (globalThis as { Buffer?: unknown }).Buffer ?? require('buffer').Buffer;
+    (globalThis as { Buffer?: unknown }).Buffer ?? require("buffer").Buffer;
   if (isBufferFactory(bufferCandidate)) {
     Buffer = bufferCandidate;
   }
@@ -278,23 +316,26 @@ if (!Buffer) {
 }
 
 const isTestRuntime = () =>
-  typeof process !== 'undefined' &&
-  typeof process.env === 'object' &&
+  typeof process !== "undefined" &&
+  typeof process.env === "object" &&
   process.env !== null &&
-  typeof process.env['JEST_WORKER_ID'] === 'string';
+  typeof process.env["JEST_WORKER_ID"] === "string";
 
 let warnedInsecureRandom = false;
 const warnInsecureRandom = () => {
   if (warnedInsecureRandom) return;
   warnedInsecureRandom = true;
   devLog(
-    '[DNSService] WARNING: secure RNG unavailable, using Math.random for DNS IDs (dev/test only)',
+    "[DNSService] WARNING: secure RNG unavailable, using Math.random for DNS IDs (dev/test only)",
   );
 };
 
 const fillSecureRandom = (target: Uint16Array<ArrayBuffer>): boolean => {
   try {
-    if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+    if (
+      typeof crypto !== "undefined" &&
+      typeof crypto.getRandomValues === "function"
+    ) {
       crypto.getRandomValues(target);
       return true;
     }
@@ -320,13 +361,13 @@ export function generateSecureDNSId(): number {
     return value ?? Math.floor(Math.random() * 65536);
   }
 
-  const isDev = typeof __DEV__ !== 'undefined' && !!__DEV__;
+  const isDev = typeof __DEV__ !== "undefined" && !!__DEV__;
   if (isDev || isTestRuntime()) {
     warnInsecureRandom();
     return Math.floor(Math.random() * 65536);
   }
 
-  throw new Error('Secure RNG unavailable for DNS transaction ID generation');
+  throw new Error("Secure RNG unavailable for DNS transaction ID generation");
 }
 
 // Safe helpers for logging/decoding
@@ -338,7 +379,7 @@ function safeStringify(value: unknown): string {
     try {
       return String(value);
     } catch {
-      return '<unstringifiable>';
+      return "<unstringifiable>";
     }
   }
 }
@@ -349,12 +390,12 @@ function safeStringify(value: unknown): string {
  * SECURITY: Enhanced validation to prevent DNS injection attacks
  */
 export function validateDNSMessage(message: string): void {
-  if (typeof message !== 'string') {
-    throw new Error('Message must be a non-empty string');
+  if (typeof message !== "string") {
+    throw new Error("Message must be a non-empty string");
   }
 
   if (message.length === 0) {
-    throw new Error('Message must be a non-empty string');
+    throw new Error("Message must be a non-empty string");
   }
 
   if (message.length > DNS_CONSTANTS.MAX_MESSAGE_LENGTH) {
@@ -364,11 +405,14 @@ export function validateDNSMessage(message: string): void {
   }
 
   if (message.trim().length === 0) {
-    throw new Error('Message cannot be empty or contain only whitespace');
+    throw new Error("Message cannot be empty or contain only whitespace");
   }
 
-  if (/[\x00-\x1F\x7F-\x9F]/.test(message)) {
-    throw new Error('Message contains control characters that cannot be encoded safely');
+  // oxlint-disable-next-line eslint/no-control-regex -- Rejecting control characters is the point of this check.
+  if (/[\u0000-\u001F\u007F-\u009F]/.test(message)) {
+    throw new Error(
+      "Message contains control characters that cannot be encoded safely",
+    );
   }
 }
 
@@ -388,7 +432,7 @@ export function sanitizeDNSMessage(message: string): string {
 
   if (!sanitized) {
     throw new Error(
-      'Message must contain at least one letter or number after sanitization',
+      "Message must contain at least one letter or number after sanitization",
     );
   }
 
@@ -403,7 +447,7 @@ export function sanitizeDNSMessage(message: string): string {
  */
 export function parseTXTResponse(txtRecords: string[]): string {
   if (!Array.isArray(txtRecords) || txtRecords.length === 0) {
-    throw new Error('No TXT records to parse');
+    throw new Error("No TXT records to parse");
   }
   try {
     return parseMultiPartTXTResponse(txtRecords);
@@ -428,8 +472,10 @@ export class DNSService {
   private static readonly TIMEOUT = DNS_CONSTANTS.QUERY_TIMEOUT_MS;
   private static readonly MAX_RETRIES = DNS_CONSTANTS.MAX_RETRIES;
   private static readonly RETRY_DELAY = DNS_CONSTANTS.RETRY_DELAY_MS;
-  private static readonly RATE_LIMIT_WINDOW = DNS_CONSTANTS.RATE_LIMIT_WINDOW_MS;
-  private static readonly MAX_REQUESTS_PER_WINDOW = DNS_CONSTANTS.MAX_REQUESTS_PER_WINDOW;
+  private static readonly RATE_LIMIT_WINDOW =
+    DNS_CONSTANTS.RATE_LIMIT_WINDOW_MS;
+  private static readonly MAX_REQUESTS_PER_WINDOW =
+    DNS_CONSTANTS.MAX_REQUESTS_PER_WINDOW;
   // SECURITY: Maximum DNS response size to prevent memory exhaustion attacks.
   // RFC 1035 specifies 512 bytes for UDP; TCP can be larger but 65535 is reasonable max.
   // A malicious server could send unlimited data without this guard.
@@ -440,14 +486,16 @@ export class DNSService {
   // as it only burned battery without adding correctness).
   private static readonly MAX_REQUEST_HISTORY_SIZE = 100;
   private static isAppInBackground = false;
+  private static backgroundTransitionId = 0;
   private static backgroundListenerInitialized = false;
   private static requestHistory: number[] = [];
   private static appStateSubscription: { remove: () => void } | null = null;
   private static serverHealth = new Map<string, ServerHealthState>();
+  private static activeJSTransportCancellations = new Set<() => void>();
 
   private static isVerbose(): boolean {
     try {
-      return typeof __DEV__ !== 'undefined' && !!__DEV__;
+      return typeof __DEV__ !== "undefined" && !!__DEV__;
     } catch {
       return false;
     }
@@ -470,17 +518,33 @@ export class DNSService {
   }
 
   private static initializeBackgroundListener() {
-    if (this.backgroundListenerInitialized || Platform.OS === 'web') {
+    if (this.backgroundListenerInitialized || Platform.OS === "web") {
       return;
     }
 
-    this.appStateSubscription = AppState.addEventListener('change', (nextAppState) => {
-      if (nextAppState === 'background') {
-        this.isAppInBackground = true;
-      } else if (nextAppState === 'active') {
-        this.isAppInBackground = false;
-      }
-    });
+    this.appStateSubscription = AppState.addEventListener(
+      "change",
+      (nextAppState) => {
+        if (nextAppState === "background") {
+          this.isAppInBackground = true;
+          this.backgroundTransitionId += 1;
+          for (const cancel of Array.from(
+            this.activeJSTransportCancellations,
+          )) {
+            cancel();
+          }
+          void nativeDNS.cancelActiveQueries().catch(() => {
+            // Keep lifecycle cleanup best-effort. Error details may contain
+            // resolver/query data and must not enter logs.
+            devLog(
+              "[DNSService] Failed to cancel active DNS queries while backgrounding",
+            );
+          });
+        } else if (nextAppState === "active") {
+          this.isAppInBackground = false;
+        }
+      },
+    );
 
     this.backgroundListenerInitialized = true;
   }
@@ -494,11 +558,14 @@ export class DNSService {
     let write = 0;
     for (let i = 0; i < this.requestHistory.length; i++) {
       const timestamp = this.requestHistory[i] ?? 0;
-      if (now - timestamp <= this.RATE_LIMIT_WINDOW) this.requestHistory[write++] = timestamp;
+      if (now - timestamp <= this.RATE_LIMIT_WINDOW)
+        this.requestHistory[write++] = timestamp;
     }
     this.requestHistory.length = write;
     if (this.requestHistory.length > this.MAX_REQUEST_HISTORY_SIZE) {
-      this.requestHistory = this.requestHistory.slice(-this.MAX_REQUEST_HISTORY_SIZE);
+      this.requestHistory = this.requestHistory.slice(
+        -this.MAX_REQUEST_HISTORY_SIZE,
+      );
     }
   }
 
@@ -521,7 +588,11 @@ export class DNSService {
     this.serverHealth.set(key, current);
   }
 
-  private static recordServerFailure(server: string, port: number, error: string): void {
+  private static recordServerFailure(
+    server: string,
+    port: number,
+    error: string,
+  ): void {
     const key = this.getServerHealthKey(server, port);
     const current = this.serverHealth.get(key) ?? {
       successes: 0,
@@ -566,6 +637,7 @@ export class DNSService {
       this.appStateSubscription = null;
       this.backgroundListenerInitialized = false;
     }
+    this.isAppInBackground = false;
     // Clear request history on teardown
     this.requestHistory = [];
   }
@@ -584,24 +656,34 @@ export class DNSService {
     return true;
   }
 
-  private static async handleBackgroundSuspension<T>(operation: () => Promise<T>): Promise<T> {
-    if (this.isAppInBackground) {
-      throw new Error('DNS query suspended due to app backgrounding');
-    }
+  private static captureLifecycleToken(): QueryLifecycleToken {
+    const lifecycleToken = this.backgroundTransitionId;
+    this.assertLifecycleActive(lifecycleToken);
+    return lifecycleToken;
+  }
 
+  private static assertLifecycleActive(
+    lifecycleToken: QueryLifecycleToken,
+  ): void {
+    if (
+      this.isAppInBackground ||
+      this.backgroundTransitionId !== lifecycleToken
+    ) {
+      throw new DNSBackgroundCancellationError();
+    }
+  }
+
+  private static async handleBackgroundSuspension<T>(
+    operation: () => Promise<T>,
+    lifecycleToken: QueryLifecycleToken,
+  ): Promise<T> {
+    this.assertLifecycleActive(lifecycleToken);
     try {
-      return await operation();
+      const result = await operation();
+      this.assertLifecycleActive(lifecycleToken);
+      return result;
     } catch (error) {
-      // If we get a network error and the app is in background, provide better error message
-      const message = getErrorMessage(error).toLowerCase();
-      if (
-        this.isAppInBackground &&
-        (message.includes('network') ||
-          message.includes('connection') ||
-          message.includes('timeout'))
-      ) {
-        throw new Error('DNS query failed - app was backgrounded during network operation');
-      }
+      this.assertLifecycleActive(lifecycleToken);
       throw error instanceof Error ? error : new Error(getErrorMessage(error));
     }
   }
@@ -615,14 +697,17 @@ export class DNSService {
   ): Promise<string> {
     // Initialize background listener on first use
     this.initializeBackgroundListener();
+    const lifecycleToken = this.captureLifecycleToken();
 
     if (!message.trim()) {
-      throw new Error('Message cannot be empty');
+      throw new Error("Message cannot be empty");
     }
 
     // Check rate limit
     if (!this.checkRateLimit()) {
-      throw new Error('Rate limit exceeded. Please wait before making another request.');
+      throw new Error(
+        "Rate limit exceeded. Please wait before making another request.",
+      );
     }
 
     const deadline = Date.now() + TOTAL_QUERY_BUDGET_MS;
@@ -633,21 +718,28 @@ export class DNSService {
     //   ch.at stays allowlisted for explicit selection, but is skipped from
     //   automatic fallback while it is known offline.
     const serversToTry: DNSServerConfig[] = dnsServer
-      ? [{ host: validateDNSServer(dnsServer), port: getServerPort(dnsServer), priority: 1 }]
+      ? [
+          {
+            host: validateDNSServer(dnsServer),
+            port: getServerPort(dnsServer),
+            priority: 1,
+          },
+        ]
       : getLLMServers();
 
     if (this.isVerbose()) {
-      this.vLog(`Server fallback chain: ${serversToTry.map(s => `${s.host}:${s.port}`).join(' → ')}`);
+      this.vLog(
+        `Server fallback chain: ${serversToTry.map((s) => `${s.host}:${s.port}`).join(" → ")}`,
+      );
     }
 
     // Start logging the query
     const queryId = DNSLogService.startQuery(message, logContext);
 
     try {
-      let lastError: Error | null = null;
-
       // Try each server in the fallback chain
       for (const serverConfig of serversToTry) {
+        this.assertLifecycleActive(lifecycleToken);
         const targetServer = serverConfig.host;
 
         // Prepare DNS query context for this server
@@ -665,8 +757,8 @@ export class DNSService {
           id: `${queryId}-server-${targetServer}`,
           timestamp: new Date(),
           message: `Trying server: ${targetServer}:${queryContext.targetPort}`,
-          method: 'native',
-          status: 'attempt',
+          method: "native",
+          status: "attempt",
           details: `Query: ${DNSLogService.redactTextForLog(queryContext.queryName)}`,
         });
 
@@ -677,7 +769,9 @@ export class DNSService {
             enableMockDNS,
             allowExperimentalTransports,
             deadline,
+            lifecycleToken,
           );
+          this.assertLifecycleActive(lifecycleToken);
 
           // SECURITY: Final response sanitization choke point. The multipart
           // parser already strips control/bidi characters, but applying it to
@@ -686,19 +780,37 @@ export class DNSService {
 
           this.recordServerSuccess(targetServer, queryContext.targetPort);
           try {
-            await DNSLogService.endQuery(queryId, true, safeResponse, result.method);
+            await DNSLogService.endQuery(
+              queryId,
+              true,
+              safeResponse,
+              result.method,
+            );
           } catch (logError) {
-            devLog("[DNSService] Failed to persist successful DNS query log", logError);
+            devLog(
+              "[DNSService] Failed to persist successful DNS query log",
+              logError,
+            );
           }
+          this.assertLifecycleActive(lifecycleToken);
           return safeResponse;
         } catch (error) {
-          if (this.isQueryBudgetError(error)) {
+          this.assertLifecycleActive(lifecycleToken);
+          if (
+            this.isQueryBudgetError(error) ||
+            this.isBackgroundCancellationError(error)
+          ) {
             throw error;
           }
           const message = getErrorMessage(error);
-          lastError = error instanceof Error ? error : new Error(message);
-          this.vLog(`Server ${targetServer}:${queryContext.targetPort} failed: ${message}`);
-          this.recordServerFailure(targetServer, queryContext.targetPort, message);
+          this.vLog(
+            `Server ${targetServer}:${queryContext.targetPort} failed: ${message}`,
+          );
+          this.recordServerFailure(
+            targetServer,
+            queryContext.targetPort,
+            message,
+          );
 
           // Log server fallback if there's another server to try
           const serverIndex = serversToTry.indexOf(serverConfig);
@@ -712,25 +824,30 @@ export class DNSService {
           }
 
           // Continue to next server
+          this.assertLifecycleActive(lifecycleToken);
           continue;
         }
       }
 
       // All servers failed
+      this.assertLifecycleActive(lifecycleToken);
       try {
         await DNSLogService.endQuery(queryId, false, undefined, undefined);
       } catch (logError) {
         devLog("[DNSService] Failed to persist failed DNS query log", logError);
       }
+      this.assertLifecycleActive(lifecycleToken);
 
       // Provide comprehensive error guidance
-      const serverList = serversToTry.map(s => `${s.host}:${s.port}`).join(', ');
+      const serverList = serversToTry
+        .map((s) => `${s.host}:${s.port}`)
+        .join(", ");
       const troubleshootingSteps = [
-        '1. Check network connectivity and try a different network (WiFi <-> Cellular)',
+        "1. Check network connectivity and try a different network (WiFi <-> Cellular)",
         `2. All LLM servers are unreachable: ${serverList}`,
-        '3. Check DNS logs in app Settings for detailed failure information',
-        '4. Network may be blocking DNS ports - contact network administrator',
-      ].join('\n');
+        "3. Check DNS logs in app Settings for detailed failure information",
+        "4. Network may be blocking DNS ports - contact network administrator",
+      ].join("\n");
 
       throw new Error(
         `DNS query failed after trying all servers (${serverList}).\n\nTroubleshooting steps:\n${troubleshootingSteps}`,
@@ -743,8 +860,12 @@ export class DNSService {
       try {
         await DNSLogService.endQuery(queryId, false);
       } catch (logError) {
-        devLog("[DNSService] Failed to finalize abandoned DNS query log", logError);
+        devLog(
+          "[DNSService] Failed to finalize abandoned DNS query log",
+          logError,
+        );
       }
+      this.assertLifecycleActive(lifecycleToken);
     }
   }
 
@@ -757,10 +878,12 @@ export class DNSService {
     enableMockDNS?: boolean,
     allowExperimentalTransports: boolean = true,
     deadline: number = Date.now() + TOTAL_QUERY_BUDGET_MS,
-  ): Promise<{ response: string; method: 'native' | 'udp' | 'tcp' | 'mock' }> {
+    lifecycleToken: QueryLifecycleToken = this.captureLifecycleToken(),
+  ): Promise<{ response: string; method: "native" | "udp" | "tcp" | "mock" }> {
     const { targetServer, targetPort } = queryContext;
 
     for (let attempt = 0; attempt < this.MAX_RETRIES; attempt++) {
+      this.assertLifecycleActive(lifecycleToken);
       this.assertWithinQueryBudget(deadline);
       const methodOrder = this.getMethodOrder(
         enableMockDNS,
@@ -771,31 +894,48 @@ export class DNSService {
         DNSLogService.addLog(queryId, {
           id: `${queryId}-order-${attempt}`,
           timestamp: new Date(),
-          message: `Transport order: ${methodOrder.join(' → ')} for ${targetServer}:${targetPort}`,
-          method: 'native',
-          status: 'attempt',
+          message: `Transport order: ${methodOrder.join(" → ")} for ${targetServer}:${targetPort}`,
+          method: "native",
+          status: "attempt",
           details: allowExperimentalTransports
-            ? 'Experimental transports enabled'
-            : 'Experimental transports disabled',
+            ? "Experimental transports enabled"
+            : "Experimental transports disabled",
         });
 
         for (const method of methodOrder) {
+          this.assertLifecycleActive(lifecycleToken);
           const remainingBudgetMs = this.assertWithinQueryBudget(deadline);
+          const methodBudgetMs = Math.min(this.TIMEOUT, remainingBudgetMs);
+          const methodDeadline = Math.min(
+            deadline,
+            Date.now() + methodBudgetMs,
+          );
           const timeoutExhaustsQueryBudget = remainingBudgetMs <= this.TIMEOUT;
           try {
             const result = await this.withTimeout(
-              this.tryMethod(queryId, method, queryContext),
-              Math.min(this.TIMEOUT, remainingBudgetMs),
+              this.tryMethod(
+                queryId,
+                method,
+                queryContext,
+                methodDeadline,
+                lifecycleToken,
+              ),
+              methodBudgetMs,
               () =>
                 timeoutExhaustsQueryBudget
                   ? this.createQueryBudgetError()
-                  : new Error('DNS query timed out'),
+                  : new Error("DNS query timed out"),
             );
+            this.assertLifecycleActive(lifecycleToken);
             if (result) {
               return result;
             }
           } catch (methodError) {
-            if (this.isQueryBudgetError(methodError)) {
+            this.assertLifecycleActive(lifecycleToken);
+            if (
+              this.isQueryBudgetError(methodError) ||
+              this.isBackgroundCancellationError(methodError)
+            ) {
               throw methodError;
             }
             // Log fallback to next method if available
@@ -811,14 +951,13 @@ export class DNSService {
         }
 
         // If we get here, all methods failed for this attempt
-        const availableMethods = methodOrder.join(', ');
+        const availableMethods = methodOrder.join(", ");
         const methodCount = methodOrder.length;
 
         // Provide actionable guidance based on common failure patterns
-        let guidance = '';
-        if (methodOrder.includes('udp') && methodOrder.includes('tcp')) {
-          guidance =
-            ` • Port ${targetPort} may be blocked. Try switching networks (WiFi <-> Cellular).`;
+        let guidance = "";
+        if (methodOrder.includes("udp") && methodOrder.includes("tcp")) {
+          guidance = ` • Port ${targetPort} may be blocked. Try switching networks (WiFi <-> Cellular).`;
         }
 
         if (!allowExperimentalTransports) {
@@ -830,26 +969,34 @@ export class DNSService {
           `All ${methodCount} DNS transports failed for ${targetServer}:${targetPort} (attempted: ${availableMethods}).${guidance}`,
         );
       } catch (error) {
-        if (this.isQueryBudgetError(error)) {
+        this.assertLifecycleActive(lifecycleToken);
+        if (
+          this.isQueryBudgetError(error) ||
+          this.isBackgroundCancellationError(error)
+        ) {
           throw error;
         }
         if (attempt === this.MAX_RETRIES - 1) {
-          throw error instanceof Error ? error : new Error(getErrorMessage(error));
+          throw error instanceof Error
+            ? error
+            : new Error(getErrorMessage(error));
         }
 
         const retryDelay = this.RETRY_DELAY * Math.pow(2, attempt);
+        this.assertLifecycleActive(lifecycleToken);
         const remainingBudgetMs = this.assertWithinQueryBudget(deadline);
         DNSLogService.addLog(queryId, {
           id: `retry-${Date.now()}`,
           timestamp: new Date(),
           message: `Retrying ${targetServer}:${targetPort} (attempt ${attempt + 2}/${this.MAX_RETRIES})`,
-          method: methodOrder[methodOrder.length - 1] ?? 'native',
-          status: 'attempt',
+          method: methodOrder[methodOrder.length - 1] ?? "native",
+          status: "attempt",
           details: `Waiting ${Math.min(retryDelay, remainingBudgetMs)}ms`,
         });
 
         // Exponential backoff
         await this.sleep(Math.min(retryDelay, remainingBudgetMs));
+        this.assertLifecycleActive(lifecycleToken);
       }
     }
 
@@ -861,16 +1008,18 @@ export class DNSService {
   private static async performNativeUDPQuery(
     queryName: string,
     dnsServer: string,
-    port: number = DNS_CONSTANTS.DNS_PORT,
+    port: number,
+    deadline: number,
   ): Promise<string[]> {
     return new Promise((resolve, reject) => {
       if (!dgram) {
-        return reject(new Error('UDP not available'));
+        return reject(new Error("UDP not available"));
       }
 
-      const socket = dgram.createSocket('udp4');
+      const socket = dgram.createSocket("udp4");
       let timeoutId: ReturnType<typeof setTimeout> | null = null;
       let settled = false;
+      let cancelForBackground: (() => void) | null = null;
 
       // SECURITY: Robust cleanup ensures socket is always closed.
       // Uses settled flag to prevent double cleanup which could cause errors.
@@ -878,59 +1027,91 @@ export class DNSService {
         if (settled) return;
         settled = true;
         if (timeoutId) clearTimeout(timeoutId);
+        if (cancelForBackground) {
+          this.activeJSTransportCancellations.delete(cancelForBackground);
+        }
         try {
           socket.removeAllListeners();
+        } catch {
+          // Listener cleanup is best-effort; the socket must still be closed.
+        }
+        try {
           socket.close();
         } catch {
-          // Socket may already be closed - ignore
+          // Socket may already be closed.
         }
       };
 
       const onError = (e: unknown) => {
+        if (settled) return;
         const details = getErrorDetails(e);
-        this.vLog('UDP: Error occurred:', e);
-        this.vLog('UDP: Error type:', typeof e);
-        this.vLog('UDP: Error message:', details.message);
-        this.vLog('UDP: Error code:', details.code);
-        this.vLog('UDP: Error errno:', details.errno);
+        this.vLog("UDP: Error occurred:", e);
+        this.vLog("UDP: Error type:", typeof e);
+        this.vLog("UDP: Error message:", details.message);
+        this.vLog("UDP: Error code:", details.code);
+        this.vLog("UDP: Error errno:", details.errno);
 
         cleanup();
+        if (e instanceof DNSBackgroundCancellationError) {
+          reject(e);
+          return;
+        }
 
         // Enhanced error handling for common UDP issues
         if (e === undefined || e === null) {
-          reject(new Error('UDP Socket error - received undefined error object'));
-        } else if (typeof e === 'string') {
+          reject(
+            new Error("UDP Socket error - received undefined error object"),
+          );
+        } else if (typeof e === "string") {
           reject(new Error(`UDP Socket error: ${e}`));
         } else if (e instanceof Error) {
           // Check for specific iOS port blocking errors
           const errorMsg = details.message.toLowerCase();
           const errorCode = details.code;
-          if (errorMsg.startsWith('failed to bind udp socket:')) {
+          if (errorMsg.startsWith("failed to bind udp socket:")) {
             reject(e);
           } else if (
-            errorMsg.includes('bad_port') ||
-            errorMsg.includes('port') ||
-            errorCode === 'ERR_SOCKET_BAD_PORT'
+            errorMsg.includes("bad_port") ||
+            errorMsg.includes("port") ||
+            errorCode === "ERR_SOCKET_BAD_PORT"
           ) {
             reject(
               new Error(
                 `UDP port ${port} blocked by network/iOS - automatic fallback to TCP: ${details.message}`,
               ),
             );
-          } else if (errorMsg.includes('permission') || errorMsg.includes('denied')) {
+          } else if (
+            errorMsg.includes("permission") ||
+            errorMsg.includes("denied")
+          ) {
             reject(
-              new Error(`UDP permission denied - network restrictions detected: ${details.message}`),
+              new Error(
+                `UDP permission denied - network restrictions detected: ${details.message}`,
+              ),
             );
-          } else if (errorMsg.includes('network') || errorMsg.includes('unreachable')) {
-            reject(new Error(`UDP network unreachable - connectivity issue: ${details.message}`));
+          } else if (
+            errorMsg.includes("network") ||
+            errorMsg.includes("unreachable")
+          ) {
+            reject(
+              new Error(
+                `UDP network unreachable - connectivity issue: ${details.message}`,
+              ),
+            );
           } else {
             reject(e);
           }
-        } else if (e && typeof e === 'object') {
-          const errorCode = details.code ?? details.errno ?? 'NO_CODE';
-          reject(new Error(`UDP Socket error [${errorCode}]: ${details.message}`));
+        } else if (e && typeof e === "object") {
+          const errorCode = details.code ?? details.errno ?? "NO_CODE";
+          reject(
+            new Error(`UDP Socket error [${errorCode}]: ${details.message}`),
+          );
         } else {
-          reject(new Error(`UDP Socket error - unexpected error type: ${typeof e} (${String(e)})`));
+          reject(
+            new Error(
+              `UDP Socket error - unexpected error type: ${typeof e} (${String(e)})`,
+            ),
+          );
         }
       };
 
@@ -938,12 +1119,18 @@ export class DNSService {
       const queryId = generateSecureDNSId();
       try {
         const queryBuffer = encodeTxtDnsQuery(queryName, queryId);
+        const remainingBudgetMs = this.assertWithinQueryBudget(deadline);
+
+        cancelForBackground = () => {
+          onError(new DNSBackgroundCancellationError());
+        };
+        this.activeJSTransportCancellations.add(cancelForBackground);
 
         timeoutId = setTimeout(() => {
-          onError(new Error('DNS query timed out'));
-        }, this.TIMEOUT);
+          onError(new Error("DNS query timed out"));
+        }, remainingBudgetMs);
 
-        socket.once('error', onError);
+        socket.once("error", onError);
 
         // SECURITY (anti-spoofing): use a persistent 'message' listener instead of
         // 'once'. An off-path attacker can race the legitimate server with forged
@@ -958,32 +1145,41 @@ export class DNSService {
         // Native gives us no cheap way to learn the OS-resolved address before
         // sending, so rinfo.address cannot be compared; the transaction ID,
         // source port, and question-echo checks remain the spoofing defenses.
-        socket.on('message', (response: Uint8Array, rinfo: { address: string; port: number }) => {
-          if (settled) return;
-          try {
-            const decoded = decodeDnsPacket(response, Buffer);
-            const txtRecords = extractTxtRecordsFromDecodedResponse(decoded, {
-              expectedQueryId: queryId,
-              expectedQueryName: queryName,
-              expectedPort: port,
-              expectedServer: dnsServer,
-              sourceAddress: rinfo.address,
-              sourcePort: rinfo.port,
-            }, Buffer);
+        socket.on(
+          "message",
+          (response: Uint8Array, rinfo: { address: string; port: number }) => {
+            if (settled) return;
+            try {
+              const decoded = decodeDnsPacket(response, Buffer);
+              const txtRecords = extractTxtRecordsFromDecodedResponse(
+                decoded,
+                {
+                  expectedQueryId: queryId,
+                  expectedQueryName: queryName,
+                  expectedPort: port,
+                  expectedServer: dnsServer,
+                  sourceAddress: rinfo.address,
+                  sourcePort: rinfo.port,
+                },
+                Buffer,
+              );
 
-            cleanup();
-            resolve(txtRecords);
-          } catch (validationError) {
-            // Drop the datagram and keep waiting for a valid response.
-            this.vLog(
-              'UDP: Dropped datagram failing DNS response validation:',
-              getErrorMessage(validationError),
-            );
-          }
-        });
+              cleanup();
+              resolve(txtRecords);
+            } catch (validationError) {
+              // Drop the datagram and keep waiting for a valid response.
+              this.vLog(
+                "UDP: Dropped datagram failing DNS response validation:",
+                getErrorMessage(validationError),
+              );
+            }
+          },
+        );
 
         const onBindError = (error: unknown) => {
-          onError(new Error(`Failed to bind UDP socket: ${getErrorMessage(error)}`));
+          onError(
+            new Error(`Failed to bind UDP socket: ${getErrorMessage(error)}`),
+          );
         };
 
         try {
@@ -999,13 +1195,15 @@ export class DNSService {
                 queryBuffer,
                 0,
                 queryBuffer.length,
-                port,  // Use the allowlisted resolver port
+                port, // Use the allowlisted resolver port
                 dnsServer,
                 (error?: unknown) => {
                   if (error) {
                     const message = getErrorMessage(error);
                     onError(
-                      new Error(`Failed to send UDP packet to ${dnsServer}:${port}: ${message}`),
+                      new Error(
+                        `Failed to send UDP packet to ${dnsServer}:${port}: ${message}`,
+                      ),
                     );
                   }
                 },
@@ -1026,30 +1224,30 @@ export class DNSService {
   private static async performDNSOverTCP(
     queryName: string,
     dnsServer: string,
-    port: number = DNS_CONSTANTS.DNS_PORT,
+    port: number,
+    deadline: number,
   ): Promise<string[]> {
     return new Promise((resolve, reject) => {
-      this.vLog('TCP: Starting DNS-over-TCP query');
-      this.vLog('TCP: TcpSocket available:', !!TcpSocket);
-      this.vLog('TCP: TcpSocket.Socket available:', !!TcpSocket?.Socket);
+      this.vLog("TCP: Starting DNS-over-TCP query");
+      this.vLog("TCP: TcpSocket available:", !!TcpSocket);
+      this.vLog("TCP: TcpSocket.Socket available:", !!TcpSocket?.Socket);
 
       if (!TcpSocket) {
-        this.vLog('TCP: Socket not available');
-        return reject(new Error('TCP Socket not available'));
+        this.vLog("TCP: Socket not available");
+        return reject(new Error("TCP Socket not available"));
+      }
+      if (!Buffer) {
+        return reject(new Error("Buffer unavailable for DNS-over-TCP"));
       }
 
       let socket: TcpSocketInstance | null = null;
       try {
-        this.vLog('TCP: Creating socket...');
+        this.vLog("TCP: Creating socket...");
         socket = new TcpSocket.Socket();
-        this.vLog('TCP: Socket created successfully');
+        this.vLog("TCP: Socket created successfully");
       } catch (socketError) {
-        this.vLog('TCP: Socket creation failed:', socketError);
+        this.vLog("TCP: Socket creation failed:", socketError);
         return reject(new Error(`Socket creation failed: ${socketError}`));
-      }
-
-      if (!Buffer) {
-        return reject(new Error('Buffer unavailable for DNS-over-TCP'));
       }
 
       let timeoutId: ReturnType<typeof setTimeout> | null = null;
@@ -1057,57 +1255,85 @@ export class DNSService {
       let expectedLength = 0;
       let prefixConsumed = false;
       let settled = false;
+      let cancelForBackground: (() => void) | null = null;
 
       // SECURITY: Robust cleanup ensures socket is always destroyed.
       // Uses settled flag to prevent double cleanup which could cause errors.
       const cleanup = () => {
         if (settled) return;
         settled = true;
-        this.vLog('TCP: Cleaning up...');
+        this.vLog("TCP: Cleaning up...");
         if (timeoutId) clearTimeout(timeoutId);
+        if (cancelForBackground) {
+          this.activeJSTransportCancellations.delete(cancelForBackground);
+        }
         if (socket) {
           try {
             socket.removeAllListeners();
+          } catch (destroyError) {
+            this.vLog("TCP: Error during listener cleanup:", destroyError);
+          }
+          try {
             socket.destroy();
           } catch (destroyError) {
-            this.vLog('TCP: Error during socket destroy:', destroyError);
+            this.vLog("TCP: Error during socket destroy:", destroyError);
           }
         }
       };
 
       const onError = (e: unknown) => {
+        if (settled) return;
         const details = getErrorDetails(e);
         const constructorName =
-          e && typeof e === 'object' && 'constructor' in e
+          e && typeof e === "object" && "constructor" in e
             ? (e as { constructor?: { name?: string } }).constructor?.name
             : undefined;
-        this.vLog('TCP: Error occurred:', e);
-        this.vLog('TCP: Error type:', typeof e);
-        this.vLog('TCP: Error constructor:', constructorName);
-        this.vLog('TCP: Error message:', details.message);
-        this.vLog('TCP: Error code:', details.code);
-        this.vLog('TCP: Error errno:', details.errno);
-        this.vLog('TCP: Error stringified:', safeStringify(e));
-        this.vLog('TCP: Error is undefined/null:', e === undefined || e === null);
+        this.vLog("TCP: Error occurred:", e);
+        this.vLog("TCP: Error type:", typeof e);
+        this.vLog("TCP: Error constructor:", constructorName);
+        this.vLog("TCP: Error message:", details.message);
+        this.vLog("TCP: Error code:", details.code);
+        this.vLog("TCP: Error errno:", details.errno);
+        this.vLog("TCP: Error stringified:", safeStringify(e));
+        this.vLog(
+          "TCP: Error is undefined/null:",
+          e === undefined || e === null,
+        );
 
         cleanup();
+        if (e instanceof DNSBackgroundCancellationError) {
+          reject(e);
+          return;
+        }
 
         // Enhanced error handling for undefined/null errors
         if (e === undefined || e === null) {
           reject(
             new Error(
-              'TCP Socket error - received undefined error object (possible React Native socket issue)',
+              "TCP Socket error - received undefined error object (possible React Native socket issue)",
             ),
           );
-        } else if (typeof e === 'string') {
+        } else if (typeof e === "string") {
           // Check for specific connection issues in string errors
           const errorStr = e.toLowerCase();
-          if (errorStr.includes('connection refused') || errorStr.includes('econnrefused')) {
+          if (
+            errorStr.includes("connection refused") ||
+            errorStr.includes("econnrefused")
+          ) {
             reject(
-              new Error(`TCP connection refused - DNS server may be blocking TCP port ${port}: ${e}`),
+              new Error(
+                `TCP connection refused - DNS server may be blocking TCP port ${port}: ${e}`,
+              ),
             );
-          } else if (errorStr.includes('timeout') || errorStr.includes('etimedout')) {
-            reject(new Error(`TCP connection timeout - network may be blocking TCP DNS: ${e}`));
+          } else if (
+            errorStr.includes("timeout") ||
+            errorStr.includes("etimedout")
+          ) {
+            reject(
+              new Error(
+                `TCP connection timeout - network may be blocking TCP DNS: ${e}`,
+              ),
+            );
           } else {
             reject(new Error(`TCP Socket error: ${e}`));
           }
@@ -1116,9 +1342,9 @@ export class DNSService {
           const errorMsg = details.message.toLowerCase();
           const errorCode = details.code;
           if (
-            errorMsg.includes('connection refused') ||
-            errorMsg.includes('econnrefused') ||
-            errorCode === 'ECONNREFUSED'
+            errorMsg.includes("connection refused") ||
+            errorMsg.includes("econnrefused") ||
+            errorCode === "ECONNREFUSED"
           ) {
             reject(
               new Error(
@@ -1126,29 +1352,35 @@ export class DNSService {
               ),
             );
           } else if (
-            errorMsg.includes('timeout') ||
-            errorMsg.includes('etimedout') ||
-            errorCode === 'ETIMEDOUT'
+            errorMsg.includes("timeout") ||
+            errorMsg.includes("etimedout") ||
+            errorCode === "ETIMEDOUT"
           ) {
             reject(
-              new Error(`TCP connection timeout - network may be blocking TCP DNS: ${details.message}`),
+              new Error(
+                `TCP connection timeout - network may be blocking TCP DNS: ${details.message}`,
+              ),
             );
           } else if (
-            errorMsg.includes('network') ||
-            errorMsg.includes('unreachable') ||
-            errorCode === 'ENETUNREACH'
+            errorMsg.includes("network") ||
+            errorMsg.includes("unreachable") ||
+            errorCode === "ENETUNREACH"
           ) {
-            reject(new Error(`TCP network unreachable - connectivity issue: ${details.message}`));
+            reject(
+              new Error(
+                `TCP network unreachable - connectivity issue: ${details.message}`,
+              ),
+            );
           } else {
             reject(e);
           }
-        } else if (e && typeof e === 'object') {
+        } else if (e && typeof e === "object") {
           const errorMsg = details.message;
-          const errorCode = details.code ?? details.errno ?? 'NO_CODE';
+          const errorCode = details.code ?? details.errno ?? "NO_CODE";
           // Check for connection issues in object errors
           if (
-            errorCode === 'ECONNREFUSED' ||
-            String(errorMsg).toLowerCase().includes('connection refused')
+            errorCode === "ECONNREFUSED" ||
+            String(errorMsg).toLowerCase().includes("connection refused")
           ) {
             reject(
               new Error(
@@ -1156,8 +1388,8 @@ export class DNSService {
               ),
             );
           } else if (
-            errorCode === 'ETIMEDOUT' ||
-            String(errorMsg).toLowerCase().includes('timeout')
+            errorCode === "ETIMEDOUT" ||
+            String(errorMsg).toLowerCase().includes("timeout")
           ) {
             reject(
               new Error(
@@ -1168,7 +1400,11 @@ export class DNSService {
             reject(new Error(`TCP Socket error [${errorCode}]: ${errorMsg}`));
           }
         } else {
-          reject(new Error(`TCP Socket error - unexpected error type: ${typeof e} (${String(e)})`));
+          reject(
+            new Error(
+              `TCP Socket error - unexpected error type: ${typeof e} (${String(e)})`,
+            ),
+          );
         }
       };
 
@@ -1176,26 +1412,38 @@ export class DNSService {
       const queryId = generateSecureDNSId();
       try {
         const tcpQuery = createTcpTxtDnsQueryFrame(queryName, queryId, Buffer);
-        this.vLog('TCP: TCP query frame created, total length:', tcpQuery.length);
+        this.vLog(
+          "TCP: TCP query frame created, total length:",
+          tcpQuery.length,
+        );
+        const remainingBudgetMs = this.assertWithinQueryBudget(deadline);
 
-        this.vLog('TCP: Setting up timeout...');
+        cancelForBackground = () => {
+          onError(new DNSBackgroundCancellationError());
+        };
+        this.activeJSTransportCancellations.add(cancelForBackground);
+
+        this.vLog("TCP: Setting up timeout...");
         timeoutId = setTimeout(() => {
-          this.vLog('TCP: Query timed out');
-          onError(new Error('DNS TCP query timed out'));
-        }, this.TIMEOUT);
+          this.vLog("TCP: Query timed out");
+          onError(new Error("DNS TCP query timed out"));
+        }, remainingBudgetMs);
 
-        this.vLog('TCP: Setting up error handler...');
-        socket.on('error', (err: unknown) => {
-          this.vLog('TCP: Socket error event:', err);
+        this.vLog("TCP: Setting up error handler...");
+        socket.on("error", (err: unknown) => {
+          this.vLog("TCP: Socket error event:", err);
           onError(err);
         });
 
-        this.vLog('TCP: Setting up data handler...');
-        socket.on('data', (data: BufferLike) => {
-          this.vLog('TCP: Received data, length:', data.length);
+        this.vLog("TCP: Setting up data handler...");
+        socket.on("data", (data: BufferLike) => {
+          this.vLog("TCP: Received data, length:", data.length);
 
           // SECURITY: Prevent memory exhaustion from malicious oversized responses
-          if (responseBuffer.length + data.length > this.MAX_DNS_RESPONSE_SIZE) {
+          if (
+            responseBuffer.length + data.length >
+            this.MAX_DNS_RESPONSE_SIZE
+          ) {
             cleanup();
             reject(
               new Error(
@@ -1205,7 +1453,10 @@ export class DNSService {
             return;
           }
 
-          responseBuffer = responseBuffer.length === 0 ? data : Buffer.concat([responseBuffer, data]);
+          responseBuffer =
+            responseBuffer.length === 0
+              ? data
+              : Buffer.concat([responseBuffer, data]);
 
           // Read the length prefix if we haven't yet
           if (!prefixConsumed && responseBuffer.length >= 2) {
@@ -1227,13 +1478,20 @@ export class DNSService {
           // Check if we have received the complete response
           if (expectedLength > 0 && responseBuffer.length >= expectedLength) {
             try {
-              const decoded = decodeDnsPacket(responseBuffer.subarray(0, expectedLength), Buffer);
-              const txtRecords = extractTxtRecordsFromDecodedResponse(decoded, {
-                expectedQueryId: queryId,
-                expectedQueryName: queryName,
-                expectedPort: port,
-                expectedServer: dnsServer,
-              }, Buffer);
+              const decoded = decodeDnsPacket(
+                responseBuffer.subarray(0, expectedLength),
+                Buffer,
+              );
+              const txtRecords = extractTxtRecordsFromDecodedResponse(
+                decoded,
+                {
+                  expectedQueryId: queryId,
+                  expectedQueryName: queryName,
+                  expectedPort: port,
+                  expectedServer: dnsServer,
+                },
+                Buffer,
+              );
 
               cleanup();
               resolve(txtRecords);
@@ -1243,53 +1501,64 @@ export class DNSService {
           }
         });
 
-        this.vLog('TCP: Setting up close handler...');
-        socket.on('close', () => {
-          this.vLog('TCP: Socket closed');
+        this.vLog("TCP: Setting up close handler...");
+        socket.on("close", () => {
+          this.vLog("TCP: Socket closed");
           if (!prefixConsumed || responseBuffer.length < expectedLength) {
-            this.vLog('TCP: Connection closed prematurely');
-            onError(new Error('Connection closed before receiving complete response'));
+            this.vLog("TCP: Connection closed prematurely");
+            onError(
+              new Error("Connection closed before receiving complete response"),
+            );
           }
         });
 
         // Connect and send the query
-        this.vLog('TCP: Attempting to connect to', dnsServer, 'port', port);
+        this.vLog("TCP: Attempting to connect to", dnsServer, "port", port);
         try {
           socket.connect(
             {
-              port: port,  // Use the allowlisted resolver port
+              port: port, // Use the allowlisted resolver port
               host: dnsServer,
             },
             (connectResult: unknown) => {
-              this.vLog('TCP: Connected successfully');
-              this.vLog('TCP: Connect result:', connectResult);
+              this.vLog("TCP: Connected successfully");
+              this.vLog("TCP: Connect result:", connectResult);
               try {
-                this.vLog('TCP: Sending query, length:', tcpQuery.length);
+                this.vLog("TCP: Sending query, length:", tcpQuery.length);
                 const writeResult = socket.write(tcpQuery);
-                this.vLog('TCP: Query sent, write result:', writeResult);
+                this.vLog("TCP: Query sent, write result:", writeResult);
               } catch (writeError) {
-                this.vLog('TCP: Write failed:', writeError);
-                this.vLog('TCP: Write error type:', typeof writeError);
-                this.vLog('TCP: Write error details:', safeStringify(writeError));
-                onError(writeError || new Error(`Write operation failed with undefined error`));
+                this.vLog("TCP: Write failed:", writeError);
+                this.vLog("TCP: Write error type:", typeof writeError);
+                this.vLog(
+                  "TCP: Write error details:",
+                  safeStringify(writeError),
+                );
+                onError(
+                  writeError ||
+                    new Error(`Write operation failed with undefined error`),
+                );
               }
             },
           );
 
           // Add specific error handling for connect failures
-          socket.on('connect', () => {
-            this.vLog('TCP: Socket connect event fired');
+          socket.on("connect", () => {
+            this.vLog("TCP: Socket connect event fired");
           });
 
-          socket.on('timeout', () => {
-            this.vLog('TCP: Socket timeout event fired');
-            onError(new Error('TCP Socket connection timeout'));
+          socket.on("timeout", () => {
+            this.vLog("TCP: Socket timeout event fired");
+            onError(new Error("TCP Socket connection timeout"));
           });
         } catch (connectError) {
-          this.vLog('TCP: Connect attempt failed:', connectError);
-          this.vLog('TCP: Connect error type:', typeof connectError);
-          this.vLog('TCP: Connect error details:', safeStringify(connectError));
-          onError(connectError || new Error(`Connect attempt failed with undefined error`));
+          this.vLog("TCP: Connect attempt failed:", connectError);
+          this.vLog("TCP: Connect error type:", typeof connectError);
+          this.vLog("TCP: Connect error details:", safeStringify(connectError));
+          onError(
+            connectError ||
+              new Error(`Connect attempt failed with undefined error`),
+          );
         }
       } catch (error) {
         onError(error);
@@ -1322,10 +1591,16 @@ export class DNSService {
     return normalized;
   }
 
-  private static createQueryContext(originalMessage: string, targetServer: string): DNSQueryContext {
+  private static createQueryContext(
+    originalMessage: string,
+    targetServer: string,
+  ): DNSQueryContext {
     const label = this.sanitizeMessage(originalMessage);
     const queryName = composeDNSQueryName(label, targetServer);
-    const targetPort = this.normalizePort(getServerPort(targetServer), targetServer);
+    const targetPort = this.normalizePort(
+      getServerPort(targetServer),
+      targetServer,
+    );
 
     return {
       originalMessage,
@@ -1348,7 +1623,11 @@ export class DNSService {
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
     const timeoutPromise = new Promise<T>((_, reject) => {
       timeoutId = setTimeout(() => {
-        reject(typeof timeoutMessage === 'function' ? timeoutMessage() : new Error(timeoutMessage));
+        reject(
+          typeof timeoutMessage === "function"
+            ? timeoutMessage()
+            : new Error(timeoutMessage),
+        );
       }, timeoutMs);
     });
 
@@ -1360,13 +1639,21 @@ export class DNSService {
   }
 
   private static createQueryBudgetError(): DNSError {
-    return new DNSError(DNSErrorType.TIMEOUT, 'DNS query budget exhausted');
+    return new DNSError(DNSErrorType.TIMEOUT, "DNS query budget exhausted");
   }
 
   private static isQueryBudgetError(error: unknown): boolean {
-    return error instanceof DNSError &&
+    return (
+      error instanceof DNSError &&
       error.type === DNSErrorType.TIMEOUT &&
-      error.message === 'DNS query budget exhausted';
+      error.message === "DNS query budget exhausted"
+    );
+  }
+
+  private static isBackgroundCancellationError(
+    error: unknown,
+  ): error is DNSBackgroundCancellationError {
+    return error instanceof DNSBackgroundCancellationError;
   }
 
   private static assertWithinQueryBudget(deadline: number): number {
@@ -1380,149 +1667,197 @@ export class DNSService {
   private static getMethodOrder(
     enableMockDNS: boolean | undefined,
     allowExperimentalTransports: boolean,
-  ): ('native' | 'udp' | 'tcp' | 'mock')[] {
-    const appendMock = (order: ('native' | 'udp' | 'tcp')[]) =>
-      enableMockDNS ? ([...order, 'mock'] as ('native' | 'udp' | 'tcp' | 'mock')[]) : order;
+  ): ("native" | "udp" | "tcp" | "mock")[] {
+    const appendMock = (order: ("native" | "udp" | "tcp")[]) =>
+      enableMockDNS
+        ? ([...order, "mock"] as ("native" | "udp" | "tcp" | "mock")[])
+        : order;
 
     // Web platform has no working DNS methods (no native, UDP, TCP support)
-    if (Platform.OS === 'web') {
+    if (Platform.OS === "web") {
       // Browsers cannot open custom DNS sockets, so web always uses the mock
       // transport regardless of the native-only setting flags.
-      return ['mock'];
+      return ["mock"];
     }
 
     // Production: Native with UDP/TCP fallbacks enabled
     if (allowExperimentalTransports) {
-      return appendMock(['native', 'udp', 'tcp']);
+      return appendMock(["native", "udp", "tcp"]);
     }
 
     // Restricted: Native only (no fallbacks)
-    return appendMock(['native']);
+    return appendMock(["native"]);
   }
 
   private static async tryMethod(
     queryId: string,
-    method: 'native' | 'udp' | 'tcp' | 'mock',
+    method: "native" | "udp" | "tcp" | "mock",
     context: DNSQueryContext,
+    deadline: number,
+    lifecycleToken: QueryLifecycleToken,
   ): Promise<{
     response: string;
-    method: 'native' | 'udp' | 'tcp' | 'mock';
+    method: "native" | "udp" | "tcp" | "mock";
   } | null> {
+    this.assertLifecycleActive(lifecycleToken);
+    this.assertWithinQueryBudget(deadline);
     const startTime = Date.now();
-    const { queryName, targetServer, targetPort, originalMessage, label } = context;
+    const { queryName, targetServer, targetPort, originalMessage, label } =
+      context;
 
     try {
-      DNSLogService.logMethodAttempt(queryId, method, `Server: ${targetServer}:${targetPort}`);
+      DNSLogService.logMethodAttempt(
+        queryId,
+        method,
+        `Server: ${targetServer}:${targetPort}`,
+      );
 
       let txtRecords: string[];
 
       switch (method) {
-        case 'native':
-          this.vLog('NATIVE: Starting native DNS transport test');
-          this.vLog('NATIVE: Target server:', targetServer);
-          this.vLog('NATIVE: Query metadata:', {
+        case "native":
+          this.vLog("NATIVE: Starting native DNS transport test");
+          this.vLog("NATIVE: Target server:", targetServer);
+          this.vLog("NATIVE: Query metadata:", {
             queryNameLength: queryName.length,
             labelLength: label.length,
           });
 
           const result = await this.handleBackgroundSuspension(async () => {
-            this.vLog('NATIVE: Checking native DNS capabilities...');
+            this.vLog("NATIVE: Checking native DNS capabilities...");
 
             let capabilities;
             try {
               capabilities = await nativeDNS.isAvailable();
-              this.vLog('NATIVE: Capabilities check completed');
+              this.assertLifecycleActive(lifecycleToken);
+              this.vLog("NATIVE: Capabilities check completed");
               // PERF: JSON.stringify argument evaluation would survive the
               // production transform-remove-console pass; gate it on dev.
               if (this.isVerbose()) {
                 this.vLog(
-                  'NATIVE: Capabilities details:',
+                  "NATIVE: Capabilities details:",
                   JSON.stringify(capabilities, null, 2),
                 );
               }
-              this.vLog('NATIVE: Available:', capabilities.available);
-              this.vLog('NATIVE: Platform:', capabilities.platform);
-              this.vLog('NATIVE: Supports custom server:', capabilities.supportsCustomServer);
-              this.vLog('NATIVE: Supports async query:', capabilities.supportsAsyncQuery);
+              this.vLog("NATIVE: Available:", capabilities.available);
+              this.vLog("NATIVE: Platform:", capabilities.platform);
+              this.vLog(
+                "NATIVE: Supports custom server:",
+                capabilities.supportsCustomServer,
+              );
+              this.vLog(
+                "NATIVE: Supports async query:",
+                capabilities.supportsAsyncQuery,
+              );
 
               if (capabilities.apiLevel) {
-                this.vLog('NATIVE: Android API level:', capabilities.apiLevel);
+                this.vLog("NATIVE: Android API level:", capabilities.apiLevel);
               }
             } catch (capabilitiesError) {
               const message = getErrorMessage(capabilitiesError);
-              this.vLog('NATIVE: Capabilities check failed:', capabilitiesError);
-              this.vLog('NATIVE: Capabilities error type:', typeof capabilitiesError);
-              this.vLog('NATIVE: Capabilities error details:', safeStringify(capabilitiesError));
+              this.vLog(
+                "NATIVE: Capabilities check failed:",
+                capabilitiesError,
+              );
+              this.vLog(
+                "NATIVE: Capabilities error type:",
+                typeof capabilitiesError,
+              );
+              this.vLog(
+                "NATIVE: Capabilities error details:",
+                safeStringify(capabilitiesError),
+              );
               throw new Error(
                 `Native DNS capabilities check failed: ${message}`,
               );
             }
 
             if (capabilities.available && capabilities.supportsCustomServer) {
-              this.vLog('NATIVE: Native DNS available and supports custom servers');
-              this.vLog('NATIVE: Attempting to query TXT records...');
+              this.vLog(
+                "NATIVE: Native DNS available and supports custom servers",
+              );
+              this.vLog("NATIVE: Attempting to query TXT records...");
 
               try {
-                this.vLog('NATIVE: Calling nativeDNS.queryTXT with:', {
+                this.assertLifecycleActive(lifecycleToken);
+                this.vLog("NATIVE: Calling nativeDNS.queryTXT with:", {
                   server: targetServer,
                   port: targetPort,
                   queryNameLength: queryName.length,
                 });
 
                 const queryStartTime = Date.now();
-                const records = await this.withTimeout(
-                  nativeDNS.queryTXT(targetServer, queryName, targetPort),
-                  this.TIMEOUT,
-                  `Native DNS query to ${targetServer}:${targetPort} timed out after ${this.TIMEOUT}ms`,
+                const records = await nativeDNS.queryTXT(
+                  targetServer,
+                  queryName,
+                  targetPort,
+                  deadline,
                 );
+                this.assertLifecycleActive(lifecycleToken);
                 const queryDuration = Date.now() - queryStartTime;
 
-                this.vLog('NATIVE: Query took:', queryDuration, 'ms');
-                if (this.isVerbose()) this.vLog('NATIVE: TXT record summary:', this.recordSummary(records));
+                this.vLog("NATIVE: Query took:", queryDuration, "ms");
+                if (this.isVerbose())
+                  this.vLog(
+                    "NATIVE: TXT record summary:",
+                    this.recordSummary(records),
+                  );
 
                 // Validate records - native module contract guarantees string[] or throws
                 if (!records || !Array.isArray(records)) {
                   throw new Error(
-                    `Native DNS query returned invalid records type: ${typeof records} (expected string[])`
+                    `Native DNS query returned invalid records type: ${typeof records} (expected string[])`,
                   );
                 }
 
                 if (records.length === 0) {
-                  throw new Error('Native DNS query returned empty records array');
+                  throw new Error(
+                    "Native DNS query returned empty records array",
+                  );
                 }
 
-                this.vLog('NATIVE: Parsing multi-part response...');
-                const parsedResponse = nativeDNS.parseMultiPartResponse(records);
-                this.vLog('NATIVE: Response parsed successfully');
-                this.vLog('NATIVE: Parsed response length:', parsedResponse?.length || 0);
+                this.vLog("NATIVE: Parsing multi-part response...");
+                const parsedResponse =
+                  nativeDNS.parseMultiPartResponse(records);
+                this.vLog("NATIVE: Response parsed successfully");
+                this.vLog(
+                  "NATIVE: Parsed response length:",
+                  parsedResponse?.length || 0,
+                );
 
                 return parsedResponse;
               } catch (nativeError) {
                 const details = getErrorDetails(nativeError);
                 const constructorName =
-                  nativeError && typeof nativeError === 'object' && 'constructor' in nativeError
-                    ? (nativeError as { constructor?: { name?: string } }).constructor?.name
+                  nativeError &&
+                  typeof nativeError === "object" &&
+                  "constructor" in nativeError
+                    ? (nativeError as { constructor?: { name?: string } })
+                        .constructor?.name
                     : undefined;
-                this.vLog('NATIVE: Query failed with error:', nativeError);
-                this.vLog('NATIVE: Error type:', typeof nativeError);
-                this.vLog('NATIVE: Error constructor:', constructorName);
-                this.vLog('NATIVE: Error message:', details.message);
-                this.vLog('NATIVE: Error code:', details.code);
-                this.vLog('NATIVE: Error details:', safeStringify(nativeError));
+                this.vLog("NATIVE: Query failed with error:", nativeError);
+                this.vLog("NATIVE: Error type:", typeof nativeError);
+                this.vLog("NATIVE: Error constructor:", constructorName);
+                this.vLog("NATIVE: Error message:", details.message);
+                this.vLog("NATIVE: Error code:", details.code);
+                this.vLog("NATIVE: Error details:", safeStringify(nativeError));
 
-                if (details.message.includes('timeout')) {
+                if (details.message.includes("timeout")) {
                   throw new Error(
                     `Native DNS timeout - network may be slow or DNS server unreachable: ${details.message}`,
                   );
-                } else if (details.message.includes('network')) {
+                } else if (details.message.includes("network")) {
                   throw new Error(
                     `Native DNS network error - check connectivity or try different network: ${details.message}`,
                   );
-                } else if (details.message.includes('permission')) {
+                } else if (details.message.includes("permission")) {
                   throw new Error(
                     `Native DNS permission denied - iOS/Android may restrict DNS access: ${details.message}`,
                   );
-                } else if (details.message.includes('resolution') || details.message.includes('not found')) {
+                } else if (
+                  details.message.includes("resolution") ||
+                  details.message.includes("not found")
+                ) {
                   throw new Error(
                     `Native DNS resolution failed - DNS server may not support TXT queries: ${details.message}`,
                   );
@@ -1533,43 +1868,61 @@ export class DNSService {
                 }
               }
             } else {
-              this.vLog("NATIVE: Native DNS not available or doesn't support custom servers");
-              this.vLog('NATIVE: Available:', capabilities.available);
-              this.vLog('NATIVE: Supports custom server:', capabilities.supportsCustomServer);
+              this.vLog(
+                "NATIVE: Native DNS not available or doesn't support custom servers",
+              );
+              this.vLog("NATIVE: Available:", capabilities.available);
+              this.vLog(
+                "NATIVE: Supports custom server:",
+                capabilities.supportsCustomServer,
+              );
 
               if (!capabilities.available) {
-                throw new Error(`Native DNS not available on platform: ${capabilities.platform}`);
+                throw new Error(
+                  `Native DNS not available on platform: ${capabilities.platform}`,
+                );
               } else {
-                throw new Error("Native DNS doesn't support custom servers on this platform");
+                throw new Error(
+                  "Native DNS doesn't support custom servers on this platform",
+                );
               }
             }
-          });
+          }, lifecycleToken);
 
           if (!result) {
-            this.vLog('NATIVE: Result is null/undefined after background suspension handling');
-            throw new Error('Native DNS returned null result');
+            this.vLog(
+              "NATIVE: Result is null/undefined after background suspension handling",
+            );
+            throw new Error("Native DNS returned null result");
           }
 
           const nativeDuration = Date.now() - startTime;
-          this.vLog('NATIVE: Native DNS query completed successfully');
-          this.vLog('NATIVE: Total duration:', nativeDuration, 'ms');
+          this.vLog("NATIVE: Native DNS query completed successfully");
+          this.vLog("NATIVE: Total duration:", nativeDuration, "ms");
           DNSLogService.logMethodSuccess(
             queryId,
-            'native',
+            "native",
             nativeDuration,
             `Response received (${result.length} chars)`,
           );
-          return { response: result, method: 'native' };
+          return { response: result, method: "native" };
 
-        case 'udp':
-          if (Platform.OS === 'web') {
+        case "udp":
+          if (Platform.OS === "web") {
             throw new Error(
               `UDP DNS transport not supported on web platform - use native DNS instead`,
             );
           }
-          if (Platform.OS === 'ios') {
-            txtRecords = await this.handleBackgroundSuspension(() =>
-              nativeDNS.queryTXTUDP(targetServer, queryName, targetPort),
+          if (Platform.OS === "ios") {
+            txtRecords = await this.handleBackgroundSuspension(
+              () =>
+                nativeDNS.queryTXTUDP(
+                  targetServer,
+                  queryName,
+                  targetPort,
+                  deadline,
+                ),
+              lifecycleToken,
             );
             break;
           }
@@ -1579,20 +1932,32 @@ export class DNSService {
             );
           }
 
-          txtRecords = await this.handleBackgroundSuspension(() =>
-            this.performNativeUDPQuery(queryName, targetServer, targetPort),
+          txtRecords = await this.handleBackgroundSuspension(
+            () =>
+              this.performNativeUDPQuery(
+                queryName,
+                targetServer,
+                targetPort,
+                deadline,
+              ),
+            lifecycleToken,
           );
           break;
 
-        case 'tcp':
-          if (Platform.OS === 'web') {
-            throw new Error(
-              `TCP DNS transport not supported on web platform`,
-            );
+        case "tcp":
+          if (Platform.OS === "web") {
+            throw new Error(`TCP DNS transport not supported on web platform`);
           }
-          if (Platform.OS === 'ios') {
-            txtRecords = await this.handleBackgroundSuspension(() =>
-              nativeDNS.queryTXTTCP(targetServer, queryName, targetPort),
+          if (Platform.OS === "ios") {
+            txtRecords = await this.handleBackgroundSuspension(
+              () =>
+                nativeDNS.queryTXTTCP(
+                  targetServer,
+                  queryName,
+                  targetPort,
+                  deadline,
+                ),
+              lifecycleToken,
             );
             break;
           }
@@ -1602,30 +1967,52 @@ export class DNSService {
             );
           }
 
-          txtRecords = await this.handleBackgroundSuspension(() =>
-            this.performDNSOverTCP(queryName, targetServer, targetPort),
+          txtRecords = await this.handleBackgroundSuspension(
+            () =>
+              this.performDNSOverTCP(
+                queryName,
+                targetServer,
+                targetPort,
+                deadline,
+              ),
+            lifecycleToken,
           );
           break;
 
-        case 'mock':
-          const mockResponse = await MockDNSService.queryLLM(originalMessage);
+        case "mock":
+          const mockResponse = await this.handleBackgroundSuspension(
+            () => MockDNSService.queryLLM(originalMessage),
+            lifecycleToken,
+          );
           const mockDuration = Date.now() - startTime;
-          DNSLogService.logMethodSuccess(queryId, 'mock', mockDuration, `Mock response generated`);
-          return { response: mockResponse, method: 'mock' };
+          DNSLogService.logMethodSuccess(
+            queryId,
+            "mock",
+            mockDuration,
+            `Mock response generated`,
+          );
+          return { response: mockResponse, method: "mock" };
 
         default:
-          const validMethods = ['native', 'udp', 'tcp', 'mock'].join(', ');
+          const validMethods = ["native", "udp", "tcp", "mock"].join(", ");
           throw new Error(
             `Invalid DNS transport method '${method}' - valid methods are: ${validMethods}`,
           );
       }
 
+      this.assertLifecycleActive(lifecycleToken);
       const response = this.parseResponse(txtRecords);
       const successDuration = Date.now() - startTime;
-      DNSLogService.logMethodSuccess(queryId, method, successDuration, `Response received`);
+      DNSLogService.logMethodSuccess(
+        queryId,
+        method,
+        successDuration,
+        `Response received`,
+      );
 
       return { response, method };
     } catch (error) {
+      this.assertLifecycleActive(lifecycleToken);
       const errorDuration = Date.now() - startTime;
       const message = getErrorMessage(error);
       DNSLogService.logMethodFailure(queryId, method, message, errorDuration);
@@ -1633,29 +2020,34 @@ export class DNSService {
     }
   }
 
-
   /**
    * Test a specific DNS transport method with no fallback
    * Used for testing individual transport methods in isolation
    */
   static async testTransport(
     message: string,
-    transport: 'native' | 'udp' | 'tcp',
+    transport: "native" | "udp" | "tcp",
     dnsServer?: string,
   ): Promise<string> {
+    this.initializeBackgroundListener();
+    const lifecycleToken = this.captureLifecycleToken();
     this.vLog(`Starting forced transport test: ${transport.toUpperCase()}`);
 
     if (!message.trim()) {
-      throw new Error('Test message cannot be empty');
+      throw new Error("Test message cannot be empty");
     }
 
     // Check rate limit
     if (!this.checkRateLimit()) {
-      throw new Error('Rate limit exceeded. Please wait before making another request.');
+      throw new Error(
+        "Rate limit exceeded. Please wait before making another request.",
+      );
     }
 
     // Normalize + validate once; use the canonical value everywhere (query name + sockets + logs).
-    const targetServer = validateDNSServer(dnsServer || this.DEFAULT_DNS_SERVER);
+    const targetServer = validateDNSServer(
+      dnsServer || this.DEFAULT_DNS_SERVER,
+    );
 
     const context = this.createQueryContext(message, targetServer);
 
@@ -1666,15 +2058,18 @@ export class DNSService {
       timestamp: new Date(),
       message: "Resolved DNS query name",
       method: transport,
-      status: 'attempt',
+      status: "attempt",
       details: `Label: ${DNSLogService.redactTextForLog(context.label)}`,
     });
 
     const startTime = Date.now();
+    const deadline = startTime + this.TIMEOUT;
 
     try {
-      this.vLog(`Testing ${transport.toUpperCase()} transport to ${targetServer}:${context.targetPort}`);
-      this.vLog('Forced query metadata:', {
+      this.vLog(
+        `Testing ${transport.toUpperCase()} transport to ${targetServer}:${context.targetPort}`,
+      );
+      this.vLog("Forced query metadata:", {
         queryNameLength: context.queryName.length,
         labelLength: context.label.length,
       });
@@ -1687,65 +2082,99 @@ export class DNSService {
       let txtRecords: string[];
 
       switch (transport) {
-        case 'native':
-          this.vLog('NATIVE TEST: Starting forced native DNS transport test');
+        case "native":
+          this.vLog("NATIVE TEST: Starting forced native DNS transport test");
 
           const result = await this.handleBackgroundSuspension(async () => {
-            this.vLog('NATIVE TEST: Checking capabilities for forced test...');
+            this.vLog("NATIVE TEST: Checking capabilities for forced test...");
             const capabilities = await nativeDNS.isAvailable();
+            this.assertLifecycleActive(lifecycleToken);
             // PERF: JSON.stringify argument evaluation would survive the
             // production transform-remove-console pass; gate it on dev.
             if (this.isVerbose()) {
-              this.vLog('NATIVE TEST: Capabilities:', JSON.stringify(capabilities, null, 2));
+              this.vLog(
+                "NATIVE TEST: Capabilities:",
+                JSON.stringify(capabilities, null, 2),
+              );
             }
 
             if (capabilities.available && capabilities.supportsCustomServer) {
-              this.vLog('NATIVE TEST: Native DNS available for forced test');
-              this.vLog(`NATIVE TEST: Executing queryTXT to ${targetServer}:${context.targetPort}...`);
+              this.vLog("NATIVE TEST: Native DNS available for forced test");
+              this.vLog(
+                `NATIVE TEST: Executing queryTXT to ${targetServer}:${context.targetPort}...`,
+              );
 
               const testStartTime = Date.now();
+              const remainingBudgetMs = this.assertWithinQueryBudget(deadline);
+              this.assertLifecycleActive(lifecycleToken);
               const records = await this.withTimeout(
-                nativeDNS.queryTXT(targetServer, context.queryName, context.targetPort),
-                this.TIMEOUT,
-                `Native DNS query to ${targetServer}:${context.targetPort} timed out after ${this.TIMEOUT}ms`,
+                nativeDNS.queryTXT(
+                  targetServer,
+                  context.queryName,
+                  context.targetPort,
+                  deadline,
+                ),
+                remainingBudgetMs,
+                () => this.createQueryBudgetError(),
               );
+              this.assertLifecycleActive(lifecycleToken);
               const testQueryDuration = Date.now() - testStartTime;
 
-              if (this.isVerbose()) this.vLog('NATIVE TEST: TXT record summary:', this.recordSummary(records));
-              this.vLog('NATIVE TEST: Query duration:', testQueryDuration, 'ms');
+              if (this.isVerbose())
+                this.vLog(
+                  "NATIVE TEST: TXT record summary:",
+                  this.recordSummary(records),
+                );
+              this.vLog(
+                "NATIVE TEST: Query duration:",
+                testQueryDuration,
+                "ms",
+              );
 
               const parsedResult = nativeDNS.parseMultiPartResponse(records);
-              this.vLog('NATIVE TEST: Response parsed:', parsedResult?.length, 'chars');
+              this.vLog(
+                "NATIVE TEST: Response parsed:",
+                parsedResult?.length,
+                "chars",
+              );
 
               return parsedResult;
             }
-            this.vLog('NATIVE TEST: Native DNS not available for forced test');
+            this.vLog("NATIVE TEST: Native DNS not available for forced test");
             throw new Error(
               `Native DNS not available for forced test - available: ${capabilities.available}, custom server: ${capabilities.supportsCustomServer}`,
             );
-          });
+          }, lifecycleToken);
 
           const nativeDuration = Date.now() - startTime;
-          this.vLog('NATIVE TEST: Forced test completed successfully');
+          this.vLog("NATIVE TEST: Forced test completed successfully");
           DNSLogService.logMethodSuccess(
             queryId,
-            'native',
+            "native",
             nativeDuration,
             `Forced test response received (${result.length} chars)`,
           );
-          await DNSLogService.endQuery(queryId, true, result, 'native');
-          this.vLog('Native transport test successful:', { responseLength: result.length });
+          await DNSLogService.endQuery(queryId, true, result, "native");
+          this.assertLifecycleActive(lifecycleToken);
+          this.vLog("Native transport test successful:", {
+            responseLength: result.length,
+          });
           return result;
 
-        case 'udp':
-          if (Platform.OS === 'web') {
-            throw new Error(
-              `UDP forced test not supported on web platform`,
-            );
+        case "udp":
+          if (Platform.OS === "web") {
+            throw new Error(`UDP forced test not supported on web platform`);
           }
-          if (Platform.OS === 'ios') {
-            txtRecords = await this.handleBackgroundSuspension(() =>
-              nativeDNS.queryTXTUDP(targetServer, context.queryName, context.targetPort),
+          if (Platform.OS === "ios") {
+            txtRecords = await this.handleBackgroundSuspension(
+              () =>
+                nativeDNS.queryTXTUDP(
+                  targetServer,
+                  context.queryName,
+                  context.targetPort,
+                  deadline,
+                ),
+              lifecycleToken,
             );
             break;
           }
@@ -1755,20 +2184,32 @@ export class DNSService {
             );
           }
 
-          txtRecords = await this.handleBackgroundSuspension(() =>
-            this.performNativeUDPQuery(context.queryName, targetServer, context.targetPort),
+          txtRecords = await this.handleBackgroundSuspension(
+            () =>
+              this.performNativeUDPQuery(
+                context.queryName,
+                targetServer,
+                context.targetPort,
+                deadline,
+              ),
+            lifecycleToken,
           );
           break;
 
-        case 'tcp':
-          if (Platform.OS === 'web') {
-            throw new Error(
-              `TCP forced test not supported on web platform`,
-            );
+        case "tcp":
+          if (Platform.OS === "web") {
+            throw new Error(`TCP forced test not supported on web platform`);
           }
-          if (Platform.OS === 'ios') {
-            txtRecords = await this.handleBackgroundSuspension(() =>
-              nativeDNS.queryTXTTCP(targetServer, context.queryName, context.targetPort),
+          if (Platform.OS === "ios") {
+            txtRecords = await this.handleBackgroundSuspension(
+              () =>
+                nativeDNS.queryTXTTCP(
+                  targetServer,
+                  context.queryName,
+                  context.targetPort,
+                  deadline,
+                ),
+              lifecycleToken,
             );
             break;
           }
@@ -1778,18 +2219,26 @@ export class DNSService {
             );
           }
 
-          txtRecords = await this.handleBackgroundSuspension(() =>
-            this.performDNSOverTCP(context.queryName, targetServer, context.targetPort),
+          txtRecords = await this.handleBackgroundSuspension(
+            () =>
+              this.performDNSOverTCP(
+                context.queryName,
+                targetServer,
+                context.targetPort,
+                deadline,
+              ),
+            lifecycleToken,
           );
           break;
 
         default:
-          const validTransports = ['native', 'udp', 'tcp'].join(', ');
+          const validTransports = ["native", "udp", "tcp"].join(", ");
           throw new Error(
             `Invalid transport method '${transport}' for forced test - valid transports are: ${validTransports}`,
           );
       }
 
+      this.assertLifecycleActive(lifecycleToken);
       const response = this.parseResponse(txtRecords);
       const testSuccessDuration = Date.now() - startTime;
       DNSLogService.logMethodSuccess(
@@ -1799,6 +2248,7 @@ export class DNSService {
         `Forced test response received`,
       );
       await DNSLogService.endQuery(queryId, true, response, transport);
+      this.assertLifecycleActive(lifecycleToken);
       this.vLog(`${transport.toUpperCase()} transport test successful:`, {
         responseLength: response.length,
       });
@@ -1807,8 +2257,17 @@ export class DNSService {
       const testErrorDuration = Date.now() - startTime;
       const message = getErrorMessage(error);
       this.vLog(`${transport.toUpperCase()} transport test failed:`, message);
-      DNSLogService.logMethodFailure(queryId, transport, message, testErrorDuration);
-      await DNSLogService.endQuery(queryId, false, undefined, transport);
+      DNSLogService.logMethodFailure(
+        queryId,
+        transport,
+        message,
+        testErrorDuration,
+      );
+      try {
+        await DNSLogService.endQuery(queryId, false, undefined, transport);
+      } finally {
+        this.assertLifecycleActive(lifecycleToken);
+      }
       throw error instanceof Error ? error : new Error(message);
     }
   }
@@ -1825,13 +2284,16 @@ export class MockDNSService {
 
   static async queryLLM(message: string): Promise<string> {
     // Simulate network delay
-    await new Promise((resolve) => setTimeout(resolve, 1000 + Math.random() * 2000));
+    await new Promise((resolve) =>
+      setTimeout(resolve, 1000 + Math.random() * 2000),
+    );
 
     // NOTE: Removed random errors to ensure mock service is reliable fallback
     // When used as final fallback, mock service should always succeed
 
     // Return a mock response
-    const randomResponse = this.responses[Math.floor(Math.random() * this.responses.length)];
+    const randomResponse =
+      this.responses[Math.floor(Math.random() * this.responses.length)];
     return `${randomResponse}\n\nYour message: "${message}"`;
   }
 }

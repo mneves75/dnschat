@@ -1,9 +1,5 @@
 import React, { useEffect, useState } from "react";
-import {
-  AccessibilityInfo,
-  Platform,
-  View,
-} from "react-native";
+import { AccessibilityInfo, Platform, View } from "react-native";
 import type { ViewProps } from "react-native";
 import {
   GlassView,
@@ -11,7 +7,10 @@ import {
   isGlassEffectAPIAvailable as expoIsGlassEffectAPIAvailable,
   isLiquidGlassAvailable as expoIsLiquidGlassAvailable,
 } from "expo-glass-effect";
-import { getImessagePalette, getAndroidGlassFallback } from "../ui/theme/imessagePalette";
+import {
+  getImessagePalette,
+  getAndroidGlassFallback,
+} from "../ui/theme/imessagePalette";
 import { splitGlassStyles } from "./glass/glassStyleUtils";
 import { useResolvedColorScheme } from "../ui/theme/resolvedColorScheme";
 
@@ -116,10 +115,7 @@ const computeGlassAvailability = (): GlassAvailability => {
   const iosMajorVersion = parseIosMajorVersion();
 
   try {
-    if (
-      expoIsLiquidGlassAvailable() &&
-      expoIsGlassEffectAPIAvailable()
-    ) {
+    if (expoIsLiquidGlassAvailable() && expoIsGlassEffectAPIAvailable()) {
       return {
         available: true,
         reason: "expo",
@@ -363,10 +359,7 @@ export const LiquidGlassWrapper: React.FC<LiquidGlassProps> = ({
   if (enableContainer) {
     return (
       <View style={containerStyles}>
-        <GlassContainer
-          spacing={containerSpacing}
-          style={glassStyles}
-        >
+        <GlassContainer spacing={containerSpacing} style={glassStyles}>
           {glassContent}
         </GlassContainer>
       </View>
@@ -390,10 +383,9 @@ export const LiquidGlassButton: React.FC<LiquidGlassProps> = ({
   />
 );
 
-
 export const useLiquidGlassCapabilities = () => {
-  const [availability, setAvailability] = useState<GlassAvailability>(
-    () => computeGlassAvailability(),
+  const [availability, setAvailability] = useState<GlassAvailability>(() =>
+    computeGlassAvailability(),
   );
   const [loading, setLoading] = useState(Platform.OS === "ios");
   const [reduceTransparency, setReduceTransparency] = useState(

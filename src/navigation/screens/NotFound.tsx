@@ -10,14 +10,12 @@
  */
 
 import React from "react";
-import { StyleSheet, Text, View, Platform } from "react-native";
+import { StyleSheet } from "react-native";
 import Animated from "react-native-reanimated";
 import { useRouter } from "expo-router";
 import { useTranslation } from "../../i18n";
 import { useImessagePalette } from "../../ui/theme/imessagePalette";
-import { LiquidGlassSpacing, getCornerRadius } from "../../ui/theme/liquidGlassSpacing";
 import { Form } from "../../components/glass/GlassForm";
-import { LiquidGlassWrapper } from "../../components/LiquidGlassWrapper";
 import { useScreenEntrance } from "../../ui/hooks/useScreenEntrance";
 import { EmptyState } from "../../components/EmptyState";
 
@@ -34,7 +32,9 @@ export function NotFound() {
   return (
     <Form.List
       testID="not-found-screen"
-      navigationTitle={t("screen.notFound.navigationTitle", { defaultValue: "Not Found" })}
+      navigationTitle={t("screen.notFound.navigationTitle", {
+        defaultValue: "Not Found",
+      })}
       style={[styles.container, { backgroundColor: palette.background }]}
     >
       <Form.Section>
@@ -42,7 +42,8 @@ export function NotFound() {
           <EmptyState
             title={t("screen.notFound.title")}
             description={t("screen.notFound.description", {
-              defaultValue: "The page you're looking for doesn't exist or has been moved.",
+              defaultValue:
+                "The page you're looking for doesn't exist or has been moved.",
             })}
             iconType="error"
             actionLabel={t("screen.notFound.goHome")}

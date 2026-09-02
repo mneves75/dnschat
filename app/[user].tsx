@@ -11,5 +11,9 @@ export default function ProfileRedirectRoute() {
     return <NotFound />;
   }
 
-  return <Redirect href={{ pathname: "/profile/[user]", params: { user: handle } }} />;
+  return (
+    <Redirect
+      href={{ pathname: "/profile/[user]", params: { user: handle } }}
+    />
+  );
 }

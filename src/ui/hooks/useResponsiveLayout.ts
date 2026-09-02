@@ -10,9 +10,9 @@
  *   - desktop : width >= 1024 (web large)
  */
 
-import { useWindowDimensions } from 'react-native';
+import { useWindowDimensions } from "react-native";
 
-export type ResponsiveSize = 'phone' | 'tablet' | 'desktop';
+export type ResponsiveSize = "phone" | "tablet" | "desktop";
 
 export interface ResponsiveLayout {
   size: ResponsiveSize;
@@ -39,16 +39,16 @@ export function useResponsiveLayout(): ResponsiveLayout {
   const isTablet = !isPhone && !isDesktop;
 
   const size: ResponsiveSize = isDesktop
-    ? 'desktop'
+    ? "desktop"
     : isTablet
-      ? 'tablet'
-      : 'phone';
+      ? "tablet"
+      : "phone";
 
   const messageMaxWidth: number | `${number}%` = isDesktop
     ? 560
     : isTablet
-      ? '60%'
-      : '75%';
+      ? "60%"
+      : "75%";
 
   const tabIconSize = isDesktop ? 28 : isTablet ? 26 : 22;
 

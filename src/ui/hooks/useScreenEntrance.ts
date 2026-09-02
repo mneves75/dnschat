@@ -21,19 +21,18 @@
  * @see DESIGN-UI-UX-GUIDELINES.md - Screen entrance patterns
  */
 
-import { useEffect, useState } from 'react';
-import type { ViewStyle } from 'react-native';
+import { useEffect, useState } from "react";
+import type { ViewStyle } from "react-native";
 import {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
   withSpring,
-  Easing,
-} from 'react-native-reanimated';
-import { scheduleOnRN } from 'react-native-worklets';
-import type { AnimatedStyle, WithSpringConfig, WithTimingConfig } from 'react-native-reanimated';
-import { useMotionReduction } from '../../context/AccessibilityContext';
-import { SpringConfig, TimingConfig } from '../../utils/animations';
+} from "react-native-reanimated";
+import { scheduleOnRN } from "react-native-worklets";
+import type { AnimatedStyle } from "react-native-reanimated";
+import { useMotionReduction } from "../../context/AccessibilityContext";
+import { SpringConfig, TimingConfig } from "../../utils/animations";
 
 interface UseScreenEntranceOptions {
   /**
@@ -78,7 +77,7 @@ interface UseScreenEntranceResult {
 }
 
 export function useScreenEntrance(
-  options: UseScreenEntranceOptions = {}
+  options: UseScreenEntranceOptions = {},
 ): UseScreenEntranceResult {
   const {
     initialOffset = 20,
@@ -102,7 +101,7 @@ export function useScreenEntrance(
   };
 
   const animate = () => {
-    'worklet';
+    "worklet";
 
     if (shouldReduceMotion) {
       // Instant transition for reduced motion
@@ -113,11 +112,13 @@ export function useScreenEntrance(
     }
 
     // Opacity: timing animation (0.3s)
-    opacity.set(withTiming(1, TimingConfig.normal, (finished) => {
-      if (finished) {
-        scheduleOnRN(markReady);
-      }
-    }));
+    opacity.set(
+      withTiming(1, TimingConfig.normal, (finished) => {
+        if (finished) {
+          scheduleOnRN(markReady);
+        }
+      }),
+    );
 
     // TranslateY: spring or timing based on preference
     if (useSpringAnimation) {

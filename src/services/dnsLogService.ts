@@ -1,15 +1,18 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { sha256 } from '@noble/hashes/sha2.js';
-import { bytesToHex, utf8ToBytes } from '@noble/hashes/utils.js';
-import { LOGGING_CONSTANTS, STORAGE_CONSTANTS } from '../constants/appConstants';
+import { sha256 } from "@noble/hashes/sha2.js";
+import { bytesToHex, utf8ToBytes } from "@noble/hashes/utils.js";
+import {
+  LOGGING_CONSTANTS,
+  STORAGE_CONSTANTS,
+} from "../constants/appConstants";
 import {
   EncryptionKeyCorruptionError,
   EncryptionKeyUnavailableError,
   decryptIfEncrypted,
   encryptString,
   isEncryptedPayload,
-} from './encryptionService';
-import { isScreenshotMode, getMockDNSLogs } from '../utils/screenshotMode';
+} from "./encryptionService";
+import { isScreenshotMode, getMockDNSLogs } from "../utils/screenshotMode";
 import { devLog, devWarn } from "../utils/devLog";
 
 export interface DNSLogEntry {
@@ -36,16 +39,6 @@ export interface DNSQueryLog {
   response?: string;
   entries: DNSLogEntry[];
 }
-
-type StoredDNSLogEntry = Omit<DNSLogEntry, 'timestamp'> & {
-  timestamp: string | number | Date;
-};
-
-type StoredDNSQueryLog = Omit<DNSQueryLog, 'startTime' | 'endTime' | 'entries'> & {
-  startTime: string | number | Date;
-  endTime?: string | number | Date;
-  entries?: StoredDNSLogEntry[];
-};
 
 const STORAGE_KEY = STORAGE_CONSTANTS.LOGS_KEY;
 const LOGS_BACKUP_KEY = STORAGE_CONSTANTS.LOGS_BACKUP_KEY;
@@ -83,7 +76,8 @@ export class DNSLogService {
   private static queryLogs: DNSQueryLog[] = [];
   private static listeners: Set<(logs: DNSQueryLog[]) => void> = new Set();
   private static idCounter = 0;
-  private static cleanupIntervalId: ReturnType<typeof setInterval> | null = null;
+  private static cleanupIntervalId: ReturnType<typeof setInterval> | null =
+    null;
   private static persistenceQueue: Promise<void> = Promise.resolve();
   private static initialized = false;
   private static initializationInFlight: Promise<void> | null = null;
@@ -165,7 +159,10 @@ export class DNSLogService {
     return sanitized;
   }
 
-  private static sanitizeEntry(queryId: string, entry: DNSLogEntry): DNSLogEntry {
+  private static sanitizeEntry(
+    queryId: string,
+    entry: DNSLogEntry,
+  ): DNSLogEntry {
     return {
       ...entry,
       ...(entry.details !== undefined
@@ -188,9 +185,7 @@ export class DNSLogService {
   ): string {
     const value = record[key];
     if (typeof value !== "string" || value.length === 0) {
-      throw new DNSLogStorageCorruptionError(
-        `${context} has invalid ${key}`,
-      );
+      throw new DNSLogStorageCorruptionError(`${context} has invalid ${key}`);
     }
     return value;
   }
@@ -205,9 +200,7 @@ export class DNSLogService {
       return undefined;
     }
     if (typeof value !== "string") {
-      throw new DNSLogStorageCorruptionError(
-        `${context} has invalid ${key}`,
-      );
+      throw new DNSLogStorageCorruptionError(`${context} has invalid ${key}`);
     }
     return value;
   }
@@ -222,17 +215,12 @@ export class DNSLogService {
       return undefined;
     }
     if (typeof value !== "number" || !Number.isFinite(value) || value < 0) {
-      throw new DNSLogStorageCorruptionError(
-        `${context} has invalid ${key}`,
-      );
+      throw new DNSLogStorageCorruptionError(`${context} has invalid ${key}`);
     }
     return value;
   }
 
-  private static parseStoredDate(
-    value: unknown,
-    context: string,
-  ): Date {
+  private static parseStoredDate(value: unknown, context: string): Date {
     if (typeof value !== "string" && typeof value !== "number") {
       throw new DNSLogStorageCorruptionError(`${context} is invalid`);
     }
@@ -267,7 +255,10 @@ export class DNSLogService {
     const duration = this.optionalDuration(candidate, "duration", context);
     return {
       id: this.requireString(candidate, "id", context),
-      timestamp: this.parseStoredDate(candidate["timestamp"], `${context} timestamp`),
+      timestamp: this.parseStoredDate(
+        candidate["timestamp"],
+        `${context} timestamp`,
+      ),
       message: this.requireString(candidate, "message", context),
       method: method as DNSLogEntry["method"],
       status: status as DNSLogEntry["status"],
@@ -287,7 +278,9 @@ export class DNSLogService {
     }
 
     const finalStatus = this.requireString(candidate, "finalStatus", context);
-    if (!DNS_FINAL_STATUSES.includes(finalStatus as DNSQueryLog["finalStatus"])) {
+    if (
+      !DNS_FINAL_STATUSES.includes(finalStatus as DNSQueryLog["finalStatus"])
+    ) {
       throw new DNSLogStorageCorruptionError(
         `${context} has invalid finalStatus`,
       );
@@ -304,9 +297,7 @@ export class DNSLogService {
 
     const storedEntries = candidate["entries"];
     if (storedEntries !== undefined && !Array.isArray(storedEntries)) {
-      throw new DNSLogStorageCorruptionError(
-        `${context} has invalid entries`,
-      );
+      throw new DNSLogStorageCorruptionError(`${context} has invalid entries`);
     }
     const entries = (storedEntries ?? []).map((entry, entryIndex) =>
       this.parseStoredEntry(entry, logIndex, entryIndex),
@@ -330,7 +321,10 @@ export class DNSLogService {
       ...(chatId !== undefined ? { chatId } : {}),
       ...(chatTitle !== undefined ? { chatTitle } : {}),
       query: this.requireString(candidate, "query", context),
-      startTime: this.parseStoredDate(candidate["startTime"], `${context} startTime`),
+      startTime: this.parseStoredDate(
+        candidate["startTime"],
+        `${context} startTime`,
+      ),
       ...(endTime !== undefined ? { endTime } : {}),
       ...(totalDuration !== undefined ? { totalDuration } : {}),
       finalStatus: finalStatus as DNSQueryLog["finalStatus"],
@@ -412,7 +406,10 @@ export class DNSLogService {
     // Platform-safe performance counter
     let performance = 0;
     try {
-      if (typeof globalThis.performance !== 'undefined' && globalThis.performance.now) {
+      if (
+        typeof globalThis.performance !== "undefined" &&
+        globalThis.performance.now
+      ) {
         performance = Math.floor(globalThis.performance.now() * 1000);
       }
     } catch {
@@ -428,7 +425,9 @@ export class DNSLogService {
     let storageReadCompleted = false;
     try {
       if (isScreenshotMode()) {
-        devLog("[DNSLogService] Screenshot mode detected, loading mock DNS logs");
+        devLog(
+          "[DNSLogService] Screenshot mode detected, loading mock DNS logs",
+        );
         this.queryLogs = getMockDNSLogs();
         this.notifyListeners();
         return true;
@@ -482,7 +481,10 @@ export class DNSLogService {
         backupPayload = await this.createCorruptionBackupPayload(error, stored);
         await AsyncStorage.setItem(LOGS_BACKUP_KEY, backupPayload);
       } catch (backupError) {
-        devWarn("[DNSLogService] Failed to backup corrupted DNS logs", backupError);
+        devWarn(
+          "[DNSLogService] Failed to backup corrupted DNS logs",
+          backupError,
+        );
         throw backupError;
       }
 
@@ -513,11 +515,13 @@ export class DNSLogService {
       return this.initializationInFlight;
     }
 
-    const run = this.enqueueInitializationRead().then(async (screenshotMode) => {
-      if (!screenshotMode) {
-        await this.initializeCleanupScheduler();
-      }
-    });
+    const run = this.enqueueInitializationRead().then(
+      async (screenshotMode) => {
+        if (!screenshotMode) {
+          await this.initializeCleanupScheduler();
+        }
+      },
+    );
     this.initializationInFlight = run;
     void run.then(
       () => {
@@ -561,7 +565,9 @@ export class DNSLogService {
     // Compile each sensitive-value redaction pattern once per query; the Set
     // dedupes raw values (e.g. title === query) before compilation.
     const sensitivePatterns = Array.from(
-      new Set([query, rawChatTitle].filter((value): value is string => !!value)),
+      new Set(
+        [query, rawChatTitle].filter((value): value is string => !!value),
+      ),
       (value) => this.buildSensitiveValuePattern(value),
     );
     this.sensitiveValuesByQueryId.set(queryId, sensitivePatterns);
@@ -696,7 +702,11 @@ export class DNSLogService {
    * Log server-level fallback (e.g., llm.pieter.com:53 → ch.at:53)
    * Distinct from transport-level fallback (native → udp → tcp)
    */
-  static logServerFallback(queryId: string, fromServer: string, toServer: string) {
+  static logServerFallback(
+    queryId: string,
+    fromServer: string,
+    toServer: string,
+  ) {
     const queryLog = this.activeQueryLogs.get(queryId);
     if (!queryLog) return;
 
@@ -726,8 +736,7 @@ export class DNSLogService {
 
     queryLog.endTime = new Date();
     queryLog.totalDuration =
-      queryLog.endTime.getTime() -
-      queryLog.startTime.getTime();
+      queryLog.endTime.getTime() - queryLog.startTime.getTime();
     queryLog.finalStatus = success ? "success" : "failure";
     queryLog.finalMethod = resolvedFinalMethod;
     if (response) {
@@ -825,14 +834,17 @@ export class DNSLogService {
 
   static getLogs(): DNSQueryLog[] {
     const activeLogs = Array.from(this.activeQueryLogs.values())
-      .sort((left, right) => right.startTime.getTime() - left.startTime.getTime())
+      .sort(
+        (left, right) => right.startTime.getTime() - left.startTime.getTime(),
+      )
       .map((log) => ({ ...log, entries: [...log.entries] }));
     return [...activeLogs, ...this.queryLogs];
   }
 
   static getCurrentQueryLog(): DNSQueryLog | null {
-    const activeLogs = Array.from(this.activeQueryLogs.values())
-      .sort((left, right) => right.startTime.getTime() - left.startTime.getTime());
+    const activeLogs = Array.from(this.activeQueryLogs.values()).sort(
+      (left, right) => right.startTime.getTime() - left.startTime.getTime(),
+    );
     const latest = activeLogs[0];
     return latest ? { ...latest, entries: [...latest.entries] } : null;
   }
@@ -844,7 +856,8 @@ export class DNSLogService {
         AsyncStorage.removeItem(LOGS_BACKUP_KEY),
       ]);
 
-      const changed = this.queryLogs.length > 0 || this.activeQueryLogs.size > 0;
+      const changed =
+        this.queryLogs.length > 0 || this.activeQueryLogs.size > 0;
       this.queryLogs = [];
       this.activeQueryLogs.clear();
       this.sensitiveValuesByQueryId.clear();
@@ -875,7 +888,9 @@ export class DNSLogService {
    * PERFORMANCE FIX: Use more efficient cleanup with early termination
    */
   static async cleanupOldLogs(): Promise<void> {
-    const thirtyDaysAgo = new Date(Date.now() - LOG_RETENTION_DAYS * 24 * 60 * 60 * 1000);
+    const thirtyDaysAgo = new Date(
+      Date.now() - LOG_RETENTION_DAYS * 24 * 60 * 60 * 1000,
+    );
     const changed = await this.enqueuePersistentMutation(() => {
       let removedCount = 0;
       for (let i = this.queryLogs.length - 1; i >= 0; i--) {

@@ -1,9 +1,5 @@
 import React from "react";
-import {
-  View,
-  StyleSheet,
-  StatusBar,
-} from "react-native";
+import { View, StyleSheet, StatusBar } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useOnboarding } from "../../context/OnboardingContext";
 import { useImessagePalette } from "../../ui/theme/imessagePalette";

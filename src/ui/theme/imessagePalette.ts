@@ -143,17 +143,11 @@ export const getImessagePalette = (
   return {
     ...base,
     surface: isDark ? "rgba(44,44,46,0.9)" : "rgba(255,255,255,0.92)",
-    accentSurface: isDark
-      ? "rgba(10,132,255,0.55)"
-      : "rgba(10,132,255,0.45)",
+    accentSurface: isDark ? "rgba(10,132,255,0.55)" : "rgba(10,132,255,0.45)",
     border: isDark ? "rgba(235,235,245,0.25)" : "rgba(0,0,0,0.18)",
-    accentBorder: isDark
-      ? "rgba(10,132,255,0.75)"
-      : "rgba(10,132,255,0.55)",
+    accentBorder: isDark ? "rgba(10,132,255,0.75)" : "rgba(10,132,255,0.55)",
     tint: isDark ? "rgba(76,76,80,0.75)" : "rgba(255,255,255,0.85)",
-    accentTint: isDark
-      ? "rgba(10,132,255,0.85)"
-      : "rgba(10,132,255,0.75)",
+    accentTint: isDark ? "rgba(10,132,255,0.85)" : "rgba(10,132,255,0.75)",
   };
 };
 
@@ -168,5 +162,8 @@ export const useImessagePalette = () => {
 };
 
 export const useNativeColors = () => {
-  return systemColors as Record<keyof typeof systemColors, ColorValue | undefined>;
+  return systemColors as Record<
+    keyof typeof systemColors,
+    ColorValue | undefined
+  >;
 };

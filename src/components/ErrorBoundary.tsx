@@ -1,9 +1,5 @@
 import React from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-} from "react-native";
+import { View, Text, StyleSheet } from "react-native";
 import { useImessagePalette } from "../ui/theme/imessagePalette";
 import { devWarn } from "../utils/devLog";
 import { PressableRipple } from "./PressableRipple";
@@ -79,9 +75,7 @@ function ErrorFallback({ error, onRetry }: ErrorFallbackProps) {
   const palette = useImessagePalette();
 
   return (
-    <View
-      style={[styles.container, { backgroundColor: palette.background }]}
-    >
+    <View style={[styles.container, { backgroundColor: palette.background }]}>
       <Text style={[styles.title, { color: palette.textPrimary }]}>
         {FALLBACK_COPY.title}
       </Text>

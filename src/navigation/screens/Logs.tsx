@@ -12,12 +12,7 @@
  */
 
 import React, { useEffect, useRef, useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  ActivityIndicator,
-} from "react-native";
+import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
 import Animated from "react-native-reanimated";
 import type { SharedValue } from "react-native-reanimated";
 import { DNSLogService } from "../../services/dnsLogService";
@@ -29,7 +24,10 @@ import type { MessageKey, TranslationParams } from "../../i18n";
 import { useImessagePalette } from "../../ui/theme/imessagePalette";
 import type { IMessagePalette } from "../../ui/theme/imessagePalette";
 import { useScreenEntrance } from "../../ui/hooks/useScreenEntrance";
-import { useStaggeredListValues, AnimatedListItem } from "../../ui/hooks/useStaggeredList";
+import {
+  useStaggeredListValues,
+  AnimatedListItem,
+} from "../../ui/hooks/useStaggeredList";
 import { LogsSkeleton } from "../../components/skeletons";
 import { EmptyState } from "../../components/EmptyState";
 import { CheckmarkIcon } from "../../components/icons/CheckmarkIcon";
@@ -156,7 +154,6 @@ export function Logs() {
     );
   };
 
-
   return (
     <Form.List
       testID="logs-screen"
@@ -253,7 +250,12 @@ interface LogEntryRowProps {
   t: TFn;
 }
 
-const LogEntryRow: React.FC<LogEntryRowProps> = ({ entry, parentId, palette, t }) => {
+const LogEntryRow: React.FC<LogEntryRowProps> = ({
+  entry,
+  parentId,
+  palette,
+  t,
+}) => {
   const statusIcon = DNSLogService.getStatusIcon(entry.status);
   const methodColor = DNSLogService.getMethodColor(entry.method);
 
@@ -262,13 +264,11 @@ const LogEntryRow: React.FC<LogEntryRowProps> = ({ entry, parentId, palette, t }
       <View style={styles.entryHeader}>
         <Text style={styles.entryIcon}>{statusIcon}</Text>
         <View
-          style={[
-            styles.methodBadge,
-            { backgroundColor: methodColor + "20" },
-          ]}
+          style={[styles.methodBadge, { backgroundColor: methodColor + "20" }]}
         >
           <Text style={[styles.methodText, { color: methodColor }]}>
-            {entry.method?.toUpperCase() || t("screen.logs.labels.unknownMethod")}
+            {entry.method?.toUpperCase() ||
+              t("screen.logs.labels.unknownMethod")}
           </Text>
         </View>
         {entry.duration !== undefined && (
@@ -383,7 +383,9 @@ const LogQueryRow: React.FC<LogQueryRowProps> = ({
                 {t("screen.logs.labels.redactedQuery")}
               </Text>
               <View style={styles.logMeta}>
-                <Text style={[styles.timestamp, { color: palette.textSecondary }]}>
+                <Text
+                  style={[styles.timestamp, { color: palette.textSecondary }]}
+                >
                   {timeLabel}
                 </Text>
                 {Boolean(item.finalMethod) && (
@@ -404,7 +406,9 @@ const LogQueryRow: React.FC<LogQueryRowProps> = ({
                   </View>
                 )}
                 {item.totalDuration !== undefined && (
-                  <Text style={[styles.duration, { color: palette.textSecondary }]}>
+                  <Text
+                    style={[styles.duration, { color: palette.textSecondary }]}
+                  >
                     {DNSLogService.formatDuration(item.totalDuration)}
                   </Text>
                 )}
@@ -447,11 +451,19 @@ const LogQueryRow: React.FC<LogQueryRowProps> = ({
 
               {Boolean(item.response) && (
                 <View style={styles.responseSection}>
-                  <Text style={[styles.sectionTitle, { color: palette.textPrimary }]}>
+                  <Text
+                    style={[
+                      styles.sectionTitle,
+                      { color: palette.textPrimary },
+                    ]}
+                  >
                     {t("screen.logs.labels.response")}
                   </Text>
                   <Text
-                    style={[styles.responseText, { color: palette.textSecondary }]}
+                    style={[
+                      styles.responseText,
+                      { color: palette.textSecondary },
+                    ]}
                     numberOfLines={3}
                   >
                     {t("screen.logs.labels.redactedResponse")}
@@ -459,7 +471,9 @@ const LogQueryRow: React.FC<LogQueryRowProps> = ({
                 </View>
               )}
 
-              <Text style={[styles.sectionTitle, { color: palette.textPrimary }]}>
+              <Text
+                style={[styles.sectionTitle, { color: palette.textPrimary }]}
+              >
                 {t("screen.logs.labels.querySteps")}
               </Text>
               <View style={styles.entriesList}>

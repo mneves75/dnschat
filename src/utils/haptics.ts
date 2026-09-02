@@ -1,6 +1,6 @@
-import { Platform } from 'react-native';
-import * as Haptics from 'expo-haptics';
-import { devLog, devWarn } from './devLog';
+import { Platform } from "react-native";
+import * as Haptics from "expo-haptics";
+import { devLog, devWarn } from "./devLog";
 
 type HapticConfiguration = {
   userEnabled?: boolean;
@@ -15,9 +15,11 @@ let availabilityPromise: Promise<boolean> | null = null;
 // We proactively gate every call on this availability probe so we never touch CoreHaptics unless
 // the platform actually provides the system pattern library.
 const resolveAvailabilityCheck = (): Promise<boolean> => {
-  const availabilityFn = (Haptics as typeof Haptics & {
-    isAvailableAsync?: () => Promise<boolean>;
-  }).isAvailableAsync;
+  const availabilityFn = (
+    Haptics as typeof Haptics & {
+      isAvailableAsync?: () => Promise<boolean>;
+    }
+  ).isAvailableAsync;
   if (typeof availabilityFn === "function") {
     return availabilityFn();
   }
@@ -26,7 +28,7 @@ const resolveAvailabilityCheck = (): Promise<boolean> => {
 };
 
 const ensureHardwareSupport = async (): Promise<boolean> => {
-  if (Platform.OS !== 'ios') {
+  if (Platform.OS !== "ios") {
     hardwareSupported = false;
     return false;
   }
@@ -40,7 +42,7 @@ const ensureHardwareSupport = async (): Promise<boolean> => {
         return available;
       })
       .catch((error: unknown) => {
-        devWarn('Haptics availability check failed:', error);
+        devWarn("Haptics availability check failed:", error);
         return false;
       })
       .finally(() => {
@@ -79,14 +81,13 @@ const runImpact = (
 const runNotification = (
   type: Haptics.NotificationFeedbackType,
   label: string,
-): Promise<void> =>
-  runWithGuard(() => Haptics.notificationAsync(type), label);
+): Promise<void> => runWithGuard(() => Haptics.notificationAsync(type), label);
 
 const runSelection = (): Promise<void> =>
-  runWithGuard(() => Haptics.selectionAsync(), 'selection');
+  runWithGuard(() => Haptics.selectionAsync(), "selection");
 
 export const configureHaptics = (config: HapticConfiguration = {}) => {
-  if (typeof config.userEnabled === 'boolean') {
+  if (typeof config.userEnabled === "boolean") {
     userEnabled = config.userEnabled;
   }
 };
@@ -121,8 +122,7 @@ export class HapticFeedback {
    * }}>
    * ```
    */
-  static light = () =>
-    runImpact(Haptics.ImpactFeedbackStyle.Light, 'light');
+  static light = () => runImpact(Haptics.ImpactFeedbackStyle.Light, "light");
 
   /**
    * Medium impact feedback
@@ -136,8 +136,7 @@ export class HapticFeedback {
    * };
    * ```
    */
-  static medium = () =>
-    runImpact(Haptics.ImpactFeedbackStyle.Medium, 'medium');
+  static medium = () => runImpact(Haptics.ImpactFeedbackStyle.Medium, "medium");
 
   /**
    * Heavy impact feedback
@@ -151,8 +150,7 @@ export class HapticFeedback {
    * };
    * ```
    */
-  static heavy = () =>
-    runImpact(Haptics.ImpactFeedbackStyle.Heavy, 'heavy');
+  static heavy = () => runImpact(Haptics.ImpactFeedbackStyle.Heavy, "heavy");
 
   /**
    * Success notification feedback
@@ -168,7 +166,7 @@ export class HapticFeedback {
    * ```
    */
   static success = () =>
-    runNotification(Haptics.NotificationFeedbackType.Success, 'success');
+    runNotification(Haptics.NotificationFeedbackType.Success, "success");
 
   /**
    * Warning notification feedback
@@ -183,7 +181,7 @@ export class HapticFeedback {
    * ```
    */
   static warning = () =>
-    runNotification(Haptics.NotificationFeedbackType.Warning, 'warning');
+    runNotification(Haptics.NotificationFeedbackType.Warning, "warning");
 
   /**
    * Error notification feedback
@@ -200,7 +198,7 @@ export class HapticFeedback {
    * ```
    */
   static error = () =>
-    runNotification(Haptics.NotificationFeedbackType.Error, 'error');
+    runNotification(Haptics.NotificationFeedbackType.Error, "error");
 
   /**
    * Selection changed feedback
@@ -223,8 +221,7 @@ export class HapticFeedback {
    * Use sparingly for special interactions that need
    * a distinct, rigid feel (e.g., locking mechanisms)
    */
-  static rigid = () =>
-    runImpact(Haptics.ImpactFeedbackStyle.Rigid, 'rigid');
+  static rigid = () => runImpact(Haptics.ImpactFeedbackStyle.Rigid, "rigid");
 
   /**
    * Soft impact (iOS 13+)
@@ -233,7 +230,7 @@ export class HapticFeedback {
    * Use for very subtle feedback needs where light
    * might be too strong
    */
-  static soft = () => runImpact(Haptics.ImpactFeedbackStyle.Soft, 'soft');
+  static soft = () => runImpact(Haptics.ImpactFeedbackStyle.Soft, "soft");
 }
 
 /**

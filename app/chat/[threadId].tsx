@@ -33,16 +33,17 @@ export default function ChatRoute() {
   const normalizedThreadId = normalizeRouteParam(threadId);
   const [isResolving, setIsResolving] = React.useState(false);
   const [isRouteHydrating, setIsRouteHydrating] = React.useState(false);
-  const [hasAttemptedRouteLoad, setHasAttemptedRouteLoad] = React.useState(false);
+  const [hasAttemptedRouteLoad, setHasAttemptedRouteLoad] =
+    React.useState(false);
   const lastAttemptedRef = React.useRef<string | null>(null);
   const createAttemptsRef = React.useRef(0);
   const routeChat = resolveRouteChat(chats, currentChat, normalizedThreadId);
   const isMissingRouteChat = Boolean(
     normalizedThreadId &&
-      !isLoading &&
-      !isRouteHydrating &&
-      !routeChat &&
-      (hasAttemptedRouteLoad || chats.length > 0),
+    !isLoading &&
+    !isRouteHydrating &&
+    !routeChat &&
+    (hasAttemptedRouteLoad || chats.length > 0),
   );
 
   // Effect: a new route target is a new visit — give it a fresh auto-create
@@ -58,7 +59,12 @@ export default function ChatRoute() {
 
   // Effect: load chats lazily when a thread route is hit without cached data.
   React.useEffect(() => {
-    if (!normalizedThreadId || isLoading || chats.length > 0 || hasAttemptedRouteLoad) {
+    if (
+      !normalizedThreadId ||
+      isLoading ||
+      chats.length > 0 ||
+      hasAttemptedRouteLoad
+    ) {
       return;
     }
 
@@ -71,7 +77,13 @@ export default function ChatRoute() {
       .finally(() => {
         setIsRouteHydrating(false);
       });
-  }, [chats.length, hasAttemptedRouteLoad, isLoading, loadChats, normalizedThreadId]);
+  }, [
+    chats.length,
+    hasAttemptedRouteLoad,
+    isLoading,
+    loadChats,
+    normalizedThreadId,
+  ]);
 
   // Effect: resolve the route thread id into a chat or create one and redirect.
   React.useEffect(() => {
@@ -155,7 +167,9 @@ export default function ChatRoute() {
     if (!routeChat) return;
     appAlert(
       t("common.clear"),
-      t("screen.glassChatList.alerts.deleteMessage", { title: routeChat.title }),
+      t("screen.glassChatList.alerts.deleteMessage", {
+        title: routeChat.title,
+      }),
       [
         { text: t("common.cancel"), style: "cancel" },
         {
@@ -200,10 +214,17 @@ export default function ChatRoute() {
       {routeChat ? (
         <Stack.Toolbar placement="right">
           <Stack.Toolbar.Menu icon="ellipsis.circle">
-            <Stack.Toolbar.MenuAction icon="square.and.arrow.up" onPress={handleShare}>
+            <Stack.Toolbar.MenuAction
+              icon="square.and.arrow.up"
+              onPress={handleShare}
+            >
               {t("screen.chat.messageActions.share")}
             </Stack.Toolbar.MenuAction>
-            <Stack.Toolbar.MenuAction icon="trash" destructive onPress={handleClearChat}>
+            <Stack.Toolbar.MenuAction
+              icon="trash"
+              destructive
+              onPress={handleClearChat}
+            >
               {t("common.clear")}
             </Stack.Toolbar.MenuAction>
           </Stack.Toolbar.Menu>

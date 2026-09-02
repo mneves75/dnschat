@@ -27,7 +27,10 @@ const dictionaries = {
   "pt-BR": ptBR,
 } as unknown as Record<SupportedLocale, Messages>;
 
-const getMessage = (messages: Messages, key: MessageKey): string | undefined => {
+const getMessage = (
+  messages: Messages,
+  key: MessageKey,
+): string | undefined => {
   return key.split(".").reduce<unknown>((acc, segment) => {
     if (acc && typeof acc === "object") {
       return (acc as Record<string, unknown>)[segment];
@@ -54,7 +57,9 @@ type I18nValue = {
 
 const I18nContext = React.createContext<I18nValue | undefined>(undefined);
 
-export const I18nProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const I18nProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const { locale } = useSettings();
 
   const activeLocale = locale;

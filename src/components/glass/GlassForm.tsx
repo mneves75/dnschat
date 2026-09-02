@@ -165,10 +165,7 @@ export const GlassForm: React.FC<GlassFormProps> = ({
   const contentPaddingBottom =
     Platform.OS === "web"
       ? 24
-      : Math.max(
-          insets.bottom + SafeAreaDefaults.bottom.tabBar + 24,
-          96,
-        );
+      : Math.max(insets.bottom + SafeAreaDefaults.bottom.tabBar + 24, 96);
   const contentStyle = [
     styles.scrollContent,
     Platform.OS === "web" && styles.webContentWidth,
@@ -180,7 +177,11 @@ export const GlassForm: React.FC<GlassFormProps> = ({
     <SafeAreaView
       testID={testID}
       edges={["left", "right"]}
-      style={[styles.safeAreaContainer, { backgroundColor: colors.background }, style]}
+      style={[
+        styles.safeAreaContainer,
+        { backgroundColor: colors.background },
+        style,
+      ]}
     >
       <ScrollView
         style={styles.scrollContainer}
@@ -189,15 +190,13 @@ export const GlassForm: React.FC<GlassFormProps> = ({
         contentContainerStyle={contentStyle}
         nestedScrollEnabled={nestedScrollEnabled}
         refreshControl={
-          onRefresh
-            ? (
-                <RefreshControl
-                  refreshing={refreshing ?? false}
-                  onRefresh={onRefresh}
-                  tintColor={colors.textSecondary}
-                />
-              )
-            : undefined
+          onRefresh ? (
+            <RefreshControl
+              refreshing={refreshing ?? false}
+              onRefresh={onRefresh}
+              tintColor={colors.textSecondary}
+            />
+          ) : undefined
         }
       >
         {navigationTitle && (
@@ -318,7 +317,11 @@ export const GlassFormItem: React.FC<GlassFormItemProps> = ({
         <Text
           style={[
             styles.itemTitle,
-            { color: destructive ? colors.palette.destructive : colors.textPrimary },
+            {
+              color: destructive
+                ? colors.palette.destructive
+                : colors.textPrimary,
+            },
           ]}
         >
           {title}
@@ -327,7 +330,11 @@ export const GlassFormItem: React.FC<GlassFormItemProps> = ({
           <Text
             style={[
               styles.itemSubtitle,
-              { color: destructive ? colors.palette.destructive : colors.textSecondary },
+              {
+                color: destructive
+                  ? colors.palette.destructive
+                  : colors.textSecondary,
+              },
             ]}
           >
             {subtitle}
@@ -337,9 +344,7 @@ export const GlassFormItem: React.FC<GlassFormItemProps> = ({
 
       <View style={styles.itemContentRight}>
         {rightContent}
-        {showChevron && (
-          <ChevronIcon size={16} color={colors.textTertiary} />
-        )}
+        {showChevron && <ChevronIcon size={16} color={colors.textTertiary} />}
       </View>
     </View>
   );

@@ -77,17 +77,13 @@ type SplitStyles = {
   glassStyle: ViewStyle;
 };
 
-export const splitGlassStyles = (
-  style?: StyleProp<ViewStyle>,
-): SplitStyles => {
+export const splitGlassStyles = (style?: StyleProp<ViewStyle>): SplitStyles => {
   const flattened = StyleSheet.flatten(style) ?? {};
   const containerStyle: Record<string, ViewStyle[keyof ViewStyle]> = {};
   const glassStyle: Record<string, ViewStyle[keyof ViewStyle]> = {};
 
   for (const [rawKey, value] of Object.entries(flattened)) {
     if (value == null) continue;
-    const key = rawKey as keyof ViewStyle;
-
     if (BORDER_RADIUS_KEYS.has(rawKey)) {
       containerStyle[rawKey] = value as ViewStyle[keyof ViewStyle];
       glassStyle[rawKey] = value as ViewStyle[keyof ViewStyle];

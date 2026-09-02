@@ -1,12 +1,14 @@
 import {
   applyDynamicType,
-  LiquidGlassType,
-  Material3Type,
   Typography,
   getTypographyForPlatform,
-} from '../theme/liquidGlassTypography';
-import type { TypographyKey, TypographyScale, TypographyStyle } from '../theme/liquidGlassTypography';
-import { useFontSize } from '../../context/AccessibilityContext';
+} from "../theme/liquidGlassTypography";
+import type {
+  TypographyKey,
+  TypographyScale,
+  TypographyStyle,
+} from "../theme/liquidGlassTypography";
+import { useFontSize } from "../../context/AccessibilityContext";
 
 /**
  * useTypography Hook
@@ -63,9 +65,7 @@ export const useSemanticTypography = () => {
  * <Text style={bodyStyle}>Hello</Text>
  * ```
  */
-export const useTypographyStyle = (
-  key: TypographyKey
-): TypographyStyle => {
+export const useTypographyStyle = (key: TypographyKey): TypographyStyle => {
   const typography = useTypography();
   return typography[key];
 };

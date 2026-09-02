@@ -6,10 +6,10 @@
  * @see GlassChatList.tsx for the actual component layout
  */
 
-import React from 'react';
-import { View, StyleSheet } from 'react-native';
-import { SkeletonBox, SkeletonText, SkeletonCard } from './SkeletonBase';
-import { LiquidGlassSpacing } from '../../ui/theme/liquidGlassSpacing';
+import React from "react";
+import { View, StyleSheet } from "react-native";
+import { SkeletonBox, SkeletonText, SkeletonCard } from "./SkeletonBase";
+import { LiquidGlassSpacing } from "../../ui/theme/liquidGlassSpacing";
 
 interface ChatListSkeletonProps {
   /**
@@ -46,7 +46,12 @@ function ChatItemSkeleton({ delay = 0 }: { delay?: number }) {
           {/* Meta row */}
           <View style={styles.metaRow}>
             <SkeletonBox width={60} height={13} delay={delay + 150} />
-            <SkeletonBox width={80} height={18} borderRadius={9} delay={delay + 200} />
+            <SkeletonBox
+              width={80}
+              height={18}
+              borderRadius={9}
+              delay={delay + 200}
+            />
           </View>
         </View>
 
@@ -75,8 +80,8 @@ const styles = StyleSheet.create({
     marginVertical: 4,
   },
   chatContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   chatInfo: {
     flex: 1,
@@ -86,9 +91,9 @@ const styles = StyleSheet.create({
     marginBottom: LiquidGlassSpacing.xs,
   },
   metaRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginTop: LiquidGlassSpacing.sm,
   },
 });

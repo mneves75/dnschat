@@ -1,11 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  ScrollView,
-} from "react-native";
+import { View, Text, StyleSheet, TextInput, ScrollView } from "react-native";
 import type { LayoutChangeEvent } from "react-native";
 import {
   KeyboardStickyView,
@@ -66,7 +60,10 @@ export function FirstChatScreen() {
   // KeyboardStickyView translates from its normal layout slot. The onboarding
   // navigation sits below that slot, so compensate without moving downward for
   // short keyboard/accessory heights.
-  const compensatedNavigationHeight = Math.min(navigationHeight, keyboardHeight);
+  const compensatedNavigationHeight = Math.min(
+    navigationHeight,
+    keyboardHeight,
+  );
   const stickyInputOffset = { closed: 0, opened: compensatedNavigationHeight };
   const keyboardOverlayInset = Math.max(0, keyboardHeight - navigationHeight);
 
@@ -87,7 +84,12 @@ export function FirstChatScreen() {
     return () => {
       cancelAnimationFrame(frameId);
     };
-  }, [keyboardOverlayInset, messages.length, lastMessageKey, shouldReduceMotion]);
+  }, [
+    keyboardOverlayInset,
+    messages.length,
+    lastMessageKey,
+    shouldReduceMotion,
+  ]);
 
   const handleNavigationLayout = (event: LayoutChangeEvent) => {
     const nextHeight = event.nativeEvent.layout.height;
@@ -245,10 +247,15 @@ export function FirstChatScreen() {
                   variant="surface"
                   pressedOpacity={0.7}
                   accessibilityRole="button"
-                  accessibilityLabel={t("screen.onboarding.firstChat.accessibility.suggestionLabel", {
-                    suggestion,
-                  })}
-                  accessibilityHint={t("screen.onboarding.firstChat.accessibility.suggestionHint")}
+                  accessibilityLabel={t(
+                    "screen.onboarding.firstChat.accessibility.suggestionLabel",
+                    {
+                      suggestion,
+                    },
+                  )}
+                  accessibilityHint={t(
+                    "screen.onboarding.firstChat.accessibility.suggestionHint",
+                  )}
                 >
                   <Text
                     style={[
@@ -268,7 +275,10 @@ export function FirstChatScreen() {
 
       {/* iOS HIG: Message input row follows the keyboard via KeyboardStickyView.
           OnboardingNavigation stays anchored to the safe-area bottom below. */}
-      <KeyboardStickyView offset={stickyInputOffset} style={styles.stickyInputWrapper}>
+      <KeyboardStickyView
+        offset={stickyInputOffset}
+        style={styles.stickyInputWrapper}
+      >
         <View
           style={[
             styles.inputContainer,
@@ -291,10 +301,15 @@ export function FirstChatScreen() {
             placeholderTextColor={palette.textTertiary}
             multiline
             maxLength={MESSAGE_CONSTANTS.MAX_MESSAGE_LENGTH}
-            accessibilityLabel={t("screen.onboarding.firstChat.accessibility.inputLabel")}
-            accessibilityHint={t("screen.onboarding.firstChat.accessibility.inputHint", {
-              max: MESSAGE_CONSTANTS.MAX_MESSAGE_LENGTH,
-            })}
+            accessibilityLabel={t(
+              "screen.onboarding.firstChat.accessibility.inputLabel",
+            )}
+            accessibilityHint={t(
+              "screen.onboarding.firstChat.accessibility.inputHint",
+              {
+                max: MESSAGE_CONSTANTS.MAX_MESSAGE_LENGTH,
+              },
+            )}
           />
           <PressableRipple
             testID="onboarding-first-chat-send"
@@ -322,14 +337,20 @@ export function FirstChatScreen() {
                 ? "screen.onboarding.firstChat.accessibility.sendingLabel"
                 : "screen.onboarding.firstChat.accessibility.sendLabel",
             )}
-            accessibilityHint={t("screen.onboarding.firstChat.accessibility.sendHint")}
+            accessibilityHint={t(
+              "screen.onboarding.firstChat.accessibility.sendHint",
+            )}
             accessibilityState={{
               disabled: !inputText.trim() || isLoading,
               busy: isLoading,
             }}
           >
             {isLoading ? (
-              <Text style={[typography.headline, { color: palette.textOnChroma }]}>…</Text>
+              <Text
+                style={[typography.headline, { color: palette.textOnChroma }]}
+              >
+                …
+              </Text>
             ) : (
               <SendIcon size={20} isActive={!!inputText.trim()} />
             )}
@@ -342,7 +363,11 @@ export function FirstChatScreen() {
         onLayout={handleNavigationLayout}
       >
         <OnboardingNavigation
-          nextButtonText={hasTriedChat ? t("screen.onboarding.firstChat.navigation.continue") : t("screen.onboarding.firstChat.navigation.skip")}
+          nextButtonText={
+            hasTriedChat
+              ? t("screen.onboarding.firstChat.navigation.continue")
+              : t("screen.onboarding.firstChat.navigation.skip")
+          }
         />
       </View>
     </View>

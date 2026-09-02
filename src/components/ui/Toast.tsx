@@ -1,11 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
-  Platform,
-} from "react-native";
+import { View, Text, StyleSheet, Pressable, Platform } from "react-native";
 import type { StyleProp, TextStyle } from "react-native";
 import Animated, {
   useSharedValue,
@@ -16,7 +10,10 @@ import Animated, {
 import { scheduleOnRN } from "react-native-worklets";
 import { useTypography } from "../../ui/hooks/useTypography";
 import { useImessagePalette } from "../../ui/theme/imessagePalette";
-import { LiquidGlassSpacing, getCornerRadius } from "../../ui/theme/liquidGlassSpacing";
+import {
+  LiquidGlassSpacing,
+  getCornerRadius,
+} from "../../ui/theme/liquidGlassSpacing";
 import { SpringConfig, TimingConfig } from "../../utils/animations";
 import { HapticFeedback } from "../../utils/haptics";
 import { useTranslation } from "../../i18n";
@@ -109,17 +106,11 @@ function ToastContent({
       accessibilityLabel={`${title ? `${title} ` : ""}${message}`}
     >
       {Boolean(title) && (
-        <Text
-          style={titleStyle}
-          {...TITLE_TRUNCATION_PROPS}
-        >
+        <Text style={titleStyle} {...TITLE_TRUNCATION_PROPS}>
           {title}
         </Text>
       )}
-      <Text
-        style={messageStyle}
-        {...messageTruncationProps}
-      >
+      <Text style={messageStyle} {...messageTruncationProps}>
         {message}
       </Text>
     </View>
@@ -144,10 +135,7 @@ function ToastActionButton({
       accessibilityLabel={actionLabel}
       hitSlop={8}
     >
-      <Text
-        style={actionTextStyle}
-        numberOfLines={1}
-      >
+      <Text style={actionTextStyle} numberOfLines={1}>
         {actionLabel}
       </Text>
     </Pressable>
@@ -212,6 +200,7 @@ export function Toast({
   }
 
   // Effect: keep the visibility ref in sync with the visible prop.
+  /* oxlint-disable react-hooks/exhaustive-deps -- Callback bodies are represented by their reactive inputs below; render-time callback identities would restart dismissal animation. */
   useEffect(() => {
     visibleRef.current = visible;
   }, [visible]);
@@ -239,18 +228,16 @@ export function Toast({
       return;
     }
 
-    translateY.set(withSpring(
-      hiddenTranslateY,
-      SpringConfig.stiff,
-      (finished) => {
+    translateY.set(
+      withSpring(hiddenTranslateY, SpringConfig.stiff, (finished) => {
         if (finished) {
           if (notifyDismiss) {
             scheduleOnRN(onDismiss);
           }
           scheduleOnRN(finishHide);
         }
-      }
-    ));
+      }),
+    );
     opacity.set(withTiming(0, TimingConfig.quick));
   };
 
@@ -347,6 +334,7 @@ export function Toast({
     shouldReduceMotion,
     translateY,
   ]);
+  /* oxlint-enable react-hooks/exhaustive-deps */
 
   // Handle action
   const handleAction = () => {

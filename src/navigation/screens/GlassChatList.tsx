@@ -17,19 +17,17 @@
  */
 
 import React from "react";
-import {
-  StyleSheet,
-  Text,
-  View,
-  Platform,
-} from "react-native";
+import { StyleSheet, Text, View, Platform } from "react-native";
 import type { AccessibilityActionEvent } from "react-native";
 import Animated from "react-native-reanimated";
 import type { SharedValue } from "react-native-reanimated";
 import { useRouter } from "expo-router";
 import { useChat } from "../../context/ChatContext";
 import { Form } from "../../components/glass/GlassForm";
-import { GlassActionSheet, useGlassBottomSheet } from "../../components/glass/GlassBottomSheet";
+import {
+  GlassActionSheet,
+  useGlassBottomSheet,
+} from "../../components/glass/GlassBottomSheet";
 import { PressableRipple } from "../../components/PressableRipple";
 import { TrashIcon } from "../../components/icons/TrashIcon";
 import { PlusIcon } from "../../components/icons/PlusIcon";
@@ -42,7 +40,10 @@ import { HapticFeedback } from "../../utils/haptics";
 import { devWarn } from "../../utils/devLog";
 import { getDateFnsLocale } from "../../utils/dateLocale";
 import { useScreenEntrance } from "../../ui/hooks/useScreenEntrance";
-import { useStaggeredListValues, AnimatedListItem } from "../../ui/hooks/useStaggeredList";
+import {
+  useStaggeredListValues,
+  AnimatedListItem,
+} from "../../ui/hooks/useStaggeredList";
 import { ChatListSkeleton } from "../../components/skeletons";
 import { EmptyState } from "../../components/EmptyState";
 import { ShareService } from "../../services/ShareService";
@@ -136,7 +137,12 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
   const chatAccessibilityActions = [
     { name: "activate", label: t("screen.glassChatList.actionSheet.openChat") },
     ...(onShare
-      ? [{ name: "share", label: t("screen.glassChatList.actionSheet.shareChat") }]
+      ? [
+          {
+            name: "share",
+            label: t("screen.glassChatList.actionSheet.shareChat"),
+          },
+        ]
       : []),
     { name: "delete", label: t("screen.glassChatList.actionSheet.deleteChat") },
   ];
@@ -167,7 +173,8 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
       style={[
         styles.chatItemContainer,
         { backgroundColor: itemBackgroundColor },
-        pressed && Platform.OS === "ios" && { backgroundColor: palette.highlight },
+        pressed &&
+          Platform.OS === "ios" && { backgroundColor: palette.highlight },
       ]}
     >
       <View style={styles.chatItemContent}>
@@ -216,7 +223,12 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
                     { backgroundColor: palette.assistantBubble },
                   ]}
                 >
-                  <Text style={[styles.messageBadgeText, { color: palette.textPrimary }]}>
+                  <Text
+                    style={[
+                      styles.messageBadgeText,
+                      { color: palette.textPrimary },
+                    ]}
+                  >
                     {messageBadgeLabel}
                   </Text>
                 </View>
@@ -266,19 +278,51 @@ function NewConversationSection({ onPress }: { onPress: () => void }) {
         accessibilityElementsHidden
         importantForAccessibility="no-hide-descendants"
       >
-        <View style={[styles.signalNode, { backgroundColor: palette.userBubble }]} />
-        <View style={[styles.signalLine, { backgroundColor: palette.border }]} />
-        <View style={[styles.signalNode, styles.signalNodeOutline, { borderColor: palette.userBubble }]} />
-        <View style={[styles.signalLine, { backgroundColor: palette.border }]} />
-        <View style={[styles.signalNode, { backgroundColor: palette.success }]} />
+        <View
+          style={[styles.signalNode, { backgroundColor: palette.userBubble }]}
+        />
+        <View
+          style={[styles.signalLine, { backgroundColor: palette.border }]}
+        />
+        <View
+          style={[
+            styles.signalNode,
+            styles.signalNodeOutline,
+            { borderColor: palette.userBubble },
+          ]}
+        />
+        <View
+          style={[styles.signalLine, { backgroundColor: palette.border }]}
+        />
+        <View
+          style={[styles.signalNode, { backgroundColor: palette.success }]}
+        />
       </View>
-      <Text style={[typography.title2, styles.signalTitle, { color: palette.textPrimary }]}>
+      <Text
+        style={[
+          typography.title2,
+          styles.signalTitle,
+          { color: palette.textPrimary },
+        ]}
+      >
         {t("screen.glassChatList.newConversation.title")}
       </Text>
-      <Text style={[styles.signalDescription, typography.subheadline, { color: palette.textSecondary }]}>
+      <Text
+        style={[
+          styles.signalDescription,
+          typography.subheadline,
+          { color: palette.textSecondary },
+        ]}
+      >
         {t("screen.glassChatList.newConversation.description")}
       </Text>
-      <Text style={[styles.observableNotice, typography.footnote, { color: palette.textPrimary }]}>
+      <Text
+        style={[
+          styles.observableNotice,
+          typography.footnote,
+          { color: palette.textPrimary },
+        ]}
+      >
         {t("screen.glassChatList.newConversation.observableNotice")}
       </Text>
       <View style={styles.primaryComposeButton}>
@@ -288,7 +332,9 @@ function NewConversationSection({ onPress }: { onPress: () => void }) {
           onPress={onPress}
           accessibilityRole="button"
           accessibilityLabel={t("screen.glassChatList.newConversation.button")}
-          accessibilityHint={t("screen.glassChatList.newConversation.description")}
+          accessibilityHint={t(
+            "screen.glassChatList.newConversation.description",
+          )}
         >
           <View
             style={[
@@ -335,9 +381,12 @@ function RecentChatsSection({
 }: RecentChatsSectionProps) {
   const { t } = useTranslation();
   const palette = useImessagePalette();
-  const recentFooter = chats.length === 1
-    ? t("screen.glassChatList.recent.footerSingle", { count: chats.length })
-    : t("screen.glassChatList.recent.footerMultiple", { count: chats.length });
+  const recentFooter =
+    chats.length === 1
+      ? t("screen.glassChatList.recent.footerSingle", { count: chats.length })
+      : t("screen.glassChatList.recent.footerMultiple", {
+          count: chats.length,
+        });
 
   if (showSkeleton) {
     return (
@@ -361,7 +410,10 @@ function RecentChatsSection({
   }
 
   return (
-    <Form.Section title={t("screen.glassChatList.recent.title")} footer={recentFooter}>
+    <Form.Section
+      title={t("screen.glassChatList.recent.title")}
+      footer={recentFooter}
+    >
       <View style={styles.chatsList}>
         {chats.map((chat, index) => (
           <AnimatedListItem
@@ -370,9 +422,7 @@ function RecentChatsSection({
             translateX={translates[index]}
             style={{
               borderBottomWidth:
-                index < chats.length - 1
-                  ? StyleSheet.hairlineWidth
-                  : 0,
+                index < chats.length - 1 ? StyleSheet.hairlineWidth : 0,
               borderBottomColor: palette.separator,
             }}
           >
@@ -396,7 +446,6 @@ function RecentChatsSection({
 
 export function GlassChatList() {
   const { push } = useRouter();
-  const palette = useImessagePalette();
   const {
     chats,
     createChat,
@@ -432,7 +481,9 @@ export function GlassChatList() {
   // Surface the latest context error as a dismissable toast. Derived purely from
   // state (no effect, no setState-in-render): once dismissed, the same error stays
   // hidden until a different one arrives.
-  const [dismissedError, setDismissedError] = React.useState<string | null>(null);
+  const [dismissedError, setDismissedError] = React.useState<string | null>(
+    null,
+  );
   const visibleError = error && error !== dismissedError ? error : null;
 
   // Guards against a double-fired "New chat" (the toolbar button and the empty
@@ -443,6 +494,7 @@ export function GlassChatList() {
   // loadChats surfaces its own failures through the context error (visibleError
   // toast); the .finally still marks hasLoadedOnce so the skeleton always yields
   // to the empty/error state even if loadChats ever begins to reject.
+  /* oxlint-disable react-hooks/exhaustive-deps -- Intentional mount-only load; ChatContext functions change identity as provider state changes. */
   React.useEffect(() => {
     let isMounted = true;
     loadChats()
@@ -458,6 +510,7 @@ export function GlassChatList() {
       isMounted = false;
     };
   }, []);
+  /* oxlint-enable react-hooks/exhaustive-deps */
 
   const handleDismissError = () => {
     setDismissedError(error);
@@ -550,18 +603,18 @@ export function GlassChatList() {
         refreshing={refreshing}
         onRefresh={handleRefresh}
       >
-      <Animated.View style={animatedStyle}>
-        <NewConversationSection onPress={handleNewChat} />
-        <RecentChatsSection
-          chats={chats}
-          showSkeleton={showSkeleton}
-          opacities={opacities}
-          translates={translates}
-          onPress={handleChatPress}
-          onDelete={(chat) => handleDeleteChat(chat.id, chat.title)}
-          onShare={handleShareChat}
-          onShowActions={handleShowChatActions}
-        />
+        <Animated.View style={animatedStyle}>
+          <NewConversationSection onPress={handleNewChat} />
+          <RecentChatsSection
+            chats={chats}
+            showSkeleton={showSkeleton}
+            opacities={opacities}
+            translates={translates}
+            onPress={handleChatPress}
+            onDelete={(chat) => handleDeleteChat(chat.id, chat.title)}
+            onShare={handleShareChat}
+            onShowActions={handleShowChatActions}
+          />
         </Animated.View>
       </Form.List>
       {/* Shared Chat Action Sheet (one instance for every row) */}

@@ -1,8 +1,9 @@
 {
   "compilerOptions": {
     "target": "ES2020",
-    "lib": ["ES2020"],
-    "moduleResolution": "node",
+    "lib": ["ES2020", "ES2022.Error"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
     "ignoreDeprecations": "6.0",
     "strict": true,
     "exactOptionalPropertyTypes": true,
@@ -11,7 +12,9 @@
     "noImplicitReturns": true,
     "noPropertyAccessFromIndexSignature": true,
     "noUncheckedIndexedAccess": true,
+    "skipLibCheck": true,
+    "types": ["jest", "node"],
     "useUnknownInCatchVariables": true,
-    "verbatimModuleSyntax": true
+    "verbatimModuleSyntax": false
   }
 }

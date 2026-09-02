@@ -1,8 +1,8 @@
-import { Share } from 'react-native';
-import { HapticFeedback } from '../utils/haptics';
-import { createTranslator } from '../i18n';
-import type { SupportedLocale } from '../i18n/translations';
-import { appAlert } from '../utils/appAlert';
+import { Share } from "react-native";
+import { HapticFeedback } from "../utils/haptics";
+import { createTranslator } from "../i18n";
+import type { SupportedLocale } from "../i18n/translations";
+import { appAlert } from "../utils/appAlert";
 
 /**
  * ShareService
@@ -97,7 +97,7 @@ export class ShareService {
 
     const conversationText = messages
       .map((msg, index) => `${index + 1}. ${msg}`)
-      .join('\n\n');
+      .join("\n\n");
 
     await this.shareMessage(conversationText, undefined, locale);
   }

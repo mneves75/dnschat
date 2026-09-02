@@ -28,13 +28,21 @@ export function MessageListErrorFallback({
   return (
     <View style={styles.container} testID={testID}>
       <Text
-        style={[styles.title, typography.title3, { color: palette.textPrimary }]}
+        style={[
+          styles.title,
+          typography.title3,
+          { color: palette.textPrimary },
+        ]}
         accessibilityRole="header"
       >
         {t("screen.chat.listError.title")}
       </Text>
       <Text
-        style={[styles.description, typography.subheadline, { color: palette.textSecondary }]}
+        style={[
+          styles.description,
+          typography.subheadline,
+          { color: palette.textSecondary },
+        ]}
       >
         {t("screen.chat.listError.description")}
       </Text>

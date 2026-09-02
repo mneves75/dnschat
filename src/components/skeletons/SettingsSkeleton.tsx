@@ -6,11 +6,11 @@
  * @see GlassSettings.tsx for the actual component layout
  */
 
-import React from 'react';
-import { View, StyleSheet, Platform } from 'react-native';
-import { SkeletonBox, SkeletonCard } from './SkeletonBase';
-import { LiquidGlassSpacing } from '../../ui/theme/liquidGlassSpacing';
-import { useImessagePalette } from '../../ui/theme/imessagePalette';
+import React from "react";
+import { View, StyleSheet, Platform } from "react-native";
+import { SkeletonBox } from "./SkeletonBase";
+import { LiquidGlassSpacing } from "../../ui/theme/liquidGlassSpacing";
+import { useImessagePalette } from "../../ui/theme/imessagePalette";
 
 interface SettingsSkeletonProps {
   /**
@@ -31,7 +31,12 @@ function SettingsItemSkeleton({ delay = 0 }: { delay?: number }) {
     <View style={styles.item}>
       <View style={styles.itemContent}>
         <SkeletonBox width="50%" height={17} delay={delay} />
-        <SkeletonBox width="30%" height={15} delay={delay + 50} style={styles.subtitle} />
+        <SkeletonBox
+          width="30%"
+          height={15}
+          delay={delay + 50}
+          style={styles.subtitle}
+        />
       </View>
       <SkeletonBox width={10} height={18} delay={delay + 25} />
     </View>
@@ -61,14 +66,19 @@ function SettingsSectionSkeleton({
       <View
         style={[
           styles.sectionContent,
-          { backgroundColor: Platform.OS === 'android' ? palette.solid : palette.surface },
+          {
+            backgroundColor:
+              Platform.OS === "android" ? palette.solid : palette.surface,
+          },
         ]}
       >
         {Array.from({ length: itemCount }).map((_, index) => (
           <React.Fragment key={index}>
             <SettingsItemSkeleton delay={delay + (index + 1) * 75} />
             {index < itemCount - 1 && (
-              <View style={[styles.divider, { backgroundColor: palette.separator }]} />
+              <View
+                style={[styles.divider, { backgroundColor: palette.separator }]}
+              />
             )}
           </React.Fragment>
         ))}
@@ -116,10 +126,10 @@ const styles = StyleSheet.create({
   sectionContent: {
     marginHorizontal: LiquidGlassSpacing.lg,
     borderRadius: 12,
-    ...(Platform.OS === 'web'
-      ? { boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.08)' }
+    ...(Platform.OS === "web"
+      ? { boxShadow: "0px 1px 2px rgba(0, 0, 0, 0.08)" }
       : {
-          shadowColor: '#111827',
+          shadowColor: "#111827",
           shadowOffset: { width: 0, height: 1 },
           shadowOpacity: 0.08,
           shadowRadius: 2,
@@ -131,9 +141,9 @@ const styles = StyleSheet.create({
     marginTop: LiquidGlassSpacing.sm,
   },
   item: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: LiquidGlassSpacing.md,
     paddingVertical: LiquidGlassSpacing.sm + 4,
   },

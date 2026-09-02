@@ -15,21 +15,17 @@
  */
 
 import React from "react";
-import {
-  StyleSheet,
-  Switch,
-  Text,
-  View,
-  Platform,
-  Share,
-} from "react-native";
+import { StyleSheet, Switch, Text, View, Platform, Share } from "react-native";
 import Animated from "react-native-reanimated";
 import { useChat } from "../../context/ChatContext";
 import { useSettings } from "../../context/SettingsContext";
 import { useOnboarding } from "../../context/OnboardingContext";
 import { useTranslation } from "../../i18n";
 import { LOCALE_LABEL_KEYS } from "../../i18n/localeMeta";
-import { DEFAULT_DNS_SERVER, DEFAULT_SETTINGS } from "../../context/settingsStorage";
+import {
+  DEFAULT_DNS_SERVER,
+  DEFAULT_SETTINGS,
+} from "../../context/settingsStorage";
 import { DNSLogService } from "../../services/dnsLogService";
 import { DNSService } from "../../services/dnsService";
 import { StorageService } from "../../services/storageService";
@@ -59,7 +55,13 @@ const getErrorMessage = (error: unknown): string => {
   if (typeof error === "string") return error;
   return String(error);
 };
-const ABOUT_FEATURE_KEYS = ["line1", "line2", "line3", "line4", "line5"] as const;
+const ABOUT_FEATURE_KEYS = [
+  "line1",
+  "line2",
+  "line3",
+  "line4",
+  "line5",
+] as const;
 
 // ==================================================================================
 // GLASS SETTINGS SCREEN COMPONENT
@@ -130,9 +132,7 @@ export function GlassSettings() {
     themeOptions[0]?.title ??
     t("screen.settings.sections.appearance.options.system");
 
-  const handleSelectTheme = async (
-    preference: "system" | "light" | "dark",
-  ) => {
+  const handleSelectTheme = async (preference: "system" | "light" | "dark") => {
     try {
       await updateThemePreference(preference);
       themeSheet.hide();
@@ -153,9 +153,7 @@ export function GlassSettings() {
     {
       value: "llm.pieter.com",
       label: t("screen.glassSettings.dnsOptions.llmPieter.label"),
-      description: t(
-        "screen.glassSettings.dnsOptions.llmPieter.description",
-      ),
+      description: t("screen.glassSettings.dnsOptions.llmPieter.description"),
     },
     {
       value: "ch.at",
@@ -164,12 +162,11 @@ export function GlassSettings() {
     },
   ];
 
-  const fallbackDnsOption =
-    dnsServerOptions[0] ?? {
-      value: DEFAULT_DNS_SERVER,
-      label: t("screen.glassSettings.dnsOptions.llmPieter.label"),
-      description: t("screen.glassSettings.dnsOptions.llmPieter.description"),
-    };
+  const fallbackDnsOption = dnsServerOptions[0] ?? {
+    value: DEFAULT_DNS_SERVER,
+    label: t("screen.glassSettings.dnsOptions.llmPieter.label"),
+    description: t("screen.glassSettings.dnsOptions.llmPieter.description"),
+  };
   const currentDnsOption =
     dnsServerOptions.find((option) => option.value === dnsServer) ??
     fallbackDnsOption;
@@ -178,10 +175,9 @@ export function GlassSettings() {
     {
       key: "system",
       title: t("screen.settings.sections.language.systemOption"),
-      subtitle: t(
-        "screen.settings.sections.language.systemDescription",
-        { language: t(LOCALE_LABEL_KEYS[systemLocale]) },
-      ),
+      subtitle: t("screen.settings.sections.language.systemDescription", {
+        language: t(LOCALE_LABEL_KEYS[systemLocale]),
+      }),
       value: null as string | null,
     },
     ...availableLocales.map((option) => {
@@ -189,10 +185,9 @@ export function GlassSettings() {
       return {
         key: option.locale,
         title: label,
-        subtitle: t(
-          "screen.settings.sections.language.optionDescription",
-          { language: label },
-        ),
+        subtitle: t("screen.settings.sections.language.optionDescription", {
+          language: label,
+        }),
         value: option.locale,
       };
     }),
@@ -225,7 +220,6 @@ export function GlassSettings() {
       devWarn("[GlassSettings] Share failed", error);
     }
   };
-
 
   const handleResetSettings = () => {
     appAlert(
@@ -290,7 +284,7 @@ export function GlassSettings() {
   };
 
   // Transport test state
-  const [testMessage, setTestMessage] = React.useState("ping");
+  const [testMessage] = React.useState("ping");
   const [testRunning, setTestRunning] = React.useState(false);
   const [lastTestResult, setLastTestResult] = React.useState<string | null>(
     null,
@@ -370,9 +364,7 @@ export function GlassSettings() {
     setTestRunning(false);
   };
 
-  const handleForceTransport = async (
-    transport: "native" | "udp" | "tcp",
-  ) => {
+  const handleForceTransport = async (transport: "native" | "udp" | "tcp") => {
     if (testRunning) return;
     const throttleMessage = checkForcedAvailability(transport);
     if (throttleMessage) {
@@ -443,325 +435,378 @@ export function GlassSettings() {
         <Animated.View style={animatedStyle}>
           {/* DNS Configuration Section */}
           <Form.Section
-          title={t("screen.settings.sections.dnsConfig.title")}
-          footer={t("screen.settings.sections.dnsConfig.description")}
-        >
-          <Form.Item
-            testID="settings-dns-server"
-            title={t("screen.settings.sections.dnsConfig.dnsServerLabel")}
-            subtitle={currentDnsOption.label}
-            rightContent={
-              <Text style={[styles.valueText, { color: palette.textSecondary }]}>
-                {dnsServer}
-              </Text>
-            }
-            onPress={dnsServerSheet.show}
-            showChevron
-          />
-
-          <Form.Item
-            testID="settings-mock-dns"
-            title={t("screen.glassSettings.sections.dnsConfig.mockTitle")}
-            subtitle={t("screen.glassSettings.sections.dnsConfig.mockSubtitle")}
-            rightContent={
-              <Switch
-                testID="settings-mock-dns-switch"
-                value={enableMockDNS}
-                onValueChange={handleToggleMockDNS}
-                accessibilityLabel={t("screen.glassSettings.sections.dnsConfig.mockTitle")}
-                accessibilityHint={t("screen.glassSettings.sections.dnsConfig.mockSubtitle")}
-                trackColor={{ false: palette.textTertiary, true: palette.userBubble }}
-                thumbColor={
-                  Platform.OS === "android"
-                    ? enableMockDNS
-                      ? "#FFFFFF"
-                      : palette.textTertiary
-                    : undefined
-                }
-              />
-            }
-          />
-          <Form.Item
-            testID="settings-haptics"
-            title={t("screen.settings.sections.appBehavior.enableHaptics.label")}
-            subtitle={t(
-              "screen.settings.sections.appBehavior.enableHaptics.description",
-            )}
-            rightContent={
-              <Switch
-                testID="settings-haptics-switch"
-                value={enableHaptics}
-                onValueChange={handleToggleHaptics}
-                accessibilityLabel={t("screen.settings.sections.appBehavior.enableHaptics.label")}
-                accessibilityHint={t(
-                  "screen.settings.sections.appBehavior.enableHaptics.description",
-                )}
-                trackColor={{ false: palette.textTertiary, true: palette.userBubble }}
-                thumbColor={
-                  Platform.OS === "android"
-                    ? enableHaptics
-                      ? "#FFFFFF"
-                      : palette.textTertiary
-                    : undefined
-                }
-              />
-            }
-          />
-        </Form.Section>
-
-        <Form.Section
-          title={t("screen.settings.sections.appearance.title")}
-          footer={t("screen.settings.sections.appearance.description")}
-        >
-          <Form.Item
-            testID="settings-theme"
-            title={t("screen.settings.sections.appearance.themeLabel")}
-            subtitle={currentThemeTitle}
-            onPress={themeSheet.show}
-            accessibilityHint={t(
-              "screen.settings.sections.appearance.themeHint",
-            )}
-            showChevron
-          />
-        </Form.Section>
-
-        <Form.Section
-          title={t("screen.settings.sections.language.title")}
-          footer={t("screen.settings.sections.language.description")}
-        >
-          {localeOptions.map((option) => (
+            title={t("screen.settings.sections.dnsConfig.title")}
+            footer={t("screen.settings.sections.dnsConfig.description")}
+          >
             <Form.Item
-              key={option.key}
-              testID={`language-option-${option.key}`}
-              title={option.title}
-              subtitle={option.subtitle}
+              testID="settings-dns-server"
+              title={t("screen.settings.sections.dnsConfig.dnsServerLabel")}
+              subtitle={currentDnsOption.label}
               rightContent={
-                activeLocaleSelection === option.value && (
-                  <CheckmarkIcon size={18} color={palette.userBubble} />
-                )
+                <Text
+                  style={[styles.valueText, { color: palette.textSecondary }]}
+                >
+                  {dnsServer}
+                </Text>
               }
-              onPress={() => handleSelectLocale(option.value)}
-              accessibilityState={{ selected: activeLocaleSelection === option.value }}
+              onPress={dnsServerSheet.show}
               showChevron
             />
-          ))}
-        </Form.Section>
 
-        {/* Transport Test */}
-        <Form.Section
-          title={t("screen.settings.sections.transportTest.title")}
-          footer={t("screen.settings.sections.transportTest.description")}
-        >
-          <Form.Item
-            title={t("screen.settings.sections.transportTest.messageLabel")}
-            subtitle={testMessage}
-            rightContent={
-              <Text style={[styles.valueText, { color: palette.textSecondary }]}>
-                {testMessage}
-              </Text>
-            }
-          />
-          <LiquidGlassWrapper
-            variant="interactive"
-            shape="capsule"
-            style={{ marginVertical: 8, alignItems: "center", padding: 10 }}
-          >
-            <PressableRipple
-              testID="settings-transport-test"
-              onPress={handleTestSelectedPreference}
-              accessibilityRole="button"
-              accessibilityLabel={
-                testRunning
-                  ? t("screen.settings.sections.transportTest.testingButton")
-                  : t("screen.settings.sections.transportTest.testButton")
-              }
-              accessibilityHint={t("screen.settings.sections.transportTest.testHint")}
-              accessibilityState={{ busy: testRunning }}
-              style={[
-                styles.transportTestButton,
-                { minHeight: minimumTouchTarget, minWidth: minimumTouchTarget },
-              ]}
-            >
-              <Text
-                style={[
-                  styles.transportTestButtonText,
-                  { color: palette.bubbleTextOnBlue },
-                ]}
-              >
-                {testRunning
-                  ? t("screen.settings.sections.transportTest.testingButton")
-                  : t("screen.settings.sections.transportTest.testButton")}
-              </Text>
-            </PressableRipple>
-          </LiquidGlassWrapper>
-          <View
-            style={{ flexDirection: "row", justifyContent: "space-around" }}
-          >
-            {(["native", "udp", "tcp"] as const).map((transportKey) => (
-              <LiquidGlassWrapper
-                key={transportKey}
-                variant="interactive"
-                shape="capsule"
-                style={{ paddingHorizontal: 12, paddingVertical: 6 }}
-              >
-                <PressableRipple
-                  testID={`settings-force-${transportKey}`}
-                  onPress={() => handleForceTransport(transportKey)}
-                  accessibilityRole="button"
+            <Form.Item
+              testID="settings-mock-dns"
+              title={t("screen.glassSettings.sections.dnsConfig.mockTitle")}
+              subtitle={t(
+                "screen.glassSettings.sections.dnsConfig.mockSubtitle",
+              )}
+              rightContent={
+                <Switch
+                  testID="settings-mock-dns-switch"
+                  value={enableMockDNS}
+                  onValueChange={handleToggleMockDNS}
                   accessibilityLabel={t(
-                    "screen.settings.sections.transportTest.forceAccessibilityLabel",
-                    { transport: transportLabelMap[transportKey] },
+                    "screen.glassSettings.sections.dnsConfig.mockTitle",
                   )}
-                  accessibilityHint={t("screen.settings.sections.transportTest.forceHint", {
-                    transport: transportLabelMap[transportKey],
-                  })}
-                  style={[
-                    styles.transportForceButton,
-                    { minHeight: minimumTouchTarget, minWidth: minimumTouchTarget },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.transportForceButtonText,
-                      { color: palette.bubbleTextOnBlue },
-                    ]}
-                  >
-                    {transportLabelMap[transportKey]}
-                  </Text>
-                </PressableRipple>
-              </LiquidGlassWrapper>
+                  accessibilityHint={t(
+                    "screen.glassSettings.sections.dnsConfig.mockSubtitle",
+                  )}
+                  trackColor={{
+                    false: palette.textTertiary,
+                    true: palette.userBubble,
+                  }}
+                  thumbColor={
+                    Platform.OS === "android"
+                      ? enableMockDNS
+                        ? "#FFFFFF"
+                        : palette.textTertiary
+                      : undefined
+                  }
+                />
+              }
+            />
+            <Form.Item
+              testID="settings-haptics"
+              title={t(
+                "screen.settings.sections.appBehavior.enableHaptics.label",
+              )}
+              subtitle={t(
+                "screen.settings.sections.appBehavior.enableHaptics.description",
+              )}
+              rightContent={
+                <Switch
+                  testID="settings-haptics-switch"
+                  value={enableHaptics}
+                  onValueChange={handleToggleHaptics}
+                  accessibilityLabel={t(
+                    "screen.settings.sections.appBehavior.enableHaptics.label",
+                  )}
+                  accessibilityHint={t(
+                    "screen.settings.sections.appBehavior.enableHaptics.description",
+                  )}
+                  trackColor={{
+                    false: palette.textTertiary,
+                    true: palette.userBubble,
+                  }}
+                  thumbColor={
+                    Platform.OS === "android"
+                      ? enableHaptics
+                        ? "#FFFFFF"
+                        : palette.textTertiary
+                      : undefined
+                  }
+                />
+              }
+            />
+          </Form.Section>
+
+          <Form.Section
+            title={t("screen.settings.sections.appearance.title")}
+            footer={t("screen.settings.sections.appearance.description")}
+          >
+            <Form.Item
+              testID="settings-theme"
+              title={t("screen.settings.sections.appearance.themeLabel")}
+              subtitle={currentThemeTitle}
+              onPress={themeSheet.show}
+              accessibilityHint={t(
+                "screen.settings.sections.appearance.themeHint",
+              )}
+              showChevron
+            />
+          </Form.Section>
+
+          <Form.Section
+            title={t("screen.settings.sections.language.title")}
+            footer={t("screen.settings.sections.language.description")}
+          >
+            {localeOptions.map((option) => (
+              <Form.Item
+                key={option.key}
+                testID={`language-option-${option.key}`}
+                title={option.title}
+                subtitle={option.subtitle}
+                rightContent={
+                  activeLocaleSelection === option.value && (
+                    <CheckmarkIcon size={18} color={palette.userBubble} />
+                  )
+                }
+                onPress={() => handleSelectLocale(option.value)}
+                accessibilityState={{
+                  selected: activeLocaleSelection === option.value,
+                }}
+                showChevron
+              />
             ))}
-          </View>
+          </Form.Section>
 
-          {lastTestResult && (
-            <View
-              style={[styles.aboutCard, { backgroundColor: palette.highlight }]}
-              accessibilityLiveRegion="polite"
+          {/* Transport Test */}
+          <Form.Section
+            title={t("screen.settings.sections.transportTest.title")}
+            footer={t("screen.settings.sections.transportTest.description")}
+          >
+            <Form.Item
+              title={t("screen.settings.sections.transportTest.messageLabel")}
+              subtitle={testMessage}
+              rightContent={
+                <Text
+                  style={[styles.valueText, { color: palette.textSecondary }]}
+                >
+                  {testMessage}
+                </Text>
+              }
+            />
+            <LiquidGlassWrapper
+              variant="interactive"
+              shape="capsule"
+              style={{ marginVertical: 8, alignItems: "center", padding: 10 }}
             >
-              <Text style={[styles.aboutText, { color: palette.textPrimary }]}>
-                {t("screen.glassSettings.results.label", {
-                  value: lastTestResult,
-                })}
-              </Text>
-            </View>
-          )}
-          {lastTestError && (
-            <View
-              style={[styles.aboutCard, { backgroundColor: palette.highlight }]}
-              accessibilityRole="alert"
-              accessibilityLiveRegion="assertive"
-            >
-              <Text style={[styles.aboutText, { color: palette.textPrimary }]}>
-                {t("screen.glassSettings.results.error", {
-                  value: lastTestError,
-                })}
-              </Text>
-            </View>
-          )}
-        </Form.Section>
-
-        {/* App Information Section */}
-        <Form.Section title={t("screen.glassSettings.sections.about.title")}>
-          <Form.Item
-            testID="settings-about-version"
-            title={t("screen.glassSettings.sections.about.appVersionTitle")}
-            subtitle={t(
-              "screen.glassSettings.sections.about.appVersionSubtitle",
-              { version: appVersion },
-            )}
-            rightContent={
-              <LiquidGlassWrapper
-                variant="interactive"
-                shape="capsule"
+              <PressableRipple
+                testID="settings-transport-test"
+                onPress={handleTestSelectedPreference}
+                accessibilityRole="button"
+                accessibilityLabel={
+                  testRunning
+                    ? t("screen.settings.sections.transportTest.testingButton")
+                    : t("screen.settings.sections.transportTest.testButton")
+                }
+                accessibilityHint={t(
+                  "screen.settings.sections.transportTest.testHint",
+                )}
+                accessibilityState={{ busy: testRunning }}
                 style={[
-                  styles.versionBadge,
-                  { backgroundColor: palette.accentSurface },
+                  styles.transportTestButton,
+                  {
+                    minHeight: minimumTouchTarget,
+                    minWidth: minimumTouchTarget,
+                  },
                 ]}
               >
                 <Text
-                  style={[styles.versionText, { color: palette.userBubble }]}
+                  style={[
+                    styles.transportTestButtonText,
+                    { color: palette.bubbleTextOnBlue },
+                  ]}
                 >
-                  {t("screen.glassSettings.sections.about.latestBadge")}
+                  {testRunning
+                    ? t("screen.settings.sections.transportTest.testingButton")
+                    : t("screen.settings.sections.transportTest.testButton")}
                 </Text>
-              </LiquidGlassWrapper>
-            }
-            onPress={aboutSheet.show}
-          />
+              </PressableRipple>
+            </LiquidGlassWrapper>
+            <View
+              style={{ flexDirection: "row", justifyContent: "space-around" }}
+            >
+              {(["native", "udp", "tcp"] as const).map((transportKey) => (
+                <LiquidGlassWrapper
+                  key={transportKey}
+                  variant="interactive"
+                  shape="capsule"
+                  style={{ paddingHorizontal: 12, paddingVertical: 6 }}
+                >
+                  <PressableRipple
+                    testID={`settings-force-${transportKey}`}
+                    onPress={() => handleForceTransport(transportKey)}
+                    accessibilityRole="button"
+                    accessibilityLabel={t(
+                      "screen.settings.sections.transportTest.forceAccessibilityLabel",
+                      { transport: transportLabelMap[transportKey] },
+                    )}
+                    accessibilityHint={t(
+                      "screen.settings.sections.transportTest.forceHint",
+                      {
+                        transport: transportLabelMap[transportKey],
+                      },
+                    )}
+                    style={[
+                      styles.transportForceButton,
+                      {
+                        minHeight: minimumTouchTarget,
+                        minWidth: minimumTouchTarget,
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.transportForceButtonText,
+                        { color: palette.bubbleTextOnBlue },
+                      ]}
+                    >
+                      {transportLabelMap[transportKey]}
+                    </Text>
+                  </PressableRipple>
+                </LiquidGlassWrapper>
+              ))}
+            </View>
 
-          <Form.Link
-            testID="settings-github-link"
-            title={t("screen.glassSettings.sections.about.githubTitle")}
-            subtitle={t(
-              "screen.glassSettings.sections.about.githubSubtitle",
+            {lastTestResult && (
+              <View
+                style={[
+                  styles.aboutCard,
+                  { backgroundColor: palette.highlight },
+                ]}
+                accessibilityLiveRegion="polite"
+              >
+                <Text
+                  style={[styles.aboutText, { color: palette.textPrimary }]}
+                >
+                  {t("screen.glassSettings.results.label", {
+                    value: lastTestResult,
+                  })}
+                </Text>
+              </View>
             )}
-            onPress={() => openExternalLink("https://github.com/mneves75/dnschat")}
-          />
-
-          <Form.Item
-            testID="settings-share-app"
-            title={t("screen.glassSettings.sections.about.shareTitle")}
-            subtitle={t("screen.glassSettings.sections.about.shareSubtitle")}
-            onPress={handleShareApp}
-            showChevron
-          />
-        </Form.Section>
-
-        {/* Advanced Section */}
-        <Form.Section
-          title={t("screen.glassSettings.sections.advanced.title")}
-          footer={t("screen.glassSettings.sections.advanced.footer")}
-        >
-          <Form.Item
-            testID="settings-clear-data"
-            title={t("screen.glassSettings.sections.advanced.clearCacheTitle")}
-            subtitle={t(
-              "screen.glassSettings.sections.advanced.clearCacheSubtitle",
+            {lastTestError && (
+              <View
+                style={[
+                  styles.aboutCard,
+                  { backgroundColor: palette.highlight },
+                ]}
+                accessibilityRole="alert"
+                accessibilityLiveRegion="assertive"
+              >
+                <Text
+                  style={[styles.aboutText, { color: palette.textPrimary }]}
+                >
+                  {t("screen.glassSettings.results.error", {
+                    value: lastTestError,
+                  })}
+                </Text>
+              </View>
             )}
-            onPress={handleClearData}
-            showChevron
-          />
+          </Form.Section>
 
-          <Form.Item
-            testID="settings-reset-defaults"
-            title={t("screen.glassSettings.sections.advanced.resetTitle")}
-            subtitle={t(
-              "screen.glassSettings.sections.advanced.resetSubtitle",
-            )}
-            onPress={handleResetSettings}
-            showChevron
-          />
-        </Form.Section>
+          {/* App Information Section */}
+          <Form.Section title={t("screen.glassSettings.sections.about.title")}>
+            <Form.Item
+              testID="settings-about-version"
+              title={t("screen.glassSettings.sections.about.appVersionTitle")}
+              subtitle={t(
+                "screen.glassSettings.sections.about.appVersionSubtitle",
+                { version: appVersion },
+              )}
+              rightContent={
+                <LiquidGlassWrapper
+                  variant="interactive"
+                  shape="capsule"
+                  style={[
+                    styles.versionBadge,
+                    { backgroundColor: palette.accentSurface },
+                  ]}
+                >
+                  <Text
+                    style={[styles.versionText, { color: palette.userBubble }]}
+                  >
+                    {t("screen.glassSettings.sections.about.latestBadge")}
+                  </Text>
+                </LiquidGlassWrapper>
+              }
+              onPress={aboutSheet.show}
+            />
 
-        {/* Support Section */}
-        <Form.Section title={t("screen.glassSettings.sections.support.title")}>
-          <Form.Item
-            testID="settings-help"
-            title={t("screen.glassSettings.sections.support.helpTitle")}
-            subtitle={t("screen.glassSettings.sections.support.helpSubtitle")}
-            onPress={supportSheet.show}
-            showChevron
-          />
+            <Form.Link
+              testID="settings-github-link"
+              title={t("screen.glassSettings.sections.about.githubTitle")}
+              subtitle={t("screen.glassSettings.sections.about.githubSubtitle")}
+              onPress={() =>
+                openExternalLink("https://github.com/mneves75/dnschat")
+              }
+            />
 
-          <Form.Item
-            testID="settings-report-bug"
-            title={t("screen.glassSettings.sections.support.bugTitle")}
-            subtitle={t("screen.glassSettings.sections.support.bugSubtitle")}
-            onPress={() => {
-              openExternalLink("https://github.com/mneves75/dnschat/issues");
-            }}
-            showChevron
-          />
-        </Form.Section>
+            <Form.Item
+              testID="settings-share-app"
+              title={t("screen.glassSettings.sections.about.shareTitle")}
+              subtitle={t("screen.glassSettings.sections.about.shareSubtitle")}
+              onPress={handleShareApp}
+              showChevron
+            />
+          </Form.Section>
 
-        {/* App tour reset */}
+          {/* Advanced Section */}
+          <Form.Section
+            title={t("screen.glassSettings.sections.advanced.title")}
+            footer={t("screen.glassSettings.sections.advanced.footer")}
+          >
+            <Form.Item
+              testID="settings-clear-data"
+              title={t(
+                "screen.glassSettings.sections.advanced.clearCacheTitle",
+              )}
+              subtitle={t(
+                "screen.glassSettings.sections.advanced.clearCacheSubtitle",
+              )}
+              onPress={handleClearData}
+              showChevron
+            />
+
+            <Form.Item
+              testID="settings-reset-defaults"
+              title={t("screen.glassSettings.sections.advanced.resetTitle")}
+              subtitle={t(
+                "screen.glassSettings.sections.advanced.resetSubtitle",
+              )}
+              onPress={handleResetSettings}
+              showChevron
+            />
+          </Form.Section>
+
+          {/* Support Section */}
+          <Form.Section
+            title={t("screen.glassSettings.sections.support.title")}
+          >
+            <Form.Item
+              testID="settings-help"
+              title={t("screen.glassSettings.sections.support.helpTitle")}
+              subtitle={t("screen.glassSettings.sections.support.helpSubtitle")}
+              onPress={supportSheet.show}
+              showChevron
+            />
+
+            <Form.Item
+              testID="settings-report-bug"
+              title={t("screen.glassSettings.sections.support.bugTitle")}
+              subtitle={t("screen.glassSettings.sections.support.bugSubtitle")}
+              onPress={() => {
+                openExternalLink("https://github.com/mneves75/dnschat/issues");
+              }}
+              showChevron
+            />
+          </Form.Section>
+
+          {/* App tour reset */}
           <Form.Section
             title={t("screen.settings.sections.development.title")}
-            footer={t("screen.settings.sections.development.resetOnboardingSubtitle")}
+            footer={t(
+              "screen.settings.sections.development.resetOnboardingSubtitle",
+            )}
           >
             <Form.Item
               testID="settings-reset-onboarding"
-              title={t("screen.settings.sections.development.resetOnboardingTitle")}
-              subtitle={t("screen.settings.sections.development.resetOnboardingSubtitle")}
+              title={t(
+                "screen.settings.sections.development.resetOnboardingTitle",
+              )}
+              subtitle={t(
+                "screen.settings.sections.development.resetOnboardingSubtitle",
+              )}
               onPress={handleResetOnboarding}
               showChevron
             />
@@ -798,7 +843,12 @@ export function GlassSettings() {
             >
               <View style={styles.dnsOptionContent}>
                 <View style={styles.dnsOptionText}>
-                  <Text style={[styles.dnsOptionTitle, { color: palette.textPrimary }]}>
+                  <Text
+                    style={[
+                      styles.dnsOptionTitle,
+                      { color: palette.textPrimary },
+                    ]}
+                  >
                     {option.label}
                   </Text>
                   <Text
@@ -883,17 +933,13 @@ export function GlassSettings() {
             cornerRadius={12}
             style={[styles.aboutCard, { backgroundColor: palette.highlight }]}
           >
-            <Text
-              style={[styles.aboutText, { color: palette.textPrimary }]}
-            >
+            <Text style={[styles.aboutText, { color: palette.textPrimary }]}>
               {t("screen.glassSettings.aboutSheet.overview")}
             </Text>
           </LiquidGlassWrapper>
 
           <View style={styles.aboutFeatures}>
-            <Text
-              style={[styles.featureTitle, { color: palette.textPrimary }]}
-            >
+            <Text style={[styles.featureTitle, { color: palette.textPrimary }]}>
               {t("screen.glassSettings.aboutSheet.featuresTitle")}
             </Text>
             {ABOUT_FEATURE_KEYS.map((featureKey) => (

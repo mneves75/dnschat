@@ -1,15 +1,14 @@
 import React from "react";
-import {
-  View,
-  StyleSheet,
-  Platform,
-} from "react-native";
+import { View, StyleSheet, Platform } from "react-native";
 import type { AccessibilityActionEvent } from "react-native";
 import type { Message } from "../types/chat";
 import { useTypography } from "../ui/hooks/useTypography";
 import { useResponsiveLayout } from "../ui/hooks/useResponsiveLayout";
 import { useImessagePalette } from "../ui/theme/imessagePalette";
-import { LiquidGlassSpacing, getCornerRadius } from "../ui/theme/liquidGlassSpacing";
+import {
+  LiquidGlassSpacing,
+  getCornerRadius,
+} from "../ui/theme/liquidGlassSpacing";
 import { HapticFeedback } from "../utils/haptics";
 import { ClipboardService } from "../services/ClipboardService";
 import { ShareService } from "../services/ShareService";
@@ -17,7 +16,10 @@ import { MessageContent } from "./MessageContent";
 import { useTranslation } from "../i18n";
 import { useLocale } from "../context/SettingsContext";
 import { NativeMenu } from "./platform/NativeMenu";
-import type { NativeMenuAction, NativeMenuActionEvent } from "./platform/NativeMenu";
+import type {
+  NativeMenuAction,
+  NativeMenuActionEvent,
+} from "./platform/NativeMenu";
 import { useResolvedColorScheme } from "../ui/theme/resolvedColorScheme";
 
 const androidCopyIcon = require("../assets/icons/menu-content-copy.xml");
@@ -25,9 +27,9 @@ const androidShareIcon = require("../assets/icons/menu-share.xml");
 
 // Platform-specific monospace font for code rendering
 const MONOSPACE_FONT = Platform.select({
-  ios: 'Menlo',
-  android: 'monospace',
-  default: 'Courier',
+  ios: "Menlo",
+  android: "monospace",
+  default: "Courier",
 });
 
 const MARKDOWN_LINK_PATTERN =
@@ -49,19 +51,24 @@ function MessageBubbleComponent({ message }: MessageBubbleProps) {
   const isUser = message.role === "user";
   const isLoading = message.status === "sending";
   const hasError = message.status === "error";
-  const exposesInteractiveMarkdown = !isUser && MARKDOWN_LINK_PATTERN.test(message.content);
-  const messageCornerRadius = getCornerRadius('message');
+  const exposesInteractiveMarkdown =
+    !isUser && MARKDOWN_LINK_PATTERN.test(message.content);
+  const messageCornerRadius = getCornerRadius("message");
 
   const runMessageAction = async (actionKey: string) => {
     switch (actionKey) {
-      case 'copy':
+      case "copy":
         void HapticFeedback.light();
         await ClipboardService.copy(message.content);
         break;
 
-      case 'share':
+      case "share":
         void HapticFeedback.light();
-        await ShareService.shareMessage(message.content, message.timestamp, locale);
+        await ShareService.shareMessage(
+          message.content,
+          message.timestamp,
+          locale,
+        );
         break;
 
       default:
@@ -98,9 +105,8 @@ function MessageBubbleComponent({ message }: MessageBubbleProps) {
   ];
 
   // Text color: AA text on blue/red, dark/light on gray depending on mode.
-  const textColor = isUser || hasError
-    ? palette.bubbleTextOnBlue
-    : palette.bubbleTextOnGray;
+  const textColor =
+    isUser || hasError ? palette.bubbleTextOnBlue : palette.bubbleTextOnGray;
 
   const textStyles = [
     styles.text,
@@ -128,44 +134,44 @@ function MessageBubbleComponent({ message }: MessageBubbleProps) {
     code_block: {
       backgroundColor: isDark ? palette.solid : palette.surface,
       padding: LiquidGlassSpacing.sm,
-      borderRadius: getCornerRadius('input'),
+      borderRadius: getCornerRadius("input"),
       marginVertical: LiquidGlassSpacing.xs,
       fontFamily: MONOSPACE_FONT,
     },
     fence: {
       backgroundColor: isDark ? palette.solid : palette.surface,
       padding: LiquidGlassSpacing.sm,
-      borderRadius: getCornerRadius('input'),
+      borderRadius: getCornerRadius("input"),
       marginVertical: LiquidGlassSpacing.xs,
       fontFamily: MONOSPACE_FONT,
     },
   };
 
   const copyImage = Platform.select({
-    ios: 'doc.on.doc',
+    ios: "doc.on.doc",
     android: androidCopyIcon,
   }) as NativeMenuAction["image"];
   const shareImage = Platform.select({
-    ios: 'square.and.arrow.up',
+    ios: "square.and.arrow.up",
     android: androidShareIcon,
   }) as NativeMenuAction["image"];
   const menuActions: NativeMenuAction[] = [
     {
-      id: 'copy',
-      title: t('screen.chat.messageActions.copy'),
+      id: "copy",
+      title: t("screen.chat.messageActions.copy"),
       ...(copyImage ? { image: copyImage } : {}),
     },
     {
-      id: 'share',
-      title: t('screen.chat.messageActions.share'),
+      id: "share",
+      title: t("screen.chat.messageActions.share"),
       ...(shareImage ? { image: shareImage } : {}),
     },
   ];
   const messageAccessibilityActions = isLoading
     ? undefined
     : [
-        { name: 'copy', label: t('screen.chat.messageActions.copy') },
-        { name: 'share', label: t('screen.chat.messageActions.share') },
+        { name: "copy", label: t("screen.chat.messageActions.copy") },
+        { name: "share", label: t("screen.chat.messageActions.share") },
       ];
 
   const messageContentProps = {
@@ -194,7 +200,9 @@ function MessageBubbleComponent({ message }: MessageBubbleProps) {
               ? t("screen.chat.accessibility.loadingHint")
               : t("screen.chat.accessibility.menuHint"),
             accessibilityActions: messageAccessibilityActions,
-            onAccessibilityAction: isLoading ? undefined : handleAccessibilityAction,
+            onAccessibilityAction: isLoading
+              ? undefined
+              : handleAccessibilityAction,
           }
         : {})}
     >
@@ -245,12 +253,12 @@ const styles = StyleSheet.create({
   assistantContainer: {
     alignSelf: "flex-start",
   },
-    bubbleBase: {
-      paddingHorizontal: LiquidGlassSpacing.md,
-      paddingVertical: LiquidGlassSpacing.sm,
-      borderRadius: getCornerRadius('message'),
-      minWidth: 60,
-    },
+  bubbleBase: {
+    paddingHorizontal: LiquidGlassSpacing.md,
+    paddingVertical: LiquidGlassSpacing.sm,
+    borderRadius: getCornerRadius("message"),
+    minWidth: 60,
+  },
   text: {
     // Typography and color applied inline from palette
   },

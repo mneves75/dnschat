@@ -1,5 +1,9 @@
 import { NativeModules, Platform } from "react-native";
-import { getNativeSanitizerConfig, getServerPort, DNS_CONSTANTS } from "./constants";
+import {
+  getNativeSanitizerConfig,
+  getServerPort,
+  DNS_CONSTANTS,
+} from "./constants";
 import type { NativeSanitizerConfig } from "./constants";
 
 const isJestRuntime = (): boolean => {
@@ -21,7 +25,10 @@ const isExplicitDebugEnabled = (): boolean => {
     if (globalRecord["__DNSCHAT_NATIVE_DEBUG__"] === true) return true;
   } catch {}
   try {
-    if (typeof process !== "undefined" && process.env?.["DNSCHAT_NATIVE_DEBUG"] === "1") {
+    if (
+      typeof process !== "undefined" &&
+      process.env?.["DNSCHAT_NATIVE_DEBUG"] === "1"
+    ) {
       return true;
     }
   } catch {}
@@ -66,7 +73,9 @@ const getErrorCode = (error: unknown): string | undefined => {
   return typeof record["code"] === "string" ? record["code"] : undefined;
 };
 
-const getErrorDetails = (error: unknown): { message: string; code?: string } => {
+const getErrorDetails = (
+  error: unknown,
+): { message: string; code?: string } => {
   const message = getErrorMessage(error);
   const code = getErrorCode(error);
   return code ? { message, code } : { message };
@@ -88,9 +97,25 @@ export interface NativeDNSModule {
    * @param port - DNS port (53 for the allowlisted resolvers)
    * @returns Promise resolving to array of TXT record strings
    */
-  queryTXT(domain: string, message: string, port: number): Promise<string[]>;
-  queryTXTUDP?(domain: string, message: string, port: number): Promise<string[]>;
-  queryTXTTCP?(domain: string, message: string, port: number): Promise<string[]>;
+  queryTXT(
+    domain: string,
+    message: string,
+    port: number,
+    deadlineEpochMs: number,
+  ): Promise<string[]>;
+  queryTXTUDP?(
+    domain: string,
+    message: string,
+    port: number,
+    deadlineEpochMs: number,
+  ): Promise<string[]>;
+  queryTXTTCP?(
+    domain: string,
+    message: string,
+    port: number,
+    deadlineEpochMs: number,
+  ): Promise<string[]>;
+  cancelActiveQueries(): Promise<number>;
 
   /**
    * Check if native DNS functionality is available on this platform
@@ -167,16 +192,25 @@ export function parseMultiPartTXTResponse(txtRecords: string[]): string {
     const sanitizedResponse = sanitizeLLMResponseText(rawValue);
     if ((first < 48 || first > 57) && first > 32) {
       if (!sanitizedResponse.trim()) {
-        throw new DNSError(DNSErrorType.INVALID_RESPONSE, "Received empty response");
+        throw new DNSError(
+          DNSErrorType.INVALID_RESPONSE,
+          "Received empty response",
+        );
       }
       return sanitizedResponse;
     }
     if (!rawValue.trim()) {
-      throw new DNSError(DNSErrorType.INVALID_RESPONSE, "Received empty response");
+      throw new DNSError(
+        DNSErrorType.INVALID_RESPONSE,
+        "Received empty response",
+      );
     }
     if (!/^\s*\d+\/\d+:/.test(rawValue)) {
       if (!sanitizedResponse.trim()) {
-        throw new DNSError(DNSErrorType.INVALID_RESPONSE, "Received empty response");
+        throw new DNSError(
+          DNSErrorType.INVALID_RESPONSE,
+          "Received empty response",
+        );
       }
       return sanitizedResponse;
     }
@@ -222,7 +256,10 @@ export function parseMultiPartTXTResponse(txtRecords: string[]): string {
     }
     const sanitizedResponse = sanitizeLLMResponseText(plainResponse);
     if (!sanitizedResponse.trim()) {
-      throw new DNSError(DNSErrorType.INVALID_RESPONSE, "Received empty response");
+      throw new DNSError(
+        DNSErrorType.INVALID_RESPONSE,
+        "Received empty response",
+      );
     }
     return sanitizedResponse;
   }
@@ -253,7 +290,7 @@ export function parseMultiPartTXTResponse(txtRecords: string[]): string {
     );
   }
 
-  const byPart = new Array<string | undefined>(expectedTotal);
+  const byPart = Array.from<string | undefined>({ length: expectedTotal });
   let receivedParts = 0;
 
   for (const part of parts) {
@@ -301,7 +338,10 @@ export function parseMultiPartTXTResponse(txtRecords: string[]): string {
 
   const sanitizedResponse = sanitizeLLMResponseText(fullResponse);
   if (!sanitizedResponse.trim()) {
-    throw new DNSError(DNSErrorType.INVALID_RESPONSE, "Received empty response");
+    throw new DNSError(
+      DNSErrorType.INVALID_RESPONSE,
+      "Received empty response",
+    );
   }
   return sanitizedResponse;
 }
@@ -341,10 +381,16 @@ export class NativeDNS implements NativeDNSModule {
 
   private configureSanitizerIfNeeded(): void {
     if (!this.nativeModule) return;
-    if (this.sanitizerConfigurationPromise || this.sanitizerConfigurationPermanentFailure) {
+    if (
+      this.sanitizerConfigurationPromise ||
+      this.sanitizerConfigurationPermanentFailure
+    ) {
       return;
     }
-    debugLog("[NativeDNS] RNDNSModule methods:", Object.keys(this.nativeModule));
+    debugLog(
+      "[NativeDNS] RNDNSModule methods:",
+      Object.keys(this.nativeModule),
+    );
     if (typeof this.nativeModule.configureSanitizer !== "function") {
       this.recordSanitizerConfigurationFailure(
         new Error("Native DNS module does not expose sanitizer configuration"),
@@ -364,7 +410,9 @@ export class NativeDNS implements NativeDNSModule {
           if (didUpdate) {
             debugLog("[NativeDNS] Sanitizer configured via shared constants");
           } else {
-            debugLog("[NativeDNS] Sanitizer already up to date; skipped reconfiguration");
+            debugLog(
+              "[NativeDNS] Sanitizer already up to date; skipped reconfiguration",
+            );
           }
           this.sanitizerConfigurationError = null;
           this.sanitizerConfigurationPermanentFailure = false;
@@ -398,7 +446,10 @@ export class NativeDNS implements NativeDNSModule {
       await currentConfigurationPromise;
     }
 
-    if (this.sanitizerConfigurationError && !this.sanitizerConfigurationPermanentFailure) {
+    if (
+      this.sanitizerConfigurationError &&
+      !this.sanitizerConfigurationPermanentFailure
+    ) {
       // Configuration can fail transiently while the native bridge is starting
       // or reconnecting. Retry on the next query, sharing one in-flight attempt.
       if (!this.sanitizerConfigurationPromise) {
@@ -421,7 +472,10 @@ export class NativeDNS implements NativeDNSModule {
   constructor(nativeModuleOverride?: NativeDNSModule | null) {
     // Try to get the native module, but don't crash if it's not available
     debugLog("[NativeDNS] constructor called");
-    debugLog("[NativeDNS] Available NativeModules keys:", Object.keys(NativeModules));
+    debugLog(
+      "[NativeDNS] Available NativeModules keys:",
+      Object.keys(NativeModules),
+    );
     debugLog("[NativeDNS] Looking for RNDNSModule...");
 
     if (nativeModuleOverride !== undefined) {
@@ -444,7 +498,8 @@ export class NativeDNS implements NativeDNSModule {
     method: NativeDNSQueryMethod,
     domain: string,
     message: string,
-    port?: number,
+    port: number,
+    deadlineEpochMs: number,
   ): Promise<string[]> {
     if (!this.nativeModule) {
       throw new DNSError(
@@ -453,6 +508,7 @@ export class NativeDNS implements NativeDNSModule {
       );
     }
 
+    this.assertValidDeadline(deadlineEpochMs);
     await this.ensureSanitizerConfigured();
 
     const trimmedMessage = message?.trim();
@@ -487,7 +543,15 @@ export class NativeDNS implements NativeDNSModule {
           `Native DNS module does not expose ${method}`,
         );
       }
-      const result = await nativeQuery(domain, trimmedMessage, dnsPort);
+      // Configuration and bridge startup can consume the caller's budget.
+      // Never dispatch new native work after its deadline has expired.
+      this.assertValidDeadline(deadlineEpochMs);
+      const result = await nativeQuery(
+        domain,
+        trimmedMessage,
+        dnsPort,
+        deadlineEpochMs,
+      );
 
       if (!Array.isArray(result) || result.length === 0) {
         throw new DNSError(
@@ -528,8 +592,13 @@ export class NativeDNS implements NativeDNSModule {
       }
 
       if (
+        details.code === "TIMEOUT" ||
+        details.code === "DNS_TIMEOUT" ||
+        details.code === "DEADLINE_EXCEEDED" ||
         messageLower.includes("timeout") ||
-        messageLower.includes("timed out")
+        messageLower.includes("timed out") ||
+        messageLower.includes("deadline") ||
+        messageLower.includes("budget exhausted")
       ) {
         throw new DNSError(DNSErrorType.TIMEOUT, "DNS query timed out", cause);
       }
@@ -562,16 +631,88 @@ export class NativeDNS implements NativeDNSModule {
     }
   }
 
-  async queryTXT(domain: string, message: string, port?: number): Promise<string[]> {
-    return this.queryWithNativeMethod("queryTXT", domain, message, port);
+  private assertValidDeadline(deadlineEpochMs: number): void {
+    if (
+      !Number.isSafeInteger(deadlineEpochMs) ||
+      deadlineEpochMs <= Date.now()
+    ) {
+      throw new DNSError(DNSErrorType.TIMEOUT, "DNS query deadline expired");
+    }
   }
 
-  async queryTXTUDP(domain: string, message: string, port?: number): Promise<string[]> {
-    return this.queryWithNativeMethod("queryTXTUDP", domain, message, port);
+  async queryTXT(
+    domain: string,
+    message: string,
+    port: number,
+    deadlineEpochMs: number,
+  ): Promise<string[]> {
+    return this.queryWithNativeMethod(
+      "queryTXT",
+      domain,
+      message,
+      port,
+      deadlineEpochMs,
+    );
   }
 
-  async queryTXTTCP(domain: string, message: string, port?: number): Promise<string[]> {
-    return this.queryWithNativeMethod("queryTXTTCP", domain, message, port);
+  async queryTXTUDP(
+    domain: string,
+    message: string,
+    port: number,
+    deadlineEpochMs: number,
+  ): Promise<string[]> {
+    return this.queryWithNativeMethod(
+      "queryTXTUDP",
+      domain,
+      message,
+      port,
+      deadlineEpochMs,
+    );
+  }
+
+  async queryTXTTCP(
+    domain: string,
+    message: string,
+    port: number,
+    deadlineEpochMs: number,
+  ): Promise<string[]> {
+    return this.queryWithNativeMethod(
+      "queryTXTTCP",
+      domain,
+      message,
+      port,
+      deadlineEpochMs,
+    );
+  }
+
+  async cancelActiveQueries(): Promise<number> {
+    if (!this.nativeModule) {
+      return 0;
+    }
+    if (typeof this.nativeModule.cancelActiveQueries !== "function") {
+      throw new DNSError(
+        DNSErrorType.PLATFORM_UNSUPPORTED,
+        "Native DNS module does not expose cancelActiveQueries",
+      );
+    }
+
+    try {
+      const cancelledCount = await this.nativeModule.cancelActiveQueries();
+      if (!Number.isSafeInteger(cancelledCount) || cancelledCount < 0) {
+        throw new DNSError(
+          DNSErrorType.DNS_QUERY_FAILED,
+          "Native DNS cancellation returned an invalid count",
+        );
+      }
+      return cancelledCount;
+    } catch (error: unknown) {
+      if (error instanceof DNSError) throw error;
+      throw new DNSError(
+        DNSErrorType.DNS_QUERY_FAILED,
+        "Failed to cancel active native DNS queries",
+        error instanceof Error ? error : undefined,
+      );
+    }
   }
 
   async isAvailable(): Promise<DNSCapabilities> {
@@ -610,7 +751,9 @@ export class NativeDNS implements NativeDNSModule {
       const unavailableCapabilities: DNSCapabilities = {
         available: false,
         platform:
-          Platform.OS === "ios" || Platform.OS === "android" ? Platform.OS : "web",
+          Platform.OS === "ios" || Platform.OS === "android"
+            ? Platform.OS
+            : "web",
         supportsCustomServer: false,
         supportsAsyncQuery: false,
       };
@@ -626,8 +769,8 @@ export class NativeDNS implements NativeDNSModule {
         this.capabilitiesTimestamp = Date.now();
         return this.capabilities;
       } catch (error) {
-      debugWarn("Failed to check DNS availability:", error);
-      this.capabilities = {
+        debugWarn("Failed to check DNS availability:", error);
+        this.capabilities = {
           available: false,
           platform: "web",
           supportsCustomServer: false,

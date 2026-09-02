@@ -16,8 +16,14 @@ import { MessageBubble } from "./MessageBubble";
 import type { Message } from "../types/chat";
 import { useImessagePalette } from "../ui/theme/imessagePalette";
 import { useTypography } from "../ui/hooks/useTypography";
-import { LiquidGlassSpacing, getCornerRadius } from "../ui/theme/liquidGlassSpacing";
-import { LiquidGlassWrapper, useLiquidGlassCapabilities } from "./LiquidGlassWrapper";
+import {
+  LiquidGlassSpacing,
+  getCornerRadius,
+} from "../ui/theme/liquidGlassSpacing";
+import {
+  LiquidGlassWrapper,
+  useLiquidGlassCapabilities,
+} from "./LiquidGlassWrapper";
 import { useTranslation } from "../i18n";
 import { devLog } from "../utils/devLog";
 import { useMotionReduction } from "../context/AccessibilityContext";
@@ -90,9 +96,15 @@ export function MessageList({
     const messageWasAdded = messages.length > previousMessageCountRef.current;
     previousMessageCountRef.current = messages.length;
     const shouldFollowConversation =
-      isNearBottomRef.current || messageWasAdded || lastMessage?.role === "user";
+      isNearBottomRef.current ||
+      messageWasAdded ||
+      lastMessage?.role === "user";
 
-    if (flatListRef.current && messages.length > 0 && shouldFollowConversation) {
+    if (
+      flatListRef.current &&
+      messages.length > 0 &&
+      shouldFollowConversation
+    ) {
       // Double requestAnimationFrame guarantees FlatList layout is complete
       // First RAF: Browser schedules next paint
       // Second RAF: Layout has been calculated and committed
@@ -114,7 +126,13 @@ export function MessageList({
       if (outerFrameId !== null) cancelAnimationFrame(outerFrameId);
       if (innerFrameId !== null) cancelAnimationFrame(innerFrameId);
     };
-  }, [messages.length, lastMessageKey, bottomInset, lastMessage?.role, shouldReduceMotion]);
+  }, [
+    messages.length,
+    lastMessageKey,
+    bottomInset,
+    lastMessage?.role,
+    shouldReduceMotion,
+  ]);
 
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
@@ -192,7 +210,7 @@ export function MessageList({
             styles.emptyNonGlassCard,
             {
               backgroundColor: palette.surface,
-              borderRadius: getCornerRadius('card'),
+              borderRadius: getCornerRadius("card"),
             },
           ]}
         >

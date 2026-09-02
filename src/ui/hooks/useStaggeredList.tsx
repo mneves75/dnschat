@@ -29,8 +29,8 @@
  * @see DESIGN-UI-UX-GUIDELINES.md - Stagger delay 50-100ms per item
  */
 
-import { useEffect, useState } from 'react';
-import type { ReactNode } from 'react';
+import { useEffect, useState } from "react";
+import type { ReactNode } from "react";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -38,12 +38,12 @@ import Animated, {
   withSpring,
   withDelay,
   makeMutable,
-} from 'react-native-reanimated';
-import { scheduleOnRN } from 'react-native-worklets';
-import type { SharedValue } from 'react-native-reanimated';
-import type { ViewStyle } from 'react-native';
-import { useMotionReduction } from '../../context/AccessibilityContext';
-import { SpringConfig, TimingConfig } from '../../utils/animations';
+} from "react-native-reanimated";
+import { scheduleOnRN } from "react-native-worklets";
+import type { SharedValue } from "react-native-reanimated";
+import type { ViewStyle } from "react-native";
+import { useMotionReduction } from "../../context/AccessibilityContext";
+import { SpringConfig, TimingConfig } from "../../utils/animations";
 
 interface UseStaggeredListOptions {
   /**
@@ -62,7 +62,7 @@ interface UseStaggeredListOptions {
    * Direction of slide animation
    * @default 'right'
    */
-  direction?: 'left' | 'right';
+  direction?: "left" | "right";
 
   /**
    * Maximum number of concurrent animations (iOS HIG recommends max 8)
@@ -147,7 +147,9 @@ function useStaggeredSharedValuePool(
   );
 
   if (pool.opacities.length < effectiveCount) {
-    setPool((prev) => growPool(prev, effectiveCount, hiddenOpacity, hiddenTranslate));
+    setPool((prev) =>
+      growPool(prev, effectiveCount, hiddenOpacity, hiddenTranslate),
+    );
   }
 
   return pool;
@@ -155,12 +157,12 @@ function useStaggeredSharedValuePool(
 
 export function useStaggeredList(
   itemCount: number,
-  options: UseStaggeredListOptions = {}
+  options: UseStaggeredListOptions = {},
 ): UseStaggeredListResult {
   const {
     delayPerItem = 50,
     initialOffset = 20,
-    direction = 'right',
+    direction = "right",
     maxConcurrent = 8,
     animateOnMount = true,
     onComplete,
@@ -174,7 +176,11 @@ export function useStaggeredList(
   const { opacities, translates } = useStaggeredSharedValuePool(
     effectiveCount,
     shouldReduceMotion ? 1 : 0,
-    shouldReduceMotion ? 0 : (direction === 'left' ? -initialOffset : initialOffset),
+    shouldReduceMotion
+      ? 0
+      : direction === "left"
+        ? -initialOffset
+        : initialOffset,
   );
 
   const completedCount = useSharedValue(0);
@@ -198,29 +204,30 @@ export function useStaggeredList(
       // Calculate delay with max concurrent limit
       // Items beyond maxConcurrent start after first batch completes
       const batchIndex = Math.floor(i / maxConcurrent);
-      const delay = (i % maxConcurrent) * delayPerItem + batchIndex * (delayPerItem * maxConcurrent);
+      const delay =
+        (i % maxConcurrent) * delayPerItem +
+        batchIndex * (delayPerItem * maxConcurrent);
 
-      opacities[i]?.set(withDelay(
-        delay,
-        withTiming(1, TimingConfig.normal, (finished) => {
-          if (finished) {
-            completedCount.set(completedCount.get() + 1);
-            if (completedCount.get() === effectiveCount && onComplete) {
-              scheduleOnRN(onComplete);
+      opacities[i]?.set(
+        withDelay(
+          delay,
+          withTiming(1, TimingConfig.normal, (finished) => {
+            if (finished) {
+              completedCount.set(completedCount.get() + 1);
+              if (completedCount.get() === effectiveCount && onComplete) {
+                scheduleOnRN(onComplete);
+              }
             }
-          }
-        })
-      ));
+          }),
+        ),
+      );
 
-      translates[i]?.set(withDelay(
-        delay,
-        withSpring(0, SpringConfig.gentle)
-      ));
+      translates[i]?.set(withDelay(delay, withSpring(0, SpringConfig.gentle)));
     }
   };
 
   const reset = () => {
-    const offset = direction === 'left' ? -initialOffset : initialOffset;
+    const offset = direction === "left" ? -initialOffset : initialOffset;
     for (let i = 0; i < effectiveCount; i++) {
       opacities[i]?.set(shouldReduceMotion ? 1 : 0);
       translates[i]?.set(shouldReduceMotion ? 0 : offset);
@@ -283,9 +290,7 @@ export function AnimatedListItem({
   }));
 
   return (
-    <Animated.View style={[style, animatedStyle]}>
-      {children}
-    </Animated.View>
+    <Animated.View style={[style, animatedStyle]}>{children}</Animated.View>
   );
 }
 
@@ -296,12 +301,12 @@ export function AnimatedListItem({
  */
 export function useStaggeredListValues(
   itemCount: number,
-  options: UseStaggeredListOptions = {}
+  options: UseStaggeredListOptions = {},
 ) {
   const {
     delayPerItem = 50,
     initialOffset = 20,
-    direction = 'right',
+    direction = "right",
     maxConcurrent = 8,
     animateOnMount = true,
     onComplete,
@@ -315,7 +320,11 @@ export function useStaggeredListValues(
   const { opacities, translates } = useStaggeredSharedValuePool(
     effectiveCount,
     shouldReduceMotion ? 1 : 0,
-    shouldReduceMotion ? 0 : (direction === 'left' ? -initialOffset : initialOffset),
+    shouldReduceMotion
+      ? 0
+      : direction === "left"
+        ? -initialOffset
+        : initialOffset,
   );
 
   const completedCount = useSharedValue(0);
@@ -336,26 +345,30 @@ export function useStaggeredListValues(
 
     for (let i = 0; i < effectiveCount; i++) {
       const batchIndex = Math.floor(i / maxConcurrent);
-      const delay = (i % maxConcurrent) * delayPerItem + batchIndex * (delayPerItem * maxConcurrent);
+      const delay =
+        (i % maxConcurrent) * delayPerItem +
+        batchIndex * (delayPerItem * maxConcurrent);
 
-      opacities[i]?.set(withDelay(
-        delay,
-        withTiming(1, TimingConfig.normal, (finished) => {
-          if (finished) {
-            completedCount.set(completedCount.get() + 1);
-            if (completedCount.get() === effectiveCount && onComplete) {
-              scheduleOnRN(onComplete);
+      opacities[i]?.set(
+        withDelay(
+          delay,
+          withTiming(1, TimingConfig.normal, (finished) => {
+            if (finished) {
+              completedCount.set(completedCount.get() + 1);
+              if (completedCount.get() === effectiveCount && onComplete) {
+                scheduleOnRN(onComplete);
+              }
             }
-          }
-        })
-      ));
+          }),
+        ),
+      );
 
       translates[i]?.set(withDelay(delay, withSpring(0, SpringConfig.gentle)));
     }
   };
 
   const reset = () => {
-    const offset = direction === 'left' ? -initialOffset : initialOffset;
+    const offset = direction === "left" ? -initialOffset : initialOffset;
     for (let i = 0; i < effectiveCount; i++) {
       opacities[i]?.set(shouldReduceMotion ? 1 : 0);
       translates[i]?.set(shouldReduceMotion ? 0 : offset);

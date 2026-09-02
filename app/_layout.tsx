@@ -1,4 +1,9 @@
-import { Stack, useRootNavigationState, useRouter, useSegments } from "expo-router";
+import {
+  Stack,
+  useRootNavigationState,
+  useRouter,
+  useSegments,
+} from "expo-router";
 import { ThemeProvider } from "expo-router/react-navigation";
 import * as SplashScreen from "expo-splash-screen";
 import * as React from "react";
@@ -9,7 +14,10 @@ import { ErrorBoundary } from "../src/components/ErrorBoundary";
 import { HapticsConfigurator } from "../src/components/HapticsConfigurator";
 import { AccessibilityProvider } from "../src/context/AccessibilityContext";
 import { ChatProvider } from "../src/context/ChatContext";
-import { OnboardingProvider, useOnboarding } from "../src/context/OnboardingContext";
+import {
+  OnboardingProvider,
+  useOnboarding,
+} from "../src/context/OnboardingContext";
 import { SettingsProvider, useSettings } from "../src/context/SettingsContext";
 import { I18nProvider } from "../src/i18n";
 import { DNSLogService } from "../src/services/dnsLogService";
@@ -48,7 +56,8 @@ function RootLayoutContent() {
   const isDark = colorScheme === "dark";
   const palette = useImessagePalette();
   const navigationTheme = createNavigationTheme(palette, isDark);
-  const [hasSettledInitialRoute, setHasSettledInitialRoute] = React.useState(false);
+  const [hasSettledInitialRoute, setHasSettledInitialRoute] =
+    React.useState(false);
   const routeMatchesExpectation =
     (!hasCompletedOnboarding && segments[0] === "onboarding") ||
     (hasCompletedOnboarding && segments[0] !== "onboarding");
@@ -89,7 +98,13 @@ function RootLayoutContent() {
     if (hasCompletedOnboarding && inOnboarding) {
       replace("/(tabs)");
     }
-  }, [hasCompletedOnboarding, loading, rootNavigationState?.key, replace, segments]);
+  }, [
+    hasCompletedOnboarding,
+    loading,
+    rootNavigationState?.key,
+    replace,
+    segments,
+  ]);
 
   // Effect: initialize DNS log storage once on mount (off the splash critical path).
   React.useEffect(() => {
@@ -126,17 +141,23 @@ function RootLayoutContent() {
         contentStyle: { backgroundColor: palette.background },
       }}
     >
+      <Stack.Screen name="(tabs)" options={{ headerShown: false, title: "" }} />
       <Stack.Screen
-        name="(tabs)"
+        name="onboarding"
         options={{ headerShown: false, title: "" }}
       />
-      <Stack.Screen name="onboarding" options={{ headerShown: false, title: "" }} />
-      <Stack.Screen name="chat/[threadId]" options={{ headerBackTitle: "", title: "" }} />
+      <Stack.Screen
+        name="chat/[threadId]"
+        options={{ headerBackTitle: "", title: "" }}
+      />
       <Stack.Screen name="profile/[user]" />
       {/* stackPresentation is a mount-time native prop: setting it from inside
           the route body runs a layout effect after the screen is already
           pushed, so it must be declared here. */}
-      <Stack.Screen name="(modals)/settings" options={{ presentation: "modal" }} />
+      <Stack.Screen
+        name="(modals)/settings"
+        options={{ presentation: "modal" }}
+      />
       <Stack.Screen name="dev/logs" />
       <Stack.Screen name="+not-found" />
     </Stack>

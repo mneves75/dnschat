@@ -52,21 +52,27 @@ export default function TabsLayout() {
         name="index"
         options={{
           title: t("navigation.tabs.chat"),
-          tabBarIcon: ({ color }) => <TabIcon source={chatIcon} color={color} size={tabIconSize} />,
+          tabBarIcon: ({ color }) => (
+            <TabIcon source={chatIcon} color={color} size={tabIconSize} />
+          ),
         }}
       />
       <Tabs.Screen
         name="logs"
         options={{
           title: t("navigation.tabs.logs"),
-          tabBarIcon: ({ color }) => <TabIcon source={logsIcon} color={color} size={tabIconSize} />,
+          tabBarIcon: ({ color }) => (
+            <TabIcon source={logsIcon} color={color} size={tabIconSize} />
+          ),
         }}
       />
       <Tabs.Screen
         name="about"
         options={{
           title: t("navigation.tabs.about"),
-          tabBarIcon: ({ color }) => <TabIcon source={infoIcon} color={color} size={tabIconSize} />,
+          tabBarIcon: ({ color }) => (
+            <TabIcon source={infoIcon} color={color} size={tabIconSize} />
+          ),
         }}
       />
     </Tabs>

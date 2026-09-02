@@ -10,7 +10,7 @@
 export interface DNSServerConfig {
   host: string;
   port: number;
-  priority: number;  // Lower = higher priority (1 = primary)
+  priority: number; // Lower = higher priority (1 = primary)
   isDefault?: boolean;
   description?: string;
 }
@@ -31,7 +31,7 @@ type RegexDescriptor = {
  * ones so older native binaries can continue to parse earlier shapes safely.
  */
 export type NativeSanitizerConfig = {
-  unicodeNormalization: 'NFKD';
+  unicodeNormalization: "NFKD";
   spaceReplacement: string;
   maxLabelLength: number;
   allowedServers: string[];
@@ -53,25 +53,44 @@ export type NativeSanitizerConfig = {
 export const DNS_SERVERS: DNSServerConfig[] = [
   // Port 53 confirmed working via dig test (2026-01-05) - more firewall-friendly than port 9000
   // See: https://x.com/levelsio/status/1953063231347458220
-  { host: 'llm.pieter.com', port: 53, priority: 1, isDefault: true, description: 'LLM-over-DNS by @levelsio' },
-  { host: 'ch.at', port: 53, priority: 2, description: 'Original ChatDNS server' },
-  { host: '8.8.8.8', port: 53, priority: 10, description: 'Google DNS' },
-  { host: '8.8.4.4', port: 53, priority: 10, description: 'Google DNS secondary' },
-  { host: '1.1.1.1', port: 53, priority: 10, description: 'Cloudflare DNS' },
-  { host: '1.0.0.1', port: 53, priority: 10, description: 'Cloudflare DNS secondary' },
+  {
+    host: "llm.pieter.com",
+    port: 53,
+    priority: 1,
+    isDefault: true,
+    description: "LLM-over-DNS by @levelsio",
+  },
+  {
+    host: "ch.at",
+    port: 53,
+    priority: 2,
+    description: "Original ChatDNS server",
+  },
+  { host: "8.8.8.8", port: 53, priority: 10, description: "Google DNS" },
+  {
+    host: "8.8.4.4",
+    port: 53,
+    priority: 10,
+    description: "Google DNS secondary",
+  },
+  { host: "1.1.1.1", port: 53, priority: 10, description: "Cloudflare DNS" },
+  {
+    host: "1.0.0.1",
+    port: 53,
+    priority: 10,
+    description: "Cloudflare DNS secondary",
+  },
 ];
 
 const DNS_SERVER_BY_HOST: Record<string, DNSServerConfig> = {
-  'llm.pieter.com': DNS_SERVERS[0] as DNSServerConfig,
-  'ch.at': DNS_SERVERS[1] as DNSServerConfig,
-  '8.8.8.8': DNS_SERVERS[2] as DNSServerConfig,
-  '8.8.4.4': DNS_SERVERS[3] as DNSServerConfig,
-  '1.1.1.1': DNS_SERVERS[4] as DNSServerConfig,
-  '1.0.0.1': DNS_SERVERS[5] as DNSServerConfig,
+  "llm.pieter.com": DNS_SERVERS[0] as DNSServerConfig,
+  "ch.at": DNS_SERVERS[1] as DNSServerConfig,
+  "8.8.8.8": DNS_SERVERS[2] as DNSServerConfig,
+  "8.8.4.4": DNS_SERVERS[3] as DNSServerConfig,
+  "1.1.1.1": DNS_SERVERS[4] as DNSServerConfig,
+  "1.0.0.1": DNS_SERVERS[5] as DNSServerConfig,
 };
-const LLM_DNS_SERVERS = [
-  DNS_SERVERS[0],
-] as DNSServerConfig[];
+const LLM_DNS_SERVERS = [DNS_SERVERS[0]] as DNSServerConfig[];
 const DEFAULT_DNS_SERVER_CONFIG = DNS_SERVERS[0] as DNSServerConfig;
 
 const cloneServerConfig = (server: DNSServerConfig): DNSServerConfig => ({
@@ -96,7 +115,9 @@ const cloneNativeSanitizerConfig = (): NativeSanitizerConfig => ({
 export function getServerConfig(host: string): DNSServerConfig | undefined {
   const direct = DNS_SERVER_BY_HOST[host];
   if (direct) return cloneServerConfig(direct);
-  const normalized = (host.endsWith('.') ? host.replace(/\.+$/, '') : host).toLowerCase().trim();
+  const normalized = (host.endsWith(".") ? host.replace(/\.+$/, "") : host)
+    .toLowerCase()
+    .trim();
   const server = DNS_SERVER_BY_HOST[normalized];
   return server ? cloneServerConfig(server) : undefined;
 }
@@ -133,8 +154,8 @@ export function getLLMServers(): DNSServerConfig[] {
 
 export const DNS_CONSTANTS = {
   // Message limits
-  MAX_MESSAGE_LENGTH: 120,      // Enforce limit before sanitization to avoid silent truncation
-  MAX_DNS_LABEL_LENGTH: 63,     // DNS RFC 1035 single label limit
+  MAX_MESSAGE_LENGTH: 120, // Enforce limit before sanitization to avoid silent truncation
+  MAX_DNS_LABEL_LENGTH: 63, // DNS RFC 1035 single label limit
   // SECURITY: Upper bound for "n/N:" multipart TXT responses. A malicious server
   // declaring e.g. "1/999999999999999:" must fail fast instead of relying on
   // incidental allocation errors. 64 parts * 255 bytes/TXT string is far beyond
@@ -142,22 +163,23 @@ export const DNS_CONSTANTS = {
   MAX_TXT_PARTS: 64,
 
   // Character replacements
-  SPACE_REPLACEMENT: '-',       // Replace spaces with dashes
+  SPACE_REPLACEMENT: "-", // Replace spaces with dashes
 
   // Validation patterns
-  ALLOWED_CHARS_PATTERN: /^[a-z0-9-]+$/,  // Only lowercase alphanumeric and dash
-  DANGEROUS_CHARS_PATTERN: /[\x00-\x1F\x7F-\x9F<>'"&`@:()]/,  // Control chars and injection risks
+  ALLOWED_CHARS_PATTERN: /^[a-z0-9-]+$/, // Only lowercase alphanumeric and dash
+  // oxlint-disable-next-line eslint/no-control-regex -- Security validation intentionally rejects control characters.
+  DANGEROUS_CHARS_PATTERN: /[\x00-\x1F\x7F-\x9F<>'"&`@:()]/, // Control chars and injection risks
 
   // Sanitization rules (must be applied in order)
   SANITIZATION_STEPS: [
-    'normalize_unicode',  // Decompose & remove combining marks
-    'lowercase',          // Convert to lowercase
-    'trim',               // Remove leading/trailing whitespace
-    'spaces_to_dashes',   // Replace spaces with dashes
-    'remove_invalid',     // Remove non-alphanumeric except dash
-    'collapse_dashes',    // Replace multiple dashes with single
-    'remove_edge_dashes', // Remove leading/trailing dashes
-    'enforce_label_limit', // Reject if it exceeds 63 characters (no silent truncation)
+    "normalize_unicode", // Decompose & remove combining marks
+    "lowercase", // Convert to lowercase
+    "trim", // Remove leading/trailing whitespace
+    "spaces_to_dashes", // Replace spaces with dashes
+    "remove_invalid", // Remove non-alphanumeric except dash
+    "collapse_dashes", // Replace multiple dashes with single
+    "remove_edge_dashes", // Remove leading/trailing dashes
+    "enforce_label_limit", // Reject if it exceeds 63 characters (no silent truncation)
   ],
 
   // DNS server whitelist (derived from DNS_SERVERS for backward compatibility)
@@ -170,14 +192,21 @@ export const DNS_CONSTANTS = {
   // the native lists are updated in the same change (a hijacked JS bundle must
   // not be able to redirect queries). nativeSecurityPolicy.test.ts asserts the
   // three lists stay set-equal.
-  ALLOWED_DNS_SERVERS: ['llm.pieter.com', 'ch.at', '8.8.8.8', '8.8.4.4', '1.1.1.1', '1.0.0.1'],
+  ALLOWED_DNS_SERVERS: [
+    "llm.pieter.com",
+    "ch.at",
+    "8.8.8.8",
+    "8.8.4.4",
+    "1.1.1.1",
+    "1.0.0.1",
+  ],
 
   // Network configuration
   // IMPORTANT: DEFAULT_DNS_SERVER is now llm.pieter.com (port 53)
   DEFAULT_DNS_SERVER: getDefaultServer().host,
-  DEFAULT_DNS_PORT: getDefaultServer().port,  // Matches the current default DNS server port
-  DNS_PORT: 53,                 // Standard DNS port (for fallback servers)
-  QUERY_TIMEOUT_MS: 10000,      // 10 seconds
+  DEFAULT_DNS_PORT: getDefaultServer().port, // Matches the current default DNS server port
+  DNS_PORT: 53, // Standard DNS port (for fallback servers)
+  QUERY_TIMEOUT_MS: 10000, // 10 seconds
   // Maximum retry attempts.
   //
   // CONTRACT (multiplicative retries): this value is consumed by TWO independent
@@ -190,46 +219,47 @@ export const DNS_CONSTANTS = {
   // attempts, plus the UDP/TCP fallback attempts in each JS pass. Keep this in
   // mind before raising the value.
   MAX_RETRIES: 3,
-  RETRY_DELAY_MS: 200,          // 200ms between retries (exponential backoff applied natively)
+  RETRY_DELAY_MS: 200, // 200ms between retries (exponential backoff applied natively)
 
   // Thread pool configuration (Android)
-  THREAD_POOL_CORE_SIZE: 2,     // Minimum threads
-  THREAD_POOL_MAX_SIZE: 4,      // Maximum threads
-  THREAD_POOL_QUEUE_SIZE: 10,   // Maximum queued tasks
+  THREAD_POOL_CORE_SIZE: 2, // Minimum threads
+  THREAD_POOL_MAX_SIZE: 4, // Maximum threads
+  THREAD_POOL_QUEUE_SIZE: 10, // Maximum queued tasks
 
   // Rate limiting (merged from appConstants.ts)
-  RATE_LIMIT_WINDOW_MS: 60000,  // 1 minute
-  MAX_REQUESTS_PER_WINDOW: 60,  // 60 requests per minute (updated to match app logic)
+  RATE_LIMIT_WINDOW_MS: 60000, // 1 minute
+  MAX_REQUESTS_PER_WINDOW: 60, // 60 requests per minute (updated to match app logic)
 };
 
 export const DNS_SANITIZER_CONFIG: NativeSanitizerConfig = {
-  unicodeNormalization: 'NFKD',
+  unicodeNormalization: "NFKD",
   spaceReplacement: DNS_CONSTANTS.SPACE_REPLACEMENT,
   maxLabelLength: DNS_CONSTANTS.MAX_DNS_LABEL_LENGTH,
   allowedServers: DNS_CONSTANTS.ALLOWED_DNS_SERVERS,
   whitespace: {
-    pattern: '\\s+',
-    flags: 'g',
+    pattern: "\\s+",
+    flags: "g",
   },
   invalidChars: {
-    pattern: '[^a-z0-9-]',
-    flags: 'g',
+    pattern: "[^a-z0-9-]",
+    flags: "g",
   },
   dashCollapse: {
-    pattern: '-{2,}',
-    flags: 'g',
+    pattern: "-{2,}",
+    flags: "g",
   },
   edgeDashes: {
-    pattern: '^-+|-+$',
-    flags: 'g',
+    pattern: "^-+|-+$",
+    flags: "g",
   },
   combiningMarks: {
-    pattern: '\\p{M}+',
-    flags: 'gu',
+    pattern: "\\p{M}+",
+    flags: "gu",
   },
 };
 
-const createRegExp = ({ pattern, flags }: RegexDescriptor): RegExp => new RegExp(pattern, flags);
+const createRegExp = ({ pattern, flags }: RegexDescriptor): RegExp =>
+  new RegExp(pattern, flags);
 
 const WHITESPACE_REGEX = createRegExp(DNS_SANITIZER_CONFIG.whitespace);
 const INVALID_CHARS_REGEX = createRegExp(DNS_SANITIZER_CONFIG.invalidChars);
@@ -237,6 +267,7 @@ const DASH_COLLAPSE_REGEX = createRegExp(DNS_SANITIZER_CONFIG.dashCollapse);
 const EDGE_DASHES_REGEX = createRegExp(DNS_SANITIZER_CONFIG.edgeDashes);
 const COMBINING_MARKS_REGEX = createRegExp(DNS_SANITIZER_CONFIG.combiningMarks);
 const VALID_DNS_LABEL_REGEX = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
+// oxlint-disable-next-line eslint/no-control-regex -- ASCII validation intentionally rejects every non-ASCII code point.
 const NON_ASCII_REGEX = /[^\x00-\x7F]/;
 
 /**
@@ -249,7 +280,11 @@ export function sanitizeDNSMessageReference(message: string): string {
       `Message too long (maximum ${DNS_CONSTANTS.MAX_MESSAGE_LENGTH} characters before sanitization)`,
     );
   }
-  if (message.length <= DNS_CONSTANTS.MAX_DNS_LABEL_LENGTH && VALID_DNS_LABEL_REGEX.test(message)) return message;
+  if (
+    message.length <= DNS_CONSTANTS.MAX_DNS_LABEL_LENGTH &&
+    VALID_DNS_LABEL_REGEX.test(message)
+  )
+    return message;
 
   let result = message;
 
@@ -260,7 +295,7 @@ export function sanitizeDNSMessageReference(message: string): string {
     } catch {
       // Some environments (very old JS runtimes) may not support normalize; fallback silently
     }
-    result = result.replace(COMBINING_MARKS_REGEX, '');
+    result = result.replace(COMBINING_MARKS_REGEX, "");
   }
 
   // Step 2: Lowercase
@@ -270,16 +305,22 @@ export function sanitizeDNSMessageReference(message: string): string {
   result = result.trim();
 
   // Step 4: Spaces to dashes
-  result = result.replace(WHITESPACE_REGEX, DNS_SANITIZER_CONFIG.spaceReplacement);
+  result = result.replace(
+    WHITESPACE_REGEX,
+    DNS_SANITIZER_CONFIG.spaceReplacement,
+  );
 
   // Step 5: Remove invalid characters (keep only alphanumeric and dash)
-  result = result.replace(INVALID_CHARS_REGEX, '');
+  result = result.replace(INVALID_CHARS_REGEX, "");
 
   // Step 6: Collapse multiple dashes
-  result = result.replace(DASH_COLLAPSE_REGEX, DNS_SANITIZER_CONFIG.spaceReplacement);
+  result = result.replace(
+    DASH_COLLAPSE_REGEX,
+    DNS_SANITIZER_CONFIG.spaceReplacement,
+  );
 
   // Step 7: Remove edge dashes
-  result = result.replace(EDGE_DASHES_REGEX, '');
+  result = result.replace(EDGE_DASHES_REGEX, "");
 
   // Step 8: Enforce DNS label limit
   if (result.length > DNS_SANITIZER_CONFIG.maxLabelLength) {
@@ -291,4 +332,5 @@ export function sanitizeDNSMessageReference(message: string): string {
   return result;
 }
 
-export const getNativeSanitizerConfig = (): NativeSanitizerConfig => cloneNativeSanitizerConfig();
+export const getNativeSanitizerConfig = (): NativeSanitizerConfig =>
+  cloneNativeSanitizerConfig();

@@ -51,13 +51,19 @@ import Animated, {
 import { scheduleOnRN } from "react-native-worklets";
 import { useTypography } from "../ui/hooks/useTypography";
 import { useImessagePalette } from "../ui/theme/imessagePalette";
-import { LiquidGlassSpacing, getMinimumTouchTarget } from "../ui/theme/liquidGlassSpacing";
+import {
+  LiquidGlassSpacing,
+  getMinimumTouchTarget,
+} from "../ui/theme/liquidGlassSpacing";
 import { SpringConfig, buttonPressScale } from "../utils/animations";
 import { useMotionReduction } from "../context/AccessibilityContext";
 import { HapticFeedback } from "../utils/haptics";
 import { SendIcon } from "./icons/SendIcon";
 import { useTranslation } from "../i18n";
-import { LiquidGlassWrapper, useLiquidGlassCapabilities } from "./LiquidGlassWrapper";
+import {
+  LiquidGlassWrapper,
+  useLiquidGlassCapabilities,
+} from "./LiquidGlassWrapper";
 import { PressableRipple } from "./PressableRipple";
 import { MESSAGE_CONSTANTS } from "../constants/appConstants";
 import { useResolvedColorScheme } from "../ui/theme/resolvedColorScheme";
@@ -142,7 +148,7 @@ export function ChatInput({
   const touchTarget = minimumTouchTarget;
   const heightConstraints = {
     min: Math.max(naturalMin, touchTarget),
-    max: (lineHeight * 5) + verticalPadding,
+    max: lineHeight * 5 + verticalPadding,
   };
 
   React.useEffect(() => {
@@ -212,7 +218,7 @@ export function ChatInput({
     const remaining = MAX_SENDABLE_LENGTH - message.length;
     if (CHARACTER_ANNOUNCEMENT_REMAINING.has(remaining)) {
       AccessibilityInfo.announceForAccessibility(
-        t("components.chatInput.charactersRemaining", { count: remaining })
+        t("components.chatInput.charactersRemaining", { count: remaining }),
       );
     }
   }, [message.length, t]);
@@ -283,7 +289,7 @@ export function ChatInput({
     const { height } = event.nativeEvent.contentSize;
     const constrainedHeight = Math.min(
       Math.max(height, heightConstraints.min),
-      heightConstraints.max
+      heightConstraints.max,
     );
 
     if (shouldReduceMotion) {
@@ -332,9 +338,11 @@ export function ChatInput({
     if (canSend) {
       HapticFeedback.light();
       // Non-bouncy spring to prevent overshoot above 1.0; skip when reducing motion.
-      scale.set(shouldReduceMotion
-        ? buttonPressScale
-        : withSpring(buttonPressScale, SpringConfig.press));
+      scale.set(
+        shouldReduceMotion
+          ? buttonPressScale
+          : withSpring(buttonPressScale, SpringConfig.press),
+      );
     }
   };
 
@@ -589,9 +597,9 @@ const styles = StyleSheet.create({
   textInput: {
     flex: 1,
     maxHeight: 120, // Fallback for non-Reanimated scenarios
-    minHeight: 36,  // Fallback for non-Reanimated scenarios
+    minHeight: 36, // Fallback for non-Reanimated scenarios
     paddingHorizontal: LiquidGlassSpacing.md, // 16px - matches reference
-    paddingVertical: LiquidGlassSpacing.sm,   // 12px - closer to reference (13px)
+    paddingVertical: LiquidGlassSpacing.sm, // 12px - closer to reference (13px)
     borderRadius: 24, // Capsule shape radius for consistency
     borderWidth: 1,
   },

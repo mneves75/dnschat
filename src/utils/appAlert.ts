@@ -7,7 +7,10 @@ interface Catchable {
 }
 
 function isCatchable(value: unknown): value is Catchable {
-  if ((typeof value !== "object" || value === null) && typeof value !== "function") {
+  if (
+    (typeof value !== "object" || value === null) &&
+    typeof value !== "function"
+  ) {
     return false;
   }
 
@@ -61,9 +64,12 @@ export function appAlert(
     const accepted = window.confirm(text);
     if (accepted) {
       const preferredButton = buttons.find(
-        (button) => button.style === "destructive" || button.style === "default",
+        (button) =>
+          button.style === "destructive" || button.style === "default",
       );
-      const nonCancelButton = buttons.find((button) => button.style !== "cancel");
+      const nonCancelButton = buttons.find(
+        (button) => button.style !== "cancel",
+      );
       invokeButton(preferredButton ?? nonCancelButton);
       return;
     }

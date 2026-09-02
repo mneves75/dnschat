@@ -43,7 +43,10 @@ type RippleVariant = "surface" | "primary" | "destructive" | "icon";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-export interface PressableRippleProps extends Omit<PressableProps, "android_ripple"> {
+export interface PressableRippleProps extends Omit<
+  PressableProps,
+  "android_ripple"
+> {
   /** Visual variant — determines default ripple colour on Android, and whether iOS gets scale or opacity feedback. */
   variant?: RippleVariant;
   /** Override ripple colour (Android only). */

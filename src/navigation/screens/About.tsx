@@ -19,7 +19,10 @@ import { Form } from "../../components/glass/GlassForm";
 import { useTranslation } from "../../i18n";
 import { useImessagePalette } from "../../ui/theme/imessagePalette";
 import { useTypography } from "../../ui/hooks/useTypography";
-import { LiquidGlassSpacing, getCornerRadius } from "../../ui/theme/liquidGlassSpacing";
+import {
+  LiquidGlassSpacing,
+  getCornerRadius,
+} from "../../ui/theme/liquidGlassSpacing";
 import { useScreenEntrance } from "../../ui/hooks/useScreenEntrance";
 import { devLog } from "../../utils/devLog";
 import { getAppVersionInfo } from "../../utils/appVersion";
@@ -73,177 +76,187 @@ export function About() {
   });
 
   return (
-    <Form.List testID="about-screen" navigationTitle={t("screen.about.navigationTitle")}>
+    <Form.List
+      testID="about-screen"
+      navigationTitle={t("screen.about.navigationTitle")}
+    >
       <Animated.View style={animatedStyle}>
         <Form.Section>
-        <View style={styles.headerContainer}>
-          <View style={styles.header}>
-            <View
-              style={styles.logoContainer}
-              accessible={false}
-              accessibilityElementsHidden
-              importantForAccessibility="no-hide-descendants"
-            >
-              {!iconError ? (
-                <Image
-                  source={AppIcon}
-                  style={styles.logoImage}
-                  resizeMode="contain"
-                  onLoad={() => devLog("[About] icon loaded")}
-                  onError={(error) => {
-                    devLog(
-                      "[About] Icon load error:",
-                      error.nativeEvent.error || "Unknown error",
-                    );
-                    setIconError(true);
-                  }}
-                />
-              ) : (
-                <Text
-                  style={[
-                    typography["headline"],
-                    { color: palette.textPrimary, fontWeight: "bold" },
-                  ]}
-                >
-                  {t("screen.about.fallbackInitials")}
-                </Text>
-              )}
-            </View>
-            <Text
-              style={[
-                styles.title,
-                typography["displaySmall"],
-                { color: palette.textPrimary, fontWeight: "bold" },
-              ]}
-            >
-              {t("screen.about.appName")}
-            </Text>
-            <View style={[styles.versionBadge, { backgroundColor: palette.border }]}>
+          <View style={styles.headerContainer}>
+            <View style={styles.header}>
+              <View
+                style={styles.logoContainer}
+                accessible={false}
+                accessibilityElementsHidden
+                importantForAccessibility="no-hide-descendants"
+              >
+                {!iconError ? (
+                  <Image
+                    source={AppIcon}
+                    style={styles.logoImage}
+                    resizeMode="contain"
+                    onLoad={() => devLog("[About] icon loaded")}
+                    onError={(error) => {
+                      devLog(
+                        "[About] Icon load error:",
+                        error.nativeEvent.error || "Unknown error",
+                      );
+                      setIconError(true);
+                    }}
+                  />
+                ) : (
+                  <Text
+                    style={[
+                      typography["headline"],
+                      { color: palette.textPrimary, fontWeight: "bold" },
+                    ]}
+                  >
+                    {t("screen.about.fallbackInitials")}
+                  </Text>
+                )}
+              </View>
               <Text
                 style={[
-                  typography["callout"],
-                  { color: palette.textSecondary, fontWeight: "600" },
+                  styles.title,
+                  typography["displaySmall"],
+                  { color: palette.textPrimary, fontWeight: "bold" },
                 ]}
               >
-                {versionLabel}
+                {t("screen.about.appName")}
+              </Text>
+              <View
+                style={[
+                  styles.versionBadge,
+                  { backgroundColor: palette.border },
+                ]}
+              >
+                <Text
+                  style={[
+                    typography["callout"],
+                    { color: palette.textSecondary, fontWeight: "600" },
+                  ]}
+                >
+                  {versionLabel}
+                </Text>
+              </View>
+              <Text
+                style={[
+                  styles.description,
+                  typography["body"],
+                  { color: palette.textSecondary },
+                ]}
+              >
+                {t("screen.about.tagline")}
               </Text>
             </View>
-            <Text
-              style={[
-                styles.description,
-                typography["body"],
-                { color: palette.textSecondary },
-              ]}
-            >
-              {t("screen.about.tagline")}
-            </Text>
           </View>
-        </View>
-      </Form.Section>
+        </Form.Section>
 
-      <Form.Section title={t("screen.about.quickActions.title")}>
-        <Form.Item
-          testID="about-settings-link"
-          title={t("screen.about.quickActions.settingsTitle")}
-          subtitle={t("screen.about.quickActions.settingsSubtitle")}
-          onPress={() => push("/(modals)/settings")}
-          showChevron
-        />
-      </Form.Section>
-
-      <Form.Section
-        title={t("screen.about.sections.inspiration.title")}
-        footer={t("screen.about.sections.inspiration.footer")}
-      >
-        <Form.Link
-          title={t(
-            "screen.about.sections.inspiration.items.arxivTweet.title",
-          )}
-          subtitle={t(
-            "screen.about.sections.inspiration.items.arxivTweet.subtitle",
-          )}
-          onPress={() =>
-            openExternalLink("https://x.com/Arxiv_Daily/status/1952452878716805172")
-          }
-        />
-        <Form.Link
-          title={t("screen.about.sections.inspiration.items.chatProject.title")}
-          subtitle={t(
-            "screen.about.sections.inspiration.items.chatProject.subtitle",
-          )}
-          onPress={() => openExternalLink("https://github.com/Deep-ai-inc/ch.at")}
-        />
-        <Form.Link
-          title={t("screen.about.sections.inspiration.items.levelsio.title")}
-          subtitle={t(
-            "screen.about.sections.inspiration.items.levelsio.subtitle",
-          )}
-          onPress={() => openExternalLink("https://x.com/levelsio")}
-        />
-      </Form.Section>
-
-      <Form.Section title={t("screen.about.sections.project.title")}>
-        <Form.Link
-          title={t("screen.about.sections.project.items.github.title")}
-          subtitle={t(
-            "screen.about.sections.project.items.github.subtitle",
-          )}
-          onPress={() => openExternalLink("https://github.com/mneves75/dnschat")}
-        />
-        <Form.Link
-          title={t("screen.about.sections.project.items.issues.title")}
-          subtitle={t(
-            "screen.about.sections.project.items.issues.subtitle",
-          )}
-          onPress={() => openExternalLink("https://github.com/mneves75/dnschat/issues")}
-        />
-        <Form.Link
-          title={t("screen.about.sections.project.items.updates.title")}
-          subtitle={t(
-            "screen.about.sections.project.items.updates.subtitle",
-          )}
-          onPress={() => openExternalLink("https://x.com/dnschat")}
-        />
-        <Form.Item
-          testID="about-project-settings-link"
-          title={t("screen.about.sections.project.settings.title")}
-          subtitle={t("screen.about.sections.project.settings.subtitle")}
-          onPress={() => push("/(modals)/settings")}
-          showChevron
-        />
-      </Form.Section>
-
-      <Form.Section title={t("screen.about.sections.developer.title")}>
-        <Form.Item
-          title={t("screen.about.sections.developer.maintainersTitle")}
-          subtitle={t("screen.about.sections.developer.maintainersSubtitle")}
-        />
-        {typeof __DEV__ !== "undefined" && __DEV__ && (
+        <Form.Section title={t("screen.about.quickActions.title")}>
           <Form.Item
-            testID="about-dev-logs-link"
-            title={t("screen.about.sections.developer.devLogsTitle")}
-            subtitle={t(
-              "screen.about.sections.developer.devLogsSubtitle",
-            )}
-            onPress={() => push("/dev/logs")}
+            testID="about-settings-link"
+            title={t("screen.about.quickActions.settingsTitle")}
+            subtitle={t("screen.about.quickActions.settingsSubtitle")}
+            onPress={() => push("/(modals)/settings")}
             showChevron
           />
-        )}
-      </Form.Section>
+        </Form.Section>
 
-      <Form.Section
-        title={t("screen.about.sections.specialThanks.title")}
-        footer={t("screen.about.sections.specialThanks.footer")}
-      >
-        {credits.map((credit) => (
+        <Form.Section
+          title={t("screen.about.sections.inspiration.title")}
+          footer={t("screen.about.sections.inspiration.footer")}
+        >
           <Form.Link
-            key={credit.name}
-            title={credit.name}
-            subtitle={credit.description}
-            onPress={() => openExternalLink(credit.url)}
+            title={t(
+              "screen.about.sections.inspiration.items.arxivTweet.title",
+            )}
+            subtitle={t(
+              "screen.about.sections.inspiration.items.arxivTweet.subtitle",
+            )}
+            onPress={() =>
+              openExternalLink(
+                "https://x.com/Arxiv_Daily/status/1952452878716805172",
+              )
+            }
           />
-        ))}
-      </Form.Section>
+          <Form.Link
+            title={t(
+              "screen.about.sections.inspiration.items.chatProject.title",
+            )}
+            subtitle={t(
+              "screen.about.sections.inspiration.items.chatProject.subtitle",
+            )}
+            onPress={() =>
+              openExternalLink("https://github.com/Deep-ai-inc/ch.at")
+            }
+          />
+          <Form.Link
+            title={t("screen.about.sections.inspiration.items.levelsio.title")}
+            subtitle={t(
+              "screen.about.sections.inspiration.items.levelsio.subtitle",
+            )}
+            onPress={() => openExternalLink("https://x.com/levelsio")}
+          />
+        </Form.Section>
+
+        <Form.Section title={t("screen.about.sections.project.title")}>
+          <Form.Link
+            title={t("screen.about.sections.project.items.github.title")}
+            subtitle={t("screen.about.sections.project.items.github.subtitle")}
+            onPress={() =>
+              openExternalLink("https://github.com/mneves75/dnschat")
+            }
+          />
+          <Form.Link
+            title={t("screen.about.sections.project.items.issues.title")}
+            subtitle={t("screen.about.sections.project.items.issues.subtitle")}
+            onPress={() =>
+              openExternalLink("https://github.com/mneves75/dnschat/issues")
+            }
+          />
+          <Form.Link
+            title={t("screen.about.sections.project.items.updates.title")}
+            subtitle={t("screen.about.sections.project.items.updates.subtitle")}
+            onPress={() => openExternalLink("https://x.com/dnschat")}
+          />
+          <Form.Item
+            testID="about-project-settings-link"
+            title={t("screen.about.sections.project.settings.title")}
+            subtitle={t("screen.about.sections.project.settings.subtitle")}
+            onPress={() => push("/(modals)/settings")}
+            showChevron
+          />
+        </Form.Section>
+
+        <Form.Section title={t("screen.about.sections.developer.title")}>
+          <Form.Item
+            title={t("screen.about.sections.developer.maintainersTitle")}
+            subtitle={t("screen.about.sections.developer.maintainersSubtitle")}
+          />
+          {typeof __DEV__ !== "undefined" && __DEV__ && (
+            <Form.Item
+              testID="about-dev-logs-link"
+              title={t("screen.about.sections.developer.devLogsTitle")}
+              subtitle={t("screen.about.sections.developer.devLogsSubtitle")}
+              onPress={() => push("/dev/logs")}
+              showChevron
+            />
+          )}
+        </Form.Section>
+
+        <Form.Section
+          title={t("screen.about.sections.specialThanks.title")}
+          footer={t("screen.about.sections.specialThanks.footer")}
+        >
+          {credits.map((credit) => (
+            <Form.Link
+              key={credit.name}
+              title={credit.name}
+              subtitle={credit.description}
+              onPress={() => openExternalLink(credit.url)}
+            />
+          ))}
+        </Form.Section>
 
         <Form.Section footer={t("screen.about.footer")}>{null}</Form.Section>
       </Animated.View>

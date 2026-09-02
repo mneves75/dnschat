@@ -10,25 +10,25 @@ export { SUPPORTED_LOCALE_OPTIONS, resolveLocale } from "../i18n/translations";
 export type { SupportedLocaleOption } from "../i18n/translations";
 
 export interface AccessibilityConfig {
-  fontSize: 'small' | 'medium' | 'large' | 'extra-large';
+  fontSize: "small" | "medium" | "large" | "extra-large";
   highContrast: boolean;
   reduceMotion: boolean;
   screenReader: boolean;
 }
 
-export type ThemePreference = 'system' | 'light' | 'dark';
+export type ThemePreference = "system" | "light" | "dark";
 
 export const THEME_PREFERENCE_VALUES: readonly ThemePreference[] = [
-  'system',
-  'light',
-  'dark',
+  "system",
+  "light",
+  "dark",
 ];
 
 export function normalizeThemePreference(value: unknown): ThemePreference {
-  if (typeof value !== 'string') return 'system';
+  if (typeof value !== "string") return "system";
   return (THEME_PREFERENCE_VALUES as readonly string[]).includes(value)
     ? (value as ThemePreference)
-    : 'system';
+    : "system";
 }
 
 export interface PersistedSettings {
@@ -59,7 +59,7 @@ export const SETTINGS_VERSION = 5;
  */
 function migrateOfflineServer(server: string): string {
   // ch.at is offline - migrate to llm.pieter.com
-  if (server.toLowerCase().trim() === 'ch.at') {
+  if (server.toLowerCase().trim() === "ch.at") {
     return DEFAULT_DNS_SERVER;
   }
   return server;
@@ -72,17 +72,22 @@ export const DEFAULT_SETTINGS: PersistedSettings = {
   allowExperimentalTransports: true,
   enableHaptics: true,
   preferredLocale: null,
-  themePreference: 'system',
+  themePreference: "system",
   accessibility: {
-    fontSize: 'medium',
+    fontSize: "medium",
     highContrast: false,
     reduceMotion: false,
     screenReader: false,
   },
 };
 
-function normalizePersistedDnsServer(candidate: unknown, applyOfflineMigration: boolean = false): string {
-  const cleaned = sanitizeDnsServer(typeof candidate === "string" ? candidate : undefined);
+function normalizePersistedDnsServer(
+  candidate: unknown,
+  applyOfflineMigration: boolean = false,
+): string {
+  const cleaned = sanitizeDnsServer(
+    typeof candidate === "string" ? candidate : undefined,
+  );
   try {
     const validated = validateDNSServer(cleaned);
     // Apply offline server migration if requested (v3 → v4)
@@ -115,15 +120,17 @@ export function migrateSettings(raw: unknown): PersistedSettings {
     return { ...DEFAULT_SETTINGS };
   }
 
-  const candidate = raw as Partial<PersistedSettings> & LegacySettingsV1 & {
-    version?: number;
-    preferDnsOverHttps?: boolean;
-    dnsMethodPreference?: string;
-  };
+  const candidate = raw as Partial<PersistedSettings> &
+    LegacySettingsV1 & {
+      version?: number;
+      preferDnsOverHttps?: boolean;
+      dnsMethodPreference?: string;
+    };
 
-  const accessibilitySource = candidate.accessibility ?? DEFAULT_SETTINGS.accessibility;
+  const accessibilitySource =
+    candidate.accessibility ?? DEFAULT_SETTINGS.accessibility;
   const resolvedAccessibility: AccessibilityConfig = {
-    fontSize: accessibilitySource?.fontSize ?? 'medium',
+    fontSize: accessibilitySource?.fontSize ?? "medium",
     highContrast: Boolean(accessibilitySource?.highContrast),
     reduceMotion: Boolean(accessibilitySource?.reduceMotion),
     screenReader: Boolean(accessibilitySource?.screenReader),
@@ -206,7 +213,7 @@ export function migrateSettings(raw: unknown): PersistedSettings {
     allowExperimentalTransports: true,
     enableHaptics: true,
     preferredLocale: null,
-    themePreference: 'system',
+    themePreference: "system",
     accessibility: { ...DEFAULT_SETTINGS.accessibility },
   };
 }

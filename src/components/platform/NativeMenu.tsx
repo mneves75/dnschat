@@ -19,19 +19,20 @@ import { useTranslation } from "../../i18n";
 export type NativeMenuAction = MenuAction;
 export type NativeMenuActionEvent = NativeActionEvent;
 
-export interface NativeMenuProps
-  extends Pick<
-    MenuComponentProps,
-    | "actions"
-    | "children"
-    | "onPressAction"
-    | "shouldOpenOnLongPress"
-    | "style"
-    | "testID"
-    | "title"
-  > {}
+export interface NativeMenuProps extends Pick<
+  MenuComponentProps,
+  | "actions"
+  | "children"
+  | "onPressAction"
+  | "shouldOpenOnLongPress"
+  | "style"
+  | "testID"
+  | "title"
+> {}
 
-export function createNativeMenuActionEvent(event: string): NativeMenuActionEvent {
+export function createNativeMenuActionEvent(
+  event: string,
+): NativeMenuActionEvent {
   return { nativeEvent: { event } };
 }
 
@@ -58,11 +59,7 @@ export function NativeMenu({
       ...(title ? { title } : {}),
     };
 
-    return (
-      <MenuView {...nativeProps}>
-        {children}
-      </MenuView>
-    );
+    return <MenuView {...nativeProps}>{children}</MenuView>;
   }
 
   return (

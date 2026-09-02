@@ -24,9 +24,14 @@ export const getAppVersionInfo = (): {
   const packageVersion =
     typeof packageJson.version === "string" ? packageJson.version : "0.0.0";
   const appVersion =
-    Constants["nativeAppVersion"] ?? Constants.expoConfig?.version ?? packageVersion;
-  const buildVersion = Constants["nativeBuildVersion"] ?? getConfiguredBuildVersion();
-  const displayVersion = buildVersion ? `${appVersion} (${buildVersion})` : appVersion;
+    Constants["nativeAppVersion"] ??
+    Constants.expoConfig?.version ??
+    packageVersion;
+  const buildVersion =
+    Constants["nativeBuildVersion"] ?? getConfiguredBuildVersion();
+  const displayVersion = buildVersion
+    ? `${appVersion} (${buildVersion})`
+    : appVersion;
 
   return {
     appVersion,

@@ -10,19 +10,20 @@
  */
 
 import React, { useEffect, useState } from "react";
-import {
-  StyleSheet,
-  StatusBar,
-  View,
-  Platform,
-} from "react-native";
+import { StyleSheet, StatusBar, Platform } from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { KeyboardStickyView, useKeyboardState } from "react-native-keyboard-controller";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
+import {
+  KeyboardStickyView,
+  useKeyboardState,
+} from "react-native-keyboard-controller";
 import { MessageList } from "../../components/MessageList";
 import { ErrorBoundary } from "../../components/ErrorBoundary";
 import { MessageListErrorFallback } from "../../components/MessageListErrorFallback";
@@ -89,7 +90,7 @@ export function Chat() {
     if (!shouldReduceMotion) {
       opacity.set(withTiming(1, { duration: 200 }));
     }
-  }, [shouldReduceMotion]);
+  }, [opacity, shouldReduceMotion]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     opacity: opacity.get(),
@@ -165,11 +166,8 @@ export function Chat() {
   return (
     <SafeAreaView
       testID="chat-screen"
-      edges={['left', 'right']}  // top handled by navigation header, bottom by KeyboardStickyView
-      style={[
-        styles.container,
-        { backgroundColor: palette.background },
-      ]}
+      edges={["left", "right"]} // top handled by navigation header, bottom by KeyboardStickyView
+      style={[styles.container, { backgroundColor: palette.background }]}
     >
       <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
 

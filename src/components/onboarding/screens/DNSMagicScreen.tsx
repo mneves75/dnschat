@@ -1,10 +1,5 @@
 import React, { useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-} from "react-native";
+import { View, Text, StyleSheet, ScrollView } from "react-native";
 import { OnboardingNavigation } from "../OnboardingNavigation";
 import { PressableRipple } from "../../PressableRipple";
 import { DNSService } from "../../../services/dnsService";
@@ -117,7 +112,10 @@ export function DNSMagicScreen() {
         succeeded = true;
         break;
       } catch (error) {
-        devWarn(`[DNSMagicScreen] ${step.transport.toUpperCase()} DNS demo failed`, error);
+        devWarn(
+          `[DNSMagicScreen] ${step.transport.toUpperCase()} DNS demo failed`,
+          error,
+        );
         updateStep(step.id, "failed", t(step.failedKey));
         await wait(350);
       }
@@ -187,7 +185,9 @@ export function DNSMagicScreen() {
                 ? "screen.onboarding.dnsMagic.accessibility.runningLabel"
                 : "screen.onboarding.dnsMagic.accessibility.idleLabel",
             )}
-            accessibilityHint={t("screen.onboarding.dnsMagic.accessibility.demoHint")}
+            accessibilityHint={t(
+              "screen.onboarding.dnsMagic.accessibility.demoHint",
+            )}
             accessibilityState={{ disabled: isRunning, busy: isRunning }}
           >
             <Text
@@ -200,15 +200,14 @@ export function DNSMagicScreen() {
                 },
               ]}
             >
-              {isRunning ? t("screen.onboarding.dnsMagic.demoButtonRunning") : t("screen.onboarding.dnsMagic.demoButton")}
+              {isRunning
+                ? t("screen.onboarding.dnsMagic.demoButtonRunning")
+                : t("screen.onboarding.dnsMagic.demoButton")}
             </Text>
           </PressableRipple>
 
           <View
-            style={[
-              styles.stepsContainer,
-              { backgroundColor: palette.solid },
-            ]}
+            style={[styles.stepsContainer, { backgroundColor: palette.solid }]}
           >
             {dnsSteps.map((step, index) => (
               <DNSStepItem
@@ -308,9 +307,7 @@ function DNSStepItem({ step, index, palette, typography }: DNSStepItemProps) {
         {
           borderBottomColor: palette.separator,
           borderBottomWidth:
-            index < DNS_DEMO_STEPS.length - 1
-              ? StyleSheet.hairlineWidth
-              : 0,
+            index < DNS_DEMO_STEPS.length - 1 ? StyleSheet.hairlineWidth : 0,
         },
       ]}
     >
