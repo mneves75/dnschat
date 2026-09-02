@@ -210,23 +210,34 @@ Release:
 
 ## Current verification baseline
 
-Latest validated TestFlight beta: `4.3.6` build `84`, tagged
-`v4.3.6-beta1`.
-Last architecture/dependency verification: `2026-08-31`.
-Last full source/security sweep: `2026-08-31` (native DNS, encrypted storage,
-release automation, model-output rendering, UI/accessibility, and public
-disclosures; see `CHANGELOG.md` `4.3.6`).
+Latest validated TestFlight beta: `4.4.0` build `85`, tagged
+`v4.4.0-beta1`.
+Last architecture/dependency verification: `2026-09-02`.
+Last full source/security sweep: `2026-09-02` (native DNS transport
+hardening: DNS-over-HTTPS removal, port-53 pin, query-zone pin, narrowed
+native allowlist, and the dnsjava absolute-name fix; see `CHANGELOG.md`
+`4.4.0`).
 Last AXe simulator E2E feature pass: `2026-06-05` for version `4.0.26` build
 `60`; 10 feature groups passed (historical; Argent MCP is the current
 verification surface).
-The latest `VALID` TestFlight build is version `4.3.6` build `84`, processed
-`VALID` on `2026-08-31` with bilingual `What to Test` notes (`en-US` and
-`pt-BR`) and strict validation reporting `0` errors and `0` warnings. The same
-final source produced the signed archive/IPA and the physical Release install.
-Release builds use the proven `xcodebuild archive` -> `-exportArchive` -> `asc
-publish testflight` lane. App Store Connect has no `4.3.6` App Store version
-record, so this is TestFlight-only staging, not production. The paragraphs
-below are release history.
+The latest `VALID` TestFlight build is version `4.4.0` build `85`, processed
+`VALID` on `2026-09-02` with `en-US` `What to Test` notes, distributed to the
+internal tester group only. The signed archive and IPA were produced from the
+exact source tagged `v4.4.0-beta1`. Release builds use the proven `xcodebuild
+archive` -> `-exportArchive` -> `asc publish testflight` lane. App Store
+Connect has no `4.4.0` App Store version record, so this is TestFlight-only
+staging, not production.
+
+Build `85` has no physical-device install proof: the authorized iPhone was
+locked for the whole session, so `devicectl` could not mount the developer
+disk image. The archive compiles and TestFlight validates it, but nobody has
+run it on hardware. Treat on-device behavior as unverified until someone
+launches it.
+
+The paragraphs below are release history.
+
+Version `4.3.6` build `84` is the previous TestFlight release, processed
+`VALID` on `2026-08-31` with bilingual notes and a physical Release install.
 
 Version `4.2.3` build `77` is the previous TestFlight release. It carries
 the iOS 27 `UIScene` startup fix proven on a physical device in build `76`;

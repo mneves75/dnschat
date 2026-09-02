@@ -12,6 +12,23 @@ Build `84` -> `85`. Native DNS transport hardening: the Android
 DNS-over-HTTPS fallback is gone, the native bridge accepts only port 53, and
 every native query is pinned to the allowlisted zone.
 
+### Release
+
+- Tagged `v4.4.0-beta1` from the exact source that produced the signed archive
+  and IPA. TestFlight processed build `85` as `VALID`, distributed to the
+  internal tester group only. No matching App Store version record exists, so
+  this is a beta release, not production.
+- No physical-device install proof for this build: the authorized iPhone stayed
+  locked, so the developer disk image could not mount and `devicectl` could not
+  install or launch. On-device behavior is unverified.
+- Known issue, not fixed here: on iOS, `queryTXT` and `cancelActiveQueries`
+  create independent unstructured Tasks, so a cancel can be admitted before a
+  query that was requested first and report zero cancellations while that query
+  proceeds. A stale result is still rejected by the JavaScript lifecycle guard,
+  so no wrong data reaches the user. A correct fix needs a lock-protected
+  cancellation generation read outside the MainActor, and this repo has no iOS
+  test target to verify the ordering, so it is deliberately deferred.
+
 ### Security
 
 - Removed the Android Cloudflare DNS-over-HTTPS fallback and the
