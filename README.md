@@ -210,9 +210,9 @@ Release:
 
 ## Current verification baseline
 
-Latest validated TestFlight beta: `4.4.0` build `85`, tagged
-`v4.4.0-beta1`.
-Last architecture/dependency verification: `2026-09-02`.
+Latest validated TestFlight beta: `4.4.1` build `86`, tagged
+`v4.4.1-beta1`.
+Last architecture/dependency verification: `2026-09-04`.
 Last full source/security sweep: `2026-09-02` (native DNS transport
 hardening: DNS-over-HTTPS removal, port-53 pin, query-zone pin, narrowed
 native allowlist, and the dnsjava absolute-name fix; see `CHANGELOG.md`
@@ -220,15 +220,15 @@ native allowlist, and the dnsjava absolute-name fix; see `CHANGELOG.md`
 Last AXe simulator E2E feature pass: `2026-06-05` for version `4.0.26` build
 `60`; 10 feature groups passed (historical; Argent MCP is the current
 verification surface).
-The latest `VALID` TestFlight build is version `4.4.0` build `85`, processed
-`VALID` on `2026-09-02` with `en-US` `What to Test` notes, distributed to the
+The latest `VALID` TestFlight build is version `4.4.1` build `86`, processed
+`VALID` on `2026-09-04` with `en-US` `What to Test` notes, distributed to the
 internal tester group only. The signed archive and IPA were produced from the
 exact source tagged `v4.4.0-beta1`. Release builds use the proven `xcodebuild
 archive` -> `-exportArchive` -> `asc publish testflight` lane. App Store
 Connect has no `4.4.0` App Store version record, so this is TestFlight-only
 staging, not production.
 
-Build `85` has no physical-device install proof: the authorized iPhone was
+Builds `85` and `86` have no physical-device install proof: the authorized iPhone was
 locked for the whole session, so `devicectl` could not mount the developer
 disk image. The archive compiles and TestFlight validates it, but nobody has
 run it on hardware. Treat on-device behavior as unverified until someone

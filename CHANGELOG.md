@@ -12,6 +12,24 @@ Build `85` -> `86`. Review follow-up to `4.4.0`: a link-spoofing fix in the one
 control guarding untrusted model output, plus cross-platform parity and
 dependency advisories.
 
+### Release
+
+- Tagged `v4.4.1-beta1` from the exact source that produced the signed archive
+  and IPA. TestFlight processed build `86` as `VALID`, internal tester group
+  only. No matching App Store version record exists, so this is a beta
+  release, not production.
+- Still no physical-device install proof: the authorized iPhone remained
+  locked, so the developer disk image could not mount. On-device behavior is
+  unverified for both `85` and `86`.
+- The iOS cancellation-ordering finding deferred in `4.4.0` remains open.
+  Follow-up research narrowed it: since SE-0431 a `Task` created in an
+  actor-isolated context enqueues synchronously, and the query registers
+  before its first `await`, so the two Tasks are ordered when created from the
+  same thread. The residual gap is that `queryTXT` and `cancelActiveQueries`
+  are exported from different native modules, whose method queues are not
+  ordered relative to each other. Still not fixable with proof here: the repo
+  has no iOS test target.
+
 ### Security
 
 - External links from model output can no longer carry userinfo.
