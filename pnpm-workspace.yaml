@@ -27,14 +27,21 @@ allowBuilds:
 # Security version floors (formerly npm-style "overrides" in package.json,
 # which pnpm ignores — they must live here to apply).
 overrides:
-  '@xmldom/xmldom': '>=0.8.13'
+  # GHSA-6gmq-8vp8-gcm6 (XML fragment injection) hits <=0.8.14 and 0.9.0-0.9.11,
+  # so both floors move together: unscoped resolves to the patched 0.9 line for
+  # plist@3, and the scoped entry below stays on the patched 0.8 line.
+  '@xmldom/xmldom': '>=0.8.15'
   # ...but @expo/plist@0.8.1 declares `^0.8.8` and calls
   # `parseFromString(xml)` with no mimeType. xmldom 0.9 made that a hard error,
   # so the unscoped floor above crashed `expo run:ios` (`pnpm run ios`) with
   # `the provided mimeType "undefined" is not valid` as soon as the CLI probed
   # usbmux. Keep @expo/plist on the patched 0.8 line; `plist@3` genuinely wants
   # ^0.9.10 and stays there.
-  '@expo/plist>@xmldom/xmldom': '~0.8.13'
+  '@expo/plist>@xmldom/xmldom': '~0.8.15'
+  # plist@3 pins an exact 0.9.10, which the unscoped floor above does not
+  # rewrite. It genuinely wants the 0.9 line, so move it to the patched 0.9.12
+  # rather than dragging it back to 0.8.
+  'plist>@xmldom/xmldom': '>=0.9.12'
   # GHSA-c83g-rgw3-j3cx / GHSA-73wf-gq98-2v4g. Caret floor: every consumer wants 4.x.
   browserslist: '^4.28.7'
   brace-expansion: '>=5.0.9'
