@@ -10,51 +10,30 @@ describe("Android DNSResolver executable JVM boundaries", () => {
     const outputDirectory = fs.mkdtempSync(
       path.join(os.tmpdir(), "dnsresolver-jvm-"),
     );
+    // Discover the stubs rather than listing them. A hand-maintained list meant
+    // adding one stub silently excluded it from the compile, which surfaced as a
+    // bogus "DNSResolver.java does not compile" failure.
+    const collectJavaFiles = (directory: string): string[] =>
+      fs
+        .readdirSync(directory, { withFileTypes: true })
+        .flatMap((entry) => {
+          const entryPath = path.join(directory, entry.name);
+          if (entry.isDirectory()) return collectJavaFiles(entryPath);
+          return entry.isFile() && entry.name.endsWith(".java")
+            ? [entryPath]
+            : [];
+        })
+        .sort();
+
+    const stubSources = collectJavaFiles(path.join(fixtureRoot, "stubs"));
+    // Guard the glob itself: an empty or truncated stub set would make the
+    // compile fail for the wrong reason.
+    expect(stubSources.length).toBeGreaterThanOrEqual(12);
+
     const javaSources = [
       path.join(moduleRoot, "android", "DNSResolver.java"),
       path.join(fixtureRoot, "DNSResolverJvmHarness.java"),
-      path.join(
-        fixtureRoot,
-        "stubs",
-        "android",
-        "net",
-        "ConnectivityManager.java",
-      ),
-      path.join(fixtureRoot, "stubs", "android", "net", "DnsResolver.java"),
-      path.join(fixtureRoot, "stubs", "android", "net", "Network.java"),
-      path.join(fixtureRoot, "stubs", "android", "os", "Build.java"),
-      path.join(
-        fixtureRoot,
-        "stubs",
-        "android",
-        "os",
-        "CancellationSignal.java",
-      ),
-      path.join(fixtureRoot, "stubs", "android", "os", "SystemClock.java"),
-      path.join(fixtureRoot, "stubs", "android", "util", "Log.java"),
-      path.join(fixtureRoot, "stubs", "org", "xbill", "DNS", "DClass.java"),
-      path.join(fixtureRoot, "stubs", "org", "xbill", "DNS", "Lookup.java"),
-      path.join(fixtureRoot, "stubs", "org", "xbill", "DNS", "Name.java"),
-      path.join(fixtureRoot, "stubs", "org", "xbill", "DNS", "Record.java"),
-      path.join(fixtureRoot, "stubs", "org", "xbill", "DNS", "Resolver.java"),
-      path.join(
-        fixtureRoot,
-        "stubs",
-        "org",
-        "xbill",
-        "DNS",
-        "SimpleResolver.java",
-      ),
-      path.join(
-        fixtureRoot,
-        "stubs",
-        "org",
-        "xbill",
-        "DNS",
-        "TextParseException.java",
-      ),
-      path.join(fixtureRoot, "stubs", "org", "xbill", "DNS", "TXTRecord.java"),
-      path.join(fixtureRoot, "stubs", "org", "xbill", "DNS", "Type.java"),
+      ...stubSources,
     ];
 
     try {

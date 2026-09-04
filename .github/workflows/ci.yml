@@ -80,6 +80,15 @@ jobs:
         with:
           node-version: '22.23.1'
 
+      # The dns-native suite compiles and runs DNSResolver.java through javac in
+      # DNSResolverJvm.test.ts, so this job needs a pinned JDK exactly like the
+      # android job. Without it the gate rides whatever JDK ubuntu-latest ships.
+      - name: Setup Java
+        uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
       - name: Enable Corepack
         run: corepack enable
 
