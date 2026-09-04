@@ -58,10 +58,14 @@ describe("Android DNSResolver executable JVM boundaries", () => {
     ];
 
     try {
+      // JVM startup plus a ~2k-line compile is fast when idle but not when the
+      // machine is loaded; a 30s budget produced SIGTERM/status:null flakes on a
+      // busy host (load ~17) for a compile that passes in seconds when idle.
+      // These bounds only exist to stop a wedged toolchain hanging the suite.
       const compile = spawnSync(
         "javac",
         ["-source", "8", "-target", "8", "-d", outputDirectory, ...javaSources],
-        { encoding: "utf8", timeout: 30_000 },
+        { encoding: "utf8", timeout: 180_000 },
       );
 
       expect({
@@ -79,7 +83,9 @@ describe("Android DNSResolver executable JVM boundaries", () => {
       const run = spawnSync(
         "java",
         ["-cp", outputDirectory, "com.dnsnative.DNSResolverJvmHarness"],
-        { encoding: "utf8", timeout: 10_000 },
+        // The harness itself asserts its own sub-second deadlines, so this only
+        // bounds a hung JVM, not the behavior under test.
+        { encoding: "utf8", timeout: 60_000 },
       );
 
       expect(run.stdout).toContain("PASS parser-transactionality-and-utf8");
