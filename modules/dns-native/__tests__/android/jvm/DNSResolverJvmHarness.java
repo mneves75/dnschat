@@ -36,6 +36,11 @@ public final class DNSResolverJvmHarness {
     // below and are deliberately NOT derived from this.
     private static final long SEAM_LATCH_TIMEOUT_SECONDS = 10L;
 
+    // Upper bound for a stalled lookup, measured from seam entry. Sits between the
+    // injected 1s native timeout and the 10s release latch: if the native timeout
+    // stopped bounding the stall, the lookup would run to that latch and blow this.
+    private static final long STALL_BOUND_NANOS = TimeUnit.SECONDS.toNanos(5);
+
     private static int failures;
 
     private DNSResolverJvmHarness() {}
@@ -178,7 +183,13 @@ public final class DNSResolverJvmHarness {
             long.class
         );
         constructor.setAccessible(true);
-        DNSResolver resolver = constructor.newInstance(null, stalledHostResolver, 75L);
+        // Injected NATIVE query budget. This is the whole budget for the query, not
+        // just the stalled lookup: at 75ms a loaded CI runner could not dispatch to
+        // host resolution before the operation was already expired, so the seam was
+        // skipped entirely and the case failed for machine load. 1s is still tiny
+        // next to the 30s caller deadline, so the assertions below still prove the
+        // native timeout -- not the caller budget -- is what ends the stall.
+        DNSResolver resolver = constructor.newInstance(null, stalledHostResolver, 1_000L);
         try {
             // Caller deadline is deliberately generous. What this case tests is that
             // the injected 75ms NATIVE timeout bounds a stalled host resolution -- not
@@ -199,7 +210,7 @@ public final class DNSResolverJvmHarness {
             long firstStartedNanos = System.nanoTime();
             expectFutureDnsError(first, DNSResolver.DNSError.Type.TIMEOUT);
             require(
-                System.nanoTime() - firstStartedNanos < TimeUnit.MILLISECONDS.toNanos(750),
+                System.nanoTime() - firstStartedNanos < STALL_BOUND_NANOS,
                 "stalled lookup exceeded the injected native deadline"
             );
             awaitNoActiveQueries(resolver);
@@ -236,8 +247,7 @@ public final class DNSResolverJvmHarness {
                 "a stalled lookup blocked the resolver recovery lane"
             );
             require(
-                System.nanoTime() - recoveryStartedNanos
-                    < TimeUnit.MILLISECONDS.toNanos(750),
+                System.nanoTime() - recoveryStartedNanos < STALL_BOUND_NANOS,
                 "resolver recovery lane exceeded its deadline"
             );
             require(calls.get() == 2, "resolver recovery did not execute a fresh lookup");
