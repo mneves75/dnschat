@@ -3,7 +3,10 @@ import Markdown from "react-native-markdown-display";
 import type { MarkdownProps, RenderRules } from "react-native-markdown-display";
 import { useTranslation } from "../i18n";
 import { appAlert } from "../utils/appAlert";
-import { openExternalLink } from "../utils/externalLinks";
+import {
+  describeExternalUrlTarget,
+  openExternalLink,
+} from "../utils/externalLinks";
 
 export type SafeMarkdownStyle = MarkdownProps["style"];
 
@@ -23,7 +26,12 @@ export function SafeMarkdown({ children, style }: SafeMarkdownProps) {
   const handleLinkPress = (url: string): boolean => {
     appAlert(
       t("screen.chat.externalLink.title"),
-      t("screen.chat.externalLink.message", { url }),
+      // Show the resolved target, not the raw href: this text comes from model
+      // output, and a userinfo or padded URL can read as a trusted host while
+      // pointing somewhere else.
+      t("screen.chat.externalLink.message", {
+        url: describeExternalUrlTarget(url),
+      }),
       [
         { text: t("common.cancel"), style: "cancel" },
         {

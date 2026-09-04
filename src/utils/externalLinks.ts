@@ -18,9 +18,38 @@ export function isAllowedExternalUrl(url: string): boolean {
 
   try {
     const parsed = new URL(url);
-    return ALLOWED_EXTERNAL_PROTOCOLS.has(parsed.protocol);
+    if (!ALLOWED_EXTERNAL_PROTOCOLS.has(parsed.protocol)) {
+      return false;
+    }
+    // SECURITY: reject userinfo. Model output is untrusted, and
+    // "https://llm.pieter.com@evil.example/" parses with host "evil.example"
+    // while reading as the trusted resolver in a confirmation dialog. Nothing
+    // this app legitimately links to carries credentials in the URL.
+    if (parsed.username !== "" || parsed.password !== "") {
+      return false;
+    }
+    return true;
   } catch {
     return false;
+  }
+}
+
+/**
+ * The string a confirmation dialog should show for an external URL.
+ *
+ * Never show the raw href: it is attacker-controlled when it came from model
+ * output, and a long or padded URL pushes the real host out of view. This
+ * returns the host the tap will actually reach, which is the one fact the user
+ * is being asked to approve.
+ */
+export function describeExternalUrlTarget(url: string): string {
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "mailto:"
+      ? parsed.pathname
+      : `${parsed.protocol}//${parsed.host}`;
+  } catch {
+    return "invalid";
   }
 }
 

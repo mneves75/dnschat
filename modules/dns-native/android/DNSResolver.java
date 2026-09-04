@@ -539,7 +539,12 @@ public class DNSResolver {
     static void requireQueryNameInZone(String queryName, String zone) {
         String suffix = "." + zone;
         int labelLength = queryName.length() - suffix.length();
+        // The label cap mirrors iOS isQueryName and RFC 1035. Without it the two
+        // platforms disagree on the same tampered bundle: iOS rejects an
+        // over-long label natively while Android accepts it and lets the wire
+        // encoder deal with it.
         if (labelLength < 1
+            || labelLength > DEFAULT_MAX_LABEL_LENGTH
             || !queryName.endsWith(suffix)
             || queryName.lastIndexOf('.', labelLength - 1) >= 0) {
             throw new DNSError(DNSError.Type.QUERY_FAILED, "DNS query name is outside the allowed zone");

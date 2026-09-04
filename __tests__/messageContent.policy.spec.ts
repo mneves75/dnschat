@@ -18,7 +18,14 @@ describe("MessageContent render policy", () => {
     expect(safeMarkdownSource).toContain("image: () => null");
     expect(safeMarkdownSource).toContain("onLinkPress={handleLinkPress}");
     expect(safeMarkdownSource).toContain("appAlert(");
+    // The dialog must show the resolved target, never the raw href: this text
+    // is model output, and a userinfo URL reads as a trusted host while
+    // pointing elsewhere. Asserting the call shape keeps the raw form from
+    // creeping back.
     expect(safeMarkdownSource).toContain(
+      "url: describeExternalUrlTarget(url),",
+    );
+    expect(safeMarkdownSource).not.toContain(
       't("screen.chat.externalLink.message", { url })',
     );
     expect(safeMarkdownSource).toContain("openExternalLink(url)");

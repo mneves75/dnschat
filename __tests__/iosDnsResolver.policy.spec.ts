@@ -25,6 +25,20 @@ describe("iOS DNSResolver native policy", () => {
     expect(source).not.toContain("port.uint16Value > 0 ? port.uint16Value");
   });
 
+  it("pins every query to one label under the selected resolver's zone", () => {
+    // Android asserts this in androidDnsResolver.policy.spec.ts; iOS had the
+    // guard but no gate, so it could have been deleted silently. The label cap
+    // is part of the contract: both platforms must reject an over-long label,
+    // or the same tampered bundle behaves differently per OS.
+    expect(source).toContain(
+      "guard Self.isQueryName(queryName, inZone: normalizedDomain) else {",
+    );
+    expect(source).toContain("DNS query name is outside the allowed zone");
+    expect(source).toContain(
+      'return !label.isEmpty && label.count <= maxLabelLength && !label.contains(".")',
+    );
+  });
+
   it("validates TXT answer owner name and class before accepting record data", () => {
     expect(source).toContain(
       "let (answerName, answerOffset) = try readName(bytes: bytes, offset: offset)",
