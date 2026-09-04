@@ -9,10 +9,12 @@
 
 ## Active Work
 
-- TestFlight beta `4.4.0` build `85` is `VALID` and tagged `v4.4.0-beta1` from the exact source that produced the signed archive. Internal tester group only. CI green on `main` (`ci`, `gitleaks`, `codeql`, `public-redaction`). See `memory/2026-09-02.md`.
-- `4.4.0` completed a half-finished native DNS hardening pass: Android DNS-over-HTTPS removed, native bridge pinned to port 53, every native query pinned to the allowlisted zone, native allowlist narrowed to the two LLM zones.
-- **Build `85` has no physical-device proof.** The authorized iPhone was locked all session, so the developer disk image never mounted and `devicectl` could not install or launch. On-device behavior is unverified, and this release changes DNS transport behavior. Install and run the survival check before treating it as device-proven.
-- Previous beta `4.3.6` build `84` (tagged `v4.3.6-beta1`) did have physical-device Release install/launch proof.
+- TestFlight beta `4.4.1` build `86` is `VALID` and tagged `v4.4.1-beta1` from the exact source that produced the signed archive. Internal tester group only. CI green on `main` across `test`, `dns-native`, `android`, `sbom`, plus `gitleaks`, `codeql`, `public-redaction`.
+- `4.4.0` completed a half-finished native DNS hardening pass (Android DNS-over-HTTPS removed, bridge pinned to port 53, query-zone pin, native allowlist narrowed to the two LLM zones). `4.4.1` is the review follow-up: external-link userinfo spoofing fix, Android/iOS query-label parity, both `@xmldom/xmldom` advisories patched rather than suppressed, and `queryWithServer` no longer defaulting its deadline.
+- **Android runtime proof exists for `4.4.1` (2026-09-04).** Signed release APK installed on an `android-36 google_apis arm64` emulator: onboarding, chat list, chat, error handling, persistence and the Logs screen all render; no crash, no ANR. The DNS query failed on the emulator's degraded network, and the Logs entry read `Failed / Method: TCP / Duration: 20.05s` -- which is the useful part: the chain fell through native -> UDP -> TCP and terminated exactly on `TOTAL_QUERY_BUDGET_MS` (20 000 ms), so the `4.4.0` wall-clock deadline works end to end on a device.
+- **No iOS physical-device proof for `85` or `86`.** The authorized iPhone was locked, then `unavailable` (disconnected). Install and run the survival check before treating either as device-proven.
+- Emulator setup is not preinstalled here: the SDK had no system image and no in-SDK `cmdline-tools`. Install both into `$ANDROID_HOME` (a Homebrew `avdmanager` resolves its SDK root from its own install path and will not see the project SDK), then `avdmanager create avd`. The release APK is unsigned, so sign it with the debug key via `zipalign` + `apksigner` before `adb install`.
+- Previous beta `4.3.6` build `84` (tagged `v4.3.6-beta1`) is the last release with physical-device Release install/launch proof.
 - No matching App Store version record exists; production remains blocked by the provider-policy and unauthenticated-response decisions below.
 
 ## Native DNS Invariants
@@ -24,7 +26,7 @@
 
 ## Known Unfixed
 
-- iOS cancellation ordering race: `queryTXT` and `cancelActiveQueries` create independent unstructured Tasks funnelling to the same MainActor state, so a cancel can be admitted before an earlier query and report zero cancellations. A stale result is still rejected by the JS lifecycle guard, so no wrong data reaches the user. A fix needs a lock-protected cancellation generation read outside the MainActor; **the repo has no iOS test target**, so the ordering cannot be verified here. Deferred deliberately, recorded in `CHANGELOG.md` `4.4.0`.
+- ~~iOS cancellation ordering race~~ **closed as not applicable (2026-09-04)**. Both `queryTXT` and `cancelActiveQueries` are declared on `RNDNSModule` and exported by one `RCT_EXTERN_MODULE` block, so JS calls arrive in order on a single serial methodQueue; the bridge forwards synchronously; SE-0431 makes an actor-isolated `Task` enqueue synchronously onto the FIFO `MainActor`; and the query registers in `activeQueries` before its first `await`. Two earlier readings of this were wrong (first "unordered Tasks", then "different modules") -- the premise was never checked against `RNDNSModule.m`. `iosDnsResolver.policy.spec.ts` now gates the ordering by construction. Structural, not executed: there is still no iOS test target.
 - `decode-uri-component` CVE-2026-45822 (moderate DoS) is suppressed in `pnpm-workspace.yaml` `auditConfig.ignoreGhsas`, not fixed: the only patched release `0.5.0` is ESM-only while `query-string` requires it from the Metro CJS bundle, and every earlier release is vulnerable. Recheck 2026-10-01. Every other advisory, including future moderates, still fails the build.
 
 ## Decisions and Blockers
@@ -41,3 +43,5 @@
 - When a spec file is *modified* in the working tree, diff it against `HEAD` before inferring intent from source comments. Reading only the hardened source led to the wrong conclusion about the allowlist narrowing; the new spec settled it.
 - `expo install --fix` cannot run at this pnpm workspace root (it calls `pnpm add` without `-w`). Update the dependency ranges directly, then `pnpm install`.
 - `verify:expo-doctor` and `pnpm audit` are release gates that drift on their own as advisories land and Expo ships patches; neither failure means the working tree broke something.
+- Check a finding's PREMISE against the code before acting on it, and again before publishing it. The iOS cancellation "race" was reported, then deferred, then re-deferred on a second wrong premise -- twice reasoning about which module owns the bridge methods without opening `RNDNSModule.m`, which answers it in one grep. A wrong premise survived into a shipped changelog.
+- Timing assertions in the JVM harness must bound what the code controls. Two separate CI failures came from budgets that also had to cover executor dispatch on a loaded runner: measure from the seam the test injects, and keep the injected native budget well clear of scheduling latency.

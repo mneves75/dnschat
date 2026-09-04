@@ -21,14 +21,21 @@ dependency advisories.
 - Still no physical-device install proof: the authorized iPhone remained
   locked, so the developer disk image could not mount. On-device behavior is
   unverified for both `85` and `86`.
-- The iOS cancellation-ordering finding deferred in `4.4.0` remains open.
-  Follow-up research narrowed it: since SE-0431 a `Task` created in an
-  actor-isolated context enqueues synchronously, and the query registers
-  before its first `await`, so the two Tasks are ordered when created from the
-  same thread. The residual gap is that `queryTXT` and `cancelActiveQueries`
-  are exported from different native modules, whose method queues are not
-  ordered relative to each other. Still not fixable with proof here: the repo
-  has no iOS test target.
+- **Correction.** The iOS cancellation-ordering finding carried from `4.4.0`
+  does not apply, and the note published with this entry was wrong on its key
+  premise: it claimed `queryTXT` and `cancelActiveQueries` are exported from
+  different native modules with unordered method queues. They are not. Both are
+  declared on `RNDNSModule` and exported by the one
+  `RCT_EXTERN_MODULE(RNDNSModule)` block, so JS calls arrive in order on a
+  single serial methodQueue; `RNDNSModule.queryTXT` forwards synchronously; and
+  since SE-0431 a `Task` created in an actor-isolated context enqueues
+  synchronously onto `MainActor`, which runs jobs in enqueue order. The query
+  registers in `activeQueries` before its first `await`, so a cancel issued
+  after it cannot be admitted first.
+  `iosDnsResolver.policy.spec.ts` now gates that ordering by construction
+  (registration must precede the first suspension, and the bridge must forward
+  synchronously). This repo still has no iOS test target, so the conclusion is
+  structural rather than executed.
 
 ### Security
 

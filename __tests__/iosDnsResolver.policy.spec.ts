@@ -39,6 +39,33 @@ describe("iOS DNSResolver native policy", () => {
     );
   });
 
+  it("registers a query before its first suspension, so a later cancel cannot overtake it", () => {
+    // This is the structural property that makes queryTXT/cancelActiveQueries
+    // ordering safe, and it is easy to break by accident.
+    //
+    // Both are exported from the SAME React Native module (RNDNSModule), so JS
+    // calls arrive in order on one serial methodQueue; RNDNSModule.queryTXT
+    // forwards synchronously; and since SE-0431 a Task created in an
+    // actor-isolated context enqueues synchronously onto MainActor, which runs
+    // jobs in enqueue order. The remaining requirement is that the query is in
+    // activeQueries BEFORE it suspends -- otherwise a cancel enqueued later
+    // would run first, find nothing, and report zero while the query proceeds.
+    //
+    // There is no iOS test target in this repo, so this asserts the ordering by
+    // construction rather than by execution.
+    const registration = source.indexOf(
+      "let operationId = self.registerActiveQuery(queryTask)",
+    );
+    const firstAwait = source.indexOf("let result = try await queryTask.value");
+    expect(registration).toBeGreaterThan(-1);
+    expect(firstAwait).toBeGreaterThan(-1);
+    expect(registration).toBeLessThan(firstAwait);
+
+    // The bridge must forward synchronously; wrapping this in its own Task
+    // would reintroduce an unordered hop ahead of the resolver.
+    expect(source).toContain("self.resolver.queryTXT(");
+  });
+
   it("validates TXT answer owner name and class before accepting record data", () => {
     expect(source).toContain(
       "let (answerName, answerOffset) = try readName(bytes: bytes, offset: offset)",
