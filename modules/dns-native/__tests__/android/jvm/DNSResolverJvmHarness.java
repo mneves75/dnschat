@@ -29,6 +29,13 @@ public final class DNSResolverJvmHarness {
         void run() throws Exception;
     }
 
+    // Setup-synchronisation budget only: how long to wait for a test seam to be
+    // reached before declaring the harness itself broken. A 1s budget failed on a
+    // loaded CI runner ("stalled resolver seam was not entered") for a test that
+    // passes locally. The deadline bounds under test are the nanoTime checks
+    // below and are deliberately NOT derived from this.
+    private static final long SEAM_LATCH_TIMEOUT_SECONDS = 10L;
+
     private static int failures;
 
     private DNSResolverJvmHarness() {}
@@ -155,7 +162,7 @@ public final class DNSResolverJvmHarness {
                 entered.countDown();
                 while (true) {
                     try {
-                        if (release.await(1, TimeUnit.SECONDS)) {
+                        if (release.await(SEAM_LATCH_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
                             return InetAddress.getLoopbackAddress();
                         }
                     } catch (InterruptedException ignored) {
@@ -180,7 +187,7 @@ public final class DNSResolverJvmHarness {
                 53,
                 System.currentTimeMillis() + 1_000L
             );
-            require(entered.await(1, TimeUnit.SECONDS), "stalled resolver seam was not entered");
+            require(entered.await(SEAM_LATCH_TIMEOUT_SECONDS, TimeUnit.SECONDS), "stalled resolver seam was not entered");
             expectFutureDnsError(first, DNSResolver.DNSError.Type.TIMEOUT);
             require(
                 System.nanoTime() - firstStartedNanos < TimeUnit.MILLISECONDS.toNanos(750),
@@ -290,7 +297,7 @@ public final class DNSResolverJvmHarness {
                 System.currentTimeMillis() + 3_000L
             );
             require(
-                invalidResponseSent.await(1, TimeUnit.SECONDS),
+                invalidResponseSent.await(SEAM_LATCH_TIMEOUT_SECONDS, TimeUnit.SECONDS),
                 "fallback positive control did not answer raw UDP"
             );
             expectFutureDnsError(query, DNSResolver.DNSError.Type.NO_RECORDS_FOUND);
@@ -333,7 +340,7 @@ public final class DNSResolverJvmHarness {
                 System.currentTimeMillis() + 200L
             );
             require(
-                firstPacketReceived.await(1, TimeUnit.SECONDS),
+                firstPacketReceived.await(SEAM_LATCH_TIMEOUT_SECONDS, TimeUnit.SECONDS),
                 "short-budget raw UDP positive control did not send"
             );
             expectFutureDnsError(query, DNSResolver.DNSError.Type.TIMEOUT);
@@ -404,7 +411,7 @@ public final class DNSResolverJvmHarness {
                 );
             }
             require(
-                blockedPacketsReceived.await(2, TimeUnit.SECONDS),
+                blockedPacketsReceived.await(SEAM_LATCH_TIMEOUT_SECONDS, TimeUnit.SECONDS),
                 "identical operations did not independently occupy every raw-UDP worker"
             );
             require(
@@ -467,7 +474,7 @@ public final class DNSResolverJvmHarness {
             null,
             host -> {
                 hostResolverEntered.countDown();
-                releaseHostResolver.await(1, TimeUnit.SECONDS);
+                releaseHostResolver.await(SEAM_LATCH_TIMEOUT_SECONDS, TimeUnit.SECONDS);
                 return loopback;
             },
             9_500L
@@ -480,7 +487,7 @@ public final class DNSResolverJvmHarness {
                 System.currentTimeMillis() + 3_000L
             );
             require(
-                hostResolverEntered.await(1, TimeUnit.SECONDS),
+                hostResolverEntered.await(SEAM_LATCH_TIMEOUT_SECONDS, TimeUnit.SECONDS),
                 "blocked HostResolver control was not entered"
             );
             require(activeQueryCount(resolver) == 1, "blocked HostResolver query was not active");
@@ -511,7 +518,7 @@ public final class DNSResolverJvmHarness {
                 hostResolversEntered.countDown();
                 while (true) {
                     try {
-                        if (releaseHostResolvers.await(1, TimeUnit.SECONDS)) {
+                        if (releaseHostResolvers.await(SEAM_LATCH_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
                             return loopback;
                         }
                     } catch (InterruptedException ignored) {
@@ -536,7 +543,7 @@ public final class DNSResolverJvmHarness {
                 deadline
             );
             require(
-                hostResolversEntered.await(1, TimeUnit.SECONDS),
+                hostResolversEntered.await(SEAM_LATCH_TIMEOUT_SECONDS, TimeUnit.SECONDS),
                 "two uninterruptible HostResolver controls did not enter"
             );
             require(resolver.cancelActiveQueries() == 2, "host operations were not both cancelled");
