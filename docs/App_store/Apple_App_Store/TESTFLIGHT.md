@@ -4,8 +4,8 @@ To upload your DNSChat iOS app to TestFlight, you'll need to follow these steps:
 
 ## Release state
 
-- **Repository target:** `4.4.0` build `85`.
-- **Latest validated TestFlight artifact:** `4.4.0` build `85`, tagged
+- **Repository target:** `4.4.1` build `86`.
+- **Latest validated TestFlight artifact:** `4.4.1` build `86`, tagged
   `v4.3.6-beta1` and processed `VALID` on `2026-08-31` with strict validation
   at `0` errors and `0` warnings.
 - **Latest production App Store release:** unverified. Confirm it in App Store
@@ -117,14 +117,14 @@ xcodebuild clean archive \
   CODE_SIGNING_ALLOWED=NO
 ```
 
-The latest validated TestFlight artifact is `4.4.0` build `85` (`2026-08-31`):
+The latest validated TestFlight artifact is `4.4.1` build `86` (`2026-08-31`):
 
 - `pnpm run verify:all`, native DNS tests, audit, secret scan, version sync, and
   `asc doctor` passed for the final source tagged `v4.3.6-beta1`.
 - Signed archive/IPA export and physical-device Release install/launch passed.
 - TestFlight processed the build `VALID`; bilingual test notes are present and
   strict validation reported `0` errors and `0` warnings.
-- `4.4.0` build `85` is not attached to an App Store version. Validation reports
+- `4.4.1` build `86` is not attached to an App Store version. Validation reports
   that no matching iOS version record exists.
 - Internal App Store Connect IDs, tester group names, device names, device identifiers, local paths, team IDs, profile names, and certificate IDs are intentionally omitted from public docs.
 
@@ -241,7 +241,7 @@ pnpm run ios --verbose
 - **App Store Connect** app record created
 - **Code signing** configured correctly
 - **Bundle ID** matches (`<BUNDLE_ID>`)
-- **Version numbers** consistent with the repository target (`4.4.0` build `85`)
+- **Version numbers** consistent with the repository target (`4.4.1` build `86`)
 - **Native DNS module** compiles successfully
 - **Xcode CLI smoke** passed:
   - Debug simulator build
@@ -269,7 +269,7 @@ eas build --platform ios --profile production
 
 ### TestFlight distribution
 
-Latest validated TestFlight distribution (`4.4.0` build `85`):
+Latest validated TestFlight distribution (`4.4.1` build `86`):
 
 - Version/build: `4.3.6` / `84`; tag: `v4.3.6-beta1`
 - Processing state: `VALID`; signed archive/export and upload succeeded, and
@@ -300,7 +300,7 @@ After upload:
   messages, and settings; confirm they remain accessible and dismiss cleanly.
 - Open a stale chat deep link and confirm the conversation-not-found state
   appears instead of a blank chat.
-- Confirm settings/About version metadata reports `4.4.0` build `85`.
+- Confirm settings/About version metadata reports `4.4.1` build `86`.
 - Send short prompts through the default DNS service and confirm responses render.
 - Force or observe a DNS failure and confirm the chat shows a compact localized
   retry prompt instead of an oversized diagnostic overlay.

@@ -175,9 +175,11 @@ the two LLM zones only (never a public recursive resolver), the bridge accepts
 port 53 and nothing else, and every native query name is pinned to the selected
 resolver's zone. Native must stay a strict *subset* of `ALLOWED_DNS_SERVERS`, and
 both platforms must narrow identically - enforced by
-`modules/dns-native/__tests__/nativeSecurityPolicy.test.ts`. Selecting an IP
-resolver therefore fails the native rung and falls through to UDP/TCP; with
-experimental transports off it fails outright. The Android DNS-over-HTTPS rung
+`modules/dns-native/__tests__/nativeSecurityPolicy.test.ts`. An IP resolver
+therefore fails the native rung and falls through to UDP/TCP; with experimental
+transports off it is retried `MAX_RETRIES` times and then fails, unless Mock DNS
+is on. The Settings picker offers only the two LLM hostnames, so an IP resolver
+arrives only from a setting an older install persisted. The Android DNS-over-HTTPS rung
 was removed; `androidDnsResolver.policy.spec.ts` fails the build if
 `HttpURLConnection` returns to that resolver.
 

@@ -2,8 +2,8 @@
 
 ## Release state
 
-- **Repository target:** `4.4.0` build `85`.
-- **Latest validated TestFlight artifact:** `4.4.0` build `85`, tagged
+- **Repository target:** `4.4.1` build `86`.
+- **Latest validated TestFlight artifact:** `4.4.1` build `86`, tagged
   `v4.3.6-beta1` and processed `VALID` with strict validation at `0` errors
   and `0` warnings. This is beta evidence, not production evidence.
 - **Latest production App Store release:** unverified. Confirm it in App Store
@@ -166,8 +166,8 @@ Validated screenshot sets currently available in App Store Connect:
 ### Bundle Information
 
 - **Bundle ID**: `<BUNDLE_ID>`
-- **Repository target**: `4.4.0` build `85` (from `package.json` via `sync-versions`)
-- **Latest validated TestFlight artifact**: `4.4.0` build `85`
+- **Repository target**: `4.4.1` build `86` (from `package.json` via `sync-versions`)
+- **Latest validated TestFlight artifact**: `4.4.1` build `86`
 - **Latest production App Store release**: unverified
 - **App Store Connect internal IDs**: intentionally omitted from public docs; keep exact IDs in private release notes.
 - **Minimum iOS Version**: 16.4
@@ -305,7 +305,7 @@ No user account is required. The app does not require app-owned backend infrastr
 ### App Store Connect Configuration
 
 - [x] Historical IPA upload evidence exists for `4.0.13` build `43`
-- [x] Latest validated TestFlight artifact uploaded (`4.4.0` build `85`)
+- [x] Latest validated TestFlight artifact uploaded (`4.4.1` build `86`)
 - [x] Local ASC health checked with `asc doctor` (`2026-08-31`)
 - [x] Apply App Store Connect metadata for `en-US` and `pt-BR`
 - [x] Renew iPhone and iPad screenshot sets for `en-US` and `pt-BR`

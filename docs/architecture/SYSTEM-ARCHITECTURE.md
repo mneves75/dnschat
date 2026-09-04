@@ -88,9 +88,12 @@ foreground transition.
   layer: it compiles in only the LLM zones (never a public recursive
   resolver), accepts only port 53, and pins each query name to the selected
   resolver's zone.
-- Consequence of that asymmetry: selecting an IP resolver such as `8.8.8.8`
-  makes the native rung reject the query, and the chain continues to UDP then
-  TCP, which still accept it. With **Allow Experimental Transports** turned
-  off the order is native-only, so an IP resolver has no rung left and the
-  query fails with "Native DNS is enforced". Prefer a hostname resolver when
-  experimental transports are disabled.
+- Consequence of that asymmetry: an IP resolver such as `8.8.8.8` makes the
+  native rung reject the query, and the chain continues to UDP then TCP, which
+  still accept it. The Settings picker offers only the two LLM hostnames, so an
+  IP resolver arrives only from a setting an older install persisted
+  (`migrateSettings` keeps it and `validateDNSServer` still accepts it).
+- With **Allow Experimental Transports** off the order is native-only, so such
+  a stored IP resolver is retried `MAX_RETRIES` times and then fails with
+  "Native DNS is enforced" -- unless **Mock DNS** is also on, in which case the
+  appended mock rung answers instead.

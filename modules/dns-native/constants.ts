@@ -190,8 +190,13 @@ export const DNS_CONSTANTS = {
   // configureSanitizer with their compiled-in copy. JS can narrow but never
   // widen the native allowlist — adding a server here only takes effect after
   // the native lists are updated in the same change (a hijacked JS bundle must
-  // not be able to redirect queries). nativeSecurityPolicy.test.ts asserts the
-  // three lists stay set-equal.
+  // not be able to redirect queries).
+  //
+  // The native lists are deliberately NARROWER than this one: they hold only the
+  // LLM zones, never a public recursive resolver. nativeSecurityPolicy.test.ts
+  // asserts CONTAINMENT (native is a non-empty subset of this list) plus
+  // iOS/Android parity -- not set-equality. So the IP entries below are reachable
+  // over the JavaScript UDP/TCP rungs only; the native rung rejects them.
   ALLOWED_DNS_SERVERS: [
     "llm.pieter.com",
     "ch.at",

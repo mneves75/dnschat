@@ -43,8 +43,15 @@ Important consequence:
   resolver `8.8.8.8`.
 - Since 4.4.0 this path is JavaScript-only. The native rung compiles in the LLM
   zones alone and rejects an IP resolver, so the chain falls through to UDP/TCP,
-  which still honour it. With **Allow Experimental Transports** disabled the
-  order is native-only and an IP resolver has no rung left, so the query fails.
+  which still honour it.
+- Reachability: the Settings picker offers only `llm.pieter.com` and `ch.at`, so
+  an IP resolver cannot be *newly selected*. It reaches the code path when an
+  older install already persisted one -- `migrateSettings` preserves it and
+  `validateDNSServer` still accepts it (see `__tests__/settings.migration.spec.ts`).
+- With **Allow Experimental Transports** disabled the order is native-only, so
+  such a stored IP resolver is retried `MAX_RETRIES` times against the native
+  rung and then fails -- unless **Mock DNS** is also enabled, in which case the
+  mock rung answers and the query succeeds.
 
 ## TXT response parsing
 
@@ -92,8 +99,13 @@ Order used for iOS/Android builds:
 Android native module internal fallback chain:
 
 1. Raw UDP (native)
-2. DNS-over-HTTPS (wireformat, RFC 8484) only when the selected resolver is Cloudflare `1.1.1.1`
-3. Legacy resolver (dnsjava)
+2. Legacy resolver (dnsjava), queried with an absolute name so the system
+   search path cannot expand it
+
+The DNS-over-HTTPS rung was removed in 4.4.0. The native resolver speaks only
+DNS, so no query leaves the device over HTTPS to a third party;
+`androidDnsResolver.policy.spec.ts` fails the build if `HttpURLConnection`
+returns to that resolver.
 
 Web builds use Mock because browsers cannot do custom DNS on port 53.
 

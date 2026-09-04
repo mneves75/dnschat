@@ -6,6 +6,58 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+## [4.4.1] - 2026-09-04
+
+Build `85` -> `86`. Review follow-up to `4.4.0`: a link-spoofing fix in the one
+control guarding untrusted model output, plus cross-platform parity and
+dependency advisories.
+
+### Security
+
+- External links from model output can no longer carry userinfo.
+  `https://llm.pieter.com@evil.example/` parses with host `evil.example` while
+  reading as the trusted resolver, and the confirmation dialog printed the raw
+  href -- so a hostile link returned by the DNS server, or substituted on-path
+  into an unsigned TXT answer, could be approved by a user who checked it. The
+  allowlist now rejects any URL carrying a username or password, and the dialog
+  shows the resolved target instead of the raw href.
+- Android now enforces the same 63-character label cap as iOS when pinning a
+  query to its zone. Without it the two platforms disagreed on the same
+  tampered bundle: iOS rejected an over-long label natively, Android did not.
+- Resolved both `@xmldom/xmldom` advisories (GHSA-6gmq-8vp8-gcm6, XML fragment
+  injection) by moving to patched releases on each line -- `0.8.15` where the
+  `0.8` line is required and `0.9.12` for `plist@3` -- rather than suppressing
+  them.
+- `queryWithServer` no longer defaults its deadline. It is the retry loop, so a
+  caller that omitted the argument silently received a fresh full budget on
+  every entry, defeating the wall-clock bound `4.4.0` introduced.
+- The iOS query-zone pin now has a policy gate. Android already asserted its
+  equivalent, so the iOS guard could have been removed without failing a test.
+
+### Fixed
+
+- The `dns-native` CI job compiles and runs `DNSResolver.java` through `javac`
+  but pinned no JDK, riding whatever the runner happened to ship. It now pins
+  Temurin 17, matching the `android` job.
+- The JVM gate discovers its Java stubs instead of listing them by hand. The
+  hand-maintained list silently excluded a newly added stub, which surfaced as
+  a bogus "DNSResolver.java does not compile" failure.
+- Raised the JVM gate's spawn budgets. A compile that takes seconds when idle
+  hit the 30-second bound on a loaded host, failing the gate for machine load.
+
+### Changed
+
+- Aligned the Expo SDK 57 patch set again (four packages) and re-resolved the
+  iOS pods after the native module versions moved; `expo-doctor` is 19/19.
+- Corrected the documented consequence of selecting an IP resolver. The
+  Settings picker offers only the two LLM hostnames, so an IP resolver arrives
+  only from a setting an older install persisted; with experimental transports
+  off it is retried `MAX_RETRIES` times before failing, and succeeds anyway if
+  Mock DNS is enabled. `DNS-PROTOCOL-SPEC.md` also still described the removed
+  Android DNS-over-HTTPS rung.
+- `ALLOWED_DNS_SERVERS` no longer claims the three allowlists stay set-equal;
+  the invariant has been containment since `4.4.0`.
+
 ## [4.4.0] - 2026-09-02
 
 Build `84` -> `85`. Native DNS transport hardening: the Android
