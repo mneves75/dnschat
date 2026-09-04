@@ -49,6 +49,7 @@ type DNSServiceInternals = {
     ...args: unknown[]
   ) => Promise<{ response: string; method: string }>;
   sleep?: (ms: number) => Promise<void>;
+  captureLifecycleToken: () => number;
 };
 
 const dnsServiceInternals = DNSService as unknown as DNSServiceInternals;
@@ -633,6 +634,11 @@ describe("DNS Service helpers", () => {
           "query-1",
           false,
           false,
+          // queryWithServer takes no defaults: the budget and lifecycle token
+          // are passed explicitly so the test cannot silently inherit a fresh
+          // full budget on every retry.
+          Date.now() + 20_000,
+          dnsServiceInternals.captureLifecycleToken(),
         ),
       ).rejects.toThrow("All 1 DNS transports failed for ch.at:53");
 
@@ -657,6 +663,11 @@ describe("DNS Service helpers", () => {
           "query-2",
           false,
           false,
+          // queryWithServer takes no defaults: the budget and lifecycle token
+          // are passed explicitly so the test cannot silently inherit a fresh
+          // full budget on every retry.
+          Date.now() + 20_000,
+          dnsServiceInternals.captureLifecycleToken(),
         ),
       ).rejects.toThrow("All 1 DNS transports failed for ch.at:53");
 

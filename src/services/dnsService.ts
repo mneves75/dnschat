@@ -872,13 +872,18 @@ export class DNSService {
   /**
    * Execute DNS query against a specific server with transport fallback
    */
+  // Every parameter is required on purpose. `deadline` in particular must never
+  // default: this method is the retry loop, so a caller that omitted it would
+  // silently receive a fresh full budget on each entry -- exactly the
+  // budget-laundering this deadline plumbing exists to prevent. The sole caller
+  // (queryLLM) passes all six explicitly.
   private static async queryWithServer(
     queryContext: DNSQueryContext,
     queryId: string,
-    enableMockDNS?: boolean,
-    allowExperimentalTransports: boolean = true,
-    deadline: number = Date.now() + TOTAL_QUERY_BUDGET_MS,
-    lifecycleToken: QueryLifecycleToken = this.captureLifecycleToken(),
+    enableMockDNS: boolean | undefined,
+    allowExperimentalTransports: boolean,
+    deadline: number,
+    lifecycleToken: QueryLifecycleToken,
   ): Promise<{ response: string; method: "native" | "udp" | "tcp" | "mock" }> {
     const { targetServer, targetPort } = queryContext;
 
