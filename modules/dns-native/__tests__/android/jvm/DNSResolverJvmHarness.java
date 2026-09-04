@@ -180,14 +180,23 @@ public final class DNSResolverJvmHarness {
         constructor.setAccessible(true);
         DNSResolver resolver = constructor.newInstance(null, stalledHostResolver, 75L);
         try {
-            long firstStartedNanos = System.nanoTime();
+            // Caller deadline is deliberately generous. What this case tests is that
+            // the injected 75ms NATIVE timeout bounds a stalled host resolution -- not
+            // that the caller budget does. A tight caller deadline made the query
+            // expire before the executor even dispatched it on a loaded CI runner, so
+            // the seam below was never reached and the case failed for machine load.
             CompletableFuture<List<String>> first = resolver.queryTXT(
                 "llm.pieter.com",
                 "one.llm.pieter.com",
                 53,
-                System.currentTimeMillis() + 1_000L
+                System.currentTimeMillis() + 30_000L
             );
             require(entered.await(SEAM_LATCH_TIMEOUT_SECONDS, TimeUnit.SECONDS), "stalled resolver seam was not entered");
+            // Measured from seam entry, not from queryTXT: scheduler latency before the
+            // resolver starts is not something the native timeout can bound, and
+            // including it is what made this assertion load-sensitive. The bound still
+            // sits far below the caller deadline, so an unbounded stall fails here.
+            long firstStartedNanos = System.nanoTime();
             expectFutureDnsError(first, DNSResolver.DNSError.Type.TIMEOUT);
             require(
                 System.nanoTime() - firstStartedNanos < TimeUnit.MILLISECONDS.toNanos(750),
