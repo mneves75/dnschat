@@ -4,6 +4,62 @@ All notable changes to DNSChat will be documented in this file.
 
 The format is based on Keep a Changelog, and this project follows Semantic Versioning.
 
+## [Unreleased]
+
+## [4.4.4] - 2026-09-05
+
+Build `88` -> `89`. Cleanup, security and render-performance pass. No store
+upload or production promotion.
+
+### Security
+
+- Remove two branches that shipped in the release bundle and could weaken
+  encryption at rest. Both were gated on `process.env.JEST_WORKER_ID`, which
+  Metro does not substitute, and returned a constant key and a constant
+  AES-GCM nonce; reusing a nonce under one key leaks the authentication key,
+  not only plaintext. Tests now supply their inputs through mocks, a test
+  asserts that two encryptions of the same plaintext use different nonces, and
+  a repository check fails if such a branch is reintroduced.
+- Record the OWASP MASVS-NETWORK-1 result as a deliberate, unmitigated failure
+  rather than implying a control, note that the traffic matches DNS-tunneling
+  detection so filtered networks are an expected failure mode, and state the
+  JavaScript AES timing caveat and the absence of key rotation.
+
+### Performance
+
+- Load the UDP and TCP transport libraries on first use instead of at import.
+  They were pulled into startup through a root provider even for sessions that
+  only reached the native transport or mock responses.
+- Show the assistant answer before the encrypted history write rather than
+  after it, and keep the DNS log store write off the message-send path.
+- Coalesce DNS log notifications, which previously fired once per log entry and
+  cloned the whole store each time.
+- Build the Markdown parser once instead of on every render of every message;
+  the renderer's own defaults were rebuilding it per bubble.
+- Stop mounting hidden bottom sheets, share one Reduce Transparency
+  subscription across glass surfaces, and read window dimensions once per
+  message list instead of once per row.
+- Ship the in-app icon at the size it renders, cutting 1.1 MB from the bundle
+  and its decoded bitmap from 4 MB to 256 KB.
+
+### Changed
+
+- Fix clipped chat paragraphs by constraining message content inside the native
+  context menu; retain intrinsic sizing for short messages and copy/share
+  actions.
+- The transport-test throttle notice now follows the selected language; it was
+  hardcoded Portuguese for every locale.
+- Remove roughly 3,700 lines of dead weight: 26 test files that asserted on
+  source text, comments or marketing copy rather than behavior, dead exports
+  across services and theme tokens, 126 unreferenced translation keys, the
+  unused end-to-end runner, a screen reachable only by deep link, superseded
+  planning documents, and two development dependencies. The unreachable
+  multi-server fallback in the DNS service is gone; the transport-level error
+  already carried the network and settings guidance.
+- Replace the test-count floor with a check that every spec on disk is
+  discovered, and take the marketing video check out of the standard
+  verification chain.
+
 ## [4.4.3] - 2026-09-05
 
 Build `87` -> `88`. Release candidate following the full codebase audit.

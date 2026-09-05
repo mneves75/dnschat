@@ -10,6 +10,8 @@ This is a behavior spec, not a release log.
 - Chat list: multiple threads persisted locally.
 - Thread view: user and assistant bubbles, streaming-like UX (send user message,
   show assistant response when DNS returns).
+- Message paragraphs wrap within the responsive bubble limit, including inside
+  native context menus. Short messages keep their intrinsic width.
 - Settings: DNS server selection, transport toggles, onboarding reset.
 - Logs: in-app DNS logs showing transport attempts and fallbacks.
 - First-install settings hydration completes with safe defaults even when no
