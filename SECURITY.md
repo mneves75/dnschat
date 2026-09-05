@@ -83,6 +83,33 @@ payload and verify that the plaintext marker never appears in backup metadata.
   on-path actor can still observe, retain, replay, or alter a valid-looking
   query or response. Do not send secrets or personal data, treat responses as
   cryptographically verified, or describe DNS prompts as private.
+- **This app fails OWASP MASVS-NETWORK-1 by design, and that is not mitigated.**
+  The control requires all network traffic to follow current best practice, and
+  MASVS has no accepted-risk mechanism: scope is chosen before testing, not
+  waived after it. Prompts leave the device as cleartext DNS, so an audit
+  against MASVS 2.1.0 should record a deliberate failure rather than a control.
+  MASVS-NETWORK-2 (identity pinning) does not apply, because it covers endpoints
+  under the developer's control and the resolver is third-party. RFC 9076
+  section 4.2 treats the query name as revealing what the user does; here the
+  query name *is* the message, which is a broader exposure than that text
+  contemplates. Responses are matched on transaction id, source port and the
+  echoed question, which is less than the full tuple RFC 5452 section 9.1 asks
+  for, and RFC 5452 section 1 states that even the full set does not protect
+  against an actor who can observe or inject packets.
+- Long high-entropy labels plus TXT queries plus multipart responses to a single
+  domain is the signature protective DNS resolvers and enterprise monitoring use
+  to detect DNS tunneling. On a managed or filtered network the app can be
+  blocked outright, and the traffic may be attributed to the user's device as
+  suspicious. Treat a blocked resolver as an expected failure mode, not a defect.
+- Chat history is encrypted with AES-256-GCM implemented in JavaScript
+  (`@noble/ciphers`), whose own documentation notes that its table-driven AES
+  leaks access timings and that constant-time behaviour is not achievable in
+  JavaScript. That is accepted here because the threat model is offline access
+  to device storage, not a local timing side channel. Every payload uses a fresh
+  random nonce from a hard-failing CSPRNG; there is deliberately no code path
+  that can produce a constant key or nonce. There is currently no key rotation
+  or keyset version (OWASP MASWE-0015): a compromised key stays valid for the
+  lifetime of the install, and rotating it would require re-encrypting history.
 - The static marketing site uses a restrictive meta-delivered CSP. The CSP
   standard ignores `frame-ancestors` in a meta element, and the current Pages
   deployment does not set a response-header policy. The site therefore exposes

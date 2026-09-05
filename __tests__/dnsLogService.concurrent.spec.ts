@@ -118,6 +118,21 @@ describe("DNSLogService concurrent query isolation", () => {
     expect(writeCompleted).toBe(true);
   });
 
+  it("lets a queued clear discard a query that finishes while it is pending", async () => {
+    // endQuery finalizes in memory immediately, while clearLogs only clears
+    // after its storage removals resolve. A query completing inside that window
+    // is therefore wiped. This is the accepted trade: moving the clear out of
+    // the queue would let a failed removal report a deletion that never
+    // happened, which dnsLogService.recovery.spec.ts pins.
+    const queryId = DNSLogService.startQuery("epsilon");
+
+    const clearing = DNSLogService.clearLogs();
+    await DNSLogService.endQuery(queryId, true, "epsilon-response", "native");
+    await clearing;
+
+    expect(DNSLogService.getLogs()).toHaveLength(0);
+  });
+
   it("coalesces the listener fan-out for entries added in one microtask", async () => {
     const queryId = DNSLogService.startQuery("delta");
     const listener = jest.fn();

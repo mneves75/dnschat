@@ -53,8 +53,12 @@ describe("repo policy: CI configuration exists and matches spec", () => {
       ),
     );
 
+    // Recursive, matching the testMatch glob: a spec added in a subdirectory
+    // must be covered too, or this gate reintroduces the blind spot it exists
+    // to remove. The dns-native workspace has its own jest config and is
+    // deliberately outside this root config's discovery.
     const onDisk = fs
-      .readdirSync("__tests__")
+      .readdirSync("__tests__", { recursive: true, encoding: "utf8" })
       .filter((entry) => /\.spec\.(ts|tsx|js)$/.test(entry))
       .map((entry) => nodePath.join("__tests__", entry));
 

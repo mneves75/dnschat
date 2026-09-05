@@ -57,6 +57,37 @@ describe("encryptionService key handling", () => {
     ).rejects.toBeInstanceOf(EncryptionPayloadCorruptionError);
   });
 
+  it("uses a fresh nonce for every payload encrypted under one key", async () => {
+    // The behavioral half of removing the shipped test-runtime branches: that
+    // code returned a constant nonce, and AES-GCM nonce reuse under one key
+    // leaks the authentication key rather than just plaintext. Real randomness
+    // is mocked away here, so drive the nonce source directly and assert the
+    // envelopes differ rather than trusting the mock.
+    jest.resetModules();
+    const { encryptString } =
+      require("../src/services/encryptionService") as typeof import("../src/services/encryptionService");
+    const mockSecureStore = require("expo-secure-store") as jest.Mocked<
+      typeof SecureStore
+    >;
+    mockSecureStore.getItemAsync.mockResolvedValue(null);
+
+    let counter = 0;
+    const cryptoModule = require("expo-crypto") as {
+      getRandomValues: jest.Mock;
+    };
+    cryptoModule.getRandomValues.mockImplementation((arr: Uint8Array) => {
+      counter += 1;
+      return arr.fill(counter);
+    });
+
+    const nonceOf = (payload: string) => payload.split(":")[2];
+    const first = await encryptString("same plaintext");
+    const second = await encryptString("same plaintext");
+
+    expect(nonceOf(first)).not.toBe(nonceOf(second));
+    expect(first).not.toBe(second);
+  });
+
   it("persists generated key using a valid SecureStore key name", async () => {
     jest.resetModules();
     const { encryptString } = require("../src/services/encryptionService");

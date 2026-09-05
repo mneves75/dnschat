@@ -734,6 +734,12 @@ export class DNSLogService {
     // and every subscriber observe the terminal state as soon as endQuery
     // returns. Sensitive values are dropped here too, so they never outlive the
     // query even if the write below fails.
+    //
+    // Ordering note: this no longer runs inside the persistence queue, so a
+    // query finishing while a clearLogs() is queued is discarded by that clear
+    // rather than surviving it. clearLogs must keep its in-memory clear inside
+    // the queue - it only clears after the storage removal succeeds, so a
+    // failed clear cannot report a deletion that did not happen.
     this.activeQueryLogs.delete(queryId);
     this.sensitiveValuesByQueryId.delete(queryId);
     this.queryLogs.unshift({ ...queryLog, entries: [...queryLog.entries] });
@@ -746,11 +752,11 @@ export class DNSLogService {
 
     // PERFORMANCE: writePersistentLogs() re-encrypts the whole log store and
     // hex-encodes it. Awaiting it here put that on the message-send critical
-    // path, between the DNS response arriving and queryLLM returning. It stays
-    // on the serialized persistence queue - so ordering against clearLogs and
-    // cleanup is unchanged - but the caller no longer waits for the write.
+    // path, between the DNS response arriving and queryLLM returning. Writes
+    // stay serialized on the persistence queue, so no write can overwrite a
+    // newer one; the caller simply no longer waits for this one.
     // enqueuePersistentMutation already logs and swallows write failures.
-    void this.enqueuePersistentMutation(() => true);
+    void this.enqueuePersistentWrite();
   }
 
   static async recordSettingsEvent(message: string, details?: string) {
@@ -798,6 +804,12 @@ export class DNSLogService {
   }
 
   static async clearLogs() {
+    // The in-memory clear stays inside the queued task, after the removals
+    // succeed: if storage removal fails the logs must survive, so the UI never
+    // reports a deletion that did not happen. Consequence, asserted in
+    // dnsLogService.concurrent.spec.ts: a query that finishes while a clear is
+    // queued is wiped by that clear, because endQuery finalizes in memory
+    // immediately while this clear runs a turn later.
     const run = this.persistenceQueue.then(async () => {
       await Promise.all([
         AsyncStorage.removeItem(STORAGE_KEY),
@@ -885,6 +897,14 @@ export class DNSLogService {
   private static async writePersistentLogs(): Promise<void> {
     const payload = await encryptString(JSON.stringify(this.queryLogs));
     await AsyncStorage.setItem(STORAGE_KEY, payload);
+  }
+
+  /**
+   * Queue a write of the current in-memory logs. Use when the caller has
+   * already mutated state itself and only needs it persisted.
+   */
+  private static enqueuePersistentWrite(): Promise<boolean> {
+    return this.enqueuePersistentMutation(() => true);
   }
 
   private static async enqueuePersistentMutation(
