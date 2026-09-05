@@ -4,10 +4,11 @@ To upload your DNSChat iOS app to TestFlight, you'll need to follow these steps:
 
 ## Release state
 
-- **Repository target:** `4.4.3` build `88`; archive/upload pending.
-- **Latest validated TestFlight artifact:** `4.4.1` build `86`, tagged
-  `v4.4.1-beta1` and recorded as `VALID` on `2026-09-04` with strict validation
-  at `0` errors and `0` warnings in the release history. This audit does not revalidate or replace that uploaded binary.
+- **Repository target:** `4.4.3` build `88`; signed archive and IPA uploaded.
+- **Latest validated TestFlight artifact:** `4.4.3` build `88`, tagged
+  `v4.4.3-beta1` at `f775597` and processed `VALID` on `2026-09-05`.
+  Strict validation reports `0` errors and `0` warnings; both `en-US` and
+  `pt-BR` test notes are present. Distribution is internal only.
 - **Latest production App Store release:** `4.0.23`, observed as
   `READY_FOR_SALE` on `2026-09-05`. TestFlight validation does not prove
   production publication.
@@ -270,15 +271,21 @@ eas build --platform ios --profile production
 
 ### TestFlight distribution
 
-Latest validated TestFlight distribution (`4.4.1` build `86`):
+Latest validated TestFlight distribution (`4.4.3` build `88`):
 
-- Version/build: `4.4.1` / `86`; tag: `v4.4.1-beta1`
+- Version/build: `4.4.3` / `88`; tag: `v4.4.3-beta1`
 - Processing state: `VALID`; signed archive/export and upload succeeded, and
   strict TestFlight validation reports `0` errors and `0` warnings.
-- Physical-device state: unverified for build `86`; the requested device was locked and then unavailable. Earlier build `84` hardware proof does not transfer to this binary.
-- App Store state: no matching iOS `4.4.1` version record was recorded. Create it only when
-  preparing an App Store submission; TestFlight processing does not imply that
-  relationship.
+- Archive: stable Xcode `26.6` (`17F113`), SDK `26.5`; code-sign verification
+  passes and source maps remain outside the exported app/IPA.
+- Physical-device state: unverified for build `88`; paired iOS devices were
+  unavailable. Earlier simulator and build `84` hardware proof do not establish
+  this binary's behavior on hardware.
+- App Store state: iOS `4.4.3` is `PREPARE_FOR_SUBMISSION`, attached to build
+  `88`, with bilingual description and release notes. Strict API readiness
+  reports `0` errors and `0` warnings, but cannot verify App Privacy publication.
+  Web authentication requires 2FA; provider privacy/content declarations and
+  unsigned-response risk acceptance remain prerequisites in `SECURITY.md`.
 - Tester groups: configured in App Store Connect; internal group names are intentionally omitted from public docs.
 - Exact build IDs and App Store Connect version IDs belong in private release notes, not public runbooks.
 
@@ -342,4 +349,4 @@ If you encounter issues during the upload process:
 
 ---
 
-_Source target 4.4.3 build 88; latest recorded validated TestFlight beta 4.4.1 build 86; production remains 4.0.23._
+_Source target and validated TestFlight beta: 4.4.3 build 88; production remains 4.0.23._

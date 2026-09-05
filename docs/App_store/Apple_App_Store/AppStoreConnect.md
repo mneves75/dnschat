@@ -2,14 +2,16 @@
 
 ## Release state
 
-- **Repository target:** `4.4.3` build `88`; archive/upload pending.
-- **Latest validated TestFlight artifact:** `4.4.1` build `86`, tagged
-  `v4.4.1-beta1` and recorded as `VALID` with strict validation at `0` errors
-  and `0` warnings in the release history.
+- **Repository target:** `4.4.3` build `88`; signed archive and IPA uploaded.
+- **Latest validated TestFlight artifact:** `4.4.3` build `88`, tagged
+  `v4.4.3-beta1` and processed `VALID` on `2026-09-05`, with bilingual test
+  notes and strict validation at `0` errors and `0` warnings.
 - **Latest production App Store release:** `4.0.23`, observed as
-  `READY_FOR_SALE` on `2026-09-05`. The existing `4.0.24` submission draft
-  has an expired build and missing `socialMedia`/`socialMediaAgeRestricted`
-  age-rating fields. App Privacy needs authenticated web verification.
+  `READY_FOR_SALE` on `2026-09-05`. The existing draft is now `4.4.3`, attached
+  to build `88`, with updated bilingual metadata. Its missing social-media
+  capability fields are set to false: DNSChat has no social feed or user-to-user
+  communication. Strict API readiness passes, but App Privacy publication and
+  the provider privacy/content declarations still need verification.
 
 ## App Store Listing Information
 
@@ -37,54 +39,23 @@
 
 ## App Store Description (4000 characters max)
 
-DNS Chat is a mobile chat app that sends short prompts as DNS TXT queries and renders AI-style responses from compatible DNS servers.
+DNSChat sends short messages as DNS TXT queries to a compatible third-party DNS service and displays its responses in a chat interface.
 
-DNS-BASED TRANSPORT
-Chat through DNS TXT queries instead of traditional HTTPS API calls. Use the default compatible DNS service or configure supported servers from the app settings.
+CHAT AND LOCAL HISTORY
+- Keep conversation history encrypted on your iPhone or iPad.
+- Use the app without an account or an API key.
+- Choose light or dark appearance, English or Portuguese, and adjustable text size.
+- Inspect transport attempts and errors in the local Logs screen.
 
-NATIVE PERFORMANCE
+DNS TRANSPORT
+The default service is llm.pieter.com; ch.at is also available in Settings. Native DNS, UDP and TCP attempts share one time limit. Connectivity depends on your network and the selected service.
 
-- Native iOS implementation using Apple Network Framework
-- Fast DNS queries with automatic transport fallback
-- Works on cellular and WiFi networks worldwide
-- Production-ready with comprehensive error handling
+PRIVACY AND LIMITATIONS
+DNSChat includes no analytics or advertising SDK. Prompts are sent to the selected third-party DNS service. DNSChat does not control that provider's retention, secondary use or deletion practices.
 
-MODERN CHAT EXPERIENCE
+DNS queries are observable by DNS infrastructure, and responses are not authenticated end to end. Do not send secrets or personal data. Treat generated responses as untrusted information and verify important claims independently.
 
-- ChatGPT-style interface with beautiful message bubbles
-- Persistent conversation history stored locally
-- Dark/Light theme follows your device settings
-- Smooth animations and intuitive navigation
-
-LOCAL DATA & TRANSPARENCY
-
-- Conversation history is stored locally on your device
-- No account required; DNSChat includes no analytics or tracking SDK
-- Network-resilient with multiple fallback methods
-- Open-source and fully transparent
-- DNS queries are observable by DNS infrastructure, so do not send secrets or personal data
-- Queries are sent to the selected third-party DNS service; its retention,
-  secondary-use, and deletion practices are not controlled by DNSChat
-- Do not submit App Privacy answers until the provider's practices are
-  documented or the publisher approves conservative collection/linkage answers
-
-CROSS-PLATFORM READY
-
-- Optimized for iPhone and iPad
-- React Native architecture for consistent performance across iOS and Android
-- Professional DNS-themed app icon and branding
-
-CUSTOMIZABLE
-Choose from supported DNS servers or use the default service. Perfect for developers, local-first app enthusiasts, and anyone curious about protocol-level experimentation.
-
-Perfect for:
-
-- Tech enthusiasts exploring cutting-edge communication
-- Local-first users who understand DNS queries are observable infrastructure
-- Developers interested in DNS innovation
-- Anyone wanting a fast, reliable AI chat experience
-
-Download now to try AI-style chat over DNS.
+DNSChat is open source and intended for people interested in experimenting with DNS-based communication.
 
 ---
 
@@ -169,7 +140,7 @@ Validated screenshot sets currently available in App Store Connect:
 
 - **Bundle ID**: `<BUNDLE_ID>`
 - **Repository target**: `4.4.3` build `88` (from `package.json` via `sync-versions`)
-- **Latest validated TestFlight artifact**: `4.4.1` build `86`
+- **Latest validated TestFlight artifact**: `4.4.3` build `88`
 - **Latest production App Store release**: `4.0.23` (verified `2026-09-05`)
 - **App Store Connect internal IDs**: intentionally omitted from public docs; keep exact IDs in private release notes.
 - **Minimum iOS Version**: 16.4
@@ -307,11 +278,11 @@ No user account is required. The app does not require app-owned backend infrastr
 ### App Store Connect Configuration
 
 - [x] Historical IPA upload evidence exists for `4.0.13` build `43`
-- [x] Latest validated TestFlight artifact uploaded (`4.4.1` build `86`)
+- [x] Latest validated TestFlight artifact uploaded (`4.4.3` build `88`)
 - [x] Local ASC health checked with `asc doctor` (`2026-08-31`)
 - [x] Apply App Store Connect metadata for `en-US` and `pt-BR`
 - [x] Renew iPhone and iPad screenshot sets for `en-US` and `pt-BR`
-- [ ] Create or update an App Store version for the validated repository target
+- [x] Update the App Store version to `4.4.3` and attach validated build `88`
 - [ ] Configure pricing (Free)
 - [ ] Set availability (Worldwide)
 - [ ] Age rating questionnaire
@@ -328,11 +299,13 @@ No user account is required. The app does not require app-owned backend infrastr
 - [x] Historical App Store Connect upload/submission check passed for build `43`
 - [x] Historical TestFlight validation passed (`0` errors, `0` warnings) for build `43`
 - [x] Historical build `56` physical-device Release build/install/launch
-- [x] Latest validated build `84` signed archive/export
-- [x] Latest validated build `84` physical-device Release install/launch
-- [x] Latest validated build `84` TestFlight processing check (`VALID`)
-- [x] Latest validated build `84` TestFlight validation (`0` errors, `0` warnings)
-- [ ] Candidate build `88` upload and App Store pre-submit validation (a matching version record and production decisions are required)
+- [x] Historical build `84` signed archive/export
+- [x] Historical build `84` physical-device Release install/launch
+- [x] Historical build `84` TestFlight processing check (`VALID`)
+- [x] Historical build `84` TestFlight validation (`0` errors, `0` warnings)
+- [x] Build `88` upload, matching version attachment and strict API pre-submit validation
+- [ ] App Privacy web verification and publisher privacy/content decisions
+- [ ] Build `88` physical-device runtime verification
 - [ ] Submit for App Store Review
 - [ ] Final testing on TestFlight
 - [ ] Review guidelines compliance check
@@ -340,4 +313,4 @@ No user account is required. The app does not require app-owned backend infrastr
 
 ---
 
-_Source target 4.4.3 build 88; latest recorded validated TestFlight beta 4.4.1 build 86; production remains 4.0.23._
+_Source target and validated TestFlight beta: 4.4.3 build 88; production remains 4.0.23._

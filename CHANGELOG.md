@@ -8,6 +8,7 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 Build `87` -> `88`. Release candidate following the full codebase audit.
 
+- Tag `v4.4.3-beta1` identifies the verified source; signed archive/export and internal TestFlight upload passed, with build `88` processed `VALID` and strict validation at zero errors/warnings. The matching App Store draft is prepared; production remains `4.0.23` pending privacy/content decisions and authentication.
 - Remove the nonfunctional profile export action, unused styling/haptic helpers and mock-only native tests; protect message-list behavior and reject empty Android bundles in alignment checks.
 - Hash chat corruption-backup error metadata so malformed decrypted fields cannot be persisted in plaintext; preserve encrypted recovery payloads.
 - Install hooks in valid empty-template Git checkouts without overwriting existing hooks or using external custom directories.
