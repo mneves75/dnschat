@@ -16,6 +16,7 @@ import { MessageBubble } from "./MessageBubble";
 import type { Message } from "../types/chat";
 import { useImessagePalette } from "../ui/theme/imessagePalette";
 import { useTypography } from "../ui/hooks/useTypography";
+import { useResponsiveLayout } from "../ui/hooks/useResponsiveLayout";
 import {
   LiquidGlassSpacing,
   getCornerRadius,
@@ -44,10 +45,6 @@ interface MessageListProps {
   testID?: string;
 }
 
-const renderMessage = ({ item: message }: ListRenderItemInfo<Message>) => {
-  return <MessageBubble message={message} />;
-};
-
 const keyExtractor = (item: Message) => item.id;
 
 export function MessageList({
@@ -63,6 +60,13 @@ export function MessageList({
   const previousMessageCountRef = useRef(messages.length);
   const { supportsLiquidGlass } = useLiquidGlassCapabilities();
   const { shouldReduceMotion } = useMotionReduction();
+
+  // One dimensions subscription for the whole list: reading it per bubble opened
+  // one per rendered row for a value that only changes on rotation.
+  const { messageMaxWidthPx } = useResponsiveLayout();
+  const renderMessage = ({ item: message }: ListRenderItemInfo<Message>) => (
+    <MessageBubble message={message} maxWidth={messageMaxWidthPx} />
+  );
 
   // iOS 26 HIG: Semantic color palette that adapts to light/dark/high-contrast modes
   // Returns memoized object - only re-renders when colorScheme/accessibility settings change

@@ -24,12 +24,29 @@ export interface ResponsiveLayout {
   height: number;
   /** Recommended max-width for chat bubbles (75% phone, 60% tablet, 560px desktop). */
   messageMaxWidth: number | `${number}%`;
+  /**
+   * `messageMaxWidth` resolved to pixels. The native message menu measures its
+   * content in a separate layout root, where a percentage loses the outer
+   * constraint, so bubbles need the absolute value.
+   */
+  messageMaxWidthPx: number;
   /** Recommended tab/icon size for the web tab bar. */
   tabIconSize: number;
 }
 
 const PHONE_BREAKPOINT = 600;
 const DESKTOP_BREAKPOINT = 1024;
+
+const messageMaxWidthFor = (width: number): number | `${number}%` =>
+  width >= DESKTOP_BREAKPOINT ? 560 : width >= PHONE_BREAKPOINT ? "60%" : "75%";
+
+/** Absolute chat-bubble max width for a window width, in pixels. */
+export function resolveMessageMaxWidth(width: number): number {
+  const maxWidth = messageMaxWidthFor(width);
+  return typeof maxWidth === "number"
+    ? maxWidth
+    : (width * Number.parseFloat(maxWidth)) / 100;
+}
 
 export function useResponsiveLayout(): ResponsiveLayout {
   const { width, height } = useWindowDimensions();
@@ -44,11 +61,7 @@ export function useResponsiveLayout(): ResponsiveLayout {
       ? "tablet"
       : "phone";
 
-  const messageMaxWidth: number | `${number}%` = isDesktop
-    ? 560
-    : isTablet
-      ? "60%"
-      : "75%";
+  const messageMaxWidth = messageMaxWidthFor(width);
 
   const tabIconSize = isDesktop ? 28 : isTablet ? 26 : 22;
 
@@ -60,6 +73,7 @@ export function useResponsiveLayout(): ResponsiveLayout {
     width,
     height,
     messageMaxWidth,
+    messageMaxWidthPx: resolveMessageMaxWidth(width),
     tabIconSize,
   };
 }

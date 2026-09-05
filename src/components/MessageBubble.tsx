@@ -3,7 +3,6 @@ import { View, StyleSheet, Platform } from "react-native";
 import type { AccessibilityActionEvent } from "react-native";
 import type { Message } from "../types/chat";
 import { useTypography } from "../ui/hooks/useTypography";
-import { useResponsiveLayout } from "../ui/hooks/useResponsiveLayout";
 import { useImessagePalette } from "../ui/theme/imessagePalette";
 import {
   LiquidGlassSpacing,
@@ -37,19 +36,23 @@ const MARKDOWN_LINK_PATTERN =
 
 interface MessageBubbleProps {
   message: Message;
+  /**
+   * Absolute bubble max width in pixels, resolved once by MessageList. The
+   * native menu measures its content in a separate layout root, so a
+   * percentage loses the outer constraint; reading window dimensions here
+   * would also open one subscription per row.
+   */
+  maxWidth: number;
 }
 
-function MessageBubbleComponent({ message }: MessageBubbleProps) {
+function MessageBubbleComponent({
+  message,
+  maxWidth: bubbleMaxWidth,
+}: MessageBubbleProps) {
   const colorScheme = useResolvedColorScheme();
   const isDark = colorScheme === "dark";
   const typography = useTypography();
   const palette = useImessagePalette();
-  const { messageMaxWidth, width } = useResponsiveLayout();
-  // The native menu measures its content in a separate layout root, so percentages lose the outer constraint.
-  const bubbleMaxWidth =
-    typeof messageMaxWidth === "number"
-      ? messageMaxWidth
-      : (width * Number.parseFloat(messageMaxWidth)) / 100;
   const { t } = useTranslation();
   const locale = useLocale();
 

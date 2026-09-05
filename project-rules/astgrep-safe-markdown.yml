@@ -4,6 +4,8 @@ severity: error
 message: "Render untrusted Markdown through src/components/SafeMarkdown.tsx."
 ignores:
   - src/components/SafeMarkdown.tsx
+  # Mocks the untransformed ESM renderer; renders no untrusted Markdown.
+  - __tests__/safeMarkdown.stableEngine.spec.tsx
 rule:
   all:
     - kind: string

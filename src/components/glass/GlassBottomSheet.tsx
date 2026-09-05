@@ -100,7 +100,23 @@ export const GlassBottomSheet: React.FC<GlassBottomSheetProps> = ({
     onCloseRef.current = onClose;
   }, [onClose]);
 
+  // A closed sheet renders nothing: mounting the modal host, the animated
+  // values and the dimensions subscription for a hidden sheet was measurable
+  // commit cost on screens that declare several sheets (e.g. GlassSettings).
+  const [isPresented, setIsPresented] = React.useState(visible);
+
+  // Present during render (React's supported "adjust state when a prop changes"
+  // path) so opening still mounts in the same commit. Hiding happens in the
+  // exit animation's completion callback below.
+  if (visible && !isPresented) {
+    setIsPresented(true);
+  }
+
   React.useEffect(() => {
+    if (!isPresented) {
+      return;
+    }
+
     const duration = shouldReduceMotion ? 0 : animationDuration;
     Animated.parallel([
       Animated.timing(translateY, {
@@ -118,10 +134,17 @@ export const GlassBottomSheet: React.FC<GlassBottomSheetProps> = ({
         duration,
         useNativeDriver,
       }),
-    ]).start();
+    ]).start(({ finished }) => {
+      // Unmount only once the exit animation has run to completion, so an
+      // interrupted close (reopened mid-animation) never drops the sheet.
+      if (finished && !visible) {
+        setIsPresented(false);
+      }
+    });
   }, [
     animatedBackdropOpacity,
     animationDuration,
+    isPresented,
     scale,
     shouldReduceMotion,
     translateY,
@@ -236,6 +259,10 @@ export const GlassBottomSheet: React.FC<GlassBottomSheetProps> = ({
       restoreFocusRef.current = null;
     };
   }, [visible]);
+
+  if (!isPresented) {
+    return null;
+  }
 
   return (
     <Modal

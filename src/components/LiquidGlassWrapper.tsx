@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useSyncExternalStore } from "react";
 import { AccessibilityInfo, Platform, View } from "react-native";
 import type { ViewProps } from "react-native";
 import {
@@ -232,6 +232,64 @@ export const buildFallbackStyle = (
   };
 };
 
+/**
+ * Shared Reduce Transparency store.
+ *
+ * Every wrapper instance used to query AccessibilityInfo and register its own
+ * `reduceTransparencyChanged` listener; a screen with seven glass surfaces paid
+ * for seven native round trips and seven listeners. One module-level cache with
+ * a single native listener now serves every consumer through
+ * `useSyncExternalStore`. The snapshot is a plain boolean, so it stays
+ * referentially stable between renders.
+ *
+ * Initial value semantics are unchanged: iOS starts conservative (`true`, no
+ * glass) and is corrected once the native value resolves.
+ */
+let reduceTransparencyValue = Platform.OS === "ios";
+let reduceTransparencyResolved: Promise<void> = Promise.resolve();
+let nativeReduceTransparencySubscription: { remove: () => void } | null = null;
+const reduceTransparencyListeners = new Set<() => void>();
+
+const applyReduceTransparency = (value: boolean) => {
+  const next = Boolean(value);
+  if (next === reduceTransparencyValue) return;
+  reduceTransparencyValue = next;
+  reduceTransparencyListeners.forEach((listener) => listener());
+};
+
+const getReduceTransparencySnapshot = () => reduceTransparencyValue;
+
+const subscribeReduceTransparency = (onStoreChange: () => void) => {
+  reduceTransparencyListeners.add(onStoreChange);
+
+  if (reduceTransparencyListeners.size === 1 && Platform.OS === "ios") {
+    nativeReduceTransparencySubscription = AccessibilityInfo.addEventListener(
+      "reduceTransparencyChanged",
+      applyReduceTransparency,
+    );
+    reduceTransparencyResolved =
+      AccessibilityInfo.isReduceTransparencyEnabled().then(
+        applyReduceTransparency,
+        () => undefined,
+      );
+  }
+
+  return () => {
+    reduceTransparencyListeners.delete(onStoreChange);
+    if (reduceTransparencyListeners.size === 0) {
+      nativeReduceTransparencySubscription?.remove();
+      nativeReduceTransparencySubscription = null;
+    }
+  };
+};
+
+const useReduceTransparency = () =>
+  useSyncExternalStore(
+    subscribeReduceTransparency,
+    getReduceTransparencySnapshot,
+    getReduceTransparencySnapshot,
+  );
+
 const tintForVariant = (
   variant: GlassVariant,
   isDark: boolean,
@@ -259,37 +317,7 @@ export const LiquidGlassWrapper: React.FC<LiquidGlassProps> = ({
 }) => {
   const colorScheme = useResolvedColorScheme();
   const isDark = colorScheme === "dark";
-  const [reduceTransparency, setReduceTransparency] = useState(
-    Platform.OS === "ios",
-  );
-
-  // Effect: sync reduce-transparency accessibility setting on iOS.
-  // react-doctor-disable-next-line react-doctor/effect-needs-cleanup
-  useEffect(() => {
-    if (Platform.OS !== "ios") return;
-
-    let isMounted = true;
-
-    AccessibilityInfo.isReduceTransparencyEnabled().then((value) => {
-      if (isMounted) {
-        setReduceTransparency(Boolean(value));
-      }
-    });
-
-    const handleChange = (value: boolean) => {
-      setReduceTransparency(Boolean(value));
-    };
-
-    const subscription = AccessibilityInfo.addEventListener(
-      "reduceTransparencyChanged",
-      handleChange,
-    );
-
-    return () => {
-      isMounted = false;
-      subscription.remove();
-    };
-  }, []);
+  const reduceTransparency = useReduceTransparency();
 
   const glassKey = isInteractive ? "interactive" : "static";
   const radius = shapeRadius(shape, cornerRadius);
@@ -366,16 +394,15 @@ export const LiquidGlassButton: React.FC<LiquidGlassProps> = ({
 );
 
 export const useLiquidGlassCapabilities = () => {
+  // Subscribes first, so the shared store's native query is already in flight
+  // when the effect below waits on it.
+  const reduceTransparency = useReduceTransparency();
   const [availability, setAvailability] = useState<GlassAvailability>(() =>
     computeGlassAvailability(),
   );
   const [loading, setLoading] = useState(Platform.OS === "ios");
-  const [reduceTransparency, setReduceTransparency] = useState(
-    Platform.OS === "ios",
-  );
 
-  // Effect: compute glass capability and watch reduce-transparency changes on iOS.
-  // react-doctor-disable-next-line react-doctor/effect-needs-cleanup
+  // Effect: settle glass capability once the shared accessibility value resolves.
   useEffect(() => {
     if (Platform.OS !== "ios") {
       // Non-iOS state is already fully determined by the useState initializers
@@ -385,30 +412,16 @@ export const useLiquidGlassCapabilities = () => {
       return;
     }
 
-    const updateAvailability = () => {
+    let cancelled = false;
+
+    void reduceTransparencyResolved.then(() => {
+      if (cancelled) return;
       setAvailability(computeGlassAvailability());
-    };
-
-    const handleReduceTransparency = (value: boolean) => {
-      setReduceTransparency(Boolean(value));
-    };
-
-    const subscription = AccessibilityInfo.addEventListener(
-      "reduceTransparencyChanged",
-      handleReduceTransparency,
-    );
-
-    AccessibilityInfo.isReduceTransparencyEnabled()
-      .then((value) => {
-        handleReduceTransparency(Boolean(value));
-      })
-      .finally(() => {
-        updateAvailability();
-        setLoading(false);
-      });
+      setLoading(false);
+    });
 
     return () => {
-      subscription.remove();
+      cancelled = true;
     };
   }, []);
 

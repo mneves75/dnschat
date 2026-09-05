@@ -1,9 +1,10 @@
 import React from "react";
-import { StyleSheet, useWindowDimensions } from "react-native";
+import { StyleSheet } from "react-native";
 import { act } from "react-test-renderer";
 import type { ReactTestRenderer } from "react-test-renderer";
 import { MessageBubble } from "../src/components/MessageBubble";
 import { NativeMenu } from "../src/components/platform/NativeMenu";
+import { resolveMessageMaxWidth } from "../src/ui/hooks/useResponsiveLayout";
 import type { Message } from "../src/types/chat";
 import { createWithSuppressedWarnings } from "./utils/reactTestRenderer";
 
@@ -16,7 +17,6 @@ jest.mock("react-native", () => {
       select: (values: Record<string, unknown>) =>
         values["ios"] ?? values["default"],
     },
-    useWindowDimensions: jest.fn(),
   };
 });
 jest.mock("../src/ui/hooks/useTypography", () => ({
@@ -64,12 +64,16 @@ describe("MessageBubble native hosted width", () => {
   ])(
     "bounds independently measured menu content at viewport width %i",
     (width, maximum) => {
-      jest
-        .mocked(useWindowDimensions)
-        .mockReturnValue({ width, height: 874, scale: 3, fontScale: 1 });
+      // MessageList resolves the percentage once for the whole list; the bubble
+      // receives the absolute value.
+      expect(resolveMessageMaxWidth(width)).toBeCloseTo(maximum);
+
       act(() => {
         tree = createWithSuppressedWarnings(
-          <MessageBubble message={message} />,
+          <MessageBubble
+            message={message}
+            maxWidth={resolveMessageMaxWidth(width)}
+          />,
         );
       });
 
