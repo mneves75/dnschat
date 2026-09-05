@@ -83,9 +83,6 @@ const runNotification = (
   label: string,
 ): Promise<void> => runWithGuard(() => Haptics.notificationAsync(type), label);
 
-const runSelection = (): Promise<void> =>
-  runWithGuard(() => Haptics.selectionAsync(), "selection");
-
 export const configureHaptics = (config: HapticConfiguration = {}) => {
   if (typeof config.userEnabled === "boolean") {
     userEnabled = config.userEnabled;
@@ -103,7 +100,6 @@ export const preloadHaptics = () => ensureHardwareSupport();
  * Usage Guidelines:
  * - Light: Button taps, switch toggles, selections
  * - Medium: Confirmations, swipe actions, transitions
- * - Heavy: Errors, destructive actions, important alerts
  * - Success: Task completion, successful operations
  * - Warning: Caution messages, potential issues
  * - Error: Failed operations, validation errors
@@ -137,20 +133,6 @@ export class HapticFeedback {
    * ```
    */
   static medium = () => runImpact(Haptics.ImpactFeedbackStyle.Medium, "medium");
-
-  /**
-   * Heavy impact feedback
-   * Use for: Errors, destructive actions, critical alerts, important completions
-   *
-   * @example
-   * ```typescript
-   * const handleDelete = () => {
-   *   HapticFeedback.heavy();
-   *   deleteItem();
-   * };
-   * ```
-   */
-  static heavy = () => runImpact(Haptics.ImpactFeedbackStyle.Heavy, "heavy");
 
   /**
    * Success notification feedback
@@ -199,38 +181,6 @@ export class HapticFeedback {
    */
   static error = () =>
     runNotification(Haptics.NotificationFeedbackType.Error, "error");
-
-  /**
-   * Selection changed feedback
-   * Use for: Scrolling through picker values, adjusting sliders
-   *
-   * @example
-   * ```typescript
-   * const handleSliderChange = (value: number) => {
-   *   HapticFeedback.selection();
-   *   updateValue(value);
-   * };
-   * ```
-   */
-  static selection = () => runSelection();
-
-  /**
-   * Rigid impact (iOS 13+)
-   * Sharp, precise feedback for mechanical interactions
-   *
-   * Use sparingly for special interactions that need
-   * a distinct, rigid feel (e.g., locking mechanisms)
-   */
-  static rigid = () => runImpact(Haptics.ImpactFeedbackStyle.Rigid, "rigid");
-
-  /**
-   * Soft impact (iOS 13+)
-   * Gentle, soft feedback for subtle interactions
-   *
-   * Use for very subtle feedback needs where light
-   * might be too strong
-   */
-  static soft = () => runImpact(Haptics.ImpactFeedbackStyle.Soft, "soft");
 }
 
 /**
@@ -242,18 +192,6 @@ export class HapticFeedback {
  * Feedback for switch/toggle state changes
  */
 export const toggleSwitch = () => HapticFeedback.light();
-
-/**
- * Send message haptic
- * Feedback for sending messages or submitting forms
- */
-export const sendMessage = () => HapticFeedback.medium();
-
-/**
- * Navigation haptic
- * Subtle feedback for navigation transitions
- */
-export const navigation = () => HapticFeedback.soft();
 
 export interface HapticsPreferencePersistenceOptions {
   loading: boolean;

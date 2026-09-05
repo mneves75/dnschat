@@ -10,6 +10,9 @@ web-build/
 expo-env.d.ts
 
 # Repo-local planning / editor assistants
+.omx/
+.codemap/
+.scratch/
 .claude/
 .cursor/
 .cachebro/

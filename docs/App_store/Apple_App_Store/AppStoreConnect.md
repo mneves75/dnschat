@@ -91,8 +91,8 @@ RELIABILITY, SECURITY, AND ACCESSIBILITY
 - Check Settings, About, Profile, and language/accessibility labels in English and Portuguese.
 - Exercise DNS server settings and confirm invalid or unsupported server choices fail closed.
 - Turn on system Reduce Motion before launch and confirm onboarding, chat, and settings render without startup loops or unexpected motion.
-- Increase the in-app font-size preference and confirm chat list, profile, and message surfaces scale without clipping.
-- In Portuguese, confirm chat-list and profile relative timestamps use Portuguese phrasing.
+- Increase the in-app font-size preference and confirm chat list and message surfaces scale without clipping.
+- In Portuguese, confirm chat-list relative timestamps use Portuguese phrasing.
 
 ---
 
@@ -292,8 +292,6 @@ No user account is required. The app does not require app-owned backend infrastr
 ### Review Submission
 
 - [x] Xcode Debug simulator build passed (`2026-06-30`, Xcode `26.6`)
-- [x] AXe release simulator pass covered 10 feature groups (`2026-06-05`,
-  version `4.0.26` build `60`)
 - [x] Xcode generic iOS Release build/archive passed unsigned (`2026-06-30`)
 - [x] Signed archive/export passed for `4.0.13` build `43`
 - [x] Historical App Store Connect upload/submission check passed for build `43`

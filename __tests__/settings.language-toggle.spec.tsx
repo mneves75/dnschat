@@ -2,6 +2,7 @@ import React from "react";
 import type { ReactTestRenderer } from "react-test-renderer";
 import { act } from "react-test-renderer";
 import { TouchableOpacity } from "react-native";
+import { DNSService } from "../src/services/dnsService";
 import { createWithSuppressedWarnings } from "./utils/reactTestRenderer";
 
 const mockUseSettings = jest.fn();
@@ -37,7 +38,7 @@ jest.mock("../src/context/AccessibilityContext", () => ({
   useFontSize: () => ({ scale: 1.0 }),
 }));
 
-jest.mock("../src/components/glass", () => {
+jest.mock("../src/components/glass/GlassForm", () => {
   const { TouchableOpacity } = require("react-native");
   const Placeholder = ({ children }: { children?: React.ReactNode }) => (
     <>{children}</>
@@ -82,14 +83,13 @@ jest.mock("../src/components/glass", () => {
   };
 });
 
-jest.mock("../src/ui/hooks/useTransportTestThrottle", () => ({
-  useTransportTestThrottle: () => ({
-    checkChainAvailability: () => null,
-    checkForcedAvailability: () => null,
-    registerChainRun: jest.fn(),
-    registerForcedRun: jest.fn(),
-  }),
-}));
+jest.mock("../src/components/glass/GlassBottomSheet", () =>
+  jest.requireMock("../src/components/glass/GlassForm"),
+);
+
+jest.mock("../src/components/LiquidGlassWrapper", () =>
+  jest.requireMock("../src/components/glass/GlassForm"),
+);
 
 jest.mock("../src/utils/haptics", () => ({
   persistHapticsPreference: jest.fn().mockResolvedValue(undefined),
@@ -104,17 +104,9 @@ jest.mock("../src/ui/hooks/useScreenEntrance", () => ({
 
 jest.mock("../src/i18n", () => ({
   useTranslation: () => ({
-    t: (key: string, params?: Record<string, unknown>) => {
-      const language = params?.["language"];
-      if (typeof language === "string") {
-        return `${key}:${language}`;
-      }
-      const count = params?.["count"];
-      if (typeof count !== "undefined") {
-        return `${key}:${String(count)}`;
-      }
-      return key;
-    },
+    t: jest
+      .requireActual("../src/i18n")
+      .createTranslator(mockUseSettings().locale),
   }),
 }));
 
@@ -200,6 +192,10 @@ describe("Settings language picker", () => {
     jest.clearAllMocks();
   });
 
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   it("selects explicit locale", async () => {
     const value = createSettingsValue();
     mockUseSettings.mockReturnValue(value);
@@ -249,4 +245,55 @@ describe("Settings language picker", () => {
 
     expect(value.updateLocale).toHaveBeenCalledWith(null);
   });
+  it.each([
+    [
+      "en-US",
+      "Wait a moment before testing again.",
+      "Wait a moment before testing this transport again.",
+    ],
+    [
+      "pt-BR",
+      "Aguarde um instante antes de testar novamente.",
+      "Aguarde um instante antes de testar este transporte novamente.",
+    ],
+  ])(
+    "translates throttled transport tests in %s",
+    async (locale, chainMessage, forcedMessage) => {
+      mockUseSettings.mockReturnValue(createSettingsValue({ locale }));
+      jest.spyOn(Date, "now").mockReturnValue(10_000);
+      const chainQuery = jest
+        .spyOn(DNSService, "queryLLM")
+        .mockResolvedValue("ok");
+      const forcedQuery = jest
+        .spyOn(DNSService, "testTransport")
+        .mockResolvedValue("ok");
+      let tree: ReactTestRenderer | null = null;
+      await act(async () => {
+        tree = createWithSuppressedWarnings(<Settings />);
+      });
+      if (!tree) throw new Error("Failed to render Settings");
+      const renderedTree = tree as ReactTestRenderer;
+
+      for (const [testID, message, query] of [
+        ["settings-transport-test", chainMessage, chainQuery],
+        ["settings-force-native", forcedMessage, forcedQuery],
+      ] as const) {
+        const button = renderedTree.root.findAllByProps({ testID })[0];
+        if (!button) throw new Error(`Missing button: ${testID}`);
+        await act(async () => {
+          await button.props["onPress"]();
+        });
+        expect(query).toHaveBeenCalledTimes(1);
+        expect(JSON.stringify(renderedTree.toJSON())).not.toContain(message);
+        await act(async () => {
+          await button.props["onPress"]();
+        });
+        expect(query).toHaveBeenCalledTimes(1);
+        expect(JSON.stringify(renderedTree.toJSON())).toContain(message);
+      }
+      await act(async () => {
+        renderedTree.unmount();
+      });
+    },
+  );
 });

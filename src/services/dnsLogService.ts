@@ -537,13 +537,6 @@ export class DNSLogService {
     return run;
   }
 
-  /**
-   * Clean up all listeners to prevent memory leaks
-   */
-  static cleanupListeners(): void {
-    this.listeners.clear();
-  }
-
   static startQuery(
     query: string,
     context?: { chatId?: string; chatTitle?: string },
@@ -695,30 +688,6 @@ export class DNSLogService {
       method: fromMethod,
       status: "fallback",
       details: `Next attempt: ${toMethod}`,
-    };
-
-    this.addLog(queryId, entry);
-  }
-
-  /**
-   * Log server-level fallback (e.g., llm.pieter.com:53 → ch.at:53)
-   * Distinct from transport-level fallback (native → udp → tcp)
-   */
-  static logServerFallback(
-    queryId: string,
-    fromServer: string,
-    toServer: string,
-  ) {
-    const queryLog = this.activeQueryLogs.get(queryId);
-    if (!queryLog) return;
-
-    const entry: DNSLogEntry = {
-      id: this.generateUniqueId(`${queryLog.id}-server-fallback`),
-      timestamp: new Date(),
-      message: `Server fallback: ${fromServer} → ${toServer}`,
-      method: "native",
-      status: "fallback",
-      details: `Trying next server: ${toServer}`,
     };
 
     this.addLog(queryId, entry);

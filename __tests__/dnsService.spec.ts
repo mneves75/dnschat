@@ -1,3 +1,4 @@
+import * as WaitUtils from "../src/utils/wait";
 jest.mock("react-native", () => {
   const actual = jest.requireActual("react-native");
   return {
@@ -40,15 +41,9 @@ type DNSServiceInternals = {
   queryWithServer: (
     ...args: unknown[]
   ) => Promise<{ response: string; method: string }>;
-  getServerHealthSnapshot: () => Record<
-    string,
-    { successes: number; failures: number; lastError?: string | null }
-  >;
-  resetServerHealthForTests?: () => void;
   tryMethod?: (
     ...args: unknown[]
   ) => Promise<{ response: string; method: string }>;
-  sleep?: (ms: number) => Promise<void>;
   captureLifecycleToken: () => number;
 };
 
@@ -505,7 +500,7 @@ describe("DNS Service helpers", () => {
     });
   });
 
-  describe("server fallback + health tracking", () => {
+  describe("server selection", () => {
     beforeEach(() => {
       jest.clearAllMocks();
       jest.spyOn(DNSLogService, "startQuery").mockReturnValue("query-1");
@@ -516,11 +511,7 @@ describe("DNS Service helpers", () => {
       jest
         .spyOn(DNSLogService, "logFallback")
         .mockImplementation(() => undefined);
-      jest
-        .spyOn(DNSLogService, "logServerFallback")
-        .mockImplementation(() => undefined);
       jest.spyOn(DNSLogService, "endQuery").mockResolvedValue(undefined);
-      dnsServiceInternals.resetServerHealthForTests?.();
     });
 
     afterEach(() => {
@@ -535,7 +526,7 @@ describe("DNS Service helpers", () => {
 
       await expect(
         DNSService.queryLLM("test fallback", undefined, true, true),
-      ).rejects.toThrow("llm.pieter.com:53");
+      ).rejects.toThrow("Primary server down");
 
       expect(querySpy).toHaveBeenCalledTimes(1);
       const calls = querySpy.mock.calls as Array<
@@ -543,29 +534,6 @@ describe("DNS Service helpers", () => {
       >;
       const firstContext = calls[0]?.[0] as { targetServer: string };
       expect(firstContext.targetServer).toBe("llm.pieter.com");
-    });
-
-    it("tracks server health across failures and successes", async () => {
-      const querySpy = jest
-        .spyOn(dnsServiceInternals, "queryWithServer")
-        .mockRejectedValueOnce(new Error("Primary server down"));
-
-      await expect(
-        DNSService.queryLLM("test health", undefined, true, true),
-      ).rejects.toThrow("llm.pieter.com:53");
-
-      querySpy.mockResolvedValueOnce({ response: "ok", method: "udp" });
-      await DNSService.queryLLM("test explicit secondary", "ch.at", true, true);
-
-      const snapshot = dnsServiceInternals.getServerHealthSnapshot();
-      const primary = snapshot["llm.pieter.com:53"];
-      const secondary = snapshot["ch.at:53"];
-      if (!primary || !secondary) {
-        throw new Error("Expected server health entries to be present");
-      }
-      expect(primary.failures).toBe(1);
-      expect(primary.lastError).toContain("Primary server down");
-      expect(secondary.successes).toBe(1);
     });
 
     it("does not persist raw DNS query names derived from user prompts", async () => {
@@ -604,7 +572,7 @@ describe("DNS Service helpers", () => {
       jest
         .spyOn(DNSLogService, "logFallback")
         .mockImplementation(() => undefined);
-      jest.spyOn(dnsServiceInternals, "sleep").mockResolvedValue(undefined);
+      jest.spyOn(WaitUtils, "wait").mockResolvedValue(undefined);
     });
 
     afterEach(() => {
@@ -711,7 +679,6 @@ describe("DNS Service helpers", () => {
         .spyOn(DNSLogService, "logFallback")
         .mockImplementation(() => undefined);
       jest.spyOn(DNSLogService, "endQuery").mockResolvedValue(undefined);
-      dnsServiceInternals.resetServerHealthForTests?.();
     });
 
     afterEach(() => {

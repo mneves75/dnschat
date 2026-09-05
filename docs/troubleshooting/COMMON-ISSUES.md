@@ -148,7 +148,7 @@ Fix checklist:
 Quick terminal sanity check:
 
 ```bash
-node test-dns-simple.js "Hello world"
+dig @llm.pieter.com "hello" TXT +short
 ```
 
 ### Web preview

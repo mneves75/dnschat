@@ -1,4 +1,4 @@
-#!/usr/bin/env ts-node
+#!/usr/bin/env node
 /**
  * Cross-layer DNS harness for verification bundles.
  * Sanitizes the message, composes the query name, and executes the

@@ -79,8 +79,9 @@ local history is encrypted. DNS itself is observable and unauthenticated.
 ## Validation and review
 
 Use the smallest relevant check while editing. The full closeout gate is
-`pnpm run verify:all`; run it before committing. It includes native module tests,
-security scans and video validation. For a full source/security sweep also run
+`pnpm run verify:all`; run it before committing. It includes native module tests
+and security scans. Run `pnpm run verify:video` only when `marketing/video`
+changes. For a full source/security sweep also run
 `asc doctor`, the local DNS harness, and the native build/runtime proof described
 in `docs/agents/development.md`. A skipped artifact check is not build evidence.
 Once required checks pass, repeat only for changed code, a new failure or a
@@ -91,9 +92,9 @@ read the relevant skills, call `list-devices`, prefer a running simulator/emulat
 and use fresh accessibility/component-tree frames for taps. Never derive tap
 coordinates from screenshots. Expo Go and Expo dev-client are not valid proof.
 Record repeatable scenarios before the first action; saved QA flows need two
-unchanged complete passes. AXe is fallback only after an explicit request or a
-documented Argent blocker. At closeout, stop only Argent services for devices
-used by this session; do not stop another session's Metro.
+unchanged complete passes. Argent MCP is the only runtime proof surface.
+At closeout, stop only Argent services for devices used by this session; do not
+stop another session's Metro.
 
 For broad audits, inventory `app/`, `src/`, `modules/`, `scripts/`, tests,
 plugins, native config, site/marketing sources, CI and release/security docs.

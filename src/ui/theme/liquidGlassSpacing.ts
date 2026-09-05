@@ -30,23 +30,6 @@ export const LiquidGlassSpacing = {
 } as const;
 
 /**
- * Material Design 3 Spacing System
- * Based on 4dp grid with 8dp increments
- */
-
-export const Material3Spacing = {
-  xxs: 4, // Minimal spacing
-  xs: 8, // Base unit
-  sm: 12, // Small gaps
-  md: 16, // Standard spacing
-  lg: 24, // Content margins (Material uses 24dp vs iOS 20px)
-  xl: 32, // Section spacing
-  xxl: 40, // Major sections
-  xxxl: 48, // Screen spacing
-  huge: 56, // Special cases
-} as const;
-
-/**
  * Touch Target Specifications
  * Minimum sizes for comfortable interaction
  *
@@ -54,7 +37,7 @@ export const Material3Spacing = {
  * Android: 48dp minimum (Material Design 3 requirement)
  */
 
-export const TouchTargets = {
+const TouchTargets = {
   ios: {
     minimum: 44, // iOS 26 minimum touch target
     recommended: 48, // Better for accessibility
@@ -87,7 +70,7 @@ export const getMinimumTouchTarget = (): number => {
  * - capsule: 999px (fully rounded pill shape)
  */
 
-export const LiquidGlassRadius = {
+const LiquidGlassRadius = {
   card: 16, // Standard cards
   button: 12, // Buttons and interactive elements
   input: 10, // Text inputs
@@ -102,7 +85,7 @@ export const LiquidGlassRadius = {
  * Defined shape scale for Android components
  */
 
-export const Material3Radius = {
+const Material3Radius = {
   none: 0, // Square corners
   extraSmall: 4, // Subtle rounding
   small: 8, // Small components
@@ -156,80 +139,3 @@ export const SafeAreaDefaults = {
     safe: 20, // Safe content margin
   },
 } as const;
-
-/**
- * Elevation/Shadow System
- * iOS uses shadows, Android uses elevation
- */
-
-export const Elevation = {
-  none: 0,
-  level1:
-    Platform.OS === "ios"
-      ? {
-          shadowRadius: 3,
-          shadowOpacity: 0.1,
-          shadowOffset: { width: 0, height: 1 },
-        }
-      : 1,
-  level2:
-    Platform.OS === "ios"
-      ? {
-          shadowRadius: 8,
-          shadowOpacity: 0.12,
-          shadowOffset: { width: 0, height: 4 },
-        }
-      : 3,
-  level3:
-    Platform.OS === "ios"
-      ? {
-          shadowRadius: 20,
-          shadowOpacity: 0.12,
-          shadowOffset: { width: 0, height: 8 },
-        }
-      : 8,
-  level4:
-    Platform.OS === "ios"
-      ? {
-          shadowRadius: 24,
-          shadowOpacity: 0.15,
-          shadowOffset: { width: 0, height: 12 },
-        }
-      : 12,
-  level5:
-    Platform.OS === "ios"
-      ? {
-          shadowRadius: 32,
-          shadowOpacity: 0.18,
-          shadowOffset: { width: 0, height: 16 },
-        }
-      : 16,
-} as const;
-
-/**
- * Semantic Spacing Utilities
- * Common spacing patterns for layout
- */
-
-export const Spacing = {
-  get base() {
-    return Platform.OS === "ios" ? LiquidGlassSpacing.xs : Material3Spacing.xs;
-  },
-  get small() {
-    return Platform.OS === "ios" ? LiquidGlassSpacing.sm : Material3Spacing.sm;
-  },
-  get medium() {
-    return Platform.OS === "ios" ? LiquidGlassSpacing.md : Material3Spacing.md;
-  },
-  get large() {
-    return Platform.OS === "ios" ? LiquidGlassSpacing.lg : Material3Spacing.lg;
-  },
-  get section() {
-    return Platform.OS === "ios" ? LiquidGlassSpacing.xl : Material3Spacing.xl;
-  },
-  get screen() {
-    return Platform.OS === "ios" ? LiquidGlassSpacing.lg : Material3Spacing.lg;
-  },
-} as const;
-
-export default Spacing;

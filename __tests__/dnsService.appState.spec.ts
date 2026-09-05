@@ -1,3 +1,4 @@
+import * as WaitUtils from "../src/utils/wait";
 /**
  * DNSService AppState Listener Tests
  *
@@ -284,18 +285,15 @@ describe("DNSService AppState Listener Singleton", () => {
       enterBackoff = resolve;
     });
     const dnsServiceInternals = DNSService as unknown as {
-      sleep(ms: number): Promise<void>;
       tryMethod(...args: unknown[]): Promise<unknown>;
     };
-    const sleepSpy = jest
-      .spyOn(dnsServiceInternals, "sleep")
-      .mockImplementation(
-        () =>
-          new Promise<void>((resolve) => {
-            releaseBackoff = resolve;
-            enterBackoff();
-          }),
-      );
+    const sleepSpy = jest.spyOn(WaitUtils, "wait").mockImplementation(
+      () =>
+        new Promise<void>((resolve) => {
+          releaseBackoff = resolve;
+          enterBackoff();
+        }),
+    );
     const tryMethodSpy = jest
       .spyOn(dnsServiceInternals, "tryMethod")
       .mockRejectedValue(new Error("transport unavailable"));

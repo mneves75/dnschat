@@ -34,13 +34,13 @@ import { getMinimumTouchTarget } from "../../ui/theme/liquidGlassSpacing";
 import { useScreenEntrance } from "../../ui/hooks/useScreenEntrance";
 import { appAlert } from "../../utils/appAlert";
 
+import { Form } from "../../components/glass/GlassForm";
+import { LiquidGlassWrapper } from "../../components/LiquidGlassWrapper";
 import {
-  Form,
   GlassBottomSheet,
   GlassActionSheet,
   useGlassBottomSheet,
-  LiquidGlassWrapper,
-} from "../../components/glass";
+} from "../../components/glass/GlassBottomSheet";
 import { useTransportTestThrottle } from "../../ui/hooks/useTransportTestThrottle";
 import { HapticFeedback, persistHapticsPreference } from "../../utils/haptics";
 import { devLog, devWarn } from "../../utils/devLog";
@@ -340,9 +340,9 @@ export function GlassSettings() {
 
   const handleTestSelectedPreference = async () => {
     if (testRunning) return;
-    const throttleMessage = checkChainAvailability();
-    if (throttleMessage) {
-      setLastTestError(throttleMessage);
+    const throttleMessageKey = checkChainAvailability();
+    if (throttleMessageKey) {
+      setLastTestError(t(throttleMessageKey));
       return;
     }
 
@@ -366,9 +366,9 @@ export function GlassSettings() {
 
   const handleForceTransport = async (transport: "native" | "udp" | "tcp") => {
     if (testRunning) return;
-    const throttleMessage = checkForcedAvailability(transport);
-    if (throttleMessage) {
-      setLastTestError(throttleMessage);
+    const throttleMessageKey = checkForcedAvailability(transport);
+    if (throttleMessageKey) {
+      setLastTestError(t(throttleMessageKey));
       return;
     }
 

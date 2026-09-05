@@ -3,10 +3,6 @@ import { useRef } from "react";
 export type TransportKind = "native" | "udp" | "tcp";
 
 const DEFAULT_INTERVAL = 1200;
-export const CHAIN_THROTTLE_MESSAGE =
-  "Aguarde um instante antes de testar novamente.";
-export const FORCED_THROTTLE_MESSAGE =
-  "Evite testes consecutivos no mesmo transporte em sequência curta.";
 
 /**
  * Shared throttling for DNS transport diagnostics.
@@ -24,7 +20,7 @@ export function useTransportTestThrottle() {
   const checkChainAvailability = () => {
     const now = Date.now();
     if (now - chainLastRunRef.current < DEFAULT_INTERVAL) {
-      return CHAIN_THROTTLE_MESSAGE;
+      return "screen.settings.sections.transportTest.chainThrottleMessage" as const;
     }
     return null;
   };
@@ -36,7 +32,7 @@ export function useTransportTestThrottle() {
   const checkForcedAvailability = (transport: TransportKind) => {
     const now = Date.now();
     if (now - forcedLastRunRef.current[transport] < DEFAULT_INTERVAL) {
-      return FORCED_THROTTLE_MESSAGE;
+      return "screen.settings.sections.transportTest.forcedThrottleMessage" as const;
     }
     return null;
   };

@@ -61,6 +61,5 @@ remount behavior, not the current screen-level performance target.
 
 ## Routes not yet covered
 
-`onboarding` (only reachable on a fresh install), `dev/logs`, `+not-found`,
-`[user]`, and `profile/[user]`. All are reachable by deep link and can be added
+`onboarding` (only reachable on a fresh install), `dev/logs`, and `+not-found`. All are reachable by deep link and can be added
 to the sweep; they were left out of the first baseline, not measured and hidden.

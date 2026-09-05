@@ -2,23 +2,14 @@ export const ptBR = {
   common: {
     ok: "OK",
     cancel: "Cancelar",
-    delete: "Apagar",
     errorTitle: "Erro",
     close: "Fechar",
-    reset: "Restaurar",
-    save: "Salvar",
-    saving: "Salvando…",
     clear: "Limpar",
-    settings: "Configurações",
-    language: "Idioma",
-    followSystem: "Usar idioma do dispositivo",
     unknownError: "Algo deu errado. Por favor, tente novamente.",
-    done: "Concluído",
   },
   locales: {
     enUS: "Inglês (Estados Unidos)",
     ptBR: "Português (Brasil)",
-    deviceLabel: "Idioma do dispositivo ({{language}})",
   },
   navigation: {
     tabs: {
@@ -27,16 +18,11 @@ export const ptBR = {
       about: "Sobre",
     },
     stack: {
-      chat: "Chat",
-      settings: "Configurações",
       devLogs: "Logs DNS do Dev",
       notFound: "404",
     },
     toolbar: {
       newChat: "Nova Conversa",
-      share: "Compartilhar",
-      clearChat: "Limpar Conversa",
-      dnsInfo: "Info DNS",
     },
   },
   screen: {
@@ -84,8 +70,6 @@ export const ptBR = {
         subtitle: "Envie uma mensagem e veja ela viajar pelo DNS",
         welcomeMessage:
           "Envie uma mensagem curta. O aplicativo a transporta em uma consulta DNS TXT.",
-        successMessage:
-          "Sua mensagem foi enviada como uma consulta DNS TXT. Quando o servidor responde, a resposta retorna em registros DNS TXT.",
         failureMessage:
           "A mensagem DNS não pôde ser entregue. Verifique as configurações de rede ou tente novamente mais tarde.",
         suggestions: {
@@ -97,8 +81,6 @@ export const ptBR = {
         },
         input: {
           placeholder: "Digite sua mensagem…",
-          send: "Enviar",
-          sending: "…",
           sendingVia: "Enviando via DNS…",
         },
         navigation: {
@@ -283,9 +265,7 @@ export const ptBR = {
       },
     },
     chat: {
-      navigationTitle: "Chat",
       errorAlertTitle: "Erro",
-      errorAlertDismiss: "OK",
       errorRetry: "Tentar de novo",
       errorMessage:
         "A consulta DNS falhou. Tente de novo ou veja os logs DNS em Ajustes.",
@@ -337,24 +317,8 @@ export const ptBR = {
       placeholder: "Mensagem...",
     },
     chatList: {
-      navigationTitle: "Conversas",
-      emptyTitle: "Ainda não há conversas",
-      emptySubtitle:
-        "Crie uma nova conversa para começar a falar com o assistente de IA.",
-      newChatButton: "Iniciar nova conversa",
-      noMessages: "Ainda não há mensagens",
-      lastUserPrefix: "Você: {{content}}",
-      yesterday: "Ontem",
-      deleteTitle: "Apagar conversa",
-      deleteMessage: 'Tem certeza de que deseja apagar "{{title}}"?',
       createErrorTitle: "Não foi possível criar a conversa",
       createErrorMessage: "Falha ao criar a conversa",
-      accessibility: {
-        deleteButton: "Apagar conversa",
-        deleteButtonHint: "Toque duas vezes para apagar esta conversa",
-        chatItem: "Conversa: {{title}}",
-        chatItemHint: "Toque duas vezes para abrir a conversa",
-      },
     },
     glassChatList: {
       navigationTitle: "DNS Chat",
@@ -375,13 +339,6 @@ export const ptBR = {
         title: "Nenhuma conversa ainda",
         subtitle: "Suas conversas aparecerão aqui depois que você iniciar uma.",
       },
-      stats: {
-        title: "Estatísticas",
-        totalMessagesTitle: "Total de mensagens",
-        totalMessagesSubtitle: "Quantas mensagens já foram enviadas",
-        averageTitle: "Média por conversa",
-        averageSubtitle: "Mensagens por conversa",
-      },
       badges: {
         messageSingular: "{{count}} mensagem",
         messagePlural: "{{count}} mensagens",
@@ -391,7 +348,6 @@ export const ptBR = {
       itemAccessibilityHint:
         "Toque duas vezes para abrir. Use as ações disponíveis para compartilhar ou apagar esta conversa.",
       actionSheet: {
-        title: "Escolha uma ação",
         message: "Selecione o que fazer com esta conversa",
         openChat: "Abrir conversa",
         shareChat: "Compartilhar conversa",
@@ -422,16 +378,12 @@ export const ptBR = {
         footerMultiple: "{{count}} consultas registradas",
       },
       labels: {
-        noQuery: "Sem consulta",
         noMessage: "Sem mensagem",
-        noResponse: "Sem resposta",
         redactedQuery: "Consulta DNS",
         redactedResponse: "Resposta ocultada",
         durationPending: "Duração pendente",
         response: "Resposta:",
         querySteps: "Etapas da consulta:",
-        resultTitle: "Resultado do último teste:",
-        errorTitle: "Erro do último teste:",
         unknownMethod: "DESCONHECIDO",
         errorPrefix: "Erro: {{message}}",
       },
@@ -458,7 +410,6 @@ export const ptBR = {
         success: "Sucesso",
         failed: "Falhou",
         pending: "Pendente",
-        unknown: "Desconhecido",
       },
     },
     settings: {
@@ -469,17 +420,8 @@ export const ptBR = {
           description:
             "Defina o servidor DNS usado na comunicação com o LLM. Ele receberá suas mensagens via consultas TXT.",
           dnsServerLabel: "Serviço DNS TXT",
-          dnsServerPlaceholder: "llm.pieter.com",
-          dnsServerHint: "Padrão: {{server}}",
         },
         appBehavior: {
-          title: "Comportamento do App",
-          description: "Configure recursos e comportamento do aplicativo.",
-          enableMockDNS: {
-            label: "Ativar DNS simulado",
-            description:
-              "Usa respostas DNS simuladas para desenvolvimento e testes.",
-          },
           enableHaptics: {
             label: "Ativar hápticos",
             description:
@@ -487,16 +429,18 @@ export const ptBR = {
           },
         },
         transportTest: {
+          chainThrottleMessage:
+            "Aguarde um instante antes de testar novamente.",
+          forcedThrottleMessage:
+            "Aguarde um instante antes de testar este transporte novamente.",
           title: "Teste de transporte",
           description:
             "Envie uma mensagem de teste usando a preferência atual ou force um transporte específico. Tudo é registrado.",
           messageLabel: "Mensagem de teste",
-          placeholder: "ping",
           testButton: "Testar preferência selecionada",
           testingButton: "Testando...",
           testHint:
             "Executa o teste DNS usando a preferência de transporte atual",
-          forceLabel: "Forçar transporte específico",
           forceHint:
             "Executa o teste DNS usando apenas o transporte {{transport}}",
           forceAccessibilityLabel: "Forçar transporte {{transport}}",
@@ -505,23 +449,6 @@ export const ptBR = {
             udp: "UDP",
             tcp: "TCP",
           },
-          resultLabel: "Resultado do último teste:",
-          errorLabel: "Erro do último teste:",
-          viewLogs: "Ver logs",
-        },
-        currentConfig: {
-          title: "Configuração atual",
-          dnsServerLabel: "Servidor DNS ativo:",
-        },
-        data: {
-          title: "Gerenciamento de dados",
-          description:
-            "Gerencie chats e logs DNS armazenados localmente neste dispositivo.",
-          clearDataTitle: "Limpar dados locais",
-          clearDataSubtitle:
-            "Excluir histórico de chats e logs DNS deste dispositivo",
-          clearDataHint:
-            "Exclui todos os chats e logs DNS armazenados localmente neste dispositivo",
         },
         development: {
           title: "Tour do app",
@@ -554,16 +481,7 @@ export const ptBR = {
             "Sobrescreve a aparência do sistema apenas no DNS Chat.",
         },
       },
-      actions: {
-        resetButton: "Restaurar padrão",
-        saveButton: "Salvar alterações",
-        saving: "Salvando...",
-      },
       alerts: {
-        resetTitle: "Restaurar padrão",
-        resetMessage:
-          "Tem certeza de que deseja restaurar todas as configurações?",
-        resetConfirm: "Restaurar",
         onboardingTitle: "Redefinir onboarding",
         onboardingMessage:
           "Isso reiniciará o processo de onboarding e o mostrará novamente no próximo lançamento.",
@@ -572,20 +490,9 @@ export const ptBR = {
         onboardingResetTitle: "Onboarding redefinido",
         onboardingResetMessage:
           "O onboarding será exibido novamente quando você reabrir o app.",
-        saveSuccessTitle: "Configurações salvas",
         saveSuccessMessage: "As configurações foram atualizadas com sucesso.",
         saveErrorTitle: "Erro",
         saveErrorMessage: "Falha ao salvar. Tente novamente.",
-        dnsSaveErrorTitle: "Falha ao salvar",
-        dnsSaveErrorMessage: "Não foi possível salvar o servidor DNS.",
-        clearDataTitle: "Limpar dados locais",
-        clearDataMessage:
-          "Isso excluirá permanentemente seu histórico de chats e logs DNS deste dispositivo.",
-        clearDataSuccessTitle: "Dados locais limpos",
-        clearDataSuccessMessage:
-          "Seu histórico de chats e logs DNS foi apagado.",
-        clearDataErrorMessage:
-          "Não foi possível limpar os dados locais. Tente novamente.",
       },
     },
     glassSettings: {
@@ -657,9 +564,6 @@ export const ptBR = {
           helpSubtitle: "Peça ajuda ou envie sugestões",
           bugTitle: "Reportar bug",
           bugSubtitle: "Encontrou um problema? Avise-nos",
-        },
-        language: {
-          title: "Idioma",
         },
       },
       alerts: {
@@ -755,68 +659,6 @@ export const ptBR = {
           footer:
             "Nada disso existiria sem esses projetos e serviços open-source incríveis",
         },
-      },
-    },
-    home: {
-      title: "Tela inicial",
-      subtitle: "Abra 'app/(tabs)/index.tsx' para começar a trabalhar no app!",
-      goToProfile: "Ir para o perfil",
-      goToSettings: "Ir para configurações",
-      navigationTitle: "Início",
-      dnsConnected: "Conectado",
-      dnsDisconnected: "Não configurado",
-      dnsStatus: "Status DNS",
-      configureButton: "Configurar DNS",
-      configure: "Configurar",
-      quickActions: {
-        title: "Ações rápidas",
-        newChat: "Nova conversa",
-        newChatDescription: "Iniciar uma nova conversa por DNS",
-        viewLogs: "Ver logs",
-        viewLogsDescription: "Inspecionar histórico de consultas DNS",
-      },
-      recentChats: {
-        title: "Conversas recentes",
-        footer: "Suas conversas mais recentes",
-      },
-      allChats: "Todas as conversas",
-      allChatsDescription: "Abrir lista completa de conversas",
-    },
-    profile: {
-      title: "Perfil de {{user}}",
-      navigationTitle: "Perfil",
-      noChatsYet: "Ainda sem conversas",
-      defaultUser: "Usuário",
-      avatarLabel: "Avatar do perfil",
-      memberSince: "Primeira conversa {{date}}",
-      alerts: {
-        clearDataTitle: "Limpar todos os dados",
-        clearDataMessage:
-          "Isso excluirá todas as conversas e mensagens. Esta ação não pode ser desfeita.",
-        clearDataConfirm: "Limpar dados",
-        clearDataSuccessTitle: "Dados limpos",
-        clearDataSuccessMessage:
-          "Todas as conversas foram apagadas deste dispositivo.",
-        clearDataErrorMessage:
-          "Não foi possível limpar seus dados locais de chat. Tente novamente.",
-      },
-      statistics: {
-        title: "Estatísticas",
-        footer: "Resumo da sua atividade de chat",
-        totalChats: "Total de conversas",
-        totalMessages: "Total de mensagens",
-        averageMessages: "Média de mensagens por conversa",
-      },
-      preferences: {
-        title: "Preferências",
-        settings: "Configurações",
-        settingsDescription: "DNS, acessibilidade e mais",
-      },
-      data: {
-        title: "Gerenciamento de dados",
-        footer: "Gerencie seu histórico de conversas e dados pessoais",
-        clearAll: "Limpar todos os dados",
-        clearAllDescription: "Excluir todas as conversas e mensagens",
       },
     },
     notFound: {

@@ -220,8 +220,7 @@ native `.so` files.
 Quick check (no React Native runtime required):
 
 ```bash
-node test-dns-simple.js "Hello world"
-node test-dns-simple.js "Hello world" --local-server
+dig @llm.pieter.com "hello" TXT +short
 ```
 
 Full harness (UDP/TCP transports):

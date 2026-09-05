@@ -47,9 +47,8 @@ pnpm run verify:all
 DNS smoke checks:
 
 ```bash
-node test-dns-simple.js "test message"
+dig @llm.pieter.com "hello" TXT +short
 pnpm run dns:harness --message "test message"
-node test-dns-simple.js "test message" --local-server
 pnpm run dns:harness --message "test message" --local-server
 ```
 
@@ -86,5 +85,5 @@ Remove `.git/hooks/pre-commit` locally if you do not want repo-managed hooks.
 - `pnpm run fmt:check`
 - `pnpm run lint`
 - `pnpm run test`
-- `node test-dns-simple.js "hello"`
+- `dig @llm.pieter.com "hello" TXT +short`
 - `pnpm run dns:harness --message "hello"`

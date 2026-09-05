@@ -44,7 +44,7 @@ import {
   useStaggeredListValues,
   AnimatedListItem,
 } from "../../ui/hooks/useStaggeredList";
-import { ChatListSkeleton } from "../../components/skeletons";
+import { ChatListSkeleton } from "../../components/skeletons/ChatListSkeleton";
 import { EmptyState } from "../../components/EmptyState";
 import { ShareService } from "../../services/ShareService";
 import { useSettings } from "../../context/SettingsContext";

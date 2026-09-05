@@ -38,7 +38,7 @@ jest.mock("../src/context/AccessibilityContext", () => ({
   useFontSize: () => ({ scale: 1.0 }),
 }));
 
-jest.mock("../src/components/glass", () => {
+jest.mock("../src/components/glass/GlassForm", () => {
   const Placeholder = ({ children }: { children?: React.ReactNode }) => (
     <>{children}</>
   );
@@ -70,6 +70,14 @@ jest.mock("../src/components/glass", () => {
     LiquidGlassWrapper: Placeholder,
   };
 });
+
+jest.mock("../src/components/glass/GlassBottomSheet", () =>
+  jest.requireMock("../src/components/glass/GlassForm"),
+);
+
+jest.mock("../src/components/LiquidGlassWrapper", () =>
+  jest.requireMock("../src/components/glass/GlassForm"),
+);
 
 jest.mock("../src/ui/hooks/useTransportTestThrottle", () => ({
   useTransportTestThrottle: () => ({

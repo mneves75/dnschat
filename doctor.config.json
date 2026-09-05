@@ -42,7 +42,7 @@
         "rules": ["react-doctor/no-derived-state"]
       },
       {
-        "files": ["scripts/**", "test-dns-simple.js"],
+        "files": ["scripts/**"],
         "rules": [
           "react-doctor/async-await-in-loop",
           "react-doctor/js-combine-iterations",
@@ -220,7 +220,7 @@
         ]
       },
       {
-        "files": ["plugins/**", "test-dns-simple.js"],
+        "files": ["plugins/**"],
         "rules": [
           "deslop/unused-file",
           "deslop/unused-export",

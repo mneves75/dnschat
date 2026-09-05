@@ -117,8 +117,7 @@ Notes:
 
 ```bash
 # Quick DNS check (no React Native runtime required)
-node test-dns-simple.js "test message"
-node test-dns-simple.js "test message" --local-server
+dig @llm.pieter.com "hello" TXT +short
 
 # Full harness (builds scripts/ ts -> js, then runs UDP/TCP transports)
 pnpm run dns:harness --message "test message"
@@ -141,9 +140,7 @@ pnpm run lint
 # Unit tests
 pnpm run test
 
-# Native UI QA uses Argent; see docs/agents/development.md.
-# AXe is fallback only after an explicit request or documented Argent blocker.
-pnpm run e2e:axe:doctor
+# Native UI QA uses Argent MCP; see docs/agents/development.md.
 
 # Public-doc redaction gate
 pnpm run verify:public-redaction

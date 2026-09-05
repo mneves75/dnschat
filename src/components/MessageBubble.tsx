@@ -44,7 +44,12 @@ function MessageBubbleComponent({ message }: MessageBubbleProps) {
   const isDark = colorScheme === "dark";
   const typography = useTypography();
   const palette = useImessagePalette();
-  const { messageMaxWidth } = useResponsiveLayout();
+  const { messageMaxWidth, width } = useResponsiveLayout();
+  // The native menu measures its content in a separate layout root, so percentages lose the outer constraint.
+  const bubbleMaxWidth =
+    typeof messageMaxWidth === "number"
+      ? messageMaxWidth
+      : (width * Number.parseFloat(messageMaxWidth)) / 100;
   const { t } = useTranslation();
   const locale = useLocale();
 
@@ -91,6 +96,7 @@ function MessageBubbleComponent({ message }: MessageBubbleProps) {
   const bubbleStyles = [
     styles.bubbleBase,
     {
+      maxWidth: bubbleMaxWidth,
       backgroundColor: hasError
         ? palette.destructive
         : isUser
@@ -214,7 +220,7 @@ function MessageBubbleComponent({ message }: MessageBubbleProps) {
     <View
       style={[
         styles.container,
-        { maxWidth: messageMaxWidth },
+        { maxWidth: bubbleMaxWidth },
         isUser ? styles.userContainer : styles.assistantContainer,
       ]}
     >
@@ -245,7 +251,6 @@ const styles = StyleSheet.create({
   container: {
     marginVertical: LiquidGlassSpacing.xxs,
     marginHorizontal: LiquidGlassSpacing.md,
-    // maxWidth provided inline via useResponsiveLayout (75% phone / 60% tablet / 560 desktop)
   },
   userContainer: {
     alignSelf: "flex-end",

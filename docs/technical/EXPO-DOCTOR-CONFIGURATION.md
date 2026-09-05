@@ -60,5 +60,5 @@ pnpm run test
 pnpm run verify:all
 
 # DNS smoke test
-node test-dns-simple.js "Hello world"
+dig @llm.pieter.com "hello" TXT +short
 ```

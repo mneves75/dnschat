@@ -8,12 +8,8 @@ Developer documentation for DNSChat. Code is the source of truth — these docs 
 - `docs/architecture/SYSTEM-ARCHITECTURE.md` — what talks to what
 - `docs/technical/DNS-PROTOCOL-SPEC.md` — DNS query/response rules (current behavior)
 - `docs/technical/SPECIFICATION.md` — product behavior + repo invariants
-- `docs/plans/SDK56_UPGRADE_PLAN.md` — SDK 56 upgrade plan and verification gate
-- `docs/plans/EXPO_UI_COMPONENT_MIGRATION_PLAN.md` - Expo UI adoption decision
   and migration plan
-- `docs/e2e-axe-feature-coverage.md` — AXe simulator E2E feature checklist
   and runner notes
-- `docs/technical/CHAT-TEMPLATE-2026-REVIEW.md` — 2026 chat-template review plan and applied repairs
 - `docs/technical/SCREEN-MOUNT-PERF.md` — per-screen mount budget, measurement protocol, current baseline
 - `docs/troubleshooting/COMMON-ISSUES.md` — known issues and fixes
 
@@ -32,9 +28,8 @@ results do not establish the state of a newer binary. The September audit plan
 and its decisions are in `docs/technical/AUDIT-PLAN-2026-09.md`.
 
 Use `docs/agents/development.md` for focused checks, full gates, compiled-app QA,
-profiling and worktree isolation. Runtime verification defaults to Argent; the
-AXe checklist above is a documented fallback. There is no configured iOS XCTest
-target. Privacy and unauthenticated-DNS production decisions are tracked in
+profiling and worktree isolation. Argent MCP is the only runtime proof surface.
+There is no configured iOS XCTest target. Privacy and unauthenticated-DNS production decisions are tracked in
 `SECURITY.md` and `docs/model-registry.md`.
 
 ## Release

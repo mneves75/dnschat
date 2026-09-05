@@ -28,7 +28,7 @@ import {
   useStaggeredListValues,
   AnimatedListItem,
 } from "../../ui/hooks/useStaggeredList";
-import { LogsSkeleton } from "../../components/skeletons";
+import { LogsSkeleton } from "../../components/skeletons/LogsSkeleton";
 import { EmptyState } from "../../components/EmptyState";
 import { CheckmarkIcon } from "../../components/icons/CheckmarkIcon";
 import { CloseIcon } from "../../components/icons/CloseIcon";

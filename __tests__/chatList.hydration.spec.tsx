@@ -37,7 +37,7 @@ jest.mock("../src/components/glass/GlassBottomSheet", () => ({
   GlassActionSheet: () => null,
 }));
 jest.mock("../src/components/ui/Toast", () => ({ Toast: () => null }));
-jest.mock("../src/components/skeletons", () => ({
+jest.mock("../src/components/skeletons/ChatListSkeleton", () => ({
   ChatListSkeleton: () => null,
 }));
 jest.mock("../src/components/EmptyState", () => ({ EmptyState: () => null }));

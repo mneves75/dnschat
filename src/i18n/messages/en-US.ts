@@ -2,23 +2,14 @@ export const enUS = {
   common: {
     ok: "OK",
     cancel: "Cancel",
-    delete: "Delete",
     errorTitle: "Error",
     close: "Close",
-    reset: "Reset",
-    save: "Save",
-    saving: "Saving…",
     clear: "Clear",
-    settings: "Settings",
-    language: "Language",
-    followSystem: "Use device language",
     unknownError: "Something went wrong. Please try again.",
-    done: "Done",
   },
   locales: {
     enUS: "English (United States)",
     ptBR: "Português (Brasil)",
-    deviceLabel: "Device language ({{language}})",
   },
   navigation: {
     tabs: {
@@ -27,16 +18,11 @@ export const enUS = {
       about: "About",
     },
     stack: {
-      chat: "Chat",
-      settings: "Settings",
       devLogs: "Dev DNS Logs",
       notFound: "404",
     },
     toolbar: {
       newChat: "New Chat",
-      share: "Share",
-      clearChat: "Clear Chat",
-      dnsInfo: "DNS Info",
     },
   },
   screen: {
@@ -84,8 +70,6 @@ export const enUS = {
         subtitle: "Send a message and watch it travel through DNS",
         welcomeMessage:
           "Send a short prompt. The app carries it in a DNS TXT query.",
-        successMessage:
-          "Your prompt was sent as a DNS TXT query. When the server replies, the response returns in DNS TXT records.",
         failureMessage:
           "The DNS message could not be delivered. Check your network settings or try again later.",
         suggestions: {
@@ -97,8 +81,6 @@ export const enUS = {
         },
         input: {
           placeholder: "Type your message…",
-          send: "Send",
-          sending: "…",
           sendingVia: "Sending via DNS…",
         },
         navigation: {
@@ -283,9 +265,7 @@ export const enUS = {
       },
     },
     chat: {
-      navigationTitle: "Chat",
       errorAlertTitle: "Error",
-      errorAlertDismiss: "OK",
       errorRetry: "Retry",
       errorMessage:
         "DNS request failed. Try again or check DNS logs in Settings.",
@@ -335,24 +315,8 @@ export const enUS = {
       placeholder: "Message...",
     },
     chatList: {
-      navigationTitle: "Chats",
-      emptyTitle: "No chats yet",
-      emptySubtitle:
-        "Start a new conversation to begin chatting with the AI assistant.",
-      newChatButton: "Start New Chat",
-      noMessages: "No messages yet",
-      lastUserPrefix: "You: {{content}}",
-      yesterday: "Yesterday",
-      deleteTitle: "Delete Chat",
-      deleteMessage: 'Are you sure you want to delete "{{title}}"?',
       createErrorTitle: "Unable to create chat",
       createErrorMessage: "Failed to create chat",
-      accessibility: {
-        deleteButton: "Delete chat",
-        deleteButtonHint: "Double tap to delete this conversation",
-        chatItem: "Chat: {{title}}",
-        chatItemHint: "Double tap to open conversation",
-      },
     },
     glassChatList: {
       navigationTitle: "DNS Chat",
@@ -373,13 +337,6 @@ export const enUS = {
         title: "No Conversations Yet",
         subtitle: "Your conversations will appear here after you start one.",
       },
-      stats: {
-        title: "Statistics",
-        totalMessagesTitle: "Total Messages",
-        totalMessagesSubtitle: "Messages sent so far",
-        averageTitle: "Average per Chat",
-        averageSubtitle: "Messages per conversation",
-      },
       badges: {
         messageSingular: "{{count}} message",
         messagePlural: "{{count}} messages",
@@ -388,7 +345,6 @@ export const enUS = {
       itemAccessibilityHint:
         "Double tap to open. Use available actions to share or delete this conversation.",
       actionSheet: {
-        title: "Choose an action",
         message: "Choose an action for this conversation",
         openChat: "Open Chat",
         shareChat: "Share Chat",
@@ -419,16 +375,12 @@ export const enUS = {
         footerMultiple: "{{count}} queries logged",
       },
       labels: {
-        noQuery: "No query",
         noMessage: "No message",
-        noResponse: "No response",
         redactedQuery: "DNS query",
         redactedResponse: "Response redacted",
         durationPending: "Duration pending",
         response: "Response:",
         querySteps: "Query Steps:",
-        resultTitle: "Last Test Result:",
-        errorTitle: "Last Test Error:",
         unknownMethod: "UNKNOWN",
         errorPrefix: "Error: {{message}}",
       },
@@ -455,7 +407,6 @@ export const enUS = {
         success: "Succeeded",
         failed: "Failed",
         pending: "Pending",
-        unknown: "Unknown",
       },
     },
     settings: {
@@ -466,17 +417,8 @@ export const enUS = {
           description:
             "Configure the DNS server used for LLM communication. This server will receive your messages via DNS TXT queries.",
           dnsServerLabel: "DNS TXT Service",
-          dnsServerPlaceholder: "llm.pieter.com",
-          dnsServerHint: "Default: {{server}}",
         },
         appBehavior: {
-          title: "App Behavior",
-          description: "Configure app features and behavior settings.",
-          enableMockDNS: {
-            label: "Enable Mock DNS",
-            description:
-              "Use simulated DNS responses for development and testing.",
-          },
           enableHaptics: {
             label: "Enable Haptics",
             description:
@@ -484,15 +426,16 @@ export const enUS = {
           },
         },
         transportTest: {
+          chainThrottleMessage: "Wait a moment before testing again.",
+          forcedThrottleMessage:
+            "Wait a moment before testing this transport again.",
           title: "Transport Test",
           description:
             "Send a test message using the selected preference or force a specific transport method. All tests are logged for debugging.",
           messageLabel: "Test Message",
-          placeholder: "ping",
           testButton: "Test Selected Preference",
           testingButton: "Testing...",
           testHint: "Runs the DNS test using the current transport preference",
-          forceLabel: "Force Specific Transport",
           forceHint: "Runs the DNS test using only the {{transport}} transport",
           forceAccessibilityLabel: "Force {{transport}} transport",
           transports: {
@@ -500,23 +443,6 @@ export const enUS = {
             udp: "UDP",
             tcp: "TCP",
           },
-          resultLabel: "Last Test Result:",
-          errorLabel: "Last Test Error:",
-          viewLogs: "View Logs",
-        },
-        currentConfig: {
-          title: "Current Configuration",
-          dnsServerLabel: "Active DNS Server:",
-        },
-        data: {
-          title: "Data Management",
-          description:
-            "Manage locally stored chats and DNS logs on this device.",
-          clearDataTitle: "Clear Local Data",
-          clearDataSubtitle:
-            "Delete chat history and DNS logs from this device",
-          clearDataHint:
-            "Deletes all local chats and DNS logs stored on this device",
         },
         development: {
           title: "App Tour",
@@ -548,15 +474,7 @@ export const enUS = {
           sheetSubtitle: "Override the system appearance for DNS Chat only.",
         },
       },
-      actions: {
-        resetButton: "Reset to Default",
-        saveButton: "Save Changes",
-        saving: "Saving...",
-      },
       alerts: {
-        resetTitle: "Reset to Default",
-        resetMessage: "Are you sure you want to reset all settings to default?",
-        resetConfirm: "Reset",
         onboardingTitle: "Reset Onboarding",
         onboardingMessage:
           "This will reset the onboarding process and show it again on next app launch. This is useful for testing or if you want to see the tour again.",
@@ -565,19 +483,9 @@ export const enUS = {
         onboardingResetTitle: "Onboarding Reset",
         onboardingResetMessage:
           "The onboarding will be shown again when you restart the app.",
-        saveSuccessTitle: "Settings Saved",
         saveSuccessMessage: "Settings have been updated successfully.",
         saveErrorTitle: "Error",
         saveErrorMessage: "Failed to save settings. Please try again.",
-        dnsSaveErrorTitle: "Save Failed",
-        dnsSaveErrorMessage: "Could not save DNS server.",
-        clearDataTitle: "Clear Local Data",
-        clearDataMessage:
-          "This will permanently delete your chat history and DNS logs from this device.",
-        clearDataSuccessTitle: "Local Data Cleared",
-        clearDataSuccessMessage:
-          "Your chat history and DNS logs have been cleared.",
-        clearDataErrorMessage: "Unable to clear local data. Please try again.",
       },
     },
     glassSettings: {
@@ -649,9 +557,6 @@ export const enUS = {
           helpSubtitle: "Get help or provide feedback",
           bugTitle: "Report Bug",
           bugSubtitle: "Found an issue? Let us know",
-        },
-        language: {
-          title: "Language",
         },
       },
       alerts: {
@@ -748,68 +653,6 @@ export const enUS = {
         },
       },
     },
-    home: {
-      title: "Home Screen",
-      subtitle: "Open up 'app/(tabs)/index.tsx' to start working on your app!",
-      goToProfile: "Go to Profile",
-      goToSettings: "Go to Settings",
-      navigationTitle: "Home",
-      dnsConnected: "Connected",
-      dnsDisconnected: "Not configured",
-      dnsStatus: "DNS Status",
-      configureButton: "Configure DNS",
-      configure: "Configure",
-      quickActions: {
-        title: "Quick Actions",
-        newChat: "New Chat",
-        newChatDescription: "Start a new DNS conversation",
-        viewLogs: "View Logs",
-        viewLogsDescription: "Inspect DNS query history",
-      },
-      recentChats: {
-        title: "Recent Chats",
-        footer: "Your latest conversations",
-      },
-      allChats: "All Chats",
-      allChatsDescription: "Open the full chat list",
-    },
-    profile: {
-      title: "{{user}}'s Profile",
-      navigationTitle: "Profile",
-      noChatsYet: "No chats yet",
-      defaultUser: "User",
-      avatarLabel: "Profile avatar",
-      memberSince: "First chat {{date}}",
-      alerts: {
-        clearDataTitle: "Clear All Data",
-        clearDataMessage:
-          "This will delete all your chats and messages. This action cannot be undone.",
-        clearDataConfirm: "Clear Data",
-        clearDataSuccessTitle: "Data cleared",
-        clearDataSuccessMessage:
-          "All conversations were deleted from this device.",
-        clearDataErrorMessage:
-          "Unable to clear your local chat data. Please try again.",
-      },
-      statistics: {
-        title: "Statistics",
-        footer: "Your chat activity summary",
-        totalChats: "Total Conversations",
-        totalMessages: "Total Messages",
-        averageMessages: "Avg. Messages per Chat",
-      },
-      preferences: {
-        title: "Preferences",
-        settings: "Settings",
-        settingsDescription: "DNS, accessibility, and more",
-      },
-      data: {
-        title: "Data Management",
-        footer: "Manage your chat history and personal data",
-        clearAll: "Clear All Data",
-        clearAllDescription: "Delete all chats and messages",
-      },
-    },
     notFound: {
       title: "404",
       goHome: "Go to Home",
@@ -848,5 +691,3 @@ export const enUS = {
     },
   },
 } as const;
-
-export type EnUSMessages = typeof enUS;

@@ -1,5 +1,10 @@
 # Implementation Plans — DNSChat
 
+## Cycle 5 - 2026-09-05
+
+The cycle 1-4 plans are archived under `plans/archive/`. The September 2026 audit is recorded in `docs/technical/AUDIT-PLAN-2026-09.md`. This cycle removed test and source slop and executed measured performance work; see `CHANGELOG.md` for details.
+
+
 ## Cycle 4 — deep audit 2026-07-28 (planned against commit `749334c`)
 
 Release-closeout pass on `main` at `4.3.2`. Three parallel read-only auditors

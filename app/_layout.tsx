@@ -150,7 +150,6 @@ function RootLayoutContent() {
         name="chat/[threadId]"
         options={{ headerBackTitle: "", title: "" }}
       />
-      <Stack.Screen name="profile/[user]" />
       {/* stackPresentation is a mount-time native prop: setting it from inside
           the route body runs a layout effect after the screen is already
           pushed, so it must be declared here. */}

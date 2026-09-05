@@ -146,8 +146,6 @@ Earlier 4.0.14 baseline evidence (`2026-05-22`, Xcode `26.5` / `17F42`, SDK 56 b
 Prior signed-release evidence (`2026-05-17`, Xcode `26.5` / `17F42`):
 
 - Debug simulator build passed on iOS 26.5.
-- AXe release simulator pass covered 10 feature groups for version `4.0.13`
-  build `43`.
 - Generic iOS Release build passed unsigned.
 - Generic iOS Release archive passed unsigned.
 - Physical-device compiled app install passed for version `4.0.8` build `36`.

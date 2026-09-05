@@ -112,7 +112,7 @@ const cloneNativeSanitizerConfig = (): NativeSanitizerConfig => ({
 /**
  * Get server configuration by hostname
  */
-export function getServerConfig(host: string): DNSServerConfig | undefined {
+function getServerConfig(host: string): DNSServerConfig | undefined {
   const direct = DNS_SERVER_BY_HOST[host];
   if (direct) return cloneServerConfig(direct);
   const normalized = (host.endsWith(".") ? host.replace(/\.+$/, "") : host)
@@ -135,13 +135,6 @@ export function getServerPort(host: string): number {
  */
 export function getDefaultServer(): DNSServerConfig {
   return cloneServerConfig(DEFAULT_DNS_SERVER_CONFIG);
-}
-
-/**
- * Get servers sorted by priority (for fallback chain)
- */
-export function getServersByPriority(): DNSServerConfig[] {
-  return DNS_SERVERS.map(cloneServerConfig);
 }
 
 /**
@@ -236,7 +229,7 @@ export const DNS_CONSTANTS = {
   MAX_REQUESTS_PER_WINDOW: 60, // 60 requests per minute (updated to match app logic)
 };
 
-export const DNS_SANITIZER_CONFIG: NativeSanitizerConfig = {
+const DNS_SANITIZER_CONFIG: NativeSanitizerConfig = {
   unicodeNormalization: "NFKD",
   spaceReplacement: DNS_CONSTANTS.SPACE_REPLACEMENT,
   maxLabelLength: DNS_CONSTANTS.MAX_DNS_LABEL_LENGTH,

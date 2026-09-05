@@ -15,8 +15,6 @@ import {
   DNS_CONSTANTS,
   sanitizeDNSMessageReference,
   getServerPort,
-  getLLMServers,
-  type DNSServerConfig,
 } from "../../modules/dns-native/constants";
 import { getRandomValues as expoGetRandomValues } from "expo-crypto";
 import { DNSLogService } from "./dnsLogService";
@@ -31,11 +29,12 @@ import {
 } from "./dnsWire";
 export { validateDecodedDnsResponseForTxt } from "./dnsWire";
 import { devLog, devLogArgs, devLogLazy } from "../utils/devLog";
+import { wait } from "../utils/wait";
 
 const DEFAULT_DNS_ZONE = DNS_CONSTANTS.DEFAULT_DNS_SERVER;
-// Invariant: total elapsed time for one queryLLM call across all servers,
-// retries, and transports must not exceed this budget.
-export const TOTAL_QUERY_BUDGET_MS = 20000;
+// Invariant: total elapsed time for one queryLLM call across retries and
+// transports must not exceed this budget.
+const TOTAL_QUERY_BUDGET_MS = 20000;
 const BACKGROUND_CANCELLATION_MESSAGE =
   "DNS query failed - app was backgrounded during network operation";
 
@@ -458,14 +457,6 @@ export function parseTXTResponse(txtRecords: string[]): string {
   }
 }
 
-type ServerHealthState = {
-  successes: number;
-  failures: number;
-  lastSuccessAt: number | null;
-  lastFailureAt: number | null;
-  lastError: string | null;
-};
-
 export class DNSService {
   private static readonly DEFAULT_DNS_SERVER = DNS_CONSTANTS.DEFAULT_DNS_SERVER;
   private static readonly DNS_PORT: number = DNS_CONSTANTS.DNS_PORT;
@@ -490,7 +481,6 @@ export class DNSService {
   private static backgroundListenerInitialized = false;
   private static requestHistory: number[] = [];
   private static appStateSubscription: { remove: () => void } | null = null;
-  private static serverHealth = new Map<string, ServerHealthState>();
   private static activeJSTransportCancellations = new Set<() => void>();
 
   private static isVerbose(): boolean {
@@ -567,56 +557,6 @@ export class DNSService {
         -this.MAX_REQUEST_HISTORY_SIZE,
       );
     }
-  }
-
-  private static getServerHealthKey(server: string, port: number): string {
-    return `${server}:${port}`;
-  }
-
-  private static recordServerSuccess(server: string, port: number): void {
-    const key = this.getServerHealthKey(server, port);
-    const current = this.serverHealth.get(key) ?? {
-      successes: 0,
-      failures: 0,
-      lastSuccessAt: null,
-      lastFailureAt: null,
-      lastError: null,
-    };
-    current.successes += 1;
-    current.lastSuccessAt = Date.now();
-    current.lastError = null;
-    this.serverHealth.set(key, current);
-  }
-
-  private static recordServerFailure(
-    server: string,
-    port: number,
-    error: string,
-  ): void {
-    const key = this.getServerHealthKey(server, port);
-    const current = this.serverHealth.get(key) ?? {
-      successes: 0,
-      failures: 0,
-      lastSuccessAt: null,
-      lastFailureAt: null,
-      lastError: null,
-    };
-    current.failures += 1;
-    current.lastFailureAt = Date.now();
-    current.lastError = error;
-    this.serverHealth.set(key, current);
-  }
-
-  static getServerHealthSnapshot(): Record<string, ServerHealthState> {
-    const snapshot: Record<string, ServerHealthState> = {};
-    for (const [key, value] of this.serverHealth.entries()) {
-      snapshot[key] = { ...value };
-    }
-    return snapshot;
-  }
-
-  static resetServerHealthForTests(): void {
-    this.serverHealth.clear();
   }
 
   /**
@@ -712,149 +652,96 @@ export class DNSService {
 
     const deadline = Date.now() + TOTAL_QUERY_BUDGET_MS;
 
-    // Build server fallback chain:
-    // - If user specified a server, use only that server (no fallback)
-    // - Otherwise, use currently online LLM servers in priority order.
-    //   ch.at stays allowlisted for explicit selection, but is skipped from
-    //   automatic fallback while it is known offline.
-    const serversToTry: DNSServerConfig[] = dnsServer
-      ? [
-          {
-            host: validateDNSServer(dnsServer),
-            port: getServerPort(dnsServer),
-            priority: 1,
-          },
-        ]
-      : getLLMServers();
-
-    if (this.isVerbose()) {
-      this.vLog(
-        `Server fallback chain: ${serversToTry.map((s) => `${s.host}:${s.port}`).join(" → ")}`,
-      );
-    }
+    const targetServer = dnsServer
+      ? validateDNSServer(dnsServer)
+      : this.DEFAULT_DNS_SERVER;
 
     // Start logging the query
     const queryId = DNSLogService.startQuery(message, logContext);
 
     try {
-      // Try each server in the fallback chain
-      for (const serverConfig of serversToTry) {
+      this.assertLifecycleActive(lifecycleToken);
+
+      // Prepare DNS query context for this server
+      const queryContext = this.createQueryContext(message, targetServer);
+
+      // Defense-in-depth: register the sanitized label and composed query name
+      // as sensitive values so any transport/native error text embedding them
+      // is redacted before it reaches the persisted Logs store.
+      DNSLogService.registerSensitiveValues(queryId, [
+        queryContext.label,
+        queryContext.queryName,
+      ]);
+
+      DNSLogService.addLog(queryId, {
+        id: `${queryId}-server-${targetServer}`,
+        timestamp: new Date(),
+        message: `Trying server: ${targetServer}:${queryContext.targetPort}`,
+        method: "native",
+        status: "attempt",
+        details: `Query: ${DNSLogService.redactTextForLog(queryContext.queryName)}`,
+      });
+
+      try {
+        const result = await this.queryWithServer(
+          queryContext,
+          queryId,
+          enableMockDNS,
+          allowExperimentalTransports,
+          deadline,
+          lifecycleToken,
+        );
         this.assertLifecycleActive(lifecycleToken);
-        const targetServer = serverConfig.host;
 
-        // Prepare DNS query context for this server
-        const queryContext = this.createQueryContext(message, targetServer);
-
-        // Defense-in-depth: register the sanitized label and composed query name
-        // as sensitive values so any transport/native error text embedding them
-        // is redacted before it reaches the persisted Logs store.
-        DNSLogService.registerSensitiveValues(queryId, [
-          queryContext.label,
-          queryContext.queryName,
-        ]);
-
-        DNSLogService.addLog(queryId, {
-          id: `${queryId}-server-${targetServer}`,
-          timestamp: new Date(),
-          message: `Trying server: ${targetServer}:${queryContext.targetPort}`,
-          method: "native",
-          status: "attempt",
-          details: `Query: ${DNSLogService.redactTextForLog(queryContext.queryName)}`,
-        });
+        // SECURITY: Final response sanitization choke point. The multipart
+        // parser already strips control/bidi characters, but applying it to
+        // the final response covers every transport (native, UDP, TCP, mock).
+        const safeResponse = sanitizeLLMResponseText(result.response);
 
         try {
-          const result = await this.queryWithServer(
-            queryContext,
+          await DNSLogService.endQuery(
             queryId,
-            enableMockDNS,
-            allowExperimentalTransports,
-            deadline,
-            lifecycleToken,
+            true,
+            safeResponse,
+            result.method,
           );
-          this.assertLifecycleActive(lifecycleToken);
-
-          // SECURITY: Final response sanitization choke point. The multipart
-          // parser already strips control/bidi characters, but applying it to
-          // the final response covers every transport (native, UDP, TCP, mock).
-          const safeResponse = sanitizeLLMResponseText(result.response);
-
-          this.recordServerSuccess(targetServer, queryContext.targetPort);
-          try {
-            await DNSLogService.endQuery(
-              queryId,
-              true,
-              safeResponse,
-              result.method,
-            );
-          } catch (logError) {
-            devLog(
-              "[DNSService] Failed to persist successful DNS query log",
-              logError,
-            );
-          }
-          this.assertLifecycleActive(lifecycleToken);
-          return safeResponse;
-        } catch (error) {
-          this.assertLifecycleActive(lifecycleToken);
-          if (
-            this.isQueryBudgetError(error) ||
-            this.isBackgroundCancellationError(error)
-          ) {
-            throw error;
-          }
-          const message = getErrorMessage(error);
-          this.vLog(
-            `Server ${targetServer}:${queryContext.targetPort} failed: ${message}`,
+        } catch (logError) {
+          devLog(
+            "[DNSService] Failed to persist successful DNS query log",
+            logError,
           );
-          this.recordServerFailure(
-            targetServer,
-            queryContext.targetPort,
-            message,
-          );
-
-          // Log server fallback if there's another server to try
-          const serverIndex = serversToTry.indexOf(serverConfig);
-          const nextServer = serversToTry[serverIndex + 1];
-          if (nextServer) {
-            DNSLogService.logServerFallback(
-              queryId,
-              `${targetServer}:${queryContext.targetPort}`,
-              `${nextServer.host}:${nextServer.port}`,
-            );
-          }
-
-          // Continue to next server
-          this.assertLifecycleActive(lifecycleToken);
-          continue;
         }
+        this.assertLifecycleActive(lifecycleToken);
+        return safeResponse;
+      } catch (error) {
+        this.assertLifecycleActive(lifecycleToken);
+        if (
+          this.isQueryBudgetError(error) ||
+          this.isBackgroundCancellationError(error)
+        ) {
+          throw error;
+        }
+        const message = getErrorMessage(error);
+        this.vLog(
+          `Server ${targetServer}:${queryContext.targetPort} failed: ${message}`,
+        );
+
+        this.assertLifecycleActive(lifecycleToken);
+        try {
+          await DNSLogService.endQuery(queryId, false, undefined, undefined);
+        } catch (logError) {
+          devLog(
+            "[DNSService] Failed to persist failed DNS query log",
+            logError,
+          );
+        }
+        this.assertLifecycleActive(lifecycleToken);
+
+        throw error;
       }
-
-      // All servers failed
-      this.assertLifecycleActive(lifecycleToken);
-      try {
-        await DNSLogService.endQuery(queryId, false, undefined, undefined);
-      } catch (logError) {
-        devLog("[DNSService] Failed to persist failed DNS query log", logError);
-      }
-      this.assertLifecycleActive(lifecycleToken);
-
-      // Provide comprehensive error guidance
-      const serverList = serversToTry
-        .map((s) => `${s.host}:${s.port}`)
-        .join(", ");
-      const troubleshootingSteps = [
-        "1. Check network connectivity and try a different network (WiFi <-> Cellular)",
-        `2. All LLM servers are unreachable: ${serverList}`,
-        "3. Check DNS logs in app Settings for detailed failure information",
-        "4. Network may be blocking DNS ports - contact network administrator",
-      ].join("\n");
-
-      throw new Error(
-        `DNS query failed after trying all servers (${serverList}).\n\nTroubleshooting steps:\n${troubleshootingSteps}`,
-      );
     } finally {
       // Guarantee query-lifecycle cleanup. endQuery() is a no-op once the query
-      // has already been finalized (success or all-servers-failed); this only
+      // has already been finalized (success or failure); this only
       // fires when an unexpected early throw (e.g. createQueryContext) bypassed
       // it, so abandoned queries never retain in-memory sensitive values.
       try {
@@ -1000,7 +887,7 @@ export class DNSService {
         });
 
         // Exponential backoff
-        await this.sleep(Math.min(retryDelay, remainingBudgetMs));
+        await wait(Math.min(retryDelay, remainingBudgetMs));
         this.assertLifecycleActive(lifecycleToken);
       }
     }
@@ -1571,18 +1458,6 @@ export class DNSService {
     });
   }
 
-  private static parseResponse(txtRecords: string[]): string {
-    return parseTXTResponse(txtRecords);
-  }
-
-  private static validateMessage(message: string): void {
-    return validateDNSMessage(message);
-  }
-
-  private static sanitizeMessage(message: string): string {
-    return sanitizeDNSMessage(message);
-  }
-
   private static normalizePort(port: number, server: string): number {
     if (!Number.isFinite(port)) {
       throw new Error(`Invalid DNS port for ${server}: ${String(port)}`);
@@ -1600,7 +1475,7 @@ export class DNSService {
     originalMessage: string,
     targetServer: string,
   ): DNSQueryContext {
-    const label = this.sanitizeMessage(originalMessage);
+    const label = sanitizeDNSMessage(originalMessage);
     const queryName = composeDNSQueryName(label, targetServer);
     const targetPort = this.normalizePort(
       getServerPort(targetServer),
@@ -1614,10 +1489,6 @@ export class DNSService {
       targetServer,
       targetPort,
     };
-  }
-
-  private static sleep(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   private static async withTimeout<T>(
@@ -2006,7 +1877,7 @@ export class DNSService {
       }
 
       this.assertLifecycleActive(lifecycleToken);
-      const response = this.parseResponse(txtRecords);
+      const response = parseTXTResponse(txtRecords);
       const successDuration = Date.now() - startTime;
       DNSLogService.logMethodSuccess(
         queryId,
@@ -2244,7 +2115,7 @@ export class DNSService {
       }
 
       this.assertLifecycleActive(lifecycleToken);
-      const response = this.parseResponse(txtRecords);
+      const response = parseTXTResponse(txtRecords);
       const testSuccessDuration = Date.now() - startTime;
       DNSLogService.logMethodSuccess(
         queryId,

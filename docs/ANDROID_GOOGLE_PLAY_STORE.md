@@ -181,7 +181,7 @@ NOTE: This app is for educational and demonstration purposes, showcasing DNS pro
 
 ### Screenshot Recommendations
 
-Existing Android screenshots live in `docs/chatdns_android_images/`. Review and resize/crop as needed before submission.
+Capture Android screenshots from the current compiled app and review them before submission.
 
 Capture these screens for best store presentation:
 
@@ -456,7 +456,7 @@ Before submitting for review, verify:
 | Version | Date | Notes |
 |---------|------|-------|
 | 4.0.28 | 2026-06-08 | TestFlight chat-error presentation fix, React Doctor config alignment, and staging target build 62 |
-| 4.0.26 | 2026-06-05 | Premium/react-doctor hardening release packaging, AXe E2E, and TestFlight staging build 60 |
+| 4.0.26 | 2026-06-05 | Premium/react-doctor hardening release packaging and TestFlight staging build 60 |
 | 4.0.25 | 2026-06-05 | React Compiler cleanliness pass and react-doctor 100/100 |
 | 4.0.24 | 2026-06-04 | Production-readiness hardening after App Store submission |
 | 4.0.23 | 2026-06-04 | TestFlight/App Store submission package, screenshot renewal, and docs sync |
@@ -472,7 +472,7 @@ Before submitting for review, verify:
 | 4.0.13 | 2026-05-17 | Clawpatch hardening, DNS/native validation, release-gate and UI regression coverage |
 | 4.0.12 | 2026-05-15 | Dark-mode navigation chrome fix, chat composer scroll stability, external link allowlist |
 | 4.0.11 | 2026-05-15 | Expo Router chat route fix, route-owned toolbar actions, release docs sync |
-| 4.0.10 | 2026-05-15 | AXe simulator E2E coverage, accessibility identifiers, release diagnostics |
+| 4.0.10 | 2026-05-15 | Accessibility identifiers and release diagnostics |
 | 4.0.8 | 2026-05-14 | SDK patch alignment, encrypted-storage migration, DNS log redaction and validation hardening |
 | 4.0.7 | 2026-05-04 | Expo/RN patch alignment, permission cleanup, SecureStore backup hardening |
 | 3.6.0 | 2025-12-16 | Google Play Store documentation |
