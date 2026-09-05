@@ -75,14 +75,35 @@ jest.mock("@noble/hashes/sha2.js", () => {
   };
 });
 
-jest.mock("@noble/ciphers/aes.js", () => ({
-  gcm: () => ({
-    encrypt: (plaintext) => Uint8Array.from(plaintext),
-    decrypt: (ciphertext) => Uint8Array.from(ciphertext),
-  }),
-}));
-
-// Keep default console behavior for debugging capability detection
+jest.mock("@noble/ciphers/aes.js", () => {
+  const { createCipheriv, createDecipheriv } = require("node:crypto");
+  return {
+    gcm: (key, nonce, aad) => ({
+      encrypt: (plaintext) => {
+        const cipher = createCipheriv("aes-256-gcm", key, nonce);
+        if (aad !== undefined) cipher.setAAD(aad);
+        return Uint8Array.from(
+          Buffer.concat([
+            cipher.update(plaintext),
+            cipher.final(),
+            cipher.getAuthTag(),
+          ]),
+        );
+      },
+      decrypt: (ciphertext) => {
+        const decipher = createDecipheriv("aes-256-gcm", key, nonce);
+        if (aad !== undefined) decipher.setAAD(aad);
+        decipher.setAuthTag(ciphertext.subarray(-16));
+        return Uint8Array.from(
+          Buffer.concat([
+            decipher.update(ciphertext.subarray(0, -16)),
+            decipher.final(),
+          ]),
+        );
+      },
+    }),
+  };
+});
 
 // Provide Web Crypto API for Node test environment if not already present.
 if (typeof global.crypto === "undefined") {

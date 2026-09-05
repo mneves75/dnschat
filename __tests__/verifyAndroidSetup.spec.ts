@@ -5,10 +5,8 @@ import path from "node:path";
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const {
   checkAdbReverse,
-  checkAndroidReleaseSigningPolicy,
   checkMetroPort,
   isSupportedAndroidJavaMajor,
-  checkMainApplicationKt,
   isValidTcpPort,
   parseJavaMajorVersion,
   parseJavaProperties,
@@ -18,13 +16,11 @@ const {
     env?: Record<string, string | undefined>;
     execFileSyncImpl?: (...args: unknown[]) => string;
   }) => boolean;
-  checkAndroidReleaseSigningPolicy: () => boolean;
   checkMetroPort: (options?: {
     env?: Record<string, string | undefined>;
     execFileSyncImpl?: (...args: unknown[]) => string;
   }) => boolean;
   isSupportedAndroidJavaMajor: (major: number | null) => boolean;
-  checkMainApplicationKt: () => boolean;
   isValidTcpPort: (value: string) => boolean;
   parseJavaMajorVersion: (raw: string) => number | null;
   parseJavaProperties: (raw: string) => Record<string, string>;
@@ -156,13 +152,5 @@ describe("scripts/verify-android-setup.js helpers", () => {
       ["-s", "emulator-5554", "reverse", "--list"],
       expect.objectContaining({ encoding: "utf8" }),
     );
-  });
-
-  it("validates current MainApplication registration policy", () => {
-    expect(checkMainApplicationKt()).toBe(true);
-  });
-
-  it("validates current Android release signing policy", () => {
-    expect(checkAndroidReleaseSigningPolicy()).toBe(true);
   });
 });

@@ -212,7 +212,7 @@ describe("repo policy: lint is portable (no global installs)", () => {
     expect(fs.existsSync(".oxfmtrc.json")).toBe(true);
   });
 
-  // Both banned patterns must be caught in BOTH .ts and .tsx sources. ast-grep
+  // Each rule family must be caught in BOTH .ts and .tsx sources. ast-grep
   // treats Tsx and TypeScript as separate languages, so a single-language rule
   // silently misses half the codebase - which is how this gate first shipped.
   it.each([
@@ -247,16 +247,6 @@ describe("repo policy: lint is portable (no global installs)", () => {
       "no-tautological-jest-equality",
     ],
     [
-      "tautological-member-expect.ts.txt",
-      "tautological-member-expect.ts",
-      "no-tautological-jest-equality-ts",
-    ],
-    [
-      "tautological-subscript-expect.tsx.txt",
-      "tautological-subscript-expect.tsx",
-      "no-tautological-jest-equality",
-    ],
-    [
       "direct-markdown-import.ts.txt",
       "direct-markdown-import.ts",
       "no-direct-markdown-renderer-imports-ts",
@@ -266,25 +256,28 @@ describe("repo policy: lint is portable (no global installs)", () => {
       "direct-markdown-import.tsx",
       "no-direct-markdown-renderer-imports",
     ],
+    // The rules match distinct AST alternatives (import_statement vs
+    // call_expression; identifier vs member vs subscript). Each alternative
+    // keeps its own planted violation so a narrowed rule cannot pass silently.
     [
       "direct-markdown-require.ts.txt",
       "direct-markdown-require.ts",
       "no-direct-markdown-renderer-imports-ts",
     ],
     [
-      "direct-markdown-require.tsx.txt",
-      "direct-markdown-require.tsx",
-      "no-direct-markdown-renderer-imports",
-    ],
-    [
-      "direct-markdown-dynamic.ts.txt",
-      "direct-markdown-dynamic.ts",
-      "no-direct-markdown-renderer-imports-ts",
-    ],
-    [
       "direct-markdown-dynamic.tsx.txt",
       "direct-markdown-dynamic.tsx",
       "no-direct-markdown-renderer-imports",
+    ],
+    [
+      "tautological-member-expect.ts.txt",
+      "tautological-member-expect.ts",
+      "no-tautological-jest-equality-ts",
+    ],
+    [
+      "tautological-subscript-expect.tsx.txt",
+      "tautological-subscript-expect.tsx",
+      "no-tautological-jest-equality",
     ],
   ])("rejects %s with %s", (fixtureName, sourceName, ruleId) => {
     const result = runLintOnFixture(fixtureName, sourceName);
@@ -295,32 +288,25 @@ describe("repo policy: lint is portable (no global installs)", () => {
     expect(output).toContain(ruleId);
   });
 
-  it("accepts a Jest equality assertion with an independent expected value", () => {
-    const result = runLintOnFixture(
-      "valid-independent-expect.ts.txt",
-      "valid-independent-expect.ts",
-    );
+  it.each([
+    ["valid-glass-import.ts.txt", "valid-glass-import.ts"],
+    ["valid-glass-import.tsx.txt", "valid-glass-import.tsx"],
+    ["valid-native-module.ts.txt", "valid-native-module.ts"],
+    ["valid-native-module.tsx.txt", "valid-native-module.tsx"],
+    ["valid-markdown-import.ts.txt", "valid-markdown-import.ts"],
+    ["valid-markdown-import.tsx.txt", "valid-markdown-import.tsx"],
+    ["valid-call-expect.ts.txt", "valid-call-expect.ts"],
+    ["valid-call-expect.tsx.txt", "valid-call-expect.tsx"],
+  ])("accepts the valid ast-grep control %s", (fixtureName, sourceName) => {
+    const result = runLintOnFixture(fixtureName, sourceName);
     const output = `${result.stdout}${result.stderr}`;
 
     expect(result.error).toBeUndefined();
     expect(result.status).toBe(0);
-    expect(output).not.toContain("no-tautological-jest-equality");
+    expect(output).not.toMatch(
+      /no-(legacy-liquid-glass|native-liquid-glass|direct-markdown-renderer|tautological-jest)/,
+    );
   });
-
-  it.each([
-    ["valid-call-expect.ts.txt", "valid-call-expect.ts"],
-    ["valid-call-expect.tsx.txt", "valid-call-expect.tsx"],
-  ])(
-    "accepts a relationship asserted across separate call evaluations in %s",
-    (fixtureName, sourceName) => {
-      const result = runLintOnFixture(fixtureName, sourceName);
-      const output = `${result.stdout}${result.stderr}`;
-
-      expect(result.error).toBeUndefined();
-      expect(result.status).toBe(0);
-      expect(output).not.toContain("no-tautological-jest-equality");
-    },
-  );
 
   it.each(OXLINT_VIOLATION_FIXTURES)(
     "rejects Oxlint fixture %s with %s",

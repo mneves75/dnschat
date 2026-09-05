@@ -1,0 +1,3 @@
+const RNDNSModule = "RNDNSModule";
+
+export const moduleName = <span>{RNDNSModule}</span>;

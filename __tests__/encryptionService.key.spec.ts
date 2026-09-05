@@ -27,6 +27,29 @@ describe("encryptionService key handling", () => {
     delete (globalThis as { localStorage?: unknown }).localStorage;
   });
 
+  it("encrypts with AES-GCM, round-trips, and rejects tampered ciphertext", async () => {
+    jest.resetModules();
+    const { encryptString, decryptString, EncryptionPayloadCorruptionError } =
+      require("../src/services/encryptionService") as typeof import("../src/services/encryptionService");
+    const plaintext = "known plaintext for AES-GCM authentication";
+    const encrypted = await encryptString(plaintext);
+    const [prefix, version, nonceHex, cipherHex] = encrypted.split(":");
+    const ciphertext = Buffer.from(cipherHex!, "hex");
+
+    expect(ciphertext.subarray(0, Buffer.byteLength(plaintext))).not.toEqual(
+      Buffer.from(plaintext),
+    );
+    expect(ciphertext).toHaveLength(Buffer.byteLength(plaintext) + 16);
+    await expect(decryptString(encrypted)).resolves.toBe(plaintext);
+
+    ciphertext[0] = ciphertext[0]! ^ 1;
+    await expect(
+      decryptString(
+        `${prefix}:${version}:${nonceHex}:${ciphertext.toString("hex")}`,
+      ),
+    ).rejects.toBeInstanceOf(EncryptionPayloadCorruptionError);
+  });
+
   it("persists generated key using a valid SecureStore key name", async () => {
     const originalWorkerId = process.env["JEST_WORKER_ID"];
     delete process.env["JEST_WORKER_ID"];

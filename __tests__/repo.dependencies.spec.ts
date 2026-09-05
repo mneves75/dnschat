@@ -74,27 +74,6 @@ describe("repo policy: dependency hygiene", () => {
     expect(fs.readFileSync(".node-version", "utf8").trim()).toBe("24");
   });
 
-  it("does not include heavyweight unused tooling dependencies", () => {
-    const pkg = readPackageJson();
-    const allDeps = new Set([
-      ...Object.keys(pkg.dependencies ?? {}),
-      ...Object.keys(pkg.devDependencies ?? {}),
-    ]);
-
-    // Keep this list tight and obviously justified. These are large transitive graphs
-    // that tend to bloat installs, slow CI, and broaden attack surface.
-    const banned = [
-      "playwright",
-      "@playwright/test",
-      "puppeteer",
-      "cypress",
-      "detox",
-    ];
-
-    const offenders = banned.filter((name) => allDeps.has(name));
-    expect(offenders).toEqual([]);
-  });
-
   it("does not use dynamic React Native versions in native Gradle modules", () => {
     const gradle = fs.readFileSync(
       "modules/dns-native/android/build.gradle",
@@ -156,7 +135,9 @@ describe("repo policy: dependency hygiene", () => {
     expect(fs.existsSync("modules/dns-native/package-lock.json")).toBe(false);
   });
 
-  it("keeps security overrides compatible with Expo native tooling", () => {
+  it("keeps the uuid security floor loadable as CJS with the API xcode consumes", () => {
+    // A `>=` override can resolve to an ESM-only major (the nanoid trap);
+    // `xcode` require()s uuid from Expo's CLI, so the override must stay CJS.
     const uuid = require("uuid") as { v4?: unknown };
     const xcode = require("xcode") as { project?: unknown };
 

@@ -1,0 +1,3 @@
+import { LiquidGlassWrapper } from "../components/LiquidGlassWrapper";
+
+export const wrapper = <LiquidGlassWrapper />;

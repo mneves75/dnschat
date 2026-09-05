@@ -1,5 +1,5 @@
 import dnsPacket from "dns-packet";
-import { NativeDNS } from "../index";
+import { DNSError, DNSErrorType, NativeDNS } from "../index";
 import { sanitizeDNSMessageReference } from "../constants";
 
 function composeDNSQueryName(label: string, dnsServer: string): string {
@@ -109,6 +109,73 @@ describe("DNS packet compatibility", () => {
     expect(() =>
       native.parseMultiPartResponse(["1/2:hello", "1/2:hola", "2/2:world"]),
     ).toThrow(/Conflicting content/);
+  });
+
+  it("should parse single response correctly", () => {
+    const native = new NativeDNS();
+    const txtRecords = ["Hello world from AI"];
+    const result = native.parseMultiPartResponse(txtRecords);
+    expect(result).toBe("Hello world from AI");
+  });
+
+  it("should handle unordered multi-part response", () => {
+    const native = new NativeDNS();
+    const txtRecords = ["3/3:assistant!", "1/3:Hello ", "2/3:from AI "];
+    const result = native.parseMultiPartResponse(txtRecords);
+    expect(result).toBe("Hello from AI assistant!");
+  });
+
+  it("should handle incomplete multi-part response", () => {
+    const native = new NativeDNS();
+    const txtRecords = [
+      "1/3:Hello ",
+      "3/3:assistant!", // Missing part 2/3
+    ];
+
+    expect(() => native.parseMultiPartResponse(txtRecords)).toThrow(
+      new DNSError(
+        DNSErrorType.INVALID_RESPONSE,
+        "Incomplete multi-part response: got 2 parts, expected 3",
+      ),
+    );
+  });
+
+  it("should handle empty response", () => {
+    const native = new NativeDNS();
+    expect(() => native.parseMultiPartResponse([])).toThrow(
+      new DNSError(DNSErrorType.INVALID_RESPONSE, "No TXT records to parse"),
+    );
+  });
+
+  it("rejects responses that become empty after sanitization", () => {
+    const native = new NativeDNS();
+    const cases = [
+      ["\u202E"],
+      ["\u0000"],
+      ["\u202E", "\u0000"],
+      ["1/2:\u202E", "2/2:\u2066"],
+    ];
+
+    for (const txtRecords of cases) {
+      expect(() => native.parseMultiPartResponse(txtRecords)).toThrow(
+        new DNSError(DNSErrorType.INVALID_RESPONSE, "Received empty response"),
+      );
+    }
+  });
+
+  it("sanitizes non-empty plain and multipart responses before returning", () => {
+    const native = new NativeDNS();
+    expect(native.parseMultiPartResponse(["\u202Eresponse"])).toBe("response");
+    expect(native.parseMultiPartResponse(["1/1:\u2066response"])).toBe(
+      "response",
+    );
+  });
+
+  it("rejects mixed plain and numbered TXT records", () => {
+    const native = new NativeDNS();
+    expect(() =>
+      native.parseMultiPartResponse(["plain response", "1/1:part"]),
+    ).toThrow("Mixed plain and multipart TXT records");
   });
 
   it("keeps Unicode input DNS-safe by folding diacritics", () => {

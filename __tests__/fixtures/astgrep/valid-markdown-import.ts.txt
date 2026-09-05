@@ -1,0 +1,3 @@
+import { SafeMarkdown } from "../components/SafeMarkdown";
+
+export const renderMarkdown = SafeMarkdown;

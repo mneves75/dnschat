@@ -74,6 +74,19 @@ describe("DNS Service helpers", () => {
       expect(result).toBe("Hello from AI assistant!");
     });
 
+    it("reassembles multipart responses containing newlines", () => {
+      const records = ["1/2:Hello\nWorld", "2/2:!"];
+      const result = parseTXTResponse(records);
+      expect(result).toBe("Hello\nWorld!");
+    });
+
+    it("throws on duplicate multipart part numbers", () => {
+      const records = ["1/2:Hel", "1/2:lo"];
+      expect(() => parseTXTResponse(records)).toThrow(
+        /Conflicting content for part/,
+      );
+    });
+
     it("throws on incomplete multi-part response", () => {
       const input = ["1/3:Hello ", "3/3:assistant!"];
       expect(() => parseTXTResponse(input)).toThrow(
@@ -337,13 +350,6 @@ describe("DNS Service helpers", () => {
       }
       return order;
     };
-
-    if (typeof rawGetOrder !== "function") {
-      it("exposes getMethodOrder for test via private access", () => {
-        expect(typeof rawGetOrder).toBe("function");
-      });
-      return;
-    }
 
     it("returns native→udp→tcp when experimental transports enabled", () => {
       const order = getOrder(false, true);

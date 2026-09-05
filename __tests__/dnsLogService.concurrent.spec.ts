@@ -209,6 +209,21 @@ describe("DNSLogService concurrent query isolation", () => {
     expect(dnsLogServiceInternals.cleanupIntervalId).toBeNull();
   });
 
+  it("initializes cleanup scheduler only once", async () => {
+    jest.useFakeTimers();
+    const setIntervalSpy = jest.spyOn(global, "setInterval");
+    try {
+      await DNSLogService.initializeCleanupScheduler();
+      await DNSLogService.initializeCleanupScheduler();
+
+      expect(setIntervalSpy).toHaveBeenCalledTimes(1);
+    } finally {
+      DNSLogService.stopCleanupScheduler();
+      setIntervalSpy.mockRestore();
+      jest.useRealTimers();
+    }
+  });
+
   it("attributes failed queries to the last attempted transport instead of mock", async () => {
     const queryId = DNSLogService.startQuery("gamma");
 

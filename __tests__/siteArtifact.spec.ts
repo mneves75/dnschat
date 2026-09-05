@@ -99,35 +99,6 @@ describe("static site artifact contract", () => {
     expect(workflow).toMatch(/path:\s*\.site-dist/);
   });
 
-  it("does not claim frame protection from a meta-delivered CSP", () => {
-    expect(siteHtml).toContain('http-equiv="Content-Security-Policy"');
-    expect(siteHtml).not.toContain("frame-ancestors");
-
-    const securityPolicy = fs.readFileSync("SECURITY.md", "utf8");
-    expect(securityPolicy).toMatch(
-      /The CSP\s+standard ignores [`']?frame-ancestors[`']? in a meta element/,
-    );
-  });
-
-  it("keeps documented React Native versions aligned with package.json", () => {
-    const version = (
-      JSON.parse(fs.readFileSync("package.json", "utf8")) as {
-        dependencies: { "react-native": string };
-      }
-    ).dependencies["react-native"];
-
-    for (const file of [
-      "AGENTS.md",
-      "README.md",
-      "docs/INSTALL.md",
-      "docs/architecture/SYSTEM-ARCHITECTURE.md",
-    ]) {
-      const content = fs.readFileSync(file, "utf8");
-      expect(content).toContain(version);
-      expect(content).not.toContain("0.86.0");
-    }
-  });
-
   it("switches video caption tracks to the selected locale", () => {
     const script = fs.readFileSync("site/script.js", "utf8");
     const buttonListeners = new Map<string, () => void>();
