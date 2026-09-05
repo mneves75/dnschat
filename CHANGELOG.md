@@ -36,9 +36,11 @@ upload or production promotion.
   cloned the whole store each time.
 - Build the Markdown parser once instead of on every render of every message;
   the renderer's own defaults were rebuilding it per bubble.
-- Stop mounting hidden bottom sheets, share one Reduce Transparency
-  subscription across glass surfaces, and read window dimensions once per
-  message list instead of once per row.
+- Stop mounting the modal subtree of hidden bottom sheets, share one Reduce
+  Transparency subscription across glass surfaces, and read window dimensions
+  once per message list instead of once per row. A closed sheet still runs its
+  own hooks, so its animated values and dimensions subscription are still
+  created; only the modal and its children are skipped.
 - Ship the in-app icon at the size it renders, cutting 1.1 MB from the bundle
   and its decoded bitmap from 4 MB to 256 KB.
 
