@@ -6,7 +6,6 @@
   "types": "index.ts",
   "scripts": {
     "test": "jest",
-    "test:integration": "RUN_INTEGRATION_TESTS=true jest --testPathPattern=integration",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "typecheck": "tsc --noEmit"

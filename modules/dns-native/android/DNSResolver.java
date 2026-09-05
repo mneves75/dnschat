@@ -1442,6 +1442,7 @@ public class DNSResolver {
         boolean jumped = false;
         int jumps = 0;
         boolean terminated = false;
+        int expandedLength = 1; // Include the terminating root label.
 
         while (currentOffset < data.length) {
             int len = data[currentOffset] & 0xFF;
@@ -1482,6 +1483,10 @@ public class DNSResolver {
             currentOffset += 1;
             if (currentOffset + len > data.length) {
                 throw new DNSError(DNSError.Type.QUERY_FAILED, "DNS response name truncated");
+            }
+            expandedLength += len + 1;
+            if (expandedLength > MAX_QNAME_LENGTH) {
+                throw new DNSError(DNSError.Type.QUERY_FAILED, "DNS response name exceeds 255 bytes");
             }
             if (name.length() > 0) {
                 name.append('.');

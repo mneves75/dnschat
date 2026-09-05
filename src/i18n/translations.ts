@@ -47,7 +47,3 @@ export function resolveLocale(candidate?: string | null): SupportedLocale {
 
   return DEFAULT_LOCALE;
 }
-
-export function isSupportedLocale(locale: string): locale is SupportedLocale {
-  return SUPPORTED_LOCALE_OPTIONS.some((option) => option.locale === locale);
-}

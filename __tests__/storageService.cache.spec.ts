@@ -68,6 +68,27 @@ describe("StorageService in-memory chats cache", () => {
     expect(finalChats[0].messages[0].content).toBe("edited");
   });
 
+  it("round-trips chat and message dates through encrypted persistence", async () => {
+    let currentStorage: string | null = null;
+    mockAsyncStorage.getItem.mockImplementation(async () => currentStorage);
+    mockAsyncStorage.setItem.mockImplementation(async (_key, value) => {
+      currentStorage = value;
+    });
+    const chat = await StorageService.createChat("Date round trip");
+    const message: Message = {
+      ...makeMessage("dated-error"),
+      timestamp: new Date("2000-02-29T23:59:59.123Z"),
+      status: "error",
+    };
+    await StorageService.addMessage(chat.id, message);
+    const [reloaded] = await StorageService.loadChats();
+
+    expect(currentStorage).toMatch(/^enc:v1:/);
+    expect(reloaded?.createdAt).toEqual(chat.createdAt);
+    expect(reloaded?.updatedAt).toBeInstanceOf(Date);
+    expect(reloaded?.messages).toEqual([message]);
+  });
+
   it("invalidates the cache when a save fails, forcing a fresh read", async () => {
     let currentStorage = JSON.stringify([makeChat("chat-1")]);
     mockAsyncStorage.getItem.mockImplementation(async () => currentStorage);

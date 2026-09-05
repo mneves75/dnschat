@@ -24,7 +24,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: 20.19.4
+          node-version-file: .node-version
 
       - name: Public redaction check
         run: node scripts/check-public-redaction.js

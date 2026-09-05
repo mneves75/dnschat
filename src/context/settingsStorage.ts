@@ -1,4 +1,4 @@
-import { SUPPORTED_LOCALE_OPTIONS, resolveLocale } from "../i18n/translations";
+import { resolveLocale } from "../i18n/translations";
 import type { SupportedLocale } from "../i18n/translations";
 // Import from the lightweight validation module, NOT dnsService: dnsService
 // require()'s react-native-udp / react-native-tcp-socket at module load, which
@@ -231,17 +231,5 @@ export function areAccessibilityConfigsEqual(
     left.screenReader === right.screenReader
   );
 }
-
-export const SettingsStorageHelpers = {
-  DEFAULT_SETTINGS,
-  DEFAULT_DNS_SERVER,
-  SETTINGS_STORAGE_KEY,
-  SETTINGS_VERSION,
-  SUPPORTED_LOCALE_OPTIONS,
-  resolveLocale,
-  migrateSettings,
-  sanitizeDnsServer,
-  normalizePreferredLocale,
-};
 
 export type { SupportedLocale };

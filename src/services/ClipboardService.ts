@@ -39,37 +39,4 @@ export class ClipboardService {
       // Error already logged by @react-native-clipboard/clipboard
     }
   }
-
-  /**
-   * Get current clipboard content
-   *
-   * @returns Promise<string> - Current clipboard text content
-   *
-   * NOTE: Some platforms require user permission to read clipboard.
-   * iOS shows system prompt on first access.
-   */
-  static async getString(): Promise<string> {
-    try {
-      const content = await Clipboard.getString();
-      return content;
-    } catch {
-      // Read failures are silent - return empty string
-      return "";
-    }
-  }
-
-  /**
-   * Check if clipboard contains text content
-   *
-   * @returns Promise<boolean> - True if clipboard has text
-   */
-  static async hasString(): Promise<boolean> {
-    try {
-      const content = await Clipboard.getString();
-      return content.length > 0;
-    } catch {
-      // Check failures are silent - return false
-      return false;
-    }
-  }
 }

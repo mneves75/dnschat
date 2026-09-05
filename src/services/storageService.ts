@@ -1,4 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { sha256 } from "@noble/hashes/sha2.js";
+import { bytesToHex, utf8ToBytes } from "@noble/hashes/utils.js";
 import type { Chat, Message } from "../types/chat";
 import * as Crypto from "expo-crypto";
 import { devLog, devLogLazy, devWarn, devWarnLazy } from "../utils/devLog";
@@ -146,15 +148,6 @@ export class StorageService {
     });
   }
 
-  private static serializeChats(chats: Chat[]): string {
-    return JSON.stringify(chats, (key, value) => {
-      if (key === "createdAt" || key === "updatedAt" || key === "timestamp") {
-        return new Date(value).toISOString();
-      }
-      return value;
-    });
-  }
-
   private static async createCorruptionBackupPayload(
     error: StorageCorruptionError,
     storedPayload: string,
@@ -167,7 +160,7 @@ export class StorageService {
 
     return JSON.stringify({
       timestamp,
-      error: error.message,
+      error: `sha256:${bytesToHex(sha256(utf8ToBytes(error.message)))}`,
       payload: protectedPayload,
       payloadWasEncrypted,
     });
@@ -181,7 +174,7 @@ export class StorageService {
     }));
 
     try {
-      const serializedChats = this.serializeChats(chats);
+      const serializedChats = JSON.stringify(chats);
 
       devLog("[StorageService] Serialized chats", {
         dataSize: serializedChats.length,

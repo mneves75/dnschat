@@ -15,8 +15,7 @@ Status:
 
 - iOS: uses Apple's Network framework (`NWConnection`) for DNS resolution.
 - Android: attempts a raw UDP TXT query first; if that fails, it falls back to
-  DNS-over-HTTPS only when the selected resolver is Cloudflare (`1.1.1.1`),
-  then to a legacy resolver (dnsjava).
+  the legacy resolver (dnsjava). It does not use DNS-over-HTTPS.
 
 Note: In the DNSChat app, the TypeScript layer controls the overall transport
 order (native -> UDP -> TCP -> mock). The Android native module also has its own
@@ -67,3 +66,13 @@ const response = nativeDNS.parseMultiPartResponse(txtRecords);
 pnpm install --frozen-lockfile
 pnpm run test:native
 ```
+
+Run these commands from the repository root. The Jest suite tests the
+TypeScript bridge with mocked native modules. Its Android JVM harness also
+compiles and executes the real `DNSResolver.java` with platform boundary
+stubs; it requires JDK 17 or 21. These tests do not establish compiled-app
+behavior on iOS or Android, or device performance.
+
+For native runtime proof, use the compiled-app scenarios and build commands in
+[the development guide](../../docs/agents/development.md). There is no wired
+iOS XCTest target or device integration command in this package.

@@ -810,6 +810,14 @@ async function runHarness() {
         };
       }
 
+      if (attempt.status === "success") {
+        finalResponse = reduceTxtRecords(attempt.txtRecords);
+        if (!finalResponse) {
+          attempt.status = "failure";
+          attempt.error = "No complete TXT response returned";
+        }
+      }
+
       const harnessAttempt: HarnessAttempt = {
         method,
         ...attempt,
@@ -819,7 +827,6 @@ async function runHarness() {
 
       if (attempt.status === "success") {
         finalStatus = "success";
-        finalResponse = reduceTxtRecords(attempt.txtRecords);
         break;
       }
     }

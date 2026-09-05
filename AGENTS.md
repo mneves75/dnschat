@@ -1,186 +1,133 @@
-# AGENTS.md - Project Navigation for Coding Agents
+# DNSChat agent contract
 
-This file provides a fast, practical map of the repo so agents can orient quickly and make safe changes.
+Shared project instructions for Codex and Claude Code. Read this file first;
+CLAUDE.md imports it. User instructions take precedence over skill procedures.
 
-## Start Here
+## Start and scope
 
-- Read `CLAUDE.md` for architecture, commands, and transport order.
-- Read `docs/README.md` for the documentation index.
-- Read `docs/technical/SPECIFICATION.md` before broad review, security work, or behavior changes; it is the current product and engineering behavior contract.
-- Read `SECURITY.md`, `docs/data-inventory.md`, and `docs/model-registry.md` before privacy, storage, logging, networking, or release-readiness changes.
+1. Inspect `git status -sb`. Preserve unrelated changes; stay in the requested checkout.
+2. Read `MEMORY.md` and the relevant `memory/` journal for current state.
+3. Read `docs/technical/SPECIFICATION.md` for behavior; `docs/README.md` indexes supporting references.
+4. Read `docs/agents/development.md` for build, debug, worktree and verification mechanics.
+5. For networking, storage, logging or release work, also read `SECURITY.md`, `docs/data-inventory.md`, `docs/model-registry.md` and `docs/technical/DNS-PROTOCOL-SPEC.md`.
 
-## Execution Standards
+An audit or explanation alone is read-only. A request to implement authorizes
+reversible in-scope edits and validation. Push, publish, deployment and destructive
+operations require explicit authorization. Do not ask again for an authorized step.
 
-- Keep work scoped to the requested outcome and this project's requirement contract; do not expand into adjacent improvements without a clear need.
-- Prefer the simplest robust design that satisfies the requirement and remains easy to review and maintain.
-- Choose performance techniques only when justified by measured constraints and the existing architecture.
-- Evaluate proposals against evidence, requirements, risk, and maintainability rather than their source.
-- Match validation depth to risk. Stop when the requested outcome has sufficient evidence, and report any remaining verification gap precisely.
+For substantial work, write acceptance criteria and a bounded plan. The primary
+agent owns requirements, architecture, integration and acceptance. Delegate only
+independent, substantial work with explicit file ownership and proof requirements;
+subagents do not delegate again. Serialize native builds and device interaction.
+Batch independent reads; keep the primary agent working on a separate part while
+reviewers run. Use targeted edits and tests sized to the behavior being changed.
 
-## What This App Is
+Report concise progress during long runs. Preserve the objective, decisions,
+paths and proof across compaction. Stop when acceptance criteria and required
+checks are satisfied; state actual blockers without inventing certainty. Model
+configuration belongs to the harness, not this app. Current prompting references:
+[Claude Fable 5.1](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/prompting-claude-fable-5-1)
+and [GPT-6 Astra](https://developers.openai.com/api/docs/guides/latest-model?model=gpt-6-astra#prompting-best-practices).
+These references were checked on 2026-09-04. Keep model/effort tuning in the
+harness; deeper reasoning does not require longer replies or repeated gates.
 
-DNSChat is an Expo React Native app that sends short prompts as DNS TXT queries and renders responses. Development and release builds use the compiled native app, not Expo Go or Expo dev-client.
+## Product and code map
 
-**Stack**: Expo SDK 57 / React Native 0.86.3 / React 19.2.3 / TypeScript 6.0.x / Hermes / New Architecture
+DNSChat sends short prompts as DNS TXT queries. No accounts, API keys or tracking;
+local history is encrypted. DNS itself is observable and unauthenticated.
 
-The app's product promise is: no accounts, no API keys, no tracking, local encrypted history, and DNS-based prompt/response transport. DNS is observable infrastructure, so UX, docs, logs, and tests must never imply that DNS prompts are private.
+- Stack: Expo SDK 57, React Native 0.86.3, React 19.2.3, TypeScript 6, Hermes, New Architecture.
+- Default resolver: `llm.pieter.com:53`, the only automatic-chain server. `ch.at:53` is selectable but not an automatic fallback.
+- `entry.tsx` bootstraps crypto before `expo-router/entry`; `app/_layout.tsx` owns providers and initialization.
+- Routes exist only under `app/`. `src/navigation/screens/` contains screen components consumed by routes.
+- `src/services/dnsService.ts` owns transport orchestration; `dnsWire.ts` owns DNS encoding, decoding, TCP framing and response validation.
+- `src/services/storageService.ts`, `encryptionService.ts`, `dnsLogService.ts` own persistence, encryption and logs.
+- `src/context/settingsStorage.ts` owns defaults and settings migration.
+- `modules/dns-native/` owns native DNS and shared constants. Resolver mirrors also exist in `ios/DNSNative/` and `android/app/src/main/java/com/dnsnative/`; keep each platform's two copies identical.
+- `src/i18n/messages/en-US.ts` and `pt-BR.ts` own bilingual text.
+- `src/ui/theme/` and `DESIGN.md` own design tokens; `PRODUCT.md` owns product intent.
 
-## Key Entry Points
+## Behavior and security invariants
 
-- `entry.tsx` -> runtime bootstrap; imports crypto bootstrap, then `expo-router/entry`.
-- `app/_layout.tsx` -> root providers, onboarding gate, initialization hooks.
-- `app/(tabs)/_layout.tsx` -> tab bar and screen wiring (web override: `_layout.web.tsx`).
-- `app/chat/[threadId].tsx` -> dynamic chat thread route.
+- Keep the transport order native -> UDP -> TCP -> optional mock. Web uses mock; neither JS nor Android has DNS-over-HTTPS.
+- One absolute 20-second budget covers retries, backoff and transports. Each rung is capped at 10 seconds; native converts the deadline once to a monotonic budget capped at 9.5 seconds.
+- Backgrounding invalidates in-flight work and closes sockets/cancels native work. An expired or cancelled lifecycle cannot start another fallback or accept a stale result.
+- Prompt limit is 120 before sanitization; output is one lowercase alphanumeric/dash label of at most 63 characters. Do not change limits or sanitizer without native + JS tests and docs.
+- Resolver choices stay allowlisted in `modules/dns-native/constants.ts`. Never add arbitrary server input. Native accepts port 53 and the two LLM zones only; native allowlists must match each other and be a subset of the JS allowlist.
+- Root Android dnsjava names explicitly with `Name.fromString(queryName, Name.root)`; pin every query to its selected zone. Validate packet/question/answer boundaries and expanded DNS-name length.
+- Never log prompts, TXT responses, keys, credentials or device identifiers in production. Corruption handling must not store plaintext payload fragments in diagnostic metadata.
+- Render untrusted Markdown only through `SafeMarkdown`; no automatic remote images or uncontrolled external navigation. Review installed renderer defaults when upgrading it.
+- Native encryption keys live in SecureStore. Preserve Android backup/transfer exclusions. Browser storage is preview-only and is not a production secure-storage boundary.
+- No credentials, signing assets, `.env*` secrets, Firebase configs, device IDs, local paths or internal App Store identifiers in tracked files. Follow `docs/public-release-redaction.md`.
+- `DEVELOPMENT_TEAM` stays empty in the public Xcode project. Supply signing configuration locally at build time.
+- Dependency suppressions require an actual fix blocker, reachability argument and recheck date. Remove them when a compatible fix exists; preserve the consumer major in version floors.
 
-Routes live exclusively in `app/`. `src/navigation/screens/*.tsx` files are screen components consumed by routes — adding files there does not register a route. If you need a new route, create it under `app/` and import the screen.
+## Implementation conventions
 
-## Core Logic
+- Use pnpm exclusively; `pnpm-lock.yaml` is authoritative. Install with `pnpm install --frozen-lockfile`; never hand-edit the lockfile or installed dependencies.
+- Prefer deleting unused code and redundant ownership over adding wrappers. Keep validation at external boundaries and meaningful error/data-loss handling.
+- Add a failing behavioral regression before a bug fix. Do not assert comments, endorsements or implementation spellings as a substitute for behavior. Keep useful native/security structural gates and prove their positive controls.
+- React Compiler stays enabled. Add manual memoization only after profiling proves a compiler bailout and a benefit.
+- Reanimated shared values use `.get()`/`.set()`. Create render-used animated values with lazy `useState`; avoid render-time ref reads. Use compiler-supported cleanup rather than `finally` blocks in component/hook code.
+- Never add `react-native-reanimated/plugin`: `babel-preset-expo` already registers the worklets transform.
+- Use `useImessagePalette()`, `useResolvedColorScheme()` and `useResponsiveLayout()` for colors, theme and sizing; raw `useColorScheme()` ignores the web theme setting.
+- Use `appAlert()` instead of `Alert.alert`, which does not work on web. Preserve reduce-motion behavior, accessible labels/roles and touch targets.
+- Update both locales together. Do not add emoji/pictographic glyphs to tracked source or docs.
+- Register new routes under `app/`, then verify generated typed routes.
+- ast-grep uses `sgconfig.yml` with `ruleDirs: project-rules`; never pass a rule as the scan config. Bans need both TypeScript/Tsx rules and violation fixtures.
 
-- `src/services/dnsService.ts` -> DNS query pipeline orchestration (native -> UDP -> TCP -> mock).
-- `src/services/dnsWire.ts` -> DNS wire format: TXT query encoding, packet decoding, TCP framing, TXT extraction, and decoded-response validation (extracted so transport orchestration stays smaller without changing DNS behavior).
-- `src/services/dnsLogService.ts` -> log storage and cleanup scheduler.
-- `src/services/storageService.ts` -> encrypted local storage for chats/logs.
-- `src/services/encryptionService.ts` -> AES-GCM encryption helpers and SecureStore-backed key handling.
-- `src/context/settingsStorage.ts` -> settings persistence, default DNS server, and migration/coercion of invalid settings.
-- `src/i18n/messages/en-US.ts`, `src/i18n/messages/pt-BR.ts` -> bilingual copy; update both locales together.
-- `src/utils/appAlert.ts` -> cross-platform alert/confirm wrapper; use `appAlert()` instead of `Alert.alert` (no-op on react-native-web).
-- `src/ui/theme/resolvedColorScheme.ts` -> `useResolvedColorScheme()`; resolve the active light/dark scheme through this, never raw `useColorScheme` (web ignores `Appearance.setColorScheme`).
-- `modules/dns-native/` -> native DNS module (iOS/Android).
+## Validation and review
 
-## Requirement Contract
+Use the smallest relevant check while editing. The full closeout gate is
+`pnpm run verify:all`; run it before committing. It includes native module tests,
+security scans and video validation. For a full source/security sweep also run
+`asc doctor`, the local DNS harness, and the native build/runtime proof described
+in `docs/agents/development.md`. A skipped artifact check is not build evidence.
+Once required checks pass, repeat only for changed code, a new failure or a
+specific unresolved concern. State which behavior each check can establish.
 
-- Product behavior source of truth: `docs/technical/SPECIFICATION.md`.
-- DNS wire/protocol rules: `docs/technical/DNS-PROTOCOL-SPEC.md`.
-- System architecture and transport boundaries: `docs/architecture/SYSTEM-ARCHITECTURE.md`.
-- Data handling and retention: `docs/data-inventory.md`.
-- Model/provider claims: `docs/model-registry.md`.
-- Public security process: `SECURITY.md`.
+Visible changes require a real compiled-app UI pass. Argent is the default:
+read the relevant skills, call `list-devices`, prefer a running simulator/emulator,
+and use fresh accessibility/component-tree frames for taps. Never derive tap
+coordinates from screenshots. Expo Go and Expo dev-client are not valid proof.
+Record repeatable scenarios before the first action; saved QA flows need two
+unchanged complete passes. AXe is fallback only after an explicit request or a
+documented Argent blocker. At closeout, stop only Argent services for devices
+used by this session; do not stop another session's Metro.
 
-For any source-code sweep, map findings and fixes back to these requirements. Do not treat a lint/test pass as enough if behavior, docs, security posture, or native/JS parity drift from the requirement contract.
+For broad audits, inventory `app/`, `src/`, `modules/`, `scripts/`, tests,
+plugins, native config, site/marketing sources, CI and release/security docs.
+Map findings to the specification. Performance claims need a same-workload
+baseline, build mode, actual work counts and load-aware timings; simulator
+measurements do not establish hardware performance.
 
-## Configuration
+Run `$autoreview` through P3 after non-trivial edits. Verify findings against
+real code, fix in-scope defects, then rerun affected proof and one review pass.
+When Matt Pocock's code-review is requested, use the starting commit and the
+accepted requirements as the baseline; keep Standards and Spec findings separate.
 
-- `package.json` -> version source of truth.
-- `app.json` -> Expo config: `experiments.typedRoutes: true`, `experiments.reactCompiler: true`, plugins, `dnschat://` scheme.
-- `babel.config.js` -> React Compiler + production console stripping. Do NOT add `react-native-reanimated/plugin`: `babel-preset-expo` already registers the worklets plugin it re-exports, so listing it runs the transform twice.
-- `tsconfig.json` -> strict TS config.
-- `expo-env.d.ts` -> generated by typed-routes; gitignored, not manually edited.
+## Version and release
 
-## Commands (pnpm)
+`package.json` is the version source. Edit it first, then run
+`pnpm run sync-versions --bump-build`; inspect `sync-versions:dry`. Never manually
+edit version fields in app.json, Xcode or Gradle; Info.plist uses build variables.
+Update CHANGELOG.md under Unreleased during work and relevant behavior docs.
 
-- Dev: `pnpm run start`, `pnpm run ios`, `pnpm run android`, `pnpm run web`
-- Format: `pnpm run fmt:check` (check), `pnpm run fmt` (write)
-- Lint: `pnpm run lint`
-- Tests: `pnpm run test`
-- Runtime UI verification: Argent MCP is the default proof surface. Run
-  discovery (`describe`, screenshot, or `debugger-component-tree`) before any
-  tap — never guess coordinates — and call `stop-all-simulator-servers` at
-  session end. AXe (`pnpm run e2e:axe:*`) is opt-in fallback only (explicit
-  user request, or a documented Argent blocker); record the exact reason.
-  Full policy: `CLAUDE.md` -> "Argent MCP Runtime Verification".
-- Native module tests: `cd modules/dns-native && pnpm run test`
-- DNS harness: `pnpm run dns:harness --message "test message"`; add `--local-server` for offline UDP/TCP verification.
-- Security scan: `gitleaks detect --source . --redact --no-banner --config .gitleaks.toml`
-- React Doctor: `pnpm dlx react-doctor@latest --project chat-dns` (scope to this project; a bare run can report the sibling `paquera-mobile` from the parent workspace). Kept at `100/100`; see the React Compiler conventions in `CLAUDE.md` (Reanimated `.get()`/`.set()`, no `finally`, `useState` over `useRef` for create-once animated values).
-- Public redaction scan: `pnpm run verify:public-redaction`
-- iOS CLI build smoke: `xcodebuild clean build -workspace ios/DNSChat.xcworkspace -scheme DNSChat -configuration Debug -destination 'platform=iOS Simulator,name=iPhone 17'`. On a macOS 27 beta host, use `DEVELOPER_DIR=/Applications/Xcode-beta.app/Contents/Developer`; Xcode 26.6's build service can terminate silently on that host. If precompiled Expo modules were produced by an incompatible Swift compiler, run the release build from source pods with `EXPO_USE_PRECOMPILED_MODULES=0 pod install`, then restore the committed precompiled pod state after the build. The Podfile clamps pod targets to `IPHONEOS_DEPLOYMENT_TARGET >= 16.4` for newer toolchains.
-- iOS unsigned release smoke: `xcodebuild clean build -workspace ios/DNSChat.xcworkspace -scheme DNSChat -configuration Release -destination 'generic/platform=iOS' CODE_SIGNING_ALLOWED=NO`
-- iOS unsigned archive smoke: `xcodebuild clean archive -workspace ios/DNSChat.xcworkspace -scheme DNSChat -configuration Release -destination 'generic/platform=iOS' -archivePath /tmp/DNSChat.xcarchive CODE_SIGNING_ALLOWED=NO`
-- ASC local health: `asc doctor` (upload/submission checks require local ASC credentials)
-- iOS physical-device install: build the native `DNSChat` target for the device identifier and install the compiled `.app` with `xcrun devicectl device install app`; do not treat Expo Go as a valid full-app install because this repo depends on native DNS modules. Do not commit device names, UDIDs, local user paths, or profile identifiers to public docs.
-- TestFlight release: after signed archive/export, use `asc publish testflight --app <APP_ID> --ipa <IPA> --version <VERSION> --build-number <BUILD> --group <GROUPS> --wait`, then verify with `asc validate testflight` and `asc validate --app <APP_ID> --version <VERSION> --platform IOS`.
-- Version sync: `pnpm run sync-versions` (source = `package.json`); preview with `pnpm run sync-versions:dry`.
-- Individual verifies: `pnpm run typecheck:dns-native`, `pnpm run verify:ios-pods`, `verify:android`, `verify:android-16kb`, `verify:typed-routes`, `verify:react-compiler`, `verify:sdk-alignment`, `verify:dnsresolver-sync`, `verify:expo-doctor`.
-- Verify (full gate): `pnpm run verify:all` runs all of the above plus public redaction, lint, and tests. Release-facing UI/runtime work also needs an Argent simulator smoke/inspection pass when simulator automation is available (see Runtime UI verification above).
+A push is not an App Store release. TestFlight requires separate authorization
+and the protocol in `docs/App_store/Apple_App_Store/TESTFLIGHT.md`: final verified
+source, signed archive, IPA export, processed VALID upload, strict validation
+with zero errors/warnings. Changes after upload require a new build and upload.
+Use `vX.Y.Z-betaN` for staging; clean version tags require production promotion.
+A matching App Store version attachment needs separate explicit evidence.
+Before production submission, run `asc validate --strict` for the exact version
+and verify App Privacy in an authenticated web session; API validation does not
+establish whether privacy declarations are published.
 
-## Review / Security Sweep Protocol
+Preserve the iOS SceneDelegate bridge and UIApplicationSceneManifest until Expo
+provides equivalent support. Do not clean-prebuild without restoring the bridge
+and passing `__tests__/iosSceneLifecycle.spec.ts`. A successful launch response
+must be followed by process-survival and actual screen evidence.
 
-When asked for a broad review, "latest/best practices", "2026+", or a full source sweep:
-
-1. Use the relevant skills/workflows first (`$code-review`, `$security-review`, and React Native/iOS simulator skills when runtime evidence is needed).
-2. Confirm current official docs for unfamiliar or version-sensitive Expo, React Native, React Compiler, platform, or security guidance before changing code.
-3. Inventory all owned source surfaces: `app/`, `src/`, `modules/dns-native/`, `scripts/`, `__tests__/`, native config under `ios/` and `android/`, and release/security docs.
-4. Check security explicitly: prompt validation, DNS server allowlist, DNS query composition, TXT parsing, encrypted local storage, SecureStore key handling, logs/redaction, backup exclusions, native permissions, release signing, dependency overrides, and secret scanning.
-5. Preserve behavior with focused regression tests before cleanup/refactor edits when behavior is not already protected.
-6. Keep native and TypeScript DNS constants synchronized. Do not change `MAX_MESSAGE_LENGTH`, `MAX_DNS_LABEL_LENGTH`, server order, or sanitizer behavior without native + JS tests and docs updates.
-7. Finish with evidence: `pnpm run verify:all`, `cd modules/dns-native && pnpm run test`, `gitleaks detect --source . --redact --no-banner --config .gitleaks.toml`, `asc doctor`, and any platform/runtime smoke required by the touched area. For iOS release-readiness work, include `xcodebuild` Debug simulator build plus unsigned generic Release build/archive unless signing credentials are intentionally available. When signing is available, prefer stronger evidence: signed archive/export, TestFlight upload, `asc validate testflight`, App Store version validation, and physical-device compiled-app install when requested.
-
-## Versioning Rules
-
-- Update `package.json` first, then run `pnpm run sync-versions --bump-build`.
-- iOS/Android versions are synced via `scripts/sync-versions.js`.
-- Never edit `ios/` Xcode project version fields, `android/app/build.gradle` `versionName`/`versionCode`, or `app.json` `expo.version` by hand — `sync-versions` will overwrite them.
-- iOS `Info.plist` uses `$(MARKETING_VERSION)` / `$(CURRENT_PROJECT_VERSION)` build settings; do not hardcode versions there.
-
-## Release / TestFlight Protocol
-
-- TestFlight/staging tags use `vX.Y.Z-betaN`, starting at `beta1` and
-  incrementing for each candidate of the same version. Reserve the clean
-  `vX.Y.Z` tag for a separately authorized production promotion.
-- Treat the uploaded TestFlight binary as evidence only if it was archived after the final source, dependency, pod, version, and docs state was verified. If any release-affecting file changes after upload, bump the build number with `pnpm run sync-versions --bump-build`, rebuild, export, upload, and validate a new build.
-- Until the installed Expo release carries equivalent iOS 27 support, preserve `UIApplicationSceneManifest` and the local `SceneDelegate` bridge. Do not run `expo prebuild --clean` without restoring that bridge and passing `__tests__/iosSceneLifecycle.spec.ts`; a successful `devicectl` launch response is not sufficient without process-survival evidence.
-- Run `pnpm run verify:all` before signed archive/export. If `expo-doctor` requires an SDK patch package that the registry delays, do not weaken the global policy; use a one-command override only for the required package, update `package.json` and `pnpm-lock.yaml`, run `pod install` when native pods change, then rerun `verify:all`.
-- For TestFlight releases, require this evidence chain before claiming completion: signed archive succeeded, IPA export succeeded, `asc publish testflight --wait` returned `VALID`, and `asc validate testflight` has `0` errors and `0` warnings. If a matching App Store version record exists, `asc validate --app <APP_ID> --version <VERSION> --platform IOS` must have no blocking findings; if no matching App Store version record exists, document the exact blocker and treat it as App Store-submission state, not TestFlight processing state.
-- After release-facing UI, navigation, accessibility, or localization changes, exercise the changed flow on the compiled native app with Argent (policy: Runtime UI verification, in Commands above).
-- Keep App Store Connect internal IDs, build IDs, tester group names, signing identities, profile names, team IDs, device identifiers, and local paths out of public docs and commit messages. Record exact identifiers only in private release notes outside git.
-- Do not describe a build as attached to an App Store version unless `asc` or App Store Connect evidence specifically proves that relationship. A processed `VALID` TestFlight build and an updated App Store version are separate claims.
-
-## Apple Platforms (Swift / iOS 26)
-
-Before writing or reviewing Swift / iOS 26 / iPadOS 26 code (native DNS module under `modules/dns-native/ios/`, Liquid Glass parity, or any platform-version-sensitive API), read Xcode's bundled iOS 26 docs instead of relying on training memory — these APIs post-date the model knowledge cutoff:
-
-```
-/Applications/Xcode.app/Contents/PlugIns/IDEIntelligenceChat.framework/Versions/A/Resources/AdditionalDocumentation/
-```
-
-Covers Liquid Glass (`SwiftUI-`/`UIKit-`/`AppKit-`/`WidgetKit-Implementing-Liquid-Glass-Design.md`), `Swift-Concurrency-Updates.md`, `FoundationModels-Using-on-device-LLM-in-your-app.md`, `SwiftData-Class-Inheritance.md`, `StoreKit-Updates.md`, and others. Read the specific file; do not guess at iOS 26 API shapes.
-
-## Docs You Will Touch Often
-
-Architecture & spec:
-
-- `docs/architecture/SYSTEM-ARCHITECTURE.md`
-- `docs/technical/DNS-PROTOCOL-SPEC.md`
-- `docs/technical/SPECIFICATION.md`
-- `docs/technical/EXPO-DOCTOR-CONFIGURATION.md`
-
-Operational:
-
-- `docs/troubleshooting/COMMON-ISSUES.md`
-- `docs/data-inventory.md`
-- `docs/model-registry.md`
-
-Release:
-
-- `docs/ANDROID_RELEASE.md`, `docs/ANDROID_GOOGLE_PLAY_STORE.md`
-- `docs/App_store/Apple_App_Store/AppStoreConnect.md`, `TESTFLIGHT.md`
-- `CHANGELOG.md` (always update under `[Unreleased]` for non-trivial behavior changes)
-
-## Guardrails
-
-- Use pnpm as default package manager.
-- Keep iOS `DEVELOPMENT_TEAM` empty for public portability (enforced by `__tests__/repo.noCredentials.spec.ts`).
-- Keep signing assets local. Never commit certificates, private keys, `.p12` files, provisioning profiles, App Store Connect API keys, or temporary keychains created for archive/export.
-- Keep public docs privacy-clean. Follow `docs/public-release-redaction.md`; use placeholders for local paths, device names, device identifiers, App Store Connect internal UUIDs, tester group names, certificate IDs, team IDs, and profile names.
-- Never re-add `react-native-reanimated/plugin` to `babel.config.js` (duplicate worklets transform).
-- ast-grep rules load through `sgconfig.yml` (`ruleDirs: project-rules`), never by passing a rule file to `scan --config` - that loads zero rules and exits 0. Each ban needs a `Tsx` and a `TypeScript` rule file plus a fixture; `__tests__/repo.lint.spec.ts` runs the linter against `__tests__/fixtures/astgrep/` and proves the configured rule floor loads.
-- Do not pass `--passWithNoTests` to Jest in CI or the pre-commit hook; it turns a broken `testMatch` into a green build. `__tests__/repo.ci.spec.ts` asserts test discovery still finds at least 100 files.
-- Keep React Compiler enabled and avoid adding manual `useMemo`/`useCallback` unless profiling proves it is needed.
-- Do not add new files under `src/navigation/screens/` expecting routing to pick them up — add a route under `app/` and import the screen.
-- Do not change DNS prompt limits (`MAX_MESSAGE_LENGTH`, `MAX_DNS_LABEL_LENGTH`) without updating native constants and tests.
-- Do not add arbitrary DNS server input; server choices must stay in the allowlist in `modules/dns-native/constants.ts`.
-- Do not log prompts, TXT responses, encryption keys, device identifiers, or credentials in production paths (`__tests__/repo.noConsoleLog.spec.ts` enforces).
-- Do not commit `.env*`, App Store Connect keys, Android keystores, Firebase configs, or other secret-bearing files (`__tests__/repo.hygiene.spec.ts` enforces).
-- Every entry in `auditConfig.ignoreGhsas` (`pnpm-workspace.yaml`) needs a stated blocker, a reachability argument, and a recheck date. A suppression is only legitimate while no fixed version exists; once one ships, delete the entry and add a version floor to `overrides`.
-- Do not write emoji or pictographic glyphs in tracked source/docs (`__tests__/repo.noEmoji.spec.ts` enforces).
-- Keep user-facing copy bilingual; update `en-US` and `pt-BR` in the same change.
-- Run `pnpm run verify:all` before committing to catch drift early.
-
-## Package management
-
-- **Use pnpm exclusively.** Never use `npm install`, `yarn`, or `bun install` — they ignore `pnpm-lock.yaml` and create duplicate physical copies of every dependency.
-- Setup / CI: `pnpm install --frozen-lockfile`
-- Add dependency: `pnpm add <pkg>` · dev: `pnpm add -D <pkg>` · workspace pkg: `pnpm --filter <name> add <pkg>`
-- Run scripts: `pnpm <script>`
-- `node_modules/` is disposable: hardlinked views into the shared pnpm store. Deleting it is always safe; reinstall is fast and offline. Never commit or edit it.
-- `pnpm-lock.yaml` is the source of truth: commit it, never hand-edit.
+Keep current release state and unresolved provider-policy/authentication decisions
+in MEMORY.md and SECURITY.md. Never claim production readiness from a green gate
+while those decisions remain unresolved.

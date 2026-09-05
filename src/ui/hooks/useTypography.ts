@@ -1,13 +1,8 @@
 import {
   applyDynamicType,
-  Typography,
   getTypographyForPlatform,
 } from "../theme/liquidGlassTypography";
-import type {
-  TypographyKey,
-  TypographyScale,
-  TypographyStyle,
-} from "../theme/liquidGlassTypography";
+import type { TypographyScale } from "../theme/liquidGlassTypography";
 import { useFontSize } from "../../context/AccessibilityContext";
 
 /**
@@ -38,36 +33,3 @@ export const useTypography = (): TypographyScale => {
     ]),
   ) as TypographyScale;
 };
-
-/**
- * useSemanticTypography Hook
- * Returns semantic typography aliases that automatically
- * map to the correct platform-specific styles
- *
- * Usage:
- * ```typescript
- * const { screenTitle, body, button } = useSemanticTypography();
- * <Text style={screenTitle}>Screen Title</Text>
- * <Text style={body}>Body text</Text>
- * ```
- */
-export const useSemanticTypography = () => {
-  return Typography;
-};
-
-/**
- * useTypographyStyle Hook
- * Returns a specific typography style for the current platform
- *
- * Usage:
- * ```typescript
- * const bodyStyle = useTypographyStyle('body');
- * <Text style={bodyStyle}>Hello</Text>
- * ```
- */
-export const useTypographyStyle = (key: TypographyKey): TypographyStyle => {
-  const typography = useTypography();
-  return typography[key];
-};
-
-export default useTypography;

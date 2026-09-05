@@ -992,6 +992,7 @@ final class DNSResolver: NSObject {
         var jumped = false
         var jumps = 0
         var terminated = false
+        var expandedLength = 1 // Include the terminating root label.
 
         while currentOffset < bytes.count {
             let len = Int(bytes[currentOffset])
@@ -1031,6 +1032,10 @@ final class DNSResolver: NSObject {
             currentOffset += 1
             guard currentOffset + len <= bytes.count else {
                 throw DNSError.queryFailed("DNS response name truncated")
+            }
+            expandedLength += len + 1
+            guard expandedLength <= Self.maxQNameLength else {
+                throw DNSError.queryFailed("DNS response name exceeds 255 bytes")
             }
             let labelBytes = bytes[currentOffset..<(currentOffset + len)]
             guard let label = String(bytes: labelBytes, encoding: .utf8) else {

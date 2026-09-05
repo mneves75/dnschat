@@ -47,13 +47,6 @@ export const Material3Spacing = {
 } as const;
 
 /**
- * Get platform-appropriate spacing system
- */
-export const getSpacing = () => {
-  return Platform.OS === "ios" ? LiquidGlassSpacing : Material3Spacing;
-};
-
-/**
  * Touch Target Specifications
  * Minimum sizes for comfortable interaction
  *
@@ -81,12 +74,6 @@ export const getMinimumTouchTarget = (): number => {
   return Platform.OS === "ios"
     ? TouchTargets.ios.minimum
     : TouchTargets.android.minimum;
-};
-
-export const getRecommendedTouchTarget = (): number => {
-  return Platform.OS === "ios"
-    ? TouchTargets.ios.recommended
-    : TouchTargets.android.recommended;
 };
 
 /**
@@ -171,31 +158,6 @@ export const SafeAreaDefaults = {
 } as const;
 
 /**
- * Content Margins
- * Standard margins for different content types
- */
-
-export const ContentMargins = {
-  screen: Platform.OS === "ios" ? 20 : 16, // Screen edge margins
-  card: Platform.OS === "ios" ? 16 : 16, // Card internal padding
-  section: Platform.OS === "ios" ? 20 : 24, // Section spacing
-  list: Platform.OS === "ios" ? 16 : 16, // List item padding
-} as const;
-
-/**
- * Glass Container Spacing
- * Spacing between glass elements in GlassContainer
- * Controls morphing animation behavior
- */
-
-export const GlassContainerSpacing = {
-  tight: 8, // Tight spacing, subtle morphing
-  comfortable: 12, // Standard spacing
-  relaxed: 16, // Loose spacing, clear separation
-  spacious: 20, // Extra space between elements
-} as const;
-
-/**
  * Elevation/Shadow System
  * iOS uses shadows, Android uses elevation
  */
@@ -242,41 +204,6 @@ export const Elevation = {
           shadowOffset: { width: 0, height: 16 },
         }
       : 16,
-} as const;
-
-/**
- * Glass Effect Elevation (for interactive/prominent glass)
- * Stronger shadows for glass elements that need to stand out
- */
-
-export const GlassElevation = {
-  regular:
-    Platform.OS === "ios"
-      ? {
-          shadowColor: "#111827",
-          shadowRadius: 20,
-          shadowOpacity: 0.12,
-          shadowOffset: { width: 0, height: 8 },
-        }
-      : 3,
-  prominent:
-    Platform.OS === "ios"
-      ? {
-          shadowColor: "#0A84FF",
-          shadowRadius: 24,
-          shadowOpacity: 0.25,
-          shadowOffset: { width: 0, height: 10 },
-        }
-      : 8,
-  interactive:
-    Platform.OS === "ios"
-      ? {
-          shadowColor: "#0A84FF",
-          shadowRadius: 24,
-          shadowOpacity: 0.35,
-          shadowOffset: { width: 0, height: 10 },
-        }
-      : 8,
 } as const;
 
 /**

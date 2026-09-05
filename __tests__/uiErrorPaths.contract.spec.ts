@@ -52,21 +52,6 @@ describe("UI error-path hardening", () => {
     );
   });
 
-  it("GlassChatList mount load never locks the skeleton on rejection", () => {
-    expect(chatListSource).toContain(
-      'devWarn("[GlassChatList] Failed to load chats"',
-    );
-    // hasLoadedOnce is set from .finally, not only from the old success-only .then.
-    expect(chatListSource).not.toContain("loadChats().then(");
-    const mountBlock = chatListSource.slice(
-      chatListSource.indexOf("let isMounted = true;"),
-      chatListSource.indexOf("isMounted = false;"),
-    );
-    expect(mountBlock).toContain(".catch((loadError)");
-    expect(mountBlock).toContain(".finally(");
-    expect(mountBlock).toContain("if (isMounted && !hasLoadedOnce) {");
-  });
-
   it("GlassChatList re-arms dismissed errors on a new action", () => {
     // Both the create and refresh entry points reset the dismissed-error latch.
     const dismissedResets =

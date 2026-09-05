@@ -118,11 +118,12 @@ Correctness:
 
 Tests and tooling:
 
-- **TEST-02** `modules/dns-native/__tests__/concurrency.stress.test.ts` (337
+- **TEST-02 (resolved)** Removed `modules/dns-native/__tests__/concurrency.stress.test.ts` (337
   lines, in the CI `dns-native` job) never imports the module under test; every
   assertion is about its own `jest.fn()`. Its dedup case is tautological. It
   reads as evidence that the Swift ResumeGate race is covered; nothing in the
-  repo tests that. S to delete, M to replace with a real `NativeDNS` test.
+  repo tests that. The audit deleted it; native parser tests and compiled-app
+  checks remain, without claiming Swift race coverage.
 - **TEST-03** The shared `__tests__/mocks/react-native.js` omits `AppState`,
   `StatusBar`, `Appearance`, `TouchableWithoutFeedback` and `Settings`, so the
   Chat screen, `OnboardingContainer` and `GlassBottomSheet` cannot render in

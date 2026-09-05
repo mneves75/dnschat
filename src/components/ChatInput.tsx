@@ -22,7 +22,6 @@
  * target misalignment. Only inputWrapper (around TextInput) uses flex: 1 for
  * horizontal expansion in row layout.
  *
- * @reviewed-by John Carmack
  */
 
 import React, { useState, useRef } from "react";

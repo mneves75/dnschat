@@ -16,23 +16,7 @@ import {
 import { MESSAGE_CONSTANTS } from "../constants/appConstants";
 import { devLog, devWarn } from "../utils/devLog";
 
-type ChatStateContextValue = Pick<
-  ChatContextType,
-  "chats" | "currentChat" | "isLoading" | "error"
->;
-type ChatActionsContextValue = Omit<
-  ChatContextType,
-  "chats" | "currentChat" | "isLoading" | "error"
->;
-
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
-const ChatStateContext = createContext<ChatStateContextValue | undefined>(
-  undefined,
-);
-const ChatActionsContext = createContext<ChatActionsContextValue | undefined>(
-  undefined,
-);
-
 interface ChatProviderProps {
   children: ReactNode;
 }
@@ -41,7 +25,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
   const settings = useSettings();
   const [chats, setChats] = useState<Chat[]>([]);
   const [currentChat, setCurrentChat] = useState<Chat | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const sendInFlightRef = useRef(false);
 
@@ -202,29 +186,6 @@ export function ChatProvider({ children }: ChatProviderProps) {
     }
   };
 
-  /**
-   * CRITICAL BUG FIX (v3.0.0):
-   *
-   * This function previously had a stale closure bug where the `currentChat` variable
-   * captured at line 81 was used throughout the function, even after calling setCurrentChat
-   * multiple times. When updating the chats array via setChats(), the code compared against
-   * currentChat.id (the OLD/original value), but tried to update with new chat objects
-   * (updatedChat, chatWithAssistantPlaceholder, finalChat).
-   *
-   * This caused the chats array to NEVER update because:
-   * 1. currentChat.id was the ID from the START of the function
-   * 2. setCurrentChat() is async/batched, so currentChat doesn't update immediately
-   * 3. The map() comparison `chat.id === currentChat.id` would match the OLD chat
-   * 4. But we were trying to replace it with a NEW chat object with NEW messages
-   * 5. Result: Messages appeared in storage but NOT in the UI
-   *
-   * FIX: Use the freshly created chat object's ID instead of the stale currentChat.id:
-   * - Line 124: currentChat.id → updatedChat.id
-   * - Line 163: currentChat.id → chatWithAssistantPlaceholder.id
-   * - Line 222: currentChat.id → finalChat.id
-   *
-   * This ensures the chats array properly updates when messages are added.
-   */
   const sendMessage = async (content: string): Promise<void> => {
     devLog("[ChatContext] sendMessage called", {
       contentLength: content.length,
@@ -259,13 +220,8 @@ export function ChatProvider({ children }: ChatProviderProps) {
           }`
         : currentChat.title;
 
-    // SECURITY: Track assistant message ID for error handling.
-    // Must be declared outside try block so it's accessible in catch block.
-    // Avoids stale closure bug where 'chats' array would be captured at function
-    // definition time, not at error time.
+    // Keep the placeholder available to persist a failed response.
     let assistantMessage: Message | null = null;
-    let assistantMessageId: string | null = null;
-    let assistantMessagePersisted = false;
     let userMessagePersisted = false;
 
     try {
@@ -316,8 +272,6 @@ export function ChatProvider({ children }: ChatProviderProps) {
         status: "sending",
       };
 
-      // SECURITY: Capture message ID for error handling (see declaration above try block)
-      assistantMessageId = assistantMessage.id;
       const assistantPlaceholder = assistantMessage;
 
       devLog("[ChatContext] Created assistant placeholder", {
@@ -354,7 +308,6 @@ export function ChatProvider({ children }: ChatProviderProps) {
         chat.messages.push(assistantPlaceholder);
       });
       userMessagePersisted = true;
-      assistantMessagePersisted = true;
       devLog("[ChatContext] User message and assistant placeholder persisted");
 
       // Get AI response using DNS service (respects enableMockDNS setting).
@@ -427,43 +380,17 @@ export function ChatProvider({ children }: ChatProviderProps) {
 
       setError(errorMessage);
 
-      // Update assistant message with error status
-      // CRITICAL: Use captured chatIdAtSend and assistantMessageId to prevent race conditions.
-      // Both values were captured at creation time, eliminating stale closure bugs where:
-      // - currentChat could change if user switches chats during async operation
-      // - chats array could be stale (captured at function definition, not error time)
+      // Persist failures against the chat captured before the request.
       if (chatIdAtSend && assistantMessage && userMessagePersisted) {
         try {
-          if (!assistantMessagePersisted) {
-            devLog(
-              "[ChatContext] Persisting failed assistant message after placeholder write error",
-              {
-                messageId: assistantMessage.id,
-                chatId: chatIdAtSend,
-              },
-            );
-
-            await StorageService.addMessage(chatIdAtSend, {
-              ...assistantMessage,
+          await StorageService.updateMessage(
+            chatIdAtSend,
+            assistantMessage.id,
+            {
               status: "error",
               content: `Error: ${errorMessage}`,
-            });
-            assistantMessagePersisted = true;
-          } else if (assistantMessageId) {
-            devLog("[ChatContext] Updating message with error status", {
-              messageId: assistantMessageId,
-              chatId: chatIdAtSend,
-            });
-
-            await StorageService.updateMessage(
-              chatIdAtSend,
-              assistantMessageId,
-              {
-                status: "error",
-                content: `Error: ${errorMessage}`,
-              },
-            );
-          }
+            },
+          );
 
           // Reload chats to reflect error state while preserving the selected thread.
           // DECISION (perf review): keep this full reload rather than patching
@@ -510,19 +437,11 @@ export function ChatProvider({ children }: ChatProviderProps) {
     setError(null);
   };
 
-  const createAndNavigateToChat = async (): Promise<void> => {
-    const newChat = await createChat();
-    setCurrentChat(newChat);
-  };
-
-  const stateValue: ChatStateContextValue = {
+  const contextValue: ChatContextType = {
     chats,
     currentChat,
     isLoading,
     error,
-  };
-
-  const actionsValue: ChatActionsContextValue = {
     createChat,
     deleteChat,
     clearAllChats,
@@ -530,43 +449,15 @@ export function ChatProvider({ children }: ChatProviderProps) {
     loadChats,
     setCurrentChat,
     clearError,
-    createAndNavigateToChat,
   };
 
-  const contextValue: ChatContextType = {
-    ...stateValue,
-    ...actionsValue,
-  };
-
-  return (
-    <ChatStateContext value={stateValue}>
-      <ChatActionsContext value={actionsValue}>
-        <ChatContext value={contextValue}>{children}</ChatContext>
-      </ChatActionsContext>
-    </ChatStateContext>
-  );
+  return <ChatContext value={contextValue}>{children}</ChatContext>;
 }
 
 export function useChat() {
   const context = use(ChatContext);
   if (context === undefined) {
     throw new Error("useChat must be used within a ChatProvider");
-  }
-  return context;
-}
-
-export function useChatActions() {
-  const context = use(ChatActionsContext);
-  if (context === undefined) {
-    throw new Error("useChatActions must be used within a ChatProvider");
-  }
-  return context;
-}
-
-export function useChatState() {
-  const context = use(ChatStateContext);
-  if (context === undefined) {
-    throw new Error("useChatState must be used within a ChatProvider");
   }
   return context;
 }

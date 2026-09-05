@@ -1,0 +1,21 @@
+steps:
+  - echo: 'Baseline: completed onboarding, empty chat list, existing log history, pt-BR. Preserve all data and settings.'
+  - launch: org.mvneves.dnschat
+  - await: { visible: { id: chat-list-new-chat }, timeout: 15000 }
+  - await: { idle: true }
+  - tap: { id: info.circle.fill }
+  - await: { visible: { id: about-settings-link } }
+  - await: { idle: true }
+  - tap: { id: about-settings-link }
+  - await: { visible: { id: settings-dns-server } }
+  - await: { idle: true }
+  - tap: { text: Fechar }
+  - await: { hidden: { id: settings-dns-server } }
+  - await: { visible: { id: about-settings-link } }
+  - await: { idle: true }
+  - tap: { id: list.bullet.rectangle }
+  - await: { visible: { id: logs-clear-all } }
+  - await: { idle: true }
+  - tap: { id: bubble.left.and.bubble.right.fill }
+  - await: { visible: { id: chat-list-new-chat } }
+  - await: { idle: true }

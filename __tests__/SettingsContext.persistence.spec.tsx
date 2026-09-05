@@ -53,6 +53,13 @@ describe("SettingsProvider persistence", () => {
     return latestSettings;
   };
 
+  it("finishes hydration when a fresh install has no saved settings", async () => {
+    const settings = await renderProvider();
+    expect(settings.loading).toBe(false);
+    expect(settings.dnsServer).toBe("llm.pieter.com");
+    expect(mockAsyncStorage.setItem).not.toHaveBeenCalled();
+  });
+
   it("serializes concurrent updates against the latest persisted snapshot", async () => {
     const settings = await renderProvider();
 

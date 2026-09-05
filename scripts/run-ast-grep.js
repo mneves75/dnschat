@@ -57,7 +57,12 @@ function runAstGrep() {
     process.exit(1);
   }
 
-  process.exit(result.status || 0);
+  if (result.signal) {
+    console.error(
+      `[lint:ast-grep] ast-grep interrompido por ${result.signal}.`,
+    );
+  }
+  process.exit(result.status ?? 1);
 }
 
 ensureCliBinary();

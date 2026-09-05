@@ -232,18 +232,6 @@ export const buildFallbackStyle = (
   };
 };
 
-const glassEffectForVariant = (variant: GlassVariant): "regular" | "clear" => {
-  switch (variant) {
-    case "regular":
-      return "regular";
-    case "prominent":
-    case "interactive":
-      return "regular";
-    default:
-      return "regular";
-  }
-};
-
 const tintForVariant = (
   variant: GlassVariant,
   isDark: boolean,
@@ -255,11 +243,6 @@ const tintForVariant = (
     return palette.accentTint;
   }
   return palette.tint;
-};
-
-export const shouldUseGlassEffect = (reduceTransparency: boolean) => {
-  if (reduceTransparency) return false;
-  return computeGlassAvailability().available;
 };
 
 export const LiquidGlassWrapper: React.FC<LiquidGlassProps> = ({
@@ -323,7 +306,6 @@ export const LiquidGlassWrapper: React.FC<LiquidGlassProps> = ({
   );
 
   const tint = tintForVariant(variant, isDark, tintColor);
-  const glassEffect = glassEffectForVariant(variant);
 
   const canRenderGlass = computeGlassAvailability().available;
 
@@ -345,7 +327,7 @@ export const LiquidGlassWrapper: React.FC<LiquidGlassProps> = ({
 
   const glassContent = (
     <GlassView
-      glassEffectStyle={reduceTransparency ? "none" : glassEffect}
+      glassEffectStyle={reduceTransparency ? "none" : "regular"}
       isInteractive={isInteractive}
       tintColor={tint}
       style={glassStyles}

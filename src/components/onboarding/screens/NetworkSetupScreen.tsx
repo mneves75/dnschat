@@ -1,11 +1,5 @@
-import React, { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  ActivityIndicator,
-  ScrollView,
-} from "react-native";
+import React, { useState } from "react";
+import { View, Text, StyleSheet, ScrollView } from "react-native";
 import { OnboardingNavigation } from "../OnboardingNavigation";
 import { PressableRipple } from "../../PressableRipple";
 import { useSettings } from "../../../context/SettingsContext";
@@ -14,12 +8,10 @@ import { useTypography } from "../../../ui/hooks/useTypography";
 import { LiquidGlassSpacing } from "../../../ui/theme/liquidGlassSpacing";
 import { useTranslation } from "../../../i18n";
 import { devWarn } from "../../../utils/devLog";
-import { wait } from "../../../utils/wait";
 import { appAlert } from "../../../utils/appAlert";
 
 interface NetworkTest {
   method: string;
-  status: "waiting" | "configuring" | "configured";
   description: string;
 }
 
@@ -29,50 +21,27 @@ export function NetworkSetupScreen() {
   const { t } = useTranslation();
   const { applyRecommendedNetworkSettings } = useSettings();
 
-  const [isOptimizing, setIsOptimizing] = useState(false);
   const [isApplyingSettings, setIsApplyingSettings] = useState(false);
-  const [optimizationComplete, setOptimizationComplete] = useState(false);
-  const [recommendedSetting, setRecommendedSetting] = useState<boolean | null>(
-    null,
-  );
-  const [networkTests, setNetworkTests] = useState<NetworkTest[]>([
+  const networkTests: NetworkTest[] = [
     {
       method: t("screen.onboarding.networkSetup.tests.native.name"),
-      status: "waiting",
       description: t("screen.onboarding.networkSetup.tests.native.description"),
     },
     {
       method: t("screen.onboarding.networkSetup.tests.udp.name"),
-      status: "waiting",
       description: t("screen.onboarding.networkSetup.tests.udp.description"),
     },
     {
       method: t("screen.onboarding.networkSetup.tests.tcp.name"),
-      status: "waiting",
       description: t("screen.onboarding.networkSetup.tests.tcp.description"),
     },
-  ]);
-  const isMountedRef = React.useRef(true);
+  ];
 
   const applyRecommendedSettings = async () => {
-    if (recommendedSetting !== null) {
-      setIsApplyingSettings(true);
-      try {
-        await applyRecommendedNetworkSettings(recommendedSetting);
-      } catch (error) {
-        devWarn(
-          "[NetworkSetupScreen] Failed to apply recommended settings",
-          error,
-        );
-        appAlert(
-          t("screen.onboarding.networkSetup.alerts.errorTitle"),
-          t("screen.onboarding.networkSetup.alerts.errorMessage"),
-        );
-        setIsApplyingSettings(false);
-        return;
-      }
-      setIsApplyingSettings(false);
-
+    if (isApplyingSettings) return;
+    setIsApplyingSettings(true);
+    try {
+      await applyRecommendedNetworkSettings(true);
       appAlert(
         t("screen.onboarding.networkSetup.alerts.successTitle"),
         t("screen.onboarding.networkSetup.alerts.successMessage"),
@@ -83,59 +52,18 @@ export function NetworkSetupScreen() {
           },
         ],
       );
-    }
-  };
-
-  // Effect: defer network optimization to allow initial UI paint.
-  useEffect(() => {
-    isMountedRef.current = true;
-    const updateTest = (index: number, updates: Partial<NetworkTest>) => {
-      setNetworkTests((prev) =>
-        prev.map((test, i) => (i === index ? { ...test, ...updates } : test)),
+    } catch (error) {
+      devWarn(
+        "[NetworkSetupScreen] Failed to apply recommended settings",
+        error,
       );
-    };
-
-    const runNetworkOptimization = async () => {
-      setIsOptimizing(true);
-
-      try {
-        // Visual configuration progression; this applies the transport order
-        // without pretending to measure live network success.
-        const stageDelaysMs = [1000, 800, 600];
-        for (const [index, delayMs] of stageDelaysMs.entries()) {
-          updateTest(index, { status: "configuring" });
-          await wait(delayMs);
-          if (!isMountedRef.current) return;
-          updateTest(index, { status: "configured" });
-        }
-
-        // Default to automatic fallback chain (no probing yet).
-        setRecommendedSetting(true);
-
-        setOptimizationComplete(true);
-      } catch (error) {
-        devWarn("[NetworkSetupScreen] Network configuration failed", error);
-        appAlert(
-          t("screen.onboarding.networkSetup.alerts.errorTitle"),
-          t("screen.onboarding.networkSetup.alerts.errorMessage"),
-        );
-      }
-      // Replaces `finally`; mount-guarded so the early `!isMountedRef` returns
-      // (where this would be a no-op anyway) skip it harmlessly.
-      if (isMountedRef.current) {
-        setIsOptimizing(false);
-      }
-    };
-
-    const timer = setTimeout(() => {
-      runNetworkOptimization();
-    }, 1000);
-
-    return () => {
-      isMountedRef.current = false;
-      clearTimeout(timer);
-    };
-  }, [t]);
+      appAlert(
+        t("screen.onboarding.networkSetup.alerts.errorTitle"),
+        t("screen.onboarding.networkSetup.alerts.errorMessage"),
+      );
+    }
+    setIsApplyingSettings(false);
+  };
 
   return (
     <View testID="onboarding-network-setup" style={styles.container}>
@@ -208,112 +136,82 @@ export function NetworkSetupScreen() {
               isLast={index === networkTests.length - 1}
               palette={palette}
               typography={typography}
-              isActive={isOptimizing && test.status === "configuring"}
             />
           ))}
         </View>
 
-        {optimizationComplete && recommendedSetting !== null && (
-          <View
-            accessibilityLiveRegion="polite"
+        <View
+          accessibilityLiveRegion="polite"
+          style={[
+            styles.recommendationContainer,
+            {
+              backgroundColor: palette.accentSurface,
+              borderColor: palette.accentBorder,
+            },
+          ]}
+        >
+          <Text
             style={[
-              styles.recommendationContainer,
-              {
-                backgroundColor: palette.accentSurface,
-                borderColor: palette.accentBorder,
-              },
+              typography.headline,
+              styles.recommendationTitle,
+              { color: palette.accentText },
             ]}
           >
-            <Text
-              style={[
-                typography.headline,
-                styles.recommendationTitle,
-                { color: palette.accentText },
-              ]}
-            >
-              {t("screen.onboarding.networkSetup.optimization.title")}
-            </Text>
+            {t("screen.onboarding.networkSetup.optimization.title")}
+          </Text>
 
-            <Text
-              style={[
-                typography.callout,
-                styles.recommendationText,
-                { color: palette.textPrimary },
-              ]}
-            >
-              {t("screen.onboarding.networkSetup.optimization.description")}
-            </Text>
+          <Text
+            style={[
+              typography.callout,
+              styles.recommendationText,
+              { color: palette.textPrimary },
+            ]}
+          >
+            {t("screen.onboarding.networkSetup.optimization.description")}
+          </Text>
 
-            {/* iOS HIG: Primary action button to apply network optimization results */}
-            <PressableRipple
-              testID="onboarding-network-apply"
-              style={[
-                styles.applyButton,
-                {
-                  backgroundColor: palette.surface,
-                  borderColor: palette.accentTint,
-                },
-              ]}
-              onPress={applyRecommendedSettings}
-              disabled={isApplyingSettings}
-              variant="surface"
-              pressedOpacity={0.7}
-              accessibilityRole="button"
-              accessibilityLabel={t(
-                "screen.onboarding.networkSetup.accessibility.applyLabel",
-              )}
-              accessibilityHint={t(
-                "screen.onboarding.networkSetup.accessibility.applyHint",
-              )}
-            >
-              <Text
-                style={[
-                  typography.callout,
-                  styles.applyButtonText,
-                  { color: palette.accentText, fontWeight: "600" },
-                ]}
-              >
-                {t("screen.onboarding.networkSetup.optimization.applyButton")}
-              </Text>
-            </PressableRipple>
-          </View>
-        )}
-
-        {!optimizationComplete && (
-          <View
-            accessible={true}
+          <PressableRipple
+            testID="onboarding-network-apply"
+            style={[
+              styles.applyButton,
+              {
+                backgroundColor: palette.surface,
+                borderColor: palette.accentTint,
+              },
+            ]}
+            onPress={applyRecommendedSettings}
+            disabled={isApplyingSettings}
+            accessibilityState={{
+              disabled: isApplyingSettings,
+              busy: isApplyingSettings,
+            }}
+            variant="surface"
+            pressedOpacity={0.7}
+            accessibilityRole="button"
             accessibilityLabel={t(
-              "screen.onboarding.networkSetup.optimization.loading",
+              "screen.onboarding.networkSetup.accessibility.applyLabel",
             )}
             accessibilityHint={t(
-              "screen.onboarding.networkSetup.optimization.loading",
+              "screen.onboarding.networkSetup.accessibility.applyHint",
             )}
-            accessibilityRole="progressbar"
-            accessibilityLiveRegion="polite"
-            style={styles.loadingSection}
           >
-            <ActivityIndicator size="large" color={palette.accentText} />
             <Text
-              accessible={false}
-              importantForAccessibility="no-hide-descendants"
               style={[
                 typography.callout,
-                styles.loadingText,
-                { color: palette.textSecondary },
+                styles.applyButtonText,
+                { color: palette.accentText, fontWeight: "600" },
               ]}
             >
-              {t("screen.onboarding.networkSetup.optimization.loading")}
+              {isApplyingSettings
+                ? t("screen.onboarding.networkSetup.optimization.loading")
+                : t("screen.onboarding.networkSetup.optimization.applyButton")}
             </Text>
-          </View>
-        )}
+          </PressableRipple>
+        </View>
       </ScrollView>
 
       <OnboardingNavigation
-        nextButtonText={
-          optimizationComplete
-            ? t("screen.onboarding.networkSetup.navigation.continue")
-            : t("screen.onboarding.networkSetup.navigation.skip")
-        }
+        nextButtonText={t("screen.onboarding.networkSetup.navigation.continue")}
         showSkip={false}
       />
     </View>
@@ -325,7 +223,6 @@ interface NetworkTestItemProps {
   isLast: boolean;
   palette: ReturnType<typeof useImessagePalette>;
   typography: ReturnType<typeof useTypography>;
-  isActive: boolean;
 }
 
 function NetworkTestItem({
@@ -333,60 +230,28 @@ function NetworkTestItem({
   isLast,
   palette,
   typography,
-  isActive,
 }: NetworkTestItemProps) {
   const { t } = useTranslation();
 
-  const getStatusLabel = () => {
-    switch (test.status) {
-      case "configuring":
-        return t("screen.onboarding.networkSetup.status.testing");
-      case "configured":
-        return t("screen.onboarding.networkSetup.status.success");
-      case "waiting":
-        return t("screen.onboarding.networkSetup.status.waiting");
-      default:
-        return t("screen.onboarding.networkSetup.status.waiting");
-    }
-  };
-
-  const getStatusColor = () => {
-    switch (test.status) {
-      case "configuring":
-        return palette.accentText;
-      case "configured":
-        return palette.success;
-      case "waiting":
-        return palette.textTertiary;
-      default:
-        return palette.textTertiary;
-    }
-  };
+  const statusLabel = t("screen.onboarding.networkSetup.status.recommended");
 
   return (
     <View
       style={[
         styles.testItem,
         {
-          backgroundColor: isActive
-            ? palette.accentSurface
-            : palette.transparent,
           borderBottomColor: palette.separator,
           borderBottomWidth: isLast ? 0 : StyleSheet.hairlineWidth,
-          // The active-stage marker is always 2pt wide and only changes color,
-          // so rows do not shift horizontally as the progression advances.
-          borderLeftColor: isActive ? palette.accentTint : palette.transparent,
         },
       ]}
-      accessibilityLiveRegion={isActive ? "polite" : "none"}
       accessible
-      accessibilityLabel={`${test.method}. ${test.description}. ${getStatusLabel()}.`}
+      accessibilityLabel={`${test.method}. ${test.description}. ${statusLabel}.`}
     >
       <View style={styles.testHeader}>
         <View
           style={[
             styles.statusIndicator,
-            { backgroundColor: getStatusColor() },
+            { backgroundColor: palette.textSecondary },
           ]}
         />
         <View style={styles.testInfo}>
@@ -414,10 +279,10 @@ function NetworkTestItem({
             style={[
               typography.caption1,
               styles.statusLabel,
-              { color: getStatusColor(), fontWeight: "500" },
+              { color: palette.textSecondary, fontWeight: "500" },
             ]}
           >
-            {getStatusLabel()}
+            {statusLabel}
           </Text>
         </View>
       </View>
@@ -475,7 +340,6 @@ const styles = StyleSheet.create({
   },
   testItem: {
     padding: LiquidGlassSpacing.md,
-    borderLeftWidth: 2,
   },
   testHeader: {
     flexDirection: "row",
@@ -501,13 +365,6 @@ const styles = StyleSheet.create({
   },
   statusLabel: {
     marginBottom: 2,
-  },
-  loadingSection: {
-    alignItems: "center",
-    gap: LiquidGlassSpacing.md,
-  },
-  loadingText: {
-    opacity: 0.8,
   },
   recommendationContainer: {
     padding: LiquidGlassSpacing.lg,

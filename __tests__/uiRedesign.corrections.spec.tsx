@@ -102,13 +102,6 @@ describe("Onboarding network setup rows", () => {
     // The bug was a literal row count; any hardcoded index must stay gone.
     expect(source).not.toContain("index < 2");
   });
-
-  it("changes only the active marker color, never its width", () => {
-    const testItemStyle = source.slice(source.indexOf("testItem: {"));
-    expect(testItemStyle.slice(0, 140)).toContain("borderLeftWidth: 2");
-    expect(source).not.toContain("borderLeftWidth: isActive ? 2 : 0");
-    expect(source).toContain("borderLeftColor: isActive");
-  });
 });
 
 // ==================================================================================

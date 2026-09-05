@@ -12,6 +12,11 @@ This is a behavior spec, not a release log.
   show assistant response when DNS returns).
 - Settings: DNS server selection, transport toggles, onboarding reset.
 - Logs: in-app DNS logs showing transport attempts and fallbacks.
+- First-install settings hydration completes with safe defaults even when no
+  settings record exists. ChatProvider owns initial chat hydration; mounting
+  the list does not load the same history again, while explicit refresh does.
+- Network onboarding presents recommendations immediately. It does not probe
+  connectivity or delay a local recommendation; only saving settings is pending.
 
 ## Prompt rules (must match native + JS)
 
@@ -183,13 +188,13 @@ Repo quality:
      - Guard test prevents it from coming back
    - Store listing assets and automation can be tracked when needed:
      - Store metadata docs live under `docs/App_store/` (markdown only).
-     - fastlane configuration + screenshots live under `ios/fastlane/`.
+     - Retained screenshot assets live under `ios/fastlane/`; capture new compiled-app screenshots through the Argent workflow in `docs/agents/development.md`. No Fastlane screenshot lane or iOS UI-test target is configured.
      - Generated outputs (e.g. `ios/fastlane/report.xml`) stay out of git.
      - Guard tests enforce these constraints (`__tests__/repo.hygiene.spec.ts`).
    - Local-only tooling folders are ignored and must not be tracked:
      - `.claude/`, `.cursor/`, `agent_planning/`, `.logs/` are gitignored
      - Guard test prevents tracking them (`__tests__/repo.hygiene.spec.ts`)
-   - Keep dependencies minimal and justifiable:
+- Keep dependencies minimal and justifiable:
      - Remove unused heavyweight tooling deps from `package.json` to reduce
        attack surface and install time (e.g. Playwright, when not used).
 	   - Block common secret-bearing files at the repo boundary:

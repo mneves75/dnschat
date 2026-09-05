@@ -25,6 +25,7 @@ const dnsLogServiceInternals = DNSLogService as unknown as {
   initializationInFlight: Promise<void> | null;
   persistenceQueue: Promise<void>;
   cleanupIntervalId: ReturnType<typeof setInterval> | null;
+  sensitiveValuesByQueryId: Map<string, RegExp[]>;
 };
 
 describe("DNSLogService concurrent query isolation", () => {
@@ -72,6 +73,29 @@ describe("DNSLogService concurrent query isolation", () => {
       betaLog?.entries.some((entry) => entry.details === "alpha-attempt"),
     ).toBe(false);
     expect(mockAsyncStorage.setItem).toHaveBeenCalled();
+  });
+
+  it("releases sensitive query values on completion and clear", async () => {
+    const completed = DNSLogService.startQuery("private completed prompt");
+    const pending = DNSLogService.startQuery("private pending prompt");
+    expect(dnsLogServiceInternals.sensitiveValuesByQueryId.has(completed)).toBe(
+      true,
+    );
+    expect(dnsLogServiceInternals.sensitiveValuesByQueryId.has(pending)).toBe(
+      true,
+    );
+
+    await DNSLogService.endQuery(completed, false);
+    expect(dnsLogServiceInternals.sensitiveValuesByQueryId.has(completed)).toBe(
+      false,
+    );
+    expect(dnsLogServiceInternals.sensitiveValuesByQueryId.has(pending)).toBe(
+      true,
+    );
+
+    await DNSLogService.clearLogs();
+    expect(dnsLogServiceInternals.sensitiveValuesByQueryId.size).toBe(0);
+    expect(DNSLogService.getLogs()).toEqual([]);
   });
 
   it("serializes persistent log saves so older writes cannot overwrite newer state", async () => {

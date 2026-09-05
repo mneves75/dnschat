@@ -75,6 +75,50 @@ describe("StorageService Corruption Handling", () => {
       );
     });
 
+    it.each([false, true])(
+      "keeps malformed-schema content out of backup metadata (encrypted=%s)",
+      async (encrypted) => {
+        const marker = "PRIVATE_METADATA_SENTINEL";
+        const originalPayload = JSON.stringify([
+          {
+            id: "fixture-chat",
+            title: "Fixture",
+            createdAt: "2026-09-01T00:00:00.000Z",
+            updatedAt: "2026-09-01T00:00:00.000Z",
+            messages: [
+              {
+                id: "fixture-message",
+                role: marker,
+                content: "Fixture",
+                timestamp: "2026-09-01T00:00:00.000Z",
+                status: "sent",
+              },
+            ],
+          },
+        ]);
+        mockAsyncStorage.getItem.mockResolvedValue(
+          encrypted ? await encryptString(originalPayload) : originalPayload,
+        );
+
+        await expect(
+          StorageService.loadChats({ recoverOnCorruption: false }),
+        ).rejects.toThrow(marker);
+        const chats = await StorageService.loadChats();
+        expect(chats).toHaveLength(1);
+        expect(chats[0]?.messages).toEqual([]);
+        const backupCall = mockAsyncStorage.setItem.mock.calls.find(
+          ([key]) => key === "@chat_dns_chats_backup",
+        );
+        expect(backupCall).toBeDefined();
+        const backup = JSON.parse(String(backupCall?.[1]));
+        expect(backup.error).toMatch(/^sha256:[a-f0-9]{64}$/);
+        expect(JSON.stringify(backup)).not.toContain(marker);
+        await expect(decryptIfEncrypted(backup.payload)).resolves.toBe(
+          originalPayload,
+        );
+      },
+    );
+
     it("throws StorageCorruptionError on invalid JSON when recovery disabled", async () => {
       mockAsyncStorage.getItem.mockResolvedValue("not valid json {{{");
 

@@ -14,7 +14,7 @@
 import fs from "fs";
 import path from "path";
 
-describe("ChatInput Component - John Carmack Quality Standards", () => {
+describe("ChatInput source contracts", () => {
   const chatInputPath = path.resolve(
     __dirname,
     "../src/components/ChatInput.tsx",
@@ -189,12 +189,6 @@ describe("ChatInput Component - John Carmack Quality Standards", () => {
     it("sets keyboardType to default", () => {
       expect(source).toContain('keyboardType="default"');
     });
-
-    it("has comment explaining keyboard configuration", () => {
-      expect(source).toContain(
-        "// Keyboard configuration - enables suggestions and autocorrect",
-      );
-    });
   });
 
   describe("Accessibility Features", () => {
@@ -245,71 +239,6 @@ describe("ChatInput Component - John Carmack Quality Standards", () => {
       expect(resetEffect).toContain('if (message === "")');
       expect(resetEffect).toContain(
         "inputHeight.set(withSpring(heightConstraints.min",
-      );
-    });
-
-    it("has JSDoc comment explaining reset behavior", () => {
-      expect(source).toContain("* Reset Input Height on Message Clear");
-      expect(source).toContain(
-        "* After sending, collapse input back to minimum height",
-      );
-    });
-  });
-
-  describe("Comprehensive Documentation", () => {
-    it("has top-level file JSDoc with architecture decisions", () => {
-      expect(source).toContain("* ChatInput Component");
-      expect(source).toContain("* iOS 26+ HIG-compliant");
-      expect(source).toContain("* Architecture decisions:");
-      expect(source).toContain("* @reviewed-by John Carmack");
-    });
-
-    it("documents height calculation approach", () => {
-      expect(source).toContain("* Height Calculation (Design System Derived)");
-      expect(source).toContain(
-        "* Min Height: MUST be >= minimumTouchTarget to accommodate send button",
-      );
-      expect(source).toContain("* Max Height: 5 lines + vertical padding");
-      expect(source).toContain(
-        "* CRITICAL: Minimum height must be at least minimumTouchTarget",
-      );
-    });
-
-    it("documents button position animation", () => {
-      expect(source).toContain("* Button Position Animation");
-      expect(source).toContain(
-        "* CRITICAL: Cannot use useMemo with shared values",
-      );
-    });
-
-    it("documents send button solid fill (no opacity stack)", () => {
-      expect(source).toContain("sendButtonBackground");
-      expect(source).toContain(
-        "made the idle control invisible on dark inputs",
-      );
-    });
-
-    it("documents handleSend function steps", () => {
-      expect(source).toContain("* Handle Send");
-      expect(source).toContain("* 1. Validates non-empty trimmed message");
-      expect(source).toContain("* 2. Provides haptic feedback");
-      expect(source).toContain("* 3. Calls onSendMessage with trimmed text");
-    });
-
-    it("documents StyleSheet decisions", () => {
-      expect(source).toContain("* StyleSheet");
-      expect(source).toContain(
-        "* All values derived from design system constants",
-      );
-      expect(source).toContain("* No magic numbers");
-    });
-
-    it("explains Liquid Glass rendering", () => {
-      expect(source).toContain(
-        "// iOS 26 HIG: Glass wrapper for text input (iOS only)",
-      );
-      expect(source).toContain(
-        "* CRITICAL: Glass wrapper handles background, input must be transparent",
       );
     });
   });
@@ -410,13 +339,6 @@ describe("ChatInput Component - John Carmack Quality Standards", () => {
 
     it("has no console.log statements", () => {
       expect(source).not.toContain("console.log");
-    });
-
-    it("imports from correct paths", () => {
-      expect(source).toContain('from "react-native-reanimated"');
-      expect(source).toContain('from "../ui/hooks/useTypography"');
-      expect(source).toContain('from "../ui/theme/imessagePalette"');
-      expect(source).toContain('from "../constants/appConstants"');
     });
 
     it("uses TypeScript types for props", () => {

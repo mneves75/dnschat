@@ -27,21 +27,24 @@ describe("release documentation policy", () => {
     expect(testFlight).toContain(`Repository target:** ${repositoryTarget}`);
     expect(appStore).toContain(`Repository target:** ${repositoryTarget}`);
 
-    expect(testFlight).toContain(
-      `Latest validated TestFlight artifact:** ${repositoryTarget}`,
-    );
+    // A source version bump does not upload a new TestFlight artifact.
+    const recordedArtifact = testFlight.match(
+      /Latest validated TestFlight artifact:\*\* (`\d+\.\d+\.\d+` build `\d+`)/,
+    )?.[1];
+    expect(recordedArtifact).toBeDefined();
     expect(appStore).toContain(
-      `Latest validated TestFlight artifact:** ${repositoryTarget}`,
+      `Latest validated TestFlight artifact:** ${recordedArtifact}`,
     );
     expect(androidRelease).toContain("Latest production release:** unverified");
     expect(playStore).toContain(
       "Latest production Google Play release:** unverified",
     );
-    expect(testFlight).toContain(
-      "Latest production App Store release:** unverified",
-    );
+    const productionState = testFlight.match(
+      /Latest production App Store release:\*\* (unverified|`\d+\.\d+\.\d+`)/,
+    )?.[1];
+    expect(productionState).toBeDefined();
     expect(appStore).toContain(
-      "Latest production App Store release:** unverified",
+      `Latest production App Store release:** ${productionState}`,
     );
   });
 

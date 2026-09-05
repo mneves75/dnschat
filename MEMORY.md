@@ -2,6 +2,8 @@
 
 ## Project Environment
 
+Machine-independent inspector result: `memory/project-environment.json`.
+
 - Expo SDK 57 / React Native 0.86 with Expo Router, Hermes, New Architecture, and compiled iOS/Android projects.
 - Use pnpm 11 and the repository scripts. Expo Go and Expo dev-client are not valid runtime proof because DNSChat depends on the native DNS module.
 - Metro defaults to port 8081. Argent is the default compiled-app UI verification surface; discover elements before each tap and stop only the simulator services used by this project.
@@ -9,13 +11,15 @@
 
 ## Active Work
 
+- The audit is being released as 4.4.3/build 88. The final gate passes 1,010 root and 68 native tests, with 141/141 compiled components. Final external autoreview through P3 is clean after correcting staged AAB validation and empty-template Git hook installation. Independent security review also reproduced and verified the fix for plaintext chat corruption metadata. Earlier 4.4.2/build 87 iOS/Android Debug builds and walkthroughs pass; iOS navigation replay passed twice with pixel-settling warnings. See `memory/2026-09-05.md` for release evidence.
+
 - TestFlight beta `4.4.1` build `86` is `VALID` and tagged `v4.4.1-beta1` from the exact source that produced the signed archive. Internal tester group only. CI green on `main` across `test`, `dns-native`, `android`, `sbom`, plus `gitleaks`, `codeql`, `public-redaction`.
 - `4.4.0` completed a half-finished native DNS hardening pass (Android DNS-over-HTTPS removed, bridge pinned to port 53, query-zone pin, native allowlist narrowed to the two LLM zones). `4.4.1` is the review follow-up: external-link userinfo spoofing fix, Android/iOS query-label parity, both `@xmldom/xmldom` advisories patched rather than suppressed, and `queryWithServer` no longer defaulting its deadline.
 - **Android runtime proof exists for `4.4.1` (2026-09-04).** Signed release APK installed on an `android-36 google_apis arm64` emulator: onboarding, chat list, chat, error handling, persistence and the Logs screen all render; no crash, no ANR. The DNS query failed on the emulator's degraded network, and the Logs entry read `Failed / Method: TCP / Duration: 20.05s` -- which is the useful part: the chain fell through native -> UDP -> TCP and terminated exactly on `TOTAL_QUERY_BUDGET_MS` (20 000 ms), so the `4.4.0` wall-clock deadline works end to end on a device.
 - **No iOS physical-device proof for `85` or `86`.** The authorized iPhone was locked, then `unavailable` (disconnected). Install and run the survival check before treating either as device-proven.
 - Emulator setup is not preinstalled here: the SDK had no system image and no in-SDK `cmdline-tools`. Install both into `$ANDROID_HOME` (a Homebrew `avdmanager` resolves its SDK root from its own install path and will not see the project SDK), then `avdmanager create avd`. The release APK is unsigned, so sign it with the debug key via `zipalign` + `apksigner` before `adb install`.
 - Previous beta `4.3.6` build `84` (tagged `v4.3.6-beta1`) is the last release with physical-device Release install/launch proof.
-- No matching App Store version record exists; production remains blocked by the provider-policy and unauthenticated-response decisions below.
+- App Store Connect reports production 4.0.23 and an existing 4.0.24 submission draft on 2026-09-05. The draft has an expired build and two missing age-rating fields. Privacy web-session authentication requires 2FA; provider-policy and unauthenticated-response decisions below still apply.
 
 ## Native DNS Invariants
 
@@ -27,7 +31,7 @@
 ## Known Unfixed
 
 - ~~iOS cancellation ordering race~~ **closed as not applicable (2026-09-04)**. Both `queryTXT` and `cancelActiveQueries` are declared on `RNDNSModule` and exported by one `RCT_EXTERN_MODULE` block, so JS calls arrive in order on a single serial methodQueue; the bridge forwards synchronously; SE-0431 makes an actor-isolated `Task` enqueue synchronously onto the FIFO `MainActor`; and the query registers in `activeQueries` before its first `await`. Two earlier readings of this were wrong (first "unordered Tasks", then "different modules") -- the premise was never checked against `RNDNSModule.m`. `iosDnsResolver.policy.spec.ts` now gates the ordering by construction. Structural, not executed: there is still no iOS test target.
-- `decode-uri-component` CVE-2026-45822 (moderate DoS) is suppressed in `pnpm-workspace.yaml` `auditConfig.ignoreGhsas`, not fixed: the only patched release `0.5.0` is ESM-only while `query-string` requires it from the Metro CJS bundle, and every earlier release is vulnerable. Recheck 2026-10-01. Every other advisory, including future moderates, still fails the build.
+- `decode-uri-component` CVE-2026-45822 is fixed in the 4.4.2 candidate with a scoped `^0.5.0` override and a one-line pnpm patch migrating query-string to the ESM default export. The installed Metro consumer regression passes. A direct override alone failed, but the prior conclusion that this required indefinite suppression was too broad. Two image-size advisories remain suppressed with reachability arguments and recheck dates in `pnpm-workspace.yaml` because their fixed release is not published.
 
 ## Decisions and Blockers
 

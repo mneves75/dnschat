@@ -182,8 +182,9 @@ function updateAppJson(version, buildNumber) {
     );
     return true;
   } catch (error) {
-    console.error("[sync-versions] Error updating app.json:", error.message);
-    return false;
+    throw new Error(
+      `[sync-versions] Error updating app.json: ${error.message}`,
+    );
   }
 }
 
@@ -228,8 +229,9 @@ function updateIosProject(version, buildNumber) {
     );
     return true;
   } catch (error) {
-    console.error("[sync-versions] Error updating iOS project:", error.message);
-    return false;
+    throw new Error(
+      `[sync-versions] Error updating iOS project: ${error.message}`,
+    );
   }
 }
 
@@ -275,11 +277,9 @@ function updateAndroidBuild(version, buildNumber) {
     );
     return true;
   } catch (error) {
-    console.error(
-      "[sync-versions] Error updating Android build.gradle:",
-      error.message,
+    throw new Error(
+      `[sync-versions] Error updating Android build.gradle: ${error.message}`,
     );
-    return false;
   }
 }
 
@@ -426,7 +426,12 @@ function main() {
 
 // Execute if run directly
 if (require.main === module) {
-  main();
+  try {
+    main();
+  } catch (error) {
+    console.error(error instanceof Error ? error.message : String(error));
+    process.exitCode = 1;
+  }
 }
 
 module.exports = { main, getSourceVersionFromPackageJson };

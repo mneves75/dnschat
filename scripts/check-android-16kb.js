@@ -190,13 +190,15 @@ const collectAabSoFiles = (aabPath) => {
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "dnschat-aab-"));
   try {
     extractArchive(aabPath, tempDir);
+    const soFiles = collectSoFiles(tempDir);
+    if (soFiles.length === 0) {
+      throw new Error(`No native .so files found in supplied AAB: ${aabPath}`);
+    }
+    return { soFiles, tempDir };
   } catch (error) {
     fs.rmSync(tempDir, { recursive: true, force: true });
     throw error;
   }
-
-  const soFiles = collectSoFiles(tempDir);
-  return { soFiles, tempDir };
 };
 
 const checkAlignment = (soFiles, readelf) => {
@@ -205,7 +207,9 @@ const checkAlignment = (soFiles, readelf) => {
   for (const soFile of soFiles) {
     let output = "";
     try {
-      output = execFileSync(readelf, ["-l", soFile], { encoding: "utf8" });
+      output = execFileSync(readelf, ["-l", "-W", soFile], {
+        encoding: "utf8",
+      });
     } catch {
       failures.push({ file: soFile, reason: "readelf failed" });
       continue;
@@ -214,14 +218,28 @@ const checkAlignment = (soFiles, readelf) => {
     const loadLines = output
       .split(/\r?\n/)
       .map((line) => line.trim())
-      .filter((line) => line.startsWith("LOAD"));
+      .filter((line) => /^LOAD\b/.test(line));
+
+    if (loadLines.length === 0) {
+      failures.push({ file: soFile, reason: "No LOAD segments found" });
+      continue;
+    }
 
     for (const line of loadLines) {
       const columns = line.split(/\s+/);
       const alignHex = columns[columns.length - 1];
-      if (!alignHex || !alignHex.startsWith("0x")) continue;
-      const alignValue = Number.parseInt(alignHex, 16);
-      if (Number.isNaN(alignValue)) continue;
+      const alignValue = Number(alignHex);
+      if (
+        !/^0x[\da-f]+$/i.test(alignHex || "") ||
+        !Number.isSafeInteger(alignValue) ||
+        2 ** Math.round(Math.log2(alignValue)) !== alignValue
+      ) {
+        failures.push({
+          file: soFile,
+          reason: "Invalid LOAD segment alignment",
+        });
+        break;
+      }
       if (alignValue < requiredAlign) {
         failures.push({
           file: soFile,
@@ -274,21 +292,15 @@ const run = () => {
       const { soFiles: aabSoFiles, tempDir } = collectAabSoFiles(aabPath);
       aabResults.push({ aabPath, soFiles: aabSoFiles, tempDir });
     } catch (error) {
+      for (const result of aabResults) {
+        fs.rmSync(result.tempDir, { recursive: true, force: true });
+      }
       fail(error instanceof Error ? error.message : String(error));
+      return;
     }
   }
 
-  const aabSoFileCount = aabResults.reduce(
-    (count, result) => count + result.soFiles.length,
-    0,
-  );
-
-  if (soFiles.length === 0 && aabSoFileCount === 0) {
-    if (aabPaths.length > 0) {
-      fail("No native .so files found in the supplied AAB artifact(s).");
-      return;
-    }
-
+  if (soFiles.length === 0 && aabResults.length === 0) {
     warn(
       "No native .so files found. Skipping 16KB alignment until Android build artifacts exist.",
     );

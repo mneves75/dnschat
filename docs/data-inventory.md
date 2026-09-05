@@ -30,7 +30,7 @@ This document inventories the data stored or processed by DNSChat and satisfies 
   prompt/title values, composed DNS query names, and multipart TXT fragments are
   replaced with redacted hashes before entries reach memory or storage). The raw
   prompt/title values used for that scrub are held only for the query lifecycle
-  and dropped on completion, deletion, clear, or an early-throw finalize.
+  and dropped on completion, clear, or an early-throw finalize.
 - Encryption: AES-GCM via `encryptionService`; native key material is stored in
   SecureStore, while Web preview stores the local-only preview key in
   same-origin browser storage because SecureStore is not available in browsers.
@@ -41,6 +41,7 @@ This document inventories the data stored or processed by DNSChat and satisfies 
 - Contents: backup payload for corrupted log storage
 - Storage location: AsyncStorage
 - Encryption: same as DNS query logs; legacy plaintext corruption payloads are encrypted before backup writes
+- Diagnostic metadata: parser error messages are stored only as a hash, because JSON errors may quote a fragment of the corrupted plaintext. Backup encryption does not make adjacent metadata safe to store verbatim.
 - Retention: Persistent until user clears logs or app removes backups
 
 5) User settings

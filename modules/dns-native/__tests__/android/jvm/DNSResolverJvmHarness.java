@@ -47,6 +47,7 @@ public final class DNSResolverJvmHarness {
 
     public static void main(String[] args) throws Exception {
         runCase("parser-transactionality-and-utf8", DNSResolverJvmHarness::testParserBoundaries);
+        runCase("expanded-dns-name-boundaries", DNSResolverJvmHarness::testExpandedNameBoundaries);
         // doh-body-size-boundaries removed with the Cloudflare DoH transport: it drove
         // readDnsMessageBody, which no longer exists. See androidDnsResolver.policy.spec.ts,
         // which now forbids HttpURLConnection in this resolver outright.
@@ -140,6 +141,44 @@ public final class DNSResolverJvmHarness {
                 transactionId,
                 queryName
             ), DNSResolver.DNSError.Type.QUERY_FAILED);
+        } finally {
+            resolver.cleanup();
+        }
+    }
+
+    private static void testExpandedNameBoundaries() throws Exception {
+        DNSResolver resolver = new DNSResolver(null);
+        try {
+            Method readName = DNSResolver.class.getDeclaredMethod("readName", byte[].class, int.class);
+            readName.setAccessible(true);
+            for (int wireLength : new int[] { 255, 256 }) {
+                ByteArrayOutputStream name = new ByteArrayOutputStream();
+                for (int length : new int[] { 63, 63, 63, wireLength - 194 }) {
+                    name.write(length);
+                    for (int i = 0; i < length; i++) name.write('a');
+                }
+                name.write(0);
+                require(name.size() == wireLength, "incorrect expanded-name fixture length");
+                for (boolean compressed : new boolean[] { false, true }) {
+                    ByteArrayOutputStream packet = new ByteArrayOutputStream();
+                    packet.write(name.toByteArray());
+                    int offset = compressed ? packet.size() : 0;
+                    if (compressed) {
+                        packet.write(0xC0);
+                        packet.write(0);
+                    }
+                    byte[] bytes = packet.toByteArray();
+                    if (wireLength == 255) {
+                        Object parsed = readName.invoke(resolver, bytes, offset);
+                        Field nextOffset = parsed.getClass().getDeclaredField("nextOffset");
+                        nextOffset.setAccessible(true);
+                        require((int) nextOffset.get(parsed) == bytes.length, "valid name consumed wrong bytes");
+                    } else {
+                        expectDnsError(() -> readName.invoke(resolver, bytes, offset),
+                            DNSResolver.DNSError.Type.QUERY_FAILED);
+                    }
+                }
+            }
         } finally {
             resolver.cleanup();
         }

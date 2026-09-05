@@ -241,6 +241,7 @@ async function queryTcp({ resolverHost, resolverPort, queryName, timeoutMs }) {
 
     socket.on("close", () => {
       clearTimeout(timeout);
+      reject(new Error("TCP connection closed before a complete DNS response"));
     });
   });
 }

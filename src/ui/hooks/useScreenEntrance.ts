@@ -1,27 +1,4 @@
-/**
- * useScreenEntrance - Screen entrance animation hook
- *
- * Provides a smooth fade-in + translateY animation for screen content.
- * Respects reduce motion accessibility setting.
- *
- * @example
- * ```tsx
- * export function MyScreen() {
- *   const { animatedStyle } = useScreenEntrance();
- *
- *   return (
- *     <Animated.View style={animatedStyle}>
- *       <ScreenContent />
- *     </Animated.View>
- *   );
- * }
- * ```
- *
- * @see IOS-GUIDELINES.md - Animation durations 0.2-0.35s
- * @see DESIGN-UI-UX-GUIDELINES.md - Screen entrance patterns
- */
-
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import type { ViewStyle } from "react-native";
 import {
   useSharedValue,
@@ -29,127 +6,34 @@ import {
   withTiming,
   withSpring,
 } from "react-native-reanimated";
-import { scheduleOnRN } from "react-native-worklets";
-import type { AnimatedStyle } from "react-native-reanimated";
 import { useMotionReduction } from "../../context/AccessibilityContext";
 import { SpringConfig, TimingConfig } from "../../utils/animations";
 
-interface UseScreenEntranceOptions {
-  /**
-   * Initial Y offset for slide animation
-   * @default 20
-   */
-  initialOffset?: number;
-
-  /**
-   * Delay before animation starts (ms)
-   * @default 0
-   */
-  delay?: number;
-
-  /**
-   * Callback when animation completes
-   */
-  onComplete?: () => void;
-
-  /**
-   * Use spring animation instead of timing
-   * @default true
-   */
-  useSpring?: boolean;
-}
-
-interface UseScreenEntranceResult {
-  /**
-   * Animated style to apply to the screen container
-   */
-  animatedStyle: AnimatedStyle<ViewStyle>;
-
-  /**
-   * Whether the entrance animation has completed
-   */
-  isReady: boolean;
-
-  /**
-   * Manually trigger the entrance animation (useful for re-entry)
-   */
-  animate: () => void;
-}
-
-export function useScreenEntrance(
-  options: UseScreenEntranceOptions = {},
-): UseScreenEntranceResult {
-  const {
-    initialOffset = 20,
-    delay = 0,
-    onComplete,
-    useSpring: useSpringAnimation = true,
-  } = options;
-
+export function useScreenEntrance() {
   const { shouldReduceMotion } = useMotionReduction();
-
-  // Shared values for animation
   const opacity = useSharedValue(shouldReduceMotion ? 1 : 0);
-  const translateY = useSharedValue(shouldReduceMotion ? 0 : initialOffset);
-  const [isReady, setIsReady] = useState(shouldReduceMotion);
+  const translateY = useSharedValue(shouldReduceMotion ? 0 : 20);
 
-  const markReady = () => {
-    setIsReady(true);
-    if (onComplete) {
-      onComplete();
-    }
-  };
-
-  const animate = () => {
-    "worklet";
-
-    if (shouldReduceMotion) {
-      // Instant transition for reduced motion
-      opacity.set(1);
-      translateY.set(0);
-      scheduleOnRN(markReady);
-      return;
-    }
-
-    // Opacity: timing animation (0.3s)
-    opacity.set(
-      withTiming(1, TimingConfig.normal, (finished) => {
-        if (finished) {
-          scheduleOnRN(markReady);
-        }
-      }),
-    );
-
-    // TranslateY: spring or timing based on preference
-    if (useSpringAnimation) {
-      translateY.set(withSpring(0, SpringConfig.gentle));
-    } else {
-      translateY.set(withTiming(0, TimingConfig.normal));
-    }
-  };
-
-  // Trigger animation on mount
   useEffect(() => {
     const timeout = setTimeout(() => {
-      animate();
-    }, delay);
+      if (shouldReduceMotion) {
+        opacity.set(1);
+        translateY.set(0);
+        return;
+      }
+      opacity.set(withTiming(1, TimingConfig.normal));
+      translateY.set(withSpring(0, SpringConfig.gentle));
+    }, 0);
 
     return () => clearTimeout(timeout);
+    // Entrance runs once; accessibility preferences are resolved before mount.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const animatedStyle = useAnimatedStyle<ViewStyle>(() => {
-    return {
-      opacity: opacity.get(),
-      transform: [{ translateY: translateY.get() }],
-    };
-  });
+  const animatedStyle = useAnimatedStyle<ViewStyle>(() => ({
+    opacity: opacity.get(),
+    transform: [{ translateY: translateY.get() }],
+  }));
 
-  return {
-    animatedStyle,
-    isReady,
-    animate,
-  };
+  return { animatedStyle };
 }
-
-export default useScreenEntrance;

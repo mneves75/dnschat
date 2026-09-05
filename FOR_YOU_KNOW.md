@@ -51,6 +51,34 @@ A versão nasce em `package.json`. `scripts/sync-versions.js` propaga a versão 
 incrementa o build em `app.json`, Xcode e Gradle. TestFlight usa tags
 `vX.Y.Z-betaN`; a tag limpa `vX.Y.Z` fica reservada para produção autorizada.
 
+## Lições da auditoria de setembro de 2026
+
+A tela de conversas e seu provedor carregavam o mesmo histórico na montagem.
+Agora o provedor é o único responsável: uma leitura inicial, com atualização
+explícita quando necessária. Na serialização, o próprio JSON já transforma datas;
+um segundo passeio reconstruía objetos sem acrescentar informação.
+
+O onboarding também esperava por uma sequência que parecia testar a rede, mas
+não fazia nenhuma consulta. As recomendações agora aparecem imediatamente e a
+espera corresponde apenas à gravação das configurações. Os testes exercitam
+essa gravação, sua falha e a nova tentativa, em vez de conferir comentários.
+
+Também removemos a ação de exportação que só mostrava um aviso de recurso futuro.
+Testes nativos que validavam apenas seus próprios mocks saíram: a cobertura real
+continua nos testes do parser, nos limites de segurança e no app compilado. O
+verificador Android agora rejeita um AAB vazio mesmo quando encontra bibliotecas
+válidas em outro artefato próximo.
+
+Um verificador precisa saber dizer que não conseguiu verificar. Corrigimos saídas
+de sucesso quando um linter era interrompido, um arquivo de versão não podia ser
+gravado ou uma conexão DNS terminava sem resposta completa. Fixtures com falhas
+reais protegem esses caminhos. Metadados de recuperação também merecem cuidado:
+um erro de JSON ou de validação de campos pode repetir parte do conteúdo privado.
+O fechamento da versão 4.4.3 encontrou esse segundo caminho no histórico: o
+conteúdo continuava criptografado, mas o diagnóstico copiava um campo inválido.
+Agora os backups de histórico e logs guardam somente um hash da mensagem de
+erro; testes com dados legados e criptografados protegem a recuperação.
+
 ## Riscos que o cliente sozinho não resolve
 
 O provedor DNS padrão ainda precisa documentar retenção, uso secundário,

@@ -258,6 +258,49 @@ describe("ChatContext error recovery", () => {
     expect(getLatestChat().isLoading).toBe(false);
   });
 
+  it("records a failed response in its original thread after selecting another thread", async () => {
+    await renderProvider();
+    const otherChat = await createStoredChat("Other thread");
+    const sendingChat = await createStoredChat("Sending thread");
+    let rejectDns: (error: Error) => void = () => {
+      throw new Error("DNS request did not start");
+    };
+    mockDNSService.queryLLM.mockImplementation(
+      () =>
+        new Promise((_resolve, reject) => {
+          rejectDns = reject;
+        }),
+    );
+    let pendingSend: Promise<void>;
+    await act(async () => {
+      pendingSend = getLatestChat().sendMessage("hello dns");
+      await Promise.resolve();
+    });
+    expect(mockDNSService.queryLLM).toHaveBeenCalledTimes(1);
+    act(() => {
+      getLatestChat().setCurrentChat(otherChat);
+    });
+    await act(async () => {
+      rejectDns(new Error("DNS unavailable"));
+      await pendingSend;
+    });
+    expect(mockStorageService.updateMessage).toHaveBeenCalledWith(
+      sendingChat.id,
+      expect.any(String),
+      { status: "error", content: "Error: DNS unavailable" },
+    );
+    expect(
+      getLatestChat().chats.find((chat) => chat.id === otherChat.id)?.messages,
+    ).toEqual([]);
+    expect(
+      getLatestChat().chats.find((chat) => chat.id === sendingChat.id)
+        ?.messages,
+    ).toMatchObject([
+      { role: "user", content: "hello dns" },
+      { role: "assistant", status: "error" },
+    ]);
+  });
+
   it("updates a persisted assistant placeholder to error and reloads both messages", async () => {
     // Given
     await renderProvider();

@@ -4,7 +4,32 @@ All notable changes to DNSChat will be documented in this file.
 
 The format is based on Keep a Changelog, and this project follows Semantic Versioning.
 
-## [Unreleased]
+## [4.4.3] - 2026-09-05
+
+Build `87` -> `88`. Release candidate following the full codebase audit.
+
+- Remove the nonfunctional profile export action, unused styling/haptic helpers and mock-only native tests; protect message-list behavior and reject empty Android bundles in alignment checks.
+- Hash chat corruption-backup error metadata so malformed decrypted fields cannot be persisted in plaintext; preserve encrypted recovery payloads.
+- Install hooks in valid empty-template Git checkouts without overwriting existing hooks or using external custom directories.
+- Refresh the release runbooks and shared agent guidance with current verification evidence and explicit production prerequisites.
+
+## [4.4.2] - 2026-09-04
+
+Build `86` -> `87`. Codebase audit and maintenance update; no store upload or production promotion.
+
+### Fixed
+
+- Finish settings hydration on first install and make network recommendations immediately available, with bilingual save/error/retry feedback.
+- Reject native DNS names above the expanded 255-octet wire limit and hash corruption-backup error metadata that could otherwise quote private content.
+- Fix the decoder denial-of-service advisory with a scoped dependency override and tested Metro consumer migration; remove its suppression.
+- Make version writes, interrupted linters, Android alignment checks and incomplete DNS harness responses fail visibly; preserve foreign Git hooks and support linked worktrees.
+- Pin React Doctor and reject incomplete analysis even when its CLI reports a successful exit; keep diagnostic warnings visible.
+
+### Changed
+
+- Load chat history once at startup, remove a redundant serialization traversal and animation completion render, and delete unused contexts, APIs, constants and comment-only tests while retaining behavioral regressions.
+- Remove broken Fastlane screenshot commands, unregistered screenshot-test sources and unused migration tooling; document compiled-app QA, debug access, worktree isolation and remaining production decisions.
+- Consolidate shared agent instructions in AGENTS.md, make CLAUDE.md an entry point, and align CI with the supported Node version file.
 
 ## [4.4.1] - 2026-09-04
 

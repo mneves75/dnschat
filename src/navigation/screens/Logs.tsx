@@ -42,7 +42,6 @@ export function Logs() {
   const palette = useImessagePalette();
   const [logs, setLogs] = useState<DNSQueryLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const [loadFailed, setLoadFailed] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [expandedLogs, setExpandedLogs] = useState<Set<string>>(new Set());
@@ -57,7 +56,7 @@ export function Logs() {
       : t("screen.logs.history.footerMultiple", { count: logs.length });
 
   // Track skeleton display
-  const showSkeleton = isLoading && !hasLoadedOnce && logs.length === 0;
+  const showSkeleton = isLoading && logs.length === 0;
 
   // Declared before the effect that calls it (avoids access-before-declaration).
   // No synchronous setIsLoading(true): isLoading already starts true for the
@@ -81,7 +80,6 @@ export function Logs() {
       .finally(() => {
         if (isMountedRef.current) {
           setIsLoading(false);
-          setHasLoadedOnce(true);
         }
       });
 

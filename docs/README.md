@@ -25,60 +25,17 @@ Developer documentation for DNSChat. Code is the source of truth — these docs 
 - `docs/public-release-redaction.md` — public-doc redaction policy and release
   evidence split
 
-## Current verification baseline
+## Verification and release state
 
-Last architecture/dependency verification: `2026-08-31`.
-Last full source/security sweep: `2026-08-31` (native DNS, encrypted storage,
-release automation, model-output rendering, UI/accessibility, and public
-disclosures; see `CHANGELOG.md` `4.3.6`).
-Last AXe simulator E2E feature pass: `2026-06-05` for version `4.0.26` build
-`60`; 10 feature groups passed. Runtime UI verification now defaults to Argent.
-Latest validated TestFlight beta: `4.3.6` build `84`, tagged
-`v4.3.6-beta1` and processed `VALID` on `2026-08-31`. Its signed
-archive/export, physical-device Release install/launch, group relationship,
-bilingual notes, and `0` error / `0` warning strict validation are verified.
-No App Store version record exists for `4.3.6`, and App Store production
-submission has not happened for this line. Build `4.2.3`/`77` is the previous
-validated TestFlight artifact.
+Current candidate proof and known blockers live in `MEMORY.md`; older build
+results do not establish the state of a newer binary. The September audit plan
+and its decisions are in `docs/technical/AUDIT-PLAN-2026-09.md`.
 
-- `pnpm dlx react-doctor@latest --project chat-dns` reports `100 / 100` for
-  `chat-dns` on `2026-07-28` (module also `100 / 100`).
-- Jest baseline on `2026-07-28`: `129` suites passed, `1` skipped; `1013` tests
-  passed, `13` skipped.
-- Native DNS module tests pass on `2026-07-28` (`8` suites passed, `1` skipped;
-  `65` tests passed, `13` skipped).
-- AXe E2E baseline: 10 feature groups passed in one owned release-simulator
-  run on `2026-06-05`.
-- `pnpm run verify:all` passed on `2026-07-28` for build `80`: 129 suites and
-  1013 tests passed; 1 suite and 13 tests skipped; React Compiler 105/105 and
-  Expo Doctor 19/19. Android `assembleDebug`/`assembleRelease` and 16KB alignment
-  checks require native build artifacts and are run separately in CI.
-- Native DNS tests passed on `2026-07-28`: 8 suites and 65 tests passed; 1
-  suite and 13 tests skipped.
-- `gitleaks detect` on `2026-07-28` reports `no leaks found`.
-- `pnpm audit` on `2026-07-28` reports `No known vulnerabilities found`.
-- `xcodebuild clean build` passes for Debug on an iOS 26.5 simulator on
-  `2026-06-30`.
-- `xcodebuild clean build` and `xcodebuild clean archive` pass for generic iOS
-  Release when code signing is disabled (`CODE_SIGNING_ALLOWED=NO`) on
-  `2026-06-30`.
-- Physical-device Release build, install, installed metadata check, and launch
-  are separate evidence claims and are not implied by the local SDK 57 simulator
-  and unsigned archive checks.
-- Latest validated TestFlight release: `4.3.6` build `84`. Signed archive/IPA
-  export and physical-device Release install/launch passed, TestFlight
-  processing returned `VALID`, and strict validation reported `0` errors and
-  `0` warnings. Internal App Store Connect IDs are intentionally omitted.
-- App Store version validation for `4.3.6` is blocked because no matching App
-  Store version record exists. This is App Store-submission state, not a
-  TestFlight processing failure.
-- `xcodebuild test` is not a native gate yet because the `DNSChat` scheme has no
-  XCTest bundles.
-- Public docs and store copy must not claim that DNS prompts are private or
-  end-to-end encrypted; only local history is encrypted at rest.
-- Public docs must use placeholders for local/device/account-specific release
-  identifiers. Run `pnpm run verify:public-redaction` and `gitleaks detect`
-  before committing release docs.
+Use `docs/agents/development.md` for focused checks, full gates, compiled-app QA,
+profiling and worktree isolation. Runtime verification defaults to Argent; the
+AXe checklist above is a documented fallback. There is no configured iOS XCTest
+target. Privacy and unauthenticated-DNS production decisions are tracked in
+`SECURITY.md` and `docs/model-registry.md`.
 
 ## Release
 

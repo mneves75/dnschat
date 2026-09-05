@@ -29,14 +29,16 @@ Please do not open public issues for security vulnerabilities.
 
 ## Current Security Baseline
 
-Last full source/security sweep: `2026-08-31` (native DNS lifecycle and parser
-hardening, strict encrypted-storage corruption handling, safe Markdown boundary,
-Web transport isolation, release/site workflow review, and unified workspace
-auditing; `verify:all` and `gitleaks` gates green).
-Latest validated TestFlight beta: `4.3.6` build `84`, tagged
-`v4.3.6-beta1` and processed `VALID` on `2026-08-31` after signed
-archive/export, physical-device install/launch, bilingual test notes, and strict
-validation at `0` errors and `0` warnings. This is not production evidence.
+The September 2026 audit covers native DNS parsing, encrypted-storage corruption
+handling, model-output rendering, dependency/secret checks and verification
+scripts. See `docs/technical/AUDIT-PLAN-2026-09.md` for scope and `MEMORY.md` for
+candidate-specific validation. Historical TestFlight or hardware results must
+not be represented as proof of the current source.
+
+The release follow-up also hashes chat corruption-backup diagnostics: schema
+errors can contain decrypted field values even when JSON parsing succeeds.
+Encrypted and legacy malformed-schema regression cases preserve the recovery
+payload and verify that the plaintext marker never appears in backup metadata.
 
 - **Production privacy blocker:** no public provider policy covering retention,
   secondary use, deletion, or service-provider status was located after
@@ -47,16 +49,13 @@ validation at `0` errors and `0` warnings. This is not production evidence.
   are not shared, or are immediately discarded. The app now discloses this
   uncertainty in both locales; release runbooks use conservative draft answers.
 
-- Dependency audits pass on `2026-08-31` with two documented suppressions.
-  `nanoid` is floored at `^3.3.18` (GHSA-2v37-7h3g-55p8). The two high-severity
-  `image-size` denial-of-service advisories (GHSA-w3rx-r6r6-pgpr,
-  GHSA-5p2g-fcmc-qvqq) have no published fix - both declare `patched >=2.0.3`
-  and npm's newest release is `2.0.2` - so they are suppressed in
-  `pnpm-workspace.yaml` under `auditConfig.ignoreGhsas` with a `2026-09-12`
-  recheck date. `image-size` is a Metro bundle-time dependency that reads the
-  dimensions of assets already committed to this repository; it is not linked
-  into the shipped iOS or Android binary and never parses network input.
-  Remove the suppression and set a floor as soon as a fixed release ships.
+- `decode-uri-component` GHSA-vcc3-ghjq-m6fr is fixed by a scoped `^0.5.0`
+  override and a one-line pnpm patch migrating `query-string` to its default
+  export. An executable Metro regression verifies the installed consumer and
+  decoder together. The two `image-size` suppressions remain time-boxed
+  because the registry still reports `2.0.2`
+  as latest and their declared patched version is `2.0.3`. All suppressions,
+  reachability arguments and recheck dates live in `pnpm-workspace.yaml`.
 - Secret scanning passes with `gitleaks detect --source . --redact --no-banner --config .gitleaks.toml`.
 - Public-repo leak prevention uses defense in depth: local `gitleaks`,
   `pnpm run verify:public-redaction`, repo hygiene tests, GitHub secret scanning,

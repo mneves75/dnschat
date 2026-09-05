@@ -1,11 +1,6 @@
 import { useRef } from "react";
 
-export type TransportKind = "native" | "udp" | "tcp" | "https";
-
-export interface TransportThrottleConfig {
-  intervalMs?: number;
-  forcedIntervalMs?: number;
-}
+export type TransportKind = "native" | "udp" | "tcp";
 
 const DEFAULT_INTERVAL = 1200;
 export const CHAIN_THROTTLE_MESSAGE =
@@ -18,21 +13,17 @@ export const FORCED_THROTTLE_MESSAGE =
  * Prevents users from spamming the same test buttons and overwhelming the resolver,
  * in line with docs/SETTINGS.md guidance.
  */
-export function useTransportTestThrottle(config: TransportThrottleConfig = {}) {
-  const chainInterval = config.intervalMs ?? DEFAULT_INTERVAL;
-  const forcedInterval = config.forcedIntervalMs ?? DEFAULT_INTERVAL;
-
+export function useTransportTestThrottle() {
   const chainLastRunRef = useRef(0);
   const forcedLastRunRef = useRef<Record<TransportKind, number>>({
     native: 0,
     udp: 0,
     tcp: 0,
-    https: 0,
   });
 
   const checkChainAvailability = () => {
     const now = Date.now();
-    if (now - chainLastRunRef.current < chainInterval) {
+    if (now - chainLastRunRef.current < DEFAULT_INTERVAL) {
       return CHAIN_THROTTLE_MESSAGE;
     }
     return null;
@@ -44,7 +35,7 @@ export function useTransportTestThrottle(config: TransportThrottleConfig = {}) {
 
   const checkForcedAvailability = (transport: TransportKind) => {
     const now = Date.now();
-    if (now - forcedLastRunRef.current[transport] < forcedInterval) {
+    if (now - forcedLastRunRef.current[transport] < DEFAULT_INTERVAL) {
       return FORCED_THROTTLE_MESSAGE;
     }
     return null;

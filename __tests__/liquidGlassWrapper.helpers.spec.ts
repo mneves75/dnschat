@@ -1,56 +1,10 @@
-import { Platform } from "react-native";
-
 jest.mock("expo-glass-effect", () => ({
   isGlassEffectAPIAvailable: jest.fn(() => true),
   isLiquidGlassAvailable: jest.fn(() => true),
 }));
 
-import {
-  buildFallbackStyle,
-  shouldUseGlassEffect,
-} from "../src/components/LiquidGlassWrapper";
+import { buildFallbackStyle } from "../src/components/LiquidGlassWrapper";
 import { splitGlassStyles } from "../src/components/glass/glassStyleUtils";
-
-const { isLiquidGlassAvailable } = require("expo-glass-effect") as {
-  isLiquidGlassAvailable: jest.Mock<boolean, []>;
-};
-const { isGlassEffectAPIAvailable } = require("expo-glass-effect") as {
-  isGlassEffectAPIAvailable: jest.Mock<boolean, []>;
-};
-
-const setPlatform = (os: string, version?: string | number) => {
-  const osDescriptor = Object.getOwnPropertyDescriptor(Platform, "OS");
-  const versionDescriptor = Object.getOwnPropertyDescriptor(
-    Platform,
-    "Version",
-  );
-
-  Object.defineProperty(Platform, "OS", {
-    configurable: true,
-    get: () => os,
-  });
-
-  if (typeof version !== "undefined") {
-    Object.defineProperty(Platform, "Version", {
-      configurable: true,
-      get: () => version,
-    });
-  }
-
-  return () => {
-    if (osDescriptor) {
-      Object.defineProperty(Platform, "OS", osDescriptor);
-    }
-
-    if (typeof version !== "undefined") {
-      if (versionDescriptor) {
-        Object.defineProperty(Platform, "Version", versionDescriptor);
-      } else {
-        delete (Platform as unknown as Record<string, unknown>)["Version"];
-      }
-    }
-  };
-};
 
 describe("LiquidGlassWrapper helpers", () => {
   afterEach(() => {
@@ -93,61 +47,6 @@ describe("LiquidGlassWrapper helpers", () => {
 
     expect(style.backgroundColor.replace(/\s/g, "")).toBe("rgb(10,132,255)");
     expect(style.borderColor.replace(/\s/g, "")).toBe("rgb(10,132,255)");
-  });
-
-  it("returns true when Liquid Glass is available on iOS", () => {
-    const restore = setPlatform("ios");
-    isLiquidGlassAvailable.mockReturnValue(true);
-
-    expect(shouldUseGlassEffect(false)).toBe(true);
-
-    restore();
-  });
-
-  it("disables glass when reduce transparency is active", () => {
-    const restore = setPlatform("ios");
-    isLiquidGlassAvailable.mockReturnValue(true);
-
-    expect(shouldUseGlassEffect(true)).toBe(false);
-
-    restore();
-  });
-
-  it("falls back on non-iOS platforms", () => {
-    const restore = setPlatform("android");
-    isLiquidGlassAvailable.mockReturnValue(true);
-
-    expect(shouldUseGlassEffect(false)).toBe(false);
-
-    restore();
-  });
-
-  it("does not bypass Expo's availability result on iOS 26", () => {
-    const restore = setPlatform("ios", "26.1");
-    isLiquidGlassAvailable.mockReturnValue(false);
-
-    expect(shouldUseGlassEffect(false)).toBe(false);
-
-    restore();
-  });
-
-  it("disables glass when the runtime API is unavailable", () => {
-    const restore = setPlatform("ios", "26.1");
-    isLiquidGlassAvailable.mockReturnValue(true);
-    isGlassEffectAPIAvailable.mockReturnValue(false);
-
-    expect(shouldUseGlassEffect(false)).toBe(false);
-
-    restore();
-  });
-
-  it("keeps glass disabled on pre-iOS 26 when Expo API returns false", () => {
-    const restore = setPlatform("ios", "25.4");
-    isLiquidGlassAvailable.mockReturnValue(false);
-
-    expect(shouldUseGlassEffect(false)).toBe(false);
-
-    restore();
   });
 
   it("splits border and shadow styles away from the native glass view", () => {

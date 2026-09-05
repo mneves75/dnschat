@@ -238,34 +238,10 @@ export class HapticFeedback {
  */
 
 /**
- * Button press haptic
- * Standard feedback for button interactions
- */
-export const buttonPress = () => HapticFeedback.light();
-
-/**
  * Toggle switch haptic
  * Feedback for switch/toggle state changes
  */
 export const toggleSwitch = () => HapticFeedback.light();
-
-/**
- * Swipe action haptic
- * Feedback for swipe-to-delete or swipe-to-action
- */
-export const swipeAction = () => HapticFeedback.medium();
-
-/**
- * Delete action haptic
- * Strong feedback for destructive actions
- */
-export const deleteAction = () => HapticFeedback.heavy();
-
-/**
- * Save success haptic
- * Feedback for successful save operations
- */
-export const saveSuccess = () => HapticFeedback.success();
 
 /**
  * Send message haptic
@@ -274,22 +250,10 @@ export const saveSuccess = () => HapticFeedback.success();
 export const sendMessage = () => HapticFeedback.medium();
 
 /**
- * Pull to refresh haptic
- * Feedback when pull-to-refresh triggers
- */
-export const pullToRefresh = () => HapticFeedback.light();
-
-/**
  * Navigation haptic
  * Subtle feedback for navigation transitions
  */
 export const navigation = () => HapticFeedback.soft();
-
-/**
- * Long press haptic
- * Feedback when long press gesture is recognized
- */
-export const longPress = () => HapticFeedback.medium();
 
 export interface HapticsPreferencePersistenceOptions {
   loading: boolean;

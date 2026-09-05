@@ -1,14 +1,10 @@
 #!/usr/bin/env node
 const fs = require("fs");
 const path = require("path");
+const { execFileSync } = require("node:child_process");
 
 const repoRoot = path.resolve(__dirname, "..");
-const hooksDir = path.join(repoRoot, ".git", "hooks");
-const hookPath = path.join(hooksDir, "pre-commit");
 
-// Keep this script intentionally dependency-free (no husky).
-// The goal is to make commit-time checks reliable anywhere the repo has a
-// writable .git/ directory.
 const hookScript = `#!/bin/sh
 set -e
 
@@ -32,8 +28,60 @@ if (!fs.existsSync(path.join(repoRoot, ".git"))) {
   process.exit(0);
 }
 
-fs.mkdirSync(hooksDir, { recursive: true });
+// Git resolves linked worktrees and core.hooksPath, including relative paths.
+const hooksDir = path.resolve(
+  repoRoot,
+  execFileSync("git", ["rev-parse", "--git-path", "hooks"], {
+    cwd: repoRoot,
+    encoding: "utf8",
+  }).trim(),
+);
+const commonGitDir = fs.realpathSync(
+  path.resolve(
+    repoRoot,
+    execFileSync("git", ["rev-parse", "--git-common-dir"], {
+      cwd: repoRoot,
+      encoding: "utf8",
+    }).trim(),
+  ),
+);
+if (
+  !fs.existsSync(hooksDir) &&
+  fs.existsSync(path.dirname(hooksDir)) &&
+  path.join(
+    fs.realpathSync(path.dirname(hooksDir)),
+    path.basename(hooksDir),
+  ) === path.join(commonGitDir, "hooks")
+) {
+  fs.mkdirSync(hooksDir);
+}
+const resolvedHooksDir = fs.existsSync(hooksDir)
+  ? fs.realpathSync(hooksDir)
+  : null;
+const localPrefix = fs.realpathSync(repoRoot) + path.sep;
+if (
+  !resolvedHooksDir ||
+  (!resolvedHooksDir.startsWith(localPrefix) &&
+    resolvedHooksDir !== path.join(commonGitDir, "hooks"))
+) {
+  console.error(
+    "[install-git-hooks] Refusing a missing hooks directory or one outside this repository. Create a repository-local core.hooksPath directory or use Git's default hooks path.",
+  );
+  process.exit(1);
+}
+const hookPath = path.join(hooksDir, "pre-commit");
+const existingHook = fs.lstatSync(hookPath, { throwIfNoEntry: false });
+if (
+  existingHook &&
+  (!existingHook.isFile() || fs.readFileSync(hookPath, "utf8") !== hookScript)
+) {
+  console.error(
+    "[install-git-hooks] Preserving existing pre-commit hook. Review core.hooksPath and integrate the DNSChat checks manually before retrying.",
+  );
+  process.exit(1);
+}
 fs.writeFileSync(hookPath, hookScript, { mode: 0o755 });
+fs.chmodSync(hookPath, 0o755);
 console.log(
   "[install-git-hooks] Installed pre-commit hook (verify:ios-pods, fmt:check, lint, test)",
 );

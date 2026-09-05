@@ -115,7 +115,7 @@ describe("repo policy: CI configuration exists and matches spec", () => {
     expect(content).toContain("timeout-minutes: 75");
     expect(content).toContain("actions/setup-java@");
     expect(content).toContain("java-version: 17");
-    expect(content).toMatch(/node-version: '?22[.']/);
+    expect(content).toContain("node-version-file: .node-version");
     expect(content).toContain("gradle/actions/setup-gradle@");
     expect(content).toContain("assembleDebug");
     expect(content).toContain("assembleRelease");

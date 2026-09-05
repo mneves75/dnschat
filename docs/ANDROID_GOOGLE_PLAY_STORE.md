@@ -4,11 +4,11 @@ Complete step-by-step guide for publishing DNSChat to the Google Play Store.
 
 **App**: DNSChat
 **Package**: `<ANDROID_PACKAGE>`
-**Repository Target**: `4.4.1` build `86`
+**Repository Target**: `4.4.3` build `88`
 
 ## Release state
 
-- **Repository target:** `4.4.1` build `86`; this is source state, not proof of
+- **Repository target:** `4.4.3` build `88`; this is source state, not proof of
   an uploaded artifact.
 - **Latest validated Android artifact:** not recorded in this public runbook;
   build and validate a fresh AAB before upload.
@@ -331,7 +331,7 @@ See [ANDROID_RELEASE.md](./ANDROID_RELEASE.md) for signing configuration.
    - **Upload** new AAB
 4. Add release notes:
    ```
-   Repository target: 4.4.1 build 86.
+   Repository target: 4.4.3 build 88.
    Replace this placeholder with user-facing notes derived from CHANGELOG.md
    after validating the exact AAB selected for upload.
    ```

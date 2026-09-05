@@ -44,6 +44,8 @@ overrides:
   'plist>@xmldom/xmldom': '>=0.9.12'
   # GHSA-c83g-rgw3-j3cx / GHSA-73wf-gq98-2v4g. Caret floor: every consumer wants 4.x.
   browserslist: '^4.28.7'
+  # GHSA-vcc3-ghjq-m6fr: query-string's pinned patch consumes the fixed ESM default export.
+  'query-string>decode-uri-component': '^0.5.0'
   brace-expansion: '>=5.0.9'
   handlebars: '>=4.7.9'
   js-yaml: '>=4.3.0'
@@ -69,23 +71,10 @@ overrides:
 # dependency used at bundle time to read the dimensions of assets already in
 # this repository; it is not linked into the iOS or Android binary and never
 # parses network input. Recheck 2026-09-12.
-#
-# decode-uri-component GHSA-vcc3-ghjq-m6fr / CVE-2026-45822 (CWE-400
-# algorithmic-complexity DoS, CVSS 6.6 moderate), reached only through
-# query-string -> expo-router.
-# Blocker: the sole patched release is 0.5.0, which is ESM-only ("type":
-# "module", and its `exports` map has no `require` condition), while
-# query-string require()s it from the Metro CJS bundle. Every 0.2/0.3/0.4
-# release is inside the vulnerable range, so there is no CJS version to move
-# to; forcing 0.5.0 would break the app bundle at runtime to fix a hang that
-# needs the user to open a hostile deep link. Drop this entry when expo-router
-# ships a query-string depending on a CJS-compatible fixed release.
-# Recheck 2026-10-01.
 auditConfig:
   ignoreGhsas:
     - GHSA-w3rx-r6r6-pgpr
     - GHSA-5p2g-fcmc-qvqq
-    - GHSA-vcc3-ghjq-m6fr
 
 minimumReleaseAgeExclude:
   - '@expo/cli@57.0.12 || 57.0.21 || 57.0.22'
@@ -104,3 +93,6 @@ minimumReleaseAgeExclude:
   - expo-font@57.0.3
   - expo-modules-jsi@57.0.7 || 57.0.8
   - expo-secure-store@57.0.3
+
+patchedDependencies:
+  query-string@7.1.3: patches/query-string@7.1.3.patch

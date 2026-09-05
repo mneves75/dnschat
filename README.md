@@ -7,7 +7,7 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 - JavaScript fallback transports (UDP/TCP) for constrained networks
 - An in-app Logs screen to inspect attempts, failures, and fallbacks
 
-[![Version](https://img.shields.io/badge/version-4.4.1-blue.svg)](.)
+[![Version](https://img.shields.io/badge/version-4.4.3-blue.svg)](.)
 [![React Native](https://img.shields.io/badge/React%20Native-0.86.3-blue.svg)](https://reactnative.dev/)
 [![Expo](https://img.shields.io/badge/Expo-57.0.x-black.svg)](https://expo.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0.x-blue.svg)](https://www.typescriptlang.org/)
@@ -31,7 +31,7 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 
 ## Tech stack
 
-- App version: `4.4.1` (build `86`)
+- App version: `4.4.3` (build `88`); distribution status is recorded in the [TestFlight runbook](docs/App_store/Apple_App_Store/TESTFLIGHT.md).
 - Expo workflow: Expo Router + EAS-compatible native config
 - Expo SDK: `57.0.x`
 - React: `19.2.3`
@@ -141,9 +141,9 @@ pnpm run lint
 # Unit tests
 pnpm run test
 
-# AXe simulator E2E
+# Native UI QA uses Argent; see docs/agents/development.md.
+# AXe is fallback only after an explicit request or documented Argent blocker.
 pnpm run e2e:axe:doctor
-pnpm run e2e:axe:release
 
 # Public-doc redaction gate
 pnpm run verify:public-redaction
@@ -175,10 +175,12 @@ Mechanism:
 
 - `pnpm install` runs `pnpm run prepare`
 - `prepare` runs `scripts/install-git-hooks.js`
-- that script writes `.git/hooks/pre-commit` that runs `verify:ios-pods`,
+- that script resolves Git's hooks path (including linked worktrees and
+  `core.hooksPath`) and writes an executable pre-commit hook that runs `verify:ios-pods`,
   `fmt:check`, `lint` (Oxlint + ast-grep), and unit tests
 
-If you do not want repo-managed hooks, remove `.git/hooks/pre-commit` locally.
+Reinstall the hook with `pnpm run prepare`. Run `pnpm run verify:all` before
+committing; the hook is the shorter safety net, not the entire release gate.
 
 ## Documentation
 
@@ -186,6 +188,8 @@ Start here:
 
 - [`docs/README.md`](docs/README.md) — full documentation index
 - [`docs/INSTALL.md`](docs/INSTALL.md) — setup, build, verification
+- [`docs/agents/development.md`](docs/agents/development.md) — agent setup, worktrees, debug access and verification loops
+- [`September audit plan`](docs/technical/AUDIT-PLAN-2026-09.md) — findings, alternatives and acceptance criteria
 - [`CLAUDE.md`](CLAUDE.md) / [`AGENTS.md`](AGENTS.md) — guidance for AI coding agents
 
 Architecture & spec:
@@ -210,29 +214,21 @@ Release:
 
 ## Current verification baseline
 
-Latest validated TestFlight beta: `4.4.1` build `86`, tagged
-`v4.4.1-beta1`.
-Last architecture/dependency verification: `2026-09-04`.
-Last full source/security sweep: `2026-09-02` (native DNS transport
-hardening: DNS-over-HTTPS removal, port-53 pin, query-zone pin, narrowed
-native allowlist, and the dnsjava absolute-name fix; see `CHANGELOG.md`
-`4.4.0`).
-Last AXe simulator E2E feature pass: `2026-06-05` for version `4.0.26` build
-`60`; 10 feature groups passed (historical; Argent MCP is the current
-verification surface).
-The latest `VALID` TestFlight build is version `4.4.1` build `86`, processed
-`VALID` on `2026-09-04` with `en-US` `What to Test` notes, distributed to the
-internal tester group only. The signed archive and IPA were produced from the
-exact source tagged `v4.4.0-beta1`. Release builds use the proven `xcodebuild
-archive` -> `-exportArchive` -> `asc publish testflight` lane. App Store
-Connect has no `4.4.0` App Store version record, so this is TestFlight-only
-staging, not production.
+The final 4.4.3 gate passed 1,010 root tests and 68 native tests. The preceding
+audit also passed compiled iOS/Android Debug builds and actual app walkthroughs.
+The saved Argent iOS navigation flow passed twice; pixel-settling warnings
+remain, so this is navigation evidence rather than a screenshot comparison.
+The release follow-up adds chat corruption-metadata and empty-template Git
+installation regressions, observed failing before their fixes and passing
+afterward. Final external autoreview through P3 reported no actionable findings.
 
-Builds `85` and `86` have no physical-device install proof: the authorized iPhone was
-locked for the whole session, so `devicectl` could not mount the developer
-disk image. The archive compiles and TestFlight validates it, but nobody has
-run it on hardware. Treat on-device behavior as unverified until someone
-launches it.
+Release builds use `xcodebuild archive`, `-exportArchive`, and
+`asc publish testflight`. The [TestFlight runbook](docs/App_store/Apple_App_Store/TESTFLIGHT.md)
+records the latest uploaded binary separately from source and simulator proof.
+The App Store production version observed on `2026-09-05` is `4.0.23`;
+the existing submission draft has an expired build and incomplete age-rating
+fields. Provider privacy declarations and unsigned-response risk acceptance
+remain production prerequisites. No hardware performance improvement is claimed.
 
 The paragraphs below are release history.
 

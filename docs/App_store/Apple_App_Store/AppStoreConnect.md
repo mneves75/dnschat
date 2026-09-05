@@ -2,12 +2,14 @@
 
 ## Release state
 
-- **Repository target:** `4.4.1` build `86`.
+- **Repository target:** `4.4.3` build `88`; archive/upload pending.
 - **Latest validated TestFlight artifact:** `4.4.1` build `86`, tagged
-  `v4.3.6-beta1` and processed `VALID` with strict validation at `0` errors
-  and `0` warnings. This is beta evidence, not production evidence.
-- **Latest production App Store release:** unverified. Confirm it in App Store
-  Connect before changing production metadata or making publication claims.
+  `v4.4.1-beta1` and recorded as `VALID` with strict validation at `0` errors
+  and `0` warnings in the release history.
+- **Latest production App Store release:** `4.0.23`, observed as
+  `READY_FOR_SALE` on `2026-09-05`. The existing `4.0.24` submission draft
+  has an expired build and missing `socialMedia`/`socialMediaAgeRestricted`
+  age-rating fields. App Privacy needs authenticated web verification.
 
 ## App Store Listing Information
 
@@ -92,7 +94,7 @@ AI,chat,DNS,assistant,local,native,tech,innovation,queries,networking
 
 ---
 
-## Latest Validated What's New (TestFlight v4.3.6)
+## Historical What's New (TestFlight v4.3.6)
 
 RELIABILITY, SECURITY, AND ACCESSIBILITY
 
@@ -101,7 +103,7 @@ RELIABILITY, SECURITY, AND ACCESSIBILITY
 - Improved contrast, localized failures, and bilingual captions.
 - Hardened model-output links and release/public-data controls.
 
-## TestFlight What to Test (v4.3.6 build 84)
+## Historical TestFlight What to Test (v4.3.6 build 84)
 
 - Launch the app on iOS 27 and confirm it remains open instead of returning to the Home Screen.
 - Cold-start the app from a `dnschat://` link, then open another `dnschat://` link while it is already running.
@@ -166,9 +168,9 @@ Validated screenshot sets currently available in App Store Connect:
 ### Bundle Information
 
 - **Bundle ID**: `<BUNDLE_ID>`
-- **Repository target**: `4.4.1` build `86` (from `package.json` via `sync-versions`)
+- **Repository target**: `4.4.3` build `88` (from `package.json` via `sync-versions`)
 - **Latest validated TestFlight artifact**: `4.4.1` build `86`
-- **Latest production App Store release**: unverified
+- **Latest production App Store release**: `4.0.23` (verified `2026-09-05`)
 - **App Store Connect internal IDs**: intentionally omitted from public docs; keep exact IDs in private release notes.
 - **Minimum iOS Version**: 16.4
 - **Device Support**: iPhone, iPad
@@ -330,7 +332,7 @@ No user account is required. The app does not require app-owned backend infrastr
 - [x] Latest validated build `84` physical-device Release install/launch
 - [x] Latest validated build `84` TestFlight processing check (`VALID`)
 - [x] Latest validated build `84` TestFlight validation (`0` errors, `0` warnings)
-- [ ] Build `84` App Store pre-submit validation (no `4.3.6` iOS version record)
+- [ ] Candidate build `88` upload and App Store pre-submit validation (a matching version record and production decisions are required)
 - [ ] Submit for App Store Review
 - [ ] Final testing on TestFlight
 - [ ] Review guidelines compliance check
@@ -338,4 +340,4 @@ No user account is required. The app does not require app-owned backend infrastr
 
 ---
 
-_Release-state guide: latest validated TestFlight beta 4.3.6 build 84; production release unverified._
+_Source target 4.4.3 build 88; latest recorded validated TestFlight beta 4.4.1 build 86; production remains 4.0.23._

@@ -1,0 +1,28 @@
+{
+  "inspected_at": "2026-09-04",
+  "project_type": "expo",
+  "is_react_native": true,
+  "is_ios": true,
+  "is_android": true,
+  "is_web": true,
+  "is_native_ios": false,
+  "is_native_android": false,
+  "bundler": "metro",
+  "metro_port": 8081,
+  "runtime": "Node 24",
+  "package_manager": "pnpm",
+  "key_packages": {
+    "expo": "57",
+    "react-native": "0.86.3",
+    "react": "19.2.3"
+  },
+  "startup_command": "pnpm run start",
+  "build_commands": {
+    "ios": "pnpm run ios",
+    "android": "pnpm run android"
+  },
+  "verification_command": "pnpm run verify:all",
+  "runtime_qa": "Argent on the compiled app",
+  "ios_test_target": false,
+  "notes": "Native module tests run separately from root Jest; Expo Go is not valid runtime proof. Device identifiers and local configuration remain outside git."
+}

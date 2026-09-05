@@ -168,7 +168,8 @@ export const ptBR = {
         label: "Configuração",
         title: "Configuração de Rede",
         subtitle: "Escolha como o DNS Chat deve se conectar ao servidor LLM",
-        disclaimer: "Você pode alterar a ordem de transporte depois em Ajustes",
+        disclaimer:
+          "Esta recomendação não testa a conexão de rede. Você pode alterar os transportes depois em Ajustes.",
         tests: {
           native: {
             name: "DNS Nativo",
@@ -183,28 +184,21 @@ export const ptBR = {
             description: "Transporte TCP de fallback",
           },
         },
-        status: {
-          testing: "Configurando",
-          waiting: "Aguardando",
-          success: "Configurado",
-          failed: "Indisponível",
-          skipped: "Pulado",
-        },
+        status: { recommended: "Recomendado" },
         optimization: {
-          title: "Configuração Aplicada",
+          title: "Configuração Recomendada",
           description:
-            "O DNS Chat usará a cadeia automática de fallback entre estes transportes. Você pode ajustar isso a qualquer momento em Ajustes.",
+            "Aplique estes ajustes para tentar o DNS nativo primeiro e depois UDP e TCP, se necessário. Nenhuma consulta de teste é enviada aqui.",
           applyButton: "Aplicar Configurações Recomendadas",
-          loading: "Configurando a ordem de transporte...",
+          loading: "Salvando ajustes...",
         },
         navigation: {
           continue: "Continuar",
-          skip: "Pular",
         },
         alerts: {
           errorTitle: "Erro",
           errorMessage:
-            "Configuração de rede falhou. Usando configurações padrão.",
+            "Não foi possível concluir a aplicação dos ajustes de rede. Tente novamente.",
           successTitle: "Configurações Aplicadas",
           successMessage:
             "Configuração de rede concluída. O DNS usará a cadeia automática de fallback.",
@@ -805,9 +799,6 @@ export const ptBR = {
           "Todas as conversas foram apagadas deste dispositivo.",
         clearDataErrorMessage:
           "Não foi possível limpar seus dados locais de chat. Tente novamente.",
-        exportTitle: "Exportar dados",
-        exportMessage:
-          "A exportação de dados estará disponível em uma atualização futura.",
       },
       statistics: {
         title: "Estatísticas",
@@ -824,8 +815,6 @@ export const ptBR = {
       data: {
         title: "Gerenciamento de dados",
         footer: "Gerencie seu histórico de conversas e dados pessoais",
-        export: "Exportar dados",
-        exportDescription: "Baixar seu histórico de conversas",
         clearAll: "Limpar todos os dados",
         clearAllDescription: "Excluir todas as conversas e mensagens",
       },

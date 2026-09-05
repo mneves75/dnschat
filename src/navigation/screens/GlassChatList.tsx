@@ -461,9 +461,6 @@ export function GlassChatList() {
   const { animatedStyle } = useScreenEntrance();
   const { opacities, translates } = useStaggeredListValues(chats.length);
 
-  // Track initial load for skeleton display
-  const [hasLoadedOnce, setHasLoadedOnce] = React.useState(false);
-
   // ONE shared action sheet for the whole list, keyed by the selected chat.
   // Per-row GlassActionSheet instances each mount a hidden <Modal> plus three
   // Animated.Values (50 chats -> 50 hidden Modals) and were implicated in the
@@ -490,35 +487,13 @@ export function GlassChatList() {
   // state both call handleNewChat). A ref, not state: it never affects render.
   const isCreatingChatRef = React.useRef(false);
 
-  // Effect: load chat list on first mount and mark first load completion.
-  // loadChats surfaces its own failures through the context error (visibleError
-  // toast); the .finally still marks hasLoadedOnce so the skeleton always yields
-  // to the empty/error state even if loadChats ever begins to reject.
-  /* oxlint-disable react-hooks/exhaustive-deps -- Intentional mount-only load; ChatContext functions change identity as provider state changes. */
-  React.useEffect(() => {
-    let isMounted = true;
-    loadChats()
-      .catch((loadError) => {
-        devWarn("[GlassChatList] Failed to load chats", loadError);
-      })
-      .finally(() => {
-        if (isMounted && !hasLoadedOnce) {
-          setHasLoadedOnce(true);
-        }
-      });
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-  /* oxlint-enable react-hooks/exhaustive-deps */
-
   const handleDismissError = () => {
     setDismissedError(error);
     clearError();
   };
 
   const [refreshing, setRefreshing] = React.useState(false);
-  const showSkeleton = isLoading && !hasLoadedOnce && chats.length === 0;
+  const showSkeleton = isLoading && !refreshing && chats.length === 0;
 
   const handleNewChat = async () => {
     if (isCreatingChatRef.current) {

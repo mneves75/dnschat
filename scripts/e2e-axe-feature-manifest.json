@@ -81,11 +81,10 @@
     {
       "id": "F-USER-001",
       "name": "Profile and data management",
-      "expected": "The profile route shows user identity, conversation/message statistics, settings navigation, export placeholder, and clear-all data confirmation.",
+      "expected": "The profile route shows user identity, conversation/message statistics, settings navigation, and clear-all data confirmation.",
       "primarySelectors": [
         "profile-screen",
         "profile-settings-link",
-        "profile-export-data",
         "profile-clear-all-data"
       ],
       "coverage": ["axe-e2e", "jest"]

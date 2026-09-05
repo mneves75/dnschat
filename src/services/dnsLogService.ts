@@ -44,7 +44,6 @@ const STORAGE_KEY = STORAGE_CONSTANTS.LOGS_KEY;
 const LOGS_BACKUP_KEY = STORAGE_CONSTANTS.LOGS_BACKUP_KEY;
 const MAX_LOGS = LOGGING_CONSTANTS.MAX_LOGS;
 const LOG_RETENTION_DAYS = LOGGING_CONSTANTS.LOG_RETENTION_DAYS;
-const STORAGE_SIZE_WARNING_MB = LOGGING_CONSTANTS.STORAGE_SIZE_WARNING_MB;
 const DNS_METHODS: readonly DNSLogEntry["method"][] = [
   "native",
   "udp",
@@ -88,7 +87,7 @@ export class DNSLogService {
    * query in `startQuery()` (PERFORMANCE: previously a `new RegExp` was built
    * per sensitive value per entry in `sanitizeEntry`).
    * Lifecycle: populated in `startQuery()`; dropped in `endQuery()` (success or
-   * failure), `deleteLog()`, and `clearLogs()`. `DNSService.queryLLM()` wraps its
+   * failure) and `clearLogs()`. `DNSService.queryLLM()` wraps its
    * body in try/finally so an early throw still finalizes the query and clears
    * this entry — these values must never outlive the query that produced them.
    */
@@ -388,7 +387,10 @@ export class DNSLogService {
 
     return JSON.stringify({
       timestamp,
-      error: error instanceof Error ? error.message : String(error),
+      // JSON parser errors can quote decrypted or legacy plaintext content.
+      error: this.redactText(
+        error instanceof Error ? error.message : String(error),
+      ),
       payload: protectedPayload,
       payloadWasEncrypted,
     });
@@ -807,31 +809,6 @@ export class DNSLogService {
     this.notifyListeners();
   }
 
-  static async saveLogs() {
-    await this.enqueuePersistentMutation(() => true);
-  }
-
-  static async deleteLog(logId: string) {
-    const changed = await this.enqueuePersistentMutation(() => {
-      // Always drop in-memory lifecycle state for this id, regardless of which
-      // store currently holds the log, so sensitive values and active entries
-      // can never outlive a delete.
-      const deletedActive = this.activeQueryLogs.delete(logId);
-      const deletedSensitive = this.sensitiveValuesByQueryId.delete(logId);
-
-      const nextLogs = this.queryLogs.filter((log) => log.id !== logId);
-      if (nextLogs.length !== this.queryLogs.length) {
-        this.queryLogs = nextLogs;
-        return true;
-      }
-
-      return deletedActive || deletedSensitive;
-    });
-    if (changed) {
-      this.notifyListeners();
-    }
-  }
-
   static getLogs(): DNSQueryLog[] {
     const activeLogs = Array.from(this.activeQueryLogs.values())
       .sort(
@@ -839,14 +816,6 @@ export class DNSLogService {
       )
       .map((log) => ({ ...log, entries: [...log.entries] }));
     return [...activeLogs, ...this.queryLogs];
-  }
-
-  static getCurrentQueryLog(): DNSQueryLog | null {
-    const activeLogs = Array.from(this.activeQueryLogs.values()).sort(
-      (left, right) => right.startTime.getTime() - left.startTime.getTime(),
-    );
-    const latest = activeLogs[0];
-    return latest ? { ...latest, entries: [...latest.entries] } : null;
   }
 
   static async clearLogs() {
@@ -958,28 +927,6 @@ export class DNSLogService {
     });
     await this.persistenceQueue;
     return changed;
-  }
-
-  /**
-   * Check storage size and warn if approaching limit
-   */
-  static async checkStorageSize(): Promise<number> {
-    try {
-      const logsJson = JSON.stringify(this.queryLogs);
-      const sizeInBytes = new Blob([logsJson]).size;
-      const sizeInMB = sizeInBytes / (1024 * 1024);
-
-      if (sizeInMB > STORAGE_SIZE_WARNING_MB) {
-        devWarn(
-          `[DNSLogService] DNS logs storage size (${sizeInMB.toFixed(2)}MB) exceeds warning threshold (${STORAGE_SIZE_WARNING_MB}MB)`,
-        );
-      }
-
-      return sizeInMB;
-    } catch (error) {
-      devWarn("[DNSLogService] Failed to check storage size", error);
-      return 0;
-    }
   }
 
   /**

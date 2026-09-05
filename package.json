@@ -1,6 +1,6 @@
 {
   "name": "chat-dns",
-  "version": "4.4.1",
+  "version": "4.4.3",
   "description": "DNSChat - A React Native chat app using DNS TXT queries",
   "main": "entry.tsx",
   "author": "DNSChat contributors",
@@ -47,7 +47,7 @@
     "verify:typed-routes": "node scripts/verify-typed-routes.js",
     "verify:expo-doctor": "RUBYOPT=-rlogger pnpm exec expo-doctor",
     "verify:react-compiler": "react-compiler-healthcheck",
-    "verify:react-doctor": "pnpm dlx react-doctor@latest . --project chat-dns",
+    "verify:react-doctor": "node scripts/run-react-doctor.js",
     "verify:public-redaction": "node scripts/check-public-redaction.js",
     "verify:security": "pnpm audit && gitleaks detect --source . --redact --no-banner --config .gitleaks.toml",
     "verify:video": "pnpm run typecheck:video && pnpm --filter @dnschat/video run compositions",

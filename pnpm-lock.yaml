@@ -9,6 +9,7 @@ overrides:
   '@expo/plist>@xmldom/xmldom': ~0.8.15
   plist>@xmldom/xmldom: '>=0.9.12'
   browserslist: ^4.28.7
+  query-string>decode-uri-component: ^0.5.0
   brace-expansion: '>=5.0.9'
   handlebars: '>=4.7.9'
   js-yaml: '>=4.3.0'
@@ -20,6 +21,9 @@ overrides:
   uuid: '>=11.1.1'
   ws: '>=8.21.0'
   yaml: '>=2.8.3'
+
+patchedDependencies:
+  query-string@7.1.3: fe47b885269a14c517ab79b9f7e5d0b46666cf13e5a80856685262c20aa00da5
 
 importers:
 
@@ -2798,9 +2802,9 @@ packages:
       supports-color:
         optional: true
 
-  decode-uri-component@0.2.2:
-    resolution: {integrity: sha512-FqUYQ+8o158GyGTrMFJms9qh3CqTKvAqgqsTnkLI8sKu0028orqBhxNMFkFen0zGyg6epACD32pjVk58ngIErQ==}
-    engines: {node: '>=0.10'}
+  decode-uri-component@0.5.0:
+    resolution: {integrity: sha512-1BiQVoK8C9gUbQU6NzAtO/tkz2qOFpEObMWpcFvhx4fYnj4Oc5yzaJN/LD36ihkVUdXyh5ZekzX+yM+ty/SrPg==}
+    engines: {node: '>=14.16'}
 
   dedent@1.7.2:
     resolution: {integrity: sha512-WzMx3mW98SN+zn3hgemf4OzdmyNhhhKz5Ay0pUfQiMQ3e1g+xmTJWp/pKdwKVXhdSkAEGIIzqeuWrL3mV/AXbA==}
@@ -8123,7 +8127,7 @@ snapshots:
     optionalDependencies:
       supports-color: 8.1.1
 
-  decode-uri-component@0.2.2: {}
+  decode-uri-component@0.5.0: {}
 
   dedent@1.7.2: {}
 
@@ -8416,7 +8420,7 @@ snapshots:
       fast-deep-equal: 3.1.3
       invariant: 2.2.4
       nanoid: 3.3.18
-      query-string: 7.1.3
+      query-string: 7.1.3(patch_hash=fe47b885269a14c517ab79b9f7e5d0b46666cf13e5a80856685262c20aa00da5)
       react: 19.2.3
       react-fast-compare: 3.2.2
       react-is: 19.2.7
@@ -9810,9 +9814,9 @@ snapshots:
 
   pure-rand@6.1.0: {}
 
-  query-string@7.1.3:
+  query-string@7.1.3(patch_hash=fe47b885269a14c517ab79b9f7e5d0b46666cf13e5a80856685262c20aa00da5):
     dependencies:
-      decode-uri-component: 0.2.2
+      decode-uri-component: 0.5.0
       filter-obj: 1.1.0
       split-on-first: 1.1.0
       strict-uri-encode: 2.0.0

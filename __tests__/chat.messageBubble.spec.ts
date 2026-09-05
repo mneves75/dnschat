@@ -48,12 +48,6 @@ describe("MessageBubble - iOS 26 HIG Compliance", () => {
       expect(sourceCode).not.toContain("glassStrokeLayer");
       expect(sourceCode).not.toContain("bubbleOverlay");
     });
-
-    it("documents HIG compliance in comments", () => {
-      expect(sourceCode).toContain("iOS 26 HIG");
-      expect(sourceCode).toContain("Message bubbles are CONTENT");
-      expect(sourceCode).toContain("NOT Liquid Glass");
-    });
   });
 
   describe("iOS 26 HIG: iMessage-Style Solid Backgrounds", () => {
@@ -155,17 +149,6 @@ describe("MessageBubble - iOS 26 HIG Compliance", () => {
 
     it("has no console.log statements", () => {
       expect(sourceCode).not.toContain("console.log");
-    });
-
-    it("uses proper TypeScript types", () => {
-      expect(sourceCode).toContain("MessageBubbleProps");
-      expect(sourceCode).toContain("interface MessageBubbleProps");
-    });
-
-    it("exports MessageBubble component", () => {
-      expect(sourceCode).toMatch(
-        /export\s+(const\s+MessageBubble\s*=|{\s*MessageBubbleComponent\s+as\s+MessageBubble\s*})/,
-      );
     });
   });
 

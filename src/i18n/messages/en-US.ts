@@ -168,7 +168,8 @@ export const enUS = {
         label: "Setup",
         title: "Network Configuration",
         subtitle: "Choose how DNS Chat should reach the LLM server",
-        disclaimer: "You can change the transport order later in Settings",
+        disclaimer:
+          "This recommendation does not test network connectivity. You can change transport settings later in Settings.",
         tests: {
           native: {
             name: "Native DNS",
@@ -183,27 +184,21 @@ export const enUS = {
             description: "TCP fallback transport",
           },
         },
-        status: {
-          testing: "Configuring",
-          waiting: "Waiting",
-          success: "Configured",
-          failed: "Unavailable",
-          skipped: "Skipped",
-        },
+        status: { recommended: "Recommended" },
         optimization: {
-          title: "Configuration Applied",
+          title: "Recommended Configuration",
           description:
-            "DNS Chat will use the automatic fallback chain across these transports. You can adjust this anytime in Settings.",
+            "Apply these settings to try Native DNS first, then UDP and TCP when needed. No test query is sent here.",
           applyButton: "Apply Recommended Settings",
-          loading: "Configuring transport order...",
+          loading: "Saving settings...",
         },
         navigation: {
           continue: "Continue",
-          skip: "Skip",
         },
         alerts: {
           errorTitle: "Error",
-          errorMessage: "Network configuration failed. Using default settings.",
+          errorMessage:
+            "Could not finish applying network settings. Try again.",
           successTitle: "Settings Applied",
           successMessage:
             "Network configuration complete. DNS will use the automatic fallback chain.",
@@ -795,8 +790,6 @@ export const enUS = {
           "All conversations were deleted from this device.",
         clearDataErrorMessage:
           "Unable to clear your local chat data. Please try again.",
-        exportTitle: "Export Data",
-        exportMessage: "Data export will be available in a future update.",
       },
       statistics: {
         title: "Statistics",
@@ -813,8 +806,6 @@ export const enUS = {
       data: {
         title: "Data Management",
         footer: "Manage your chat history and personal data",
-        export: "Export Data",
-        exportDescription: "Download your chat history",
         clearAll: "Clear All Data",
         clearAllDescription: "Delete all chats and messages",
       },

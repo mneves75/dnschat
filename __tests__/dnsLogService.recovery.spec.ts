@@ -63,7 +63,7 @@ describe("DNSLogService recovery", () => {
 
     expect(mockAsyncStorage.setItem).toHaveBeenCalledWith(
       STORAGE_CONSTANTS.LOGS_BACKUP_KEY,
-      expect.stringContaining("invalid ghash tag"),
+      expect.stringContaining("sha256:"),
     );
     expect(mockAsyncStorage.removeItem).toHaveBeenCalledWith(
       STORAGE_CONSTANTS.LOGS_KEY,
@@ -92,6 +92,37 @@ describe("DNSLogService recovery", () => {
       expect.stringContaining("enc:v1:"),
     );
   });
+
+  it.each([false, true])(
+    "does not expose parser excerpts in backup metadata (encrypted: %s)",
+    async (encrypted) => {
+      const sensitivePayload = "SENSITIVE not JSON";
+      let parserError: Error | undefined;
+      try {
+        JSON.parse(sensitivePayload);
+      } catch (error) {
+        parserError = error as Error;
+      }
+      expect(parserError?.message).toContain("SENSITIVE");
+      mockAsyncStorage.getItem.mockResolvedValue(
+        encrypted ? "enc:v1:protected" : sensitivePayload,
+      );
+      decryptIfEncrypted.mockResolvedValue(sensitivePayload);
+      const { encryptString } = jest.requireMock(
+        "../src/services/encryptionService",
+      );
+      encryptString.mockResolvedValue("enc:v1:protected");
+
+      await DNSLogService.initialize();
+
+      const backup = mockAsyncStorage.setItem.mock.calls.find(
+        ([key]) => key === STORAGE_CONSTANTS.LOGS_BACKUP_KEY,
+      );
+      expect(backup).toBeDefined();
+      expect(backup?.[1]).not.toContain("SENSITIVE");
+      expect(JSON.parse(String(backup?.[1])).payload).toBe("enc:v1:protected");
+    },
+  );
 
   it("redacts every sensitive legacy field before exposing or persisting migrated logs", async () => {
     const legacyPayload = JSON.stringify([

@@ -198,14 +198,6 @@ function useOptionalAccessibility(): AccessibilityContextType | undefined {
 }
 
 // Accessibility utility hooks
-export function useScreenReader() {
-  const ctx = useOptionalAccessibility();
-  return {
-    isEnabled: ctx?.isScreenReaderEnabled ?? false,
-    announce: ctx?.announceToScreenReader ?? (() => undefined),
-  };
-}
-
 export function useMotionReduction() {
   const ctx = useOptionalAccessibility();
   const shouldReduceMotion = ctx?.isReduceMotionEnabled ?? false;

@@ -1,254 +1,92 @@
-/**
- * NetworkSetupScreen iOS 26 HIG Compliance Tests
- * Verifies zero emojis, semantic systems, disclaimer, and proper status indicators
- */
+import React from "react";
+import { act } from "react-test-renderer";
+import type { ReactTestRenderer } from "react-test-renderer";
+import { NetworkSetupScreen } from "../src/components/onboarding/screens/NetworkSetupScreen";
+import { createWithSuppressedWarnings } from "./utils/reactTestRenderer";
+import { appAlert } from "../src/utils/appAlert";
 
-import fs from "fs";
-import path from "path";
+const mockApply = jest.fn();
+jest.mock("../src/context/SettingsContext", () => ({
+  SettingsContext: require("react").createContext(undefined),
+  useSettings: () => ({ applyRecommendedNetworkSettings: mockApply }),
+}));
+jest.mock("../src/i18n", () => ({
+  useTranslation: () => ({ t: (key: string) => key }),
+}));
+jest.mock("../src/components/onboarding/OnboardingNavigation", () => ({
+  OnboardingNavigation: () => null,
+}));
+jest.mock("../src/utils/appAlert", () => ({ appAlert: jest.fn() }));
 
-describe("NetworkSetupScreen - iOS 26 HIG Compliance", () => {
-  const filePath = path.resolve(
-    __dirname,
-    "../src/components/onboarding/screens/NetworkSetupScreen.tsx",
-  );
-  let sourceCode: string;
-
-  beforeAll(() => {
-    sourceCode = fs.readFileSync(filePath, "utf8");
-  });
-
-  describe("Required Imports", () => {
-    it("imports useImessagePalette", () => {
-      expect(sourceCode).toContain("useImessagePalette");
-    });
-
-    it("imports useTypography", () => {
-      expect(sourceCode).toContain("useTypography");
-    });
-
-    it("imports LiquidGlassSpacing", () => {
-      expect(sourceCode).toContain("LiquidGlassSpacing");
-    });
-  });
-
-  describe("Disclaimer Requirement", () => {
-    it("contains the required disclaimer text", () => {
-      expect(sourceCode).toContain(
-        't("screen.onboarding.networkSetup.disclaimer")',
-      );
-    });
-
-    it("renders disclaimer in a styled container", () => {
-      expect(sourceCode).toContain("disclaimerContainer");
-    });
-
-    it("applies semantic colors to disclaimer", () => {
-      const disclaimerSection = sourceCode.substring(
-        sourceCode.indexOf("disclaimerContainer"),
-        sourceCode.indexOf("disclaimerContainer") + 500,
-      );
-      expect(disclaimerSection).toContain("palette.accentSurface");
-      expect(disclaimerSection).toContain("palette.accentBorder");
-    });
-  });
-
-  describe("Zero Emoji Requirement", () => {
-    it("does not contain checkmark emoji", () => {
-      expect(sourceCode).not.toContain(String.fromCodePoint(0x2705));
-    });
-
-    it("does not contain cross mark emoji", () => {
-      expect(sourceCode).not.toContain(String.fromCodePoint(0x274c));
-    });
-
-    it("does not contain hourglass emoji", () => {
-      expect(sourceCode).not.toContain(String.fromCodePoint(0x23f3));
-    });
-
-    it("does not contain rocket emoji", () => {
-      expect(sourceCode).not.toContain(String.fromCodePoint(0x1f680));
-    });
-
-    it("does not contain sparkles emoji", () => {
-      expect(sourceCode).not.toContain(String.fromCodePoint(0x2728));
-    });
-
-    it("does not contain lightning emoji", () => {
-      expect(sourceCode).not.toContain(String.fromCodePoint(0x26a1));
-    });
-
-    it("does not contain gear emoji", () => {
-      expect(sourceCode).not.toContain("\u2699\uFE0F");
-    });
-
-    it("contains zero emoji characters", () => {
-      const emojiPattern = /[\u{1F300}-\u{1F9FF}]/gu;
-      expect(sourceCode.match(emojiPattern)).toBeNull();
-    });
-
-    it("uses text-based status labels instead", () => {
-      expect(sourceCode).toContain(
-        't("screen.onboarding.networkSetup.status.testing")',
-      );
-      expect(sourceCode).toContain(
-        't("screen.onboarding.networkSetup.status.waiting")',
-      );
-      expect(sourceCode).toContain(
-        't("screen.onboarding.networkSetup.status.success")',
+describe("onboarding network recommendation", () => {
+  let renderer: ReactTestRenderer;
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.useFakeTimers();
+    mockApply.mockResolvedValue(undefined);
+    act(() => {
+      renderer = createWithSuppressedWarnings(
+        React.createElement(NetworkSetupScreen),
       );
     });
   });
+  afterEach(() => {
+    act(() => renderer.unmount());
+    jest.useRealTimers();
+  });
+  const applyButton = () =>
+    renderer.root.findAll(
+      (node) =>
+        node.props["testID"] === "onboarding-network-apply" &&
+        typeof node.props["onPress"] === "function",
+    )[0];
 
-  describe("Status System", () => {
-    it("uses palette colors for status indicators", () => {
-      expect(sourceCode).toContain("palette.textTertiary");
-      expect(sourceCode).toContain("palette.accentTint");
-      expect(sourceCode).toContain("palette.success");
+  it("offers Apply immediately without simulated work and saves the recommended chain", async () => {
+    expect(applyButton()).toBeDefined();
+    expect(applyButton()!.props["disabled"]).toBe(false);
+    expect(mockApply).not.toHaveBeenCalled();
+    expect(JSON.stringify(renderer.toJSON())).toContain(
+      "screen.onboarding.networkSetup.disclaimer",
+    );
+    await act(async () => {
+      await applyButton()!.props["onPress"]();
     });
-
-    it("includes status indicator component", () => {
-      expect(sourceCode).toContain("statusIndicator");
-    });
-
-    it("includes getStatusColor function", () => {
-      expect(sourceCode).toContain("getStatusColor");
-    });
-
-    it("includes getStatusLabel function", () => {
-      expect(sourceCode).toContain("getStatusLabel");
-    });
+    expect(mockApply).toHaveBeenCalledWith(true);
+    expect(appAlert).toHaveBeenCalledWith(
+      "screen.onboarding.networkSetup.alerts.successTitle",
+      "screen.onboarding.networkSetup.alerts.successMessage",
+      expect.any(Array),
+    );
   });
 
-  describe("Network Test Items", () => {
-    it("includes Native DNS test", () => {
-      expect(sourceCode).toContain(
-        't("screen.onboarding.networkSetup.tests.native.name")',
-      );
+  it("disables Apply only during persistence and allows retry after failure", async () => {
+    let rejectSave: (error: Error) => void = () => {
+      throw new Error("save did not start");
+    };
+    mockApply.mockImplementationOnce(
+      () =>
+        new Promise((_resolve, reject) => {
+          rejectSave = reject;
+        }),
+    );
+    expect(applyButton()).toBeDefined();
+    let pending: Promise<void>;
+    await act(async () => {
+      pending = applyButton()!.props["onPress"]();
     });
-
-    it("includes DNS over UDP test", () => {
-      expect(sourceCode).toContain(
-        't("screen.onboarding.networkSetup.tests.udp.name")',
-      );
+    expect(applyButton()!.props["disabled"]).toBe(true);
+    await act(async () => {
+      rejectSave(new Error("disk full"));
+      await pending;
     });
-
-    it("includes DNS over TCP test", () => {
-      expect(sourceCode).toContain(
-        't("screen.onboarding.networkSetup.tests.tcp.name")',
-      );
+    expect(applyButton()!.props["disabled"]).toBe(false);
+    expect(appAlert).toHaveBeenCalledWith(
+      "screen.onboarding.networkSetup.alerts.errorTitle",
+      "screen.onboarding.networkSetup.alerts.errorMessage",
+    );
+    await act(async () => {
+      await applyButton()!.props["onPress"]();
     });
-
-    it("does not display fabricated latency metrics", () => {
-      // HIG: never show simulated milliseconds as if measured. The screen now
-      // animates a configuration progression instead of fake test results.
-      expect(sourceCode).not.toContain("latency");
-      expect(sourceCode).not.toMatch(/\$\{[^}]*\}ms/);
-      expect(sourceCode).not.toContain("Math.random");
-    });
-
-    it("transitions steps through a configuration progression", () => {
-      // Each step moves to "configured" so the visual progress conveys
-      // that the transport order is being applied.
-      expect(sourceCode).toContain('status: "configured"');
-    });
-  });
-
-  describe("No Hardcoded Colors", () => {
-    it("contains zero hardcoded hex colors", () => {
-      const hexPattern = /#[0-9A-Fa-f]{6}|#[0-9A-Fa-f]{3}/g;
-      expect(sourceCode.match(hexPattern)).toBeNull();
-    });
-
-    it("uses palette for all colors", () => {
-      expect(sourceCode.match(/palette\./g)!.length).toBeGreaterThan(15);
-    });
-  });
-
-  describe("No Hardcoded Font Sizes", () => {
-    it("does not contain fontSize declarations", () => {
-      expect(sourceCode).not.toContain("fontSize:");
-    });
-
-    it("uses typography system throughout", () => {
-      expect(sourceCode.match(/typography\./g)!.length).toBeGreaterThan(10);
-    });
-  });
-
-  describe("Spacing System", () => {
-    it("uses LiquidGlassSpacing throughout", () => {
-      expect(sourceCode.match(/LiquidGlassSpacing\./g)!.length).toBeGreaterThan(
-        20,
-      );
-    });
-
-    it("does not use hardcoded numeric spacing", () => {
-      const styles = sourceCode.substring(sourceCode.indexOf("const styles"));
-      // Allow only 0, 1, 2 for borderWidth and similar props
-      const numericSpacingPattern =
-        /(?:padding|margin|gap|top|bottom|left|right|width|height):\s*(?!0\b|1\b|2\b)\d+/g;
-      expect(styles.match(numericSpacingPattern)).toBeNull();
-    });
-  });
-
-  describe("Component Structure", () => {
-    it("defines NetworkTest interface", () => {
-      expect(sourceCode).toContain("interface NetworkTest");
-    });
-
-    it("defines NetworkTestItem component", () => {
-      expect(sourceCode).toContain("function NetworkTestItem");
-    });
-
-    it("includes recommendation section", () => {
-      expect(sourceCode).toContain("recommendationContainer");
-      expect(sourceCode).toContain(
-        't("screen.onboarding.networkSetup.optimization.title")',
-      );
-    });
-
-    it("includes apply settings button", () => {
-      expect(sourceCode).toContain("applyButton");
-      expect(sourceCode).toContain(
-        't("screen.onboarding.networkSetup.optimization.applyButton")',
-      );
-    });
-  });
-
-  describe("Semantic Color Usage", () => {
-    it("uses semantic surface colors", () => {
-      expect(sourceCode).toContain("palette.surface");
-      expect(sourceCode).toContain("palette.accentSurface");
-    });
-
-    it("uses semantic border colors", () => {
-      expect(sourceCode).toContain("palette.border");
-      expect(sourceCode).toContain("palette.accentBorder");
-    });
-
-    it("uses semantic text colors", () => {
-      expect(sourceCode).toContain("palette.textPrimary");
-      expect(sourceCode).toContain("palette.textSecondary");
-      expect(sourceCode).toContain("palette.textTertiary");
-    });
-
-    it("uses semantic accent colors", () => {
-      expect(sourceCode).toContain("palette.accentTint");
-      expect(sourceCode).toContain("palette.solid");
-    });
-  });
-
-  describe("Code Quality", () => {
-    it("uses StyleSheet.create for performance", () => {
-      expect(sourceCode).toContain("StyleSheet.create");
-    });
-
-    it("applies styles with array syntax for composition", () => {
-      expect(sourceCode.match(/style=\{\[/g)!.length).toBeGreaterThan(10);
-    });
-
-    it("passes palette and typography to child components", () => {
-      expect(sourceCode).toContain("palette={palette}");
-      expect(sourceCode).toContain("typography={typography}");
-    });
+    expect(mockApply).toHaveBeenCalledTimes(2);
   });
 });

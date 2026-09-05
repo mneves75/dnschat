@@ -54,16 +54,6 @@ describe("Onboarding Accessibility Tests", () => {
         "accessibilityState={{ disabled: isSubmitting, busy: isSubmitting }}",
       );
     });
-
-    it("has iOS HIG comments explaining button purposes", () => {
-      expect(source).toContain(
-        "iOS HIG: Skip button allows users to bypass onboarding tutorial",
-      );
-      expect(source).toContain(
-        "iOS HIG: Back button for navigation between onboarding steps",
-      );
-      expect(source).toContain("iOS HIG: Primary action button");
-    });
   });
 
   describe("FirstChatScreen accessibility", () => {
@@ -111,12 +101,6 @@ describe("Onboarding Accessibility Tests", () => {
         "screen.onboarding.firstChat.accessibility.inputHint",
       );
     });
-
-    it("has iOS HIG comment for message suggestions", () => {
-      expect(source).toContain(
-        "iOS HIG: Show message suggestions before first chat attempt",
-      );
-    });
   });
 
   describe("DNSMagicScreen accessibility", () => {
@@ -144,12 +128,6 @@ describe("Onboarding Accessibility Tests", () => {
         "accessibilityState={{ disabled: isRunning, busy: isRunning }}",
       );
     });
-
-    it("has iOS HIG comment for demo button", () => {
-      expect(source).toContain(
-        "iOS HIG: Primary action button to trigger DNS demonstration",
-      );
-    });
   });
 
   describe("NetworkSetupScreen accessibility", () => {
@@ -166,12 +144,6 @@ describe("Onboarding Accessibility Tests", () => {
       );
       expect(source).toContain(
         "screen.onboarding.networkSetup.accessibility.applyHint",
-      );
-    });
-
-    it("has iOS HIG comment for apply button", () => {
-      expect(source).toContain(
-        "iOS HIG: Primary action button to apply network optimization results",
       );
     });
   });
@@ -194,12 +166,6 @@ describe("Onboarding Accessibility Tests", () => {
       expect(source).toContain("accessibilityLabel={feature.action.text}");
       expect(source).toContain(
         "screen.onboarding.features.opensource.accessibilityHint",
-      );
-    });
-
-    it("has iOS HIG comment for external link", () => {
-      expect(source).toContain(
-        "iOS HIG: External link button to open GitHub repository in browser",
       );
     });
   });
@@ -259,23 +225,6 @@ describe("Onboarding Accessibility Tests", () => {
 
         // Every element with accessibilityRole should have accessibilityHint
         expect(hintCount).toBeGreaterThanOrEqual(roleCount);
-      });
-    });
-  });
-
-  describe("iOS HIG documentation comments", () => {
-    const onboardingFiles = [
-      "../src/components/onboarding/OnboardingNavigation.tsx",
-      "../src/components/onboarding/screens/FirstChatScreen.tsx",
-      "../src/components/onboarding/screens/DNSMagicScreen.tsx",
-      "../src/components/onboarding/screens/NetworkSetupScreen.tsx",
-      "../src/components/onboarding/screens/FeaturesScreen.tsx",
-    ];
-
-    it("all files have at least one iOS HIG comment", () => {
-      onboardingFiles.forEach((file) => {
-        const source = fs.readFileSync(path.resolve(__dirname, file), "utf8");
-        expect(source).toContain("iOS HIG:");
       });
     });
   });

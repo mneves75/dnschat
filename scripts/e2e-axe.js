@@ -1029,11 +1029,7 @@ function runProfileSmoke(options) {
       hasLabel(elements, "Profile"),
     30000,
   );
-  for (const id of [
-    "profile-settings-link",
-    "profile-export-data",
-    "profile-clear-all-data",
-  ]) {
+  for (const id of ["profile-settings-link", "profile-clear-all-data"]) {
     waitForId(options, id, 10000);
   }
   console.log("F-USER-001 profile screen");

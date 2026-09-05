@@ -116,16 +116,6 @@ export function Profile({ user }: ProfileProps) {
     );
   };
 
-  const handleExportData = () => {
-    appAlert(
-      t("screen.profile.alerts.exportTitle", { defaultValue: "Export Data" }),
-      t("screen.profile.alerts.exportMessage", {
-        defaultValue: "Data export will be available in a future update.",
-      }),
-      [{ text: t("common.ok", { defaultValue: "OK" }) }],
-    );
-  };
-
   const handleOpenSettings = () => {
     push("/(modals)/settings");
   };
@@ -296,17 +286,6 @@ export function Profile({ user }: ProfileProps) {
             defaultValue: "Manage your chat history and personal data",
           })}
         >
-          <Form.Item
-            testID="profile-export-data"
-            title={t("screen.profile.data.export", {
-              defaultValue: "Export Data",
-            })}
-            subtitle={t("screen.profile.data.exportDescription", {
-              defaultValue: "Download your chat history",
-            })}
-            onPress={handleExportData}
-            showChevron
-          />
           <Form.Item
             testID="profile-clear-all-data"
             title={t("screen.profile.data.clearAll", {
