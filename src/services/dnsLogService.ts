@@ -78,6 +78,7 @@ export class DNSLogService {
   private static cleanupIntervalId: ReturnType<typeof setInterval> | null =
     null;
   private static persistenceQueue: Promise<void> = Promise.resolve();
+  private static notifyScheduled = false;
   private static initialized = false;
   private static initializationInFlight: Promise<void> | null = null;
   /**
@@ -606,7 +607,7 @@ export class DNSLogService {
     if (!queryLog) return;
 
     queryLog.entries.push(this.sanitizeEntry(queryId, entry));
-    this.notifyListeners();
+    this.scheduleNotifyListeners();
   }
 
   static logMethodAttempt(
@@ -729,18 +730,27 @@ export class DNSLogService {
 
     this.addLog(queryId, finalEntry);
 
-    await this.enqueuePersistentMutation(() => {
-      this.activeQueryLogs.delete(queryId);
-      this.sensitiveValuesByQueryId.delete(queryId);
-      this.queryLogs.unshift({ ...queryLog, entries: [...queryLog.entries] });
+    // PERFORMANCE: the in-memory transition happens synchronously so getLogs()
+    // and every subscriber observe the terminal state as soon as endQuery
+    // returns. Sensitive values are dropped here too, so they never outlive the
+    // query even if the write below fails.
+    this.activeQueryLogs.delete(queryId);
+    this.sensitiveValuesByQueryId.delete(queryId);
+    this.queryLogs.unshift({ ...queryLog, entries: [...queryLog.entries] });
 
-      if (this.queryLogs.length > MAX_LOGS) {
-        this.queryLogs = this.queryLogs.slice(0, MAX_LOGS);
-      }
+    if (this.queryLogs.length > MAX_LOGS) {
+      this.queryLogs = this.queryLogs.slice(0, MAX_LOGS);
+    }
 
-      return true;
-    });
     this.notifyListeners();
+
+    // PERFORMANCE: writePersistentLogs() re-encrypts the whole log store and
+    // hex-encodes it. Awaiting it here put that on the message-send critical
+    // path, between the DNS response arriving and queryLLM returning. It stays
+    // on the serialized persistence queue - so ordering against clearLogs and
+    // cleanup is unchanged - but the caller no longer waits for the write.
+    // enqueuePersistentMutation already logs and swallows write failures.
+    void this.enqueuePersistentMutation(() => true);
   }
 
   static async recordSettingsEvent(message: string, details?: string) {
@@ -923,11 +933,34 @@ export class DNSLogService {
     this.cleanupIntervalId = null;
   }
 
+  /**
+   * PERFORMANCE: a single DNS query emits 10-25 addLog() calls. Notifying per
+   * entry ran getLogs() - a sort plus a shallow clone of every log and its
+   * entries - and re-rendered the Logs screen that many times while the query
+   * was still in flight. Entries added within one microtask checkpoint now
+   * collapse into a single notification. Terminal transitions (endQuery,
+   * clearLogs, recovery) still call notifyListeners() directly, so a
+   * subscriber never observes a stale final state.
+   */
+  private static scheduleNotifyListeners() {
+    if (this.listeners.size === 0) return;
+    if (this.notifyScheduled) return;
+    this.notifyScheduled = true;
+    queueMicrotask(() => {
+      // A synchronous flush in between clears the flag and already delivered
+      // this batch; drop the queued run instead of notifying twice.
+      if (!this.notifyScheduled) return;
+      this.notifyScheduled = false;
+      this.notifyListeners();
+    });
+  }
+
   private static notifyListeners() {
+    this.notifyScheduled = false;
     // PERFORMANCE: getLogs() sorts and shallow-clones up to MAX_LOGS query
-    // logs on every addLog(); skip that entirely when nobody is subscribed.
-    // Persistence is handled by the callers (enqueuePersistentMutation) and
-    // is unaffected by this early return.
+    // logs; skip that entirely when nobody is subscribed. Persistence is
+    // handled by the callers (enqueuePersistentMutation) and is unaffected
+    // by this early return.
     if (this.listeners.size === 0) return;
     const logs = this.getLogs();
     this.listeners.forEach((listener) => listener(logs));

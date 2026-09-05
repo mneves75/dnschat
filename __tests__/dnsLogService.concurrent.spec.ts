@@ -72,7 +72,75 @@ describe("DNSLogService concurrent query isolation", () => {
     expect(
       betaLog?.entries.some((entry) => entry.details === "alpha-attempt"),
     ).toBe(false);
+
+    // endQuery finalizes in memory synchronously and enqueues the encrypted
+    // write instead of awaiting it, so the store is written once the
+    // persistence queue drains rather than before endQuery resolves.
+    await dnsLogServiceInternals.persistenceQueue;
     expect(mockAsyncStorage.setItem).toHaveBeenCalled();
+  });
+
+  it("finalizes a query in memory before its encrypted write completes", async () => {
+    let writeCompleted = false;
+    let releaseWrite: (() => void) | undefined;
+    mockAsyncStorage.setItem.mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          releaseWrite = () => {
+            writeCompleted = true;
+            resolve();
+          };
+        }),
+    );
+
+    const queryId = DNSLogService.startQuery("gamma");
+    DNSLogService.logMethodAttempt(queryId, "native", "gamma-attempt");
+
+    await DNSLogService.endQuery(queryId, true, "gamma-response", "native");
+
+    // endQuery has resolved while the encrypted write is still outstanding,
+    // yet the finished query is already visible and its active-query state,
+    // including the sensitive values, has been released.
+    expect(writeCompleted).toBe(false);
+    const finished = DNSLogService.getLogs().find((log) => log.id === queryId);
+    expect(finished?.finalStatus).toBe("success");
+    expect(dnsLogServiceInternals.sensitiveValuesByQueryId.has(queryId)).toBe(
+      false,
+    );
+
+    // The write is still queued and does complete once allowed to finish.
+    for (let attempt = 0; attempt < 10 && !releaseWrite; attempt += 1) {
+      await Promise.resolve();
+    }
+    expect(releaseWrite).toBeDefined();
+    releaseWrite?.();
+    await dnsLogServiceInternals.persistenceQueue;
+    expect(writeCompleted).toBe(true);
+  });
+
+  it("coalesces the listener fan-out for entries added in one microtask", async () => {
+    const queryId = DNSLogService.startQuery("delta");
+    const listener = jest.fn();
+    const unsubscribe = DNSLogService.subscribe(listener);
+    listener.mockClear();
+
+    for (let index = 0; index < 10; index += 1) {
+      DNSLogService.logMethodAttempt(queryId, "native", `attempt-${index}`);
+    }
+
+    expect(listener).not.toHaveBeenCalled();
+    await Promise.resolve();
+    expect(listener).toHaveBeenCalledTimes(1);
+
+    const snapshot = listener.mock.calls[0]?.[0] as
+      | { id: string; entries: { details?: string }[] }[]
+      | undefined;
+    const delta = snapshot?.find((log) => log.id === queryId);
+    expect(
+      delta?.entries.filter((entry) => entry.details?.startsWith("attempt-")),
+    ).toHaveLength(10);
+
+    unsubscribe();
   });
 
   it("releases sensitive query values on completion and clear", async () => {

@@ -1,3 +1,4 @@
+import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 
 function readJsonFile(path: string): unknown {
@@ -86,5 +87,37 @@ describe("repo policy: no release credentials", () => {
     expect(content).toMatch(
       /<key>ITSAppUsesNonExemptEncryption<\/key>\s*<false\/>/,
     );
+  });
+
+  it("ships no test-runtime branch that can weaken production crypto", () => {
+    // encryptionService once returned a constant key and a constant AES-GCM
+    // nonce whenever process.env.JEST_WORKER_ID was set. Metro only replaces
+    // dot-notation process.env.NODE_ENV, so that bracket-notation check - and
+    // both weakened branches - shipped in the release bundle. Reusing a GCM
+    // nonce under one key leaks the authentication key, not just plaintext,
+    // so tests must supply their inputs through mocks instead.
+    const sources = execFileSync(
+      "git",
+      ["ls-files", "src", "modules", "app", "entry.tsx"],
+      { encoding: "utf8" },
+    )
+      .split("\n")
+      .filter((file) => /\.(ts|tsx)$/.test(file));
+
+    // These two gate log verbosity only, and both sit behind a __DEV__ check
+    // that is false in release, so no behavior they guard reaches production.
+    // Anything else matching is a shipped test-runtime branch: reject it.
+    const loggingOnly = new Set([
+      "src/utils/devLog.ts",
+      "modules/dns-native/index.ts",
+    ]);
+
+    const offenders = sources.filter(
+      (file) =>
+        !loggingOnly.has(file) &&
+        /JEST_WORKER_ID|isTestRuntime/.test(fs.readFileSync(file, "utf8")),
+    );
+
+    expect(offenders).toEqual([]);
   });
 });

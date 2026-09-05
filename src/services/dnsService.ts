@@ -237,88 +237,107 @@ const getErrorDetails = (
 // - react-native-udp: Unmaintained but critical for DNS fallback on restricted networks
 // - react-native-tcp-socket: Untested on New Architecture but works via Interop Layer
 // If libraries fail to load, app gracefully falls back within the chain: native DNS -> UDP -> TCP -> Mock
+// PERFORMANCE: these are resolved on first use, not at module load. dnsService is
+// imported by ChatContext, which app/_layout.tsx mounts as a root provider, so a
+// module-scope require() pulls both socket libraries and their stream/EventEmitter
+// polyfills into the startup path even for a session that only ever reaches the
+// native rung or Mock DNS. Resolution is attempted once and the outcome cached,
+// so a missing library still degrades exactly as before.
 let dgram: UDPModule | null = null;
+let dgramResolved = false;
 let TcpSocket: TcpSocketModule | null = null;
-let Buffer: BufferFactory | null = null;
+let tcpSocketResolved = false;
+let bufferFactory: BufferFactory | null = null;
 
-try {
-  // UDP DNS transport (fallback #2 after native DNS)
-  // Used when native DNS unavailable or fails
-  const udpCandidate: unknown = require("react-native-udp");
-  const udpModule = resolveModuleCandidate(udpCandidate, isUDPModule);
-  if (udpModule) {
-    dgram = udpModule;
-    devLog("[DNSService] UDP library loaded successfully:", !!dgram);
-  } else {
-    devLog("[DNSService] UDP library did not expose createSocket as expected");
+function getDgram(): UDPModule | null {
+  if (dgramResolved) return dgram;
+  dgramResolved = true;
+  try {
+    // UDP DNS transport (fallback #2 after native DNS)
+    // Used when native DNS unavailable or fails
+    const udpCandidate: unknown = require("react-native-udp");
+    const udpModule = resolveModuleCandidate(udpCandidate, isUDPModule);
+    if (udpModule) {
+      dgram = udpModule;
+      devLog("[DNSService] UDP library loaded successfully:", !!dgram);
+    } else {
+      devLog(
+        "[DNSService] UDP library did not expose createSocket as expected",
+      );
+    }
+  } catch (error) {
+    devLog("[DNSService] UDP library failed to load:", error);
+    // UDP not available, will use TCP/Mock fallback methods
   }
-} catch (error) {
-  devLog("[DNSService] UDP library failed to load:", error);
-  // UDP not available, will use TCP/Mock fallback methods
+  return dgram;
 }
 
-try {
-  // TCP DNS transport (fallback #3 after UDP)
-  // Critical for corporate networks that block UDP port 53
-  const tcpCandidate: unknown = require("react-native-tcp-socket");
-  const tcpModule = resolveModuleCandidate(tcpCandidate, isTcpSocketModule);
-  if (tcpModule) {
-    TcpSocket = tcpModule;
-    devLogLazy("[DNSService] TCP Socket library structure:", () =>
-      Object.keys(tcpModule),
-    );
-    devLog(
-      "[DNSService] TCP Socket library loaded successfully:",
-      !!TcpSocket?.Socket,
-    );
-  } else {
-    devLog("[DNSService] TCP Socket library missing Socket constructor");
+function getTcpSocket(): TcpSocketModule | null {
+  if (tcpSocketResolved) return TcpSocket;
+  tcpSocketResolved = true;
+  try {
+    // TCP DNS transport (fallback #3 after UDP)
+    // Critical for corporate networks that block UDP port 53
+    const tcpCandidate: unknown = require("react-native-tcp-socket");
+    const tcpModule = resolveModuleCandidate(tcpCandidate, isTcpSocketModule);
+    if (tcpModule) {
+      TcpSocket = tcpModule;
+      devLogLazy("[DNSService] TCP Socket library structure:", () =>
+        Object.keys(tcpModule),
+      );
+      devLog(
+        "[DNSService] TCP Socket library loaded successfully:",
+        !!TcpSocket?.Socket,
+      );
+    } else {
+      devLog("[DNSService] TCP Socket library missing Socket constructor");
+    }
+  } catch (error) {
+    devLog("[DNSService] TCP Socket library failed to load:", error);
+    // TCP Socket not available, will use native DNS/Mock fallback
   }
-} catch (error) {
-  devLog("[DNSService] TCP Socket library failed to load:", error);
-  // TCP Socket not available, will use native DNS/Mock fallback
+  return TcpSocket;
 }
 
 // TRICKY: Buffer polyfill for cross-platform compatibility
 // React Native, Web, and Node.js environments handle binary data differently
-// This polyfill ensures dns-packet library works across all platforms
-try {
-  // Try to use native Buffer (React Native with polyfill or Node.js)
-  const bufferCandidate =
-    (globalThis as { Buffer?: unknown }).Buffer ?? require("buffer").Buffer;
-  if (isBufferFactory(bufferCandidate)) {
-    Buffer = bufferCandidate;
+// This polyfill ensures dns-packet library works across all platforms. The
+// polyfill fallback means resolution always yields a usable factory.
+function getBuffer(): BufferFactory {
+  if (bufferFactory) return bufferFactory;
+  try {
+    // Try to use native Buffer (React Native with polyfill or Node.js)
+    const bufferCandidate =
+      (globalThis as { Buffer?: unknown }).Buffer ?? require("buffer").Buffer;
+    if (isBufferFactory(bufferCandidate)) {
+      bufferFactory = bufferCandidate;
+    }
+  } catch {}
+
+  if (!bufferFactory) {
+    // FALLBACK: Create minimal Buffer polyfill for web environments
+    // Provides only methods needed by dns-packet library for DNS protocol handling
+    bufferFactory = {
+      alloc: (size: number) => new Uint8Array(size),
+      concat: (arrays: Uint8Array[]) => {
+        const totalLength = arrays.reduce((len, arr) => len + arr.length, 0);
+        const result = new Uint8Array(totalLength);
+        let offset = 0;
+        for (const arr of arrays) {
+          result.set(arr, offset);
+          offset += arr.length;
+        }
+        return result;
+      },
+      from: (data: Uint8Array | ArrayBuffer | ArrayLike<number>) => {
+        if (data instanceof Uint8Array) return data;
+        if (data instanceof ArrayBuffer) return new Uint8Array(data);
+        return new Uint8Array(data);
+      },
+    };
   }
-} catch {}
-
-if (!Buffer) {
-  // FALLBACK: Create minimal Buffer polyfill for web environments
-  // Provides only methods needed by dns-packet library for DNS protocol handling
-  Buffer = {
-    alloc: (size: number) => new Uint8Array(size),
-    concat: (arrays: Uint8Array[]) => {
-      const totalLength = arrays.reduce((len, arr) => len + arr.length, 0);
-      const result = new Uint8Array(totalLength);
-      let offset = 0;
-      for (const arr of arrays) {
-        result.set(arr, offset);
-        offset += arr.length;
-      }
-      return result;
-    },
-    from: (data: Uint8Array | ArrayBuffer | ArrayLike<number>) => {
-      if (data instanceof Uint8Array) return data;
-      if (data instanceof ArrayBuffer) return new Uint8Array(data);
-      return new Uint8Array(data);
-    },
-  };
+  return bufferFactory;
 }
-
-const isTestRuntime = () =>
-  typeof process !== "undefined" &&
-  typeof process.env === "object" &&
-  process.env !== null &&
-  typeof process.env["JEST_WORKER_ID"] === "string";
 
 let warnedInsecureRandom = false;
 const warnInsecureRandom = () => {
@@ -361,7 +380,7 @@ export function generateSecureDNSId(): number {
   }
 
   const isDev = typeof __DEV__ !== "undefined" && !!__DEV__;
-  if (isDev || isTestRuntime()) {
+  if (isDev) {
     warnInsecureRandom();
     return Math.floor(Math.random() * 65536);
   }
@@ -904,11 +923,13 @@ export class DNSService {
     deadline: number,
   ): Promise<string[]> {
     return new Promise((resolve, reject) => {
-      if (!dgram) {
+      const udp = getDgram();
+      if (!udp) {
         return reject(new Error("UDP not available"));
       }
+      const Buffer = getBuffer();
 
-      const socket = dgram.createSocket("udp4");
+      const socket = udp.createSocket("udp4");
       let timeoutId: ReturnType<typeof setTimeout> | null = null;
       let settled = false;
       let cancelForBackground: (() => void) | null = null;
@@ -1121,21 +1142,20 @@ export class DNSService {
   ): Promise<string[]> {
     return new Promise((resolve, reject) => {
       this.vLog("TCP: Starting DNS-over-TCP query");
-      this.vLog("TCP: TcpSocket available:", !!TcpSocket);
-      this.vLog("TCP: TcpSocket.Socket available:", !!TcpSocket?.Socket);
+      const tcp = getTcpSocket();
+      this.vLog("TCP: TcpSocket available:", !!tcp);
+      this.vLog("TCP: TcpSocket.Socket available:", !!tcp?.Socket);
 
-      if (!TcpSocket) {
+      if (!tcp) {
         this.vLog("TCP: Socket not available");
         return reject(new Error("TCP Socket not available"));
       }
-      if (!Buffer) {
-        return reject(new Error("Buffer unavailable for DNS-over-TCP"));
-      }
+      const Buffer = getBuffer();
 
       let socket: TcpSocketInstance | null = null;
       try {
         this.vLog("TCP: Creating socket...");
-        socket = new TcpSocket.Socket();
+        socket = new tcp.Socket();
         this.vLog("TCP: Socket created successfully");
       } catch (socketError) {
         this.vLog("TCP: Socket creation failed:", socketError);
@@ -1802,7 +1822,7 @@ export class DNSService {
             );
             break;
           }
-          if (!dgram) {
+          if (!getDgram()) {
             throw new Error(
               `UDP DNS transport unavailable - react-native-udp library not loaded (platform: ${Platform.OS})`,
             );
@@ -1837,7 +1857,7 @@ export class DNSService {
             );
             break;
           }
-          if (!TcpSocket) {
+          if (!getTcpSocket()) {
             throw new Error(
               `TCP DNS transport unavailable - react-native-tcp-socket library not loaded (platform: ${Platform.OS})`,
             );
@@ -2054,7 +2074,7 @@ export class DNSService {
             );
             break;
           }
-          if (!dgram) {
+          if (!getDgram()) {
             throw new Error(
               `UDP forced test unavailable - react-native-udp library not loaded (platform: ${Platform.OS})`,
             );
@@ -2089,7 +2109,7 @@ export class DNSService {
             );
             break;
           }
-          if (!TcpSocket) {
+          if (!getTcpSocket()) {
             throw new Error(
               `TCP forced test unavailable - react-native-tcp-socket library not loaded (platform: ${Platform.OS})`,
             );

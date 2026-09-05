@@ -341,15 +341,6 @@ export function ChatProvider({ children }: ChatProviderProps) {
         status: "sent",
       };
 
-      devLog(
-        "[ChatContext] Updating assistant message in storage with response...",
-      );
-      await StorageService.updateMessage(chatIdAtSend, assistantMessage.id, {
-        content: response,
-        status: "sent",
-      });
-      devLog("[ChatContext] Assistant message updated in storage");
-
       // Update state with completed response
       const finalChat: Chat = {
         ...chatWithAssistantPlaceholder,
@@ -365,10 +356,23 @@ export function ChatProvider({ children }: ChatProviderProps) {
         messageCount: finalChat.messages.length,
       });
 
+      // PERFORMANCE: paint the answer before persisting it. updateMessage
+      // serializes the whole chat history, encrypts it with AES-GCM and writes
+      // it to AsyncStorage; awaiting that first put the entire write on the
+      // path between the DNS response arriving and the bubble appearing. The
+      // write stays inside this try, so a failed write still lands in the catch
+      // below, which persists the error status and reloads from storage.
       replaceChatInState(finalChat.id, finalChat);
-
-      devLog("[ChatContext] Final state update complete");
       setError(null);
+
+      devLog(
+        "[ChatContext] Updating assistant message in storage with response...",
+      );
+      await StorageService.updateMessage(chatIdAtSend, assistantMessage.id, {
+        content: response,
+        status: "sent",
+      });
+      devLog("[ChatContext] Assistant message updated in storage");
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Failed to send message";

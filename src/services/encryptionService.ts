@@ -52,12 +52,6 @@ let keyLoadInFlight: Promise<Uint8Array> | null = null;
 let cachedDecoder: TextDecoder | null = null;
 let warnedWebKeyPersisted = false;
 
-const isTestRuntime = () =>
-  typeof process !== "undefined" &&
-  typeof process.env === "object" &&
-  process.env !== null &&
-  typeof process.env["JEST_WORKER_ID"] === "string";
-
 const getRandomBytes = async (size: number): Promise<Uint8Array> => {
   try {
     if (
@@ -202,12 +196,6 @@ const loadEncryptionKey = async (): Promise<Uint8Array> => {
   if (keyLoadInFlight) return keyLoadInFlight;
 
   keyLoadInFlight = (async () => {
-    if (isTestRuntime()) {
-      const testKey = new Uint8Array(ENCRYPTION_CONSTANTS.KEY_LENGTH).fill(7);
-      cachedKey = testKey;
-      return testKey;
-    }
-
     const stored = await (async () => {
       try {
         return isWebRuntime()
@@ -255,9 +243,10 @@ export const isEncryptedPayload = (value: string): boolean =>
 
 export const encryptString = async (plaintext: string): Promise<string> => {
   const key = await loadEncryptionKey();
-  const nonce = isTestRuntime()
-    ? new Uint8Array(ENCRYPTION_CONSTANTS.IV_LENGTH).fill(9)
-    : await getRandomBytes(ENCRYPTION_CONSTANTS.IV_LENGTH);
+  // Every payload gets a fresh random nonce. AES-GCM nonce reuse under one key
+  // is catastrophic (it leaks the authentication key, not just plaintext), so
+  // there is deliberately no branch here that can produce a constant nonce.
+  const nonce = await getRandomBytes(ENCRYPTION_CONSTANTS.IV_LENGTH);
   const cipher = gcm(key, nonce).encrypt(utf8ToBytes(plaintext));
   return `${ENCRYPTION_PREFIX}${bytesToHex(nonce)}:${bytesToHex(cipher)}`;
 };
