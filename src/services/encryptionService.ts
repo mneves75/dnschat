@@ -242,11 +242,15 @@ export const isEncryptedPayload = (value: string): boolean =>
   typeof value === "string" && value.startsWith(ENCRYPTION_PREFIX);
 
 export const encryptString = async (plaintext: string): Promise<string> => {
-  const key = await loadEncryptionKey();
   // Every payload gets a fresh random nonce. AES-GCM nonce reuse under one key
   // is catastrophic (it leaks the authentication key, not just plaintext), so
   // there is deliberately no branch here that can produce a constant nonce.
-  const nonce = await getRandomBytes(ENCRYPTION_CONSTANTS.IV_LENGTH);
+  // The key load and the nonce do not depend on each other, so they run
+  // together rather than making every write wait for both in turn.
+  const [key, nonce] = await Promise.all([
+    loadEncryptionKey(),
+    getRandomBytes(ENCRYPTION_CONSTANTS.IV_LENGTH),
+  ]);
   const cipher = gcm(key, nonce).encrypt(utf8ToBytes(plaintext));
   return `${ENCRYPTION_PREFIX}${bytesToHex(nonce)}:${bytesToHex(cipher)}`;
 };
