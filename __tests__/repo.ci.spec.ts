@@ -1,5 +1,6 @@
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
+import nodePath from "node:path";
 
 function read(path: string): string {
   return fs.readFileSync(path, "utf8");
@@ -32,7 +33,12 @@ describe("repo policy: CI configuration exists and matches spec", () => {
     expect(offenders).toEqual([]);
   });
 
-  it("discovers at least 60 test files", () => {
+  it("discovers every spec file that exists on disk", () => {
+    // Guards the regression that removing --passWithNoTests was meant to catch:
+    // a broken testMatch turns a green run into a run of nothing. A count floor
+    // cannot do this job - the previous "at least 60" sat 51 files below the
+    // real total, so most of the suite could vanish before it fired. Comparing
+    // against the files actually present has no dead zone and needs no upkeep.
     const output = execFileSync(
       process.execPath,
       [require.resolve("jest/bin/jest"), "--listTests", "--json"],
@@ -41,8 +47,18 @@ describe("repo policy: CI configuration exists and matches spec", () => {
         encoding: "utf8",
       },
     );
-    const testPaths = JSON.parse(output) as string[];
+    const discovered = new Set(
+      (JSON.parse(output) as string[]).map((absolute) =>
+        nodePath.relative(process.cwd(), absolute),
+      ),
+    );
 
-    expect(testPaths.length).toBeGreaterThanOrEqual(60);
+    const onDisk = fs
+      .readdirSync("__tests__")
+      .filter((entry) => /\.spec\.(ts|tsx|js)$/.test(entry))
+      .map((entry) => nodePath.join("__tests__", entry));
+
+    expect(onDisk.length).toBeGreaterThan(0);
+    expect(onDisk.filter((file) => !discovered.has(file))).toEqual([]);
   });
 });
