@@ -16,7 +16,7 @@
     "generate:sfx": "node scripts/generate-sfx.mjs"
   },
   "dependencies": {
-    "@remotion/cli": "4.0.518",
+    "@remotion/cli": "4.0.520",
     "@remotion/media": "4.0.518",
     "@remotion/transitions": "4.0.518",
     "react": "19.2.3",
