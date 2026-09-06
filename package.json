@@ -102,18 +102,18 @@
   "devDependencies": {
     "@ast-grep/cli": "^0.40.3",
     "@types/dns-packet": "^5.6.5",
-    "@types/jest": "^29.5.12",
+    "@types/jest": "^30.0.0",
     "@types/react": "~19.2.10",
     "@types/react-test-renderer": "^19.0.0",
     "babel-plugin-transform-remove-console": "^6.9.4",
     "expo-doctor": "1.20.1",
-    "jest": "^29.7.0",
+    "jest": "^30.5.1",
     "oxfmt": "~0.64.0",
     "oxlint": "~1.79.0",
     "react-compiler-healthcheck": "1.0.0",
-    "react-test-renderer": "19.2.3",
-    "ts-jest": "^29.4.9",
-    "typescript": "~6.0.3"
+    "react-test-renderer": "19.2.8",
+    "ts-jest": "^29.4.12",
+    "typescript": "~7.0.2"
   },
   "expo": {
     "doctor": {
