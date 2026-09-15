@@ -6,6 +6,33 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+## [4.4.7] - 2026-09-15
+
+Build `91` -> `92`. Fixes found by a full Android 16 emulator end-to-end run of
+4.4.6 and a follow-up review. Build `91` on TestFlight has Android-only defects
+and the iOS composer echo; iOS testers should move to `92`.
+
+### Fixed
+
+- Android native DNS never worked: the prompt sanitizer compiled its combining
+  mark pattern with a flag Android's ICU regex rejects, so every native query
+  was refused and requests fell through to the JavaScript transports.
+- The JavaScript UDP rung never loaded on either platform: the module check
+  rejected react-native-udp's class export, so a failed native query skipped
+  UDP and went to TCP.
+- Android: messages added after a chat opened rendered blank inside the Expo UI
+  Compose menu. Android now uses the React Native long-press menu (Copy,
+  Share); iOS keeps the native menu.
+- Failed replies are announced, copied, shared and previewed in the chat list
+  with the localized error text instead of the stored English diagnostic.
+- The error toast places its action under the message, which now shows up to
+  four lines instead of being squeezed beside the button.
+- iOS: sending while an autocorrect suggestion was pending ("cao" -> "cão") put
+  the corrected sent text back in the composer. Only that echo is cleared; a
+  new draft typed or pasted right after sending is kept, and other platforms
+  are unaffected.
+- Onboarding no longer mentions the removed transport preference.
+
 ## [4.4.6] - 2026-09-15
 
 Build `90` -> `91`. Second review round over 4.4.5: a security re-review, Matt

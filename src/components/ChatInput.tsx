@@ -85,6 +85,30 @@ const CHARACTER_COUNTER_THRESHOLD =
 const BUTTON_SPACING = LiquidGlassSpacing.xxs; // 4px from edge
 const SEND_ECHO_WINDOW_MS = 400;
 
+function foldWord(word: string): string {
+  return word.normalize("NFD").replace(/\p{M}/gu, "").toLocaleLowerCase();
+}
+
+// iOS autocorrect only rewrites the word being typed, which is the last one of
+// the sent text; it keeps that word's first letter and roughly its length
+// ("cao" -> "cão", "dont" -> "don't"). A new draft inside the echo window only
+// matches that shape when it repeats every earlier sent word and the last
+// word's first letter, so it is kept.
+function isAutocorrectEcho(sent: string, text: string): boolean {
+  const sentWords = sent.trim().split(/\s+/u);
+  const words = text.trim().split(/\s+/u);
+  const last = words.length - 1;
+  if (
+    words.length !== sentWords.length ||
+    words.slice(0, last).join(" ") !== sentWords.slice(0, last).join(" ")
+  ) {
+    return false;
+  }
+  const word = foldWord(words[last] ?? "");
+  const sentWord = foldWord(sentWords[last] ?? "");
+  return word.length >= sentWord.length - 1 && word[0] === sentWord[0];
+}
+
 interface ChatInputProps {
   /** Resolves false when the send was rejected before anything was sent. */
   onSendMessage: (message: string) => Promise<boolean>;
@@ -108,7 +132,7 @@ export function ChatInput({
 }: ChatInputProps) {
   const [message, setMessage] = useState("");
   const textInputRef = useRef<TextInput>(null);
-  const lastSendAtRef = useRef(Number.NEGATIVE_INFINITY);
+  const lastSendRef = useRef({ at: Number.NEGATIVE_INFINITY, text: "" });
   const colorScheme = useResolvedColorScheme();
   const isDark = colorScheme === "dark";
   const typography = useTypography();
@@ -314,10 +338,14 @@ export function ChatInput({
   // iOS commits a pending autocorrect suggestion when the send button is
   // tapped. That native edit is newer than the JS clear, so the native view
   // rejects the clear and reports the sent text (with the correction applied)
-  // straight back. Nobody can type into the field this soon after a send, so a
-  // change inside the window is that echo and is cleared again.
+  // straight back. Only that echo is cleared; any other input is kept.
   const handleChangeText = (text: string) => {
-    if (Date.now() - lastSendAtRef.current < SEND_ECHO_WINDOW_MS) {
+    const lastSend = lastSendRef.current;
+    if (
+      Platform.OS === "ios" &&
+      Date.now() - lastSend.at < SEND_ECHO_WINDOW_MS &&
+      isAutocorrectEcho(lastSend.text, text)
+    ) {
       textInputRef.current?.clear();
       setMessage("");
       return;
@@ -331,7 +359,7 @@ export function ChatInput({
       return;
     }
     HapticFeedback.medium();
-    lastSendAtRef.current = Date.now();
+    lastSendRef.current = { at: Date.now(), text };
     setMessage("");
 
     // Refocus the input after sending on iOS

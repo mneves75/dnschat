@@ -7,7 +7,7 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 - JavaScript fallback transports (UDP/TCP) for constrained networks
 - An in-app Logs screen to inspect attempts, failures, and fallbacks
 
-[![Version](https://img.shields.io/badge/version-4.4.3-blue.svg)](.)
+[![Version](https://img.shields.io/badge/version-4.4.7-blue.svg)](.)
 [![React Native](https://img.shields.io/badge/React%20Native-0.86.3-blue.svg)](https://reactnative.dev/)
 [![Expo](https://img.shields.io/badge/Expo-57.0.x-black.svg)](https://expo.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0.x-blue.svg)](https://www.typescriptlang.org/)
@@ -31,7 +31,7 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 
 ## Tech stack
 
-- App version: `4.4.3` (build `88`); distribution status is recorded in the [TestFlight runbook](docs/App_store/Apple_App_Store/TESTFLIGHT.md).
+- App version: `4.4.7` (build `92`); distribution status is recorded in the [TestFlight runbook](docs/App_store/Apple_App_Store/TESTFLIGHT.md).
 - Expo workflow: Expo Router + EAS-compatible native config
 - Expo SDK: `57.0.x`
 - React: `19.2.3`
@@ -211,13 +211,12 @@ Release:
 
 ## Current verification baseline
 
-The final 4.4.3 gate passed 1,010 root tests and 68 native tests. The preceding
-audit also passed compiled iOS/Android Debug builds and actual app walkthroughs.
-The saved Argent iOS navigation flow passed twice; pixel-settling warnings
-remain, so this is navigation evidence rather than a screenshot comparison.
-The release follow-up adds chat corruption-metadata and empty-template Git
-installation regressions, observed failing before their fixes and passing
-afterward. Final external autoreview through P3 reported no actionable findings.
+The 4.4.7 gate (`pnpm run verify:all`) passed 702 root tests and 67 native
+tests, with react-doctor at 92, a clean dependency audit and no leaks found.
+A full Android 16 emulator end-to-end run of the release APK and an iOS 27
+simulator pass of the Release build exercised onboarding, DNS replies with
+accented text, the UDP fallback, errors, retry, long-press menus, sharing and
+the pt-BR locale. No physical-device pass was run for this version.
 
 Release builds use `xcodebuild archive`, `-exportArchive`, and
 `asc publish testflight`. The [TestFlight runbook](docs/App_store/Apple_App_Store/TESTFLIGHT.md)

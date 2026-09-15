@@ -1,5 +1,5 @@
 import React from "react";
-import { AccessibilityInfo } from "react-native";
+import { AccessibilityInfo, Platform } from "react-native";
 import { act } from "react-test-renderer";
 import type { ReactTestRenderer } from "react-test-renderer";
 import { MESSAGE_CONSTANTS } from "../src/constants/appConstants";
@@ -208,6 +208,65 @@ describe("ChatInput behavior", () => {
       expect(field().props["value"]).toBe("next question");
     } finally {
       now.mockRestore();
+    }
+  });
+
+  it("keeps genuine input typed or pasted right after a send", async () => {
+    // Only the native autocorrect echo of the sent text is suppressed; a new
+    // draft that starts inside the echo window must survive.
+    const now = jest.spyOn(Date, "now").mockReturnValue(1_000);
+    try {
+      const onSendMessage = jest.fn(async () => true);
+      const tree = renderChatInput({ onSendMessage });
+      const field = () => tree.root.findByProps({ testID: "chat-input-field" });
+
+      act(() => {
+        field().props["onChangeText"]("o que e um cao");
+      });
+      await act(async () => {
+        await tree.root
+          .findByProps({ testID: "chat-input-send" })
+          .props["onPress"]();
+      });
+      now.mockReturnValue(1_100);
+      act(() => {
+        field().props["onChangeText"]("o");
+      });
+      expect(field().props["value"]).toBe("o");
+      act(() => {
+        field().props["onChangeText"]("o que e um cao, e um gato?");
+      });
+      expect(field().props["value"]).toBe("o que e um cao, e um gato?");
+    } finally {
+      now.mockRestore();
+    }
+  });
+
+  it("never suppresses input on platforms without the iOS autocorrect echo", async () => {
+    const originalPlatform = Platform.OS;
+    Platform.OS = "android";
+    const now = jest.spyOn(Date, "now").mockReturnValue(1_000);
+    try {
+      const onSendMessage = jest.fn(async () => true);
+      const tree = renderChatInput({ onSendMessage });
+      const field = () => tree.root.findByProps({ testID: "chat-input-field" });
+
+      act(() => {
+        field().props["onChangeText"]("o que e um cao");
+      });
+      await act(async () => {
+        await tree.root
+          .findByProps({ testID: "chat-input-send" })
+          .props["onPress"]();
+      });
+      now.mockReturnValue(1_050);
+      act(() => {
+        field().props["onChangeText"]("o que e um cão");
+      });
+      expect(field().props["value"]).toBe("o que e um cão");
+    } finally {
+      now.mockRestore();
+      Platform.OS = originalPlatform;
     }
   });
 
