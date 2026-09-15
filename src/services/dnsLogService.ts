@@ -64,9 +64,12 @@ const DNS_FINAL_STATUSES: readonly DNSQueryLog["finalStatus"][] = [
 // Logs before 4.4.5 stored an unsalted SHA-256 of prompts, titles and
 // responses. Prompts are short natural language, so a digest can be confirmed
 // by guessing; only the length is kept now.
-const LEGACY_DIGEST_PATTERN = /sha256:[0-9a-f]{64} len:(\d+)/g;
-const HAS_LEGACY_DIGEST = /sha256:[0-9a-f]{64} len:\d+/;
-const REDACTED_VALUE_PATTERN = /^(?:redacted|sha256:[0-9a-f]{64}) len:\d+$/;
+const LEGACY_DIGEST = "sha256:[0-9a-f]{64}";
+const LEGACY_DIGEST_PATTERN = new RegExp(`${LEGACY_DIGEST} len:(\\d+)`, "g");
+const HAS_LEGACY_DIGEST = new RegExp(LEGACY_DIGEST);
+const REDACTED_VALUE_PATTERN = new RegExp(
+  `^(?:redacted|${LEGACY_DIGEST}) len:\\d+$`,
+);
 
 const stripLegacyDigests = (value: string): string =>
   value.replace(LEGACY_DIGEST_PATTERN, "redacted len:$1");
@@ -504,22 +507,21 @@ export class DNSLogService {
       const wasEncrypted = isEncryptedPayload(stored);
       const decrypted = await decryptIfEncrypted(stored);
       const parsed = this.parseStoredLogs(JSON.parse(decrypted) as unknown);
-      const hadLegacyDigests =
-        wasEncrypted && HAS_LEGACY_DIGEST.test(decrypted);
+      // Plaintext logs are redacted wholesale; encrypted logs from before 4.4.5
+      // only need their digests stripped. Either way the store is rewritten.
+      const needsRewrite = !wasEncrypted || HAS_LEGACY_DIGEST.test(decrypted);
+      const migrate = wasEncrypted
+        ? (log: DNSQueryLog) => this.stripLegacyDigestsFromLog(log)
+        : (log: DNSQueryLog) => this.migrateLegacyLog(log);
       this.queryLogs = this.mergeWithStoredLogs(
-        wasEncrypted
-          ? hadLegacyDigests
-            ? parsed.map((log) => this.stripLegacyDigestsFromLog(log))
-            : parsed
-          : parsed.map((log) => this.migrateLegacyLog(log)),
+        needsRewrite ? parsed.map(migrate) : parsed,
       );
 
-      if (hadLegacyDigests) {
+      if (needsRewrite) {
         await this.writePersistentLogs();
       }
 
       if (!wasEncrypted) {
-        await this.writePersistentLogs();
         devWarn(
           "[DNSLogService] Migrated legacy plaintext DNS logs to encrypted and redacted payload",
         );

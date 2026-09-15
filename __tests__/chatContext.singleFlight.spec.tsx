@@ -7,7 +7,6 @@ jest.mock("../src/context/SettingsContext", () => ({
   useSettings: () => ({
     dnsServer: "llm.pieter.com",
     enableMockDNS: false,
-    allowExperimentalTransports: true,
     preferredLocale: "en-US",
   }),
 }));

@@ -137,8 +137,6 @@ const toggleSwitchMock = jest
 const baseSettingsValue = {
   dnsServer: "ch.at",
   updateDnsServer: jest.fn().mockResolvedValue(undefined),
-  allowExperimentalTransports: true,
-  updateAllowExperimentalTransports: jest.fn().mockResolvedValue(undefined),
   enableMockDNS: false,
   updateEnableMockDNS: jest.fn().mockResolvedValue(undefined),
   enableHaptics: true,

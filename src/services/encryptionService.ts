@@ -9,9 +9,11 @@ import { devWarn } from "../utils/devLog";
 // SecureStore keys must be alphanumeric plus ., -, _ (no @ or /)
 const KEY_STORAGE_KEY = "dnschat.encryption_key.v2";
 // Written before 4.3.6 with the library default accessibility, which a backup
-// can restore onto another device. Still read so existing history decrypts,
-// and the web preview keeps its key under this name.
+// can restore onto another device. Still read so existing history decrypts.
 const LEGACY_KEY_STORAGE_KEY = "dnschat.encryption_key";
+// Browser storage has no accessibility classes, so the web preview keeps its
+// original key name.
+const WEB_KEY_STORAGE_KEY = LEGACY_KEY_STORAGE_KEY;
 const DEVICE_ONLY_KEY_OPTIONS = {
   keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
 };
@@ -91,7 +93,7 @@ const getWebStoredKey = (): string | null => {
     const localStorage = globalThis.localStorage;
     if (!localStorage || typeof localStorage.getItem !== "function")
       return null;
-    return localStorage.getItem(LEGACY_KEY_STORAGE_KEY);
+    return localStorage.getItem(WEB_KEY_STORAGE_KEY);
   } catch (error) {
     devWarn(
       "[EncryptionService] Failed to read web fallback key storage",
@@ -107,7 +109,7 @@ const setWebStoredKey = (key: string): boolean => {
     const localStorage = globalThis.localStorage;
     if (!localStorage || typeof localStorage.setItem !== "function")
       return false;
-    localStorage.setItem(LEGACY_KEY_STORAGE_KEY, key);
+    localStorage.setItem(WEB_KEY_STORAGE_KEY, key);
     if (!warnedWebKeyPersisted) {
       warnedWebKeyPersisted = true;
       // Web preview stores the key in same-origin browser storage, which is not a
@@ -227,10 +229,24 @@ const migrateLegacyKey = async (legacyEncoded: string): Promise<void> => {
   }
 };
 
-const readStoredKey = async (): Promise<string | null> => {
+// Returns the stored key, moving a legacy entry to the device-only entry on the
+// way (see migrateLegacyKey).
+const readKeyMigratingLegacy = async (): Promise<string | null> => {
   if (isWebRuntime()) return getWebStoredKey();
   const current = await SecureStore.getItemAsync(KEY_STORAGE_KEY);
-  if (current !== null) return current;
+  if (current !== null) {
+    // Validate first: corrupt key material must surface before anything is
+    // deleted. A launch whose final delete failed left the legacy entry behind;
+    // the verified device-only copy exists, so removing it here finishes the
+    // move. Deleting a missing item is a no-op.
+    decodeStoredKey(current);
+    try {
+      await SecureStore.deleteItemAsync(LEGACY_KEY_STORAGE_KEY);
+    } catch (error) {
+      devWarn("[EncryptionService] Legacy key cleanup deferred", error);
+    }
+    return current;
+  }
   const legacy = await SecureStore.getItemAsync(LEGACY_KEY_STORAGE_KEY);
   if (legacy !== null) {
     // Validate before copying so corrupt key material is preserved, not spread.
@@ -247,7 +263,7 @@ const loadEncryptionKey = async (): Promise<Uint8Array> => {
   keyLoadInFlight = (async () => {
     const stored = await (async () => {
       try {
-        return await readStoredKey();
+        return await readKeyMigratingLegacy();
       } catch (error) {
         if (error instanceof EncryptionKeyCorruptionError) throw error;
         const cause = error instanceof Error ? error : new Error(String(error));

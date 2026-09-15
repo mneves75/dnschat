@@ -20,7 +20,6 @@ describe("SettingsContext migrateSettings", () => {
       version: SETTINGS_VERSION,
       dnsServer: "llm.pieter.com",
       enableMockDNS: true,
-      allowExperimentalTransports: true,
       enableHaptics: true,
       preferredLocale: null,
       themePreference: "system",
@@ -47,7 +46,6 @@ describe("SettingsContext migrateSettings", () => {
       version: SETTINGS_VERSION,
       dnsServer: "llm.pieter.com",
       enableMockDNS: false,
-      allowExperimentalTransports: true,
       enableHaptics: true,
       preferredLocale: "en-US",
       themePreference: "system",
@@ -73,7 +71,7 @@ describe("SettingsContext migrateSettings", () => {
     expect(result.version).toBe(SETTINGS_VERSION);
   });
 
-  it("preserves v3 payload fields and restores the UDP/TCP fallbacks", () => {
+  it("preserves v3 payload fields and drops the removed transport toggle", () => {
     // No screen can set allowExperimentalTransports to false any more, so a
     // stored false (from a removed toggle) would leave the install on
     // native-only DNS for good, breaking the native -> UDP -> TCP order.
@@ -93,7 +91,6 @@ describe("SettingsContext migrateSettings", () => {
       version: SETTINGS_VERSION,
       dnsServer: "llm.pieter.com",
       enableMockDNS: true,
-      allowExperimentalTransports: true,
       enableHaptics: false,
       preferredLocale: "pt-BR",
       themePreference: "system",
@@ -116,7 +113,6 @@ describe("SettingsContext migrateSettings", () => {
       version: SETTINGS_VERSION,
       dnsServer: DEFAULT_SETTINGS.dnsServer,
       enableMockDNS: true,
-      allowExperimentalTransports: true,
       enableHaptics: true,
       preferredLocale: "en-US",
       themePreference: "system",
@@ -157,14 +153,15 @@ describe("SettingsContext migrateSettings", () => {
 
     const result = migrateSettings(payload);
 
+    const { allowExperimentalTransports: _removed, ...kept } = payload;
     expect(result).toEqual({
-      ...payload,
+      ...kept,
       version: SETTINGS_VERSION,
       themePreference: "system",
     });
   });
 
-  it("restores the UDP/TCP fallbacks for a current-version payload", () => {
+  it("drops the removed transport toggle from a current-version payload", () => {
     const result = migrateSettings({
       version: SETTINGS_VERSION,
       dnsServer: "llm.pieter.com",
@@ -176,7 +173,7 @@ describe("SettingsContext migrateSettings", () => {
       accessibility: DEFAULT_SETTINGS.accessibility,
     });
 
-    expect(result.allowExperimentalTransports).toBe(true);
+    expect(result).not.toHaveProperty("allowExperimentalTransports");
   });
 
   it("falls back to default dnsServer when payload is not allowlisted", () => {

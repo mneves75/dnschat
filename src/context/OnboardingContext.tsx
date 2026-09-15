@@ -5,8 +5,6 @@ import { devWarn } from "../utils/devLog";
 
 export interface OnboardingStep {
   id: string;
-  title: string;
-  description: string;
   component: string;
   completed: boolean;
 }
@@ -38,36 +36,26 @@ const ONBOARDING_STORAGE_KEY = "@chat_dns_onboarding";
 const ONBOARDING_STEPS: OnboardingStep[] = [
   {
     id: "welcome",
-    title: "Welcome to DNS Chat",
-    description: "Chat with AI through the magic of DNS",
     component: "WelcomeScreen",
     completed: false,
   },
   {
     id: "dns-magic",
-    title: "See DNS in Action",
-    description: "Watch as your messages travel through DNS queries",
     component: "DNSMagicScreen",
     completed: false,
   },
   {
     id: "network-setup",
-    title: "Network Optimization",
-    description: "Let us optimize your DNS settings",
     component: "NetworkSetupScreen",
     completed: false,
   },
   {
     id: "first-chat",
-    title: "Your First Chat",
-    description: "Send your first message and see the magic happen",
     component: "FirstChatScreen",
     completed: false,
   },
   {
     id: "features",
-    title: "Powerful Features",
-    description: "Discover advanced features and customization",
     component: "FeaturesScreen",
     completed: false,
   },

@@ -135,8 +135,6 @@ type SettingsValue = {
   updateDnsServer: jest.Mock;
   enableMockDNS: boolean;
   updateEnableMockDNS: jest.Mock;
-  allowExperimentalTransports: boolean;
-  updateAllowExperimentalTransports: jest.Mock;
   enableHaptics: boolean;
   updateEnableHaptics: jest.Mock;
   locale: string;
@@ -159,8 +157,6 @@ const baseSettingsValue: SettingsValue = {
   updateDnsServer: jest.fn().mockResolvedValue(undefined),
   enableMockDNS: false,
   updateEnableMockDNS: jest.fn().mockResolvedValue(undefined),
-  allowExperimentalTransports: true,
-  updateAllowExperimentalTransports: jest.fn().mockResolvedValue(undefined),
   enableHaptics: true,
   updateEnableHaptics: jest.fn().mockResolvedValue(undefined),
   locale: "en-US",

@@ -51,7 +51,7 @@ describe("onboarding network recommendation", () => {
     await act(async () => {
       await applyButton()!.props["onPress"]();
     });
-    expect(mockApply).toHaveBeenCalledWith(true);
+    expect(mockApply).toHaveBeenCalledWith();
     expect(appAlert).toHaveBeenCalledWith(
       "screen.onboarding.networkSetup.alerts.successTitle",
       "screen.onboarding.networkSetup.alerts.successMessage",

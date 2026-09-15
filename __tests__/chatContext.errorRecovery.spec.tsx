@@ -14,7 +14,6 @@ jest.mock("../src/context/SettingsContext", () => ({
   useSettings: () => ({
     dnsServer: "llm.pieter.com",
     enableMockDNS: false,
-    allowExperimentalTransports: true,
     preferredLocale: "en-US",
   }),
 }));
@@ -368,6 +367,36 @@ describe("ChatContext error recovery", () => {
 
     // Then
     expect(getLatestChat().currentChat?.id).toBe(selectedChat.id);
+  });
+
+  it("clears the previous error when a new send starts, so its Retry cannot resurface", async () => {
+    await renderProvider();
+    await createStoredChat("Retry scope");
+    await act(async () => {
+      await getLatestChat().sendMessage("first try");
+    });
+    expect(getLatestChat().error?.kind).toBe("dns");
+
+    let resolveDns: (value: string) => void = () => {};
+    mockDNSService.queryLLM.mockImplementationOnce(
+      () =>
+        new Promise<string>((resolve) => {
+          resolveDns = resolve;
+        }),
+    );
+    let pending: Promise<unknown> = Promise.resolve();
+    await act(async () => {
+      pending = getLatestChat().sendMessage("second try");
+      await Promise.resolve();
+    });
+
+    expect(mockDNSService.queryLLM).toHaveBeenCalledTimes(2);
+    expect(getLatestChat().error).toBeNull();
+
+    await act(async () => {
+      resolveDns("answer");
+      await pending;
+    });
   });
 
   it("removes a deleted chat's DNS log records", async () => {

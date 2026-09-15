@@ -41,7 +41,7 @@ export function NetworkSetupScreen() {
     if (isApplyingSettings) return;
     setIsApplyingSettings(true);
     try {
-      await applyRecommendedNetworkSettings(true);
+      await applyRecommendedNetworkSettings();
       appAlert(
         t("screen.onboarding.networkSetup.alerts.successTitle"),
         t("screen.onboarding.networkSetup.alerts.successMessage"),

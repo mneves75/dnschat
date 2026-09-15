@@ -66,7 +66,7 @@ describe("SettingsProvider persistence", () => {
     await act(async () => {
       await Promise.all([
         settings.updateEnableMockDNS(true),
-        settings.updateAllowExperimentalTransports(false),
+        settings.updateEnableHaptics(false),
       ]);
     });
 
@@ -77,13 +77,13 @@ describe("SettingsProvider persistence", () => {
 
     const parsed = JSON.parse(lastPayload) as {
       enableMockDNS: boolean;
-      allowExperimentalTransports: boolean;
+      enableHaptics: boolean;
     };
 
     expect(parsed.enableMockDNS).toBe(true);
-    expect(parsed.allowExperimentalTransports).toBe(false);
+    expect(parsed.enableHaptics).toBe(false);
     expect(latestSettings?.enableMockDNS).toBe(true);
-    expect(latestSettings?.allowExperimentalTransports).toBe(false);
+    expect(latestSettings?.enableHaptics).toBe(false);
   });
 
   it("does not update in-memory settings when persistence fails", async () => {
@@ -100,7 +100,10 @@ describe("SettingsProvider persistence", () => {
     const settings = await renderProvider();
 
     await act(async () => {
-      await settings.applyRecommendedNetworkSettings(false);
+      await settings.updateEnableMockDNS(true);
+    });
+    await act(async () => {
+      await latestSettings!.applyRecommendedNetworkSettings();
     });
 
     const lastPayload = mockAsyncStorage.setItem.mock.calls.at(-1)?.[1];
@@ -108,18 +111,13 @@ describe("SettingsProvider persistence", () => {
       throw new Error("Expected persisted payload");
     }
 
-    const parsed = JSON.parse(lastPayload) as {
-      dnsServer: string;
-      enableMockDNS: boolean;
-      allowExperimentalTransports: boolean;
-    };
+    const parsed = JSON.parse(lastPayload) as Record<string, unknown>;
 
-    expect(parsed.dnsServer).toBe("llm.pieter.com");
-    expect(parsed.enableMockDNS).toBe(false);
-    expect(parsed.allowExperimentalTransports).toBe(false);
+    expect(parsed["dnsServer"]).toBe("llm.pieter.com");
+    expect(parsed["enableMockDNS"]).toBe(false);
+    expect(parsed).not.toHaveProperty("allowExperimentalTransports");
     expect(latestSettings?.dnsServer).toBe("llm.pieter.com");
     expect(latestSettings?.enableMockDNS).toBe(false);
-    expect(latestSettings?.allowExperimentalTransports).toBe(false);
   });
 
   it("queues writes behind hydration so stale storage does not overwrite a user update", async () => {

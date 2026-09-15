@@ -12,7 +12,7 @@ This is a behavior spec, not a release log.
   show assistant response when DNS returns).
 - Message paragraphs wrap within the responsive bubble limit, including inside
   native context menus. Short messages keep their intrinsic width.
-- Settings: DNS server selection, transport toggles, onboarding reset.
+- Settings: DNS server selection, mock DNS, transport tests, onboarding reset.
 - Logs: in-app DNS logs showing transport attempts and fallbacks.
 - First-install settings hydration completes with safe defaults even when no
   settings record exists. ChatProvider owns initial chat hydration; mounting

@@ -204,13 +204,12 @@ describe("encryptionService key handling", () => {
       ]);
     });
 
-    it("reads only the device-only entry once it exists", async () => {
+    it("uses the device-only entry once it exists and retries a failed legacy cleanup", async () => {
+      // A launch whose final delete failed leaves both entries; the verified
+      // device-only copy wins and the legacy entry is removed on a later launch.
       const store = new Map([
         ["dnschat.encryption_key.v2", legacyHex],
-        [
-          "dnschat.encryption_key",
-          "ef".repeat(ENCRYPTION_CONSTANTS.KEY_LENGTH),
-        ],
+        ["dnschat.encryption_key", legacyHex],
       ]);
       const { service, mockSecureStore } = loadWithStore(store);
 
@@ -221,6 +220,22 @@ describe("encryptionService key handling", () => {
         "dnschat.encryption_key.v2",
       );
       expect(mockSecureStore.setItemAsync).not.toHaveBeenCalled();
+      expect([...store.entries()]).toEqual([
+        ["dnschat.encryption_key.v2", legacyHex],
+      ]);
+    });
+
+    it("keeps working when the legacy cleanup keeps failing", async () => {
+      const store = new Map([
+        ["dnschat.encryption_key.v2", legacyHex],
+        ["dnschat.encryption_key", legacyHex],
+      ]);
+      const { service, mockSecureStore } = loadWithStore(store);
+      mockSecureStore.deleteItemAsync.mockRejectedValue(new Error("busy"));
+
+      const encrypted = await service.encryptString("hello");
+
+      await expect(service.decryptString(encrypted)).resolves.toBe("hello");
     });
   });
 

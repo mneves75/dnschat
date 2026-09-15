@@ -35,7 +35,6 @@ export interface PersistedSettings {
   version: number;
   dnsServer: string;
   enableMockDNS: boolean;
-  allowExperimentalTransports: boolean;
   enableHaptics: boolean;
   preferredLocale: string | null;
   themePreference: ThemePreference;
@@ -69,7 +68,6 @@ export const DEFAULT_SETTINGS: PersistedSettings = {
   version: SETTINGS_VERSION,
   dnsServer: DEFAULT_DNS_SERVER,
   enableMockDNS: false,
-  allowExperimentalTransports: true,
   enableHaptics: true,
   preferredLocale: null,
   themePreference: "system",
@@ -115,6 +113,9 @@ export function normalizePreferredLocale(
   return resolveLocale(trimmed);
 }
 
+// Older payloads may carry allowExperimentalTransports from a removed toggle. It
+// is dropped: a stored false pinned the install to native-only DNS with no way
+// back, and every send now uses the full native -> UDP -> TCP chain.
 export function migrateSettings(raw: unknown): PersistedSettings {
   if (!raw || typeof raw !== "object") {
     return { ...DEFAULT_SETTINGS };
@@ -146,7 +147,6 @@ export function migrateSettings(raw: unknown): PersistedSettings {
       version: SETTINGS_VERSION,
       dnsServer: normalizePersistedDnsServer(candidate.dnsServer, true), // Apply offline migration
       enableMockDNS: Boolean(candidate.enableMockDNS),
-      allowExperimentalTransports: true, // Always enable for v3+ (UDP/TCP fallbacks)
       enableHaptics:
         typeof candidate.enableHaptics === "boolean"
           ? candidate.enableHaptics
@@ -166,9 +166,6 @@ export function migrateSettings(raw: unknown): PersistedSettings {
       version: SETTINGS_VERSION,
       dnsServer: normalizePersistedDnsServer(candidate.dnsServer, true), // Apply offline migration
       enableMockDNS: Boolean(candidate.enableMockDNS),
-      // No screen can turn the fallbacks off any more; a stored false from a
-      // removed toggle would pin the install to native-only DNS for good.
-      allowExperimentalTransports: true,
       enableHaptics:
         typeof candidate.enableHaptics === "boolean"
           ? candidate.enableHaptics
@@ -188,9 +185,6 @@ export function migrateSettings(raw: unknown): PersistedSettings {
       version: SETTINGS_VERSION,
       dnsServer: normalizePersistedDnsServer(candidate.dnsServer, false),
       enableMockDNS: Boolean(candidate.enableMockDNS),
-      // No screen can turn the fallbacks off any more; a stored false from a
-      // removed toggle would pin the install to native-only DNS for good.
-      allowExperimentalTransports: true,
       enableHaptics:
         typeof candidate.enableHaptics === "boolean"
           ? candidate.enableHaptics
@@ -210,7 +204,6 @@ export function migrateSettings(raw: unknown): PersistedSettings {
     version: SETTINGS_VERSION,
     dnsServer: normalizePersistedDnsServer(legacy.dnsServer, true), // Apply offline migration
     enableMockDNS: Boolean(legacy.enableMockDNS),
-    allowExperimentalTransports: true,
     enableHaptics: true,
     preferredLocale: null,
     themePreference: "system",

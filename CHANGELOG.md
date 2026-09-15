@@ -30,8 +30,9 @@ or production promotion.
   Those keys used the library's default accessibility, which a backup restores
   onto another device, and expo-secure-store cannot change an existing item's
   accessibility. The key is copied, read back, and only then is the old entry
-  deleted; if any step fails, the old key stays in use and the move is retried
-  on the next launch.
+  deleted. If the copy fails, the old key stays in use and the move is retried
+  on the next launch; if only the final delete fails, the next launch removes
+  the old entry.
 - DNS logs no longer store an unsalted SHA-256 of prompts, titles and
   responses, only their lengths; older logs are rewritten on load. Short
   prompts made those digests confirmable by guessing. Deleting a chat now also
@@ -67,11 +68,15 @@ or production promotion.
   whose request failed.
 - A failed or in-progress DNS log load can no longer let the next write replace
   the stored history with the entries created since launch.
-- Settings from a removed "Allow Experimental Transports" toggle no longer pin
-  an install to native-only DNS, and the Settings transport test uses the same
-  preference as sending a message.
-- Sharing from the chat screen uses the same localized transcript and failure
-  alert as sharing from the chat list.
+- Remove the stored "Allow Experimental Transports" preference, whose toggle
+  was already gone. A stored `false` pinned an install to native-only DNS with
+  no way back; every send and the Settings transport test now use the full
+  native -> UDP -> TCP chain.
+- Sharing from the chat screen uses the same transcript format and localized
+  failure alert as sharing from the chat list, instead of hard-coded English
+  "You"/"AI" labels and an unhandled share failure.
+- Starting a new send clears the previous error, so an earlier failure's toast
+  and Retry do not reappear while the new request runs.
 
 ### Changed
 
@@ -79,8 +84,8 @@ or production promotion.
   advisory or Expo patch no longer skips lint and unit tests.
 - Five UI accessibility and reduce-motion specs now render components and check
   behavior instead of matching source text (22 -> 40 tests, each shown to fail
-  against a deliberate break). Dead sanitizer and thread-pool constants and an
-  unused onboarding API are gone.
+  against a deliberate break). Dead sanitizer and thread-pool constants, an
+  unused onboarding API and unrendered English onboarding step text are gone.
 
 ## [4.4.4] - 2026-09-05
 

@@ -257,6 +257,8 @@ export function ChatProvider({ children }: ChatProviderProps) {
 
     sendInFlightRef.current = true;
     setIsLoading(true);
+    // A new request supersedes the previous error and its Retry target.
+    setError(null);
 
     const userMessage: Message = {
       id: Crypto.randomUUID(),
@@ -327,8 +329,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
 
       // Get AI response using DNS service (respects enableMockDNS setting).
       // Settings are read from the ref at call time (see settingsRef above).
-      const { dnsServer, enableMockDNS, allowExperimentalTransports } =
-        settingsRef.current;
+      const { dnsServer, enableMockDNS } = settingsRef.current;
       devLog("[ChatContext] Starting DNS query...", {
         server: dnsServer,
         enableMockDNS,
@@ -339,7 +340,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
         content,
         dnsServer,
         enableMockDNS,
-        allowExperimentalTransports,
+        true,
         {
           chatId: chatIdAtSend,
           chatTitle: chatTitleAtSend,

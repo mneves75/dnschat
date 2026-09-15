@@ -84,7 +84,6 @@ jest.mock("../src/context/SettingsContext", () => ({
     updateEnableMockDNS: jest.fn(async () => undefined),
     enableHaptics: true,
     updateEnableHaptics: jest.fn(async () => undefined),
-    updateAllowExperimentalTransports: jest.fn(async () => undefined),
     updateAccessibility: jest.fn(async () => undefined),
     locale: "en-US",
     systemLocale: "en-US",

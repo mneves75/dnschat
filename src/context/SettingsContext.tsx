@@ -31,11 +31,7 @@ interface SettingsContextValue {
   updateDnsServer: (server: string) => Promise<void>;
   enableMockDNS: boolean;
   updateEnableMockDNS: (enable: boolean) => Promise<void>;
-  allowExperimentalTransports: boolean;
-  updateAllowExperimentalTransports: (enable: boolean) => Promise<void>;
-  applyRecommendedNetworkSettings: (
-    allowExperimentalTransports: boolean,
-  ) => Promise<void>;
+  applyRecommendedNetworkSettings: () => Promise<void>;
   enableHaptics: boolean;
   updateEnableHaptics: (enable: boolean) => Promise<void>;
   locale: SupportedLocale;
@@ -233,38 +229,16 @@ function useSettingsContextValue(): SettingsContextValue {
     );
   };
 
-  const updateAllowExperimentalTransports = async (enable: boolean) => {
-    const { changed } = await persistSettings((current) =>
-      current.allowExperimentalTransports === enable
-        ? current
-        : {
-            ...current,
-            allowExperimentalTransports: enable,
-          },
-    );
-    if (!changed) {
-      return;
-    }
-    await DNSLogService.recordSettingsEvent(
-      `Experimental transports ${enable ? "enabled" : "disabled"}`,
-    );
-  };
-
-  const applyRecommendedNetworkSettings = async (
-    enableExperimentalTransports: boolean,
-  ) => {
+  const applyRecommendedNetworkSettings = async () => {
     const { previous, next, changed } = await persistSettings((current) => {
       const updated: PersistedSettings = {
         ...current,
         dnsServer: DEFAULT_SETTINGS.dnsServer,
         enableMockDNS: false,
-        allowExperimentalTransports: enableExperimentalTransports,
       };
 
       return current.dnsServer === updated.dnsServer &&
-        current.enableMockDNS === updated.enableMockDNS &&
-        current.allowExperimentalTransports ===
-          updated.allowExperimentalTransports
+        current.enableMockDNS === updated.enableMockDNS
         ? current
         : updated;
     });
@@ -275,7 +249,7 @@ function useSettingsContextValue(): SettingsContextValue {
 
     await DNSLogService.recordSettingsEvent(
       `Recommended onboarding network profile applied`,
-      `dnsServer: ${previous.dnsServer} -> ${next.dnsServer}; mockDNS: ${previous.enableMockDNS} -> ${next.enableMockDNS}; experimental: ${previous.allowExperimentalTransports} -> ${next.allowExperimentalTransports}`,
+      `dnsServer: ${previous.dnsServer} -> ${next.dnsServer}; mockDNS: ${previous.enableMockDNS} -> ${next.enableMockDNS}`,
     );
   };
 
@@ -358,8 +332,6 @@ function useSettingsContextValue(): SettingsContextValue {
     updateDnsServer,
     enableMockDNS: settings.enableMockDNS,
     updateEnableMockDNS,
-    allowExperimentalTransports: settings.allowExperimentalTransports,
-    updateAllowExperimentalTransports,
     applyRecommendedNetworkSettings,
     enableHaptics: settings.enableHaptics,
     updateEnableHaptics,
