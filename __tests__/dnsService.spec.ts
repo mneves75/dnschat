@@ -24,6 +24,7 @@ import {
 import { Platform } from "react-native";
 import { DNSLogService } from "../src/services/dnsLogService";
 import { sanitizeDNSMessageReference } from "../modules/dns-native/constants";
+import { ERROR_MESSAGES } from "../src/constants/appConstants";
 
 // Access private methods for test via internal access
 import * as DNSServiceModule from "../src/services/dnsService";
@@ -224,10 +225,12 @@ describe("DNS Service helpers", () => {
       expect(fqdn).toBe("hello-world.ch.at");
     });
 
-    it("falls back to default zone when server is IPv4", () => {
-      const fqdn = composeDNSQueryName("test", "8.8.8.8");
-      // Default zone is now llm.pieter.com (primary LLM server)
-      expect(fqdn).toBe("test.llm.pieter.com");
+    it("refuses a public recursive resolver as the target server", () => {
+      // Sending prompts through Google or Cloudflare adds a third party the
+      // privacy disclosures do not name.
+      expect(() => composeDNSQueryName("test", "8.8.8.8")).toThrow(
+        ERROR_MESSAGES.DNS_SERVER_NOT_ALLOWED,
+      );
     });
   });
 
@@ -302,8 +305,14 @@ describe("DNS Service helpers", () => {
     it("accepts allowlisted endpoints and returns canonical lowercase form", () => {
       expect(validateDNSServer("CH.AT")).toBe("ch.at");
       expect(validateDNSServer("  llm.pieter.com  ")).toBe("llm.pieter.com");
-      expect(validateDNSServer("1.1.1.1")).toBe("1.1.1.1");
-      expect(validateDNSServer("8.8.8.8")).toBe("8.8.8.8");
+    });
+
+    it("rejects public recursive resolvers", () => {
+      for (const resolver of ["8.8.8.8", "8.8.4.4", "1.1.1.1", "1.0.0.1"]) {
+        expect(() => validateDNSServer(resolver)).toThrow(
+          ERROR_MESSAGES.DNS_SERVER_NOT_ALLOWED,
+        );
+      }
     });
 
     it("treats a trailing dot as equivalent for hostnames", () => {
@@ -547,7 +556,7 @@ describe("DNS Service helpers", () => {
       const serializedEntries = JSON.stringify(
         addLogSpy.mock.calls.map(([, entry]) => entry),
       );
-      expect(serializedEntries).toContain("sha256:");
+      expect(serializedEntries).toContain("redacted len:");
       expect(serializedEntries).not.toContain("secret-prompt.llm.pieter.com");
     });
 

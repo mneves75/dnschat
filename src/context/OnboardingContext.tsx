@@ -20,7 +20,6 @@ interface OnboardingContextType {
   previousStep: () => Promise<void>;
   skipOnboarding: () => Promise<void>;
   resetOnboarding: () => Promise<void>;
-  markStepCompleted: (stepId: string) => void;
   loading: boolean;
 }
 
@@ -273,14 +272,6 @@ export function OnboardingProvider({
     );
   };
 
-  const markStepCompleted = (stepId: string) => {
-    setSteps((prevSteps) =>
-      prevSteps.map((step) =>
-        step.id === stepId ? { ...step, completed: true } : step,
-      ),
-    );
-  };
-
   return (
     <OnboardingContext
       value={{
@@ -292,7 +283,6 @@ export function OnboardingProvider({
         previousStep,
         skipOnboarding,
         resetOnboarding,
-        markStepCompleted,
         loading,
       }}
     >

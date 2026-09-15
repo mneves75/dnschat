@@ -1,6 +1,4 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { sha256 } from "@noble/hashes/sha2.js";
-import { bytesToHex, utf8ToBytes } from "@noble/hashes/utils.js";
 import {
   LOGGING_CONSTANTS,
   STORAGE_CONSTANTS,
@@ -63,6 +61,16 @@ const DNS_FINAL_STATUSES: readonly DNSQueryLog["finalStatus"][] = [
   "failure",
 ];
 
+// Logs before 4.4.5 stored an unsalted SHA-256 of prompts, titles and
+// responses. Prompts are short natural language, so a digest can be confirmed
+// by guessing; only the length is kept now.
+const LEGACY_DIGEST_PATTERN = /sha256:[0-9a-f]{64} len:(\d+)/g;
+const HAS_LEGACY_DIGEST = /sha256:[0-9a-f]{64} len:\d+/;
+const REDACTED_VALUE_PATTERN = /^(?:redacted|sha256:[0-9a-f]{64}) len:\d+$/;
+
+const stripLegacyDigests = (value: string): string =>
+  value.replace(LEGACY_DIGEST_PATTERN, "redacted len:$1");
+
 class DNSLogStorageCorruptionError extends Error {
   constructor(message: string) {
     super(message);
@@ -82,6 +90,12 @@ export class DNSLogService {
   private static initialized = false;
   private static initializationInFlight: Promise<void> | null = null;
   /**
+   * True once the persisted store has been read (or is known to be empty).
+   * Until then, in-memory logs hold only entries created since launch, and
+   * writing them would replace the stored history.
+   */
+  private static storeLoaded = false;
+  /**
    * Per-query map of raw, unredacted sensitive values (prompt text + chat title)
    * to their pre-compiled redaction regexes, used to scrub those exact strings
    * out of log entry `details`/`error` text. The patterns are compiled once per
@@ -94,8 +108,7 @@ export class DNSLogService {
    */
   private static sensitiveValuesByQueryId: Map<string, RegExp[]> = new Map();
   private static redactText(value: string): string {
-    const hash = bytesToHex(sha256(utf8ToBytes(value)));
-    return `sha256:${hash} len:${value.length}`;
+    return `redacted len:${value.length}`;
   }
 
   static redactTextForLog(value: string): string {
@@ -348,9 +361,49 @@ export class DNSLogService {
   }
 
   private static redactLegacyText(value: string): string {
-    return /^sha256:[0-9a-f]{64} len:\d+$/.test(value)
-      ? value
+    return REDACTED_VALUE_PATTERN.test(value)
+      ? stripLegacyDigests(value)
       : this.redactText(value);
+  }
+
+  private static stripLegacyDigestsFromLog(log: DNSQueryLog): DNSQueryLog {
+    return {
+      ...log,
+      ...(log.chatTitle !== undefined
+        ? { chatTitle: stripLegacyDigests(log.chatTitle) }
+        : {}),
+      query: stripLegacyDigests(log.query),
+      ...(log.response !== undefined
+        ? { response: stripLegacyDigests(log.response) }
+        : {}),
+      entries: log.entries.map((entry) => ({
+        ...entry,
+        ...(entry.details !== undefined
+          ? { details: stripLegacyDigests(entry.details) }
+          : {}),
+        ...(entry.error !== undefined
+          ? { error: stripLegacyDigests(entry.error) }
+          : {}),
+      })),
+    };
+  }
+
+  /**
+   * Combines the stored history with entries created before it was read. The
+   * in-memory copy wins for a shared id; newest first, capped like any write.
+   */
+  private static mergeWithStoredLogs(stored: DNSQueryLog[]): DNSQueryLog[] {
+    const inMemoryIds = new Set(this.queryLogs.map((log) => log.id));
+    return [
+      ...this.queryLogs,
+      ...stored.filter((log) => !inMemoryIds.has(log.id)),
+    ]
+      .sort(
+        (left, right) =>
+          new Date(right.startTime).getTime() -
+          new Date(left.startTime).getTime(),
+      )
+      .slice(0, MAX_LOGS);
   }
 
   private static migrateLegacyLog(log: DNSQueryLog): DNSQueryLog {
@@ -424,6 +477,12 @@ export class DNSLogService {
   }
 
   private static async loadPersistentLogs(): Promise<boolean> {
+    const screenshotMode = await this.readPersistentLogs();
+    this.storeLoaded = true;
+    return screenshotMode;
+  }
+
+  private static async readPersistentLogs(): Promise<boolean> {
     let stored: string | null = null;
     let storageReadCompleted = false;
     try {
@@ -439,16 +498,25 @@ export class DNSLogService {
       stored = await AsyncStorage.getItem(STORAGE_KEY);
       storageReadCompleted = true;
       if (!stored) {
-        this.queryLogs = [];
         return false;
       }
 
       const wasEncrypted = isEncryptedPayload(stored);
       const decrypted = await decryptIfEncrypted(stored);
       const parsed = this.parseStoredLogs(JSON.parse(decrypted) as unknown);
-      this.queryLogs = wasEncrypted
-        ? parsed
-        : parsed.map((log) => this.migrateLegacyLog(log));
+      const hadLegacyDigests =
+        wasEncrypted && HAS_LEGACY_DIGEST.test(decrypted);
+      this.queryLogs = this.mergeWithStoredLogs(
+        wasEncrypted
+          ? hadLegacyDigests
+            ? parsed.map((log) => this.stripLegacyDigestsFromLog(log))
+            : parsed
+          : parsed.map((log) => this.migrateLegacyLog(log)),
+      );
+
+      if (hadLegacyDigests) {
+        await this.writePersistentLogs();
+      }
 
       if (!wasEncrypted) {
         await this.writePersistentLogs();
@@ -475,7 +543,6 @@ export class DNSLogService {
 
       devWarn("[DNSLogService] Failed to load DNS logs", error);
       if (!stored) {
-        this.queryLogs = [];
         return false;
       }
 
@@ -492,7 +559,6 @@ export class DNSLogService {
       }
 
       await AsyncStorage.removeItem(STORAGE_KEY);
-      this.queryLogs = [];
       devWarn("[DNSLogService] Corrupted DNS logs backed up and cleared", {
         key: LOGS_BACKUP_KEY,
       });
@@ -794,6 +860,30 @@ export class DNSLogService {
     this.notifyListeners();
   }
 
+  /**
+   * Removes every log record of a deleted chat, including a query still in
+   * flight for it, so the chat's metadata does not outlive the chat.
+   */
+  static async purgeChat(chatId: string): Promise<void> {
+    let droppedActive = false;
+    for (const [queryId, log] of this.activeQueryLogs) {
+      if (log.chatId === chatId) {
+        this.activeQueryLogs.delete(queryId);
+        this.sensitiveValuesByQueryId.delete(queryId);
+        droppedActive = true;
+      }
+    }
+
+    const changed = await this.enqueuePersistentMutation(() => {
+      const before = this.queryLogs.length;
+      this.queryLogs = this.queryLogs.filter((log) => log.chatId !== chatId);
+      return this.queryLogs.length !== before;
+    });
+    if (changed || droppedActive) {
+      this.notifyListeners();
+    }
+  }
+
   static getLogs(): DNSQueryLog[] {
     const activeLogs = Array.from(this.activeQueryLogs.values())
       .sort(
@@ -819,6 +909,7 @@ export class DNSLogService {
       const changed =
         this.queryLogs.length > 0 || this.activeQueryLogs.size > 0;
       this.queryLogs = [];
+      this.storeLoaded = true;
       this.activeQueryLogs.clear();
       this.sensitiveValuesByQueryId.clear();
       return changed;
@@ -914,8 +1005,22 @@ export class DNSLogService {
     let changed = false;
 
     const run = this.persistenceQueue.then(async () => {
+      let canPersist = true;
+      if (!this.storeLoaded) {
+        // Initialization failed or has not run: read the stored history before
+        // writing, or this write would replace it with launch-time entries.
+        try {
+          await this.loadPersistentLogs();
+        } catch (error) {
+          canPersist = false;
+          devWarn(
+            "[DNSLogService] Stored DNS logs unavailable; keeping this change in memory",
+            error,
+          );
+        }
+      }
       changed = await mutate();
-      if (!changed) {
+      if (!changed || !canPersist) {
         return;
       }
       await persist();

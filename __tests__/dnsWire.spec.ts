@@ -9,6 +9,7 @@ import {
   type BufferFactory,
 } from "../src/services/dnsWire";
 import type { DecodedPacket } from "dns-packet";
+import * as dns from "dns-packet";
 
 const bufferFactory = Buffer as unknown as BufferFactory;
 const baseDecodedResponse = (): DecodedPacket =>
@@ -195,5 +196,59 @@ describe("DNS wire helpers", () => {
     expect(() =>
       validateDecodedDnsResponseForTxt(decoded, validationOptions),
     ).toThrow(expectedError);
+  });
+  describe("TXT character-strings split inside a UTF-8 sequence", () => {
+    // RFC 1035 caps a character-string at 255 bytes, and a server may cut a long
+    // answer at any byte, so a multibyte character can straddle two strings of
+    // one RR. These packets go through the real dns-packet encoder and decoder.
+    const queryName = "hello.llm.pieter.com";
+    const extractFromChunks = (chunks: Buffer[]): string[] => {
+      const packet = dns.encode({
+        id: 42,
+        type: "response",
+        flags: dns.RECURSION_DESIRED,
+        questions: [{ type: "TXT", class: "IN", name: queryName }],
+        answers: [
+          { type: "TXT", class: "IN", name: queryName, ttl: 1, data: chunks },
+        ],
+      } as unknown as Parameters<typeof dns.encode>[0]);
+      const decoded = decodeDnsPacket(new Uint8Array(packet), bufferFactory);
+      return extractTxtRecordsFromDecodedResponse(
+        decoded,
+        {
+          expectedQueryId: 42,
+          expectedQueryName: queryName,
+          expectedPort: 53,
+          expectedServer: "llm.pieter.com",
+        },
+        bufferFactory,
+      );
+    };
+    const splitAt = (text: string, index: number): Buffer[] => {
+      const bytes = Buffer.from(text, "utf8");
+      return [bytes.subarray(0, index), bytes.subarray(index)];
+    };
+
+    it("decodes a 2-byte character whose bytes land in adjacent strings", () => {
+      const text = `${"a".repeat(254)}\u00e7\u00e3o`;
+      // Byte 254 is the lead byte of U+00E7; byte 255 starts the next string.
+      expect(extractFromChunks(splitAt(text, 255))).toEqual([text]);
+    });
+
+    it("decodes a 4-byte emoji split two bytes into the next string", () => {
+      const text = `${"b".repeat(253)}\u{1F600} ok`;
+      expect(extractFromChunks(splitAt(text, 255))).toEqual([text]);
+    });
+
+    it("keeps U+FFFD replacement for bytes that are not valid UTF-8", () => {
+      // JS transports stay lenient: invalid input decodes to U+FFFD rather than
+      // failing the query, including an incomplete sequence at the end of the RR.
+      expect(
+        extractFromChunks([
+          Buffer.from([0x61, 0xc3, 0x28]),
+          Buffer.from([0x62, 0xc3]),
+        ]),
+      ).toEqual(["a\ufffd(b\ufffd"]);
+    });
   });
 });

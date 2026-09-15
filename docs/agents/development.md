@@ -119,8 +119,9 @@ keep teardown scoped to the selected device.
 
 ## Native build proof
 
-On macOS 27 beta, select the beta Xcode explicitly because the stable build
-service can terminate on that host. Keep builds sequential. Use a task-specific
+Confirm the selected toolchain with `xcode-select -p` and `xcodebuild -version`
+before a native build; Xcode 27.0 (iOS 27 SDK) built SDK 57.0.22 on 2026-09-15.
+Keep builds sequential. Use a task-specific
 `-derivedDataPath` when another checkout has build output in the default cache.
 
 ```sh

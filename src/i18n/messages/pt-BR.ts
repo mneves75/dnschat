@@ -269,6 +269,14 @@ export const ptBR = {
       errorRetry: "Tentar de novo",
       errorMessage:
         "A consulta DNS falhou. Tente de novo ou veja os logs DNS em Ajustes.",
+      errors: {
+        validation:
+          "Não é possível enviar esta mensagem. Use letras ou números e respeite o limite de caracteres.",
+        busy: "Aguarde a resposta atual antes de enviar outra mensagem.",
+        noChat: "Abra uma conversa antes de enviar uma mensagem.",
+        storage:
+          "Não foi possível salvar ou carregar as conversas neste aparelho. Tente de novo.",
+      },
       storageRecovery: {
         recovered:
           "O armazenamento de conversas foi corrompido. As conversas que puderam ser recuperadas continuam disponíveis.",

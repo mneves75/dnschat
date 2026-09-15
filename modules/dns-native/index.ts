@@ -573,9 +573,10 @@ export class NativeDNS implements NativeDNSModule {
 
       // Map native errors to our error types.
       // Substring classification runs BEFORE the generic DNS_QUERY_FAILED code
-      // catch-all: native reject sites all use code "DNS_QUERY_FAILED", so
-      // keying on the code first would collapse real timeouts/network/permission
-      // failures into the generic type and make these branches unreachable.
+      // catch-all: native reject codes (TIMEOUT, CANCELLED, NO_RECORDS_FOUND,
+      // QUERY_FAILED, RESOLVER_FAILED) do not separate network or permission
+      // failures, so keying on the code first would collapse those into the
+      // generic type and make these branches unreachable.
       // Permission first: a composed native message (e.g. the iOS
       // "UDP failed (…); TCP fallback failed: …" form) can carry a permission
       // indicator alongside timeout/network wording, and the permission

@@ -18,30 +18,37 @@ This document inventories the data stored or processed by DNSChat and satisfies 
 - Contents: backup payload for corrupted chat storage
 - Storage location: AsyncStorage
 - Encryption: same as chats
-- Retention: Persistent until app recovers/clears storage
+- Diagnostic metadata: the parser error is stored as its length only.
+- Retention: Removed when any chat is deleted or all chats are cleared. The
+  backup is an opaque copy of every chat at quarantine time and cannot be
+  filtered per chat.
 
 3) DNS query logs (redacted and encrypted at rest)
 - Storage key: `@dns_query_logs`
-- Contents: per-query log entries (hashed message text and chat title, raw local
-  chat ID, status, method, timestamps, durations)
+- Contents: per-query log entries (length of the message text, chat title and
+  response, local chat ID, status, method, timestamps, durations)
 - Storage location: AsyncStorage
-- Redaction: message content stored as `sha256:<hash> len:<length>`. Per-entry
-  `details`/`error` text is also scrubbed at the logging boundary (active-query
-  prompt/title values, composed DNS query names, and multipart TXT fragments are
-  replaced with redacted hashes before entries reach memory or storage). The raw
+- Redaction: message content stored as `redacted len:<length>`. Until 4.4.4 an
+  unsalted SHA-256 was stored as well; prompts are short natural language, so
+  that digest could be confirmed by guessing, and loading older logs strips it.
+  Per-entry `details`/`error` text is also scrubbed at the logging boundary
+  (active-query prompt/title values, composed DNS query names, and multipart
+  TXT fragments are replaced with `[redacted len:<length>]` before entries
+  reach memory or storage). The raw
   prompt/title values used for that scrub are held only for the query lifecycle
   and dropped on completion, clear, or an early-throw finalize.
 - Encryption: AES-GCM via `encryptionService`; native key material is stored in
   SecureStore, while Web preview stores the local-only preview key in
   same-origin browser storage because SecureStore is not available in browsers.
-- Retention: 30 days (automatic cleanup) and max 100 logs
+- Retention: 30 days (automatic cleanup) and max 100 logs; deleting a chat
+  removes its log records, including a query still in flight
 
 4) DNS logs backup (encrypted at rest)
 - Storage key: `@dns_query_logs_backup`
 - Contents: backup payload for corrupted log storage
 - Storage location: AsyncStorage
 - Encryption: same as DNS query logs; legacy plaintext corruption payloads are encrypted before backup writes
-- Diagnostic metadata: parser error messages are stored only as a hash, because JSON errors may quote a fragment of the corrupted plaintext. Backup encryption does not make adjacent metadata safe to store verbatim.
+- Diagnostic metadata: parser error messages are stored only as their length, because JSON errors may quote a fragment of the corrupted plaintext. Backup encryption does not make adjacent metadata safe to store verbatim.
 - Retention: Persistent until user clears logs or app removes backups
 
 5) User settings
@@ -51,9 +58,15 @@ This document inventories the data stored or processed by DNSChat and satisfies 
 - Retention: Persistent until user resets settings or clears app data
 
 6) Encryption key material
-- Storage key: `dnschat.encryption_key`
+- Storage key: `dnschat.encryption_key.v2` (native) and `dnschat.encryption_key`
+  (web preview; native legacy entry)
 - Contents: AES key for local payload encryption
 - Storage location: SecureStore in native builds (device protected storage).
+  iOS writes the key as `WHEN_UNLOCKED_THIS_DEVICE_ONLY`, so it is not restored
+  onto another device from a backup. A key written before 4.3.6 under the
+  legacy name is copied to the device-only entry, read back, and only then
+  deleted; if any step fails the legacy key stays in use and the copy retries
+  on the next launch.
   Android backup and device-transfer rules exclude the SecureStore shared
   preferences file so key material is not restored without the platform
   keystore. Web preview stores the key in same-origin browser storage as a
@@ -80,7 +93,7 @@ This document inventories the data stored or processed by DNSChat and satisfies 
 ## Data Classification
 
 - Chat content: Confidential
-- DNS query logs (hashed): Internal
+- DNS query logs (redacted to lengths): Internal
 - User settings: Internal
 - Encryption key material: Restricted
 
@@ -89,7 +102,7 @@ This document inventories the data stored or processed by DNSChat and satisfies 
 - Logs: automatic cleanup after 30 days and capped at 100 entries; user can clear logs from the Logs screen.
 - Chats: retained until user deletes chats or clears app storage.
 - Settings: retained until user resets settings or clears app storage.
-- Backups: retained until corruption recovery or manual clear.
+- Backups: the chat backup is removed when any chat is deleted or all chats are cleared; the log backup when logs are cleared.
 
 ## Security Controls
 
@@ -102,9 +115,9 @@ This document inventories the data stored or processed by DNSChat and satisfies 
 - iOS declares `ITSAppUsesNonExemptEncryption=false`; the app uses platform
   storage and standard local data protection, not non-exempt custom
   cryptography for export-compliance purposes.
-- Redaction of log message content to hashed form.
+- Redaction of log message content to its length.
 
 ## Review Cadence
 
 - Review this inventory whenever storage keys, retention policies, or data flows change.
-- Last reviewed during the production security sweep on `2026-08-31`.
+- Last reviewed during the pre-production security review on `2026-09-15`.

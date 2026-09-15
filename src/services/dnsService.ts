@@ -31,7 +31,6 @@ export { validateDecodedDnsResponseForTxt } from "./dnsWire";
 import { devLog, devLogArgs, devLogLazy } from "../utils/devLog";
 import { wait } from "../utils/wait";
 
-const DEFAULT_DNS_ZONE = DNS_CONSTANTS.DEFAULT_DNS_SERVER;
 // Invariant: total elapsed time for one queryLLM call across retries and
 // transports must not exceed this budget.
 const TOTAL_QUERY_BUDGET_MS = 20000;
@@ -61,9 +60,8 @@ export function composeDNSQueryName(label: string, dnsServer: string): string {
 
   // SECURITY FIX: Validate DNS server before using it to prevent injection and
   // keep behavior consistent everywhere we accept DNS server input.
-  const serverInput = validateDNSServer(dnsServer);
-  const ipRegex = /^(?:\d{1,3}\.){3}\d{1,3}$/;
-  const zone = ipRegex.test(serverInput) ? DEFAULT_DNS_ZONE : serverInput;
+  // Every allowlisted server is an LLM zone, so the server is the zone.
+  const zone = validateDNSServer(dnsServer);
 
   return `${trimmedLabel}.${zone}`;
 }
@@ -873,7 +871,7 @@ export class DNSService {
 
         if (!allowExperimentalTransports) {
           guidance +=
-            " • Native DNS is enforced. Enable 'Allow Experimental Transports' in Settings to retry with UDP/TCP.";
+            " • Native DNS is enforced for this query, so UDP/TCP fallbacks were not tried.";
         }
 
         throw new Error(

@@ -12,7 +12,11 @@ function describeProtocol(url: string): string {
 }
 
 export function isAllowedExternalUrl(url: string): boolean {
-  if (url.trim() !== url) {
+  // SECURITY: WHATWG parsing reads "\\" as "/", but Foundation's NSURL, which
+  // opens the link on iOS, does not: "https://llm.pieter.com\\@evil.example/"
+  // passes the checks below yet reaches evil.example. No legitimate link needs
+  // a raw backslash (markdown-it percent-encodes one).
+  if (url.trim() !== url || url.includes("\\")) {
     return false;
   }
 
@@ -67,7 +71,9 @@ export async function openExternalUrl(url: string): Promise<boolean> {
   }
 
   try {
-    await Linking.openURL(url);
+    // Open the serialization that was validated, so the platform cannot
+    // re-parse the raw string differently.
+    await Linking.openURL(new URL(url).href);
     return true;
   } catch (error) {
     devWarn("[ExternalLinks] Failed to open external URL", {

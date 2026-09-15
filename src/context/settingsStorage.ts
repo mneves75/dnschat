@@ -166,9 +166,9 @@ export function migrateSettings(raw: unknown): PersistedSettings {
       version: SETTINGS_VERSION,
       dnsServer: normalizePersistedDnsServer(candidate.dnsServer, true), // Apply offline migration
       enableMockDNS: Boolean(candidate.enableMockDNS),
-      allowExperimentalTransports: Boolean(
-        candidate.allowExperimentalTransports ?? true,
-      ),
+      // No screen can turn the fallbacks off any more; a stored false from a
+      // removed toggle would pin the install to native-only DNS for good.
+      allowExperimentalTransports: true,
       enableHaptics:
         typeof candidate.enableHaptics === "boolean"
           ? candidate.enableHaptics
@@ -188,9 +188,9 @@ export function migrateSettings(raw: unknown): PersistedSettings {
       version: SETTINGS_VERSION,
       dnsServer: normalizePersistedDnsServer(candidate.dnsServer, false),
       enableMockDNS: Boolean(candidate.enableMockDNS),
-      allowExperimentalTransports: Boolean(
-        candidate.allowExperimentalTransports ?? true,
-      ),
+      // No screen can turn the fallbacks off any more; a stored false from a
+      // removed toggle would pin the install to native-only DNS for good.
+      allowExperimentalTransports: true,
       enableHaptics:
         typeof candidate.enableHaptics === "boolean"
           ? candidate.enableHaptics

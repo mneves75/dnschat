@@ -7,7 +7,14 @@ import { ENCRYPTION_CONSTANTS } from "../constants/appConstants";
 import { devWarn } from "../utils/devLog";
 
 // SecureStore keys must be alphanumeric plus ., -, _ (no @ or /)
-const KEY_STORAGE_KEY = "dnschat.encryption_key";
+const KEY_STORAGE_KEY = "dnschat.encryption_key.v2";
+// Written before 4.3.6 with the library default accessibility, which a backup
+// can restore onto another device. Still read so existing history decrypts,
+// and the web preview keeps its key under this name.
+const LEGACY_KEY_STORAGE_KEY = "dnschat.encryption_key";
+const DEVICE_ONLY_KEY_OPTIONS = {
+  keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
+};
 const ENCRYPTION_PREFIX = "enc:v1:";
 const GCM_AUTH_TAG_LENGTH = 16;
 
@@ -84,7 +91,7 @@ const getWebStoredKey = (): string | null => {
     const localStorage = globalThis.localStorage;
     if (!localStorage || typeof localStorage.getItem !== "function")
       return null;
-    return localStorage.getItem(KEY_STORAGE_KEY);
+    return localStorage.getItem(LEGACY_KEY_STORAGE_KEY);
   } catch (error) {
     devWarn(
       "[EncryptionService] Failed to read web fallback key storage",
@@ -100,7 +107,7 @@ const setWebStoredKey = (key: string): boolean => {
     const localStorage = globalThis.localStorage;
     if (!localStorage || typeof localStorage.setItem !== "function")
       return false;
-    localStorage.setItem(KEY_STORAGE_KEY, key);
+    localStorage.setItem(LEGACY_KEY_STORAGE_KEY, key);
     if (!warnedWebKeyPersisted) {
       warnedWebKeyPersisted = true;
       // Web preview stores the key in same-origin browser storage, which is not a
@@ -181,14 +188,56 @@ const generateAndPersistKey = async (): Promise<Uint8Array> => {
 
   // THIS_DEVICE_ONLY keeps the key out of iCloud/device backups, preserving the
   // key/ciphertext separation: chat payloads live in AsyncStorage (which IS
-  // backed up), so the key must never travel with them. Existing keys written
-  // with the library default (WHEN_UNLOCKED) remain readable because the
-  // read path does not filter by kSecAttrAccessible.
-  await SecureStore.setItemAsync(KEY_STORAGE_KEY, encoded, {
-    keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
-  });
+  // backed up), so the key must never travel with them.
+  await SecureStore.setItemAsync(
+    KEY_STORAGE_KEY,
+    encoded,
+    DEVICE_ONLY_KEY_OPTIONS,
+  );
   cachedKey = generated;
   return generated;
+};
+
+// expo-secure-store answers a duplicate item by replacing only its value, so a
+// legacy entry cannot be re-protected in place. Copy it to a new account (a
+// fresh SecItemAdd applies THIS_DEVICE_ONLY), confirm the copy, and only then
+// delete the legacy entry. Any failure keeps the legacy key in use and retries
+// on the next launch; history never depends on the copy succeeding.
+const migrateLegacyKey = async (legacyEncoded: string): Promise<void> => {
+  try {
+    await SecureStore.setItemAsync(
+      KEY_STORAGE_KEY,
+      legacyEncoded,
+      DEVICE_ONLY_KEY_OPTIONS,
+    );
+    if ((await SecureStore.getItemAsync(KEY_STORAGE_KEY)) !== legacyEncoded) {
+      devWarn(
+        "[EncryptionService] Device-only key copy did not read back; keeping legacy key",
+      );
+      // A mismatched copy would be read first on the next launch.
+      await SecureStore.deleteItemAsync(KEY_STORAGE_KEY);
+      return;
+    }
+    await SecureStore.deleteItemAsync(LEGACY_KEY_STORAGE_KEY);
+  } catch (error) {
+    devWarn(
+      "[EncryptionService] Legacy key migration deferred to next launch",
+      error,
+    );
+  }
+};
+
+const readStoredKey = async (): Promise<string | null> => {
+  if (isWebRuntime()) return getWebStoredKey();
+  const current = await SecureStore.getItemAsync(KEY_STORAGE_KEY);
+  if (current !== null) return current;
+  const legacy = await SecureStore.getItemAsync(LEGACY_KEY_STORAGE_KEY);
+  if (legacy !== null) {
+    // Validate before copying so corrupt key material is preserved, not spread.
+    decodeStoredKey(legacy);
+    await migrateLegacyKey(legacy);
+  }
+  return legacy;
 };
 
 const loadEncryptionKey = async (): Promise<Uint8Array> => {
@@ -198,10 +247,9 @@ const loadEncryptionKey = async (): Promise<Uint8Array> => {
   keyLoadInFlight = (async () => {
     const stored = await (async () => {
       try {
-        return isWebRuntime()
-          ? getWebStoredKey()
-          : await SecureStore.getItemAsync(KEY_STORAGE_KEY);
+        return await readStoredKey();
       } catch (error) {
+        if (error instanceof EncryptionKeyCorruptionError) throw error;
         const cause = error instanceof Error ? error : new Error(String(error));
         devWarn(
           `[EncryptionService] Failed to read key from ${getKeyStorageName()}`,

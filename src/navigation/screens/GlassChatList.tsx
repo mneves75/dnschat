@@ -48,7 +48,8 @@ import { ChatListSkeleton } from "../../components/skeletons/ChatListSkeleton";
 import { EmptyState } from "../../components/EmptyState";
 import { ShareService } from "../../services/ShareService";
 import { useSettings } from "../../context/SettingsContext";
-import type { Chat } from "../../types/chat";
+import type { Chat, ChatError } from "../../types/chat";
+import { chatErrorMessageKey } from "../../utils/chatErrors";
 import { Toast } from "../../components/ui/Toast";
 import { appAlert } from "../../utils/appAlert";
 
@@ -478,7 +479,7 @@ export function GlassChatList() {
   // Surface the latest context error as a dismissable toast. Derived purely from
   // state (no effect, no setState-in-render): once dismissed, the same error stays
   // hidden until a different one arrives.
-  const [dismissedError, setDismissedError] = React.useState<string | null>(
+  const [dismissedError, setDismissedError] = React.useState<ChatError | null>(
     null,
   );
   const visibleError = error && error !== dismissedError ? error : null;
@@ -629,7 +630,7 @@ export function GlassChatList() {
         visible={Boolean(visibleError)}
         variant="error"
         title={t("screen.chat.errorAlertTitle")}
-        message={visibleError ?? ""}
+        message={visibleError ? t(chatErrorMessageKey(visibleError.kind)) : ""}
         duration={6000}
         onDismiss={handleDismissError}
         testID="chat-list-error-toast"

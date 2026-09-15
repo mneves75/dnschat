@@ -958,7 +958,7 @@ final class DNSResolver: NSObject {
                     throw DNSError.queryFailed("DNS TXT RDATA is empty")
                 }
 
-                var recordResults: [String] = []
+                var characterStrings: [ArraySlice<UInt8>] = []
                 var p = offset
                 while p < end {
                     let txtLen = Int(bytes[p])
@@ -966,14 +966,11 @@ final class DNSResolver: NSObject {
                     guard txtLen <= end - p else {
                         throw DNSError.queryFailed("DNS TXT character-string truncated")
                     }
-                    let sub = bytes[p..<(p + txtLen)]
-                    guard let decoded = String(bytes: sub, encoding: .utf8) else {
-                        throw DNSError.queryFailed("DNS TXT character-string is not valid UTF-8")
-                    }
-                    if !decoded.isEmpty {
-                        recordResults.append(decoded)
-                    }
+                    characterStrings.append(bytes[p..<(p + txtLen)])
                     p += txtLen
+                }
+                guard let recordResults = decodeTXTCharacterStrings(characterStrings) else {
+                    throw DNSError.queryFailed("DNS TXT character-string is not valid UTF-8")
                 }
 
                 if answerClass == 1 && answerName == expectedQueryName {
@@ -1390,6 +1387,54 @@ private func withDeadline<T>(
         }
         return result
     }
+}
+
+// MARK: - TXT Decoding
+
+/// Decodes the character-strings of one TXT RR as strict UTF-8, returning each
+/// non-empty string as its own element, or nil when the RR is not valid UTF-8.
+/// RFC 1035 lets a server cut a long answer into 255-byte character-strings at any
+/// byte, so an incomplete sequence at the end of one string carries into the next
+/// string of the same RR. Malformed bytes, or a sequence still incomplete at the end
+/// of the RR, reject the answer. Mirrors appendDecodedTxtStrings in DNSResolver.java.
+private func decodeTXTCharacterStrings(_ strings: [ArraySlice<UInt8>]) -> [String]? {
+    var results: [String] = []
+    var carry: [UInt8] = []
+    for (index, string) in strings.enumerated() {
+        let pending = carry + string
+        let carryLength = index == strings.count - 1 ? 0 : incompleteUTF8SuffixLength(pending)
+        guard let decoded = String(bytes: pending[..<(pending.count - carryLength)], encoding: .utf8) else {
+            return nil
+        }
+        if !decoded.isEmpty {
+            results.append(decoded)
+        }
+        carry = Array(pending[(pending.count - carryLength)...])
+    }
+    return results
+}
+
+/// Length of a trailing lead byte plus continuation bytes that could still become a
+/// valid sequence with more input; 0 when the bytes end on a sequence boundary. An
+/// invalid lead byte yields 0, so strict decoding of the prefix rejects it.
+private func incompleteUTF8SuffixLength(_ bytes: [UInt8]) -> Int {
+    var index = bytes.count - 1
+    var continuationBytes = 0
+    while index >= 0 && continuationBytes < 3 && bytes[index] & 0xC0 == 0x80 {
+        index -= 1
+        continuationBytes += 1
+    }
+    guard index >= 0 else { return 0 }
+    let lead = bytes[index]
+    let sequenceLength: Int
+    switch lead {
+    case 0xC2...0xDF: sequenceLength = 2
+    case 0xE0...0xEF: sequenceLength = 3
+    case 0xF0...0xF4: sequenceLength = 4
+    default: sequenceLength = 1
+    }
+    let available = bytes.count - index
+    return available < sequenceLength ? available : 0
 }
 
 // MARK: - React Native Bridge Support

@@ -141,6 +141,30 @@ const safeDecodeBytes = (
   }
 };
 
+// A server may split a TXT RR into 255-byte character-strings at any byte, so a
+// multibyte character can straddle two strings. Join the bytes of one RR before
+// decoding; decoding each string separately turns both halves into U+FFFD.
+const joinTxtCharacterStrings = (
+  strings: readonly unknown[],
+  bufferFactory?: Pick<BufferFactory, "from"> | null,
+): string => {
+  const chunks: Uint8Array[] = [];
+  let totalLength = 0;
+  for (const value of strings) {
+    const chunk = typeof value === "string" ? null : toUint8Array(value);
+    if (!chunk) return strings.join("");
+    chunks.push(chunk);
+    totalLength += chunk.length;
+  }
+  const joined = new Uint8Array(totalLength);
+  let offset = 0;
+  for (const chunk of chunks) {
+    joined.set(chunk, offset);
+    offset += chunk.length;
+  }
+  return safeDecodeBytes(joined, bufferFactory);
+};
+
 export function decodeDnsPacket(
   data: Uint8Array,
   bufferFactory?: Pick<BufferFactory, "from"> | null,
@@ -318,7 +342,7 @@ export function extractTxtRecordsFromDecodedResponse(
   for (const answer of decoded.answers ?? []) {
     if (!isTxtAnswerForQuery(answer, expectedNormalizedQueryName)) continue;
     const record = Array.isArray(answer.data)
-      ? answer.data.join("")
+      ? joinTxtCharacterStrings(answer.data, bufferFactory)
       : answer.data instanceof Uint8Array ||
           (answer.data &&
             typeof answer.data === "object" &&

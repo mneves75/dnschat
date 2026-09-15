@@ -35,10 +35,27 @@ scripts. See `docs/technical/AUDIT-PLAN-2026-09.md` for scope and `MEMORY.md` fo
 candidate-specific validation. Historical TestFlight or hardware results must
 not be represented as proof of the current source.
 
-The release follow-up also hashes chat corruption-backup diagnostics: schema
-errors can contain decrypted field values even when JSON parsing succeeds.
+Corruption-backup diagnostics keep only the error length: schema errors can
+contain decrypted field values even when JSON parsing succeeds.
 Encrypted and legacy malformed-schema regression cases preserve the recovery
 payload and verify that the plaintext marker never appears in backup metadata.
+
+The 2026-09-15 pre-production review (4.4.5) closed these gaps:
+
+- A native encryption key written before 4.3.6 used the library default
+  keychain accessibility, which a backup restores onto another device, and
+  expo-secure-store cannot change an existing item's accessibility. The key is
+  now copied to a device-only entry, read back, then the legacy entry deleted.
+- DNS logs stored an unsalted SHA-256 of prompts, titles and responses, which
+  short prompts let an attacker confirm by guessing. Logs keep only lengths,
+  loading strips older digests, and deleting a chat removes its log records and
+  the opaque chat corruption backup.
+- Stored IPv4 resolver settings are migrated to the default resolver, so the
+  Android JS rungs can no longer send prompts through a public resolver.
+- External links containing a backslash are rejected, and the validated,
+  normalized URL is the one opened.
+- The Android legacy dnsjava rung no longer shares dnsjava's process cache, so
+  an earlier answer cannot be replayed for an identical prompt.
 
 - **Production privacy blocker:** no public provider policy covering retention,
   secondary use, deletion, or service-provider status was located after
@@ -52,10 +69,10 @@ payload and verify that the plaintext marker never appears in backup metadata.
 - `decode-uri-component` GHSA-vcc3-ghjq-m6fr is fixed by a scoped `^0.5.0`
   override and a one-line pnpm patch migrating `query-string` to its default
   export. An executable Metro regression verifies the installed consumer and
-  decoder together. The two `image-size` suppressions remain time-boxed
-  because the registry still reports `2.0.2`
-  as latest and their declared patched version is `2.0.3`. All suppressions,
-  reachability arguments and recheck dates live in `pnpm-workspace.yaml`.
+  decoder together. `pnpm audit` runs with no suppressions: the two
+  `image-size` entries were removed in 4.4.5 because the package has not been
+  in the dependency tree since 4.3.6. Any future suppression needs a blocker,
+  reachability argument and recheck date in `pnpm-workspace.yaml`.
 - Secret scanning passes with `gitleaks detect --source . --redact --no-banner --config .gitleaks.toml`.
 - Public-repo leak prevention uses defense in depth: local `gitleaks`,
   `pnpm run verify:public-redaction`, repo hygiene tests, GitHub secret scanning,

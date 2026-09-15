@@ -64,17 +64,6 @@ jest.mock("@noble/hashes/utils.js", () => ({
   utf8ToBytes,
 }));
 
-jest.mock("@noble/hashes/sha2.js", () => {
-  const { createHash } = require("node:crypto");
-  return {
-    sha256: (input) => {
-      const buffer = Buffer.isBuffer(input) ? input : Buffer.from(input);
-      const hash = createHash("sha256").update(buffer).digest();
-      return Uint8Array.from(hash);
-    },
-  };
-});
-
 jest.mock("@noble/ciphers/aes.js", () => {
   const { createCipheriv, createDecipheriv } = require("node:crypto");
   return {

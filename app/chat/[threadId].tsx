@@ -1,10 +1,11 @@
 import React from "react";
 import { Link, Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { Share } from "react-native";
 import { Chat } from "../../src/navigation/screens/Chat";
 import { EmptyState } from "../../src/components/EmptyState";
 import { Form } from "../../src/components/glass/GlassForm";
 import { useChat } from "../../src/context/ChatContext";
+import { useSettings } from "../../src/context/SettingsContext";
+import { ShareService } from "../../src/services/ShareService";
 import { useTranslation } from "../../src/i18n";
 import { resolveRouteChat } from "../../src/utils/chatRoute";
 import { normalizeRouteParam } from "../../src/utils/routeParams";
@@ -21,6 +22,7 @@ export default function ChatRoute() {
   }>();
   const { replace } = useRouter();
   const { t } = useTranslation();
+  const { locale } = useSettings();
   const {
     chats,
     currentChat,
@@ -155,12 +157,13 @@ export default function ChatRoute() {
     setCurrentChat,
   ]);
 
+  // Same localized transcript and failure alert as sharing from the chat list.
   const handleShare = async () => {
     if (!routeChat) return;
-    const messages = routeChat.messages
-      .map((m) => `${m.role === "user" ? "You" : "AI"}: ${m.content}`)
-      .join("\n\n");
-    await Share.share({ message: messages, title: routeChat.title });
+    await ShareService.shareConversation(
+      routeChat.messages.map((message) => message.content),
+      locale,
+    );
   };
 
   const handleClearChat = () => {

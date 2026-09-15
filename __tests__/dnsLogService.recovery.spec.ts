@@ -37,6 +37,7 @@ const dnsLogServiceInternals = DNSLogService as unknown as {
   queryLogs: unknown[];
   initialized: boolean;
   initializationInFlight: Promise<void> | null;
+  storeLoaded: boolean;
   persistenceQueue: Promise<void>;
 };
 
@@ -48,6 +49,7 @@ describe("DNSLogService recovery", () => {
     dnsLogServiceInternals.queryLogs = [];
     dnsLogServiceInternals.initialized = false;
     dnsLogServiceInternals.initializationInFlight = null;
+    dnsLogServiceInternals.storeLoaded = false;
     dnsLogServiceInternals.persistenceQueue = Promise.resolve();
   });
 
@@ -63,7 +65,7 @@ describe("DNSLogService recovery", () => {
 
     expect(mockAsyncStorage.setItem).toHaveBeenCalledWith(
       STORAGE_CONSTANTS.LOGS_BACKUP_KEY,
-      expect.stringContaining("sha256:"),
+      expect.stringContaining("redacted len:"),
     );
     expect(mockAsyncStorage.removeItem).toHaveBeenCalledWith(
       STORAGE_CONSTANTS.LOGS_KEY,
@@ -174,8 +176,9 @@ describe("DNSLogService recovery", () => {
       expect(exposed).not.toContain(rawValue);
       expect(migratedPlaintext).not.toContain(rawValue);
     }
-    expect(exposed).toContain("sha256:");
-    expect(migratedPlaintext).toContain("sha256:");
+    expect(exposed).toContain("redacted len:");
+    expect(migratedPlaintext).toContain("redacted len:");
+    expect(migratedPlaintext).not.toContain("sha256:");
   });
 
   it("backs up an invalid top-level shape before removing primary logs", async () => {
@@ -330,5 +333,147 @@ describe("DNSLogService recovery", () => {
     const logs = DNSLogService.getLogs();
     expect(logs).toHaveLength(1);
     expect(logs[0]?.finalStatus).toBe("success");
+  });
+
+  describe("stored history before initialization completes", () => {
+    const storedHistory = JSON.stringify([
+      {
+        id: "stored-log",
+        query: "redacted len:3",
+        startTime: "2026-09-10T12:00:00.000Z",
+        finalStatus: "success",
+        finalMethod: "native",
+        entries: [],
+      },
+    ]);
+    // An earlier test leaves encryptString prefixing its input.
+    const lastPrimaryWrite = (): string | undefined =>
+      mockAsyncStorage.setItem.mock.calls
+        .filter(([key]) => key === STORAGE_CONSTANTS.LOGS_KEY)
+        .at(-1)?.[1]
+        ?.replace(/^enc:v1:/, "");
+
+    it("does not replace stored logs after a failed initialization", async () => {
+      const { EncryptionKeyUnavailableError } = jest.requireMock(
+        "../src/services/encryptionService",
+      );
+      mockAsyncStorage.getItem.mockResolvedValue("enc:v1:history");
+      decryptIfEncrypted.mockRejectedValue(
+        new EncryptionKeyUnavailableError("keychain locked"),
+      );
+      await expect(DNSLogService.initialize()).rejects.toBeInstanceOf(
+        EncryptionKeyUnavailableError,
+      );
+
+      const queryId = DNSLogService.startQuery("hello");
+      await DNSLogService.endQuery(queryId, true, "response", "native");
+      await dnsLogServiceInternals.persistenceQueue;
+
+      // The key is still unavailable: nothing may be written over the history.
+      expect(lastPrimaryWrite()).toBeUndefined();
+      expect(DNSLogService.getLogs().map((log) => log.id)).toEqual([queryId]);
+
+      // Once the key is back, the next write reads the history and keeps it.
+      decryptIfEncrypted.mockResolvedValue(storedHistory);
+      await DNSLogService.recordSettingsEvent("key recovered");
+      const persisted = JSON.parse(lastPrimaryWrite() ?? "[]") as Array<{
+        id: string;
+      }>;
+      expect(persisted.map((log) => log.id)).toEqual(
+        expect.arrayContaining([queryId, "stored-log"]),
+      );
+    });
+
+    it("keeps a query that finished while the initial read was in flight", async () => {
+      let releaseRead: (value: string) => void = () => {};
+      mockAsyncStorage.getItem.mockImplementationOnce(
+        () =>
+          new Promise<string>((resolve) => {
+            releaseRead = resolve;
+          }),
+      );
+      decryptIfEncrypted.mockResolvedValue(storedHistory);
+
+      const initialization = DNSLogService.initialize();
+      const queryId = DNSLogService.startQuery("hello");
+      await DNSLogService.endQuery(queryId, true, "response", "native");
+      releaseRead("enc:v1:history");
+      await initialization;
+      await dnsLogServiceInternals.persistenceQueue;
+
+      expect(DNSLogService.getLogs().map((log) => log.id)).toEqual([
+        queryId,
+        "stored-log",
+      ]);
+      const persisted = JSON.parse(lastPrimaryWrite() ?? "[]") as Array<{
+        id: string;
+      }>;
+      expect(persisted.map((log) => log.id)).toEqual([queryId, "stored-log"]);
+    });
+  });
+
+  it("stores content as length only and strips digests from older logs", async () => {
+    const digest = "a".repeat(64);
+    mockAsyncStorage.getItem.mockResolvedValue("enc:v1:history");
+    decryptIfEncrypted.mockResolvedValue(
+      JSON.stringify([
+        {
+          id: "old-log",
+          chatTitle: `sha256:${digest} len:5`,
+          query: `sha256:${digest} len:3`,
+          response: `sha256:${digest} len:8`,
+          startTime: "2026-09-10T12:00:00.000Z",
+          finalStatus: "success",
+          entries: [
+            {
+              id: "old-entry",
+              timestamp: "2026-09-10T12:00:00.000Z",
+              message: "Starting DNS query",
+              method: "native",
+              status: "attempt",
+              details: `query=sha256:${digest} len:3`,
+            },
+          ],
+        },
+      ]),
+    );
+
+    await DNSLogService.initialize();
+    const queryId = DNSLogService.startQuery("secret prompt");
+    await DNSLogService.endQuery(queryId, true, "secret response", "native");
+    await dnsLogServiceInternals.persistenceQueue;
+
+    const persisted = String(
+      mockAsyncStorage.setItem.mock.calls
+        .filter(([key]) => key === STORAGE_CONSTANTS.LOGS_KEY)
+        .at(-1)?.[1],
+    );
+    expect(persisted).not.toContain("sha256:");
+    expect(persisted).toContain("query=redacted len:3");
+    expect(persisted).toContain('"query":"redacted len:13"');
+  });
+
+  it("purges every log record of a deleted chat, including an in-flight query", async () => {
+    mockAsyncStorage.getItem.mockResolvedValue(null);
+    await DNSLogService.initialize();
+    const kept = DNSLogService.startQuery("keep", { chatId: "chat-keep" });
+    await DNSLogService.endQuery(kept, true, "ok", "native");
+    const done = DNSLogService.startQuery("gone", { chatId: "chat-gone" });
+    await DNSLogService.endQuery(done, true, "ok", "native");
+    const inFlight = DNSLogService.startQuery("gone again", {
+      chatId: "chat-gone",
+    });
+
+    await DNSLogService.purgeChat("chat-gone");
+    await DNSLogService.endQuery(inFlight, true, "late", "native");
+    await dnsLogServiceInternals.persistenceQueue;
+
+    expect(DNSLogService.getLogs().map((log) => log.id)).toEqual([kept]);
+    const persisted = String(
+      mockAsyncStorage.setItem.mock.calls
+        .filter(([key]) => key === STORAGE_CONSTANTS.LOGS_KEY)
+        .at(-1)?.[1],
+    );
+    expect(persisted).not.toContain("chat-gone");
   });
 });

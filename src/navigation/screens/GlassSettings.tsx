@@ -75,6 +75,7 @@ export function GlassSettings() {
     updateEnableMockDNS,
     enableHaptics,
     updateEnableHaptics,
+    allowExperimentalTransports,
     updateAllowExperimentalTransports,
     updateAccessibility,
     systemLocale,
@@ -351,11 +352,12 @@ export function GlassSettings() {
     setLastTestResult(null);
     setLastTestError(null);
     try {
+      // Same transport preference as a chat send, as the hint promises.
       const response = await DNSService.queryLLM(
         testMessage,
         dnsServer,
         enableMockDNS,
-        true,
+        allowExperimentalTransports,
       );
       setLastTestResult(response);
     } catch (e: unknown) {

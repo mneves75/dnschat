@@ -7,6 +7,8 @@ import {
 
 describe("SettingsContext migrateSettings", () => {
   it("migrates legacy v1 payload (no version) to current version", () => {
+    // A stored public resolver is reset to the default LLM server
+    // (SPECIFICATION: unallowlisted persisted values are coerced).
     const legacyPayload = {
       dnsServer: "8.8.8.8",
       enableMockDNS: true,
@@ -16,7 +18,7 @@ describe("SettingsContext migrateSettings", () => {
 
     expect(result).toEqual({
       version: SETTINGS_VERSION,
-      dnsServer: "8.8.8.8",
+      dnsServer: "llm.pieter.com",
       enableMockDNS: true,
       allowExperimentalTransports: true,
       enableHaptics: true,
@@ -71,7 +73,10 @@ describe("SettingsContext migrateSettings", () => {
     expect(result.version).toBe(SETTINGS_VERSION);
   });
 
-  it("preserves v3 payload with correct fields", () => {
+  it("preserves v3 payload fields and restores the UDP/TCP fallbacks", () => {
+    // No screen can set allowExperimentalTransports to false any more, so a
+    // stored false (from a removed toggle) would leave the install on
+    // native-only DNS for good, breaking the native -> UDP -> TCP order.
     const v3Payload = {
       version: 3,
       dnsServer: "llm.pieter.com",
@@ -88,7 +93,7 @@ describe("SettingsContext migrateSettings", () => {
       version: SETTINGS_VERSION,
       dnsServer: "llm.pieter.com",
       enableMockDNS: true,
-      allowExperimentalTransports: false,
+      allowExperimentalTransports: true,
       enableHaptics: false,
       preferredLocale: "pt-BR",
       themePreference: "system",
@@ -157,6 +162,21 @@ describe("SettingsContext migrateSettings", () => {
       version: SETTINGS_VERSION,
       themePreference: "system",
     });
+  });
+
+  it("restores the UDP/TCP fallbacks for a current-version payload", () => {
+    const result = migrateSettings({
+      version: SETTINGS_VERSION,
+      dnsServer: "llm.pieter.com",
+      enableMockDNS: false,
+      allowExperimentalTransports: false,
+      enableHaptics: true,
+      preferredLocale: null,
+      themePreference: "system",
+      accessibility: DEFAULT_SETTINGS.accessibility,
+    });
+
+    expect(result.allowExperimentalTransports).toBe(true);
   });
 
   it("falls back to default dnsServer when payload is not allowlisted", () => {

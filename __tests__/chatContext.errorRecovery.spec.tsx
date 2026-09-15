@@ -1,11 +1,12 @@
 import React from "react";
 import { act } from "react-test-renderer";
 import { ChatProvider, useChat } from "../src/context/ChatContext";
-import { DNSService } from "../src/services/dnsService";
+import { DNSService, sanitizeDNSMessage } from "../src/services/dnsService";
 import {
   StorageCorruptionError,
   StorageService,
 } from "../src/services/storageService";
+import { DNSLogService } from "../src/services/dnsLogService";
 import type { Chat } from "../src/types/chat";
 import { createWithSuppressedWarnings } from "./utils/reactTestRenderer";
 
@@ -45,6 +46,7 @@ jest.mock("../src/utils/screenshotMode", () => ({
 
 const mockStorageService = jest.mocked(StorageService);
 const mockDNSService = jest.mocked(DNSService);
+const mockSanitizeDNSMessage = jest.mocked(sanitizeDNSMessage);
 
 let latestChat: ReturnType<typeof useChat> | null = null;
 let storedChats: Chat[] = [];
@@ -191,9 +193,7 @@ describe("ChatContext error recovery", () => {
 
     expect(getLatestChat().chats).toEqual(recoveredChats);
     expect(getLatestChat().currentChat).toEqual(recoveredChats[0]);
-    expect(getLatestChat().error).toBe(
-      "Chat storage was corrupted. Chats that could be recovered are still available.",
-    );
+    expect(getLatestChat().error).toEqual({ kind: "storageRecovered" });
   });
 
   it("preserves a selected thread that survives corruption recovery", async () => {
@@ -252,9 +252,7 @@ describe("ChatContext error recovery", () => {
 
     expect(getLatestChat().chats).toEqual([]);
     expect(getLatestChat().currentChat).toBeNull();
-    expect(getLatestChat().error).toBe(
-      "Chat storage was corrupted and has been reset.",
-    );
+    expect(getLatestChat().error).toEqual({ kind: "storageReset" });
     expect(getLatestChat().isLoading).toBe(false);
   });
 
@@ -271,7 +269,7 @@ describe("ChatContext error recovery", () => {
           rejectDns = reject;
         }),
     );
-    let pendingSend: Promise<void>;
+    let pendingSend: Promise<unknown>;
     await act(async () => {
       pendingSend = getLatestChat().sendMessage("hello dns");
       await Promise.resolve();
@@ -351,7 +349,7 @@ describe("ChatContext error recovery", () => {
     expect(mockStorageService.addMessage).not.toHaveBeenCalled();
     expect(mockStorageService.updateMessage).not.toHaveBeenCalled();
     expect(mockStorageService.loadChats).toHaveBeenCalled();
-    expect(getLatestChat().error).toBe("placeholder persist failed");
+    expect(getLatestChat().error).toEqual({ kind: "storage" });
   });
 
   it("preserves the selected thread after reloading recovered storage", async () => {
@@ -370,5 +368,64 @@ describe("ChatContext error recovery", () => {
 
     // Then
     expect(getLatestChat().currentChat?.id).toBe(selectedChat.id);
+  });
+
+  it("removes a deleted chat's DNS log records", async () => {
+    const purgeChat = jest
+      .spyOn(DNSLogService, "purgeChat")
+      .mockResolvedValue(undefined);
+    await renderProvider();
+    const chat = await createStoredChat("To delete");
+
+    await act(async () => {
+      await getLatestChat().deleteChat(chat.id);
+    });
+
+    expect(mockStorageService.deleteChat).toHaveBeenCalledWith(chat.id);
+    expect(purgeChat).toHaveBeenCalledWith(chat.id);
+    purgeChat.mockRestore();
+  });
+
+  it("rejects an unsendable message without writing, querying or blaming DNS", async () => {
+    await renderProvider();
+    await createStoredChat("Validation");
+    mockSanitizeDNSMessage.mockImplementationOnce(() => {
+      throw new Error(
+        "Message must contain at least one letter or number after sanitization",
+      );
+    });
+
+    let result: Awaited<ReturnType<ReturnType<typeof useChat>["sendMessage"]>> =
+      "sent";
+    await act(async () => {
+      result = await getLatestChat().sendMessage("???");
+    });
+
+    expect(result).toBe("rejected");
+    expect(getLatestChat().error).toEqual({ kind: "validation" });
+    expect(mockStorageService.appendAndUpdateMessages).not.toHaveBeenCalled();
+    expect(mockDNSService.queryLLM).not.toHaveBeenCalled();
+  });
+
+  it("reports a DNS failure with the failed assistant message it belongs to", async () => {
+    await renderProvider();
+    await createStoredChat("DNS failure");
+
+    let result: Awaited<ReturnType<ReturnType<typeof useChat>["sendMessage"]>> =
+      "sent";
+    await act(async () => {
+      result = await getLatestChat().sendMessage("hello dns");
+    });
+
+    const failedAssistant = getLatestChat().currentChat?.messages.at(-1);
+    expect(result).toBe("failed");
+    expect(failedAssistant).toMatchObject({
+      role: "assistant",
+      status: "error",
+    });
+    expect(getLatestChat().error).toEqual({
+      kind: "dns",
+      failedMessageId: failedAssistant?.id,
+    });
   });
 });

@@ -1,6 +1,4 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { sha256 } from "@noble/hashes/sha2.js";
-import { bytesToHex, utf8ToBytes } from "@noble/hashes/utils.js";
 import type { Chat, Message } from "../types/chat";
 import * as Crypto from "expo-crypto";
 import { devLog, devLogLazy, devWarn, devWarnLazy } from "../utils/devLog";
@@ -160,7 +158,8 @@ export class StorageService {
 
     return JSON.stringify({
       timestamp,
-      error: `sha256:${bytesToHex(sha256(utf8ToBytes(error.message)))}`,
+      // Parser errors can quote payload text; keep only the length.
+      error: `redacted len:${error.message.length}`,
       payload: protectedPayload,
       payloadWasEncrypted,
     });
@@ -596,10 +595,13 @@ export class StorageService {
   }
 
   static async deleteChat(chatId: string): Promise<void> {
-    return this.mutateChats("deleteChat", (chats) => ({
+    await this.mutateChats("deleteChat", (chats) => ({
       chats: chats.filter((chat) => chat.id !== chatId),
       result: undefined,
     }));
+    // A corruption backup is an opaque copy of every chat at quarantine time and
+    // cannot be filtered, so keeping it would keep the deleted chat's content.
+    await this.queueOperation(() => AsyncStorage.removeItem(CHAT_BACKUP_KEY));
   }
 
   static async addMessage(chatId: string, message: Message): Promise<void> {

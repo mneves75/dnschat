@@ -66,29 +66,11 @@ export const DNS_SERVERS: DNSServerConfig[] = [
     priority: 2,
     description: "Original ChatDNS server",
   },
-  { host: "8.8.8.8", port: 53, priority: 10, description: "Google DNS" },
-  {
-    host: "8.8.4.4",
-    port: 53,
-    priority: 10,
-    description: "Google DNS secondary",
-  },
-  { host: "1.1.1.1", port: 53, priority: 10, description: "Cloudflare DNS" },
-  {
-    host: "1.0.0.1",
-    port: 53,
-    priority: 10,
-    description: "Cloudflare DNS secondary",
-  },
 ];
 
 const DNS_SERVER_BY_HOST: Record<string, DNSServerConfig> = {
   "llm.pieter.com": DNS_SERVERS[0] as DNSServerConfig,
   "ch.at": DNS_SERVERS[1] as DNSServerConfig,
-  "8.8.8.8": DNS_SERVERS[2] as DNSServerConfig,
-  "8.8.4.4": DNS_SERVERS[3] as DNSServerConfig,
-  "1.1.1.1": DNS_SERVERS[4] as DNSServerConfig,
-  "1.0.0.1": DNS_SERVERS[5] as DNSServerConfig,
 };
 const LLM_DNS_SERVERS = [DNS_SERVERS[0]] as DNSServerConfig[];
 const DEFAULT_DNS_SERVER_CONFIG = DNS_SERVERS[0] as DNSServerConfig;
@@ -158,23 +140,6 @@ export const DNS_CONSTANTS = {
   // Character replacements
   SPACE_REPLACEMENT: "-", // Replace spaces with dashes
 
-  // Validation patterns
-  ALLOWED_CHARS_PATTERN: /^[a-z0-9-]+$/, // Only lowercase alphanumeric and dash
-  // oxlint-disable-next-line eslint/no-control-regex -- Security validation intentionally rejects control characters.
-  DANGEROUS_CHARS_PATTERN: /[\x00-\x1F\x7F-\x9F<>'"&`@:()]/, // Control chars and injection risks
-
-  // Sanitization rules (must be applied in order)
-  SANITIZATION_STEPS: [
-    "normalize_unicode", // Decompose & remove combining marks
-    "lowercase", // Convert to lowercase
-    "trim", // Remove leading/trailing whitespace
-    "spaces_to_dashes", // Replace spaces with dashes
-    "remove_invalid", // Remove non-alphanumeric except dash
-    "collapse_dashes", // Replace multiple dashes with single
-    "remove_edge_dashes", // Remove leading/trailing dashes
-    "enforce_label_limit", // Reject if it exceeds 63 characters (no silent truncation)
-  ],
-
   // DNS server whitelist (derived from DNS_SERVERS for backward compatibility)
   //
   // CONTRACT (subset-only narrowing): iOS and Android each compile in this same
@@ -185,19 +150,12 @@ export const DNS_CONSTANTS = {
   // the native lists are updated in the same change (a hijacked JS bundle must
   // not be able to redirect queries).
   //
-  // The native lists are deliberately NARROWER than this one: they hold only the
-  // LLM zones, never a public recursive resolver. nativeSecurityPolicy.test.ts
-  // asserts CONTAINMENT (native is a non-empty subset of this list) plus
-  // iOS/Android parity -- not set-equality. So the IP entries below are reachable
-  // over the JavaScript UDP/TCP rungs only; the native rung rejects them.
-  ALLOWED_DNS_SERVERS: [
-    "llm.pieter.com",
-    "ch.at",
-    "8.8.8.8",
-    "8.8.4.4",
-    "1.1.1.1",
-    "1.0.0.1",
-  ],
+  // nativeSecurityPolicy.test.ts asserts CONTAINMENT (native is a non-empty
+  // subset of this list) plus iOS/Android parity, not set-equality. Public
+  // recursive resolvers (Google, Cloudflare) were removed in 4.4.5: they reached
+  // prompts over the JavaScript rungs only and are not named in the privacy
+  // disclosures. A persisted IP resolver is reset to the default on migration.
+  ALLOWED_DNS_SERVERS: ["llm.pieter.com", "ch.at"],
 
   // Network configuration
   // IMPORTANT: DEFAULT_DNS_SERVER is now llm.pieter.com (port 53)
@@ -211,18 +169,13 @@ export const DNS_CONSTANTS = {
   // retry loops, so the totals multiply:
   //   1. JS layer (DNSService.queryWithServer) retries the full transport chain
   //      (native -> UDP -> TCP) up to MAX_RETRIES times per server.
-  //   2. The native iOS/Android resolvers independently retry their own query up
-  //      to MAX_RETRIES times per invocation.
-  // Worst case per server: MAX_RETRIES (JS) x MAX_RETRIES (native) = 9 native
+  //   2. The native resolvers independently retry their own query, using their
+  //      own compiled attempt limit (3 on iOS and Android), not this constant.
+  // Worst case per server: MAX_RETRIES (JS) x 3 (native) = 9 native
   // attempts, plus the UDP/TCP fallback attempts in each JS pass. Keep this in
   // mind before raising the value.
   MAX_RETRIES: 3,
   RETRY_DELAY_MS: 200, // 200ms between retries (exponential backoff applied natively)
-
-  // Thread pool configuration (Android)
-  THREAD_POOL_CORE_SIZE: 2, // Minimum threads
-  THREAD_POOL_MAX_SIZE: 4, // Maximum threads
-  THREAD_POOL_QUEUE_SIZE: 10, // Maximum queued tasks
 
   // Rate limiting (merged from appConstants.ts)
   RATE_LIMIT_WINDOW_MS: 60000, // 1 minute

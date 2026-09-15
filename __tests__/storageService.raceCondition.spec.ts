@@ -403,6 +403,10 @@ describe("StorageService Race Condition Prevention", () => {
         "chat-1",
         "chat-3",
       ]);
+      // The corruption backup cannot be filtered per chat, so it goes too.
+      expect(mockAsyncStorage.removeItem).toHaveBeenCalledWith(
+        "@chat_dns_chats_backup",
+      );
     });
   });
 

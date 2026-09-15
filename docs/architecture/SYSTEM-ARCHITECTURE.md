@@ -84,16 +84,8 @@ foreground transition.
   in 4.4.0 -- the native resolver speaks only DNS, so no query leaves the
   device over HTTPS to a third party.
   See `modules/dns-native/android/DNSResolver.java`.
-- Native DNS (both platforms) is deliberately stricter than the JavaScript
-  layer: it compiles in only the LLM zones (never a public recursive
-  resolver), accepts only port 53, and pins each query name to the selected
-  resolver's zone.
-- Consequence of that asymmetry: an IP resolver such as `8.8.8.8` makes the
-  native rung reject the query, and the chain continues to UDP then TCP, which
-  still accept it. The Settings picker offers only the two LLM hostnames, so an
-  IP resolver arrives only from a setting an older install persisted
-  (`migrateSettings` keeps it and `validateDNSServer` still accepts it).
-- With **Allow Experimental Transports** off the order is native-only, so such
-  a stored IP resolver is retried `MAX_RETRIES` times and then fails with
-  "Native DNS is enforced" -- unless **Mock DNS** is also on, in which case the
-  appended mock rung answers instead.
+- Native DNS (both platforms) compiles in only the LLM zones, accepts only
+  port 53, and pins each query name to the selected resolver's zone. Since
+  4.4.5 the JavaScript allowlist holds the same two LLM hostnames: public
+  recursive resolvers were removed, and settings migration resets a persisted
+  IP resolver to the default.

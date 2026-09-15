@@ -6,6 +6,82 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+## [4.4.5] - 2026-09-15
+
+Build `89` -> `90`. Expo SDK 57 patch upgrade, a pre-production security review
+and a best-practices review, with every confirmed finding fixed. No store upload
+or production promotion.
+
+### Dependencies
+
+- Upgrade the 13 Expo SDK 57 packages to the set `expo@57.0.22` expects, and
+  update the matching iOS pods. React Native stays at 0.86.3. SDK 58 is still a
+  preview on a React Native release candidate, so it was not adopted.
+- Update `expo-doctor` to 1.20.4 (20/20 checks pass).
+- Remove the `image-size` audit suppressions, which had done nothing since
+  4.3.6 because the package left the dependency tree then, and the expired
+  release-age exclusions. `pnpm audit` passes with no suppressions.
+- `expo-glass-effect` now reports Liquid Glass as available in apps built with
+  the iOS 27 SDK.
+
+### Security
+
+- Move an encryption key written before 4.3.6 to a device-only keychain entry.
+  Those keys used the library's default accessibility, which a backup restores
+  onto another device, and expo-secure-store cannot change an existing item's
+  accessibility. The key is copied, read back, and only then is the old entry
+  deleted; if any step fails, the old key stays in use and the move is retried
+  on the next launch.
+- DNS logs no longer store an unsalted SHA-256 of prompts, titles and
+  responses, only their lengths; older logs are rewritten on load. Short
+  prompts made those digests confirmable by guessing. Deleting a chat now also
+  removes its log records, including a query still in flight, and the opaque
+  chat corruption backup.
+- Remove the public recursive resolvers (Google and Cloudflare) from the
+  allowlist. A persisted IP resolver is reset to `llm.pieter.com`, so Android's
+  UDP/TCP fallbacks can no longer send prompts to a third party that the
+  privacy disclosures do not name.
+- Reject external links that contain a backslash, which iOS Foundation and the
+  app's URL check parse to different hosts, and open the validated URL instead
+  of the raw string.
+- The Android legacy dnsjava rung uses a fresh cache per lookup, so an earlier
+  answer is never replayed for an identical prompt.
+- CI checkouts no longer keep the Git credential, and the `modules/dns-native`
+  npm override that disabled npm's release-age protection is gone. Android
+  backups are also disabled in `app.json`, so a clean prebuild keeps the
+  manifest setting.
+
+### Fixed
+
+- Answers with accented characters are decoded correctly. The Android legacy
+  rung returned dnsjava's escaped form (`n\195\163o`), and a multibyte
+  character split across two TXT character-strings made iOS and Android reject
+  the answer and JavaScript show replacement characters.
+- A message that cannot be sent, such as emoji or punctuation only, stays in
+  the composer with a message explaining why. Before, the text was erased, the
+  error said the DNS request failed, and Retry resent an older, unrelated
+  failed prompt.
+- Chat errors are shown in the selected language on the chat list and the
+  chat screen; the list could show raw English transport diagnostics, and a
+  storage reset was reported as a DNS failure. Retry only resends the prompt
+  whose request failed.
+- A failed or in-progress DNS log load can no longer let the next write replace
+  the stored history with the entries created since launch.
+- Settings from a removed "Allow Experimental Transports" toggle no longer pin
+  an install to native-only DNS, and the Settings transport test uses the same
+  preference as sending a message.
+- Sharing from the chat screen uses the same localized transcript and failure
+  alert as sharing from the chat list.
+
+### Changed
+
+- CI runs `pnpm audit` and Expo Doctor in their own job, so an upstream
+  advisory or Expo patch no longer skips lint and unit tests.
+- Five UI accessibility and reduce-motion specs now render components and check
+  behavior instead of matching source text (22 -> 40 tests, each shown to fail
+  against a deliberate break). Dead sanitizer and thread-pool constants and an
+  unused onboarding API are gone.
+
 ## [4.4.4] - 2026-09-05
 
 Build `88` -> `89`. Cleanup, security and render-performance pass. No store

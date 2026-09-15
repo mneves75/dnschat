@@ -23,6 +23,7 @@ const mockAsyncStorage = AsyncStorage as jest.Mocked<typeof AsyncStorage>;
 const dnsLogServiceInternals = DNSLogService as unknown as {
   initialized: boolean;
   initializationInFlight: Promise<void> | null;
+  storeLoaded: boolean;
   persistenceQueue: Promise<void>;
   cleanupIntervalId: ReturnType<typeof setInterval> | null;
   sensitiveValuesByQueryId: Map<string, RegExp[]>;
@@ -34,6 +35,7 @@ describe("DNSLogService concurrent query isolation", () => {
     await DNSLogService.clearLogs();
     dnsLogServiceInternals.initialized = false;
     dnsLogServiceInternals.initializationInFlight = null;
+    dnsLogServiceInternals.storeLoaded = false;
     dnsLogServiceInternals.persistenceQueue = Promise.resolve();
   });
 
@@ -41,6 +43,7 @@ describe("DNSLogService concurrent query isolation", () => {
     DNSLogService.stopCleanupScheduler();
     dnsLogServiceInternals.initialized = false;
     dnsLogServiceInternals.initializationInFlight = null;
+    dnsLogServiceInternals.storeLoaded = false;
     dnsLogServiceInternals.persistenceQueue = Promise.resolve();
   });
 
@@ -330,7 +333,7 @@ describe("DNSLogService concurrent query isolation", () => {
     const log = DNSLogService.getLogs().find((entry) => entry.id === queryId);
     const serialized = JSON.stringify(log);
 
-    expect(serialized).toContain("sha256:");
+    expect(serialized).toContain("redacted len:");
     expect(serialized).not.toContain("secret prompt");
     expect(serialized).not.toContain("secret response");
   });
@@ -381,7 +384,7 @@ describe("DNSLogService concurrent query isolation", () => {
     const log = DNSLogService.getLogs().find((entry) => entry.id === queryId);
     const serialized = JSON.stringify(log);
 
-    expect(serialized).toContain("sha256:");
+    expect(serialized).toContain("redacted len:");
     expect(serialized).not.toContain("secret prompt");
     expect(serialized).not.toContain("private chat");
     expect(serialized).not.toContain("secret-prompt.llm.pieter.com");

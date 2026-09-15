@@ -97,7 +97,7 @@ describe("ChatInput behavior", () => {
   });
 
   it("sends one trimmed message and clears the input", () => {
-    const onSendMessage = jest.fn();
+    const onSendMessage = jest.fn(async () => true);
     const tree = renderChatInput({ onSendMessage });
 
     const sendBtn = () => tree.root.findByProps({ testID: "chat-input-send" });
@@ -122,6 +122,57 @@ describe("ChatInput behavior", () => {
     expect(
       tree.root.findByProps({ testID: "chat-input-field" }).props["value"],
     ).toBe("");
+  });
+
+  it("restores the text when the send is rejected before anything was sent", async () => {
+    // A rejected send (validation, busy) stores and sends nothing, so wiping
+    // the composer would silently discard what the user typed.
+    const onSendMessage = jest.fn(async () => false);
+    const tree = renderChatInput({ onSendMessage });
+    const field = () => tree.root.findByProps({ testID: "chat-input-field" });
+
+    act(() => {
+      field().props["onChangeText"]("\u{1F600}\u{1F600}");
+    });
+    await act(async () => {
+      await tree.root
+        .findByProps({ testID: "chat-input-send" })
+        .props["onPress"]();
+    });
+
+    expect(onSendMessage).toHaveBeenCalledWith("\u{1F600}\u{1F600}");
+    expect(field().props["value"]).toBe("\u{1F600}\u{1F600}");
+  });
+
+  it("keeps a newer draft typed while a rejected send was settling", async () => {
+    let settle: (accepted: boolean) => void = () => {};
+    const onSendMessage = jest.fn(
+      () =>
+        new Promise<boolean>((resolve) => {
+          settle = resolve;
+        }),
+    );
+    const tree = renderChatInput({ onSendMessage });
+    const field = () => tree.root.findByProps({ testID: "chat-input-field" });
+
+    act(() => {
+      field().props["onChangeText"]("first");
+    });
+    let pending: Promise<void> = Promise.resolve();
+    act(() => {
+      pending = tree.root
+        .findByProps({ testID: "chat-input-send" })
+        .props["onPress"]();
+    });
+    act(() => {
+      field().props["onChangeText"]("second");
+    });
+    await act(async () => {
+      settle(false);
+      await pending;
+    });
+
+    expect(field().props["value"]).toBe("second");
   });
 
   it("does not send whitespace-only or loading messages", () => {

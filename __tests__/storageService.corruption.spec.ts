@@ -111,7 +111,7 @@ describe("StorageService Corruption Handling", () => {
         );
         expect(backupCall).toBeDefined();
         const backup = JSON.parse(String(backupCall?.[1]));
-        expect(backup.error).toMatch(/^sha256:[a-f0-9]{64}$/);
+        expect(backup.error).toMatch(/^redacted len:\d+$/);
         expect(JSON.stringify(backup)).not.toContain(marker);
         await expect(decryptIfEncrypted(backup.payload)).resolves.toBe(
           originalPayload,

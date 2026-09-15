@@ -269,6 +269,14 @@ export const enUS = {
       errorRetry: "Retry",
       errorMessage:
         "DNS request failed. Try again or check DNS logs in Settings.",
+      errors: {
+        validation:
+          "This message can't be sent. Use letters or numbers and keep it within the character limit.",
+        busy: "Wait for the current response before sending another message.",
+        noChat: "Open a chat before sending a message.",
+        storage:
+          "Chats could not be saved or loaded on this device. Try again.",
+      },
       storageRecovery: {
         recovered:
           "Chat storage was corrupted. Chats that could be recovered are still available.",

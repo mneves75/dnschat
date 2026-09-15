@@ -23,6 +23,25 @@ describe("external link userinfo spoofing", () => {
     expect(isAllowedExternalUrl("https://user@evil.example/")).toBe(false);
   });
 
+  it("rejects a backslash that URL parsers disagree on", () => {
+    // WHATWG parsing treats "\\" as "/" (host llm.pieter.com); Foundation's
+    // NSURL, which opens the link on iOS, reads host evil.example instead.
+    expect(isAllowedExternalUrl("https://llm.pieter.com\\@evil.example/")).toBe(
+      false,
+    );
+    expect(isAllowedExternalUrl("https://llm.pieter.com\\path")).toBe(false);
+  });
+
+  it("opens the normalized URL it validated, not the raw href", async () => {
+    const openURL = jest.fn().mockResolvedValue(undefined);
+    Linking.openURL = openURL;
+
+    await expect(openExternalUrl("https://LLM.Pieter.com/a b")).resolves.toBe(
+      true,
+    );
+    expect(openURL).toHaveBeenCalledWith("https://llm.pieter.com/a%20b");
+  });
+
   it("describes the target a tap actually reaches, not the raw href", () => {
     expect(
       describeExternalUrlTarget("https://llm.pieter.com@evil.example/x"),

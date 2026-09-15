@@ -13,6 +13,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -22,7 +23,10 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.xbill.DNS.DClass;
 import org.xbill.DNS.Lookup;
+import org.xbill.DNS.Name;
+import org.xbill.DNS.TXTRecord;
 
 public final class DNSResolverJvmHarness {
     private interface CheckedRunnable {
@@ -47,6 +51,10 @@ public final class DNSResolverJvmHarness {
 
     public static void main(String[] args) throws Exception {
         runCase("parser-transactionality-and-utf8", DNSResolverJvmHarness::testParserBoundaries);
+        runCase(
+            "txt-utf8-split-across-character-strings",
+            DNSResolverJvmHarness::testTxtUtf8SplitAcrossCharacterStrings
+        );
         runCase("expanded-dns-name-boundaries", DNSResolverJvmHarness::testExpandedNameBoundaries);
         // doh-body-size-boundaries removed with the Cloudflare DoH transport: it drove
         // readDnsMessageBody, which no longer exists. See androidDnsResolver.policy.spec.ts,
@@ -62,6 +70,10 @@ public final class DNSResolverJvmHarness {
         runCase(
             "legacy-fallback-observability-positive-control",
             DNSResolverJvmHarness::testLegacyFallbackObservabilityPositiveControl
+        );
+        runCase(
+            "legacy-txt-raw-utf8-and-no-shared-cache",
+            DNSResolverJvmHarness::testLegacyTxtRawUtf8AndNoSharedCache
         );
         runCase(
             "short-caller-deadline-bounds-fallback",
@@ -144,6 +156,160 @@ public final class DNSResolverJvmHarness {
         } finally {
             resolver.cleanup();
         }
+    }
+
+    // RFC 1035 lets a server cut a TXT RR into 255-byte character-strings at any
+    // byte. An incomplete UTF-8 sequence at the end of one string must carry into
+    // the next string of the same RR; it must never carry across RRs or survive the
+    // end of the RR, and a malformed continuation still rejects the answer.
+    private static void testTxtUtf8SplitAcrossCharacterStrings() throws Exception {
+        DNSResolver resolver = new DNSResolver(null);
+        try {
+            Method parser = DNSResolver.class.getDeclaredMethod(
+                "parseDnsTxtResponse",
+                byte[].class,
+                int.class,
+                String.class
+            );
+            parser.setAccessible(true);
+            String queryName = "split.llm.pieter.com";
+            int transactionId = 0x2345;
+
+            ByteArrayOutputStream twoByteSplit = new ByteArrayOutputStream();
+            twoByteSplit.write(255);
+            for (int i = 0; i < 254; i++) twoByteSplit.write('a');
+            twoByteSplit.write(0xC3); // lead byte of U+00E7
+            twoByteSplit.write(2);
+            twoByteSplit.write(0xA7);
+            twoByteSplit.write('o');
+            @SuppressWarnings("unchecked")
+            List<String> twoByte = (List<String>) parser.invoke(
+                resolver,
+                dnsResponse(transactionId, queryName, new byte[][] { twoByteSplit.toByteArray() }),
+                transactionId,
+                queryName
+            );
+            require(
+                twoByte.size() == 2 && String.join("", twoByte).equals(repeat('a', 254) + "\u00e7o"),
+                "2-byte character split across character-strings did not decode: " + twoByte.size()
+            );
+
+            @SuppressWarnings("unchecked")
+            List<String> emoji = (List<String>) parser.invoke(
+                resolver,
+                dnsResponse(transactionId, queryName, new byte[][] {
+                    bytes(1, 0xF0, 1, 0x9F, 3, 0x98, 0x80, '!')
+                }),
+                transactionId,
+                queryName
+            );
+            require(
+                emoji.equals(Arrays.asList("\uD83D\uDE00!")),
+                "4-byte emoji split across three character-strings did not decode"
+            );
+
+            // Negative controls: incomplete at end of RR, carry across RRs, and a
+            // carried lead byte followed by a non-continuation byte.
+            for (byte[][] rdatas : new byte[][][] {
+                { bytes(2, 'a', 0xC3) },
+                { bytes(2, 'a', 0xC3), bytes(2, 0xA7, 'o') },
+                { bytes(2, 'a', 0xC3, 1, 0x28) }
+            }) {
+                expectDnsError(() -> parser.invoke(
+                    resolver,
+                    dnsResponse(transactionId, queryName, rdatas),
+                    transactionId,
+                    queryName
+                ), DNSResolver.DNSError.Type.QUERY_FAILED);
+            }
+        } finally {
+            resolver.cleanup();
+        }
+    }
+
+    // The legacy dnsjava rung runs when raw UDP fails (e.g. TC=1 for an answer over
+    // 512 bytes). It must decode the raw TXT bytes rather than dnsjava's escaped
+    // presentation strings, and must not answer from dnsjava's shared cache.
+    private static void testLegacyTxtRawUtf8AndNoSharedCache() throws Exception {
+        Lookup.resetRunCount();
+        Lookup.resetObservations();
+        String queryName = "legacyutf8.llm.pieter.com";
+        Lookup.setNextRecords(new org.xbill.DNS.Record[] {
+            new TXTRecord(
+                Name.fromString(queryName, Name.root),
+                DClass.IN,
+                Arrays.asList(
+                    "n\u00e3o ".getBytes(StandardCharsets.UTF_8),
+                    bytes('o', 'k', ' ', 0xF0, 0x9F),
+                    bytes(0x98, 0x80, '!')
+                )
+            )
+        });
+        InetAddress loopback = InetAddress.getLoopbackAddress();
+        DatagramSocket serverSocket = new DatagramSocket(0, loopback);
+        CountDownLatch invalidResponseSent = new CountDownLatch(1);
+        Thread responder = new Thread(() -> {
+            byte[] payload = new byte[2048];
+            try {
+                DatagramPacket request = new DatagramPacket(payload, payload.length);
+                serverSocket.receive(request);
+                byte[] invalidResponse = new byte[12];
+                serverSocket.send(new DatagramPacket(
+                    invalidResponse,
+                    invalidResponse.length,
+                    request.getAddress(),
+                    request.getPort()
+                ));
+                invalidResponseSent.countDown();
+            } catch (Exception ignored) {
+                // The assertions below expose any failure to reach the legacy rung.
+            }
+        }, "DNSLegacyUtf8Responder");
+        responder.setDaemon(true);
+        responder.start();
+
+        DNSResolver resolver = new DNSResolver(null, host -> loopback, 9_500L);
+        try {
+            CompletableFuture<List<String>> query = resolver.queryTXT(
+                "llm.pieter.com",
+                queryName,
+                serverSocket.getLocalPort(),
+                System.currentTimeMillis() + 3_000L
+            );
+            require(
+                invalidResponseSent.await(SEAM_LATCH_TIMEOUT_SECONDS, TimeUnit.SECONDS),
+                "legacy UTF-8 case did not answer raw UDP"
+            );
+            List<String> records = query.get(SEAM_LATCH_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            require(Lookup.getRunCount() > 0, "legacy Lookup.run did not fire");
+            require(
+                records.equals(Arrays.asList("n\u00e3o ", "ok ", "\uD83D\uDE00!")),
+                "legacy TXT strings were not decoded from raw UTF-8 bytes: " + records.size()
+                    + " record(s), escaped=" + String.join("", records).contains("\\")
+            );
+            require(
+                Boolean.TRUE.equals(Lookup.getLastRunUsedTemporaryCache()),
+                "legacy Lookup used dnsjava's shared default cache"
+            );
+            awaitNoActiveQueries(resolver);
+        } finally {
+            Lookup.resetObservations();
+            serverSocket.close();
+            responder.join(1_000L);
+            resolver.cleanup();
+        }
+    }
+
+    private static byte[] bytes(int... values) {
+        byte[] result = new byte[values.length];
+        for (int i = 0; i < values.length; i++) result[i] = (byte) values[i];
+        return result;
+    }
+
+    private static String repeat(char value, int count) {
+        char[] chars = new char[count];
+        Arrays.fill(chars, value);
+        return new String(chars);
     }
 
     private static void testExpandedNameBoundaries() throws Exception {

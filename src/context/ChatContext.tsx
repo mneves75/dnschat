@@ -1,14 +1,21 @@
 import React, { createContext, use, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import * as Crypto from "expo-crypto";
-import type { Chat, Message, ChatContextType } from "../types/chat";
+import type {
+  Chat,
+  ChatContextType,
+  ChatError,
+  ChatErrorKind,
+  Message,
+  SendMessageResult,
+} from "../types/chat";
 import {
   StorageService,
   StorageCorruptionError,
 } from "../services/storageService";
 import { DNSService, sanitizeDNSMessage } from "../services/dnsService";
 import { useSettings } from "./SettingsContext";
-import { createTranslator } from "../i18n";
+import { DNSLogService } from "../services/dnsLogService";
 import {
   isScreenshotMode,
   getMockConversations,
@@ -26,7 +33,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
   const [chats, setChats] = useState<Chat[]>([]);
   const [currentChat, setCurrentChat] = useState<Chat | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ChatError | null>(null);
   const sendInFlightRef = useRef(false);
 
   // PERFORMANCE: mirror settings into a ref so sendMessage/loadChats read them
@@ -54,7 +61,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
 
   const loadChats = async (options?: {
     preserveChatId?: string | null;
-    preserveError?: string | null;
+    preserveError?: ChatError | null;
     clearError?: boolean;
   }) => {
     setIsLoading(true);
@@ -101,8 +108,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
       if (err instanceof StorageCorruptionError) {
         // Best-effort recovery: a recovery failure must still reset state and
         // clear loading below (it must not escape and skip cleanup).
-        const translate = createTranslator(settingsRef.current.locale);
-        let recoveryMessage = translate("screen.chat.storageRecovery.reset");
+        let recoveryError: ChatError = { kind: "storageReset" };
         try {
           const recoveredChats = await StorageService.loadChats();
           setChats(recoveredChats);
@@ -115,9 +121,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
             (preferredChat ?? recoveredChats[0] ?? null) as Chat | null,
           );
           if (recoveredChats.length > 0) {
-            recoveryMessage = translate(
-              "screen.chat.storageRecovery.recovered",
-            );
+            recoveryError = { kind: "storageRecovered" };
           }
         } catch {
           setChats([]);
@@ -125,11 +129,12 @@ export function ChatProvider({ children }: ChatProviderProps) {
         }
         setError(
           options?.clearError === false
-            ? (options?.preserveError ?? recoveryMessage)
-            : recoveryMessage,
+            ? (options?.preserveError ?? recoveryError)
+            : recoveryError,
         );
       } else {
-        setError(err instanceof Error ? err.message : "Failed to load chats");
+        devWarn("[ChatContext] Failed to load chats", err);
+        setError({ kind: "storage" });
       }
     }
     // Replaces `finally`; the early screenshot-mode path clears loading itself.
@@ -156,7 +161,8 @@ export function ChatProvider({ children }: ChatProviderProps) {
       setError(null);
       return newChat;
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create chat");
+      devWarn("[ChatContext] Failed to create chat", err);
+      setError({ kind: "storage" });
       throw err;
     }
   };
@@ -164,13 +170,19 @@ export function ChatProvider({ children }: ChatProviderProps) {
   const deleteChat = async (chatId: string): Promise<void> => {
     try {
       await StorageService.deleteChat(chatId);
+      // Deleting a chat also removes its DNS log records. Best-effort: the chat
+      // is already gone, and a failed log write keeps the previous log state.
+      await DNSLogService.purgeChat(chatId).catch((purgeError: unknown) => {
+        devWarn("[ChatContext] Failed to purge DNS logs for chat", purgeError);
+      });
       setChats((prevChats) => prevChats.filter((chat) => chat.id !== chatId));
 
       setCurrentChat((previous) => (previous?.id === chatId ? null : previous));
 
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete chat");
+      devWarn("[ChatContext] Failed to delete chat", err);
+      setError({ kind: "storage" });
     }
   };
 
@@ -181,12 +193,13 @@ export function ChatProvider({ children }: ChatProviderProps) {
       setCurrentChat(null);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to clear chats");
+      devWarn("[ChatContext] Failed to clear chats", err);
+      setError({ kind: "storage" });
       throw err;
     }
   };
 
-  const sendMessage = async (content: string): Promise<void> => {
+  const sendMessage = async (content: string): Promise<SendMessageResult> => {
     devLog("[ChatContext] sendMessage called", {
       contentLength: content.length,
       currentChatId: currentChat?.id,
@@ -195,15 +208,13 @@ export function ChatProvider({ children }: ChatProviderProps) {
 
     if (!currentChat) {
       devWarn("[ChatContext] No active chat selected");
-      setError("No active chat selected");
-      return;
+      setError({ kind: "noChat" });
+      return "rejected";
     }
 
     if (sendInFlightRef.current) {
-      setError(
-        "Please wait for the current response to finish before sending another message.",
-      );
-      return;
+      setError({ kind: "busy" });
+      return "rejected";
     }
 
     // SECURITY: Capture chat ID at function entry to prevent race conditions.
@@ -223,6 +234,10 @@ export function ChatProvider({ children }: ChatProviderProps) {
     // Keep the placeholder available to persist a failed response.
     let assistantMessage: Message | null = null;
     let userMessagePersisted = false;
+    // Which step a thrown error came from: only the DNS request itself is a
+    // DNS failure; every write around it is a storage failure.
+    let failureKind: ChatErrorKind = "storage";
+    let result: SendMessageResult = "sent";
 
     try {
       sanitizeDNSMessage(content);
@@ -236,8 +251,8 @@ export function ChatProvider({ children }: ChatProviderProps) {
         stack:
           validationError instanceof Error ? validationError.stack : undefined,
       });
-      setError(errorMessage);
-      return;
+      setError({ kind: "validation" });
+      return "rejected";
     }
 
     sendInFlightRef.current = true;
@@ -319,6 +334,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
         enableMockDNS,
       });
 
+      failureKind = "dns";
       const response = await DNSService.queryLLM(
         content,
         dnsServer,
@@ -330,6 +346,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
         },
       );
 
+      failureKind = "storage";
       devLog("[ChatContext] DNS query completed", {
         responseLength: response.length,
       });
@@ -382,7 +399,12 @@ export function ChatProvider({ children }: ChatProviderProps) {
         stack: err instanceof Error ? err.stack : undefined,
       });
 
-      setError(errorMessage);
+      result = "failed";
+      const sendError: ChatError =
+        failureKind === "dns" && assistantMessage
+          ? { kind: "dns", failedMessageId: assistantMessage.id }
+          : { kind: failureKind };
+      setError(sendError);
 
       // Persist failures against the chat captured before the request.
       if (chatIdAtSend && assistantMessage && userMessagePersisted) {
@@ -406,7 +428,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
           devLog("[ChatContext] Reloading chats after error...");
           await loadChats({
             preserveChatId: chatIdAtSend,
-            preserveError: errorMessage,
+            preserveError: sendError,
             clearError: false,
           });
           devLog("[ChatContext] Chats reloaded after error");
@@ -420,7 +442,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
         try {
           await loadChats({
             preserveChatId: chatIdAtSend,
-            preserveError: errorMessage,
+            preserveError: sendError,
             clearError: false,
           });
         } catch (reloadErr) {
@@ -435,6 +457,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
     // this cleanup runs on both the success and error paths.
     sendInFlightRef.current = false;
     setIsLoading(false);
+    return result;
   };
 
   const clearError = () => {

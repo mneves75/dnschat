@@ -112,8 +112,8 @@ describe("ChatContext single-flight send protection", () => {
     }
     const chat = latestChat;
 
-    let firstSend: Promise<void> | null = null;
-    let secondSend: Promise<void> | null = null;
+    let firstSend: Promise<unknown> | null = null;
+    let secondSend: Promise<unknown> | null = null;
     await act(async () => {
       firstSend = chat.sendMessage("hello");
       secondSend = chat.sendMessage("world");
@@ -121,9 +121,7 @@ describe("ChatContext single-flight send protection", () => {
     });
 
     expect(mockDNSService.queryLLM).toHaveBeenCalledTimes(1);
-    expect(latestChat.error).toBe(
-      "Please wait for the current response to finish before sending another message.",
-    );
+    expect(latestChat.error).toEqual({ kind: "busy" });
 
     if (!resolveDns) {
       throw new Error("Expected DNS request to be pending");
@@ -178,7 +176,7 @@ describe("ChatContext single-flight send protection", () => {
     if (!latestChat) {
       throw new Error("Chat context did not refresh after chat creation");
     }
-    let sendPromise: Promise<void> | null = null;
+    let sendPromise: Promise<unknown> | null = null;
     act(() => {
       sendPromise = latestChat?.sendMessage("hello") ?? null;
     });

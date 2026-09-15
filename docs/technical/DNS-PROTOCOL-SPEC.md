@@ -22,40 +22,45 @@ Sanitized label constraints:
 
 Terminology:
 
-- `targetServer`: DNS server/resolver we send packets to (e.g. `llm.pieter.com`, `8.8.8.8`).
+- `targetServer`: DNS server we send packets to (`llm.pieter.com` or `ch.at`).
 - `zone`: suffix used to build the query name (e.g. `llm.pieter.com`).
 - `label`: sanitized message label.
 
 Algorithm (implemented by `composeDNSQueryName(label, dnsServer)`):
 
 1. Strip trailing dots and whitespace from `label`.
-2. Validate `dnsServer` (non-empty allowlisted hostname or IP; ports disallowed).
-3. Determine `zone`:
-   - If `dnsServer` is empty or an IPv4 address, use default zone `llm.pieter.com`
-     (`DNS_CONSTANTS.DEFAULT_DNS_SERVER`).
-   - Else use `dnsServer` (lowercased, trailing dot removed) as the zone.
+2. Validate `dnsServer` (non-empty allowlisted hostname; ports disallowed).
+3. Use the validated `dnsServer` (lowercased, trailing dot removed) as the zone.
 4. Query name is `${label}.${zone}`.
 
 Important consequence:
 
-- If the user selects an IP resolver like `8.8.8.8`, we still query a name under
-  `llm.pieter.com` (e.g. `hello-world.llm.pieter.com`) but we send it to
-  resolver `8.8.8.8`.
-- Since 4.4.0 this path is JavaScript-only. The native rung compiles in the LLM
-  zones alone and rejects an IP resolver, so the chain falls through to UDP/TCP,
-  which still honour it.
-- Reachability: the Settings picker offers only `llm.pieter.com` and `ch.at`, so
-  an IP resolver cannot be *newly selected*. It reaches the code path when an
-  older install already persisted one -- `migrateSettings` preserves it and
-  `validateDNSServer` still accepts it (see `__tests__/settings.migration.spec.ts`).
-- With **Allow Experimental Transports** disabled the order is native-only, so
-  such a stored IP resolver is retried `MAX_RETRIES` times against the native
-  rung and then fails -- unless **Mock DNS** is also enabled, in which case the
-  mock rung answers and the query succeeds.
+- Every allowlisted server is an LLM zone, so the query name is always pinned to
+  the server that receives it. Public recursive resolvers (`8.8.8.8`,
+  `1.1.1.1` and their secondaries) were allowlisted until 4.4.4 and reachable
+  over the JavaScript UDP/TCP rungs only; 4.4.5 removed them, and settings
+  migration resets a persisted IP resolver to `llm.pieter.com`.
 
 ## TXT response parsing
 
 Input is a list of TXT strings as returned by the transport.
+
+TXT bytes are UTF-8 (the default resolver returns raw non-ASCII bytes). RFC 1035
+caps a character-string at 255 bytes and a server may split one RR at any byte,
+so a multibyte character can straddle two character-strings. Transports decode
+the bytes of one RR as a unit, never string by string:
+
+- iOS native and Android raw UDP / legacy dnsjava: each non-empty
+  character-string stays its own list element. An incomplete UTF-8 sequence at
+  the end of one character-string carries into the next character-string of the
+  same RR, never across RRs. Malformed bytes, or a sequence still incomplete at
+  the end of the RR, reject the response as not valid UTF-8. The legacy rung
+  decodes dnsjava's raw bytes (`getStringsAsByteArrays`), not its escaped
+  presentation strings, and gives each lookup its own throwaway cache so an
+  earlier answer for the same name is never replayed.
+- JS UDP/TCP: one list element per RR, built by concatenating the RR's
+  character-string bytes and decoding once. Invalid bytes stay lenient and
+  decode to U+FFFD.
 
 Parsing rules (implemented by `parseTXTResponse(txtRecords)`):
 

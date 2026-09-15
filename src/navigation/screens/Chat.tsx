@@ -39,25 +39,12 @@ import { useTypography } from "../../ui/hooks/useTypography";
 import { useMotionReduction } from "../../context/AccessibilityContext";
 import { devLog, devWarn } from "../../utils/devLog";
 import { Toast } from "../../components/ui/Toast";
-import type { Message } from "../../types/chat";
+import type { ChatError } from "../../types/chat";
 import { useResolvedColorScheme } from "../../ui/theme/resolvedColorScheme";
-
-function getRetryableFailedPrompt(messages: Message[]): string | null {
-  for (let index = messages.length - 1; index > 0; index -= 1) {
-    const message = messages[index];
-    const previous = messages[index - 1];
-    if (
-      message?.role === "assistant" &&
-      message.status === "error" &&
-      previous?.role === "user" &&
-      previous.content.trim()
-    ) {
-      return previous.content;
-    }
-  }
-
-  return null;
-}
+import {
+  chatErrorMessageKey,
+  getRetryablePrompt,
+} from "../../utils/chatErrors";
 
 export function Chat() {
   const colorScheme = useResolvedColorScheme();
@@ -75,8 +62,11 @@ export function Chat() {
     minimumTouchTarget,
   );
   const [inputHeight, setInputHeight] = useState(minimumInputHeight);
-  const [dismissedError, setDismissedError] = useState<string | null>(null);
-  const retryablePrompt = getRetryableFailedPrompt(currentChat?.messages ?? []);
+  const [dismissedError, setDismissedError] = useState<ChatError | null>(null);
+  const retryablePrompt = getRetryablePrompt(
+    currentChat?.messages ?? [],
+    error,
+  );
   const handleInputHeightChange = (height: number) => {
     setInputHeight((previous) =>
       Math.abs(previous - height) < 1 ? previous : height,
@@ -143,14 +133,15 @@ export function Chat() {
     clearError();
   };
 
-  const handleSendMessage = async (message: string) => {
+  const handleSendMessage = async (message: string): Promise<boolean> => {
     // Re-arm the toast so a recurring identical error re-notifies after dismissal.
     setDismissedError(null);
     try {
-      await sendMessage(message);
+      return (await sendMessage(message)) !== "rejected";
     } catch (err) {
       // Error handling is done in the context
       devWarn("[Chat] Failed to send message", err);
+      return true;
     }
   };
 
@@ -200,7 +191,7 @@ export function Chat() {
         visible={Boolean(visibleError)}
         variant="error"
         title={t("screen.chat.errorAlertTitle")}
-        message={visibleError ? t("screen.chat.errorMessage") : ""}
+        message={visibleError ? t(chatErrorMessageKey(visibleError.kind)) : ""}
         duration={6000}
         onDismiss={handleDismissError}
         {...(retryablePrompt

@@ -16,7 +16,9 @@ import java.net.SocketTimeoutException;
 import java.time.Duration;
 import java.security.SecureRandom;
 import java.nio.ByteBuffer;
-import java.nio.charset.CharacterCodingException;
+import java.nio.CharBuffer;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CoderResult;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.text.Normalizer;
@@ -988,6 +990,10 @@ public class DNSResolver {
                     // filter already rejects those answers, but the query must not be
                     // sent at all -- the zone pin is a wire-level guarantee.
                     Lookup lookup = new Lookup(Name.fromString(queryName, Name.root), Type.TXT);
+                    // dnsjava's default is a process-wide cache that would replay an
+                    // earlier answer for an identical prompt without asking the server;
+                    // null gives this lookup its own throwaway cache (dnsjava 3.6.2).
+                    lookup.setCache(null);
 
                     SimpleResolver resolver = new SimpleResolver(serverAddress);
                     resolver.setPort(port);
@@ -1004,11 +1010,12 @@ public class DNSResolver {
                     List<String> txtRecords = new ArrayList<>();
                     for (org.xbill.DNS.Record record : records) {
                         if (record instanceof TXTRecord && isExpectedLegacyTxtRecord(record, queryName)) {
-                            TXTRecord txtRecord = (TXTRecord) record;
-                            List<?> strings = txtRecord.getStrings();
-                            for (Object str : strings) {
-                                txtRecords.add(str.toString());
-                            }
+                            // getStrings() is presentation format: dnsjava escapes every
+                            // byte >= 0x7F as \DDD, so decode the raw bytes instead.
+                            appendDecodedTxtStrings(
+                                ((TXTRecord) record).getStringsAsByteArrays(),
+                                txtRecords
+                            );
                         }
                     }
 
@@ -1387,6 +1394,7 @@ public class DNSResolver {
                     throw new DNSError(DNSError.Type.QUERY_FAILED, "DNS TXT RDATA is empty");
                 }
 
+                List<byte[]> strings = new ArrayList<>();
                 int p = offset;
                 while (p < end) {
                     int txtLen = data[p] & 0xFF;
@@ -1394,12 +1402,10 @@ public class DNSResolver {
                     if (txtLen > end - p) {
                         throw new DNSError(DNSError.Type.QUERY_FAILED, "DNS TXT character-string truncated");
                     }
-                    String decoded = decodeUtf8Strict(data, p, txtLen);
-                    if (!decoded.isEmpty()) {
-                        results.add(decoded);
-                    }
+                    strings.add(Arrays.copyOfRange(data, p, p + txtLen));
                     p += txtLen;
                 }
+                appendDecodedTxtStrings(strings, results);
             }
 
             offset = end;
@@ -1408,21 +1414,48 @@ public class DNSResolver {
         return results;
     }
 
-    private static String decodeUtf8Strict(byte[] data, int offset, int length) throws DNSError {
-        try {
-            return StandardCharsets.UTF_8
-                .newDecoder()
-                .onMalformedInput(CodingErrorAction.REPORT)
-                .onUnmappableCharacter(CodingErrorAction.REPORT)
-                .decode(ByteBuffer.wrap(data, offset, length))
-                .toString();
-        } catch (CharacterCodingException error) {
-            throw new DNSError(
-                DNSError.Type.QUERY_FAILED,
-                "DNS TXT character-string is not valid UTF-8",
-                error
-            );
+    /**
+     * Decodes the character-strings of one TXT RR as strict UTF-8, appending each
+     * non-empty string as its own result. RFC 1035 lets a server cut a long answer
+     * into 255-byte character-strings at any byte, so an incomplete sequence at the
+     * end of one string carries into the next string of the same RR. Malformed bytes,
+     * or a sequence still incomplete at the end of the RR, reject the answer.
+     */
+    private static void appendDecodedTxtStrings(List<byte[]> strings, List<String> results) throws DNSError {
+        CharsetDecoder decoder = StandardCharsets.UTF_8
+            .newDecoder()
+            .onMalformedInput(CodingErrorAction.REPORT)
+            .onUnmappableCharacter(CodingErrorAction.REPORT);
+        byte[] carry = new byte[0];
+        for (int i = 0; i < strings.size(); i++) {
+            byte[] string = strings.get(i);
+            boolean endOfRecord = i == strings.size() - 1;
+            byte[] pending = new byte[carry.length + string.length];
+            System.arraycopy(carry, 0, pending, 0, carry.length);
+            System.arraycopy(string, 0, pending, carry.length, string.length);
+            ByteBuffer input = ByteBuffer.wrap(pending);
+            // UTF-8 never yields more UTF-16 units than input bytes, so this cannot overflow.
+            CharBuffer output = CharBuffer.allocate(pending.length);
+            CoderResult result = decoder.decode(input, output, endOfRecord);
+            if (!result.isUnderflow()) {
+                throw invalidTxtUtf8();
+            }
+            if (endOfRecord && !decoder.flush(output).isUnderflow()) {
+                throw invalidTxtUtf8();
+            }
+            carry = new byte[input.remaining()];
+            input.get(carry);
+            if (output.position() > 0) {
+                results.add(new String(output.array(), 0, output.position()));
+            }
         }
+    }
+
+    private static DNSError invalidTxtUtf8() {
+        return new DNSError(
+            DNSError.Type.QUERY_FAILED,
+            "DNS TXT character-string is not valid UTF-8"
+        );
     }
 
     private static final class NameParseResult {

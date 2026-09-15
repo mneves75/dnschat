@@ -72,8 +72,9 @@ import { useResolvedColorScheme } from "../ui/theme/resolvedColorScheme";
 // The sendable limit is the DNS label limit, not MAX_MESSAGE_LENGTH: sendMessage
 // sanitizes into a single label and rejects anything longer than 63 bytes, so a
 // 120-char allowance let users type text that was silently destroyed on send.
-// Sanitization never lengthens input (spaces map 1:1 to dashes, everything else
-// is stripped), so anything accepted here always survives sanitization.
+// Sanitization almost never lengthens input (spaces map 1:1 to dashes, the rest
+// is stripped); NFKD can expand compatibility characters such as the fi
+// ligature. Such a message is rejected on send and handed back to the composer.
 const MAX_SENDABLE_LENGTH = MESSAGE_CONSTANTS.MAX_DNS_LABEL_LENGTH;
 const CHARACTER_ANNOUNCEMENT_REMAINING = new Set([10, 5, 0]);
 // Reveal the counter at the first announced milestone so the visual and
@@ -84,7 +85,8 @@ const CHARACTER_COUNTER_THRESHOLD =
 const BUTTON_SPACING = LiquidGlassSpacing.xxs; // 4px from edge
 
 interface ChatInputProps {
-  onSendMessage: (message: string) => void;
+  /** Resolves false when the send was rejected before anything was sent. */
+  onSendMessage: (message: string) => Promise<boolean>;
   isLoading?: boolean;
   placeholder?: string;
   /** Test ID for automation testing */
@@ -303,24 +305,28 @@ export function ChatInput({
    *
    * 1. Validates non-empty trimmed message
    * 2. Provides haptic feedback (medium)
-   * 3. Calls onSendMessage with trimmed text
-   * 4. Clears input
-   * 5. Refocuses input (iOS only)
+   * 3. Clears input and calls onSendMessage with trimmed text
+   * 4. Refocuses input (iOS only)
+   * 5. Restores the text if the send was rejected and nothing new was typed
    */
-  const handleSend = () => {
-    if (message.trim() && !isLoading) {
-      // Haptic feedback on send
-      HapticFeedback.medium();
+  const handleSend = async () => {
+    const text = message.trim();
+    if (!text || isLoading) {
+      return;
+    }
+    HapticFeedback.medium();
+    setMessage("");
 
-      onSendMessage(message.trim());
-      setMessage("");
+    // Refocus the input after sending on iOS
+    if (Platform.OS === "ios") {
+      InteractionManager.runAfterInteractions(() => {
+        textInputRef.current?.focus();
+      });
+    }
 
-      // Refocus the input after sending on iOS
-      if (Platform.OS === "ios") {
-        InteractionManager.runAfterInteractions(() => {
-          textInputRef.current?.focus();
-        });
-      }
+    const accepted = await onSendMessage(text);
+    if (!accepted) {
+      setMessage((current) => (current === "" ? text : current));
     }
   };
 

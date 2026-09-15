@@ -6,6 +6,10 @@ public final class Lookup {
     private static final AtomicInteger RUN_COUNT = new AtomicInteger();
 
     private static volatile Name lastName;
+    private static volatile Record[] nextRecords;
+    private static volatile Boolean lastRunUsedTemporaryCache;
+
+    private boolean temporaryCache;
 
     // Only the absolute-Name overload is stubbed: the String overload is the one
     // that walks the search path, so omitting it makes a regression fail to compile.
@@ -19,9 +23,17 @@ public final class Lookup {
 
     public void setResolver(Resolver resolver) {}
 
+    // dnsjava 3.6.2: null installs a fresh per-lookup Cache (temporary_cache=true);
+    // without this call run() reads and writes the process-wide default cache, which
+    // replays an earlier answer for the same name without contacting the server.
+    public void setCache(Cache cache) {
+        temporaryCache = cache == null;
+    }
+
     public Record[] run() {
         RUN_COUNT.incrementAndGet();
-        return null;
+        lastRunUsedTemporaryCache = temporaryCache;
+        return nextRecords;
     }
 
     public static int getRunCount() {
@@ -30,5 +42,18 @@ public final class Lookup {
 
     public static void resetRunCount() {
         RUN_COUNT.set(0);
+    }
+
+    public static void setNextRecords(Record[] records) {
+        nextRecords = records;
+    }
+
+    public static Boolean getLastRunUsedTemporaryCache() {
+        return lastRunUsedTemporaryCache;
+    }
+
+    public static void resetObservations() {
+        nextRecords = null;
+        lastRunUsedTemporaryCache = null;
     }
 }

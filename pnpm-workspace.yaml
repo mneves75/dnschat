@@ -3,19 +3,11 @@ packages:
   - 'modules/dns-native'
   - 'marketing/video'
 
-# NOTE ON SUPPLY-CHAIN POLICIES (react-doctor suggests minimumReleaseAge +
-# trustPolicy here). Since pnpm v11, minimumReleaseAge defaults to 1440 (1 day)
-# and is ACTIVE unless `minimumReleaseAge: 0` is set — not a repo decision.
-# The Excludes below are the required-package overrides for the Expo SDK 57
-# patch set that expo-doctor mandates; the versions were published within the
-# 24h window, so they are excluded rather than weakening the policy (see
-# AGENTS.md). `blockExoticSubdeps`, `strictDepBuilds` stay on default.
-# trustPolicy: no-downgrade — flags semver@6.3.1 and ua-parser-js@1.0.41 as
-# trust downgrades. Both are long-stable releases that predate npm
-# provenance attestations and are pinned upstream (fbjs -> react-native-web),
-# so they are not ours to move.
-#
-# Revisit the Excludes once these versions have aged past the 1-day window.
+# Supply-chain policy: pnpm 11 keeps minimumReleaseAge at its 1-day default.
+# Add a minimumReleaseAgeExclude entry only for a required same-day Expo patch,
+# and delete it once that version has aged past the window. trustPolicy stays
+# unset: no-downgrade flags semver@6.3.1 and ua-parser-js@1.0.41, long-stable
+# releases that predate npm provenance and are pinned upstream.
 
 # React Native/Expo compatibility fallback.
 nodeLinker: hoisted
@@ -59,40 +51,6 @@ overrides:
   uuid: '>=11.1.1'
   ws: '>=8.21.0'
   yaml: '>=2.8.3'
-
-# Time-boxed audit suppressions. Each entry needs a published-fix blocker and a
-# recheck date; delete the entry (and bump the floor) the moment a fix ships.
-#
-# image-size GHSA-w3rx-r6r6-pgpr (ICNS parser infinite loop) and
-# GHSA-5p2g-fcmc-qvqq (JXL/HEIF parser infinite loops), both high.
-# Blocker: the advisories declare `patched >=2.0.3`, and no 2.0.3 exists on npm
-# (newest is 2.0.2, and the whole 1.x line carries the `legacy` tag). There is
-# no version to move to. image-size reaches this repo only as a Metro
-# dependency used at bundle time to read the dimensions of assets already in
-# this repository; it is not linked into the iOS or Android binary and never
-# parses network input. Recheck 2026-09-12.
-auditConfig:
-  ignoreGhsas:
-    - GHSA-w3rx-r6r6-pgpr
-    - GHSA-5p2g-fcmc-qvqq
-
-minimumReleaseAgeExclude:
-  - '@expo/cli@57.0.12 || 57.0.21 || 57.0.22'
-  - '@expo/router-server@57.0.5 || 57.0.9'
-  - expo-constants@57.0.9 || 57.0.17
-  - expo-modules-core@57.0.9 || 57.0.15 || 57.0.16
-  - expo@57.0.10 || 57.0.19 || 57.0.20
-  - '@expo/ui@57.0.9 || 57.0.15 || 57.0.16'
-  - expo-linking@57.0.5 || 57.0.9
-  - expo-router@57.0.10 || 57.0.18 || 57.0.19
-  - '@expo/fingerprint@0.20.12'
-  - '@expo/metro-runtime@57.0.15'
-  - babel-preset-expo@57.0.10
-  - expo-asset@57.0.16
-  - expo-build-properties@57.0.16 || 57.0.17
-  - expo-font@57.0.3
-  - expo-modules-jsi@57.0.7 || 57.0.8
-  - expo-secure-store@57.0.3
 
 patchedDependencies:
   query-string@7.1.3: patches/query-string@7.1.3.patch
