@@ -491,6 +491,21 @@ describe("DNSLogService recovery", () => {
       expect(lastPrimaryWrite()).not.toContain("chat-gone");
     });
 
+    it("drops a query still in flight for a chat that no longer exists", async () => {
+      mockAsyncStorage.getItem.mockResolvedValue(null);
+      await DNSLogService.initialize();
+      const inFlight = DNSLogService.startQuery("gone", {
+        chatId: "chat-gone",
+      });
+
+      await DNSLogService.retainChats(new Set());
+      await DNSLogService.endQuery(inFlight, true, "late", "native");
+      await dnsLogServiceInternals.persistenceQueue;
+
+      expect(DNSLogService.getLogs()).toEqual([]);
+      expect(lastPrimaryWrite() ?? "").not.toContain("chat-gone");
+    });
+
     it("keeps a query that finished while the initial read was in flight", async () => {
       let releaseRead: (value: string) => void = () => {};
       mockAsyncStorage.getItem.mockImplementationOnce(

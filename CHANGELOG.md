@@ -20,16 +20,18 @@ development device and never distributed.
   returning to 4.4.5 then overwrote the moved original: history in the
   corruption backup became permanently undecryptable. The key now stays under
   its original name, re-added as device-only through a verified staging copy,
-  with a marker recording completion. Older builds keep reading the same key; a
-  4.4.5 install that already moved the key is restored to the original name;
-  and if two different keys are ever found, neither is overwritten or deleted.
+  with a marker recording completion. Older builds keep reading the same key,
+  and if the device-only re-add fails the key is written back under its name
+  so an older build installed before the next launch still finds it. A 4.4.5
+  install that already moved the key is restored to the original name, and if
+  two different keys are ever found, neither is overwritten or deleted.
 - A failed one-time rewrite of older DNS logs no longer counts as corruption.
   It used to move the store, digests included, into the backup and delete it;
   the store now stays in place and the next launch retries.
 - DNS log records of chats that no longer exist are dropped whenever the chat
   list loads, which also finishes a deletion that an earlier session could not
   save while the log store was unreadable. Clearing all chats clears their log
-  records too.
+  records too, including a query still in flight.
 - Deleting a chat still completes, and removes its log records, when removing
   the chat corruption backup fails.
 - Remove the unused Face ID usage description; the app never requests

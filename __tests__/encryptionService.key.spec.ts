@@ -220,6 +220,34 @@ describe("encryptionService key handling", () => {
       },
     );
 
+    it("keeps the original name readable for older builds when the device-only re-add fails", async () => {
+      // Autoreview P1: between deleting the original entry and a successful
+      // re-add, an older build must still find the key under its name.
+      const store = legacyStore();
+      const first = launch(store);
+      const realSet = first.secureStore.setItemAsync.getMockImplementation()!;
+      first.secureStore.setItemAsync.mockImplementation(
+        async (key: string, value: string, options) => {
+          if (
+            key === KEY &&
+            String(options?.keychainAccessible) === DEVICE_ONLY
+          ) {
+            throw new Error("keychain busy");
+          }
+          return realSet(key, value, options);
+        },
+      );
+
+      const encrypted = await first.service.encryptString("history");
+
+      expect(store.get(KEY)?.value).toBe(keyHex);
+      const older = launch(store);
+      await expect(older.service.decryptString(encrypted)).resolves.toBe(
+        "history",
+      );
+      expectProtected(store);
+    });
+
     it("recovers the key from the staged copy when the app stopped after deleting the legacy entry", async () => {
       // Also the end state a 4.4.5 install leaves behind.
       const store = new Map<string, Entry>([

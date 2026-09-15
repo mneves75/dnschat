@@ -245,8 +245,7 @@ const protectKey = async (
       }
       await SecureStore.deleteItemAsync(KEY_STORAGE_KEY);
     }
-    if (!(await storeAndVerify(KEY_STORAGE_KEY, encoded))) {
-      devWarn("[EncryptionService] Device-only key did not read back");
+    if (!(await addDeviceOnlyKey(encoded))) {
       return;
     }
     await markKeyProtected();
@@ -257,6 +256,19 @@ const protectKey = async (
       error,
     );
   }
+};
+
+// Re-adds the key under its own name as device-only. If that fails, the name
+// is written back with the default accessibility so an older build installed
+// before the next launch still finds this key instead of generating another.
+const addDeviceOnlyKey = async (encoded: string): Promise<boolean> => {
+  try {
+    if (await storeAndVerify(KEY_STORAGE_KEY, encoded)) return true;
+  } catch (error) {
+    devWarn("[EncryptionService] Device-only key re-add failed", error);
+  }
+  await SecureStore.setItemAsync(KEY_STORAGE_KEY, encoded);
+  return false;
 };
 
 // Returns the stored key, finishing its device-only protection on the way.

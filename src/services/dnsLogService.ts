@@ -884,14 +884,9 @@ export class DNSLogService {
    * flight for it, so the chat's metadata does not outlive the chat.
    */
   static async purgeChat(chatId: string): Promise<void> {
-    let droppedActive = false;
-    for (const [queryId, log] of this.activeQueryLogs) {
-      if (log.chatId === chatId) {
-        this.activeQueryLogs.delete(queryId);
-        this.sensitiveValuesByQueryId.delete(queryId);
-        droppedActive = true;
-      }
-    }
+    const droppedActive = this.dropActiveQueries(
+      (log) => log.chatId === chatId,
+    );
 
     const changed = await this.enqueuePersistentMutation(() => {
       if (!this.storeLoaded) {
@@ -914,14 +909,33 @@ export class DNSLogService {
   static async retainChats(chatIds: ReadonlySet<string>): Promise<void> {
     const isOrphan = (log: DNSQueryLog) =>
       log.chatId !== undefined && !chatIds.has(log.chatId);
+    const droppedActive = this.dropActiveQueries(isOrphan);
     const changed = await this.enqueuePersistentMutation(() => {
       const before = this.queryLogs.length;
       this.queryLogs = this.queryLogs.filter((log) => !isOrphan(log));
       return this.queryLogs.length !== before;
     });
-    if (changed) {
+    if (changed || droppedActive) {
       this.notifyListeners();
     }
+  }
+
+  /**
+   * Forgets in-flight queries matching `predicate`, including their raw
+   * sensitive values; endQuery then finds nothing to finalize or persist.
+   */
+  private static dropActiveQueries(
+    predicate: (log: DNSQueryLog) => boolean,
+  ): boolean {
+    let dropped = false;
+    for (const [queryId, log] of this.activeQueryLogs) {
+      if (predicate(log)) {
+        this.activeQueryLogs.delete(queryId);
+        this.sensitiveValuesByQueryId.delete(queryId);
+        dropped = true;
+      }
+    }
+    return dropped;
   }
 
   static getLogs(): DNSQueryLog[] {

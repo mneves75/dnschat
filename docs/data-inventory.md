@@ -69,8 +69,10 @@ This document inventories the data stored or processed by DNSChat and satisfies 
   library default is re-added under the same name as device-only: it is copied
   to the staging entry and read back, the original is deleted and added again
   and read back, the marker is written, and the staging copy is removed. The key
-  always exists in at least one verified entry, older builds keep reading the
-  same name, and a later launch finishes an interrupted step. Encrypted backups
+  always exists in at least one verified entry; if the device-only re-add fails
+  the key is written back under its name with the default accessibility, so
+  older builds keep reading the same name; a later launch finishes an
+  interrupted step. Encrypted backups
   taken before protection still contain the key (there is no key rotation).
   Android backup and device-transfer rules exclude the SecureStore shared
   preferences file so key material is not restored without the platform
