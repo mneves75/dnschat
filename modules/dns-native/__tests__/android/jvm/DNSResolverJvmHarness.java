@@ -13,6 +13,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -54,6 +55,10 @@ public final class DNSResolverJvmHarness {
         runCase(
             "txt-utf8-split-across-character-strings",
             DNSResolverJvmHarness::testTxtUtf8SplitAcrossCharacterStrings
+        );
+        runCase(
+            "txt-utf8-split-positions-and-single-byte-strings",
+            DNSResolverJvmHarness::testTxtUtf8SplitPositionsAndSingleByteStrings
         );
         runCase("expanded-dns-name-boundaries", DNSResolverJvmHarness::testExpandedNameBoundaries);
         // doh-body-size-boundaries removed with the Cloudflare DoH transport: it drove
@@ -218,6 +223,96 @@ public final class DNSResolverJvmHarness {
                 expectDnsError(() -> parser.invoke(
                     resolver,
                     dnsResponse(transactionId, queryName, rdatas),
+                    transactionId,
+                    queryName
+                ), DNSResolver.DNSError.Type.QUERY_FAILED);
+            }
+        } finally {
+            resolver.cleanup();
+        }
+    }
+
+    // The resolver computes the incomplete UTF-8 suffix itself and decodes each
+    // complete prefix in one call, as ios/DNSNative/DNSResolver.swift does. Expected
+    // groupings follow the Swift decodeTXTCharacterStrings semantics: a string whose
+    // bytes are all carried adds no result, and the character joins the next string.
+    private static void testTxtUtf8SplitPositionsAndSingleByteStrings() throws Exception {
+        DNSResolver resolver = new DNSResolver(null);
+        try {
+            Method parser = DNSResolver.class.getDeclaredMethod(
+                "parseDnsTxtResponse",
+                byte[].class,
+                int.class,
+                String.class
+            );
+            parser.setAccessible(true);
+            String queryName = "carry.llm.pieter.com";
+            int transactionId = 0x3456;
+            String grinning = "\uD83D\uDE00";
+
+            Object[][] positives = new Object[][] {
+                // 3+1: the case an ICU decoder holding the partial sequence overflowed.
+                { bytes(3, 0xF0, 0x9F, 0x98, 2, 0x80, 'a'), Arrays.asList(grinning + "a") },
+                // 1+3 after ASCII in the same string.
+                { bytes(2, 'a', 0xF0, 3, 0x9F, 0x98, 0x80), Arrays.asList("a", grinning) },
+                // 2+2 followed by ASCII.
+                { bytes(2, 0xF0, 0x9F, 3, 0x98, 0x80, 'b'), Arrays.asList(grinning + "b") },
+                // 3-byte U+20AC split 2+1, and an empty string between carried bytes.
+                { bytes(2, 0xE2, 0x82, 0, 1, 0xAC), Arrays.asList("\u20AC") },
+                // Surrogate pairs back to back, split 3+(1+3)+1.
+                {
+                    bytes(3, 0xF0, 0x9F, 0x98, 4, 0x80, 0xF0, 0x9F, 0x98, 1, 0x80),
+                    Arrays.asList(grinning, grinning)
+                }
+            };
+            for (Object[] positive : positives) {
+                @SuppressWarnings("unchecked")
+                List<String> decoded = (List<String>) parser.invoke(
+                    resolver,
+                    dnsResponse(transactionId, queryName, new byte[][] { (byte[]) positive[0] }),
+                    transactionId,
+                    queryName
+                );
+                require(
+                    decoded.equals(positive[1]),
+                    "split UTF-8 decoded as " + decoded + " instead of " + positive[1]
+                );
+            }
+
+            // 100 one-byte character-strings, each one byte of U+00E7 (C3 | A7).
+            ByteArrayOutputStream singleBytes = new ByteArrayOutputStream();
+            List<String> expectedSingles = new ArrayList<>();
+            for (int i = 0; i < 50; i++) {
+                singleBytes.write(1);
+                singleBytes.write(0xC3);
+                singleBytes.write(1);
+                singleBytes.write(0xA7);
+                expectedSingles.add("\u00e7");
+            }
+            @SuppressWarnings("unchecked")
+            List<String> singles = (List<String>) parser.invoke(
+                resolver,
+                dnsResponse(transactionId, queryName, new byte[][] { singleBytes.toByteArray() }),
+                transactionId,
+                queryName
+            );
+            require(
+                singles.equals(expectedSingles),
+                "one-byte character-strings decoded as " + singles.size() + " result(s)"
+            );
+
+            // Negative controls: an invalid lead byte before another string, a carried
+            // overlong 3-byte prefix, a truncated 4-byte sequence at the end of the RR,
+            // and a lone continuation byte after a completed character.
+            for (byte[] rdata : new byte[][] {
+                bytes(1, 0xF5, 3, 0x80, 0x80, 0x80),
+                bytes(2, 0xE0, 0x80, 1, 0x80),
+                bytes(3, 0xF0, 0x9F, 0x98),
+                bytes(2, 0xC3, 0xA7, 1, 0x80)
+            }) {
+                expectDnsError(() -> parser.invoke(
+                    resolver,
+                    dnsResponse(transactionId, queryName, new byte[][] { rdata }),
                     transactionId,
                     queryName
                 ), DNSResolver.DNSError.Type.QUERY_FAILED);

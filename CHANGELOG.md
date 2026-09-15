@@ -6,11 +6,59 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+## [4.4.6] - 2026-09-15
+
+Build `90` -> `91`. Second review round over 4.4.5: a security re-review, Matt
+Pocock code-review and autoreview. Build `90` was only installed on one
+development device and never distributed.
+
+### Security
+
+- Protect the encryption key in place instead of moving it. Under 4.4.5 the key
+  moved to a new keychain name, so installing an older build (for example a
+  previous TestFlight build) generated a new key under the original name, and
+  returning to 4.4.5 then overwrote the moved original: history in the
+  corruption backup became permanently undecryptable. The key now stays under
+  its original name, re-added as device-only through a verified staging copy,
+  with a marker recording completion. Older builds keep reading the same key; a
+  4.4.5 install that already moved the key is restored to the original name;
+  and if two different keys are ever found, neither is overwritten or deleted.
+- A failed one-time rewrite of older DNS logs no longer counts as corruption.
+  It used to move the store, digests included, into the backup and delete it;
+  the store now stays in place and the next launch retries.
+- DNS log records of chats that no longer exist are dropped whenever the chat
+  list loads, which also finishes a deletion that an earlier session could not
+  save while the log store was unreadable. Clearing all chats clears their log
+  records too.
+- Deleting a chat still completes, and removes its log records, when removing
+  the chat corruption backup fails.
+- Remove the unused Face ID usage description; the app never requests
+  biometric authentication.
+
+### Fixed
+
+- Android native DNS no longer rejects a valid answer when an emoji is split
+  across TXT character-strings in some positions (3+1). The decoder now finds
+  the incomplete tail itself instead of relying on Android's decoder state,
+  matching the iOS implementation.
+- Sharing a chat labels each speaker in the selected language ("You" /
+  "Assistant", "Você" / "Assistente") and shows failed replies with the
+  localized error text instead of the stored diagnostic. The chat list and the
+  chat screen share the same transcript.
+
+### Changed
+
+- Remove the transport-preference parameter from the DNS service; every query
+  uses native -> UDP -> TCP. The Settings test hint now says so.
+- The chat route hydration spec renders the route and checks behavior (4 tests,
+  each shown to fail against a deliberate break) instead of matching source
+  text.
+
 ## [4.4.5] - 2026-09-15
 
 Build `89` -> `90`. Expo SDK 57 patch upgrade, a pre-production security review
-and a best-practices review, with every confirmed finding fixed. No store upload
-or production promotion.
+and a best-practices review. No store upload or production promotion. The key
+migration below was replaced in 4.4.6 after a downgrade data-loss case.
 
 ### Dependencies
 

@@ -16,9 +16,7 @@ import java.net.SocketTimeoutException;
 import java.time.Duration;
 import java.security.SecureRandom;
 import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
-import java.nio.charset.CharsetDecoder;
-import java.nio.charset.CoderResult;
+import java.nio.charset.CharacterCodingException;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.text.Normalizer;
@@ -1420,35 +1418,66 @@ public class DNSResolver {
      * into 255-byte character-strings at any byte, so an incomplete sequence at the
      * end of one string carries into the next string of the same RR. Malformed bytes,
      * or a sequence still incomplete at the end of the RR, reject the answer.
+     *
+     * The carry is computed here rather than left to a streaming decoder: Android's
+     * ICU-backed decoder may hold a partial sequence in its own state instead of
+     * leaving it in the input buffer. Each complete prefix is decoded in one call.
      */
     private static void appendDecodedTxtStrings(List<byte[]> strings, List<String> results) throws DNSError {
-        CharsetDecoder decoder = StandardCharsets.UTF_8
-            .newDecoder()
-            .onMalformedInput(CodingErrorAction.REPORT)
-            .onUnmappableCharacter(CodingErrorAction.REPORT);
         byte[] carry = new byte[0];
         for (int i = 0; i < strings.size(); i++) {
             byte[] string = strings.get(i);
-            boolean endOfRecord = i == strings.size() - 1;
             byte[] pending = new byte[carry.length + string.length];
             System.arraycopy(carry, 0, pending, 0, carry.length);
             System.arraycopy(string, 0, pending, carry.length, string.length);
-            ByteBuffer input = ByteBuffer.wrap(pending);
-            // UTF-8 never yields more UTF-16 units than input bytes, so this cannot overflow.
-            CharBuffer output = CharBuffer.allocate(pending.length);
-            CoderResult result = decoder.decode(input, output, endOfRecord);
-            if (!result.isUnderflow()) {
+            int carryLength = i == strings.size() - 1 ? 0 : incompleteUtf8SuffixLength(pending);
+            int completeLength = pending.length - carryLength;
+            String decoded;
+            try {
+                decoded = StandardCharsets.UTF_8
+                    .newDecoder()
+                    .onMalformedInput(CodingErrorAction.REPORT)
+                    .onUnmappableCharacter(CodingErrorAction.REPORT)
+                    .decode(ByteBuffer.wrap(pending, 0, completeLength))
+                    .toString();
+            } catch (CharacterCodingException e) {
                 throw invalidTxtUtf8();
             }
-            if (endOfRecord && !decoder.flush(output).isUnderflow()) {
-                throw invalidTxtUtf8();
+            if (!decoded.isEmpty()) {
+                results.add(decoded);
             }
-            carry = new byte[input.remaining()];
-            input.get(carry);
-            if (output.position() > 0) {
-                results.add(new String(output.array(), 0, output.position()));
-            }
+            carry = Arrays.copyOfRange(pending, completeLength, pending.length);
         }
+    }
+
+    /**
+     * Length of a trailing lead byte plus continuation bytes that could still become
+     * a valid sequence with more input; 0 when the bytes end on a sequence boundary.
+     * An invalid lead byte yields 0, so strict decoding of the prefix rejects it.
+     */
+    private static int incompleteUtf8SuffixLength(byte[] bytes) {
+        int index = bytes.length - 1;
+        int continuationBytes = 0;
+        while (index >= 0 && continuationBytes < 3 && (bytes[index] & 0xC0) == 0x80) {
+            index--;
+            continuationBytes++;
+        }
+        if (index < 0) {
+            return 0;
+        }
+        int lead = bytes[index] & 0xFF;
+        int sequenceLength;
+        if (lead >= 0xC2 && lead <= 0xDF) {
+            sequenceLength = 2;
+        } else if (lead >= 0xE0 && lead <= 0xEF) {
+            sequenceLength = 3;
+        } else if (lead >= 0xF0 && lead <= 0xF4) {
+            sequenceLength = 4;
+        } else {
+            sequenceLength = 1;
+        }
+        int available = bytes.length - index;
+        return available < sequenceLength ? available : 0;
     }
 
     private static DNSError invalidTxtUtf8() {

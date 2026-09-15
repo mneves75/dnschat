@@ -7,13 +7,13 @@ import { ENCRYPTION_CONSTANTS } from "../constants/appConstants";
 import { devWarn } from "../utils/devLog";
 
 // SecureStore keys must be alphanumeric plus ., -, _ (no @ or /)
-const KEY_STORAGE_KEY = "dnschat.encryption_key.v2";
-// Written before 4.3.6 with the library default accessibility, which a backup
-// can restore onto another device. Still read so existing history decrypts.
-const LEGACY_KEY_STORAGE_KEY = "dnschat.encryption_key";
-// Browser storage has no accessibility classes, so the web preview keeps its
-// original key name.
-const WEB_KEY_STORAGE_KEY = LEGACY_KEY_STORAGE_KEY;
+const KEY_STORAGE_KEY = "dnschat.encryption_key";
+// Verified copy that holds the key while it is re-added as device-only (and
+// where 4.4.5 left a moved key).
+const STAGED_KEY_STORAGE_KEY = "dnschat.encryption_key.v2";
+// Present once the key under KEY_STORAGE_KEY is known to be device-only.
+const KEY_PROTECTION_MARKER = "dnschat.encryption_key.protection";
+const DEVICE_ONLY_PROTECTION = "this-device-only";
 const DEVICE_ONLY_KEY_OPTIONS = {
   keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
 };
@@ -93,7 +93,7 @@ const getWebStoredKey = (): string | null => {
     const localStorage = globalThis.localStorage;
     if (!localStorage || typeof localStorage.getItem !== "function")
       return null;
-    return localStorage.getItem(WEB_KEY_STORAGE_KEY);
+    return localStorage.getItem(KEY_STORAGE_KEY);
   } catch (error) {
     devWarn(
       "[EncryptionService] Failed to read web fallback key storage",
@@ -109,7 +109,7 @@ const setWebStoredKey = (key: string): boolean => {
     const localStorage = globalThis.localStorage;
     if (!localStorage || typeof localStorage.setItem !== "function")
       return false;
-    localStorage.setItem(WEB_KEY_STORAGE_KEY, key);
+    localStorage.setItem(KEY_STORAGE_KEY, key);
     if (!warnedWebKeyPersisted) {
       warnedWebKeyPersisted = true;
       // Web preview stores the key in same-origin browser storage, which is not a
@@ -196,52 +196,102 @@ const generateAndPersistKey = async (): Promise<Uint8Array> => {
     encoded,
     DEVICE_ONLY_KEY_OPTIONS,
   );
+  try {
+    await markKeyProtected();
+  } catch (error) {
+    // Without the marker the next launch re-adds the same key; nothing is lost.
+    devWarn("[EncryptionService] Key protection marker deferred", error);
+  }
   cachedKey = generated;
   return generated;
 };
 
-// expo-secure-store answers a duplicate item by replacing only its value, so a
-// legacy entry cannot be re-protected in place. Copy it to a new account (a
-// fresh SecItemAdd applies THIS_DEVICE_ONLY), confirm the copy reads back, and
-// only then delete the legacy entry. Any failure leaves the legacy entry, which
-// stays authoritative, and the next launch repeats the check.
-const migrateLegacyKey = async (legacyEncoded: string): Promise<void> => {
+const markKeyProtected = (): Promise<void> =>
+  SecureStore.setItemAsync(
+    KEY_PROTECTION_MARKER,
+    DEVICE_ONLY_PROTECTION,
+    DEVICE_ONLY_KEY_OPTIONS,
+  );
+
+const storeAndVerify = async (
+  name: string,
+  value: string,
+): Promise<boolean> => {
+  await SecureStore.setItemAsync(name, value, DEVICE_ONLY_KEY_OPTIONS);
+  return (await SecureStore.getItemAsync(name)) === value;
+};
+
+// Keys written before 4.3.6 used the library default accessibility, which a
+// backup restores onto another device, and expo-secure-store answers a
+// duplicate item by replacing only its value. So the key is re-added under its
+// own name: copy it to the staging entry and read it back, delete the original,
+// add it again as device-only and read it back, record the marker, then drop
+// the copy. Older builds keep reading the same name. At every step the key
+// exists in at least one verified entry, and any failure is finished by a later
+// launch.
+const protectKey = async (
+  encoded: string,
+  originalPresent: boolean,
+  staged: string | null,
+): Promise<void> => {
   try {
-    if ((await SecureStore.getItemAsync(KEY_STORAGE_KEY)) !== legacyEncoded) {
-      await SecureStore.setItemAsync(
-        KEY_STORAGE_KEY,
-        legacyEncoded,
-        DEVICE_ONLY_KEY_OPTIONS,
-      );
-      if ((await SecureStore.getItemAsync(KEY_STORAGE_KEY)) !== legacyEncoded) {
-        devWarn(
-          "[EncryptionService] Device-only key copy did not read back; keeping legacy key",
-        );
+    if (originalPresent) {
+      if (
+        staged !== encoded &&
+        !(await storeAndVerify(STAGED_KEY_STORAGE_KEY, encoded))
+      ) {
+        devWarn("[EncryptionService] Staged key copy did not read back");
         return;
       }
+      await SecureStore.deleteItemAsync(KEY_STORAGE_KEY);
     }
-    await SecureStore.deleteItemAsync(LEGACY_KEY_STORAGE_KEY);
+    if (!(await storeAndVerify(KEY_STORAGE_KEY, encoded))) {
+      devWarn("[EncryptionService] Device-only key did not read back");
+      return;
+    }
+    await markKeyProtected();
+    await SecureStore.deleteItemAsync(STAGED_KEY_STORAGE_KEY);
   } catch (error) {
     devWarn(
-      "[EncryptionService] Legacy key migration deferred to next launch",
+      "[EncryptionService] Key protection deferred to next launch",
       error,
     );
   }
 };
 
-// Returns the stored key. While a legacy entry exists it is the source of
-// truth: the device-only entry is trusted only once it has been confirmed equal
-// to it, so no failed or partial copy can replace the key history needs.
-const readKeyMigratingLegacy = async (): Promise<string | null> => {
+// Returns the stored key, finishing its device-only protection on the way.
+const readKeyProtectingIt = async (): Promise<string | null> => {
   if (isWebRuntime()) return getWebStoredKey();
-  const legacy = await SecureStore.getItemAsync(LEGACY_KEY_STORAGE_KEY);
-  if (legacy === null) {
-    return SecureStore.getItemAsync(KEY_STORAGE_KEY);
+  const [stored, staged] = await Promise.all([
+    SecureStore.getItemAsync(KEY_STORAGE_KEY),
+    SecureStore.getItemAsync(STAGED_KEY_STORAGE_KEY),
+  ]);
+  if (stored === null) {
+    if (staged === null) return null;
+    // Stopped after deleting the original, or moved there by 4.4.5.
+    decodeStoredKey(staged);
+    await protectKey(staged, false, staged);
+    return staged;
   }
-  // Validate before copying so corrupt key material is preserved, not spread.
-  decodeStoredKey(legacy);
-  await migrateLegacyKey(legacy);
-  return legacy;
+  // Validate first so corrupt key material is preserved, never copied.
+  decodeStoredKey(stored);
+  if (staged !== null && staged !== stored) {
+    // Two different keys (a downgrade during an interrupted move). Either may
+    // be the one some history needs, so neither is overwritten or deleted.
+    devWarn(
+      "[EncryptionService] Staged key differs from stored key; leaving both",
+    );
+    return stored;
+  }
+  if (
+    staged === null &&
+    (await SecureStore.getItemAsync(KEY_PROTECTION_MARKER)) ===
+      DEVICE_ONLY_PROTECTION
+  ) {
+    return stored;
+  }
+  await protectKey(stored, true, staged);
+  return stored;
 };
 
 const loadEncryptionKey = async (): Promise<Uint8Array> => {
@@ -251,7 +301,7 @@ const loadEncryptionKey = async (): Promise<Uint8Array> => {
   keyLoadInFlight = (async () => {
     const stored = await (async () => {
       try {
-        return await readKeyMigratingLegacy();
+        return await readKeyProtectingIt();
       } catch (error) {
         if (error instanceof EncryptionKeyCorruptionError) throw error;
         const cause = error instanceof Error ? error : new Error(String(error));

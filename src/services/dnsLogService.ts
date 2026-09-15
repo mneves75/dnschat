@@ -400,7 +400,6 @@ export class DNSLogService {
   private static mergeWithStoredLogs(stored: DNSQueryLog[]): DNSQueryLog[] {
     const inMemoryIds = new Set(this.queryLogs.map((log) => log.id));
     const purged = this.pendingPurgedChatIds;
-    this.pendingPurgedChatIds = new Set();
     return [
       ...this.queryLogs,
       ...stored.filter(
@@ -489,12 +488,16 @@ export class DNSLogService {
   private static async loadPersistentLogs(): Promise<boolean> {
     const screenshotMode = await this.readPersistentLogs();
     this.storeLoaded = true;
+    // Deletions recorded before this read were applied by the merge, or there
+    // was nothing stored for them to apply to.
+    this.pendingPurgedChatIds.clear();
     return screenshotMode;
   }
 
   private static async readPersistentLogs(): Promise<boolean> {
     let stored: string | null = null;
     let storageReadCompleted = false;
+    let rewriteNeeded = false;
     try {
       if (isScreenshotMode()) {
         devLog(
@@ -524,9 +527,7 @@ export class DNSLogService {
         needsRewrite ? parsed.map(migrate) : parsed,
       );
 
-      if (needsRewrite) {
-        await this.writePersistentLogs();
-      }
+      rewriteNeeded = needsRewrite;
 
       if (!wasEncrypted) {
         devWarn(
@@ -573,6 +574,15 @@ export class DNSLogService {
       });
     }
 
+    if (rewriteNeeded) {
+      // Outside the corruption handling above: a failed write is not a corrupt
+      // store. The migrated logs stay in memory and the next load retries.
+      try {
+        await this.writePersistentLogs();
+      } catch (error) {
+        devWarn("[DNSLogService] DNS log rewrite deferred", error);
+      }
+    }
     return false;
   }
 
@@ -892,6 +902,24 @@ export class DNSLogService {
       return this.queryLogs.length !== before;
     });
     if (changed || droppedActive) {
+      this.notifyListeners();
+    }
+  }
+
+  /**
+   * Drops log records whose chat no longer exists. Run after the chat list
+   * loads, it also finishes a deletion that an earlier session could not
+   * persist. Records not attached to a chat (settings events) are kept.
+   */
+  static async retainChats(chatIds: ReadonlySet<string>): Promise<void> {
+    const isOrphan = (log: DNSQueryLog) =>
+      log.chatId !== undefined && !chatIds.has(log.chatId);
+    const changed = await this.enqueuePersistentMutation(() => {
+      const before = this.queryLogs.length;
+      this.queryLogs = this.queryLogs.filter((log) => !isOrphan(log));
+      return this.queryLogs.length !== before;
+    });
+    if (changed) {
       this.notifyListeners();
     }
   }

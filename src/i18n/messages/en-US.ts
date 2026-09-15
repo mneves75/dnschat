@@ -443,7 +443,7 @@ export const enUS = {
           messageLabel: "Test Message",
           testButton: "Test Selected Preference",
           testingButton: "Testing...",
-          testHint: "Runs the DNS test using the current transport preference",
+          testHint: "Runs the DNS test through native DNS, then UDP and TCP",
           forceHint: "Runs the DNS test using only the {{transport}} transport",
           forceAccessibilityLabel: "Force {{transport}} transport",
           transports: {
@@ -691,6 +691,8 @@ export const enUS = {
     share: {
       title: "Share Message",
       footer: "Shared from DNSChat on {{date}}",
+      transcriptUser: "You",
+      transcriptAssistant: "Assistant",
       failedTitle: "Share Failed",
       failedMessage: "Unable to share this message. Please try again.",
     },

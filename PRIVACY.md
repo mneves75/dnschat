@@ -7,7 +7,7 @@ DNSChat is an open-source mobile app that sends short prompts via DNS TXT querie
 ## Data We Process
 
 - **Chat content**: Messages you type are sent as DNS TXT queries to the DNS resolver you choose (default: llm.pieter.com) and the responses are displayed in the app.
-- **DNS query logs**: The app stores local logs about DNS query attempts (method, timestamps, status). Logs record only the length of query and response content, never the content or a hash of it. Deleting a chat deletes its log records.
+- **DNS query logs**: The app stores local logs about DNS query attempts (method, timestamps, status). Logs record only the length of query and response content, never the content. Logs written before version 4.4.5 also stored a hash, which the app removes when it next loads the logs. Deleting a chat deletes its log records.
 - **Settings**: Your preferences (DNS server, language, haptics, accessibility) are stored locally.
 
 ## How We Use Data

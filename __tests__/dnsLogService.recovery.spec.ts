@@ -423,6 +423,74 @@ describe("DNSLogService recovery", () => {
       expect(lastPrimaryWrite()).not.toContain("chat-gone");
     });
 
+    it("keeps the store in place when the one-time digest rewrite cannot be written", async () => {
+      // A transient write failure is not corruption: nothing may be moved to
+      // the backup or removed, and the next launch retries the rewrite.
+      const digest = "a".repeat(64);
+      const withDigest = JSON.stringify([
+        {
+          id: "old-log",
+          query: `sha256:${digest} len:3`,
+          startTime: "2026-09-10T12:00:00.000Z",
+          finalStatus: "success",
+          entries: [],
+        },
+      ]);
+      mockAsyncStorage.getItem.mockResolvedValue("enc:v1:history");
+      decryptIfEncrypted.mockResolvedValue(withDigest);
+      mockAsyncStorage.setItem.mockRejectedValueOnce(new Error("disk full"));
+
+      await DNSLogService.initialize();
+
+      expect(mockAsyncStorage.setItem).not.toHaveBeenCalledWith(
+        STORAGE_CONSTANTS.LOGS_BACKUP_KEY,
+        expect.anything(),
+      );
+      expect(mockAsyncStorage.removeItem).not.toHaveBeenCalled();
+      expect(JSON.stringify(DNSLogService.getLogs())).not.toContain("sha256:");
+    });
+
+    it("drops log records of chats that no longer exist, keeping unattached records", async () => {
+      // Reconciling against the loaded chat list also finishes a deletion made
+      // while the log store could not be read in an earlier session.
+      const history = JSON.stringify([
+        {
+          id: "kept-chat-log",
+          chatId: "chat-kept",
+          query: "redacted len:3",
+          startTime: "2026-09-12T12:00:00.000Z",
+          finalStatus: "success",
+          entries: [],
+        },
+        {
+          id: "deleted-chat-log",
+          chatId: "chat-gone",
+          query: "redacted len:4",
+          startTime: "2026-09-11T12:00:00.000Z",
+          finalStatus: "success",
+          entries: [],
+        },
+        {
+          id: "settings-log",
+          query: "[settings] Mock DNS enabled",
+          startTime: "2026-09-10T12:00:00.000Z",
+          finalStatus: "success",
+          entries: [],
+        },
+      ]);
+      mockAsyncStorage.getItem.mockResolvedValue("enc:v1:history");
+      decryptIfEncrypted.mockResolvedValue(history);
+      await DNSLogService.initialize();
+
+      await DNSLogService.retainChats(new Set(["chat-kept"]));
+
+      expect(DNSLogService.getLogs().map((log) => log.id)).toEqual([
+        "kept-chat-log",
+        "settings-log",
+      ]);
+      expect(lastPrimaryWrite()).not.toContain("chat-gone");
+    });
+
     it("keeps a query that finished while the initial read was in flight", async () => {
       let releaseRead: (value: string) => void = () => {};
       mockAsyncStorage.getItem.mockImplementationOnce(

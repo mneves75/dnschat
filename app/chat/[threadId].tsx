@@ -160,10 +160,7 @@ export default function ChatRoute() {
   // Same localized transcript and failure alert as sharing from the chat list.
   const handleShare = async () => {
     if (!routeChat) return;
-    await ShareService.shareConversation(
-      routeChat.messages.map((message) => message.content),
-      locale,
-    );
+    await ShareService.shareChat(routeChat.messages, locale);
   };
 
   const handleClearChat = () => {

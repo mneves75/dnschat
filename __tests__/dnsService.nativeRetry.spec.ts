@@ -74,12 +74,7 @@ describe("DNSService native retry integration", () => {
       .spyOn(dnsServiceInternals, "performNativeUDPQuery")
       .mockResolvedValue(["Hello from UDP"]);
 
-    const result = await DNSService.queryLLM(
-      "test fallback",
-      "ch.at",
-      false,
-      true,
-    );
+    const result = await DNSService.queryLLM("test fallback", "ch.at", false);
 
     expect(mockedNativeDNS.queryTXT).toHaveBeenCalledTimes(1);
     expect(mockedNativeDNS.queryTXTUDP).toHaveBeenCalledTimes(1);
@@ -100,12 +95,7 @@ describe("DNSService native retry integration", () => {
     const fixedNow = 1_800_000_000_000;
     const nowSpy = jest.spyOn(Date, "now").mockReturnValue(fixedNow);
 
-    const result = await DNSService.queryLLM(
-      message,
-      targetServer,
-      false,
-      false, // native-only (no UDP/TCP)
-    );
+    const result = await DNSService.queryLLM(message, targetServer, false);
     nowSpy.mockRestore();
 
     expect(result).toBe("Hello from native");

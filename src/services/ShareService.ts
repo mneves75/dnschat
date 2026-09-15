@@ -3,6 +3,7 @@ import { HapticFeedback } from "../utils/haptics";
 import { createTranslator } from "../i18n";
 import type { SupportedLocale } from "../i18n/translations";
 import { appAlert } from "../utils/appAlert";
+import type { Message } from "../types/chat";
 
 /**
  * ShareService
@@ -79,26 +80,30 @@ export class ShareService {
   }
 
   /**
-   * Share multiple messages as a conversation thread
-   *
-   * @param messages - Array of message contents to share
-   * @returns Promise<void>
-   *
-   * Future enhancement: Combine multiple messages into formatted conversation.
+   * Share a chat as a transcript with localized speaker labels. Messages still
+   * sending are skipped, and failed replies use the localized error copy rather
+   * than the stored diagnostic text.
    */
-  static async shareConversation(
-    messages: string[],
+  static async shareChat(
+    messages: readonly Message[],
     locale: SupportedLocale = "en-US",
   ): Promise<void> {
-    if (!messages || messages.length === 0) {
-      // Empty conversation, silently return
-      return;
+    const t = createTranslator(locale);
+    const lines: string[] = [];
+    for (const message of messages) {
+      if (message.status === "sending") continue;
+      const speaker =
+        message.role === "user"
+          ? t("components.share.transcriptUser")
+          : t("components.share.transcriptAssistant");
+      const text =
+        message.status === "error"
+          ? t("screen.chat.errorMessage")
+          : message.content;
+      lines.push(`${speaker}: ${text}`);
     }
+    const transcript = lines.join("\n\n");
 
-    const conversationText = messages
-      .map((msg, index) => `${index + 1}. ${msg}`)
-      .join("\n\n");
-
-    await this.shareMessage(conversationText, undefined, locale);
+    await this.shareMessage(transcript, undefined, locale);
   }
 }

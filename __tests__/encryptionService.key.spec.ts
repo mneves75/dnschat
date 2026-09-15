@@ -101,156 +101,177 @@ describe("encryptionService key handling", () => {
     await encryptString("hello");
 
     expect(mockSecureStore.setItemAsync).toHaveBeenCalledWith(
-      "dnschat.encryption_key.v2",
+      "dnschat.encryption_key",
       expect.any(String),
       { keychainAccessible: "whenUnlockedThisDeviceOnly" },
     );
   });
 
-  describe("legacy key migration", () => {
+  describe("device-only key protection", () => {
     // Keys written before 4.3.6 used the library default accessibility
-    // (WHEN_UNLOCKED), which restores onto another device from a backup.
-    // expo-secure-store's duplicate-item path only replaces the value, so
-    // re-protecting needs a new keychain account; the legacy entry may be
-    // removed only after the copy has been read back.
-    const legacyHex = "ab".repeat(ENCRYPTION_CONSTANTS.KEY_LENGTH);
+    // (WHEN_UNLOCKED), which a backup restores onto another device, and
+    // expo-secure-store's duplicate-item path only replaces the value. The key
+    // is re-added under its own name as THIS_DEVICE_ONLY, staged through a
+    // verified copy, so older builds (which read only that name) keep working
+    // and no step leaves the key nowhere.
+    const KEY = "dnschat.encryption_key";
+    const STAGED = "dnschat.encryption_key.v2";
+    const MARKER = "dnschat.encryption_key.protection";
+    const DEVICE_ONLY = "whenUnlockedThisDeviceOnly";
+    const keyHex = "ab".repeat(ENCRYPTION_CONSTANTS.KEY_LENGTH);
+    const otherHex = "cd".repeat(ENCRYPTION_CONSTANTS.KEY_LENGTH);
 
-    const loadWithStore = (store: Map<string, string>) => {
+    type Entry = { value: string; accessible: string | undefined };
+
+    const launch = (store: Map<string, Entry>) => {
       jest.resetModules();
       const service =
         require("../src/services/encryptionService") as typeof import("../src/services/encryptionService");
-      const mockSecureStore = require("expo-secure-store") as jest.Mocked<
+      const secureStore = require("expo-secure-store") as jest.Mocked<
         typeof SecureStore
       >;
-      mockSecureStore.getItemAsync.mockImplementation(
-        async (key: string) => store.get(key) ?? null,
+      secureStore.getItemAsync.mockImplementation(
+        async (key: string) => store.get(key)?.value ?? null,
       );
-      mockSecureStore.setItemAsync.mockImplementation(
-        async (key: string, value: string) => {
-          store.set(key, value);
+      secureStore.setItemAsync.mockImplementation(
+        async (key: string, value: string, options) => {
+          // Like SecItemUpdate: an existing item keeps its accessibility.
+          const existing = store.get(key);
+          store.set(key, {
+            value,
+            accessible: existing
+              ? existing.accessible
+              : options?.keychainAccessible?.toString(),
+          });
         },
       );
-      mockSecureStore.deleteItemAsync.mockImplementation(
-        async (key: string) => {
-          store.delete(key);
-        },
-      );
-      return { service, mockSecureStore };
+      secureStore.deleteItemAsync.mockImplementation(async (key: string) => {
+        store.delete(key);
+      });
+      return { service, secureStore };
     };
 
-    it("copies the legacy key to a device-only entry, then deletes the legacy entry", async () => {
-      const store = new Map([["dnschat.encryption_key", legacyHex]]);
-      const { service, mockSecureStore } = loadWithStore(store);
+    const legacyStore = () =>
+      new Map<string, Entry>([[KEY, { value: keyHex, accessible: undefined }]]);
 
-      await service.encryptString("hello");
+    const expectProtected = (store: Map<string, Entry>) => {
+      expect(store.get(KEY)).toEqual({
+        value: keyHex,
+        accessible: DEVICE_ONLY,
+      });
+      expect(store.has(STAGED)).toBe(false);
+      expect(store.get(MARKER)?.accessible).toBe(DEVICE_ONLY);
+    };
 
-      expect(mockSecureStore.setItemAsync).toHaveBeenCalledWith(
-        "dnschat.encryption_key.v2",
-        legacyHex,
-        { keychainAccessible: "whenUnlockedThisDeviceOnly" },
-      );
-      const setOrder =
-        mockSecureStore.setItemAsync.mock.invocationCallOrder[0]!;
-      const deleteOrder =
-        mockSecureStore.deleteItemAsync.mock.invocationCallOrder[0]!;
-      expect(deleteOrder).toBeGreaterThan(setOrder);
-      expect(mockSecureStore.deleteItemAsync).toHaveBeenCalledWith(
-        "dnschat.encryption_key",
-      );
-      expect([...store.entries()]).toEqual([
-        ["dnschat.encryption_key.v2", legacyHex],
-      ]);
-    });
+    it("re-adds a legacy key under its own name as device-only, through a verified copy", async () => {
+      const store = legacyStore();
+      const { service } = launch(store);
 
-    it("keeps using and preserving the legacy key when the copy cannot be written", async () => {
-      const store = new Map([["dnschat.encryption_key", legacyHex]]);
-      const first = loadWithStore(store);
-      first.mockSecureStore.setItemAsync.mockRejectedValue(
-        new Error("keychain busy"),
-      );
-      const encrypted = await first.service.encryptString("history");
-      expect(first.mockSecureStore.deleteItemAsync).not.toHaveBeenCalled();
+      const encrypted = await service.encryptString("history");
 
-      // The next launch retries the copy; history written under the legacy
-      // key stays readable whether or not that retry succeeds.
-      const next = loadWithStore(store);
-      next.mockSecureStore.setItemAsync.mockRejectedValue(
-        new Error("keychain busy"),
-      );
-      await expect(next.service.decryptString(encrypted)).resolves.toBe(
+      expectProtected(store);
+      // An older build reading only the original name still decrypts history.
+      const older = launch(store);
+      await expect(older.service.decryptString(encrypted)).resolves.toBe(
         "history",
       );
-      expect(next.mockSecureStore.deleteItemAsync).not.toHaveBeenCalled();
-      expect([...store.entries()]).toEqual([
-        ["dnschat.encryption_key", legacyHex],
-      ]);
     });
 
-    it("keeps the legacy key authoritative when a copy reads back differently, across restarts", async () => {
-      // Autoreview P1: a mismatched copy whose cleanup also failed must never
-      // be trusted on a later launch, or history becomes undecryptable.
-      const otherHex = "cd".repeat(ENCRYPTION_CONSTANTS.KEY_LENGTH);
-      const store = new Map([["dnschat.encryption_key", legacyHex]]);
-      const first = loadWithStore(store);
-      first.mockSecureStore.setItemAsync.mockImplementation(
-        async (key: string) => {
-          store.set(key, otherHex);
-        },
-      );
-      first.mockSecureStore.deleteItemAsync.mockRejectedValue(
-        new Error("keychain busy"),
-      );
-      const encrypted = await first.service.encryptString("history");
-      expect(store.get("dnschat.encryption_key")).toBe(legacyHex);
+    it("does no keychain writes once protection is recorded", async () => {
+      const store = legacyStore();
+      await launch(store).service.encryptString("first");
 
-      // Next launch: storage works again and still holds the wrong copy.
-      const next = loadWithStore(store);
-      await expect(next.service.decryptString(encrypted)).resolves.toBe(
-        "history",
-      );
-      expect([...store.entries()]).toEqual([
-        ["dnschat.encryption_key.v2", legacyHex],
-      ]);
+      const { service, secureStore } = launch(store);
+      await service.encryptString("second");
+
+      expect(secureStore.setItemAsync).not.toHaveBeenCalled();
+      expect(secureStore.deleteItemAsync).not.toHaveBeenCalled();
     });
 
-    it("finishes an interrupted move once the copy is confirmed, without rewriting it", async () => {
-      // A launch whose final delete failed leaves both entries, already equal.
-      const store = new Map([
-        ["dnschat.encryption_key.v2", legacyHex],
-        ["dnschat.encryption_key", legacyHex],
-      ]);
-      const { service, mockSecureStore } = loadWithStore(store);
+    it.each([
+      ["the staged copy write", 0, "set"],
+      ["the legacy delete", 0, "delete"],
+      ["the device-only re-add", 1, "set"],
+      ["the marker write", 2, "set"],
+      ["the staged copy cleanup", 1, "delete"],
+    ] as const)(
+      "keeps history readable and finishes on a later launch when %s fails",
+      async (_step, callIndex, method) => {
+        const store = legacyStore();
+        const first = launch(store);
+        const mock =
+          method === "set"
+            ? first.secureStore.setItemAsync
+            : first.secureStore.deleteItemAsync;
+        const real = mock.getMockImplementation()!;
+        let calls = 0;
+        mock.mockImplementation(async (...args: unknown[]) => {
+          if (calls++ === callIndex) throw new Error("keychain busy");
+          return (real as (...a: unknown[]) => Promise<void>)(...args);
+        });
 
-      await service.encryptString("hello");
+        const encrypted = await first.service.encryptString("history");
 
-      expect(mockSecureStore.setItemAsync).not.toHaveBeenCalled();
-      expect([...store.entries()]).toEqual([
-        ["dnschat.encryption_key.v2", legacyHex],
-      ]);
-    });
+        const next = launch(store);
+        await expect(next.service.decryptString(encrypted)).resolves.toBe(
+          "history",
+        );
+        expectProtected(store);
+      },
+    );
 
-    it("keeps working when the legacy cleanup keeps failing", async () => {
-      const store = new Map([
-        ["dnschat.encryption_key.v2", legacyHex],
-        ["dnschat.encryption_key", legacyHex],
+    it("recovers the key from the staged copy when the app stopped after deleting the legacy entry", async () => {
+      // Also the end state a 4.4.5 install leaves behind.
+      const store = new Map<string, Entry>([
+        [STAGED, { value: keyHex, accessible: DEVICE_ONLY }],
       ]);
-      const { service, mockSecureStore } = loadWithStore(store);
-      mockSecureStore.deleteItemAsync.mockRejectedValue(new Error("busy"));
+      const { service } = launch(store);
 
       const encrypted = await service.encryptString("hello");
 
-      await expect(service.decryptString(encrypted)).resolves.toBe("hello");
-      expect(store.get("dnschat.encryption_key")).toBe(legacyHex);
+      expectProtected(store);
+      await expect(
+        launch(store).service.decryptString(encrypted),
+      ).resolves.toBe("hello");
     });
 
-    it("reads only the device-only entry when no legacy entry exists", async () => {
-      const store = new Map([["dnschat.encryption_key.v2", legacyHex]]);
-      const { service, mockSecureStore } = loadWithStore(store);
+    it("never overwrites either key when the staged copy and the legacy key differ", async () => {
+      // A downgrade during an interrupted move can leave two different keys.
+      // Choosing one could destroy the history encrypted under the other.
+      const store = new Map<string, Entry>([
+        [KEY, { value: keyHex, accessible: undefined }],
+        [STAGED, { value: otherHex, accessible: DEVICE_ONLY }],
+      ]);
+      const { service, secureStore } = launch(store);
 
       await service.encryptString("hello");
 
-      expect(mockSecureStore.setItemAsync).not.toHaveBeenCalled();
-      expect(mockSecureStore.deleteItemAsync).not.toHaveBeenCalled();
+      expect(store.get(KEY)?.value).toBe(keyHex);
+      expect(store.get(STAGED)?.value).toBe(otherHex);
+      expect(secureStore.deleteItemAsync).not.toHaveBeenCalled();
+    });
+
+    it("keeps the protected key when an older build ran after protection", async () => {
+      // The older build reads and writes only the original name, which still
+      // holds the same device-only key, so nothing needs to change.
+      const store = legacyStore();
+      await launch(store).service.encryptString("first");
+      const snapshot = new Map(store);
+
+      await launch(store).service.encryptString("again");
+
+      expect(store).toEqual(snapshot);
+    });
+
+    it("generates a new install's key as device-only and records protection", async () => {
+      const store = new Map<string, Entry>();
+      const { service } = launch(store);
+
+      await service.encryptString("hello");
+
+      expect(store.get(KEY)?.accessible).toBe(DEVICE_ONLY);
+      expect(store.get(MARKER)?.accessible).toBe(DEVICE_ONLY);
+      expect(store.has(STAGED)).toBe(false);
     });
   });
 

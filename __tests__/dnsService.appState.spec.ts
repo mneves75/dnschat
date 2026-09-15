@@ -156,7 +156,6 @@ describe("DNSService AppState Listener Singleton", () => {
       "background cancellation",
       "llm.pieter.com",
       false,
-      true,
     );
     const outcome = operation.then(
       (value) => ({ status: "resolved" as const, value }),
@@ -201,7 +200,6 @@ describe("DNSService AppState Listener Singleton", () => {
       "capabilities cancellation",
       "llm.pieter.com",
       false,
-      true,
     );
     const outcome = operation.then(
       (value) => ({ status: "resolved" as const, value }),
@@ -302,7 +300,6 @@ describe("DNSService AppState Listener Singleton", () => {
       "retry cancellation",
       "llm.pieter.com",
       false,
-      true,
     );
     const outcome = operation.then(
       (value) => ({ status: "resolved" as const, value }),
@@ -331,12 +328,7 @@ describe("DNSService AppState Listener Singleton", () => {
     getAppStateHandler()("background");
 
     await expect(
-      DNSService.queryLLM(
-        "background cancellation",
-        "llm.pieter.com",
-        false,
-        true,
-      ),
+      DNSService.queryLLM("background cancellation", "llm.pieter.com", false),
     ).rejects.toThrow(
       "DNS query failed - app was backgrounded during network operation",
     );

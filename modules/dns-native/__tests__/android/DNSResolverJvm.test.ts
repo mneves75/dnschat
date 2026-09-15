@@ -71,6 +71,9 @@ describe("Android DNSResolver executable JVM boundaries", () => {
       expect(run.stdout).toContain(
         "PASS txt-utf8-split-across-character-strings",
       );
+      expect(run.stdout).toContain(
+        "PASS txt-utf8-split-positions-and-single-byte-strings",
+      );
       expect(run.stdout).toContain("PASS expanded-dns-name-boundaries");
       // doh-body-size-boundaries is intentionally absent: the Cloudflare DoH
       // transport was removed, so there is no readDnsMessageBody left to bound.

@@ -1,6 +1,6 @@
 # Installation
 
-This repo builds DNSChat `4.4.5` build `90` (React Native `0.86.3`, Expo SDK `57`, `expo@57.0.22`, React `19.2.3`).
+This repo builds DNSChat `4.4.6` build `91` (React Native `0.86.3`, Expo SDK `57`, `expo@57.0.22`, React `19.2.3`).
 
 Prereqs:
 

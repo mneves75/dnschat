@@ -649,7 +649,6 @@ export class DNSService {
     message: string,
     dnsServer?: string,
     enableMockDNS?: boolean,
-    allowExperimentalTransports: boolean = true,
     logContext?: { chatId?: string; chatTitle?: string },
   ): Promise<string> {
     // Initialize background listener on first use
@@ -704,7 +703,6 @@ export class DNSService {
           queryContext,
           queryId,
           enableMockDNS,
-          allowExperimentalTransports,
           deadline,
           lifecycleToken,
         );
@@ -785,7 +783,6 @@ export class DNSService {
     queryContext: DNSQueryContext,
     queryId: string,
     enableMockDNS: boolean | undefined,
-    allowExperimentalTransports: boolean,
     deadline: number,
     lifecycleToken: QueryLifecycleToken,
   ): Promise<{ response: string; method: "native" | "udp" | "tcp" | "mock" }> {
@@ -794,10 +791,7 @@ export class DNSService {
     for (let attempt = 0; attempt < this.MAX_RETRIES; attempt++) {
       this.assertLifecycleActive(lifecycleToken);
       this.assertWithinQueryBudget(deadline);
-      const methodOrder = this.getMethodOrder(
-        enableMockDNS,
-        allowExperimentalTransports,
-      );
+      const methodOrder = this.getMethodOrder(enableMockDNS);
 
       try {
         DNSLogService.addLog(queryId, {
@@ -806,9 +800,6 @@ export class DNSService {
           message: `Transport order: ${methodOrder.join(" → ")} for ${targetServer}:${targetPort}`,
           method: "native",
           status: "attempt",
-          details: allowExperimentalTransports
-            ? "Experimental transports enabled"
-            : "Experimental transports disabled",
         });
 
         for (const method of methodOrder) {
@@ -867,11 +858,6 @@ export class DNSService {
         let guidance = "";
         if (methodOrder.includes("udp") && methodOrder.includes("tcp")) {
           guidance = ` • Port ${targetPort} may be blocked. Try switching networks (WiFi <-> Cellular).`;
-        }
-
-        if (!allowExperimentalTransports) {
-          guidance +=
-            " • Native DNS is enforced for this query, so UDP/TCP fallbacks were not tried.";
         }
 
         throw new Error(
@@ -1560,7 +1546,6 @@ export class DNSService {
 
   private static getMethodOrder(
     enableMockDNS: boolean | undefined,
-    allowExperimentalTransports: boolean,
   ): ("native" | "udp" | "tcp" | "mock")[] {
     const appendMock = (order: ("native" | "udp" | "tcp")[]) =>
       enableMockDNS
@@ -1574,13 +1559,7 @@ export class DNSService {
       return ["mock"];
     }
 
-    // Production: Native with UDP/TCP fallbacks enabled
-    if (allowExperimentalTransports) {
-      return appendMock(["native", "udp", "tcp"]);
-    }
-
-    // Restricted: Native only (no fallbacks)
-    return appendMock(["native"]);
+    return appendMock(["native", "udp", "tcp"]);
   }
 
   private static async tryMethod(

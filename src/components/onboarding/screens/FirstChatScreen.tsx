@@ -127,7 +127,6 @@ export function FirstChatScreen() {
         inputText.trim(),
         undefined,
         false,
-        true,
       );
 
       if (!isMountedRef.current) return;

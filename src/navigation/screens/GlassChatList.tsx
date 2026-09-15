@@ -563,10 +563,7 @@ export function GlassChatList() {
   };
 
   const handleShareChat = async (chat: Chat) => {
-    await ShareService.shareConversation(
-      chat.messages.map((message) => message.content),
-      locale,
-    );
+    await ShareService.shareChat(chat.messages, locale);
   };
 
   return (

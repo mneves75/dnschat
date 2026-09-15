@@ -399,6 +399,30 @@ describe("ChatContext error recovery", () => {
     });
   });
 
+  it("reconciles DNS log records with the chats that loaded", async () => {
+    const retainChats = jest
+      .spyOn(DNSLogService, "retainChats")
+      .mockResolvedValue(undefined);
+    storedChats = [makeRecoveredChat("chat-a", "A")];
+
+    await renderProvider();
+
+    expect(retainChats).toHaveBeenCalledWith(new Set(["chat-a"]));
+    retainChats.mockRestore();
+  });
+
+  it("does not reconcile DNS logs against a chat list that failed to load", async () => {
+    const retainChats = jest
+      .spyOn(DNSLogService, "retainChats")
+      .mockResolvedValue(undefined);
+    mockStorageService.loadChats.mockRejectedValueOnce(new Error("io"));
+
+    await renderProvider();
+
+    expect(retainChats).not.toHaveBeenCalled();
+    retainChats.mockRestore();
+  });
+
   it("removes a deleted chat's DNS log records", async () => {
     const purgeChat = jest
       .spyOn(DNSLogService, "purgeChat")

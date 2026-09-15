@@ -344,35 +344,20 @@ describe("DNS Service helpers", () => {
       moduleWithService.DNSService,
     );
 
-    const getOrder = (
-      enableMock: boolean | undefined,
-      allowExperimental: boolean = true,
-    ) => {
-      const order = rawGetOrder?.(enableMock, allowExperimental);
+    const getOrder = (enableMock: boolean | undefined) => {
+      const order = rawGetOrder?.(enableMock);
       if (!order) {
         throw new Error("Expected getMethodOrder to return a value");
       }
       return order;
     };
 
-    it("returns native→udp→tcp when experimental transports enabled", () => {
-      const order = getOrder(false, true);
-      expect(order).toEqual(["native", "udp", "tcp"]);
-    });
-
-    it("returns native-only when experimental transports disabled", () => {
-      const order = getOrder(false, false);
-      expect(order).toEqual(["native"]);
+    it("returns native→udp→tcp", () => {
+      expect(getOrder(false)).toEqual(["native", "udp", "tcp"]);
     });
 
     it("appends mock when enableMock is true", () => {
-      const order = getOrder(true, true);
-      expect(order).toEqual(["native", "udp", "tcp", "mock"]);
-    });
-
-    it("appends mock to native-only when experimental disabled", () => {
-      const order = getOrder(true, false);
-      expect(order).toEqual(["native", "mock"]);
+      expect(getOrder(true)).toEqual(["native", "udp", "tcp", "mock"]);
     });
 
     it("uses mock transport by default on web", async () => {
@@ -385,7 +370,7 @@ describe("DNS Service helpers", () => {
         await DNSLogService.clearLogs();
         (Platform as { OS: string }).OS = "web";
 
-        expect(getOrder(undefined, true)).toEqual(["mock"]);
+        expect(getOrder(undefined)).toEqual(["mock"]);
         await expect(DNSService.queryLLM("web default query")).resolves.toBe(
           "web mock response",
         );
@@ -400,21 +385,13 @@ describe("DNS Service helpers", () => {
     });
 
     it("never includes https (removed in v3.0.0)", () => {
-      const orderWithExperimental = getOrder(false, true);
-      const orderWithoutExperimental = getOrder(false, false);
-      const orderWithMock = getOrder(true, true);
-
-      expect((orderWithExperimental as string[]).includes("https")).toBe(false);
-      expect((orderWithoutExperimental as string[]).includes("https")).toBe(
-        false,
-      );
-      expect((orderWithMock as string[]).includes("https")).toBe(false);
+      expect((getOrder(false) as string[]).includes("https")).toBe(false);
+      expect((getOrder(true) as string[]).includes("https")).toBe(false);
     });
 
     it("native is always first when available", () => {
-      expect(getOrder(false, true)[0]).toBe("native");
-      expect(getOrder(false, false)[0]).toBe("native");
-      expect(getOrder(true, true)[0]).toBe("native");
+      expect(getOrder(false)[0]).toBe("native");
+      expect(getOrder(true)[0]).toBe("native");
     });
   });
 
@@ -534,7 +511,7 @@ describe("DNS Service helpers", () => {
         .mockRejectedValueOnce(new Error("Primary server down"));
 
       await expect(
-        DNSService.queryLLM("test fallback", undefined, true, true),
+        DNSService.queryLLM("test fallback", undefined, true),
       ).rejects.toThrow("Primary server down");
 
       expect(querySpy).toHaveBeenCalledTimes(1);
@@ -551,7 +528,7 @@ describe("DNS Service helpers", () => {
         .spyOn(dnsServiceInternals, "queryWithServer")
         .mockResolvedValueOnce({ response: "ok", method: "udp" });
 
-      await DNSService.queryLLM("secret prompt", "llm.pieter.com", true, true);
+      await DNSService.queryLLM("secret prompt", "llm.pieter.com", true);
 
       const serializedEntries = JSON.stringify(
         addLogSpy.mock.calls.map(([, entry]) => entry),
@@ -569,7 +546,7 @@ describe("DNS Service helpers", () => {
         .mockResolvedValueOnce({ response: "ok", method: "udp" });
 
       await expect(
-        DNSService.queryLLM("logging failure", "llm.pieter.com", true, true),
+        DNSService.queryLLM("logging failure", "llm.pieter.com", true),
       ).resolves.toBe("ok");
     });
   });
@@ -589,7 +566,7 @@ describe("DNS Service helpers", () => {
       jest.restoreAllMocks();
     });
 
-    it("logs one transport failure per retry when native-only mode is enabled", async () => {
+    it("logs one failure per transport per retry", async () => {
       const failureSpy = jest
         .spyOn(DNSLogService, "logMethodFailure")
         .mockImplementation(() => undefined);
@@ -616,16 +593,15 @@ describe("DNS Service helpers", () => {
           },
           "query-1",
           false,
-          false,
           // queryWithServer takes no defaults: the budget and lifecycle token
           // are passed explicitly so the test cannot silently inherit a fresh
           // full budget on every retry.
           Date.now() + 20_000,
           dnsServiceInternals.captureLifecycleToken(),
         ),
-      ).rejects.toThrow("All 1 DNS transports failed for ch.at:53");
+      ).rejects.toThrow("All 3 DNS transports failed for ch.at:53");
 
-      expect(failureSpy).toHaveBeenCalledTimes(3);
+      expect(failureSpy).toHaveBeenCalledTimes(9);
     });
 
     it("tags retry log entries with the last attempted transport", async () => {
@@ -645,14 +621,13 @@ describe("DNS Service helpers", () => {
           },
           "query-2",
           false,
-          false,
           // queryWithServer takes no defaults: the budget and lifecycle token
           // are passed explicitly so the test cannot silently inherit a fresh
           // full budget on every retry.
           Date.now() + 20_000,
           dnsServiceInternals.captureLifecycleToken(),
         ),
-      ).rejects.toThrow("All 1 DNS transports failed for ch.at:53");
+      ).rejects.toThrow("All 3 DNS transports failed for ch.at:53");
 
       const retryEntries = addLogSpy.mock.calls
         .map(([, entry]) => entry)
@@ -666,9 +641,7 @@ describe("DNS Service helpers", () => {
         ) as Array<{ message: string; method: string }>;
 
       expect(retryEntries).toHaveLength(2);
-      expect(retryEntries.every((entry) => entry.method === "native")).toBe(
-        true,
-      );
+      expect(retryEntries.every((entry) => entry.method === "tcp")).toBe(true);
     });
   });
 
@@ -705,7 +678,6 @@ describe("DNS Service helpers", () => {
         "budget timeout",
         "llm.pieter.com",
         false,
-        true,
       );
       // oxlint-disable-next-line jest/valid-expect -- Awaited after fake timers advance so the timeout can settle.
       const assertion = expect(query).rejects.toMatchObject({
@@ -744,7 +716,6 @@ describe("DNS Service helpers", () => {
         "native timeout fallback",
         "llm.pieter.com",
         false,
-        true,
       );
       // oxlint-disable-next-line jest/valid-expect -- Awaited after fake timers advance so the fallback can settle.
       const assertion = expect(query).resolves.toBe("udp fallback ok");
@@ -762,7 +733,7 @@ describe("DNS Service helpers", () => {
       });
 
       await expect(
-        DNSService.queryLLM("fast response", "llm.pieter.com", false, true),
+        DNSService.queryLLM("fast response", "llm.pieter.com", false),
       ).resolves.toBe("fast ok");
     });
   });

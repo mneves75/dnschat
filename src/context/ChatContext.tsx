@@ -96,6 +96,13 @@ export function ChatProvider({ children }: ChatProviderProps) {
         recoverOnCorruption: false,
       });
       setChats(loadedChats);
+      // Best-effort: a log store that cannot be read keeps its records until a
+      // later load reconciles them.
+      void DNSLogService.retainChats(
+        new Set(loadedChats.map((chat) => chat.id)),
+      ).catch((reconcileError: unknown) => {
+        devWarn("[ChatContext] Failed to reconcile DNS logs", reconcileError);
+      });
       const preferredChat = options?.preserveChatId
         ? (loadedChats.find((chat) => chat.id === options.preserveChatId) ??
           null)
@@ -189,6 +196,11 @@ export function ChatProvider({ children }: ChatProviderProps) {
   const clearAllChats = async (): Promise<void> => {
     try {
       await StorageService.clearAllChats();
+      await DNSLogService.retainChats(new Set()).catch(
+        (reconcileError: unknown) => {
+          devWarn("[ChatContext] Failed to reconcile DNS logs", reconcileError);
+        },
+      );
       setChats([]);
       setCurrentChat(null);
       setError(null);
@@ -340,7 +352,6 @@ export function ChatProvider({ children }: ChatProviderProps) {
         content,
         dnsServer,
         enableMockDNS,
-        true,
         {
           chatId: chatIdAtSend,
           chatTitle: chatTitleAtSend,

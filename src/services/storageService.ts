@@ -601,7 +601,16 @@ export class StorageService {
     }));
     // A corruption backup is an opaque copy of every chat at quarantine time and
     // cannot be filtered, so keeping it would keep the deleted chat's content.
-    await this.queueOperation(() => AsyncStorage.removeItem(CHAT_BACKUP_KEY));
+    // The chat itself is already deleted; a failed removal must not report the
+    // deletion as failed.
+    await this.queueOperation(() =>
+      AsyncStorage.removeItem(CHAT_BACKUP_KEY),
+    ).catch((error: unknown) => {
+      devWarn(
+        "[StorageService] Failed to remove chat corruption backup",
+        error,
+      );
+    });
   }
 
   static async addMessage(chatId: string, message: Message): Promise<void> {

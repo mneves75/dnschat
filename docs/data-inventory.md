@@ -41,7 +41,8 @@ This document inventories the data stored or processed by DNSChat and satisfies 
   SecureStore, while Web preview stores the local-only preview key in
   same-origin browser storage because SecureStore is not available in browsers.
 - Retention: 30 days (automatic cleanup) and max 100 logs; deleting a chat
-  removes its log records, including a query still in flight
+  removes its log records, including a query still in flight, and records of
+  chats that no longer exist are dropped whenever the chat list loads
 
 4) DNS logs backup (encrypted at rest)
 - Storage key: `@dns_query_logs_backup`
@@ -58,16 +59,19 @@ This document inventories the data stored or processed by DNSChat and satisfies 
 - Retention: Persistent until user resets settings or clears app data
 
 6) Encryption key material
-- Storage key: `dnschat.encryption_key.v2` (native) and `dnschat.encryption_key`
-  (web preview; native legacy entry)
+- Storage keys: `dnschat.encryption_key` (the key, native and web preview),
+  `dnschat.encryption_key.v2` (transient verified staging copy) and
+  `dnschat.encryption_key.protection` (completion marker, no key material)
 - Contents: AES key for local payload encryption
 - Storage location: SecureStore in native builds (device protected storage).
   iOS writes the key as `WHEN_UNLOCKED_THIS_DEVICE_ONLY`, so it is not restored
-  onto another device from a backup. A key written before 4.3.6 under the
-  legacy name is copied to the device-only entry, read back, and only then
-  deleted. While the legacy entry exists it stays authoritative, so a failed or
-  mismatched copy is never used, and every launch repeats the move until it
-  completes.
+  onto another device from a backup. A key written before 4.3.6 with the
+  library default is re-added under the same name as device-only: it is copied
+  to the staging entry and read back, the original is deleted and added again
+  and read back, the marker is written, and the staging copy is removed. The key
+  always exists in at least one verified entry, older builds keep reading the
+  same name, and a later launch finishes an interrupted step. Encrypted backups
+  taken before protection still contain the key (there is no key rotation).
   Android backup and device-transfer rules exclude the SecureStore shared
   preferences file so key material is not restored without the platform
   keystore. Web preview stores the key in same-origin browser storage as a

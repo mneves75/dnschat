@@ -448,7 +448,7 @@ export const ptBR = {
           testButton: "Testar preferência selecionada",
           testingButton: "Testando...",
           testHint:
-            "Executa o teste DNS usando a preferência de transporte atual",
+            "Executa o teste DNS pelo DNS nativo e depois por UDP e TCP",
           forceHint:
             "Executa o teste DNS usando apenas o transporte {{transport}}",
           forceAccessibilityLabel: "Forçar transporte {{transport}}",
@@ -698,6 +698,8 @@ export const ptBR = {
     share: {
       title: "Compartilhar mensagem",
       footer: "Compartilhado do DNSChat em {{date}}",
+      transcriptUser: "Você",
+      transcriptAssistant: "Assistente",
       failedTitle: "Falha ao compartilhar",
       failedMessage:
         "Não foi possível compartilhar esta mensagem. Tente novamente.",

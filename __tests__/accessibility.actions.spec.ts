@@ -137,7 +137,7 @@ jest.mock("../src/services/dnsLogService", () => ({
 jest.mock("../src/services/ShareService", () => ({
   ShareService: {
     shareMessage: jest.fn(async () => undefined),
-    shareConversation: jest.fn(async () => undefined),
+    shareChat: jest.fn(async () => undefined),
   },
 }));
 jest.mock("../src/services/ClipboardService", () => ({
@@ -171,7 +171,7 @@ jest.mock("../src/utils/dateLocale", () => ({
 }));
 
 const { ShareService } = jest.requireMock("../src/services/ShareService") as {
-  ShareService: { shareMessage: jest.Mock; shareConversation: jest.Mock };
+  ShareService: { shareMessage: jest.Mock; shareChat: jest.Mock };
 };
 const { ClipboardService } = jest.requireMock(
   "../src/services/ClipboardService",
@@ -340,8 +340,8 @@ describe("accessibility action coverage", () => {
       });
 
       await accessibilityAction(row, "share");
-      expect(ShareService.shareConversation).toHaveBeenCalledWith(
-        ["private prompt"],
+      expect(ShareService.shareChat).toHaveBeenCalledWith(
+        chat.messages,
         "en-US",
       );
 

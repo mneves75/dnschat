@@ -410,6 +410,27 @@ describe("StorageService Race Condition Prevention", () => {
     });
   });
 
+  describe("chat deletion", () => {
+    it("deletes the chat even when its corruption backup cannot be removed", async () => {
+      mockAsyncStorage.getItem.mockResolvedValue(
+        JSON.stringify([
+          {
+            id: "chat-1",
+            title: "First",
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            messages: [],
+          },
+        ]),
+      );
+      mockAsyncStorage.removeItem.mockRejectedValueOnce(new Error("io"));
+
+      await expect(
+        StorageService.deleteChat("chat-1"),
+      ).resolves.toBeUndefined();
+    });
+  });
+
   describe("Error Handling", () => {
     it("throws error when adding message to non-existent chat", async () => {
       mockAsyncStorage.getItem.mockResolvedValue("[]");

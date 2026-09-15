@@ -44,12 +44,17 @@ The 2026-09-15 pre-production review (4.4.5) closed these gaps:
 
 - A native encryption key written before 4.3.6 used the library default
   keychain accessibility, which a backup restores onto another device, and
-  expo-secure-store cannot change an existing item's accessibility. The key is
-  now copied to a device-only entry, read back, then the legacy entry deleted.
+  expo-secure-store cannot change an existing item's accessibility. 4.4.6
+  re-adds the key under its own name as device-only through a verified staging
+  copy, so older builds keep working and no step leaves the key nowhere. (4.4.5
+  moved the key to a new name instead; installing an older build and then
+  returning could destroy the original key, and 4.4.6 restores such an install.)
+  Backups taken before protection still hold the key; there is no key rotation.
 - DNS logs stored an unsalted SHA-256 of prompts, titles and responses, which
   short prompts let an attacker confirm by guessing. Logs keep only lengths,
-  loading strips older digests, and deleting a chat removes its log records and
-  the opaque chat corruption backup.
+  loading strips older digests (a failed rewrite leaves the store in place),
+  deleting a chat removes its log records and the opaque chat corruption backup,
+  and log records of chats that no longer exist are dropped when chats load.
 - Stored IPv4 resolver settings are migrated to the default resolver, so the
   Android JS rungs can no longer send prompts through a public resolver.
 - External links containing a backslash are rejected, and the validated,
