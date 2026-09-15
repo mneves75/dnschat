@@ -94,7 +94,9 @@ function ToastContent({
   liveRegion: "assertive" | "polite";
 }) {
   const messageTruncationProps = {
-    numberOfLines: variant === "error" ? 3 : 2,
+    // Four lines keep the whole localized DNS error readable at phone width
+    // now that the action sits below the message.
+    numberOfLines: variant === "error" ? 4 : 2,
   } as const;
 
   return (
@@ -371,34 +373,39 @@ export function Toast({
       >
         <ToastIcon icon={variantStyle.icon} />
 
-        <ToastContent
-          {...(title ? { title } : {})}
-          message={message}
-          titleStyle={[
-            styles.title,
-            typography.headline,
-            { color: variantStyle.textColor },
-          ]}
-          messageStyle={[
-            styles.message,
-            typography.body,
-            { color: variantStyle.textColor },
-          ]}
-          variant={variant}
-          liveRegion={liveRegion}
-        />
-
-        {Boolean(actionLabel) && onAction && (
-          <ToastActionButton
-            actionLabel={actionLabel ?? ""}
-            actionTextStyle={[
-              styles.actionText,
-              typography.callout,
+        {/* The action sits under the message: beside it, a longer localized
+            label squeezed the message to a few characters per line on narrow
+            Android screens. Content and action stay separate a11y elements. */}
+        <View style={styles.textColumn}>
+          <ToastContent
+            {...(title ? { title } : {})}
+            message={message}
+            titleStyle={[
+              styles.title,
+              typography.headline,
               { color: variantStyle.textColor },
             ]}
-            onPress={handleAction}
+            messageStyle={[
+              styles.message,
+              typography.body,
+              { color: variantStyle.textColor },
+            ]}
+            variant={variant}
+            liveRegion={liveRegion}
           />
-        )}
+
+          {Boolean(actionLabel) && onAction && (
+            <ToastActionButton
+              actionLabel={actionLabel ?? ""}
+              actionTextStyle={[
+                styles.actionText,
+                typography.callout,
+                { color: variantStyle.textColor },
+              ]}
+              onPress={handleAction}
+            />
+          )}
+        </View>
 
         <ToastDismissButton
           color={variantStyle.textColor}
@@ -429,7 +436,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: LiquidGlassSpacing.md,
     paddingVertical: LiquidGlassSpacing.sm,
     borderRadius: getCornerRadius("button"),
-    maxHeight: 168,
+    // Title, four message lines and the action row below them.
+    maxHeight: 208,
     ...(Platform.OS === "web"
       ? { boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.3)" }
       : {
@@ -455,10 +463,13 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#FFFFFF",
   },
-  content: {
+  textColumn: {
     flex: 1,
     minWidth: 0,
     marginRight: LiquidGlassSpacing.xs,
+  },
+  content: {
+    minWidth: 0,
   },
   title: {
     fontWeight: "600",
@@ -468,13 +479,12 @@ const styles = StyleSheet.create({
     // Typography applied inline
   },
   actionButton: {
+    alignSelf: "flex-start",
+    marginTop: LiquidGlassSpacing.xs,
     paddingHorizontal: LiquidGlassSpacing.sm,
     paddingVertical: LiquidGlassSpacing.xxs,
     backgroundColor: "rgba(255, 255, 255, 0.2)",
     borderRadius: getCornerRadius("button"),
-    marginRight: LiquidGlassSpacing.xs,
-    maxWidth: 150,
-    flexShrink: 1,
   },
   actionText: {
     fontWeight: "600",

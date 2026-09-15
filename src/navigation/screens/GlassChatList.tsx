@@ -99,6 +99,11 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
   const { locale } = useSettings();
 
   const lastMessage = chat.messages[chat.messages.length - 1];
+  // A failed reply stores the service diagnostic; preview the localized error.
+  const previewText =
+    lastMessage?.status === "error"
+      ? t("screen.chat.errorMessage")
+      : (lastMessage?.content ?? "");
   const messageCount = chat.messages.length;
   // Untitled chats are persisted with the English sentinel "New Chat" (storage
   // and title-generation both match on it), so translate at render time rather
@@ -199,9 +204,9 @@ const GlassChatItem: React.FC<ChatItemProps> = ({
                 { color: palette.textSecondary },
               ]}
             >
-              {lastMessage.content.length > 60
-                ? `${lastMessage.content.substring(0, 60)}…`
-                : lastMessage.content}
+              {previewText.length > 60
+                ? `${previewText.substring(0, 60)}…`
+                : previewText}
             </Text>
           )}
 

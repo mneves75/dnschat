@@ -49,7 +49,11 @@ export function NativeMenu({
   testID,
   title,
 }: NativeMenuProps) {
-  if (Platform.OS !== "web") {
+  // Only iOS uses the native menu. On Android the Expo UI Compose MenuView did
+  // not draw rows mounted after the list first rendered, so a new message stayed
+  // blank until the chat was reopened; the React Native menu below has no such
+  // host-sizing step.
+  if (Platform.OS === "ios") {
     const nativeProps = {
       actions,
       shouldOpenOnLongPress,
@@ -63,7 +67,7 @@ export function NativeMenu({
   }
 
   return (
-    <WebMenuFallback
+    <PressableMenu
       actions={actions}
       shouldOpenOnLongPress={shouldOpenOnLongPress}
       {...(onPressAction ? { onPressAction } : {})}
@@ -71,11 +75,11 @@ export function NativeMenu({
       {...(testID ? { testID } : {})}
     >
       {children}
-    </WebMenuFallback>
+    </PressableMenu>
   );
 }
 
-function WebMenuFallback({
+function PressableMenu({
   actions,
   children,
   onPressAction,

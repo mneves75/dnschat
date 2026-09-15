@@ -275,6 +275,25 @@ describe("accessibility action coverage", () => {
       );
     });
 
+    it("announces and copies a failed reply as the localized error, not the stored diagnostic", async () => {
+      // Found on Android: TalkBack read "Error: All 3 DNS transports failed for
+      // llm.pieter.com:53 ..." in English while the bubble showed localized copy.
+      const failed = message({
+        content: "Error: All 3 DNS transports failed for llm.pieter.com:53",
+        status: "error",
+      });
+      const tree = await renderBubble(failed);
+      const node = bubble(tree);
+
+      expect(node.props["accessibilityLabel"]).toBe(
+        "Assistant message: DNS request failed. Try again or check DNS logs in Settings.",
+      );
+      await accessibilityAction(node, "copy");
+      expect(ClipboardService.copy).toHaveBeenCalledWith(
+        "DNS request failed. Try again or check DNS logs in Settings.",
+      );
+    });
+
     it("withholds actions while the message is still loading", async () => {
       const tree = await renderBubble(message({ status: "sending" }));
       const node = bubble(tree);
@@ -319,6 +338,35 @@ describe("accessibility action coverage", () => {
       const tree = await render(h(GlassChatList));
       return tree.root.find(byProps({ testID: "chat-list-item-c1" }));
     };
+
+    it("previews a failed last reply with the localized error, not the stored diagnostic", async () => {
+      // Seen on an Android emulator: the row previewed "Error: DNS query budget
+      // exhausted" in English.
+      mockChats.splice(0, mockChats.length, {
+        ...chat,
+        messages: [
+          ...chat.messages,
+          {
+            id: "m2",
+            role: "assistant",
+            content: "Error: DNS query budget exhausted",
+            timestamp: new Date("2026-09-15T11:01:00Z"),
+            status: "error",
+          },
+        ],
+      });
+      const { GlassChatList } =
+        require("../src/navigation/screens/GlassChatList") as typeof import("../src/navigation/screens/GlassChatList");
+      const tree = await render(h(GlassChatList));
+      const texts = tree.root
+        .findAll((node) => String(node.type) === "Text")
+        .map((node) => String(node.props["children"]));
+
+      expect(texts).toContain(
+        "DNS request failed. Try again or check DNS logs in Settings.",
+      );
+      expect(texts.join(" ")).not.toContain("budget exhausted");
+    });
 
     it("lets assistive tech open, share and delete a conversation without logging its content", async () => {
       const row = await renderRow();

@@ -196,7 +196,7 @@ describe("Toast reduce-motion and bounded-content behavior", () => {
   });
 
   it.each([
-    ["error", 3],
+    ["error", 4],
     ["info", 2],
   ] as const)(
     "bounds %s toast text to a single-line title and %i message lines inside a height cap",
@@ -212,7 +212,7 @@ describe("Toast reduce-motion and bounded-content behavior", () => {
           isHost(node, "View") &&
           StyleSheet.flatten(node.props["style"])?.maxHeight !== undefined,
       );
-      expect(StyleSheet.flatten(card.props["style"]).maxHeight).toBe(168);
+      expect(StyleSheet.flatten(card.props["style"]).maxHeight).toBe(208);
     },
   );
 

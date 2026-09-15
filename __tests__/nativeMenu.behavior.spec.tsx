@@ -57,66 +57,75 @@ describe("NativeMenu", () => {
     });
   });
 
-  it("keeps copy/share usable on web through an accessible fallback", () => {
-    Platform.OS = "web";
-    const onPressAction = jest.fn();
+  // Android also uses the React Native menu: the Compose MenuView from Expo UI
+  // left rows mounted after a chat opened blank (found on an Android 16
+  // emulator), so new messages stayed invisible until the chat was reopened.
+  it.each(["web", "android"] as const)(
+    "keeps copy/share usable on %s through an accessible React Native menu",
+    (platform) => {
+      Platform.OS = platform;
+      const onPressAction = jest.fn();
 
-    let tree: ReturnType<typeof createWithSuppressedWarnings>;
-    act(() => {
-      tree = createWithSuppressedWarnings(
-        <NativeMenu
-          actions={[
-            { id: "copy", title: "Copy" },
-            { id: "share", title: "Share", attributes: { disabled: true } },
-            { id: "hidden", title: "Hidden", attributes: { hidden: true } },
-          ]}
-          onPressAction={onPressAction}
-          shouldOpenOnLongPress
-          testID="message-menu"
-        >
-          <Pressable testID="message-content" />
-        </NativeMenu>,
+      let tree: ReturnType<typeof createWithSuppressedWarnings>;
+      act(() => {
+        tree = createWithSuppressedWarnings(
+          <NativeMenu
+            actions={[
+              { id: "copy", title: "Copy" },
+              { id: "share", title: "Share", attributes: { disabled: true } },
+              { id: "hidden", title: "Hidden", attributes: { hidden: true } },
+            ]}
+            onPressAction={onPressAction}
+            shouldOpenOnLongPress
+            testID="message-menu"
+          >
+            <Pressable testID="message-content" />
+          </NativeMenu>,
+        );
+      });
+
+      const trigger = tree!.root.find(
+        (node) =>
+          node.props["testID"] === "message-menu" &&
+          typeof node.props["onLongPress"] === "function",
       );
-    });
+      act(() => {
+        trigger.props["onLongPress"]();
+      });
 
-    const trigger = tree!.root.find(
-      (node) =>
-        node.props["testID"] === "message-menu" &&
-        typeof node.props["onLongPress"] === "function",
-    );
-    act(() => {
-      trigger.props["onLongPress"]();
-    });
+      const modal = findHostType(tree!.root, "Modal");
+      expect(modal.props["visible"]).toBe(true);
+      expect(
+        tree!.root.findByProps({ accessibilityLabel: "common.close" }),
+      ).toBeTruthy();
+      expect(
+        tree!.root.findAll(
+          (node) => node.props["accessibilityLabel"] === "Hidden",
+        ),
+      ).toHaveLength(0);
 
-    const modal = findHostType(tree!.root, "Modal");
-    expect(modal.props["visible"]).toBe(true);
-    expect(
-      tree!.root.findByProps({ accessibilityLabel: "common.close" }),
-    ).toBeTruthy();
-    expect(
-      tree!.root.findAll(
-        (node) => node.props["accessibilityLabel"] === "Hidden",
-      ),
-    ).toHaveLength(0);
+      const disabledShare = tree!.root.findByProps({
+        accessibilityLabel: "Share",
+      });
+      act(() => {
+        disabledShare.props["onPress"]();
+      });
+      expect(onPressAction).not.toHaveBeenCalled();
 
-    const disabledShare = tree!.root.findByProps({
-      accessibilityLabel: "Share",
-    });
-    act(() => {
-      disabledShare.props["onPress"]();
-    });
-    expect(onPressAction).not.toHaveBeenCalled();
+      const copy = tree!.root.findByProps({ accessibilityLabel: "Copy" });
+      act(() => {
+        copy.props["onPress"]();
+      });
 
-    const copy = tree!.root.findByProps({ accessibilityLabel: "Copy" });
-    act(() => {
-      copy.props["onPress"]();
-    });
-
-    expect(onPressAction).toHaveBeenCalledWith({
-      nativeEvent: { event: "copy" },
-    });
-    expect(findHostType(tree!.root, "Modal").props["visible"]).toBe(false);
-  });
+      expect(onPressAction).toHaveBeenCalledWith({
+        nativeEvent: { event: "copy" },
+      });
+      expect(findHostType(tree!.root, "Modal").props["visible"]).toBe(false);
+      expect(
+        tree!.root.findAll((node) => String(node.type) === "MenuView"),
+      ).toHaveLength(0);
+    },
+  );
 
   it("normalizes action identifiers to match Expo UI event payloads", () => {
     expect(getNativeMenuActionId({ id: "copy", title: "Copy" })).toBe("copy");

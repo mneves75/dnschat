@@ -151,7 +151,7 @@ export const ptBR = {
         title: "Configuração de Rede",
         subtitle: "Escolha como o DNS Chat deve se conectar ao servidor LLM",
         disclaimer:
-          "Esta recomendação não testa a conexão de rede. Você pode alterar os transportes depois em Ajustes.",
+          "Esta recomendação não testa a conexão de rede. Você pode testar cada transporte depois em Ajustes.",
         tests: {
           native: {
             name: "DNS Nativo",
@@ -203,7 +203,7 @@ export const ptBR = {
           label: "Personalizar",
           title: "Configurações Personalizáveis",
           description:
-            "Configure servidores DNS, hápticos e comportamento de transporte para sua rede.",
+            "Escolha o servidor DNS, a vibração e o idioma, e teste cada transporte na sua rede.",
         },
         liquidGlass: {
           label: "iOS 26",

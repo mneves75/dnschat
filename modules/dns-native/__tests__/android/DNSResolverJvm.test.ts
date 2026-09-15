@@ -103,6 +103,9 @@ describe("Android DNSResolver executable JVM boundaries", () => {
       expect(run.stdout).toContain(
         "PASS platform-resolver-timeout-cancels-signal",
       );
+      expect(run.stdout).toContain(
+        "PASS js-sanitizer-config-uses-android-supported-regex-flags",
+      );
       expect({
         status: run.status,
         signal: run.signal,

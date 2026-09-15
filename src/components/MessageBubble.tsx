@@ -21,9 +21,6 @@ import type {
 } from "./platform/NativeMenu";
 import { useResolvedColorScheme } from "../ui/theme/resolvedColorScheme";
 
-const androidCopyIcon = require("../assets/icons/menu-content-copy.xml");
-const androidShareIcon = require("../assets/icons/menu-share.xml");
-
 // Platform-specific monospace font for code rendering
 const MONOSPACE_FONT = Platform.select({
   ios: "Menlo",
@@ -59,24 +56,25 @@ function MessageBubbleComponent({
   const isUser = message.role === "user";
   const isLoading = message.status === "sending";
   const hasError = message.status === "error";
+  // A failed reply stores the service diagnostic; people see, hear and copy
+  // the localized error instead (MessageContent renders the same copy).
+  const visibleText = hasError
+    ? t("screen.chat.errorMessage")
+    : message.content;
   const exposesInteractiveMarkdown =
-    !isUser && MARKDOWN_LINK_PATTERN.test(message.content);
+    !isUser && !hasError && MARKDOWN_LINK_PATTERN.test(message.content);
   const messageCornerRadius = getCornerRadius("message");
 
   const runMessageAction = async (actionKey: string) => {
     switch (actionKey) {
       case "copy":
         void HapticFeedback.light();
-        await ClipboardService.copy(message.content);
+        await ClipboardService.copy(visibleText);
         break;
 
       case "share":
         void HapticFeedback.light();
-        await ShareService.shareMessage(
-          message.content,
-          message.timestamp,
-          locale,
-        );
+        await ShareService.shareMessage(visibleText, message.timestamp, locale);
         break;
 
       default:
@@ -156,13 +154,13 @@ function MessageBubbleComponent({
     },
   };
 
+  // SF Symbols for the iOS native menu; the React Native menu on Android and
+  // web shows titles only.
   const copyImage = Platform.select({
     ios: "doc.on.doc",
-    android: androidCopyIcon,
   }) as NativeMenuAction["image"];
   const shareImage = Platform.select({
     ios: "square.and.arrow.up",
-    android: androidShareIcon,
   }) as NativeMenuAction["image"];
   const menuActions: NativeMenuAction[] = [
     {
@@ -203,7 +201,7 @@ function MessageBubbleComponent({
               isUser
                 ? "screen.chat.accessibility.userMessage"
                 : "screen.chat.accessibility.assistantMessage",
-              { content: message.content.replace(/[`*_~]/g, "") },
+              { content: visibleText.replace(/[`*_~]/g, "") },
             ),
             accessibilityHint: isLoading
               ? t("screen.chat.accessibility.loadingHint")

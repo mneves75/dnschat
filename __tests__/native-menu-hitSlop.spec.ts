@@ -18,11 +18,4 @@ describe("Expo UI native menu migration", () => {
     expect(messageBubbleSource).toContain("NativeMenu");
     expect(messageBubbleSource).not.toContain("@react-native-menu/menu");
   });
-
-  it("keeps a web fallback because Expo UI menu does not fire actions on web", () => {
-    expect(nativeMenuSource).toContain('Platform.OS !== "web"');
-    expect(nativeMenuSource).toContain("WebMenuFallback");
-    expect(nativeMenuSource).toContain("createNativeMenuActionEvent");
-    expect(nativeMenuSource).toContain("getNativeMenuActionId(action)");
-  });
 });

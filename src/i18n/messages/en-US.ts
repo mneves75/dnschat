@@ -151,7 +151,7 @@ export const enUS = {
         title: "Network Configuration",
         subtitle: "Choose how DNS Chat should reach the LLM server",
         disclaimer:
-          "This recommendation does not test network connectivity. You can change transport settings later in Settings.",
+          "This recommendation does not test network connectivity. You can test each transport later in Settings.",
         tests: {
           native: {
             name: "Native DNS",
@@ -203,7 +203,7 @@ export const enUS = {
           label: "Customize",
           title: "Customizable Settings",
           description:
-            "Configure DNS servers, haptics, and transport behavior for your network.",
+            "Choose the DNS server, haptics and language, and test each transport on your network.",
         },
         liquidGlass: {
           label: "iOS 26",

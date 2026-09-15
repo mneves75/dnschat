@@ -545,7 +545,7 @@ describe("shared interactive control accessibility behavior", () => {
   });
 
   it.each([
-    ["error", "alert", "assertive", 3],
+    ["error", "alert", "assertive", 4],
     ["success", undefined, "polite", 2],
   ] as const)(
     "announces %s toasts with role %s and a %s live region, bounded to %i message lines",
@@ -592,15 +592,35 @@ describe("shared interactive control accessibility behavior", () => {
       );
       expect(glyph.props["accessibilityElementsHidden"]).toBe(true);
 
-      const action = tree.root.find(
-        byProps({ accessibilityLabel: "Retry", accessibilityRole: "button" }),
+      // The action sits under the message in the text column. Beside it, on a
+      // narrow Android screen a longer label ("Tentar de novo") squeezed the
+      // message to a few characters per line.
+      const hasNode = (
+        root: ReactTestInstance,
+        predicate: (node: ReactTestInstance) => boolean,
+      ) => root.findAll(predicate).length > 0;
+      const textColumns = tree.root.findAll(
+        (node) =>
+          byType("View")(node) &&
+          flatStyle(node)["flex"] === 1 &&
+          hasNode(
+            node,
+            (child) =>
+              child.props["accessibilityLabel"] === "DNS Resolver unreachable",
+          ) &&
+          hasNode(
+            node,
+            (child) =>
+              child.props["accessibilityLabel"] === "Retry" &&
+              child.props["accessibilityRole"] === "button",
+          ),
       );
-      expect(flatStyle(action)["flexShrink"]).toBe(1);
+      expect(textColumns.length).toBeGreaterThan(0);
       const card = tree.root.find(
         (node) =>
           byType("View")(node) && flatStyle(node)["maxHeight"] !== undefined,
       );
-      expect(flatStyle(card)["maxHeight"]).toBe(168);
+      expect(flatStyle(card)["maxHeight"]).toBe(208);
     },
   );
 

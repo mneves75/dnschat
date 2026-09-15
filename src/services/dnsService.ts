@@ -131,15 +131,18 @@ type TcpSocketModule = {
   Socket: new () => TcpSocketInstance;
 };
 
+// Library exports may be plain objects or classes with static members:
+// react-native-udp's default export is `class UdpSockets`, a function.
+const isObjectOrClass = (value: unknown): value is object =>
+  (typeof value === "object" || typeof value === "function") && value !== null;
+
 const isUDPModule = (value: unknown): value is UDPModule =>
-  typeof value === "object" &&
-  value !== null &&
+  isObjectOrClass(value) &&
   "createSocket" in value &&
   typeof (value as UDPModule).createSocket === "function";
 
 const isTcpSocketModule = (value: unknown): value is TcpSocketModule =>
-  typeof value === "object" &&
-  value !== null &&
+  isObjectOrClass(value) &&
   "Socket" in value &&
   typeof (value as TcpSocketModule).Socket === "function";
 

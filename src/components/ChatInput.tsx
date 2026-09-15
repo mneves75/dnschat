@@ -83,6 +83,7 @@ const CHARACTER_ANNOUNCEMENT_REMAINING = new Set([10, 5, 0]);
 const CHARACTER_COUNTER_THRESHOLD =
   MAX_SENDABLE_LENGTH - Math.max(...CHARACTER_ANNOUNCEMENT_REMAINING);
 const BUTTON_SPACING = LiquidGlassSpacing.xxs; // 4px from edge
+const SEND_ECHO_WINDOW_MS = 400;
 
 interface ChatInputProps {
   /** Resolves false when the send was rejected before anything was sent. */
@@ -107,6 +108,7 @@ export function ChatInput({
 }: ChatInputProps) {
   const [message, setMessage] = useState("");
   const textInputRef = useRef<TextInput>(null);
+  const lastSendAtRef = useRef(Number.NEGATIVE_INFINITY);
   const colorScheme = useResolvedColorScheme();
   const isDark = colorScheme === "dark";
   const typography = useTypography();
@@ -309,12 +311,27 @@ export function ChatInput({
    * 4. Refocuses input (iOS only)
    * 5. Restores the text if the send was rejected and nothing new was typed
    */
+  // iOS commits a pending autocorrect suggestion when the send button is
+  // tapped. That native edit is newer than the JS clear, so the native view
+  // rejects the clear and reports the sent text (with the correction applied)
+  // straight back. Nobody can type into the field this soon after a send, so a
+  // change inside the window is that echo and is cleared again.
+  const handleChangeText = (text: string) => {
+    if (Date.now() - lastSendAtRef.current < SEND_ECHO_WINDOW_MS) {
+      textInputRef.current?.clear();
+      setMessage("");
+      return;
+    }
+    setMessage(text);
+  };
+
   const handleSend = async () => {
     const text = message.trim();
     if (!text || isLoading) {
       return;
     }
     HapticFeedback.medium();
+    lastSendAtRef.current = Date.now();
     setMessage("");
 
     // Refocus the input after sending on iOS
@@ -389,7 +406,7 @@ export function ChatInput({
           ...additionalStyles,
         ]}
         value={message}
-        onChangeText={setMessage}
+        onChangeText={handleChangeText}
         onContentSizeChange={handleContentSizeChange}
         placeholder={resolvedPlaceholder}
         placeholderTextColor={palette.textTertiary}

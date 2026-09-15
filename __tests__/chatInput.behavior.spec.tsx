@@ -164,6 +164,8 @@ describe("ChatInput behavior", () => {
         .findByProps({ testID: "chat-input-send" })
         .props["onPress"]();
     });
+    // Typing a new draft happens well after the send's autocorrect echo window.
+    const now = jest.spyOn(Date, "now").mockReturnValue(Date.now() + 5_000);
     act(() => {
       field().props["onChangeText"]("second");
     });
@@ -171,8 +173,42 @@ describe("ChatInput behavior", () => {
       settle(false);
       await pending;
     });
+    now.mockRestore();
 
     expect(field().props["value"]).toBe("second");
+  });
+
+  it("clears the autocorrect echo iOS reports right after a send, but not later typing", async () => {
+    // Runtime finding on the iOS 27 simulator: sending with a suggestion
+    // pending ("cao" -> "cão") put the corrected sent text back in the composer.
+    const now = jest.spyOn(Date, "now").mockReturnValue(1_000);
+    try {
+      const onSendMessage = jest.fn(async () => true);
+      const tree = renderChatInput({ onSendMessage });
+      const field = () => tree.root.findByProps({ testID: "chat-input-field" });
+
+      act(() => {
+        field().props["onChangeText"]("o que e um cao");
+      });
+      await act(async () => {
+        await tree.root
+          .findByProps({ testID: "chat-input-send" })
+          .props["onPress"]();
+      });
+      now.mockReturnValue(1_050);
+      act(() => {
+        field().props["onChangeText"]("o que e um cão");
+      });
+      expect(field().props["value"]).toBe("");
+
+      now.mockReturnValue(3_000);
+      act(() => {
+        field().props["onChangeText"]("next question");
+      });
+      expect(field().props["value"]).toBe("next question");
+    } finally {
+      now.mockRestore();
+    }
   });
 
   it("does not send whitespace-only or loading messages", () => {

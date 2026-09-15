@@ -1583,7 +1583,7 @@ public class DNSResolver {
         private static final String CODE_INVALID_REGEX = "SANITIZER_CONFIG_REGEX";
         private static final String CODE_UNEXPECTED = "SANITIZER_CONFIG_UNEXPECTED";
 
-        // Combining marks Unicode ranges (portable alternative to \p{M} which requires UNICODE_CHARACTER_CLASS):
+        // Combining marks Unicode ranges (explicit ranges for the default config):
         // \u0300-\u036f = Combining Diacritical Marks
         // \u1ab0-\u1aff = Combining Diacritical Marks Extended
         // \u1dc0-\u1dff = Combining Diacritical Marks Supplement
@@ -1753,10 +1753,11 @@ public class DNSResolver {
                         flags |= Pattern.DOTALL;
                         break;
                     case 'u':
-                        // UNICODE_CHARACTER_CLASS enables Unicode-aware character classes
-                        // This makes \d, \w, \s match Unicode characters, not just ASCII
-                        // Reference: https://stackoverflow.com/questions/72236081/different-java-regex-matching-behavior-when-using-unicode-character-class-flag
-                        flags |= Pattern.UNICODE_CASE | Pattern.UNICODE_CHARACTER_CLASS;
+                        // Unicode property classes such as \p{M} work without extra flags.
+                        // UNICODE_CHARACTER_CLASS must not be used: Android's ICU-backed
+                        // java.util.regex throws "flag not supported", which rejected the
+                        // whole sanitizer configuration and disabled native DNS.
+                        flags |= Pattern.UNICODE_CASE;
                         break;
                     case 'g':
                         // Global flag is implied by Java's matcher iteration; ignore silently.

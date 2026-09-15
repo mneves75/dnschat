@@ -15,8 +15,10 @@ import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -99,6 +101,11 @@ public final class DNSResolverJvmHarness {
         runCase(
             "platform-resolver-timeout-cancels-signal",
             DNSResolverJvmHarness::testPlatformResolverTimeoutCancelsSignal
+        );
+
+        runCase(
+            "js-sanitizer-config-uses-android-supported-regex-flags",
+            DNSResolverJvmHarness::testJsSanitizerConfigUsesAndroidSupportedRegexFlags
         );
 
         if (failures != 0) {
@@ -405,6 +412,53 @@ public final class DNSResolverJvmHarness {
         char[] chars = new char[count];
         Arrays.fill(chars, value);
         return new String(chars);
+    }
+
+    // The exact descriptors modules/dns-native/constants.ts sends through
+    // configureSanitizer. Android's ICU-backed java.util.regex throws
+    // "UNICODE_CHARACTER_CLASS flag not supported", which failed the whole
+    // configuration on every Android device and disabled the native rung. A
+    // desktop JVM accepts the flag, so the compiled flags are checked directly.
+    private static void testJsSanitizerConfigUsesAndroidSupportedRegexFlags() throws Exception {
+        Map<String, Object> config = new HashMap<>();
+        config.put("unicodeNormalization", "NFKD");
+        config.put("spaceReplacement", "-");
+        config.put("maxLabelLength", 63.0);
+        config.put("allowedServers", Arrays.asList("llm.pieter.com", "ch.at"));
+        config.put("whitespace", regex("\\s+", "g"));
+        config.put("invalidChars", regex("[^a-z0-9-]", "g"));
+        config.put("dashCollapse", regex("-{2,}", "g"));
+        config.put("edgeDashes", regex("^-+|-+$", "g"));
+        config.put("combiningMarks", regex("\\p{M}+", "gu"));
+
+        DNSResolver.SanitizerConfig parsed = DNSResolver.SanitizerConfig.fromMap(config);
+        for (Pattern pattern : Arrays.asList(
+            parsed.whitespacePattern,
+            parsed.invalidCharsPattern,
+            parsed.dashCollapsePattern,
+            parsed.edgeDashesPattern,
+            parsed.combiningMarksPattern
+        )) {
+            require(
+                (pattern.flags() & Pattern.UNICODE_CHARACTER_CLASS) == 0,
+                "pattern uses UNICODE_CHARACTER_CLASS, which Android rejects: " + pattern.pattern()
+            );
+        }
+        require(
+            parsed.combiningMarksPattern.matcher("c\u0327a\u0303o").replaceAll("").equals("cao"),
+            "combining marks were not stripped without UNICODE_CHARACTER_CLASS"
+        );
+        require(
+            new DNSResolver(null).configureSanitizer(config),
+            "JavaScript sanitizer config was not applied"
+        );
+    }
+
+    private static Map<String, Object> regex(String pattern, String flags) {
+        Map<String, Object> descriptor = new HashMap<>();
+        descriptor.put("pattern", pattern);
+        descriptor.put("flags", flags);
+        return descriptor;
     }
 
     private static void testExpandedNameBoundaries() throws Exception {
