@@ -202,23 +202,23 @@ const generateAndPersistKey = async (): Promise<Uint8Array> => {
 
 // expo-secure-store answers a duplicate item by replacing only its value, so a
 // legacy entry cannot be re-protected in place. Copy it to a new account (a
-// fresh SecItemAdd applies THIS_DEVICE_ONLY), confirm the copy, and only then
-// delete the legacy entry. Any failure keeps the legacy key in use and retries
-// on the next launch; history never depends on the copy succeeding.
+// fresh SecItemAdd applies THIS_DEVICE_ONLY), confirm the copy reads back, and
+// only then delete the legacy entry. Any failure leaves the legacy entry, which
+// stays authoritative, and the next launch repeats the check.
 const migrateLegacyKey = async (legacyEncoded: string): Promise<void> => {
   try {
-    await SecureStore.setItemAsync(
-      KEY_STORAGE_KEY,
-      legacyEncoded,
-      DEVICE_ONLY_KEY_OPTIONS,
-    );
     if ((await SecureStore.getItemAsync(KEY_STORAGE_KEY)) !== legacyEncoded) {
-      devWarn(
-        "[EncryptionService] Device-only key copy did not read back; keeping legacy key",
+      await SecureStore.setItemAsync(
+        KEY_STORAGE_KEY,
+        legacyEncoded,
+        DEVICE_ONLY_KEY_OPTIONS,
       );
-      // A mismatched copy would be read first on the next launch.
-      await SecureStore.deleteItemAsync(KEY_STORAGE_KEY);
-      return;
+      if ((await SecureStore.getItemAsync(KEY_STORAGE_KEY)) !== legacyEncoded) {
+        devWarn(
+          "[EncryptionService] Device-only key copy did not read back; keeping legacy key",
+        );
+        return;
+      }
     }
     await SecureStore.deleteItemAsync(LEGACY_KEY_STORAGE_KEY);
   } catch (error) {
@@ -229,30 +229,18 @@ const migrateLegacyKey = async (legacyEncoded: string): Promise<void> => {
   }
 };
 
-// Returns the stored key, moving a legacy entry to the device-only entry on the
-// way (see migrateLegacyKey).
+// Returns the stored key. While a legacy entry exists it is the source of
+// truth: the device-only entry is trusted only once it has been confirmed equal
+// to it, so no failed or partial copy can replace the key history needs.
 const readKeyMigratingLegacy = async (): Promise<string | null> => {
   if (isWebRuntime()) return getWebStoredKey();
-  const current = await SecureStore.getItemAsync(KEY_STORAGE_KEY);
-  if (current !== null) {
-    // Validate first: corrupt key material must surface before anything is
-    // deleted. A launch whose final delete failed left the legacy entry behind;
-    // the verified device-only copy exists, so removing it here finishes the
-    // move. Deleting a missing item is a no-op.
-    decodeStoredKey(current);
-    try {
-      await SecureStore.deleteItemAsync(LEGACY_KEY_STORAGE_KEY);
-    } catch (error) {
-      devWarn("[EncryptionService] Legacy key cleanup deferred", error);
-    }
-    return current;
-  }
   const legacy = await SecureStore.getItemAsync(LEGACY_KEY_STORAGE_KEY);
-  if (legacy !== null) {
-    // Validate before copying so corrupt key material is preserved, not spread.
-    decodeStoredKey(legacy);
-    await migrateLegacyKey(legacy);
+  if (legacy === null) {
+    return SecureStore.getItemAsync(KEY_STORAGE_KEY);
   }
+  // Validate before copying so corrupt key material is preserved, not spread.
+  decodeStoredKey(legacy);
+  await migrateLegacyKey(legacy);
   return legacy;
 };
 

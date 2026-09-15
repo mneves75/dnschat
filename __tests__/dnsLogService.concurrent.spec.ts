@@ -24,6 +24,7 @@ const dnsLogServiceInternals = DNSLogService as unknown as {
   initialized: boolean;
   initializationInFlight: Promise<void> | null;
   storeLoaded: boolean;
+  pendingPurgedChatIds: Set<string>;
   persistenceQueue: Promise<void>;
   cleanupIntervalId: ReturnType<typeof setInterval> | null;
   sensitiveValuesByQueryId: Map<string, RegExp[]>;
@@ -36,6 +37,7 @@ describe("DNSLogService concurrent query isolation", () => {
     dnsLogServiceInternals.initialized = false;
     dnsLogServiceInternals.initializationInFlight = null;
     dnsLogServiceInternals.storeLoaded = false;
+    dnsLogServiceInternals.pendingPurgedChatIds = new Set();
     dnsLogServiceInternals.persistenceQueue = Promise.resolve();
   });
 
@@ -44,6 +46,7 @@ describe("DNSLogService concurrent query isolation", () => {
     dnsLogServiceInternals.initialized = false;
     dnsLogServiceInternals.initializationInFlight = null;
     dnsLogServiceInternals.storeLoaded = false;
+    dnsLogServiceInternals.pendingPurgedChatIds = new Set();
     dnsLogServiceInternals.persistenceQueue = Promise.resolve();
   });
 

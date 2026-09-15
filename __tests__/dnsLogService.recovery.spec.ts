@@ -38,6 +38,7 @@ const dnsLogServiceInternals = DNSLogService as unknown as {
   initialized: boolean;
   initializationInFlight: Promise<void> | null;
   storeLoaded: boolean;
+  pendingPurgedChatIds: Set<string>;
   persistenceQueue: Promise<void>;
 };
 
@@ -50,6 +51,7 @@ describe("DNSLogService recovery", () => {
     dnsLogServiceInternals.initialized = false;
     dnsLogServiceInternals.initializationInFlight = null;
     dnsLogServiceInternals.storeLoaded = false;
+    dnsLogServiceInternals.pendingPurgedChatIds = new Set();
     dnsLogServiceInternals.persistenceQueue = Promise.resolve();
   });
 
@@ -382,6 +384,43 @@ describe("DNSLogService recovery", () => {
       expect(persisted.map((log) => log.id)).toEqual(
         expect.arrayContaining([queryId, "stored-log"]),
       );
+    });
+
+    it("keeps a chat deletion made while stored logs were unavailable", async () => {
+      // Autoreview P2: the purge must survive the later merge with storage.
+      const { EncryptionKeyUnavailableError } = jest.requireMock(
+        "../src/services/encryptionService",
+      );
+      const historyWithChat = JSON.stringify([
+        ...(JSON.parse(storedHistory) as unknown[]),
+        {
+          id: "deleted-chat-log",
+          chatId: "chat-gone",
+          query: "redacted len:4",
+          startTime: "2026-09-11T12:00:00.000Z",
+          finalStatus: "success",
+          finalMethod: "native",
+          entries: [],
+        },
+      ]);
+      mockAsyncStorage.getItem.mockResolvedValue("enc:v1:history");
+      decryptIfEncrypted.mockRejectedValue(
+        new EncryptionKeyUnavailableError("keychain locked"),
+      );
+      await expect(DNSLogService.initialize()).rejects.toBeInstanceOf(
+        EncryptionKeyUnavailableError,
+      );
+
+      await DNSLogService.purgeChat("chat-gone");
+      expect(lastPrimaryWrite()).toBeUndefined();
+
+      decryptIfEncrypted.mockResolvedValue(historyWithChat);
+      await DNSLogService.recordSettingsEvent("key recovered");
+
+      const ids = DNSLogService.getLogs().map((log) => log.id);
+      expect(ids).toContain("stored-log");
+      expect(ids).not.toContain("deleted-chat-log");
+      expect(lastPrimaryWrite()).not.toContain("chat-gone");
     });
 
     it("keeps a query that finished while the initial read was in flight", async () => {

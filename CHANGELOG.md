@@ -30,14 +30,14 @@ or production promotion.
   Those keys used the library's default accessibility, which a backup restores
   onto another device, and expo-secure-store cannot change an existing item's
   accessibility. The key is copied, read back, and only then is the old entry
-  deleted. If the copy fails, the old key stays in use and the move is retried
-  on the next launch; if only the final delete fails, the next launch removes
-  the old entry.
+  deleted. While the old entry exists it stays authoritative, so a failed,
+  partial or mismatched copy is never used, and every launch repeats the move
+  until it completes.
 - DNS logs no longer store an unsalted SHA-256 of prompts, titles and
   responses, only their lengths; older logs are rewritten on load. Short
   prompts made those digests confirmable by guessing. Deleting a chat now also
-  removes its log records, including a query still in flight, and the opaque
-  chat corruption backup.
+  removes its log records, including a query still in flight and records not
+  yet loaded from storage, and the opaque chat corruption backup.
 - Remove the public recursive resolvers (Google and Cloudflare) from the
   allowlist. A persisted IP resolver is reset to `llm.pieter.com`, so Android's
   UDP/TCP fallbacks can no longer send prompts to a third party that the

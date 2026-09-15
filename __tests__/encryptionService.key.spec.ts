@@ -186,27 +186,35 @@ describe("encryptionService key handling", () => {
       ]);
     });
 
-    it("does not delete the legacy key when the copy reads back differently", async () => {
+    it("keeps the legacy key authoritative when a copy reads back differently, across restarts", async () => {
+      // Autoreview P1: a mismatched copy whose cleanup also failed must never
+      // be trusted on a later launch, or history becomes undecryptable.
+      const otherHex = "cd".repeat(ENCRYPTION_CONSTANTS.KEY_LENGTH);
       const store = new Map([["dnschat.encryption_key", legacyHex]]);
-      const { service, mockSecureStore } = loadWithStore(store);
-      mockSecureStore.setItemAsync.mockImplementation(async (key: string) => {
-        store.set(key, "cd".repeat(ENCRYPTION_CONSTANTS.KEY_LENGTH));
-      });
-
-      await service.encryptString("hello");
-
-      expect(mockSecureStore.deleteItemAsync).not.toHaveBeenCalledWith(
-        "dnschat.encryption_key",
+      const first = loadWithStore(store);
+      first.mockSecureStore.setItemAsync.mockImplementation(
+        async (key: string) => {
+          store.set(key, otherHex);
+        },
       );
-      // The mismatched copy is removed so the next launch cannot read it first.
+      first.mockSecureStore.deleteItemAsync.mockRejectedValue(
+        new Error("keychain busy"),
+      );
+      const encrypted = await first.service.encryptString("history");
+      expect(store.get("dnschat.encryption_key")).toBe(legacyHex);
+
+      // Next launch: storage works again and still holds the wrong copy.
+      const next = loadWithStore(store);
+      await expect(next.service.decryptString(encrypted)).resolves.toBe(
+        "history",
+      );
       expect([...store.entries()]).toEqual([
-        ["dnschat.encryption_key", legacyHex],
+        ["dnschat.encryption_key.v2", legacyHex],
       ]);
     });
 
-    it("uses the device-only entry once it exists and retries a failed legacy cleanup", async () => {
-      // A launch whose final delete failed leaves both entries; the verified
-      // device-only copy wins and the legacy entry is removed on a later launch.
+    it("finishes an interrupted move once the copy is confirmed, without rewriting it", async () => {
+      // A launch whose final delete failed leaves both entries, already equal.
       const store = new Map([
         ["dnschat.encryption_key.v2", legacyHex],
         ["dnschat.encryption_key", legacyHex],
@@ -215,10 +223,6 @@ describe("encryptionService key handling", () => {
 
       await service.encryptString("hello");
 
-      expect(mockSecureStore.getItemAsync).toHaveBeenCalledTimes(1);
-      expect(mockSecureStore.getItemAsync).toHaveBeenCalledWith(
-        "dnschat.encryption_key.v2",
-      );
       expect(mockSecureStore.setItemAsync).not.toHaveBeenCalled();
       expect([...store.entries()]).toEqual([
         ["dnschat.encryption_key.v2", legacyHex],
@@ -236,6 +240,17 @@ describe("encryptionService key handling", () => {
       const encrypted = await service.encryptString("hello");
 
       await expect(service.decryptString(encrypted)).resolves.toBe("hello");
+      expect(store.get("dnschat.encryption_key")).toBe(legacyHex);
+    });
+
+    it("reads only the device-only entry when no legacy entry exists", async () => {
+      const store = new Map([["dnschat.encryption_key.v2", legacyHex]]);
+      const { service, mockSecureStore } = loadWithStore(store);
+
+      await service.encryptString("hello");
+
+      expect(mockSecureStore.setItemAsync).not.toHaveBeenCalled();
+      expect(mockSecureStore.deleteItemAsync).not.toHaveBeenCalled();
     });
   });
 

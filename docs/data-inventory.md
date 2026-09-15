@@ -65,8 +65,9 @@ This document inventories the data stored or processed by DNSChat and satisfies 
   iOS writes the key as `WHEN_UNLOCKED_THIS_DEVICE_ONLY`, so it is not restored
   onto another device from a backup. A key written before 4.3.6 under the
   legacy name is copied to the device-only entry, read back, and only then
-  deleted; if any step fails the legacy key stays in use and the copy retries
-  on the next launch.
+  deleted. While the legacy entry exists it stays authoritative, so a failed or
+  mismatched copy is never used, and every launch repeats the move until it
+  completes.
   Android backup and device-transfer rules exclude the SecureStore shared
   preferences file so key material is not restored without the platform
   keystore. Web preview stores the key in same-origin browser storage as a

@@ -98,6 +98,8 @@ export class DNSLogService {
    * writing them would replace the stored history.
    */
   private static storeLoaded = false;
+  /** Chats deleted before the store was read; applied when it is merged. */
+  private static pendingPurgedChatIds: Set<string> = new Set();
   /**
    * Per-query map of raw, unredacted sensitive values (prompt text + chat title)
    * to their pre-compiled redaction regexes, used to scrub those exact strings
@@ -397,9 +399,14 @@ export class DNSLogService {
    */
   private static mergeWithStoredLogs(stored: DNSQueryLog[]): DNSQueryLog[] {
     const inMemoryIds = new Set(this.queryLogs.map((log) => log.id));
+    const purged = this.pendingPurgedChatIds;
+    this.pendingPurgedChatIds = new Set();
     return [
       ...this.queryLogs,
-      ...stored.filter((log) => !inMemoryIds.has(log.id)),
+      ...stored.filter(
+        (log) =>
+          !inMemoryIds.has(log.id) && !(log.chatId && purged.has(log.chatId)),
+      ),
     ]
       .sort(
         (left, right) =>
@@ -877,6 +884,9 @@ export class DNSLogService {
     }
 
     const changed = await this.enqueuePersistentMutation(() => {
+      if (!this.storeLoaded) {
+        this.pendingPurgedChatIds.add(chatId);
+      }
       const before = this.queryLogs.length;
       this.queryLogs = this.queryLogs.filter((log) => log.chatId !== chatId);
       return this.queryLogs.length !== before;
