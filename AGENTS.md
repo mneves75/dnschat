@@ -36,7 +36,7 @@ harness; deeper reasoning does not require longer replies or repeated gates.
 DNSChat sends short prompts as DNS TXT queries. No accounts, API keys or tracking;
 local history is encrypted. DNS itself is observable and unauthenticated.
 
-- Stack: Expo SDK 57, React Native 0.86.3, React 19.2.3, TypeScript 6, Hermes, New Architecture.
+- Stack: Expo SDK 57 (`expo@57.0.22`), React Native 0.86.3, React 19.2.3, TypeScript 6, Hermes, New Architecture.
 - Default resolver: `llm.pieter.com:53`, the only automatic-chain server. `ch.at:53` is selectable but not an automatic fallback.
 - `entry.tsx` bootstraps crypto before `expo-router/entry`; `app/_layout.tsx` owns providers and initialization.
 - Routes exist only under `app/`. `src/navigation/screens/` contains screen components consumed by routes.
