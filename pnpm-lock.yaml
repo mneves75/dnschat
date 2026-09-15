@@ -187,8 +187,8 @@ importers:
         specifier: 4.0.518
         version: 4.0.518(lightningcss@1.32.0)(postcss@8.5.23)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(supports-color@8.1.1)(typescript@6.0.3)(uglify-js@3.19.3)
       '@remotion/media':
-        specifier: 4.0.518
-        version: 4.0.518(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+        specifier: 4.0.520
+        version: 4.0.520(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@remotion/transitions':
         specifier: 4.0.518
         version: 4.0.518(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -1915,6 +1915,12 @@ packages:
       react: '>=16.8.0'
       react-dom: '>=16.8.0'
 
+  '@remotion/media@4.0.520':
+    resolution: {integrity: sha512-Gvb2WZrscQpyw5lZHJSIK7xs2dmL8cTa1HlEs0fmt6ha2P3FtpjUSO+LgYr7GUAq75EgqlWgdiEfld5UYQVo1A==}
+    peerDependencies:
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
+
   '@remotion/paths@4.0.518':
     resolution: {integrity: sha512-EAp+yvlaLBbfOk0zloAnRnynfhK87VYdTxLRb+tMjhbrCjkvR6dgUANQM7c5NK5OvmuEINDZSfYvTUXqo8NbzQ==}
 
@@ -2173,6 +2179,9 @@ packages:
 
   '@types/dom-webcodecs@0.1.13':
     resolution: {integrity: sha512-O5hkiFIcjjszPIYyUSyvScyvrBoV3NOEEZx/pMlsu44TKzWNkLVBBxnxJz42in5n3QIolYOcBYFCPZZ0h8SkwQ==}
+
+  '@types/dom-webcodecs@0.1.19':
+    resolution: {integrity: sha512-+yFUIDUaASFz0vQpWBErPxun/Lb+F0TdrlTsj50gm7K797YzEx2TmV6fEiwciHyFNghlZYPgQXH5qRcwMHcJFQ==}
 
   '@types/eslint-scope@3.7.7':
     resolution: {integrity: sha512-MzMFlSLBqNF2gcHWO0G1vP/YQyfvrxZ0bF+u7mzUdZ1/xK4A4sru+nraZz5i3iEIk1l1uyicaDVTB4QbbEkAYg==}
@@ -3762,6 +3771,9 @@ packages:
   mediabunny@1.55.1:
     resolution: {integrity: sha512-JDdTEUOw9g6Ey8eWc2Ei63GmRGtGTJoE56SE7CHikwzS8i9xpsWcve4bEiUw47d4j49L3r7MXDFsH/5oZIhjBw==}
 
+  mediabunny@1.55.5:
+    resolution: {integrity: sha512-m0v6y8FGXiK+HKOc3AZqU+kJPLYsSKaLitmQNQIIHZKIGlTwQ34OF+X6Ul0K8iV4b03oPse10apwuoqbvmKeAA==}
+
   memfs@3.4.3:
     resolution: {integrity: sha512-eivjfi7Ahr6eQTn44nvTnR60e4a1Fs1Via2kCR5lHo/kyNoiMWaXCNJ/GpSd0ilXas2JSOl9B5FTIhflXu0hlg==}
     engines: {node: '>= 4.0.0'}
@@ -4419,6 +4431,12 @@ packages:
 
   remotion@4.0.518:
     resolution: {integrity: sha512-EV3i85Mhcw8zxb3uSaHfACtCe3Bq3Mk3Oica8Iex0FkymX6bgzphHiL4+w7N/OE56MiFLj5JGs3KF29kCJwxuQ==}
+    peerDependencies:
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
+
+  remotion@4.0.520:
+    resolution: {integrity: sha512-dORllOm7QdlHW/ZHNNWNXfQnO7pk9lwWIlSJ8p9V1URvjI75+pX+pTbrs6tVyRz6KQIXwI8MaeE22pC5U4EXIw==}
     peerDependencies:
       react: '>=16.8.0'
       react-dom: '>=16.8.0'
@@ -7008,6 +7026,14 @@ snapshots:
       remotion: 4.0.518(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       zod: 4.4.3
 
+  '@remotion/media@4.0.520(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
+    dependencies:
+      mediabunny: 1.55.5
+      react: 19.2.3
+      react-dom: 19.2.3(react@19.2.3)
+      remotion: 4.0.520(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      zod: 4.4.3
+
   '@remotion/paths@4.0.518': {}
 
   '@remotion/player@4.0.518(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
@@ -7362,9 +7388,11 @@ snapshots:
 
   '@types/dom-mediacapture-transform@0.1.12':
     dependencies:
-      '@types/dom-webcodecs': 0.1.13
+      '@types/dom-webcodecs': 0.1.19
 
   '@types/dom-webcodecs@0.1.13': {}
+
+  '@types/dom-webcodecs@0.1.19': {}
 
   '@types/eslint-scope@3.7.7':
     dependencies:
@@ -9219,6 +9247,11 @@ snapshots:
       '@types/dom-mediacapture-transform': 0.1.12
       '@types/dom-webcodecs': 0.1.13
 
+  mediabunny@1.55.5:
+    dependencies:
+      '@types/dom-mediacapture-transform': 0.1.12
+      '@types/dom-webcodecs': 0.1.13
+
   memfs@3.4.3:
     dependencies:
       fs-monkey: 1.0.3
@@ -10032,6 +10065,11 @@ snapshots:
       jsesc: 3.1.0
 
   remotion@4.0.518(react-dom@19.2.3(react@19.2.3))(react@19.2.3):
+    dependencies:
+      react: 19.2.3
+      react-dom: 19.2.3(react@19.2.3)
+
+  remotion@4.0.520(react-dom@19.2.3(react@19.2.3))(react@19.2.3):
     dependencies:
       react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)
