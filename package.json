@@ -109,7 +109,7 @@
     "expo-doctor": "1.20.4",
     "jest": "^29.7.0",
     "oxfmt": "~0.64.0",
-    "oxlint": "~1.79.0",
+    "oxlint": "~1.82.0",
     "react-compiler-healthcheck": "1.0.0",
     "react-test-renderer": "19.2.3",
     "ts-jest": "^29.4.9",
