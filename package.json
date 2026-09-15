@@ -64,7 +64,7 @@
   "dependencies": {
     "@expo/metro-runtime": "~57.0.15",
     "@expo/ui": "~57.0.18",
-    "@noble/ciphers": "^2.1.1",
+    "@noble/ciphers": "^2.4.0",
     "@noble/hashes": "^2.0.1",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@react-native-clipboard/clipboard": "^1.14.2",
