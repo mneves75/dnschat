@@ -242,6 +242,35 @@ describe("ChatInput behavior", () => {
     }
   });
 
+  it.each(["h", "hello", "ha"])(
+    "keeps %s typed or pasted right after sending a short single word",
+    async (draft) => {
+      const now = jest.spyOn(Date, "now").mockReturnValue(1_000);
+      try {
+        const onSendMessage = jest.fn(async () => true);
+        const tree = renderChatInput({ onSendMessage });
+        const field = () =>
+          tree.root.findByProps({ testID: "chat-input-field" });
+
+        act(() => {
+          field().props["onChangeText"]("hi");
+        });
+        await act(async () => {
+          await tree.root
+            .findByProps({ testID: "chat-input-send" })
+            .props["onPress"]();
+        });
+        now.mockReturnValue(1_050);
+        act(() => {
+          field().props["onChangeText"](draft);
+        });
+        expect(field().props["value"]).toBe(draft);
+      } finally {
+        now.mockRestore();
+      }
+    },
+  );
+
   it("never suppresses input on platforms without the iOS autocorrect echo", async () => {
     const originalPlatform = Platform.OS;
     Platform.OS = "android";

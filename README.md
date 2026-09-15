@@ -211,7 +211,7 @@ Release:
 
 ## Current verification baseline
 
-The 4.4.7 gate (`pnpm run verify:all`) passed 702 root tests and 67 native
+The 4.4.7 gate (`pnpm run verify:all`) passed 705 root tests and 67 native
 tests, with react-doctor at 92, a clean dependency audit and no leaks found.
 A full Android 16 emulator end-to-end run of the release APK and an iOS 27
 simulator pass of the Release build exercised onboarding, DNS replies with

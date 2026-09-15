@@ -85,28 +85,14 @@ const CHARACTER_COUNTER_THRESHOLD =
 const BUTTON_SPACING = LiquidGlassSpacing.xxs; // 4px from edge
 const SEND_ECHO_WINDOW_MS = 400;
 
-function foldWord(word: string): string {
-  return word.normalize("NFD").replace(/\p{M}/gu, "").toLocaleLowerCase();
-}
-
-// iOS autocorrect only rewrites the word being typed, which is the last one of
-// the sent text; it keeps that word's first letter and roughly its length
-// ("cao" -> "cão", "dont" -> "don't"). A new draft inside the echo window only
-// matches that shape when it repeats every earlier sent word and the last
-// word's first letter, so it is kept.
-function isAutocorrectEcho(sent: string, text: string): boolean {
-  const sentWords = sent.trim().split(/\s+/u);
-  const words = text.trim().split(/\s+/u);
-  const last = words.length - 1;
-  if (
-    words.length !== sentWords.length ||
-    words.slice(0, last).join(" ") !== sentWords.slice(0, last).join(" ")
-  ) {
-    return false;
-  }
-  const word = foldWord(words[last] ?? "");
-  const sentWord = foldWord(sentWords[last] ?? "");
-  return word.length >= sentWord.length - 1 && word[0] === sentWord[0];
+// Case and accents are the only difference the observed echo carries
+// ("cao" -> "cão"). Any other text, including a new draft, is genuine input.
+function foldText(value: string): string {
+  return value
+    .trim()
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .toLocaleLowerCase();
 }
 
 interface ChatInputProps {
@@ -344,7 +330,7 @@ export function ChatInput({
     if (
       Platform.OS === "ios" &&
       Date.now() - lastSend.at < SEND_ECHO_WINDOW_MS &&
-      isAutocorrectEcho(lastSend.text, text)
+      foldText(text) === foldText(lastSend.text)
     ) {
       textInputRef.current?.clear();
       setMessage("");

@@ -28,9 +28,11 @@ and the iOS composer echo; iOS testers should move to `92`.
 - The error toast places its action under the message, which now shows up to
   four lines instead of being squeezed beside the button.
 - iOS: sending while an autocorrect suggestion was pending ("cao" -> "cão") put
-  the corrected sent text back in the composer. Only that echo is cleared; a
-  new draft typed or pasted right after sending is kept, and other platforms
-  are unaffected.
+  the corrected sent text back in the composer. For 400 ms after a send, text
+  that equals the sent message ignoring case and accents is cleared; anything
+  else typed or pasted is kept, and other platforms are unaffected. A
+  correction that changes letters (for example "teh" -> "the") is not
+  recognized and can still reappear.
 - Onboarding no longer mentions the removed transport preference.
 
 ## [4.4.6] - 2026-09-15
