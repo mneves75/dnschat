@@ -216,7 +216,9 @@ tests, with react-doctor at 92, a clean dependency audit and no leaks found.
 A full Android 16 emulator end-to-end run of the release APK and an iOS 27
 simulator pass of the Release build exercised onboarding, DNS replies with
 accented text, the UDP fallback, errors, retry, long-press menus, sharing and
-the pt-BR locale. No physical-device pass was run for this version.
+the pt-BR locale. On a physical iPhone the Release build was installed over
+the previous version: it launched, existing conversations still decrypted,
+and About showed 4.4.7 (92).
 
 Release builds use `xcodebuild archive`, `-exportArchive`, and
 `asc publish testflight`. The [TestFlight runbook](docs/App_store/Apple_App_Store/TESTFLIGHT.md)

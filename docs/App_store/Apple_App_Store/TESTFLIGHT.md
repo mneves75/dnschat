@@ -4,13 +4,14 @@ To upload your DNSChat iOS app to TestFlight, you'll need to follow these steps:
 
 ## Release state
 
-- **Repository target:** `4.4.7` build `92`.
-- **Latest validated TestFlight artifact:** `4.4.6` build `91`, tagged
-  `v4.4.6-beta1` at `a7c5da5` and processed `VALID` on `2026-09-15`.
+- **Repository target:** `4.4.7` build `92`; signed archive and IPA uploaded.
+- **Latest validated TestFlight artifact:** `4.4.7` build `92`, tagged
+  `v4.4.7-beta1` at `c09e090` and processed `VALID` on `2026-09-15`.
   Strict validation reports `0` errors and `0` warnings; both `en-US` and
-  `pt-BR` test notes are present. Distribution is internal only. Archived with
-  Xcode `27.0`; the exported IPA passes `codesign --verify --deep --strict` and
-  contains no source maps. Build `90` (`4.4.5`) was never uploaded.
+  `pt-BR` test notes are present. Distribution is internal only. The exported
+  IPA passes `codesign --verify --deep --strict` and contains no source maps.
+  It replaces `4.4.6` build `91`, which skipped the JavaScript UDP fallback and
+  could re-fill the composer with the sent text after an autocorrected send.
 - **Latest production App Store release:** `4.0.23`, observed as
   `READY_FOR_SALE` on `2026-09-05`. TestFlight validation does not prove
   production publication.
@@ -349,4 +350,4 @@ If you encounter issues during the upload process:
 
 ---
 
-_Source target: 4.4.7 build 92; validated TestFlight beta: 4.4.6 build 91; production remains 4.0.23._
+_Source target and validated TestFlight beta: 4.4.7 build 92; production remains 4.0.23._
