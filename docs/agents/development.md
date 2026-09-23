@@ -75,10 +75,8 @@ there is no configured iOS XCTest target.
 
 `verify:react-doctor` pins its CLI and validates the JSON completion report.
 An incomplete scan fails even when the upstream CLI exits zero. Warnings remain
-visible; do not reshape working code merely to raise a heuristic score. The
-September audit completed at 93/100 with three existing complexity warnings in
-MessageBubble, GlassSettings and Logs. Check the underlying behavior before
-turning those warnings into implementation work.
+visible; do not reshape working code merely to raise a heuristic score. Check the
+underlying behavior before turning a warning into implementation work.
 
 ## Runtime and debug access
 
@@ -110,17 +108,20 @@ do not establish visual stillness; destination selectors provide the behavioral
 assertions. Keep screenshots and run output outside tracked source.
 
 Before trusting a Debug UI pass, verify a changed control in the running bundle.
-Reload alone can retain stale Metro output. A fresh project Metro on an unused
-port with `--clear` rebuilt the audit candidate; on iOS a local simulator launch
-argument `-RCT_jsLocation localhost:<PORT>` selects that server without changing
-source. Confirm the runtime and screen after the rebuild. For Argent's
+Reload alone can retain stale Metro output; start a fresh project Metro on an
+unused port with `--clear`. On iOS the simulator launch argument
+`-RCT_jsLocation localhost:<PORT>` selects that server without changing source.
+Confirm the runtime and screen after the rebuild. For Argent's
 `unregistered` native instrumentation state, follow its recovery guidance and
 keep teardown scoped to the selected device.
 
 ## Native build proof
 
 Confirm the selected toolchain with `xcode-select -p` and `xcodebuild -version`
-before a native build; Xcode 27.0 (iOS 27 SDK) built SDK 57.0.22 on 2026-09-15.
+before a native build; Xcode 27.0 (iOS 27 SDK) built SDK 57.0.24 on 2026-09-23. Release
+uploads need stable Xcode: when `xcode-select` points at a beta, prefix the
+build with `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer`, and run
+the gates with the Node major in `.node-version`.
 Keep builds sequential. Use a task-specific
 `-derivedDataPath` when another checkout has build output in the default cache.
 
@@ -162,3 +163,8 @@ Verify the text and links locally. A fresh harness run is stronger evidence of
 instruction loading; do not infer truncation merely by summing file sizes.
 Keep historical tool failures in memory or troubleshooting docs, not duplicated
 across the agent entry points.
+
+Prompting references for maintainers editing these instruction files:
+[Claude Fable 5.1](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/prompting-claude-fable-5-1)
+and [GPT-6 Astra](https://developers.openai.com/api/docs/guides/latest-model?model=gpt-6-astra#prompting-best-practices),
+checked on 2026-09-04. Re-audit both entry points at each model release.

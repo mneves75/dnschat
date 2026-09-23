@@ -6,6 +6,37 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+## [4.4.8] - 2026-09-23
+
+Build `92` -> `93`. Maintenance release: Expo SDK 57 patch alignment, one
+iOS release hardening item from the pre-production security review, and
+agent-instruction cleanup. No intended change to chat behavior.
+
+### Security
+
+- iOS Release builds no longer carry the App Transport Security
+  `NSAllowsLocalNetworking` exception. Only Debug needs it to reach Metro; the
+  Release strip build phase now removes it with the other development-only
+  local-network keys. A test runs that build phase against the real
+  Info.plist for both configurations.
+
+### Changed
+
+- Expo SDK 57 patches required by Expo Doctor: `expo` 57.0.24, `expo-router`
+  57.0.22, `expo-constants` 57.0.19, `expo-asset` 57.0.18,
+  `expo-build-properties` 57.0.21, `@expo/ui` 57.0.19 and
+  `@expo/metro-runtime` 57.0.16. Transitively `@expo/cli` 57.0.26 and
+  `babel-preset-expo` 57.0.12. Expo Doctor passes 20/20 again.
+- AGENTS.md no longer pins model prompting references or a stale react-doctor
+  score; the references moved to a maintainer note in
+  `docs/agents/development.md`.
+
+### Not included
+
+- Dependabot updates that cross a major or SDK line (Expo SDK 58 packages,
+  React 19.3, TypeScript 7, Jest 30, GitHub Actions majors) stay open for a
+  dedicated upgrade.
+
 ## [4.4.7] - 2026-09-15
 
 Build `91` -> `92`. Fixes found by a full Android 16 emulator end-to-end run of

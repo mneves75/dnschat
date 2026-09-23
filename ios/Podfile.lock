@@ -2,9 +2,9 @@ PODS:
   - CocoaAsyncSocket (7.6.5)
   - DNSNative (1.5.0):
     - React-Core
-  - EXConstants (57.0.18):
+  - EXConstants (57.0.19):
     - ExpoModulesCore
-  - Expo (57.0.22):
+  - Expo (57.0.24):
     - ExpoModulesCore
     - ExpoModulesJSI
     - hermes-engine
@@ -30,7 +30,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - ExpoAsset (57.0.17):
+  - ExpoAsset (57.0.18):
     - ExpoModulesCore
   - ExpoCrypto (57.0.3):
     - ExpoModulesCore
@@ -87,7 +87,7 @@ PODS:
     - ExpoModulesJSI
     - ExpoModulesWorklets
     - RNWorklets
-  - ExpoRouter (57.0.21):
+  - ExpoRouter (57.0.22):
     - ExpoModulesCore
     - RNScreens
   - ExpoSecureStore (57.0.4):
@@ -98,7 +98,7 @@ PODS:
     - ExpoModulesCore
   - ExpoSystemUI (57.0.4):
     - ExpoModulesCore
-  - ExpoUI (57.0.18):
+  - ExpoUI (57.0.19):
     - ExpoModulesCore
     - ExpoModulesWorklets
     - React-RCTFabric
@@ -2744,9 +2744,9 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   CocoaAsyncSocket: 065fd1e645c7abab64f7a6a2007a48038fdc6a99
   DNSNative: e1654d7333a1747c724a008c144aca102b26539d
-  EXConstants: 8948a340eb14bf2bdaaa0e21a63cb9343860b87a
-  Expo: 70c70c1692c316b909fbe4996cf9c92b9cfb1bae
-  ExpoAsset: b3999ffb3d4049b6c870708c60ea2209ace9f170
+  EXConstants: 2dc4473aff5574eccaccb9f3eefe6d95247e5d38
+  Expo: c04c9bde6ce9344f6da189e3d594c34884bba88b
+  ExpoAsset: a917b756b2e4fe12cef1ac3bca5fd849ddb2b919
   ExpoCrypto: 3ba3d7fcf244a3ae8cb888c5759e0db70ecc236d
   ExpoDomWebView: beaec034e51bd028428b98bb1f2633ab79c6d095
   ExpoFileSystem: 28778f942725170102f7c6cf4dee05a526ddacd0
@@ -2761,12 +2761,12 @@ SPEC CHECKSUMS:
   ExpoModulesJSI: 9df8e7c9719f59e8c001ec33611774137fc1484a
   ExpoModulesWorklets: 986cf72c18400743869b4642d243115f831e404d
   ExpoModulesWorkletsAdapter: 45b4ea99adb80abaa012b45e9a9543b4763275c9
-  ExpoRouter: 8f978c2ecb68bfb1f2eeff765ba2ddd8d66c54e0
+  ExpoRouter: 3a8e63a51be53961b03f331c33108629090cf667
   ExpoSecureStore: ff1fd5e073957417ba8f9dec0bebcbd55a60e747
   ExpoSplashScreen: e771da4f26d550ea4fd067d8fb942657e47bb846
   ExpoSymbols: 37a3a6e5847edb08b83a5ee04d3b46525e205f00
   ExpoSystemUI: 05ee8d4aaba1b6af330f3621e19b39ff9f21e718
-  ExpoUI: 97c741e691148862d8032f467c708671d28809b1
+  ExpoUI: 98d4650d9d32daaf772597adc76525c645b1ff76
   FBLazyVector: 2138c6c2ab66c31bf5754dc18097fbc498a49c7f
   hermes-engine: 63c5db7d529c36335fada6582fd293ae2a105d77
   RCTDeprecation: 96f68ebf33f8762466b01d57d6e873c4f30efb07

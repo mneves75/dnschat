@@ -7,7 +7,7 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 - JavaScript fallback transports (UDP/TCP) for constrained networks
 - An in-app Logs screen to inspect attempts, failures, and fallbacks
 
-[![Version](https://img.shields.io/badge/version-4.4.7-blue.svg)](.)
+[![Version](https://img.shields.io/badge/version-4.4.8-blue.svg)](.)
 [![React Native](https://img.shields.io/badge/React%20Native-0.86.3-blue.svg)](https://reactnative.dev/)
 [![Expo](https://img.shields.io/badge/Expo-57.0.x-black.svg)](https://expo.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0.x-blue.svg)](https://www.typescriptlang.org/)
@@ -31,7 +31,7 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 
 ## Tech stack
 
-- App version: `4.4.7` (build `92`); distribution status is recorded in the [TestFlight runbook](docs/App_store/Apple_App_Store/TESTFLIGHT.md).
+- App version: `4.4.8` (build `93`); distribution status is recorded in the [TestFlight runbook](docs/App_store/Apple_App_Store/TESTFLIGHT.md).
 - Expo workflow: Expo Router + EAS-compatible native config
 - Expo SDK: `57.0.x`
 - React: `19.2.3`
@@ -211,14 +211,15 @@ Release:
 
 ## Current verification baseline
 
-The 4.4.7 gate (`pnpm run verify:all`) passed 705 root tests and 67 native
-tests, with react-doctor at 92, a clean dependency audit and no leaks found.
-A full Android 16 emulator end-to-end run of the release APK and an iOS 27
-simulator pass of the Release build exercised onboarding, DNS replies with
-accented text, the UDP fallback, errors, retry, long-press menus, sharing and
-the pt-BR locale. On a physical iPhone the Release build was installed over
-the previous version: it launched, existing conversations still decrypted,
-and About showed 4.4.7 (92).
+The 4.4.8 gate (`pnpm run verify:all`, Node 24) passed 707 root tests and 67
+native tests, with react-doctor at 92, Expo Doctor 20/20, a clean dependency
+audit and no leaks found. Release builds were run on an iOS 27 simulator
+(stable Xcode 27.0) and an Android 16 emulator. Both completed onboarding and
+got a real DNS reply over the native transport; iOS rendered accented text,
+kept its encrypted history across a cold restart and showed 4.4.8 (93) in
+About. The compiled iOS Info.plist carries no local-networking exception.
+Earlier releases hold the fuller end-to-end record; see the
+[changelog](CHANGELOG.md).
 
 Release builds use `xcodebuild archive`, `-exportArchive`, and
 `asc publish testflight`. The [TestFlight runbook](docs/App_store/Apple_App_Store/TESTFLIGHT.md)
