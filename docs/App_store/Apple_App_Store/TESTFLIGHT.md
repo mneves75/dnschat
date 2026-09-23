@@ -4,14 +4,16 @@ To upload your DNSChat iOS app to TestFlight, you'll need to follow these steps:
 
 ## Release state
 
-- **Repository target:** `4.4.7` build `92`; signed archive and IPA uploaded.
-- **Latest validated TestFlight artifact:** `4.4.7` build `92`, tagged
-  `v4.4.7-beta1` at `c09e090` and processed `VALID` on `2026-09-15`.
-  Strict validation reports `0` errors and `0` warnings; both `en-US` and
-  `pt-BR` test notes are present. Distribution is internal only. The exported
-  IPA passes `codesign --verify --deep --strict` and contains no source maps.
-  It replaces `4.4.6` build `91`, which skipped the JavaScript UDP fallback and
-  could re-fill the composer with the sent text after an autocorrected send.
+- **Repository target:** `4.4.8` build `93`; signed archive and IPA uploaded.
+- **Latest validated TestFlight artifact:** `4.4.8` build `93`, tagged
+  `v4.4.8-beta1` at `157659e` and processed `VALID` on `2026-09-23`.
+  Archived with stable Xcode `27.0` (the host's selected Xcode was a beta, so
+  the build used `DEVELOPER_DIR`). Strict validation reports `0` errors and
+  `0` warnings; both `en-US` and `pt-BR` test notes are present. Distribution
+  is internal only. The exported IPA passes `codesign --verify --deep --strict`,
+  contains no source maps, and its Info.plist has no App Transport Security
+  local-networking exception. It replaces `4.4.7` build `92`. Build `90`
+  (`4.4.5`) was never uploaded.
 - **Latest production App Store release:** `4.0.23`, observed as
   `READY_FOR_SALE` on `2026-09-05`. TestFlight validation does not prove
   production publication.
@@ -244,7 +246,7 @@ pnpm run ios --verbose
 - **App Store Connect** app record created
 - **Code signing** configured correctly
 - **Bundle ID** matches (`<BUNDLE_ID>`)
-- **Version numbers** consistent with the repository target (`4.4.7` build `92`)
+- **Version numbers** consistent with the repository target (`4.4.8` build `93`)
 - **Native DNS module** compiles successfully
 - **Xcode CLI smoke** passed:
   - Debug simulator build
@@ -350,4 +352,4 @@ If you encounter issues during the upload process:
 
 ---
 
-_Source target and validated TestFlight beta: 4.4.7 build 92; production remains 4.0.23._
+_Source target and validated TestFlight beta: 4.4.8 build 93; production remains 4.0.23._

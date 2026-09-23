@@ -126,16 +126,10 @@ xcrun devicectl device install app \
   <DERIVED_DATA>/Build/Products/Release-iphoneos/DNSChat.app
 ```
 
-Latest validated TestFlight release: version `4.3.6` build `84`, tagged
-`v4.3.6-beta1`. The exact final source completed signed archive and IPA
-export, installed and remained running on an authorized physical iPhone, and
-processed `VALID` in TestFlight on `2026-08-31`. Bilingual test notes are
-present and strict validation reports `0` errors and `0` warnings.
-
-App Store version validation is blocked because no `4.3.6` iOS version record
-exists. This is production-submission state, not a TestFlight failure. App Store
-Connect identifiers, signing identifiers, tester group names, local paths, and
-device identifiers are intentionally omitted from public docs.
+The current TestFlight release state is recorded in the
+[TestFlight runbook](App_store/Apple_App_Store/TESTFLIGHT.md). App Store Connect
+identifiers, signing identifiers, tester group names, local paths, and device
+identifiers are intentionally omitted from public docs.
 
 Signed TestFlight release shape:
 
@@ -149,7 +143,7 @@ xcodebuild clean archive \
   DEVELOPMENT_TEAM=<TEAM_ID> \
   CODE_SIGN_STYLE=Manual \
   PROVISIONING_PROFILE_SPECIFIER='<APP_STORE_PROFILE>' \
-  CODE_SIGN_IDENTITY='iPhone Distribution'
+  CODE_SIGN_IDENTITY='Apple Distribution'
 
 xcodebuild -exportArchive \
   -archivePath /tmp/DNSChat.xcarchive \
