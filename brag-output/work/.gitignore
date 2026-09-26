@@ -1,0 +1,11 @@
+# Apple system fonts: copy locally before rendering, never commit (see README.md).
+assets/*.ttf
+# Regenerable render intermediates.
+stills/
+segs/
+check/
+*.wav
+*.m4a
+*.mp4
+*.png
+!assets/icon.png

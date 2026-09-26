@@ -22,6 +22,7 @@
     "assets/**",
     "artifacts/**",
     "__tests__/fixtures/**",
-    "marketing/video/public/**"
+    "marketing/video/public/**",
+    "brag-output/work/assets/**"
   ]
 }

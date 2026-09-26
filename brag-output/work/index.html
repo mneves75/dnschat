@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>DNS Chat brag</title>
+<style>
+@font-face { font-family: "SFPro"; src: url(assets/sfpro.ttf) format("truetype"); font-weight: 1 1000; }
+@font-face { font-family: "SFMono"; src: url(assets/sfmono.ttf) format("truetype"); font-weight: 300 900; }
+:root {
+  --canvas: #F2F2F7; --surface: #FFFFFF; --blue: #007AFF; --label: #000; --label2: #6D6D70; --label3: #8E8E93;
+  --sep: rgba(60,60,67,.15); --gray5: #E5E5EA; --blueText: #0057B8;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 1920px; height: 1080px; overflow: hidden; background: var(--canvas); }
+body { font-family: "SFPro", system-ui, sans-serif; color: var(--label); -webkit-font-smoothing: antialiased; }
+.mono { font-family: "SFMono", ui-monospace, Menlo, monospace; }
+#stage { position: relative; width: 1920px; height: 1080px; overflow: hidden; background: radial-gradient(1400px 900px at 62% 38%, #FFFFFF 0%, #F7F7FA 45%, var(--canvas) 80%); }
+.abs { position: absolute; }
+.scene { position: absolute; inset: 0; }
+.cap { font-weight: 700; font-size: 84px; letter-spacing: -0.035em; line-height: 1.06; white-space: nowrap; }
+.hide { opacity: 0; }
+
+/* S1 terminal */
+#term { left: 160px; top: 360px; width: 1600px; height: 492px; background: var(--surface); border-radius: 22px; border: 1px solid rgba(0,0,0,.08);
+  box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 24px 60px -20px rgba(0,0,0,.18); overflow: hidden; transform-origin: 50% 40%; }
+.tbar { height: 56px; border-bottom: 1px solid var(--sep); display: flex; align-items: center; padding-left: 24px; gap: 10px; position: relative; }
+.tbar i { width: 14px; height: 14px; border-radius: 50%; background: #D1D1D6; }
+.tbar span { position: absolute; left: 0; right: 0; text-align: center; font-size: 20px; font-weight: 600; color: var(--label3); }
+.tbody { padding: 40px 52px; font-size: 40px; line-height: 64px; color: var(--label); white-space: pre; }
+.pr { color: var(--label3); }
+.q { color: var(--blue); }
+.cur { display: inline-block; width: 22px; height: 44px; background: var(--label); vertical-align: -8px; margin-left: 2px; }
+.out { color: #1C1C1E; }
+
+/* S2 title */
+.appicon { border-radius: 22.4%; box-shadow: 0 2px 4px rgba(0,0,0,.06), 0 30px 60px -18px rgba(8,80,85,.45); }
+
+/* S3 phone */
+#phone { transform-origin: 50% 12%; left: 1256px; top: 44px; width: 460px; height: 992px; border-radius: 74px; background: #1C1C1E; padding: 12px;
+  box-shadow: 0 0 0 2px #3A3A3C inset, 0 40px 80px -30px rgba(0,0,0,.45), 0 8px 20px rgba(0,0,0,.12); }
+#screen { position: relative; width: 436px; height: 968px; border-radius: 62px; overflow: hidden; background: var(--canvas); }
+.sb { position: absolute; top: 0; left: 0; right: 0; height: 56px; }
+.sb .time { position: absolute; left: 50px; top: 19px; font-size: 19px; font-weight: 600; letter-spacing: -0.01em; }
+.sb .island { position: absolute; left: 156px; top: 12px; width: 124px; height: 36px; border-radius: 18px; background: #000; }
+.sb .bars { position: absolute; left: 318px; top: 24px; display: flex; gap: 2px; align-items: flex-end; }
+.sb .bars b { width: 4px; background: #000; border-radius: 1px; }
+.sb .wifi { position: absolute; left: 346px; top: 21px; }
+.sb .batt { position: absolute; left: 372px; top: 23px; width: 28px; height: 13px; border-radius: 4px; border: 1.5px solid rgba(0,0,0,.4); padding: 1.5px; }
+.sb .batt::after { content: ""; display: block; width: 100%; height: 100%; background: #000; border-radius: 2px; }
+.nav { position: absolute; top: 0; left: 0; right: 0; height: 132px; background: rgba(255,255,255,.96); border-bottom: 1px solid var(--sep); }
+.navbtn { position: absolute; top: 66px; width: 48px; height: 48px; border-radius: 50%; background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,.08), 0 0 0 1px rgba(0,0,0,.04); display: grid; place-items: center; }
+.ttl { position: absolute; left: 80px; right: 80px; top: 78px; text-align: center; font-size: 19px; font-weight: 600; letter-spacing: -0.01em; }
+.msgs { position: absolute; left: 0; right: 0; top: 148px; }
+.bub { position: absolute; font-size: 19px; line-height: 1.32; letter-spacing: -0.01em; border-radius: 22px; padding: 12px 18px 10px; }
+.bub .tm { display: block; font-size: 13px; margin-top: 4px; opacity: .6; }
+#ub { right: 18px; top: 0; background: var(--blue); color: #000; transform-origin: 100% 100%; }
+#ab { left: 18px; top: 96px; width: 322px; background: var(--gray5); color: #000; transform-origin: 0% 0%; }
+#dots { left: 18px; top: 96px; width: 78px; height: 46px; background: var(--gray5); border-radius: 22px; display: flex; gap: 7px; align-items: center; justify-content: center; transform-origin: 0% 50%; }
+#dots i { width: 10px; height: 10px; border-radius: 50%; background: #8E8E93; }
+.composer { position: absolute; left: 20px; right: 20px; top: 866px; height: 54px; border-radius: 27px; background: rgba(255,255,255,.94); box-shadow: 0 6px 20px rgba(0,0,0,.08), 0 0 0 1px rgba(0,0,0,.05); }
+.composer .ph { position: absolute; left: 22px; top: 15px; font-size: 19px; color: var(--label3); }
+.composer .typed { position: absolute; left: 22px; top: 15px; font-size: 19px; color: #000; white-space: pre; }
+.caret { display: inline-block; width: 2px; height: 23px; background: var(--blue); vertical-align: -4px; margin-left: 1px; }
+#send { position: absolute; right: 8px; top: 8px; width: 38px; height: 38px; border-radius: 50%; background: #8E8E93; display: grid; place-items: center; }
+#sendOn { position: absolute; inset: 0; border-radius: 50%; background: var(--blue); }
+.home { position: absolute; left: 148px; bottom: 9px; width: 140px; height: 5px; border-radius: 3px; background: #000; }
+.tap { position: absolute; width: 60px; height: 60px; margin: -30px 0 0 -30px; border-radius: 50%; background: rgba(0,0,0,.14); border: 2px solid rgba(0,0,0,.18); }
+#ring { position: absolute; border-radius: 26px; border: 3px solid var(--blue); }
+
+/* S4 path */
+.rowlbl { position: absolute; left: 160px; width: 180px; font-size: 28px; font-weight: 500; color: var(--label2); letter-spacing: -0.01em; }
+.chip { position: absolute; left: 360px; background: var(--surface); border-radius: 14px; border: 1px solid rgba(0,0,0,.08); box-shadow: 0 1px 2px rgba(0,0,0,.04); padding: 16px 26px; white-space: nowrap; }
+.link { position: absolute; left: 400px; width: 2px; background: #C7C7CC; transform-origin: 50% 0%; }
+.tbox { position: absolute; top: 760px; width: 240px; height: 118px; background: var(--surface); border-radius: 14px; border: 1px solid rgba(0,0,0,.1); padding: 18px 24px; }
+.tbox .n { font-size: 36px; font-weight: 600; letter-spacing: -0.02em; }
+.tbox .st { position: absolute; left: 24px; top: 70px; font-size: 24px; color: var(--label3); white-space: nowrap; }
+#tNativeOn { position: absolute; inset: -1px; border-radius: 14px; border: 3px solid var(--blue); }
+#pulse { position: absolute; width: 18px; height: 18px; margin: -9px 0 0 -9px; border-radius: 50%; background: var(--blue); box-shadow: 0 0 0 6px rgba(0,122,255,.18); }
+
+/* S5 */
+.claim { position: absolute; left: 160px; font-weight: 700; font-size: 112px; letter-spacing: -0.04em; line-height: 1; white-space: nowrap; }
+#vrule { position: absolute; left: 1250px; top: 280px; width: 1px; height: 560px; background: var(--sep); transform-origin: 50% 0%; }
+</style>
+</head>
+<body>
+<div id="stage">
+
+  <!-- S1: terminal hook -->
+  <div id="s1" class="scene">
+    <div id="cap1a" class="abs cap" style="left:160px;top:190px">This is a DNS lookup.</div>
+    <div id="cap1b" class="abs cap hide" style="left:160px;top:190px">It wrote a haiku.</div>
+    <div id="term" class="abs">
+      <div class="tbar"><i></i><i></i><i></i><span>zsh</span></div>
+      <div class="tbody mono"><div><span class="pr">%</span> <span id="cmd"></span><span id="cur1" class="cur"></span></div><div id="h1" class="out hide">"DNS whispers on port fifty-three</div><div id="h2" class="out hide"> Quietly routing queries</div><div id="h3" class="out hide"> Domain names set free."</div><div id="p2" class="hide"><span class="pr">%</span> <span id="cur2" class="cur"></span></div></div>
+    </div>
+  </div>
+
+  <!-- S2: reveal -->
+  <div id="s2" class="scene">
+    <img id="icon2" class="abs appicon hide" src="assets/icon.png" alt="" style="left:840px;top:250px;width:240px;height:240px">
+    <div id="name2" class="abs hide" style="left:0;width:1920px;top:532px;text-align:center;font-weight:700;font-size:136px;letter-spacing:-0.045em">DNS Chat</div>
+    <div id="sub2" class="abs hide" style="left:0;width:1920px;top:720px;text-align:center;font-weight:500;font-size:54px;color:var(--label2);letter-spacing:-0.025em">An AI chat that travels as DNS queries.</div>
+  </div>
+
+  <!-- S3 + S4 share the phone -->
+  <div id="s3" class="scene">
+    <div id="cap3a" class="abs cap hide" style="left:160px;top:420px">Ask it what DNS is.</div>
+    <div id="cap3b" class="abs cap hide" style="left:160px;top:370px">It answers.<br>Over DNS.</div>
+
+    <div id="path" class="scene">
+      <div id="cap4" class="abs cap hide" style="left:160px;top:150px;font-size:72px">What actually left the phone:</div>
+      <div id="r1l" class="rowlbl hide" style="top:318px">You typed</div>
+      <div id="r1" class="chip hide" style="top:296px;font-size:44px;font-weight:500;letter-spacing:-0.02em">What is DNS?</div>
+      <div id="k1" class="link" style="top:382px;height:48px;transform:scaleY(0)"></div>
+      <div id="r2l" class="rowlbl hide" style="top:458px">DNS label</div>
+      <div id="r2" class="chip mono hide" style="top:436px;font-size:42px;color:var(--blue)">what-is-dns</div>
+      <div id="k2" class="link" style="top:522px;height:48px;transform:scaleY(0)"></div>
+      <div id="r3l" class="rowlbl hide" style="top:598px">Query</div>
+      <div id="r3" class="chip mono hide" style="top:576px;font-size:38px"><span style="color:var(--label3)">TXT</span> <span style="color:var(--blue)">what-is-dns</span>.llm.pieter.com</div>
+      <div id="k3" class="link" style="top:660px;height:100px;transform:scaleY(0)"></div>
+      <div id="r4l" class="rowlbl hide" style="top:800px">Route</div>
+      <div id="tNative" class="tbox hide" style="left:360px"><div id="tNativeOn" class="hide"></div><div class="n">Native</div><div class="st" id="stN0">first try</div><div class="st hide" id="stN1" style="color:var(--blueText);font-weight:600">answered</div></div>
+      <div id="tUdp" class="tbox hide" style="left:624px"><div class="n">UDP</div><div class="st" id="stU0">fallback</div><div class="st hide" id="stU1">not needed</div></div>
+      <div id="tTcp" class="tbox hide" style="left:888px"><div class="n">TCP</div><div class="st" id="stT0">fallback</div><div class="st hide" id="stT1">not needed</div></div>
+      <div id="pulse" class="hide" style="left:401px;top:660px"></div>
+    </div>
+
+    <div id="phone" class="abs hide">
+      <div id="screen">
+        <div class="nav">
+          <div class="sb">
+            <div class="time">9:41</div><div class="island"></div>
+            <div class="bars"><b style="height:5px"></b><b style="height:7px"></b><b style="height:9px"></b><b style="height:11px"></b></div>
+            <svg class="wifi" width="19" height="14" viewBox="0 0 19 14"><path d="M9.5 13.2 6.9 10.5a3.7 3.7 0 0 1 5.2 0Z M4.6 8.2a7 7 0 0 1 9.8 0l-1.5 1.5a4.9 4.9 0 0 0-6.8 0Z M2.3 5.9a10.3 10.3 0 0 1 14.4 0l-1.5 1.5a8.2 8.2 0 0 0-11.4 0Z M0 3.6a13.5 13.5 0 0 1 19 0l-1.5 1.5a11.4 11.4 0 0 0-16 0Z" fill="#000"/></svg>
+            <div class="batt"></div>
+          </div>
+          <div class="navbtn" style="left:16px"><svg width="14" height="22" viewBox="0 0 14 22"><path d="M11 2 3 11l8 9" fill="none" stroke="#000" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div id="ttlA" class="ttl">New Chat</div>
+          <div id="ttlB" class="ttl hide">What is DNS?</div>
+          <div class="navbtn" style="right:16px"><svg width="26" height="26" viewBox="0 0 26 26"><circle cx="13" cy="13" r="11" fill="none" stroke="#000" stroke-width="2"/><circle cx="8" cy="13" r="1.7"/><circle cx="13" cy="13" r="1.7"/><circle cx="18" cy="13" r="1.7"/></svg></div>
+        </div>
+        <div class="msgs">
+          <div id="ub" class="bub hide">What is DNS?<span class="tm">9:41</span></div>
+          <div id="ring" class="hide"></div>
+          <div id="dots" class="bub hide"><i></i><i></i><i></i></div>
+          <div id="ab" class="bub hide">DNS (Domain Name System) translates domain names like google.com into IP addresses that computers use to connect.<span class="tm">9:41</span></div>
+        </div>
+        <div class="composer">
+          <div id="ph" class="ph">Ask me anything...</div>
+          <div class="typed"><span id="typed"></span><span id="caret" class="caret hide"></span></div>
+          <div id="send"><div id="sendOn" class="hide"></div><svg style="position:relative" width="16" height="18" viewBox="0 0 16 18"><path d="M8 16V3M2 8.5 8 2.5l6 6" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        </div>
+        <div class="home"></div>
+        <div id="tap1" class="tap hide" style="left:120px;top:893px"></div>
+        <div id="tap2" class="tap hide" style="left:397px;top:893px"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- S5 -->
+  <div id="s5" class="scene">
+    <div id="c1" class="claim hide" style="top:286px">No account.</div>
+    <div id="c2" class="claim hide" style="top:420px">No API key.</div>
+    <div id="c3" class="claim hide" style="top:554px">No tracking.</div>
+    <div id="c4" class="abs hide" style="left:160px;top:722px;font-size:46px;font-weight:500;color:var(--label2);letter-spacing:-0.02em;white-space:nowrap">DNS is observable. The app tells you.</div>
+    <div id="vrule" style="transform:scaleY(0)"></div>
+    <img id="icon5" class="abs appicon hide" src="assets/icon.png" alt="" style="left:1470px;top:318px;width:200px;height:200px">
+    <div id="name5" class="abs hide" style="left:1270px;width:600px;top:550px;text-align:center;font-weight:700;font-size:76px;letter-spacing:-0.04em">DNS Chat</div>
+    <div id="url5" class="abs mono hide" style="left:1270px;width:600px;top:658px;text-align:center;font-size:32px;color:var(--label2)">github.com/mneves75/dnschat</div>
+  </div>
+</div>
+
+<script src="assets/gsap.min.js"></script>
+<script>
+const $ = (s) => document.querySelector(s);
+const tl = gsap.timeline({ paused: true, defaults: { ease: "power3.out", immediateRender: false } });
+// fromTo helper: every tween states both ends, so seeking in any order is deterministic.
+const ft = (sel, from, to, at) => tl.fromTo(sel, from, to, at);
+const IN = (sel, at, d = 0.45, dy = 28) => ft(sel, { opacity: 0, y: dy }, { opacity: 1, y: 0, duration: d }, at);
+const OUT = (sel, at, d = 0.28, dy = -24) => ft(sel, { opacity: 1, y: 0 }, { opacity: 0, y: dy, duration: d, ease: "power2.in" }, at);
+const POP = (sel, at, d = 0.4, s = 0.6) => ft(sel, { opacity: 0, scale: s }, { opacity: 1, scale: 1, duration: d, ease: "back.out(1.6)" }, at);
+
+// ---------- S1 hook (0 – 5.625) ----------
+ft("#term", { scale: 1 }, { scale: 1.035, duration: 5.3, ease: "none" }, 0.0);
+["#h1", "#h2", "#h3"].forEach((h, i) => ft(h, { opacity: 0, x: -10 }, { opacity: 1, x: 0, duration: 0.3 }, 1.75 + i * 0.3));
+ft("#p2", { opacity: 0 }, { opacity: 1, duration: 0.01 }, 2.7);
+OUT("#cap1a", 2.5, 0.25);
+IN("#cap1b", 2.78, 0.4);
+OUT("#cap1b", 5.3, 0.3);
+ft("#term", { opacity: 1, y: 0 }, { opacity: 0, y: -40, duration: 0.32, ease: "power2.in" }, 5.3);
+
+// ---------- S2 reveal (5.625 – 8.75) ----------
+ft("#icon2", { opacity: 0, scale: 0.7, y: 40, filter: "blur(12px)" }, { opacity: 1, scale: 1, y: 0, filter: "blur(0px)", duration: 0.6, ease: "back.out(1.4)" }, 5.65);
+IN("#name2", 5.85, 0.5, 36);
+IN("#sub2", 6.02, 0.45, 24);
+OUT("#icon2", 8.42, 0.3); OUT("#name2", 8.45, 0.3); OUT("#sub2", 8.48, 0.28);
+
+// ---------- S3 demo (8.75 – 14.375) ----------
+ft("#phone", { opacity: 0, x: 260, rotate: 3 }, { opacity: 1, x: 0, rotate: 0, duration: 0.75, ease: "expo.out" }, 8.75);
+IN("#cap3a", 8.92, 0.42);
+ft("#tap1", { opacity: 0, scale: 0.5 }, { opacity: 1, scale: 1, duration: 0.14, ease: "power2.out" }, 9.38);
+ft("#tap1", { opacity: 1 }, { opacity: 0, duration: 0.2 }, 9.55);
+ft("#ph", { opacity: 1 }, { opacity: 0, duration: 0.01 }, 9.6);
+ft("#caret", { opacity: 0 }, { opacity: 1, duration: 0.01 }, 9.5);
+ft("#sendOn", { opacity: 0 }, { opacity: 1, duration: 0.15 }, 9.62);
+ft("#tap2", { opacity: 0, scale: 0.5 }, { opacity: 1, scale: 1, duration: 0.12, ease: "power2.out" }, 10.34);
+ft("#tap2", { opacity: 1 }, { opacity: 0, duration: 0.2 }, 10.48);
+ft("#send", { scale: 1 }, { scale: 0.86, duration: 0.08, yoyo: true, repeat: 1, ease: "power1.inOut" }, 10.36);
+ft("#sendOn", { opacity: 1 }, { opacity: 0, duration: 0.15 }, 10.46);
+ft("#ph", { opacity: 0 }, { opacity: 1, duration: 0.15 }, 10.5);
+ft("#ub", { opacity: 0, y: 700, scale: 0.9 }, { opacity: 1, y: 0, scale: 1, duration: 0.5, ease: "expo.out" }, 10.44);
+OUT("#ttlA", 10.6, 0.18, -8); IN("#ttlB", 10.7, 0.25, 8);
+POP("#dots", 10.85, 0.3, 0.5);
+ft("#dots", { opacity: 1, scale: 1 }, { opacity: 0, scale: 0.9, duration: 0.12 }, 11.52);
+// Camera: lean into the thread so the answer is readable, then back out for the path.
+ft("#phone", { scale: 1 }, { scale: 1.32, duration: 0.9, ease: "power2.inOut" }, 11.7);
+ft("#phone", { scale: 1.32 }, { scale: 1, duration: 0.6, ease: "power2.inOut" }, 14.2);
+ft("#ab", { opacity: 0, scale: 0.85, y: 10 }, { opacity: 1, scale: 1, y: 0, duration: 0.45, ease: "back.out(1.3)" }, 11.6);
+OUT("#cap3a", 11.36, 0.25);
+IN("#cap3b", 11.62, 0.42);
+OUT("#cap3b", 14.08, 0.28);
+
+// ---------- S4 path (14.375 – 18.75) ----------
+IN("#cap4", 14.4, 0.42);
+ft("#ring", { opacity: 0, scale: 1.12 }, { opacity: 1, scale: 1, duration: 0.35 }, 14.45);
+ft("#ring", { opacity: 1 }, { opacity: 0.0, duration: 0.5 }, 16.2);
+IN("#r1l", 14.62, 0.35, 16); IN("#r1", 14.62, 0.35, 16);
+ft("#k1", { scaleY: 0 }, { scaleY: 1, duration: 0.3, ease: "power2.inOut" }, 14.9);
+IN("#r2l", 15.02, 0.35, 16); IN("#r2", 15.02, 0.35, 16);
+ft("#k2", { scaleY: 0 }, { scaleY: 1, duration: 0.3, ease: "power2.inOut" }, 15.3);
+IN("#r3l", 15.42, 0.35, 16); IN("#r3", 15.42, 0.35, 16);
+IN("#r4l", 15.85, 0.35, 16);
+IN("#tNative", 15.85, 0.35, 20); IN("#tUdp", 16.0, 0.35, 20); IN("#tTcp", 16.15, 0.35, 20);
+ft("#k3", { scaleY: 0 }, { scaleY: 1, duration: 0.36, ease: "power2.in" }, 16.34);
+ft("#pulse", { opacity: 0, y: 0 }, { opacity: 1, y: 0, duration: 0.05 }, 16.32);
+ft("#pulse", { y: 0 }, { y: 100, duration: 0.36, ease: "power2.in" }, 16.34);
+ft("#pulse", { opacity: 1, scale: 1 }, { opacity: 0, scale: 2.2, duration: 0.25 }, 16.7);
+ft("#tNativeOn", { opacity: 0 }, { opacity: 1, duration: 0.2 }, 16.72);
+ft("#tNative", { scale: 1 }, { scale: 1.05, duration: 0.12, yoyo: true, repeat: 1, ease: "power1.inOut" }, 16.72);
+ft("#stN0", { opacity: 1 }, { opacity: 0, duration: 0.12 }, 16.72); ft("#stN1", { opacity: 0 }, { opacity: 1, duration: 0.2 }, 16.8);
+ft(["#stU0", "#stT0"], { opacity: 1 }, { opacity: 0, duration: 0.12 }, 16.95); ft(["#stU1", "#stT1"], { opacity: 0 }, { opacity: 1, duration: 0.2 }, 17.02);
+ft("#path", { opacity: 1, y: 0 }, { opacity: 0, y: -24, duration: 0.3, ease: "power2.in" }, 18.42);
+ft("#phone", { opacity: 1, x: 0 }, { opacity: 0, x: 220, duration: 0.34, ease: "power2.in" }, 18.4);
+
+// ---------- S5 punchline + outro (18.75 – 23.0) ----------
+IN("#c1", 18.8, 0.4, 40); IN("#c2", 19.15, 0.4, 40); IN("#c3", 19.5, 0.4, 40);
+IN("#c4", 19.95, 0.4, 20);
+ft("#vrule", { scaleY: 0 }, { scaleY: 1, duration: 0.5, ease: "power2.inOut" }, 20.35);
+ft("#icon5", { opacity: 0, scale: 0.75, filter: "blur(10px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.55, ease: "back.out(1.4)" }, 20.45);
+IN("#name5", 20.6, 0.45, 24); IN("#url5", 20.72, 0.45, 16);
+
+// ---------- per-frame text that is a function of time ----------
+const CMD = [["dig +short TXT ", ""], ["write-a-haiku-about-port-53", "q"], [" @llm.pieter.com", ""]];
+const CMDLEN = CMD.reduce((n, [s]) => n + s.length, 0);
+const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+function cmdHTML(n) {
+  let out = "", left = n;
+  for (const [s, c] of CMD) { const part = s.slice(0, Math.max(0, left)); left -= s.length; if (part) out += c ? `<span class="${c}">${esc(part)}</span>` : esc(part); }
+  return out;
+}
+const lerpCount = (t, t0, t1, n) => Math.max(0, Math.min(n, Math.floor(((t - t0) / (t1 - t0)) * n + 1e-6)));
+const blink = (t, t0) => ((t - t0) % 1.0) < 0.55;
+const MSG = "What is DNS?";
+let last = {};
+function setHTML(el, key, html) { if (last[key] !== html) { el.innerHTML = html; last[key] = html; } }
+function update(t) {
+  const n = lerpCount(t, 0.45, 1.42, CMDLEN);
+  setHTML($("#cmd"), "cmd", cmdHTML(n));
+  $("#cur1").style.opacity = t < 1.55 ? (t < 0.45 || t > 1.42 ? (blink(t, 0) ? 1 : 0) : 1) : 0;
+  $("#cur2").style.opacity = t >= 2.7 && blink(t, 2.7) ? 1 : 0;
+  const m = t >= 10.46 ? 0 : lerpCount(t, 9.6, 10.28, MSG.length);
+  setHTML($("#typed"), "typed", esc(MSG.slice(0, m)));
+  $("#caret").style.visibility = (t < 9.5 || t >= 10.46 || (t > 10.28 && !blink(t, 10.28))) ? "hidden" : "visible";
+  document.querySelectorAll("#dots i").forEach((d, i) => { const p = Math.sin((t - 10.85) * 7 - i * 0.9); d.style.opacity = 0.45 + 0.55 * Math.max(0, p); d.style.transform = `translateY(${-3 * Math.max(0, p)}px)`; });
+}
+function layout() {
+  // User bubble sits at the top of the thread; the ring hugs it.
+  const ub = $("#ub");
+  const r = { x: ub.offsetLeft, y: ub.offsetTop, w: ub.offsetWidth, h: ub.offsetHeight };
+  Object.assign($("#ring").style, { left: r.x - 6 + "px", top: r.y - 6 + "px", width: r.w + 12 + "px", height: r.h + 12 + "px" });
+  $("#dots").style.top = $("#ab").style.top = r.y + r.h + 16 + "px";
+}
+window.__seek = (t) => { tl.seek(t, true); update(t); };
+window.__duration = 23.0;
+Promise.all([document.fonts.load('700 84px "SFPro"'), document.fonts.load('400 40px "SFMono"'), ...[...document.images].map((i) => i.decode())]).then(() => document.fonts.ready).then(() => {
+  layout(); window.__seek(0); window.__ready = true;
+});
+</script>
+</body>
+</html>

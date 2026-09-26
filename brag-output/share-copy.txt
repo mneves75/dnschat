@@ -1,0 +1,1 @@
+I asked DNS for a haiku. It answered on port 53. DNS Chat sends your prompt to an AI as a DNS TXT query: no account, no API key, no tracking, and it tells you plainly that DNS is observable. github.com/mneves75/dnschat

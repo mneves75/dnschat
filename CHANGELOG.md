@@ -6,6 +6,13 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+### Added
+
+- `brag-output/`: a 23-second launch clip (`brag.mp4`, poster, share copy)
+  with its deterministic HTML, audio and render sources. It opens on a live
+  `dig` haiku from `llm.pieter.com` and shows the chat, the DNS label and the
+  transport route. The app is unchanged.
+
 ## [4.4.8] - 2026-09-23
 
 Build `92` -> `93`. Maintenance release: Expo SDK 57 patch alignment, one
