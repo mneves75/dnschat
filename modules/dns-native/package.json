@@ -27,7 +27,7 @@
     "@types/jest": "^29.5.0",
     "dns-packet": "^5.6.1",
     "jest": "^29.5.0",
-    "ts-jest": "^29.4.9",
+    "ts-jest": "^29.4.13",
     "typescript": "~6.0.3"
   },
   "peerDependencies": {
