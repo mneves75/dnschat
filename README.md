@@ -31,7 +31,7 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 
 ## Tech stack
 
-- App version: `4.4.9` (build `94`, candidate); distribution status is recorded in the [TestFlight runbook](docs/App_store/Apple_App_Store/TESTFLIGHT.md).
+- App version: `4.4.9` (build `94`, internal TestFlight `v4.4.9-beta1`); distribution status is recorded in the [TestFlight runbook](docs/App_store/Apple_App_Store/TESTFLIGHT.md).
 - Expo workflow: Expo Router + EAS-compatible native config
 - Expo SDK: `57.0.x`
 - React: `19.2.3`
@@ -211,7 +211,7 @@ Release:
 
 ## Current verification baseline
 
-The 4.4.9 candidate preserves ciphertext when its device-only key is missing,
+The 4.4.9 beta preserves ciphertext when its device-only key is missing,
 rejects ambiguous DNS wire names, and removes Android's unowned legacy lookup.
 The harness uses the app's response validation. Unsaved sends retain their
 drafts and settings failures show localized errors. The dependency lockfile
@@ -219,8 +219,9 @@ contains security updates and a hardware-capability patch for Expo Haptics;
 refresh dependencies and rebuild native code to apply it. For this candidate,
 the frozen installation and full gate pass: 755 application and 68 native tests.
 The signed iOS Release build passes. A prior candidate installed in place;
-final SDK hardware verification needs exclusive device access. Distribution evidence is recorded
-separately before promotion.
+final SDK hardware verification needs exclusive device access. TestFlight reports
+`VALID` and `IN_BETA_TESTING`, with strict validation at zero errors/warnings and
+bilingual test notes. Production prerequisites remain unresolved.
 
 The 4.4.8 gate (`pnpm run verify:all`, Node 24) passed 707 root tests and 67
 native tests, with react-doctor at 92, Expo Doctor 20/20, a clean dependency

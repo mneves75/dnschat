@@ -35,7 +35,7 @@ scripts. See `docs/technical/AUDIT-PLAN-2026-09.md` for scope and `MEMORY.md` fo
 candidate-specific validation. Historical TestFlight or hardware results must
 not be represented as proof of the current source.
 
-The 4.4.9 candidate fails closed when encrypted history survives without its
+The 4.4.9 beta fails closed when encrypted history survives without its
 device-only key: neither decryption nor a new log write may replace that key.
 It preserves chat/log ciphertext and backups for recovery rather than
 quarantining them as corrupt. This cannot recover a genuinely lost key.
@@ -53,6 +53,13 @@ The 2026-09-30 frozen installation and full verification gate pass, including
 the installed dependency controls; the audit reports zero advisories. The
 signed iOS Release build also passes. Runtime and distribution proof remain
 separate requirements; dependency checks do not establish hardware behavior.
+
+Internal TestFlight 4.4.9 (94) is processed VALID with zero strict-validation
+errors/warnings and bilingual testing notes. Its final archive/IPA has no
+development-only ATS local-network exception, with the packaged plist declared
+as an input to the stripping phase. Final hardware QA and dedicated contained
+adversarial execution remain unverified; the production decisions below remain
+binding. TestFlight availability does not establish production readiness.
 
 The Ruby lockfile no longer includes the unused Fastlane dependency or
 rubyzip 2.4.1, affected by

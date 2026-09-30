@@ -6,8 +6,13 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
-4.4.9 candidate, build `93` -> `94`. Security and verification maintenance;
-distribution evidence is recorded separately in the TestFlight runbook.
+## [4.4.9] - 2026-09-30
+
+Build `93` -> `94`. Internal TestFlight `v4.4.9-beta1` from `1ddfe09`,
+processed `VALID`; strict validation reports zero errors and warnings.
+Bilingual testing notes and internal beta availability are verified.
+The full gate passes 755 application and 68 native tests. Final physical-device
+runtime proof requires exclusive access; production prerequisites remain open.
 
 ### Security
 

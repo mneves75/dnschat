@@ -4,13 +4,21 @@ To upload your DNSChat iOS app to TestFlight, you'll need to follow these steps:
 
 ## Release state
 
-- **Repository target:** `4.4.9` build `94`, candidate. The full verification
+- **Repository target:** `4.4.9` build `94`, internal beta. The full verification
   gate (755 application and 68 native tests) and signed Release build pass.
   A prior candidate installed in place; the final SDK build needs exclusive
   device access for installation, Argent launch, screen and preserved-chat proof.
-  Signed archive, export and upload evidence are pending; the previous
-  TestFlight artifact below is historical.
-- **Latest validated TestFlight artifact:** `4.4.8` build `93`, tagged
+  Signed archive, export and upload pass for the exact source below.
+- **Latest validated TestFlight artifact:** `4.4.9` build `94`, tagged
+  `v4.4.9-beta1` from `1ddfe09`, processed `VALID` on `2026-09-30`.
+  Stable Xcode `27.0` (`27A266a`), strict signing verification, no source maps,
+  no ATS local-networking exception, and preserved historical signing/keychain
+  namespace. Strict TestFlight validation reports `0` errors and `0` warnings;
+  `en-US` and `pt-BR` notes are saved. Apple reports `IN_BETA_TESTING`, with
+  complete internal-group membership lookup. External beta review and production
+  submission were not performed. Android CI encountered a corrupt NDK download
+  before compilation; its failed job is being retried.
+- **Previous validated TestFlight artifact:** `4.4.8` build `93`, tagged
   `v4.4.8-beta1` at `157659e` and processed `VALID` on `2026-09-23`.
   Archived with stable Xcode `27.0` (the host's selected Xcode was a beta, so
   the build used `DEVELOPER_DIR`). Strict validation reports `0` errors and
@@ -304,7 +312,20 @@ After upload:
 3. **Feedback**: Collect user feedback through TestFlight
 4. **Iterate**: Upload new builds for continuous testing
 
-### What to Test for the 4.4.3 build 88 candidate
+### What to test for 4.4.9 build 94
+
+- Update in place, then confirm existing chats open and remain available after
+  a cold restart. Do not uninstall or reset storage to test an upgrade.
+- Confirm About reports 4.4.9 (94), and exercise navigation and native menus.
+- Send a short, non-sensitive prompt and check native DNS replies and localized
+  retry behavior. DNS traffic remains observable and unauthenticated.
+- Confirm an unsuccessful send preserves its draft and a failed settings save
+  reports an error instead of success.
+- Test haptics on supported physical hardware and Reduce Motion behavior.
+- Check Portuguese and English labels. Report the device/OS and reproducible
+  steps privately; do not include prompts or chat history in public logs.
+
+### Historical testing scope for 4.4.3 build 88
 
 - Launch the app on iOS 27 and confirm it remains open instead of returning to
   the Home Screen.
@@ -357,4 +378,4 @@ If you encounter issues during the upload process:
 
 ---
 
-_Source target: 4.4.9 build 94 (candidate); latest validated TestFlight beta: 4.4.8 build 93; production remains 4.0.23._
+_Source target and latest validated internal TestFlight beta: 4.4.9 build 94; production remains 4.0.23._
