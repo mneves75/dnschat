@@ -17,6 +17,9 @@ describe.each(["udp", "tcp"])(
     it.each<[string[], number, string]>([
       [["fixture-response"], 0, "valid"],
       [["fixture-response"], 0, "keep-open"],
+      ...((method === "tcp"
+        ? [[["fixture-response"], 0, "occupied-udp-port"]]
+        : []) as [string[], number, string][]),
       [[], 1, "valid"],
       [["1/2:incomplete"], 1, "valid"],
       [["1/2:a", "3/2:c"], 1, "valid"],
@@ -71,14 +74,30 @@ describe.each(["udp", "tcp"])(
           else socket.end(frame);
         });
       });
+      let occupiedUdp: dgram.Socket | undefined;
       try {
-        await new Promise<void>((resolve) =>
-          tcp.listen(0, "127.0.0.1", resolve),
-        );
-        const port = (tcp.address() as net.AddressInfo).port;
-        await new Promise<void>((resolve) =>
-          udp.bind(port, "127.0.0.1", resolve),
-        );
+        let port: number;
+        if (method === "tcp") {
+          await new Promise<void>((resolve, reject) => {
+            tcp.once("error", reject);
+            tcp.listen(0, "127.0.0.1", resolve);
+          });
+          port = (tcp.address() as net.AddressInfo).port;
+          if (variant === "occupied-udp-port") {
+            const collision = dgram.createSocket("udp4");
+            occupiedUdp = collision;
+            await new Promise<void>((resolve, reject) => {
+              collision.once("error", reject);
+              collision.bind(port, "127.0.0.1", resolve);
+            });
+          }
+        } else {
+          await new Promise<void>((resolve, reject) => {
+            udp.once("error", reject);
+            udp.bind(0, "127.0.0.1", resolve);
+          });
+          port = udp.address().port;
+        }
         const result = await new Promise<{
           code: number | null;
           output: string;
@@ -115,8 +134,10 @@ describe.each(["udp", "tcp"])(
           expected === 0 ? "Combined: fixture-response" : "failed",
         );
       } finally {
+        occupiedUdp?.close();
         udp.close();
-        await new Promise<void>((resolve) => tcp.close(() => resolve()));
+        if (tcp.listening)
+          await new Promise<void>((resolve) => tcp.close(() => resolve()));
       }
     });
   },

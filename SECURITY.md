@@ -54,6 +54,13 @@ the installed dependency controls; the audit reports zero advisories. The
 signed iOS Release build also passes. Runtime and distribution proof remain
 separate requirements; dependency checks do not establish hardware behavior.
 
+The Ruby lockfile no longer includes the unused Fastlane dependency or
+rubyzip 2.4.1, affected by
+[GHSA-47m2-wp7j-p9vc](https://github.com/advisories/GHSA-47m2-wp7j-p9vc).
+There are no configured Fastlane lanes; retained screenshot metadata does not
+require it. CocoaPods remains locked. A Bundler lockfile control failed on
+the affected version and passes after removal; no advisory is suppressed.
+
 Corruption-backup diagnostics keep only the error length: schema errors can
 contain decrypted field values even when JSON parsing succeeds.
 Encrypted and legacy malformed-schema regression cases preserve the recovery

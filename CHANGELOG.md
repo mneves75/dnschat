@@ -23,6 +23,8 @@ distribution evidence is recorded separately in the TestFlight runbook.
 - Close UDP and TCP sockets if secure transaction-ID generation fails.
 - Update security floors within the resolved package majors: fast-uri 3.1.8,
   brace-expansion 5.0.12, js-yaml 5.4.2 and markdown-it 14.3.2.
+- Remove the unused Fastlane dependency and its vulnerable rubyzip 2.4.1
+  dependency; CocoaPods remains locked. Releases use Xcode and `asc`.
 
 ### Fixed
 
@@ -32,6 +34,8 @@ distribution evidence is recorded separately in the TestFlight runbook.
   changing forwarding on other devices. Ambiguous selection is left to Expo.
 - Complete DNS TCP harness replies on a full frame, including servers that keep
   the connection open, and bound the response buffer to one DNS frame.
+- Reserve fixture ports only for the selected UDP or TCP transport, with an
+  occupied-UDP control proving TCP validation does not need that port.
 - Restore the composer draft when a send fails before persistence, and show
   localized errors when settings or onboarding reset cannot be saved.
 - Add a local Expo Haptics hardware-capability patch, preserving the simulator

@@ -217,7 +217,7 @@ The harness uses the app's response validation. Unsaved sends retain their
 drafts and settings failures show localized errors. The dependency lockfile
 contains security updates and a hardware-capability patch for Expo Haptics;
 refresh dependencies and rebuild native code to apply it. For this candidate,
-the frozen installation and full gate pass: 753 application and 68 native tests.
+the frozen installation and full gate pass: 754 application and 68 native tests.
 The signed iOS Release build and in-place device installation pass; Argent
 hardware verification still needs USB. Distribution evidence is recorded
 separately before promotion.

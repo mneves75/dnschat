@@ -124,6 +124,10 @@ keep teardown scoped to the selected device.
 
 ## Native build proof
 
+The Ruby Gemfile locks CocoaPods. The unused Fastlane dependency was removed
+to eliminate vulnerable rubyzip; screenshot assets under `ios/fastlane/` are
+retained metadata. Use Xcode and `asc` for the documented release process.
+
 Confirm the selected toolchain with `xcode-select -p` and `xcodebuild -version`
 before a native build; Xcode 27.0 (iOS 27 SDK) built SDK 57.0.24 on 2026-09-23. Release
 uploads need stable Xcode: when `xcode-select` points at a beta, prefix the
