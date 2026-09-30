@@ -28,6 +28,8 @@ distribution evidence is recorded separately in the TestFlight runbook.
 
 ### Fixed
 
+- Align Expo SDK 57 patch versions with the current compatibility gate,
+  including native UI, constants, glass, linking, router and build properties.
 - Make the DNS harness share production response validation and multipart
   parsing, rejecting wrong IDs/questions/owners/classes and incomplete replies.
 - Respect the Android launcher's selected device and Metro port without

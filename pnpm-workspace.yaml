@@ -56,3 +56,9 @@ overrides:
 patchedDependencies:
   expo-haptics@57.0.3: patches/expo-haptics@57.0.3.patch
   query-string@7.1.3: patches/query-string@7.1.3.patch
+
+minimumReleaseAgeExclude:
+  - expo-constants@57.0.20
+  - expo-modules-core@57.0.20
+  - expo@57.0.26
+  - '@expo/ui@57.0.21'
