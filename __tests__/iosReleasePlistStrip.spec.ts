@@ -47,6 +47,29 @@ function builtPlistAfterStrip(configuration: string): string {
 }
 
 describeOnMac("iOS release Info.plist strip phase", () => {
+  it("waits for Xcode to generate the packaged Info.plist before stripping", () => {
+    const project = JSON.parse(
+      execFileSync("/usr/bin/plutil", [
+        "-convert",
+        "json",
+        "-o",
+        "-",
+        "ios/DNSChat.xcodeproj/project.pbxproj",
+      ]).toString(),
+    ) as {
+      objects: Record<string, { name?: string; inputPaths?: string[] }>;
+    };
+    const phase = Object.values(project.objects).find(
+      (object) =>
+        object.name ===
+        "[Expo Dev Launcher] Strip Local Network Keys for Release",
+    );
+
+    expect(phase?.inputPaths).toContain(
+      "$(TARGET_BUILD_DIR)/$(INFOPLIST_PATH)",
+    );
+  });
+
   it("removes development-only local network keys from Release", () => {
     const plist = builtPlistAfterStrip("Release");
 

@@ -341,6 +341,7 @@
 			files = (
 			);
 			inputPaths = (
+				"$(TARGET_BUILD_DIR)/$(INFOPLIST_PATH)",
 			);
 			name = "[Expo Dev Launcher] Strip Local Network Keys for Release";
 			outputPaths = (

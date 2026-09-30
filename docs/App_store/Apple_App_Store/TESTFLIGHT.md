@@ -5,8 +5,9 @@ To upload your DNSChat iOS app to TestFlight, you'll need to follow these steps:
 ## Release state
 
 - **Repository target:** `4.4.9` build `94`, candidate. The full verification
-  gate, signed Release build and in-place physical-device installation pass.
-  USB is still required for Argent launch, screen and preserved-chat proof.
+  gate (755 application and 68 native tests) and signed Release build pass.
+  A prior candidate installed in place; the final SDK build needs exclusive
+  device access for installation, Argent launch, screen and preserved-chat proof.
   Signed archive, export and upload evidence are pending; the previous
   TestFlight artifact below is historical.
 - **Latest validated TestFlight artifact:** `4.4.8` build `93`, tagged

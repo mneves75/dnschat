@@ -838,7 +838,11 @@ public final class DNSResolverJvmHarness {
         Lookup.resetRunCount();
         InetAddress loopback = InetAddress.getLoopbackAddress();
         DatagramSocket serverSocket = new DatagramSocket(0, loopback);
-        DNSResolver resolver = new DNSResolver(null, host -> loopback, 9_500L);
+        // Exercise raw-UDP worker ownership through the production API 29+ path.
+        // The two-lane legacy host resolver deliberately rejects a parallel burst.
+        android.net.DnsResolver.reset();
+        android.net.DnsResolver.setAnswer(Arrays.asList(loopback));
+        DNSResolver resolver = new DNSResolver(null);
         int workerCount = queryExecutor(resolver).getMaximumPoolSize();
         CountDownLatch blockedPacketsReceived = new CountDownLatch(workerCount);
         CountDownLatch freshResponseSent = new CountDownLatch(1);
@@ -885,15 +889,14 @@ public final class DNSResolverJvmHarness {
                     serverSocket.getLocalPort(),
                     sharedDeadline
                 );
-                awaitAtomicCount(
-                    packetCount,
-                    index + 1,
-                    "identical operation did not reach raw UDP independently"
-                );
             }
             require(
                 blockedPacketsReceived.await(SEAM_LATCH_TIMEOUT_SECONDS, TimeUnit.SECONDS),
                 "identical operations did not independently occupy every raw-UDP worker"
+            );
+            require(
+                packetCount.get() == workerCount,
+                "identical operations did not each emit exactly one raw UDP packet"
             );
             require(
                 activeQueryCount(resolver) == workerCount,
@@ -925,8 +928,13 @@ public final class DNSResolverJvmHarness {
                 "cancelled operations emitted packets after cancellation"
             );
             require(Lookup.getRunCount() == 0, "fresh query entered unowned fallback");
+            require(
+                android.net.DnsResolver.getQueryCount() == workerCount + 1,
+                "raw queries bypassed independent platform address resolution"
+            );
             awaitNoActiveQueries(resolver);
         } finally {
+            android.net.DnsResolver.reset();
             serverSocket.close();
             receiver.join(1_000L);
             resolver.cleanup();
@@ -1179,21 +1187,6 @@ public final class DNSResolverJvmHarness {
         throw new AssertionError(
             "cancelled host resolution retained general query executor work"
         );
-    }
-
-    private static void awaitAtomicCount(
-        AtomicInteger value,
-        int expected,
-        String failureMessage
-    ) throws Exception {
-        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(1);
-        while (System.nanoTime() < deadline) {
-            if (value.get() >= expected) {
-                return;
-            }
-            Thread.sleep(5L);
-        }
-        throw new AssertionError(failureMessage + ": expected " + expected + ", got " + value.get());
     }
 
     private static void expectDnsError(

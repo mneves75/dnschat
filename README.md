@@ -217,9 +217,9 @@ The harness uses the app's response validation. Unsaved sends retain their
 drafts and settings failures show localized errors. The dependency lockfile
 contains security updates and a hardware-capability patch for Expo Haptics;
 refresh dependencies and rebuild native code to apply it. For this candidate,
-the frozen installation and full gate pass: 754 application and 68 native tests.
-The signed iOS Release build and in-place device installation pass; Argent
-hardware verification still needs USB. Distribution evidence is recorded
+the frozen installation and full gate pass: 755 application and 68 native tests.
+The signed iOS Release build passes. A prior candidate installed in place;
+final SDK hardware verification needs exclusive device access. Distribution evidence is recorded
 separately before promotion.
 
 The 4.4.8 gate (`pnpm run verify:all`, Node 24) passed 707 root tests and 67

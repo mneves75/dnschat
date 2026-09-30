@@ -28,6 +28,10 @@ distribution evidence is recorded separately in the TestFlight runbook.
 
 ### Fixed
 
+- Declare the packaged Info.plist as an input to the Release privacy strip
+  phase so Xcode cannot regenerate development-only ATS keys after stripping.
+- Synchronize native cancellation-test setup on all received packets together,
+  preserving worker-ownership, cancellation and recovery assertions under load.
 - Align Expo SDK 57 patch versions with the current compatibility gate,
   including native UI, constants, glass, linking, router and build properties.
 - Make the DNS harness share production response validation and multipart
