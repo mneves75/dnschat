@@ -26,10 +26,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.xbill.DNS.DClass;
 import org.xbill.DNS.Lookup;
-import org.xbill.DNS.Name;
-import org.xbill.DNS.TXTRecord;
 
 public final class DNSResolverJvmHarness {
     private interface CheckedRunnable {
@@ -54,6 +51,8 @@ public final class DNSResolverJvmHarness {
 
     public static void main(String[] args) throws Exception {
         runCase("parser-transactionality-and-utf8", DNSResolverJvmHarness::testParserBoundaries);
+        runCase("dns-label-identity", DNSResolverJvmHarness::testDnsLabelIdentity);
+        runCase("cname-does-not-escape-selected-zone", DNSResolverJvmHarness::testCnameDoesNotEscapeSelectedZone);
         runCase(
             "txt-utf8-split-across-character-strings",
             DNSResolverJvmHarness::testTxtUtf8SplitAcrossCharacterStrings
@@ -75,12 +74,12 @@ public final class DNSResolverJvmHarness {
             DNSResolverJvmHarness::testExpiredCallerDeadlineBeforeIo
         );
         runCase(
-            "legacy-fallback-observability-positive-control",
-            DNSResolverJvmHarness::testLegacyFallbackObservabilityPositiveControl
+            "raw-failures-do-not-start-unowned-fallback",
+            DNSResolverJvmHarness::testRawFailuresDoNotStartUnownedFallback
         );
         runCase(
-            "legacy-txt-raw-utf8-and-no-shared-cache",
-            DNSResolverJvmHarness::testLegacyTxtRawUtf8AndNoSharedCache
+            "raw-txt-utf8-and-fresh-identical-queries",
+            DNSResolverJvmHarness::testRawTxtUtf8AndFreshIdenticalQueries
         );
         runCase(
             "short-caller-deadline-bounds-fallback",
@@ -120,6 +119,124 @@ public final class DNSResolverJvmHarness {
         } catch (Throwable error) {
             failures++;
             System.out.println("FAIL " + name + ": " + error);
+        }
+    }
+
+    private static void testDnsLabelIdentity() throws Exception {
+        DNSResolver resolver = new DNSResolver(null);
+        Method parse = DNSResolver.class.getDeclaredMethod(
+            "parseDnsTxtResponse", byte[].class, int.class, String.class);
+        parse.setAccessible(true);
+        try {
+            String expected = "test.llm.pieter.com";
+            List<?> valid = (List<?>) parse.invoke(resolver,
+                dnsResponse(0x1234, "TEST.LLM.PIETER.COM", new byte[][] { bytes(2, 'o', 'k') }),
+                0x1234, expected);
+            require(valid.equals(Arrays.asList("ok")), "ASCII case/compressed owner was rejected");
+
+            for (boolean forgedQuestion : new boolean[] { true, false }) {
+                byte[] packet = nameIdentityResponse(expected, expected, forgedQuestion);
+                if (forgedQuestion) {
+                    expectDnsError(() -> parse.invoke(resolver, packet, 0x1234, expected),
+                        DNSResolver.DNSError.Type.QUERY_FAILED);
+                } else {
+                    require(((List<?>) parse.invoke(resolver, packet, 0x1234, expected)).isEmpty(),
+                        "one dotted wire label matched a multi-label answer owner");
+                }
+            }
+            for (boolean forgedQuestion : new boolean[] { true, false }) {
+                byte[] packet = nameIdentityResponse("k.llm.pieter.com", "\u212A.llm.pieter.com", forgedQuestion);
+                if (forgedQuestion) {
+                    expectDnsError(() -> parse.invoke(resolver, packet, 0x1234, "k.llm.pieter.com"),
+                        DNSResolver.DNSError.Type.QUERY_FAILED);
+                } else {
+                    require(((List<?>) parse.invoke(resolver, packet, 0x1234, "k.llm.pieter.com")).isEmpty(),
+                        "non-ASCII wire owner matched ASCII expected name");
+                }
+            }
+        } finally {
+            resolver.cleanup();
+        }
+    }
+
+    private static byte[] nameIdentityResponse(String expected, String forged, boolean forgedQuestion)
+        throws Exception {
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        writeU16(output, 0x1234);
+        writeU16(output, 0x8180);
+        writeU16(output, 1);
+        writeU16(output, 1);
+        writeU16(output, 0);
+        writeU16(output, 0);
+        if (forgedQuestion) writeForgedName(output, forged);
+        else writeName(output, expected);
+        writeU16(output, 16);
+        writeU16(output, 1);
+        if (forgedQuestion) writeU16(output, 0xC00C);
+        else writeForgedName(output, forged);
+        writeU16(output, 16);
+        writeU16(output, 1);
+        writeU32(output, 60);
+        writeU16(output, 3);
+        output.write(bytes(2, 'o', 'k'));
+        return output.toByteArray();
+    }
+
+    private static void writeForgedName(ByteArrayOutputStream output, String name) throws Exception {
+        // A literal dot belongs to this single label; it is not a wire separator.
+        for (String label : name.startsWith("\u212A") ? name.split("\\.") : new String[] { name }) {
+            byte[] encoded = label.getBytes(StandardCharsets.UTF_8);
+            output.write(encoded.length);
+            output.write(encoded);
+        }
+        output.write(0);
+    }
+
+    private static void testCnameDoesNotEscapeSelectedZone() throws Exception {
+        Lookup.resetRunCount();
+        InetAddress loopback = InetAddress.getLoopbackAddress();
+        DatagramSocket serverSocket = new DatagramSocket(0, loopback);
+        AtomicInteger packetCount = new AtomicInteger();
+        String queryName = "alias.llm.pieter.com";
+        ByteArrayOutputStream cname = new ByteArrayOutputStream();
+        writeName(cname, "outside.example");
+        byte[] rdata = cname.toByteArray();
+        Thread responder = new Thread(() -> {
+            byte[] payload = new byte[2048];
+            try {
+                for (int index = 0; index < 3; index++) {
+                    DatagramPacket request = new DatagramPacket(payload, payload.length);
+                    serverSocket.receive(request);
+                    byte[] expectedQueryName = dnsResponse(0, queryName, new byte[0][]);
+                    require(Arrays.equals(Arrays.copyOfRange(payload, 12, request.getLength()),
+                        Arrays.copyOfRange(expectedQueryName, 12, expectedQueryName.length)),
+                        "query followed an alias outside the selected zone");
+                    packetCount.incrementAndGet();
+                    byte[] response = dnsResponse(((payload[0] & 0xFF) << 8) | (payload[1] & 0xFF),
+                        queryName, new byte[][] { rdata });
+                    response[response.length - rdata.length - 9] = 5; // CNAME type, not TXT.
+                    serverSocket.send(new DatagramPacket(response, response.length,
+                        request.getAddress(), request.getPort()));
+                }
+            } catch (Exception ignored) {
+                // Packet count and completion expose malformed responder/setup behavior.
+            }
+        }, "DNSAliasResponder");
+        responder.setDaemon(true);
+        responder.start();
+        DNSResolver resolver = new DNSResolver(null, host -> loopback, 9_500L);
+        try {
+            Throwable failure = resolver.queryTXT("llm.pieter.com", queryName,
+                serverSocket.getLocalPort(), System.currentTimeMillis() + 3_000L)
+                .handle((records, error) -> error).get(SEAM_LATCH_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            assertDnsError(rootCause(failure), DNSResolver.DNSError.Type.NO_RECORDS_FOUND);
+            require(packetCount.get() == 3, "raw no-answer retry positive control did not run");
+            require(Lookup.getRunCount() == 0, "CNAME entered an alias-following Lookup");
+            awaitNoActiveQueries(resolver);
+        } finally {
+            serverSocket.close();
+            responder.join(1_000L);
+            resolver.cleanup();
         }
     }
 
@@ -329,73 +446,50 @@ public final class DNSResolverJvmHarness {
         }
     }
 
-    // The legacy dnsjava rung runs when raw UDP fails (e.g. TC=1 for an answer over
-    // 512 bytes). It must decode the raw TXT bytes rather than dnsjava's escaped
-    // presentation strings, and must not answer from dnsjava's shared cache.
-    private static void testLegacyTxtRawUtf8AndNoSharedCache() throws Exception {
+    // The owned raw path must preserve UTF-8 split across character-strings and
+    // send a fresh query for each request, including identical prompts.
+    private static void testRawTxtUtf8AndFreshIdenticalQueries() throws Exception {
         Lookup.resetRunCount();
-        Lookup.resetObservations();
-        String queryName = "legacyutf8.llm.pieter.com";
-        Lookup.setNextRecords(new org.xbill.DNS.Record[] {
-            new TXTRecord(
-                Name.fromString(queryName, Name.root),
-                DClass.IN,
-                Arrays.asList(
-                    "n\u00e3o ".getBytes(StandardCharsets.UTF_8),
-                    bytes('o', 'k', ' ', 0xF0, 0x9F),
-                    bytes(0x98, 0x80, '!')
-                )
-            )
-        });
+        String queryName = "rawutf8.llm.pieter.com";
         InetAddress loopback = InetAddress.getLoopbackAddress();
         DatagramSocket serverSocket = new DatagramSocket(0, loopback);
-        CountDownLatch invalidResponseSent = new CountDownLatch(1);
+        AtomicInteger packetCount = new AtomicInteger();
         Thread responder = new Thread(() -> {
             byte[] payload = new byte[2048];
             try {
-                DatagramPacket request = new DatagramPacket(payload, payload.length);
-                serverSocket.receive(request);
-                byte[] invalidResponse = new byte[12];
-                serverSocket.send(new DatagramPacket(
-                    invalidResponse,
-                    invalidResponse.length,
-                    request.getAddress(),
-                    request.getPort()
-                ));
-                invalidResponseSent.countDown();
+                for (int index = 0; index < 2; index++) {
+                    DatagramPacket request = new DatagramPacket(payload, payload.length);
+                    serverSocket.receive(request);
+                    packetCount.incrementAndGet();
+                    byte[] response = dnsResponse(
+                        ((payload[0] & 0xFF) << 8) | (payload[1] & 0xFF),
+                        queryName,
+                        new byte[][] { bytes(5, 'n', 0xC3, 0xA3, 'o', ' ',
+                            5, 'o', 'k', ' ', 0xF0, 0x9F, 3, 0x98, 0x80, '!') }
+                    );
+                    serverSocket.send(new DatagramPacket(response, response.length,
+                        request.getAddress(), request.getPort()));
+                }
             } catch (Exception ignored) {
-                // The assertions below expose any failure to reach the legacy rung.
+                // Query completion and packet count expose responder failures.
             }
-        }, "DNSLegacyUtf8Responder");
+        }, "DNSRawUtf8Responder");
         responder.setDaemon(true);
         responder.start();
 
         DNSResolver resolver = new DNSResolver(null, host -> loopback, 9_500L);
         try {
-            CompletableFuture<List<String>> query = resolver.queryTXT(
-                "llm.pieter.com",
-                queryName,
-                serverSocket.getLocalPort(),
-                System.currentTimeMillis() + 3_000L
-            );
-            require(
-                invalidResponseSent.await(SEAM_LATCH_TIMEOUT_SECONDS, TimeUnit.SECONDS),
-                "legacy UTF-8 case did not answer raw UDP"
-            );
-            List<String> records = query.get(SEAM_LATCH_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-            require(Lookup.getRunCount() > 0, "legacy Lookup.run did not fire");
-            require(
-                records.equals(Arrays.asList("n\u00e3o ", "ok ", "\uD83D\uDE00!")),
-                "legacy TXT strings were not decoded from raw UTF-8 bytes: " + records.size()
-                    + " record(s), escaped=" + String.join("", records).contains("\\")
-            );
-            require(
-                Boolean.TRUE.equals(Lookup.getLastRunUsedTemporaryCache()),
-                "legacy Lookup used dnsjava's shared default cache"
-            );
+            for (int index = 0; index < 2; index++) {
+                List<String> records = resolver.queryTXT("llm.pieter.com", queryName,
+                    serverSocket.getLocalPort(), System.currentTimeMillis() + 3_000L)
+                    .get(SEAM_LATCH_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+                require(records.equals(Arrays.asList("n\u00e3o ", "ok ", "\uD83D\uDE00!")),
+                    "raw TXT UTF-8 strings were not preserved");
+            }
+            require(packetCount.get() == 2, "identical prompt reused a cached answer");
+            require(Lookup.getRunCount() == 0, "raw success entered an unowned fallback");
             awaitNoActiveQueries(resolver);
         } finally {
-            Lookup.resetObservations();
             serverSocket.close();
             responder.join(1_000L);
             resolver.cleanup();
@@ -546,7 +640,7 @@ public final class DNSResolverJvmHarness {
         DNSResolver resolver = constructor.newInstance(null, stalledHostResolver, 1_000L);
         try {
             // Caller deadline is deliberately generous. What this case tests is that
-            // the injected 75ms NATIVE timeout bounds a stalled host resolution -- not
+            // the injected 1s NATIVE timeout bounds a stalled host resolution -- not
             // that the caller budget does. A tight caller deadline made the query
             // expire before the executor even dispatched it on a loaded CI runner, so
             // the seam below was never reached and the case failed for machine load.
@@ -562,7 +656,9 @@ public final class DNSResolverJvmHarness {
             // including it is what made this assertion load-sensitive. The bound still
             // sits far below the caller deadline, so an unbounded stall fails here.
             long firstStartedNanos = System.nanoTime();
-            expectFutureDnsError(first, DNSResolver.DNSError.Type.TIMEOUT);
+            Throwable firstFailure = first.handle((records, error) -> error)
+                .get(SEAM_LATCH_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            assertDnsError(rootCause(firstFailure), DNSResolver.DNSError.Type.TIMEOUT);
             require(
                 System.nanoTime() - firstStartedNanos < STALL_BOUND_NANOS,
                 "stalled lookup exceeded the injected native deadline"
@@ -636,7 +732,13 @@ public final class DNSResolverJvmHarness {
         }
     }
 
-    private static void testLegacyFallbackObservabilityPositiveControl() throws Exception {
+    private static void testRawFailuresDoNotStartUnownedFallback() throws Exception {
+        for (int responseFlags : new int[] { 0, 0x8380 }) {
+            assertRawFailureDoesNotStartUnownedFallback(responseFlags);
+        }
+    }
+
+    private static void assertRawFailureDoesNotStartUnownedFallback(int responseFlags) throws Exception {
         Lookup.resetRunCount();
         InetAddress loopback = InetAddress.getLoopbackAddress();
         DatagramSocket serverSocket = new DatagramSocket(0, loopback);
@@ -646,7 +748,11 @@ public final class DNSResolverJvmHarness {
             try {
                 DatagramPacket request = new DatagramPacket(payload, payload.length);
                 serverSocket.receive(request);
-                byte[] invalidResponse = new byte[12];
+                byte[] invalidResponse = dnsResponse(
+                    ((payload[0] & 0xFF) << 8) | (payload[1] & 0xFF),
+                    "fallback.llm.pieter.com", new byte[][] { bytes(2, 'o', 'k') });
+                invalidResponse[2] = (byte) (responseFlags >>> 8);
+                invalidResponse[3] = (byte) responseFlags;
                 serverSocket.send(new DatagramPacket(
                     invalidResponse,
                     invalidResponse.length,
@@ -673,8 +779,8 @@ public final class DNSResolverJvmHarness {
                 invalidResponseSent.await(SEAM_LATCH_TIMEOUT_SECONDS, TimeUnit.SECONDS),
                 "fallback positive control did not answer raw UDP"
             );
-            expectFutureDnsError(query, DNSResolver.DNSError.Type.NO_RECORDS_FOUND);
-            require(Lookup.getRunCount() > 0, "legacy Lookup.run positive control did not fire");
+            expectFutureDnsError(query, DNSResolver.DNSError.Type.QUERY_FAILED);
+            require(Lookup.getRunCount() == 0, "raw failure started unowned Lookup.run");
             awaitNoActiveQueries(resolver);
         } finally {
             serverSocket.close();
@@ -748,7 +854,9 @@ public final class DNSResolverJvmHarness {
                         blockedPacketsReceived.countDown();
                         continue;
                     }
-                    byte[] invalidResponse = new byte[12];
+                    byte[] invalidResponse = dnsResponse(
+                        ((payload[0] & 0xFF) << 8) | (payload[1] & 0xFF),
+                        "identical.llm.pieter.com", new byte[][] { bytes(2, 'o', 'k') });
                     serverSocket.send(new DatagramPacket(
                         invalidResponse,
                         invalidResponse.length,
@@ -810,12 +918,13 @@ public final class DNSResolverJvmHarness {
                 freshResponseSent.await(750, TimeUnit.MILLISECONDS),
                 "cancelled raw-UDP work retained the query executor"
             );
-            expectFutureDnsError(freshQuery, DNSResolver.DNSError.Type.NO_RECORDS_FOUND);
+            require(freshQuery.get(SEAM_LATCH_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                .equals(Arrays.asList("ok")), "fresh raw query did not recover after cancellation");
             require(
                 packetCount.get() == workerCount + 1,
                 "cancelled operations emitted packets after cancellation"
             );
-            require(Lookup.getRunCount() > 0, "fresh query did not reach observable legacy fallback");
+            require(Lookup.getRunCount() == 0, "fresh query entered unowned fallback");
             awaitNoActiveQueries(resolver);
         } finally {
             serverSocket.close();
@@ -986,7 +1095,8 @@ public final class DNSResolverJvmHarness {
             android.os.CancellationSignal timeoutSignal =
                 android.net.DnsResolver.getLastCancellationSignal();
             require(timeoutSignal != null, "platform resolver did not receive a cancellation signal");
-            require(!timeoutSignal.isCanceled(), "platform signal lacked a live positive control");
+            require(Boolean.FALSE.equals(android.net.DnsResolver.wasLastSignalInitiallyCancelled()),
+                "platform signal lacked a live positive control at query entry");
             expectFutureDnsError(timedOut, DNSResolver.DNSError.Type.TIMEOUT);
             require(timeoutSignal.isCanceled(), "platform timeout did not cancel its signal");
             awaitNoActiveQueries(resolver);

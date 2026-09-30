@@ -17,6 +17,7 @@
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { StorageService } from "../src/services/storageService";
+import { encryptString } from "../src/services/encryptionService";
 import type { Message } from "../src/types/chat";
 import {
   makeChat,
@@ -33,12 +34,15 @@ jest.mock("@react-native-async-storage/async-storage", () => ({
 const mockAsyncStorage = AsyncStorage as jest.Mocked<typeof AsyncStorage>;
 
 describe("StorageService in-memory chats cache", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     jest.clearAllMocks();
     StorageService.invalidateChatCache();
     mockAsyncStorage.getItem.mockResolvedValue(null);
     mockAsyncStorage.setItem.mockResolvedValue(undefined);
     mockAsyncStorage.removeItem.mockResolvedValue(undefined);
+    // These fixtures represent an existing installation with a usable key.
+    await encryptString("fixture initialization");
+    jest.clearAllMocks();
   });
 
   it("does not re-read AsyncStorage when the cache is warm", async () => {

@@ -51,6 +51,13 @@ for setup/diagnostics; use Argent for app interaction.
 
 ## Short feedback loop
 
+`patches/expo-haptics@57.0.3.patch` adds the hardware availability probe used by
+the app's haptics guard. It returns false on simulators and queries
+`CHHapticEngine.capabilitiesForHardware().supportsHaptics` on hardware without
+creating an engine or feedback generator. A dependency refresh and native
+rebuild are required; `__tests__/haptics.nativeContract.spec.ts` checks the
+installed JS wrapper rather than trusting the test mock's API surface.
+
 1. Reproduce the changed behavior with one focused test or a local harness.
 2. Make the smallest fix; rerun that check, typecheck and relevant lint.
 3. For visible changes, inspect the actual compiled native app. For performance,

@@ -13,6 +13,7 @@ public final class DnsResolver {
     private static final DnsResolver INSTANCE = new DnsResolver();
     private static final AtomicInteger QUERY_COUNT = new AtomicInteger();
     private static volatile CancellationSignal lastCancellationSignal;
+    private static volatile Boolean lastSignalInitiallyCancelled;
     private static volatile boolean throwOnQuery;
     private static volatile boolean errorOnCancel;
     private static volatile List<InetAddress> answer;
@@ -32,6 +33,9 @@ public final class DnsResolver {
         Callback<? super List<InetAddress>> callback
     ) {
         lastCancellationSignal = cancellationSignal;
+        // Capture the positive control before scheduling/polling can observe the
+        // later timeout. The harness separately requires cancellation at completion.
+        lastSignalInitiallyCancelled = cancellationSignal.isCanceled();
         QUERY_COUNT.incrementAndGet();
         if (throwOnQuery) {
             throw new IllegalStateException("platform resolver setup failed");
@@ -49,6 +53,7 @@ public final class DnsResolver {
 
     public static void reset() {
         lastCancellationSignal = null;
+        lastSignalInitiallyCancelled = null;
         QUERY_COUNT.set(0);
         throwOnQuery = false;
         errorOnCancel = false;
@@ -61,6 +66,10 @@ public final class DnsResolver {
 
     public static CancellationSignal getLastCancellationSignal() {
         return lastCancellationSignal;
+    }
+
+    public static Boolean wasLastSignalInitiallyCancelled() {
+        return lastSignalInitiallyCancelled;
     }
 
     public static void setThrowOnQuery(boolean shouldThrow) {

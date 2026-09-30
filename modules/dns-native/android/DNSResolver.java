@@ -13,7 +13,6 @@ import java.net.InetAddress;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketTimeoutException;
-import java.time.Duration;
 import java.security.SecureRandom;
 import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
@@ -47,8 +46,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import java.util.Objects;
 import java.util.regex.Pattern;
-
-import org.xbill.DNS.*;
 
 public class DNSResolver {
     private static final String TAG = "DNSResolver";
@@ -423,7 +420,7 @@ public class DNSResolver {
     }
 
     public static boolean isAvailable() {
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q || isDnsJavaAvailable();
+        return true; // Raw DatagramSocket queries are available on every supported API level.
     }
 
     public static boolean isDnsJavaAvailable() {
@@ -584,8 +581,8 @@ public class DNSResolver {
     }
 
     /**
-     * Executes the DNS query chain with fallback strategies.
-     * Fallback chain: Raw UDP -> Legacy (dnsjava on the same resolver)
+     * Runs the owned raw-UDP transport. Errors return to the JS UDP/TCP chain;
+     * no library may start alias queries or retries outside this operation.
      */
     private void executeQueryChain(
         String queryName,
@@ -596,32 +593,14 @@ public class DNSResolver {
     ) {
         Log.d(TAG, "DNS: Active queries count: " + activeQueries.size());
         requireQueryCanContinue(operation, deadlineNanos);
-        CompletableFuture<InetAddress> serverAddressFuture = resolveServerAddress(
+        CompletableFuture<List<String>> chain = resolveServerAddress(
             operation,
             normalizedDomain,
             deadlineNanos
-        );
-
-        // Every fallback stays on the selected resolver so the app never lies
-        // about which resolver answered.
-        CompletableFuture<List<String>> chain = serverAddressFuture
-            .thenCompose(serverAddress -> {
-                requireQueryCanContinue(operation, deadlineNanos);
-                return queryTXTRawUDP(operation, queryName, serverAddress, port, deadlineNanos);
-            })
-            .handle((txtRecords, rawError) -> {
-                if (rawError == null) {
-                    return CompletableFuture.completedFuture(txtRecords);
-                }
-                return startFallbackChain(
-                    queryName,
-                    port,
-                    deadlineNanos,
-                    operation,
-                    serverAddressFuture
-                );
-            })
-            .thenCompose(future -> future);
+        ).thenCompose(serverAddress -> {
+            requireQueryCanContinue(operation, deadlineNanos);
+            return queryTXTRawUDP(operation, queryName, serverAddress, port, deadlineNanos);
+        });
 
         chain.whenComplete((txtRecords, error) -> {
             try {
@@ -633,21 +612,6 @@ public class DNSResolver {
             } finally {
                 activeQueries.remove(operation.id, operation);
             }
-        });
-    }
-
-    private CompletableFuture<List<String>> startFallbackChain(
-        String queryName,
-        int port,
-        long deadlineNanos,
-        ActiveQuery operation,
-        CompletableFuture<InetAddress> serverAddressFuture
-    ) {
-        requireQueryCanContinue(operation, deadlineNanos);
-        Log.d(TAG, "DNS: Trying legacy DNS on the selected resolver");
-        return serverAddressFuture.thenCompose(serverAddress -> {
-            requireQueryCanContinue(operation, deadlineNanos);
-            return queryTXTLegacy(operation, serverAddress, queryName, port, deadlineNanos);
         });
     }
 
@@ -966,107 +930,6 @@ public class DNSResolver {
         } catch (DNSError deadlineError) {
             completion.completeExceptionally(deadlineError);
         }
-    }
-
-    private CompletableFuture<List<String>> queryTXTLegacy(
-        ActiveQuery operation,
-        InetAddress serverAddress,
-        String queryName,
-        int port,
-        long deadlineNanos
-    ) {
-        return submitDnsAsync(operation, () -> {
-            DNSError lastError = null;
-            for (int attempt = 0; attempt < MAX_NATIVE_ATTEMPTS; attempt++) {
-                try {
-                    requireQueryCanContinue(operation, deadlineNanos);
-                    int timeoutMillis = remainingTimeoutMillis(deadlineNanos);
-                    // Absolute name, rooted explicitly. dnsjava treats a name with no
-                    // trailing dot as relative and walks the system search path, which
-                    // would put <queryName>.<local-search-domain> on the wire and hand
-                    // the user's internal search domain to the DNS server. The response
-                    // filter already rejects those answers, but the query must not be
-                    // sent at all -- the zone pin is a wire-level guarantee.
-                    Lookup lookup = new Lookup(Name.fromString(queryName, Name.root), Type.TXT);
-                    // dnsjava's default is a process-wide cache that would replay an
-                    // earlier answer for an identical prompt without asking the server;
-                    // null gives this lookup its own throwaway cache (dnsjava 3.6.2).
-                    lookup.setCache(null);
-
-                    SimpleResolver resolver = new SimpleResolver(serverAddress);
-                    resolver.setPort(port);
-                    resolver.setTimeout(Duration.ofMillis(timeoutMillis));
-                    lookup.setResolver(resolver);
-
-                    org.xbill.DNS.Record[] records = lookup.run();
-                    requireQueryCanContinue(operation, deadlineNanos);
-
-                    if (records == null || records.length == 0) {
-                        throw new DNSError(DNSError.Type.NO_RECORDS_FOUND, "No TXT records found in legacy query");
-                    }
-
-                    List<String> txtRecords = new ArrayList<>();
-                    for (org.xbill.DNS.Record record : records) {
-                        if (record instanceof TXTRecord && isExpectedLegacyTxtRecord(record, queryName)) {
-                            // getStrings() is presentation format: dnsjava escapes every
-                            // byte >= 0x7F as \DDD, so decode the raw bytes instead.
-                            appendDecodedTxtStrings(
-                                ((TXTRecord) record).getStringsAsByteArrays(),
-                                txtRecords
-                            );
-                        }
-                    }
-
-                    if (txtRecords.isEmpty()) {
-                        throw new DNSError(DNSError.Type.NO_RECORDS_FOUND, "No valid TXT records found in legacy query");
-                    }
-
-                    return txtRecords;
-
-                } catch (DNSError e) {
-                    lastError = e;
-                    if (e.getType() == DNSError.Type.NO_RECORDS_FOUND && attempt < MAX_NATIVE_ATTEMPTS - 1) {
-                        sleepBeforeRetry(
-                            operation,
-                            (long) (RETRY_DELAY_MS * Math.pow(2, attempt)),
-                            deadlineNanos
-                        );
-                        continue;
-                    }
-                    Log.e(TAG, "DNS query failed: " + e.getType().name());
-                    throw e;
-                } catch (Exception e) {
-                    if (operation.isCancelled() || Thread.currentThread().isInterrupted()) {
-                        throw new DNSError(
-                            DNSError.Type.CANCELLED,
-                            "DNS query was cancelled",
-                            e
-                        );
-                    }
-                    remainingTimeoutMillis(deadlineNanos);
-                    // Never log the throwable: dnsjava messages can embed the prompt-derived name.
-                    Log.e(TAG, "DNS query failed: " + e.getClass().getSimpleName());
-                    throw new DNSError(DNSError.Type.QUERY_FAILED, "Legacy DNS query failed: " + e.getMessage(), e);
-                }
-            }
-            throw lastError != null
-                ? lastError
-                : new DNSError(DNSError.Type.NO_RECORDS_FOUND, "No TXT records found in legacy query");
-        });
-    }
-
-    private static boolean isExpectedLegacyTxtRecord(org.xbill.DNS.Record record, String queryName) {
-        return record.getType() == Type.TXT
-            && record.getDClass() == DClass.IN
-            && normalizeDnsName(record.getName().toString()).equals(normalizeDnsName(queryName));
-    }
-
-    private static String normalizeDnsName(String name) {
-        String normalized = name == null ? "" : name.trim().toLowerCase(Locale.ROOT);
-        while (normalized.endsWith(".")) {
-            normalized = normalized.substring(0, normalized.length() - 1);
-        }
-        return normalized;
     }
 
     /**
@@ -1553,8 +1416,17 @@ public class DNSResolver {
             if (name.length() > 0) {
                 name.append('.');
             }
-            String label = new String(data, currentOffset, len, StandardCharsets.US_ASCII);
-            name.append(label);
+            // Escape label bytes before joining: a literal dot is not a separator.
+            // DNS case-insensitivity applies only to ASCII A-Z, never Unicode.
+            for (int index = currentOffset; index < currentOffset + len; index++) {
+                int value = data[index] & 0xFF;
+                if (value >= 'A' && value <= 'Z') value += 'a' - 'A';
+                if (value == '.' || value == '\\' || value < 0x21 || value > 0x7E) {
+                    name.append('\\').append(String.format(Locale.ROOT, "%03d", value));
+                } else {
+                    name.append((char) value);
+                }
+            }
             currentOffset += len;
             if (!jumped) {
                 nextOffset = currentOffset;
@@ -1565,7 +1437,7 @@ public class DNSResolver {
             throw new DNSError(DNSError.Type.QUERY_FAILED, "DNS response name truncated");
         }
 
-        return new NameParseResult(name.toString().toLowerCase(Locale.US), nextOffset);
+        return new NameParseResult(name.toString(), nextOffset);
     }
 
     private Network getActiveNetwork() {

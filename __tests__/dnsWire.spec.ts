@@ -30,6 +30,157 @@ const validationOptions = {
 };
 
 describe("DNS wire helpers", () => {
+  it("preserves unrelated additional records with non-hostname labels", () => {
+    const packet = dns.encode({
+      ...baseDecodedResponse(),
+      additionals: [
+        {
+          name: "_service.ch.at",
+          type: "TXT",
+          class: "IN",
+          data: [Buffer.from("ignored")],
+        },
+      ],
+    });
+    expect(
+      extractTxtRecordsFromDecodedResponse(
+        decodeDnsPacket(packet, bufferFactory),
+        validationOptions,
+        bufferFactory,
+      ),
+    ).toEqual(["ok"]);
+  });
+  it.each([
+    ["A", 1, Buffer.from([127, 0, 0, 1])],
+    ["AAAA", 28, Buffer.alloc(16)],
+    ["CNAME", 5, Buffer.from([0xc0, 12])],
+  ])(
+    "rejects a %s length hiding an unchecked TXT owner",
+    (_type, typeCode, data) => {
+      const query = Buffer.from(encodeTxtDnsQuery("hello.ch.at", 1111));
+      query.writeUInt16BE(0x8100, 2);
+      query.writeUInt16BE(2, 6);
+      const hidden = Buffer.concat([
+        Buffer.from([11]),
+        Buffer.from("hello.ch.at"),
+        Buffer.from([0, 0, 16, 0, 1, 0, 0, 0, 0, 0, 7, 6]),
+        Buffer.from("forged"),
+      ]);
+      const first = Buffer.from([0xc0, 12, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0]);
+      first.writeUInt16BE(typeCode, 2);
+      const final = Buffer.from([
+        0xc0, 12, 0, 16, 0, 1, 0, 0, 0, 0, 0, 3, 2, 111, 107,
+      ]);
+      first.writeUInt16BE(data.length, 10);
+      expect(
+        extractTxtRecordsFromDecodedResponse(
+          decodeDnsPacket(
+            Buffer.concat([query, first, data, final]),
+            bufferFactory,
+          ),
+          validationOptions,
+          bufferFactory,
+        ),
+      ).toEqual(["ok"]);
+      first.writeUInt16BE(data.length + hidden.length, 10);
+      expect(() =>
+        extractTxtRecordsFromDecodedResponse(
+          decodeDnsPacket(
+            Buffer.concat([query, first, data, hidden, final]),
+            bufferFactory,
+          ),
+          validationOptions,
+          bufferFactory,
+        ),
+      ).toThrow("DNS record length mismatch");
+    },
+  );
+  it.each([9, 10])(
+    "bounds compression chains with %s embedded pointers",
+    (count) => {
+      const query = Buffer.from(encodeTxtDnsQuery("hello.ch.at", 1111));
+      query.writeUInt16BE(0x8100, 2);
+      query.writeUInt16BE(2, 6);
+      const chainStart = query.length + 13;
+      const chain = Buffer.alloc(count * 2);
+      for (let i = 0; i < count; i++) {
+        chain.writeUInt16BE(
+          0xc000 | (i === 0 ? 12 : chainStart + (i - 1) * 2),
+          i * 2,
+        );
+      }
+      const first = Buffer.from([
+        0xc0,
+        12,
+        0,
+        16,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        chain.length + 1,
+        chain.length,
+      ]);
+      const owner = Buffer.alloc(2);
+      owner.writeUInt16BE(0xc000 | (chainStart + (count - 1) * 2));
+      const packet = Buffer.concat([
+        query,
+        first,
+        chain,
+        owner,
+        Buffer.from([0, 16, 0, 1, 0, 0, 0, 0, 0, 3, 2, 111, 107]),
+      ]);
+      let result: { name?: string | undefined; error?: string };
+      try {
+        result = {
+          name: decodeDnsPacket(packet, bufferFactory).answers?.[1]?.name,
+        };
+      } catch (error) {
+        result = {
+          error: error instanceof Error ? error.message : String(error),
+        };
+      }
+      expect(result).toEqual(
+        count === 9
+          ? { name: "hello.ch.at" }
+          : { error: "DNS name exceeds 10 compression jumps" },
+      );
+    },
+  );
+  it.each(["question", "owner"])(
+    "rejects a dotted single wire label in the %s",
+    (field) => {
+      const name = "hello.ch.at";
+      const labels = Buffer.from(encodeTxtDnsQuery(name, 1111)).subarray(
+        12,
+        -4,
+      );
+      const dottedLabel = Buffer.concat([
+        Buffer.from([name.length]),
+        Buffer.from(name),
+        Buffer.from([0]),
+      ]);
+      const header = Buffer.from([4, 87, 129, 0, 0, 1, 0, 1, 0, 0, 0, 0]);
+      const packet = Buffer.concat([
+        header,
+        field === "question" ? dottedLabel : labels,
+        Buffer.from([0, 16, 0, 1]),
+        field === "owner" ? dottedLabel : labels,
+        Buffer.from([0, 16, 0, 1, 0, 0, 0, 0, 0, 3, 2, 111, 107]),
+      ]);
+      expect(() =>
+        extractTxtRecordsFromDecodedResponse(
+          decodeDnsPacket(packet, bufferFactory),
+          validationOptions,
+          bufferFactory,
+        ),
+      ).toThrow("DNS label contains non-hostname bytes");
+    },
+  );
+
   it("encodes TXT queries through one reusable wire interface", () => {
     const query = encodeTxtDnsQuery("hello.ch.at", 1234);
     const decoded = decodeDnsPacket(query, bufferFactory);

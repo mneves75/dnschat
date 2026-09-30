@@ -411,7 +411,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
         stack: err instanceof Error ? err.stack : undefined,
       });
 
-      result = "failed";
+      result = userMessagePersisted ? "failed" : "rejected";
       const sendError: ChatError =
         failureKind === "dns" && assistantMessage
           ? { kind: "dns", failedMessageId: assistantMessage.id }

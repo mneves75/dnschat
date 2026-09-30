@@ -1,9 +1,13 @@
 import * as SecureStore from "expo-secure-store";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getRandomBytesAsync, getRandomValues } from "expo-crypto";
 import { Platform } from "react-native";
 import { gcm } from "@noble/ciphers/aes.js";
 import { bytesToHex, hexToBytes, utf8ToBytes } from "@noble/hashes/utils.js";
-import { ENCRYPTION_CONSTANTS } from "../constants/appConstants";
+import {
+  ENCRYPTION_CONSTANTS,
+  STORAGE_CONSTANTS,
+} from "../constants/appConstants";
 import { devWarn } from "../utils/devLog";
 
 // SecureStore keys must be alphanumeric plus ., -, _ (no @ or /)
@@ -175,6 +179,33 @@ const decodeUtf8 = (payload: Uint8Array): string => {
 };
 
 const generateAndPersistKey = async (): Promise<Uint8Array> => {
+  // A restored device-only key can be absent while its ciphertext survives.
+  // Never replace that key or classify its history as corrupt. Backups also
+  // belong to the original key; leave them intact even if their wrapper is bad.
+  let payloads: (string | null)[];
+  try {
+    payloads = await Promise.all([
+      AsyncStorage.getItem(STORAGE_CONSTANTS.CHATS_KEY),
+      AsyncStorage.getItem(STORAGE_CONSTANTS.LOGS_KEY),
+      AsyncStorage.getItem(STORAGE_CONSTANTS.CHAT_BACKUP_KEY),
+      AsyncStorage.getItem(STORAGE_CONSTANTS.LOGS_BACKUP_KEY),
+    ]);
+  } catch {
+    throw new EncryptionKeyUnavailableError(
+      "Existing encrypted storage cannot be checked",
+    );
+  }
+  const [chats, logs, chatBackup, logsBackup] = payloads;
+  if (
+    chats?.startsWith(ENCRYPTION_PREFIX) ||
+    logs?.startsWith(ENCRYPTION_PREFIX) ||
+    chatBackup ||
+    logsBackup
+  ) {
+    throw new EncryptionKeyUnavailableError(
+      "Encryption key is missing for existing history",
+    );
+  }
   const generated = await getRandomBytes(ENCRYPTION_CONSTANTS.KEY_LENGTH);
   const encoded = bytesToHex(generated);
 
@@ -306,7 +337,7 @@ const readKeyProtectingIt = async (): Promise<string | null> => {
   return stored;
 };
 
-const loadEncryptionKey = async (): Promise<Uint8Array> => {
+const loadEncryptionKey = async (allowCreation = true): Promise<Uint8Array> => {
   if (cachedKey) return cachedKey;
   if (keyLoadInFlight) return keyLoadInFlight;
 
@@ -334,9 +365,16 @@ const loadEncryptionKey = async (): Promise<Uint8Array> => {
       return decoded;
     }
 
+    if (!allowCreation) {
+      throw new EncryptionKeyUnavailableError(
+        "Encryption key is missing for existing history",
+      );
+    }
+
     try {
       return await generateAndPersistKey();
     } catch (error) {
+      if (error instanceof EncryptionKeyUnavailableError) throw error;
       devWarn(
         `[EncryptionService] Failed to persist key in ${getKeyStorageName()}`,
         error,
@@ -376,6 +414,9 @@ export const decryptString = async (payload: string): Promise<string> => {
     );
   }
 
+  // Key availability takes precedence over envelope corruption: without the
+  // key, recovery must not overwrite an earlier backup or remove ciphertext.
+  const key = await loadEncryptionKey(false);
   const remainder = payload.slice(ENCRYPTION_PREFIX.length);
   const fields = remainder.split(":");
   if (fields.length !== 2) {
@@ -415,7 +456,6 @@ export const decryptString = async (payload: string): Promise<string> => {
     );
   }
 
-  const key = await loadEncryptionKey();
   try {
     const plaintext = gcm(key, nonce).decrypt(cipher);
     return decodeUtf8(plaintext);

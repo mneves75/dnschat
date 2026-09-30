@@ -50,14 +50,11 @@ caps a character-string at 255 bytes and a server may split one RR at any byte,
 so a multibyte character can straddle two character-strings. Transports decode
 the bytes of one RR as a unit, never string by string:
 
-- iOS native and Android raw UDP / legacy dnsjava: each non-empty
+- iOS native and Android raw UDP: each non-empty
   character-string stays its own list element. An incomplete UTF-8 sequence at
   the end of one character-string carries into the next character-string of the
   same RR, never across RRs. Malformed bytes, or a sequence still incomplete at
-  the end of the RR, reject the response as not valid UTF-8. The legacy rung
-  decodes dnsjava's raw bytes (`getStringsAsByteArrays`), not its escaped
-  presentation strings, and gives each lookup its own throwaway cache so an
-  earlier answer for the same name is never replayed.
+  the end of the RR, reject the response as not valid UTF-8.
 - JS UDP/TCP: one list element per RR, built by concatenating the RR's
   character-string bytes and decoding once. Invalid bytes stay lenient and
   decode to U+FFFD.
@@ -90,6 +87,7 @@ Native UDP resolvers (iOS/Android) and JS UDP/TCP fallbacks validate DNS respons
   - QTYPE is TXT (16) and QCLASS is IN (1).
 - Accepted TXT answers must also match the original owner name and IN class.
 - DNS name parsing handles compression pointers with strict bounds checks and a small max-jump guard. Expanded names must fit 255 wire octets, including label-length octets and the terminating root; compression does not bypass this limit.
+- JS checks record-decoder consumption against each declared RDLENGTH, including authority and additional records. A non-TXT record cannot hide a different answer boundary from name validation. Non-hostname labels in unrelated authority/additional owners remain allowed.
 - JS UDP additionally rejects unexpected source metadata when the selected resolver is an explicit IPv4 address (source port must always match, and source address must match for IPv4-literal resolvers).
 
 ## Transport chain
@@ -101,11 +99,14 @@ Order used for iOS/Android builds:
 3. TCP DNS (JavaScript, `react-native-tcp-socket`)
 4. Mock (optional dev fallback)
 
-Android native module internal fallback chain:
+Android native uses only owned raw UDP. Failures return to the app's UDP/TCP
+chain. An alias-following dnsjava lookup is not allowed: its additional sends
+would escape the selected zone, absolute deadline and cancellation ownership.
 
-1. Raw UDP (native)
-2. Legacy resolver (dnsjava), queried with an absolute name so the system
-   search path cannot expand it
+Question and answer-owner comparisons preserve wire label boundaries and fold
+only ASCII A-Z. Embedded dots cannot turn one label into several. The local
+DNS harness shares the application's packet validation and multipart parser;
+its successful artifact requires a valid, complete matching TXT response.
 
 The DNS-over-HTTPS rung was removed in 4.4.0. The native resolver speaks only
 DNS, so no query leaves the device over HTTPS to a third party;

@@ -1,6 +1,6 @@
 {
   "name": "chat-dns",
-  "version": "4.4.8",
+  "version": "4.4.9",
   "description": "DNSChat - A React Native chat app using DNS TXT queries",
   "main": "entry.tsx",
   "author": "DNSChat contributors",
@@ -56,7 +56,7 @@
     "fmt": "oxfmt .",
     "fmt:check": "oxfmt --check .",
     "dns:harness:build": "tsc -p scripts/tsconfig.harness.json",
-    "dns:harness": "pnpm run dns:harness:build && node scripts/dist/run-dns-harness.js",
+    "dns:harness": "pnpm run dns:harness:build && node scripts/dist/scripts/run-dns-harness.js",
     "verify:ios-pods": "node scripts/verify-ios-pods-sync.js",
     "prepare": "node scripts/install-git-hooks.js",
     "postinstall": "node scripts/postinstall-ios-pods.js"

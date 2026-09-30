@@ -1,37 +1,49 @@
-import { spawn } from "node:child_process";
+import { spawn, execFileSync } from "node:child_process";
 import dgram from "node:dgram";
-import fs from "node:fs";
 import net from "node:net";
 import dnsPacket from "dns-packet";
-import ts from "typescript";
 
-const harness = ts
-  .transpileModule(fs.readFileSync("scripts/run-dns-harness.ts", "utf8"), {
-    compilerOptions: {
-      module: ts.ModuleKind.CommonJS,
-      target: ts.ScriptTarget.ES2022,
-      esModuleInterop: true,
-    },
-  })
-  .outputText.replace(/^#![^\n]*\n/, "");
+beforeAll(() => {
+  execFileSync(process.execPath, [
+    "node_modules/typescript/bin/tsc",
+    "-p",
+    "scripts/tsconfig.harness.json",
+  ]);
+}, 30000);
 
 describe.each(["udp", "tcp"])(
   "DNS harness %s response validation",
   (method) => {
-    it.each<[string[], number]>([
-      [["fixture-response"], 0],
-      [[], 1],
-      [["1/2:incomplete"], 1],
-    ])("checks TXT records %j", async (records, expected) => {
+    it.each<[string[], number, string]>([
+      [["fixture-response"], 0, "valid"],
+      [["fixture-response"], 0, "keep-open"],
+      [[], 1, "valid"],
+      [["1/2:incomplete"], 1, "valid"],
+      [["1/2:a", "3/2:c"], 1, "valid"],
+      [["plain", "1/1:part"], 1, "valid"],
+      [["fixture-response"], 1, "id"],
+      [["fixture-response"], 1, "question"],
+      [["fixture-response"], 1, "owner"],
+      [["fixture-response"], 1, "class"],
+      [["fixture-response"], 1, "truncated"],
+    ])("checks TXT records %j (%s, %s)", async (records, expected, variant) => {
       const reply = (queryBuffer: Buffer) => {
         const query = dnsPacket.decode(queryBuffer);
         return dnsPacket.encode({
           type: "response",
-          id: query.id,
-          questions: query.questions,
+          id: variant === "id" ? (query.id! + 1) & 0xffff : query.id,
+          flags: variant === "truncated" ? dnsPacket.TRUNCATED_RESPONSE : 0,
+          questions:
+            variant === "question"
+              ? [{ name: "other.llm.pieter.com", type: "TXT", class: "IN" }]
+              : query.questions,
           answers: records.map((record) => ({
             type: "TXT" as const,
-            name: "ping.llm.pieter.com",
+            name:
+              variant === "owner"
+                ? "other.llm.pieter.com"
+                : "ping.llm.pieter.com",
+            class: variant === "class" ? "CH" : "IN",
             ttl: 1,
             data: [record],
           })),
@@ -54,7 +66,9 @@ describe.each(["udp", "tcp"])(
           const response = reply(requestBuffer.subarray(2));
           const prefix = Buffer.alloc(2);
           prefix.writeUInt16BE(response.length);
-          socket.end(Buffer.concat([prefix, response]));
+          const frame = Buffer.concat([prefix, response]);
+          if (variant === "keep-open") socket.write(frame);
+          else socket.end(frame);
         });
       });
       try {
@@ -72,9 +86,7 @@ describe.each(["udp", "tcp"])(
           const child = spawn(
             process.execPath,
             [
-              "-e",
-              harness,
-              "harness",
+              "scripts/dist/scripts/run-dns-harness.js",
               "--message",
               "ping",
               "--server",
@@ -83,6 +95,8 @@ describe.each(["udp", "tcp"])(
               String(port),
               "--method-order",
               method,
+              "--timeout",
+              "500",
             ],
             { timeout: 10000 },
           );
@@ -98,9 +112,7 @@ describe.each(["udp", "tcp"])(
         });
         expect(result.code).toBe(expected);
         expect(result.output).toContain(
-          expected === 0
-            ? "Combined: fixture-response"
-            : "No complete TXT response returned",
+          expected === 0 ? "Combined: fixture-response" : "failed",
         );
       } finally {
         udp.close();

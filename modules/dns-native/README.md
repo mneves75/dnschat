@@ -14,12 +14,12 @@ Status:
 ## Platform implementation
 
 - iOS: uses Apple's Network framework (`NWConnection`) for DNS resolution.
-- Android: attempts a raw UDP TXT query first; if that fails, it falls back to
-  the legacy resolver (dnsjava). It does not use DNS-over-HTTPS.
+- Android: uses an owned raw UDP TXT query with cancellation and deadline
+  tracking. Failed native queries return to the app's UDP/TCP chain. It does
+  not use DNS-over-HTTPS or dnsjava alias-following lookups.
 
 Note: In the DNSChat app, the TypeScript layer controls the overall transport
-order (native -> UDP -> TCP -> mock). The Android native module also has its own
-internal fallback chain inside the native "native" step.
+order (native -> UDP -> TCP -> optional mock).
 
 Native UDP responses are validated before TXT parsing (transaction ID, header
 flags, QDCOUNT, and question name/type/class matching) to reduce spoofing risk.

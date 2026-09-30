@@ -4,7 +4,11 @@ To upload your DNSChat iOS app to TestFlight, you'll need to follow these steps:
 
 ## Release state
 
-- **Repository target:** `4.4.8` build `93`; signed archive and IPA uploaded.
+- **Repository target:** `4.4.9` build `94`, candidate. The full verification
+  gate, signed Release build and in-place physical-device installation pass.
+  USB is still required for Argent launch, screen and preserved-chat proof.
+  Signed archive, export and upload evidence are pending; the previous
+  TestFlight artifact below is historical.
 - **Latest validated TestFlight artifact:** `4.4.8` build `93`, tagged
   `v4.4.8-beta1` at `157659e` and processed `VALID` on `2026-09-23`.
   Archived with stable Xcode `27.0` (the host's selected Xcode was a beta, so
@@ -246,7 +250,7 @@ pnpm run ios --verbose
 - **App Store Connect** app record created
 - **Code signing** configured correctly
 - **Bundle ID** matches (`<BUNDLE_ID>`)
-- **Version numbers** consistent with the repository target (`4.4.8` build `93`)
+- **Version numbers** consistent with the repository target (`4.4.9` build `94`)
 - **Native DNS module** compiles successfully
 - **Xcode CLI smoke** passed:
   - Debug simulator build
@@ -274,7 +278,7 @@ eas build --platform ios --profile production
 
 ### TestFlight distribution
 
-Latest validated TestFlight distribution (`4.4.3` build `88`):
+Historical TestFlight distribution (`4.4.3` build `88`):
 
 - Version/build: `4.4.3` / `88`; tag: `v4.4.3-beta1`
 - Processing state: `VALID`; signed archive/export and upload succeeded, and
@@ -352,4 +356,4 @@ If you encounter issues during the upload process:
 
 ---
 
-_Source target and validated TestFlight beta: 4.4.8 build 93; production remains 4.0.23._
+_Source target: 4.4.9 build 94 (candidate); latest validated TestFlight beta: 4.4.8 build 93; production remains 4.0.23._

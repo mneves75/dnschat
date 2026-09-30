@@ -1035,9 +1035,15 @@ final class DNSResolver: NSObject {
                 throw DNSError.queryFailed("DNS response name exceeds 255 bytes")
             }
             let labelBytes = bytes[currentOffset..<(currentOffset + len)]
-            guard let label = String(bytes: labelBytes, encoding: .utf8) else {
-                throw DNSError.queryFailed("DNS response name decode failed")
-            }
+            // Preserve label boundaries and arbitrary octets in DNS presentation
+            // form. Only ASCII A-Z is case-insensitive on the wire.
+            let label = labelBytes.map { byte -> String in
+                let folded = (65...90).contains(byte) ? byte + 32 : byte
+                if folded == 46 || folded == 92 || folded < 0x21 || folded > 0x7E {
+                    return String(format: "\\%03d", Int(folded))
+                }
+                return String(UnicodeScalar(folded))
+            }.joined()
             labels.append(label)
             currentOffset += len
             if !jumped {
@@ -1049,7 +1055,7 @@ final class DNSResolver: NSObject {
             throw DNSError.queryFailed("DNS response name truncated")
         }
 
-        let name = labels.joined(separator: ".").lowercased()
+        let name = labels.joined(separator: ".")
         return (name, nextOffset)
     }
 

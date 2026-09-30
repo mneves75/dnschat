@@ -68,6 +68,8 @@ describe("Android DNSResolver executable JVM boundaries", () => {
       );
 
       expect(run.stdout).toContain("PASS parser-transactionality-and-utf8");
+      expect(run.stdout).toContain("PASS dns-label-identity");
+      expect(run.stdout).toContain("PASS cname-does-not-escape-selected-zone");
       expect(run.stdout).toContain(
         "PASS txt-utf8-split-across-character-strings",
       );
@@ -83,10 +85,10 @@ describe("Android DNSResolver executable JVM boundaries", () => {
       );
       expect(run.stdout).toContain("PASS expired-caller-deadline-before-io");
       expect(run.stdout).toContain(
-        "PASS legacy-fallback-observability-positive-control",
+        "PASS raw-failures-do-not-start-unowned-fallback",
       );
       expect(run.stdout).toContain(
-        "PASS legacy-txt-raw-utf8-and-no-shared-cache",
+        "PASS raw-txt-utf8-and-fresh-identical-queries",
       );
       expect(run.stdout).toContain(
         "PASS short-caller-deadline-bounds-fallback",

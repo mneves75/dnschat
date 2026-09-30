@@ -1,0 +1,51 @@
+diff --git a/build/Haptics.d.ts b/build/Haptics.d.ts
+index 5eed6428a74ba99b9b22c14c0d64129d3b3ff366..f4e7fa2a5adbf36ea75b77295e041adcc38b58ea 100644
+--- a/build/Haptics.d.ts
++++ b/build/Haptics.d.ts
+@@ -1,4 +1,6 @@
+ import { NotificationFeedbackType, ImpactFeedbackStyle, AndroidHaptics } from './Haptics.types';
++/** Returns the iOS hardware capability without creating a feedback generator. */
++export declare function isAvailableAsync(): Promise<boolean>;
+ /**
+  * The kind of notification response used in the feedback.
+  * @param type A notification feedback type that on Android is simulated using [`Vibrator`](https://developer.android.com/reference/android/os/Vibrator)
+diff --git a/ios/HapticsModule.swift b/ios/HapticsModule.swift
+index 41659a062d29c565e92fc8e783dea0700fe40d21..ad2c78f513389d3a327772501c6696a468880d4f 100644
+--- a/ios/HapticsModule.swift
++++ b/ios/HapticsModule.swift
+@@ -1,9 +1,18 @@
+ import ExpoModulesCore
++import CoreHaptics
+ 
+ public class HapticsModule: Module {
+   public func definition() -> ModuleDefinition {
+     Name("ExpoHaptics")
+ 
++    AsyncFunction("isAvailableAsync") { () -> Bool in
++      #if targetEnvironment(simulator)
++      return false
++      #else
++      return CHHapticEngine.capabilitiesForHardware().supportsHaptics
++      #endif
++    }
++
+     AsyncFunction("notificationAsync") { (notificationType: NotificationType) in
+       let generator = UINotificationFeedbackGenerator()
+       generator.prepare()
+diff --git a/src/Haptics.ts b/src/Haptics.ts
+index ffa7d34f6b93f04ce9db96bda9df0b0b85bdbe8c..2c6bc5eaaed45e1afce8bdc710488e60e54aa85c 100644
+--- a/src/Haptics.ts
++++ b/src/Haptics.ts
+@@ -3,6 +3,12 @@ import { Platform, UnavailabilityError } from 'expo-modules-core';
+ import ExpoHaptics from './ExpoHaptics';
+ import { NotificationFeedbackType, ImpactFeedbackStyle, AndroidHaptics } from './Haptics.types';
+ 
++/** Returns the iOS hardware capability without creating a feedback generator. */
++export async function isAvailableAsync(): Promise<boolean> {
++  if (Platform.OS !== 'ios' || !ExpoHaptics?.isAvailableAsync) return false;
++  return await ExpoHaptics.isAvailableAsync();
++}
++
+ // @needsAudit
+ /**
+  * The kind of notification response used in the feedback.

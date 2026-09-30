@@ -1016,8 +1016,8 @@ export class DNSService {
       };
 
       // SECURITY: Store query ID for response validation (RFC 5452 - DNS cache poisoning prevention)
-      const queryId = generateSecureDNSId();
       try {
+        const queryId = generateSecureDNSId();
         const queryBuffer = encodeTxtDnsQuery(queryName, queryId);
         const remainingBudgetMs = this.assertWithinQueryBudget(deadline);
 
@@ -1308,8 +1308,8 @@ export class DNSService {
       };
 
       // SECURITY: Store query ID for response validation (RFC 5452 - DNS cache poisoning prevention)
-      const queryId = generateSecureDNSId();
       try {
+        const queryId = generateSecureDNSId();
         const tcpQuery = createTcpTxtDnsQueryFrame(queryName, queryId, Buffer);
         this.vLog(
           "TCP: TCP query frame created, total length:",

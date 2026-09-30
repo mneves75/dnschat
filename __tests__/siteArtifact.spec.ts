@@ -1,6 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import vm from "node:vm";
+import { DEMO } from "../marketing/video/src/data/demo";
+import { DNS_CONSTANTS } from "../modules/dns-native/constants";
 
 const {
   extractLocalReferences,
@@ -18,6 +20,11 @@ const {
 
 describe("static site artifact contract", () => {
   const siteHtml = fs.readFileSync("site/index.html", "utf8");
+
+  it("shows only selectable app resolvers in the tutorial settings", () => {
+    expect(DEMO.services).toEqual(DNS_CONSTANTS.ALLOWED_DNS_SERVERS);
+    expect(DEMO.services).toContain(DEMO.selectedService);
+  });
 
   it("keeps the React Doctor exception tied to the HTML script entrypoint", () => {
     expect(siteHtml).toContain('<script src="script.js" defer></script>');

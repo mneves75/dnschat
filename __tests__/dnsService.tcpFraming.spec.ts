@@ -113,6 +113,44 @@ const loadDNSService = () => {
 };
 
 describe("DNSService TCP framing", () => {
+  it("destroys its socket when secure transaction ID generation fails", async () => {
+    const { DNSService } = loadDNSService();
+    const cryptoSpy = jest
+      .spyOn(globalThis.crypto, "getRandomValues")
+      .mockImplementation(() => {
+        throw new Error("RNG unavailable");
+      });
+    const expoCrypto = require("expo-crypto") as { getRandomValues: jest.Mock };
+    expoCrypto.getRandomValues.mockImplementationOnce(() => {
+      throw new Error("RNG unavailable");
+    });
+    const runtime = globalThis as typeof globalThis & { __DEV__: boolean };
+    const originalDev = runtime.__DEV__;
+    runtime.__DEV__ = false;
+    try {
+      const internals = DNSService as unknown as {
+        performDNSOverTCP: (
+          name: string,
+          server: string,
+          port: number,
+          deadline: number,
+        ) => Promise<string[]>;
+      };
+      await expect(
+        internals.performDNSOverTCP(
+          queryName,
+          "llm.pieter.com",
+          53,
+          Date.now() + 1000,
+        ),
+      ).rejects.toThrow("Secure RNG unavailable");
+      expect(currentSocket.destroy).toHaveBeenCalledTimes(1);
+    } finally {
+      runtime.__DEV__ = originalDev;
+      cryptoSpy.mockRestore();
+    }
+  });
+
   afterEach(() => {
     jest.useRealTimers();
     jest.dontMock("react-native-tcp-socket");

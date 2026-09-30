@@ -28,7 +28,9 @@ jest.mock("@react-native-async-storage/async-storage", () => ({
 const mockAsyncStorage = AsyncStorage as jest.Mocked<typeof AsyncStorage>;
 
 describe("StorageService Corruption Handling", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
+    mockAsyncStorage.getItem.mockResolvedValue(null);
+    await encryptString("fixture initialization");
     jest.clearAllMocks();
     // The deferred plaintext->encrypted migration populates the static chats
     // cache; clear it so migration writes in one test can't leak into the next.

@@ -1,7 +1,10 @@
 #!/usr/bin/env node
 const { execFileSync } = require("node:child_process");
 const { setTimeout: delay } = require("node:timers/promises");
-const { parseAdbDevices, resolveMetroPort } = require("./utils/adbReverse");
+const {
+  parseAdbDevices,
+  resolveReverseOptions,
+} = require("./utils/adbReverse");
 
 const MAX_ATTEMPTS = 10;
 const POLL_INTERVAL_MS = 500;
@@ -59,7 +62,7 @@ async function waitForDevices() {
 }
 
 async function main() {
-  const port = resolveMetroPort();
+  const { port, device } = resolveReverseOptions(process.argv.slice(2));
   const devices = await waitForDevices();
 
   if (devices.length === 0) {
@@ -67,7 +70,21 @@ async function main() {
     return;
   }
 
-  reversePortForDevices(devices, port);
+  const selected = device
+    ? devices.filter((serial) => serial === device)
+    : devices.length === 1
+      ? devices
+      : [];
+  if (selected.length === 0) {
+    log(
+      "Device selection is ambiguous or unavailable. Leaving reverse setup to Expo.",
+    );
+    return;
+  }
+  reversePortForDevices(selected, port);
 }
 
-main();
+main().catch((error) => {
+  warn(error.message);
+  process.exitCode = 1;
+});

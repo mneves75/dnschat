@@ -15,15 +15,9 @@ describe("Android DNSResolver native policy", () => {
     );
   });
 
-  it("sends the legacy dnsjava query as an absolute name", () => {
-    // A relative name makes dnsjava walk the system search path, putting
-    // <queryName>.<local-search-domain> on the wire and disclosing the user's
-    // internal search domain to the DNS server. The response filter rejects
-    // those answers, but the zone pin has to hold at the wire, not just on the
-    // way back. The JVM stub also omits the String overload, so a regression
-    // fails to compile in modules/dns-native/__tests__/android.
-    expect(source).toContain("Name.fromString(queryName, Name.root)");
-    expect(source).not.toMatch(/new Lookup\(\s*queryName\s*,/);
+  it("keeps exchanges under the owned raw transport instead of dnsjava alias lookup", () => {
+    expect(source).not.toContain("new Lookup(");
+    expect(source).not.toContain("queryTXTLegacy");
   });
 
   it("pins every query to one label under the selected resolver's zone", () => {
@@ -62,12 +56,6 @@ describe("Android DNSResolver native policy", () => {
     );
     expect(source).toContain("answerClass == 1");
     expect(source).toContain("answerName.name.equals(expectedQueryName)");
-  });
-
-  it("applies owner-name and class validation to the legacy dnsjava fallback", () => {
-    expect(source).toContain("isExpectedLegacyTxtRecord(record, queryName)");
-    expect(source).toContain("record.getDClass() == DClass.IN");
-    expect(source).toContain("normalizeDnsName(record.getName().toString())");
   });
 
   it("does not log prompt-derived DNS query names", () => {

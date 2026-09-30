@@ -169,7 +169,84 @@ export function decodeDnsPacket(
   data: Uint8Array,
   bufferFactory?: Pick<BufferFactory, "from"> | null,
 ): DecodedPacket {
-  return dns.decode(toNodeBuffer(data, bufferFactory));
+  const buffer = toNodeBuffer(data, bufferFactory);
+  validateWireNames(buffer);
+  return dns.decode(buffer);
+}
+
+// dns-packet joins labels without escaping embedded dots and decodes them as
+// UTF-8. Check the app's ASCII name contract before those distinctions are lost.
+function validateWireNames(data: NodeBuffer): void {
+  const word = (offset: number): number => {
+    if (offset + 2 > data.length) throw new Error("Truncated DNS packet");
+    return (data[offset]! << 8) | data[offset + 1]!;
+  };
+  const nameEnd = (start: number, requireHostnameBytes = true): number => {
+    let offset = start;
+    let end: number | undefined;
+    let expandedLength = 1;
+    let jumps = 0;
+    while (true) {
+      const length = data[offset++];
+      if (length === undefined) throw new Error("Truncated DNS name");
+      if (length === 0) return end ?? offset;
+      if ((length & 0xc0) === 0xc0) {
+        if (++jumps > 10)
+          throw new Error("DNS name exceeds 10 compression jumps");
+        const target = word(offset - 1) & 0x3fff;
+        if (target >= offset - 1) throw new Error("Invalid DNS name pointer");
+        end ??= offset + 1;
+        offset = target;
+        continue;
+      }
+      if (length > 63 || offset + length > data.length)
+        throw new Error("Invalid DNS label length");
+      expandedLength += length + 1;
+      if (expandedLength > 255) throw new Error("DNS name exceeds 255 bytes");
+      for (let i = 0; requireHostnameBytes && i < length; i++) {
+        const byte = data[offset + i]!;
+        if (
+          !(
+            byte === 45 ||
+            (byte >= 48 && byte <= 57) ||
+            (byte >= 65 && byte <= 90) ||
+            (byte >= 97 && byte <= 122)
+          )
+        )
+          throw new Error("DNS label contains non-hostname bytes");
+      }
+      offset += length;
+    }
+  };
+  if (data.length < 12) throw new Error("Truncated DNS header");
+  let offset = 12;
+  for (let i = 0; i < word(4); i++) {
+    offset = nameEnd(offset) + 4;
+    if (offset > data.length) throw new Error("Truncated DNS question");
+  }
+  const answerCount = word(6);
+  const recordCount = answerCount + word(8) + word(10);
+  for (let i = 0; i < recordCount; i++) {
+    const start = offset;
+    offset = nameEnd(offset, i < answerCount);
+    const size = word(offset + 8);
+    offset += 10 + size;
+    if (offset > data.length) throw new Error("Truncated DNS answer");
+    // The package exports its record decoder, but its typings omit it. Some
+    // record codecs ignore RDLENGTH; require the exact boundary we validated.
+    const recordDecoder = (
+      dns as typeof dns & {
+        answer: {
+          decode: ((buffer: NodeBuffer, offset: number) => unknown) & {
+            bytes: number;
+          };
+        };
+      }
+    ).answer.decode;
+    recordDecoder(data.subarray(0, offset), start);
+    if (recordDecoder.bytes !== offset - start)
+      throw new Error("DNS record length mismatch");
+  }
 }
 
 export function encodeTxtDnsQuery(
@@ -344,7 +421,7 @@ export function extractTxtRecordsFromDecodedResponse(
     const record = Array.isArray(answer.data)
       ? joinTxtCharacterStrings(answer.data, bufferFactory)
       : answer.data instanceof Uint8Array ||
-          (answer.data &&
+          (answer.data != null &&
             typeof answer.data === "object" &&
             "length" in answer.data)
         ? safeDecodeBytes(answer.data as Uint8Array, bufferFactory)

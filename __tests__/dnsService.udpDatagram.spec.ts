@@ -176,6 +176,37 @@ const performUdpQuery = (
 };
 
 describe("DNSService UDP datagram validation", () => {
+  it("closes its socket when secure transaction ID generation fails", async () => {
+    const { DNSService } = loadDNSService();
+    const cryptoSpy = jest
+      .spyOn(globalThis.crypto, "getRandomValues")
+      .mockImplementation(() => {
+        throw new Error("RNG unavailable");
+      });
+    const expoCrypto = require("expo-crypto") as { getRandomValues: jest.Mock };
+    expoCrypto.getRandomValues.mockImplementationOnce(() => {
+      throw new Error("RNG unavailable");
+    });
+    const runtime = globalThis as typeof globalThis & { __DEV__: boolean };
+    const originalDev = runtime.__DEV__;
+    runtime.__DEV__ = false;
+    try {
+      await expect(
+        getInternals(DNSService).performNativeUDPQuery(
+          queryName,
+          resolver,
+          53,
+          Date.now() + 1000,
+        ),
+      ).rejects.toThrow("Secure RNG unavailable");
+      expect(currentSocket.close).toHaveBeenCalledTimes(1);
+      expect(currentSocket.bind).not.toHaveBeenCalled();
+    } finally {
+      runtime.__DEV__ = originalDev;
+      cryptoSpy.mockRestore();
+    }
+  });
+
   afterEach(() => {
     jest.useRealTimers();
     currentAppStateHandler = null;

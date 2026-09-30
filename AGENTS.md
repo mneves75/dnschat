@@ -116,10 +116,11 @@ local history is encrypted. DNS itself is observable and unauthenticated.
 - Backgrounding invalidates in-flight work and closes sockets/cancels native work. An expired or cancelled lifecycle cannot start another fallback or accept a stale result.
 - Prompt limit is 120 before sanitization; output is one lowercase alphanumeric/dash label of at most 63 characters. Do not change limits or sanitizer without native + JS tests and docs.
 - Resolver choices stay allowlisted in `modules/dns-native/constants.ts`. Never add arbitrary server input. Native accepts port 53 and the two LLM zones only; native allowlists must match each other and be a subset of the JS allowlist.
-- Root Android dnsjava names explicitly with `Name.fromString(queryName, Name.root)`; pin every query to its selected zone. Validate packet/question/answer boundaries and expanded DNS-name length.
+- Keep Android native exchanges under the owned raw UDP operation; do not reintroduce an unowned alias-following resolver. Pin every query to its selected zone and preserve DNS label boundaries with ASCII-only case normalization. Validate packet/question/answer boundaries and expanded DNS-name length.
 - Never log prompts, TXT responses, keys, credentials or device identifiers in production. Corruption handling must not store plaintext payload fragments in diagnostic metadata.
 - Render untrusted Markdown only through `SafeMarkdown`; no automatic remote images or uncontrolled external navigation. Review installed renderer defaults when upgrading it.
 - Native encryption keys live in SecureStore. Preserve Android backup/transfer exclusions. Browser storage is preview-only and is not a production secure-storage boundary.
+- A missing key must preserve existing ciphertext and backups. Decryption never generates a replacement key; new-key creation first checks every encrypted history store.
 - No credentials, signing assets, `.env*` secrets, Firebase configs, device IDs, local paths or internal App Store identifiers in tracked files. Follow `docs/public-release-redaction.md`.
 - `DEVELOPMENT_TEAM` stays empty in the public Xcode project. Supply signing configuration locally at build time.
 - Dependency suppressions require an actual fix blocker, reachability argument and recheck date. Remove them when a compatible fix exists; preserve the consumer major in version floors.

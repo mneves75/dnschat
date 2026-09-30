@@ -348,6 +348,12 @@ describe("encryptionService key handling", () => {
 
   it("rejects encrypted envelopes with extra fields as typed payload corruption", async () => {
     jest.resetModules();
+    const mockSecureStore = require("expo-secure-store") as jest.Mocked<
+      typeof SecureStore
+    >;
+    mockSecureStore.getItemAsync.mockImplementation(async (key) =>
+      key === "dnschat.encryption_key" ? "ab".repeat(32) : "this-device-only",
+    );
     const {
       decryptString,
       EncryptionPayloadCorruptionError,
@@ -362,6 +368,12 @@ describe("encryptionService key handling", () => {
 
   it("rejects invalid nonce and too-short ciphertext lengths", async () => {
     jest.resetModules();
+    const mockSecureStore = require("expo-secure-store") as jest.Mocked<
+      typeof SecureStore
+    >;
+    mockSecureStore.getItemAsync.mockImplementation(async (key) =>
+      key === "dnschat.encryption_key" ? "ab".repeat(32) : "this-device-only",
+    );
     const {
       decryptString,
       EncryptionPayloadCorruptionError,

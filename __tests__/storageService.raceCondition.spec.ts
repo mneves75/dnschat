@@ -14,6 +14,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { parseStoredChats } from "./utils/storageTestUtils";
 import { StorageService } from "../src/services/storageService";
 import type { Message } from "../src/types/chat";
+import { encryptString } from "../src/services/encryptionService";
 
 // Mock AsyncStorage
 jest.mock("@react-native-async-storage/async-storage", () => ({
@@ -25,7 +26,7 @@ jest.mock("@react-native-async-storage/async-storage", () => ({
 const mockAsyncStorage = AsyncStorage as jest.Mocked<typeof AsyncStorage>;
 
 describe("StorageService Race Condition Prevention", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     jest.clearAllMocks();
     // StorageService is static: drop the in-memory chats cache so each test
     // starts from the AsyncStorage mock state, not a previous test's cache.
@@ -34,6 +35,8 @@ describe("StorageService Race Condition Prevention", () => {
     mockAsyncStorage.getItem.mockResolvedValue(null);
     mockAsyncStorage.setItem.mockResolvedValue(undefined);
     mockAsyncStorage.removeItem.mockResolvedValue(undefined);
+    await encryptString("fixture initialization");
+    jest.clearAllMocks();
   });
 
   describe("Operation Queue Serialization", () => {

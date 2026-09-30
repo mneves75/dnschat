@@ -351,6 +351,45 @@ describe("ChatContext error recovery", () => {
     expect(getLatestChat().error).toEqual({ kind: "storage" });
   });
 
+  it("rejects a send that could not persist its prompt so the composer restores it", async () => {
+    await renderProvider();
+    await createStoredChat("Unsaved prompt");
+    mockStorageService.appendAndUpdateMessages.mockRejectedValueOnce(
+      new Error("Storage unavailable"),
+    );
+
+    let result: Awaited<ReturnType<ReturnType<typeof useChat>["sendMessage"]>> =
+      "sent";
+    await act(async () => {
+      result = await getLatestChat().sendMessage("keep this draft");
+    });
+
+    expect(result).toBe("rejected");
+    expect(getLatestChat().currentChat?.messages).toEqual([]);
+    expect(mockDNSService.queryLLM).not.toHaveBeenCalled();
+    expect(getLatestChat().error).toEqual({ kind: "storage" });
+    expect(getLatestChat().isLoading).toBe(false);
+  });
+
+  it("accepts a successfully persisted prompt and response", async () => {
+    await renderProvider();
+    await createStoredChat("Successful send");
+    mockDNSService.queryLLM.mockResolvedValueOnce("DNS reply");
+
+    let result: Awaited<ReturnType<ReturnType<typeof useChat>["sendMessage"]>> =
+      "rejected";
+    await act(async () => {
+      result = await getLatestChat().sendMessage("hello dns");
+    });
+
+    expect(result).toBe("sent");
+    expect(getLatestChat().currentChat?.messages).toMatchObject([
+      { role: "user", content: "hello dns", status: "sent" },
+      { role: "assistant", content: "DNS reply", status: "sent" },
+    ]);
+    expect(getLatestChat().error).toBeNull();
+  });
+
   it("preserves the selected thread after reloading recovered storage", async () => {
     // Given
     await renderProvider();

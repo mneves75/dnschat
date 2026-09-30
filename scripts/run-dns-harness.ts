@@ -16,7 +16,11 @@ import dgram from "node:dgram";
 import net from "node:net";
 import crypto from "node:crypto";
 import dnsPacket from "dns-packet";
-import type { Answer, TxtAnswer, TxtData } from "dns-packet";
+import {
+  decodeDnsPacket,
+  extractTxtRecordsFromDecodedResponse,
+} from "../src/services/dnsWire";
+import { parseMultiPartTXTResponse } from "../modules/dns-native/txtResponse";
 
 const DEFAULT_SERVER = "llm.pieter.com";
 const DEFAULT_PORT = 53;
@@ -79,23 +83,6 @@ const getErrorMessage = (error: unknown, fallback: string): string => {
     }
   }
   return fallback;
-};
-
-const normalizeTxtData = (data: TxtData): Array<string | Uint8Array> => {
-  if (Array.isArray(data)) return data;
-  return [data];
-};
-
-const extractTxtRecords = (answers: Answer[] | undefined): string[] => {
-  if (!answers || answers.length === 0) return [];
-  return answers
-    .filter((answer): answer is TxtAnswer => answer.type === "TXT")
-    .flatMap((answer) => normalizeTxtData(answer.data))
-    .map((record) =>
-      typeof record === "string"
-        ? record
-        : Buffer.from(record).toString("utf8"),
-    );
 };
 
 function parseArgs(argv: string[]): HarnessOptions {
@@ -499,14 +486,23 @@ async function attemptUdp(
       });
     });
 
-    socket.on("message", async (response) => {
+    socket.on("message", async (response, remote) => {
       cleanup();
-      if (responsePath) {
-        await fs.writeFile(responsePath, response);
-      }
       try {
-        const decoded = dnsPacket.decode(response);
-        const answers = extractTxtRecords(decoded.answers);
+        if (responsePath) await fs.writeFile(responsePath, response);
+        const decoded = decodeDnsPacket(response, Buffer);
+        const answers = extractTxtRecordsFromDecodedResponse(
+          decoded,
+          {
+            expectedQueryId: queryBuffer.readUInt16BE(0),
+            expectedQueryName: queryName,
+            expectedServer: options.server,
+            expectedPort: options.port,
+            sourceAddress: remote.address,
+            sourcePort: remote.port,
+          },
+          Buffer,
+        );
         resolve({
           status: "success",
           durationMs: Date.now() - start,
@@ -582,7 +578,7 @@ async function attemptTcp(
       port: options.port,
     });
     let timeout: ReturnType<typeof setTimeout> | null = null;
-    const chunks: Buffer[] = [];
+    let responseBuffer = Buffer.alloc(0);
 
     const cleanup = () => {
       if (timeout) {
@@ -613,20 +609,21 @@ async function attemptTcp(
       });
     });
 
-    client.on("data", (data) => {
-      chunks.push(typeof data === "string" ? Buffer.from(data) : data);
-    });
-
-    client.on("end", async () => {
+    const finishResponse = async () => {
       cleanup();
-      const responseBuffer = Buffer.concat(chunks);
-      if (responsePath) {
-        await fs.writeFile(responsePath, responseBuffer);
-      }
-
       try {
+        if (responsePath) await fs.writeFile(responsePath, responseBuffer);
         const decodedMessage = parseTcpResponse(responseBuffer);
-        const answers = extractTxtRecords(decodedMessage.answers);
+        const answers = extractTxtRecordsFromDecodedResponse(
+          decodedMessage,
+          {
+            expectedQueryId: queryBuffer.readUInt16BE(0),
+            expectedQueryName: queryName,
+            expectedServer: options.server,
+            expectedPort: options.port,
+          },
+          Buffer,
+        );
         resolve({
           status: "success",
           durationMs: Date.now() - start,
@@ -643,6 +640,33 @@ async function attemptTcp(
           ...(responsePath ? { rawResponsePath: responsePath } : {}),
         });
       }
+    };
+
+    client.on("data", (data) => {
+      const chunk = typeof data === "string" ? Buffer.from(data) : data;
+      // One DNS TCP frame is bounded by its two-byte length prefix.
+      if (responseBuffer.length + chunk.length > 65537) {
+        cleanup();
+        resolve({
+          status: "failure",
+          durationMs: Date.now() - start,
+          error: "TCP response exceeds one DNS frame",
+        });
+        return;
+      }
+      responseBuffer = Buffer.concat([responseBuffer, chunk]);
+      if (
+        responseBuffer.length >= 2 &&
+        responseBuffer.length >= responseBuffer.readUInt16BE(0) + 2
+      ) {
+        void finishResponse();
+      }
+    });
+    client.on("end", () => {
+      void finishResponse();
+    });
+    client.on("close", () => {
+      void finishResponse();
     });
 
     timeout = setTimeout(() => {
@@ -672,53 +696,7 @@ function parseTcpResponse(buffer: Buffer) {
       `TCP response length mismatch (expected ${expectedLength}, got ${payload.length})`,
     );
   }
-  return dnsPacket.decode(payload);
-}
-
-function reduceTxtRecords(records: string[] | undefined): string | undefined {
-  if (!records || records.length === 0) return undefined;
-
-  const plainSegments: string[] = [];
-  const parts: Array<{ part: number; total: number; content: string }> = [];
-
-  for (const record of records) {
-    const trimmed = (record ?? "").trim();
-    if (!trimmed) continue;
-    const match = trimmed.match(/^(\d+)\/(\d+):(.*)$/);
-    if (match && match[1] && match[2] && match[3] !== undefined) {
-      parts.push({
-        part: parseInt(match[1], 10),
-        total: parseInt(match[2], 10),
-        content: match[3],
-      });
-    } else {
-      plainSegments.push(trimmed);
-    }
-  }
-
-  if (plainSegments.length) {
-    return plainSegments.join("");
-  }
-
-  if (!parts.length) {
-    return undefined;
-  }
-
-  const firstPart = parts[0];
-  if (!firstPart) {
-    return undefined;
-  }
-  const total = firstPart.total;
-  const map = new Map<number, string>();
-  for (const part of parts) {
-    if (!map.has(part.part)) {
-      map.set(part.part, part.content);
-    }
-  }
-  if (map.size !== total) {
-    return undefined;
-  }
-  return Array.from({ length: total }, (_, i) => map.get(i + 1) ?? "").join("");
+  return decodeDnsPacket(payload, Buffer);
 }
 
 async function writeJsonArtifact(pathname: string, result: HarnessResult) {
@@ -811,10 +789,14 @@ async function runHarness() {
       }
 
       if (attempt.status === "success") {
-        finalResponse = reduceTxtRecords(attempt.txtRecords);
-        if (!finalResponse) {
+        try {
+          finalResponse = parseMultiPartTXTResponse(attempt.txtRecords ?? []);
+        } catch (error) {
           attempt.status = "failure";
-          attempt.error = "No complete TXT response returned";
+          attempt.error = getErrorMessage(
+            error,
+            "No complete TXT response returned",
+          );
         }
       }
 

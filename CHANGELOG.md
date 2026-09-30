@@ -6,6 +6,40 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+4.4.9 candidate, build `93` -> `94`. Security and verification maintenance;
+distribution evidence is recorded separately in the TestFlight runbook.
+
+### Security
+
+- Preserve encrypted chats, logs and backups when their device-only encryption
+  key is missing. Decryption never creates a replacement key; new encryption
+  fails closed while existing history still needs the missing key.
+- Preserve DNS wire label identity and use ASCII case folding, preventing
+  a single label containing dots from matching a multi-label query.
+- Reject DNS records whose decoded length differs from their declared wire
+  boundary, including non-TXT records that could hide an unchecked TXT owner.
+- Remove Android's unowned dnsjava lookup fallback. Native failures return to
+  the existing UDP/TCP chain, whose zone, deadline and cancellation are owned.
+- Close UDP and TCP sockets if secure transaction-ID generation fails.
+- Update security floors within the resolved package majors: fast-uri 3.1.8,
+  brace-expansion 5.0.12, js-yaml 5.4.2 and markdown-it 14.3.2.
+
+### Fixed
+
+- Make the DNS harness share production response validation and multipart
+  parsing, rejecting wrong IDs/questions/owners/classes and incomplete replies.
+- Respect the Android launcher's selected device and Metro port without
+  changing forwarding on other devices. Ambiguous selection is left to Expo.
+- Complete DNS TCP harness replies on a full frame, including servers that keep
+  the connection open, and bound the response buffer to one DNS frame.
+- Restore the composer draft when a send fails before persistence, and show
+  localized errors when settings or onboarding reset cannot be saved.
+- Add a local Expo Haptics hardware-capability patch, preserving the simulator
+  and unsupported-device guard. Requires dependency refresh and a native rebuild.
+- Align tutorial resolver options with the app allowlist.
+- Reject malformed URLs and asset-directory escapes in the local launch-video
+  render server while preserving valid assets and frame ordering.
+
 ### Added
 
 - `brag-output/`: a 23-second launch clip (`brag.mp4`, poster, share copy)

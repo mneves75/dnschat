@@ -4,12 +4,13 @@
     "target": "ES2022",
     "lib": ["ES2022"],
     "outDir": "./dist",
+    "rootDir": "..",
     "esModuleInterop": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,
     "moduleResolution": "node16",
-    "strict": false
+    "strict": true
   },
   "include": ["run-dns-harness.ts"],
   "exclude": ["node_modules", "dist"]

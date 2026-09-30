@@ -59,6 +59,10 @@ This document inventories the data stored or processed by DNSChat and satisfies 
 - Retention: Persistent until user resets settings or clears app data
 
 6) Encryption key material
+- Missing key handling: decryption never creates a replacement. New-key creation
+  checks chats, DNS logs and both corruption backups first; inaccessible stores
+  or surviving encrypted history block writes while preserving the old data.
+  A genuinely lost key cannot be reconstructed from ciphertext.
 - Storage keys: `dnschat.encryption_key` (the key, native and web preview),
   `dnschat.encryption_key.v2` (transient verified staging copy) and
   `dnschat.encryption_key.protection` (completion marker, no key material)

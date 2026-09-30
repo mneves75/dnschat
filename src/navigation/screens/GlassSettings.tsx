@@ -140,6 +140,10 @@ export function GlassSettings() {
       }
     } catch (error) {
       devWarn("[GlassSettings] Failed to update theme preference", error);
+      appAlert(
+        t("screen.settings.alerts.saveErrorTitle"),
+        t("screen.settings.alerts.saveErrorMessage"),
+      );
     }
   };
 
@@ -200,12 +204,20 @@ export function GlassSettings() {
 
   // Action handlers
   const handleDnsServerSelect = async (server: string) => {
-    await updateDnsServer(server);
-    dnsServerSheet.hide();
+    try {
+      await updateDnsServer(server);
+      dnsServerSheet.hide();
 
-    // Haptic feedback
-    if (Platform.OS === "ios") {
-      HapticFeedback.medium();
+      // Haptic feedback
+      if (Platform.OS === "ios") {
+        HapticFeedback.medium();
+      }
+    } catch (error) {
+      devWarn("[GlassSettings] Failed to update DNS server", error);
+      appAlert(
+        t("screen.settings.alerts.saveErrorTitle"),
+        t("screen.settings.alerts.saveErrorMessage"),
+      );
     }
   };
 
@@ -268,11 +280,19 @@ export function GlassSettings() {
           text: t("screen.settings.alerts.onboardingConfirm"),
           style: "destructive",
           onPress: async () => {
-            await resetOnboarding();
-            showSuccess(
-              t("screen.settings.alerts.onboardingResetTitle"),
-              t("screen.settings.alerts.onboardingResetMessage"),
-            );
+            try {
+              await resetOnboarding();
+              showSuccess(
+                t("screen.settings.alerts.onboardingResetTitle"),
+                t("screen.settings.alerts.onboardingResetMessage"),
+              );
+            } catch (error) {
+              devWarn("[GlassSettings] Failed to reset onboarding", error);
+              appAlert(
+                t("screen.settings.alerts.saveErrorTitle"),
+                t("screen.settings.alerts.saveErrorMessage"),
+              );
+            }
           },
         },
       ],
@@ -311,6 +331,10 @@ export function GlassSettings() {
       await updateEnableMockDNS(value);
     } catch (e) {
       devLog("Failed to save Mock DNS preference", e);
+      appAlert(
+        t("screen.settings.alerts.saveErrorTitle"),
+        t("screen.settings.alerts.saveErrorMessage"),
+      );
     }
   };
 

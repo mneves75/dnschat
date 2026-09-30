@@ -35,6 +35,25 @@ scripts. See `docs/technical/AUDIT-PLAN-2026-09.md` for scope and `MEMORY.md` fo
 candidate-specific validation. Historical TestFlight or hardware results must
 not be represented as proof of the current source.
 
+The 4.4.9 candidate fails closed when encrypted history survives without its
+device-only key: neither decryption nor a new log write may replace that key.
+It preserves chat/log ciphertext and backups for recovery rather than
+quarantining them as corrupt. This cannot recover a genuinely lost key.
+DNS label identity is checked before string normalization; native comparisons
+use ASCII case folding and preserve embedded label bytes. Android's unowned
+dnsjava lookup rung is removed. The required DNS harness shares production
+packet validation and multipart parsing, including negative controls.
+JS validation also checks each record decoder's consumption against its
+declared RDLENGTH in answers, authority and additional sections. Malformed
+non-TXT records cannot shift decoding past the owner-name validation.
+
+The 4.4.9 lockfile resolves fast-uri 3.1.8, brace-expansion 5.0.12,
+js-yaml 5.4.2 and markdown-it 14.3.2, retaining their existing resolved majors.
+The 2026-09-30 frozen installation and full verification gate pass, including
+the installed dependency controls; the audit reports zero advisories. The
+signed iOS Release build also passes. Runtime and distribution proof remain
+separate requirements; dependency checks do not establish hardware behavior.
+
 Corruption-backup diagnostics keep only the error length: schema errors can
 contain decrypted field values even when JSON parsing succeeds.
 Encrypted and legacy malformed-schema regression cases preserve the recovery
@@ -65,7 +84,8 @@ The 2026-09-15 pre-production review (4.4.5) closed these gaps:
 - **Production privacy blocker:** no public provider policy covering retention,
   secondary use, deletion, or service-provider status was located after
   reviewing the default third-party DNS service's public page and web search on
-  2026-08-31. The public page documents only the query interface. Until
+  2026-08-31. Rechecking its public page on 2026-09-29 still found only the
+  query interface, without those policy terms. Until
   operator evidence is recorded,
   do not submit store privacy declarations that claim prompts remain local,
   are not shared, or are immediately discarded. The app now discloses this

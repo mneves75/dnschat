@@ -21,12 +21,21 @@ const TYPES = {
   ".ttf": "font/ttf",
 };
 const server = http.createServer((req, res) => {
-  const p = path.join(
-    ROOT,
-    decodeURIComponent(new URL(req.url, "http://x").pathname),
-  );
+  let p;
+  try {
+    p = path.join(
+      ROOT,
+      decodeURIComponent(new URL(req.url, "http://x").pathname),
+    );
+  } catch {
+    res.writeHead(400).end();
+    return;
+  }
+  const relativePath = path.relative(ROOT, p);
   if (
-    !p.startsWith(ROOT) ||
+    relativePath === ".." ||
+    relativePath.startsWith(`..${path.sep}`) ||
+    path.isAbsolute(relativePath) ||
     !fs.existsSync(p) ||
     fs.statSync(p).isDirectory()
   ) {

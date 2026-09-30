@@ -136,15 +136,15 @@ describe("DNSLogService recovery", () => {
         chatTitle: "raw legacy title",
         query: "raw legacy prompt",
         response: "raw legacy response",
-        startTime: "2026-08-30T12:00:00.000Z",
-        endTime: "2026-08-30T12:00:01.000Z",
+        startTime: new Date().toISOString(),
+        endTime: new Date().toISOString(),
         totalDuration: 1000,
         finalStatus: "failure",
         finalMethod: "udp",
         entries: [
           {
             id: "legacy-entry",
-            timestamp: "2026-08-30T12:00:00.500Z",
+            timestamp: new Date().toISOString(),
             message: "UDP query failed",
             method: "udp",
             status: "failure",

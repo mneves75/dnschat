@@ -165,8 +165,8 @@ function buildAndroidEnv({ baseEnv = process.env, javaHomeResult } = {}) {
   return env;
 }
 
-function runNodeScript(scriptPath, { env = process.env } = {}) {
-  const result = spawnSync(process.execPath, [scriptPath], {
+function runNodeScript(scriptPath, { env = process.env, args = [] } = {}) {
+  const result = spawnSync(process.execPath, [scriptPath, ...args], {
     stdio: "inherit",
     env,
   });
@@ -180,8 +180,8 @@ function main() {
   const repoRoot = path.resolve(__dirname, "..");
   const ensureReverseScript = path.join(__dirname, "ensure-adb-reverse.js");
 
-  // Keep reverse behavior consistent with prior `pnpm run android`.
-  runNodeScript(ensureReverseScript, { env: process.env });
+  const expoArgs = process.argv.slice(2);
+  runNodeScript(ensureReverseScript, { env: process.env, args: expoArgs });
 
   const javaHomeResult = resolveJava17Home();
   const env = buildAndroidEnv({ baseEnv: process.env, javaHomeResult });
@@ -209,7 +209,6 @@ function main() {
     }
   }
 
-  const expoArgs = process.argv.slice(2);
   const pnpmCmd = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
 
   const result = spawnSync(

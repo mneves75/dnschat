@@ -3,9 +3,14 @@ import type { ReactTestRenderer } from "react-test-renderer";
 import { act } from "react-test-renderer";
 import { TouchableOpacity } from "react-native";
 import { DNSService } from "../src/services/dnsService";
+import { appAlert } from "../src/utils/appAlert";
 import { createWithSuppressedWarnings } from "./utils/reactTestRenderer";
 
 const mockUseSettings = jest.fn();
+const mockResetOnboarding = jest.fn().mockResolvedValue(undefined);
+const mockHideSheet = jest.fn();
+
+jest.mock("../src/utils/appAlert", () => ({ appAlert: jest.fn() }));
 
 jest.mock("../src/context/SettingsContext", () => {
   const ReactModule = jest.requireActual<typeof import("react")>("react");
@@ -16,7 +21,7 @@ jest.mock("../src/context/SettingsContext", () => {
 });
 
 jest.mock("../src/context/OnboardingContext", () => ({
-  useOnboarding: () => ({ resetOnboarding: jest.fn() }),
+  useOnboarding: () => ({ resetOnboarding: mockResetOnboarding }),
 }));
 
 jest.mock("../src/context/ChatContext", () => ({
@@ -76,7 +81,7 @@ jest.mock("../src/components/glass/GlassForm", () => {
     GlassActionSheet: Placeholder,
     useGlassBottomSheet: () => ({
       show: jest.fn(),
-      hide: jest.fn(),
+      hide: mockHideSheet,
       visible: false,
     }),
     LiquidGlassWrapper: Placeholder,
@@ -93,6 +98,7 @@ jest.mock("../src/components/LiquidGlassWrapper", () =>
 
 jest.mock("../src/utils/haptics", () => ({
   persistHapticsPreference: jest.fn().mockResolvedValue(undefined),
+  HapticFeedback: { light: jest.fn(), medium: jest.fn() },
 }));
 
 jest.mock("../src/ui/hooks/useScreenEntrance", () => ({
@@ -142,6 +148,8 @@ type SettingsValue = {
   preferredLocale: string | null;
   availableLocales: Array<{ locale: string; label: string }>;
   updateLocale: jest.Mock;
+  themePreference: "system" | "light" | "dark";
+  updateThemePreference: jest.Mock;
   accessibility: {
     fontSize: string;
     highContrast: boolean;
@@ -167,6 +175,8 @@ const baseSettingsValue: SettingsValue = {
     { locale: "pt-BR", label: "Português" },
   ],
   updateLocale: jest.fn().mockResolvedValue(undefined),
+  themePreference: "system",
+  updateThemePreference: jest.fn().mockResolvedValue(undefined),
   accessibility: {
     fontSize: "medium",
     highContrast: false,
@@ -240,6 +250,82 @@ describe("Settings language picker", () => {
     });
 
     expect(value.updateLocale).toHaveBeenCalledWith(null);
+  });
+
+  it.each([
+    ["en-US", "Error", "Failed to save settings. Please try again."],
+    ["pt-BR", "Erro", "Falha ao salvar. Tente novamente."],
+  ])(
+    "surfaces rejected setting writes in %s",
+    async (locale, title, message) => {
+      const value = createSettingsValue({
+        locale,
+        updateDnsServer: jest
+          .fn()
+          .mockRejectedValue(new Error("Storage unavailable")),
+        updateEnableMockDNS: jest
+          .fn()
+          .mockRejectedValue(new Error("Storage unavailable")),
+        updateThemePreference: jest
+          .fn()
+          .mockRejectedValue(new Error("Storage unavailable")),
+      });
+      mockUseSettings.mockReturnValue(value);
+      let tree: ReactTestRenderer | null = null;
+      await act(async () => {
+        tree = createWithSuppressedWarnings(<Settings />);
+      });
+      if (!tree) throw new Error("Failed to render Settings");
+      const renderedTree = tree as ReactTestRenderer;
+
+      for (const [testID, event, argument] of [
+        ["settings-dns-option-llm-pieter-com", "onPress", undefined],
+        ["settings-mock-dns-switch", "onValueChange", true],
+        ["settings-theme-option-dark", "onPress", undefined],
+      ] as const) {
+        jest.mocked(appAlert).mockClear();
+        const control = renderedTree.root.findAllByProps({ testID })[0];
+        if (!control) throw new Error(`Missing control: ${testID}`);
+        await act(async () => {
+          await expect(control.props[event](argument)).resolves.toBeUndefined();
+        });
+        expect(appAlert).toHaveBeenCalledWith(title, message);
+        expect(mockHideSheet).not.toHaveBeenCalled();
+      }
+      await act(async () => renderedTree.unmount());
+    },
+  );
+
+  it("reports a failed onboarding reset without showing success", async () => {
+    mockUseSettings.mockReturnValue(createSettingsValue());
+    mockResetOnboarding.mockRejectedValueOnce(new Error("Storage unavailable"));
+    let tree: ReactTestRenderer | null = null;
+    await act(async () => {
+      tree = createWithSuppressedWarnings(<Settings />);
+    });
+    if (!tree) throw new Error("Failed to render Settings");
+    const renderedTree = tree as ReactTestRenderer;
+    renderedTree.root
+      .findAllByProps({ testID: "settings-reset-onboarding" })[0]
+      ?.props["onPress"]();
+    const buttons = jest.mocked(appAlert).mock.calls[0]?.[2];
+    const confirm = buttons?.find((button) => button.style === "destructive");
+    const confirmReset = confirm?.onPress;
+    if (!confirmReset) throw new Error("Missing onboarding reset confirmation");
+    await act(async () => {
+      await expect(confirmReset()).resolves.toBeUndefined();
+    });
+    expect(appAlert).toHaveBeenLastCalledWith(
+      "Error",
+      "Failed to save settings. Please try again.",
+    );
+    expect(
+      renderedTree.root.findAllByProps({
+        testID: "settings-success-toast",
+        visible: true,
+      }),
+    ).toHaveLength(0);
+    await act(async () => renderedTree.unmount());
   });
   it.each([
     [

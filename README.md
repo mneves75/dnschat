@@ -7,7 +7,7 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 - JavaScript fallback transports (UDP/TCP) for constrained networks
 - An in-app Logs screen to inspect attempts, failures, and fallbacks
 
-[![Version](https://img.shields.io/badge/version-4.4.8-blue.svg)](.)
+[![Version](https://img.shields.io/badge/version-4.4.9-blue.svg)](.)
 [![React Native](https://img.shields.io/badge/React%20Native-0.86.3-blue.svg)](https://reactnative.dev/)
 [![Expo](https://img.shields.io/badge/Expo-57.0.x-black.svg)](https://expo.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0.x-blue.svg)](https://www.typescriptlang.org/)
@@ -31,7 +31,7 @@ DNS TXT queries (default DNS server: `llm.pieter.com`). The app includes:
 
 ## Tech stack
 
-- App version: `4.4.8` (build `93`); distribution status is recorded in the [TestFlight runbook](docs/App_store/Apple_App_Store/TESTFLIGHT.md).
+- App version: `4.4.9` (build `94`, candidate); distribution status is recorded in the [TestFlight runbook](docs/App_store/Apple_App_Store/TESTFLIGHT.md).
 - Expo workflow: Expo Router + EAS-compatible native config
 - Expo SDK: `57.0.x`
 - React: `19.2.3`
@@ -210,6 +210,17 @@ Release:
 - [`docs/App_store/Apple_App_Store/TESTFLIGHT.md`](docs/App_store/Apple_App_Store/TESTFLIGHT.md) — TestFlight upload steps
 
 ## Current verification baseline
+
+The 4.4.9 candidate preserves ciphertext when its device-only key is missing,
+rejects ambiguous DNS wire names, and removes Android's unowned legacy lookup.
+The harness uses the app's response validation. Unsaved sends retain their
+drafts and settings failures show localized errors. The dependency lockfile
+contains security updates and a hardware-capability patch for Expo Haptics;
+refresh dependencies and rebuild native code to apply it. For this candidate,
+the frozen installation and full gate pass: 753 application and 68 native tests.
+The signed iOS Release build and in-place device installation pass; Argent
+hardware verification still needs USB. Distribution evidence is recorded
+separately before promotion.
 
 The 4.4.8 gate (`pnpm run verify:all`, Node 24) passed 707 root tests and 67
 native tests, with react-doctor at 92, Expo Doctor 20/20, a clean dependency

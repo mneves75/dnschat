@@ -250,7 +250,7 @@ describe("DNSLogService concurrent query isolation", () => {
         id: "stored-log",
         query:
           "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa len:3",
-        startTime: "2026-08-30T12:00:00.000Z",
+        startTime: new Date().toISOString(),
         finalStatus: "success",
         finalMethod: "native",
         entries: [],

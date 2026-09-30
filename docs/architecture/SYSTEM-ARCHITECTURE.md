@@ -79,8 +79,9 @@ foreground transition.
 - Web builds cannot do raw DNS to a custom server on port 53, so Web uses Mock.
 - The TypeScript transport chain does not implement DNS-over-HTTPS; `tcp` is
   DNS-over-TCP on port 53.
-- Android native DNS has its own internal fallback: the platform resolver
-  first, then a legacy resolver (dnsjava). The DNS-over-HTTPS rung was removed
+- Android native DNS uses owned raw UDP only, under the operation's deadline
+  and cancellation ownership. Failed
+  native queries return to the app's UDP/TCP chain. The DNS-over-HTTPS rung was removed
   in 4.4.0 -- the native resolver speaks only DNS, so no query leaves the
   device over HTTPS to a third party.
   See `modules/dns-native/android/DNSResolver.java`.
